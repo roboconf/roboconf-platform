@@ -1,0 +1,13 @@
+
+# Simple component
+# with multi-line comment
+
+     # and badly-formatted!
+
+apache {
+
+	alias: Apache;	# in-line comment
+	
+}
+
+# end comment

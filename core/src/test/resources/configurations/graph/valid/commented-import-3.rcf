@@ -1,0 +1,13 @@
+
+# Import #1
+import otherDefinition.txt;
+
+######################
+# Important Imports
+######################
+
+    # Import 2, with an indented comment
+import otherDefinition-2.txt;
+import otherDefinition-3.txt; 	# And an inline comment.
+
+# ...

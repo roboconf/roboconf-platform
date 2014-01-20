@@ -1,0 +1,3 @@
+facet server { failed comment
+	installer: bash;
+}

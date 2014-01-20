@@ -1,0 +1,5 @@
+facet server {
+	installer: bash;
+} facet toto {
+
+}

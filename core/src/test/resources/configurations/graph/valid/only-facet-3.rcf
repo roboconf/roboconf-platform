@@ -1,0 +1,27 @@
+
+facet deployable {
+
+}
+
+facet tomcat {
+	imports: port, db.ip;
+	exports: ip, port = 8080;
+	children: war;
+	icon: tomcat.png;
+	installer: puppet;
+	extends: deployable;
+}
+
+facet apache {
+	imports: tomcat.port, tomcat.ip;
+	exports: ip, port = 80;
+	installer: puppet;
+	extends: deployable;
+}
+
+facet db {
+	exports: ip, port = 3306;
+	icon: db.gif;
+	installer: puppet;
+	extends: deployable;
+}

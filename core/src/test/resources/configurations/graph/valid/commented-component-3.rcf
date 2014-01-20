@@ -1,0 +1,33 @@
+##############
+# Components
+##############
+
+# Tomcat
+tomcat {
+	alias: Tomcat;
+	imports: port, db.ip;
+	exports: ip, port = 8080;
+	children: war;
+	icon: tomcat.png;
+	installer: puppet;
+}
+
+# Apache
+apache {
+	# In-line comment is empty
+	alias: Apache; 	#
+	
+	# In-line comment is empty and stuck to the semi-colon
+	imports: tomcat.port, tomcat.ip;#
+	# And there is a comment after...
+	
+	exports: ip, port = 80;
+	installer: puppet;
+}
+
+# Database
+db {
+	alias: Some Database;
+	
+	facets: db;
+}

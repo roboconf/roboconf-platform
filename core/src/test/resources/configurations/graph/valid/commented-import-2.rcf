@@ -1,0 +1,9 @@
+
+# This a commented import
+# with blank lines.
+
+# How bad!
+
+import otherDefinition.txt;
+
+# ...

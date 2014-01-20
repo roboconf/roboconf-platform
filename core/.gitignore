@@ -11,3 +11,4 @@
 /.externalToolBuilders
 /target
 /maven-eclipse.xml
+/.settings

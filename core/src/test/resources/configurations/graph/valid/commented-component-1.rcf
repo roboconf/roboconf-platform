@@ -1,0 +1,4 @@
+# A simple component
+apache {
+	alias: Apache;
+}

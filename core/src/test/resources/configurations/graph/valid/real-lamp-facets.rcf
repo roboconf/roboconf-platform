@@ -1,0 +1,23 @@
+###################################
+## Group all the facets together ##
+###################################
+
+
+# The VM facet
+facet VM {
+	icon: vm.jpg;
+	children: deployable;
+	installer: iaas;
+}
+
+# The deployable facet
+facet deployable {
+	# nothing
+}
+
+# WAR  archives
+facet war-archive {
+	icon: war.png;
+	installer: bash;
+	exports: full-url, url-path;
+}
