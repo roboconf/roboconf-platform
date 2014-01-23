@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.validators;
+package net.roboconf.core.model;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.ErrorCode;
 import net.roboconf.core.model.ErrorCode.ErrorCategory;
 
 import org.junit.Test;
@@ -34,7 +33,7 @@ public class ErrorCodeTest {
 	 * Every error code must have an unique ID in its category.
 	 */
 	@Test
-	public void testCodeUnicity() {
+	public void testCodesUnicity() {
 
 		Map<ErrorCategory,ErrorCode> categoryToLastCode = new HashMap<ErrorCategory,ErrorCode> ();
 		for( ErrorCode code : ErrorCode.values()) {
@@ -43,6 +42,37 @@ public class ErrorCodeTest {
 				Assert.assertTrue( "Error code " + code + " is already used.", code.getErrorId() > lastCode.getErrorId());
 
 			categoryToLastCode.put( code.getCategory(), code );
+		}
+	}
+
+
+	/**
+	 * Error codes must have a have a given prefix depending on their category.
+	 */
+	@Test
+	public void testCodesPrefixes() {
+
+		Map<ErrorCategory,String> categoryToPrefix = new HashMap<ErrorCategory,String> ();
+		categoryToPrefix.put( ErrorCategory.CONVERSION, "CO_" );
+		categoryToPrefix.put( ErrorCategory.PARSING, "P_" );
+		categoryToPrefix.put( ErrorCategory.PARSING_MODEL, "PM_" );
+		categoryToPrefix.put( ErrorCategory.RUNTIME_MODEL, "RM_" );
+
+		for( ErrorCode code : ErrorCode.values()) {
+			String prefix = categoryToPrefix.get( code.getCategory());
+			Assert.assertNotNull( "No prefix was found for " + code, prefix );
+			Assert.assertTrue( "Invalid prefix for " + code + ". " + prefix + " was expected.", code.toString().startsWith( prefix ));
+		}
+	}
+
+
+	/**
+	 * Error codes must be in upper case.
+	 */
+	@Test
+	public void testCodesUpperCase() {
+		for( ErrorCode code : ErrorCode.values()) {
+			Assert.assertEquals( code + " should be in upper case.", code.toString(), code.toString().toUpperCase());
 		}
 	}
 }

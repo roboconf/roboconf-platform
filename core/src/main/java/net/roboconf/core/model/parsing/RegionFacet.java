@@ -17,27 +17,33 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * An instruction which designates a blank area (several line breaks, tabulations, etc).
+ * The 'facet' instruction.
  * @author Vincent Zurczak - Linagora
  */
-public class RelationBlank extends AbstractIgnorableInstruction {
+public class RegionFacet extends AbstractPropertiesHolder {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
-	 * @param content
+	 * @param declaringFile not null
 	 */
-	public RelationBlank( AbstractFile declaringFile, String content ) {
-		super( declaringFile, content );
+	public RegionFacet( FileDefinition declaringFile ) {
+		super( declaringFile );
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.core.model.parsing.AbstractInstruction#getInstructionType()
-	 */
+	@Override
+	public String[] getSupportedPropertyNames() {
+		return new String[] {
+			Constants.PROPERTY_GRAPH_CHILDREN,
+			Constants.PROPERTY_GRAPH_EXPORTS,
+			Constants.PROPERTY_GRAPH_ICON_LOCATION,
+			Constants.PROPERTY_GRAPH_INSTALLER,
+			Constants.PROPERTY_FACET_EXTENDS
+		};
+	}
+
 	@Override
 	public int getInstructionType() {
-		return AbstractInstruction.BLANK;
+		return AbstractRegion.FACET;
 	}
 
 	/*
@@ -46,6 +52,6 @@ public class RelationBlank extends AbstractIgnorableInstruction {
 	 */
 	@Override
 	public String toString() {
-		return "Blank region";
+		return getName();
 	}
 }

@@ -17,35 +17,27 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * The 'component' instruction.
+ * The instruction for an orphan comment.
  * @author Vincent Zurczak - Linagora
  */
-public class RelationComponent extends AbstractPropertiesHolder {
+public class RegionComment extends AbstractIgnorableInstruction {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile not null
+	 * @param declaringFile
+	 * @param content
 	 */
-	public RelationComponent( AbstractFile declaringFile ) {
-		super( declaringFile );
+	public RegionComment( FileDefinition declaringFile, String content ) {
+		super( declaringFile, content );
 	}
 
-	@Override
-	public String[] getSupportedPropertyNames() {
-		return new String[] {
-			Constants.CHILDREN,
-			Constants.EXPORTS,
-			Constants.ICON_LOCATION,
-			Constants.INSTALLER,
-			Constants.COMPONENT_ALIAS,
-			Constants.COMPONENT_FACETS,
-			Constants.COMPONENT_IMPORTS
-		};
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.core.model.parsing.AbstractRegion#getInstructionType()
+	 */
 	@Override
 	public int getInstructionType() {
-		return AbstractInstruction.COMPONENT;
+		return AbstractRegion.COMMENT;
 	}
 
 	/*
@@ -54,6 +46,6 @@ public class RelationComponent extends AbstractPropertiesHolder {
 	 */
 	@Override
 	public String toString() {
-		return getName();
+		return "Comment region";
 	}
 }

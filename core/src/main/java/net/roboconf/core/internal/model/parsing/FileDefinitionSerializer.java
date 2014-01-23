@@ -18,23 +18,24 @@ package net.roboconf.core.internal.model.parsing;
 
 import java.util.Iterator;
 
-import net.roboconf.core.model.parsing.AbstractInstruction;
 import net.roboconf.core.model.parsing.AbstractPropertiesHolder;
+import net.roboconf.core.model.parsing.AbstractRegion;
 import net.roboconf.core.model.parsing.Constants;
-import net.roboconf.core.model.parsing.FileRelations;
-import net.roboconf.core.model.parsing.RelationBlank;
-import net.roboconf.core.model.parsing.RelationComment;
-import net.roboconf.core.model.parsing.RelationComponent;
-import net.roboconf.core.model.parsing.RelationFacet;
-import net.roboconf.core.model.parsing.RelationImport;
-import net.roboconf.core.model.parsing.RelationProperty;
+import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.parsing.RegionBlank;
+import net.roboconf.core.model.parsing.RegionComment;
+import net.roboconf.core.model.parsing.RegionComponent;
+import net.roboconf.core.model.parsing.RegionFacet;
+import net.roboconf.core.model.parsing.RegionImport;
+import net.roboconf.core.model.parsing.RegionInstanceOf;
+import net.roboconf.core.model.parsing.RegionProperty;
 import net.roboconf.core.model.validators.ParsingModelValidator;
 
 /**
  * A class to serialize a relations model.
  * @author Vincent Zurczak - Linagora
  */
-public class RelationsSerializer {
+public class FileDefinitionSerializer {
 
 	private String lineSeparator = System.getProperty( "line.separator" );
 
@@ -42,7 +43,7 @@ public class RelationsSerializer {
 	/**
 	 * Constructor.
 	 */
-	public RelationsSerializer() {
+	public FileDefinitionSerializer() {
 		// nothing
 	}
 
@@ -50,21 +51,21 @@ public class RelationsSerializer {
 	 * Constructor.
 	 * @param lineSeparator the line separator (ignored if null)
 	 */
-	public RelationsSerializer( String lineSeparator ) {
+	public FileDefinitionSerializer( String lineSeparator ) {
 		if( lineSeparator != null )
 			this.lineSeparator = lineSeparator;
 	}
 
 
 	/**
-	 * @param fileRelations the relations file
+	 * @param definitionFile the relations file
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( FileRelations fileRelations, boolean writeComments ) {
+	public String write( FileDefinition definitionFile, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
-		for( Iterator<AbstractInstruction> it = fileRelations.getInstructions().iterator(); it.hasNext(); ) {
+		for( Iterator<AbstractRegion> it = definitionFile.getInstructions().iterator(); it.hasNext(); ) {
 			sb.append( write( it.next(), writeComments ));
 			if( it.hasNext())
 				sb.append( this.lineSeparator );
@@ -79,32 +80,36 @@ public class RelationsSerializer {
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( AbstractInstruction instr, boolean writeComments ) {
+	public String write( AbstractRegion instr, boolean writeComments ) {
 
 		String result;
 		switch( instr.getInstructionType()) {
-		case AbstractInstruction.COMPONENT:
-			result = write((RelationComponent) instr, writeComments );
+		case AbstractRegion.COMPONENT:
+			result = write((RegionComponent) instr, writeComments );
 			break;
 
-		case AbstractInstruction.FACET:
-			result = write((RelationFacet) instr, writeComments );
+		case AbstractRegion.FACET:
+			result = write((RegionFacet) instr, writeComments );
 			break;
 
-		case AbstractInstruction.IMPORT:
-			result = write((RelationImport) instr, writeComments );
+		case AbstractRegion.INSTANCEOF:
+			result = write((RegionInstanceOf) instr, writeComments, 0 );
 			break;
 
-		case AbstractInstruction.PROPERTY:
-			result = write((RelationProperty) instr, writeComments );
+		case AbstractRegion.IMPORT:
+			result = write((RegionImport) instr, writeComments );
 			break;
 
-		case AbstractInstruction.COMMENT:
-			result = write((RelationComment) instr, writeComments );
+		case AbstractRegion.PROPERTY:
+			result = write((RegionProperty) instr, writeComments );
 			break;
 
-		case AbstractInstruction.BLANK:
-			result = write((RelationBlank) instr, writeComments );
+		case AbstractRegion.COMMENT:
+			result = write((RegionComment) instr, writeComments );
+			break;
+
+		case AbstractRegion.BLANK:
+			result = write((RegionBlank) instr, writeComments );
 			break;
 
 		default:
@@ -121,7 +126,7 @@ public class RelationsSerializer {
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RelationImport instr, boolean writeComments ) {
+	public String write( RegionImport instr, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "import " );
@@ -141,8 +146,8 @@ public class RelationsSerializer {
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RelationComponent instr, boolean writeComments ) {
-		return writePropertiesHolder( instr, writeComments );
+	public String write( RegionComponent instr, boolean writeComments ) {
+		return writePropertiesHolder( instr, writeComments, 0 );
 	}
 
 
@@ -151,8 +156,26 @@ public class RelationsSerializer {
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RelationFacet instr, boolean writeComments ) {
-		return Constants.KEYWORD_FACET + " " + writePropertiesHolder( instr, writeComments );
+	public String write( RegionFacet instr, boolean writeComments ) {
+		return Constants.KEYWORD_FACET + " " + writePropertiesHolder( instr, writeComments, 0 );
+	}
+
+
+	/**
+	 * @param instr the instruction
+	 * @param writeComments true to write comments
+	 * @param indentationLevel the indentation level
+	 * @return a string (never null)
+	 */
+	public String write( RegionInstanceOf instr, boolean writeComments, int indentationLevel ) {
+
+		StringBuilder sb = new StringBuilder();
+		indent( sb, indentationLevel );
+		sb.append( Constants.KEYWORD_INSTANCE_OF );
+		sb.append( " " );
+		sb.append( writePropertiesHolder( instr, writeComments, indentationLevel ));
+
+		return sb.toString();
 	}
 
 
@@ -161,7 +184,7 @@ public class RelationsSerializer {
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RelationBlank instr, boolean writeComments ) {
+	public String write( RegionBlank instr, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
 		if( writeComments ) {
@@ -184,7 +207,7 @@ public class RelationsSerializer {
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RelationProperty instr, boolean writeComments ) {
+	public String write( RegionProperty instr, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( instr.getName());
@@ -205,7 +228,7 @@ public class RelationsSerializer {
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RelationComment instr, boolean writeComments ) {
+	public String write( RegionComment instr, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
 		if( writeComments ) {
@@ -234,9 +257,10 @@ public class RelationsSerializer {
 	/**
 	 * @param holder the instruction
 	 * @param writeComments true to write comments
+	 * @param indentationLevel the indentation level
 	 * @return a string (never null)
 	 */
-	private String writePropertiesHolder( AbstractPropertiesHolder holder, boolean writeComments ) {
+	private String writePropertiesHolder( AbstractPropertiesHolder holder, boolean writeComments, int indentationLevel ) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( holder.getName());
@@ -246,20 +270,36 @@ public class RelationsSerializer {
 				&& holder.getInlineComment() != null )
 			sb.append( holder.getInlineComment());
 
-		for( AbstractInstruction instr : holder.getInternalInstructions()) {
+		for( AbstractRegion instr : holder.getInternalInstructions()) {
 			sb.append( this.lineSeparator );
-			if( instr.getInstructionType() == AbstractInstruction.PROPERTY )
-				sb.append( "\t" );
+			if( instr.getInstructionType() == AbstractRegion.INSTANCEOF ) {
+				sb.append( write((RegionInstanceOf) instr, writeComments, indentationLevel + 1 ));
 
-			sb.append( write( instr, writeComments ));
+			} else {
+				if( instr.getInstructionType() == AbstractRegion.PROPERTY )
+					indent( sb, indentationLevel + 1 );
+
+				sb.append( write( instr, writeComments ));
+			}
 		}
 
 		sb.append( this.lineSeparator );
+		indent( sb, indentationLevel );
 		sb.append( "}" );
 		if( writeComments
 				&& holder.getClosingInlineComment() != null )
 			sb.append( holder.getClosingInlineComment());
 
 		return sb.toString();
+	}
+
+
+	/**
+	 * @param sb
+	 * @param indentationLevel
+	 */
+	private void indent( StringBuilder sb, int indentationLevel ) {
+		for( int i=0; i<indentationLevel; i++ )
+			sb.append( "\t" );
 	}
 }

@@ -16,34 +16,34 @@
 
 package net.roboconf.core.model.parsing;
 
+import net.roboconf.core.internal.utils.Utils;
+
 /**
- * The 'facet' instruction.
+ * The 'instanceof' instruction.
  * @author Vincent Zurczak - Linagora
  */
-public class RelationFacet extends AbstractPropertiesHolder {
+public class RegionInstanceOf extends AbstractPropertiesHolder {
 
 	/**
 	 * Constructor.
 	 * @param declaringFile not null
 	 */
-	public RelationFacet( AbstractFile declaringFile ) {
+	public RegionInstanceOf( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
 	@Override
 	public String[] getSupportedPropertyNames() {
 		return new String[] {
-			Constants.CHILDREN,
-			Constants.EXPORTS,
-			Constants.ICON_LOCATION,
-			Constants.INSTALLER,
-			Constants.FACET_EXTENDS
+			Constants.PROPERTY_INSTANCE_NAME,
+			Constants.PROPERTY_INSTANCE_CARDINALITY,
+			Constants.PROPERTY_INSTANCE_CHANNEL
 		};
 	}
 
 	@Override
 	public int getInstructionType() {
-		return AbstractInstruction.FACET;
+		return AbstractRegion.INSTANCEOF;
 	}
 
 	/*
@@ -52,6 +52,15 @@ public class RelationFacet extends AbstractPropertiesHolder {
 	 */
 	@Override
 	public String toString() {
-		return "facet " + getName();
+		RegionProperty p = findPropertyByName( Constants.PROPERTY_INSTANCE_NAME );
+		StringBuilder sb = new StringBuilder( getName());
+
+		if( p != null
+				&& ! Utils.isEmptyOrWhitespaces( p.getValue())) {
+			sb.append( " as " );
+			sb.append( p.getValue());
+		}
+
+		return sb.toString();
 	}
 }

@@ -16,6 +16,8 @@
 
 package net.roboconf.core.model;
 
+import net.roboconf.core.internal.utils.Utils;
+
 /**
  * A model error instantiates and localizes an {@link ErrorCode}.
  * @author Vincent Zurczak - Linagora
@@ -86,5 +88,26 @@ public class ModelError {
 	@Override
 	public String toString() {
 		return this.errorCode.getMsg();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof ModelError
+				&& ((ModelError) obj).errorCode == this.errorCode
+				&& ((ModelError) obj).line == this.line
+				&& Utils.areEqual(((ModelError) obj).details, this.details );
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return this.errorCode.hashCode() * this.line;
 	}
 }

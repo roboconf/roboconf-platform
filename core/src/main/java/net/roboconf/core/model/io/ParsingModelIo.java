@@ -22,10 +22,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import net.roboconf.core.internal.model.parsing.RelationsParser;
-import net.roboconf.core.internal.model.parsing.RelationsSerializer;
+import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
+import net.roboconf.core.internal.model.parsing.FileDefinitionSerializer;
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.core.model.parsing.FileRelations;
+import net.roboconf.core.model.parsing.FileDefinition;
 
 /**
  * An API set of helpers to read and write a parsing model.
@@ -34,42 +34,42 @@ import net.roboconf.core.model.parsing.FileRelations;
 public class ParsingModelIo {
 
 	/**
-	 * Reads a relation file.
+	 * Reads a definition file.
 	 * @param relationsFileUri the file URI
 	 * @param ignoreComments true to ignore comments during parsing
-	 * @return an instance of {@link FileRelations} (never null)
+	 * @return an instance of {@link FileDefinition} (never null)
 	 * <p>
 	 * Parsing errors are stored in the result.<br />
 	 * See {@link FileRelations#getParingErrors()}.
 	 * </p>
 	 */
-	public static FileRelations readRelationsFile( URI relationsFileUri, boolean ignoreComments ) {
-		RelationsParser parser = new RelationsParser( relationsFileUri, ignoreComments );
+	public static FileDefinition readConfigurationFile( URI relationsFileUri, boolean ignoreComments ) {
+		FileDefinitionParser parser = new FileDefinitionParser( relationsFileUri, ignoreComments );
 		return parser.read();
 	}
 
 
 	/**
-	 * Reads a relation file.
+	 * Reads a definition file.
 	 * @param relationsFile the relations file
 	 * @param ignoreComments true to ignore comments during parsing
-	 * @return an instance of {@link FileRelations} (never null)
+	 * @return an instance of {@link FileDefinition} (never null)
 	 * <p>
 	 * Parsing errors are stored in the result.<br />
 	 * See {@link FileRelations#getParingErrors()}.
 	 * </p>
 	 */
-	public static FileRelations readRelationsFile( File relationsFile, boolean ignoreComments ) {
-		RelationsParser parser = new RelationsParser( relationsFile, ignoreComments );
+	public static FileDefinition readConfigurationFile( File relationsFile, boolean ignoreComments ) {
+		FileDefinitionParser parser = new FileDefinitionParser( relationsFile, ignoreComments );
 		return parser.read();
 	}
 
 
 	/**
-	 * Reads a relation file.
+	 * Reads a definition file.
 	 * @param relationsFileUri the file URI
 	 * @param ignoreComments true to ignore comments during parsing
-	 * @return an instance of {@link FileRelations} (never null)
+	 * @return an instance of {@link FileDefinition} (never null)
 	 * <p>
 	 * Parsing errors are stored in the result.<br />
 	 * See {@link FileRelations#getParingErrors()}.
@@ -77,21 +77,21 @@ public class ParsingModelIo {
 	 *
 	 * @throws URISyntaxException if the given string is not a valid URI
 	 */
-	public static FileRelations readRelationsFile( String relationsFileUri, boolean ignoreComments ) throws URISyntaxException {
-		RelationsParser parser = new RelationsParser( relationsFileUri, ignoreComments );
+	public static FileDefinition readConfigurationFile( String relationsFileUri, boolean ignoreComments ) throws URISyntaxException {
+		FileDefinitionParser parser = new FileDefinitionParser( relationsFileUri, ignoreComments );
 		return parser.read();
 	}
 
 
 	/**
-	 * Writes the model into a string.
+	 * Writes a model into a string.
 	 * @param relationsFile the relations file
 	 * @param writeComments true to write comments
 	 * @param lineSeparator the line separator (if null, the OS' one is used)
 	 * @return a string (never null)
 	 */
-	public static String writeRelationsFile( FileRelations relationsFile, boolean writeComments, String lineSeparator ) {
-		return new RelationsSerializer( lineSeparator ).write( relationsFile, writeComments );
+	public static String writeConfigurationFile( FileDefinition relationsFile, boolean writeComments, String lineSeparator ) {
+		return new FileDefinitionSerializer( lineSeparator ).write( relationsFile, writeComments );
 	}
 
 
@@ -102,7 +102,7 @@ public class ParsingModelIo {
 	 * @param lineSeparator the line separator (if null, the OS' one is used)
 	 * @throws IOException
 	 */
-	public static void saveRelationsFile( FileRelations relationsFile, boolean writeComments, String lineSeparator )
+	public static void saveRelationsFile( FileDefinition relationsFile, boolean writeComments, String lineSeparator )
 	throws IOException {
 
 		if( relationsFile.getEditedFile() == null )
@@ -122,12 +122,12 @@ public class ParsingModelIo {
 	 */
 	public static void saveRelationsFileInto(
 			File targetFile,
-			FileRelations relationsFile,
+			FileDefinition relationsFile,
 			boolean writeComments,
 			String lineSeparator )
 	throws IOException {
 
-		String s = writeRelationsFile( relationsFile, writeComments, lineSeparator );
+		String s = writeConfigurationFile( relationsFile, writeComments, lineSeparator );
 		Utils.copyStream( new ByteArrayInputStream( s.getBytes( "UTF-8" )), targetFile );
 	}
 }

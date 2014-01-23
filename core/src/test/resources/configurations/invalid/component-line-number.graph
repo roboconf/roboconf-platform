@@ -1,0 +1,5 @@
+component {
+
+	# a comment
+
+	installer: bash;

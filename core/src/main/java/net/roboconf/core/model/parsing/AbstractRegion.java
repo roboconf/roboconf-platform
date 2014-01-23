@@ -22,7 +22,7 @@ import net.roboconf.core.internal.utils.Utils;
  * The base definition for all the instructions.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractInstruction {
+public abstract class AbstractRegion {
 
 	public static final int PROPERTY = 0;
 	public static final int IMPORT = 1;
@@ -30,17 +30,18 @@ public abstract class AbstractInstruction {
 	public static final int COMPONENT = 3;
 	public static final int COMMENT = 4;
 	public static final int BLANK = 5;
+	public static final int INSTANCEOF = 6;
 
 	private String inlineComment;
 	private int line;
-	private final AbstractFile declaringFile;
+	private final FileDefinition declaringFile;
 
 
 	/**
 	 * Constructor.
 	 * @param declaringFile not null
 	 */
-	public AbstractInstruction( AbstractFile declaringFile ) {
+	public AbstractRegion( FileDefinition declaringFile ) {
 		if( declaringFile == null )
 			throw new IllegalArgumentException( "Declaring file cannot be null." );
 
@@ -83,7 +84,7 @@ public abstract class AbstractInstruction {
 	/**
 	 * @return the declaringFile
 	 */
-	public AbstractFile getDeclaringFile() {
+	public FileDefinition getDeclaringFile() {
 		return this.declaringFile;
 	}
 }

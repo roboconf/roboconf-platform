@@ -23,11 +23,6 @@ package net.roboconf.core.model.parsing;
 public interface Constants {
 
 	/**
-	 * The maximum expected number of properties for a component or a facet.
-	 */
-	int DEFAULT_PROPERTIES_COUNT = 7;
-
-	/**
 	 * The symbols that indicates the beginning of a comment.
 	 */
 	String COMMENT_DELIMITER = "#";
@@ -42,48 +37,10 @@ public interface Constants {
 	 */
 	String EQUAL_OPERATOR = "=";
 
-
 	/**
-	 * Keyword for facet property.
+	 * The marker indicating a generated index must be appended to an instance name.
 	 */
-	String FACET_EXTENDS = "extends";
-
-
-	/**
-	 * Keyword for component property.
-	 */
-	String COMPONENT_ALIAS = "alias";
-
-	/**
-	 * Keyword for component property.
-	 */
-	String COMPONENT_FACETS = "facets";
-
-	/**
-	 * Keyword for component property.
-	 */
-	String COMPONENT_IMPORTS = "imports";
-
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String EXPORTS = "exports";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String CHILDREN = "children";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String ICON_LOCATION = "icon";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String INSTALLER = "installer";
+	String INSTANCE_INDEX_MARKER = "${index}";
 
 
 	/**
@@ -96,6 +53,16 @@ public interface Constants {
 	 */
 	String KEYWORD_FACET = "facet";
 
+	/**
+	 * Keyword to declare an instance.
+	 */
+	String KEYWORD_INSTANCE_OF = "instanceof";
+
+	/**
+	 * Keyword to declare a joker instance.
+	 */
+	String KEYWORD_INSTANCE_GROUP = "<group>";
+
 
 	/**
 	 * The pattern for an ID (variable, plug-in, etc).
@@ -106,4 +73,65 @@ public interface Constants {
 	 * The pattern for an image file name.
 	 */
 	String PATTERN_IMAGE = "[^\\s]+\\.((png)|(gif)|(jpg)|(jpeg))$";
+
+
+
+
+	/**
+	 * Keyword for facet property.
+	 */
+	String PROPERTY_FACET_EXTENDS = "extends";
+
+
+	/**
+	 * Keyword for component property.
+	 */
+	String PROPERTY_COMPONENT_ALIAS = "alias";
+
+	/**
+	 * Keyword for component property.
+	 */
+	String PROPERTY_COMPONENT_FACETS = "facets";
+
+	/**
+	 * Keyword for component property.
+	 */
+	String PROPERTY_COMPONENT_IMPORTS = "imports";
+
+
+	/**
+	 * Keyword for a facet or a component property.
+	 */
+	String PROPERTY_GRAPH_EXPORTS = "exports";
+
+	/**
+	 * Keyword for a facet or a component property.
+	 */
+	String PROPERTY_GRAPH_CHILDREN = "children";
+
+	/**
+	 * Keyword for a facet or a component property.
+	 */
+	String PROPERTY_GRAPH_ICON_LOCATION = "icon";
+
+	/**
+	 * Keyword for a facet or a component property.
+	 */
+	String PROPERTY_GRAPH_INSTALLER = "installer";
+
+
+	/**
+	 * Keyword for an instance property.
+	 */
+	String PROPERTY_INSTANCE_NAME = "name";
+
+	/**
+	 * Keyword for an instance property.
+	 */
+	String PROPERTY_INSTANCE_CARDINALITY = "cardinality";
+
+	/**
+	 * Keyword for an instance property.
+	 */
+	String PROPERTY_INSTANCE_CHANNEL = "channel";
 }

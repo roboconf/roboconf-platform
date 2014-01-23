@@ -17,52 +17,51 @@
 package net.roboconf.core.model.parsing;
 
 /**
+ * The instruction for an import.
  * @author Vincent Zurczak - Linagora
  */
-public class InstanceComponent {
+public class RegionImport extends AbstractRegion {
 
-	private String name, componentName, overridenExports;
+	private String uri;
 
 
 	/**
-	 * @return the name
+	 * Constructor.
+	 * @param declaringFile
 	 */
-	public String getName() {
-		return this.name;
+	public RegionImport( FileDefinition declaringFile ) {
+		super( declaringFile );
 	}
 
 	/**
-	 * @param name the name to set
+	 * @return the uri
 	 */
-	public void setName( String name ) {
-		this.name = name;
+	public String getUri() {
+		return this.uri;
 	}
 
 	/**
-	 * @return the componentName
+	 * @param uri the uri to set
 	 */
-	public String getComponentName() {
-		return this.componentName;
+	public void setUri( String uri ) {
+		this.uri = uri;
 	}
 
-	/**
-	 * @param componentName the componentName to set
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#toString()
 	 */
-	public void setComponentName( String componentName ) {
-		this.componentName = componentName;
+	@Override
+	public String toString() {
+		return "import " + this.uri + ";";
 	}
 
-	/**
-	 * @return the overridenExports
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.core.model.parsing.AbstractRegion#getInstructionType()
 	 */
-	public String getOverridenExports() {
-		return this.overridenExports;
-	}
-
-	/**
-	 * @param overridenExports the overridenExports to set
-	 */
-	public void setOverridenExports( String overridenExports ) {
-		this.overridenExports = overridenExports;
+	@Override
+	public int getInstructionType() {
+		return AbstractRegion.IMPORT;
 	}
 }

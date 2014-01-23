@@ -17,34 +17,35 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * The instruction for an import.
+ * The 'component' instruction.
  * @author Vincent Zurczak - Linagora
  */
-public class RelationImport extends AbstractInstruction {
-
-	private String uri;
-
+public class RegionComponent extends AbstractPropertiesHolder {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
+	 * @param declaringFile not null
 	 */
-	public RelationImport( AbstractFile declaringFile ) {
+	public RegionComponent( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
-	/**
-	 * @return the uri
-	 */
-	public String getUri() {
-		return this.uri;
+	@Override
+	public String[] getSupportedPropertyNames() {
+		return new String[] {
+			Constants.PROPERTY_GRAPH_CHILDREN,
+			Constants.PROPERTY_GRAPH_EXPORTS,
+			Constants.PROPERTY_GRAPH_ICON_LOCATION,
+			Constants.PROPERTY_GRAPH_INSTALLER,
+			Constants.PROPERTY_COMPONENT_ALIAS,
+			Constants.PROPERTY_COMPONENT_FACETS,
+			Constants.PROPERTY_COMPONENT_IMPORTS
+		};
 	}
 
-	/**
-	 * @param uri the uri to set
-	 */
-	public void setUri( String uri ) {
-		this.uri = uri;
+	@Override
+	public int getInstructionType() {
+		return AbstractRegion.COMPONENT;
 	}
 
 	/*
@@ -53,15 +54,6 @@ public class RelationImport extends AbstractInstruction {
 	 */
 	@Override
 	public String toString() {
-		return "import " + this.uri + ";";
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.core.model.parsing.AbstractInstruction#getInstructionType()
-	 */
-	@Override
-	public int getInstructionType() {
-		return AbstractInstruction.IMPORT;
+		return getName();
 	}
 }

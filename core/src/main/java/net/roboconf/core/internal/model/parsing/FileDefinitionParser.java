@@ -34,22 +34,23 @@ import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ErrorCode;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.parsing.AbstractIgnorableInstruction;
-import net.roboconf.core.model.parsing.AbstractInstruction;
 import net.roboconf.core.model.parsing.AbstractPropertiesHolder;
+import net.roboconf.core.model.parsing.AbstractRegion;
 import net.roboconf.core.model.parsing.Constants;
-import net.roboconf.core.model.parsing.FileRelations;
-import net.roboconf.core.model.parsing.RelationBlank;
-import net.roboconf.core.model.parsing.RelationComment;
-import net.roboconf.core.model.parsing.RelationComponent;
-import net.roboconf.core.model.parsing.RelationFacet;
-import net.roboconf.core.model.parsing.RelationImport;
-import net.roboconf.core.model.parsing.RelationProperty;
+import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.parsing.RegionBlank;
+import net.roboconf.core.model.parsing.RegionComment;
+import net.roboconf.core.model.parsing.RegionComponent;
+import net.roboconf.core.model.parsing.RegionFacet;
+import net.roboconf.core.model.parsing.RegionImport;
+import net.roboconf.core.model.parsing.RegionInstanceOf;
+import net.roboconf.core.model.parsing.RegionProperty;
 
 /**
  * A parser for relation files.
  * @author Vincent Zurczak - Linagora
  */
-public class RelationsParser {
+public class FileDefinitionParser {
 
 	static final int P_CODE_YES = 1;
 	static final int P_CODE_NO = 2;
@@ -59,7 +60,7 @@ public class RelationsParser {
 	private static final char C_CURLY_BRACKET = '}';
 	private static final char SEMI_COLON = ';';
 
-	private final FileRelations fileRelations;
+	private final FileDefinition definitionFile;
 	private boolean ignoreComments = true;
 	private boolean lastLineEndedWithLineBreak = false;
 	private int currentLineNumber;
@@ -70,21 +71,21 @@ public class RelationsParser {
 	 * @param relationsFileUri the file URI
 	 * @param ignoreComments true to ignore comments during parsing
 	 */
-	public RelationsParser( URI relationsFileUri, boolean ignoreComments ) {
+	public FileDefinitionParser( URI relationsFileUri, boolean ignoreComments ) {
 		this.ignoreComments = ignoreComments;
-		this.currentLineNumber = 0;
-		this.fileRelations = new FileRelations( relationsFileUri );
+		this.currentLineNumber = 1;
+		this.definitionFile = new FileDefinition( relationsFileUri );
 	}
 
 
 	/**
 	 * Constructor.
-	 * @param relationsFile the relation file
+	 * @param relationsFile the relation file (not null)
 	 * @param ignoreComments true to ignore comments during parsing
 	 */
-	public RelationsParser( File relationsFile, boolean ignoreComments ) {
+	public FileDefinitionParser( File relationsFile, boolean ignoreComments ) {
 		this( relationsFile.toURI(), ignoreComments );
-		this.fileRelations.setEditedFile( relationsFile );
+		this.definitionFile.setEditedFile( relationsFile );
 	}
 
 
@@ -93,39 +94,70 @@ public class RelationsParser {
 	 * @param relationsFileUri the file URI
 	 * @param ignoreComments true to ignore comments during parsing
 	 */
-	public RelationsParser( String relationsFileUri, boolean ignoreComments ) throws URISyntaxException {
+	public FileDefinitionParser( String relationsFileUri, boolean ignoreComments ) throws URISyntaxException {
 		this( UriHelper.urlToUri( relationsFileUri ), ignoreComments );
 	}
 
 
 	/**
-	 * Reads a relation file.
-	 * @return an instance of {@link FileRelations} (never null)
+	 * Reads a definition file.
+	 * @return an instance of {@link FileDefinition} (never null)
 	 * <p>
 	 * Parsing errors are stored in the result.<br />
-	 * See {@link FileRelations#getParingErrors()}.
+	 * See {@link FileDefinition#getParingErrors()}.
 	 * </p>
 	 */
-	public FileRelations read() {
+	public FileDefinition read() {
+
+		// Parse instructions
 		try {
 			fillIn();
-			mergeContiguousRegions( this.fileRelations.getInstructions());
+			mergeContiguousRegions( this.definitionFile.getInstructions());
 
 		} catch( IOException e ) {
-			ModelError error = new ModelError( ErrorCode.IO_ERROR, this.currentLineNumber );
+			ModelError error = new ModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber );
 			if( e.getMessage() != null )
 				error.setDetails( e.getMessage());
 
-			this.fileRelations.getParsingErrors().add( error );
+			this.definitionFile.getParsingErrors().add( error );
 		}
 
-		return this.fileRelations;
+		// Determine file type
+		boolean hasFacets = false, hasComponents = false, hasInstances = false, hasImports = false;
+		for( AbstractRegion block : this.definitionFile.getInstructions()) {
+			if( block.getInstructionType() == AbstractRegion.COMPONENT )
+				hasComponents = true;
+			else if( block.getInstructionType() == AbstractRegion.FACET )
+				hasFacets = true;
+			else if( block.getInstructionType() == AbstractRegion.INSTANCEOF )
+				hasInstances = true;
+			else if( block.getInstructionType() == AbstractRegion.IMPORT )
+				hasImports = true;
+		}
+
+		if( hasInstances ) {
+			if( ! hasFacets && ! hasComponents )
+				this.definitionFile.setFileType( FileDefinition.INSTANCE );
+			else
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_FILE_TYPE, 1 ));
+
+		} else if( hasFacets || hasComponents ) {
+			this.definitionFile.setFileType( FileDefinition.GRAPH );
+
+		} else if( hasImports ) {
+			this.definitionFile.setFileType( FileDefinition.AGGREGATOR );
+
+		} else {
+			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_NO_FILE_TYPE, 1 ));
+		}
+
+		return this.definitionFile;
 	}
 
 
 	/**
 	 * @param line the raw line
-	 * @return one of the P_CODE constants from {@link RelationsParser}
+	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
 	int recognizeComponent( String line, BufferedReader br ) throws IOException {
 
@@ -134,8 +166,9 @@ public class RelationsParser {
 		if( ! alteredLine.isEmpty()
 				&& ! alteredLine.startsWith( String.valueOf( Constants.COMMENT_DELIMITER ))
 				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_FACET )
+				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_INSTANCE_OF )
 				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_IMPORT ))
-			result = recognizePropertiesHolder( line, br, new RelationComponent( this.fileRelations ));
+			result = recognizePropertiesHolder( line, br, new RegionComponent( this.definitionFile ));
 
 		return result;
 	}
@@ -143,14 +176,39 @@ public class RelationsParser {
 
 	/**
 	 * @param line the raw line
-	 * @return one of the P_CODE constants from {@link RelationsParser}
+	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
 	int recognizeFacet( String line, BufferedReader br ) throws IOException {
 
 		int result = P_CODE_NO;
 		if( line.trim().toLowerCase().startsWith( Constants.KEYWORD_FACET )) {
-			String newLine = line.substring( Constants.KEYWORD_FACET.length());
-			result = recognizePropertiesHolder( newLine, br, new RelationFacet( this.fileRelations ));
+			String newLine = line.replaceAll( "\\s*" + Pattern.quote( Constants.KEYWORD_FACET ), "" );
+			result = recognizePropertiesHolder( newLine, br, new RegionFacet( this.definitionFile ));
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * @param line the raw line
+	 * @param holderInstance
+	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
+	 */
+	int recognizeInstanceOf( String line, BufferedReader br, AbstractPropertiesHolder holderInstance ) throws IOException {
+
+		int result = P_CODE_NO;
+		if( line.trim().toLowerCase().startsWith( Constants.KEYWORD_INSTANCE_OF )) {
+			String newLine = line.replaceAll( "\\s*" + Pattern.quote( Constants.KEYWORD_INSTANCE_OF ), "" );
+			RegionInstanceOf newInstance = new RegionInstanceOf( this.definitionFile );
+			result = recognizePropertiesHolder( newLine, br, newInstance );
+
+			// Handle imbricated instances
+			if( result == P_CODE_YES
+					&& holderInstance != null ) {
+				this.definitionFile.getInstructions().remove( newInstance );
+				holderInstance.getInternalInstructions().add( newInstance );
+			}
 		}
 
 		return result;
@@ -162,13 +220,13 @@ public class RelationsParser {
 	 * @param instructions the instructions to update
 	 * @return {@link #P_CODE_YES} or {@link #P_CODE_NO}
 	 */
-	int recognizeComment( String line, Collection<AbstractInstruction> instructions ) {
+	int recognizeComment( String line, Collection<AbstractRegion> instructions ) {
 
 		int result = P_CODE_NO;
 		if( line.trim().startsWith( Constants.COMMENT_DELIMITER )) {
 			result = P_CODE_YES;
 			if( ! this.ignoreComments )
-				instructions.add( new RelationComment( this.fileRelations, line ));
+				instructions.add( new RegionComment( this.definitionFile, line ));
 		}
 
 		return result;
@@ -180,12 +238,12 @@ public class RelationsParser {
 	 * @param instructions the instructions to update
 	 * @return {@link #P_CODE_YES} or {@link #P_CODE_NO}
 	 */
-	int recognizeBlankLine( String line, Collection<AbstractInstruction> instructions ) {
+	int recognizeBlankLine( String line, Collection<AbstractRegion> instructions ) {
 
 		int result = P_CODE_NO;
 		if( Utils.isEmptyOrWhitespaces( line )) {
 			result = P_CODE_YES;
-			instructions.add( new RelationBlank( this.fileRelations, line ));
+			instructions.add( new RegionBlank( this.definitionFile, line ));
 		}
 
 		return result;
@@ -195,7 +253,7 @@ public class RelationsParser {
 	/**
 	 * @param line the raw line
 	 * @param holder
-	 * @return one of the P_CODE constants from {@link RelationsParser}
+	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
 	int recognizeProperty( String line, AbstractPropertiesHolder holder ) {
 
@@ -207,19 +265,18 @@ public class RelationsParser {
 		Matcher m = Pattern.compile( regex ).matcher( realLine );
 		if( m.find()) {
 			result = P_CODE_YES;
-			RelationProperty instr = new RelationProperty( this.fileRelations );
+			RegionProperty instr = new RegionProperty( this.definitionFile );
 			instr.setLine( this.currentLineNumber );
 			instr.setName( m.group( 1 ));
 			instr.setValue( m.group( 2 ));
 			instr.setInlineComment( parts[ 1 ]);
-			holder.getPropertyNameToProperty().put( instr.getName(), instr );
 			holder.getInternalInstructions().add( instr );
 
 			realLine = realLine.substring( m.end());
 			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
-				this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.PROPERTY_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
 			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
-				this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.ONE_INSTRUCTION_PER_LINE, this.currentLineNumber ));
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_INSTRUCTION_PER_LINE, this.currentLineNumber ));
 		}
 
 		return result;
@@ -228,7 +285,7 @@ public class RelationsParser {
 
 	/**
 	 * @param line the raw line
-	 * @return one of the P_CODE constants from {@link RelationsParser}
+	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
 	int recognizeImport( String line ) {
 
@@ -240,17 +297,17 @@ public class RelationsParser {
 		Matcher m = Pattern.compile( regex, Pattern.CASE_INSENSITIVE ).matcher( realLine );
 		if( m.find()) {
 			result = P_CODE_YES;
-			RelationImport instr = new RelationImport( this.fileRelations );
+			RegionImport instr = new RegionImport( this.definitionFile );
 			instr.setLine( this.currentLineNumber );
 			instr.setUri( m.group( 1 ).trim());
 			instr.setInlineComment( parts[ 1 ]);
-			this.fileRelations.getInstructions().add( instr );
+			this.definitionFile.getInstructions().add( instr );
 
 			realLine = realLine.substring( m.end());
 			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
-				this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.IMPORT_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_IMPORT_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
 			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
-				this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.ONE_INSTRUCTION_PER_LINE, this.currentLineNumber ));
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_INSTRUCTION_PER_LINE, this.currentLineNumber ));
 		}
 
 		return result;
@@ -298,18 +355,18 @@ public class RelationsParser {
 	 *
 	 * @param instructions
 	 */
-	void mergeContiguousRegions( Collection<AbstractInstruction> instructions ) {
+	void mergeContiguousRegions( Collection<AbstractRegion> instructions ) {
 
 		AbstractIgnorableInstruction initialInstr = null;
-		List<AbstractInstruction> toRemove = new ArrayList<AbstractInstruction> ();
+		List<AbstractRegion> toRemove = new ArrayList<AbstractRegion> ();
 		StringBuilder sb = new StringBuilder();
 
 		// We only merge comments and blank regions to reduce their number
-		for( AbstractInstruction instr : instructions ) {
+		for( AbstractRegion instr : instructions ) {
 			if( initialInstr == null ) {
 
-				if( instr.getInstructionType() == AbstractInstruction.COMMENT
-						|| instr.getInstructionType() == AbstractInstruction.BLANK ) {
+				if( instr.getInstructionType() == AbstractRegion.COMMENT
+						|| instr.getInstructionType() == AbstractRegion.BLANK ) {
 
 					AbstractIgnorableInstruction currentInstr = (AbstractIgnorableInstruction) instr;
 					initialInstr = currentInstr;
@@ -331,19 +388,19 @@ public class RelationsParser {
 		instructions.removeAll( toRemove );
 
 		// In a second time, we can reduce facets and components too
-		for( AbstractInstruction instr : instructions ) {
-			if( instr.getInstructionType() == AbstractInstruction.COMPONENT
-					|| instr.getInstructionType() == AbstractInstruction.FACET )
+		for( AbstractRegion instr : instructions ) {
+			if( instr.getInstructionType() == AbstractRegion.COMPONENT
+					|| instr.getInstructionType() == AbstractRegion.FACET )
 				mergeContiguousRegions(((AbstractPropertiesHolder) instr).getInternalInstructions());
 		}
 	}
 
 
 	/**
-	 * @return the fileRelations (for tests)
+	 * @return the definitionFile (for tests)
 	 */
-	FileRelations getFileRelations() {
-		return this.fileRelations;
+	FileDefinition getFileRelations() {
+		return this.definitionFile;
 	}
 
 
@@ -380,11 +437,11 @@ public class RelationsParser {
 		}
 
 		if( foundExtraChars ) {
-			this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.O_C_BRACKET_EXTRA_CHARACTERS, this.currentLineNumber ));
+			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, this.currentLineNumber ));
 			result = P_CODE_CANCEL;
 
 		} else if( ! endInstructionReached ) {
-			this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.O_C_BRACKET_MISSING, this.currentLineNumber ));
+			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, this.currentLineNumber ));
 			result = P_CODE_CANCEL;
 
 		} else {
@@ -393,13 +450,14 @@ public class RelationsParser {
 			holder.setName( sb.toString().trim());
 			holder.setLine( this.currentLineNumber );
 			holder.setInlineComment( parts[ 1 ]);
-			this.fileRelations.getInstructions().add( holder );
+			this.definitionFile.getInstructions().add( holder );
 		}
 
 		// Recognize the properties
-		boolean errorInProperties = false;
+		boolean errorInSubProperties = false;
 		if( holder != null ) {
-			while(( line = nextLine( br )) != null ) {
+			while(( line = nextLine( br )) != null
+						&& ! line.trim().startsWith( String.valueOf( C_CURLY_BRACKET ))) {
 
 				int code = recognizeBlankLine( line, holder.getInternalInstructions());
 				if( code == P_CODE_YES )
@@ -409,34 +467,55 @@ public class RelationsParser {
 				if( code == P_CODE_YES )
 					continue;
 
-				code = recognizeProperty( line, holder );
+				code = recognizeInstanceOf( line, br, holderInstance );
+				if( code == P_CODE_NO )
+					code = recognizeProperty( line, holder );
+
 				if( code == P_CODE_CANCEL )
 					result = P_CODE_CANCEL;
 
 				if( code != P_CODE_YES ) {
-					errorInProperties = true;
+					errorInSubProperties = true;
 					break;
 				}
 			}
 		}
 
-		// Recognize the declaration end
-		if( result == P_CODE_YES ) {
-			if( line == null
-					|| ! line.trim().startsWith( String.valueOf( C_CURLY_BRACKET ))) {
+		// Why did we exit the loop?
+		// 1. We found an invalid content for the holder.
+		// 2. We reached EOF or we found a closing curly bracket.
+		// 3. We never entered the loop!
 
-				if( errorInProperties )
-					this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.INVALID_PROPERTY, this.currentLineNumber ));
+		// Inner errors prevail
+		if( errorInSubProperties ) {
+			if( result == P_CODE_YES ) {
+				if( holderInstance.getInstructionType() == AbstractRegion.INSTANCEOF )
+					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, this.currentLineNumber ));
 				else
-					this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.C_C_BRACKET_MISSING, this.currentLineNumber ));
-
-			} else {
-				parts = splitFromInlineComment( line );
-				if( parts[ 0 ].length() > 1 )
-					this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.C_C_BRACKET_EXTRA_CHARACTERS, this.currentLineNumber ));
-
-				holder.setClosingInlineComment( parts[ 1 ]);
+					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_PROPERTY, this.currentLineNumber ));
 			}
+
+			result = P_CODE_CANCEL;
+		}
+
+		// Inner blocks are valid, we found a curly bracket, check the end
+		else if( result == P_CODE_YES
+				&& line != null
+				&& line.trim().startsWith( String.valueOf( C_CURLY_BRACKET ))) {
+
+			line = line.replaceFirst( "\\s*\\}", "" );
+			parts = splitFromInlineComment( line );
+			if( ! Utils.isEmptyOrWhitespaces( parts[ 0 ])) {
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, this.currentLineNumber ));
+				result = P_CODE_CANCEL;
+			}
+
+			holder.setClosingInlineComment( parts[ 1 ]);
+		}
+
+		// The closing bracket is missing
+		else if( result == P_CODE_YES ) {
+			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, this.currentLineNumber ));
 		}
 
 		return result;
@@ -465,8 +544,7 @@ public class RelationsParser {
 			this.lastLineEndedWithLineBreak = c != -1;
 
 		String line = c == -1 && sb.length() == 0 ? null : sb.toString();
-		if( line != null )
-			this.currentLineNumber ++;
+		this.currentLineNumber ++;
 
 		return line;
 	}
@@ -480,17 +558,17 @@ public class RelationsParser {
 
 		BufferedReader br = null;
 		try {
-			InputStream in = this.fileRelations.getFileLocation().toURL().openStream();
+			InputStream in = this.definitionFile.getFileLocation().toURL().openStream();
 			br = new BufferedReader( new InputStreamReader( in, "UTF-8" ));
 
 			String line;
 			while(( line = nextLine( br )) != null ) {
 
-				int code = recognizeBlankLine( line, this.fileRelations.getInstructions());
+				int code = recognizeBlankLine( line, this.definitionFile.getInstructions());
 				if( code == P_CODE_YES )
 					continue;
 
-				code = recognizeComment( line, this.fileRelations.getInstructions());
+				code = recognizeComment( line, this.definitionFile.getInstructions());
 				if( code == P_CODE_YES )
 					continue;
 
@@ -506,16 +584,22 @@ public class RelationsParser {
 				else if( code == P_CODE_YES )
 					continue;
 
+				code = recognizeInstanceOf( line, br, null );
+				if( code == P_CODE_CANCEL )
+					break;
+				else if( code == P_CODE_YES )
+					continue;
+
 				code = recognizeComponent( line, br );
 				if( code == P_CODE_CANCEL )
 					break;
 				else if( code == P_CODE_NO )
-					this.fileRelations.getParsingErrors().add( new ModelError( ErrorCode.UNRECOGNIZED_INSTRUCTION, this.currentLineNumber ));
+					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_UNRECOGNIZED_INSTRUCTION, this.currentLineNumber ));
 			}
 
 			if( line == null
 					&& this.lastLineEndedWithLineBreak )
-				this.fileRelations.getInstructions().add( new RelationBlank( this.fileRelations, "" ));
+				this.definitionFile.getInstructions().add( new RegionBlank( this.definitionFile, "" ));
 
 		} finally {
 			if( br != null )

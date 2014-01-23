@@ -24,13 +24,13 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import net.roboconf.core.model.parsing.AbstractInstruction;
+import net.roboconf.core.model.parsing.AbstractRegion;
 import net.roboconf.core.model.parsing.Constants;
-import net.roboconf.core.model.parsing.FileRelations;
-import net.roboconf.core.model.parsing.RelationBlank;
-import net.roboconf.core.model.parsing.RelationComment;
-import net.roboconf.core.model.parsing.RelationComponent;
-import net.roboconf.core.model.parsing.RelationProperty;
+import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.parsing.RegionBlank;
+import net.roboconf.core.model.parsing.RegionComment;
+import net.roboconf.core.model.parsing.RegionComponent;
+import net.roboconf.core.model.parsing.RegionProperty;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 
@@ -40,14 +40,15 @@ import net.roboconf.core.model.runtime.Graphs;
  */
 public class FromGraphs {
 
-	public FileRelations buildFileRelations( Graphs graphs, File targetFile, boolean addComment ) {
+	public FileDefinition buildFileRelations( Graphs graphs, File targetFile, boolean addComment ) {
 
-		FileRelations result = new FileRelations( targetFile );
+		FileDefinition result = new FileDefinition( targetFile );
+		result.setFileType( FileDefinition.GRAPH );
 		if( addComment ) {
 			String s = "# File created from an in-memory model,\n# without a binding to existing files.";
-			RelationComment initialComment = new RelationComment( result, s );
+			RegionComment initialComment = new RegionComment( result, s );
 			result.getInstructions().add( initialComment );
-			result.getInstructions().add( new RelationBlank( result, "\n" ));
+			result.getInstructions().add( new RegionBlank( result, "\n" ));
 		}
 
 		Set<String> alreadySerializedComponentNames = new HashSet<String> ();
@@ -70,8 +71,8 @@ public class FromGraphs {
 	}
 
 
-	private Collection<AbstractInstruction> buildRelationComponent( FileRelations file, Component component, boolean addComment ) {
-		Collection<AbstractInstruction> result = new ArrayList<AbstractInstruction> ();
+	private Collection<AbstractRegion> buildRelationComponent( FileDefinition file, Component component, boolean addComment ) {
+		Collection<AbstractRegion> result = new ArrayList<AbstractRegion> ();
 
 		// Add a comment
 		if( addComment ) {
@@ -85,22 +86,22 @@ public class FromGraphs {
 				sb.append( facetName );
 			}
 
-			result.add( new RelationComment( file, sb.toString()));
+			result.add( new RegionComment( file, sb.toString()));
 		}
 
 		// Basic properties
-		RelationComponent relationComponent = new RelationComponent( file );
-		relationComponent.setName( component.getName());
-		result.add( relationComponent );
+		RegionComponent regionComponent = new RegionComponent( file );
+		regionComponent.setName( component.getName());
+		result.add( regionComponent );
 
-		RelationProperty p = new RelationProperty( file, Constants.ICON_LOCATION, component.getIconLocation());
-		relationComponent.getPropertyNameToProperty().put( Constants.ICON_LOCATION, p );
+		RegionProperty p = new RegionProperty( file, Constants.PROPERTY_GRAPH_ICON_LOCATION, component.getIconLocation());
+		regionComponent.getInternalInstructions().add( p );
 
-		p = new RelationProperty( file, Constants.COMPONENT_ALIAS, component.getAlias());
-		relationComponent.getPropertyNameToProperty().put( Constants.COMPONENT_ALIAS, p );
+		p = new RegionProperty( file, Constants.PROPERTY_COMPONENT_ALIAS, component.getAlias());
+		regionComponent.getInternalInstructions().add( p );
 
-		p = new RelationProperty( file, Constants.INSTALLER, component.getInstallerName());
-		relationComponent.getPropertyNameToProperty().put( Constants.INSTALLER, p );
+		p = new RegionProperty( file, Constants.PROPERTY_GRAPH_INSTALLER, component.getInstallerName());
+		regionComponent.getInternalInstructions().add( p );
 
 		// Imported Variables
 		StringBuilder sb = new StringBuilder();
@@ -110,8 +111,8 @@ public class FromGraphs {
 				sb.append( ", " );
 		}
 
-		p = new RelationProperty( file, Constants.COMPONENT_IMPORTS, sb.toString());
-		relationComponent.getPropertyNameToProperty().put( Constants.COMPONENT_IMPORTS, p );
+		p = new RegionProperty( file, Constants.PROPERTY_COMPONENT_IMPORTS, sb.toString());
+		regionComponent.getInternalInstructions().add( p );
 
 		// Exported variables
 		sb = new StringBuilder();
@@ -127,8 +128,8 @@ public class FromGraphs {
 				sb.append( ", " );
 		}
 
-		p = new RelationProperty( file, Constants.EXPORTS, sb.toString());
-		relationComponent.getPropertyNameToProperty().put( Constants.EXPORTS, p );
+		p = new RegionProperty( file, Constants.PROPERTY_GRAPH_EXPORTS, sb.toString());
+		regionComponent.getInternalInstructions().add( p );
 
 		// Children
 		sb = new StringBuilder();
@@ -138,8 +139,8 @@ public class FromGraphs {
 				sb.append( ", " );
 		}
 
-		p = new RelationProperty( file, Constants.CHILDREN, sb.toString());
-		relationComponent.getPropertyNameToProperty().put( Constants.CHILDREN, p );
+		p = new RegionProperty( file, Constants.PROPERTY_GRAPH_CHILDREN, sb.toString());
+		regionComponent.getInternalInstructions().add( p );
 
 		return result;
 	}

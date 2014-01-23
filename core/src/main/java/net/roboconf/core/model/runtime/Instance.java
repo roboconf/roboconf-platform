@@ -25,6 +25,6 @@ import java.util.Map;
 public interface Instance {
 
 	String getName();
-	String getComponentName();
+	Component getComponent();
 	Map<String,String> getOverridenExports();
 }

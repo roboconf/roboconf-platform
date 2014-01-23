@@ -1,0 +1,5 @@
+instanceof server {
+	name: server1;
+} instanceof toto {
+
+}

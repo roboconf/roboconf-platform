@@ -20,7 +20,7 @@ package net.roboconf.core.model.parsing;
  * An instruction which designates an ignorable instruction.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractIgnorableInstruction extends AbstractInstruction {
+public abstract class AbstractIgnorableInstruction extends AbstractRegion {
 
 	private String content;
 
@@ -30,7 +30,7 @@ public abstract class AbstractIgnorableInstruction extends AbstractInstruction {
 	 * @param declaringFile
 	 * @param content
 	 */
-	public AbstractIgnorableInstruction( AbstractFile declaringFile, String content ) {
+	public AbstractIgnorableInstruction( FileDefinition declaringFile, String content ) {
 		super( declaringFile );
 		this.content = content;
 	}

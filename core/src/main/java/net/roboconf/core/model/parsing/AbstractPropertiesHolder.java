@@ -18,14 +18,12 @@ package net.roboconf.core.model.parsing;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Group common code for facet and component instructions.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractPropertiesHolder extends AbstractInstruction {
+public abstract class AbstractPropertiesHolder extends AbstractRegion {
 
 	/**
 	 * The element's name.
@@ -40,25 +38,14 @@ public abstract class AbstractPropertiesHolder extends AbstractInstruction {
 	/**
 	 * The instructions within this element.
 	 */
-	private final Collection<AbstractInstruction> internalInstructions = new ArrayList<AbstractInstruction> ();
-
-	/**
-	 * Facet and component properties.
-	 * <p>
-	 * Map key = property names.<br />
-	 * Map values = properties with value and comments.<br />
-	 * Insertion order is preserved.
-	 * </p>
-	 */
-	private final Map<String,RelationProperty> propertyNameToProperty =
-			new LinkedHashMap<String,RelationProperty>( Constants.DEFAULT_PROPERTIES_COUNT );
+	private final Collection<AbstractRegion> internalInstructions = new ArrayList<AbstractRegion> ();
 
 
 	/**
 	 * Constructor.
 	 * @param declaringFile not null
 	 */
-	public AbstractPropertiesHolder( AbstractFile declaringFile ) {
+	public AbstractPropertiesHolder( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
@@ -91,21 +78,28 @@ public abstract class AbstractPropertiesHolder extends AbstractInstruction {
 	}
 
 	/**
-	 * @return the properties
-	 * <p>
-	 * Map key = property names.<br />
-	 * Map values = properties with value and comments.<br />
-	 * Insertion order is preserved.
-	 * </p>
+	 * Finds a property by its name among the one this instance owns.
+	 * @param propertyName not null
+	 * @return the associated property, or null if it was not found
 	 */
-	public Map<String,RelationProperty> getPropertyNameToProperty() {
-		return this.propertyNameToProperty;
+	public RegionProperty findPropertyByName( String propertyName ) {
+
+		RegionProperty result = null;
+		for( AbstractRegion region : this.internalInstructions ) {
+			if( region.getInstructionType() == PROPERTY
+					&& propertyName.equals(((RegionProperty) region).getName())) {
+				result = (RegionProperty) region;
+				break;
+			}
+		}
+
+		return result;
 	}
 
 	/**
 	 * @return the internalInstructions
 	 */
-	public Collection<AbstractInstruction> getInternalInstructions() {
+	public Collection<AbstractRegion> getInternalInstructions() {
 		return this.internalInstructions;
 	}
 

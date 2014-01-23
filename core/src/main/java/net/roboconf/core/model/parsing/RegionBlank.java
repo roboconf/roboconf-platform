@@ -17,27 +17,27 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * The instruction for an orphan comment.
+ * An instruction which designates a blank area (several line breaks, tabulations, etc).
  * @author Vincent Zurczak - Linagora
  */
-public class RelationComment extends AbstractIgnorableInstruction {
+public class RegionBlank extends AbstractIgnorableInstruction {
 
 	/**
 	 * Constructor.
 	 * @param declaringFile
 	 * @param content
 	 */
-	public RelationComment( AbstractFile declaringFile, String content ) {
+	public RegionBlank( FileDefinition declaringFile, String content ) {
 		super( declaringFile, content );
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.core.model.parsing.AbstractInstruction#getInstructionType()
+	 * @see net.roboconf.core.model.parsing.AbstractRegion#getInstructionType()
 	 */
 	@Override
 	public int getInstructionType() {
-		return AbstractInstruction.COMMENT;
+		return AbstractRegion.BLANK;
 	}
 
 	/*
@@ -46,6 +46,6 @@ public class RelationComment extends AbstractIgnorableInstruction {
 	 */
 	@Override
 	public String toString() {
-		return "Comment region";
+		return "Blank region";
 	}
 }
