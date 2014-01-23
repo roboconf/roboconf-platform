@@ -19,7 +19,6 @@ package net.roboconf.core.model.parsing;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import net.roboconf.core.model.ModelError;
@@ -39,7 +38,7 @@ public class FileDefinition {
 	private int fileType = UNDETERMINED;
 	private final URI fileLocation;
 	private final List<ModelError> parsingErrors = new ArrayList<ModelError> ();
-	private final List<AbstractRegion> instructions = new ArrayList<AbstractRegion> ();
+	private final List<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
 
 
 	/**
@@ -88,10 +87,10 @@ public class FileDefinition {
 	}
 
 	/**
-	 * @return the instructions
+	 * @return the blocks
 	 */
-	public Collection<AbstractRegion> getInstructions() {
-		return this.instructions;
+	public List<AbstractBlock> getBlocks() {
+		return this.blocks;
 	}
 
 	/**
@@ -145,8 +144,8 @@ public class FileDefinition {
 		StringBuilder sb = new StringBuilder();
 		sb.append( name );
 		sb.append( " with " );
-		sb.append( this.instructions.size());
-		sb.append( " instructions" );
+		sb.append( this.blocks.size());
+		sb.append( " blocks" );
 
 		return sb.toString();
 	}

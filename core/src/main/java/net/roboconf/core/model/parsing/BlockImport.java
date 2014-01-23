@@ -17,35 +17,34 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * The 'component' instruction.
+ * The block for imports.
  * @author Vincent Zurczak - Linagora
  */
-public class RegionComponent extends AbstractPropertiesHolder {
+public class BlockImport extends AbstractBlock {
+
+	private String uri;
+
 
 	/**
 	 * Constructor.
-	 * @param declaringFile not null
+	 * @param declaringFile
 	 */
-	public RegionComponent( FileDefinition declaringFile ) {
+	public BlockImport( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
-	@Override
-	public String[] getSupportedPropertyNames() {
-		return new String[] {
-			Constants.PROPERTY_GRAPH_CHILDREN,
-			Constants.PROPERTY_GRAPH_EXPORTS,
-			Constants.PROPERTY_GRAPH_ICON_LOCATION,
-			Constants.PROPERTY_GRAPH_INSTALLER,
-			Constants.PROPERTY_COMPONENT_ALIAS,
-			Constants.PROPERTY_COMPONENT_FACETS,
-			Constants.PROPERTY_COMPONENT_IMPORTS
-		};
+	/**
+	 * @return the uri
+	 */
+	public String getUri() {
+		return this.uri;
 	}
 
-	@Override
-	public int getInstructionType() {
-		return AbstractRegion.COMPONENT;
+	/**
+	 * @param uri the uri to set
+	 */
+	public void setUri( String uri ) {
+		this.uri = uri;
 	}
 
 	/*
@@ -54,6 +53,15 @@ public class RegionComponent extends AbstractPropertiesHolder {
 	 */
 	@Override
 	public String toString() {
-		return getName();
+		return "import " + this.uri + ";";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.core.model.parsing.AbstractBlock#getInstructionType()
+	 */
+	@Override
+	public int getInstructionType() {
+		return AbstractBlock.IMPORT;
 	}
 }

@@ -25,7 +25,8 @@ import java.util.Collection;
 public interface Application {
 
 	String getName();
-	String getVersion();
+	String getDescription();
+	String getQualifier();
 	Graphs getGraphs();
 	Collection<Instance> getRootInstances();
 }

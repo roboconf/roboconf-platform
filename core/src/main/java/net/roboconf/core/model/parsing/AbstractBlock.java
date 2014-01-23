@@ -19,10 +19,10 @@ package net.roboconf.core.model.parsing;
 import net.roboconf.core.internal.utils.Utils;
 
 /**
- * The base definition for all the instructions.
+ * The base definition for all the blocks.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractRegion {
+public abstract class AbstractBlock {
 
 	public static final int PROPERTY = 0;
 	public static final int IMPORT = 1;
@@ -41,7 +41,7 @@ public abstract class AbstractRegion {
 	 * Constructor.
 	 * @param declaringFile not null
 	 */
-	public AbstractRegion( FileDefinition declaringFile ) {
+	public AbstractBlock( FileDefinition declaringFile ) {
 		if( declaringFile == null )
 			throw new IllegalArgumentException( "Declaring file cannot be null." );
 
@@ -77,7 +77,7 @@ public abstract class AbstractRegion {
 	}
 
 	/**
-	 * @return the instruction type
+	 * @return the block type
 	 */
 	public abstract int getInstructionType();
 

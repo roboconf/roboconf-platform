@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2014 Linagora, Université Joseph Fourier
+ * Copyright 2014 Linagora, Université Joseph Fourier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.runtime;
-
-import java.util.Collection;
-import java.util.Map;
+package net.roboconf.core.model.validators;
 
 /**
- * An instance object represents a running component instance.
  * @author Vincent Zurczak - Linagora
  */
-public interface Instance {
+public class ApplicationValidator {
 
-	String getName();
-	String getChannel();
-	Component getComponent();
-	Map<String,String> getOverridenExports();
-	Instance getContainer();
-	Collection<Instance> getChildren();
 }

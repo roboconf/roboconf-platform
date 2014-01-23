@@ -8,22 +8,24 @@ instanceof vm {
 		port: 9878;
 		
 		instanceof web-app1 {
-			name: web-app1;
+			name: web-app1-1;
 		}
 	}
 }
 
 instanceof vm {
+
 	name: vm2;	# the VM name
 	
 	instanceof server {
-		name: server;
+		name: server4osgi;
 		port: 9878;
 		
 		instanceof osgi-container {
 			name: osgi-container-app;
 			
 			instanceof bundle {
+				# A bundle
 				name: my-bundle;
 			}
 		}

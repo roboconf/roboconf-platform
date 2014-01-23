@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model;
 
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.utils.Utils;
 
 /**

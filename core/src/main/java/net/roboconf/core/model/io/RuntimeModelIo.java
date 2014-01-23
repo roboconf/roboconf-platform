@@ -16,9 +16,42 @@
 
 package net.roboconf.core.model.io;
 
+import java.io.File;
+import java.util.Collection;
+
+import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.runtime.Application;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class RuntimeModelIo {
 
+	public static LoadResult loadApplication( File projectDirectory ) {
+		// TODO:
+		return null;
+	}
+
+
+	public static LoadResult loadApplicationFromArchive( File zipFile ) {
+		// TODO: Unzip the archive in a temporary directory, load it and delete it
+		return null;
+	}
+
+
+	/**
+	 * A bean that stores both the application and loading errors.
+	 */
+	public static class LoadResult {
+		Application application;
+		Collection<ModelError> loadErrors;
+
+		public Application getApplication() {
+			return this.application;
+		}
+
+		public Collection<ModelError> getLoadErrors() {
+			return this.loadErrors;
+		}
+	}
 }

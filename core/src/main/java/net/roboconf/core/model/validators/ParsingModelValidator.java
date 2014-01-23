@@ -24,21 +24,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.core.model.ErrorCode;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.parsing.AbstractPropertiesHolder;
-import net.roboconf.core.model.parsing.AbstractRegion;
+import net.roboconf.core.model.parsing.AbstractBlock;
+import net.roboconf.core.model.parsing.AbstractBlockHolder;
+import net.roboconf.core.model.parsing.BlockBlank;
+import net.roboconf.core.model.parsing.BlockComment;
+import net.roboconf.core.model.parsing.BlockComponent;
+import net.roboconf.core.model.parsing.BlockFacet;
+import net.roboconf.core.model.parsing.BlockImport;
+import net.roboconf.core.model.parsing.BlockInstanceOf;
+import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.parsing.RegionBlank;
-import net.roboconf.core.model.parsing.RegionComment;
-import net.roboconf.core.model.parsing.RegionComponent;
-import net.roboconf.core.model.parsing.RegionFacet;
-import net.roboconf.core.model.parsing.RegionImport;
-import net.roboconf.core.model.parsing.RegionInstanceOf;
-import net.roboconf.core.model.parsing.RegionProperty;
 
 /**
  * A set of methods to validate parsing model objects.
@@ -53,53 +53,53 @@ public class ParsingModelValidator {
 	public static Collection<ModelError> validate( FileDefinition definitionFile ) {
 		Collection<ModelError> result = new ArrayList<ModelError> ();
 		result.addAll( definitionFile.getParsingErrors());
-		for( AbstractRegion instr : definitionFile.getInstructions())
-			result.addAll( validate( instr ));
+		for( AbstractBlock block : definitionFile.getBlocks())
+			result.addAll( validate( block ));
 
 		return result;
 	}
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( AbstractRegion instr ) {
+	public static Collection<ModelError> validate( AbstractBlock block ) {
 
 		Collection<ModelError> result;
-		switch( instr.getInstructionType()) {
-		case AbstractRegion.COMPONENT:
-			result = validate((RegionComponent) instr);
+		switch( block.getInstructionType()) {
+		case AbstractBlock.COMPONENT:
+			result = validate((BlockComponent) block);
 			break;
 
-		case AbstractRegion.FACET:
-			result = validate((RegionFacet) instr);
+		case AbstractBlock.FACET:
+			result = validate((BlockFacet) block);
 			break;
 
-		case AbstractRegion.IMPORT:
-			result = validate((RegionImport) instr);
+		case AbstractBlock.IMPORT:
+			result = validate((BlockImport) block);
 			break;
 
-		case AbstractRegion.COMMENT:
-			result = validate((RegionComment) instr);
+		case AbstractBlock.COMMENT:
+			result = validate((BlockComment) block);
 			break;
 
-		case AbstractRegion.PROPERTY:
-			result = validate((RegionProperty) instr);
+		case AbstractBlock.PROPERTY:
+			result = validate((BlockProperty) block);
 			break;
 
-		case AbstractRegion.BLANK:
-			result = validate((RegionBlank) instr);
+		case AbstractBlock.BLANK:
+			result = validate((BlockBlank) block);
 			break;
 
-		case AbstractRegion.INSTANCEOF:
-			result = validate((RegionInstanceOf) instr);
+		case AbstractBlock.INSTANCEOF:
+			result = validate((BlockInstanceOf) block);
 			break;
 
 		default:
 			result = new ArrayList<ModelError>( 1 );
-			ModelError error = new ModelError( ErrorCode.PM_INVALID_INSTRUCTION_TYPE, instr.getLine());
-			error.setDetails( "Instruction type: " + instr.getInstructionType());
+			ModelError error = new ModelError( ErrorCode.PM_INVALID_BLOCK_TYPE, block.getLine());
+			error.setDetails( "Instruction type: " + block.getInstructionType());
 			result.add( error );
 			break;
 		}
@@ -109,62 +109,62 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( RegionImport instr ) {
+	public static Collection<ModelError> validate( BlockImport block ) {
 
-		String uri = instr.getUri();
+		String uri = block.getUri();
 		Collection<ModelError> result = new ArrayList<ModelError> ();
 		if( Utils.isEmptyOrWhitespaces( uri ))
-			result.add( new ModelError( ErrorCode.PM_EMPTY_IMPORT_LOCATION, instr.getLine()));
+			result.add( new ModelError( ErrorCode.PM_EMPTY_IMPORT_LOCATION, block.getLine()));
 
 		return result;
 	}
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( RegionComponent instr ) {
-		Collection<ModelError> result = validatePropertiesHolder( instr, true );
-		if( instr.findPropertyByName( Constants.PROPERTY_COMPONENT_ALIAS ) == null )
-			result.add( new ModelError( ErrorCode.PM_MISSING_ALIAS_PROPERTY, instr.getLine()));
+	public static Collection<ModelError> validate( BlockComponent block ) {
+		Collection<ModelError> result = validatePropertiesHolder( block, true );
+		if( block.findPropertyBlockByName( Constants.PROPERTY_COMPONENT_ALIAS ) == null )
+			result.add( new ModelError( ErrorCode.PM_MISSING_ALIAS_PROPERTY, block.getLine()));
 
 		return result;
 	}
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( RegionInstanceOf instr ) {
+	public static Collection<ModelError> validate( BlockInstanceOf block ) {
 
 		// Basic checks
-		Collection<ModelError> result = validatePropertiesHolder( instr, false );
-		RegionProperty prop = instr.findPropertyByName( Constants.PROPERTY_INSTANCE_NAME );
+		Collection<ModelError> result = validatePropertiesHolder( block, false );
+		BlockProperty prop = block.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_NAME );
 		if( prop == null ) {
-			result.add( new ModelError( ErrorCode.PM_MISSING_INSTANCE_NAME, instr.getLine()));
+			result.add( new ModelError( ErrorCode.PM_MISSING_INSTANCE_NAME, block.getLine()));
 
 		} else {
 			String name = prop.getValue();
-			if( instr.findPropertyByName( Constants.PROPERTY_INSTANCE_CARDINALITY ) != null ) {
+			if( block.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_CARDINALITY ) != null ) {
 				if( ! name.contains( Constants.INSTANCE_INDEX_MARKER ))
-					result.add( new ModelError( ErrorCode.PM_MISSING_INDEX_REFERENCE, instr.getLine()));
+					result.add( new ModelError( ErrorCode.PM_MISSING_INDEX_REFERENCE, block.getLine()));
 
 			} else if( name.contains( Constants.INSTANCE_INDEX_MARKER )) {
-				result.add( new ModelError( ErrorCode.PM_INVALID_INDEX_REFERENCE_USE, instr.getLine()));
+				result.add( new ModelError( ErrorCode.PM_INVALID_INDEX_REFERENCE_USE, block.getLine()));
 			}
 		}
 
 		// Check internal regions are supported
-		for( AbstractRegion region : instr.getInternalInstructions()) {
-			if( region.getInstructionType() != AbstractRegion.BLANK
-					&& region.getInstructionType() != AbstractRegion.COMMENT
-					&& region.getInstructionType() != AbstractRegion.PROPERTY
-					&& region.getInstructionType() != AbstractRegion.INSTANCEOF ) {
+		for( AbstractBlock region : block.getInnerBlocks()) {
+			if( region.getInstructionType() != AbstractBlock.BLANK
+					&& region.getInstructionType() != AbstractBlock.COMMENT
+					&& region.getInstructionType() != AbstractBlock.PROPERTY
+					&& region.getInstructionType() != AbstractBlock.INSTANCEOF ) {
 
 				ModelError error = new ModelError( ErrorCode.PM_INVALID_INSTANCE_ELEMENT, region.getLine());
 				error.setDetails( "Invalid type found: " + region.getClass().getSimpleName());
@@ -177,24 +177,24 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( RegionFacet instr ) {
-		return validatePropertiesHolder( instr, true );
+	public static Collection<ModelError> validate( BlockFacet block ) {
+		return validatePropertiesHolder( block, true );
 	}
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( RegionProperty instr ) {
+	public static Collection<ModelError> validate( BlockProperty block ) {
 
 		Collection<ModelError> result = new ArrayList<ModelError> ();
-		String value = instr.getValue();
-		String name = instr.getName();
-		int line = instr.getLine();
+		String value = block.getValue();
+		String name = block.getName();
+		int line = block.getLine();
 
 		if( Utils.isEmptyOrWhitespaces( value )) {
 			result.add( new ModelError( ErrorCode.PM_EMPTY_PROPERTY_VALUE, line ));
@@ -254,8 +254,18 @@ public class ParsingModelValidator {
 			if( ! value.matches( Constants.PATTERN_ID ))
 				result.add( new ModelError( ErrorCode.PM_INVALID_INSTALLER_NAME, line ));
 
+		} else if( Constants.PROPERTY_INSTANCE_NAME.equals( name )) {
+			// nothing
+
+		} else if( Constants.PROPERTY_INSTANCE_CARDINALITY.equals( name )) {
+			if( ! value.matches( "\\d+" ))
+				result.add( new ModelError( ErrorCode.PM_INVALID_INSTANCE_CARDINALITY, line ));
+
+		} else if( Constants.PROPERTY_INSTANCE_CHANNEL.equals( name )) {
+			// TODO:
+
 		} else {
-			ModelError error = new ModelError( ErrorCode.PM_UNKNWON_PROPERTY_NAME, line );
+			ModelError error = new ModelError( ErrorCode.PM_UNKNOWN_PROPERTY_NAME, line );
 			error.setDetails( "Property name: " + name );
 			result.add( error );
 		}
@@ -265,17 +275,17 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( RegionComment instr ) {
+	public static Collection<ModelError> validate( BlockComment block ) {
 
 		// Only makes sense when a comment section was created programmatically.
 		Collection<ModelError> result = new ArrayList<ModelError> ();
 		int cpt = 0;
-		for( String s : instr.getContent().split( "\n" )) {
+		for( String s : block.getContent().split( "\n" )) {
 			if( ! s.trim().startsWith( Constants.COMMENT_DELIMITER ))
-				result.add( new ModelError( ErrorCode.PM_MALFORMED_COMMENT, instr.getLine() + cpt ));
+				result.add( new ModelError( ErrorCode.PM_MALFORMED_COMMENT, block.getLine() + cpt ));
 
 			cpt ++;
 		}
@@ -285,15 +295,15 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param instr
+	 * @param block
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	public static Collection<ModelError> validate( RegionBlank instr ) {
+	public static Collection<ModelError> validate( BlockBlank block ) {
 
-		// Only makes sense when a RegionBlank section was created programmatically.
+		// Only makes sense when a BlockBlank section was created programmatically.
 		Collection<ModelError> result = new ArrayList<ModelError> ();
-		if( ! Utils.isEmptyOrWhitespaces( instr.getContent()))
-			result.add( new ModelError( ErrorCode.PM_MALFORMED_BLANK, instr.getLine()));
+		if( ! Utils.isEmptyOrWhitespaces( block.getContent()))
+			result.add( new ModelError( ErrorCode.PM_MALFORMED_BLANK, block.getLine()));
 
 		return result;
 	}
@@ -304,25 +314,25 @@ public class ParsingModelValidator {
 	 * @param strict true if only supported properties are allowed, false otherwise
 	 * @return a non-null list of {@link ModelError}s
 	 */
-	private static Collection<ModelError> validatePropertiesHolder( AbstractPropertiesHolder holder, boolean strict ) {
+	private static Collection<ModelError> validatePropertiesHolder( AbstractBlockHolder holder, boolean strict ) {
 
 		// Check the name
 		Collection<ModelError> result = new ArrayList<ModelError> ();
 		String name = holder.getName();
 		if( Utils.isEmptyOrWhitespaces( name ))
-			result.add( new ModelError( holder.getInstructionType() == AbstractRegion.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder.getLine()));
+			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder.getLine()));
 		else if( ! name.matches( Constants.PATTERN_ID ))
-			result.add( new ModelError( holder.getInstructionType() == AbstractRegion.FACET ? ErrorCode.PM_INVALID_FACET_NAME : ErrorCode.PM_INVALID_COMPONENT_NAME, holder.getLine()));
+			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_INVALID_FACET_NAME : ErrorCode.PM_INVALID_COMPONENT_NAME, holder.getLine()));
 		else if( name.contains( "." ))
 			result.add( new ModelError( ErrorCode.PM_DOT_IS_NOT_ALLOWED, holder.getLine()));
 
 		// Check all the properties have a value
 		List<String> supportedProperties = Arrays.asList( holder.getSupportedPropertyNames());
 		Set<String> foundProperties = new HashSet<String> ();
-		for( AbstractRegion region : holder.getInternalInstructions()) {
+		for( AbstractBlock region : holder.getInnerBlocks()) {
 
-			if( region.getInstructionType() == AbstractRegion.PROPERTY ) {
-				RegionProperty p = (RegionProperty) region;
+			if( region.getInstructionType() == AbstractBlock.PROPERTY ) {
+				BlockProperty p = (BlockProperty) region;
 				if( foundProperties.contains( p.getName())) {
 					ModelError error = new ModelError( ErrorCode.PM_DUPLICATE_PROPERTY, p.getLine());
 					error.setDetails( "Property name: " + p.getName());

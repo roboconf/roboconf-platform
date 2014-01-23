@@ -28,18 +28,20 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.ErrorCode;
+import net.roboconf.core.ErrorCode.ErrorCategory;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.core.model.ErrorCode;
-import net.roboconf.core.model.ErrorCode.ErrorCategory;
 import net.roboconf.core.model.ModelError;
-import net.roboconf.core.model.parsing.AbstractRegion;
+import net.roboconf.core.model.io.ParsingModelIo;
+import net.roboconf.core.model.parsing.AbstractBlock;
+import net.roboconf.core.model.parsing.BlockBlank;
+import net.roboconf.core.model.parsing.BlockComment;
+import net.roboconf.core.model.parsing.BlockComponent;
+import net.roboconf.core.model.parsing.BlockImport;
+import net.roboconf.core.model.parsing.BlockInstanceOf;
+import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.parsing.RegionBlank;
-import net.roboconf.core.model.parsing.RegionComment;
-import net.roboconf.core.model.parsing.RegionComponent;
-import net.roboconf.core.model.parsing.RegionImport;
-import net.roboconf.core.model.parsing.RegionProperty;
 
 import org.junit.Test;
 
@@ -51,7 +53,7 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeComment() {
 
-		Collection<AbstractRegion> instr = new ArrayList<AbstractRegion> ();
+		Collection<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
 		String[] validLines = {
 				"# ok",
 				"#",
@@ -61,27 +63,27 @@ public class FileDefinitionParserTest {
 
 		// Without ignoring comments
 		for( String line : validLines ) {
-			instr.clear();
+			blocks.clear();
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-			int code = parser.recognizeComment( line, instr );
+			int code = parser.recognizeComment( line, blocks );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + line + "'", 1, instr.size());
-			Assert.assertEquals( "Expected ONE comment instruction for '" + line + "'",
-					AbstractRegion.COMMENT,
-					instr.iterator().next().getInstructionType());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, blocks.size());
+			Assert.assertEquals( "Expected ONE comment block for '" + line + "'",
+					AbstractBlock.COMMENT,
+					blocks.iterator().next().getInstructionType());
 		}
 
 		// Ignoring comments
 		for( String line : validLines ) {
-			instr.clear();
+			blocks.clear();
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, true );
-			int code = parser.recognizeComment( line, instr );
+			int code = parser.recognizeComment( line, blocks );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
-			Assert.assertEquals( "Expected ZERO instruction to be registered for '" + line + "'", 0, instr.size());
+			Assert.assertEquals( "Expected ZERO block to be registered for '" + line + "'", 0, blocks.size());
 		}
 
 		// Testing invalid comments
@@ -93,44 +95,44 @@ public class FileDefinitionParserTest {
 		};
 
 		for( String line : invalidLines ) {
-			instr.clear();
+			blocks.clear();
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, true );
-			int code = parser.recognizeComment( line, instr );
+			int code = parser.recognizeComment( line, blocks );
 
 			Assert.assertEquals( "Expected a NO code for '" + line + "'", FileDefinitionParser.P_CODE_NO, code );
 			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
-			Assert.assertEquals( "Expected ZERO instruction to be registered for '" + line + "'", 0, instr.size());
+			Assert.assertEquals( "Expected ZERO block to be registered for '" + line + "'", 0, blocks.size());
 		}
 	}
 
 
 	@Test
 	public void testRecognizeBlank() {
-		Collection<AbstractRegion> instr = new ArrayList<AbstractRegion> ();
+		Collection<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
 
 		String[] validLines = { "  ", "" };
 		for( String line : validLines ) {
-			instr.clear();
+			blocks.clear();
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-			int code = parser.recognizeBlankLine( line, instr );
+			int code = parser.recognizeBlankLine( line, blocks );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + line + "'", 1, instr.size());
-			Assert.assertEquals( "Expected ONE blank instruction for '" + line + "'",
-					AbstractRegion.BLANK,
-					instr.iterator().next().getInstructionType());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, blocks.size());
+			Assert.assertEquals( "Expected ONE blank block for '" + line + "'",
+					AbstractBlock.BLANK,
+					blocks.iterator().next().getInstructionType());
 		}
 
 		String[] invalidLines = { "#", "something", "  something with spaces before an after  " };
 		for( String line : invalidLines ) {
-			instr.clear();
+			blocks.clear();
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-			int code = parser.recognizeBlankLine( line, instr );
+			int code = parser.recognizeBlankLine( line, blocks );
 
 			Assert.assertEquals( "Expected a NO code for '" + line + "'", FileDefinitionParser.P_CODE_NO, code );
 			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
-			Assert.assertEquals( "Expected ZERO instruction to be registered for '" + line + "'", 0, instr.size());
+			Assert.assertEquals( "Expected ZERO block to be registered for '" + line + "'", 0, blocks.size());
 		}
 	}
 
@@ -190,10 +192,10 @@ public class FileDefinitionParserTest {
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, def.getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + line + "'", 1, def.getInstructions().size());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, def.getBlocks().size());
 
-			RegionImport imp = (RegionImport) def.getInstructions().iterator().next();
-			Assert.assertEquals( "Expected ONE import instruction for '" + line + "'", AbstractRegion.IMPORT, imp.getInstructionType());
+			BlockImport imp = (BlockImport) def.getBlocks().iterator().next();
+			Assert.assertEquals( "Expected ONE import block for '" + line + "'", AbstractBlock.IMPORT, imp.getInstructionType());
 
 			Assert.assertFalse( "URI cannot be empty for '" + line + "'", Utils.isEmptyOrWhitespaces( imp.getUri()));
 			Assert.assertEquals( "URI cannot have surrounding spaces '" + line + "'", imp.getUri(), imp.getUri().trim());
@@ -217,10 +219,10 @@ public class FileDefinitionParserTest {
 
 			Assert.assertEquals( "Expected a YES code for '" + theLine + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "No pasing error was expected for '" + theLine + "'", 0, def.getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + theLine + "'", 1, def.getInstructions().size());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + theLine + "'", 1, def.getBlocks().size());
 
-			RegionImport imp = (RegionImport) def.getInstructions().iterator().next();
-			Assert.assertEquals( "Expected ONE import instruction for '" + theLine + "'", AbstractRegion.IMPORT, imp.getInstructionType());
+			BlockImport imp = (BlockImport) def.getBlocks().iterator().next();
+			Assert.assertEquals( "Expected ONE import block for '" + theLine + "'", AbstractBlock.IMPORT, imp.getInstructionType());
 
 			String expected = Utils.isEmptyOrWhitespaces( line[ 1 ]) ? null : line[ 1 ];
 			Assert.assertEquals( "Invalid in-line comment for '" + theLine + "'", expected, imp.getInlineComment());
@@ -245,9 +247,9 @@ public class FileDefinitionParserTest {
 		// Test error codes
 		Map<String,ErrorCode> invalidLineToErrorCode = new LinkedHashMap<String,ErrorCode> ();
 		invalidLineToErrorCode.put( "import facets.rcf", ErrorCode.P_IMPORT_ENDS_WITH_SEMI_COLON );
-		invalidLineToErrorCode.put( "import facets.rcf ; facet toto {", ErrorCode.P_ONE_INSTRUCTION_PER_LINE );
-		invalidLineToErrorCode.put( "import facets.rcf ; invalid comment", ErrorCode.P_ONE_INSTRUCTION_PER_LINE );
-		invalidLineToErrorCode.put( "import facets.rcf ;;", ErrorCode.P_ONE_INSTRUCTION_PER_LINE );
+		invalidLineToErrorCode.put( "import facets.rcf ; facet toto {", ErrorCode.P_ONE_BLOCK_PER_LINE );
+		invalidLineToErrorCode.put( "import facets.rcf ; invalid comment", ErrorCode.P_ONE_BLOCK_PER_LINE );
+		invalidLineToErrorCode.put( "import facets.rcf ;;", ErrorCode.P_ONE_BLOCK_PER_LINE );
 
 		for( Map.Entry<String,ErrorCode> entry : invalidLineToErrorCode.entrySet()) {
 			String line = entry.getKey();
@@ -257,10 +259,10 @@ public class FileDefinitionParserTest {
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "A pasing error was expected for '" + line + "'", 1, def.getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + line + "'", 1, def.getInstructions().size());
-			Assert.assertEquals( "Expected ONE import instruction for '" + line + "'",
-					AbstractRegion.IMPORT,
-					def.getInstructions().iterator().next().getInstructionType());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, def.getBlocks().size());
+			Assert.assertEquals( "Expected ONE import block for '" + line + "'",
+					AbstractBlock.IMPORT,
+					def.getBlocks().iterator().next().getInstructionType());
 
 			ModelError error = def.getParsingErrors().iterator().next();
 			Assert.assertEquals( "Expecting parsing error for '" + line + "'", entry.getValue().getCategory(), ErrorCategory.PARSING );
@@ -284,15 +286,15 @@ public class FileDefinitionParserTest {
 		// Comments do not matter here
 		for( String line : validLines ) {
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-			RegionComponent holder = new RegionComponent( file );
+			BlockComponent holder = new BlockComponent( file );
 			int code = parser.recognizeProperty( line, holder );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "No pasing error was expected for '" + line + "'", 0, parser.getFileRelations().getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + line + "'", 1, holder.getInternalInstructions().size());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, holder.getInnerBlocks().size());
 
-			RegionProperty prop = (RegionProperty) holder.getInternalInstructions().iterator().next();
-			Assert.assertEquals( "Expected ONE property for '" + line + "'", AbstractRegion.PROPERTY, prop.getInstructionType());
+			BlockProperty prop = (BlockProperty) holder.getInnerBlocks().iterator().next();
+			Assert.assertEquals( "Expected ONE property for '" + line + "'", AbstractBlock.PROPERTY, prop.getInstructionType());
 			Assert.assertEquals( "Invalid property name for '" + line + "'", "property", prop.getName().toLowerCase());
 		}
 
@@ -307,15 +309,15 @@ public class FileDefinitionParserTest {
 		for( String[] line : commentedLines ) {
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
 			String theLine = line[ 0 ] + line[ 1 ];
-			RegionComponent holder = new RegionComponent( file );
+			BlockComponent holder = new BlockComponent( file );
 			int code = parser.recognizeProperty( theLine, holder );
 
 			Assert.assertEquals( "Expected a YES code for '" + theLine + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "No pasing error was expected for '" + theLine + "'", 0, parser.getFileRelations().getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + theLine + "'", 1, holder.getInternalInstructions().size());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + theLine + "'", 1, holder.getInnerBlocks().size());
 
-			RegionProperty prop = (RegionProperty) holder.getInternalInstructions().iterator().next();
-			Assert.assertEquals( "Expected ONE property for '" + theLine + "'", AbstractRegion.PROPERTY, prop.getInstructionType());
+			BlockProperty prop = (BlockProperty) holder.getInnerBlocks().iterator().next();
+			Assert.assertEquals( "Expected ONE property for '" + theLine + "'", AbstractBlock.PROPERTY, prop.getInstructionType());
 
 			String expected = Utils.isEmptyOrWhitespaces( line[ 1 ]) ? null : line[ 1 ];
 			Assert.assertEquals( "Invalid in-line comment for '" + theLine + "'", expected, prop.getInlineComment());
@@ -332,7 +334,7 @@ public class FileDefinitionParserTest {
 
 		for( String line : invalidLines ) {
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-			RegionComponent holder = new RegionComponent( file );
+			BlockComponent holder = new BlockComponent( file );
 			int code = parser.recognizeProperty( line, holder );
 			Assert.assertEquals( "Expected a NO code for '" + line + "'", FileDefinitionParser.P_CODE_NO, code );
 		}
@@ -342,23 +344,23 @@ public class FileDefinitionParserTest {
 		Map<String,ErrorCode> invalidLineToErrorCode = new LinkedHashMap<String,ErrorCode> ();
 		invalidLineToErrorCode.put( "property: value", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
 		invalidLineToErrorCode.put( "property:", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
-		invalidLineToErrorCode.put( "property: value ; facet toto {", ErrorCode.P_ONE_INSTRUCTION_PER_LINE );
-		invalidLineToErrorCode.put( "property: value ; invalid comment", ErrorCode.P_ONE_INSTRUCTION_PER_LINE );
-		invalidLineToErrorCode.put( "property: value;;", ErrorCode.P_ONE_INSTRUCTION_PER_LINE );
+		invalidLineToErrorCode.put( "property: value ; facet toto {", ErrorCode.P_ONE_BLOCK_PER_LINE );
+		invalidLineToErrorCode.put( "property: value ; invalid comment", ErrorCode.P_ONE_BLOCK_PER_LINE );
+		invalidLineToErrorCode.put( "property: value;;", ErrorCode.P_ONE_BLOCK_PER_LINE );
 
 		for( Map.Entry<String,ErrorCode> entry : invalidLineToErrorCode.entrySet()) {
 			String line = entry.getKey();
 			FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-			RegionComponent holder = new RegionComponent( file );
+			BlockComponent holder = new BlockComponent( file );
 			FileDefinition def = parser.getFileRelations();
 			int code = parser.recognizeProperty( line, holder );
 
 			Assert.assertEquals( "Expected a YES code for '" + line + "'", FileDefinitionParser.P_CODE_YES, code );
 			Assert.assertEquals( "A pasing error was expected for '" + line + "'", 1, def.getParsingErrors().size());
-			Assert.assertEquals( "Expected ONE instruction to be registered for '" + line + "'", 1, holder.getInternalInstructions().size());
+			Assert.assertEquals( "Expected ONE block to be registered for '" + line + "'", 1, holder.getInnerBlocks().size());
 			Assert.assertEquals( "Expected ONE property for '" + line + "'",
-					AbstractRegion.PROPERTY,
-					holder.getInternalInstructions().iterator().next().getInstructionType());
+					AbstractBlock.PROPERTY,
+					holder.getInnerBlocks().iterator().next().getInstructionType());
 
 			ModelError error = def.getParsingErrors().iterator().next();
 			Assert.assertEquals( "Expecting parsing error for '" + line + "'", entry.getValue().getCategory(), ErrorCategory.PARSING );
@@ -372,67 +374,67 @@ public class FileDefinitionParserTest {
 		FileDefinition file = new FileDefinition( new File( "some-file" ));
 
 		FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-		List<AbstractRegion> instructions = new ArrayList<AbstractRegion> ();
-		instructions.add( new RegionImport( file ));
-		instructions.add( new RegionImport( file ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 2, instructions.size());
+		List<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
+		blocks.add( new BlockImport( file ));
+		blocks.add( new BlockImport( file ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 2, blocks.size());
 
-		instructions.clear();
-		instructions.add( new RegionProperty( file ));
-		instructions.add( new RegionProperty( file ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 2, instructions.size());
+		blocks.clear();
+		blocks.add( new BlockProperty( file ));
+		blocks.add( new BlockProperty( file ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 2, blocks.size());
 
-		instructions.clear();
-		instructions.add( new RegionComment( file, "# comment 1" ));
-		instructions.add( new RegionComment( file, "# comment 2" ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 1, instructions.size());
-		Assert.assertEquals( AbstractRegion.COMMENT, instructions.get( 0 ).getInstructionType());
+		blocks.clear();
+		blocks.add( new BlockComment( file, "# comment 1" ));
+		blocks.add( new BlockComment( file, "# comment 2" ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 1, blocks.size());
+		Assert.assertEquals( AbstractBlock.COMMENT, blocks.get( 0 ).getInstructionType());
 
-		instructions.clear();
-		instructions.add( new RegionComment( file, "# comment 1" ));
-		instructions.add( new RegionBlank( file, "" ));
-		instructions.add( new RegionComment( file, "# comment 2" ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 3, instructions.size());
+		blocks.clear();
+		blocks.add( new BlockComment( file, "# comment 1" ));
+		blocks.add( new BlockBlank( file, "" ));
+		blocks.add( new BlockComment( file, "# comment 2" ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 3, blocks.size());
 
-		instructions.clear();
-		instructions.add( new RegionComment( file, "# comment 1" ));
-		instructions.add( new RegionBlank( file, "" ));
-		instructions.add( new RegionComment( file, "# comment 2" ));
-		instructions.add( new RegionComment( file, "# comment 3" ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 3, instructions.size());
-		Assert.assertEquals( AbstractRegion.COMMENT, instructions.get( 0 ).getInstructionType());
-		Assert.assertEquals( AbstractRegion.BLANK, instructions.get( 1 ).getInstructionType());
-		Assert.assertEquals( AbstractRegion.COMMENT, instructions.get( 0 ).getInstructionType());
+		blocks.clear();
+		blocks.add( new BlockComment( file, "# comment 1" ));
+		blocks.add( new BlockBlank( file, "" ));
+		blocks.add( new BlockComment( file, "# comment 2" ));
+		blocks.add( new BlockComment( file, "# comment 3" ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 3, blocks.size());
+		Assert.assertEquals( AbstractBlock.COMMENT, blocks.get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, blocks.get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.COMMENT, blocks.get( 0 ).getInstructionType());
 
-		instructions.clear();
-		instructions.add( new RegionBlank( file, "" ));
-		instructions.add( new RegionBlank( file, "" ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 1, instructions.size());
-		Assert.assertEquals( AbstractRegion.BLANK, instructions.get( 0 ).getInstructionType());
+		blocks.clear();
+		blocks.add( new BlockBlank( file, "" ));
+		blocks.add( new BlockBlank( file, "" ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 1, blocks.size());
+		Assert.assertEquals( AbstractBlock.BLANK, blocks.get( 0 ).getInstructionType());
 
-		instructions.clear();
-		instructions.add( new RegionBlank( file, "" ));
-		instructions.add( new RegionComment( file, "# comment 1" ));
-		instructions.add( new RegionBlank( file, "" ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 3, instructions.size());
+		blocks.clear();
+		blocks.add( new BlockBlank( file, "" ));
+		blocks.add( new BlockComment( file, "# comment 1" ));
+		blocks.add( new BlockBlank( file, "" ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 3, blocks.size());
 
-		instructions.clear();
-		instructions.add( new RegionBlank( file, "" ));
-		instructions.add( new RegionBlank( file, "" ));
-		instructions.add( new RegionComment( file, "# comment 1" ));
-		instructions.add( new RegionBlank( file, "" ));
-		parser.mergeContiguousRegions( instructions );
-		Assert.assertEquals( 3, instructions.size());
-		Assert.assertEquals( AbstractRegion.BLANK, instructions.get( 0 ).getInstructionType());
-		Assert.assertEquals( AbstractRegion.COMMENT, instructions.get( 1 ).getInstructionType());
-		Assert.assertEquals( AbstractRegion.BLANK, instructions.get( 0 ).getInstructionType());
+		blocks.clear();
+		blocks.add( new BlockBlank( file, "" ));
+		blocks.add( new BlockBlank( file, "" ));
+		blocks.add( new BlockComment( file, "# comment 1" ));
+		blocks.add( new BlockBlank( file, "" ));
+		parser.mergeContiguousRegions( blocks );
+		Assert.assertEquals( 3, blocks.size());
+		Assert.assertEquals( AbstractBlock.BLANK, blocks.get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.COMMENT, blocks.get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, blocks.get( 0 ).getInstructionType());
 	}
 
 
@@ -447,7 +449,7 @@ public class FileDefinitionParserTest {
 		resourceNameToErrorCode.put( "facet-extra-char.graph", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 1 ));
 		resourceNameToErrorCode.put( "facet-line-number.graph", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 6 ));
 
-		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractRegion.FACET );
+		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractBlock.FACET );
 	}
 
 
@@ -462,7 +464,7 @@ public class FileDefinitionParserTest {
 		resourceNameToErrorCode.put( "component-extra-char.graph", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 1 ));
 		resourceNameToErrorCode.put( "component-line-number.graph", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 6 ));
 
-		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractRegion.COMPONENT );
+		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractBlock.COMPONENT );
 	}
 
 
@@ -489,7 +491,7 @@ public class FileDefinitionParserTest {
 		resourceNameToErrorCode.put( "instanceof-very-imbricated-missing-opening-cb.instances", new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, 5 ));
 		resourceNameToErrorCode.put( "instanceof-very-imbricated-extra-char.instances", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 4 ));
 
-		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractRegion.INSTANCEOF );
+		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractBlock.INSTANCEOF );
 	}
 
 
@@ -508,11 +510,11 @@ public class FileDefinitionParserTest {
 				Assert.assertNotNull( line );
 
 				FileDefinitionParser parser = new FileDefinitionParser((URI) null, false );
-				if( blockType == AbstractRegion.FACET )
+				if( blockType == AbstractBlock.FACET )
 					parser.recognizeFacet( line, br );
-				else if( blockType == AbstractRegion.COMPONENT )
+				else if( blockType == AbstractBlock.COMPONENT )
 					parser.recognizeComponent( line, br );
-				else if( blockType == AbstractRegion.INSTANCEOF )
+				else if( blockType == AbstractBlock.INSTANCEOF )
 					parser.recognizeInstanceOf( line, br, null );
 				else
 					Assert.fail( "Invalid block type." );
@@ -539,5 +541,120 @@ public class FileDefinitionParserTest {
 				}
 			}
 		}
+	}
+
+
+	@Test
+	public void testComplexInstancesParsing() {
+
+		// Parse the file
+		FileDefinition def;
+		File f;
+		try {
+			f = TestUtils.findTestFile( "/configurations/valid/instance-imbricated-3.instances" );
+			def = ParsingModelIo.readConfigurationFile( f, false );
+
+		} catch( Exception e ) {
+			e.printStackTrace();
+			Assert.fail( "Failed to find the file." );
+			return;
+		}
+
+		// Make some checks to be sure it is parsed correctly
+		Assert.assertEquals( FileDefinition.INSTANCE, def.getFileType());
+		Assert.assertEquals( f, def.getEditedFile());
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		// Check blocks
+		Assert.assertEquals( AbstractBlock.COMMENT, def.getBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, def.getBlocks().get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, def.getBlocks().get( 2 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, def.getBlocks().get( 3 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, def.getBlocks().get( 4 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, def.getBlocks().get( 5 ).getInstructionType());
+		Assert.assertEquals( 6, def.getBlocks().size());
+
+		// Check instance 1
+		BlockInstanceOf block = (BlockInstanceOf) def.getBlocks().get( 2 );
+		Assert.assertEquals( "vm", block.getName());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, block.getInnerBlocks().get( 2 ).getInstructionType());
+		Assert.assertEquals( 3, block.getInnerBlocks().size());
+
+		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 0 )).getName());
+		Assert.assertEquals( "vm1", ((BlockProperty) block.getInnerBlocks().get( 0 )).getValue());
+		Assert.assertFalse( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 0 )).getInlineComment()));
+
+		block = (BlockInstanceOf) block.getInnerBlocks().get( 2 );
+		Assert.assertEquals( "server", block.getName());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 2 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, block.getInnerBlocks().get( 3 ).getInstructionType());
+		Assert.assertEquals( 4, block.getInnerBlocks().size());
+
+		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 0 )).getName());
+		Assert.assertEquals( "server", ((BlockProperty) block.getInnerBlocks().get( 0 )).getValue());
+		Assert.assertTrue( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 0 )).getInlineComment()));
+		Assert.assertEquals( "port", ((BlockProperty) block.getInnerBlocks().get( 1 )).getName());
+		Assert.assertEquals( "9878", ((BlockProperty) block.getInnerBlocks().get( 1 )).getValue());
+
+		block = (BlockInstanceOf) block.getInnerBlocks().get( 3 );
+		Assert.assertEquals( "web-app1", block.getName());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( 1, block.getInnerBlocks().size());
+
+		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 0 )).getName());
+		Assert.assertEquals( "web-app1-1", ((BlockProperty) block.getInnerBlocks().get( 0 )).getValue());
+		Assert.assertTrue( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 0 )).getInlineComment()));
+
+		// Check instance 2
+		block = (BlockInstanceOf) def.getBlocks().get( 4 );
+		Assert.assertEquals( "vm", block.getName());
+		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 2 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, block.getInnerBlocks().get( 3 ).getInstructionType());
+		Assert.assertEquals( 4, block.getInnerBlocks().size());
+
+		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 1 )).getName());
+		Assert.assertEquals( "vm2", ((BlockProperty) block.getInnerBlocks().get( 1 )).getValue());
+		Assert.assertFalse( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 1 )).getInlineComment()));
+
+		block = (BlockInstanceOf) block.getInnerBlocks().get( 3 );
+		Assert.assertEquals( "server", block.getName());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 2 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, block.getInnerBlocks().get( 3 ).getInstructionType());
+		Assert.assertEquals( 4, block.getInnerBlocks().size());
+
+		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 0 )).getName());
+		Assert.assertEquals( "server4osgi", ((BlockProperty) block.getInnerBlocks().get( 0 )).getValue());
+		Assert.assertTrue( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 0 )).getInlineComment()));
+		Assert.assertEquals( "port", ((BlockProperty) block.getInnerBlocks().get( 1 )).getName());
+		Assert.assertEquals( "9878", ((BlockProperty) block.getInnerBlocks().get( 1 )).getValue());
+
+		block = (BlockInstanceOf) block.getInnerBlocks().get( 3 );
+		Assert.assertEquals( "osgi-container", block.getName());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 1 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, block.getInnerBlocks().get( 2 ).getInstructionType());
+		Assert.assertEquals( 3, block.getInnerBlocks().size());
+
+		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 0 )).getName());
+		Assert.assertEquals( "osgi-container-app", ((BlockProperty) block.getInnerBlocks().get( 0 )).getValue());
+		Assert.assertTrue( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 0 )).getInlineComment()));
+
+		block = (BlockInstanceOf) block.getInnerBlocks().get( 2 );
+		Assert.assertEquals( "bundle", block.getName());
+		Assert.assertEquals( AbstractBlock.COMMENT, block.getInnerBlocks().get( 0 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 1 ).getInstructionType());
+		Assert.assertEquals( 2, block.getInnerBlocks().size());
+
+		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 1 )).getName());
+		Assert.assertEquals( "my-bundle", ((BlockProperty) block.getInnerBlocks().get( 1 )).getValue());
+		Assert.assertTrue( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 1 )).getInlineComment()));
 	}
 }

@@ -19,16 +19,16 @@ package net.roboconf.core.model.parsing;
 import net.roboconf.core.internal.utils.Utils;
 
 /**
- * The 'instanceof' instruction.
+ * The 'instanceof' block.
  * @author Vincent Zurczak - Linagora
  */
-public class RegionInstanceOf extends AbstractPropertiesHolder {
+public class BlockInstanceOf extends AbstractBlockHolder {
 
 	/**
 	 * Constructor.
 	 * @param declaringFile not null
 	 */
-	public RegionInstanceOf( FileDefinition declaringFile ) {
+	public BlockInstanceOf( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
@@ -43,7 +43,7 @@ public class RegionInstanceOf extends AbstractPropertiesHolder {
 
 	@Override
 	public int getInstructionType() {
-		return AbstractRegion.INSTANCEOF;
+		return AbstractBlock.INSTANCEOF;
 	}
 
 	/*
@@ -52,7 +52,7 @@ public class RegionInstanceOf extends AbstractPropertiesHolder {
 	 */
 	@Override
 	public String toString() {
-		RegionProperty p = findPropertyByName( Constants.PROPERTY_INSTANCE_NAME );
+		BlockProperty p = findPropertyBlockByName( Constants.PROPERTY_INSTANCE_NAME );
 		StringBuilder sb = new StringBuilder( getName());
 
 		if( p != null

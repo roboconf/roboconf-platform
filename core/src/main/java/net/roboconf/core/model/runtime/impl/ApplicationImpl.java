@@ -19,6 +19,7 @@ package net.roboconf.core.model.runtime.impl;
 import java.util.Collection;
 import java.util.HashSet;
 
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
@@ -29,7 +30,7 @@ import net.roboconf.core.model.runtime.Instance;
  */
 public class ApplicationImpl implements Application {
 
-	private String name, version;
+	private String name, qualifier, description;
 	private Graphs graphs;
 	private final Collection<Instance> rootInstances = new HashSet<Instance> ();
 
@@ -50,18 +51,33 @@ public class ApplicationImpl implements Application {
 	}
 
 	/**
-	 * @return the version
+	 * @return the description
 	 */
 	@Override
-	public String getVersion() {
-		return this.version;
+	public String getDescription() {
+		return this.description;
 	}
 
 	/**
-	 * @param version the version to set
+	 * @param description the description to set
 	 */
-	public void setVersion( String version ) {
-		this.version = version;
+	public void setDescription( String description ) {
+		this.description = description;
+	}
+
+	/**
+	 * @return the qualifier
+	 */
+	@Override
+	public String getQualifier() {
+		return this.qualifier;
+	}
+
+	/**
+	 * @param qualifier the qualifier to set
+	 */
+	public void setQualifier( String qualifier ) {
+		this.qualifier = qualifier;
 	}
 
 	/**
@@ -80,10 +96,24 @@ public class ApplicationImpl implements Application {
 	}
 
 	/**
-	 * @return the rootInstances
+	 * @return the root instances
 	 */
 	@Override
 	public Collection<Instance> getRootInstances() {
 		return this.rootInstances;
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof Application
+				&& Utils.areEqual( this.name, ((Application) obj ).getName())
+				&& Utils.areEqual( this.qualifier, ((Application) obj ).getQualifier());
+	}
+
+	@Override
+	public int hashCode() {
+		int i1 = this.name == null ? 29 : this.name.hashCode();
+		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
+		return i1 * i2;
 	}
 }

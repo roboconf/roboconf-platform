@@ -17,27 +17,27 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * The instruction for an orphan comment.
+ * A block for orphan comments (VS in-line comments, which are stored somewhere else).
  * @author Vincent Zurczak - Linagora
  */
-public class RegionComment extends AbstractIgnorableInstruction {
+public class BlockComment extends AbstractIgnorableInstruction {
 
 	/**
 	 * Constructor.
 	 * @param declaringFile
 	 * @param content
 	 */
-	public RegionComment( FileDefinition declaringFile, String content ) {
+	public BlockComment( FileDefinition declaringFile, String content ) {
 		super( declaringFile, content );
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.core.model.parsing.AbstractRegion#getInstructionType()
+	 * @see net.roboconf.core.model.parsing.AbstractBlock#getInstructionType()
 	 */
 	@Override
 	public int getInstructionType() {
-		return AbstractRegion.COMMENT;
+		return AbstractBlock.COMMENT;
 	}
 
 	/*

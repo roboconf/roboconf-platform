@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model;
+package net.roboconf.core;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,22 +28,22 @@ public enum ErrorCode {
 
 	// Parsing Errors
 	P_IO_ERROR( ErrorLevel.SEVERE, ErrorCategory.PARSING, "An I/O exception occurred, parsing was interrupted." ),
-	P_ONE_INSTRUCTION_PER_LINE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Extra-characters were found after the semi-colon. There must be only one instruction per line." ),
+	P_ONE_BLOCK_PER_LINE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Extra-characters were found after the semi-colon. You cannot have more than one block per line." ),
 	P_PROPERTY_ENDS_WITH_SEMI_COLON( ErrorLevel.SEVERE, ErrorCategory.PARSING, "A property definition must end with a semi-colon." ),
 	P_IMPORT_ENDS_WITH_SEMI_COLON( ErrorLevel.SEVERE, ErrorCategory.PARSING, "An import declaration must end with a semi-colon." ),
 	P_O_C_BRACKET_EXTRA_CHARACTERS( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Extra-characters were found after the opening curly bracket." ),
 	P_C_C_BRACKET_EXTRA_CHARACTERS( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Extra-characters were found after the closing curly bracket." ),
 	P_O_C_BRACKET_MISSING( ErrorLevel.SEVERE, ErrorCategory.PARSING, "A facet, component or instance name must be followed by an opening curly bracket." ),
 	P_C_C_BRACKET_MISSING( ErrorLevel.SEVERE, ErrorCategory.PARSING, "A facet, component or instance declaration must end with a closing curly bracket." ),
-	P_UNRECOGNIZED_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Unrecognized instruction. 'import', 'facet', 'instanceof' or a component name were expected." ),
+	P_UNRECOGNIZED_BLOCK( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Unrecognized block. 'import', 'facet', 'instanceof' or a component name were expected." ),
 	P_INVALID_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid content. A property was expected." ),
 	P_INVALID_PROPERTY_OR_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid content. A property or an instance was expected." ),
 	P_INVALID_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid file type. It mixes facet, component and instance definitions." ),
 	P_NO_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "No file type. No import, facet, component or instance definition was found." ),
 
 	// Parsing Model Errors
-	PM_INVALID_INSTRUCTION_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Validation failed. Unknown instruction type." ),
-	PM_UNKNWON_PROPERTY_NAME( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "Unknown property name for a facet or a component." ),
+	PM_INVALID_BLOCK_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Validation failed. Unknown block type." ),
+	PM_UNKNOWN_PROPERTY_NAME( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "Unknown property name for a facet or a component." ),
 	PM_FORBIDDEN_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This name is not allowed for a facet or a component." ),
 	PM_EMPTY_PROPERTY_VALUE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The property value is missing." ),
 	PM_EMPTY_IMPORT_LOCATION( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The import location must be specified." ),
@@ -61,6 +61,7 @@ public enum ErrorCode {
 	PM_INVALID_ICON_LOCATION( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The icon location must end with an image extension (gif, jpg, jpeg, png)." ),
 	PM_INVALID_INDEX_REFERENCE_USE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The name contains ${index} but the cardinality property is not set." ),
 	PM_INVALID_INSTANCE_ELEMENT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An instance can only contain properties, other instances, blank lines or comments." ),
+	PM_INVALID_INSTANCE_CARDINALITY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "A cardinality must be a positive integer." ),
 
 	PM_PROPERTY_NOT_APPLIABLE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property does not apply to this element." ),
 	PM_DUPLICATE_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property was already set for this element." ),
@@ -80,7 +81,10 @@ public enum ErrorCode {
 	CO_ALREADY_DEFINED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This facet was already defined." ),
 	CO_ALREADY_DEFINED_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This component was already defined." ),
 
-	// Runtime Errors
+	// Runtime Model Errors
+
+
+	// Execution Errors
 	;
 
 
@@ -88,7 +92,7 @@ public enum ErrorCode {
 	 * Error categories.
 	 */
 	public enum ErrorCategory {
-		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL;
+		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, EXECUTION;
 	}
 
 	/**

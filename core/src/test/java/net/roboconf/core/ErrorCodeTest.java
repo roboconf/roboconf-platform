@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model;
+package net.roboconf.core;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.ErrorCode.ErrorCategory;
+import net.roboconf.core.ErrorCode.ErrorCategory;
 
 import org.junit.Test;
 
@@ -57,6 +57,7 @@ public class ErrorCodeTest {
 		categoryToPrefix.put( ErrorCategory.PARSING, "P_" );
 		categoryToPrefix.put( ErrorCategory.PARSING_MODEL, "PM_" );
 		categoryToPrefix.put( ErrorCategory.RUNTIME_MODEL, "RM_" );
+		categoryToPrefix.put( ErrorCategory.EXECUTION, "EXEC_" );
 
 		for( ErrorCode code : ErrorCode.values()) {
 			String prefix = categoryToPrefix.get( code.getCategory());

@@ -29,22 +29,22 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.utils.UriHelper;
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.core.model.ErrorCode;
 import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.parsing.AbstractBlock;
+import net.roboconf.core.model.parsing.AbstractBlockHolder;
 import net.roboconf.core.model.parsing.AbstractIgnorableInstruction;
-import net.roboconf.core.model.parsing.AbstractPropertiesHolder;
-import net.roboconf.core.model.parsing.AbstractRegion;
+import net.roboconf.core.model.parsing.BlockBlank;
+import net.roboconf.core.model.parsing.BlockComment;
+import net.roboconf.core.model.parsing.BlockComponent;
+import net.roboconf.core.model.parsing.BlockFacet;
+import net.roboconf.core.model.parsing.BlockImport;
+import net.roboconf.core.model.parsing.BlockInstanceOf;
+import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.parsing.RegionBlank;
-import net.roboconf.core.model.parsing.RegionComment;
-import net.roboconf.core.model.parsing.RegionComponent;
-import net.roboconf.core.model.parsing.RegionFacet;
-import net.roboconf.core.model.parsing.RegionImport;
-import net.roboconf.core.model.parsing.RegionInstanceOf;
-import net.roboconf.core.model.parsing.RegionProperty;
 
 /**
  * A parser for relation files.
@@ -109,10 +109,10 @@ public class FileDefinitionParser {
 	 */
 	public FileDefinition read() {
 
-		// Parse instructions
+		// Parse blocks
 		try {
 			fillIn();
-			mergeContiguousRegions( this.definitionFile.getInstructions());
+			mergeContiguousRegions( this.definitionFile.getBlocks());
 
 		} catch( IOException e ) {
 			ModelError error = new ModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber );
@@ -124,14 +124,14 @@ public class FileDefinitionParser {
 
 		// Determine file type
 		boolean hasFacets = false, hasComponents = false, hasInstances = false, hasImports = false;
-		for( AbstractRegion block : this.definitionFile.getInstructions()) {
-			if( block.getInstructionType() == AbstractRegion.COMPONENT )
+		for( AbstractBlock block : this.definitionFile.getBlocks()) {
+			if( block.getInstructionType() == AbstractBlock.COMPONENT )
 				hasComponents = true;
-			else if( block.getInstructionType() == AbstractRegion.FACET )
+			else if( block.getInstructionType() == AbstractBlock.FACET )
 				hasFacets = true;
-			else if( block.getInstructionType() == AbstractRegion.INSTANCEOF )
+			else if( block.getInstructionType() == AbstractBlock.INSTANCEOF )
 				hasInstances = true;
-			else if( block.getInstructionType() == AbstractRegion.IMPORT )
+			else if( block.getInstructionType() == AbstractBlock.IMPORT )
 				hasImports = true;
 		}
 
@@ -168,7 +168,7 @@ public class FileDefinitionParser {
 				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_FACET )
 				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_INSTANCE_OF )
 				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_IMPORT ))
-			result = recognizePropertiesHolder( line, br, new RegionComponent( this.definitionFile ));
+			result = recognizePropertiesHolder( line, br, new BlockComponent( this.definitionFile ));
 
 		return result;
 	}
@@ -183,7 +183,7 @@ public class FileDefinitionParser {
 		int result = P_CODE_NO;
 		if( line.trim().toLowerCase().startsWith( Constants.KEYWORD_FACET )) {
 			String newLine = line.replaceAll( "\\s*" + Pattern.quote( Constants.KEYWORD_FACET ), "" );
-			result = recognizePropertiesHolder( newLine, br, new RegionFacet( this.definitionFile ));
+			result = recognizePropertiesHolder( newLine, br, new BlockFacet( this.definitionFile ));
 		}
 
 		return result;
@@ -195,19 +195,19 @@ public class FileDefinitionParser {
 	 * @param holderInstance
 	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
-	int recognizeInstanceOf( String line, BufferedReader br, AbstractPropertiesHolder holderInstance ) throws IOException {
+	int recognizeInstanceOf( String line, BufferedReader br, AbstractBlockHolder holderInstance ) throws IOException {
 
 		int result = P_CODE_NO;
 		if( line.trim().toLowerCase().startsWith( Constants.KEYWORD_INSTANCE_OF )) {
 			String newLine = line.replaceAll( "\\s*" + Pattern.quote( Constants.KEYWORD_INSTANCE_OF ), "" );
-			RegionInstanceOf newInstance = new RegionInstanceOf( this.definitionFile );
+			BlockInstanceOf newInstance = new BlockInstanceOf( this.definitionFile );
 			result = recognizePropertiesHolder( newLine, br, newInstance );
 
 			// Handle imbricated instances
 			if( result == P_CODE_YES
 					&& holderInstance != null ) {
-				this.definitionFile.getInstructions().remove( newInstance );
-				holderInstance.getInternalInstructions().add( newInstance );
+				this.definitionFile.getBlocks().remove( newInstance );
+				holderInstance.getInnerBlocks().add( newInstance );
 			}
 		}
 
@@ -217,16 +217,16 @@ public class FileDefinitionParser {
 
 	/**
 	 * @param line the raw line
-	 * @param instructions the instructions to update
+	 * @param blocks the blocks to update
 	 * @return {@link #P_CODE_YES} or {@link #P_CODE_NO}
 	 */
-	int recognizeComment( String line, Collection<AbstractRegion> instructions ) {
+	int recognizeComment( String line, Collection<AbstractBlock> blocks ) {
 
 		int result = P_CODE_NO;
 		if( line.trim().startsWith( Constants.COMMENT_DELIMITER )) {
 			result = P_CODE_YES;
 			if( ! this.ignoreComments )
-				instructions.add( new RegionComment( this.definitionFile, line ));
+				blocks.add( new BlockComment( this.definitionFile, line ));
 		}
 
 		return result;
@@ -235,15 +235,15 @@ public class FileDefinitionParser {
 
 	/**
 	 * @param line the raw line
-	 * @param instructions the instructions to update
+	 * @param blocks the blocks to update
 	 * @return {@link #P_CODE_YES} or {@link #P_CODE_NO}
 	 */
-	int recognizeBlankLine( String line, Collection<AbstractRegion> instructions ) {
+	int recognizeBlankLine( String line, Collection<AbstractBlock> blocks ) {
 
 		int result = P_CODE_NO;
 		if( Utils.isEmptyOrWhitespaces( line )) {
 			result = P_CODE_YES;
-			instructions.add( new RegionBlank( this.definitionFile, line ));
+			blocks.add( new BlockBlank( this.definitionFile, line ));
 		}
 
 		return result;
@@ -255,7 +255,7 @@ public class FileDefinitionParser {
 	 * @param holder
 	 * @return one of the P_CODE constants from {@link FileDefinitionParser}
 	 */
-	int recognizeProperty( String line, AbstractPropertiesHolder holder ) {
+	int recognizeProperty( String line, AbstractBlockHolder holder ) {
 
 		int result = P_CODE_NO;
 		String[] parts = splitFromInlineComment( line );
@@ -265,18 +265,18 @@ public class FileDefinitionParser {
 		Matcher m = Pattern.compile( regex ).matcher( realLine );
 		if( m.find()) {
 			result = P_CODE_YES;
-			RegionProperty instr = new RegionProperty( this.definitionFile );
-			instr.setLine( this.currentLineNumber );
-			instr.setName( m.group( 1 ));
-			instr.setValue( m.group( 2 ));
-			instr.setInlineComment( parts[ 1 ]);
-			holder.getInternalInstructions().add( instr );
+			BlockProperty block = new BlockProperty( this.definitionFile );
+			block.setLine( this.currentLineNumber );
+			block.setName( m.group( 1 ));
+			block.setValue( m.group( 2 ));
+			block.setInlineComment( parts[ 1 ]);
+			holder.getInnerBlocks().add( block );
 
 			realLine = realLine.substring( m.end());
 			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
 				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
 			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_INSTRUCTION_PER_LINE, this.currentLineNumber ));
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_BLOCK_PER_LINE, this.currentLineNumber ));
 		}
 
 		return result;
@@ -297,17 +297,17 @@ public class FileDefinitionParser {
 		Matcher m = Pattern.compile( regex, Pattern.CASE_INSENSITIVE ).matcher( realLine );
 		if( m.find()) {
 			result = P_CODE_YES;
-			RegionImport instr = new RegionImport( this.definitionFile );
-			instr.setLine( this.currentLineNumber );
-			instr.setUri( m.group( 1 ).trim());
-			instr.setInlineComment( parts[ 1 ]);
-			this.definitionFile.getInstructions().add( instr );
+			BlockImport block = new BlockImport( this.definitionFile );
+			block.setLine( this.currentLineNumber );
+			block.setUri( m.group( 1 ).trim());
+			block.setInlineComment( parts[ 1 ]);
+			this.definitionFile.getBlocks().add( block );
 
 			realLine = realLine.substring( m.end());
 			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
 				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_IMPORT_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
 			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_INSTRUCTION_PER_LINE, this.currentLineNumber ));
+				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_BLOCK_PER_LINE, this.currentLineNumber ));
 		}
 
 		return result;
@@ -353,30 +353,30 @@ public class FileDefinitionParser {
 	 * This reduces the number of regions.
 	 * </p>
 	 *
-	 * @param instructions
+	 * @param blocks
 	 */
-	void mergeContiguousRegions( Collection<AbstractRegion> instructions ) {
+	void mergeContiguousRegions( Collection<AbstractBlock> blocks ) {
 
 		AbstractIgnorableInstruction initialInstr = null;
-		List<AbstractRegion> toRemove = new ArrayList<AbstractRegion> ();
+		List<AbstractBlock> toRemove = new ArrayList<AbstractBlock> ();
 		StringBuilder sb = new StringBuilder();
 
 		// We only merge comments and blank regions to reduce their number
-		for( AbstractRegion instr : instructions ) {
+		for( AbstractBlock block : blocks ) {
 			if( initialInstr == null ) {
 
-				if( instr.getInstructionType() == AbstractRegion.COMMENT
-						|| instr.getInstructionType() == AbstractRegion.BLANK ) {
+				if( block.getInstructionType() == AbstractBlock.COMMENT
+						|| block.getInstructionType() == AbstractBlock.BLANK ) {
 
-					AbstractIgnorableInstruction currentInstr = (AbstractIgnorableInstruction) instr;
+					AbstractIgnorableInstruction currentInstr = (AbstractIgnorableInstruction) block;
 					initialInstr = currentInstr;
 					sb = new StringBuilder( currentInstr.getContent());
 				}
 
-			} else if( initialInstr.getInstructionType() == instr.getInstructionType()) {
-				toRemove.add( instr );
+			} else if( initialInstr.getInstructionType() == block.getInstructionType()) {
+				toRemove.add( block );
 				sb.append( System.getProperty( "line.separator" ));
-				sb.append(((AbstractIgnorableInstruction) instr).getContent());
+				sb.append(((AbstractIgnorableInstruction) block).getContent());
 
 			} else {
 				initialInstr.setContent( sb.toString());
@@ -384,14 +384,14 @@ public class FileDefinitionParser {
 			}
 		}
 
-		// Remove the instructions that have been merged
-		instructions.removeAll( toRemove );
+		// Remove the blocks that have been merged
+		blocks.removeAll( toRemove );
 
 		// In a second time, we can reduce facets and components too
-		for( AbstractRegion instr : instructions ) {
-			if( instr.getInstructionType() == AbstractRegion.COMPONENT
-					|| instr.getInstructionType() == AbstractRegion.FACET )
-				mergeContiguousRegions(((AbstractPropertiesHolder) instr).getInternalInstructions());
+		for( AbstractBlock block : blocks ) {
+			if( block.getInstructionType() == AbstractBlock.COMPONENT
+					|| block.getInstructionType() == AbstractBlock.FACET )
+				mergeContiguousRegions(((AbstractBlockHolder) block).getInnerBlocks());
 		}
 	}
 
@@ -414,7 +414,7 @@ public class FileDefinitionParser {
 	private int recognizePropertiesHolder(
 			String line,
 			BufferedReader br,
-			AbstractPropertiesHolder holderInstance )
+			AbstractBlockHolder holderInstance )
 	throws IOException {
 
 		int result = P_CODE_NO;
@@ -422,7 +422,7 @@ public class FileDefinitionParser {
 		String realLine = parts[ 0 ].trim();
 
 		// Recognize the declaration
-		AbstractPropertiesHolder holder = null;
+		AbstractBlockHolder holder = null;
 		StringBuilder sb = new StringBuilder();
 		boolean endInstructionReached = false, foundExtraChars = false;
 		for( char c : realLine.toCharArray()) {
@@ -450,7 +450,7 @@ public class FileDefinitionParser {
 			holder.setName( sb.toString().trim());
 			holder.setLine( this.currentLineNumber );
 			holder.setInlineComment( parts[ 1 ]);
-			this.definitionFile.getInstructions().add( holder );
+			this.definitionFile.getBlocks().add( holder );
 		}
 
 		// Recognize the properties
@@ -459,11 +459,11 @@ public class FileDefinitionParser {
 			while(( line = nextLine( br )) != null
 						&& ! line.trim().startsWith( String.valueOf( C_CURLY_BRACKET ))) {
 
-				int code = recognizeBlankLine( line, holder.getInternalInstructions());
+				int code = recognizeBlankLine( line, holder.getInnerBlocks());
 				if( code == P_CODE_YES )
 					continue;
 
-				code = recognizeComment( line, holder.getInternalInstructions());
+				code = recognizeComment( line, holder.getInnerBlocks());
 				if( code == P_CODE_YES )
 					continue;
 
@@ -489,7 +489,7 @@ public class FileDefinitionParser {
 		// Inner errors prevail
 		if( errorInSubProperties ) {
 			if( result == P_CODE_YES ) {
-				if( holderInstance.getInstructionType() == AbstractRegion.INSTANCEOF )
+				if( holderInstance.getInstructionType() == AbstractBlock.INSTANCEOF )
 					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, this.currentLineNumber ));
 				else
 					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_PROPERTY, this.currentLineNumber ));
@@ -564,11 +564,11 @@ public class FileDefinitionParser {
 			String line;
 			while(( line = nextLine( br )) != null ) {
 
-				int code = recognizeBlankLine( line, this.definitionFile.getInstructions());
+				int code = recognizeBlankLine( line, this.definitionFile.getBlocks());
 				if( code == P_CODE_YES )
 					continue;
 
-				code = recognizeComment( line, this.definitionFile.getInstructions());
+				code = recognizeComment( line, this.definitionFile.getBlocks());
 				if( code == P_CODE_YES )
 					continue;
 
@@ -594,12 +594,12 @@ public class FileDefinitionParser {
 				if( code == P_CODE_CANCEL )
 					break;
 				else if( code == P_CODE_NO )
-					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_UNRECOGNIZED_INSTRUCTION, this.currentLineNumber ));
+					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_UNRECOGNIZED_BLOCK, this.currentLineNumber ));
 			}
 
 			if( line == null
 					&& this.lastLineEndedWithLineBreak )
-				this.definitionFile.getInstructions().add( new RegionBlank( this.definitionFile, "" ));
+				this.definitionFile.getBlocks().add( new BlockBlank( this.definitionFile, "" ));
 
 		} finally {
 			if( br != null )

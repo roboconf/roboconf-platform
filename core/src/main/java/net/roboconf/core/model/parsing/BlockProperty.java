@@ -20,7 +20,7 @@ package net.roboconf.core.model.parsing;
  * The properties for facets and components.
  * @author Vincent Zurczak - Linagora
  */
-public class RegionProperty extends AbstractRegion {
+public class BlockProperty extends AbstractBlock {
 
 	private String name, value;
 
@@ -29,7 +29,7 @@ public class RegionProperty extends AbstractRegion {
 	 * Constructor.
 	 * @param declaringFile
 	 */
-	public RegionProperty( FileDefinition declaringFile ) {
+	public BlockProperty( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
@@ -39,7 +39,7 @@ public class RegionProperty extends AbstractRegion {
 	 * @param name
 	 * @param value
 	 */
-	public RegionProperty( FileDefinition declaringFile, String name, String value ) {
+	public BlockProperty( FileDefinition declaringFile, String name, String value ) {
 		this( declaringFile );
 		this.name = name;
 		this.value = value;
@@ -93,10 +93,10 @@ public class RegionProperty extends AbstractRegion {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.core.model.parsing.AbstractRegion#getInstructionType()
+	 * @see net.roboconf.core.model.parsing.AbstractBlock#getInstructionType()
 	 */
 	@Override
 	public int getInstructionType() {
-		return AbstractRegion.PROPERTY;
+		return AbstractBlock.PROPERTY;
 	}
 }

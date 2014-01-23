@@ -17,27 +17,35 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * An instruction which designates a blank area (several line breaks, tabulations, etc).
+ * The 'component' block.
  * @author Vincent Zurczak - Linagora
  */
-public class RegionBlank extends AbstractIgnorableInstruction {
+public class BlockComponent extends AbstractBlockHolder {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
-	 * @param content
+	 * @param declaringFile not null
 	 */
-	public RegionBlank( FileDefinition declaringFile, String content ) {
-		super( declaringFile, content );
+	public BlockComponent( FileDefinition declaringFile ) {
+		super( declaringFile );
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.core.model.parsing.AbstractRegion#getInstructionType()
-	 */
+	@Override
+	public String[] getSupportedPropertyNames() {
+		return new String[] {
+			Constants.PROPERTY_GRAPH_CHILDREN,
+			Constants.PROPERTY_GRAPH_EXPORTS,
+			Constants.PROPERTY_GRAPH_ICON_LOCATION,
+			Constants.PROPERTY_GRAPH_INSTALLER,
+			Constants.PROPERTY_COMPONENT_ALIAS,
+			Constants.PROPERTY_COMPONENT_FACETS,
+			Constants.PROPERTY_COMPONENT_IMPORTS
+		};
+	}
+
 	@Override
 	public int getInstructionType() {
-		return AbstractRegion.BLANK;
+		return AbstractBlock.COMPONENT;
 	}
 
 	/*
@@ -46,6 +54,6 @@ public class RegionBlank extends AbstractIgnorableInstruction {
 	 */
 	@Override
 	public String toString() {
-		return "Blank region";
+		return getName();
 	}
 }

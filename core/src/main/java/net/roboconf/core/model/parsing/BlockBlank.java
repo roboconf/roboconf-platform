@@ -17,33 +17,27 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * The 'facet' instruction.
+ * A block for blank areas (several line breaks, tabulations, etc).
  * @author Vincent Zurczak - Linagora
  */
-public class RegionFacet extends AbstractPropertiesHolder {
+public class BlockBlank extends AbstractIgnorableInstruction {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile not null
+	 * @param declaringFile
+	 * @param content
 	 */
-	public RegionFacet( FileDefinition declaringFile ) {
-		super( declaringFile );
+	public BlockBlank( FileDefinition declaringFile, String content ) {
+		super( declaringFile, content );
 	}
 
-	@Override
-	public String[] getSupportedPropertyNames() {
-		return new String[] {
-			Constants.PROPERTY_GRAPH_CHILDREN,
-			Constants.PROPERTY_GRAPH_EXPORTS,
-			Constants.PROPERTY_GRAPH_ICON_LOCATION,
-			Constants.PROPERTY_GRAPH_INSTALLER,
-			Constants.PROPERTY_FACET_EXTENDS
-		};
-	}
-
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.core.model.parsing.AbstractBlock#getInstructionType()
+	 */
 	@Override
 	public int getInstructionType() {
-		return AbstractRegion.FACET;
+		return AbstractBlock.BLANK;
 	}
 
 	/*
@@ -52,6 +46,6 @@ public class RegionFacet extends AbstractPropertiesHolder {
 	 */
 	@Override
 	public String toString() {
-		return getName();
+		return "Blank region";
 	}
 }

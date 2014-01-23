@@ -17,13 +17,13 @@
 package net.roboconf.core.model.parsing;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 /**
- * Group common code for facet and component instructions.
+ * Blocks that can contain other blocks.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractPropertiesHolder extends AbstractRegion {
+public abstract class AbstractBlockHolder extends AbstractBlock {
 
 	/**
 	 * The element's name.
@@ -36,16 +36,16 @@ public abstract class AbstractPropertiesHolder extends AbstractRegion {
 	private String closingInlineComment;
 
 	/**
-	 * The instructions within this element.
+	 * The blocks within this element.
 	 */
-	private final Collection<AbstractRegion> internalInstructions = new ArrayList<AbstractRegion> ();
+	private final List<AbstractBlock> innerBlocks = new ArrayList<AbstractBlock> ();
 
 
 	/**
 	 * Constructor.
 	 * @param declaringFile not null
 	 */
-	public AbstractPropertiesHolder( FileDefinition declaringFile ) {
+	public AbstractBlockHolder( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
@@ -78,17 +78,17 @@ public abstract class AbstractPropertiesHolder extends AbstractRegion {
 	}
 
 	/**
-	 * Finds a property by its name among the one this instance owns.
+	 * Finds a property by its name among the ones this instance owns.
 	 * @param propertyName not null
 	 * @return the associated property, or null if it was not found
 	 */
-	public RegionProperty findPropertyByName( String propertyName ) {
+	public BlockProperty findPropertyBlockByName( String propertyName ) {
 
-		RegionProperty result = null;
-		for( AbstractRegion region : this.internalInstructions ) {
+		BlockProperty result = null;
+		for( AbstractBlock region : this.innerBlocks ) {
 			if( region.getInstructionType() == PROPERTY
-					&& propertyName.equals(((RegionProperty) region).getName())) {
-				result = (RegionProperty) region;
+					&& propertyName.equals(((BlockProperty) region).getName())) {
+				result = (BlockProperty) region;
 				break;
 			}
 		}
@@ -97,10 +97,10 @@ public abstract class AbstractPropertiesHolder extends AbstractRegion {
 	}
 
 	/**
-	 * @return the internalInstructions
+	 * @return the innerBlocks
 	 */
-	public Collection<AbstractRegion> getInternalInstructions() {
-		return this.internalInstructions;
+	public List<AbstractBlock> getInnerBlocks() {
+		return this.innerBlocks;
 	}
 
 	/**

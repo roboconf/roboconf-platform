@@ -27,19 +27,19 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.core.model.ErrorCode;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.parsing.AbstractPropertiesHolder;
-import net.roboconf.core.model.parsing.AbstractRegion;
+import net.roboconf.core.model.parsing.AbstractBlock;
+import net.roboconf.core.model.parsing.AbstractBlockHolder;
+import net.roboconf.core.model.parsing.BlockComponent;
+import net.roboconf.core.model.parsing.BlockFacet;
+import net.roboconf.core.model.parsing.BlockImport;
+import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.parsing.RegionComponent;
-import net.roboconf.core.model.parsing.RegionFacet;
-import net.roboconf.core.model.parsing.RegionImport;
-import net.roboconf.core.model.parsing.RegionProperty;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.impl.ComponentImpl;
@@ -49,25 +49,29 @@ import net.roboconf.core.model.runtime.impl.GraphsImpl;
  * To build a {@link Graphs} from a {@link FileDefinition}.
  * @author Vincent Zurczak - Linagora
  */
-public class FromRelations {
+public class FromGraphDefinition {
 
-	private final FileDefinition relations;
+	private final FileDefinition definition;
 	private final Collection<ModelError> errors = new ArrayList<ModelError> ();
 
-	private Map<String,RegionImport> importUriToImportDeclaration;
+	private Map<String,BlockImport> importUriToImportDeclaration;
 	private Set<String> alreadyProcessedUris;
-	private Map<String,List<RegionFacet>> facetNameToRelationFacets;
-	private Map<String,List<RegionComponent>> componentNameToRelationComponents;
+	private Map<String,List<BlockFacet>> facetNameToRelationFacets;
+	private Map<String,List<BlockComponent>> componentNameToRelationComponents;
 	private Map<String,Component> componentNameToComponent;
 	private Map<String,Collection<String>> componentNameToComponentChildrenNames;
 
 
 	/**
 	 * Constructor.
-	 * @param relations
+	 * @param definition its type must be either {@link FileDefinition#GRAPH} or {@link FileDefinition#AGGREGATOR}
 	 */
-	public FromRelations( FileDefinition relations ) {
-		this.relations = relations;
+	public FromGraphDefinition( FileDefinition definition ) {
+		if( definition.getFileType() != FileDefinition.AGGREGATOR
+				&& definition.getFileType() != FileDefinition.GRAPH )
+			throw new IllegalArgumentException( "File must be of type GRAPH or AGGREGATOR." );
+
+		this.definition = definition;
 	}
 
 
@@ -89,20 +93,20 @@ public class FromRelations {
 	public Graphs buildGraphs() {
 
 		// Initialize collections
-		this.facetNameToRelationFacets = new HashMap<String,List<RegionFacet>> ();
-		this.componentNameToRelationComponents = new HashMap<String,List<RegionComponent>> ();
+		this.facetNameToRelationFacets = new HashMap<String,List<BlockFacet>> ();
+		this.componentNameToRelationComponents = new HashMap<String,List<BlockComponent>> ();
 		this.componentNameToComponent = new HashMap<String,Component> ();
 		this.componentNameToComponentChildrenNames = new HashMap<String,Collection<String>> ();
-		this.importUriToImportDeclaration = new HashMap<String,RegionImport> ();
+		this.importUriToImportDeclaration = new HashMap<String,BlockImport> ();
 		this.alreadyProcessedUris = new HashSet<String> ();
 		this.errors.clear();
 
 		// Process the file and its imports
-		processInstructions( this.relations );
-		this.alreadyProcessedUris.add( String.valueOf( this.relations.getFileLocation()));
+		processInstructions( this.definition );
+		this.alreadyProcessedUris.add( String.valueOf( this.definition.getFileLocation()));
 
 		while( ! this.importUriToImportDeclaration.isEmpty()) {
-			Entry<String,RegionImport> entry = this.importUriToImportDeclaration.entrySet().iterator().next();
+			Entry<String,BlockImport> entry = this.importUriToImportDeclaration.entrySet().iterator().next();
 			String uri = entry.getKey();
 			if( this.alreadyProcessedUris.contains( uri ))
 				continue;
@@ -132,7 +136,7 @@ public class FromRelations {
 		if( this.errors.isEmpty())
 			updateComponentsFromFacets();
 
-		// Only then, search for children - ancestor relations
+		// Only then, search for children - ancestor definition
 		if( this.errors.isEmpty())
 			updateComponentsDependencies();
 
@@ -141,20 +145,20 @@ public class FromRelations {
 	}
 
 
-	private void processInstructions( FileDefinition relations ) {
+	private void processInstructions( FileDefinition definition ) {
 
-		for( AbstractRegion instr : this.relations.getInstructions()) {
-			switch( instr.getInstructionType()) {
-			case AbstractRegion.COMPONENT:
-				processComponent((RegionComponent) instr, relations.getFileLocation());
+		for( AbstractBlock block : this.definition.getBlocks()) {
+			switch( block.getInstructionType()) {
+			case AbstractBlock.COMPONENT:
+				processComponent((BlockComponent) block, definition.getFileLocation());
 				break;
 
-			case AbstractRegion.FACET:
-				processFacet((RegionFacet) instr);
+			case AbstractBlock.FACET:
+				processFacet((BlockFacet) block);
 				break;
 
-			case AbstractRegion.IMPORT:
-				processImport((RegionImport) instr, relations.getFileLocation());
+			case AbstractBlock.IMPORT:
+				processImport((BlockImport) block, definition.getFileLocation());
 				break;
 
 			default:
@@ -165,56 +169,56 @@ public class FromRelations {
 	}
 
 
-	private void processImport( RegionImport instr, URI processedUri ) {
-		String uri = instr.getUri().trim();
+	private void processImport( BlockImport block, URI processedUri ) {
+		String uri = block.getUri().trim();
 
 		// FIXME: to deal with...
 		// try {
 		//	uri = UriHelper.buildNewURI( processedUri, uri ).toString();
-			this.importUriToImportDeclaration.put( uri, instr );
+			this.importUriToImportDeclaration.put( uri, block );
 
 //		} catch( URISyntaxException e ) {
-//			throw new ConversionException( "An URI could not be built from the import definition.",  e, instr );
+//			throw new ConversionException( "An URI could not be built from the import definition.",  e, block );
 //		}
 	}
 
 
-	private void processFacet( RegionFacet instr ) {
+	private void processFacet( BlockFacet block ) {
 
-		List<RegionFacet> facets = this.facetNameToRelationFacets.get( instr.getName());
+		List<BlockFacet> facets = this.facetNameToRelationFacets.get( block.getName());
 		if( facets == null )
-			facets = new ArrayList<RegionFacet> ();
+			facets = new ArrayList<BlockFacet> ();
 
-		facets.add( instr );
-		this.facetNameToRelationFacets.put( instr.getName(), facets );
+		facets.add( block );
+		this.facetNameToRelationFacets.put( block.getName(), facets );
 	}
 
 
-	private void processComponent( RegionComponent instr, URI processedUri ) {
+	private void processComponent( BlockComponent block, URI processedUri ) {
 
 		ComponentImpl component = new ComponentImpl();
-		component.setName( instr.getName());
-		component.setInstallerName( getPropertyValue( instr, Constants.PROPERTY_GRAPH_INSTALLER ));
-		component.setAlias( getPropertyValue( instr, Constants.PROPERTY_COMPONENT_ALIAS ));
-		component.getFacetNames().addAll( getPropertyValues( instr, Constants.PROPERTY_COMPONENT_FACETS ));
-		component.getImportedVariableNames().addAll( getPropertyValues( instr, Constants.PROPERTY_COMPONENT_IMPORTS ));
-		component.getExportedVariables().putAll( getExportedVariables( instr ));
-		component.setIconLocation( getPropertyValue( instr, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
+		component.setName( block.getName());
+		component.setInstallerName( getPropertyValue( block, Constants.PROPERTY_GRAPH_INSTALLER ));
+		component.setAlias( getPropertyValue( block, Constants.PROPERTY_COMPONENT_ALIAS ));
+		component.getFacetNames().addAll( getPropertyValues( block, Constants.PROPERTY_COMPONENT_FACETS ));
+		component.getImportedVariableNames().addAll( getPropertyValues( block, Constants.PROPERTY_COMPONENT_IMPORTS ));
+		component.getExportedVariables().putAll( getExportedVariables( block ));
+		component.setIconLocation( getPropertyValue( block, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
 
 		// Children and ancestors will be resolved once all the components have been read, imports included
-		this.componentNameToComponent.put( instr.getName(), component );
-		this.componentNameToComponentChildrenNames.put( instr.getName(), getPropertyValues( instr, Constants.PROPERTY_GRAPH_CHILDREN ));
+		this.componentNameToComponent.put( block.getName(), component );
+		this.componentNameToComponentChildrenNames.put( block.getName(), getPropertyValues( block, Constants.PROPERTY_GRAPH_CHILDREN ));
 
-		List<RegionComponent> components = this.componentNameToRelationComponents.get( instr.getName());
+		List<BlockComponent> components = this.componentNameToRelationComponents.get( block.getName());
 		if( components == null )
-			components = new ArrayList<RegionComponent> ();
+			components = new ArrayList<BlockComponent> ();
 
-		components.add( instr );
-		this.componentNameToRelationComponents.put( instr.getName(), components );
+		components.add( block );
+		this.componentNameToRelationComponents.put( block.getName(), components );
 	}
 
 
-	private <T extends AbstractPropertiesHolder> void checkUnicity( Map<String,List<T>> map, ErrorCode code ) {
+	private <T extends AbstractBlockHolder> void checkUnicity( Map<String,List<T>> map, ErrorCode code ) {
 
 		for( Map.Entry<String,List<T>> entry : map.entrySet()) {
 			if( entry.getValue().size() == 1 )
@@ -223,7 +227,7 @@ public class FromRelations {
 			StringBuilder sb = new StringBuilder();
 			sb.append( entry.getKey());
 			sb.append( " is defined in:\n" );
-			for( AbstractPropertiesHolder holder : entry.getValue()) {
+			for( AbstractBlockHolder holder : entry.getValue()) {
 				sb.append( " - " );
 
 				FileDefinition file = holder.getDeclaringFile();
@@ -237,7 +241,7 @@ public class FromRelations {
 				sb.append( "\n" );
 			}
 
-			for( AbstractPropertiesHolder holder : entry.getValue()) {
+			for( AbstractBlockHolder holder : entry.getValue()) {
 				ModelError error = new ModelError( code, holder.getLine());
 				error.setDetails( sb.toString());
 				this.errors.add( error );
@@ -258,7 +262,7 @@ public class FromRelations {
 			for( String facetName : c.getFacetNames()) {
 
 				// Find the facet
-				RegionFacet facet = this.facetNameToRelationFacets.get( facetName ).get( 0 );
+				BlockFacet facet = this.facetNameToRelationFacets.get( facetName ).get( 0 );
 				if( facet == null ) {
 					ModelError error = new ModelError( ErrorCode.CO_UNRESOLVED_FACET, 0 );
 					error.setDetails( "Facet name: " + facetName );
@@ -280,7 +284,7 @@ public class FromRelations {
 						continue;
 					}
 
-					RegionFacet extendedFacet = this.facetNameToRelationFacets.get( currentFacet ).get( 0 );
+					BlockFacet extendedFacet = this.facetNameToRelationFacets.get( currentFacet ).get( 0 );
 					if( extendedFacet == null ) {
 						ModelError error = new ModelError( ErrorCode.CO_UNRESOLVED_FACET, 0 );
 						error.setDetails( "Facet name: " + currentFacet );
@@ -301,7 +305,7 @@ public class FromRelations {
 			// Update the component with the inherited properties
 			c.getFacetNames().addAll( additionalComponentFacets );
 			for( String facetName : c.getFacetNames()) {
-				RegionFacet facet = this.facetNameToRelationFacets.get( facetName ).get( 0 );
+				BlockFacet facet = this.facetNameToRelationFacets.get( facetName ).get( 0 );
 
 				c.getExportedVariables().putAll( getExportedVariables( facet ));
 				c.getImportedVariableNames().addAll( getPropertyValues( facet, Constants.PROPERTY_COMPONENT_IMPORTS ));
@@ -358,21 +362,21 @@ public class FromRelations {
 	}
 
 
-	private String getPropertyValue( AbstractPropertiesHolder holder, String propertyName ) {
-		RegionProperty p = holder.findPropertyByName( propertyName );
+	private String getPropertyValue( AbstractBlockHolder holder, String propertyName ) {
+		BlockProperty p = holder.findPropertyBlockByName( propertyName );
 		return p == null ? null : p.getValue();
 	}
 
 
-	private Collection<String> getPropertyValues( AbstractPropertiesHolder holder, String propertyName ) {
-		RegionProperty p = holder.findPropertyByName( propertyName );
+	private Collection<String> getPropertyValues( AbstractBlockHolder holder, String propertyName ) {
+		BlockProperty p = holder.findPropertyBlockByName( propertyName );
 		String propertyValue = p == null ? null : p.getValue();
 		return Utils.splitNicely( propertyValue, Constants.PROPERTY_SEPARATOR );
 	}
 
 
-	private Map<String,String> getExportedVariables( AbstractPropertiesHolder holder ) {
-		RegionProperty p = holder.findPropertyByName( Constants.PROPERTY_GRAPH_EXPORTS );
+	private Map<String,String> getExportedVariables( AbstractBlockHolder holder ) {
+		BlockProperty p = holder.findPropertyBlockByName( Constants.PROPERTY_GRAPH_EXPORTS );
 		Map<String,String> result = new HashMap<String,String> ();
 
 		String propertyValue = p == null ? null : p.getValue();

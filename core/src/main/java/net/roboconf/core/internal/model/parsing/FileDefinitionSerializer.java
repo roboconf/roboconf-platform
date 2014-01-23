@@ -18,17 +18,17 @@ package net.roboconf.core.internal.model.parsing;
 
 import java.util.Iterator;
 
-import net.roboconf.core.model.parsing.AbstractPropertiesHolder;
-import net.roboconf.core.model.parsing.AbstractRegion;
+import net.roboconf.core.model.parsing.AbstractBlock;
+import net.roboconf.core.model.parsing.AbstractBlockHolder;
+import net.roboconf.core.model.parsing.BlockBlank;
+import net.roboconf.core.model.parsing.BlockComment;
+import net.roboconf.core.model.parsing.BlockComponent;
+import net.roboconf.core.model.parsing.BlockFacet;
+import net.roboconf.core.model.parsing.BlockImport;
+import net.roboconf.core.model.parsing.BlockInstanceOf;
+import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.parsing.RegionBlank;
-import net.roboconf.core.model.parsing.RegionComment;
-import net.roboconf.core.model.parsing.RegionComponent;
-import net.roboconf.core.model.parsing.RegionFacet;
-import net.roboconf.core.model.parsing.RegionImport;
-import net.roboconf.core.model.parsing.RegionInstanceOf;
-import net.roboconf.core.model.parsing.RegionProperty;
 import net.roboconf.core.model.validators.ParsingModelValidator;
 
 /**
@@ -65,7 +65,7 @@ public class FileDefinitionSerializer {
 	public String write( FileDefinition definitionFile, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
-		for( Iterator<AbstractRegion> it = definitionFile.getInstructions().iterator(); it.hasNext(); ) {
+		for( Iterator<AbstractBlock> it = definitionFile.getBlocks().iterator(); it.hasNext(); ) {
 			sb.append( write( it.next(), writeComments ));
 			if( it.hasNext())
 				sb.append( this.lineSeparator );
@@ -76,40 +76,40 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param instr an instruction
+	 * @param block an blockuction
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( AbstractRegion instr, boolean writeComments ) {
+	public String write( AbstractBlock block, boolean writeComments ) {
 
 		String result;
-		switch( instr.getInstructionType()) {
-		case AbstractRegion.COMPONENT:
-			result = write((RegionComponent) instr, writeComments );
+		switch( block.getInstructionType()) {
+		case AbstractBlock.COMPONENT:
+			result = write((BlockComponent) block, writeComments );
 			break;
 
-		case AbstractRegion.FACET:
-			result = write((RegionFacet) instr, writeComments );
+		case AbstractBlock.FACET:
+			result = write((BlockFacet) block, writeComments );
 			break;
 
-		case AbstractRegion.INSTANCEOF:
-			result = write((RegionInstanceOf) instr, writeComments, 0 );
+		case AbstractBlock.INSTANCEOF:
+			result = write((BlockInstanceOf) block, writeComments, 0 );
 			break;
 
-		case AbstractRegion.IMPORT:
-			result = write((RegionImport) instr, writeComments );
+		case AbstractBlock.IMPORT:
+			result = write((BlockImport) block, writeComments );
 			break;
 
-		case AbstractRegion.PROPERTY:
-			result = write((RegionProperty) instr, writeComments );
+		case AbstractBlock.PROPERTY:
+			result = write((BlockProperty) block, writeComments );
 			break;
 
-		case AbstractRegion.COMMENT:
-			result = write((RegionComment) instr, writeComments );
+		case AbstractBlock.COMMENT:
+			result = write((BlockComment) block, writeComments );
 			break;
 
-		case AbstractRegion.BLANK:
-			result = write((RegionBlank) instr, writeComments );
+		case AbstractBlock.BLANK:
+			result = write((BlockBlank) block, writeComments );
 			break;
 
 		default:
@@ -122,69 +122,69 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param instr the instruction
+	 * @param block the blockuction
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RegionImport instr, boolean writeComments ) {
+	public String write( BlockImport block, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "import " );
-		sb.append( instr.getUri());
+		sb.append( block.getUri());
 		sb.append( ";" );
 
 		if( writeComments
-				&& instr.getInlineComment() != null )
-			sb.append( instr.getInlineComment());
+				&& block.getInlineComment() != null )
+			sb.append( block.getInlineComment());
 
 		return sb.toString();
 	}
 
 
 	/**
-	 * @param instr the instruction
+	 * @param block the blockuction
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RegionComponent instr, boolean writeComments ) {
-		return writePropertiesHolder( instr, writeComments, 0 );
+	public String write( BlockComponent block, boolean writeComments ) {
+		return writePropertiesHolder( block, writeComments, 0 );
 	}
 
 
 	/**
-	 * @param instr the instruction
+	 * @param block the blockuction
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RegionFacet instr, boolean writeComments ) {
-		return Constants.KEYWORD_FACET + " " + writePropertiesHolder( instr, writeComments, 0 );
+	public String write( BlockFacet block, boolean writeComments ) {
+		return Constants.KEYWORD_FACET + " " + writePropertiesHolder( block, writeComments, 0 );
 	}
 
 
 	/**
-	 * @param instr the instruction
+	 * @param block the blockuction
 	 * @param writeComments true to write comments
 	 * @param indentationLevel the indentation level
 	 * @return a string (never null)
 	 */
-	public String write( RegionInstanceOf instr, boolean writeComments, int indentationLevel ) {
+	public String write( BlockInstanceOf block, boolean writeComments, int indentationLevel ) {
 
 		StringBuilder sb = new StringBuilder();
 		indent( sb, indentationLevel );
 		sb.append( Constants.KEYWORD_INSTANCE_OF );
 		sb.append( " " );
-		sb.append( writePropertiesHolder( instr, writeComments, indentationLevel ));
+		sb.append( writePropertiesHolder( block, writeComments, indentationLevel ));
 
 		return sb.toString();
 	}
 
 
 	/**
-	 * @param instr the instruction
+	 * @param block the blockuction
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RegionBlank instr, boolean writeComments ) {
+	public String write( BlockBlank block, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
 		if( writeComments ) {
@@ -192,8 +192,8 @@ public class FileDefinitionSerializer {
 			// Here, we replace it by a line break.
 			// The error is signaled as a warning in the validation.
 			// Useful if a blank section was built programmatically.
-			if( ParsingModelValidator.validate( instr ).isEmpty())
-				sb.append( instr.getContent());
+			if( ParsingModelValidator.validate( block ).isEmpty())
+				sb.append( block.getContent());
 			else
 				sb.append( this.lineSeparator );
 		}
@@ -203,32 +203,32 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param instr the instruction
+	 * @param block the blockuction
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RegionProperty instr, boolean writeComments ) {
+	public String write( BlockProperty block, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( instr.getName());
+		sb.append( block.getName());
 		sb.append( ": " );
-		sb.append( instr.getValue());
+		sb.append( block.getValue());
 		sb.append( ";" );
 
 		if( writeComments
-				&& instr.getInlineComment() != null )
-			sb.append( instr.getInlineComment());
+				&& block.getInlineComment() != null )
+			sb.append( block.getInlineComment());
 
 		return sb.toString();
 	}
 
 
 	/**
-	 * @param instr the instruction
+	 * @param block the blockuction
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
-	public String write( RegionComment instr, boolean writeComments ) {
+	public String write( BlockComment block, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
 		if( writeComments ) {
@@ -236,11 +236,11 @@ public class FileDefinitionSerializer {
 			// Here, we insert a comment delimiter where needed.
 			// The error is signaled as a warning in the validation.
 			// Useful if a comment was built programmatically.
-			if( ParsingModelValidator.validate( instr ).isEmpty()) {
-				sb.append( instr.getContent());
+			if( ParsingModelValidator.validate( block ).isEmpty()) {
+				sb.append( block.getContent());
 
 			} else {
-				for( String s : instr.getContent().split( "\n" )) {
+				for( String s : block.getContent().split( "\n" )) {
 					if( s.trim().startsWith( Constants.COMMENT_DELIMITER ))
 						sb.append( "# " );
 
@@ -255,12 +255,12 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param holder the instruction
+	 * @param holder the blockuction
 	 * @param writeComments true to write comments
 	 * @param indentationLevel the indentation level
 	 * @return a string (never null)
 	 */
-	private String writePropertiesHolder( AbstractPropertiesHolder holder, boolean writeComments, int indentationLevel ) {
+	private String writePropertiesHolder( AbstractBlockHolder holder, boolean writeComments, int indentationLevel ) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( holder.getName());
@@ -270,16 +270,16 @@ public class FileDefinitionSerializer {
 				&& holder.getInlineComment() != null )
 			sb.append( holder.getInlineComment());
 
-		for( AbstractRegion instr : holder.getInternalInstructions()) {
+		for( AbstractBlock block : holder.getInnerBlocks()) {
 			sb.append( this.lineSeparator );
-			if( instr.getInstructionType() == AbstractRegion.INSTANCEOF ) {
-				sb.append( write((RegionInstanceOf) instr, writeComments, indentationLevel + 1 ));
+			if( block.getInstructionType() == AbstractBlock.INSTANCEOF ) {
+				sb.append( write((BlockInstanceOf) block, writeComments, indentationLevel + 1 ));
 
 			} else {
-				if( instr.getInstructionType() == AbstractRegion.PROPERTY )
+				if( block.getInstructionType() == AbstractBlock.PROPERTY )
 					indent( sb, indentationLevel + 1 );
 
-				sb.append( write( instr, writeComments ));
+				sb.append( write( block, writeComments ));
 			}
 		}
 

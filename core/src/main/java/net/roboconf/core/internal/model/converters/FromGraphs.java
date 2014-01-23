@@ -24,13 +24,13 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import net.roboconf.core.model.parsing.AbstractRegion;
+import net.roboconf.core.model.parsing.AbstractBlock;
+import net.roboconf.core.model.parsing.BlockBlank;
+import net.roboconf.core.model.parsing.BlockComment;
+import net.roboconf.core.model.parsing.BlockComponent;
+import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.parsing.RegionBlank;
-import net.roboconf.core.model.parsing.RegionComment;
-import net.roboconf.core.model.parsing.RegionComponent;
-import net.roboconf.core.model.parsing.RegionProperty;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 
@@ -40,15 +40,22 @@ import net.roboconf.core.model.runtime.Graphs;
  */
 public class FromGraphs {
 
-	public FileDefinition buildFileRelations( Graphs graphs, File targetFile, boolean addComment ) {
+	/**
+	 * Builds a file definition from a graph.
+	 * @param graphs the graphs
+	 * @param targetFile the target file (will not be written)
+	 * @param addComment true to insert generated comments
+	 * @return a non-null file definition
+	 */
+	public FileDefinition buildFileDefinition( Graphs graphs, File targetFile, boolean addComment ) {
 
 		FileDefinition result = new FileDefinition( targetFile );
 		result.setFileType( FileDefinition.GRAPH );
 		if( addComment ) {
 			String s = "# File created from an in-memory model,\n# without a binding to existing files.";
-			RegionComment initialComment = new RegionComment( result, s );
-			result.getInstructions().add( initialComment );
-			result.getInstructions().add( new RegionBlank( result, "\n" ));
+			BlockComment initialComment = new BlockComment( result, s );
+			result.getBlocks().add( initialComment );
+			result.getBlocks().add( new BlockBlank( result, "\n" ));
 		}
 
 		Set<String> alreadySerializedComponentNames = new HashSet<String> ();
@@ -61,7 +68,7 @@ public class FromGraphs {
 			if( alreadySerializedComponentNames.contains( c.getName()))
 				continue;
 
-			result.getInstructions().addAll( buildRelationComponent( result, c, addComment ));
+			result.getBlocks().addAll( buildRelationComponent( result, c, addComment ));
 			alreadySerializedComponentNames.add( c.getName());
 
 			toProcess.addAll( c.getChildren());
@@ -71,8 +78,8 @@ public class FromGraphs {
 	}
 
 
-	private Collection<AbstractRegion> buildRelationComponent( FileDefinition file, Component component, boolean addComment ) {
-		Collection<AbstractRegion> result = new ArrayList<AbstractRegion> ();
+	private Collection<AbstractBlock> buildRelationComponent( FileDefinition file, Component component, boolean addComment ) {
+		Collection<AbstractBlock> result = new ArrayList<AbstractBlock> ();
 
 		// Add a comment
 		if( addComment ) {
@@ -86,22 +93,22 @@ public class FromGraphs {
 				sb.append( facetName );
 			}
 
-			result.add( new RegionComment( file, sb.toString()));
+			result.add( new BlockComment( file, sb.toString()));
 		}
 
 		// Basic properties
-		RegionComponent regionComponent = new RegionComponent( file );
-		regionComponent.setName( component.getName());
-		result.add( regionComponent );
+		BlockComponent blockComponent = new BlockComponent( file );
+		blockComponent.setName( component.getName());
+		result.add( blockComponent );
 
-		RegionProperty p = new RegionProperty( file, Constants.PROPERTY_GRAPH_ICON_LOCATION, component.getIconLocation());
-		regionComponent.getInternalInstructions().add( p );
+		BlockProperty p = new BlockProperty( file, Constants.PROPERTY_GRAPH_ICON_LOCATION, component.getIconLocation());
+		blockComponent.getInnerBlocks().add( p );
 
-		p = new RegionProperty( file, Constants.PROPERTY_COMPONENT_ALIAS, component.getAlias());
-		regionComponent.getInternalInstructions().add( p );
+		p = new BlockProperty( file, Constants.PROPERTY_COMPONENT_ALIAS, component.getAlias());
+		blockComponent.getInnerBlocks().add( p );
 
-		p = new RegionProperty( file, Constants.PROPERTY_GRAPH_INSTALLER, component.getInstallerName());
-		regionComponent.getInternalInstructions().add( p );
+		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_INSTALLER, component.getInstallerName());
+		blockComponent.getInnerBlocks().add( p );
 
 		// Imported Variables
 		StringBuilder sb = new StringBuilder();
@@ -111,8 +118,8 @@ public class FromGraphs {
 				sb.append( ", " );
 		}
 
-		p = new RegionProperty( file, Constants.PROPERTY_COMPONENT_IMPORTS, sb.toString());
-		regionComponent.getInternalInstructions().add( p );
+		p = new BlockProperty( file, Constants.PROPERTY_COMPONENT_IMPORTS, sb.toString());
+		blockComponent.getInnerBlocks().add( p );
 
 		// Exported variables
 		sb = new StringBuilder();
@@ -128,8 +135,8 @@ public class FromGraphs {
 				sb.append( ", " );
 		}
 
-		p = new RegionProperty( file, Constants.PROPERTY_GRAPH_EXPORTS, sb.toString());
-		regionComponent.getInternalInstructions().add( p );
+		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_EXPORTS, sb.toString());
+		blockComponent.getInnerBlocks().add( p );
 
 		// Children
 		sb = new StringBuilder();
@@ -139,8 +146,8 @@ public class FromGraphs {
 				sb.append( ", " );
 		}
 
-		p = new RegionProperty( file, Constants.PROPERTY_GRAPH_CHILDREN, sb.toString());
-		regionComponent.getInternalInstructions().add( p );
+		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_CHILDREN, sb.toString());
+		blockComponent.getInnerBlocks().add( p );
 
 		return result;
 	}

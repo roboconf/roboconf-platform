@@ -183,32 +183,44 @@
 <!-- 						</configuration> -->
 <!-- 					</execution> -->
 <!-- 				</executions> -->
-<!-- 			</plugin> -->
-			
-			<!-- FindBugs -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>findbugs-maven-plugin</artifactId>
-				<version>2.5.3</version>
-				
-				<executions>
-					<execution>
-						<id>find-bugs</id>
-						<phase>compile</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-						<configuration>
-							<failOnError>false</failOnError>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+<!-- 			</plugin> -->			
 		</plugins>
 	</build>
+	
+	
+	<profiles>
+		<profile>
+			<id>find-bugs</id>
+			<activation>
+				<property>
+					<name>findbugs</name>
+					<value>true</value>
+				</property>
+			</activation>
+			
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>findbugs-maven-plugin</artifactId>
+						<version>2.5.3</version>
+						
+						<executions>
+							<execution>
+								<id>find-bugs</id>
+								<phase>compile</phase>
+								<goals>
+									<goal>check</goal>
+								</goals>
+								<configuration>
+									<failOnError>false</failOnError>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
-	<!--
-	<scm> <connection>scm:svn:https://svn.petalslink.org/svnroot/trunk/product/dev/prod/petals</connection> 
-	<developerConnection>${project.scm.connection}</developerConnection> </scm>
-	-->
 </project>

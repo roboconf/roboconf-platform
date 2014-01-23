@@ -17,34 +17,33 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * The instruction for an import.
+ * The 'facet' block.
  * @author Vincent Zurczak - Linagora
  */
-public class RegionImport extends AbstractRegion {
-
-	private String uri;
-
+public class BlockFacet extends AbstractBlockHolder {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
+	 * @param declaringFile not null
 	 */
-	public RegionImport( FileDefinition declaringFile ) {
+	public BlockFacet( FileDefinition declaringFile ) {
 		super( declaringFile );
 	}
 
-	/**
-	 * @return the uri
-	 */
-	public String getUri() {
-		return this.uri;
+	@Override
+	public String[] getSupportedPropertyNames() {
+		return new String[] {
+			Constants.PROPERTY_GRAPH_CHILDREN,
+			Constants.PROPERTY_GRAPH_EXPORTS,
+			Constants.PROPERTY_GRAPH_ICON_LOCATION,
+			Constants.PROPERTY_GRAPH_INSTALLER,
+			Constants.PROPERTY_FACET_EXTENDS
+		};
 	}
 
-	/**
-	 * @param uri the uri to set
-	 */
-	public void setUri( String uri ) {
-		this.uri = uri;
+	@Override
+	public int getInstructionType() {
+		return AbstractBlock.FACET;
 	}
 
 	/*
@@ -53,15 +52,6 @@ public class RegionImport extends AbstractRegion {
 	 */
 	@Override
 	public String toString() {
-		return "import " + this.uri + ";";
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.core.model.parsing.AbstractRegion#getInstructionType()
-	 */
-	@Override
-	public int getInstructionType() {
-		return AbstractRegion.IMPORT;
+		return getName();
 	}
 }

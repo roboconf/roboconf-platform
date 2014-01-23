@@ -17,10 +17,10 @@
 package net.roboconf.core.model.parsing;
 
 /**
- * An instruction which designates an ignorable instruction.
+ * A block that can be ignored.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractIgnorableInstruction extends AbstractRegion {
+public abstract class AbstractIgnorableInstruction extends AbstractBlock {
 
 	private String content;
 
