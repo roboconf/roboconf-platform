@@ -43,7 +43,7 @@ import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.Constants;
+import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.parsing.FileDefinition;
 
 /**
@@ -164,10 +164,10 @@ public class FileDefinitionParser {
 		int result = P_CODE_NO;
 		String alteredLine = line.trim().toLowerCase();
 		if( ! alteredLine.isEmpty()
-				&& ! alteredLine.startsWith( String.valueOf( Constants.COMMENT_DELIMITER ))
-				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_FACET )
-				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_INSTANCE_OF )
-				&& ! alteredLine.toLowerCase().startsWith( Constants.KEYWORD_IMPORT ))
+				&& ! alteredLine.startsWith( String.valueOf( ParsingConstants.COMMENT_DELIMITER ))
+				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )
+				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )
+				&& ! alteredLine.toLowerCase().startsWith( ParsingConstants.KEYWORD_IMPORT ))
 			result = recognizePropertiesHolder( line, br, new BlockComponent( this.definitionFile ));
 
 		return result;
@@ -181,8 +181,8 @@ public class FileDefinitionParser {
 	int recognizeFacet( String line, BufferedReader br ) throws IOException {
 
 		int result = P_CODE_NO;
-		if( line.trim().toLowerCase().startsWith( Constants.KEYWORD_FACET )) {
-			String newLine = line.replaceAll( "\\s*" + Pattern.quote( Constants.KEYWORD_FACET ), "" );
+		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )) {
+			String newLine = line.replaceAll( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_FACET ), "" );
 			result = recognizePropertiesHolder( newLine, br, new BlockFacet( this.definitionFile ));
 		}
 
@@ -198,8 +198,8 @@ public class FileDefinitionParser {
 	int recognizeInstanceOf( String line, BufferedReader br, AbstractBlockHolder holderInstance ) throws IOException {
 
 		int result = P_CODE_NO;
-		if( line.trim().toLowerCase().startsWith( Constants.KEYWORD_INSTANCE_OF )) {
-			String newLine = line.replaceAll( "\\s*" + Pattern.quote( Constants.KEYWORD_INSTANCE_OF ), "" );
+		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )) {
+			String newLine = line.replaceAll( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_INSTANCE_OF ), "" );
 			BlockInstanceOf newInstance = new BlockInstanceOf( this.definitionFile );
 			result = recognizePropertiesHolder( newLine, br, newInstance );
 
@@ -223,7 +223,7 @@ public class FileDefinitionParser {
 	int recognizeComment( String line, Collection<AbstractBlock> blocks ) {
 
 		int result = P_CODE_NO;
-		if( line.trim().startsWith( Constants.COMMENT_DELIMITER )) {
+		if( line.trim().startsWith( ParsingConstants.COMMENT_DELIMITER )) {
 			result = P_CODE_YES;
 			if( ! this.ignoreComments )
 				blocks.add( new BlockComment( this.definitionFile, line ));
@@ -326,7 +326,7 @@ public class FileDefinitionParser {
 	String[] splitFromInlineComment( String line ) {
 
 		String[] result = new String[] { line, "" };
-		int index = line.indexOf( Constants.COMMENT_DELIMITER );
+		int index = line.indexOf( ParsingConstants.COMMENT_DELIMITER );
 		if( index >= 0 ) {
 			result[ 0 ] = line.substring( 0, index );
 			if( ! this.ignoreComments ) {

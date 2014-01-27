@@ -149,4 +149,37 @@ public class FileDefinition {
 
 		return sb.toString();
 	}
+
+	/**
+	 * Transforms a file type into a string.
+	 * @param fileType a file type
+	 * @return a string version of the file type (never null)
+	 */
+	public static String fileTypeAsString( int fileType ) {
+
+		String result;
+		switch( fileType ) {
+		case AGGREGATOR:
+			result = "aggregator";
+			break;
+
+		case GRAPH:
+			result = "graph";
+			break;
+
+		case INSTANCE:
+			result = "intsnace";
+			break;
+
+		case UNDETERMINED:
+			result = "undetermined";
+			break;
+
+		default:
+			result = "unknown";
+			break;
+		}
+
+		return result;
+	}
 }

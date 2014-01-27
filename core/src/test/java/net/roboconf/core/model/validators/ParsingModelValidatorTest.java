@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.Collection;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.parsing.BlockBlank;
@@ -29,7 +30,6 @@ import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
 
 import org.junit.Test;

@@ -19,13 +19,15 @@ package net.roboconf.core.model.helpers;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.impl.InstanceImpl;
 
 /**
  * Helpers related to instances.
  * @author Vincent Zurczak - Linagora
  */
-public class InstancesHelper {
+public class InstanceHelpers {
 
 	/**
 	 * Builds a string representing the path from a root instance to this instance.
@@ -40,9 +42,12 @@ public class InstancesHelper {
 	public static String computeInstancePath( Instance inst ) {
 
 		StringBuilder sb = new StringBuilder();
-		for( Instance current = inst; inst != null; inst = inst.getContainer()) {
-			sb.append( "/" );
-			sb.append( current.getName());
+		for( Instance current = inst; current != null; current = current.getParent()) {
+			StringBuilder currentSb = new StringBuilder( "/" );
+			if( ! Utils.isEmptyOrWhitespaces( current.getName()))
+				currentSb.append( current.getName());
+
+			sb.insert( 0, currentSb.toString());
 		}
 
 		return sb.toString();
@@ -67,6 +72,9 @@ public class InstancesHelper {
 	 * Then, it adds child instances at level 1.<br />
 	 * Then, at level 2, etc.
 	 * </p>
+	 * <p>
+	 * Last elements in the list are leaves instances.
+	 * </p>
 	 *
 	 * @param inst the instance from which we introspect
 	 * <p>
@@ -88,5 +96,16 @@ public class InstancesHelper {
 		}
 
 		return instanceList;
+	}
+
+
+	/**
+	 * Inserts a child instance.
+	 * @param child a child instance (not null)
+	 * @param parent a parent instance (not null)
+	 */
+	public static void insertChild( Instance parent, InstanceImpl child ) {
+		child.setParent( parent );
+		parent.getChildren().add( child );
 	}
 }

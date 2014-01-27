@@ -16,6 +16,8 @@
 
 package net.roboconf.core.model.parsing;
 
+import net.roboconf.core.Constants;
+
 /**
  * The 'facet' block.
  * @author Vincent Zurczak - Linagora

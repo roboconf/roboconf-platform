@@ -24,6 +24,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipFile;
 
 /**
  * Various utilities.
@@ -81,6 +85,21 @@ public class Utils {
 		if( in != null ) {
 			try {
 				in.close();
+			} catch( IOException e ) {
+				// nothing
+			}
+		}
+	}
+
+
+	/**
+	 * Closes a stream quietly.
+	 * @param out an output stream (can be null)
+	 */
+	public static void closeQuietly( OutputStream out ) {
+		if( out != null ) {
+			try {
+				out.close();
 			} catch( IOException e ) {
 				// nothing
 			}
@@ -156,5 +175,75 @@ public class Utils {
 		InputStream is = new FileInputStream( inputFile );
 		copyStream( is, os );
 		is.close();
+	}
+
+
+	/**
+	 * Extracts a ZIP archive in a directory.
+	 * @param zipFile a ZIP file (not null, must exist)
+	 * @param targetDirectory the target directory (must exist and be a directory)
+	 * @throws ZipException if something went wrong
+	 * @throws IOException if something went wrong
+	 */
+	public static void extractZipArchive( File zipFile, File targetDirectory )
+    throws ZipException, IOException {
+
+		// Make some checks
+		if( zipFile == null || targetDirectory == null )
+			throw new IllegalArgumentException( "The ZIP file and the target directory cannot be null." );
+
+		if( ! zipFile.exists())
+			throw new IllegalArgumentException( "ZIP file " + targetDirectory.getName() + " does not exist." );
+
+		if( ! targetDirectory.exists())
+			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " does not exist." );
+
+		if( ! targetDirectory.isDirectory())
+			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " is not a directory." );
+
+		// Load the ZIP file
+		ZipFile theZipFile = new ZipFile( zipFile );
+		Enumeration<? extends ZipEntry> entries = theZipFile.entries();
+
+		// And start the copy
+		try {
+			while( entries.hasMoreElements()) {
+				FileOutputStream os = null;
+				try {
+					ZipEntry entry = entries.nextElement();
+					os = new FileOutputStream( new File( targetDirectory, entry.getName()));
+					copyStream( theZipFile.getInputStream( entry ), os );
+
+				} finally {
+					closeQuietly( os );
+				}
+			}
+
+		} finally {
+			// Close the stream
+			theZipFile.close();
+		}
+	}
+
+
+	/**
+	 * Deletes files recursively.
+	 * @param files the files to delete
+	 * @throws IOException if a file could not be deleted
+	 */
+	public static void deleteFilesRecursively( File... files ) throws IOException {
+
+		if( files == null )
+			return;
+
+		for( File file : files ) {
+			if( file.exists()) {
+				if( file.isDirectory())
+					deleteFilesRecursively( file.listFiles());
+
+				if( ! file.delete())
+					throw new IOException( file.getAbsolutePath() + " could not be deleted." );
+			}
+		}
 	}
 }

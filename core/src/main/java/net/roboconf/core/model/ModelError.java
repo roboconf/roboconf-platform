@@ -17,16 +17,14 @@
 package net.roboconf.core.model;
 
 import net.roboconf.core.ErrorCode;
+import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
 
 /**
  * A model error instantiates and localizes an {@link ErrorCode}.
  * @author Vincent Zurczak - Linagora
  */
-public class ModelError {
-
-	private ErrorCode errorCode;
-	private String details;
+public class ModelError extends RoboconfError {
 	private int line;
 
 
@@ -36,36 +34,8 @@ public class ModelError {
 	 * @param line a line number
 	 */
 	public ModelError( ErrorCode errorCode, int line ) {
-		this.errorCode = errorCode;
+		super( errorCode );
 		this.line = line;
-	}
-
-	/**
-	 * @return the errorCode
-	 */
-	public ErrorCode getErrorCode() {
-		return this.errorCode;
-	}
-
-	/**
-	 * @param errorCode the errorCode to set
-	 */
-	public void setErrorCode( ErrorCode errorCode ) {
-		this.errorCode = errorCode;
-	}
-
-	/**
-	 * @return the details
-	 */
-	public String getDetails() {
-		return this.details;
-	}
-
-	/**
-	 * @param details the details to set
-	 */
-	public void setDetails( String details ) {
-		this.details = details;
 	}
 
 	/**
@@ -80,15 +50,6 @@ public class ModelError {
 	 */
 	public void setLine( int line ) {
 		this.line = line;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return this.errorCode.getMsg();
 	}
 
 	/*

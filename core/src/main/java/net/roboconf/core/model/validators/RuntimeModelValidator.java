@@ -23,9 +23,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
+import net.roboconf.core.model.runtime.Instance;
 
 /**
  * A set of methods to validate runtime model objects.
@@ -33,7 +36,7 @@ import net.roboconf.core.model.runtime.Graphs;
  */
 public class RuntimeModelValidator {
 
-	public static Collection<String> validate( Component component ) {
+	public static Collection<RoboconfError> validate( Component component ) {
 
 		Collection<String> result = new ArrayList<String> ();
 		if( Utils.isEmptyOrWhitespaces( component.getAlias())) {
@@ -42,11 +45,11 @@ public class RuntimeModelValidator {
 
 		// A component cannot import variables it exports
 
-		return result;
+		return null;
 	}
 
 
-	public static Collection<String> validate( Graphs graphs ) {
+	public static Collection<RoboconfError> validate( Graphs graphs ) {
 
 		Collection<String> result = new ArrayList<String> ();
 		if( graphs.getRootComponents().isEmpty()) {
@@ -65,7 +68,7 @@ public class RuntimeModelValidator {
 			if( alreadyChecked.contains( c ))
 				continue;
 
-			result.addAll( validate( c ));
+			// result.addAll( validate( c ));
 			alreadyChecked.add( c );
 			toProcess.addAll( c.getChildren());
 
@@ -85,6 +88,18 @@ public class RuntimeModelValidator {
 		// Cycles?
 
 
-		return result;
+		return null;
+	}
+
+
+	public static Collection<RoboconfError> validate( Collection<Instance> instances ) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public static Collection<RoboconfError> validate( ApplicationDescriptor descriptor ) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

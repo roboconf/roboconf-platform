@@ -27,7 +27,7 @@ import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.Constants;
+import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.validators.ParsingModelValidator;
 
@@ -157,7 +157,7 @@ public class FileDefinitionSerializer {
 	 * @return a string (never null)
 	 */
 	public String write( BlockFacet block, boolean writeComments ) {
-		return Constants.KEYWORD_FACET + " " + writePropertiesHolder( block, writeComments, 0 );
+		return ParsingConstants.KEYWORD_FACET + " " + writePropertiesHolder( block, writeComments, 0 );
 	}
 
 
@@ -171,7 +171,7 @@ public class FileDefinitionSerializer {
 
 		StringBuilder sb = new StringBuilder();
 		indent( sb, indentationLevel );
-		sb.append( Constants.KEYWORD_INSTANCE_OF );
+		sb.append( ParsingConstants.KEYWORD_INSTANCE_OF );
 		sb.append( " " );
 		sb.append( writePropertiesHolder( block, writeComments, indentationLevel ));
 
@@ -241,7 +241,7 @@ public class FileDefinitionSerializer {
 
 			} else {
 				for( String s : block.getContent().split( "\n" )) {
-					if( s.trim().startsWith( Constants.COMMENT_DELIMITER ))
+					if( s.trim().startsWith( ParsingConstants.COMMENT_DELIMITER ))
 						sb.append( "# " );
 
 					sb.append( s );

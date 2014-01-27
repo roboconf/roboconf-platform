@@ -20,7 +20,7 @@ package net.roboconf.core.model.parsing;
  * A set of constants related to parsing of configuration files.
  * @author Vincent Zurczak - Linagora
  */
-public interface Constants {
+public interface ParsingConstants {
 
 	/**
 	 * The symbols that indicates the beginning of a comment.
@@ -73,65 +73,4 @@ public interface Constants {
 	 * The pattern for an image file name.
 	 */
 	String PATTERN_IMAGE = "[^\\s]+\\.((png)|(gif)|(jpg)|(jpeg))$";
-
-
-
-
-	/**
-	 * Keyword for facet property.
-	 */
-	String PROPERTY_FACET_EXTENDS = "extends";
-
-
-	/**
-	 * Keyword for component property.
-	 */
-	String PROPERTY_COMPONENT_ALIAS = "alias";
-
-	/**
-	 * Keyword for component property.
-	 */
-	String PROPERTY_COMPONENT_FACETS = "facets";
-
-	/**
-	 * Keyword for component property.
-	 */
-	String PROPERTY_COMPONENT_IMPORTS = "imports";
-
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_EXPORTS = "exports";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_CHILDREN = "children";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_ICON_LOCATION = "icon";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_INSTALLER = "installer";
-
-
-	/**
-	 * Keyword for an instance property.
-	 */
-	String PROPERTY_INSTANCE_NAME = "name";
-
-	/**
-	 * Keyword for an instance property.
-	 */
-	String PROPERTY_INSTANCE_CARDINALITY = "cardinality";
-
-	/**
-	 * Keyword for an instance property.
-	 */
-	String PROPERTY_INSTANCE_CHANNEL = "channel";
 }

@@ -18,26 +18,40 @@ package net.roboconf.core.model.runtime.impl;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
-import net.roboconf.core.model.helpers.InstancesHelper;
-import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 
 /**
- * A basic implementation of the {@link Application} interface.
+ * A basic implementation of the {@link Instance} interface.
  * @author Vincent Zurczak - Linagora
  */
 public class InstanceImpl implements Instance {
 
 	private String name, channel;
 	private Component component;
-	private Instance container;
-	private final Collection<Instance> children = new HashSet<Instance> ();
+	private Instance parent;
+	private final Collection<Instance> children = new LinkedHashSet<Instance> ();
 	private final Map<String,String> overridenExports = new HashMap<String,String> ();
 
+
+	/**
+	 * Constructor.
+	 */
+	public InstanceImpl() {
+		// nothing
+	}
+
+	/**
+	 * Constructor.
+	 * @param name
+	 */
+	public InstanceImpl( String name ) {
+		this.name = name;
+	}
 
 	/**
 	 * @return the name
@@ -85,18 +99,18 @@ public class InstanceImpl implements Instance {
 	}
 
 	/**
-	 * @return the container
+	 * @return the parent
 	 */
 	@Override
-	public Instance getContainer() {
-		return this.container;
+	public Instance getParent() {
+		return this.parent;
 	}
 
 	/**
-	 * @param container the container to set
+	 * @param container the parent to set
 	 */
-	public void setContainer( Instance container ) {
-		this.container = container;
+	public void setParent( Instance parent ) {
+		this.parent = parent;
 	}
 
 	/**
@@ -111,19 +125,19 @@ public class InstanceImpl implements Instance {
 	 * @return the overridenExports
 	 */
 	@Override
-	public Map<String, String> getOverridenExports() {
+	public Map<String,String> getOverriddenExports() {
 		return this.overridenExports;
 	}
 
 	@Override
 	public int hashCode() {
-		return InstancesHelper.computeInstancePath( this ).hashCode();
+		return InstanceHelpers.computeInstancePath( this ).hashCode();
 	}
 
 	@Override
 	public boolean equals( Object obj ) {
 		return obj instanceof Instance
-				&& InstancesHelper.haveSamePath( this, (Instance) obj);
+				&& InstanceHelpers.haveSamePath( this, (Instance) obj);
 	}
 
 	@Override

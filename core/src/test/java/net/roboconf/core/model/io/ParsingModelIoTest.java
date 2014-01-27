@@ -25,7 +25,7 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.parsing.Constants;
+import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.parsing.FileDefinition;
 
 import org.junit.Test;
@@ -113,17 +113,17 @@ public class ParsingModelIoTest {
 
 		// The same, but without writing comments
 		s = ParsingModelIo.writeConfigurationFile( rel, false, null );
-		Assert.assertFalse( f.getName() + ": serialized model should not contain a comment delimiter.",  s.contains( Constants.COMMENT_DELIMITER ));
+		Assert.assertFalse( f.getName() + ": serialized model should not contain a comment delimiter.",  s.contains( ParsingConstants.COMMENT_DELIMITER ));
 
 		// Ignore comments at parsing time
 		rel = ParsingModelIo.readConfigurationFile( f, true );
 		Assert.assertTrue( f.getName() + ": parsing errors were found.", rel.getParsingErrors().isEmpty());
 
 		s = ParsingModelIo.writeConfigurationFile( rel, true, null );
-		Assert.assertFalse( f.getName() + ": serialized model should not contain a comment delimiter.",  s.contains( Constants.COMMENT_DELIMITER ));
+		Assert.assertFalse( f.getName() + ": serialized model should not contain a comment delimiter.",  s.contains( ParsingConstants.COMMENT_DELIMITER ));
 
 		s = ParsingModelIo.writeConfigurationFile( rel, false, null );
-		Assert.assertFalse( f.getName() + ": serialized model should not contain a comment delimiter.",  s.contains( Constants.COMMENT_DELIMITER ));
+		Assert.assertFalse( f.getName() + ": serialized model should not contain a comment delimiter.",  s.contains( ParsingConstants.COMMENT_DELIMITER ));
 	}
 
 

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ModelError;
@@ -37,8 +38,8 @@ import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.parsing.ParsingConstants;
 
 /**
  * A set of methods to validate parsing model objects.
@@ -151,10 +152,10 @@ public class ParsingModelValidator {
 		} else {
 			String name = prop.getValue();
 			if( block.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_CARDINALITY ) != null ) {
-				if( ! name.contains( Constants.INSTANCE_INDEX_MARKER ))
+				if( ! name.contains( ParsingConstants.INSTANCE_INDEX_MARKER ))
 					result.add( new ModelError( ErrorCode.PM_MISSING_INDEX_REFERENCE, block.getLine()));
 
-			} else if( name.contains( Constants.INSTANCE_INDEX_MARKER )) {
+			} else if( name.contains( ParsingConstants.INSTANCE_INDEX_MARKER )) {
 				result.add( new ModelError( ErrorCode.PM_INVALID_INDEX_REFERENCE_USE, block.getLine()));
 			}
 		}
@@ -200,8 +201,8 @@ public class ParsingModelValidator {
 			result.add( new ModelError( ErrorCode.PM_EMPTY_PROPERTY_VALUE, line ));
 
 		} else if( Constants.PROPERTY_GRAPH_CHILDREN.equals( name )) {
-			for( String s : Utils.splitNicely( value, Constants.PROPERTY_SEPARATOR )) {
-				if( s.matches( Constants.PATTERN_ID ))
+			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
+				if( s.matches( ParsingConstants.PATTERN_ID ))
 					continue;
 
 				ModelError error = new ModelError( ErrorCode.PM_INVALID_CHILD_NAME, line );
@@ -215,11 +216,11 @@ public class ParsingModelValidator {
 		} else if( Constants.PROPERTY_COMPONENT_FACETS.equals( name )
 				|| Constants.PROPERTY_FACET_EXTENDS.equals( name )) {
 
-			for( String s : Utils.splitNicely( value, Constants.PROPERTY_SEPARATOR )) {
+			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
 				if( Utils.isEmptyOrWhitespaces( s )) {
 					result.add( new ModelError( ErrorCode.PM_EMPTY_REFERENCED_FACET_NAME, line ));
 
-				} else if( ! s.matches( Constants.PATTERN_ID )) {
+				} else if( ! s.matches( ParsingConstants.PATTERN_ID )) {
 					ModelError error = new ModelError( ErrorCode.PM_INVALID_FACET_NAME, line );
 					error.setDetails( "Facet name: " + s );
 					result.add( error );
@@ -227,10 +228,10 @@ public class ParsingModelValidator {
 			}
 
 		} else if( Constants.PROPERTY_COMPONENT_IMPORTS.equals( name )) {
-			for( String s : Utils.splitNicely( value, Constants.PROPERTY_SEPARATOR )) {
+			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
 				if( Utils.isEmptyOrWhitespaces( s ))
 					result.add( new ModelError( ErrorCode.PM_EMPTY_VARIABLE_NAME, line ));
-				else if( ! s.matches( Constants.PATTERN_ID ))
+				else if( ! s.matches( ParsingConstants.PATTERN_ID ))
 					result.add( new ModelError( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, line ));
 				else if( ! s.contains( "." )
 						|| s.indexOf( '.' ) == s.length() -1 )
@@ -238,20 +239,20 @@ public class ParsingModelValidator {
 			}
 
 		} else if( Constants.PROPERTY_GRAPH_EXPORTS.equals( name )) {
-			for( String s : Utils.splitNicely( value, Constants.PROPERTY_SEPARATOR )) {
+			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
 				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
 				if( Utils.isEmptyOrWhitespaces( entry.getKey()))
 					result.add( new ModelError( ErrorCode.PM_EMPTY_VARIABLE_NAME, line ));
-				else if( ! entry.getKey().matches( Constants.PATTERN_ID ))
+				else if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
 					result.add( new ModelError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, line ));
 			}
 
 		} else if( Constants.PROPERTY_GRAPH_ICON_LOCATION.equals( name )) {
-			if( ! value.toLowerCase().matches( Constants.PATTERN_IMAGE ))
+			if( ! value.toLowerCase().matches( ParsingConstants.PATTERN_IMAGE ))
 				result.add( new ModelError( ErrorCode.PM_INVALID_ICON_LOCATION, line ));
 
 		} else if( Constants.PROPERTY_GRAPH_INSTALLER.equals( name )) {
-			if( ! value.matches( Constants.PATTERN_ID ))
+			if( ! value.matches( ParsingConstants.PATTERN_ID ))
 				result.add( new ModelError( ErrorCode.PM_INVALID_INSTALLER_NAME, line ));
 
 		} else if( Constants.PROPERTY_INSTANCE_NAME.equals( name )) {
@@ -284,7 +285,7 @@ public class ParsingModelValidator {
 		Collection<ModelError> result = new ArrayList<ModelError> ();
 		int cpt = 0;
 		for( String s : block.getContent().split( "\n" )) {
-			if( ! s.trim().startsWith( Constants.COMMENT_DELIMITER ))
+			if( ! s.trim().startsWith( ParsingConstants.COMMENT_DELIMITER ))
 				result.add( new ModelError( ErrorCode.PM_MALFORMED_COMMENT, block.getLine() + cpt ));
 
 			cpt ++;
@@ -321,7 +322,7 @@ public class ParsingModelValidator {
 		String name = holder.getName();
 		if( Utils.isEmptyOrWhitespaces( name ))
 			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder.getLine()));
-		else if( ! name.matches( Constants.PATTERN_ID ))
+		else if( ! name.matches( ParsingConstants.PATTERN_ID ))
 			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_INVALID_FACET_NAME : ErrorCode.PM_INVALID_COMPONENT_NAME, holder.getLine()));
 		else if( name.contains( "." ))
 			result.add( new ModelError( ErrorCode.PM_DOT_IS_NOT_ALLOWED, holder.getLine()));

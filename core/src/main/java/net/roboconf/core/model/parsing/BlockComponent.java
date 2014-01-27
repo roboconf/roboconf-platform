@@ -16,6 +16,8 @@
 
 package net.roboconf.core.model.parsing;
 
+import net.roboconf.core.Constants;
+
 /**
  * The 'component' block.
  * @author Vincent Zurczak - Linagora

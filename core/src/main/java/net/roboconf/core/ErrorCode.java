@@ -75,13 +75,29 @@ public enum ErrorCode {
 	PM_MALFORMED_BLANK( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "A blank section contains non-blank characters. It will be ignored at serialization time." ),
 
 	// Conversion Errors
+	CO_NOT_A_GRAPH( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A graph file imports a file which is not a graph file." ),
 	CO_UNREACHABLE_FILE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A configuration file could not be read." ),
 	CO_UNRESOLVED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "The facet could not be resolved. It was not declared anywhere." ),
 	CO_CYCLE_IN_FACETS( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A cycle was found in facet definitions." ),
-	CO_ALREADY_DEFINED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This facet was already defined." ),
-	CO_ALREADY_DEFINED_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This component was already defined." ),
+	CO_ALREADY_DEFINED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This facet was defined more than once." ),
+	CO_ALREADY_DEFINED_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This component was defined more than once." ),
+	CO_ALREADY_DEFINED_ROOT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This root instance was defined more than once." ),
 
 	// Runtime Model Errors
+
+
+	// Projects Errors
+	PROJ_NO_GRAPH_DIR( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A Roboconf project must contain a 'graph' directory with the graph(s) definition(s)." ),
+	PROJ_NO_DESC_DIR( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A Roboconf project must contain a 'descriptor' directory with the application description." ),
+	PROJ_NO_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor was not found (application.properties)." ),
+	PROJ_MISSING_GRAPH_EP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The entry-point for the graph(s) was not found." ),
+	PROJ_MISSING_INSTANCE_EP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The entry-point for the instance(s) was not found." ),
+	PROJ_NOT_A_GRAPH( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A graph(s) file was expected." ),
+	PROJ_NOT_AN_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "An instance(s) file was expected." ),
+	PROJ_EXTRACT_TEMP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Roboconf failed to extract the ZIP archive (temporary directory)." ),
+	PROJ_EXTRACT_ZIP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Roboconf failed to extract the ZIP archive (ZIP reading)." ),
+	PROJ_DELETE_TEMP( ErrorLevel.WARNING, ErrorCategory.PROJECT, "Roboconf failed to delete a temporary directory." ),
+	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
 
 
 	// Execution Errors
@@ -89,14 +105,14 @@ public enum ErrorCode {
 
 
 	/**
-	 * Error categories.
+	 * RoboconfError categories.
 	 */
 	public enum ErrorCategory {
-		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, EXECUTION;
+		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, PROJECT, EXECUTION;
 	}
 
 	/**
-	 * Error levels.
+	 * RoboconfError levels.
 	 */
 	public enum ErrorLevel {
 		SEVERE, WARNING;

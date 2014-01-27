@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.model.converters;
+package net.roboconf.core.model.converters;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -27,18 +27,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.internal.utils.ModelUtils;
 import net.roboconf.core.model.ModelError;
-import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.AbstractBlockHolder;
 import net.roboconf.core.model.parsing.BlockComponent;
 import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockImport;
-import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
@@ -108,21 +106,36 @@ public class FromGraphDefinition {
 		while( ! this.importUriToImportDeclaration.isEmpty()) {
 			Entry<String,BlockImport> entry = this.importUriToImportDeclaration.entrySet().iterator().next();
 			String uri = entry.getKey();
+			this.importUriToImportDeclaration.remove( uri );
+			this.alreadyProcessedUris.add( uri );
+
 			if( this.alreadyProcessedUris.contains( uri ))
 				continue;
 
+			// Load the file
+			FileDefinition importedDefinition;
 			try {
-				FileDefinition importedRelations = new FileDefinitionParser( uri, true ).read();
-				processInstructions( importedRelations );
+				importedDefinition = new FileDefinitionParser( uri, true ).read();
 
 			} catch( URISyntaxException e ) {
 				ModelError error = new ModelError( ErrorCode.CO_UNREACHABLE_FILE, 0 );
 				error.setDetails( "Import location: " + uri );
 				this.errors.add( error );
+				continue;
 			}
 
-			this.importUriToImportDeclaration.remove( uri );
-			this.alreadyProcessedUris.add( uri );
+			// Check the file type
+			if( this.definition.getFileType() != FileDefinition.AGGREGATOR
+					&& this.definition.getFileType() != FileDefinition.GRAPH ) {
+
+				ModelError error = new ModelError( ErrorCode.CO_NOT_A_GRAPH, 0 );
+				error.setDetails( "Imported file  " + uri + " is of type " + FileDefinition.fileTypeAsString( this.definition.getFileType()) + "." );
+				this.errors.add( error );
+				continue;
+			}
+
+			// Process the file
+			processInstructions( importedDefinition );
 		}
 
 		// Check names uniqueness
@@ -198,16 +211,18 @@ public class FromGraphDefinition {
 
 		ComponentImpl component = new ComponentImpl();
 		component.setName( block.getName());
-		component.setInstallerName( getPropertyValue( block, Constants.PROPERTY_GRAPH_INSTALLER ));
-		component.setAlias( getPropertyValue( block, Constants.PROPERTY_COMPONENT_ALIAS ));
-		component.getFacetNames().addAll( getPropertyValues( block, Constants.PROPERTY_COMPONENT_FACETS ));
-		component.getImportedVariableNames().addAll( getPropertyValues( block, Constants.PROPERTY_COMPONENT_IMPORTS ));
-		component.getExportedVariables().putAll( getExportedVariables( block ));
-		component.setIconLocation( getPropertyValue( block, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
+		component.setInstallerName( ModelUtils.getPropertyValue( block, Constants.PROPERTY_GRAPH_INSTALLER ));
+		component.setAlias( ModelUtils.getPropertyValue( block, Constants.PROPERTY_COMPONENT_ALIAS ));
+		component.getFacetNames().addAll( ModelUtils.getPropertyValues( block, Constants.PROPERTY_COMPONENT_FACETS ));
+		component.getImportedVariableNames().addAll( ModelUtils.getPropertyValues( block, Constants.PROPERTY_COMPONENT_IMPORTS ));
+		component.getExportedVariables().putAll( ModelUtils.getExportedVariables( block ));
+		component.setIconLocation( ModelUtils.getPropertyValue( block, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
 
 		// Children and ancestors will be resolved once all the components have been read, imports included
 		this.componentNameToComponent.put( block.getName(), component );
-		this.componentNameToComponentChildrenNames.put( block.getName(), getPropertyValues( block, Constants.PROPERTY_GRAPH_CHILDREN ));
+		this.componentNameToComponentChildrenNames.put(
+				block.getName(),
+				ModelUtils.getPropertyValues( block, Constants.PROPERTY_GRAPH_CHILDREN ));
 
 		List<BlockComponent> components = this.componentNameToRelationComponents.get( block.getName());
 		if( components == null )
@@ -292,7 +307,7 @@ public class FromGraphDefinition {
 						continue;
 					}
 
-					for( String extendedFacetName : getPropertyValues( extendedFacet, Constants.PROPERTY_COMPONENT_FACETS ))
+					for( String extendedFacetName : ModelUtils.getPropertyValues( extendedFacet, Constants.PROPERTY_COMPONENT_FACETS ))
 						allFacets.add( extendedFacetName );
 
 					allFacets.remove( currentFacet );
@@ -307,16 +322,16 @@ public class FromGraphDefinition {
 			for( String facetName : c.getFacetNames()) {
 				BlockFacet facet = this.facetNameToRelationFacets.get( facetName ).get( 0 );
 
-				c.getExportedVariables().putAll( getExportedVariables( facet ));
-				c.getImportedVariableNames().addAll( getPropertyValues( facet, Constants.PROPERTY_COMPONENT_IMPORTS ));
+				c.getExportedVariables().putAll( ModelUtils.getExportedVariables( facet ));
+				c.getImportedVariableNames().addAll( ModelUtils.getPropertyValues( facet, Constants.PROPERTY_COMPONENT_IMPORTS ));
 				if( c.getInstallerName() == null )
-					c.setInstallerName( getPropertyValue( facet, Constants.PROPERTY_GRAPH_INSTALLER ));
+					c.setInstallerName( ModelUtils.getPropertyValue( facet, Constants.PROPERTY_GRAPH_INSTALLER ));
 
 				if( c.getIconLocation() == null )
-					c.setIconLocation( getPropertyValue( facet, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
+					c.setIconLocation( ModelUtils.getPropertyValue( facet, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
 
 				Collection<String> children = this.componentNameToComponentChildrenNames.get( c.getName());
-				children.addAll( getPropertyValues( facet, Constants.PROPERTY_GRAPH_CHILDREN ));
+				children.addAll( ModelUtils.getPropertyValues( facet, Constants.PROPERTY_GRAPH_CHILDREN ));
 				this.componentNameToComponentChildrenNames.put( c.getName(), children );
 			}
 		}
@@ -356,34 +371,6 @@ public class FromGraphDefinition {
 		for( Component c : this.componentNameToComponent.values()) {
 			if( c.getAncestors().isEmpty())
 				result.getRootComponents().add( c );
-		}
-
-		return result;
-	}
-
-
-	private String getPropertyValue( AbstractBlockHolder holder, String propertyName ) {
-		BlockProperty p = holder.findPropertyBlockByName( propertyName );
-		return p == null ? null : p.getValue();
-	}
-
-
-	private Collection<String> getPropertyValues( AbstractBlockHolder holder, String propertyName ) {
-		BlockProperty p = holder.findPropertyBlockByName( propertyName );
-		String propertyValue = p == null ? null : p.getValue();
-		return Utils.splitNicely( propertyValue, Constants.PROPERTY_SEPARATOR );
-	}
-
-
-	private Map<String,String> getExportedVariables( AbstractBlockHolder holder ) {
-		BlockProperty p = holder.findPropertyBlockByName( Constants.PROPERTY_GRAPH_EXPORTS );
-		Map<String,String> result = new HashMap<String,String> ();
-
-		String propertyValue = p == null ? null : p.getValue();
-		for( String s : Utils.splitNicely( propertyValue, Constants.PROPERTY_SEPARATOR )) {
-			Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
-			// Prefix with the facet or component name.
-			result.put( holder.getName() + "." + entry.getKey(), entry.getValue());
 		}
 
 		return result;

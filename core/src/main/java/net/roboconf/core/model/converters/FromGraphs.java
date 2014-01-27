@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.model.converters;
+package net.roboconf.core.model.converters;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,12 +24,12 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockBlank;
 import net.roboconf.core.model.parsing.BlockComment;
 import net.roboconf.core.model.parsing.BlockComponent;
 import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.Constants;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
@@ -68,7 +68,7 @@ public class FromGraphs {
 			if( alreadySerializedComponentNames.contains( c.getName()))
 				continue;
 
-			result.getBlocks().addAll( buildRelationComponent( result, c, addComment ));
+			result.getBlocks().addAll( buildComponent( result, c, addComment ));
 			alreadySerializedComponentNames.add( c.getName());
 
 			toProcess.addAll( c.getChildren());
@@ -78,7 +78,7 @@ public class FromGraphs {
 	}
 
 
-	private Collection<AbstractBlock> buildRelationComponent( FileDefinition file, Component component, boolean addComment ) {
+	private Collection<AbstractBlock> buildComponent( FileDefinition file, Component component, boolean addComment ) {
 		Collection<AbstractBlock> result = new ArrayList<AbstractBlock> ();
 
 		// Add a comment

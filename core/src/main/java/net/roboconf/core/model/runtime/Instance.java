@@ -28,7 +28,7 @@ public interface Instance {
 	String getName();
 	String getChannel();
 	Component getComponent();
-	Map<String,String> getOverridenExports();
-	Instance getContainer();
+	Map<String,String> getOverriddenExports();
+	Instance getParent();
 	Collection<Instance> getChildren();
 }

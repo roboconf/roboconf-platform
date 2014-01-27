@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model.parsing;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.utils.Utils;
 
 /**

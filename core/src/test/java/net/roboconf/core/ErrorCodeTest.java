@@ -39,7 +39,7 @@ public class ErrorCodeTest {
 		for( ErrorCode code : ErrorCode.values()) {
 			ErrorCode lastCode = categoryToLastCode.get( code.getCategory());
 			if( lastCode != null )
-				Assert.assertTrue( "Error code " + code + " is already used.", code.getErrorId() > lastCode.getErrorId());
+				Assert.assertTrue( "RoboconfError code " + code + " is already used.", code.getErrorId() > lastCode.getErrorId());
 
 			categoryToLastCode.put( code.getCategory(), code );
 		}
@@ -47,7 +47,7 @@ public class ErrorCodeTest {
 
 
 	/**
-	 * Error codes must have a have a given prefix depending on their category.
+	 * RoboconfError codes must have a have a given prefix depending on their category.
 	 */
 	@Test
 	public void testCodesPrefixes() {
@@ -58,6 +58,7 @@ public class ErrorCodeTest {
 		categoryToPrefix.put( ErrorCategory.PARSING_MODEL, "PM_" );
 		categoryToPrefix.put( ErrorCategory.RUNTIME_MODEL, "RM_" );
 		categoryToPrefix.put( ErrorCategory.EXECUTION, "EXEC_" );
+		categoryToPrefix.put( ErrorCategory.PROJECT, "PROJ_" );
 
 		for( ErrorCode code : ErrorCode.values()) {
 			String prefix = categoryToPrefix.get( code.getCategory());
@@ -68,7 +69,7 @@ public class ErrorCodeTest {
 
 
 	/**
-	 * Error codes must be in upper case.
+	 * RoboconfError codes must be in upper case.
 	 */
 	@Test
 	public void testCodesUpperCase() {
