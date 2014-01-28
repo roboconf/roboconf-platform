@@ -112,78 +112,70 @@
 			</plugins>
 		</pluginManagement>
 		
-		
-		<!-- STOOOOOOOOOOOOOOOOOOOOOOOOP!!!! -->
-		<!-- 
-			Do not delete the following configuration, even if it is commented. 
-			It aims at checking some quality rules.	
-			For the moment, we have other things to manage, but they will be uncommented soon.
-		-->
-		
 		<plugins>			
 			<!-- Find Unused Dependencies -->
-<!-- 			<plugin> -->
-<!-- 				<groupId>org.apache.maven.plugins</groupId> -->
-<!-- 				<artifactId>maven-dependency-plugin</artifactId> -->
-<!-- 				<version>2.8</version> -->
-<!-- 				<executions> -->
-<!-- 					<execution> -->
-<!-- 						<id>analyze</id> -->
-<!-- 						<phase>test-compile</phase> -->
-<!-- 						<goals> -->
-<!-- 							<goal>analyze-only</goal> -->
-<!-- 						</goals> -->
-<!-- 						<configuration> -->
-<!-- 							<ignoreNonCompile>false</ignoreNonCompile> -->
-<!-- 							<failOnWarning>false</failOnWarning> -->
-<!-- 						</configuration> -->
-<!-- 					</execution> -->
-<!-- 				</executions> -->
-<!-- 			</plugin> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.8</version>
+				<executions>
+					<execution>
+						<id>analyze</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>analyze-only</goal>
+						</goals>
+						<configuration>
+							<ignoreNonCompile>false</ignoreNonCompile>
+							<failOnWarning>false</failOnWarning>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			
 			<!-- CheckStyle -->
-<!-- 			<plugin> -->
-<!-- 				<groupId>org.apache.maven.plugins</groupId> -->
-<!-- 				<artifactId>maven-checkstyle-plugin</artifactId> -->
-<!-- 				<version>2.11</version> -->
-<!-- 				<configuration> -->
-<!-- 					<consoleOutput>true</consoleOutput> -->
-<!-- 					<logViolationsToConsole>true</logViolationsToConsole> -->
-<!-- 					<includeTestSourceDirectory>false</includeTestSourceDirectory> -->
-<!-- 				</configuration> -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.11</version>
+				<configuration>
+					<consoleOutput>true</consoleOutput>
+					<logViolationsToConsole>true</logViolationsToConsole>
+					<includeTestSourceDirectory>false</includeTestSourceDirectory>
+				</configuration>
 				
-<!-- 				<executions> -->
+				<executions>
 				
 					<!-- Java Files -->
-<!-- 					<execution> -->
-<!-- 						<id>check-java</id> -->
-<!--                			<phase>process-sources</phase> -->
-<!-- 						<goals> -->
-<!-- 							<goal>check</goal> -->
-<!-- 						</goals> -->
-<!-- 						<configuration> -->
-<!-- 							<configLocation>src/main/resources/checkstyle-java-rules.xml</configLocation> -->
-<!-- 							<headerLocation>src/main/resources/header-java.txt</headerLocation> -->
-<!-- 							<includes>**\/*.java</includes> -->
-<!-- 							<excludes>**\/internal\/**\/*</excludes> -->
-<!-- 						</configuration> -->
-<!-- 					</execution> -->
+					<execution>
+						<id>check-java</id>
+               			<phase>process-sources</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<configLocation>src/main/resources/checkstyle-java-rules.xml</configLocation>
+							<headerLocation>src/main/resources/header-java.txt</headerLocation>
+							<includes>**\/*.java</includes>
+							<excludes>**\/internal\/**\/*</excludes>
+						</configuration>
+					</execution>
 					
 					<!-- XML Files -->
-<!-- 					<execution> -->
-<!-- 						<id>check-xml</id> -->
-<!--                			<phase>process-sources</phase> -->
-<!-- 						<goals> -->
-<!-- 							<goal>check</goal> -->
-<!-- 						</goals> -->
-<!-- 						<configuration> -->
-<!-- 							<configLocation>src/main/resources/checkstyle-xml-rules.xml</configLocation> -->
-<!-- 							<headerLocation>src/main/resources/header-xml.txt</headerLocation> -->
-<!-- 							<includes>**\/*.xml, **\/*.xsd</includes> -->
-<!-- 						</configuration> -->
-<!-- 					</execution> -->
-<!-- 				</executions> -->
-<!-- 			</plugin> -->			
+					<execution>
+						<id>check-xml</id>
+               			<phase>process-sources</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<configLocation>src/main/resources/checkstyle-xml-rules.xml</configLocation>
+							<headerLocation>src/main/resources/header-xml.txt</headerLocation>
+							<includes>**\/*.xml, **\/*.xsd</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 	

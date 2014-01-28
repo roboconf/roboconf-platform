@@ -7,6 +7,11 @@
 import real-lamp-facets.rcf;
 ### End of imports
 
+# The VM
+VM {
+	alias: Virtual Machine;
+	facets: VM;
+}
 
 # MySQL database
 MySQL {

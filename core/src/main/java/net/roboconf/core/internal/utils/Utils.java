@@ -23,8 +23,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
@@ -60,14 +62,14 @@ public class Utils {
 	 * @param separator the separator (cannot be null or the empty string)
 	 * @return a list of items (never null)
 	 */
-	public static Collection<String> splitNicely( String toSplit, String separator ) {
+	public static List<String> splitNicely( String toSplit, String separator ) {
 
 		if( separator == null || separator.isEmpty())
 			throw new IllegalArgumentException( "The separator cannot be null or the empty string." );
 
-		Collection<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<String> ();
 		if( toSplit != null ) {
-			for( String s : toSplit.split( separator )) {
+			for( String s : toSplit.split( Pattern.quote( separator ))) {
 				if( ! Utils.isEmptyOrWhitespaces( s ))
 					result.add( s .trim());
 			}
@@ -211,7 +213,12 @@ public class Utils {
 				FileOutputStream os = null;
 				try {
 					ZipEntry entry = entries.nextElement();
-					os = new FileOutputStream( new File( targetDirectory, entry.getName()));
+					File f = new File( targetDirectory, entry.getName());
+					if( ! f.getParentFile().exists()
+							&& ! f.getParentFile().mkdirs())
+						throw new IOException( "Failed to create directory for entry: " + entry.getName());
+
+					os = new FileOutputStream( f );
 					copyStream( theZipFile.getInputStream( entry ), os );
 
 				} finally {
@@ -236,14 +243,23 @@ public class Utils {
 		if( files == null )
 			return;
 
-		for( File file : files ) {
-			if( file.exists()) {
-				if( file.isDirectory())
-					deleteFilesRecursively( file.listFiles());
+		List<File> filesToDelete = new ArrayList<File> ();
+		filesToDelete.addAll( Arrays.asList( files ));
+		while( ! filesToDelete.isEmpty()) {
+			File currentFile = filesToDelete.remove( 0 );
+			if( ! currentFile.exists())
+				continue;
 
-				if( ! file.delete())
-					throw new IOException( file.getAbsolutePath() + " could not be deleted." );
+			// Non-empty directory: add sub-files and reinsert the current directory after
+			File[] subFiles = currentFile.listFiles();
+			if( subFiles != null && subFiles.length > 0 ) {
+				filesToDelete.add( 0, currentFile );
+				filesToDelete.addAll( 0, Arrays.asList( subFiles ));
 			}
+
+			// Existing file or empty directory => delete it
+			else if( ! currentFile.delete())
+				throw new IOException( currentFile.getAbsolutePath() + " could not be deleted." );
 		}
 	}
 }

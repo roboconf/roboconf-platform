@@ -83,6 +83,10 @@ public class RuntimeModelIo {
 
 			try {
 				appDescriptor = ApplicationDescriptor.load( descriptorFile );
+				app.setName( appDescriptor.getName());
+				app.setDescription( appDescriptor.getDescription());
+				app.setQualifier( appDescriptor.getQualifier());
+
 				Collection<RoboconfError> errors = RuntimeModelValidator.validate( appDescriptor );
 				if( ! errors.isEmpty())
 					result.loadErrors.addAll( errors );
@@ -152,7 +156,7 @@ public class RuntimeModelIo {
 
 		// Load the instances
 		INST: if( appDescriptor != null && instDirectory.exists()) {
-			File mainInstFile = new File( instDirectory, appDescriptor.getGraphEntryPoint());
+			File mainInstFile = new File( instDirectory, appDescriptor.getInstanceEntryPoint());
 			if( ! mainInstFile.exists()) {
 				RoboconfError error = new RoboconfError( ErrorCode.PROJ_MISSING_INSTANCE_EP );
 				error.setDetails( "Expected path: " + mainInstFile.getAbsolutePath());
@@ -179,7 +183,7 @@ public class RuntimeModelIo {
 			}
 
 			FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
-			Collection<Instance> instances = fromDef.buildInstances();
+			Collection<Instance> instances = fromDef.buildInstances( app.getGraphs());
 			if( ! fromDef.getErrors().isEmpty()) {
 				result.loadErrors.addAll( fromDef.getErrors());
 				break INST;

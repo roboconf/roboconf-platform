@@ -38,14 +38,14 @@ public class RuntimeModelValidator {
 
 	public static Collection<RoboconfError> validate( Component component ) {
 
-		Collection<String> result = new ArrayList<String> ();
+		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
 		if( Utils.isEmptyOrWhitespaces( component.getAlias())) {
 			// TODO:
 		}
 
 		// A component cannot import variables it exports
 
-		return null;
+		return result;
 	}
 
 
@@ -88,18 +88,18 @@ public class RuntimeModelValidator {
 		// Cycles?
 
 
-		return null;
+		return new ArrayList<RoboconfError> ();
 	}
 
 
 	public static Collection<RoboconfError> validate( Collection<Instance> instances ) {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<RoboconfError> ();
 	}
 
 
 	public static Collection<RoboconfError> validate( ApplicationDescriptor descriptor ) {
 		// TODO Auto-generated method stub
-		return null;
+		return new ArrayList<RoboconfError> ();
 	}
 }

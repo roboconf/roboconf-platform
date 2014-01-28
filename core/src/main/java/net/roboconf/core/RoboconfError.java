@@ -16,7 +16,6 @@
 
 package net.roboconf.core;
 
-import net.roboconf.core.internal.utils.Utils;
 
 /**
  * An error instantiates an {@link ErrorCode}.
@@ -71,25 +70,5 @@ public class RoboconfError {
 	@Override
 	public String toString() {
 		return this.errorCode.getMsg();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals( Object obj ) {
-		return obj instanceof RoboconfError
-				&& ((RoboconfError) obj).errorCode == this.errorCode
-				&& Utils.areEqual(((RoboconfError) obj).details, this.details );
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		return this.errorCode.hashCode() * (this.details == null ? 11 : this.details.hashCode());
 	}
 }

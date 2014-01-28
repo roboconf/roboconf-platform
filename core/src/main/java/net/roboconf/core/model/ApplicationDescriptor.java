@@ -32,8 +32,8 @@ public class ApplicationDescriptor {
 	private static final String APPLICATION_NAME = "application-name";
 	private static final String APPLICATION_QUALIFIER = "application-qualifier";
 	private static final String APPLICATION_DESCRIPTION = "application-description";
-	private static final String APPLICATION_GRAPH_EP = "graph-ep";
-	private static final String APPLICATION_INSTANCES_EP = "instance-ep";
+	private static final String APPLICATION_GRAPH_EP = "graph-entry-point";
+	private static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
 
 	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint;
 

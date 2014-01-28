@@ -41,6 +41,7 @@ import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.impl.InstanceImpl;
 
@@ -57,6 +58,7 @@ public class FromInstanceDefinition {
 	private Map<String,List<BlockInstanceOf>> rootInstanceNameToBlocks;
 	private Set<String> alreadyProcessedUris;
 	private Collection<Instance> rootInstances;
+	private Graphs graphs;
 
 
 	/**
@@ -81,19 +83,21 @@ public class FromInstanceDefinition {
 
 
 	/**
+	 * @param graphs the graph(s)
 	 * @return a non-null collection of root rootInstances
 	 * <p>
 	 * The result is not significant if there are errors.<br />
 	 * Conversion errors are available by using {@link #getErrors()}.
 	 * </p>
 	 */
-	public Collection<Instance> buildInstances() {
+	public Collection<Instance> buildInstances( Graphs graphs ) {
 
 		// Initialize collections
 		this.importUriToImportDeclaration = new HashMap<String,BlockImport> ();
 		this.rootInstanceNameToBlocks = new HashMap<String,List<BlockInstanceOf>> ();
 		this.alreadyProcessedUris = new HashSet<String> ();
 		this.rootInstances = new ArrayList<Instance> ();
+		this.graphs = graphs;
 		this.errors.clear();
 
 		// Process the file and its imports
@@ -194,6 +198,7 @@ public class FromInstanceDefinition {
 			InstanceImpl instance = entry.getValue();
 			instance.setName( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_NAME ));
 			instance.setChannel( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_CHANNEL ));
+			instance.setComponent( InstanceHelpers.findComponent( this.graphs, currentBlock.getName()));
 
 			for( AbstractBlock innerBlock : currentBlock.getInnerBlocks()) {
 

@@ -1,5 +1,5 @@
 ###################################
-##          All in One           ##
+##             LAMP              ##
 ###################################
 
 
@@ -17,39 +17,25 @@ VM {
 MySQL {
 	alias: MySQL;
 	facets: deployable;
-	exports: ip, port = 3306;
 	installer: puppet;
+	exports: ip, port = 3306;
 }
 
 # Tomcat
 Tomcat {
-	alias: Tomcat;
-	exports: ip, port = 8080;
-	children: war;
-	icon: tomcat.png;
-	installer: puppet;
+	alias: Tomcat with Rubis;
 	facets: deployable;
+	installer: puppet;
+	exports: ip, portAJP = 8009;
+	imports: MySQL.ip, MySQL.port;
 }
 
 # Apache Load Balancer
 Apache {
 	alias: Apache Load Balancer;
-	imports: Tomcat.port, Tomcat.ip;
-	exports: ip, port = 80;
-	installer: puppet;
 	facets: deployable;
-}
-
-# WAR applications
-ecom {
-	alias: an e-trade application;
-	imports: MySQL.port, MySQL.ip;	# This application uses a database.
-	facets: war-archive;
-}
-
-hello-world {
-	alias: Hello World!;
-	facets: war-archive;
+	installer: puppet;
+	imports: Tomcat.portAJP, Tomcat.ip;
 }
 
 
@@ -59,7 +45,6 @@ hello-world {
 
 # The VM facet
 facet VM {
-	icon: vm.jpg;
 	children: deployable;
 	installer: iaas;
 }
@@ -69,9 +54,5 @@ facet deployable {
 	# nothing
 }
 
-# WAR  archives
-facet war-archive {
-	icon: war.png;
-	installer: bash;
-	exports: full-url, url-path;
-}
+# Facets are not very useful here. We could put everything in components (see lamp-legacy-1).
+# However, it shows what can be seen as a good practice for bigger VM deployments.

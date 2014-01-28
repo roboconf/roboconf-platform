@@ -18,8 +18,9 @@ package net.roboconf.core.internal.model.parsing;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -505,7 +506,7 @@ public class FileDefinitionParserTest {
 				Assert.assertNotNull( f );
 				Assert.assertTrue( f.getName(), f.exists());
 
-				br = new BufferedReader( new FileReader( f ));
+				br = new BufferedReader( new InputStreamReader( new FileInputStream( f ), "UTF-8" ));
 				String line = br.readLine();
 				Assert.assertNotNull( line );
 

@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.runtime.Component;
+import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.impl.InstanceImpl;
 
@@ -107,5 +109,32 @@ public class InstanceHelpers {
 	public static void insertChild( Instance parent, InstanceImpl child ) {
 		child.setParent( parent );
 		parent.getChildren().add( child );
+	}
+
+
+	/**
+	 * Finds a component by name.
+	 * @param graphs the graph(s) (can be null)
+	 * @param name the component name (not null)
+	 * @return a component (can be null)
+	 */
+	public static Component findComponent( Graphs graphs, String name ) {
+
+		Component result = null;
+		List<Component> components = new ArrayList<Component> ();
+		if( graphs != null )
+			components.addAll( graphs.getRootComponents());
+
+		while( result == null
+				&& ! components.isEmpty()) {
+
+			Component current = components.remove( 0 );
+			if( name.equals( current.getName()))
+				result = current;
+			else
+				components.addAll( current.getChildren());
+		}
+
+		return result;
 	}
 }

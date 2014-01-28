@@ -277,8 +277,8 @@ public class FromGraphDefinition {
 			for( String facetName : c.getFacetNames()) {
 
 				// Find the facet
-				BlockFacet facet = this.facetNameToRelationFacets.get( facetName ).get( 0 );
-				if( facet == null ) {
+				List<BlockFacet> facets = this.facetNameToRelationFacets.get( facetName );
+				if( facets == null ) {
 					ModelError error = new ModelError( ErrorCode.CO_UNRESOLVED_FACET, 0 );
 					error.setDetails( "Facet name: " + facetName );
 					this.errors.add( error );
@@ -320,8 +320,11 @@ public class FromGraphDefinition {
 			// Update the component with the inherited properties
 			c.getFacetNames().addAll( additionalComponentFacets );
 			for( String facetName : c.getFacetNames()) {
-				BlockFacet facet = this.facetNameToRelationFacets.get( facetName ).get( 0 );
+				List<BlockFacet> facets = this.facetNameToRelationFacets.get( facetName );
+				if( facets == null )
+					continue;
 
+				BlockFacet facet = facets.get( 0 );
 				c.getExportedVariables().putAll( ModelUtils.getExportedVariables( facet ));
 				c.getImportedVariableNames().addAll( ModelUtils.getPropertyValues( facet, Constants.PROPERTY_COMPONENT_IMPORTS ));
 				if( c.getInstallerName() == null )
