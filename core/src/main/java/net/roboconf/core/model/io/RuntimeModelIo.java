@@ -46,7 +46,7 @@ public class RuntimeModelIo {
 
 	/**
 	 * Loads an application from a directory.
-	 * </p>
+	 * <p>
 	 * The directory structure must be the following one:
 	 * </p>
 	 * <ul>

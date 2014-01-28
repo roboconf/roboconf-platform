@@ -24,9 +24,28 @@ import java.util.Collection;
  */
 public interface Application {
 
+	/**
+	 * @return the application name
+	 */
 	String getName();
+
+	/**
+	 * @return the application description
+	 */
 	String getDescription();
+
+	/**
+	 * @return the application qualifier (version, build ID, whatever)
+	 */
 	String getQualifier();
+
+	/**
+	 * @return the graphs
+	 */
 	Graphs getGraphs();
+
+	/**
+	 * @return the root instances
+	 */
 	Collection<Instance> getRootInstances();
 }
