@@ -17,11 +17,11 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.impl.InstanceImpl;
 
@@ -113,28 +113,22 @@ public class InstanceHelpers {
 
 
 	/**
-	 * Finds a component by name.
-	 * @param graphs the graph(s) (can be null)
-	 * @param name the component name (not null)
-	 * @return a component (can be null)
+	 * Gets the exported variables for an instance.
+	 * <p>
+	 * It includes the component variables, and the variables
+	 * overridden by the instance.
+	 * </p>
+	 *
+	 * @param instance an instance (not null)
+	 * @return a non-null map (key = variable name, value = default variable value - can be null).
 	 */
-	public static Component findComponent( Graphs graphs, String name ) {
+	public static Map<String,String> getExportedVariables( Instance instance ) {
 
-		Component result = null;
-		List<Component> components = new ArrayList<Component> ();
-		if( graphs != null )
-			components.addAll( graphs.getRootComponents());
+		Map<String,String> result = new HashMap<String,String> ();
+		if( instance.getComponent() != null )
+			result.putAll( instance.getComponent().getExportedVariables());
 
-		while( result == null
-				&& ! components.isEmpty()) {
-
-			Component current = components.remove( 0 );
-			if( name.equals( current.getName()))
-				result = current;
-			else
-				components.addAll( current.getChildren());
-		}
-
+		result.putAll( instance.getOverriddenExports());
 		return result;
 	}
 }

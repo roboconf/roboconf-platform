@@ -48,7 +48,7 @@ import net.roboconf.core.model.parsing.ParsingConstants;
 public class ParsingModelValidator {
 
 	/**
-	 * @param definitionFile
+	 * @param definitionFile a definition file
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( FileDefinition definitionFile ) {
@@ -62,7 +62,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( AbstractBlock block ) {
@@ -110,7 +110,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( BlockImport block ) {
@@ -125,7 +125,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( BlockComponent block ) {
@@ -138,7 +138,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( BlockInstanceOf block ) {
@@ -150,14 +150,14 @@ public class ParsingModelValidator {
 			result.add( new ModelError( ErrorCode.PM_MISSING_INSTANCE_NAME, block.getLine()));
 
 		} else {
-			String name = prop.getValue();
-			if( block.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_CARDINALITY ) != null ) {
-				if( ! name.contains( ParsingConstants.INSTANCE_INDEX_MARKER ))
-					result.add( new ModelError( ErrorCode.PM_MISSING_INDEX_REFERENCE, block.getLine()));
-
-			} else if( name.contains( ParsingConstants.INSTANCE_INDEX_MARKER )) {
-				result.add( new ModelError( ErrorCode.PM_INVALID_INDEX_REFERENCE_USE, block.getLine()));
-			}
+//			String name = prop.getValue();
+//			if( block.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_CARDINALITY ) != null ) {
+//				if( ! name.contains( ParsingConstants.INSTANCE_INDEX_MARKER ))
+//					result.add( new ModelError( ErrorCode.PM_MISSING_INDEX_REFERENCE, block.getLine()));
+//
+//			} else if( name.contains( ParsingConstants.INSTANCE_INDEX_MARKER )) {
+//				result.add( new ModelError( ErrorCode.PM_INVALID_INDEX_REFERENCE_USE, block.getLine()));
+//			}
 		}
 
 		// Check internal regions are supported
@@ -178,7 +178,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( BlockFacet block ) {
@@ -187,7 +187,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( BlockProperty block ) {
@@ -258,12 +258,8 @@ public class ParsingModelValidator {
 		} else if( Constants.PROPERTY_INSTANCE_NAME.equals( name )) {
 			// nothing
 
-		} else if( Constants.PROPERTY_INSTANCE_CARDINALITY.equals( name )) {
-			if( ! value.matches( "\\d+" ))
-				result.add( new ModelError( ErrorCode.PM_INVALID_INSTANCE_CARDINALITY, line ));
-
 		} else if( Constants.PROPERTY_INSTANCE_CHANNEL.equals( name )) {
-			// TODO:
+			// TODO: what is expected?
 
 		} else {
 			ModelError error = new ModelError( ErrorCode.PM_UNKNOWN_PROPERTY_NAME, line );
@@ -276,7 +272,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( BlockComment block ) {
@@ -296,7 +292,7 @@ public class ParsingModelValidator {
 
 
 	/**
-	 * @param block
+	 * @param block a block
 	 * @return a non-null list of {@link ModelError}s
 	 */
 	public static Collection<ModelError> validate( BlockBlank block ) {

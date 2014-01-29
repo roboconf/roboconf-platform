@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 
 import junit.framework.Assert;
+import net.roboconf.core.ErrorCode;
+import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Component;
@@ -55,7 +57,9 @@ public class RuntimeModelIoTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
-		Assert.assertEquals( 0, result.loadErrors.size());
+		Assert.assertEquals( 4, result.loadErrors.size());
+		for( RoboconfError error : result.loadErrors )
+			Assert.assertEquals( ErrorCode.RM_UNEXISTING_COMPONENT_DIRECTORY, error.getErrorCode());
 
 		Assert.assertEquals( "Legacy LAMP", result.application.getName());
 		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());
@@ -171,7 +175,9 @@ public class RuntimeModelIoTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
-		Assert.assertEquals( 0, result.loadErrors.size());
+		Assert.assertEquals( 4, result.loadErrors.size());
+		for( RoboconfError error : result.loadErrors )
+			Assert.assertEquals( ErrorCode.RM_UNEXISTING_COMPONENT_DIRECTORY, error.getErrorCode());
 
 		Assert.assertEquals( "Legacy LAMP", result.application.getName());
 		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());

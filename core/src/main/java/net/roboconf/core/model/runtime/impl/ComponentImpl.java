@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model.runtime.impl;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +32,7 @@ import net.roboconf.core.model.runtime.Component;
 public class ComponentImpl implements Component {
 
 	private String name, alias, installerName, iconLocation;
+	private File resourceFile;
 	private final Collection<String> importedVariableNames = new HashSet<String> ();
 	private final Collection<String> facetNames = new HashSet<String> ();
 	private final Map<String,String> exportedVariables = new HashMap<String,String> ();
@@ -38,6 +40,21 @@ public class ComponentImpl implements Component {
 	private final Collection<Component> children = new HashSet<Component> ();
 	private final Collection<Component> ancestors = new HashSet<Component> ();
 
+
+	/**
+	 * Constructor.
+	 */
+	public ComponentImpl() {
+		// nothing
+	}
+
+	/**
+	 * Constructor.
+	 * @param name the component name
+	 */
+	public ComponentImpl( String name ) {
+		this.name = name;
+	}
 
 	/**
 	 * @return the name
@@ -67,6 +84,22 @@ public class ComponentImpl implements Component {
 	 */
 	public void setAlias( String alias ) {
 		this.alias = alias;
+	}
+
+	/**
+	 * @return the resourceFile
+	 */
+	@Override
+	public File getResourceFile() {
+		return this.resourceFile;
+	}
+
+	/**
+	 * @param resourceFile the resourceFile to set
+	 */
+	@Override
+	public void setResourceFile( File resourceFile ) {
+		this.resourceFile = resourceFile;
 	}
 
 	/**

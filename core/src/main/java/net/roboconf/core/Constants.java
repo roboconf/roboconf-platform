@@ -73,11 +73,6 @@ public interface Constants {
 	/**
 	 * Keyword for an instance property.
 	 */
-	String PROPERTY_INSTANCE_CARDINALITY = "cardinality";
-
-	/**
-	 * Keyword for an instance property.
-	 */
 	String PROPERTY_INSTANCE_CHANNEL = "channel";
 
 

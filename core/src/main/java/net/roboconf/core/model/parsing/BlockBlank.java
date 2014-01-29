@@ -24,8 +24,8 @@ public class BlockBlank extends AbstractIgnorableInstruction {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
-	 * @param content
+	 * @param declaringFile the definition file
+	 * @param content the block's content
 	 */
 	public BlockBlank( FileDefinition declaringFile, String content ) {
 		super( declaringFile, content );

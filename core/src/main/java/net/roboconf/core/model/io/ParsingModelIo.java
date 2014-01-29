@@ -100,7 +100,7 @@ public class ParsingModelIo {
 	 * @param relationsFile the relations file
 	 * @param writeComments true to write comments
 	 * @param lineSeparator the line separator (if null, the OS' one is used)
-	 * @throws IOException
+	 * @throws IOException if the file could not be saved
 	 */
 	public static void saveRelationsFile( FileDefinition relationsFile, boolean writeComments, String lineSeparator )
 	throws IOException {
@@ -118,7 +118,7 @@ public class ParsingModelIo {
 	 * @param relationsFile the relations file
 	 * @param writeComments true to write comments
 	 * @param lineSeparator the line separator (if null, the OS' one is used)
-	 * @throws IOException
+	 * @throws IOException if the file could not be saved
 	 */
 	public static void saveRelationsFileInto(
 			File targetFile,

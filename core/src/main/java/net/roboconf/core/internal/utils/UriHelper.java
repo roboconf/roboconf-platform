@@ -116,6 +116,10 @@ public class UriHelper {
 		} catch( Exception e ) {
 			try {
 				// Relative URL ?
+				if( ! referenceUri.toString().endsWith( "/" )
+						&& ! uriSuffix.startsWith( "/" ))
+					referenceUri = new URI( referenceUri.toString() + "/" );
+
 				importUri = referenceUri.resolve( new URI( null, uriSuffix, null ));
 
 			} catch( Exception e2 ) {

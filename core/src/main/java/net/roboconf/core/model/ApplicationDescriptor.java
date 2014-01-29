@@ -129,7 +129,7 @@ public class ApplicationDescriptor {
 
 	/**
 	 * Loads an application descriptor.
-	 * @param properties a properties object
+	 * @param f a file
 	 * @return an application descriptor (not null)
 	 * @throws IOException if the file could not be read
 	 */

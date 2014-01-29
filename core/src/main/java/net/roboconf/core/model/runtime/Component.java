@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model.runtime;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 
@@ -27,6 +28,9 @@ public interface Component {
 
 	String getName();
 	String getAlias();
+
+	File getResourceFile();
+	void setResourceFile( File resourceFile );
 
 	String getIconLocation();
 	void setIconLocation( String iconLocation );

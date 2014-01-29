@@ -32,6 +32,7 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
 import net.roboconf.core.internal.utils.ModelUtils;
 import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.AbstractBlockHolder;
 import net.roboconf.core.model.parsing.BlockComponent;
@@ -352,14 +353,9 @@ public class FromGraphDefinition {
 
 				// Children can be determined by component name or by facet name
 				for( Component c : this.componentNameToComponent.values()) {
-					if( childName.equals( c.getName())) {
-						component.getChildren().add( c );
-						c.getAncestors().add( component );
-
-					} else if( c.getFacetNames().contains( childName )) {
-						component.getChildren().add( c );
-						c.getAncestors().add( component );
-					}
+					if( childName.equals( c.getName())
+							|| c.getFacetNames().contains( childName ))
+						ComponentHelpers.insertChild( component, c );
 				}
 			}
 		}

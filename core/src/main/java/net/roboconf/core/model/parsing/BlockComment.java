@@ -24,8 +24,8 @@ public class BlockComment extends AbstractIgnorableInstruction {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
-	 * @param content
+	 * @param declaringFile the definition file
+	 * @param content the block's content
 	 */
 	public BlockComment( FileDefinition declaringFile, String content ) {
 		super( declaringFile, content );

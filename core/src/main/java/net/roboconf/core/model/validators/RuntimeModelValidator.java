@@ -23,9 +23,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
+import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
@@ -36,28 +39,60 @@ import net.roboconf.core.model.runtime.Instance;
  */
 public class RuntimeModelValidator {
 
+	/**
+	 * Validates a component.
+	 * @param component a component
+	 * @return a non-null list of errors
+	 */
 	public static Collection<RoboconfError> validate( Component component ) {
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
 
-		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
-		if( Utils.isEmptyOrWhitespaces( component.getAlias())) {
-			// TODO:
+		// Basic checks
+		if( Utils.isEmptyOrWhitespaces( component.getName()))
+			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_NAME ));
+
+		if( Utils.isEmptyOrWhitespaces( component.getAlias()))
+			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_ALIAS ));
+
+		if( Utils.isEmptyOrWhitespaces( component.getInstallerName()))
+			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER ));
+
+		if( component.getResourceFile() == null ) {
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_COMPONENT_DIRECTORY ));
+
+		} else if( ! component.getResourceFile().exists()) {
+			RoboconfError error = new RoboconfError( ErrorCode.RM_UNEXISTING_COMPONENT_DIRECTORY );
+			error.setDetails( "Resource directory: " + component.getResourceFile().getAbsolutePath());
+			errors.add( error );
 		}
 
 		// A component cannot import variables it exports
+		for( String var : component.getImportedVariableNames()) {
+			if( component.getExportedVariables().containsKey( var )) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS );
+				error.setDetails( "Variable name: " + var );
+				errors.add( error );
+			}
+		}
 
-		return result;
+		return errors;
 	}
 
 
+	/**
+	 * Validates a graph.
+	 * @param graphs a graphs instance
+	 * @return a non-null list of errors
+	 */
 	public static Collection<RoboconfError> validate( Graphs graphs ) {
 
-		Collection<String> result = new ArrayList<String> ();
-		if( graphs.getRootComponents().isEmpty()) {
-			result.add( "No root component was found. A graph of Software elements must be oriented." );
-		}
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		if( graphs.getRootComponents().isEmpty())
+			errors.add( new RoboconfError( ErrorCode.RM_NO_ROOT_COMPONENT ));
 
 		// Validate all the components
-		Set<Component> alreadyChecked = new HashSet<Component> ();
+		// Prepare the verification of variable matching
+		Map<String,Component> alreadyChecked = new HashMap<String,Component> ();
 		Set<Component> toProcess = new HashSet<Component> ();
 		Map<String,Boolean> importedVariableNameToExported = new HashMap<String,Boolean> ();
 
@@ -65,13 +100,25 @@ public class RuntimeModelValidator {
 		while( ! toProcess.isEmpty()) {
 			Component c = toProcess.iterator().next();
 			toProcess.remove( c );
-			if( alreadyChecked.contains( c ))
-				continue;
 
-			// result.addAll( validate( c ));
-			alreadyChecked.add( c );
+			// Duplicate component?
+			Component associatedComponent = alreadyChecked.get( c.getName());
+			if( associatedComponent != null ) {
+				if( associatedComponent != c ) {
+					RoboconfError error = new RoboconfError( ErrorCode.RM_DUPLICATE_COMPONENT );
+					error.setDetails( "Component name: " + c.getName());
+					errors.add( error );
+				}
+
+				continue;
+			}
+
+			// Validate the component
+			errors.addAll( validate( c ));
+			alreadyChecked.put( c.getName(), c );
 			toProcess.addAll( c.getChildren());
 
+			// Process its variables
 			for( String importedVariableName : c.getImportedVariableNames()) {
 				if( ! importedVariableNameToExported.containsKey( importedVariableName ))
 					importedVariableNameToExported.put( importedVariableName, Boolean.FALSE );
@@ -83,23 +130,114 @@ public class RuntimeModelValidator {
 		}
 
 		// Are all the imports and exports resolvable?
+		for( Map.Entry<String,Boolean> entry : importedVariableNameToExported.entrySet()) {
+			if( entry.getValue())
+				continue;
 
+			RoboconfError error = new RoboconfError( ErrorCode.RM_UNRESOLVABLE_VARIABLE );
+			error.setDetails( "Variable name: " + entry.getKey());
+			errors.add( error );
+		}
 
-		// Cycles?
+		// Containment Cycles?
+		for( Component c : graphs.getRootComponents()) {
+			String s = ComponentHelpers.searchForLoop( c );
+			if( s != null ) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_CYCLE_IN_COMPONENTS );
+				error.setDetails( s );
+				errors.add( error );
+			}
+		}
 
-
-		return new ArrayList<RoboconfError> ();
+		return errors;
 	}
 
 
+	/**
+	 * Validates an instance.
+	 * @param instance an instance (not null)
+	 * @return a non-null list of errors
+	 */
+	public static Collection<RoboconfError> validate( Instance instance ) {
+
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		if( Utils.isEmptyOrWhitespaces( instance.getName()))
+			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_NAME ));
+
+		if( instance.getComponent() == null )
+			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_COMPONENT ));
+
+		else for( String s : instance.getOverriddenExports().keySet()) {
+			if( ! instance.getComponent().getExportedVariables().containsKey( s )) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE );
+				error.setDetails( "Variable name: " + s );
+				errors.add( error );
+			}
+		}
+
+		return errors;
+	}
+
+
+	/**
+	 * Validates a collection of instances.
+	 * @param instances a non-null collection of instances
+	 * @return a non-null list of errors
+	 */
 	public static Collection<RoboconfError> validate( Collection<Instance> instances ) {
-		// TODO Auto-generated method stub
-		return new ArrayList<RoboconfError> ();
+
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		for( Instance i : instances )
+			errors.addAll( validate( i ));
+
+		return errors;
 	}
 
 
+	/**
+	 * Validates an application.
+	 * @param app an application (not null)
+	 * @return a non-null list of errors
+	 */
+	public static Collection<RoboconfError> validate( Application app ) {
+
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		if( Utils.isEmptyOrWhitespaces( app.getName()))
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_NAME ));
+
+		if( Utils.isEmptyOrWhitespaces( app.getQualifier()))
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER ));
+
+		if( app.getGraphs() == null )
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_GRAPHS ));
+		else
+			errors.addAll( validate( app.getGraphs()));
+
+		errors.addAll( validate( app.getRootInstances()));
+		return errors;
+	}
+
+
+	/**
+	 * Validates an application descriptor.
+	 * @param descriptor a descriptor
+	 * @return a non-null list of errors
+	 */
 	public static Collection<RoboconfError> validate( ApplicationDescriptor descriptor ) {
-		// TODO Auto-generated method stub
-		return new ArrayList<RoboconfError> ();
+
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		if( Utils.isEmptyOrWhitespaces( descriptor.getName()))
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_NAME ));
+
+		if( Utils.isEmptyOrWhitespaces( descriptor.getQualifier()))
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER ));
+
+		if( Utils.isEmptyOrWhitespaces( descriptor.getGraphEntryPoint()))
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_GEP ));
+
+		if( Utils.isEmptyOrWhitespaces( descriptor.getInstanceEntryPoint()))
+			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_IEP ));
+
+		return errors;
 	}
 }

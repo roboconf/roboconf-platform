@@ -47,7 +47,7 @@ public class InstanceImpl implements Instance {
 
 	/**
 	 * Constructor.
-	 * @param name
+	 * @param name the instance name
 	 */
 	public InstanceImpl( String name ) {
 		this.name = name;
@@ -107,7 +107,7 @@ public class InstanceImpl implements Instance {
 	}
 
 	/**
-	 * @param container the parent to set
+	 * @param parent the parent to set
 	 */
 	public void setParent( Instance parent ) {
 		this.parent = parent;

@@ -27,8 +27,8 @@ public abstract class AbstractIgnorableInstruction extends AbstractBlock {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
-	 * @param content
+	 * @param declaringFile the definition file
+	 * @param content the block's content
 	 */
 	public AbstractIgnorableInstruction( FileDefinition declaringFile, String content ) {
 		super( declaringFile );

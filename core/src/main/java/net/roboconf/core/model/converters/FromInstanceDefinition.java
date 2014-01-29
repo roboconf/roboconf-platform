@@ -33,6 +33,7 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
 import net.roboconf.core.internal.utils.ModelUtils;
 import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.parsing.AbstractBlock;
@@ -198,7 +199,7 @@ public class FromInstanceDefinition {
 			InstanceImpl instance = entry.getValue();
 			instance.setName( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_NAME ));
 			instance.setChannel( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_CHANNEL ));
-			instance.setComponent( InstanceHelpers.findComponent( this.graphs, currentBlock.getName()));
+			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
 
 			for( AbstractBlock innerBlock : currentBlock.getInnerBlocks()) {
 

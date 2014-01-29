@@ -27,7 +27,7 @@ public class BlockProperty extends AbstractBlock {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
+	 * @param declaringFile the definition file
 	 */
 	public BlockProperty( FileDefinition declaringFile ) {
 		super( declaringFile );
@@ -35,9 +35,9 @@ public class BlockProperty extends AbstractBlock {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
-	 * @param name
-	 * @param value
+	 * @param declaringFile the definition file
+	 * @param name the property name
+	 * @param value the property value
 	 */
 	public BlockProperty( FileDefinition declaringFile, String name, String value ) {
 		this( declaringFile );

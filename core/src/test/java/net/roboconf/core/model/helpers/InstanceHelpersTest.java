@@ -17,9 +17,11 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.impl.ComponentImpl;
 import net.roboconf.core.model.runtime.impl.InstanceImpl;
 
 import org.junit.Test;
@@ -117,5 +119,34 @@ public class InstanceHelpersTest {
 		Assert.assertTrue( instance_1.getChildren().contains( instance_1_1 ));
 		Assert.assertNull( instance_1.getParent());
 		Assert.assertNotSame( instance_1, instance_1_1 );
+	}
+
+
+	@Test
+	public void testGetExportedVariables() {
+
+		InstanceImpl instance = new InstanceImpl( "inst 1" );
+		Assert.assertEquals( 0, InstanceHelpers.getExportedVariables( instance ).size());
+
+		instance.getOverriddenExports().put( "var1", "value1" );
+		Map<String,String> map = InstanceHelpers.getExportedVariables( instance );
+		Assert.assertEquals( 1, map.size());
+		Assert.assertEquals( "value1", map.get( "var1" ));
+
+		ComponentImpl component = new ComponentImpl( "comp 1" );
+		component.getExportedVariables().put( "var1", "another value" );
+		component.getExportedVariables().put( "var2", "value2" );
+		instance.setComponent( component );
+
+		map = InstanceHelpers.getExportedVariables( instance );
+		Assert.assertEquals( 2, map.size());
+		Assert.assertEquals( "value1", map.get( "var1" ));
+		Assert.assertEquals( "value2", map.get( "var2" ));
+
+		instance.getOverriddenExports().clear();
+		map = InstanceHelpers.getExportedVariables( instance );
+		Assert.assertEquals( 2, map.size());
+		Assert.assertEquals( "another value", map.get( "var1" ));
+		Assert.assertEquals( "value2", map.get( "var2" ));
 	}
 }

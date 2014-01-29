@@ -61,7 +61,6 @@ public enum ErrorCode {
 	PM_INVALID_ICON_LOCATION( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The icon location must end with an image extension (gif, jpg, jpeg, png)." ),
 	PM_INVALID_INDEX_REFERENCE_USE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The name contains ${index} but the cardinality property is not set." ),
 	PM_INVALID_INSTANCE_ELEMENT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An instance can only contain properties, other instances, blank lines or comments." ),
-	PM_INVALID_INSTANCE_CARDINALITY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "A cardinality must be a positive integer." ),
 
 	PM_PROPERTY_NOT_APPLIABLE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property does not apply to this element." ),
 	PM_DUPLICATE_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property was already set for this element." ),
@@ -84,7 +83,27 @@ public enum ErrorCode {
 	CO_ALREADY_DEFINED_ROOT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This root instance was defined more than once." ),
 
 	// Runtime Model Errors
+	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
+	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
+	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
+	RM_MISSING_APPLICATION_IEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for instances is missing." ),
+	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must contain a graph definition." ),
 
+	RM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component name cannot be empty." ),
+	RM_EMPTY_COMPONENT_ALIAS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component alias is mandatory." ),
+	RM_EMPTY_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component's installer name is mandatory." ),
+	RM_MISSING_COMPONENT_DIRECTORY( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component's resource directory was not set." ),
+	RM_UNEXISTING_COMPONENT_DIRECTORY( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component's resource directory does not exist." ),
+	RM_COMPONENT_IMPORTS_EXPORTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The component's imports variables it exports." ),
+
+	RM_DUPLICATE_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),
+	RM_CYCLE_IN_COMPONENTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),
+	RM_NO_ROOT_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "No root component was found in the graph." ),
+	RM_UNRESOLVABLE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is imported but no component exports it." ),
+
+	RM_EMPTY_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance name cannot be empty." ),
+	RM_EMPTY_INSTANCE_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance is not associated with a component." ),
+	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "An instance exports a variable which is not defined in its component (no override)." ),
 
 	// Projects Errors
 	PROJ_NO_GRAPH_DIR( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A Roboconf project must contain a 'graph' directory with the graph(s) definition(s)." ),

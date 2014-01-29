@@ -27,7 +27,7 @@ public class BlockImport extends AbstractBlock {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile
+	 * @param declaringFile the definition file
 	 */
 	public BlockImport( FileDefinition declaringFile ) {
 		super( declaringFile );

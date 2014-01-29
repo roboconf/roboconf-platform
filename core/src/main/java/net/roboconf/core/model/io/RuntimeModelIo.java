@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipException;
 
@@ -33,6 +34,7 @@ import net.roboconf.core.model.converters.FromGraphDefinition;
 import net.roboconf.core.model.converters.FromInstanceDefinition;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.impl.ApplicationImpl;
@@ -55,7 +57,7 @@ public class RuntimeModelIo {
 	 * 		<li>instances (optional)</li>
 	 * </ul>
 	 *
-	 * @param projectDirectory
+	 * @param projectDirectory the project directory
 	 * @return a load result (never null)
 	 */
 	public static LoadResult loadApplication( File projectDirectory ) {
@@ -118,7 +120,6 @@ public class RuntimeModelIo {
 				error.setDetails( "Expected path: " + mainGraphFile.getAbsolutePath());
 				result.loadErrors.add( error );
 				break GRAPH;
-
 			}
 
 			FileDefinition def = ParsingModelIo.readConfigurationFile( mainGraphFile, true );
@@ -146,6 +147,7 @@ public class RuntimeModelIo {
 				break GRAPH;
 			}
 
+			updateComponentLocation( graph, projectDirectory );
 			Collection<RoboconfError> errors = RuntimeModelValidator.validate( graph );
 			if( ! errors.isEmpty())
 				result.loadErrors.addAll( errors );
@@ -284,6 +286,22 @@ public class RuntimeModelIo {
 		 */
 		public Collection<RoboconfError> getLoadErrors() {
 			return this.loadErrors;
+		}
+	}
+
+
+	private static void updateComponentLocation( Graphs graphs, File projectDirectory ) {
+
+		List<Component> components = new ArrayList<Component> ();
+		if( graphs != null )
+			components.addAll( graphs.getRootComponents());
+
+		while( ! components.isEmpty()) {
+			Component current = components.remove( 0 );
+			File f = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH + "/" + current.getName());
+			current.setResourceFile( f );
+
+			components.addAll( current.getChildren());
 		}
 	}
 }

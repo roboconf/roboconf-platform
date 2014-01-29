@@ -43,7 +43,7 @@ public abstract class AbstractBlockHolder extends AbstractBlock {
 
 	/**
 	 * Constructor.
-	 * @param declaringFile not null
+	 * @param declaringFile the definition file (not null)
 	 */
 	public AbstractBlockHolder( FileDefinition declaringFile ) {
 		super( declaringFile );
