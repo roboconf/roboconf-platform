@@ -119,7 +119,7 @@
 			</plugins>
 		</pluginManagement>
 		
-		<plugins>			
+		<plugins>
 			<!-- Find Unused Dependencies -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -136,6 +136,35 @@
 							<ignoreNonCompile>false</ignoreNonCompile>
 							<failOnWarning>false</failOnWarning>
 						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Code Coverage -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.6.4.201312101107</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+
+					<execution>
+						<id>report</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+
+					<execution>
+						<id>check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
