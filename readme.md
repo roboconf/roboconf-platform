@@ -1,4 +1,4 @@
-== Roboconf ==
+# Roboconf [![Build Status](https://travis-ci.org/roboconf/roboconf.png?branch=master)](https://travis-ci.org/roboconf/roboconf)
 
 Roboconf is a solution for asynchronous and multi-target deployments.  
 It allows to deploy distributed applications over several machines (VM, connected objects, IoT) or
