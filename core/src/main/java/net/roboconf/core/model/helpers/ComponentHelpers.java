@@ -17,8 +17,11 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 
@@ -66,6 +69,62 @@ public class ComponentHelpers {
 
 		if( ! ancestor.getChildren().contains( child ))
 			ancestor.getChildren().add( child );
+	}
+
+
+	/**
+	 * Inserts (if necessary) a child component.
+	 * @param child a child component (not null)
+	 * @param ancestor an ancestor component (not null)
+	 */
+	public static void insertChild2( Component ancestor, Component child ) {
+		if( ! child.getAncestors().contains( ancestor ))
+			child.getAncestors().add( ancestor );
+
+		if( ! ancestor.getChildren().contains( child ))
+			ancestor.getChildren().add( child );
+	}
+
+
+	/**
+	 * Finds all the components of a graph.
+	 * @param graphs a set of graphs
+	 * @return a non-null list of components
+	 */
+	public static List<Component> findAllComponents( Graphs graphs ) {
+
+		List<Component> result = new ArrayList<Component> ();
+		Set<Component> alreadyVisisted = new HashSet<Component> ();
+		List<Component> toProcess = new ArrayList<Component> ();
+
+		toProcess.addAll( graphs.getRootComponents());
+		while( ! toProcess.isEmpty()) {
+
+			Component current = toProcess.remove( 0 );
+			if( alreadyVisisted.contains( current ))
+				continue;
+
+			alreadyVisisted.add( current );
+			result.add( current );
+			toProcess.addAll( current.getChildren());
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the components of an application.
+	 * @param app an application (not null)
+	 * @return a non-null list of components
+	 */
+	public static List<Component> findAllComponents( Application app ) {
+
+		List<Component> result = new ArrayList<Component> ();
+		if( app.getGraphs() != null )
+			result.addAll( findAllComponents( app.getGraphs()));
+
+		return result;
 	}
 
 

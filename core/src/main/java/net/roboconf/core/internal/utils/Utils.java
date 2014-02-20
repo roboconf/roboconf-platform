@@ -214,12 +214,20 @@ public class Utils {
 				try {
 					ZipEntry entry = entries.nextElement();
 					File f = new File( targetDirectory, entry.getName());
-					if( ! f.getParentFile().exists()
-							&& ! f.getParentFile().mkdirs())
-						throw new IOException( "Failed to create directory for entry: " + entry.getName());
 
-					os = new FileOutputStream( f );
-					copyStream( theZipFile.getInputStream( entry ), os );
+					// Case 'directory': create it.
+					// Case 'file': create its parents and copy the content.
+					if( entry.isDirectory()) {
+						if( ! f.exists() && ! f.mkdirs())
+							throw new IOException( "Failed to create directory for entry: " + entry.getName());
+
+					} else if( ! f.getParentFile().exists() && ! f.getParentFile().mkdirs()) {
+						throw new IOException( "Failed to create parent directory for entry: " + entry.getName());
+
+					} else {
+						os = new FileOutputStream( f );
+						copyStream( theZipFile.getInputStream( entry ), os );
+					}
 
 				} finally {
 					closeQuietly( os );

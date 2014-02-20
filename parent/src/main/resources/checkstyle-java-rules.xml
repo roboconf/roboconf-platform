@@ -47,12 +47,7 @@
         	<property name="severity" value="warning" />
         </module>
         
-        <!-- Javadoc -->
-        <module name="JavadocMethod">
-        	<property name="severity" value="warning" />
-			<property name="scope" value="public" />
-		</module>
-		
+        <!-- Javadoc -->		
 		<module name="JavadocType">
 			<property name="scope" value="public" />
 			<property name="authorFormat" value=".+ - .+" />

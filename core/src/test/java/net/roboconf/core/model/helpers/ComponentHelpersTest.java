@@ -17,8 +17,8 @@
 package net.roboconf.core.model.helpers;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.impl.ComponentImpl;
-import net.roboconf.core.model.runtime.impl.GraphsImpl;
+import net.roboconf.core.model.runtime.Component;
+import net.roboconf.core.model.runtime.Graphs;
 
 import org.junit.Test;
 
@@ -30,22 +30,22 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindComponent() {
 
-		GraphsImpl g = new GraphsImpl();
+		Graphs g = new Graphs();
 		Assert.assertNull( ComponentHelpers.findComponent( g, "c" ));
 
-		ComponentImpl c1 = new ComponentImpl( "c1" );
+		Component c1 = new Component( "c1" );
 		g.getRootComponents().add( c1 );
 		Assert.assertEquals( c1, ComponentHelpers.findComponent( g, "c1" ));
 
-		ComponentImpl c2 = new ComponentImpl( "c2" );
+		Component c2 = new Component( "c2" );
 		g.getRootComponents().add( c2 );
 		Assert.assertEquals( c2, ComponentHelpers.findComponent( g, "c2" ));
 
-		ComponentImpl c21 = new ComponentImpl( "c21" );
+		Component c21 = new Component( "c21" );
 		ComponentHelpers.insertChild( c2, c21 );
 		Assert.assertEquals( c21, ComponentHelpers.findComponent( g, "c21" ));
 
-		ComponentImpl duplicateC1 = new ComponentImpl( "c1" );
+		Component duplicateC1 = new Component( "c1" );
 		g.getRootComponents().add( duplicateC1 );
 		Assert.assertNotNull( ComponentHelpers.findComponent( g, "c1" ));
 	}
@@ -54,8 +54,8 @@ public class ComponentHelpersTest {
 	@Test
 	public void testInsertChild() {
 
-		ComponentImpl component_1 = new ComponentImpl( "comp 1" );
-		ComponentImpl component_1_1 = new ComponentImpl( "comp 11" );
+		Component component_1 = new Component( "comp 1" );
+		Component component_1_1 = new Component( "comp 11" );
 
 		Assert.assertEquals( 0, component_1.getAncestors().size());
 		Assert.assertEquals( 0, component_1.getChildren().size());
@@ -79,21 +79,21 @@ public class ComponentHelpersTest {
 	@Test
 	public void testSearchForLoop() {
 
-		ComponentImpl c1 = new ComponentImpl( "c1" );
+		Component c1 = new Component( "c1" );
 		Assert.assertNull( ComponentHelpers.searchForLoop( c1 ));
 
-		ComponentImpl c11 = new ComponentImpl( "c11" );
+		Component c11 = new Component( "c11" );
 		ComponentHelpers.insertChild( c1, c11 );
 		Assert.assertNull( ComponentHelpers.searchForLoop( c1 ));
 
-		ComponentImpl c12 = new ComponentImpl( "c1" );
+		Component c12 = new Component( "c1" );
 		ComponentHelpers.insertChild( c1, c12 );
 		Assert.assertEquals( "c1 -> c1", ComponentHelpers.searchForLoop( c1 ));
 		Assert.assertNull( ComponentHelpers.searchForLoop( c11 ));
 		Assert.assertNull( ComponentHelpers.searchForLoop( c12 ));
 
 		c12.setName( "c12" );
-		ComponentImpl c121 = new ComponentImpl( "c1" );
+		Component c121 = new Component( "c1" );
 		ComponentHelpers.insertChild( c12, c121 );
 		Assert.assertEquals( "c1 -> c12 -> c1", ComponentHelpers.searchForLoop( c1 ));
 		Assert.assertNull( ComponentHelpers.searchForLoop( c11 ));

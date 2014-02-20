@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2014 Linagora, Université Joseph Fourier
+ * Copyright 2014 Linagora, Université Joseph Fourier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,14 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.runtime.impl;
-
-import java.util.Collection;
-import java.util.HashSet;
-
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
+package net.roboconf.dm.rest;
 
 /**
- * A basic implementation of the {@link Graphs} interface.
  * @author Vincent Zurczak - Linagora
  */
-public class GraphsImpl implements Graphs {
+public interface UrlConstants {
 
-	private final Collection<Component> rootsComponents = new HashSet<Component> ();
-
-	@Override
-	public Collection<Component> getRootComponents() {
-		return this.rootsComponents;
-	}
+	String APPLICATIONS = "applications";
+	String APP = "app";
+	String INIT = "init";
 }

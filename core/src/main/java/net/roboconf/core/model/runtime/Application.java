@@ -16,36 +16,140 @@
 
 package net.roboconf.core.model.runtime;
 
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
+
+import net.roboconf.core.internal.utils.Utils;
 
 /**
  * An application groups an identifier, graph definitions and instances.
  * @author Vincent Zurczak - Linagora
  */
-public interface Application {
+public class Application implements Serializable {
+
+	private static final long serialVersionUID = -4753958407033243184L;
+
+	private String name, qualifier, description;
+	private Graphs graphs;
+	private final Collection<Instance> rootInstances = new HashSet<Instance> ();
+	private ApplicationStatus status = ApplicationStatus.STOPPED;
+
 
 	/**
-	 * @return the application name
+	 * @return the name
 	 */
-	String getName();
+	public String getName() {
+		return this.name;
+	}
 
 	/**
-	 * @return the application description
+	 * @param name the name to set
 	 */
-	String getDescription();
+	public void setName( String name ) {
+		this.name = name;
+	}
 
 	/**
-	 * @return the application qualifier (version, build ID, whatever)
+	 * @return the description
 	 */
-	String getQualifier();
+	public String getDescription() {
+		return this.description;
+	}
+
+	/**
+	 * @param description the description to set
+	 */
+	public void setDescription( String description ) {
+		this.description = description;
+	}
+
+	/**
+	 * @return the qualifier
+	 */
+	public String getQualifier() {
+		return this.qualifier;
+	}
+
+	/**
+	 * @param qualifier the qualifier to set
+	 */
+	public void setQualifier( String qualifier ) {
+		this.qualifier = qualifier;
+	}
+
+	/**
+	 * @return the status
+	 */
+	public ApplicationStatus getStatus() {
+		return this.status;
+	}
+
+	/**
+	 * @param status the status to set
+	 */
+	public void setStatus( ApplicationStatus status ) {
+		this.status = status;
+	}
 
 	/**
 	 * @return the graphs
 	 */
-	Graphs getGraphs();
+	public Graphs getGraphs() {
+		return this.graphs;
+	}
+
+	/**
+	 * @param graphs the graphs to set
+	 */
+	public void setGraphs( Graphs graphs ) {
+		this.graphs = graphs;
+	}
 
 	/**
 	 * @return the root instances
 	 */
-	Collection<Instance> getRootInstances();
+	public Collection<Instance> getRootInstances() {
+		return this.rootInstances;
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof Application
+				&& Utils.areEqual( this.name, ((Application) obj ).getName())
+				&& Utils.areEqual( this.qualifier, ((Application) obj ).getQualifier());
+	}
+
+	@Override
+	public int hashCode() {
+		int i1 = this.name == null ? 29 : this.name.hashCode();
+		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
+		return i1 * i2;
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public enum ApplicationStatus {
+		STARTED, STOPPED;
+
+		/**
+		 * A secured alternative to {@link ApplicationStatus#valueOf(String)}.
+		 * @param s a string (can be null)
+		 * @return the associated runtime status, or null otherwise
+		 */
+		public static ApplicationStatus wichStatus( String s ) {
+
+			ApplicationStatus result = null;
+			for( ApplicationStatus status : ApplicationStatus.values()) {
+				if( status.toString().equals( s )) {
+					result = status;
+					break;
+				}
+			}
+
+			return result;
+		}
+	}
 }

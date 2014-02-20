@@ -20,9 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.impl.ComponentImpl;
-import net.roboconf.core.model.runtime.impl.InstanceImpl;
 
 import org.junit.Test;
 
@@ -34,13 +33,13 @@ public class InstanceHelpersTest {
 	@Test
 	public void testComputeInstancePath() {
 
-		InstanceImpl instance1 = new InstanceImpl();
+		Instance instance1 = new Instance();
 		Assert.assertEquals( "/", InstanceHelpers.computeInstancePath( instance1 ));
 
 		instance1.setName( "inst1" );
 		Assert.assertEquals( "/inst1", InstanceHelpers.computeInstancePath( instance1 ));
 
-		InstanceImpl instance2 = new InstanceImpl( "inst2" );
+		Instance instance2 = new Instance( "inst2" );
 		Assert.assertEquals( "/inst2", InstanceHelpers.computeInstancePath( instance2 ));
 
 		instance1.getChildren().add( instance2 );
@@ -53,10 +52,10 @@ public class InstanceHelpersTest {
 	@Test
 	public void testHaveSamePath() {
 
-		InstanceImpl instance1 = new InstanceImpl( "inst1" );
+		Instance instance1 = new Instance( "inst1" );
 		Assert.assertTrue( InstanceHelpers.haveSamePath( instance1, instance1 ));
 
-		InstanceImpl instance2 = new InstanceImpl( "inst2" );
+		Instance instance2 = new Instance( "inst2" );
 		Assert.assertFalse( InstanceHelpers.haveSamePath( instance1, instance2 ));
 
 		instance2.setName( "inst1" );
@@ -68,13 +67,13 @@ public class InstanceHelpersTest {
 	public void testBuildHierarchicalList() {
 
 		// Series 1
-		InstanceImpl instance_1 = new InstanceImpl( "inst 1" );
+		Instance instance_1 = new Instance( "inst 1" );
 		List<Instance> instances = InstanceHelpers.buildHierarchicalList( instance_1 );
 		Assert.assertEquals( 1, instances.size());
 		Assert.assertEquals( instance_1, instances.get( 0 ));
 
 		// Series 2
-		InstanceImpl instance_1_1 = new InstanceImpl( "inst 11" );
+		Instance instance_1_1 = new Instance( "inst 11" );
 		InstanceHelpers.insertChild( instance_1, instance_1_1 );
 
 		instances = InstanceHelpers.buildHierarchicalList( instance_1 );
@@ -83,13 +82,13 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( instance_1_1, instances.get( 1 ));
 
 		// Series 3
-		InstanceImpl instance_1_2 = new InstanceImpl( "inst 12" );
+		Instance instance_1_2 = new Instance( "inst 12" );
 		InstanceHelpers.insertChild( instance_1, instance_1_2 );
 
-		InstanceImpl instance_1_1_1 = new InstanceImpl( "inst 111" );
+		Instance instance_1_1_1 = new Instance( "inst 111" );
 		InstanceHelpers.insertChild( instance_1_1, instance_1_1_1 );
 
-		InstanceImpl instance_1_2_1 = new InstanceImpl( "inst 121" );
+		Instance instance_1_2_1 = new Instance( "inst 121" );
 		InstanceHelpers.insertChild( instance_1_2, instance_1_2_1 );
 
 		instances = InstanceHelpers.buildHierarchicalList( instance_1 );
@@ -105,8 +104,8 @@ public class InstanceHelpersTest {
 	@Test
 	public void testInsertChild() {
 
-		InstanceImpl instance_1 = new InstanceImpl( "inst 1" );
-		InstanceImpl instance_1_1 = new InstanceImpl( "inst 11" );
+		Instance instance_1 = new Instance( "inst 1" );
+		Instance instance_1_1 = new Instance( "inst 11" );
 
 		Assert.assertNull( instance_1.getParent());
 		Assert.assertNull( instance_1_1.getParent());
@@ -125,7 +124,7 @@ public class InstanceHelpersTest {
 	@Test
 	public void testGetExportedVariables() {
 
-		InstanceImpl instance = new InstanceImpl( "inst 1" );
+		Instance instance = new Instance( "inst 1" );
 		Assert.assertEquals( 0, InstanceHelpers.getExportedVariables( instance ).size());
 
 		instance.getOverriddenExports().put( "var1", "value1" );
@@ -133,7 +132,7 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( 1, map.size());
 		Assert.assertEquals( "value1", map.get( "var1" ));
 
-		ComponentImpl component = new ComponentImpl( "comp 1" );
+		Component component = new Component( "comp 1" );
 		component.getExportedVariables().put( "var1", "another value" );
 		component.getExportedVariables().put( "var2", "value2" );
 		instance.setComponent( component );

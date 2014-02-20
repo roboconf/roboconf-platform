@@ -34,6 +34,7 @@
 	<artifactId>core</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: Core</name>
+	<packaging>bundle</packaging>
 	
 	<dependencies>
 		<dependency>
@@ -42,6 +43,33 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Export-Package>!net.roboconf.core.internal.*, net.roboconf.core.*</Export-Package>
+					</instructions>
+				</configuration>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 
 	<!--
 	<scm> <connection>scm:svn:https://svn.petalslink.org/svnroot/trunk/product/dev/prod/petals</connection> 

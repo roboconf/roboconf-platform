@@ -37,7 +37,6 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.impl.ApplicationImpl;
 import net.roboconf.core.model.validators.ParsingModelValidator;
 import net.roboconf.core.model.validators.RuntimeModelValidator;
 
@@ -62,7 +61,7 @@ public class RuntimeModelIo {
 	 */
 	public static LoadResult loadApplication( File projectDirectory ) {
 		LoadResult result = new LoadResult();
-		ApplicationImpl app = new ApplicationImpl();
+		Application app = new Application();
 
 		ApplicationDescriptor appDescriptor = null;
 		File descDirectory = new File( projectDirectory, Constants.PROJECT_DIR_DESC );

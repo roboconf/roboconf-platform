@@ -32,18 +32,8 @@
 	<modules>
 		<module>parent</module>
 		<module>core</module>
-		<!--
-		<module>model</module>
-		<module>new-model</module>
-		<module>agent</module>
-		<module>iaas-api</module>
-		<module>iaas-ec2</module>
-		<module>iaas-local</module>
-		<module>deployment-manager</module>
-		<module>client</module>
-		<module>apps</module>
-		<module>assembly</module>
-		-->
+		<module>roboconf-dm-rest-api</module>
+		<module>roboconf-dm-rest-client</module>
 	</modules>
 	
 </project>

@@ -16,13 +16,23 @@
 
 package net.roboconf.core.model.runtime;
 
+import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 
 /**
  * This object contains sets of related components.
  * @author Vincent Zurczak - Linagora
  */
-public interface Graphs {
+public class Graphs implements Serializable {
 
-	Collection<Component> getRootComponents();
+	private static final long serialVersionUID = 2918281424743945139L;
+	private final Collection<Component> rootsComponents = new HashSet<Component> ();
+
+	/**
+	 * @return a non-null list of root components
+	 */
+	public Collection<Component> getRootComponents() {
+		return this.rootsComponents;
+	}
 }

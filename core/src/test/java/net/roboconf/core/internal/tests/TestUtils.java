@@ -16,14 +16,23 @@
 
 package net.roboconf.core.internal.tests;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
+import java.util.zip.ZipOutputStream;
 
+import junit.framework.Assert;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.io.ParsingModelIoTest;
 
@@ -91,5 +100,109 @@ public class TestUtils {
 		result = os.toString( "UTF-8" );
 
 		return result;
+	}
+
+
+	/**
+	 * @return a non-null map associated a ZIP entry name with its text content
+	 */
+	public static Map<String,String> buildZipContent() {
+
+		Map<String,String> entryToContent = new LinkedHashMap<String,String> ();
+
+		entryToContent.put( "readme.txt", "This is a readme file." );
+		entryToContent.put( "graph/main.graph", "import facets.graph;\nimport components.graph;" );
+		entryToContent.put( "graph/facets.graph", "# nothing yet" );
+		entryToContent.put( "graph/components.graph", "# nothing here too" );
+		entryToContent.put( "descriptor/application-descriptor.properties", "application-name = Unit Test" );
+		entryToContent.put( "instances/initial-deployment.instances", "# No instance" );
+		entryToContent.put( "some/very/low/folder/demo.txt", "Whatever..." );
+		entryToContent.put( "graph/", null );
+		entryToContent.put( "anotherdir/", null );
+		entryToContent.put( "anotherdir/deeper/", null );
+
+		return entryToContent;
+	}
+
+
+	/**
+	 * Creates a ZIP file from the map.
+	 * @param entryToContent a map (key = ZIP entry, value = entry content, null for a directory)
+	 * @param targetZipFile
+	 */
+	public static void createZipFile( Map<String,String> entryToContent, File targetZipFile ) {
+
+		ZipOutputStream zos = null;
+		try {
+			zos = new ZipOutputStream( new FileOutputStream( targetZipFile ));
+			for( Map.Entry<String,String> entry : entryToContent.entrySet()) {
+				zos.putNextEntry( new ZipEntry( entry.getKey()));
+
+				if( entry.getValue() != null ) {
+					ByteArrayInputStream is = new ByteArrayInputStream( entry.getValue().getBytes( "UTF-8" ));
+					Utils.copyStream( is, zos );
+				}
+
+				zos.closeEntry();
+			}
+
+		} catch( IOException e ) {
+			Assert.fail( "Failed to create the ZIP. " + e.getMessage());
+
+		} finally {
+			Utils.closeQuietly( zos );
+		}
+	}
+
+
+	/**
+	 * Compares an assumed ZIP file with a content described in a map.
+	 * @param zipFile
+	 * @param entryToContent
+	 * @throws ZipException
+	 * @throws IOException
+	 */
+	public static void compareZipContent( File zipFile, Map<String,String> entryToContent ) throws IOException {
+
+		File tempDir = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString());
+		if( ! tempDir.mkdir())
+			Assert.fail( "Failed to create a temporary directory." );
+
+		try {
+			Utils.extractZipArchive( zipFile, tempDir );
+			compareUnzippedContent( tempDir, entryToContent );
+
+		} finally {
+			Utils.deleteFilesRecursively( tempDir );
+		}
+	}
+
+
+	/**
+	 * Compares an assumed ZIP file with a content described in a map.
+	 * @param rootDirectory the root directory of the unzipped content
+	 * @param entryToContent the map associating entries and content (null for directories)
+	 * @throws IOException
+	 */
+	public static void compareUnzippedContent( File rootDirectory, Map<String,String> entryToContent ) throws IOException {
+
+		for( Map.Entry<String,String> entry : entryToContent.entrySet()) {
+			File extractedFile = new File( rootDirectory, entry.getKey());
+			Assert.assertTrue( "Missing entry: " + entry.getKey(), extractedFile.exists());
+
+			if( entry.getValue() == null ) {
+				Assert.assertTrue( entry.getKey() + " was supposed to be a directory.", extractedFile.isDirectory());
+				continue;
+			}
+
+			try {
+				Assert.assertTrue( entry.getKey() + " was supposed to be a file.", extractedFile.isFile());
+				String fileContent = TestUtils.readFileContent( extractedFile );
+				Assert.assertEquals( entry.getValue(), fileContent );
+
+			} catch( IOException e ) {
+				Assert.fail( "Failed to compare file content. " + e.getMessage());
+			}
+		}
 	}
 }

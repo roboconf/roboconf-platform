@@ -17,13 +17,17 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.impl.InstanceImpl;
+import net.roboconf.core.model.validators.RuntimeModelValidator;
 
 /**
  * Helpers related to instances.
@@ -106,7 +110,7 @@ public class InstanceHelpers {
 	 * @param child a child instance (not null)
 	 * @param parent a parent instance (not null)
 	 */
-	public static void insertChild( Instance parent, InstanceImpl child ) {
+	public static void insertChild( Instance parent, Instance child ) {
 		child.setParent( parent );
 		parent.getChildren().add( child );
 	}
@@ -130,5 +134,134 @@ public class InstanceHelpers {
 
 		result.putAll( instance.getOverriddenExports());
 		return result;
+	}
+
+
+	/**
+	 * Finds an instance by name.
+	 * @param application the application
+	 * @param instancePath the instance path
+	 * @return an instance, or null if it was not found
+	 */
+	public static Instance findInstanceByPath( Application application, String instancePath ) {
+
+		Collection<Instance> currentList = application.getRootInstances();
+		List<String> instanceNames = new ArrayList<String>( Arrays.asList( instancePath.split( "/" )));
+		if( Utils.isEmptyOrWhitespaces( instanceNames.get( 0 )))
+			instanceNames.remove( 0 );
+
+		// Every path segment points to an instance
+		Instance result = null;
+		for( String instanceName : instanceNames ) {
+
+			result = null;
+			for( Instance instance : currentList ) {
+				if( instanceName.equals( instance.getName())) {
+					result = instance;
+					break;
+				}
+			}
+
+			// The segment does not match any instance
+			if( result == null )
+				break;
+
+			// Otherwise, prepare the next iteration
+			currentList = result.getChildren();
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds instances by component name.
+	 * @param application an application (not null)
+	 * @param componentName a component name (not null)
+	 * @return a non-null list of instances
+	 */
+	public static List<Instance> findInstancesByComponentName( Application application, String componentName ) {
+
+		List<Instance> result = new ArrayList<Instance> ();
+		for( Instance inst : application.getRootInstances()) {
+			for( Instance i : InstanceHelpers.buildHierarchicalList( inst )) {
+				if( componentName.equals( i.getComponent().getName()))
+					result.add( i );
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Gets all the instances of an application.
+	 * @param application an application (not null)
+	 * @return a non-null list of instances
+	 */
+	public static List<Instance> getAllInstances( Application application ) {
+
+		List<Instance> result = new ArrayList<Instance> ();
+		for( Instance rootInstance : application.getRootInstances())
+			result.addAll( InstanceHelpers.buildHierarchicalList( rootInstance ));
+
+		return result;
+	}
+
+
+	/**
+	 * Tries to insert a child instance.
+	 * <ol>
+	 * 		<li>Check if there is no child instance with this name.</li>
+	 * 		<li>Validate the instance.</li>
+	 * 		<li>Insert the instance.</li>
+	 * 		<li>Validate the application after insertion.</li>
+	 * 		<li>Critical error => revert the insertion.</li>
+	 * </ol>
+	 * <p>
+	 * This method assumes the application is already valid before the insertion.
+	 * Which makes sense.
+	 * </p>
+	 *
+	 * @param application the application (not null)
+	 * @param parentInstance the parent instance (can be null)
+	 * @param childInstance the child instance (not null)
+	 * @return true if the child instance could be inserted, false otherwise
+	 *
+	 * TODO: validate the child instance !!!!
+	 */
+	public static boolean tryToInsertChildInstance( Application application, Instance parentInstance, Instance childInstance ) {
+
+		boolean success = false;
+		Collection<Instance> list = parentInstance == null ? application.getRootInstances() : parentInstance.getChildren();
+
+		// First, make sure there is no child instance with this name before inserting.
+		// Otherwise, removing the child instance may result randomly.
+		boolean hasAlreadyAChildWithThisName = false;
+		for( Instance inst : list ) {
+			if(( hasAlreadyAChildWithThisName = childInstance.getName().equals( inst.getName())))
+				break;
+		}
+
+		// No parent and no root instance with this name => OK.
+		if( parentInstance == null && ! hasAlreadyAChildWithThisName ) {
+			application.getRootInstances().add( childInstance );
+			success = true;
+		}
+
+		// Otherwise, when no name conflict, insert, validate and revert if necessary.
+		else if( ! hasAlreadyAChildWithThisName ) {
+			InstanceHelpers.insertChild( parentInstance, childInstance );
+			Collection<RoboconfError> errors = RuntimeModelValidator.validate( application.getRootInstances());
+			if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
+				childInstance.setParent( null );
+				parentInstance.getChildren().remove( childInstance );
+
+			} else {
+				success = true;
+			}
+		}
+
+		return success;
 	}
 }

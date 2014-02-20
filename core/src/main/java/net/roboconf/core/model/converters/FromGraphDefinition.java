@@ -41,8 +41,6 @@ import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.impl.ComponentImpl;
-import net.roboconf.core.model.runtime.impl.GraphsImpl;
 
 /**
  * To build a {@link Graphs} from a {@link FileDefinition}.
@@ -210,7 +208,7 @@ public class FromGraphDefinition {
 
 	private void processComponent( BlockComponent block, URI processedUri ) {
 
-		ComponentImpl component = new ComponentImpl();
+		Component component = new Component();
 		component.setName( block.getName());
 		component.setInstallerName( ModelUtils.getPropertyValue( block, Constants.PROPERTY_GRAPH_INSTALLER ));
 		component.setAlias( ModelUtils.getPropertyValue( block, Constants.PROPERTY_COMPONENT_ALIAS ));
@@ -366,7 +364,7 @@ public class FromGraphDefinition {
 
 
 	private Graphs buildFinalGraphs() {
-		Graphs result = new GraphsImpl();
+		Graphs result = new Graphs();
 		for( Component c : this.componentNameToComponent.values()) {
 			if( c.getAncestors().isEmpty())
 				result.getRootComponents().add( c );

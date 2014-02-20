@@ -44,7 +44,6 @@ import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.impl.InstanceImpl;
 
 /**
  * To build a collection of {@link Instance} from a {@link FileDefinition}.
@@ -185,18 +184,18 @@ public class FromInstanceDefinition {
 	private void processInstance( BlockInstanceOf block, URI processedUri ) {
 
 		// Process the rootInstances
-		Map<BlockInstanceOf,InstanceImpl> blockToInstance = new LinkedHashMap<BlockInstanceOf,InstanceImpl> ();
-		InstanceImpl rootInstance = new InstanceImpl();
+		Map<BlockInstanceOf,Instance> blockToInstance = new LinkedHashMap<BlockInstanceOf,Instance> ();
+		Instance rootInstance = new Instance();
 		blockToInstance.put( block, rootInstance );
 		while( ! blockToInstance.isEmpty()) {
 
 			// The current one to process won't be processed again
-			Map.Entry<BlockInstanceOf,InstanceImpl> entry = blockToInstance.entrySet().iterator().next();
+			Map.Entry<BlockInstanceOf,Instance> entry = blockToInstance.entrySet().iterator().next();
 			blockToInstance.remove( entry.getKey());
 
 			// Process the current
 			BlockInstanceOf currentBlock = entry.getKey();
-			InstanceImpl instance = entry.getValue();
+			Instance instance = entry.getValue();
 			instance.setName( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_NAME ));
 			instance.setChannel( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_CHANNEL ));
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
@@ -220,7 +219,7 @@ public class FromInstanceDefinition {
 				if( innerBlock.getInstructionType() != AbstractBlock.INSTANCEOF )
 					continue;
 
-				InstanceImpl newInstance = new InstanceImpl();
+				Instance newInstance = new Instance();
 				InstanceHelpers.insertChild( instance, newInstance );
 				blockToInstance.put((BlockInstanceOf) innerBlock, newInstance );
 			}
