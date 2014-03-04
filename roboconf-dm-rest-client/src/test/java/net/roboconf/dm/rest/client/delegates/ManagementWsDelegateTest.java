@@ -24,7 +24,6 @@ import java.util.UUID;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Application.ApplicationStatus;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
 import net.roboconf.dm.rest.client.mocks.helper.PropertyManager;
@@ -70,25 +69,21 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		Assert.assertEquals( PropertyManager.APP_1, app.getName());
 		Assert.assertNotNull( app.getDescription());
 		Assert.assertEquals( "v1", app.getQualifier());
-		Assert.assertEquals( ApplicationStatus.STOPPED, app.getStatus());
 
 		app = apps.get( 1 );
 		Assert.assertEquals( PropertyManager.APP_2, app.getName());
 		Assert.assertNull( app.getDescription());
 		Assert.assertEquals( "v1", app.getQualifier());
-		Assert.assertEquals( ApplicationStatus.STOPPED, app.getStatus());
 
 		client.getManagementDelegate().startApplication( PropertyManager.APP_1 );
 		app = client.getManagementDelegate().getApplicationByName( PropertyManager.APP_1 );
 		Assert.assertNotNull( app );
 		Assert.assertEquals( PropertyManager.APP_1, app.getName());
-		Assert.assertEquals( ApplicationStatus.STARTED, app.getStatus());
 
 		client.getManagementDelegate().stopApplication( PropertyManager.APP_1 );
 		app = client.getManagementDelegate().getApplicationByName( PropertyManager.APP_1 );
 		Assert.assertNotNull( app );
 		Assert.assertEquals( PropertyManager.APP_1, app.getName());
-		Assert.assertEquals( ApplicationStatus.STOPPED, app.getStatus());
 
 		client.getManagementDelegate().deleteApplication( PropertyManager.APP_1 );
 		app = client.getManagementDelegate().getApplicationByName( PropertyManager.APP_1 );

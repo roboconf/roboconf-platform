@@ -18,7 +18,6 @@ package net.roboconf.dm.rest.api;
 
 import java.util.List;
 
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -42,92 +41,96 @@ import net.roboconf.dm.rest.UrlConstants;
  */
 public interface IApplicationWs {
 
+	String OPTIONAL_INSTANCE_PATH = "/{instancePath:(/instancePath/[^/]+?)?}";
 	String PATH = "/" + UrlConstants.APP + "/{name}";
 
-
 	/**
-	 * Lists the instances paths.
-	 * @param applicationName the application name
-	 * @return a response
+	 * Actions to apply on instances.
+	 * <ul>
+	 * <li>deploy: ask an agent to deploy the instance files.</li>
+	 * <li>undeploy: ask the agent to undeploy the instance files.</li>
+	 * <li>start: start the instance.</li>
+	 * <li>stop: stop the instance.</li>
+	 * <li>remove: remove the instance from the model.</li>
+	 * </ul>
+	 * <p>
+	 * Model additions are performed through different means.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
 	 */
-	@GET
-	@Path( "/all" )
-	@Produces( MediaType.APPLICATION_JSON )
-	List<Instance> listAllInstances( @PathParam("name") String applicationName );
+	public enum ApplicationAction {
+		deploy, undeploy, start, stop, remove;
+
+		public static ApplicationAction whichAction( String s ) {
+
+			ApplicationAction result = null;
+			for( ApplicationAction action : ApplicationAction.values()) {
+				if( action.toString().equalsIgnoreCase( s )) {
+					result = action;
+					break;
+				}
+			}
+
+			return result;
+		}
+	}
+
 
 	/**
-	 * Lists the paths of the root instances.
+	 * Performs an action on an instance of an application.
 	 * @param applicationName the application name
-	 * @return a response
-	 */
-	@GET
-	@Path( "/roots" )
-	@Produces( MediaType.APPLICATION_JSON )
-	List<Instance> listRootInstances( @PathParam("name") String applicationName );
-
-	/**
-	 * Lists the available components in this application.
-	 * @param applicationName the application name
-	 * @return a non-null list of components
-	 */
-	@GET
-	@Path("/components")
-	@Produces( MediaType.APPLICATION_JSON )
-	List<Component> listComponents( @PathParam("name") String applicationName );
-
-	/**
-	 * Adds a new root instance.
-	 * @param applicationName the application name
-	 * @param instance the new root instance
+	 * @param action see {@link ApplicationAction}
+	 * @param instancePath the instance path (optional, null to consider the application as the root)
+	 * @param applyToAllChildren only makes sense when instancePath is not empty
+	 * <p>
+	 * True to apply this action to all the children too, false to apply it only to this instance.
+	 * </p>
+	 *
 	 * @return a response
 	 */
 	@POST
+	@Path( "/{action}" + OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
-	Response addRootInstance( @PathParam("name") String applicationName, Instance instance );
+	Response perform( @PathParam("name") String applicationName, @PathParam("action") String action, @PathParam("instancePath") String instancePath, boolean applyToAllChildren );
+
 
 	/**
 	 * Adds a new instance.
 	 * @param applicationName the application name
-	 * @param parentInstancePath the path of the parent instance
+	 * @param parentInstancePath the path of the parent instance (optional, null to consider the application as the root)
 	 * @param instance the new instance
 	 * @return a response
 	 */
 	@POST
-	@Path("/{instancePath}")
+	@Path( OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
 	Response addInstance( @PathParam("name") String applicationName, @PathParam("instancePath") String parentInstancePath, Instance instance );
 
-	/**
-	 * Gets an instance.
-	 * @param applicationName the application name
-	 * @param instancePath the instance path (ID)
-	 * @return an instance
-	 */
-	@GET
-	@Path("/{instancePath}")
-	@Produces( MediaType.APPLICATION_JSON )
-	Instance getInstance( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
-
-	/**
-	 * Deletes an instance.
-	 * @param applicationName the application name
-	 * @param instancePath the instance path (ID)
-	 * @return a response
-	 */
-	@DELETE
-	@Path("/{instancePath}")
-	@Produces( MediaType.APPLICATION_JSON )
-	Response removeInstance( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
 
 	/**
 	 * Lists the paths of the children of an instance.
 	 * @param applicationName the application name
-	 * @return a response
+	 * @param instancePath the instance path (optional, null to consider the application as the root)
+	 * @return a non-null list
 	 */
 	@GET
-	@Path("/{instancePath}/children")
+	@Path( "children" + OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Instance> listChildrenInstances( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
+
+
+	/**
+	 * Lists the paths of the children of an instance.
+	 * @param applicationName the application name
+	 * @param instancePath the instance path (optional, null to consider the application as the root)
+	 * @return a non-null list
+	 */
+	@GET
+	@Path( "all-children" + OPTIONAL_INSTANCE_PATH )
+	@Produces( MediaType.APPLICATION_JSON )
+	List<Instance> listAllChildrenInstances( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
+
 
 	/**
 	 * Finds possible components under a given instance.
@@ -136,12 +139,25 @@ public interface IApplicationWs {
 	 * </p>
 	 *
 	 * @param applicationName the application name
+	 * @param instancePath the instance path (optional, null to consider the application as the root)
 	 * @return a non-null list of components names
 	 */
 	@GET
-	@Path("/{instancePath}/possibilities")
+	@Path( "possibilities" + OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
-	List<String> findPossibleComponentChildren( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
+	List<Component> findPossibleComponentChildren( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
+
+
+	/**
+	 * Lists the available components in this application.
+	 * @param applicationName the application name
+	 * @return a non-null list of components
+	 */
+	@GET
+	@Path( "/components" )
+	@Produces( MediaType.APPLICATION_JSON )
+	List<Component> listComponents( @PathParam("name") String applicationName );
+
 
 	/**
 	 * Finds possible parent instances for a given component.
@@ -151,12 +167,13 @@ public interface IApplicationWs {
 	 *
 	 *
 	 * @param applicationName the application name
-	 * @return a non-null list of instances names
+	 * @return a non-null list of instances paths
 	 */
 	@GET
 	@Path("/component/{componentName}")
 	@Produces( MediaType.APPLICATION_JSON )
 	List<String> findPossibleParentInstances( @PathParam("name") String applicationName, @PathParam("componentName") String componentName );
+
 
 	/**
 	 * Creates an instance from a component name.

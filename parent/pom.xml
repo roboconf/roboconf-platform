@@ -151,19 +151,11 @@
 							<goal>prepare-agent</goal>
 						</goals>
 					</execution>
-
 					<execution>
 						<id>report</id>
 						<phase>prepare-package</phase>
 						<goals>
 							<goal>report</goal>
-						</goals>
-					</execution>
-
-					<execution>
-						<id>check</id>
-						<goals>
-							<goal>check</goal>
 						</goals>
 					</execution>
 				</executions>

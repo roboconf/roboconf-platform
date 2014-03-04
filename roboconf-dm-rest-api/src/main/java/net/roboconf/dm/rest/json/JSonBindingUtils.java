@@ -17,9 +17,9 @@
 package net.roboconf.dm.rest.json;
 
 import java.io.IOException;
+import java.util.Map;
 
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Application.ApplicationStatus;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
@@ -47,13 +47,13 @@ public class JSonBindingUtils {
 	private static final String APP_NAME = "name";
 	private static final String APP_DESC = "desc";
 	private static final String APP_QUALIFIER = "qualifier";
-	private static final String APP_STATUS = "status";
 
 	private static final String INST_NAME = "name";
 	private static final String INST_PATH = "path";
 	private static final String INST_CHANNEL = "channel";
 	private static final String INST_COMPONENT = "component";
 	private static final String INST_STATUS = "status";
+	private static final String INST_DATA = "data";
 
 	private static final String COMP_NAME = "name";
 	private static final String COMP_ALIAS = "alias";
@@ -102,9 +102,6 @@ public class JSonBindingUtils {
 			if( app.getName() != null )
 				generator.writeStringField( APP_NAME, app.getName());
 
-			if( app.getStatus() != null )
-				generator.writeStringField( APP_STATUS, String.valueOf( app.getStatus()));
-
 			if( app.getDescription() != null )
 				generator.writeStringField( APP_DESC, app.getDescription());
 
@@ -132,9 +129,6 @@ public class JSonBindingUtils {
 	        JsonNode n;
 	        if(( n = node.get( APP_NAME )) != null )
 	        	application.setName( n.textValue());
-
-	        if(( n = node.get( APP_STATUS )) != null )
-	        	application.setStatus( ApplicationStatus.wichStatus( n.textValue()));
 
 	        if(( n = node.get( APP_DESC )) != null )
 	        	application.setDescription( n.textValue());
@@ -176,6 +170,18 @@ public class JSonBindingUtils {
 			if( instance.getComponent() != null )
 				generator.writeObjectField( INST_COMPONENT, instance.getComponent());
 
+			// Write some meta-data (useful for web clients).
+			// De-serializing this information is useless for the moment.
+			if( ! instance.getData().isEmpty()) {
+
+				generator.writeFieldName( INST_DATA );
+				generator.writeStartObject();
+				for( Map.Entry<String,String> entry : instance.getData().entrySet())
+					generator.writeObjectField( entry.getKey(), entry.getValue());
+
+				generator.writeEndObject();
+			}
+
 			generator.writeEndObject();
 		}
 	}
@@ -205,18 +211,9 @@ public class JSonBindingUtils {
 	        	instance.setChannel( n.textValue());
 
 	        if(( n = node.get( INST_COMPONENT )) != null ) {
-		        Component instanceComponent = new Component();
-		        instance.setComponent( instanceComponent );
-
-		        node = n;
-		        if(( n = node.get( COMP_NAME )) != null )
-		        	instanceComponent.setName( n.textValue());
-
-		        if(( n = node.get( COMP_ALIAS )) != null )
-		        	instanceComponent.setAlias( n.textValue());
-
-		        if(( n = node.get( COMP_INSTALLER )) != null )
-		        	instanceComponent.setInstallerName( n.textValue());
+	        	ObjectMapper mapper = createObjectMapper();
+	        	Component instanceComponent = mapper.readValue( n.toString(), Component.class );
+	        	instance.setComponent( instanceComponent );
 	        }
 
 			return instance;

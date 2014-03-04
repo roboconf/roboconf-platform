@@ -1,0 +1,160 @@
+/**
+ * Copyright 2013-2014 Linagora, Université Joseph Fourier
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.roboconf.core.model.runtime;
+
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+
+import net.roboconf.core.internal.utils.Utils;
+
+/**
+ * A component represents a Software item (hardware, software, whatever).
+ * @author Vincent Zurczak - Linagora
+ */
+public class Component implements Serializable {
+
+	private static final long serialVersionUID = 5163458185512982868L;
+
+	private String name, alias, installerName, iconLocation;
+	private final Collection<String> importedVariableNames = new HashSet<String> ();
+	private final Collection<String> facetNames = new HashSet<String> ();
+	private final Map<String,String> exportedVariables = new HashMap<String,String> ();
+
+	private final transient Collection<Component> children = new HashSet<Component> ();
+	private final transient Collection<Component> ancestors = new HashSet<Component> ();
+
+
+	/**
+	 * Constructor.
+	 */
+	public Component() {
+		// nothing
+	}
+
+	/**
+	 * Constructor.
+	 * @param name the component name
+	 */
+	public Component( String name ) {
+		this.name = name;
+	}
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return this.name;
+	}
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName( String name ) {
+		this.name = name;
+	}
+
+	/**
+	 * @return the alias
+	 */
+	public String getAlias() {
+		return this.alias;
+	}
+
+	/**
+	 * @param alias the alias to set
+	 */
+	public void setAlias( String alias ) {
+		this.alias = alias;
+	}
+
+	/**
+	 * @return the iconLocation
+	 */
+	public String getIconLocation() {
+		return this.iconLocation;
+	}
+
+	/**
+	 * @param iconLocation the iconLocation to set
+	 */
+	public void setIconLocation( String iconLocation ) {
+		this.iconLocation = iconLocation;
+	}
+
+	/**
+	 * @return the installerName
+	 */
+	public String getInstallerName() {
+		return this.installerName;
+	}
+
+	/**
+	 * @param installerName the installerName to set
+	 */
+	public void setInstallerName( String installerName ) {
+		this.installerName = installerName;
+	}
+
+	/**
+	 * @return the importedVariableNames
+	 */
+	public Collection<String> getImportedVariableNames() {
+		return this.importedVariableNames;
+	}
+
+	/**
+	 * @return the facetNames
+	 */
+	public Collection<String> getFacetNames() {
+		return this.facetNames;
+	}
+
+	/**
+	 * @return the exportedVariables
+	 */
+	public Map<String, String> getExportedVariables() {
+		return this.exportedVariables;
+	}
+
+	/**
+	 * @return the children
+	 */
+	public Collection<Component> getChildren() {
+		return this.children;
+	}
+
+	/**
+	 * @return the ancestors
+	 */
+	public Collection<Component> getAncestors() {
+		return this.ancestors;
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof Component
+				&& Utils.areEqual( this.name, ((Component) obj ).getName());
+	}
+
+	@Override
+	public int hashCode() {
+		return this.name == null ? 17 : this.name.hashCode();
+	}
+}

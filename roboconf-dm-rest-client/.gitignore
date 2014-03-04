@@ -10,5 +10,6 @@
 .classpath
 /.externalToolBuilders
 /target
+/bin
 /maven-eclipse.xml
 /.settings

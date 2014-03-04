@@ -91,16 +91,6 @@ public interface IManagementWs {
 	List<Application> listApplications();
 
 	/**
-	 * Gets the application.
-	 * @param applicationName the application name
-	 * @return the application object
-	 */
-	@GET
-	@Path("/{name}")
-	@Produces( MediaType.APPLICATION_JSON )
-	Application getApplicationByName( @PathParam("name") String applicationName );
-
-	/**
 	 * Gets the model of an application (model files in a ZIP archive).
 	 * @param applicationName the application name
 	 * @return a response with the ZIP archive
@@ -111,32 +101,27 @@ public interface IManagementWs {
 	Response downloadApplicationModelData( @PathParam("name") String applicationName );
 
 	/**
+	 * Shutdowns an application.
+	 * <p>
+	 * Shutdowns means removing everything Roboconf deployed or created.
+	 * This operation does not delete the application from the model. It only destroys
+	 * runtime resources.
+	 * </p>
+	 *
+	 * @param applicationName the application name
+	 * @return a response
+	 */
+	@POST
+	@Path("/{name}/shutdown")
+	Response shutdownApplication( @PathParam("name") String applicationName );
+
+	/**
 	 * Deletes an application.
 	 * @param applicationName the application name
 	 * @return a response
 	 */
 	@DELETE
-	@Path("/{name}")
+	@Path("/{name}/delete")
 	@Produces( MediaType.APPLICATION_JSON )
 	Response deleteApplication( @PathParam("name") String applicationName );
-
-	/**
-	 * Starts an application.
-	 * @param applicationName the application name
-	 * @return a response
-	 */
-	@POST
-	@Path("/{name}/start")
-	@Produces( MediaType.APPLICATION_JSON )
-	Response startApplication( @PathParam("name") String applicationName );
-
-	/**
-	 * Stops an application.
-	 * @param applicationName the application name
-	 * @return a response
-	 */
-	@POST
-	@Path("/{name}/stop")
-	@Produces( MediaType.APPLICATION_JSON )
-	Response stopApplication( @PathParam("name") String applicationName );
 }
