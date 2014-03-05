@@ -23,7 +23,15 @@ import java.util.Map;
  * Helpers related to variables.
  * @author Vincent Zurczak - Linagora
  */
-public class VariableHelpers {
+public final class VariableHelpers {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private VariableHelpers() {
+		// nothing
+	}
+
 
 	/**
 	 * Parses a variable name (&lt;facetOrComponentName&gt;.&lt;simpleName&gt;).

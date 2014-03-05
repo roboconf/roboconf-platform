@@ -18,6 +18,11 @@ package net.roboconf.dm.rest.client.test;
 
 import net.roboconf.dm.rest.client.WsClient;
 
+import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
+import com.sun.jersey.test.framework.AppDescriptor;
+import com.sun.jersey.test.framework.WebAppDescriptor;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -28,5 +33,20 @@ public class RestTestUtils {
 	 */
 	public static WsClient buildWsClient() {
 		return new WsClient( "http://localhost:9998" );
+	}
+
+
+	/**
+	 * @return a web descriptor for the tests
+	 */
+	public static AppDescriptor buildTestDescriptor() {
+
+		return new WebAppDescriptor.Builder()
+			.servletClass( ServletContainer.class )
+			.initParam( PackagesResourceConfig.PROPERTY_PACKAGES, "net.roboconf.dm.server;net.roboconf.dm.rest.json" )
+			.initParam( "com.sun.jersey.api.json.POJOMappingFeature", "true" )
+			.initParam( "com.sun.jersey.spi.container.ContainerResponseFilters", "net.roboconf.dm.rest.cors.ResponseCorsFilter" )
+			.initParam( "com.sun.jersey.config.feature.DisableWADL", "true" )
+			.build();
 	}
 }

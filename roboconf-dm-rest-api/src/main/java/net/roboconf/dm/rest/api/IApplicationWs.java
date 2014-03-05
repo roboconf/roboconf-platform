@@ -41,7 +41,8 @@ import net.roboconf.dm.rest.UrlConstants;
  */
 public interface IApplicationWs {
 
-	String OPTIONAL_INSTANCE_PATH = "/{instancePath:(/instancePath/[^/]+?)?}";
+	String INSTANCE_PATH_PREFIX = "/instance/";
+	String OPTIONAL_INSTANCE_PATH = "{instancePath:(" + INSTANCE_PATH_PREFIX + "[^/]+?)?}";
 	String PATH = "/" + UrlConstants.APP + "/{name}";
 
 	/**
@@ -82,7 +83,7 @@ public interface IApplicationWs {
 	 * @param applicationName the application name
 	 * @param action see {@link ApplicationAction}
 	 * @param instancePath the instance path (optional, null to consider the application as the root)
-	 * @param applyToAllChildren only makes sense when instancePath is not empty
+	 * @param applyToAllChildren only makes sense when instancePath is not null
 	 * <p>
 	 * True to apply this action to all the children too, false to apply it only to this instance.
 	 * </p>
@@ -103,7 +104,7 @@ public interface IApplicationWs {
 	 * @return a response
 	 */
 	@POST
-	@Path( OPTIONAL_INSTANCE_PATH )
+	@Path( "/add" + OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
 	Response addInstance( @PathParam("name") String applicationName, @PathParam("instancePath") String parentInstancePath, Instance instance );
 
@@ -115,7 +116,7 @@ public interface IApplicationWs {
 	 * @return a non-null list
 	 */
 	@GET
-	@Path( "children" + OPTIONAL_INSTANCE_PATH )
+	@Path( "/children" + OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Instance> listChildrenInstances( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
 
@@ -127,7 +128,7 @@ public interface IApplicationWs {
 	 * @return a non-null list
 	 */
 	@GET
-	@Path( "all-children" + OPTIONAL_INSTANCE_PATH )
+	@Path( "/all-children" + OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Instance> listAllChildrenInstances( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
 
@@ -143,7 +144,7 @@ public interface IApplicationWs {
 	 * @return a non-null list of components names
 	 */
 	@GET
-	@Path( "possibilities" + OPTIONAL_INSTANCE_PATH )
+	@Path( "/possibilities" + OPTIONAL_INSTANCE_PATH )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Component> findPossibleComponentChildren( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
 

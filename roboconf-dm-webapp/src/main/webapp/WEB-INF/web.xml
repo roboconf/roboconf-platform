@@ -57,6 +57,6 @@
 	</error-page>
 	
 	<listener>
-		<listener-class>net.roboconf.dm.listener.ServletContextListenerImpl</listener-class>
+		<listener-class>net.roboconf.dm.webapp.listener.ServletContextListenerImpl</listener-class>
 	</listener>
 </web-app>

@@ -23,10 +23,12 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.rest.RestUtils;
 import net.roboconf.dm.rest.UrlConstants;
+import net.roboconf.dm.rest.api.IApplicationWs.ApplicationAction;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 
 import com.sun.jersey.api.client.ClientResponse;
@@ -54,68 +56,95 @@ public class ApplicationWsDelegate {
 
 
 	/**
-	 * Lists all the instances for a given application.
+	 * Performs an action on instance (and potentially, on its children too).
+	 * <p>
+	 * If applyToChildren is true, the action will be performed on the given instance
+	 * and its children. In addition, if the given instance is null, then the action will be
+	 * applied to all the instances of the application.
+	 * </p>
+	 * <p>
+	 * Notice that these actions, like of most of the others, are performed asynchronously.
+	 * It means invoking these REST operations is equivalent to submitting a request. How it
+	 * will be processed concretely will depend then on the agent.
+	 * </p>
+	 *
 	 * @param applicationName the application name
-	 * @return a non-null list of instance paths
+	 * @param action the action to perform
+	 * @param instancePath the instance path (can be null if applyToChildren is true)
+	 * @param applyToAllChildren true to apply to children too
+	 * @throws ApplicationException if something went wrong
 	 */
-	public List<Instance> listAllInstances( String applicationName ) {
-		this.logger.finer( "Listing instance paths for application " + applicationName + "..." );
+	public void perform( String applicationName, ApplicationAction action, String instancePath, boolean applyToAllChildren )
+	throws ApplicationException {
 
-		List<Instance> result = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( "all" )
-				.accept( MediaType.APPLICATION_JSON )
-				.get( new GenericType<List<Instance>> () {});
+		if( instancePath == null && ! applyToAllChildren )
+			throw new IllegalArgumentException( "When applyToChildren is false, the instance path cannot be null." );
 
-		if( result != null )
-			this.logger.finer( result.size() + " instances were found for the application " + applicationName + "." );
-		else
-			this.logger.finer( "No instance was found for the application " + applicationName + "." );
+		// Log
+		StringBuilder sb = new StringBuilder();
+		sb.append( "Performing action '" );
+		sb.append( action );
+		sb.append( "' in " );
+		sb.append( applicationName );
 
-		return result != null ? result : new ArrayList<Instance> ();
+		if( instancePath == null && applyToAllChildren ) {
+			sb.append( " on all the instances." );
+
+		} else if( instancePath != null ) {
+			sb.append( ", instance " + instancePath );
+			if( applyToAllChildren )
+				sb.append( " and its children" );
+			sb.append( "..." );
+		}
+
+		this.logger.finer(sb.toString());
+
+		// Invoke the client
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( String.valueOf( action ));
+		if( ! Utils.isEmptyOrWhitespaces( instancePath ))
+			path = path.path( "instance" ).path( RestUtils.toRestfulPath( instancePath ));
+
+		ClientResponse response = path
+				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
+				.post( ClientResponse.class, applyToAllChildren );
+
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
+			String value = response.getEntity( String.class );
+			this.logger.finer( response.getStatusInfo() + ": " + value );
+			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+		}
+
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
 
 	/**
-	 * Lists all the root instances for a given application.
+	 * Lists all the children of an instance.
 	 * @param applicationName the application name
+	 * @param instancePath the instance path (null to get root instances)
+	 * @param all true to list indirect children too, false to only list direct children
 	 * @return a non-null list of instance paths
 	 */
-	public List<Instance> listRootInstances( String applicationName ) {
-		this.logger.finer( "Listing instance paths for application " + applicationName + "..." );
+	public List<Instance> listChildrenInstances( String applicationName, String instancePath, boolean all ) {
+		this.logger.finer( "Listing children instances for " + instancePath + " in " + applicationName + "." );
 
-		List<Instance> result = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( "roots" )
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName );
+		if( all )
+			path = path.path( "all-children" );
+		else
+			path = path.path( "children" );
+
+		if( ! Utils.isEmptyOrWhitespaces( instancePath ))
+			path = path.path( "instance" ).path( RestUtils.toRestfulPath( instancePath ));
+
+		List<Instance> result = path
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Instance>> () {});
 
 		if( result != null )
-			this.logger.finer( result.size() + " root instances were found for the application " + applicationName + "." );
+			this.logger.finer( result.size() + " children instances were found for " + instancePath + " in " + applicationName + "." );
 		else
-			this.logger.finer( "No root instance was found for the application " + applicationName + "." );
-
-		return result != null ? result : new ArrayList<Instance> ();
-	}
-
-
-	/**
-	 * Lists all the children instances for a given application and instance path.
-	 * @param applicationName the application name
-	 * @param parentInstancePath the parent instance path (not null)
-	 * @return a non-null list of instance paths
-	 */
-	public List<Instance> listChildrenInstances( String applicationName, String parentInstancePath ) {
-		this.logger.finer( "Listing instance paths for application " + applicationName + "..." );
-
-		String encodedPath = RestUtils.toRestfulPath( parentInstancePath );
-		List<Instance> result = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( encodedPath ).path( "children" )
-				.accept( MediaType.APPLICATION_JSON )
-				.get( new GenericType<List<Instance>> () {});
-
-		if( result != null )
-			this.logger.finer( result.size() + " instances were found for the application " + applicationName + "." );
-		else
-			this.logger.finer( "No instance was found for the application " + applicationName + "." );
+			this.logger.finer( "No child instance was found for " + instancePath + " in " + applicationName + "." );
 
 		return result != null ? result : new ArrayList<Instance> ();
 	}
@@ -131,70 +160,13 @@ public class ApplicationWsDelegate {
 	public void addInstance( String applicationName, String parentInstancePath, Instance instance ) throws ApplicationException {
 		this.logger.finer( "Adding an instance to the application " + applicationName + "..." );
 
-		// This method is a proxy for two operations (addRootInstance and addInstance).
-		// These operations are available at different URL.
-		String encodedPath = null;
-		if( parentInstancePath != null )
-			encodedPath = RestUtils.toRestfulPath( parentInstancePath );
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "add" );
+		if( ! Utils.isEmptyOrWhitespaces( parentInstancePath ))
+			path = path.path( "instance" ).path( RestUtils.toRestfulPath( parentInstancePath ));
 
-		WebResource res = this.resource.path( UrlConstants.APP ).path( applicationName );
-		if( encodedPath != null )
-			res = res.path( encodedPath );
-
-		ClientResponse response = res
+		ClientResponse response = path
 				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
 				.post( ClientResponse.class, instance );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
-	}
-
-
-	/**
-	 * Gets an instance from a path.
-	 * @param applicationName the application name
-	 * @param instancePath the instance path
-	 * @return the instance object
-	 * @throws ApplicationException if a problem occurred with the instance management
-	 */
-	public Instance getInstance( String applicationName, String instancePath ) throws ApplicationException {
-		this.logger.finer( "Getting an instance object for the application " + applicationName + "..." );
-
-		String encodedPath = RestUtils.toRestfulPath( instancePath );
-		ClientResponse response = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( encodedPath )
-				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
-				.get( ClientResponse.class );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
-		return response.getEntity( Instance.class );
-	}
-
-
-	/**
-	 * Removes an instance from an application.
-	 * @param applicationName the application name
-	 * @param instancePath the instance path
-	 * @throws ApplicationException if a problem occurred with the instance management
-	 */
-	public void removeInstance( String applicationName, String instancePath ) throws ApplicationException {
-		this.logger.finer( "Removing an instance from the application " + applicationName + "..." );
-
-		String encodedPath = RestUtils.toRestfulPath( instancePath );
-		ClientResponse response = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( encodedPath )
-				.delete( ClientResponse.class );
 
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
@@ -231,23 +203,23 @@ public class ApplicationWsDelegate {
 	/**
 	 * Finds the component names you could instantiate and deploy on an existing instance.
 	 * @param applicationName the application name
-	 * @param instancePath an instance path
+	 * @param instancePath an instance path (null to get root components)
 	 * @return a non-null list of component names
 	 */
-	public List<String> findPossibleComponentChildren( String applicationName, String instancePath ) {
+	public List<Component> findPossibleComponentChildren( String applicationName, String instancePath ) {
 		this.logger.finer( "Listing possible child components for instance " + instancePath + "..." );
 
-		String encodedPath = RestUtils.toRestfulPath( instancePath );
-		List<String> result = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( encodedPath ).path( "possibilities" )
-				.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<String>> () {});
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "possibilities" );
+		if( ! Utils.isEmptyOrWhitespaces( instancePath ))
+			path = path.path( "instance" ).path( RestUtils.toRestfulPath( instancePath ));
 
+		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
 		if( result != null )
 			this.logger.finer( result.size() + " possible children was or were found for " + instancePath + "." );
 		else
 			this.logger.finer( "No possible child was found for " + instancePath + "." );
 
-		return result != null ? result : new ArrayList<String> ();
+		return result != null ? result : new ArrayList<Component> ();
 	}
 
 
@@ -292,7 +264,6 @@ public class ApplicationWsDelegate {
 				.path( UrlConstants.APP ).path( applicationName ).path( "component" ).path( componentName ).path( "new" )
 				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
 				.get( ClientResponse.class );
-
 
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );

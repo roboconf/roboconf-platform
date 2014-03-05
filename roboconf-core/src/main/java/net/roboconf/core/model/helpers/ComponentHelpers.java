@@ -29,7 +29,15 @@ import net.roboconf.core.model.runtime.Graphs;
  * Helpers related to components.
  * @author Vincent Zurczak - Linagora
  */
-public class ComponentHelpers {
+public final class ComponentHelpers {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private ComponentHelpers() {
+		// nothing
+	}
+
 
 	/**
 	 * Finds a component by name.

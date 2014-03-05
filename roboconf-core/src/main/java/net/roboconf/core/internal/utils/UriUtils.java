@@ -24,7 +24,15 @@ import java.net.URL;
  * A collection of helpers related to {@link URI}.
  * @author Vincent Zurczak - Linagora
  */
-public class UriHelper {
+public final class UriUtils {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private UriUtils() {
+		// nothing
+	}
+
 
 	/**
 	 * Builds an URI from an URL (with a handle for URLs not compliant with RFC 2396).

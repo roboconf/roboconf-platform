@@ -24,7 +24,15 @@ import net.roboconf.core.RoboconfError;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RoboconfErrorHelpers {
+public final class RoboconfErrorHelpers {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private RoboconfErrorHelpers() {
+		// nothing
+	}
+
 
 	/**
 	 * Determines whether a collection of errors contains at least one critical error.

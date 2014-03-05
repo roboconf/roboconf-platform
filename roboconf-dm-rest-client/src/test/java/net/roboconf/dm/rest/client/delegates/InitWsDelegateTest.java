@@ -17,14 +17,14 @@
 package net.roboconf.dm.rest.client.delegates;
 
 import junit.framework.Assert;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.InitializationException;
-import net.roboconf.dm.rest.client.mocks.InitWsMock;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import com.sun.jersey.api.client.ClientResponse.Status;
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
 import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
@@ -40,27 +40,39 @@ public class InitWsDelegateTest extends JerseyTest {
 		return RestTestUtils.buildTestDescriptor();
 	}
 
+
 	@Override
     public TestContainerFactory getTestContainerFactory() {
         return new GrizzlyWebTestContainerFactory();
     }
 
+
+	@Before
+	public void resetManager() {
+		Manager.INSTANCE.cleanUpAll();
+		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+	}
+
+
 	@Test
-	public void testInitialization() throws Exception {
+	public void testInitialization_success() throws Exception {
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertFalse( client.getInitDelegate().isDeploymentManagerInitialized());
+		client.getInitDelegate().initializeDeploymentManager( "127.0.0.1" );
+		Assert.assertTrue( client.getInitDelegate().isDeploymentManagerInitialized());
+	}
 
-		try {
-			client.getInitDelegate().initializeDeploymentManager( InitWsMock.IP_OOPS );
-			Assert.fail( "A 404 error was expected." );
 
-		} catch( InitializationException e ) {
-			Assert.assertEquals( "Invalid response code", Status.NOT_FOUND.getStatusCode(), e.getResponseStatus());
-			Assert.assertFalse( client.getInitDelegate().isDeploymentManagerInitialized());
-		}
+	@Test( expected = InitializationException.class )
+	public void testInitialization_failure() throws Exception {
 
-		client.getInitDelegate().initializeDeploymentManager( null );
+		testInitialization_success();
+		Manager.INSTANCE.getAppNameToManagedApplication().put( "myApp", null );
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Assert.assertTrue( client.getInitDelegate().isDeploymentManagerInitialized());
+		client.getInitDelegate().initializeDeploymentManager( "192.168.1.9" );
 		Assert.assertTrue( client.getInitDelegate().isDeploymentManagerInitialized());
 	}
 }

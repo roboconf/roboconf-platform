@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
 
 import net.roboconf.core.internal.utils.Utils;
@@ -118,37 +117,6 @@ public class ManagementWsDelegate {
 
 
 	/**
-	 * Gets an application by name.
-	 * @param applicationName the application name
-	 * @return the application object
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
-	 * @throws ManagementException if a problem occurred with the applications management
-	 */
-	public Application getApplicationByName( String applicationName ) throws ManagementException {
-		this.logger.finer( "Getting application " + applicationName + "..." );
-
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName )
-				.accept( MediaType.APPLICATION_JSON )
-				.get( ClientResponse.class );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		Application result = null;
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
-		if( Status.OK.getStatusCode() == response.getStatusInfo().getStatusCode())
-			result = response.getEntity( Application.class );
-
-		return result;
-	}
-
-
-	/**
 	 * Lists applications.
 	 * @return a non-null list of applications
 	 * @throws UniformInterfaceException if something went wrong
@@ -201,6 +169,27 @@ public class ManagementWsDelegate {
 
 
 	/**
+	 * Shutdowns an application.
+	 * @param applicationName the application name
+	 * @throws UniformInterfaceException if something went wrong
+	 * @throws ClientHandlerException if something went wrong
+	 * @throws ManagementException if a problem occurred with the applications management
+	 */
+	public void shutdownApplication( String applicationName ) throws ManagementException {
+		this.logger.finer( "Removing application " + applicationName + "..." );
+
+		ClientResponse response = this.resource
+				.path( UrlConstants.APPLICATIONS ).path( applicationName ).path( "shutdown" )
+				.post( ClientResponse.class );
+
+		String text = response.getEntity( String.class );
+		this.logger.finer( text );
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
+			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
+	}
+
+
+	/**
 	 * Deletes an application.
 	 * @param applicationName the application name
 	 * @throws UniformInterfaceException if something went wrong
@@ -211,59 +200,12 @@ public class ManagementWsDelegate {
 		this.logger.finer( "Removing application " + applicationName + "..." );
 
 		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName )
+				.path( UrlConstants.APPLICATIONS ).path( applicationName ).path( "delete" )
 				.delete( ClientResponse.class );
 
-		this.logger.finer( response.getEntity( String.class ));
+		String text = response.getEntity( String.class );
+		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), response.getEntity( String.class ));
-	}
-
-
-	/**
-	 * Starts an application.
-	 * @param applicationName the application name
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
-	 * @throws ManagementException if a problem occurred with the applications management
-	 */
-	public void startApplication( String applicationName ) throws ManagementException {
-		this.logger.finer( "Starting application " + applicationName + "..." );
-
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName ).path( "start" )
-				.post( ClientResponse.class );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
-	}
-
-
-	/**
-	 * Stops an application.
-	 * @param applicationName the application name
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
-	 * @throws ManagementException if a problem occurred with the applications management
-	 */
-	public void stopApplication( String applicationName ) throws ManagementException {
-		this.logger.finer( "Stopping application " + applicationName + "..." );
-
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName ).path( "stop" )
-				.post( ClientResponse.class );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
+			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
 	}
 }

@@ -33,7 +33,15 @@ import net.roboconf.core.model.validators.RuntimeModelValidator;
  * Helpers related to instances.
  * @author Vincent Zurczak - Linagora
  */
-public class InstanceHelpers {
+public final class InstanceHelpers {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private InstanceHelpers() {
+		// nothing
+	}
+
 
 	/**
 	 * Builds a string representing the path from a root instance to this instance.
@@ -235,7 +243,7 @@ public class InstanceHelpers {
 	 * Tries to insert a child instance.
 	 * <ol>
 	 * 		<li>Check if there is no child instance with this name.</li>
-	 * 		<li>Validate the instance.</li>
+	 * 		<li>Check that the graph(s) allow it (coherence with respect to the components).</li>
 	 * 		<li>Insert the instance.</li>
 	 * 		<li>Validate the application after insertion.</li>
 	 * 		<li>Critical error => revert the insertion.</li>
@@ -249,8 +257,6 @@ public class InstanceHelpers {
 	 * @param parentInstance the parent instance (can be null)
 	 * @param childInstance the child instance (not null)
 	 * @return true if the child instance could be inserted, false otherwise
-	 *
-	 * TODO: validate the child instance !!!!
 	 */
 	public static boolean tryToInsertChildInstance( Application application, Instance parentInstance, Instance childInstance ) {
 
@@ -265,22 +271,31 @@ public class InstanceHelpers {
 				break;
 		}
 
-		// No parent and no root instance with this name => OK.
-		if( parentInstance == null && ! hasAlreadyAChildWithThisName ) {
-			application.getRootInstances().add( childInstance );
-			success = true;
+		// We insert a "root instance"
+		if( parentInstance == null ) {
+			if( ! hasAlreadyAChildWithThisName
+					&& childInstance.getComponent().getAncestors().isEmpty()) {
+
+				application.getRootInstances().add( childInstance );
+				success = true;
+				// No validation here, but maybe we should...
+			}
 		}
 
-		// Otherwise, when no name conflict, insert, validate and revert if necessary.
-		else if( ! hasAlreadyAChildWithThisName ) {
-			InstanceHelpers.insertChild( parentInstance, childInstance );
-			Collection<RoboconfError> errors = RuntimeModelValidator.validate( application.getRootInstances());
-			if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
-				childInstance.setParent( null );
-				parentInstance.getChildren().remove( childInstance );
+		// We insert a child instance
+		else {
+			if( ! hasAlreadyAChildWithThisName
+					&& parentInstance.getComponent().getChildren().contains( childInstance.getComponent())) {
 
-			} else {
-				success = true;
+				InstanceHelpers.insertChild( parentInstance, childInstance );
+				Collection<RoboconfError> errors = RuntimeModelValidator.validate( application.getRootInstances());
+				if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
+					childInstance.setParent( null );
+					parentInstance.getChildren().remove( childInstance );
+
+				} else {
+					success = true;
+				}
 			}
 		}
 

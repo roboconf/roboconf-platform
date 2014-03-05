@@ -22,9 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import net.roboconf.core.Constants;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.ec2.IaasEc2;
 import net.roboconf.iaas.local.IaasLocalhost;
@@ -79,8 +79,7 @@ public final class IaasHelpers {
 		if( rootInstance.getParent() != null )
 			throw new IllegalArgumentException( "A root instance was expected as parameter." );
 
-		File f = new File( applicationFilesDirectory, Constants.PROJECT_DIR_GRAPH );
-		f = new File( f, rootInstance.getName());
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, rootInstance );
 		f = new File( f, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
 
 		Properties result = new Properties();

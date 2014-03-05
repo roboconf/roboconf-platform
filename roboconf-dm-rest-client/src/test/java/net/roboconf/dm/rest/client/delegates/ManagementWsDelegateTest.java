@@ -16,19 +16,19 @@
 
 package net.roboconf.dm.rest.client.delegates;
 
-import java.io.File;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.Application;
+import net.roboconf.dm.internal.TestApplication;
+import net.roboconf.dm.internal.TestEnvironmentInterface;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
-import net.roboconf.dm.rest.client.mocks.helper.PropertyManager;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.sun.jersey.test.framework.AppDescriptor;
@@ -38,6 +38,7 @@ import com.sun.jersey.test.framework.spi.container.grizzly2.web.GrizzlyWebTestCo
 
 /**
  * @author Vincent Zurczak - Linagora
+ * TODO: test loadApplication and downloadModelData
  */
 public class ManagementWsDelegateTest extends JerseyTest {
 
@@ -46,135 +47,83 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		return RestTestUtils.buildTestDescriptor();
 	}
 
+
 	@Override
     public TestContainerFactory getTestContainerFactory() {
         return new GrizzlyWebTestContainerFactory();
     }
 
-	@Test
-	public void testApplications() throws Exception {
 
-		PropertyManager.INSTANCE.reset();
+	@Before
+	public void resetManager() {
+		Manager.INSTANCE.cleanUpAll();
+		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+	}
+
+
+	@Test
+	public void testListApplications() throws Exception {
+
 		WsClient client = RestTestUtils.buildWsClient();
 		List<Application> apps = client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 0, apps.size());
 
-		PropertyManager.INSTANCE.loadApplications();
-		apps = client.getManagementDelegate().listApplications();
-		Assert.assertNotNull( apps );
-		Assert.assertEquals( 2, apps.size());
-
-		Application app = apps.get( 0 );
-		Assert.assertEquals( PropertyManager.APP_1, app.getName());
-		Assert.assertNotNull( app.getDescription());
-		Assert.assertEquals( "v1", app.getQualifier());
-
-		app = apps.get( 1 );
-		Assert.assertEquals( PropertyManager.APP_2, app.getName());
-		Assert.assertNull( app.getDescription());
-		Assert.assertEquals( "v1", app.getQualifier());
-
-		client.getManagementDelegate().startApplication( PropertyManager.APP_1 );
-		app = client.getManagementDelegate().getApplicationByName( PropertyManager.APP_1 );
-		Assert.assertNotNull( app );
-		Assert.assertEquals( PropertyManager.APP_1, app.getName());
-
-		client.getManagementDelegate().stopApplication( PropertyManager.APP_1 );
-		app = client.getManagementDelegate().getApplicationByName( PropertyManager.APP_1 );
-		Assert.assertNotNull( app );
-		Assert.assertEquals( PropertyManager.APP_1, app.getName());
-
-		client.getManagementDelegate().deleteApplication( PropertyManager.APP_1 );
-		app = client.getManagementDelegate().getApplicationByName( PropertyManager.APP_1 );
-		Assert.assertNull( app );
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
 
 		apps = client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
 		Assert.assertEquals( 1, apps.size());
 
-		app = apps.get( 0 );
-		Assert.assertEquals( PropertyManager.APP_2, app.getName());
+		Application receivedApp = apps.get( 0 );
+		Assert.assertEquals( app.getName(), receivedApp.getName());
+		Assert.assertEquals( app.getQualifier(), receivedApp.getQualifier());
+	}
 
-		try {
-			client.getManagementDelegate().startApplication( PropertyManager.APP_2 );
-			Assert.fail( "An exception was expected" );
-		} catch( ManagementException e ) {
-			// nothing
-		}
 
-		try {
-			client.getManagementDelegate().stopApplication( PropertyManager.APP_2 );
-			Assert.fail( "An exception was expected" );
-		} catch( ManagementException e ) {
-			// nothing
-		}
+	@Test( expected = ManagementException.class )
+	public void testShutdownApplication_failure() throws Exception {
 
-		try {
-			client.getManagementDelegate().deleteApplication( PropertyManager.APP_2 );
-			Assert.fail( "An exception was expected" );
-		} catch( ManagementException e ) {
-			// nothing
-		}
+		WsClient client = RestTestUtils.buildWsClient();
+		client.getManagementDelegate().shutdownApplication( "inexisting" );
 	}
 
 
 	@Test
-	public void testDeployment_1() throws Exception {
+	public void testShutdownApplication_success() throws Exception {
 
-		PropertyManager.INSTANCE.reset();
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
 		WsClient client = RestTestUtils.buildWsClient();
-
-		Assert.assertEquals( 0, PropertyManager.INSTANCE.remoteFiles.size());
-		client.getManagementDelegate().loadApplication( "some file path" );
-		Assert.assertEquals( 1, PropertyManager.INSTANCE.remoteFiles.size());
-		Assert.assertEquals( "some file path", PropertyManager.INSTANCE.remoteFiles.get( 0 ));
+		client.getManagementDelegate().shutdownApplication( app.getName());
 	}
 
 
+	@Test( expected = ManagementException.class )
+	public void testDeleteApplication_failure() throws Exception {
 
-	@Test
-	public void testDeployment_2() throws Exception {
-
-		// Prepare the ZIP file
-		File zipFile = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString() + ".zip" );
-		zipFile.deleteOnExit();
-
-		Map<String,String> entryToContent = TestUtils.buildZipContent();
-		TestUtils.createZipFile( entryToContent, zipFile );
-
-		// Upload the file
-		PropertyManager.INSTANCE.reset();
 		WsClient client = RestTestUtils.buildWsClient();
-
-		client.getManagementDelegate().loadApplication( zipFile );
-		Assert.assertEquals( 1, PropertyManager.INSTANCE.remoteFiles.size());
-
-		String filePath = PropertyManager.INSTANCE.remoteFiles.get( 0 );
-		Assert.assertNotNull( filePath );
-
-		File f = new File( filePath );
-		Assert.assertEquals( "_" + zipFile.getName(), f.getName());
-		Assert.assertTrue( f.exists());
-		Assert.assertTrue( f.isFile());
-
-		// Compare the content
-		TestUtils.compareZipContent( f, entryToContent );
+		client.getManagementDelegate().deleteApplication( "inexisting" );
 	}
 
 
 	@Test
-	public void testDownload() throws Exception {
+	public void testDeleteApplication_success() throws Exception {
 
-		File f = File.createTempFile( "test_", ".zip" );
-		f.deleteOnExit();
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
 
-		PropertyManager.INSTANCE.reset();
 		WsClient client = RestTestUtils.buildWsClient();
-		client.getManagementDelegate().downloadApplicationModelData( "some app", f );
-		Assert.assertTrue( f.exists());
-
-		Map<String,String> entryToContent = TestUtils.buildZipContent();
-		TestUtils.compareZipContent( f, entryToContent );
+		Assert.assertEquals( 1, client.getManagementDelegate().listApplications().size());
+		client.getManagementDelegate().deleteApplication( app.getName());
+		Assert.assertEquals( 0, client.getManagementDelegate().listApplications().size());
 	}
 }

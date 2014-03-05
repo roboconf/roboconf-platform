@@ -35,12 +35,14 @@ import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.environment.EnvironmentInterfaceFactory;
 import net.roboconf.dm.environment.IEnvironmentInterface;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
+import net.roboconf.dm.management.exceptions.BulkActionException;
+import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
-import net.roboconf.dm.management.exceptions.MachineActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IApplicationWs.ApplicationAction;
+import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
@@ -84,6 +86,14 @@ public final class Manager {
 		this.appNameToManagedApplication = new HashMap<String,ManagedApplication> ();
 		this.factory = new EnvironmentInterfaceFactory();
 		this.logger = Logger.getLogger( getClass().getName());
+	}
+
+
+	/**
+	 * @return the appNameToManagedApplication
+	 */
+	public Map<String, ManagedApplication> getAppNameToManagedApplication() {
+		return this.appNameToManagedApplication;
 	}
 
 
@@ -219,10 +229,10 @@ public final class Manager {
 	 * @throws InexistingException if the application or the instance does not exist
 	 * @throws InvalidActionException if the action is invalid
 	 * @throws UnauthorizedActionException if an action could not be performed
-	 * @throws MachineActionException if an error occurred while terminating machines
+	 * @throws BulkActionException if an error occurred while terminating machines
 	 */
 	public void perform( String applicationName, String actionAS, String instancePath, boolean applyToAllChildren )
-	throws InexistingException, InvalidActionException, UnauthorizedActionException, MachineActionException {
+	throws InexistingException, InvalidActionException, UnauthorizedActionException, BulkActionException {
 
 		// Check the parameters
 		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
@@ -293,10 +303,10 @@ public final class Manager {
 	 * @param parentInstancePath the path of the instance to remove
 	 * @param instance the instance to insert
 	 * @throws InexistingException if the application or the parent instance does not exist
-	 * @throws AlreadyExistingException if such an instance already exists for the given parent
+	 * @throws ImpossibleInsertionException if the instance could not be added
 	 */
 	public void addInstance( String applicationName, String parentInstancePath, Instance instance )
-	throws InexistingException, AlreadyExistingException {
+	throws InexistingException, ImpossibleInsertionException {
 
 		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
 		if( ma == null )
@@ -310,7 +320,7 @@ public final class Manager {
 		// 1. Insert the instance in the model first.
 		// 2. Only then, propagate the information.
 		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
-			throw new AlreadyExistingException( instance.getName());
+			throw new ImpossibleInsertionException( instance.getName());
 
 		ma.getLogger().fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + applicationName + "." );
 	}
@@ -325,15 +335,15 @@ public final class Manager {
 	 *
 	 * @param applicationName the application name
 	 * @throws InexistingException if the application or the parent instance does not exist
-	 * @throws MachineActionException if an error occurred while terminating machines
+	 * @throws BulkActionException if an error occurred while terminating machines
 	 */
-	public void shutdownApplication( String applicationName ) throws InexistingException, MachineActionException {
+	public void shutdownApplication( String applicationName ) throws InexistingException, BulkActionException {
 
 		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
 		if( ma == null )
 			throw new InexistingException( applicationName );
 
-		MachineActionException machineException = new MachineActionException( false );
+		BulkActionException bulkException = new BulkActionException( false );
 		for( Instance instance : InstanceHelpers.getAllInstances( ma.getApplication())) {
 			if( instance.getParent() != null ) {
 				instance.setStatus( InstanceStatus.NOT_DEPLOYED );
@@ -345,7 +355,7 @@ public final class Manager {
 
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
-					machineException.getRootInstancesToIaasException().put( instance, e );
+					bulkException.getInstancesToException().put( instance, e );
 				}
 
 				// Assumption: the IaaS shutdowns the system before terminating the VM.
@@ -354,10 +364,10 @@ public final class Manager {
 			}
 		}
 
-		if( ! machineException.getRootInstancesToIaasException().isEmpty()) {
-			ma.getLogger().severe( machineException.getLogMessage( false ));
-			ma.getLogger().finest( machineException.getLogMessage( true ));
-			throw machineException;
+		if( ! bulkException.getInstancesToException().isEmpty()) {
+			ma.getLogger().severe( bulkException.getLogMessage( false ));
+			ma.getLogger().finest( bulkException.getLogMessage( true ));
+			throw bulkException;
 		}
 
 		ma.getLogger().fine( "Application " + applicationName + " was successfully shutdown." );
@@ -383,11 +393,18 @@ public final class Manager {
 
 	/**
 	 * Cleans all the connections and listeners.
+	 * <p>
+	 * This method should be called when the DM is shutdown or when it should be reinitialized.
+	 * The message server IP is reset to null by this method.
+	 * </p>
 	 */
 	public void cleanUpAll() {
 
-		for( ManagedApplication ma : this.appNameToManagedApplication.values())
-			cleanUp( ma );
+		this.messageServerIp = null;
+		for( ManagedApplication ma : this.appNameToManagedApplication.values()) {
+			if( ma != null )
+				cleanUp( ma );
+		}
 
 		this.logger.info( "Cleaning up all the resources (connections, listeners, etc)." );
 	}
@@ -429,14 +446,6 @@ public final class Manager {
 		}
 
 		return instances;
-	}
-
-
-	/**
-	 * @return the appNameToManagedApplication
-	 */
-	Map<String, ManagedApplication> getAppNameToManagedApplication() {
-		return this.appNameToManagedApplication;
 	}
 
 
@@ -486,9 +495,9 @@ public final class Manager {
 
 
 
-	private void undeploy( List<Instance> instances, ManagedApplication ma ) throws MachineActionException {
+	private void undeploy( List<Instance> instances, ManagedApplication ma ) throws BulkActionException {
 
-		MachineActionException machineException = new MachineActionException( false );
+		BulkActionException bulkException = new BulkActionException( false );
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
 				try {
@@ -496,7 +505,7 @@ public final class Manager {
 
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
-					machineException.getRootInstancesToIaasException().put( instance, e );
+					bulkException.getInstancesToException().put( instance, e );
 				}
 
 			} else {
@@ -505,18 +514,18 @@ public final class Manager {
 			}
 		}
 
-		if( ! machineException.getRootInstancesToIaasException().isEmpty()) {
-			ma.getLogger().severe( machineException.getLogMessage( false ));
-			ma.getLogger().finest( machineException.getLogMessage( true ));
-			throw machineException;
+		if( ! bulkException.getInstancesToException().isEmpty()) {
+			ma.getLogger().severe( bulkException.getLogMessage( false ));
+			ma.getLogger().finest( bulkException.getLogMessage( true ));
+			throw bulkException;
 		}
 	}
 
 
 
-	private void deploy( List<Instance> instances, ManagedApplication ma ) throws MachineActionException {
+	private void deploy( List<Instance> instances, ManagedApplication ma ) throws BulkActionException {
 
-		MachineActionException machineException = new MachineActionException( true );
+		BulkActionException bulkException = new BulkActionException( true );
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
 				try {
@@ -526,19 +535,26 @@ public final class Manager {
 
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
-					machineException.getRootInstancesToIaasException().put( instance, e );
+					bulkException.getInstancesToException().put( instance, e );
 				}
 
 			} else {
-				MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( InstanceHelpers.computeInstancePath( instance ), null );	// TODO: get the files to send!!!!
-				ma.getEnvironmentInterface().sendMessage( message, InstanceHelpers.findRootInstance( instance ));
+				try {
+					Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
+					MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( InstanceHelpers.computeInstancePath( instance ), instanceResources );
+					ma.getEnvironmentInterface().sendMessage( message, InstanceHelpers.findRootInstance( instance ));
+
+				} catch( IOException e ) {
+					instance.setStatus( InstanceStatus.PROBLEM );
+					bulkException.getInstancesToException().put( instance, e );
+				}
 			}
 		}
 
-		if( ! machineException.getRootInstancesToIaasException().isEmpty()) {
-			ma.getLogger().severe( machineException.getLogMessage( false ));
-			ma.getLogger().finest( machineException.getLogMessage( true ));
-			throw machineException;
+		if( ! bulkException.getInstancesToException().isEmpty()) {
+			ma.getLogger().severe( bulkException.getLogMessage( false ));
+			ma.getLogger().finest( bulkException.getLogMessage( true ));
+			throw bulkException;
 		}
 	}
 

@@ -21,34 +21,38 @@ import java.util.Map;
 
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.iaas.api.exceptions.IaasException;
 
 /**
- * FIXME: should we reintroduce the Machine object and store the IaaS exception in it?
+ * An exception that stores several exceptions.
+ * <p>
+ * This is useful when we execute bulk actions, i.e. when
+ * we process a lot of instances at once.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-public class MachineActionException extends Exception {
+public class BulkActionException extends Exception {
 	private static final long serialVersionUID = -599978625913629464L;
 
-	private final Map<Instance,IaasException> rootInstancesToIaasException;
+	private final Map<Instance,Exception> instancesToException;
 	private final boolean create;
 
 
 	/**
 	 * Constructor.
 	 */
-	public MachineActionException( boolean create ) {
+	public BulkActionException( boolean create ) {
 		super();
 		this.create = create;
-		this.rootInstancesToIaasException = new HashMap<Instance,IaasException> ();
+		this.instancesToException = new HashMap<Instance,Exception> ();
 	}
 
 
 	/**
-	 * @return the rootInstancesToIaasException
+	 * @return the instancesToException
 	 */
-	public Map<Instance, IaasException> getRootInstancesToIaasException() {
-		return this.rootInstancesToIaasException;
+	public Map<Instance,Exception> getInstancesToException() {
+		return this.instancesToException;
 	}
 
 
@@ -73,7 +77,7 @@ public class MachineActionException extends Exception {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( toString());
-		for( Map.Entry<Instance,IaasException> entry : this.rootInstancesToIaasException.entrySet()) {
+		for( Map.Entry<Instance,Exception> entry : this.instancesToException.entrySet()) {
 			sb.append( "\n\n- " );
 			sb.append( entry.getKey().getName());
 			sb.append( "\n" );

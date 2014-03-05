@@ -107,7 +107,7 @@ public class Instance implements Serializable {
 	/**
 	 * @return the status
 	 */
-	public InstanceStatus getStatus() {
+	public synchronized InstanceStatus getStatus() {
 		return this.status;
 	}
 

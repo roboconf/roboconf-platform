@@ -39,8 +39,9 @@
 		<module>roboconf-iaas-ec2</module>
 		
 		<module>roboconf-dm-rest-api</module>
-		<!-- module>roboconf-dm-rest-client</module -->
+		<module>roboconf-dm-rest-client</module>
 		<module>roboconf-dm</module>
+		<module>roboconf-dm-webapp</module>
 	</modules>
 	
 </project>

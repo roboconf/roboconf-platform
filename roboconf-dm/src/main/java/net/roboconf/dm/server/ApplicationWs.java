@@ -24,16 +24,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.exceptions.AlreadyExistingException;
+import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
-import net.roboconf.dm.management.exceptions.MachineActionException;
+import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.RestUtils;
 import net.roboconf.dm.rest.api.IApplicationWs;
@@ -77,7 +78,15 @@ public class ApplicationWs implements IApplicationWs {
 		this.logger.fine( sb.toString());
 		Response response;
 		try {
-			Manager.INSTANCE.perform( applicationName, actionAS, instancePath, applyToAllChildren );
+			// Restore the real instance path
+			String realInstancePath = null;
+			if( ! Utils.isEmptyOrWhitespaces( instancePath )) {
+				realInstancePath = instancePath.substring( IApplicationWs.INSTANCE_PATH_PREFIX.length());
+				realInstancePath = RestUtils.fromRestfulPath( realInstancePath );
+			}
+
+			// Invoke the manager
+			Manager.INSTANCE.perform( applicationName, actionAS, realInstancePath, applyToAllChildren );
 			response = Response.ok().build();
 
 		} catch( InexistingException e ) {
@@ -89,7 +98,7 @@ public class ApplicationWs implements IApplicationWs {
 		} catch( UnauthorizedActionException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
-		} catch( MachineActionException e ) {
+		} catch( BulkActionException e ) {
 			response = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
 		}
 
@@ -105,20 +114,28 @@ public class ApplicationWs implements IApplicationWs {
 	@Override
 	public List<Instance> listAllChildrenInstances( String applicationName, String instancePath ) {
 
-		if( instancePath == null )
+		// Restore the real instance path
+		String realInstancePath = null;
+		if( ! Utils.isEmptyOrWhitespaces( instancePath )) {
+			realInstancePath = instancePath.substring( IApplicationWs.INSTANCE_PATH_PREFIX.length());
+			realInstancePath = RestUtils.fromRestfulPath( realInstancePath );
+		}
+
+		// Invoke the manager
+		if( realInstancePath == null )
 			this.logger.fine( "Request: list all the instances for " + applicationName + "." );
 		else
-			this.logger.fine( "Request: list all the children instances for " + instancePath + " in " + applicationName + "." );
+			this.logger.fine( "Request: list all the children instances for " + realInstancePath + " in " + applicationName + "." );
 
 		List<Instance> result = new ArrayList<Instance> ();
 		Application app = Manager.INSTANCE.findApplicationByName( applicationName );
 		Instance inst = null;
 
 		if( app != null ) {
-			if( instancePath == null ) {
+			if( realInstancePath == null ) {
 				result.addAll( InstanceHelpers.getAllInstances( app ));
 
-			} else if(( inst = RestUtils.findInstanceFromRestfulPath( app, instancePath )) != null ) {
+			} else if(( inst = InstanceHelpers.findInstanceByPath( app, realInstancePath )) != null ) {
 				result.addAll( InstanceHelpers.buildHierarchicalList( inst ));
 				result.remove( inst );
 			}
@@ -136,19 +153,28 @@ public class ApplicationWs implements IApplicationWs {
 	@Override
 	public List<Instance> listChildrenInstances( String applicationName, String instancePath ) {
 
-		if( instancePath == null )
+		// Restore the real instance path
+		String realInstancePath = null;
+		if( ! Utils.isEmptyOrWhitespaces( instancePath )) {
+			realInstancePath = instancePath.substring( IApplicationWs.INSTANCE_PATH_PREFIX.length());
+			realInstancePath = RestUtils.fromRestfulPath( realInstancePath );
+		}
+
+		// Invoke the manager
+		if( realInstancePath == null )
 			this.logger.fine( "Request: list root instances for " + applicationName + "." );
 		else
-			this.logger.fine( "Request: list direct children instances for " + instancePath + " in " + applicationName + "." );
+			this.logger.fine( "Request: list direct children instances for " + realInstancePath + " in " + applicationName + "." );
 
 		List<Instance> result = new ArrayList<Instance> ();
 		Application app = Manager.INSTANCE.findApplicationByName( applicationName );
 
 		Instance inst;
 		if( app != null ) {
-			if( instancePath == null )
+			if( realInstancePath == null )
 				result.addAll( app.getRootInstances());
-			else if(( inst = RestUtils.findInstanceFromRestfulPath( app, instancePath )) != null )
+
+			else if(( inst = InstanceHelpers.findInstanceByPath( app, realInstancePath )) != null )
 				result.addAll( inst.getChildren());
 		}
 
@@ -163,20 +189,28 @@ public class ApplicationWs implements IApplicationWs {
 	@Override
 	public Response addInstance( String applicationName, String parentInstancePath, Instance instance ) {
 
-		if( parentInstancePath == null )
+		// Restore the real instance path
+		String realInstancePath = null;
+		if( ! Utils.isEmptyOrWhitespaces( parentInstancePath )) {
+			realInstancePath = parentInstancePath.substring( IApplicationWs.INSTANCE_PATH_PREFIX.length());
+			realInstancePath = RestUtils.fromRestfulPath( realInstancePath );
+		}
+
+		// Invoke the manager
+		if( realInstancePath == null )
 			this.logger.fine( "Request: add root instance " + instance.getName() + " in " + applicationName + "." );
 		else
-			this.logger.fine( "Request: add instance " + instance.getName() + " under " + parentInstancePath + " in " + applicationName + "." );
+			this.logger.fine( "Request: add instance " + instance.getName() + " under " + realInstancePath + " in " + applicationName + "." );
 
 		Response response;
 		try {
-			Manager.INSTANCE.addInstance( applicationName, parentInstancePath, instance );
+			Manager.INSTANCE.addInstance( applicationName, realInstancePath, instance );
 			response = Response.ok().build();
 
 		} catch( InexistingException e ) {
 			response = Response.status( Status.NOT_FOUND ).entity( e.getMessage()).build();
 
-		} catch( AlreadyExistingException e ) {
+		} catch( ImpossibleInsertionException e ) {
 			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
 		}
 
@@ -210,20 +244,32 @@ public class ApplicationWs implements IApplicationWs {
 	@Override
 	public List<Component> findPossibleComponentChildren( String applicationName, String instancePath ) {
 
-		if( instancePath == null )
+		// Restore the real instance path
+		String realInstancePath = null;
+		if( ! Utils.isEmptyOrWhitespaces( instancePath )) {
+			realInstancePath = instancePath.substring( IApplicationWs.INSTANCE_PATH_PREFIX.length());
+			realInstancePath = RestUtils.fromRestfulPath( realInstancePath );
+		}
+
+		// Invoke the manager
+		if( realInstancePath == null )
 			this.logger.fine( "Request: list possible root instances in " + applicationName + "." );
 		else
-			this.logger.fine( "Request: find components that can be deployed under " + instancePath + " in " + applicationName + "." );
+			this.logger.fine( "Request: find components that can be deployed under " + realInstancePath + " in " + applicationName + "." );
 
 		Application app = Manager.INSTANCE.findApplicationByName( applicationName );
 		Instance instance = null;
-		if( app != null )
-			instance = RestUtils.findInstanceFromRestfulPath( app, instancePath );
+		if( app != null
+				&& realInstancePath != null )
+			instance = InstanceHelpers.findInstanceByPath( app, realInstancePath );
 
 		List<Component> result = new ArrayList<Component> ();
-		if( instance != null
-				&& instance.getComponent() != null )
+		if( instance != null )
 			result.addAll( instance.getComponent().getChildren());
+
+		else if( app != null
+				&& realInstancePath == null )
+			result.addAll( app.getGraphs().getRootComponents());
 
 		return result;
 	}
@@ -267,7 +313,7 @@ public class ApplicationWs implements IApplicationWs {
 	public Instance createInstanceFromComponent( String applicationName, String componentName ) {
 
 		this.logger.fine( "Request: create a new instance for component " + componentName + " in " + applicationName + "." );
-		Instance result = new Instance();
+		Instance result = null;
 		Component comp = null;
 
 		Application app = Manager.INSTANCE.findApplicationByName( applicationName );
@@ -277,7 +323,11 @@ public class ApplicationWs implements IApplicationWs {
 		// TODO: In the real implementation, properties should be set in the exports.
 		// The interest of this operation is to display default export values
 		// in a web console (as an example) and thus allow to override them if necessary.
-		result.setComponent( comp );
+		if( comp != null ) {
+			result = new Instance( "new-instance" );
+			result.setComponent( comp );
+		}
+
 		return result;
 	}
 }

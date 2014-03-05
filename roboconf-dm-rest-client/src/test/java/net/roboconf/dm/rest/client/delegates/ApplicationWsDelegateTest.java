@@ -16,16 +16,28 @@
 
 package net.roboconf.dm.rest.client.delegates;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
+import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.dm.internal.TestApplication;
+import net.roboconf.dm.internal.TestEnvironmentInterface;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.api.IApplicationWs.ApplicationAction;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
-import net.roboconf.dm.rest.client.mocks.helper.PropertyManager;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
+import net.roboconf.dm.utils.ResourceUtils;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.sun.jersey.test.framework.AppDescriptor;
@@ -43,127 +55,338 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		return RestTestUtils.buildTestDescriptor();
 	}
 
+
 	@Override
     public TestContainerFactory getTestContainerFactory() {
         return new GrizzlyWebTestContainerFactory();
     }
 
-	@Test
-	public void testInstances() throws Exception {
 
-		PropertyManager.INSTANCE.reset();
-		PropertyManager.INSTANCE.loadApplications();
+	@Before
+	public void resetManager() {
+		Manager.INSTANCE.cleanUpAll();
+		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testPerform_illegalArgument() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
 		WsClient client = RestTestUtils.buildWsClient();
+		client.getApplicationDelegate().perform( app.getName(), ApplicationAction.deploy, null, false );
+	}
 
-		// App 1
-		List<Instance> instances = client.getApplicationDelegate().listAllInstances( PropertyManager.APP_1 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 0, instances.size());
 
-		Instance inst = new Instance();
-		inst.setName( "vm1" );
-		inst.setComponent( PropertyManager.INSTANCE.apps.get( 0 ).getGraphs().getRootComponents().iterator().next());
+	@Test( expected = ApplicationException.class )
+	public void testPerform_inexistingApplication() throws Exception {
 
-		client.getApplicationDelegate().addInstance( PropertyManager.APP_1, null, inst );
-		instances = client.getApplicationDelegate().listAllInstances( PropertyManager.APP_1 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 1, instances.size());
+		WsClient client = RestTestUtils.buildWsClient();
+		client.getApplicationDelegate().perform( "inexisting", ApplicationAction.deploy, null, true );
+	}
 
-		client.getApplicationDelegate().removeInstance( PropertyManager.APP_1, "/vm1" );
-		instances = client.getApplicationDelegate().listAllInstances( PropertyManager.APP_1 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 0, instances.size());
 
-		// App 2
-		instances = client.getApplicationDelegate().listAllInstances( PropertyManager.APP_2 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 2, instances.size());
-		Assert.assertEquals( "theVm", instances.get( 0 ).getName());
-		Assert.assertEquals( "server_1", instances.get( 1 ).getName());
+	@Test( expected = ApplicationException.class )
+	public void testPerform_inexistingInstance() throws Exception {
 
-		Instance i = client.getApplicationDelegate().getInstance( PropertyManager.APP_2, "/theVm/server_1" );
-		Assert.assertNotNull( i );
-		Assert.assertEquals( "server_1", i.getName());
-		Assert.assertNotNull( i.getComponent());
-		Assert.assertEquals( "server", i.getComponent().getName());
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
 
-		inst = new Instance();
-		inst.setName( "database" );
-		inst.setComponent( i.getComponent());
+		WsClient client = RestTestUtils.buildWsClient();
+		client.getApplicationDelegate().perform( app.getName(), ApplicationAction.deploy, "/bip/bip", false );
+	}
 
-		client.getApplicationDelegate().addInstance( PropertyManager.APP_2, "/theVm", inst );
-		instances = client.getApplicationDelegate().listAllInstances( PropertyManager.APP_2 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 3, instances.size());
-		Assert.assertEquals( "database", instances.get( 2 ).getName());
 
-		try {
-			client.getApplicationDelegate().addInstance( PropertyManager.APP_2, "/theVm", inst );
-			Assert.fail( "Expected an exception for duplicate insertion." );
+	@Test( expected = ApplicationException.class )
+	public void testPerform_invalidAction() throws Exception {
 
-		} catch( ApplicationException e ) {
-			// nothing
-		}
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
 
-		instances = client.getApplicationDelegate().listAllInstances( PropertyManager.APP_2 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 3, instances.size());
-		Assert.assertEquals( "database", instances.get( 2 ).getName());
-
-		instances = client.getApplicationDelegate().listRootInstances( PropertyManager.APP_2 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 1, instances.size());
-		Assert.assertEquals( "theVm", instances.get( 0 ).getName());
-
-		instances = client.getApplicationDelegate().listChildrenInstances( PropertyManager.APP_2, "/theVm" );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 2, instances.size());
-		Assert.assertEquals( "server_1", instances.get( 0 ).getName());
-		Assert.assertEquals( "database", instances.get( 1 ).getName());
-
-		instances = client.getApplicationDelegate().listChildrenInstances( PropertyManager.APP_2, "invalid path" );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 0, instances.size());
-
-		client.getApplicationDelegate().removeInstance( PropertyManager.APP_1, "/theVm" );
-		instances = client.getApplicationDelegate().listAllInstances( PropertyManager.APP_1 );
-		Assert.assertNotNull( instances );
-		Assert.assertEquals( 0, instances.size());
+		WsClient client = RestTestUtils.buildWsClient();
+		client.getApplicationDelegate().perform( app.getName(), null, null, true );
 	}
 
 
 	@Test
-	public void testGraphs() throws Exception {
+	public void testPerform_deploy_success() throws Exception {
 
-		PropertyManager.INSTANCE.reset();
+		// The interest of this method is to check that URLs
+		// and instance paths are correctly handled by the DM.
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
 		WsClient client = RestTestUtils.buildWsClient();
-		PropertyManager.INSTANCE.loadApplications();
+		client.getApplicationDelegate().perform(
+				app.getName(),
+				ApplicationAction.deploy,
+				InstanceHelpers.computeInstancePath( app.getMySqlVm()),
+				false );
+	}
 
-		List<Component> components = client.getApplicationDelegate().listAllComponents( PropertyManager.APP_1 );
-		Assert.assertNotNull( components );
+
+	@Test
+	public void testPerform_deployRoots_success() throws Exception {
+
+		// Create temporary directories
+		TestApplication app = new TestApplication();
+		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_app" );
+		if( ! rootDir.exists()
+				&& ! rootDir.mkdir())
+			throw new IOException( "Failed to create a root directory for tests." );
+
+		for( Instance inst : InstanceHelpers.getAllInstances( app )) {
+			File f = ResourceUtils.findInstanceResourcesDirectory( rootDir, inst );
+			if( ! f.exists()
+					&& ! f.mkdirs())
+				throw new IOException( "Failed to create a directory for tests. " + f.getAbsolutePath());
+		}
+
+		// The interest of this method is to check that URLs
+		// and instance paths are correctly handled by the DM.
+		TestEnvironmentInterface env = new TestEnvironmentInterface();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, rootDir, env ));
+
+		try {
+			WsClient client = RestTestUtils.buildWsClient();
+			Assert.assertEquals( 0, env.messageToRootInstance.size());
+			client.getApplicationDelegate().perform( app.getName(), ApplicationAction.deploy, null, true );
+			Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), env.messageToRootInstance.size());
+
+		} finally {
+			Utils.deleteFilesRecursively( rootDir );
+		}
+	}
+
+
+	@Test
+	public void testListChildrenInstances() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		List<Instance> instances = client.getApplicationDelegate().listChildrenInstances( app.getName(), "/bip/bip", false );
+		Assert.assertEquals( 0, instances.size());
+
+		instances = client.getApplicationDelegate().listChildrenInstances( app.getName(), null, false );
+		Assert.assertEquals( app.getRootInstances().size(), instances.size());
+
+		instances = client.getApplicationDelegate().listChildrenInstances( app.getName(), null, true );
+		Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), instances.size());
+
+		instances = client.getApplicationDelegate().listChildrenInstances( app.getName(), InstanceHelpers.computeInstancePath( app.getTomcatVm()), true );
+		Assert.assertEquals( 2, instances.size());
+	}
+
+
+	@Test
+	public void testListAllComponents() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		List<Component> components = client.getApplicationDelegate().listAllComponents( "inexisting" );
+		Assert.assertEquals( 0, components.size());
+
+		components = client.getApplicationDelegate().listAllComponents( app.getName());
+		Assert.assertEquals( ComponentHelpers.findAllComponents( app ).size(), components.size());
+	}
+
+
+	@Test
+	public void testFindPossibleComponentChildren() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		List<Component> components = client.getApplicationDelegate().findPossibleComponentChildren( "inexisting", "" );
+		Assert.assertEquals( 0, components.size());
+
+		components = client.getApplicationDelegate().findPossibleComponentChildren( app.getName(), "inexisting-component" );
+		Assert.assertEquals( 0, components.size());
+
+		components = client.getApplicationDelegate().findPossibleComponentChildren( app.getName(), null );
 		Assert.assertEquals( 1, components.size());
-		Assert.assertEquals( "vm", components.iterator().next().getName());
+		Assert.assertTrue( components.contains( app.getMySqlVm().getComponent()));
 
-		components = client.getApplicationDelegate().listAllComponents( PropertyManager.APP_2 );
-		Assert.assertNotNull( components );
+		components = client.getApplicationDelegate().findPossibleComponentChildren( app.getName(), InstanceHelpers.computeInstancePath( app.getMySqlVm()));
 		Assert.assertEquals( 2, components.size());
-		Assert.assertEquals( "vm", components.get( 0 ).getName());
-		Assert.assertEquals( "server", components.get( 1 ).getName());
+		Assert.assertTrue( components.contains( app.getMySql().getComponent()));
+		Assert.assertTrue( components.contains( app.getTomcat().getComponent()));
+	}
 
-		List<String> possibleChildrenComponents = client.getApplicationDelegate().findPossibleComponentChildren( PropertyManager.APP_2, "|theVm" );
-		Assert.assertNotNull( possibleChildrenComponents );
-		Assert.assertEquals( 1, possibleChildrenComponents.size());
-		Assert.assertEquals( "server", possibleChildrenComponents.get( 0 ));
 
-		possibleChildrenComponents = client.getApplicationDelegate().findPossibleComponentChildren( PropertyManager.APP_2, "some_wrong_path" );
-		Assert.assertNotNull( possibleChildrenComponents );
-		Assert.assertEquals( 0, possibleChildrenComponents.size());
+	@Test
+	public void testFindPossibleParentInstances() throws Exception {
 
-		List<String> possibleParentInstances = client.getApplicationDelegate().findPossibleParentInstances( PropertyManager.APP_2, "server" );
-		Assert.assertNotNull( possibleParentInstances );
-		Assert.assertEquals( 1, possibleParentInstances.size());
-		Assert.assertEquals( "/theVm", possibleParentInstances.get( 0 ));
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
 
-		// TODO: test instance creation
+		WsClient client = RestTestUtils.buildWsClient();
+		List<String> instancePaths = client.getApplicationDelegate().findPossibleParentInstances( "inexisting", "my-comp" );
+		Assert.assertEquals( 0, instancePaths.size());
+
+		instancePaths = client.getApplicationDelegate().findPossibleParentInstances( app.getName(), "my-comp" );
+		Assert.assertEquals( 0, instancePaths.size());
+
+		instancePaths = client.getApplicationDelegate().findPossibleParentInstances( app.getName(), app.getTomcat().getComponent().getName());
+		Assert.assertEquals( 2, instancePaths.size());
+		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( app.getMySqlVm())));
+		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( app.getTomcatVm())));
+	}
+
+
+	@Test
+	public void testCreateInstanceFromComponent() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Instance newInstance = client.getApplicationDelegate().createInstanceFromComponent( "inexisting", "my-comp" );
+		Assert.assertNull( newInstance );
+
+		String componentName = app.getMySqlVm().getComponent().getName();
+		newInstance = client.getApplicationDelegate().createInstanceFromComponent( app.getName(), componentName );
+		Assert.assertNotNull( newInstance );
+		Assert.assertEquals( componentName, newInstance.getComponent().getName());
+	}
+
+
+	@Test
+	public void testAddInstance_root_success() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Assert.assertEquals( 2, app.getRootInstances().size());
+
+		Instance newInstance = new Instance( "vm-mail" );
+		newInstance.setComponent( app.getMySqlVm().getComponent());
+
+		client.getApplicationDelegate().addInstance( app.getName(), null, newInstance );
+		Assert.assertEquals( 3, app.getRootInstances().size());
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testAddInstance_root_failure() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Assert.assertEquals( 2, app.getRootInstances().size());
+
+		Instance existingInstance = new Instance( app.getMySqlVm().getName());
+		client.getApplicationDelegate().addInstance( app.getName(), null, existingInstance );
+	}
+
+
+	@Test
+	public void testAddInstance_child_success() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Instance newMysql = new Instance( "mysql-2" );
+		newMysql.setComponent( app.getMySql().getComponent());
+
+		Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
+		Assert.assertFalse( app.getTomcatVm().getChildren().contains( newMysql ));
+
+		client.getApplicationDelegate().addInstance( app.getName(), InstanceHelpers.computeInstancePath( app.getTomcatVm()), newMysql );
+		Assert.assertEquals( 2, app.getTomcatVm().getChildren().size());
+
+		List<String> paths = new ArrayList<String> ();
+		for( Instance inst : app.getTomcatVm().getChildren())
+			paths.add( InstanceHelpers.computeInstancePath( inst ));
+
+		String rootPath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
+		Assert.assertTrue( paths.contains( rootPath + "/" + newMysql.getName()));
+		Assert.assertTrue( paths.contains( rootPath + "/" + app.getTomcat().getName()));
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testAddInstance_child_failure() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		// We cannot deploy a WAR directly on a VM!
+		// At least, this what the graph says.
+		WsClient client = RestTestUtils.buildWsClient();
+		Instance newWar = new Instance( "war-2" );
+		newWar.setComponent( app.getWar().getComponent());
+
+		Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
+		Assert.assertFalse( app.getTomcatVm().getChildren().contains( newWar ));
+		client.getApplicationDelegate().addInstance( app.getName(), InstanceHelpers.computeInstancePath( app.getTomcatVm()), newWar );
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testAddInstance_inexstingApplication() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Instance newMysql = new Instance( "mysql-2" );
+		newMysql.setComponent( app.getMySql().getComponent());
+		client.getApplicationDelegate().addInstance( "inexisting", InstanceHelpers.computeInstancePath( app.getTomcatVm()), newMysql );
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testAddInstance_inexstingParentInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put(
+				app.getName(),
+				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Instance newMysql = new Instance( "mysql-2" );
+		newMysql.setComponent( app.getMySql().getComponent());
+		client.getApplicationDelegate().addInstance( "inexisting", "/bip/bip", newMysql );
 	}
 }

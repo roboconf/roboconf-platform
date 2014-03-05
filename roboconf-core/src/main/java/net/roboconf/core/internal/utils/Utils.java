@@ -37,7 +37,15 @@ import java.util.zip.ZipFile;
  * Various utilities.
  * @author Vincent Zurczak - Linagora
  */
-public class Utils {
+public final class Utils {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private Utils() {
+		// nothing
+	}
+
 
 	/**
 	 * @param s a string (can be null)
@@ -257,7 +265,8 @@ public class Utils {
 		filesToDelete.addAll( Arrays.asList( files ));
 		while( ! filesToDelete.isEmpty()) {
 			File currentFile = filesToDelete.remove( 0 );
-			if( ! currentFile.exists())
+			if( currentFile == null
+					|| ! currentFile.exists())
 				continue;
 
 			// Non-empty directory: add sub-files and reinsert the current directory after

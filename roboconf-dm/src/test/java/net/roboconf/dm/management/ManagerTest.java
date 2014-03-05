@@ -17,6 +17,7 @@
 package net.roboconf.dm.management;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +32,12 @@ import net.roboconf.dm.environment.EnvironmentInterfaceFactory;
 import net.roboconf.dm.environment.IEnvironmentInterface;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestEnvironmentInterface;
-import net.roboconf.dm.management.exceptions.AlreadyExistingException;
+import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IApplicationWs.ApplicationAction;
+import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
@@ -285,8 +287,8 @@ public class ManagerTest {
 	}
 
 
-	@Test( expected = AlreadyExistingException.class )
-	public void testAddInstance_alredyExistingRootInstance() throws Exception {
+	@Test( expected = ImpossibleInsertionException.class )
+	public void testAddInstance_impossibleInsertion_rootInstance() throws Exception {
 
 		TestApplication app = new TestApplication();
 		File f = File.createTempFile( "roboconf_", ".folder" );
@@ -304,8 +306,8 @@ public class ManagerTest {
 	}
 
 
-	@Test( expected = AlreadyExistingException.class )
-	public void testAddInstance_alredyExistingChildInstance() throws Exception {
+	@Test( expected = ImpossibleInsertionException.class )
+	public void testAddInstance_impossibleInsertion_childInstance() throws Exception {
 
 		TestApplication app = new TestApplication();
 		File f = File.createTempFile( "roboconf_", ".folder" );
@@ -336,6 +338,8 @@ public class ManagerTest {
 
 			Assert.assertEquals( 2, app.getRootInstances().size());
 			Instance newInstance = new Instance( "mail-vm" );
+			newInstance.setComponent( app.getMySqlVm().getComponent());
+
 			Manager.INSTANCE.addInstance( app.getName(), null, newInstance );
 
 			Assert.assertEquals( 3, app.getRootInstances().size());
@@ -360,6 +364,7 @@ public class ManagerTest {
 			// Insert a MySQL instance under the Tomcat VM
 			Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
 			Instance newInstance = new Instance( app.getMySql().getName());
+			newInstance.setComponent( app.getMySql().getComponent());
 			String instancePath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
 
 			Manager.INSTANCE.addInstance( app.getName(), instancePath, newInstance );
@@ -400,38 +405,56 @@ public class ManagerTest {
 
 	@Test
 	public void testPerformDeploy() throws Exception {
-
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
 
-		TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		// Create temporary directories
+		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_app" );
+		if( ! rootDir.exists()
+				&& ! rootDir.mkdir())
+			throw new IOException( "Failed to create a root directory for tests." );
 
-		Assert.assertNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 0, env.messageToRootInstance.size());
+		for( Instance inst : InstanceHelpers.getAllInstances( app )) {
+			File f = ResourceUtils.findInstanceResourcesDirectory( rootDir, inst );
+			if( ! f.exists()
+					&& ! f.mkdirs())
+				throw new IOException( "Failed to create a directory for tests. " + f.getAbsolutePath());
+		}
 
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), instancePath, true );
+		// Load the application and check assertions
+		try {
+			ManagedApplication ma = new ManagedApplication( app, rootDir, new TestEnvironmentInterface());
+			TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
+			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		Assert.assertNotNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertTrue( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 2, env.messageToRootInstance.size());
+			Assert.assertNull( env.machineToRunningStatus.get( app.getMySqlVm()));
+			Assert.assertEquals( 0, env.messageToRootInstance.size());
 
-		final String vmPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());
-		for( Map.Entry<Message,Instance> entry : env.messageToRootInstance.entrySet()) {
-			Assert.assertEquals( app.getMySqlVm(), entry.getValue());
+			String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+			Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), instancePath, true );
 
-			if( entry.getKey() instanceof MsgCmdInstanceDeploy ) {
-				Assert.assertEquals( serverPath, ((MsgCmdInstanceDeploy) entry.getKey()).getInstancePath());
+			Assert.assertNotNull( env.machineToRunningStatus.get( app.getMySqlVm()));
+			Assert.assertTrue( env.machineToRunningStatus.get( app.getMySqlVm()));
+			Assert.assertEquals( 2, env.messageToRootInstance.size());
 
-			} else if( entry.getKey() instanceof MsgCmdInstanceAdd ) {
-				Assert.assertNull( vmPath, ((MsgCmdInstanceAdd) entry.getKey()).getParentInstancePath());
-				Assert.assertEquals( app.getMySqlVm(), ((MsgCmdInstanceAdd) entry.getKey()).getInstanceToAdd());
+			final String vmPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+			final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());
+			for( Map.Entry<Message,Instance> entry : env.messageToRootInstance.entrySet()) {
+				Assert.assertEquals( app.getMySqlVm(), entry.getValue());
 
-			} else {
-				Assert.fail( "Unknown message type:" + entry.getKey().getClass());
+				if( entry.getKey() instanceof MsgCmdInstanceDeploy ) {
+					Assert.assertEquals( serverPath, ((MsgCmdInstanceDeploy) entry.getKey()).getInstancePath());
+
+				} else if( entry.getKey() instanceof MsgCmdInstanceAdd ) {
+					Assert.assertNull( vmPath, ((MsgCmdInstanceAdd) entry.getKey()).getParentInstancePath());
+					Assert.assertEquals( app.getMySqlVm(), ((MsgCmdInstanceAdd) entry.getKey()).getInstanceToAdd());
+
+				} else {
+					Assert.fail( "Unknown message type:" + entry.getKey().getClass());
+				}
 			}
+
+		} finally {
+			Utils.deleteFilesRecursively( rootDir );
 		}
 	}
 

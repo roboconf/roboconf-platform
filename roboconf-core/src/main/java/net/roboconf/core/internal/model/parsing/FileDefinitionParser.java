@@ -30,7 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.ErrorCode;
-import net.roboconf.core.internal.utils.UriHelper;
+import net.roboconf.core.internal.utils.UriUtils;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.parsing.AbstractBlock;
@@ -95,7 +95,7 @@ public class FileDefinitionParser {
 	 * @param ignoreComments true to ignore comments during parsing
 	 */
 	public FileDefinitionParser( String relationsFileUri, boolean ignoreComments ) throws URISyntaxException {
-		this( UriHelper.urlToUri( relationsFileUri ), ignoreComments );
+		this( UriUtils.urlToUri( relationsFileUri ), ignoreComments );
 	}
 
 

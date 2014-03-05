@@ -30,7 +30,15 @@ import net.roboconf.core.model.parsing.ParsingConstants;
  * Internal utilities related to model parsing and conversion.
  * @author Vincent Zurczak - Linagora
  */
-public class ModelUtils {
+public final class ModelUtils {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private ModelUtils() {
+		// nothing
+	}
+
 
 	/**
 	 * Gets the value of a property.

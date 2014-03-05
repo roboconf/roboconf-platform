@@ -23,9 +23,10 @@ import java.io.OutputStream;
 import java.util.Properties;
 
 import junit.framework.Assert;
-import net.roboconf.core.Constants;
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.ec2.IaasEc2;
 import net.roboconf.iaas.local.IaasLocalhost;
@@ -59,21 +60,22 @@ public class IaasHelpersTest {
 			Utils.deleteFilesRecursively( applicationDirectory );
 
 		Assert.assertFalse( applicationDirectory.exists());
-		IaasHelpers.loadIaasProperties( applicationDirectory, new Instance( "my-vm" ));
+		Instance instance = new Instance( "my-vm" );
+		instance.setComponent( new Component( "my-component" ));
+		IaasHelpers.loadIaasProperties( applicationDirectory, instance );
 	}
 
 
 	@Test
 	public void testLoadIaasProperties_success() throws Exception {
 
-		final String instanceName = "my-vm";
+		final String componentName = "my-vm";
 
 		File applicationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_test" );
 		if( applicationDirectory.exists())
 			Utils.deleteFilesRecursively( applicationDirectory );
 
-		File f = new File( applicationDirectory, Constants.PROJECT_DIR_GRAPH );
-		f = new File( f, instanceName );
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, componentName );
 		f = new File( f, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
 
 		OutputStream fos = null;
@@ -94,7 +96,9 @@ public class IaasHelpersTest {
 		}
 
 		try {
-			Properties loadedProperties = IaasHelpers.loadIaasProperties( applicationDirectory, new Instance( instanceName ));
+			Instance instance = new Instance( "my-vm-instance" );
+			instance.setComponent( new Component( componentName ));
+			Properties loadedProperties = IaasHelpers.loadIaasProperties( applicationDirectory, instance );
 			Assert.assertNotNull( loadedProperties );
 			Assert.assertEquals( "my value", loadedProperties.getProperty( "my-key" ));
 

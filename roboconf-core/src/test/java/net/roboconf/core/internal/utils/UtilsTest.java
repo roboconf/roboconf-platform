@@ -70,6 +70,28 @@ public class UtilsTest {
 		} catch( IOException e ) {
 			Assert.fail( "Failed to delete the temporary directory." );
 		}
+
+		try {
+			Utils.deleteFilesRecursively((File) null);
+
+		} catch( IOException e ) {
+			Assert.fail( "Null file must be supported" );
+		}
+
+		try {
+			Utils.deleteFilesRecursively((File[]) null);
+
+		} catch( IOException e ) {
+			Assert.fail( "Null file array must be supported" );
+		}
+
+		try {
+			File[] nullFiles = new File[] { null, null };
+			Utils.deleteFilesRecursively( nullFiles );
+
+		} catch( IOException e ) {
+			Assert.fail( "Array of null files must be supported" );
+		}
 	}
 
 

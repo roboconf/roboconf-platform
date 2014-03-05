@@ -186,7 +186,7 @@ public class FromGraphDefinition {
 
 		// FIXME: to deal with...
 		// try {
-		//	uri = UriHelper.buildNewURI( processedUri, uri ).toString();
+		//	uri = UriUtils.buildNewURI( processedUri, uri ).toString();
 			this.importUriToImportDeclaration.put( uri, block );
 
 //		} catch( URISyntaxException e ) {

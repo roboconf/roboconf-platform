@@ -32,9 +32,8 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
-import net.roboconf.dm.management.exceptions.MachineActionException;
+import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.rest.api.IApplicationWs;
 import net.roboconf.dm.rest.api.IManagementWs;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
@@ -42,7 +41,7 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Path( IApplicationWs.PATH )
+@Path( IManagementWs.PATH )
 public class ManagementWs implements IManagementWs {
 
 	private final Logger logger = Logger.getLogger( ManagementWs.class.getName());
@@ -196,7 +195,7 @@ public class ManagementWs implements IManagementWs {
 		} catch( InexistingException e ) {
 			result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
 
-		} catch( MachineActionException e ) {
+		} catch( BulkActionException e ) {
 			result = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
 		}
 
