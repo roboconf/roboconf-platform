@@ -42,6 +42,13 @@
 		<module>roboconf-dm-rest-client</module>
 		<module>roboconf-dm</module>
 		<module>roboconf-dm-webapp</module>
+		
+		<module>roboconf-plugin-api</module>
+		<module>roboconf-plugin-bash</module>
+		<module>roboconf-plugin-puppet</module>
+		<module>roboconf-agent</module>
+		
+		<module>roboconf-testing</module>
 	</modules>
 	
 </project>

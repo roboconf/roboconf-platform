@@ -21,38 +21,37 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.environment.iaas.IaasHelpers;
-import net.roboconf.dm.environment.messaging.DmMessageProcessor;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
 import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
 import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.MessageServerClientRabbitMq;
+import net.roboconf.messaging.client.InteractionType;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.processing.MessageProcessorThread;
-import net.roboconf.messaging.utils.MessagingUtils;
-
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * A class to interact with RabbitMQ and IaaS environments.
  * @author Vincent Zurczak - Linagora
  */
-class DmEnvironmentInterface implements IEnvironmentInterface {
+public class DmEnvironmentInterface implements IEnvironmentInterface {
 
 	private Application application;
 	private File applicationFilesDirectory;
 	private String messageServerIp;
-
-	private MessageProcessorThread	messageHandler;
 	private IMessageServerClient messageServerClient;
 
+
+	/**
+	 * Constructor.
+	 */
+	protected DmEnvironmentInterface() {
+		// nothing
+	}
 
 
 	@Override
@@ -76,25 +75,30 @@ class DmEnvironmentInterface implements IEnvironmentInterface {
 	@Override
 	public void initializeResources() {
 
-		this.messageServerClient = new MessageServerClientRabbitMq( this.messageServerIp, this.application.getName());
+		this.messageServerClient = MessageServerClientFactory.create();
+		this.messageServerClient.setApplicationName( this.application.getName());
+		this.messageServerClient.setMessageServerIp( this.messageServerIp );
+
+		final Logger logger = Logger.getLogger( getClass().getName());
 		try {
-			ConnectionFactory factory = new ConnectionFactory();
-			factory.setHost( this.messageServerIp );
-			Connection connection = factory.newConnection();
-			Channel channel = connection.createChannel();
+			this.messageServerClient.openConnection();
+			new Thread( "Roboconf's Message Processor Thread" ) {
+				@Override
+				public void run() {
+					try {
+						DmEnvironmentInterface.this.messageServerClient.subscribeTo( InteractionType.AGENT_TO_DM, null );
 
-			String exchangeName = MessagingUtils.buildDmExchangeName( this.application.getName());
-			channel.exchangeDeclare( exchangeName, "fanout" );
-			String queueName = channel.queueDeclare().getQueue();
-			channel.queueBind( queueName, exchangeName, "" );
+					} catch( IOException e ) {
+						logger.severe( "A message processor could not start on the Deployment Manager." );
+						logger.finest( Utils.writeException( e ));
+					}
+				};
 
-			QueueingConsumer consumer = new QueueingConsumer( channel );
-			channel.basicConsume( queueName, true, consumer );
-			this.messageHandler = new MessageProcessorThread( consumer, new DmMessageProcessor( this.application ));
-			this.messageHandler.start();
+			}.start();
 
 		} catch( IOException e ) {
-			Logger.getLogger( getClass().getName()).severe( "A receiver for messages could not be initialized on the Deployment Manager." );
+			logger.severe( "A receiver for messages could not be initialized on the Deployment Manager." );
+			logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -102,23 +106,29 @@ class DmEnvironmentInterface implements IEnvironmentInterface {
 	@Override
 	public void cleanResources() {
 
-		if( this.messageServerClient != null )
-			this.messageServerClient.closeConnection();
+		if( this.messageServerClient != null ) {
+			final Logger logger = Logger.getLogger( getClass().getName());
+			try {
+				this.messageServerClient.closeConnection();
 
-		if( this.messageHandler != null )
-			this.messageHandler.halt();
-
-		this.messageHandler = null;
-		/* TBD should close connections here ??
-		try { channel.close(); } catch(IOException ignore) {}
-		try { connection.close(); } catch(IOException ignore) {}
-		*/
+			} catch( IOException e ) {
+				logger.finest( Utils.writeException( e ));
+			}
+		}
 	}
 
 
 	@Override
 	public void sendMessage( Message message, Instance rootInstance ) {
-		this.messageServerClient.sendMessage( message, rootInstance );
+
+		final Logger logger = Logger.getLogger( getClass().getName());
+		try {
+			this.messageServerClient.publish( InteractionType.DM_TO_AGENT, rootInstance.getName(), message );
+
+		} catch( IOException e ) {
+			logger.severe( "A message could not be send to " + rootInstance.getName());
+			logger.finest( Utils.writeException( e ));
+		}
 	}
 
 

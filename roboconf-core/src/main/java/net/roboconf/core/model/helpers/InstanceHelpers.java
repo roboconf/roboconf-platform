@@ -183,6 +183,21 @@ public final class InstanceHelpers {
 
 
 	/**
+	 * Finds an instance by name.
+	 * @param rootInstance a root instance
+	 * @param instancePath the instance path
+	 * @return an instance, or null if it was not found
+	 */
+	public static Instance findInstanceByPath( Instance rootInstance, String instancePath ) {
+
+		Application tempApplication = new Application();
+		tempApplication.getRootInstances().add( rootInstance );
+
+		return findInstanceByPath( tempApplication, instancePath );
+	}
+
+
+	/**
 	 * Finds instances by component name.
 	 * @param application an application (not null)
 	 * @param componentName a component name (not null)

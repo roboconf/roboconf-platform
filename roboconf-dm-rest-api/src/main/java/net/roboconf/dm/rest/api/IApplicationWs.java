@@ -26,6 +26,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.rest.UrlConstants;
@@ -44,38 +45,6 @@ public interface IApplicationWs {
 	String INSTANCE_PATH_PREFIX = "/instance/";
 	String OPTIONAL_INSTANCE_PATH = "{instancePath:(" + INSTANCE_PATH_PREFIX + "[^/]+?)?}";
 	String PATH = "/" + UrlConstants.APP + "/{name}";
-
-	/**
-	 * Actions to apply on instances.
-	 * <ul>
-	 * <li>deploy: ask an agent to deploy the instance files.</li>
-	 * <li>undeploy: ask the agent to undeploy the instance files.</li>
-	 * <li>start: start the instance.</li>
-	 * <li>stop: stop the instance.</li>
-	 * <li>remove: remove the instance from the model.</li>
-	 * </ul>
-	 * <p>
-	 * Model additions are performed through different means.
-	 * </p>
-	 *
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public enum ApplicationAction {
-		deploy, undeploy, start, stop, remove;
-
-		public static ApplicationAction whichAction( String s ) {
-
-			ApplicationAction result = null;
-			for( ApplicationAction action : ApplicationAction.values()) {
-				if( action.toString().equalsIgnoreCase( s )) {
-					result = action;
-					break;
-				}
-			}
-
-			return result;
-		}
-	}
 
 
 	/**

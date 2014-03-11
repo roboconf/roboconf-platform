@@ -22,5 +22,4 @@ package net.roboconf.messaging;
 public interface MessagingConstants {
 
 	long HEARTBEAT_PERIOD = 6000;
-	String ROBOCONF_LOGGER_NAME = "net.roboconf.messaging";
 }

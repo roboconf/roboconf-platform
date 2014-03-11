@@ -20,32 +20,33 @@ import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Noël - LIG
- * FIXME: sub channel name? What does this class do?
  */
 public class MsgCmdImportNotification extends Message {
 
 	private static final long serialVersionUID = 5366599037551758208L;
 
-	private final String name;
+	private final String variableName;
+
+	// Ignored for the moment, but required if the instance that needs variables uses a specific channel.
 	private final String subChannelName;
 
 
 	/**
 	 * Constructor.
-	 * @param name
+	 * @param variableName
 	 * @param subChannelName
 	 */
-	public MsgCmdImportNotification( String name, String subChannelName ) {
+	public MsgCmdImportNotification( String variableName, String subChannelName ) {
 		super();
-		this.name = name;
+		this.variableName = variableName;
 		this.subChannelName = subChannelName;
 	}
 
 	/**
 	 * @return the name
 	 */
-	public String getName() {
-		return this.name;
+	public String getVariableName() {
+		return this.variableName;
 	}
 
 	/**

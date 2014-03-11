@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
+import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -31,7 +32,6 @@ import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestEnvironmentInterface;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.api.IApplicationWs.ApplicationAction;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;

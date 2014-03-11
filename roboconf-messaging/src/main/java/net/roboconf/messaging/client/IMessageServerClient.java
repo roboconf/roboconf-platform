@@ -16,48 +16,75 @@
 
 package net.roboconf.messaging.client;
 
-import net.roboconf.core.model.runtime.Instance;
+import java.io.IOException;
+
 import net.roboconf.messaging.messages.Message;
 
 /**
+ * An interface to abstract the message server.
+ * <p>
+ * Implementations are responsible of the connection with the
+ * message server. They are also in charge of listening and processing
+ * messages (subscriptions).
+ * </p>
+ *
  * @author Noël - LIG
+ * @author Vincent Zurczak - Linagora
  */
 public interface IMessageServerClient {
 
 	/**
-	 * @return the message server IP address
+	 * Sets the location of the message server.
 	 */
-	String getMessageServerIp();
+	void setMessageServerIp( String messageServerIp );
+
+	/**
+	 * Sets the application name.
+	 */
+	void setApplicationName( String applicationName );
+
+	/**
+	 * Sets the message processor.
+	 * <p>
+	 * It will be used by the implementing class when a message is received.
+	 * </p>
+	 * @param messageProcessor a message processor
+	 */
+	void setMessageProcessor( IMessageProcessor messageProcessor );
 
 	/**
 	 * Opens a connection with the message server.
 	 */
-	void openConnection();
+	void openConnection() throws IOException;
 
 	/**
 	 * Closes the connection with the message server.
 	 */
-	void closeConnection();
+	void closeConnection() throws IOException;
 
 	/**
-	 * Declares a channel on the message server where instances will interact with each other.
+	 * Subscribes to a queue or topic.
+	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
+	 * @param filterName the filter name, if the message server supports it
 	 * <p>
-	 * Note that there is one channel per machine (root instance).
+	 * This feature allows to filter messages on a queue or a topic. It is supported
+	 * on RabbitMQueue (it is then called routingKey).
 	 * </p>
-	 *
-	 * @param rootInstanceName the root instance name
-	 * <p>
-	 * A root instance name designates a machine (VM, device, etc).
-	 * </p>
-	 *
-	 * @see
 	 */
-	void declareChannel( String rootInstanceName );
+	void subscribeTo( InteractionType interactionType, String filterName ) throws IOException;
 
 	/**
-	 * Send a message to a machine designated by its name.
-	 * @param message the message to send
-	 * @param rootInstance the root instance (associated with a machine) the message must be sent to
+	 * Unsubscribes from a queue or topic.
+	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
+	 * @param filterName the filter name, if the message server supports it
 	 */
-	void sendMessage( Message message, Instance rootInstance );
+	void unsubscribeTo( InteractionType interactionType, String filterName ) throws IOException;
+
+	/**
+	 * Publishes a message a message on a queue or a topic.
+	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
+	 * @param filterName the filter name, if the message server supports it
+	 * @param message the message to publish
+	 */
+	void publish( InteractionType interactionType, String filterName, Message message ) throws IOException;
 }

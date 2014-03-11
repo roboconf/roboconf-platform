@@ -19,11 +19,10 @@ package net.roboconf.dm.environment.messaging;
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.TestApplication;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifModelOnNodeChanged;
 
 import org.junit.Test;
 
@@ -87,13 +86,13 @@ public class DmMessageProcessorTest {
 
 
 	@Test
-	public void testProcessMsgNotifModelOnNodeChanged_1() {
+	public void testProcessMsgNotifInstanceChanged_1() {
 
 		TestApplication app = new TestApplication();
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		DmMessageProcessor processor = new DmMessageProcessor( app );
-		MsgNotifModelOnNodeChanged msg = new MsgNotifModelOnNodeChanged( app.getMySqlVm());
+		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( app.getMySqlVm());
 		msg.setNewStatus( InstanceStatus.STOPPING );
 
 		processor.processMessage( msg );
@@ -102,10 +101,10 @@ public class DmMessageProcessorTest {
 
 
 	@Test
-	public void testProcessMsgNotifModelOnNodeChanged_2() {
+	public void testProcessMsgNotifInstanceChanged_2() {
 
 		DmMessageProcessor processor = new DmMessageProcessor( new TestApplication());
-		MsgNotifModelOnNodeChanged msg = new MsgNotifModelOnNodeChanged( new Instance( "invalid-instance" ));
+		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( new Instance( "invalid-instance" ));
 		processor.processMessage( msg );
 
 		Assert.assertTrue( "We are supposed to reach here without any error.", true );

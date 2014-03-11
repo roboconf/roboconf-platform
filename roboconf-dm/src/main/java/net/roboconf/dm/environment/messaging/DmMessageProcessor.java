@@ -24,12 +24,13 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.InexistingException;
+import net.roboconf.messaging.client.IMessageProcessor;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifModelOnNodeChanged;
-import net.roboconf.messaging.processing.IMessageProcessor;
 
 /**
  * This class is in charge of updating the model from messages / notifications.
@@ -67,8 +68,11 @@ public class DmMessageProcessor implements IMessageProcessor {
 		else if( message instanceof MsgNotifMachineDown )
 			processMsgNotifMachineDown((MsgNotifMachineDown) message );
 
-		else if( message instanceof MsgNotifModelOnNodeChanged )
-			processMsgNotifModelOnNodeChanged((MsgNotifModelOnNodeChanged) message );
+		else if( message instanceof MsgNotifInstanceChanged )
+			processMsgNotifInstanceChanged((MsgNotifInstanceChanged) message );
+
+		else if( message instanceof MsgNotifInstanceRemoved )
+			processMsgNotifInstanceRemoved((MsgNotifInstanceRemoved) message );
 
 		else if( message instanceof MsgNotifHeartbeat )
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
@@ -138,7 +142,7 @@ public class DmMessageProcessor implements IMessageProcessor {
 	}
 
 
-	private void processMsgNotifModelOnNodeChanged( MsgNotifModelOnNodeChanged message ) {
+	private void processMsgNotifInstanceChanged( MsgNotifInstanceChanged message ) {
 
 		String instancePath = message.getInstancePath();
 		Instance instance = InstanceHelpers.findInstanceByPath( this.application, instancePath );
@@ -161,5 +165,11 @@ public class DmMessageProcessor implements IMessageProcessor {
 			sb.append( ". Imports were updated too." );
 			this.logger.fine( sb.toString());
 		}
+	}
+
+
+	private void processMsgNotifInstanceRemoved( MsgNotifInstanceRemoved message ) {
+		// TODO Auto-generated method stub
+
 	}
 }

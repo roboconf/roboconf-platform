@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.listener;
+package net.roboconf.dm.webapp.listener;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;

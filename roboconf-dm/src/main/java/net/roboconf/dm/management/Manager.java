@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
@@ -41,7 +42,6 @@ import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.rest.api.IApplicationWs.ApplicationAction;
 import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
@@ -163,9 +163,10 @@ public final class Manager {
 	/**
 	 * Loads a new application.
 	 * @param application
+	 * @return the managed application that was created
 	 * @throws AlreadyExistingException
 	 */
-	public void loadNewApplication( File applicationFilesDirectory ) throws AlreadyExistingException, InvalidApplicationException {
+	public ManagedApplication loadNewApplication( File applicationFilesDirectory ) throws AlreadyExistingException, InvalidApplicationException {
 
 		LoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
 		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
@@ -181,6 +182,8 @@ public final class Manager {
 		ManagedApplication ma = new ManagedApplication( application, applicationFilesDirectory, envInterface );
 		this.appNameToManagedApplication.put( application.getName(), ma );
 		ma.getLogger().fine( "Application " + application.getName() + " was successfully loaded and added." );
+
+		return ma;
 	}
 
 
@@ -414,7 +417,7 @@ public final class Manager {
 	 * Changes the factory (for tests only).
 	 * @param factory the factory to set
 	 */
-	void setFactory( EnvironmentInterfaceFactory factory ) {
+	public void setFactory( EnvironmentInterfaceFactory factory ) {
 		this.factory = factory;
 	}
 

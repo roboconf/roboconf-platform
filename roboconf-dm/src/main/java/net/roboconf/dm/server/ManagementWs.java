@@ -30,9 +30,9 @@ import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
+import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
-import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IManagementWs;
 
@@ -63,7 +63,7 @@ public class ManagementWs implements IManagementWs {
 
 			// Extract the ZIP content
 			String appName = fileDetail.getFileName().replace( ".zip", "" );
-			File dir = new File( System.getProperty( "java.io.tmpdir" ), appName );
+			File dir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf/" + appName );
 			Utils.extractZipArchive( tempZipFile, dir );
 
 			// Load the application
