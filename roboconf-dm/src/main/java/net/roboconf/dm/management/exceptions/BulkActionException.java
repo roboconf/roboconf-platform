@@ -35,15 +35,13 @@ public class BulkActionException extends Exception {
 	private static final long serialVersionUID = -599978625913629464L;
 
 	private final Map<Instance,Exception> instancesToException;
-	private final boolean create;
 
 
 	/**
 	 * Constructor.
 	 */
 	public BulkActionException( boolean create ) {
-		super();
-		this.create = create;
+		super( "Errors were encountered while " + (create ? "creating" : "terminating") + " machines." );
 		this.instancesToException = new HashMap<Instance,Exception> ();
 	}
 
@@ -53,18 +51,6 @@ public class BulkActionException extends Exception {
 	 */
 	public Map<Instance,Exception> getInstancesToException() {
 		return this.instancesToException;
-	}
-
-
-	@Override
-	public String getMessage() {
-
-		StringBuilder sb = new StringBuilder();
-		sb.append( "Errors were encountered while " );
-		sb.append( this.create ? "creating" : "terminating" );
-		sb.append( " machines." );
-
-		return sb.toString();
 	}
 
 

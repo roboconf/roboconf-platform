@@ -17,6 +17,7 @@
 package net.roboconf.testing;
 
 import java.io.File;
+import java.io.IOException;
 
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.ManagedApplication;
@@ -25,6 +26,7 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
+import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -48,13 +50,18 @@ public class ApplicationTesterDemo {
 		} catch( InvalidApplicationException e ) {
 			e.printStackTrace();
 
+		} catch( IOException e ) {
+			e.printStackTrace();
+
 		} finally {
 			if( ma == null )
 				return;
 		}
 
 		// Patch the application to run partially and thus debug it on this machine
-		ApplicationTester.patch( ma );
+		InMemoryIaasResolver testResolver = new InMemoryIaasResolver();
+		testResolver.setExecutionLevel( ExecutionLevel.LOG );
+		Manager.INSTANCE.setIaasResolver( testResolver );
 
 		// Run administration actions through the DM...
 		try {

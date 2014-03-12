@@ -16,6 +16,7 @@
 
 package net.roboconf.plugin.puppet;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,6 +26,7 @@ import net.roboconf.core.internal.utils.ProgramUtils;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
@@ -34,6 +36,20 @@ import net.roboconf.plugin.api.PluginInterface;
 public class PluginPuppet implements PluginInterface {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private ExecutionLevel executionLevel;
+	private File dumpDirectory;
+
+
+	@Override
+	public void setExecutionLevel( ExecutionLevel executionLevel ) {
+		this.executionLevel = executionLevel;
+	}
+
+
+	@Override
+	public void setDumpDirectory( File dumpDirectory ) {
+		this.dumpDirectory = dumpDirectory;
+	}
 
 
 	@Override

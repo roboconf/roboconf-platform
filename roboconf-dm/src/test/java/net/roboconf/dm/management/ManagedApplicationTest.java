@@ -22,9 +22,8 @@ import java.io.IOException;
 import junit.framework.Assert;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.dm.environment.IEnvironmentInterface;
 import net.roboconf.dm.internal.TestApplication;
-import net.roboconf.dm.internal.TestEnvironmentInterface;
+import net.roboconf.dm.internal.TestMessageServerClient;
 
 import org.junit.Test;
 
@@ -46,14 +45,14 @@ public class ManagedApplicationTest {
 		ManagedApplication ma = null;
 		try {
 			Application app = new TestApplication();
-			IEnvironmentInterface env = new TestEnvironmentInterface();
-			ma = new ManagedApplication( app, f, env );
+			TestMessageServerClient client = new TestMessageServerClient();
+			ma = new ManagedApplication( app, f, client );
 
 			Assert.assertNotNull( ma.getLogger());
 			Assert.assertTrue( ma.getLogger().getName().endsWith( "." + app.getName()));
 
 			Assert.assertNotNull( ma.getMonitor());
-			Assert.assertEquals( env, ma.getEnvironmentInterface());
+			Assert.assertEquals( client, ma.getMessagingClient());
 			Assert.assertEquals( app, ma.getApplication());
 
 		} finally {

@@ -21,7 +21,7 @@ import java.util.List;
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.internal.TestApplication;
-import net.roboconf.dm.internal.TestEnvironmentInterface;
+import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
@@ -72,7 +72,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		apps = client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
@@ -98,7 +98,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		client.getManagementDelegate().shutdownApplication( app.getName());
@@ -119,7 +119,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertEquals( 1, client.getManagementDelegate().listApplications().size());

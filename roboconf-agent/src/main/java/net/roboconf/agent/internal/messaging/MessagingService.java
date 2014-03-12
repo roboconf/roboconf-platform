@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.messaging;
+package net.roboconf.agent.internal.messaging;
 
 import java.io.IOException;
 import java.util.HashSet;

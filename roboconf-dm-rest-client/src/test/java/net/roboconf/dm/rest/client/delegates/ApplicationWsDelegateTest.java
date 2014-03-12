@@ -29,7 +29,8 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.internal.TestApplication;
-import net.roboconf.dm.internal.TestEnvironmentInterface;
+import net.roboconf.dm.internal.TestIaasResolver;
+import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
@@ -66,6 +67,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	public void resetManager() {
 		Manager.INSTANCE.cleanUpAll();
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
 	}
 
 
@@ -75,7 +77,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		client.getApplicationDelegate().perform( app.getName(), ApplicationAction.deploy, null, false );
@@ -96,7 +98,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		client.getApplicationDelegate().perform( app.getName(), ApplicationAction.deploy, "/bip/bip", false );
@@ -109,7 +111,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		client.getApplicationDelegate().perform( app.getName(), null, null, true );
@@ -124,7 +126,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		client.getApplicationDelegate().perform(
@@ -154,16 +156,16 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		// The interest of this method is to check that URLs
 		// and instance paths are correctly handled by the DM.
-		TestEnvironmentInterface env = new TestEnvironmentInterface();
+		TestMessageServerClient msgClient = new TestMessageServerClient();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, rootDir, env ));
+				new ManagedApplication( app, rootDir, msgClient ));
 
 		try {
 			WsClient client = RestTestUtils.buildWsClient();
-			Assert.assertEquals( 0, env.messageToRootInstance.size());
+			Assert.assertEquals( 0, msgClient.messageToRootInstanceName.size());
 			client.getApplicationDelegate().perform( app.getName(), ApplicationAction.deploy, null, true );
-			Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), env.messageToRootInstance.size());
+			Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), msgClient.messageToRootInstanceName.size());
 
 		} finally {
 			Utils.deleteFilesRecursively( rootDir );
@@ -177,7 +179,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		List<Instance> instances = client.getApplicationDelegate().listChildrenInstances( app.getName(), "/bip/bip", false );
@@ -200,7 +202,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		List<Component> components = client.getApplicationDelegate().listAllComponents( "inexisting" );
@@ -217,7 +219,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		List<Component> components = client.getApplicationDelegate().findPossibleComponentChildren( "inexisting", "" );
@@ -243,7 +245,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		List<String> instancePaths = client.getApplicationDelegate().findPossibleParentInstances( "inexisting", "my-comp" );
@@ -265,7 +267,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Instance newInstance = client.getApplicationDelegate().createInstanceFromComponent( "inexisting", "my-comp" );
@@ -284,7 +286,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertEquals( 2, app.getRootInstances().size());
@@ -303,7 +305,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertEquals( 2, app.getRootInstances().size());
@@ -319,7 +321,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Instance newMysql = new Instance( "mysql-2" );
@@ -347,7 +349,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		// We cannot deploy a WAR directly on a VM!
 		// At least, this what the graph says.
@@ -367,7 +369,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Instance newMysql = new Instance( "mysql-2" );
@@ -382,7 +384,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestEnvironmentInterface()));
+				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Instance newMysql = new Instance( "mysql-2" );

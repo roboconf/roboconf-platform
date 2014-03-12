@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent;
+package net.roboconf.agent.internal;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -27,6 +27,7 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import net.roboconf.agent.AgentData;
 import net.roboconf.core.internal.utils.Utils;
 
 /**
@@ -125,12 +126,15 @@ public final class AgentUtils {
 	public static AgentData findParametersInWsInfo( Logger logger ) {
 
 		// Copy the user data
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		String content = "";
 		InputStream in = null;
 		try {
 			URL userDataUrl = new URL( "http://instance-data/latest/user-data" );
 			in = userDataUrl.openStream();
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+
 			Utils.copyStream( in, os );
+			content = os.toString( "UTF-8" );
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
@@ -142,7 +146,7 @@ public final class AgentUtils {
 
 		// Parse them
 		AgentData result = new AgentData();
-		for( String line : os.toString().split( "\n" )) {
+		for( String line : content.split( "\n" )) {
 			line = line.trim();
 
 			if( line.startsWith( PROPERTY_APPLICATION_NAME )) {
@@ -160,13 +164,14 @@ public final class AgentUtils {
 		}
 
 		// FIXME VZ: seriously, why do we need to ask our IP address?
-		os = new ByteArrayOutputStream();
 		in = null;
 		try {
 			URL userDataUrl = new URL( "http://instance-data/latest/meta-data/public-ipv4" );
 			in = userDataUrl.openStream();
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+
 			Utils.copyStream( in, os );
-			result.setIpAddress( os.toString());
+			result.setIpAddress( os.toString( "UTF-8" ));
 
 		} catch( IOException e ) {
 			logger.severe( "The network properties could not be read. " + e.getMessage());

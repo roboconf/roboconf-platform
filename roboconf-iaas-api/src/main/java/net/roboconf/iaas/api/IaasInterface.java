@@ -50,22 +50,24 @@ public interface IaasInterface {
 	 * @param ipMessagingServer the IP of the messaging server
 	 * @param channelName the channel name
 	 * @param applicationName the application name
-	 * @return the instance id of this VM relative to the IaaS
+	 * @param rootInstanceName the name of the root instance associated with this VM
+	 * @return the (machine) ID of this VM relative to the IaaS
 	 * @throws IaasException
 	 * @throws CommunicationToIaasException
 	 */
 	String createVM(
 			String ipMessagingServer,
 			String channelName,
-			String applicationName )
+			String applicationName,
+			String rootInstanceName )
 	throws IaasException, CommunicationToIaasException;
 
 
 	/**
-	 * Asks for the termination of the VM identified by its instance id.
-	 * @param instanceId the instance ID
+	 * Asks for the termination of the VM identified by its id.
+	 * @param machineId the machine ID
 	 * @throws IaasException
 	 * @throws CommunicationToIaasException
 	 */
-	void terminateVM( String instanceId ) throws IaasException, CommunicationToIaasException;
+	void terminateVM( String machineId ) throws IaasException, CommunicationToIaasException;
 }

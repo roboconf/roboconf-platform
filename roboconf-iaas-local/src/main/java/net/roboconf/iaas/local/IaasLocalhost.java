@@ -48,7 +48,8 @@ public class IaasLocalhost implements IaasInterface {
 	public String createVM(
 			String ipMessagingServer,
 			String channelName,
-			String applicationName)
+			String applicationName,
+			String rootInstanceName )
 	throws IaasException, CommunicationToIaasException {
 		// TBD startup script ?
 		System.out.println("IaaS localhost createVMNode");

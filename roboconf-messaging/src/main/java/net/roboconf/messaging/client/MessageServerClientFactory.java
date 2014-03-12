@@ -20,14 +20,13 @@ import net.roboconf.messaging.internal.client.MessageServerClientRabbitMq;
 
 /**
  * @author Vincent Zurczak - Linagora
- * TODO: add keys and be able to return a "mock"
  */
-public final class MessageServerClientFactory {
+public class MessageServerClientFactory {
 
 	/**
 	 * @return a new instance of message server client
 	 */
-	public static IMessageServerClient create() {
+	public IMessageServerClient create() {
 		return new MessageServerClientRabbitMq();
 	}
 }

@@ -16,6 +16,7 @@
 
 package net.roboconf.plugin.bash;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -25,13 +26,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.core.internal.utils.ProgramUtils;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
@@ -43,6 +44,20 @@ import net.roboconf.plugin.api.PluginInterface;
 public class PluginBash implements PluginInterface {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private ExecutionLevel executionLevel;
+	private File dumpDirectory;
+
+
+	@Override
+	public void setExecutionLevel( ExecutionLevel executionLevel ) {
+		this.executionLevel = executionLevel;
+	}
+
+
+	@Override
+	public void setDumpDirectory( File dumpDirectory ) {
+		this.dumpDirectory = dumpDirectory;
+	}
 
 
 	@Override
@@ -311,14 +326,12 @@ public class PluginBash implements PluginInterface {
 	 * @return
 	 */
 	private Map<String, String> formatImportedVars(Instance instance) {
+
 		// The map we will return
 		Map<String, String> importedVars = new HashMap<String, String>();
-
-		Map<String, Collection<Import>> imports = instance.getImports();
-		Set<String> importTypes = imports.keySet();
-
-		for(String importTypeName : importTypes) {
-			Collection<Import> importList = imports.get(importTypeName);
+		for( Map.Entry<String,Collection<Import>> entry : instance.getImports().entrySet()) {
+			Collection<Import> importList = entry.getValue();
+			String importTypeName = entry.getKey();
 
 			// For each ImportType, put the number of Import it has, so the script knows
 			importedVars.put(importTypeName + "_size", "" + importList.size());
@@ -328,10 +341,10 @@ public class PluginBash implements PluginInterface {
 			for(Import imprt : importList) {
 				// "workers_0_name=tomcat1"
 				importedVars.put(importTypeName + "_" + i + "_name", imprt.getInstanceExportingVarsName());
-				for (Entry<String, String> entry : imprt.getImportedVars().entrySet()) {
+				for (Entry<String, String> entry2 : imprt.getImportedVars().entrySet()) {
 					// "workers_0_ip=127.0.0.1"
-					String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
-					importedVars.put(importTypeName + "_" + i + "_" + vname, entry.getValue());
+					String vname = VariableHelpers.parseVariableName(entry2.getKey()).getValue();
+					importedVars.put(importTypeName + "_" + i + "_" + vname, entry2.getValue());
 				}
 				++i;
 			}
@@ -339,5 +352,4 @@ public class PluginBash implements PluginInterface {
 
 		return importedVars;
 	}
-
 }

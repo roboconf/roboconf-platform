@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.messaging;
+package net.roboconf.agent.internal.messaging;
 
 import java.util.logging.Logger;
 
-import net.roboconf.agent.Agent;
+import net.roboconf.agent.internal.Agent;
 import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.IMessageProcessor;

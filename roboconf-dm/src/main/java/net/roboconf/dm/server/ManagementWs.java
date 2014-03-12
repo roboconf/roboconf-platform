@@ -100,6 +100,9 @@ public class ManagementWs implements IManagementWs {
 
 		} catch( InvalidApplicationException e ) {
 			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
+
+		} catch( IOException e ) {
+			response = Response.status( Status.UNAUTHORIZED ).entity( e.getMessage()).build();
 		}
 
 		return response;

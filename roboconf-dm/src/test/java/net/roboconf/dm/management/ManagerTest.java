@@ -29,15 +29,16 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.environment.EnvironmentInterfaceFactory;
-import net.roboconf.dm.environment.IEnvironmentInterface;
 import net.roboconf.dm.internal.TestApplication;
-import net.roboconf.dm.internal.TestEnvironmentInterface;
+import net.roboconf.dm.internal.TestIaasResolver;
+import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.utils.ResourceUtils;
+import net.roboconf.messaging.client.IMessageServerClient;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
@@ -58,10 +59,11 @@ public class ManagerTest {
 	public void resetManager() {
 
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
-		Manager.INSTANCE.setFactory( new EnvironmentInterfaceFactory() {
+		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
+		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
 			@Override
-			public IEnvironmentInterface create( String messageServerIp, Application application, File applicationFilesDirectory ) {
-				return new TestEnvironmentInterface();
+			public IMessageServerClient create() {
+				return new TestMessageServerClient();
 			}
 		});
 	}
@@ -97,7 +99,7 @@ public class ManagerTest {
 		try {
 			Manager.INSTANCE.getAppNameToManagedApplication().put(
 					app.getName(),
-					new ManagedApplication( app, f, new TestEnvironmentInterface()));
+					new ManagedApplication( app, f, new TestMessageServerClient()));
 
 			List<Application> applications = Manager.INSTANCE.listApplications();
 			Assert.assertEquals( 1, applications.size());
@@ -121,7 +123,7 @@ public class ManagerTest {
 		try {
 			Manager.INSTANCE.getAppNameToManagedApplication().put(
 					app.getName(),
-					new ManagedApplication( app, f, new TestEnvironmentInterface()));
+					new ManagedApplication( app, f, new TestMessageServerClient()));
 
 			Assert.assertEquals( app, Manager.INSTANCE.findApplicationByName( app.getName()));
 
@@ -144,7 +146,7 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestEnvironmentInterface());
+			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -159,7 +161,8 @@ public class ManagerTest {
 					Assert.assertEquals( instance.getName(), InstanceStatus.NOT_DEPLOYED, instance.getStatus());
 			}
 
-			Boolean runningStatus = ((TestEnvironmentInterface) ma.getEnvironmentInterface()).machineToRunningStatus.get( app.getMySqlVm());
+			TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+			Boolean runningStatus = iaasResolver.instanceToRunningStatus.get( app.getMySqlVm());
 			Assert.assertNotNull( runningStatus );
 			Assert.assertFalse( runningStatus );
 
@@ -184,7 +187,7 @@ public class ManagerTest {
 		try {
 			Manager.INSTANCE.getAppNameToManagedApplication().put(
 					app.getName(),
-					new ManagedApplication( app, f, new TestEnvironmentInterface()));
+					new ManagedApplication( app, f, new TestMessageServerClient()));
 
 			app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 			Manager.INSTANCE.deleteApplication( app.getName());
@@ -204,7 +207,7 @@ public class ManagerTest {
 		try {
 			Manager.INSTANCE.getAppNameToManagedApplication().put(
 					app.getName(),
-					new ManagedApplication( app, f, new TestEnvironmentInterface()));
+					new ManagedApplication( app, f, new TestMessageServerClient()));
 
 			Manager.INSTANCE.deleteApplication( app.getName());
 			Assert.assertEquals( 0, Manager.INSTANCE.getAppNameToManagedApplication().size());
@@ -230,7 +233,7 @@ public class ManagerTest {
 		try {
 			Manager.INSTANCE.getAppNameToManagedApplication().put(
 					app.getName(),
-					new ManagedApplication( app, f, new TestEnvironmentInterface()));
+					new ManagedApplication( app, f, new TestMessageServerClient()));
 
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 			Manager.INSTANCE.acknowledgeHeartBeat( app.getName(), app.getMySqlVm());
@@ -249,14 +252,14 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestEnvironmentInterface());
+			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-			TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
-			Assert.assertFalse( env.resourcesWereCleaned.get());
+			TestMessageServerClient client = (TestMessageServerClient) ma.getMessagingClient();
+			Assert.assertFalse( client.connectionClosed.get());
 
 			Manager.INSTANCE.cleanUpAll();
-			Assert.assertTrue( env.resourcesWereCleaned.get());
+			Assert.assertTrue( client.connectionClosed.get());
 
 		} finally {
 			Utils.deleteFilesRecursively( f );
@@ -277,7 +280,7 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestEnvironmentInterface());
+			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 			Manager.INSTANCE.addInstance( app.getName(), "inexisting", new Instance( "mail-vm" ));
 
@@ -294,7 +297,7 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestEnvironmentInterface());
+			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			String existingInstanceName = app.getMySqlVm().getName();
@@ -313,7 +316,7 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestEnvironmentInterface());
+			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			String parentPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
@@ -333,7 +336,7 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestEnvironmentInterface());
+			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			Assert.assertEquals( 2, app.getRootInstances().size());
@@ -358,7 +361,7 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestEnvironmentInterface());
+			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			// Insert a MySQL instance under the Tomcat VM
@@ -387,7 +390,7 @@ public class ManagerTest {
 	public void testPerform_invalidAction_1() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
+		ManagedApplication ma = new ManagedApplication( app, null, new TestMessageServerClient());
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 		Manager.INSTANCE.perform( app.getName(), "eat", null, true );
 	}
@@ -397,7 +400,7 @@ public class ManagerTest {
 	public void testPerform_invalidAction_2() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
+		ManagedApplication ma = new ManagedApplication( app, null, new TestMessageServerClient());
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), null, false );
 	}
@@ -422,24 +425,27 @@ public class ManagerTest {
 
 		// Load the application and check assertions
 		try {
-			ManagedApplication ma = new ManagedApplication( app, rootDir, new TestEnvironmentInterface());
-			TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
+			ManagedApplication ma = new ManagedApplication( app, rootDir, new TestMessageServerClient());
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-			Assert.assertNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-			Assert.assertEquals( 0, env.messageToRootInstance.size());
+			TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+			Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+
+			TestMessageServerClient msgClient = (TestMessageServerClient) ma.getMessagingClient();
+			Assert.assertEquals( 0, msgClient.messageToRootInstanceName.size());
 
 			String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 			Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), instancePath, true );
 
-			Assert.assertNotNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-			Assert.assertTrue( env.machineToRunningStatus.get( app.getMySqlVm()));
-			Assert.assertEquals( 2, env.messageToRootInstance.size());
+			Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+			Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+			Assert.assertEquals( 2, msgClient.messageToRootInstanceName.size());
 
 			final String vmPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 			final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());
-			for( Map.Entry<Message,Instance> entry : env.messageToRootInstance.entrySet()) {
-				Assert.assertEquals( app.getMySqlVm(), entry.getValue());
+
+			for( Map.Entry<Message,String> entry : msgClient.messageToRootInstanceName.entrySet()) {
+				Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
 
 				if( entry.getKey() instanceof MsgCmdInstanceDeploy ) {
 					Assert.assertEquals( serverPath, ((MsgCmdInstanceDeploy) entry.getKey()).getInstancePath());
@@ -463,23 +469,25 @@ public class ManagerTest {
 	public void testPerformStart() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
-
-		TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
+		ManagedApplication ma = new ManagedApplication( app, null, new TestMessageServerClient());
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		Assert.assertNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 0, env.messageToRootInstance.size());
+		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+
+		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRootInstanceName;
+		Assert.assertEquals( 0, map.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.start.toString(), instancePath, true );
 
-		Assert.assertEquals( 1, env.messageToRootInstance.size());
-		final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());
-		for( Map.Entry<Message,Instance> entry : env.messageToRootInstance.entrySet()) {
-			Assert.assertEquals( app.getMySqlVm(), entry.getValue());
-			Assert.assertEquals( serverPath, ((MsgCmdInstanceStart) entry.getKey()).getInstancePath());
-		}
+		Assert.assertEquals( 1, map.size());
+		Map.Entry<Message,String> entry = map.entrySet().iterator().next();
+
+		Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
+		Assert.assertEquals(
+				InstanceHelpers.computeInstancePath( app.getMySql()),
+				((MsgCmdInstanceStart) entry.getKey()).getInstancePath());
 	}
 
 
@@ -487,23 +495,25 @@ public class ManagerTest {
 	public void testPerformStop() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
-
-		TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
+		ManagedApplication ma = new ManagedApplication( app, null, new TestMessageServerClient());
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		Assert.assertNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 0, env.messageToRootInstance.size());
+		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+
+		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRootInstanceName;
+		Assert.assertEquals( 0, map.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.stop.toString(), instancePath, true );
 
-		Assert.assertEquals( 1, env.messageToRootInstance.size());
-		final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());
-		for( Map.Entry<Message,Instance> entry : env.messageToRootInstance.entrySet()) {
-			Assert.assertEquals( app.getMySqlVm(), entry.getValue());
-			Assert.assertEquals( serverPath, ((MsgCmdInstanceStop) entry.getKey()).getInstancePath());
-		}
+		Assert.assertEquals( 1, map.size());
+		Map.Entry<Message,String> entry = map.entrySet().iterator().next();
+
+		Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
+		Assert.assertEquals(
+				InstanceHelpers.computeInstancePath( app.getMySql()),
+				((MsgCmdInstanceStop) entry.getKey()).getInstancePath());
 	}
 
 
@@ -511,26 +521,28 @@ public class ManagerTest {
 	public void testPerformUndeploy() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
-
-		TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
+		ManagedApplication ma = new ManagedApplication( app, null, new TestMessageServerClient());
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		Assert.assertNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 0, env.messageToRootInstance.size());
+		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+
+		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRootInstanceName;
+		Assert.assertEquals( 0, map.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.undeploy.toString(), instancePath, true );
 
-		Assert.assertNotNull( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertFalse( env.machineToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 1, env.messageToRootInstance.size());
+		Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-		final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());
-		for( Map.Entry<Message,Instance> entry : env.messageToRootInstance.entrySet()) {
-			Assert.assertEquals( app.getMySqlVm(), entry.getValue());
-			Assert.assertEquals( serverPath, ((MsgCmdInstanceUndeploy) entry.getKey()).getInstancePath());
-		}
+		Assert.assertEquals( 1, map.size());
+		Map.Entry<Message,String> entry = map.entrySet().iterator().next();
+
+		Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
+		Assert.assertEquals(
+				InstanceHelpers.computeInstancePath( app.getMySql()),
+				((MsgCmdInstanceUndeploy) entry.getKey()).getInstancePath());
 	}
 
 
@@ -538,7 +550,7 @@ public class ManagerTest {
 	public void testPerformRemove_unauthorized() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
+		ManagedApplication ma = new ManagedApplication( app, null, new TestMessageServerClient());
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -550,30 +562,30 @@ public class ManagerTest {
 	public void testPerformRemove_success_1() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
+		TestMessageServerClient msgClient = new TestMessageServerClient();
 
-		TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
+		ManagedApplication ma = new ManagedApplication( app, null, msgClient );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		// Set up a "trap".
 		// Remove MySQL will fail. But removing Tomcat instances will succeed.
 		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, env.messageToRootInstance.size());
+		Assert.assertEquals( 0, msgClient.messageToRootInstanceName.size());
 
 		String tomcatVmInstancePath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.remove.toString(), tomcatVmInstancePath, true );
 
 		Assert.assertEquals( 1, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
-		Assert.assertEquals( 2, env.messageToRootInstance.size());
+		Assert.assertEquals( 2, msgClient.messageToRootInstanceName.size());
 
 		List<String> paths = new ArrayList<String> ();
 		paths.add( InstanceHelpers.computeInstancePath( app.getWar()));
 		paths.add( InstanceHelpers.computeInstancePath( app.getTomcat()));
 
-		for( Map.Entry<Message,Instance> entry : env.messageToRootInstance.entrySet()) {
-			Assert.assertEquals( app.getTomcatVm(), entry.getValue());
+		for( Map.Entry<Message,String> entry : msgClient.messageToRootInstanceName.entrySet()) {
+			Assert.assertEquals( app.getTomcatVm().getName(), entry.getValue());
 
 			String path = ((MsgCmdInstanceRemove) entry.getKey()).getInstancePath();
 			paths.remove( path );
@@ -587,18 +599,18 @@ public class ManagerTest {
 	public void testPerformRemove_success_2() throws Exception {
 
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null, new TestEnvironmentInterface());
+		TestMessageServerClient msgClient = new TestMessageServerClient();
 
-		TestEnvironmentInterface env = (TestEnvironmentInterface) ma.getEnvironmentInterface();
+		ManagedApplication ma = new ManagedApplication( app, null, msgClient );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, env.messageToRootInstance.size());
+		Assert.assertEquals( 0, msgClient.messageToRootInstanceName.size());
 
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.remove.toString(), null, true );
 
 		Assert.assertEquals( 0, app.getRootInstances().size());
-		Assert.assertEquals( 3, env.messageToRootInstance.size());
+		Assert.assertEquals( 3, msgClient.messageToRootInstanceName.size());
 	}
 
 

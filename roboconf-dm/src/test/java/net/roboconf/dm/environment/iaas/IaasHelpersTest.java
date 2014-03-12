@@ -28,8 +28,6 @@ import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.ec2.IaasEc2;
-import net.roboconf.iaas.local.IaasLocalhost;
 
 import org.junit.Test;
 
@@ -37,20 +35,6 @@ import org.junit.Test;
  * @author Vincent Zurczak - Linagora
  */
 public class IaasHelpersTest {
-
-	@Test
-	public void testFindIaasHandler() {
-
-		Properties props = new Properties();
-		Assert.assertNull( IaasHelpers.findIaasHandler( props ));
-
-		props.setProperty( IaasHelpers.IAAS_TYPE, "local" );
-		Assert.assertTrue( IaasHelpers.findIaasHandler( props ) instanceof IaasLocalhost );
-
-		props.setProperty( IaasHelpers.IAAS_TYPE, "ec2" );
-		Assert.assertTrue( IaasHelpers.findIaasHandler( props ) instanceof IaasEc2 );
-	}
-
 
 	@Test( expected = IOException.class )
 	public void testLoadIaasProperties_inexistingFile() throws Exception {

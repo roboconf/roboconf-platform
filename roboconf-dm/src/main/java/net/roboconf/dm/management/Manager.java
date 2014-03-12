@@ -33,8 +33,8 @@ import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.environment.EnvironmentInterfaceFactory;
-import net.roboconf.dm.environment.IEnvironmentInterface;
+import net.roboconf.dm.environment.iaas.IaasResolver;
+import net.roboconf.dm.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
@@ -43,7 +43,12 @@ import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.utils.ResourceUtils;
+import net.roboconf.iaas.api.IaasInterface;
+import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
 import net.roboconf.iaas.api.exceptions.IaasException;
+import net.roboconf.messaging.client.IMessageServerClient;
+import net.roboconf.messaging.client.InteractionType;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
@@ -76,7 +81,9 @@ public final class Manager {
 	private final Logger logger;
 
 	private String messageServerIp;
-	private EnvironmentInterfaceFactory factory;
+	private IaasResolver iaasResolver;
+	private MessageServerClientFactory messagingClientFactory;
+
 
 
 	/**
@@ -84,8 +91,10 @@ public final class Manager {
 	 */
 	private Manager() {
 		this.appNameToManagedApplication = new HashMap<String,ManagedApplication> ();
-		this.factory = new EnvironmentInterfaceFactory();
 		this.logger = Logger.getLogger( getClass().getName());
+
+		this.iaasResolver = new IaasResolver();
+		this.messagingClientFactory = new MessageServerClientFactory();
 	}
 
 
@@ -164,9 +173,11 @@ public final class Manager {
 	 * Loads a new application.
 	 * @param application
 	 * @return the managed application that was created
-	 * @throws AlreadyExistingException
+	 * @throws AlreadyExistingException if the application already exists
+	 * @throws InvalidApplicationException if the application contains critical errors
+	 * @throws IOException if the messaging could;not be initialized
 	 */
-	public ManagedApplication loadNewApplication( File applicationFilesDirectory ) throws AlreadyExistingException, InvalidApplicationException {
+	public ManagedApplication loadNewApplication( File applicationFilesDirectory ) throws AlreadyExistingException, InvalidApplicationException, IOException {
 
 		LoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
 		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
@@ -176,12 +187,29 @@ public final class Manager {
 		if( null != findApplicationByName( application.getName()))
 			throw new AlreadyExistingException( application.getName());
 
-		IEnvironmentInterface envInterface = this.factory.create( this.messageServerIp, application, applicationFilesDirectory );
-		envInterface.initializeResources();
+		final IMessageServerClient client = this.messagingClientFactory.create();
+		client.setApplicationName( application.getName());
+		client.setMessageServerIp( this.messageServerIp );
+		client.setMessageProcessor( new DmMessageProcessor( application ));
+		client.openConnection();
 
-		ManagedApplication ma = new ManagedApplication( application, applicationFilesDirectory, envInterface );
+		ManagedApplication ma = new ManagedApplication( application, applicationFilesDirectory, client );
 		this.appNameToManagedApplication.put( application.getName(), ma );
 		ma.getLogger().fine( "Application " + application.getName() + " was successfully loaded and added." );
+
+		new Thread( "Roboconf's Message Processor Thread" ) {
+			@Override
+			public void run() {
+				try {
+					client.subscribeTo( InteractionType.AGENT_TO_DM, null );
+
+				} catch( IOException e ) {
+					Manager.this.logger.severe( "A message processor could not start on the Deployment Manager." );
+					Manager.this.logger.finest( Utils.writeException( e ));
+				}
+			};
+
+		}.start();
 
 		return ma;
 	}
@@ -253,26 +281,25 @@ public final class Manager {
 		List<Instance> instances = findInstancesToProcess( ma.getApplication(), instancePath, applyToAllChildren );
 
 		// Performing the actions only means we send messages to the agent.
-		IEnvironmentInterface env = ma.getEnvironmentInterface();
 		switch( action ) {
 		case deploy:
-			deploy( instances, ma );
+			deploy( ma, instances );
 			break;
 
 		case undeploy:
-			undeploy( instances, ma );
+			undeploy( ma, instances );
 			break;
 
 		case remove:
-			remove( ma.getApplication(), instances, env );
+			remove( ma, instances );
 			break;
 
 		case start:
-			start( instances, env );
+			start( ma, instances );
 			break;
 
 		case stop:
-			stop( instances, env );
+			stop( ma, instances );
 			break;
 
 		default:
@@ -354,9 +381,15 @@ public final class Manager {
 			} else if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
 				instance.setStatus( InstanceStatus.UNDEPLOYING );
 				try {
-					ma.getEnvironmentInterface().terminateMachine( instance );
+					IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
+					String machineId = instance.getData().get( Instance.MACHINE_ID );
+					iaasInterface.terminateVM( machineId );
 
 				} catch( IaasException e ) {
+					instance.setStatus( InstanceStatus.PROBLEM );
+					bulkException.getInstancesToException().put( instance, e );
+
+				} catch( CommunicationToIaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
 					bulkException.getInstancesToException().put( instance, e );
 				}
@@ -414,11 +447,36 @@ public final class Manager {
 
 
 	/**
-	 * Changes the factory (for tests only).
-	 * @param factory the factory to set
+	 * To use for tests only.
+	 * @param iaasResolver the iaasResolver to set
 	 */
-	public void setFactory( EnvironmentInterfaceFactory factory ) {
-		this.factory = factory;
+	public void setIaasResolver( IaasResolver iaasResolver ) {
+		this.iaasResolver = iaasResolver;
+	}
+
+
+	/**
+	 * @return the iaasResolver
+	 */
+	public IaasResolver getIaasResolver() {
+		return this.iaasResolver;
+	}
+
+
+	/**
+	 * @return the messagingClientFactory
+	 */
+	public MessageServerClientFactory getMessagingClientFactory() {
+		return this.messagingClientFactory;
+	}
+
+
+	/**
+	 * To use for tests only.
+	 * @param messagingClientFactory the messagingClientFactory to set
+	 */
+	public void setMessagingClientFactory( MessageServerClientFactory messagingClientFactory ) {
+		this.messagingClientFactory = messagingClientFactory;
 	}
 
 
@@ -453,67 +511,33 @@ public final class Manager {
 
 
 
-	private void remove( Application app, List<Instance> instances, IEnvironmentInterface env ) throws UnauthorizedActionException {
+	private void remove( ManagedApplication ma, List<Instance> instances ) throws UnauthorizedActionException, BulkActionException {
 
 		for( Instance instance : instances ) {
 			if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
 				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed." );
 		}
 
-		for( Instance instance : instances ) {
-			if( instance.getParent() != null ) {
-				instance.getParent().getChildren().remove( instance );
-				MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( InstanceHelpers.computeInstancePath( instance ));
-				env.sendMessage( message, InstanceHelpers.findRootInstance( instance ));
-
-			} else {
-				app.getRootInstances().remove( instance );
-			}
-		}
-	}
-
-
-
-	private void start( List<Instance> instances, IEnvironmentInterface env ) {
-
-		for( Instance instance : instances ) {
-			if( instance.getParent() != null ) {
-				MsgCmdInstanceStart message = new MsgCmdInstanceStart( InstanceHelpers.computeInstancePath( instance ));
-				env.sendMessage( message, InstanceHelpers.findRootInstance( instance ));
-			}
-		}
-	}
-
-
-
-	private void stop( List<Instance> instances, IEnvironmentInterface env ) {
-
-		for( Instance instance : instances ) {
-			if( instance.getParent() != null ) {
-				MsgCmdInstanceStop message = new MsgCmdInstanceStop( InstanceHelpers.computeInstancePath( instance ));
-				env.sendMessage( message, InstanceHelpers.findRootInstance( instance ));
-			}
-		}
-	}
-
-
-
-	private void undeploy( List<Instance> instances, ManagedApplication ma ) throws BulkActionException {
-
 		BulkActionException bulkException = new BulkActionException( false );
 		for( Instance instance : instances ) {
-			if( instance.getParent() == null ) {
-				try {
-					ma.getEnvironmentInterface().terminateMachine( instance );
 
-				} catch( IaasException e ) {
-					instance.setStatus( InstanceStatus.PROBLEM );
+			if( instance.getParent() != null ) {
+				try {
+					MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( InstanceHelpers.computeInstancePath( instance ));
+					ma.getMessagingClient().publish(
+							InteractionType.DM_TO_AGENT,
+							InstanceHelpers.findRootInstance( instance ).getName(),
+							message );
+
+					instance.getParent().getChildren().remove( instance );
+
+				} catch( IOException e ) {
+					// The instance does not have any problem, just keep trace of the exception
 					bulkException.getInstancesToException().put( instance, e );
 				}
 
 			} else {
-				MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( InstanceHelpers.computeInstancePath( instance ));
-				ma.getEnvironmentInterface().sendMessage( message, InstanceHelpers.findRootInstance( instance ));
+				ma.getApplication().getRootInstances().remove( instance );
 			}
 		}
 
@@ -526,18 +550,139 @@ public final class Manager {
 
 
 
-	private void deploy( List<Instance> instances, ManagedApplication ma ) throws BulkActionException {
+	private void start( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
+
+		BulkActionException bulkException = new BulkActionException( false );
+		for( Instance instance : instances ) {
+			if( instance.getParent() == null )
+				continue;
+
+			try {
+				MsgCmdInstanceStart message = new MsgCmdInstanceStart( InstanceHelpers.computeInstancePath( instance ));
+				ma.getMessagingClient().publish(
+						InteractionType.DM_TO_AGENT,
+						InstanceHelpers.findRootInstance( instance ).getName(),
+						message );
+
+			} catch( IOException e ) {
+				// The instance does not have any problem, just keep trace of the exception
+				bulkException.getInstancesToException().put( instance, e );
+			}
+		}
+
+		if( ! bulkException.getInstancesToException().isEmpty()) {
+			ma.getLogger().severe( bulkException.getLogMessage( false ));
+			ma.getLogger().finest( bulkException.getLogMessage( true ));
+			throw bulkException;
+		}
+	}
+
+
+
+	private void stop( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
+
+		BulkActionException bulkException = new BulkActionException( false );
+		for( Instance instance : instances ) {
+			if( instance.getParent() == null )
+				continue;
+
+			try {
+				MsgCmdInstanceStop message = new MsgCmdInstanceStop( InstanceHelpers.computeInstancePath( instance ));
+				ma.getMessagingClient().publish(
+						InteractionType.DM_TO_AGENT,
+						InstanceHelpers.findRootInstance( instance ).getName(),
+						message );
+
+			} catch( IOException e ) {
+				// The instance does not have any problem, just keep trace of the exception
+				bulkException.getInstancesToException().put( instance, e );
+			}
+		}
+
+		if( ! bulkException.getInstancesToException().isEmpty()) {
+			ma.getLogger().severe( bulkException.getLogMessage( false ));
+			ma.getLogger().finest( bulkException.getLogMessage( true ));
+			throw bulkException;
+		}
+	}
+
+
+
+	private void undeploy( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
+
+		BulkActionException bulkException = new BulkActionException( false );
+		for( Instance instance : instances ) {
+			if( instance.getParent() == null ) {
+				try {
+					IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
+					String machineId = instance.getData().get( Instance.MACHINE_ID );
+					iaasInterface.terminateVM( machineId );
+
+				} catch( IaasException e ) {
+					instance.setStatus( InstanceStatus.PROBLEM );
+					bulkException.getInstancesToException().put( instance, e );
+
+				} catch( CommunicationToIaasException e ) {
+					instance.setStatus( InstanceStatus.PROBLEM );
+					bulkException.getInstancesToException().put( instance, e );
+				}
+
+			} else {
+				try {
+					MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( InstanceHelpers.computeInstancePath( instance ));
+					ma.getMessagingClient().publish(
+							InteractionType.DM_TO_AGENT,
+							InstanceHelpers.findRootInstance( instance ).getName(),
+							message );
+
+				} catch( IOException e ) {
+					// The instance does not have any problem, just keep trace of the exception
+					bulkException.getInstancesToException().put( instance, e );
+				}
+			}
+		}
+
+		if( ! bulkException.getInstancesToException().isEmpty()) {
+			ma.getLogger().severe( bulkException.getLogMessage( false ));
+			ma.getLogger().finest( bulkException.getLogMessage( true ));
+			throw bulkException;
+		}
+	}
+
+
+
+	private void deploy( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
 
 		BulkActionException bulkException = new BulkActionException( true );
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
 				try {
-					ma.getEnvironmentInterface().createMachine( instance );
+					IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
+					String machineId = iaasInterface.createVM(
+							this.messageServerIp, "",
+							ma.getApplication().getName(), instance.getName());
+
+					// FIXME: the channel name is skipped here
+					// As soon as we know what it is useful for, re-add it (it is in the instance)
+					instance.getData().put( Instance.MACHINE_ID, machineId );
+
 					MsgCmdInstanceAdd message = new MsgCmdInstanceAdd( null, instance );
-					ma.getEnvironmentInterface().sendMessage( message, InstanceHelpers.findRootInstance( instance ));
+					ma.getMessagingClient().publish(
+							InteractionType.DM_TO_AGENT,
+							InstanceHelpers.findRootInstance( instance ).getName(),
+							message );
 
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
+					bulkException.getInstancesToException().put( instance, e );
+
+
+				} catch( CommunicationToIaasException e ) {
+					instance.setStatus( InstanceStatus.PROBLEM );
+					bulkException.getInstancesToException().put( instance, e );
+
+				} catch( IOException e ) {
+					// The instance does not have any problem, just keep trace of the exception
 					bulkException.getInstancesToException().put( instance, e );
 				}
 
@@ -545,10 +690,13 @@ public final class Manager {
 				try {
 					Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
 					MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( InstanceHelpers.computeInstancePath( instance ), instanceResources );
-					ma.getEnvironmentInterface().sendMessage( message, InstanceHelpers.findRootInstance( instance ));
+					ma.getMessagingClient().publish(
+							InteractionType.DM_TO_AGENT,
+							InstanceHelpers.findRootInstance( instance ).getName(),
+							message );
 
 				} catch( IOException e ) {
-					instance.setStatus( InstanceStatus.PROBLEM );
+					// The instance does not have any problem, just keep trace of the exception
 					bulkException.getInstancesToException().put( instance, e );
 				}
 			}
@@ -575,9 +723,9 @@ public final class Manager {
 		}
 
 		try {
-			IEnvironmentInterface env = ma.getEnvironmentInterface();
-			if( env != null )
-				env.cleanResources();
+			IMessageServerClient client = ma.getMessagingClient();
+			if( client != null )
+				client.closeConnection();
 
 		} catch( Exception e ) {
 			ma.getLogger().finest( Utils.writeException( e ));

@@ -16,6 +16,8 @@
 
 package net.roboconf.plugin.api;
 
+import java.io.File;
+
 import net.roboconf.core.model.runtime.Instance;
 
 /**
@@ -55,4 +57,28 @@ public interface PluginInterface {
 	 * @param instance the instance to undeploy
 	 */
 	void undeploy( Instance instance ) throws Exception;
+
+
+	/**
+	 * Sets the execution level.
+	 * <p>
+	 * This method allows to define until which steps a plug-in must go.
+	 * It allows, as an example, to only log an action.
+	 * Or to only generate files (if it generates ones).
+	 * </p>
+	 * <p>
+	 * This is particularly useful to debug or to test plug-ins and
+	 * Roboconf deployments.
+	 * </p>
+	 *
+	 * @param executionLevel the execution level
+	 */
+	void setExecutionLevel( ExecutionLevel executionLevel );
+
+
+	/**
+	 * Sets the directory to use when the execution level is {@link ExecutionLevel#GENERATE_FILES}.
+	 * @param dumpDirectory the dump directory (not null)
+	 */
+	void setDumpDirectory( File dumpDirectory );
 }

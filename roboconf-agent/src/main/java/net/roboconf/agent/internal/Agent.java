@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent;
+package net.roboconf.agent.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -28,28 +29,23 @@ import net.roboconf.messaging.client.IMessageServerClient;
 import net.roboconf.messaging.client.InteractionType;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.bash.PluginBash;
 import net.roboconf.plugin.puppet.PluginPuppet;
 
 /**
  * @author Vincent Zurczak - Linagora
- * FIXME: rename this class?
  */
 public class Agent {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String agentName;
+	private final String agentName;
+
 	private Instance rootInstance;
 	private IMessageServerClient client;
-
-
-	/**
-	 * Constructor.
-	 */
-	public Agent() {
-		// nothing
-	}
+	private ExecutionLevel executionLevel;
+	private File dumpDirectory;
 
 
 	/**
@@ -70,18 +66,30 @@ public class Agent {
 
 
 	/**
-	 * @return the agentName
+	 * @param executionLevel the executionLevel to set
 	 */
-	public String getAgentName() {
-		return this.agentName;
+	public void setExecutionLevel( ExecutionLevel executionLevel ) {
+		this.executionLevel = executionLevel;
 	}
 
 
 	/**
-	 * @param agentName the agentName to set
+	 * @param dumpDirectory the dumpDirectory to set.
+	 * p>
+	 * Only required if execution level is
+	 * {@link ExecutionLevel#GENERATE_FILES}.
+	 * </p>
 	 */
-	public void setAgentName( String agentName ) {
-		this.agentName = agentName;
+	public void setDumpDirectory( File dumpDirectory ) {
+		this.dumpDirectory = dumpDirectory;
+	}
+
+
+	/**
+	 * @return the agentName
+	 */
+	public String getAgentName() {
+		return this.agentName;
 	}
 
 
@@ -259,6 +267,11 @@ public class Agent {
 			result = new PluginPuppet();
 		else
 			this.logger.severe( "No plugin was found for instance " + instance.getName() + " with installer " + installerName + "." );
+
+		if( result != null ) {
+			result.setExecutionLevel( this.executionLevel );
+			result.setDumpDirectory( this.dumpDirectory );
+		}
 
 		return result;
 	}

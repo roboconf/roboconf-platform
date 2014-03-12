@@ -14,28 +14,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.testing;
-
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.dm.management.ManagedApplication;
+package net.roboconf.plugin.api;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public final class ApplicationTester {
+public enum ExecutionLevel {
 
-	public static final String IN_MEMORY_AGENT = "in-memory-agent";
-
-
-	/**
-	 * Replaces IaaS components by in-memory ones.
-	 * @param ma a managed application
-	 */
-	public static void patch( ManagedApplication ma ) {
-
-		for( Component c : ma.getApplication().getGraphs().getRootComponents()) {
-			if( "iaas".equalsIgnoreCase( c.getInstallerName()))
-				c.setInstallerName( IN_MEMORY_AGENT );
-		}
-	}
+	RUNNING, GENERATE_FILES, LOG;
 }

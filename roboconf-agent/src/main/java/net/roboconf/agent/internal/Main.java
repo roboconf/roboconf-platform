@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent;
+package net.roboconf.agent.internal;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
-import net.roboconf.agent.messaging.AgentMessageProcessor;
-import net.roboconf.agent.messaging.MessagingService;
-import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
+import net.roboconf.agent.AgentData;
+import net.roboconf.agent.AgentLauncher;
+import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
  * The main program when the agent runs in stand-alone mode.
@@ -42,7 +37,6 @@ public class Main {
 		Logger logger = Logger.getLogger( Main.class.getName());
 		logger.info( "A stand-alone agent is starting." );
 
-		// TODO: get the IP address (but get the right one is not easy ;))
 		AgentData agentData = null;
 		if( args.length == 1 )
 			agentData = AgentUtils.findParametersInPropertiesFile( logger, args[ 0 ]);
@@ -59,38 +53,7 @@ public class Main {
 			logger.severe( "The agent's data (message server IP) could not be retrieved." );
 
 		} else {
-			IMessageServerClient client = new MessageServerClientFactory().create();
-			client.setMessageServerIp( agentData.getMessageServerIp());
-
-			Agent agent = new Agent();
-			agent.setClient( client );
-			try {
-				agent.setAgentName( "Roboconf Agent - " + InetAddress.getLocalHost().getHostName());
-
-			} catch( UnknownHostException e ) {
-				logger.warning( "Network information could not be retrieved. Setting the agent name to default." );
-				agent.setAgentName( "Roboconf Agent" );
-			}
-
-			AgentMessageProcessor messageProcessor = new AgentMessageProcessor( agent );
-			client.setMessageProcessor( messageProcessor );
-
-			try {
-				new MessagingService().initializeAgentConnection( agentData, client );
-
-			} catch( IOException e ) {
-				logger.severe( "A connection could not be established with the message server. " + e.getMessage());
-				logger.finest( Utils.writeException( e ));
-
-			} finally {
-				try {
-					client.closeConnection();
-
-				} catch( IOException e ) {
-					logger.severe( "The connection could not be closed with the message server. " + e.getMessage());
-					logger.finest( Utils.writeException( e ));
-				}
-			}
+			new AgentLauncher().launchAgent( agentData, ExecutionLevel.RUNNING, null );
 		}
 
 		logger.info( "A stand-alone agent is stopping." );

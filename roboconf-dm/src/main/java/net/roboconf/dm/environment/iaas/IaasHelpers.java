@@ -26,8 +26,6 @@ import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.ec2.IaasEc2;
-import net.roboconf.iaas.local.IaasLocalhost;
 
 /**
  * Utilities related to Iaas.
@@ -35,35 +33,11 @@ import net.roboconf.iaas.local.IaasLocalhost;
  */
 public final class IaasHelpers {
 
-	public static final String IAAS_TYPE = "iaas.type";
-
-
 	/**
 	 * Empty private constructor.
 	 */
 	private IaasHelpers() {
 		// nothing
-	}
-
-
-	/**
-	 * Finds the right IaaS handler.
-	 * @param iaasProperties non-null properties
-	 * @return a IaaS interface, or null if none matched
-	 * TODO: move this method in the IaaS implementations
-	 */
-	public static IaasInterface findIaasHandler( Properties iaasProperties ) {
-
-		IaasInterface result = null;
-		String iaasType = iaasProperties.getProperty( IAAS_TYPE );
-		if( "local".equals( iaasType )) {
-			result = new IaasLocalhost();
-
-		} else if( "ec2".equals( iaasType )) {
-			result = new IaasEc2();
-		}
-
-		return result;
 	}
 
 
