@@ -29,9 +29,11 @@ import net.roboconf.messaging.client.IMessageServerClient;
 import net.roboconf.messaging.client.InteractionType;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.utils.MessagingUtils;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.bash.PluginBash;
+import net.roboconf.plugin.logger.PluginLogger;
 import net.roboconf.plugin.puppet.PluginPuppet;
 
 /**
@@ -44,7 +46,7 @@ public class Agent {
 
 	private Instance rootInstance;
 	private IMessageServerClient client;
-	private ExecutionLevel executionLevel;
+	private ExecutionLevel executionLevel = ExecutionLevel.RUNNING;
 	private File dumpDirectory;
 
 
@@ -169,6 +171,7 @@ public class Agent {
 					break;
 
 				case remove:
+					String filterName = MessagingUtils.buildRoutingKeyToDm();
 					if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
 						this.logger.severe( "Instance " + instancePath + " cannot be removed. Instance status: " + instance.getStatus() + "." );
 
@@ -177,14 +180,14 @@ public class Agent {
 						this.logger.fine( "Child instance " + instancePath + " was removed from the model." );
 
 						MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( instance );
-						this.client.publish( InteractionType.AGENT_TO_DM, null, msg );
+						this.client.publish( InteractionType.DM_AND_AGENT, filterName, msg );
 
 					} else {
 						this.rootInstance = null;
 						this.logger.fine( "Root instance " + instancePath + " was set to null." );
 
 						MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( instance );
-						this.client.publish( InteractionType.AGENT_TO_DM, null, msg );
+						this.client.publish( InteractionType.DM_AND_AGENT, filterName, msg );
 					}
 					break;
 
@@ -261,10 +264,16 @@ public class Agent {
 
 		PluginInterface result = null;
 		String installerName = instance.getComponent().getInstallerName();
+
 		if( "bash".equalsIgnoreCase( installerName ))
 			result = new PluginBash();
+
 		else if( "puppet".equalsIgnoreCase( installerName ))
 			result = new PluginPuppet();
+
+		else if( "logger".equalsIgnoreCase( installerName ))
+			result = new PluginLogger();
+
 		else
 			this.logger.severe( "No plugin was found for instance " + instance.getName() + " with installer " + installerName + "." );
 
@@ -285,7 +294,9 @@ public class Agent {
 	 */
 	private void updateAndNotifyNewStatus( Instance instance, InstanceStatus newStatus ) throws IOException {
 		instance.setStatus( newStatus );
-		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( instance );
-		this.client.publish( InteractionType.AGENT_TO_DM, null, msg );
+		this.client.publish(
+				InteractionType.DM_AND_AGENT,
+				MessagingUtils.buildRoutingKeyToDm(),
+				new MsgNotifInstanceChanged( instance ));
 	}
 }

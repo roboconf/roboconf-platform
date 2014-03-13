@@ -23,6 +23,9 @@ import net.roboconf.messaging.messages.Message;
 /**
  * An interface to abstract the message server.
  * <p>
+ * It is associated with a single application.
+ * </p>
+ * <p>
  * Implementations are responsible of the connection with the
  * message server. They are also in charge of listening and processing
  * messages (subscriptions).
@@ -44,15 +47,6 @@ public interface IMessageServerClient {
 	void setApplicationName( String applicationName );
 
 	/**
-	 * Sets the message processor.
-	 * <p>
-	 * It will be used by the implementing class when a message is received.
-	 * </p>
-	 * @param messageProcessor a message processor
-	 */
-	void setMessageProcessor( IMessageProcessor messageProcessor );
-
-	/**
 	 * Opens a connection with the message server.
 	 */
 	void openConnection() throws IOException;
@@ -64,27 +58,37 @@ public interface IMessageServerClient {
 
 	/**
 	 * Subscribes to a queue or topic.
+	 * @param sourceName the source name (e.g., DM or agent something, useful for debug)
 	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
-	 * @param filterName the filter name, if the message server supports it
+	 * @param routingKey the routing key, if the message server supports it
 	 * <p>
-	 * This feature allows to filter messages on a queue or a topic. It is supported
-	 * on RabbitMQueue (it is then called routingKey).
+	 * This feature allows to route a message to a given queue. It is supported
+	 * by RabbitMQueue.
 	 * </p>
+	 * @param messageProcessor the message processor for the subscription
 	 */
-	void subscribeTo( InteractionType interactionType, String filterName ) throws IOException;
+	void subscribeTo( String sourceName, InteractionType interactionType, String routingKey, IMessageProcessor messageProcessor )
+	throws IOException;
 
 	/**
 	 * Unsubscribes from a queue or topic.
 	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
-	 * @param filterName the filter name, if the message server supports it
+	 * @param routingKey the filter name, if the message server supports it
 	 */
-	void unsubscribeTo( InteractionType interactionType, String filterName ) throws IOException;
+	void unsubscribeTo( InteractionType interactionType, String routingKey ) throws IOException;
 
 	/**
 	 * Publishes a message a message on a queue or a topic.
 	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
-	 * @param filterName the filter name, if the message server supports it
+	 * @param routingKey the filter name, if the message server supports it
 	 * @param message the message to publish
 	 */
-	void publish( InteractionType interactionType, String filterName, Message message ) throws IOException;
+	void publish( InteractionType interactionType, String routingKey, Message message ) throws IOException;
+
+	/**
+	 * Deletes the queue or topic identified by these parameters.
+	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
+	 * @param routingKey the filter name, if the message server supports it
+	 */
+	void deleteQueueOrTopic( InteractionType interactionType, String routingKey ) throws IOException;
 }

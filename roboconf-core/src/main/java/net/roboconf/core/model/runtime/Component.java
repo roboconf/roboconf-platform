@@ -37,8 +37,8 @@ public class Component implements Serializable {
 	private final Collection<String> facetNames = new HashSet<String> ();
 	private final Map<String,String> exportedVariables = new HashMap<String,String> ();
 
-	private final transient Collection<Component> children = new HashSet<Component> ();
-	private final transient Collection<Component> ancestors = new HashSet<Component> ();
+	private final Collection<Component> children = new HashSet<Component> ();
+	private final Collection<Component> ancestors = new HashSet<Component> ();
 
 
 	/**

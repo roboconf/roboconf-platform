@@ -55,6 +55,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * A class to manage a collection of applications.
@@ -190,26 +191,17 @@ public final class Manager {
 		final IMessageServerClient client = this.messagingClientFactory.create();
 		client.setApplicationName( application.getName());
 		client.setMessageServerIp( this.messageServerIp );
-		client.setMessageProcessor( new DmMessageProcessor( application ));
 		client.openConnection();
 
 		ManagedApplication ma = new ManagedApplication( application, applicationFilesDirectory, client );
 		this.appNameToManagedApplication.put( application.getName(), ma );
 		ma.getLogger().fine( "Application " + application.getName() + " was successfully loaded and added." );
 
-		new Thread( "Roboconf's Message Processor Thread" ) {
-			@Override
-			public void run() {
-				try {
-					client.subscribeTo( InteractionType.AGENT_TO_DM, null );
-
-				} catch( IOException e ) {
-					Manager.this.logger.severe( "A message processor could not start on the Deployment Manager." );
-					Manager.this.logger.finest( Utils.writeException( e ));
-				}
-			};
-
-		}.start();
+		client.subscribeTo(
+				"DM",
+				InteractionType.DM_AND_AGENT,
+				MessagingUtils.buildRoutingKeyToDm(),
+				new DmMessageProcessor( application ));
 
 		return ma;
 	}
@@ -235,14 +227,32 @@ public final class Manager {
 
 		// If yes, do it
 		ma.getLogger().fine( "Deleting application " + applicationName + "." );
-
 		cleanUp( ma );
+
+		// Delete the queues related to the DM
+		try {
+			if( ma.getMessagingClient() != null ) {
+				ma.getMessagingClient().deleteQueueOrTopic( InteractionType.DM_AND_AGENT, MessagingUtils.buildRoutingKeyToDm());
+				for( Instance rootInstance : ma.getApplication().getRootInstances()) {
+					ma.getMessagingClient().deleteQueueOrTopic(
+							InteractionType.DM_AND_AGENT,
+							MessagingUtils.buildRoutingKeyToAgent( rootInstance ));
+				}
+			}
+
+		} catch( IOException e ) {
+			ma.getLogger().warning( "Messaging queues and topics could not be deleted for " + applicationName + ". " + e.getMessage());
+			ma.getLogger().finest( Utils.writeException( e ));
+		}
+
+
 		this.appNameToManagedApplication.remove( applicationName );
 		try {
 			Utils.deleteFilesRecursively( ma.getApplicationFilesDirectory());
 
 		} catch( IOException e ) {
 			ma.getLogger().warning( "An application's directory could not be deleted. " + e.getMessage());
+			ma.getLogger().finest( Utils.writeException( e ));
 		}
 	}
 
@@ -525,11 +535,12 @@ public final class Manager {
 				try {
 					MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( InstanceHelpers.computeInstancePath( instance ));
 					ma.getMessagingClient().publish(
-							InteractionType.DM_TO_AGENT,
-							InstanceHelpers.findRootInstance( instance ).getName(),
+							InteractionType.DM_AND_AGENT,
+							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 
-					instance.getParent().getChildren().remove( instance );
+					// The instance will be removed once the agent has indicated it was removed.
+					// See DmMessageProcessor.
 
 				} catch( IOException e ) {
 					// The instance does not have any problem, just keep trace of the exception
@@ -560,8 +571,8 @@ public final class Manager {
 			try {
 				MsgCmdInstanceStart message = new MsgCmdInstanceStart( InstanceHelpers.computeInstancePath( instance ));
 				ma.getMessagingClient().publish(
-						InteractionType.DM_TO_AGENT,
-						InstanceHelpers.findRootInstance( instance ).getName(),
+						InteractionType.DM_AND_AGENT,
+						MessagingUtils.buildRoutingKeyToAgent( instance ),
 						message );
 
 			} catch( IOException e ) {
@@ -589,8 +600,8 @@ public final class Manager {
 			try {
 				MsgCmdInstanceStop message = new MsgCmdInstanceStop( InstanceHelpers.computeInstancePath( instance ));
 				ma.getMessagingClient().publish(
-						InteractionType.DM_TO_AGENT,
-						InstanceHelpers.findRootInstance( instance ).getName(),
+						InteractionType.DM_AND_AGENT,
+						MessagingUtils.buildRoutingKeyToAgent( instance ),
 						message );
 
 			} catch( IOException e ) {
@@ -631,8 +642,8 @@ public final class Manager {
 				try {
 					MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( InstanceHelpers.computeInstancePath( instance ));
 					ma.getMessagingClient().publish(
-							InteractionType.DM_TO_AGENT,
-							InstanceHelpers.findRootInstance( instance ).getName(),
+							InteractionType.DM_AND_AGENT,
+							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 
 				} catch( IOException e ) {
@@ -668,14 +679,13 @@ public final class Manager {
 
 					MsgCmdInstanceAdd message = new MsgCmdInstanceAdd( null, instance );
 					ma.getMessagingClient().publish(
-							InteractionType.DM_TO_AGENT,
-							InstanceHelpers.findRootInstance( instance ).getName(),
+							InteractionType.DM_AND_AGENT,
+							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
 					bulkException.getInstancesToException().put( instance, e );
-
 
 				} catch( CommunicationToIaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
@@ -691,8 +701,8 @@ public final class Manager {
 					Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
 					MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( InstanceHelpers.computeInstancePath( instance ), instanceResources );
 					ma.getMessagingClient().publish(
-							InteractionType.DM_TO_AGENT,
-							InstanceHelpers.findRootInstance( instance ).getName(),
+							InteractionType.DM_AND_AGENT,
+							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 
 				} catch( IOException e ) {

@@ -21,26 +21,5 @@ package net.roboconf.messaging.client;
  */
 public enum InteractionType {
 
-	AGENT_TO_AGENT, AGENT_TO_DM, DM_TO_AGENT;
-
-
-	public String getExchangeName() {
-
-		String result = null;
-		switch( this ) {
-		case AGENT_TO_AGENT:
-			result = "";
-			break;
-
-		case AGENT_TO_DM:
-		case DM_TO_AGENT:
-			result = "";
-			break;
-
-		default:
-			break;
-		}
-
-		return result;
-	}
+	AGENT_TO_AGENT, DM_AND_AGENT;
 }

@@ -1,0 +1,30 @@
+# Here, we only have components.
+# We do not use facets.
+
+# The VMs
+VMbeagle {
+	alias: Beagle board;
+	installer: iaas;
+	children: openhab;
+}
+
+VMaws {
+	alias: Virtual machine;
+	installer: iaas;
+	children: mqtt;
+}
+
+# Wall test
+openhab {
+	alias: OpenHab;
+	installer: bash;
+	exports: instanceName, openhabBrokerChoice, openhabHttpPort, openhabHttpsPort, openhabTelnetPort;
+	imports: mqtt.ip;
+}
+
+mqtt {
+	alias: MQTT;
+	installer: bash;
+	exports: ip;
+}
+

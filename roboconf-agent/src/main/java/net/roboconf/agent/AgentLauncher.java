@@ -30,7 +30,6 @@ import net.roboconf.messaging.client.IMessageServerClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.plugin.api.ExecutionLevel;
 
-
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -67,6 +66,7 @@ public class AgentLauncher {
 		// The messaging client
 		IMessageServerClient client = new MessageServerClientFactory().create();
 		client.setMessageServerIp( agentData.getMessageServerIp());
+		client.setApplicationName( agentData.getApplicationName());
 
 		// The agent
 		String aName;
@@ -84,26 +84,15 @@ public class AgentLauncher {
 		Agent agent = new Agent( aName );
 		agent.setClient( client );
 
-		// Set the message processor
-		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( agent );
-		client.setMessageProcessor( messageProcessor );
-
 		// Initialize the agent's connections
 		try {
-			new MessagingService().initializeAgentConnection( agentData, client );
+			AgentMessageProcessor messageProcessor = new AgentMessageProcessor( agent );
+			MessagingService msgService = new MessagingService();
+			msgService.initializeAgentConnection( agentData, messageProcessor, client );
 
 		} catch( IOException e ) {
 			logger.severe( "A connection could not be established with the message server. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
-
-		} finally {
-			try {
-				client.closeConnection();
-
-			} catch( IOException e ) {
-				logger.severe( "The connection could not be closed with the message server. " + e.getMessage());
-				logger.finest( Utils.writeException( e ));
-			}
 		}
 	}
 }

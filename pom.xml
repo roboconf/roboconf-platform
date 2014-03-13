@@ -46,6 +46,7 @@
 		<module>roboconf-plugin-api</module>
 		<module>roboconf-plugin-bash</module>
 		<module>roboconf-plugin-puppet</module>
+		<module>roboconf-plugin-logger</module>
 		<module>roboconf-agent</module>
 		
 		<module>roboconf-testing</module>

@@ -46,6 +46,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -432,20 +433,22 @@ public class ManagerTest {
 			Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
 			TestMessageServerClient msgClient = (TestMessageServerClient) ma.getMessagingClient();
-			Assert.assertEquals( 0, msgClient.messageToRootInstanceName.size());
+			Assert.assertEquals( 0, msgClient.messageToRoutingKey.size());
 
 			String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 			Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), instancePath, true );
 
 			Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 			Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-			Assert.assertEquals( 2, msgClient.messageToRootInstanceName.size());
+			Assert.assertEquals( 2, msgClient.messageToRoutingKey.size());
 
 			final String vmPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 			final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());
 
-			for( Map.Entry<Message,String> entry : msgClient.messageToRootInstanceName.entrySet()) {
-				Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
+			for( Map.Entry<Message,String> entry : msgClient.messageToRoutingKey.entrySet()) {
+				Assert.assertEquals(
+						MessagingUtils.buildRoutingKeyToAgent( app.getMySqlVm()),
+						entry.getValue());
 
 				if( entry.getKey() instanceof MsgCmdInstanceDeploy ) {
 					Assert.assertEquals( serverPath, ((MsgCmdInstanceDeploy) entry.getKey()).getInstancePath());
@@ -475,7 +478,7 @@ public class ManagerTest {
 		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
 		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRootInstanceName;
+		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRoutingKey;
 		Assert.assertEquals( 0, map.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
@@ -484,7 +487,10 @@ public class ManagerTest {
 		Assert.assertEquals( 1, map.size());
 		Map.Entry<Message,String> entry = map.entrySet().iterator().next();
 
-		Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
+		Assert.assertEquals(
+				MessagingUtils.buildRoutingKeyToAgent( app.getMySqlVm()),
+				entry.getValue());
+
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getMySql()),
 				((MsgCmdInstanceStart) entry.getKey()).getInstancePath());
@@ -501,7 +507,7 @@ public class ManagerTest {
 		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
 		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRootInstanceName;
+		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRoutingKey;
 		Assert.assertEquals( 0, map.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
@@ -510,7 +516,10 @@ public class ManagerTest {
 		Assert.assertEquals( 1, map.size());
 		Map.Entry<Message,String> entry = map.entrySet().iterator().next();
 
-		Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
+		Assert.assertEquals(
+				MessagingUtils.buildRoutingKeyToAgent( app.getMySqlVm()),
+				entry.getValue());
+
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getMySql()),
 				((MsgCmdInstanceStop) entry.getKey()).getInstancePath());
@@ -527,7 +536,7 @@ public class ManagerTest {
 		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
 		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRootInstanceName;
+		Map<Message,String> map = ((TestMessageServerClient) ma.getMessagingClient()).messageToRoutingKey;
 		Assert.assertEquals( 0, map.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
@@ -539,7 +548,10 @@ public class ManagerTest {
 		Assert.assertEquals( 1, map.size());
 		Map.Entry<Message,String> entry = map.entrySet().iterator().next();
 
-		Assert.assertEquals( app.getMySqlVm().getName(), entry.getValue());
+		Assert.assertEquals(
+				MessagingUtils.buildRoutingKeyToAgent( app.getMySqlVm()),
+				entry.getValue());
+
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getMySql()),
 				((MsgCmdInstanceUndeploy) entry.getKey()).getInstancePath());
@@ -571,21 +583,23 @@ public class ManagerTest {
 		// Remove MySQL will fail. But removing Tomcat instances will succeed.
 		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, msgClient.messageToRootInstanceName.size());
+		Assert.assertEquals( 0, msgClient.messageToRoutingKey.size());
 
 		String tomcatVmInstancePath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.remove.toString(), tomcatVmInstancePath, true );
 
 		Assert.assertEquals( 1, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
-		Assert.assertEquals( 2, msgClient.messageToRootInstanceName.size());
+		Assert.assertEquals( 2, msgClient.messageToRoutingKey.size());
 
 		List<String> paths = new ArrayList<String> ();
 		paths.add( InstanceHelpers.computeInstancePath( app.getWar()));
 		paths.add( InstanceHelpers.computeInstancePath( app.getTomcat()));
 
-		for( Map.Entry<Message,String> entry : msgClient.messageToRootInstanceName.entrySet()) {
-			Assert.assertEquals( app.getTomcatVm().getName(), entry.getValue());
+		for( Map.Entry<Message,String> entry : msgClient.messageToRoutingKey.entrySet()) {
+			Assert.assertEquals(
+					MessagingUtils.buildRoutingKeyToAgent( app.getTomcatVm()),
+					entry.getValue());
 
 			String path = ((MsgCmdInstanceRemove) entry.getKey()).getInstancePath();
 			paths.remove( path );
@@ -605,12 +619,12 @@ public class ManagerTest {
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, msgClient.messageToRootInstanceName.size());
+		Assert.assertEquals( 0, msgClient.messageToRoutingKey.size());
 
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.remove.toString(), null, true );
 
 		Assert.assertEquals( 0, app.getRootInstances().size());
-		Assert.assertEquals( 3, msgClient.messageToRootInstanceName.size());
+		Assert.assertEquals( 3, msgClient.messageToRoutingKey.size());
 	}
 
 

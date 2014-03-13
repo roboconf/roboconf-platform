@@ -50,8 +50,8 @@ public class Instance implements Serializable {
 
 	private String name, channel;
 	private Component component;
-	private transient Instance parent;
-	private final transient Collection<Instance> children = new LinkedHashSet<Instance> ();
+	private Instance parent;
+	private final Collection<Instance> children = new LinkedHashSet<Instance> ();
 
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
 	private final Map<String,String> data = new LinkedHashMap<String,String>( 0 );

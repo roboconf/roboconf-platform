@@ -1,0 +1,26 @@
+####################################
+# We start with a simple deployment
+####################################
+
+# A VM with Wall only
+instanceof VMbeagle {
+	name: Beagle;
+	instanceof openhab {
+		name: openhab1;
+		instanceName: openhab1;
+		openhabBrokerChoice: moquetteosgi;
+		openhabHttpPort: 8080;
+		openhabHttpsPort: 8443;
+		openhabTelnetPort: 5555;
+	}
+}
+
+
+instanceof VMaws {
+	name: VM_MQTT;
+	
+	instanceof mqtt {
+		name: MQTT;
+	}
+}
+

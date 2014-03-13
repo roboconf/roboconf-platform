@@ -78,7 +78,7 @@ public class DmMessageProcessor implements IMessageProcessor {
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
 
 		else
-			this.logger.warning( "Got an undetermined message to process: " + message.getClass().getName());
+			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
 	}
 
 
@@ -169,7 +169,19 @@ public class DmMessageProcessor implements IMessageProcessor {
 
 
 	private void processMsgNotifInstanceRemoved( MsgNotifInstanceRemoved message ) {
-		// TODO Auto-generated method stub
 
+		String instancePath = message.getInstancePath();
+		Instance instance = InstanceHelpers.findInstanceByPath( this.application, instancePath );
+		if( instance == null ) {
+			this.logger.warning( "A 'REMOVE' notification was received for an unknown instance: " + instancePath + "." );
+
+		} else {
+			if( instance.getParent() == null )
+				this.logger.warning( "Anormal behavior. A 'REMOVE' notification was received for a root instance: " + instancePath + "." );
+			else
+				instance.getParent().getChildren().remove( instance );
+
+			this.logger.info( "Instance " + instancePath + " was removed from the model." );
+		}
 	}
 }

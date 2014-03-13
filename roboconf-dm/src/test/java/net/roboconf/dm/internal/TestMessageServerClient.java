@@ -32,7 +32,7 @@ import net.roboconf.messaging.messages.Message;
  */
 public class TestMessageServerClient implements IMessageServerClient {
 
-	public final Map<Message,String> messageToRootInstanceName = new HashMap<Message,String> ();
+	public final Map<Message,String> messageToRoutingKey = new HashMap<Message,String> ();
 	public AtomicBoolean connectionOpen = new AtomicBoolean( false );
 	public AtomicBoolean connectionClosed = new AtomicBoolean( false );
 
@@ -51,12 +51,6 @@ public class TestMessageServerClient implements IMessageServerClient {
 
 
 	@Override
-	public void setMessageProcessor( IMessageProcessor messageProcessor ) {
-		// nothing, we do not care
-	}
-
-
-	@Override
 	public void openConnection() throws IOException {
 		this.connectionOpen.set( true );
 	}
@@ -69,22 +63,29 @@ public class TestMessageServerClient implements IMessageServerClient {
 
 
 	@Override
-	public void subscribeTo( InteractionType interactionType, String filterName )
+	public void subscribeTo( String sourceName, InteractionType interactionType, String routingKey, IMessageProcessor messageprocessor )
 	throws IOException {
 		// nothing, we do not care
 	}
 
 
 	@Override
-	public void unsubscribeTo( InteractionType interactionType, String filterName )
+	public void unsubscribeTo( InteractionType interactionType, String routingKey )
 	throws IOException {
 		// nothing, we do not care
 	}
 
 
 	@Override
-	public void publish( InteractionType interactionType, String filterName, Message message )
+	public void publish( InteractionType interactionType, String routingKey, Message message )
 	throws IOException {
-		this.messageToRootInstanceName.put( message, filterName );
+		this.messageToRoutingKey.put( message, routingKey );
+	}
+
+
+	@Override
+	public void deleteQueueOrTopic( InteractionType interactionType, String routingKey )
+	throws IOException {
+		// nothing
 	}
 }

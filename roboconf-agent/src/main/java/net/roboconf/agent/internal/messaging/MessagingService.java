@@ -29,16 +29,15 @@ import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IMessageServerClient;
 import net.roboconf.messaging.client.InteractionType;
-import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportNotification;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * @author Noël - LIG
@@ -54,24 +53,34 @@ public final class MessagingService {
 
 	private IMessageServerClient client;
 	private AgentData agentData;
+	private AgentMessageProcessor messageProcessor;
 
 
 
 	/**
 	 * Initializes the connection with the message server.
 	 * @param agentData the agent's data
+	 * @param messageProcessor
 	 * @param client the client for the message server
 	 * @throws IOException if something went wrong
 	 */
-	public void initializeAgentConnection( final AgentData agentData, final IMessageServerClient client ) throws IOException {
+	public void initializeAgentConnection(
+			final AgentData agentData,
+			AgentMessageProcessor messageProcessor,
+			final IMessageServerClient client )
+	throws IOException {
 
 		this.agentData = agentData;
+		this.messageProcessor = messageProcessor;
 		this.client = client;
 		client.openConnection();
 
 		// Indicate this machine is up
 		MsgNotifMachineUp machineIsUp = new MsgNotifMachineUp( agentData.getRootInstanceName(), agentData.getIpAddress());
-		client.publish( InteractionType.AGENT_TO_DM, null, machineIsUp );
+		client.publish(
+				InteractionType.DM_AND_AGENT,
+				MessagingUtils.buildRoutingKeyToDm(),
+				machineIsUp );
 
 
 		// Add a hook for when the VM shutdowns
@@ -81,7 +90,12 @@ public final class MessagingService {
 
 				MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown( agentData.getRootInstanceName());
 				try {
-					client.publish( InteractionType.AGENT_TO_DM, null, machineIsDown );
+					client.publish(
+							InteractionType.DM_AND_AGENT,
+							MessagingUtils.buildRoutingKeyToDm(),
+							machineIsDown );
+
+					// TODO: delete exports queues
 
 				} catch( IOException e ) {
 					MessagingService.this.logger.severe( e.getMessage());
@@ -99,33 +113,31 @@ public final class MessagingService {
 
 				MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( agentData.getRootInstanceName());
 				try {
-					client.publish( InteractionType.AGENT_TO_DM, null, heartBeat );
+					client.publish(
+							InteractionType.DM_AND_AGENT,
+							MessagingUtils.buildRoutingKeyToDm(),
+							heartBeat );
+
+					// FIXME: stop the timer!!!!!
 
 				} catch( IOException e ) {
 					MessagingService.this.logger.severe( e.getMessage());
 					MessagingService.this.logger.finest( Utils.writeException( e ));
+					cancel();
 				}
 			}
 		};
 
-		timer.scheduleAtFixedRate( timerTask, 0, MessagingConstants.HEARTBEAT_PERIOD );
+		timer.scheduleAtFixedRate( timerTask, 0, MessagingUtils.HEARTBEAT_PERIOD );
 
 
 		// Listen to messages that come from the DM
-		// FIXME: no routing key?
-		client.subscribeTo( InteractionType.DM_TO_AGENT, null );
-	}
-
-
-	public void publishMessage( InteractionType interactionType, Message message ) throws IOException {
-
-		// client.publish( interactionType, filterName, message );
-//		String applicationName = this.agent.getApplicationName();
-//		this.channel.basicPublish(
-//				this.agentExchangeName,
-//				MessagingUtils.buildAgentQueueName( applicationName ),
-//				null,
-//				SerializationUtils.serializeObject( message ));
+		String filterName = MessagingUtils.buildRoutingKeyToAgent( agentData.getRootInstanceName());
+		client.subscribeTo(
+				"Agent " + agentData.getRootInstanceName(),
+				InteractionType.DM_AND_AGENT,
+				filterName,
+				messageProcessor );
 	}
 
 
@@ -191,7 +203,11 @@ public final class MessagingService {
 	private void configureImports( String applicationName, String facetOrComponentName, String importedVariableName, Instance instance ) throws IOException {
 
 		this.logger.fine( "Instance " + instance.getName() + " is subscribing to components that export variables facetOrComponentNameed by " + facetOrComponentName + "." );
-		this.client.subscribeTo( InteractionType.AGENT_TO_AGENT, EXPORTS + facetOrComponentName );
+		this.client.subscribeTo(
+				"Agent " + this.agentData.getRootInstanceName(),
+				InteractionType.AGENT_TO_AGENT,
+				EXPORTS + facetOrComponentName,
+				this.messageProcessor );
 
 		// This is step 3.
 		this.logger.fine( "Instance " + instance.getName() + " is notifying other components about the variables it needs." );
@@ -216,7 +232,11 @@ public final class MessagingService {
 	private void configureExports( String applicationName, String facetOrComponentName, Instance instance ) throws IOException {
 
 		this.logger.fine( "Instance " + instance.getName() + " is subscribing to components that need variables facetOrComponentNameed by " + facetOrComponentName + "." );
-		this.client.subscribeTo( InteractionType.AGENT_TO_AGENT, IMPORTS + facetOrComponentName );
+		this.client.subscribeTo(
+				"Agent " + this.agentData.getRootInstanceName(),
+				InteractionType.AGENT_TO_AGENT,
+				IMPORTS + facetOrComponentName,
+				this.messageProcessor );
 
 		// This is step 3.
 		// FIXME: maybe we should filter the map to only keep the required variables. For security?

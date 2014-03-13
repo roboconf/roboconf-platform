@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * @author Noël - LIG
@@ -59,7 +59,7 @@ public class MachineMonitor {
 			}
 		};
 
-		this.timer.scheduleAtFixedRate( timerTask, 0, MessagingConstants.HEARTBEAT_PERIOD );
+		this.timer.scheduleAtFixedRate( timerTask, 0, MessagingUtils.HEARTBEAT_PERIOD );
 	}
 
 

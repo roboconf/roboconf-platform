@@ -95,7 +95,7 @@ public final class AgentMessageProcessor implements IMessageProcessor {
 			processMsgImportNotification((MsgCmdImportNotification) message );
 
 		else
-			this.logger.warning( "Got an undetermined message to process: " + message.getClass().getName());
+			this.logger.warning( this.agent.getAgentName() + ": got an undetermined message to process. " + message.getClass().getName());
 	}
 
 
