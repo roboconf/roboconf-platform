@@ -47,7 +47,6 @@ import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
 import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.InteractionType;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
@@ -191,17 +190,13 @@ public final class Manager {
 		final IMessageServerClient client = this.messagingClientFactory.create();
 		client.setApplicationName( application.getName());
 		client.setMessageServerIp( this.messageServerIp );
-		client.openConnection();
+		client.setSourceName( MessagingUtils.SOURCE_DM );
+		client.openConnection( new DmMessageProcessor( application ));
+		client.bind( MessagingUtils.buildRoutingKeyToDm());
 
 		ManagedApplication ma = new ManagedApplication( application, applicationFilesDirectory, client );
 		this.appNameToManagedApplication.put( application.getName(), ma );
 		ma.getLogger().fine( "Application " + application.getName() + " was successfully loaded and added." );
-
-		client.subscribeTo(
-				"DM",
-				InteractionType.DM_AND_AGENT,
-				MessagingUtils.buildRoutingKeyToDm(),
-				new DmMessageProcessor( application ));
 
 		return ma;
 	}
@@ -231,17 +226,11 @@ public final class Manager {
 
 		// Delete the queues related to the DM
 		try {
-			if( ma.getMessagingClient() != null ) {
-				ma.getMessagingClient().deleteQueueOrTopic( InteractionType.DM_AND_AGENT, MessagingUtils.buildRoutingKeyToDm());
-				for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-					ma.getMessagingClient().deleteQueueOrTopic(
-							InteractionType.DM_AND_AGENT,
-							MessagingUtils.buildRoutingKeyToAgent( rootInstance ));
-				}
-			}
+			if( ma.getMessagingClient() != null )
+				ma.getMessagingClient().cleanAllMessagingServerArtifacts();
 
 		} catch( IOException e ) {
-			ma.getLogger().warning( "Messaging queues and topics could not be deleted for " + applicationName + ". " + e.getMessage());
+			ma.getLogger().warning( "Messaging server artifacts could not be cleaned for " + applicationName + ". " + e.getMessage());
 			ma.getLogger().finest( Utils.writeException( e ));
 		}
 
@@ -535,7 +524,7 @@ public final class Manager {
 				try {
 					MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( InstanceHelpers.computeInstancePath( instance ));
 					ma.getMessagingClient().publish(
-							InteractionType.DM_AND_AGENT,
+							false,
 							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 
@@ -571,7 +560,7 @@ public final class Manager {
 			try {
 				MsgCmdInstanceStart message = new MsgCmdInstanceStart( InstanceHelpers.computeInstancePath( instance ));
 				ma.getMessagingClient().publish(
-						InteractionType.DM_AND_AGENT,
+						false,
 						MessagingUtils.buildRoutingKeyToAgent( instance ),
 						message );
 
@@ -600,7 +589,7 @@ public final class Manager {
 			try {
 				MsgCmdInstanceStop message = new MsgCmdInstanceStop( InstanceHelpers.computeInstancePath( instance ));
 				ma.getMessagingClient().publish(
-						InteractionType.DM_AND_AGENT,
+						false,
 						MessagingUtils.buildRoutingKeyToAgent( instance ),
 						message );
 
@@ -642,7 +631,7 @@ public final class Manager {
 				try {
 					MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( InstanceHelpers.computeInstancePath( instance ));
 					ma.getMessagingClient().publish(
-							InteractionType.DM_AND_AGENT,
+							false,
 							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 
@@ -679,7 +668,7 @@ public final class Manager {
 
 					MsgCmdInstanceAdd message = new MsgCmdInstanceAdd( null, instance );
 					ma.getMessagingClient().publish(
-							InteractionType.DM_AND_AGENT,
+							false,
 							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 
@@ -701,7 +690,7 @@ public final class Manager {
 					Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
 					MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( InstanceHelpers.computeInstancePath( instance ), instanceResources );
 					ma.getMessagingClient().publish(
-							InteractionType.DM_AND_AGENT,
+							false,
 							MessagingUtils.buildRoutingKeyToAgent( instance ),
 							message );
 

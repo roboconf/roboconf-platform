@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.roboconf.messaging.client.IMessageProcessor;
 import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.InteractionType;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -51,7 +50,13 @@ public class TestMessageServerClient implements IMessageServerClient {
 
 
 	@Override
-	public void openConnection() throws IOException {
+	public void setSourceName( String sourceName ) {
+		// nothing, we do not care
+	}
+
+
+	@Override
+	public void openConnection( IMessageProcessor messageProcessor ) throws IOException {
 		this.connectionOpen.set( true );
 	}
 
@@ -63,29 +68,26 @@ public class TestMessageServerClient implements IMessageServerClient {
 
 
 	@Override
-	public void subscribeTo( String sourceName, InteractionType interactionType, String routingKey, IMessageProcessor messageprocessor )
-	throws IOException {
+	public void bind( String routingKey ) throws IOException {
 		// nothing, we do not care
 	}
 
 
 	@Override
-	public void unsubscribeTo( InteractionType interactionType, String routingKey )
-	throws IOException {
+	public void unbind( String routingKey ) throws IOException {
 		// nothing, we do not care
 	}
 
 
 	@Override
-	public void publish( InteractionType interactionType, String routingKey, Message message )
+	public void cleanAllMessagingServerArtifacts() throws IOException {
+		// nothing, we do not care
+	}
+
+
+	@Override
+	public void publish( boolean toDm, String routingKey, Message message )
 	throws IOException {
 		this.messageToRoutingKey.put( message, routingKey );
-	}
-
-
-	@Override
-	public void deleteQueueOrTopic( InteractionType interactionType, String routingKey )
-	throws IOException {
-		// nothing
 	}
 }

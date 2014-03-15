@@ -16,7 +16,6 @@
 
 package net.roboconf.agent.internal;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -25,65 +24,50 @@ import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.InteractionType;
+import net.roboconf.messaging.client.IMessageProcessor;
+import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportNotification;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
 import net.roboconf.messaging.utils.MessagingUtils;
-import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
-import net.roboconf.plugin.bash.PluginBash;
-import net.roboconf.plugin.logger.PluginLogger;
-import net.roboconf.plugin.puppet.PluginPuppet;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class Agent {
+public class Agent implements IMessageProcessor {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String agentName;
 
 	private Instance rootInstance;
-	private IMessageServerClient client;
-	private ExecutionLevel executionLevel = ExecutionLevel.RUNNING;
-	private File dumpDirectory;
+	private MessagingService messagingService;
+	private final PluginManager pluginManager;
 
 
 	/**
 	 * Constructor.
 	 * @param agentName the agent name
 	 */
-	public Agent( String agentName ) {
+	public Agent( String agentName, PluginManager pluginManager ) {
 		this.agentName = agentName;
+		this.pluginManager = pluginManager;
 	}
 
 
 	/**
-	 * @param client the client to set
+	 * @param messagingService the messaging service
 	 */
-	public void setClient( IMessageServerClient client ) {
-		this.client = client;
-	}
-
-
-	/**
-	 * @param executionLevel the executionLevel to set
-	 */
-	public void setExecutionLevel( ExecutionLevel executionLevel ) {
-		this.executionLevel = executionLevel;
-	}
-
-
-	/**
-	 * @param dumpDirectory the dumpDirectory to set.
-	 * p>
-	 * Only required if execution level is
-	 * {@link ExecutionLevel#GENERATE_FILES}.
-	 * </p>
-	 */
-	public void setDumpDirectory( File dumpDirectory ) {
-		this.dumpDirectory = dumpDirectory;
+	public void setMessagingService( MessagingService messagingService ) {
+		this.messagingService = messagingService;
 	}
 
 
@@ -115,7 +99,7 @@ public class Agent {
 		if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, instancePath )) == null ) {
 			this.logger.severe( "Instance " + instancePath + " was not found on this agent." );
 
-		} else if(( plugin = findPlugin( instance )) != null ) {
+		} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) != null ) {
 			try {
 				switch( action ) {
 				case deploy:
@@ -176,18 +160,23 @@ public class Agent {
 						this.logger.severe( "Instance " + instancePath + " cannot be removed. Instance status: " + instance.getStatus() + "." );
 
 					} else if( instance.getParent() != null ) {
+						// Remove the instance
 						instance.getParent().getChildren().remove( instance );
 						this.logger.fine( "Child instance " + instancePath + " was removed from the model." );
 
+						// Stop listening messages
+						this.messagingService.configureInstanceMessaging( instance, false );
+
+						// Send a message to confirm the removal
 						MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( instance );
-						this.client.publish( InteractionType.DM_AND_AGENT, filterName, msg );
+						this.messagingService.publish( true, filterName, msg );
 
 					} else {
 						this.rootInstance = null;
 						this.logger.fine( "Root instance " + instancePath + " was set to null." );
 
 						MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( instance );
-						this.client.publish( InteractionType.DM_AND_AGENT, filterName, msg );
+						this.messagingService.publish( true, filterName, msg );
 					}
 					break;
 
@@ -209,7 +198,7 @@ public class Agent {
 	 * @throws Exception
 	 */
 	public void update( Instance instance ) throws Exception {
-		PluginInterface plugin = findPlugin( instance );
+		PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
 		if( plugin != null )
 			plugin.update( instance );
 	}
@@ -224,10 +213,26 @@ public class Agent {
 
 		// Root instance
 		if( parentInstancePath == null ) {
-			if( this.rootInstance == null )
+			if( this.rootInstance == null ) {
+
+				// Update the model
 				this.rootInstance = newInstance;
-			else
+
+				// Start listening
+				try {
+					for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+						if( instance.getParent() != null )
+							this.messagingService.configureInstanceMessaging( instance, true );
+					}
+
+				} catch( IOException e ) {
+					this.logger.severe( "Messaging could not be initialized for the instance " + InstanceHelpers.computeInstancePath( newInstance ));
+					this.logger.finest( Utils.writeException( e ));
+				}
+
+			} else {
 				this.logger.severe( "A request to change the root instance was received. Request to add " + newInstance.getName() + " is dropped." );
+			}
 		}
 
 		// Error
@@ -244,8 +249,54 @@ public class Agent {
 			else if( ! InstanceHelpers.tryToInsertChildInstance( null, parentInstance, newInstance ))
 				this.logger.severe( "Instance " + newInstance.getName() + " could not be inserted under " + parentInstancePath + ". Request is dropped." );
 
-			// Start listening?
+			// Start listening
+			try {
+				this.messagingService.configureInstanceMessaging( newInstance, true );
+
+			} catch( IOException e ) {
+				this.logger.severe( "Messaging could not be initialized for the instance " + InstanceHelpers.computeInstancePath( newInstance ));
+				this.logger.finest( Utils.writeException( e ));
+			}
 		}
+	}
+
+
+	/**
+	 * Processes a message (dispatch method).
+	 * @param message a message (not null)
+	 */
+	@Override
+	public void processMessage( Message message ) {
+
+		if( message instanceof MsgCmdInstanceAdd )
+			processMsgInstanceAdd((MsgCmdInstanceAdd) message );
+
+		else if( message instanceof MsgCmdInstanceRemove )
+			processMsgInstanceRemove((MsgCmdInstanceRemove) message );
+
+		else if( message instanceof MsgCmdInstanceDeploy )
+			processMsgInstanceDeploy((MsgCmdInstanceDeploy) message );
+
+		else if( message instanceof MsgCmdInstanceUndeploy )
+			processMsgInstanceUndeploy((MsgCmdInstanceUndeploy) message );
+
+		else if( message instanceof MsgCmdInstanceStart )
+			processMsgInstanceStart((MsgCmdInstanceStart) message );
+
+		else if( message instanceof MsgCmdInstanceStop )
+			processMsgInstanceStop((MsgCmdInstanceStop) message );
+
+		else if( message instanceof MsgCmdImportAdd )
+			processMsgImportAdd((MsgCmdImportAdd) message );
+
+		else if( message instanceof MsgCmdImportRemove )
+			processMsgImportRemove((MsgCmdImportRemove) message );
+
+		else if( message instanceof MsgCmdImportNotification )
+			processMsgImportNotification((MsgCmdImportNotification) message );
+
+		else
+			this.logger.warning( this.agentName + ": got an undetermined message to process. " + message.getClass().getName());
 	}
 
 
@@ -255,34 +306,74 @@ public class Agent {
 	}
 
 
-	/**
-	 * Finds the right plug-in.
-	 * @param instance an instance (not null)
-	 * @return the right plug-in, or null if none was found
-	 */
-	private PluginInterface findPlugin( Instance instance ) {
+	private void processMsgImportNotification( MsgCmdImportNotification msg ) {
 
-		PluginInterface result = null;
-		String installerName = instance.getComponent().getInstallerName();
+//		String instancePath = msg.getInstancePath();
+//		this.logger.fine( "Removing instance " + instancePath + "." );
+//		performAction( ApplicationAction.remove, instancePath );
+	}
 
-		if( "bash".equalsIgnoreCase( installerName ))
-			result = new PluginBash();
+	private void processMsgImportRemove( MsgCmdImportRemove msg ) {
 
-		else if( "puppet".equalsIgnoreCase( installerName ))
-			result = new PluginPuppet();
+//		String instancePath = msg.getInstancePath();
+//		this.logger.fine( "Removing instance " + instancePath + "." );
+//		performAction( ApplicationAction.remove, instancePath );
+	}
 
-		else if( "logger".equalsIgnoreCase( installerName ))
-			result = new PluginLogger();
+	private void processMsgImportAdd( MsgCmdImportAdd msg ) {
 
-		else
-			this.logger.severe( "No plugin was found for instance " + instance.getName() + " with installer " + installerName + "." );
+//		String instancePath = msg.getInstancePath();
+//		this.logger.fine( "Removing instance " + instancePath + "." );
+//		performAction( ApplicationAction.remove, instancePath );
+	}
 
-		if( result != null ) {
-			result.setExecutionLevel( this.executionLevel );
-			result.setDumpDirectory( this.dumpDirectory );
-		}
+	private void processMsgInstanceAdd( MsgCmdInstanceAdd msg ) {
 
-		return result;
+		Instance newInstance = msg.getInstanceToAdd();
+		String parentInstancePath = msg.getParentInstancePath();
+
+		this.logger.fine( "Adding instance " + newInstance.getName() + " under " + parentInstancePath + "." );
+		addInstance( parentInstancePath, newInstance );
+	}
+
+
+	private void processMsgInstanceRemove( MsgCmdInstanceRemove msg ) {
+
+		String instancePath = msg.getInstancePath();
+		this.logger.fine( "Removing instance " + instancePath + "." );
+		performAction( ApplicationAction.remove, instancePath );
+	}
+
+
+	private void processMsgInstanceDeploy( MsgCmdInstanceDeploy msg ) {
+
+		String instancePath = msg.getInstancePath();
+		this.logger.fine( "Deploying instance " + instancePath + "." );
+		performAction( ApplicationAction.deploy, instancePath );
+	}
+
+
+	private void processMsgInstanceUndeploy( MsgCmdInstanceUndeploy msg ) {
+
+		String instancePath = msg.getInstancePath();
+		this.logger.fine( "Undeploying instance " + instancePath + "." );
+		performAction( ApplicationAction.undeploy, instancePath );
+	}
+
+
+	private void processMsgInstanceStart( MsgCmdInstanceStart msg ) {
+
+		String instancePath = msg.getInstancePath();
+		this.logger.fine( "Starting instance " + instancePath + "." );
+		performAction( ApplicationAction.start, instancePath );
+	}
+
+
+	private void processMsgInstanceStop( MsgCmdInstanceStop msg ) {
+
+		String instancePath = msg.getInstancePath();
+		this.logger.fine( "Stopping instance " + instancePath + "." );
+		performAction( ApplicationAction.stop, instancePath );
 	}
 
 
@@ -294,8 +385,8 @@ public class Agent {
 	 */
 	private void updateAndNotifyNewStatus( Instance instance, InstanceStatus newStatus ) throws IOException {
 		instance.setStatus( newStatus );
-		this.client.publish(
-				InteractionType.DM_AND_AGENT,
+		this.messagingService.publish(
+				true,
 				MessagingUtils.buildRoutingKeyToDm(),
 				new MsgNotifInstanceChanged( instance ));
 	}

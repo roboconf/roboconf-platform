@@ -55,23 +55,21 @@ public class InMemoryIaaS implements IaasInterface {
 			final String rootInstanceName )
 	throws IaasException, CommunicationToIaasException {
 
-		new Thread( rootInstanceName + " - In-Memory Agent" ) {
-			@Override
-			public void run() {
+		// Create the agent's data.
+		AgentData agentData = new AgentData();
+		agentData.setApplicationName( applicationName );
+		agentData.setMessageServerIp( ipMessagingServer );
+		agentData.setIpAddress( "localhost" );
+		agentData.setRootInstanceName( rootInstanceName );
 
-				AgentData agentData = new AgentData();
-				agentData.setApplicationName( applicationName );
-				agentData.setMessageServerIp( ipMessagingServer );
-				agentData.setIpAddress( "localhost" );
-				agentData.setRootInstanceName( rootInstanceName );
-
-				InMemoryIaaS.this.agentLauncher = new AgentLauncher( getName());
-				InMemoryIaaS.this.agentLauncher.launchAgent(
-						agentData,
-						InMemoryIaaS.this.executionLevel,
-						InMemoryIaaS.this.dumpDirectory );
-			}
-		}.start();
+		// Run the agent directly.
+		// Messaging subscriptions are handled automatically in a new thread (see *.messaging).
+		String agentName = rootInstanceName + " - In-Memory Agent";
+		InMemoryIaaS.this.agentLauncher = new AgentLauncher( agentName );
+		InMemoryIaaS.this.agentLauncher.launchAgent(
+				agentData,
+				InMemoryIaaS.this.executionLevel,
+				InMemoryIaaS.this.dumpDirectory );
 
 		return IN_MEMORY_AGENT;
 	}

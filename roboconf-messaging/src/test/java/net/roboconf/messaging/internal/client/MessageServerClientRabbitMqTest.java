@@ -16,9 +16,10 @@
 
 package net.roboconf.messaging.internal.client;
 
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.collection.IsEmptyCollection.empty;
-import static org.hamcrest.collection.IsIn.isIn;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 
@@ -26,12 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.messaging.client.IMessageProcessor;
-import net.roboconf.messaging.client.InteractionType;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 import org.junit.Assume;
 import org.junit.Before;
@@ -49,6 +49,11 @@ import com.rabbitmq.client.ConnectionFactory;
  * For real exchanges between the DM and agents, other tests are required.
  * </p>
  *
+ * <p>
+ * Notice that we an error collector to continue tests even when
+ * there are errors. This way, we can clean the server for the next tests.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 public class MessageServerClientRabbitMqTest {
@@ -56,11 +61,9 @@ public class MessageServerClientRabbitMqTest {
 	private static final long DELAY = 700;
 	private static final String MESSAGE_SERVER_IP = "127.0.0.1";
 
-	private boolean running = true;
-	private MessageServerClientRabbitMq client;
-
 	@Rule
 	public ErrorCollector collector = new ErrorCollector();
+	private boolean running = true;
 
 
 	/**
@@ -99,128 +102,128 @@ public class MessageServerClientRabbitMqTest {
 	}
 
 
-	@Before
-	public void initializeClient() {
-
-		this.client = new MessageServerClientRabbitMq();
-		this.client.setMessageServerIp( MESSAGE_SERVER_IP );
-		this.client.setApplicationName( "my-app" );
-	}
-
-
 	@Test
 	public void closeConnectionShouldSupportNull() throws Exception {
 
-		this.client = new MessageServerClientRabbitMq();
-		this.collector.checkThat( this.client.getChannel(), nullValue());
-		this.collector.checkThat( this.client.getConnection(), nullValue());
+		MessageServerClientRabbitMq client = new MessageServerClientRabbitMq();
+		this.collector.checkThat( client.channel, nullValue());
+		this.collector.checkThat( client.connection, nullValue());
 
-		this.client.closeConnection();
+		client.closeConnection();
 	}
 
 
 	@Test
 	public void openAndCloseConnectionShouldWork() throws Exception {
 
-		this.collector.checkThat( this.client.getChannel(), nullValue());
-		this.collector.checkThat( this.client.getConnection(), nullValue());
+		MessageServerClientRabbitMq client = new MessageServerClientRabbitMq();
+		client.setMessageServerIp( MESSAGE_SERVER_IP );
+		client.setApplicationName( "my-app" );
+		client.setSourceName( "the-agent" );
 
-		this.client.openConnection();
-		this.collector.checkThat( this.client.getChannel(), notNullValue());
-		this.collector.checkThat( this.client.getConnection(), notNullValue());
-		this.collector.checkThat( this.client.getChannel().isOpen(), is( true ));
-		this.collector.checkThat( this.client.getConnection().isOpen(), is( true ));
+		this.collector.checkThat( client.channel, nullValue());
+		this.collector.checkThat( client.connection, nullValue());
+		this.collector.checkThat( client.consumerTag, nullValue());
 
-		this.client.closeConnection();
-		this.collector.checkThat( this.client.getChannel(), nullValue());
-		this.collector.checkThat( this.client.getConnection(), nullValue());
+		client.openConnection( new TestMessageProcessor ());
+
+		this.collector.checkThat( client.channel, notNullValue());
+		this.collector.checkThat( client.connection, notNullValue());
+		this.collector.checkThat( client.consumerTag, notNullValue());
+
+		this.collector.checkThat( client.channel.isOpen(), is( true ));
+		this.collector.checkThat( client.connection.isOpen(), is( true ));
+
+		client.closeConnection();
+
+		this.collector.checkThat( client.channel, nullValue());
+		this.collector.checkThat( client.connection, nullValue());
+		this.collector.checkThat( client.consumerTag, nullValue());
 	}
 
 
 	@Test
-	public void publishAndSubscribeShouldWork() throws Exception {
+	public void dmAndAgentCommunicationShouldWork() throws Exception {
 
-		// Create the client
-		this.client.openConnection();
-		Assert.assertEquals( 0, this.client.getQueueNames().size());
+		// Create several clients for the agents...
+		final int agentsCount = 5;
+		this.collector.checkThat( agentsCount, greaterThan( 2 ));	// We use indexes 0 and 1 farther
 
-		// Register two subscribers and make sure they were registered
-		TestMessageProcessor p1 = new TestMessageProcessor();
-		this.client.subscribeTo( "Processor 1", InteractionType.AGENT_TO_AGENT, "p1", p1 );
-		this.collector.checkThat( this.client.getQueueNames().size(), is( 1 ));
-		this.collector.checkThat( "my-app.p1", isIn( this.client.getQueueNames()));
+		TestMessageProcessor[] agentProcessors = new TestMessageProcessor[ agentsCount ];
+		MessageServerClientRabbitMq[] agentClients = new MessageServerClientRabbitMq[ agentsCount ];
 
-		TestMessageProcessor p2 = new TestMessageProcessor();
-		this.client.subscribeTo( "Processor 2", InteractionType.AGENT_TO_AGENT, "p2", p2 );
-		this.collector.checkThat( this.client.getQueueNames().size(), is( 2 ));
+		for( int i=0; i<agentsCount; i++ ) {
+			agentClients[ i ] = new MessageServerClientRabbitMq();
+			agentClients[ i ].setMessageServerIp( MESSAGE_SERVER_IP );
+			agentClients[ i ].setApplicationName( "my-app" );
+			agentClients[ i ].setSourceName( "agent-" + i );
 
-		// Make sure only the right subscriber received the message to be sent
-		this.collector.checkThat( p1.messages, empty());
-		this.collector.checkThat( p2.messages, empty());
+			agentProcessors[ i ] = new TestMessageProcessor ();
+			agentClients[ i ].openConnection( agentProcessors[ i ]);
+		}
 
-		this.client.publish( InteractionType.AGENT_TO_AGENT, "p1", new MsgNotifHeartbeat( "" ));
+		// ... and one for the DM
+		TestMessageProcessor dmProcessor = new TestMessageProcessor ();
+		MessageServerClientRabbitMq dmClient = new MessageServerClientRabbitMq();
+		dmClient.setMessageServerIp( MESSAGE_SERVER_IP );
+		dmClient.setApplicationName( "my-app" );
+		dmClient.setSourceName( MessagingUtils.SOURCE_DM );
+		dmClient.openConnection( dmProcessor );
+
+		// Check the initial state
+		this.collector.checkThat( dmProcessor.messages, empty());
+		this.collector.checkThat( dmClient.connected, is( true ));
+
+		for( int i=0; i<agentsCount; i++ ) {
+			this.collector.checkThat( agentProcessors[ i ].messages, empty());
+			this.collector.checkThat( agentClients[ i ].connected, is( true ));
+		}
+
+		// The DM publishes a message - but no routing key was defined anywhere.
+		dmClient.publish( false, "my-routing-key", new MsgNotifHeartbeat( "" ));
+		this.collector.checkThat( dmProcessor.messages, empty());
+
+		// Same test, but configure the binding first on a single agent
+		agentClients[ 0 ].bind( "my-routing-key" );
+		dmClient.publish( false, "my-routing-key", new MsgNotifHeartbeat( "" ));
+
 		Thread.sleep( DELAY );	// Wait the message is delivered
-		this.collector.checkThat( p1.messages.size(), is( 1 ));
-		this.collector.checkThat( p2.messages.size(), is( 0 ));
+		this.collector.checkThat( dmProcessor.messages, empty());
+		for( int i=1; i<agentsCount; i++ )
+			this.collector.checkThat( agentProcessors[ i ].messages, empty());
 
-		// Unsubscribe one of them
-		this.client.unsubscribeTo( InteractionType.AGENT_TO_AGENT, "p1" );
-		this.collector.checkThat( this.client.getQueueNames().size(), is( 1 ));
-		this.collector.checkThat( "my-app.p2", isIn( this.client.getQueueNames()));
+		this.collector.checkThat( agentProcessors[ 0 ].messages.size(), is( 1 ));
+		this.collector.checkThat( agentProcessors[ 0 ].messages.get( 0 ), instanceOf( MsgNotifHeartbeat.class ));
 
-		this.client.publish( InteractionType.AGENT_TO_AGENT, "p1", new MsgNotifHeartbeat( "" ));
+		// Same test, but add a new binding on the 2 first agents
+		agentClients[ 0 ].bind( "another-routing-key" );
+		agentClients[ 1 ].bind( "another-routing-key" );
+		dmClient.publish( false, "another-routing-key", new MsgNotifHeartbeat( "" ));
+
 		Thread.sleep( DELAY );	// Wait the message is delivered
-		this.collector.checkThat( p1.messages.size(), is( 1 ));
-		this.collector.checkThat( p2.messages.size(), is( 0 ));
+		this.collector.checkThat( dmProcessor.messages, empty());
+		for( int i=2; i<agentsCount; i++ )
+			this.collector.checkThat( agentProcessors[ i ].messages, empty());
 
-		// Delete the queues
-		this.client.deleteQueueOrTopic( InteractionType.AGENT_TO_AGENT, "p1" );
-		this.client.deleteQueueOrTopic( InteractionType.AGENT_TO_AGENT, "p2" );
-		this.collector.checkThat( this.client.getQueueNames().size(), is( 0 ));
+		this.collector.checkThat( agentProcessors[ 0 ].messages.size(), is( 2 ));
+		this.collector.checkThat( agentProcessors[ 1 ].messages.size(), is( 1 ));
 
-		this.client.closeConnection();
-	}
+		// Eventually, remove a binding and re-run the experience
+		agentClients[ 1 ].unbind( "another-routing-key" );
+		dmClient.publish( false, "another-routing-key", new MsgNotifHeartbeat( "" ));
 
-
-	@Test
-	public void dmAndAgentShouldCommunicate() throws Exception {
-
-		// Create the client
-		this.client.openConnection();
-		Assert.assertEquals( 0, this.client.getQueueNames().size());
-
-		// Register two subscribers
-		TestMessageProcessor agentProcessor = new TestMessageProcessor();
-		this.client.subscribeTo( "Agent processor", InteractionType.DM_AND_AGENT, "agent", agentProcessor );
-
-		TestMessageProcessor dmProcessor = new TestMessageProcessor();
-		this.client.subscribeTo( "DM Processor", InteractionType.DM_AND_AGENT, "dm", dmProcessor );
-
-		this.collector.checkThat( this.client.getQueueNames().size(), is( 2 ));
-		this.collector.checkThat( "my-app.agent", isIn( this.client.getQueueNames()));
-		this.collector.checkThat( "my-app.dm", isIn( this.client.getQueueNames()));
-
-		// Now, send a message from the DM to the agent and make sure the agent processor received it
-		this.collector.checkThat( dmProcessor.messages.size(), is( 0 ));
-		this.collector.checkThat( agentProcessor.messages.size(), is( 0 ));
-
-		this.client.publish( InteractionType.DM_AND_AGENT, "agent", new MsgNotifHeartbeat( "" ));
 		Thread.sleep( DELAY );	// Wait the message is delivered
-		this.collector.checkThat( dmProcessor.messages.size(), is( 0 ));
-		this.collector.checkThat( agentProcessor.messages.size(), is( 1 ));
+		this.collector.checkThat( dmProcessor.messages, empty());
+		for( int i=2; i<agentsCount; i++ )
+			this.collector.checkThat( agentProcessors[ i ].messages, empty());
 
-		// Now, send a message from the agent to the DM
-		this.client.publish( InteractionType.DM_AND_AGENT, "dm", new MsgNotifHeartbeat( "" ));
-		Thread.sleep( DELAY );	// Wait the message is delivered
-		this.collector.checkThat( dmProcessor.messages.size(), is( 1 ));
-		this.collector.checkThat( agentProcessor.messages.size(), is( 1 ));
+		this.collector.checkThat( agentProcessors[ 0 ].messages.size(), is( 3 ));
+		this.collector.checkThat( agentProcessors[ 1 ].messages.size(), is( 1 ));
 
-		// Delete the queues
-		this.client.deleteQueueOrTopic( InteractionType.DM_AND_AGENT, "agent" );
-		this.client.deleteQueueOrTopic( InteractionType.DM_AND_AGENT, "dm" );
-		this.collector.checkThat( this.client.getQueueNames().size(), is( 0 ));
-
-		this.client.closeConnection();
+		// Close the connections
+		dmClient.closeConnection();
+		for( int i=0; i<agentsCount; i++ )
+			agentClients[ i ].closeConnection();
 	}
 
 

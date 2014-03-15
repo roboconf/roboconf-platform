@@ -22,12 +22,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Logger;
 
-import net.roboconf.agent.internal.Agent;
-import net.roboconf.agent.internal.messaging.AgentMessageProcessor;
-import net.roboconf.agent.internal.messaging.MessagingService;
+import net.roboconf.agent.internal.MessagingService;
+import net.roboconf.agent.internal.PluginManager;
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
@@ -63,32 +60,27 @@ public class AgentLauncher {
 	public void launchAgent( AgentData agentData, ExecutionLevel executionLevel, File dumpDirectory ) {
 		Logger logger = Logger.getLogger( getClass().getName());
 
-		// The messaging client
-		IMessageServerClient client = new MessageServerClientFactory().create();
-		client.setMessageServerIp( agentData.getMessageServerIp());
-		client.setApplicationName( agentData.getApplicationName());
-
 		// The agent
-		String aName;
+		String finalAgentName;
 		try {
 			if( this.agentName != null )
-				aName = this.agentName;
+				finalAgentName = this.agentName;
 			else
-				aName = "Roboconf Agent - " + InetAddress.getLocalHost().getHostName();
+				finalAgentName = "Roboconf Agent - " + InetAddress.getLocalHost().getHostName();
 
 		} catch( UnknownHostException e ) {
 			logger.warning( "Network information could not be retrieved. Setting the agent name to default." );
-			aName = "Roboconf Agent";
+			finalAgentName = "Roboconf Agent";
 		}
 
-		Agent agent = new Agent( aName );
-		agent.setClient( client );
+		PluginManager pluginManager = new PluginManager();
+		pluginManager.setDumpDirectory( dumpDirectory );
+		pluginManager.setExecutionLevel( executionLevel );
 
 		// Initialize the agent's connections
 		try {
-			AgentMessageProcessor messageProcessor = new AgentMessageProcessor( agent );
 			MessagingService msgService = new MessagingService();
-			msgService.initializeAgentConnection( agentData, messageProcessor, client );
+			msgService.initializeAgentConnection( agentData, finalAgentName, pluginManager );
 
 		} catch( IOException e ) {
 			logger.severe( "A connection could not be established with the message server. " + e.getMessage());

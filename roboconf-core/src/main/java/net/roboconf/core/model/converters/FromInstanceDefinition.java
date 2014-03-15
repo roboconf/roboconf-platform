@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,8 +211,7 @@ public class FromInstanceDefinition {
 						continue;
 
 					String pValue = ((BlockProperty) innerBlock).getValue();
-					Map.Entry<String,String> exportedVariable = VariableHelpers.parseExportedVariable( pValue );
-					instance.getOverriddenExports().put( exportedVariable.getKey(), exportedVariable.getValue());
+					resolveOverriddenExport( innerBlock, instance, pName, pValue );
 					continue;
 				}
 
@@ -268,5 +268,50 @@ public class FromInstanceDefinition {
 
 		// The map is useless now
 		this.rootInstanceNameToBlocks = null;
+	}
+
+
+	private void resolveOverriddenExport( AbstractBlock holder, Instance instance, String varName, String varValue ) {
+
+		// Component variables are prefixed by a component or a facet name.
+		// Instance variables may not be prefixed (user-friendly).
+		Set<String> ambiguousNames = new HashSet<String> ();
+		for( String componentVarName : instance.getComponent().getExportedVariables().keySet()) {
+
+			// If variables have the same name (by ignoring the prefixing component or facet name)...
+			// ... then we have an ambiguity.
+			if( varName.equals( VariableHelpers.parseVariableName( componentVarName ).getValue()))
+				ambiguousNames.add( componentVarName );
+		}
+
+		// Analyze the result
+		// No name? Show a warning and it
+		if( ambiguousNames.isEmpty()) {
+			ModelError error = new ModelError( ErrorCode.CO_NOT_OVERRIDING, holder.getLine());
+			error.setDetails( "Variable name:" + varName );
+			this.errors.add( error );
+		}
+
+		// A single name: mark it as resolved
+		else if( ambiguousNames.size() == 1 )
+			instance.getOverriddenExports().put( ambiguousNames.iterator().next(), varValue );
+
+		// Several names? Mark an ambiguity we cannot solve.
+		else {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "Variable " );
+			sb.append( varName );
+			sb.append( " could mean " );
+
+			for( Iterator<String> it = ambiguousNames.iterator(); it.hasNext(); ) {
+				sb.append( it.next());
+				if( it.hasNext())
+					sb.append( ", " );
+			}
+
+			ModelError error = new ModelError( ErrorCode.CO_AMBIGUOUS_OVERRIDING, holder.getLine());
+			error.setDetails( sb.toString());
+			this.errors.add( error );
+		}
 	}
 }

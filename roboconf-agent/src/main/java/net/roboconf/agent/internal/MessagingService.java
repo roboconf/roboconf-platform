@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.internal.messaging;
+package net.roboconf.agent.internal;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -30,7 +30,8 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.InteractionType;
+import net.roboconf.messaging.client.MessageServerClientFactory;
+import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportNotification;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
@@ -53,34 +54,38 @@ public final class MessagingService {
 
 	private IMessageServerClient client;
 	private AgentData agentData;
-	private AgentMessageProcessor messageProcessor;
+	private Agent agent;
+	private Timer heartBeatTimer;
 
 
 
 	/**
 	 * Initializes the connection with the message server.
 	 * @param agentData the agent's data
-	 * @param messageProcessor
-	 * @param client the client for the message server
+	 * @param agentName the agent's name
+	 * @param pluginManager the plug-in manager
 	 * @throws IOException if something went wrong
 	 */
 	public void initializeAgentConnection(
 			final AgentData agentData,
-			AgentMessageProcessor messageProcessor,
-			final IMessageServerClient client )
+			String agentName,
+			PluginManager pluginManager )
 	throws IOException {
 
 		this.agentData = agentData;
-		this.messageProcessor = messageProcessor;
-		this.client = client;
-		client.openConnection();
+		this.agent = new Agent( agentName, pluginManager );
+		this.agent.setMessagingService( this );
+
+		this.client = new MessageServerClientFactory().create();
+		this.client.setMessageServerIp( agentData.getMessageServerIp());
+		this.client.setApplicationName( agentData.getApplicationName());;
+		this.client.setSourceName( agentData.getRootInstanceName());
+		this.client.openConnection( this.agent );
+		this.client.bind( MessagingUtils.buildRoutingKeyToAgent( agentData.getRootInstanceName()));
 
 		// Indicate this machine is up
 		MsgNotifMachineUp machineIsUp = new MsgNotifMachineUp( agentData.getRootInstanceName(), agentData.getIpAddress());
-		client.publish(
-				InteractionType.DM_AND_AGENT,
-				MessagingUtils.buildRoutingKeyToDm(),
-				machineIsUp );
+		this.client.publish( true, MessagingUtils.buildRoutingKeyToDm(), machineIsUp );
 
 
 		// Add a hook for when the VM shutdowns
@@ -88,14 +93,10 @@ public final class MessagingService {
 			@Override
 			public void run() {
 
-				MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown( agentData.getRootInstanceName());
 				try {
-					client.publish(
-							InteractionType.DM_AND_AGENT,
-							MessagingUtils.buildRoutingKeyToDm(),
-							machineIsDown );
-
-					// TODO: delete exports queues
+					MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown( agentData.getRootInstanceName());
+					MessagingService.this.client.publish( true, MessagingUtils.buildRoutingKeyToDm(), machineIsDown );
+					MessagingService.this.client.closeConnection();
 
 				} catch( IOException e ) {
 					MessagingService.this.logger.severe( e.getMessage());
@@ -106,42 +107,59 @@ public final class MessagingService {
 
 
 		// Regularly send a heart beat message
-		Timer timer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
+		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		TimerTask timerTask = new TimerTask() {
 			@Override
 			public void run() {
 
-				MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( agentData.getRootInstanceName());
 				try {
-					client.publish(
-							InteractionType.DM_AND_AGENT,
-							MessagingUtils.buildRoutingKeyToDm(),
-							heartBeat );
-
-					// FIXME: stop the timer!!!!!
+					MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( agentData.getRootInstanceName());
+					MessagingService.this.client.publish( true, MessagingUtils.buildRoutingKeyToDm(), heartBeat );
 
 				} catch( IOException e ) {
 					MessagingService.this.logger.severe( e.getMessage());
 					MessagingService.this.logger.finest( Utils.writeException( e ));
+					// FIXME: remove the cancel from here.
+					// If the message server is down, we do not want to stop sending heart beats!
 					cancel();
 				}
 			}
 		};
 
-		timer.scheduleAtFixedRate( timerTask, 0, MessagingUtils.HEARTBEAT_PERIOD );
-
-
-		// Listen to messages that come from the DM
-		String filterName = MessagingUtils.buildRoutingKeyToAgent( agentData.getRootInstanceName());
-		client.subscribeTo(
-				"Agent " + agentData.getRootInstanceName(),
-				InteractionType.DM_AND_AGENT,
-				filterName,
-				messageProcessor );
+		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, MessagingUtils.HEARTBEAT_PERIOD );
 	}
 
 
+	/**
+	 * Publishes a message.
+	 * @param toDm true to send the message to the DM, false to send it to agents
+	 * @param routingKey the routing key
+	 * @param msg the message to publish
+	 * @throws IOException if something went wrong
+	 */
+	public void publish( boolean toDm, String routingKey, Message msg ) throws IOException {
+		this.client.publish( toDm, routingKey, msg );
+	}
 
+
+	/**
+	 * Stops the heart beat timer.
+	 * <p>
+	 * Useless on a VM, but essential for in-memory tests.
+	 * </p>
+	 */
+	public void stopHeartBeatTimer() {
+		if( this.heartBeatTimer != null )
+			this.heartBeatTimer.cancel();
+	}
+
+
+	/**
+	 * Configure the "instance messaging".
+	 * @param instance the instance
+	 * @param init true to set up the messaging, false to set it down
+	 * @throws IOException if something went wrong
+	 */
 	public void configureInstanceMessaging( Instance instance, boolean init ) throws IOException {
 		String applicationName = this.agentData.getApplicationName();
 
@@ -196,47 +214,39 @@ public final class MessagingService {
 	private void unconfigureImports( String applicationName, String facetOrComponentName, Instance instance ) throws IOException {
 
 		this.logger.fine( "Instance " + instance.getName() + " is unsubscribing to components that export variables facetOrComponentNameed by " + facetOrComponentName + "." );
-		this.client.unsubscribeTo( InteractionType.AGENT_TO_AGENT, EXPORTS + facetOrComponentName );
+		this.client.unbind( EXPORTS + facetOrComponentName );
 	}
 
 
 	private void configureImports( String applicationName, String facetOrComponentName, String importedVariableName, Instance instance ) throws IOException {
 
 		this.logger.fine( "Instance " + instance.getName() + " is subscribing to components that export variables facetOrComponentNameed by " + facetOrComponentName + "." );
-		this.client.subscribeTo(
-				"Agent " + this.agentData.getRootInstanceName(),
-				InteractionType.AGENT_TO_AGENT,
-				EXPORTS + facetOrComponentName,
-				this.messageProcessor );
+		this.client.bind( EXPORTS + facetOrComponentName );
 
 		// This is step 3.
 		this.logger.fine( "Instance " + instance.getName() + " is notifying other components about the variables it needs." );
 		MsgCmdImportNotification message = new MsgCmdImportNotification( importedVariableName, null );
-		this.client.publish( InteractionType.AGENT_TO_AGENT, IMPORTS + facetOrComponentName, message );
+		this.client.publish( false, IMPORTS + facetOrComponentName, message );
 	}
 
 
 	private void unconfigureExports( String applicationName, String facetOrComponentName, Instance instance ) throws IOException {
 
 		this.logger.fine( "Instance " + instance.getName() + " is unsubscribing from components that need variables facetOrComponentNameed by " + facetOrComponentName + "." );
-		this.client.unsubscribeTo( InteractionType.AGENT_TO_AGENT, IMPORTS + facetOrComponentName );
+		this.client.unbind( IMPORTS + facetOrComponentName );
 
 		// This is step 3.
 		// FIXME: maybe we should filter the map to only keep the required variables. For security?
 		this.logger.fine( "Instance " + instance.getName() + " is exporting its variables on the messaging server." );
 		MsgCmdImportRemove message = new MsgCmdImportRemove( facetOrComponentName, instance.getName());	// FIXME: review the parameters
-		this.client.publish( InteractionType.AGENT_TO_AGENT, EXPORTS + facetOrComponentName, message );
+		this.client.publish( false, EXPORTS + facetOrComponentName, message );
 	}
 
 
 	private void configureExports( String applicationName, String facetOrComponentName, Instance instance ) throws IOException {
 
 		this.logger.fine( "Instance " + instance.getName() + " is subscribing to components that need variables facetOrComponentNameed by " + facetOrComponentName + "." );
-		this.client.subscribeTo(
-				"Agent " + this.agentData.getRootInstanceName(),
-				InteractionType.AGENT_TO_AGENT,
-				IMPORTS + facetOrComponentName,
-				this.messageProcessor );
+		this.client.bind( IMPORTS + facetOrComponentName );
 
 		// This is step 3.
 		// FIXME: maybe we should filter the map to only keep the required variables. For security?
@@ -244,6 +254,6 @@ public final class MessagingService {
 
 		Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
 		MsgCmdImportAdd message = new MsgCmdImportAdd( facetOrComponentName, instance.getName(), instanceExports );
-		this.client.publish( InteractionType.AGENT_TO_AGENT, EXPORTS + facetOrComponentName, message );
+		this.client.publish( false, EXPORTS + facetOrComponentName, message );
 	}
 }

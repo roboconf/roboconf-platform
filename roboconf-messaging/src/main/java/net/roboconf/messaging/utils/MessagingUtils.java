@@ -25,6 +25,7 @@ import net.roboconf.core.model.runtime.Instance;
 public final class MessagingUtils {
 
 	public static final long HEARTBEAT_PERIOD = 6000;
+	public static final String SOURCE_DM = "dm";
 
 
 	/**

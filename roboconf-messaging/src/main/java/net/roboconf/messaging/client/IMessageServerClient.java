@@ -19,6 +19,7 @@ package net.roboconf.messaging.client;
 import java.io.IOException;
 
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * An interface to abstract the message server.
@@ -28,7 +29,7 @@ import net.roboconf.messaging.messages.Message;
  * <p>
  * Implementations are responsible of the connection with the
  * message server. They are also in charge of listening and processing
- * messages (subscriptions).
+ * messages.
  * </p>
  *
  * @author Noël - LIG
@@ -47,48 +48,70 @@ public interface IMessageServerClient {
 	void setApplicationName( String applicationName );
 
 	/**
-	 * Opens a connection with the message server.
+	 * Sets the source name.
+	 * <p>
+	 * For an agent, the root instance name is expected.<br />
+	 * For the DM, use {@link MessagingUtils#SOURCE_DM}.
+	 * </p>
 	 */
-	void openConnection() throws IOException;
+	void setSourceName( String sourceName );
+
+	/**
+	 * Opens a connection with the message server.
+	 * <p>
+	 * This method also starts to listen for messages
+	 * targeting the source (see {@link #setSourceName(String)}).
+	 * </p>
+	 */
+	void openConnection( IMessageProcessor messageProcessor ) throws IOException;
 
 	/**
 	 * Closes the connection with the message server.
+	 * <p>
+	 * This method also deletes server artifacts associated with
+	 * the source (see {@link #setSourceName(String)}).
+	 * </p>
 	 */
 	void closeConnection() throws IOException;
 
 	/**
-	 * Subscribes to a queue or topic.
-	 * @param sourceName the source name (e.g., DM or agent something, useful for debug)
-	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
-	 * @param routingKey the routing key, if the message server supports it
+	 * Cleans all the server artifacts related to this application.
 	 * <p>
-	 * This feature allows to route a message to a given queue. It is supported
-	 * by RabbitMQueue.
+	 * This method must be called when ALL the agents and the DM
+	 * have stopped sending and listening messages on the server.
 	 * </p>
-	 * @param messageProcessor the message processor for the subscription
+	 * <p>
+	 * In theory, it should only be called by the DM when an application
+	 * is deleted.
+	 * </p>
 	 */
-	void subscribeTo( String sourceName, InteractionType interactionType, String routingKey, IMessageProcessor messageProcessor )
-	throws IOException;
+	void cleanAllMessagingServerArtifacts() throws IOException;
 
 	/**
-	 * Unsubscribes from a queue or topic.
-	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
-	 * @param routingKey the filter name, if the message server supports it
-	 */
-	void unsubscribeTo( InteractionType interactionType, String routingKey ) throws IOException;
-
-	/**
-	 * Publishes a message a message on a queue or a topic.
-	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
-	 * @param routingKey the filter name, if the message server supports it
+	 * Publishes a message on the server.
+	 * @param toDm true to indicate this message targets the DM, false if it is sent to an agent
+	 * @param routingKey the routing key so that the server knows who must receive the message
 	 * @param message the message to publish
 	 */
-	void publish( InteractionType interactionType, String routingKey, Message message ) throws IOException;
+	void publish( boolean toDm, String routingKey, Message message ) throws IOException;
 
 	/**
-	 * Deletes the queue or topic identified by these parameters.
-	 * @param interactionType the interaction type (the queue or topic name should be deduced from it)
-	 * @param routingKey the filter name, if the message server supports it
+	 * Binds a routing key to this source.
+	 * <p>
+	 * As an example, on RabbitMQ, it is used to define entry points to
+	 * a queue.
+	 * </p>
+	 * @param routingKey the routing key
 	 */
-	void deleteQueueOrTopic( InteractionType interactionType, String routingKey ) throws IOException;
+	void bind( String routingKey ) throws IOException;
+
+	/**
+	 * Un-binds a routing key from this source.
+	 * <p>
+	 * As an example, on RabbitMQ, it is used to delete an entry point to
+	 * a queue.
+	 * </p>
+	 * @param routingKey the routing key
+	 */
+	void unbind( String routingKey ) throws IOException;
 }

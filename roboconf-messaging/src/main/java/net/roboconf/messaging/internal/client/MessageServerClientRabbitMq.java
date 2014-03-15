@@ -17,17 +17,14 @@
 package net.roboconf.messaging.internal.client;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.messaging.client.IMessageProcessor;
 import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.InteractionType;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -39,54 +36,20 @@ import com.rabbitmq.client.ShutdownSignalException;
 /**
  * @author Noël - LIG
  * @author Vincent Zurczak - Linagora
- * FIXME: we should delete the exchanges too
  */
 public final class MessageServerClientRabbitMq implements IMessageServerClient {
 
 	private static final String TOPIC = "topic";
-
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final Map<String,String> queueNameToConsumerTag = new ConcurrentHashMap<String,String> ();
 
-	private Connection connection;
-	private Channel	channel;
-	private boolean connected;
+	Connection connection;
+	Channel	channel;
+	boolean connected = false;
+	String queueName, consumerTag;
+
 	private String messageServerIp, applicationName;
+	private String sourceName = MessagingUtils.SOURCE_DM;
 
-
-
-
-	@Override
-	public void openConnection() throws IOException {
-
-		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost( this.messageServerIp );
-		this.connection = factory.newConnection();
-		this.channel = this.connection.createChannel();
-		this.connected = true;
-	}
-
-
-	public boolean isConnected() {
-		return this.connected;
-	}
-
-
-	@Override
-	public void closeConnection() throws IOException {
-
-		if( this.channel != null
-				&& this.channel.isOpen())
-			this.channel.close();
-
-		if( this.connection != null
-				&& this.connection.isOpen())
-			this.connection.close();
-
-		this.channel = null;
-		this.connection = null;
-		this.connected = false;
-	}
 
 
 	@Override
@@ -102,27 +65,45 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 
 
 	@Override
-	public void subscribeTo(
-			final String sourceName,
-			InteractionType interactionType,
-			String routingKey,
-			final IMessageProcessor messageProcessor )
-	throws IOException {
+	public void setSourceName( String sourceName ) {
+		this.sourceName = sourceName;
+	}
 
-		// Initialize the exchange, the queue and the routing key
-		declareRabbitArtifacts( interactionType, routingKey );
-		final String queueName = getQueueName( interactionType, routingKey );
 
-		// From now, start a thread that will pick and process messages
+	@Override
+	public void openConnection( final IMessageProcessor messageProcessor ) throws IOException {
+
+		// Already connected? Do nothing
+		if( this.connected )
+			return;
+
+		// Initialize the connection
+		ConnectionFactory factory = new ConnectionFactory();
+		factory.setHost( this.messageServerIp );
+		this.connection = factory.newConnection();
+		this.channel = this.connection.createChannel();
+		this.connected = true;
+
+		// 1 agent or 1 dm <=> 1 queue
+		String exchangeName = getExchangeName();
+
+		// Exchange declaration is idem-potent
+		this.channel.exchangeDeclare( exchangeName, TOPIC );
+
+		// Queue declaration is idem-potent
+		this.queueName = this.applicationName + "." + this.sourceName;
+		this.channel.queueDeclare( this.queueName, true, false, true, null );
+
+		// Start to listen to the queue
 		final QueueingConsumer consumer = new QueueingConsumer( this.channel );
-		String consumerTag = this.channel.basicConsume( queueName, true, consumer );
-		this.queueNameToConsumerTag.put( queueName, consumerTag );
+		this.consumerTag = this.channel.basicConsume( this.queueName, true, consumer );
 
-		new Thread( "Roboconf - " + sourceName + " @ " + queueName ) {
+		new Thread( "Roboconf - Queue listener for " + this.queueName ) {
 			@Override
 			public void run() {
 
 				// We listen to messages until the consumer is cancelled
+				MessageServerClientRabbitMq.this.logger.fine( getName() + " starts listening to new messages." );
 				for( ;; ) {
 
 					try {
@@ -130,33 +111,35 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 						Message message = SerializationUtils.deserializeObject( delivery.getBody());
 
 						StringBuilder sb = new StringBuilder();
-						sb.append( sourceName );
+						sb.append( MessageServerClientRabbitMq.this.sourceName );
 						sb.append( " received a message " );
 						sb.append( message.getClass().getSimpleName());
-						sb.append( " on routing key " );
+						sb.append( " on routing key '" );
 						sb.append( delivery.getEnvelope().getRoutingKey());
-						sb.append( "." );
+						sb.append( "'." );
 						// FIXME: should be logged in finer
 						MessageServerClientRabbitMq.this.logger.info( sb.toString());
 
 						messageProcessor.processMessage( message );
 
 					} catch( ShutdownSignalException e ) {
-						MessageServerClientRabbitMq.this.logger.finest( sourceName + ": the message server is shutting down." );
+						MessageServerClientRabbitMq.this.logger.finest( MessageServerClientRabbitMq.this.sourceName + ": the message server is shutting down." );
 						break;
 
 					} catch( ConsumerCancelledException e ) {
-						MessageServerClientRabbitMq.this.logger.finest( Utils.writeException( e ));
+						MessageServerClientRabbitMq.this.logger.fine( getName() + " stops listening to new messages." );
+						break;
 
 					} catch( InterruptedException e ) {
 						MessageServerClientRabbitMq.this.logger.finest( Utils.writeException( e ));
+						break;
 
 					} catch( ClassNotFoundException e ) {
-						MessageServerClientRabbitMq.this.logger.severe( sourceName + ": a message could not be deserialized. Class cast exception." );
+						MessageServerClientRabbitMq.this.logger.severe( MessageServerClientRabbitMq.this.sourceName + ": a message could not be deserialized. Class cast exception." );
 						MessageServerClientRabbitMq.this.logger.finest( Utils.writeException( e ));
 
 					}  catch( IOException e ) {
-						MessageServerClientRabbitMq.this.logger.severe( sourceName + ": a message could not be deserialized. I/O exception." );
+						MessageServerClientRabbitMq.this.logger.severe( MessageServerClientRabbitMq.this.sourceName + ": a message could not be deserialized. I/O exception." );
 						MessageServerClientRabbitMq.this.logger.finest( Utils.writeException( e ));
 					}
 				}
@@ -167,94 +150,83 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 
 
 	@Override
-	public void unsubscribeTo( InteractionType interactionType, String routingKey ) throws IOException {
+	public void closeConnection() throws IOException {
 
-		String queueName = getQueueName( interactionType, routingKey );
-		String consumerTag = this.queueNameToConsumerTag.get( queueName );
-		if( consumerTag != null ) {
-			this.channel.basicCancel( consumerTag );
-			this.queueNameToConsumerTag.remove( queueName );
+		if( this.channel != null
+				&& this.channel.isOpen()) {
+			this.channel.basicCancel( this.consumerTag );
+			this.channel.queueDelete( this.queueName );
+			this.channel.close();
+		}
+
+		if( this.connection != null
+				&& this.connection.isOpen())
+			this.connection.close();
+
+		this.channel = null;
+		this.connection = null;
+		this.consumerTag = null;
+
+		this.connected = false;
+	}
+
+
+	@Override
+	public void bind( String routingKey ) throws IOException {
+
+		// Bind routing key to the queue.
+		// queueBind is idem-potent
+		this.channel.queueBind( this.queueName, getExchangeName(), routingKey );
+	}
+
+
+	@Override
+	public void unbind( String routingKey ) throws IOException {
+
+		// Unbind the routing key and the queue.
+		// queueUnbind is idem-potent
+		this.channel.queueUnbind( this.queueName, getExchangeName(), routingKey );
+	}
+
+
+	@Override
+	public void publish( boolean toDm, String routingKey, Message message )
+	throws IOException {
+
+		if( this.connected ) {
+			this.channel.basicPublish(
+					getExchangeName( toDm ), routingKey, null,
+					SerializationUtils.serializeObject( message ));
 		}
 	}
 
 
 	@Override
-	public void publish( InteractionType interactionType, String routingKey, Message message )
-	throws IOException {
+	public void cleanAllMessagingServerArtifacts() throws IOException {
 
-		// Check this - useful for asynchronous invocation (as in a timer)
-		if( this.channel == null )
-			return;
+		if( this.connected )
+			throw new IOException( "This instance is already connected to the messaging server." );
 
-		declareRabbitArtifacts( interactionType, routingKey );
-		this.channel.basicPublish(
-				getExchangeName( interactionType ),
-				routingKey,
-				null,
-				SerializationUtils.serializeObject( message ));
-	}
+		ConnectionFactory factory = new ConnectionFactory();
+		factory.setHost( this.messageServerIp );
+		Connection connection = factory.newConnection();
+		Channel channel = this.connection.createChannel();
 
+		channel.exchangeDelete( getExchangeName( true ));
+		channel.exchangeDelete( getExchangeName( false ));
 
-	@Override
-	public void deleteQueueOrTopic( InteractionType interactionType, String routingKey ) throws IOException {
-
-		unsubscribeTo( interactionType, routingKey );
-		String queueName = getQueueName( interactionType, routingKey );
-		this.channel.queueDelete( queueName );
+		channel.close();
+		connection.close();
 	}
 
 
 
-	private void declareRabbitArtifacts( InteractionType interactionType, String routingKey ) throws IOException {
-
-		// For us, 1 exchange <=> 1 Queue
-		String exchangeName = getExchangeName( interactionType );
-
-		// Exchange declaration is idem-potent
-		this.channel.exchangeDeclare( exchangeName, TOPIC );
-
-		// Queue declaration is idem-potent
-		String queueName = getQueueName( interactionType, routingKey );
-		this.channel.queueDeclare( queueName, true, false, true, null );
-
-		// Bind routing key to the queue.
-		// queueBind is idem-potent
-		this.channel.queueBind( queueName, exchangeName, routingKey );
+	private String getExchangeName( boolean dm ) {
+		return this.applicationName + "." + (dm ? "admin" : "agents");
 	}
 
 
-
-	private String getQueueName( InteractionType interactionType, String routingKey ) {
-		return this.applicationName + "." + routingKey;
-	}
-
-
-
-	private String getExchangeName( InteractionType interactionType ) {
-
-		StringBuilder sb = new StringBuilder();
-		sb.append( this.applicationName );
-		sb.append( "." );
-		sb.append( interactionType == InteractionType.AGENT_TO_AGENT ? "agents" : "admin" );
-
-		return sb.toString();
-	}
-
-
-
-	Set<String> getQueueNames() {
-		return this.queueNameToConsumerTag.keySet();
-	}
-
-
-
-	Connection getConnection() {
-		return this.connection;
-	}
-
-
-
-	Channel getChannel() {
-		return this.channel;
+	private String getExchangeName() {
+		return getExchangeName( MessagingUtils.SOURCE_DM.equalsIgnoreCase( this.sourceName ));
 	}
 }

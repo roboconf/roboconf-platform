@@ -34,42 +34,42 @@ public class PluginLogger implements PluginInterface {
 
 	@Override
 	public void setExecutionLevel( ExecutionLevel executionLevel ) {
-		this.logger.info( "The execution level is: " + executionLevel );
+		this.logger.fine( "The execution level is: " + executionLevel );
 	}
 
 
 	@Override
 	public void setDumpDirectory( File dumpDirectory ) {
-		this.logger.info( "The dump directory is: " + dumpDirectory );
+		this.logger.fine( "The dump directory is: " + dumpDirectory );
 	}
 
 
 	@Override
 	public void deploy( Instance instance ) throws Exception {
-		this.logger.fine( "Deploying instance " + instance.getName());
+		this.logger.info( "Deploying instance " + instance.getName());
 	}
 
 
 	@Override
 	public void start( Instance instance ) throws Exception {
-		this.logger.fine( "Starting instance " + instance.getName());
+		this.logger.info( "Starting instance " + instance.getName());
 	}
 
 
 	@Override
 	public void update( Instance instance ) throws Exception {
-		this.logger.fine( "Updating instance " + instance.getName());
+		this.logger.info( "Updating instance " + instance.getName());
 	}
 
 
 	@Override
 	public void stop( Instance instance ) throws Exception {
-		this.logger.fine( "Stopping instance " + instance.getName());
+		this.logger.info( "Stopping instance " + instance.getName());
 	}
 
 
 	@Override
 	public void undeploy( Instance instance ) throws Exception {
-		this.logger.fine( "Undeploying instance " + instance.getName());
+		this.logger.info( "Undeploying instance " + instance.getName());
 	}
 }

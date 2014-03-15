@@ -16,12 +16,8 @@
 
 package net.roboconf.dm.rest.client;
 
-import net.roboconf.dm.internal.TestIaasResolver;
-import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
-import net.roboconf.messaging.client.IMessageServerClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Test;
 
@@ -50,16 +46,16 @@ public class DebugServer extends JerseyTest {
 	public void testApplications() throws Exception {
 
 		// Mock everything we can.
-		// Comment if necessary.
+		// Comment or un-comment if necessary.
 		Manager.INSTANCE.cleanUpAll();
-		Manager.INSTANCE.getAppNameToManagedApplication().clear();
-		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
-		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
-			@Override
-			public IMessageServerClient create() {
-				return new TestMessageServerClient();
-			}
-		});
+//		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+//		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
+//		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
+//			@Override
+//			public IMessageServerClient create() {
+//				return new TestMessageServerClient();
+//			}
+//		});
 
 		// And just wait...
 		for( ;; ) {
