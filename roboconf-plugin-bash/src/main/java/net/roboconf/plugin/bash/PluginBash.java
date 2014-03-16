@@ -46,6 +46,7 @@ public class PluginBash implements PluginInterface {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ExecutionLevel executionLevel;
 	private File dumpDirectory;
+	private String agentName;
 
 
 	@Override
@@ -61,29 +62,35 @@ public class PluginBash implements PluginInterface {
 
 
 	@Override
+	public void setAgentName( String agentName ) {
+		this.agentName = agentName;
+	}
+
+
+	@Override
 	public void deploy( Instance instance ) throws Exception {
-		this.logger.fine( "Deploying instance " + instance.getName());
+		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
 		prepareAndExecuteCommand( "setup", instance );
 	}
 
 
 	@Override
 	public void start( Instance instance ) throws Exception {
-		this.logger.fine( "Starting instance " + instance.getName());
+		this.logger.fine( this.agentName + " is starting instance " + instance.getName());
 		prepareAndExecuteCommand( "start", instance );
 	}
 
 
 	@Override
 	public void update( Instance instance ) throws Exception {
-		this.logger.fine( "Deploying instance " + instance.getName());
+		this.logger.fine( this.agentName + " is updating instance " + instance.getName());
 		prepareAndExecuteCommand( "update", instance );
 	}
 
 
 	@Override
 	public void stop( Instance instance ) throws Exception {
-		this.logger.fine( "Stopping instance " + instance.getName());
+		this.logger.fine( this.agentName + " is stopping instance " + instance.getName());
 		prepareAndExecuteCommand( "stop", instance );
 	}
 
@@ -340,8 +347,12 @@ public class PluginBash implements PluginInterface {
 			int i = 0;
 			for(Import imprt : importList) {
 				// "workers_0_name=tomcat1"
-				importedVars.put(importTypeName + "_" + i + "_name", imprt.getInstanceExportingVarsName());
-				for (Entry<String, String> entry2 : imprt.getImportedVars().entrySet()) {
+
+				int index = imprt.getInstancePath().lastIndexOf( '/' );
+				String instanceName = imprt.getInstancePath().substring( index + 1 );
+
+				importedVars.put(importTypeName + "_" + i + "_name", instanceName);
+				for (Entry<String, String> entry2 : imprt.getExportedVars().entrySet()) {
 					// "workers_0_ip=127.0.0.1"
 					String vname = VariableHelpers.parseVariableName(entry2.getKey()).getValue();
 					importedVars.put(importTypeName + "_" + i + "_" + vname, entry2.getValue());

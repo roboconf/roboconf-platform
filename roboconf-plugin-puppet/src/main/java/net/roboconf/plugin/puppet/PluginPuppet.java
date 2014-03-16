@@ -38,6 +38,7 @@ public class PluginPuppet implements PluginInterface {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ExecutionLevel executionLevel;
 	private File dumpDirectory;
+	private String agentName;
 
 
 	@Override
@@ -53,22 +54,28 @@ public class PluginPuppet implements PluginInterface {
 
 
 	@Override
+	public void setAgentName( String agentName ) {
+		this.agentName = agentName;
+	}
+
+
+	@Override
 	public void deploy( Instance instance ) throws Exception {
-		this.logger.fine( "Deploying instance " + instance.getName());
+		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
 		callPuppetScript( instance, "stopped" );
 	}
 
 
 	@Override
 	public void start( Instance instance ) throws Exception {
-		this.logger.fine( "Starting instance " + instance.getName());
+		this.logger.fine( this.agentName + " is starting instance " + instance.getName());
 		callPuppetScript( instance, "running" );
 	}
 
 
 	@Override
 	public void update( Instance instance ) throws Exception {
-		this.logger.fine( "Updating instance " + instance.getName());
+		this.logger.fine( this.agentName + " is updating instance " + instance.getName());
 		callPuppetScript( instance, "undef" );
 	}
 
@@ -76,7 +83,7 @@ public class PluginPuppet implements PluginInterface {
 
 	@Override
 	public void stop( Instance instance ) throws Exception {
-		this.logger.fine( "Stopping instance " + instance.getName());
+		this.logger.fine( this.agentName + " is stopping instance " + instance.getName());
 		callPuppetScript( instance, "stopped" );
 	}
 
@@ -191,9 +198,11 @@ public class PluginPuppet implements PluginInterface {
 					if(first) first = false;
 					else sb.append(", ");
 
-					sb.append("'" + imp.getInstanceExportingVarsName() + "' => { ");
+					int index = imp.getInstancePath().lastIndexOf( '/' );
+					String instanceName = imp.getInstancePath().substring( index + 1 );
+					sb.append("'" + instanceName + "' => { ");
 
-					Map<String, String> varsOfImport = imp.getImportedVars();
+					Map<String, String> varsOfImport = imp.getExportedVars();
 					boolean firstofthirdfor = true;
 					for (Entry<String, String> entry : varsOfImport.entrySet()) {
 						if (firstofthirdfor) {

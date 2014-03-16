@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.Map;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -57,8 +56,9 @@ public class Instance implements Serializable {
 	private final Map<String,String> data = new LinkedHashMap<String,String>( 0 );
 	private final Map<String,String> overridenExports = new HashMap<String,String> ();
 
-	// FIXME: change the structure of this?
-	private final Map<String,Collection<Import>> parameters = new HashMap<String,Collection<Import>> ();
+	// At runtime, exported variables are grouped by prefix.
+	// The prefix is a component or a facet name.
+	private final Map<String,Collection<Import>> variablePrefixToImports = new HashMap<String,Collection<Import>> ();
 
 
 	/**
@@ -184,33 +184,39 @@ public class Instance implements Serializable {
 	}
 
 
-	//
-
 	/**
 	 * Updates the imports with new values.
-	 * @param newImports the new imports (can be null)
+	 * @param variablePrefixToImports the new imports (can be null)
 	 */
-	public void updateImports( Map<String,Collection<Import>> newImports ) {
-		this.parameters.clear();
-		if( newImports != null )
-			this.parameters.putAll( newImports );
+	public void updateImports( Map<String,Collection<Import>> variablePrefixToImports ) {
+		this.variablePrefixToImports.clear();
+		if( variablePrefixToImports != null )
+			this.variablePrefixToImports.putAll( variablePrefixToImports );
 	}
 
 
-	public Map<String, Collection<Import>> getImports() {
-		return this.parameters;
+	/**
+	 * @return the imports (not null, key: component or facet name, value: the associated imports)
+	 */
+	public Map<String,Collection<Import>> getImports() {
+		return this.variablePrefixToImports;
 	}
 
 
-	public void addImport(String component, Import imp) {
+	/**
+	 * Adds an import.
+	 * @param componentOrFacetName a component or a prefix name
+	 * @param imp the import to add
+	 */
+	public void addImport( String componentOrFacetName, Import imp ) {
 
-		Collection<Import> imports = this.parameters.get(component);
+		Collection<Import> imports = this.variablePrefixToImports.get( componentOrFacetName );
 		if(imports == null) {
-			imports = new LinkedList<Import>();
-			this.parameters.put(component, imports);
+			imports = new LinkedHashSet<Import> ();
+			this.variablePrefixToImports.put( componentOrFacetName, imports );
 		}
 
-		if(! imports.contains(imp))
+		if( ! imports.contains( imp ))
 			imports.add(imp);
 	}
 

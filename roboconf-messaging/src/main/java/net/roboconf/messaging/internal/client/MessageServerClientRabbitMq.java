@@ -40,7 +40,7 @@ import com.rabbitmq.client.ShutdownSignalException;
 public final class MessageServerClientRabbitMq implements IMessageServerClient {
 
 	private static final String TOPIC = "topic";
-	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final String loggerName = getClass().getName();
 
 	Connection connection;
 	Channel	channel;
@@ -102,8 +102,10 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 			@Override
 			public void run() {
 
+				final Logger logger = Logger.getLogger( MessageServerClientRabbitMq.this.loggerName );
+				logger.fine( getName() + " starts listening to new messages." );
+
 				// We listen to messages until the consumer is cancelled
-				MessageServerClientRabbitMq.this.logger.fine( getName() + " starts listening to new messages." );
 				for( ;; ) {
 
 					try {
@@ -118,29 +120,29 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 						sb.append( delivery.getEnvelope().getRoutingKey());
 						sb.append( "'." );
 						// FIXME: should be logged in finer
-						MessageServerClientRabbitMq.this.logger.info( sb.toString());
+						logger.info( sb.toString());
 
 						messageProcessor.processMessage( message );
 
 					} catch( ShutdownSignalException e ) {
-						MessageServerClientRabbitMq.this.logger.finest( MessageServerClientRabbitMq.this.sourceName + ": the message server is shutting down." );
+						logger.finest( MessageServerClientRabbitMq.this.sourceName + ": the message server is shutting down." );
 						break;
 
 					} catch( ConsumerCancelledException e ) {
-						MessageServerClientRabbitMq.this.logger.fine( getName() + " stops listening to new messages." );
+						logger.fine( getName() + " stops listening to new messages." );
 						break;
 
 					} catch( InterruptedException e ) {
-						MessageServerClientRabbitMq.this.logger.finest( Utils.writeException( e ));
+						logger.finest( Utils.writeException( e ));
 						break;
 
 					} catch( ClassNotFoundException e ) {
-						MessageServerClientRabbitMq.this.logger.severe( MessageServerClientRabbitMq.this.sourceName + ": a message could not be deserialized. Class cast exception." );
-						MessageServerClientRabbitMq.this.logger.finest( Utils.writeException( e ));
+						logger.severe( MessageServerClientRabbitMq.this.sourceName + ": a message could not be deserialized. Class cast exception." );
+						logger.finest( Utils.writeException( e ));
 
 					}  catch( IOException e ) {
-						MessageServerClientRabbitMq.this.logger.severe( MessageServerClientRabbitMq.this.sourceName + ": a message could not be deserialized. I/O exception." );
-						MessageServerClientRabbitMq.this.logger.finest( Utils.writeException( e ));
+						logger.severe( MessageServerClientRabbitMq.this.sourceName + ": a message could not be deserialized. I/O exception." );
+						logger.finest( Utils.writeException( e ));
 					}
 				}
 			};

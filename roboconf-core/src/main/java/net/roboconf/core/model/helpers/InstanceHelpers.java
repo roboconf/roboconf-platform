@@ -101,7 +101,8 @@ public final class InstanceHelpers {
 
 		List<Instance> instanceList = new ArrayList<Instance> ();
 		List<Instance> todo = new ArrayList<Instance> ();
-		todo.add( inst );
+		if( inst != null )
+			todo.add( inst );
 
 		while( ! todo.isEmpty()) {
 			Instance current = todo.remove( 0 );

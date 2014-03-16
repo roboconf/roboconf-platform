@@ -19,16 +19,13 @@ package net.roboconf.messaging.messages.from_agent_to_agent;
 import net.roboconf.messaging.messages.Message;
 
 /**
+ * A message to indicate we need an import.
  * @author Noël - LIG
  */
-public class MsgCmdImportNotification extends Message {
+public class MsgCmdImportRequest extends Message {
 
 	private static final long serialVersionUID = 5366599037551758208L;
-
-	private final String variableName;
-
-	// Ignored for the moment, but required if the instance that needs variables uses a specific channel.
-	private final String subChannelName;
+	private final String componentOrFacetName;
 
 
 	/**
@@ -36,23 +33,15 @@ public class MsgCmdImportNotification extends Message {
 	 * @param variableName
 	 * @param subChannelName
 	 */
-	public MsgCmdImportNotification( String variableName, String subChannelName ) {
+	public MsgCmdImportRequest( String componentOrFacetName ) {
 		super();
-		this.variableName = variableName;
-		this.subChannelName = subChannelName;
+		this.componentOrFacetName = componentOrFacetName;
 	}
 
 	/**
-	 * @return the name
+	 * @return the component or facet name
 	 */
-	public String getVariableName() {
-		return this.variableName;
-	}
-
-	/**
-	 * @return the subChannelName
-	 */
-	public String getSubChannelName() {
-		return this.subChannelName;
+	public String getComponentOrFacetName() {
+		return this.componentOrFacetName;
 	}
 }

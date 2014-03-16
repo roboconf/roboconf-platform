@@ -17,7 +17,11 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.AbstractMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
+import net.roboconf.core.model.runtime.Instance;
 
 /**
  * Helpers related to variables.
@@ -78,5 +82,56 @@ public final class VariableHelpers {
 		}
 
 		return new AbstractMap.SimpleEntry<String,String>( varName, defaultValue );
+	}
+
+
+	/**
+	 * Determines whether an instance imports a variable associated with a given component or facet.
+	 * @param instance the instance to check (not null)
+	 * @param componentOrFacetName a component or facet name
+	 * @return true if such a variable was found, false otherwise
+	 */
+	public static boolean instanceHasVariablesWithPrefix( Instance instance, String componentOrFacetName ) {
+
+		boolean result = false;
+		for( String importedVar : instance.getComponent().getImportedVariableNames()) {
+			if( importedVar.startsWith( componentOrFacetName + "." )) {
+				result = true;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds the component and facet names that prefix the variables of an instance.
+	 * @param instance an instance
+	 * @return a non-null set with all the component and facet names this instance exports
+	 */
+	public static Set<String> findExportedVariablePrefixes( Instance instance ) {
+		Set<String> result = new HashSet<String> ();
+
+		Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
+		for( String exportedVariableName : instanceExports.keySet())
+			result.add( VariableHelpers.parseVariableName( exportedVariableName ).getKey());
+
+		return result;
+	}
+
+
+	/**
+	 * Finds the component and facet names that prefix the variables of an instance.
+	 * @param instance an instance
+	 * @return a non-null set with all the component and facet names this instance imports
+	 */
+	public static Set<String> findImportedVariablePrefixes( Instance instance ) {
+		Set<String> result = new HashSet<String> ();
+
+		for( String importedVariableName : instance.getComponent().getImportedVariableNames())
+			result.add( VariableHelpers.parseVariableName( importedVariableName ).getKey());
+
+		return result;
 	}
 }

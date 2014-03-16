@@ -81,4 +81,11 @@ public interface PluginInterface {
 	 * @param dumpDirectory the dump directory (not null)
 	 */
 	void setDumpDirectory( File dumpDirectory );
+
+
+	/**
+	 * Sets the agent name (useful for debug and analyzing logs).
+	 * @param agentName the agent name
+	 */
+	void setAgentName( String agentName );
 }

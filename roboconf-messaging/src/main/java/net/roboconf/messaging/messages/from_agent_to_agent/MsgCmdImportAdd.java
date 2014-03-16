@@ -22,48 +22,47 @@ import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Noël - LIG
- * FIXME: instance paths...
  */
 public class MsgCmdImportAdd extends Message {
 
 	private static final long serialVersionUID = -374008319791927432L;
 
-	private final String importedTypeName;
-	private final String instanceExportingVarsName;
-	private final Map<String,String> exportedVarsAndValues;
+	private final String componentOrFacetName;
+	private final String addedInstancePath;
+	private final Map<String,String> exportedVariables;
 
 
 	/**
 	 * Constructor.
-	 * @param name
-	 * @param instanceExportingVarsName
-	 * @param exportedVarsAndValues
+	 * @param componentOrFacetName
+	 * @param addedInstancePath
+	 * @param exportedVariables
 	 */
-	public MsgCmdImportAdd( String name, String instanceExportingVarsName, Map<String, String> exportedVarsAndValues ) {
+	public MsgCmdImportAdd( String componentOrFacetName, String addedInstancePath, Map<String,String> exportedVariables ) {
 		super();
-		this.importedTypeName = name;
-		this.instanceExportingVarsName = instanceExportingVarsName;
-		this.exportedVarsAndValues = exportedVarsAndValues;
+		this.componentOrFacetName = componentOrFacetName;
+		this.addedInstancePath = addedInstancePath;
+		this.exportedVariables = exportedVariables;
 	}
 
 	/**
-	 * @return the importedTypeName
+	 * @return the componentOrFacetName
 	 */
-	public String getImportedTypeName() {
-		return this.importedTypeName;
+	public String getComponentOrFacetName() {
+		return this.componentOrFacetName;
 	}
 
 	/**
-	 * @return the instanceExportingVarsName
+	 * @return the addedInstancePath
 	 */
-	public String getInstanceExportingVarsName() {
-		return this.instanceExportingVarsName;
+	public String getAddedInstancePath() {
+		return this.addedInstancePath;
 	}
 
 	/**
-	 * @return the exportedVarsAndValues
+	 * @return the exportedVariables
 	 */
-	public Map<String, String> getExportedVarsAndValues() {
-		return this.exportedVarsAndValues;
+	public Map<String, String> getExportedVariables() {
+		return this.exportedVariables;
 	}
 }

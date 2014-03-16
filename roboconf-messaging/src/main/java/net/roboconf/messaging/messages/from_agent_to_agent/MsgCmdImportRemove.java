@@ -20,38 +20,37 @@ import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Noël - LIG
- * FIXME: importedTypeName???
  */
 public class MsgCmdImportRemove extends Message {
 
 	private static final long serialVersionUID = -2597875984409385732L;
 
-	private final String importedTypeName;
-	private final String instanceNameLeaving;
+	private final String componentOrFacetName;
+	private final String removedInstancePath;
 
 
 	/**
 	 * Constructor.
-	 * @param importedTypeName
-	 * @param instanceNameLeaving
+	 * @param componentOrFacetName
+	 * @param removedInstancePath
 	 */
-	public MsgCmdImportRemove( String importedTypeName, String instanceNameLeaving ) {
+	public MsgCmdImportRemove( String componentOrFacetName, String removedInstancePath ) {
 		super();
-		this.importedTypeName = importedTypeName;
-		this.instanceNameLeaving = instanceNameLeaving;
+		this.componentOrFacetName = componentOrFacetName;
+		this.removedInstancePath = removedInstancePath;
 	}
 
 	/**
-	 * @return the importedTypeName
+	 * @return the component or facet name
 	 */
-	public String getImportedTypeName() {
-		return this.importedTypeName;
+	public String getComponentOrFacetName() {
+		return this.componentOrFacetName;
 	}
 
 	/**
-	 * @return the instanceNameLeaving
+	 * @return the removedInstancePath
 	 */
-	public String getInstanceNameLeaving() {
-		return this.instanceNameLeaving;
+	public String getRemovedInstancePath() {
+		return this.removedInstancePath;
 	}
 }

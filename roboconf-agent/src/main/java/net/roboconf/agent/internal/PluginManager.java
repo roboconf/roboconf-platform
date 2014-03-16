@@ -19,6 +19,7 @@ package net.roboconf.agent.internal;
 import java.io.File;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
@@ -61,6 +62,7 @@ public class PluginManager {
 		if( result != null ) {
 			result.setExecutionLevel( this.executionLevel );
 			result.setDumpDirectory( this.dumpDirectory );
+			result.setAgentName( "Agent " + InstanceHelpers.findRootInstance( instance ).getName());
 		}
 
 		return result;

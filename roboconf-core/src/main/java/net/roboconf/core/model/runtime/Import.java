@@ -20,102 +20,87 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
+
+import net.roboconf.core.internal.utils.Utils;
 
 /**
- * An Import is a list of var which is embedded into an ImportType.
+ * An Import is a list of variables an instance exports.
  * <p>
- * It define a set of var which is exchanged on the network.
- * For example in the case of a loadbalancer and application servers, an Import would be the ip and port of a worker.
+ * This structure is used by an instance to store what other instances
+ * have exported.
  * </p>
  *
- * TODO: review the javadoc, and maybe the structure
  * @author Noël - LIG
  */
 public class Import implements Serializable {
 
 	private static final long serialVersionUID = 1926254974053785327L;
 
-	private final String instanceExportingVarsName;
-	private Map<String, String>	 importedVars;
+	private final String instancePath;
+	private final Map<String,String> exportedVars = new HashMap<String,String> ();
 
-	public Import(String instanceExportingVarsName) {
-		this.instanceExportingVarsName = instanceExportingVarsName;
-		this.importedVars = new HashMap<String, String>();
-	}
-
-	public Import(String instanceExportingVarsName,
-			Map<String, String> importedVars) {
-		super();
-		this.instanceExportingVarsName = instanceExportingVarsName;
-		this.importedVars = importedVars;
-	}
-
-	// Getters
-	public Set<String> getImportedVarsName() {
-		return this.importedVars.keySet();
-	}
-
-	public Map<String, String> getImportedVars() {
-		return this.importedVars;
-	}
-
-	public String getInstanceExportingVarsName() {
-		return this.instanceExportingVarsName;
-	}
-
-	// Setters
-	public void setImportedVarValue(String varName, String varValue) {
-		this.importedVars.put(varName, varValue);
-	}
-
-	public void setImportedVars(Map<String, String> vars) {
-		this.importedVars = vars;
-	}
-
-	// Methods
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("[");
-		for (Entry<String, String> entry : this.importedVars.entrySet()) {
-			sb.append(entry.getKey() + "=" + entry.getValue() + ",");
-		}
-		sb.append("]");
-		return sb.toString();
-	}
-
-
-	// VZ: call super.clone()... Is it really useful?
-//	@Override
-//	public Import clone() {
-//		Import clone = new Import(this.instanceExportingVarsName);
-//		for (Entry<String, String> importedVarName : this.importedVars.entrySet()) {
-//			clone.setImportedVarValue(importedVarName.getKey(), importedVarName.getValue());
-//		}
-//		return clone;
-//	}
 
 	/**
-	 * An Import is considered empty if it contains no vars or if value of vars are null or equals empty string ("").
-	 * @return true if empty, false if it contains at least one var that has a value
+	 * Constructor.
+	 * @param instancePath
 	 */
-	public boolean isEmpty() {
-		if (this.importedVars.isEmpty()) {
-			return true;
-		}
-		for (Entry<String, String> entry : this.importedVars.entrySet()) {
-			if (entry.getValue() == null) {
-				continue;
-			} else {
-				if (entry.getValue().equals("")) {
-					// Consider it empty
-				} else {
-					return false;
-				}
-			}
-		}
-		return true;
+	public Import( String instancePath ) {
+		this.instancePath = instancePath;
 	}
 
+
+	/**
+	 * Constructor.
+	 * @param instancePath
+	 * @param exportedVars
+	 */
+	public Import( String instancePath, Map<String,String> exportedVars ) {
+		super();
+		this.instancePath = instancePath;
+		this.exportedVars.putAll( exportedVars );
+	}
+
+
+	/**
+	 * @return the exported variables (not null, key: variable name, value: variable value)
+	 */
+	public Map<String,String> getExportedVars() {
+		return this.exportedVars;
+	}
+
+
+	/**
+	 * @return the path of the instance that exports these variables
+	 */
+	public String getInstancePath() {
+		return this.instancePath;
+	}
+
+
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof Import
+				&& Utils.areEqual( this.instancePath, ((Import) obj).instancePath );
+	}
+
+
+	@Override
+	public int hashCode() {
+		return this.instancePath == null ? 17 : this.instancePath.hashCode();
+	}
+
+
+	@Override
+	public String toString() {
+
+		StringBuilder sb = new StringBuilder();
+		sb.append( this.instancePath );
+		sb.append( " exports [ " );
+
+		for( Entry<String,String> entry : this.exportedVars.entrySet())
+			sb.append(entry.getKey() + "=" + entry.getValue() + ", ");
+
+		sb.append(" ] ");
+		return sb.toString();
+	}
 }

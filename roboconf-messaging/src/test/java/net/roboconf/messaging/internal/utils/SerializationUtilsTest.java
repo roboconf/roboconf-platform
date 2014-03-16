@@ -24,8 +24,8 @@ import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportNotification;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
@@ -178,10 +178,10 @@ public class SerializationUtilsTest {
 
 
 	@Test
-	public void testMessage_importNotification() throws Exception {
+	public void testMessage_importRequest() throws Exception {
 
-		MsgCmdImportNotification msg = new MsgCmdImportNotification( "dsf", "sdde" );
-		checkBasics( msg, MsgCmdImportNotification.class );
+		MsgCmdImportRequest msg = new MsgCmdImportRequest( "dsf" );
+		checkBasics( msg, MsgCmdImportRequest.class );
 	}
 
 
