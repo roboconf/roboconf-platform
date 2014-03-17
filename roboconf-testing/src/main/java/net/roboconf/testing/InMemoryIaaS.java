@@ -78,8 +78,7 @@ public class InMemoryIaaS implements IaasInterface {
 	@Override
 	public void terminateVM( String machineId )
 	throws IaasException, CommunicationToIaasException {
-
-
+		this.agentLauncher.forceAgentToStop();
 	}
 
 

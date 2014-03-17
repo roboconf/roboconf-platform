@@ -33,6 +33,7 @@ import net.roboconf.plugin.api.ExecutionLevel;
 public class AgentLauncher {
 
 	private String agentName;
+	private MessagingService msgService;
 
 
 	/**
@@ -79,12 +80,25 @@ public class AgentLauncher {
 
 		// Initialize the agent's connections
 		try {
-			MessagingService msgService = new MessagingService();
-			msgService.initializeAgentConnection( agentData, finalAgentName, pluginManager );
+			this.msgService = new MessagingService();
+			this.msgService.initializeAgentConnection( agentData, finalAgentName, pluginManager );
 
 		} catch( IOException e ) {
 			logger.severe( "A connection could not be established with the message server. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
 		}
+	}
+
+
+	/**
+	 * Forces the agent to stop.
+	 * <p>
+	 * The agent will stop sending heart beats and send a MachineDown notification.
+	 * </p>
+	 */
+	public void forceAgentToStop() {
+
+		if( this.msgService != null )
+			this.msgService.agentIsTerminating();
 	}
 }

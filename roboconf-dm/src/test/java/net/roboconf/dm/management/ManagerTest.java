@@ -147,25 +147,16 @@ public class ManagerTest {
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			ManagedApplication ma = new ManagedApplication( app, f, new TestMessageServerClient());
+			TestMessageServerClient client = new TestMessageServerClient();
+			ManagedApplication ma = new ManagedApplication( app, f, client );
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 			app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
 			Manager.INSTANCE.shutdownApplication( app.getName());
 
-			for( Instance instance : InstanceHelpers.getAllInstances( app )) {
-
-				if( instance == app.getMySqlVm())
-					Assert.assertEquals( InstanceStatus.UNDEPLOYING, instance.getStatus());
-				else
-					Assert.assertEquals( instance.getName(), InstanceStatus.NOT_DEPLOYED, instance.getStatus());
-			}
-
-			TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
-			Boolean runningStatus = iaasResolver.instanceToRunningStatus.get( app.getMySqlVm());
-			Assert.assertNotNull( runningStatus );
-			Assert.assertFalse( runningStatus );
+			Assert.assertEquals( 1, client.messageToRoutingKey.size());
+			Assert.assertEquals( MsgCmdInstanceUndeploy.class, client.messageToRoutingKey.keySet().iterator().next().getClass());
 
 		} finally {
 			Utils.deleteFilesRecursively( f );
@@ -541,10 +532,6 @@ public class ManagerTest {
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.undeploy.toString(), instancePath, true );
-
-		Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-
 		Assert.assertEquals( 1, map.size());
 		Map.Entry<Message,String> entry = map.entrySet().iterator().next();
 
@@ -553,7 +540,7 @@ public class ManagerTest {
 				entry.getValue());
 
 		Assert.assertEquals(
-				InstanceHelpers.computeInstancePath( app.getMySql()),
+				InstanceHelpers.computeInstancePath( app.getMySqlVm()),
 				((MsgCmdInstanceUndeploy) entry.getKey()).getInstancePath());
 	}
 

@@ -17,20 +17,17 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.core.internal.utils.Utils;
-import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.IMessageServerClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
@@ -73,6 +70,7 @@ public final class MessagingService {
 		this.agentData = agentData;
 		this.agent = new Agent( agentName, pluginManager );
 		this.agent.setMessagingService( this );
+		this.agent.setAgentData( agentData );
 
 		this.client = new MessageServerClientFactory().create();
 		this.client.setMessageServerIp( agentData.getMessageServerIp());
@@ -90,16 +88,7 @@ public final class MessagingService {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
-
-				try {
-					MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown( agentData.getRootInstanceName());
-					MessagingService.this.client.publish( true, MessagingUtils.buildRoutingKeyToDm(), machineIsDown );
-					MessagingService.this.client.closeConnection();
-
-				} catch( IOException e ) {
-					MessagingService.this.logger.severe( e.getMessage());
-					MessagingService.this.logger.finest( Utils.writeException( e ));
-				}
+				agentIsTerminating();
 			}
 		}));
 
@@ -144,12 +133,31 @@ public final class MessagingService {
 	/**
 	 * Stops the heart beat timer.
 	 * <p>
-	 * Useless on a VM, but essential for in-memory tests.
+	 * Useless on a VM, but essential for in-memory or real-machine tests.
 	 * </p>
 	 */
 	public void stopHeartBeatTimer() {
+
 		if( this.heartBeatTimer != null )
 			this.heartBeatTimer.cancel();
+	}
+
+
+	/**
+	 * To call when the agent is terminating.
+	 */
+	public void agentIsTerminating() {
+
+		stopHeartBeatTimer();
+		try {
+			MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown( this.agentData.getRootInstanceName());
+			MessagingService.this.client.publish( true, MessagingUtils.buildRoutingKeyToDm(), machineIsDown );
+			MessagingService.this.client.closeConnection();
+
+		} catch( IOException e ) {
+			MessagingService.this.logger.severe( e.getMessage());
+			MessagingService.this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
@@ -239,11 +247,5 @@ public final class MessagingService {
 
 		this.logger.fine( "Instance " + instance.getName() + " is subscribing to components that need variables it exports (prefix = " + facetOrComponentName + ")." );
 		this.client.bind( THOSE_THAT_IMPORT + facetOrComponentName );
-
-		// FIXME: maybe we should filter the map to only keep the required variables. For security?
-		this.logger.fine( "Instance " + instance.getName() + " is exporting its variables on the messaging server." );
-		Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
-		MsgCmdImportAdd message = new MsgCmdImportAdd( facetOrComponentName, instance.getName(), instanceExports );
-		publishExportOrImport( facetOrComponentName, message, THOSE_THAT_EXPORT );
 	}
 }

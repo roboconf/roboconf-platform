@@ -17,6 +17,8 @@
 package net.roboconf.testing;
 
 import java.io.File;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.environment.iaas.IaasResolver;
@@ -32,13 +34,19 @@ public class InMemoryIaasResolver extends IaasResolver {
 
 	private ExecutionLevel executionLevel;
 	private File dumpDirectory;
+	private final Map<String,InMemoryIaaS> appNameToIaasResolver = new ConcurrentHashMap<String,InMemoryIaaS> ();
 
 
 	@Override
 	public IaasInterface findIaasInterface( ManagedApplication ma, Instance instance )
 	throws IaasException {
 
-		InMemoryIaaS result = new InMemoryIaaS();
+		InMemoryIaaS result = this.appNameToIaasResolver.get( ma.getApplication().getName());
+		if( result == null ) {
+			result = new InMemoryIaaS();
+			this.appNameToIaasResolver.put( ma.getApplication().getName(), result );
+		}
+
 		result.setDumpDirectory( this.dumpDirectory );
 		result.setExecutionLevel( this.executionLevel );
 

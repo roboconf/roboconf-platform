@@ -16,6 +16,8 @@
 
 package net.roboconf.agent.internal;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.agent.AgentData;
 import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -37,6 +40,7 @@ import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
@@ -53,10 +57,12 @@ public class Agent implements IMessageProcessor {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String agentName;
+	private final PluginManager pluginManager;
 
 	private Instance rootInstance;
 	private MessagingService messagingService;
-	private final PluginManager pluginManager;
+	private AgentData agentData;
+
 
 
 	/**
@@ -86,6 +92,14 @@ public class Agent implements IMessageProcessor {
 
 
 	/**
+	 * @param agentData the agentData to set
+	 */
+	public void setAgentData( AgentData agentData ) {
+		this.agentData = agentData;
+	}
+
+
+	/**
 	 * @return the rootInstance
 	 */
 	public Instance getRootInstance() {
@@ -97,8 +111,9 @@ public class Agent implements IMessageProcessor {
 	 * Performs an action on an instance.
 	 * @param action an action
 	 * @param instancePath the instance's path
+	 * @param originalMessage the original message
 	 */
-	public void performAction( ApplicationAction action, String instancePath ) {
+	public void performAction( ApplicationAction action, String instancePath, Message originalMessage ) {
 		Instance instance;
 		PluginInterface plugin;
 
@@ -111,6 +126,7 @@ public class Agent implements IMessageProcessor {
 				case deploy:
 					if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
 						updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYING );
+						copyInstanceResources( instance, ((MsgCmdInstanceDeploy) originalMessage).getFileNameToFileContent());
 						plugin.deploy( instance );
 						updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYED_STOPPED );
 
@@ -135,7 +151,7 @@ public class Agent implements IMessageProcessor {
 
 				case stop:
 					if( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
-						stopInstance( instance, plugin );
+						stopInstance( instance, plugin, false );
 
 					} else {
 						this.logger.info(
@@ -146,9 +162,7 @@ public class Agent implements IMessageProcessor {
 
 				case undeploy:
 					if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
-						updateAndNotifyNewStatus( instance, InstanceStatus.UNDEPLOYING );
-						plugin.undeploy( instance );
-						updateAndNotifyNewStatus( instance, InstanceStatus.NOT_DEPLOYED );
+						undeployInstance( instance, plugin );
 
 					} else {
 						this.logger.info(
@@ -297,12 +311,13 @@ public class Agent implements IMessageProcessor {
 				processMsgImportRemove((MsgCmdImportRemove) message );
 
 			else if( message instanceof MsgCmdImportRequest )
-				processMsgImportNotification((MsgCmdImportRequest) message );
+				processMsgImportRequest((MsgCmdImportRequest) message );
 
 			else
 				this.logger.warning( this.agentName + ": got an undetermined message to process. " + message.getClass().getName());
 
 		} catch( Exception e ) {
+			e.printStackTrace();
 			this.logger.severe( "A problem occurred while processing a message on the agent " + this.agentName + ". " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
@@ -315,16 +330,20 @@ public class Agent implements IMessageProcessor {
 	}
 
 
-	private void processMsgImportNotification( MsgCmdImportRequest msg ) throws IOException {
+	private void processMsgImportRequest( MsgCmdImportRequest msg ) throws IOException {
 
 		// Go through all the instances to see if one
 		// of them owns the required variable prefix
 		String name = msg.getComponentOrFacetName();
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+			if( instance.getStatus() != InstanceStatus.DEPLOYED_STARTED )
+				continue;
+
 			if( ! VariableHelpers.instanceHasVariablesWithPrefix( instance, name ))
 				continue;
 
 			Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
+			VariableHelpers.updateNetworkVariables( instanceExports, this.agentData.getIpAddress());
 			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, instance.getName(), instanceExports );
 			this.messagingService.publishExportOrImport( name, newMsg, MessagingService.THOSE_THAT_EXPORT );
 		}
@@ -407,7 +426,7 @@ public class Agent implements IMessageProcessor {
 
 		String instancePath = msg.getInstancePath();
 		this.logger.fine( "Removing instance " + instancePath + "." );
-		performAction( ApplicationAction.remove, instancePath );
+		performAction( ApplicationAction.remove, instancePath, msg );
 	}
 
 
@@ -415,7 +434,7 @@ public class Agent implements IMessageProcessor {
 
 		String instancePath = msg.getInstancePath();
 		this.logger.fine( "Deploying instance " + instancePath + "." );
-		performAction( ApplicationAction.deploy, instancePath );
+		performAction( ApplicationAction.deploy, instancePath, msg );
 	}
 
 
@@ -423,7 +442,7 @@ public class Agent implements IMessageProcessor {
 
 		String instancePath = msg.getInstancePath();
 		this.logger.fine( "Undeploying instance " + instancePath + "." );
-		performAction( ApplicationAction.undeploy, instancePath );
+		performAction( ApplicationAction.undeploy, instancePath, msg );
 	}
 
 
@@ -431,7 +450,7 @@ public class Agent implements IMessageProcessor {
 
 		String instancePath = msg.getInstancePath();
 		this.logger.fine( "Starting instance " + instancePath + "." );
-		performAction( ApplicationAction.start, instancePath );
+		performAction( ApplicationAction.start, instancePath, msg );
 	}
 
 
@@ -439,7 +458,7 @@ public class Agent implements IMessageProcessor {
 
 		String instancePath = msg.getInstancePath();
 		this.logger.fine( "Stopping instance " + instancePath + "." );
-		performAction( ApplicationAction.stop, instancePath );
+		performAction( ApplicationAction.stop, instancePath, msg );
 	}
 
 
@@ -467,16 +486,12 @@ public class Agent implements IMessageProcessor {
 	 * @param instance an instance (must be deployed and started)
 	 * @param plugin the plug-in to use for concrete modifications
 	 */
-	private void stopInstance( Instance instance, PluginInterface plugin ) throws Exception {
-
-		// Indicate we are stopping this instance
-		updateAndNotifyNewStatus( instance, InstanceStatus.STOPPING );
+	private void stopInstance( Instance instance, PluginInterface plugin, boolean isDueToImportsChange ) throws Exception {
 
 		// Children may have to be stopped too.
 		// From a plug-in point of view, we only use the one for the given instance.
 		// Children are supposed to be stopped immediately.
 		List<Instance> instancesToStop = InstanceHelpers.buildHierarchicalList( instance );
-		instancesToStop.remove( instance );
 		Collections.reverse( instancesToStop );
 
 		// Update the statuses if necessary
@@ -484,7 +499,7 @@ public class Agent implements IMessageProcessor {
 			if( i.getStatus() != InstanceStatus.DEPLOYED_STARTED )
 				continue;
 
-			// Update the status
+			// Update the statuses
 			updateAndNotifyNewStatus( instance, InstanceStatus.STOPPING );
 
 			// Inform other agents this instance was removed
@@ -496,13 +511,65 @@ public class Agent implements IMessageProcessor {
 			}
 		}
 
-		// Stop the initial instance
-		plugin.stop( instance );
+		// Stop the initial instance - if it makes sense!
+		if( instance.getParent() != null )
+			plugin.stop( instance );
 
 		// Indicate everything is stopped
 		updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYED_STOPPED );
+
+		// In the case where the instances were stopped because of a change in "imports",
+		// we remain in the starting phase, so that we can start automatically when the required
+		// imports arrive.
+		InstanceStatus newStatus = isDueToImportsChange ? InstanceStatus.STARTING : InstanceStatus.DEPLOYED_STOPPED;
 		for( Instance i : instancesToStop )
-			updateAndNotifyNewStatus( i, InstanceStatus.DEPLOYED_STOPPED );
+			updateAndNotifyNewStatus( i, newStatus );
+	}
+
+
+	private void undeployInstance( Instance instance, PluginInterface plugin ) throws Exception {
+
+		// Children may have to be marked as stopped.
+		// From a plug-in point of view, we only use the one for the given instance.
+		// Children are supposed to be stopped immediately.
+		List<Instance> instancesToStop = InstanceHelpers.buildHierarchicalList( instance );
+		Collections.reverse( instancesToStop );
+
+		// Update the statuses if necessary
+		for( Instance i : instancesToStop ) {
+			if( i.getStatus() == InstanceStatus.NOT_DEPLOYED )
+				continue;
+
+			// Update the statuses
+			updateAndNotifyNewStatus( instance, InstanceStatus.UNDEPLOYING );
+
+			// Delete files
+			File dir = findInstanceDirectory( instance );
+			Utils.deleteFilesRecursively( dir );
+
+			// Inform other agents this instance was removed
+			for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( instance )) {
+				MsgCmdImportRemove msg = new MsgCmdImportRemove(
+						facetOrComponentName,
+						InstanceHelpers.computeInstancePath( instance ));
+				this.messagingService.publishExportOrImport( facetOrComponentName, msg, MessagingService.THOSE_THAT_EXPORT );
+			}
+		}
+
+		// Undeploy the initial instance - if it makes sense!
+		if( instance.getParent() != null )
+			plugin.undeploy( instance );
+
+		// Update the status of all the instances
+		for( Instance i : instancesToStop )
+			updateAndNotifyNewStatus( i, InstanceStatus.NOT_DEPLOYED );
+
+		// If the instance is a root instance, signal to the DM it is ready to be deleted
+		if( instance.equals( this.rootInstance )) {
+			MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( this.rootInstance.getName());
+			this.messagingService.publish( true, MessagingUtils.buildRoutingKeyToDm(), msg );
+			this.messagingService.stopHeartBeatTimer();
+		}
 	}
 
 
@@ -515,11 +582,14 @@ public class Agent implements IMessageProcessor {
 
 		// Do we have all the imports we need?
 		boolean haveAllImports = true;
-		for( Map.Entry<String,Collection<Import>> entry : impactedInstance.getImports().entrySet()) {
-			if( entry.getValue().isEmpty()) {
-				haveAllImports = false;
-				this.logger.fine( InstanceHelpers.computeInstancePath( impactedInstance ) + " is still missing dependencies '" + entry.getKey() + ".*'." );
-			}
+		for( String facetOrComponentName : VariableHelpers.findImportedVariablePrefixes( impactedInstance )) {
+			Collection<Import> imports = impactedInstance.getImports().get( facetOrComponentName );
+			if( imports != null && ! imports.isEmpty())
+				continue;
+
+			haveAllImports = false;
+			this.logger.fine( InstanceHelpers.computeInstancePath( impactedInstance ) + " is still missing dependencies '" + facetOrComponentName + ".*'." );
+			break;
 		}
 
 		// Update the life cycle of this instance if necessary
@@ -533,10 +603,14 @@ public class Agent implements IMessageProcessor {
 
 				// Inform other agents this instance was removed
 				for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( impactedInstance )) {
+
+					// FIXME: maybe we should filter the map to only keep the required variables. For security?
+					Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( impactedInstance );
+					VariableHelpers.updateNetworkVariables( instanceExports, this.agentData.getIpAddress());
 					MsgCmdImportAdd msg = new MsgCmdImportAdd(
 							facetOrComponentName,
 							InstanceHelpers.computeInstancePath( impactedInstance ),
-							InstanceHelpers.getExportedVariables( impactedInstance ));
+							instanceExports );
 
 					this.messagingService.publishExportOrImport( facetOrComponentName, msg, MessagingService.THOSE_THAT_EXPORT );
 				}
@@ -553,11 +627,39 @@ public class Agent implements IMessageProcessor {
 		// Or maybe we have something to stop
 		else {
 			if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
-				stopInstance( impactedInstance, plugin );
+				stopInstance( impactedInstance, plugin, true );
 
 			} else {
 				this.logger.fine( InstanceHelpers.computeInstancePath( impactedInstance ) + " checked import changes but has nothing to update." );
 			}
+		}
+	}
+
+
+	private File findInstanceDirectory( Instance instance ) {
+		String path = InstanceHelpers.computeInstancePath( instance );
+		path = path.substring( 1 );
+		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + path );
+	}
+
+
+	private void copyInstanceResources( Instance instance, Map<String,byte[]> fileNameToFileContent )
+	throws IOException {
+
+		File dir = findInstanceDirectory( instance );
+		if( ! dir.exists()
+				&& ! dir.mkdirs())
+			throw new IOException( this.agentName + " could not create directory " + dir.getAbsolutePath());
+
+		for( Map.Entry<String,byte[]> entry : fileNameToFileContent.entrySet()) {
+
+			File f = new File( dir, entry.getKey());
+			if( ! f.getParentFile().exists()
+					&& ! f.getParentFile().mkdirs())
+				throw new IOException( this.agentName + " could not create directory " + dir.getAbsolutePath());
+
+			ByteArrayInputStream in = new ByteArrayInputStream( entry.getValue());
+			Utils.copyStream( in, f );
 		}
 	}
 }

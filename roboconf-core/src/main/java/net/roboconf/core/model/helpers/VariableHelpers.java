@@ -29,6 +29,10 @@ import net.roboconf.core.model.runtime.Instance;
  */
 public final class VariableHelpers {
 
+	private static final String IP = "ip";
+
+
+
 	/**
 	 * Private empty constructor.
 	 */
@@ -133,5 +137,30 @@ public final class VariableHelpers {
 			result.add( VariableHelpers.parseVariableName( importedVariableName ).getKey());
 
 		return result;
+	}
+
+
+	/**
+	 * Updates the exports of an instance with network values.
+	 * <p>
+	 * For the moment, only IP is supported.
+	 * </p>
+	 *
+	 * @param instanceExports a non-null map of instance exports
+	 * @param ipAddress the IP address to set
+	 */
+	public static void updateNetworkVariables( Map<String,String> instanceExports, String ipAddress ) {
+
+		// Find the keys to update ( xxx.ip )
+		Set<String> keysToUpdate = new HashSet<String> ();
+		for( Map.Entry<String,String> entry : instanceExports.entrySet()) {
+			String suffix = parseVariableName( entry.getKey()).getValue();
+			if( IP.equals( suffix ))
+				keysToUpdate.add( entry.getKey());
+		}
+
+		// Update them
+		for( String key : keysToUpdate )
+			instanceExports.put( key, ipAddress );
 	}
 }

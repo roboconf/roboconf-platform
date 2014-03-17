@@ -30,6 +30,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 
 /**
@@ -77,8 +78,30 @@ public class DmMessageProcessor implements IMessageProcessor {
 		else if( message instanceof MsgNotifHeartbeat )
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
 
+		else if( message instanceof MsgNotifMachineReadyToBeDeleted )
+			processMsgNotifReadyToBeDeleted((MsgNotifMachineReadyToBeDeleted) message );
+
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
+	}
+
+
+
+	private void processMsgNotifReadyToBeDeleted( MsgNotifMachineReadyToBeDeleted message ) {
+
+		String rootInstanceName = message.getRootInstanceName();
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( this.application, "/" + rootInstanceName );
+
+		if( rootInstance == null ) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A machine signaled it is ready to be deleted, but this machine is unknown: " );
+			sb.append( rootInstanceName );
+			this.logger.warning( sb.toString());
+
+		} else {
+			Manager.INSTANCE.terminateMachine( this.application.getName(), rootInstance );
+			this.logger.fine( "Machine " + rootInstanceName + " is ready to be deleted." );
+		}
 	}
 
 
@@ -114,7 +137,7 @@ public class DmMessageProcessor implements IMessageProcessor {
 
 		} else {
 			rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
-			this.logger.info( rootInstanceName + " is now terminated. Back to INITIALIZED state." );
+			this.logger.info( rootInstanceName + " is now terminated. Back to NOT_DEPLOYED state." );
 		}
 	}
 

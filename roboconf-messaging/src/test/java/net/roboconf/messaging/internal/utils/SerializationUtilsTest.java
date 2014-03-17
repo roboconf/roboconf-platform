@@ -30,6 +30,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdFirewallAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdFirewallRemove;
@@ -74,6 +75,14 @@ public class SerializationUtilsTest {
 
 
 	@Test
+	public void testMessage_readyToBeDeleted() throws Exception {
+
+		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( "instance1" );
+		checkBasics( msg, MsgNotifMachineReadyToBeDeleted.class );
+	}
+
+
+	@Test
 	public void testMessage_instanceChanged() throws Exception {
 
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( new Instance( "instance1" ));
@@ -87,6 +96,34 @@ public class SerializationUtilsTest {
 		MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( new Instance( "instance1" ));
 		checkBasics( msg, MsgNotifInstanceRemoved.class );
 	}
+
+
+	@Test
+	public void testMessage_importRemove() throws Exception {
+
+		MsgCmdImportRemove msg = new MsgCmdImportRemove( "change-me", "anything" );
+		checkBasics( msg, MsgCmdImportRemove.class );
+	}
+
+
+	@Test
+	public void testMessage_importAdd() throws Exception {
+
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( "yeah", "value" );
+
+		MsgCmdImportAdd msg = new MsgCmdImportAdd( "change-me", "anything", map );
+		checkBasics( msg, MsgCmdImportAdd.class );
+	}
+
+
+	@Test
+	public void testMessage_importRequest() throws Exception {
+
+		MsgCmdImportRequest msg = new MsgCmdImportRequest( "dsf" );
+		checkBasics( msg, MsgCmdImportRequest.class );
+	}
+
 
 	// From DM
 
@@ -155,33 +192,6 @@ public class SerializationUtilsTest {
 
 		MsgCmdInstanceDeploy msg = new MsgCmdInstanceDeploy( "/o/mp/k", fileNameToFileContent );
 		checkBasics( msg, MsgCmdInstanceDeploy.class );
-	}
-
-
-	@Test
-	public void testMessage_importRemove() throws Exception {
-
-		MsgCmdImportRemove msg = new MsgCmdImportRemove( "change-me", "anything" );
-		checkBasics( msg, MsgCmdImportRemove.class );
-	}
-
-
-	@Test
-	public void testMessage_importAdd() throws Exception {
-
-		Map<String,String> map = new HashMap<String,String> ();
-		map.put( "yeah", "value" );
-
-		MsgCmdImportAdd msg = new MsgCmdImportAdd( "change-me", "anything", map );
-		checkBasics( msg, MsgCmdImportAdd.class );
-	}
-
-
-	@Test
-	public void testMessage_importRequest() throws Exception {
-
-		MsgCmdImportRequest msg = new MsgCmdImportRequest( "dsf" );
-		checkBasics( msg, MsgCmdImportRequest.class );
 	}
 
 
