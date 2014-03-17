@@ -1,4 +1,4 @@
 # Can be started locally with 4 params:
-# applicationName, ipMessagingServer, channelName (= machine name), ipAddress
+# applicationName, rootInstanceName (= machine name), ipMessagingServer, ipAddress
 java -cp "lib/*" net.roboconf.agent.internal.Main $*
 

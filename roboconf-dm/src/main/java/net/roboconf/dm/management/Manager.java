@@ -654,6 +654,10 @@ public final class Manager {
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
 				try {
+					ma.getMessagingClient().dmCreateAgentQueue( 
+							ma.getApplication().getName(),
+							instance.getName());
+					
 					IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
 					String machineId = iaasInterface.createVM(
 							this.messageServerIp, "",

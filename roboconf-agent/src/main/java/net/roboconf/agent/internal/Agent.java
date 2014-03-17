@@ -96,6 +96,7 @@ public class Agent implements IMessageProcessor {
 	 */
 	public void setAgentData( AgentData agentData ) {
 		this.agentData = agentData;
+		AgentUtils.configureLogger(logger, agentData.getRootInstanceName());
 	}
 
 
@@ -227,6 +228,10 @@ public class Agent implements IMessageProcessor {
 	 * @param newInstance the new instance to add
 	 */
 	public void addInstance( String parentInstancePath, Instance newInstance ) {
+		
+		// Update the network exports
+		if( newInstance != null )
+			VariableHelpers.updateNetworkVariables( newInstance.getExports(), this.agentData.getIpAddress());
 
 		// Root instance
 		if( parentInstancePath == null ) {
@@ -238,8 +243,11 @@ public class Agent implements IMessageProcessor {
 				// Start listening
 				try {
 					for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
-						if( instance.getParent() != null )
-							this.messagingService.configureInstanceMessaging( instance, true );
+						if( instance.getParent() == null )
+							continue;
+							
+						this.messagingService.configureInstanceMessaging( instance, true );
+						VariableHelpers.updateNetworkVariables( instance.getExports(), this.agentData.getIpAddress());
 					}
 
 				} catch( IOException e ) {
@@ -342,9 +350,7 @@ public class Agent implements IMessageProcessor {
 			if( ! VariableHelpers.instanceHasVariablesWithPrefix( instance, name ))
 				continue;
 
-			Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
-			VariableHelpers.updateNetworkVariables( instanceExports, this.agentData.getIpAddress());
-			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, instance.getName(), instanceExports );
+			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, instance.getName(), instance.getExports());
 			this.messagingService.publishExportOrImport( name, newMsg, MessagingService.THOSE_THAT_EXPORT );
 		}
 	}

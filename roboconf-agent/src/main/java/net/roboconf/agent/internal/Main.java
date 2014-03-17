@@ -54,8 +54,8 @@ public class Main {
 
 		} else {
 			new AgentLauncher().launchAgent( agentData, ExecutionLevel.RUNNING, null );
+			logger.info( "Agent launched !" );
 		}
 
-		logger.info( "A stand-alone agent is stopping." );
 	}
 }
