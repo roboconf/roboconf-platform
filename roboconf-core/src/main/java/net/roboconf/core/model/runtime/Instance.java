@@ -55,6 +55,7 @@ public class Instance implements Serializable {
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
 	private final Map<String,String> data = new LinkedHashMap<String,String>( 0 );
 	private final Map<String,String> overridenExports = new HashMap<String,String> ();
+	private final Map<String,String> exports = new HashMap<String,String> ();
 
 	// At runtime, exported variables are grouped by prefix.
 	// The prefix is a component or a facet name.
@@ -165,6 +166,13 @@ public class Instance implements Serializable {
 	 */
 	public Map<String,String> getOverriddenExports() {
 		return this.overridenExports;
+	}
+
+	/**
+	 * @return the real exports
+	 */
+	public Map<String,String> getExports() {
+		return exports;
 	}
 
 	@Override

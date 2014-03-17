@@ -143,7 +143,7 @@ public class PluginPuppet implements PluginInterface {
 		// Output local vars that will be used in Puppet recipe to a String
 		StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (Entry<String, String> var : instance.getComponent().getExportedVariables().entrySet()) {
+		for (Entry<String, String> var : instance.getExports().entrySet()) {
 			if (first) {
 				first = false;
 			} else {

@@ -143,7 +143,13 @@ public class FromInstanceDefinition {
 		// Check uniqueness
 		if( this.errors.isEmpty())
 			checkUnicity();
-
+		
+		// Set real exports
+		for( Instance rootInstance : rootInstances ) {
+			for( Instance inst : InstanceHelpers.buildHierarchicalList( rootInstance ))
+				inst.getExports().putAll( InstanceHelpers.getExportedVariables( inst ));
+		}
+			
 		return this.rootInstances;
 	}
 

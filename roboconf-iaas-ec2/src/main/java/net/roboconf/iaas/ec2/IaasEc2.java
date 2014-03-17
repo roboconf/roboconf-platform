@@ -107,7 +107,7 @@ public class IaasEc2 implements IaasInterface {
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode(
 					this.ec2Properties.getAmiVmNode(),
 					ipMessagingServer,
-					channelName,
+					rootInstanceName,
 					applicationName );
 
 			RunInstancesResult runInstanceResult = this.ec2.runInstances( runInstancesRequest );
@@ -117,7 +117,7 @@ public class IaasEc2 implements IaasInterface {
 			List<Tag> tags = new ArrayList<Tag>();
 			Tag t = new Tag();
 			t.setKey("Name");
-			t.setValue(applicationName + "." + channelName);
+			t.setValue(applicationName + "." + rootInstanceName);
 			tags.add(t);
 			CreateTagsRequest ctr = new CreateTagsRequest();
 			ctr.setTags(tags);
