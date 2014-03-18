@@ -16,7 +16,7 @@
 
 package net.roboconf.iaas.local;
 
-import java.util.Properties;
+import java.util.Map;
 
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
@@ -34,7 +34,7 @@ public class IaasLocalhost implements IaasInterface {
 	 * #setIaasProperties(java.util.Properties)
 	 */
 	@Override
-	public void setIaasProperties( Properties iaasProperties ) {
+	public void setIaasProperties(Map<String, String> iaasProperties) {
 		// nothing
 	}
 

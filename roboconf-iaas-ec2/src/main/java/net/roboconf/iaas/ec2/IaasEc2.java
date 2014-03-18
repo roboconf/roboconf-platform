@@ -20,7 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.iaas.api.IaasInterface;
@@ -77,7 +77,7 @@ public class IaasEc2 implements IaasInterface {
 	 * #setIaasProperties(java.util.Properties)
 	 */
 	@Override
-	public void setIaasProperties( Properties iaasProperties) throws InvalidIaasPropertiesException {
+	public void setIaasProperties(Map<String, String> iaasProperties) throws InvalidIaasPropertiesException {
 
 		// Check the properties
 		parseProperties( iaasProperties );
@@ -169,7 +169,7 @@ public class IaasEc2 implements IaasInterface {
 	 * @param iaasProperties the IaaS properties
 	 * @throws InvalidIaasPropertiesException
 	 */
-	private void parseProperties( Properties iaasProperties ) throws InvalidIaasPropertiesException {
+	private void parseProperties( Map<String, String> iaasProperties ) throws InvalidIaasPropertiesException {
 
 		// Quick check
 		String[] properties = {
@@ -183,19 +183,19 @@ public class IaasEc2 implements IaasInterface {
 		};
 
 		for( String property : properties ) {
-			if( StringUtils.isBlank( iaasProperties.getProperty( property )))
+			if( StringUtils.isBlank( iaasProperties.get( property )))
 				throw new InvalidIaasPropertiesException( "The value for " + property + " cannot be null or empty." );
 		}
 
 		// Create a bean
 		this.ec2Properties = new Ec2Properties();
-		this.ec2Properties.setEndpoint( iaasProperties.getProperty( Ec2Constants.EC2_ENDPOINT ).trim());
-		this.ec2Properties.setAccessKey( iaasProperties.getProperty( Ec2Constants.EC2_ACCESS_KEY ).trim());
-		this.ec2Properties.setSecretKey( iaasProperties.getProperty( Ec2Constants.EC2_SECRET_KEY ).trim());
-		this.ec2Properties.setAmiVmNode( iaasProperties.getProperty( Ec2Constants.AMI_VM_NODE ).trim());
-		this.ec2Properties.setVmInstanceType( iaasProperties.getProperty( Ec2Constants.VM_INSTANCE_TYPE ).trim());
-		this.ec2Properties.setSshKeyName( iaasProperties.getProperty( Ec2Constants.SSH_KEY_NAME ).trim());
-		this.ec2Properties.setSecurityGroupName( iaasProperties.getProperty( Ec2Constants.SECURITY_GROUP_NAME ).trim());
+		this.ec2Properties.setEndpoint( iaasProperties.get( Ec2Constants.EC2_ENDPOINT ).trim());
+		this.ec2Properties.setAccessKey( iaasProperties.get( Ec2Constants.EC2_ACCESS_KEY ).trim());
+		this.ec2Properties.setSecretKey( iaasProperties.get( Ec2Constants.EC2_SECRET_KEY ).trim());
+		this.ec2Properties.setAmiVmNode( iaasProperties.get( Ec2Constants.AMI_VM_NODE ).trim());
+		this.ec2Properties.setVmInstanceType( iaasProperties.get( Ec2Constants.VM_INSTANCE_TYPE ).trim());
+		this.ec2Properties.setSshKeyName( iaasProperties.get( Ec2Constants.SSH_KEY_NAME ).trim());
+		this.ec2Properties.setSecurityGroupName( iaasProperties.get( Ec2Constants.SECURITY_GROUP_NAME ).trim());
 	}
 
 
