@@ -165,7 +165,9 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 			WsClient client = RestTestUtils.buildWsClient();
 			Assert.assertEquals( 0, msgClient.messageToRoutingKey.size());
 			client.getApplicationDelegate().perform( app.getName(), ApplicationAction.deploy, null, true );
-			Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), msgClient.messageToRoutingKey.size());
+
+			int expected = InstanceHelpers.getAllInstances( app ).size() - app.getRootInstances().size();
+			Assert.assertEquals( expected, msgClient.messageToRoutingKey.size());
 
 		} finally {
 			Utils.deleteFilesRecursively( rootDir );

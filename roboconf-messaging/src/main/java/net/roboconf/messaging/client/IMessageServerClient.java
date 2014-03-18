@@ -114,11 +114,4 @@ public interface IMessageServerClient {
 	 * @param routingKey the routing key
 	 */
 	void unbind( String routingKey ) throws IOException;
-	
-	/**
-	 * Creates a queue.
-	 * @param queueName
-	 * @throws IOException
-	 */
-	void dmCreateAgentQueue( String appName, String rootInstanceName ) throws IOException;
 }

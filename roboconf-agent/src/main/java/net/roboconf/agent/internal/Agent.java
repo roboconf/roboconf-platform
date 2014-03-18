@@ -96,7 +96,7 @@ public class Agent implements IMessageProcessor {
 	 */
 	public void setAgentData( AgentData agentData ) {
 		this.agentData = agentData;
-		AgentUtils.configureLogger(logger, agentData.getRootInstanceName());
+		AgentUtils.configureLogger(this.logger, agentData.getRootInstanceName());
 	}
 
 
@@ -118,7 +118,10 @@ public class Agent implements IMessageProcessor {
 		Instance instance;
 		PluginInterface plugin;
 
-		if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, instancePath )) == null ) {
+		if( this.rootInstance == null ) {
+			this.logger.info( "The agent's model has not yet been initialized. Request " + originalMessage.getClass().getSimpleName() + " is dropped." );
+
+		} else if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, instancePath )) == null ) {
 			this.logger.severe( "Instance " + instancePath + " was not found on this agent." );
 
 		} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) != null ) {
@@ -153,6 +156,12 @@ public class Agent implements IMessageProcessor {
 				case stop:
 					if( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 						stopInstance( instance, plugin, false );
+
+					} else if( instance.getStatus() == InstanceStatus.STARTING ) {
+						for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
+							if( i.getStatus() == InstanceStatus.STARTING )
+								updateAndNotifyNewStatus( i, InstanceStatus.DEPLOYED_STOPPED );
+						}
 
 					} else {
 						this.logger.info(
@@ -228,7 +237,7 @@ public class Agent implements IMessageProcessor {
 	 * @param newInstance the new instance to add
 	 */
 	public void addInstance( String parentInstancePath, Instance newInstance ) {
-		
+
 		// Update the network exports
 		if( newInstance != null )
 			VariableHelpers.updateNetworkVariables( newInstance.getExports(), this.agentData.getIpAddress());
@@ -245,7 +254,7 @@ public class Agent implements IMessageProcessor {
 					for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 						if( instance.getParent() == null )
 							continue;
-							
+
 						this.messagingService.configureInstanceMessaging( instance, true );
 						VariableHelpers.updateNetworkVariables( instance.getExports(), this.agentData.getIpAddress());
 					}
