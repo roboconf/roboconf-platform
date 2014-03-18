@@ -88,13 +88,12 @@ public enum ErrorCode {
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
-	RM_MISSING_APPLICATION_IEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for instances is missing." ),
 	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must contain a graph definition." ),
 
 	RM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component name cannot be empty." ),
 	RM_EMPTY_COMPONENT_ALIAS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component alias is mandatory." ),
 	RM_EMPTY_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component's installer name is mandatory." ),
-	RM_COMPONENT_IMPORTS_EXPORTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The component's imports variables it exports." ),
+	RM_COMPONENT_IMPORTS_EXPORTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The component imports variables it exports." ),
 
 	RM_DUPLICATE_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),
 	RM_CYCLE_IN_COMPONENTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),

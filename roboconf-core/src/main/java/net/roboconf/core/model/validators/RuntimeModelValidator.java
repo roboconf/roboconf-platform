@@ -58,7 +58,7 @@ public class RuntimeModelValidator {
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER ));
 
 		// A component cannot import variables it exports
-		for( String var : component.getImportedVariableNames()) {
+		for( String var : component.getImportedVariables().keySet()) {
 			if( component.getExportedVariables().containsKey( var )) {
 				RoboconfError error = new RoboconfError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS );
 				error.setDetails( "Variable name: " + var );
@@ -110,7 +110,7 @@ public class RuntimeModelValidator {
 			toProcess.addAll( c.getChildren());
 
 			// Process its variables
-			for( String importedVariableName : c.getImportedVariableNames()) {
+			for( String importedVariableName : c.getImportedVariables().keySet()) {
 				if( ! importedVariableNameToExported.containsKey( importedVariableName ))
 					importedVariableNameToExported.put( importedVariableName, Boolean.FALSE );
 			}
@@ -225,9 +225,6 @@ public class RuntimeModelValidator {
 
 		if( Utils.isEmptyOrWhitespaces( descriptor.getGraphEntryPoint()))
 			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_GEP ));
-
-		if( Utils.isEmptyOrWhitespaces( descriptor.getInstanceEntryPoint()))
-			errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_IEP ));
 
 		return errors;
 	}

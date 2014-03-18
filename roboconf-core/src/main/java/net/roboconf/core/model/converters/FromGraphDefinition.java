@@ -213,7 +213,15 @@ public class FromGraphDefinition {
 		component.setInstallerName( ModelUtils.getPropertyValue( block, Constants.PROPERTY_GRAPH_INSTALLER ));
 		component.setAlias( ModelUtils.getPropertyValue( block, Constants.PROPERTY_COMPONENT_ALIAS ));
 		component.getFacetNames().addAll( ModelUtils.getPropertyValues( block, Constants.PROPERTY_COMPONENT_FACETS ));
-		component.getImportedVariableNames().addAll( ModelUtils.getPropertyValues( block, Constants.PROPERTY_COMPONENT_IMPORTS ));
+
+		for( String s : ModelUtils.getPropertyValues( block, Constants.PROPERTY_COMPONENT_IMPORTS )) {
+			Boolean optional = s.toLowerCase().endsWith( Constants.PROPERTY_COMPONENT_OPTIONAL_IMPORT );
+			if( optional )
+				s = s.substring( 0, s.length() - Constants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length()).trim();
+
+			component.getImportedVariables().put( s, optional );
+		}
+
 		component.getExportedVariables().putAll( ModelUtils.getExportedVariables( block ));
 		component.setIconLocation( ModelUtils.getPropertyValue( block, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
 
@@ -325,7 +333,15 @@ public class FromGraphDefinition {
 
 				BlockFacet facet = facets.get( 0 );
 				c.getExportedVariables().putAll( ModelUtils.getExportedVariables( facet ));
-				c.getImportedVariableNames().addAll( ModelUtils.getPropertyValues( facet, Constants.PROPERTY_COMPONENT_IMPORTS ));
+
+				for( String s : ModelUtils.getPropertyValues( facet, Constants.PROPERTY_COMPONENT_IMPORTS )) {
+					Boolean optional = s.toLowerCase().endsWith( Constants.PROPERTY_COMPONENT_OPTIONAL_IMPORT );
+					if( optional )
+						s = s.substring( 0, s.length() - Constants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length()).trim();
+
+					c.getImportedVariables().put( s, optional );
+				}
+
 				if( c.getInstallerName() == null )
 					c.setInstallerName( ModelUtils.getPropertyValue( facet, Constants.PROPERTY_GRAPH_INSTALLER ));
 

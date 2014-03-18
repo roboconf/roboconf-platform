@@ -33,9 +33,9 @@ public class Component implements Serializable {
 	private static final long serialVersionUID = 5163458185512982868L;
 
 	private String name, alias, installerName, iconLocation;
-	private final Collection<String> importedVariableNames = new HashSet<String> ();
 	private final Collection<String> facetNames = new HashSet<String> ();
 	private final Map<String,String> exportedVariables = new HashMap<String,String> ();
+	private final Map<String,Boolean> importedVariables = new HashMap<String,Boolean> ();
 
 	private final Collection<Component> children = new HashSet<Component> ();
 	private final Collection<Component> ancestors = new HashSet<Component> ();
@@ -113,17 +113,21 @@ public class Component implements Serializable {
 	}
 
 	/**
-	 * @return the importedVariableNames
-	 */
-	public Collection<String> getImportedVariableNames() {
-		return this.importedVariableNames;
-	}
-
-	/**
 	 * @return the facetNames
 	 */
 	public Collection<String> getFacetNames() {
 		return this.facetNames;
+	}
+
+	/**
+	 * @return the importedVariables
+	 * <p>
+	 * Key = imported variable name.
+	 * Value = true if the import is optional, false if it is required
+	 * </p>
+	 */
+	public Map<String, Boolean> getImportedVariables() {
+		return this.importedVariables;
 	}
 
 	/**

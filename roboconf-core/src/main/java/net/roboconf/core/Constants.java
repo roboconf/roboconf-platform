@@ -43,6 +43,11 @@ public interface Constants {
 	 */
 	String PROPERTY_COMPONENT_IMPORTS = "imports";
 
+	/**
+	 * Keyword for component property.
+	 */
+	String PROPERTY_COMPONENT_OPTIONAL_IMPORT = "(optional)";
+
 
 	/**
 	 * Keyword for a facet or a component property.
