@@ -130,7 +130,10 @@ public class Agent implements IMessageProcessor {
 				case deploy:
 					if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
 						updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYING );
-						copyInstanceResources( instance, ((MsgCmdInstanceDeploy) originalMessage).getFileNameToFileContent());
+						copyInstanceResources(
+								instance, plugin.getPluginName(),
+								((MsgCmdInstanceDeploy) originalMessage).getFileNameToFileContent());
+
 						plugin.deploy( instance );
 						updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYED_STOPPED );
 
@@ -559,7 +562,7 @@ public class Agent implements IMessageProcessor {
 			updateAndNotifyNewStatus( instance, InstanceStatus.UNDEPLOYING );
 
 			// Delete files
-			File dir = findInstanceDirectory( instance );
+			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, plugin.getPluginName());
 			Utils.deleteFilesRecursively( dir );
 
 			// Inform other agents this instance was removed
@@ -651,17 +654,11 @@ public class Agent implements IMessageProcessor {
 	}
 
 
-	private File findInstanceDirectory( Instance instance ) {
-		String path = InstanceHelpers.computeInstancePath( instance );
-		path = path.substring( 1 );
-		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + path );
-	}
 
-
-	private void copyInstanceResources( Instance instance, Map<String,byte[]> fileNameToFileContent )
+	private void copyInstanceResources( Instance instance, String pluginName, Map<String,byte[]> fileNameToFileContent )
 	throws IOException {
 
-		File dir = findInstanceDirectory( instance );
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, pluginName );
 		if( ! dir.exists()
 				&& ! dir.mkdirs())
 			throw new IOException( this.agentName + " could not create directory " + dir.getAbsolutePath());

@@ -46,20 +46,23 @@ public class PluginManager {
 
 		PluginInterface result = null;
 		String installerName = instance.getComponent().getInstallerName();
+		PluginInterface[] plugins = new PluginInterface[] {
+				new PluginBash(),
+				new PluginPuppet(),
+				new PluginLogger()
+		};
 
-		if( "bash".equalsIgnoreCase( installerName ))
-			result = new PluginBash();
+		for( PluginInterface pi : plugins ) {
+			if( pi.getPluginName().equalsIgnoreCase( installerName )) {
+				result = pi;
+				break;
+			}
+		}
 
-		else if( "puppet".equalsIgnoreCase( installerName ))
-			result = new PluginPuppet();
-
-		else if( "logger".equalsIgnoreCase( installerName ))
-			result = new PluginLogger();
-
-		else
+		if( result == null ) {
 			logger.severe( "No plugin was found for instance " + instance.getName() + " with installer " + installerName + "." );
 
-		if( result != null ) {
+		} else {
 			result.setExecutionLevel( this.executionLevel );
 			result.setDumpDirectory( this.dumpDirectory );
 			result.setAgentName( "Agent " + InstanceHelpers.findRootInstance( instance ).getName());

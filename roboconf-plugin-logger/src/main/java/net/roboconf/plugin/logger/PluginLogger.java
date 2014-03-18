@@ -34,6 +34,12 @@ public class PluginLogger implements PluginInterface {
 
 
 	@Override
+	public String getPluginName() {
+		return "logger";
+	}
+
+
+	@Override
 	public void setExecutionLevel( ExecutionLevel executionLevel ) {
 		this.logger.fine( "The execution level is: " + executionLevel );
 	}
