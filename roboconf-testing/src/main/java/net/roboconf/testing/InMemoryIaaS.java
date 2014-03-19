@@ -17,7 +17,7 @@
 package net.roboconf.testing;
 
 import java.io.File;
-import java.util.Properties;
+import java.util.Map;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.AgentLauncher;
@@ -41,7 +41,7 @@ public class InMemoryIaaS implements IaasInterface {
 
 
 	@Override
-	public void setIaasProperties( Properties iaasProperties )
+	public void setIaasProperties(Map<String, String> iaasProperties)
 	throws InvalidIaasPropertiesException {
 		// nothing
 	}

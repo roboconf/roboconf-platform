@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
@@ -82,9 +83,9 @@ public class IaasHelpersTest {
 		try {
 			Instance instance = new Instance( "my-vm-instance" );
 			instance.setComponent( new Component( componentName ));
-			Properties loadedProperties = IaasHelpers.loadIaasProperties( applicationDirectory, instance );
+			Map<String, String> loadedProperties = IaasHelpers.loadIaasProperties( applicationDirectory, instance );
 			Assert.assertNotNull( loadedProperties );
-			Assert.assertEquals( "my value", loadedProperties.getProperty( "my-key" ));
+			Assert.assertEquals( "my value", loadedProperties.get("my-key"));
 
 		} finally {
 			Utils.deleteFilesRecursively( applicationDirectory );

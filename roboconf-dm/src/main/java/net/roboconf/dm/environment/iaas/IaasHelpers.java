@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import net.roboconf.core.internal.utils.Utils;
@@ -48,7 +50,7 @@ public final class IaasHelpers {
 	 * @return a non-null properties
 	 * @throws IOException if the IaaS properties file was not found
 	 */
-	public static Properties loadIaasProperties( File applicationFilesDirectory, Instance rootInstance ) throws IOException {
+	public static Map<String, String> loadIaasProperties( File applicationFilesDirectory, Instance rootInstance ) throws IOException {
 
 		if( rootInstance.getParent() != null )
 			throw new IllegalArgumentException( "A root instance was expected as parameter." );
@@ -56,12 +58,15 @@ public final class IaasHelpers {
 		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, rootInstance );
 		f = new File( f, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
 
-		Properties result = new Properties();
+		Map<String, String> result = new HashMap<String, String>();
 		InputStream in = null;
 		try {
-			in = new FileInputStream( f );
-			result.load( in );
-
+			Properties p = new Properties();
+			in = new FileInputStream(f);
+			p.load(in);
+			for(Object name : p.keySet()) {
+				result.put(name.toString(), p.get(name).toString());
+			}
 		} finally {
 			Utils.closeQuietly( in );
 		}
