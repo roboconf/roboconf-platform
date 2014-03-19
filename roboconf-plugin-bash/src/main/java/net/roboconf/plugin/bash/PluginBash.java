@@ -73,7 +73,7 @@ public class PluginBash implements PluginInterface {
 	@Override
 	public void deploy( Instance instance ) throws Exception {
 		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
-		prepareAndExecuteCommand( "setup", instance );
+		prepareAndExecuteCommand( "deploy", instance );
 	}
 
 
