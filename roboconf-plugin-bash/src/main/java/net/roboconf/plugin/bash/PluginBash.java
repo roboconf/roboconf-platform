@@ -31,6 +31,7 @@ import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
+import net.roboconf.plugin.bash.template.InstanceTemplateHelper;
 
 /**
  * @author Noël - LIG
@@ -164,9 +165,12 @@ public class PluginBash implements PluginInterface {
      * @param template
      * @param instance
      * @return
+     * @throws IOException 
      */
-    protected File generateTemplate(File template, Instance instance) {
-        return null;
+    protected File generateTemplate(File template, Instance instance) throws IOException {
+        File generated = File.createTempFile(instance.getName(), ".sh");
+        InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
+        return generated;
     }
 
 
