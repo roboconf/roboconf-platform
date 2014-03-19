@@ -2,3 +2,7 @@
 .project
 /target
 /maven-eclipse.xml
+
+#idea
+*.iml
+.idea/
