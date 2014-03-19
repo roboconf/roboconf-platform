@@ -13,3 +13,7 @@
 /bin
 /maven-eclipse.xml
 /.settings
+
+#idea
+*.iml
+.idea/
