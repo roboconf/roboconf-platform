@@ -93,9 +93,7 @@ public class PluginPuppetTest {
 		this.plugin.installPuppetModules( this.instance, propFile.getParentFile());
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
-		File modulesDirectory = new File( instanceDirectory, PluginPuppet.MODULES );
-		Assert.assertTrue( modulesDirectory.exists());
-		File[] subFiles = modulesDirectory.listFiles();
+		File[] subFiles = instanceDirectory.listFiles();
 
 		Assert.assertNotNull( subFiles );
 		Assert.assertEquals( 1, subFiles.length );
@@ -110,9 +108,7 @@ public class PluginPuppetTest {
 		this.plugin.installPuppetModules( this.instance, propFile.getParentFile());
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
-		File modulesDirectory = new File( instanceDirectory, PluginPuppet.MODULES );
-		Assert.assertTrue( modulesDirectory.exists());
-		File[] subFiles = modulesDirectory.listFiles();
+		File[] subFiles = instanceDirectory.listFiles();
 
 		Assert.assertNotNull( subFiles );
 		Assert.assertEquals( 2, subFiles.length );
@@ -240,7 +236,7 @@ public class PluginPuppetTest {
 		Instance instance = new Instance( "test" );
 		instance.setComponent( new Component( "test-component" ));
 
-		String expectedPrefix = "class{'roboconf_test-component': runningState => ";
+		String expectedPrefix = "\"class{'roboconf_test-component': runningState => ";
 		for( PuppetState state : PuppetState.values()) {
 
 			String s = this.plugin.generateCodeToExecute( instance, state );
