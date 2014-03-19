@@ -53,8 +53,6 @@ import net.roboconf.plugin.api.PluginInterface;
  */
 public class PluginPuppet implements PluginInterface {
 
-	public static final String MODULES = "modules";
-
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ExecutionLevel executionLevel;
 	private File dumpDirectory;
@@ -183,14 +181,7 @@ public class PluginPuppet implements PluginInterface {
 			Utils.closeQuietly( in );
 		}
 
-		// Install them
-		File modulesDirectory = new File(
-				InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName()),
-				MODULES );
-
-		if( ! modulesDirectory.exists()
-				&& ! modulesDirectory.mkdirs())
-			throw new IOException( "The modules directory could not be created for instance " + instance.getName() + "." );
+        File realInstanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(instance, getPluginName());
 
 		for( Map.Entry<Object,Object> entry : props.entrySet()) {
 
@@ -207,7 +198,7 @@ public class PluginPuppet implements PluginInterface {
 
 			commands.add((String) entry.getKey());
 			commands.add( "--target-dir" );
-			commands.add( modulesDirectory.getAbsolutePath());
+			commands.add( realInstanceDirectory.getAbsolutePath());
 
 			if( this.executionLevel == ExecutionLevel.LOG ) {
 				String[] params = commands.toArray( new String[ 0 ]);
@@ -235,23 +226,17 @@ public class PluginPuppet implements PluginInterface {
             return;
         }
 
-		File modulesDirectory = new File( instanceDirectory, MODULES );
-		File manifestFile = new File( instanceDirectory, "manifests/" + step + ".pp" );
-		if( ! manifestFile.exists()
-				|| ! manifestFile.isFile()) {
-            this.logger.warning("Puppet manifest " + manifestFile + " has not been found for instance " + instance.getName());
-            return;
-        }
+        File manifestFile = new File( instanceDirectory, "manifests/init.pp" );
+        Utils.copyStream(new File(instanceDirectory, "manifests/" + step + ".pp"), manifestFile);
 
 		List<String> commands = new ArrayList<String> ();
 		commands.add( "puppet" );
 		commands.add( "apply" );
 		commands.add( "--verbose" );
 		commands.add( "--modulepath" );
-		commands.add( modulesDirectory.getAbsolutePath());
+		commands.add( instanceDirectory.getAbsolutePath());
 		commands.add( "--execute" );
-		commands.add( generateCodeToExecute( instance, puppetState ));
-		commands.add( manifestFile.getAbsolutePath());
+		commands.add( generateCodeToExecute(instance, puppetState));
 
 		if( this.executionLevel == ExecutionLevel.LOG ) {
 			String[] params = commands.toArray( new String[ 0 ]);
@@ -273,7 +258,7 @@ public class PluginPuppet implements PluginInterface {
 
 		String className = "roboconf_" + instance.getComponent().getName().toLowerCase();
 		StringBuilder sb = new StringBuilder();
-		sb.append( "class{'" );
+		sb.append( "\"class{'" );
 		sb.append( className );
 		sb.append( "': runningState => " );
 		sb.append( puppetState.toString());
@@ -288,7 +273,7 @@ public class PluginPuppet implements PluginInterface {
 		if( ! Utils.isEmptyOrWhitespaces( importedTypes ))
 			sb.append( ", " + importedTypes );
 
-		sb.append("}");
+		sb.append("}\"");
 		return sb.toString();
 	}
 
