@@ -16,7 +16,7 @@
 
 package net.roboconf.iaas.api;
 
-import java.util.Properties;
+import java.util.Map;
 
 import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
 import net.roboconf.iaas.api.exceptions.IaasException;
@@ -38,7 +38,7 @@ public interface IaasInterface {
 	 * </p>
 	 * @param iaasProperties the IaaS properties (not null)
 	 */
-	void setIaasProperties( Properties iaasProperties ) throws InvalidIaasPropertiesException;
+	void setIaasProperties(Map<String, String> iaasProperties) throws InvalidIaasPropertiesException;
 
 	/**
 	 * Creates a VM containing a message server in it.
@@ -56,10 +56,10 @@ public interface IaasInterface {
 	 * @throws CommunicationToIaasException
 	 */
 	String createVM(
+			String machineImageId,
 			String ipMessagingServer,
 			String channelName,
-			String applicationName,
-			String rootInstanceName )
+			String applicationName)
 	throws IaasException, CommunicationToIaasException;
 
 

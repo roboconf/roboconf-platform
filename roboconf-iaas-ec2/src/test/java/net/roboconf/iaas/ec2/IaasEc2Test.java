@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Linagora, Université Joseph Fourier
+ * Copyright 2014 Linagora, Université Joseph Fourier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 package net.roboconf.iaas.ec2;
 
-import java.util.Properties;
+import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
@@ -33,7 +34,7 @@ public class IaasEc2Test {
 	public void testConfigurationParsing() {
 
 		// Empty configuration
-		Properties iaasProperties = new Properties();
+		Map<String, String> iaasProperties = new HashMap<String, String>();
 		IaasEc2 ec2 = new IaasEc2();
 		try {
 			ec2.setIaasProperties( iaasProperties );

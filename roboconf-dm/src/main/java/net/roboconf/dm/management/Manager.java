@@ -655,8 +655,8 @@ public final class Manager {
 				try {
 					IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
 					String machineId = iaasInterface.createVM(
-							this.messageServerIp, "",
-							ma.getApplication().getName(), instance.getName());
+							null, this.messageServerIp, instance.getName(),
+							ma.getApplication().getName());
 
 					// FIXME: the channel name is skipped here
 					// As soon as we know what it is useful for, re-add it (it is in the instance)

@@ -18,7 +18,6 @@ package net.roboconf.dm.internal;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.environment.iaas.IaasResolver;
@@ -43,7 +42,7 @@ public class TestIaasResolver extends IaasResolver {
 		return new IaasInterface() {
 
 			@Override
-			public void setIaasProperties( Properties iaasProperties )
+			public void setIaasProperties( Map<String, String> iaasProperties )
 			throws InvalidIaasPropertiesException {
 				// nothing
 			}

@@ -16,7 +16,8 @@
 
 package net.roboconf.dm.environment.iaas;
 
-import java.util.Properties;
+import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.ec2.IaasEc2;
@@ -33,13 +34,13 @@ public class IaasResolverTest {
 	public void testFindIaasHandler() {
 		IaasResolver resolver = new IaasResolver();
 
-		Properties props = new Properties();
+		Map<String, String> props = new HashMap<String, String>();
 		Assert.assertNull( resolver.findIaasHandler( props ));
 
-		props.setProperty( IaasResolver.IAAS_TYPE, "local" );
+		props.put( IaasResolver.IAAS_TYPE, "local" );
 		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasLocalhost );
 
-		props.setProperty( IaasResolver.IAAS_TYPE, "ec2" );
+		props.put( IaasResolver.IAAS_TYPE, "ec2" );
 		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasEc2 );
 	}
 }
