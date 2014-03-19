@@ -49,7 +49,8 @@ public class PluginManager {
 		PluginInterface[] plugins = new PluginInterface[] {
 				new PluginBash(),
 				new PluginPuppet(),
-				new PluginLogger()
+				new PluginLogger(),
+				new NilPlugin()
 		};
 
 		for( PluginInterface pi : plugins ) {
@@ -126,11 +127,70 @@ public class PluginManager {
 
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( instanceToAdd )) {
 
+			String installerName = instance.getComponent().getInstallerName();
 			PluginInterface plugin = pluginManager.findPlugin( instance, logger );
 			if( plugin == null )
-				throw new Exception( "No plugin was found for " + instance.getName() + "." );
+				throw new Exception( "No plugin was found for " + instance.getName() + ". Installer name:" + installerName );
 
 			plugin.initialize( instance );
+		}
+	}
+
+
+	/**
+	 * A class used for the IaaS (which is considered as any other installer by the agent).
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class NilPlugin implements PluginInterface {
+
+		@Override
+		public void initialize( Instance instance ) throws Exception {
+			// nothing
+		}
+
+		@Override
+		public void deploy( Instance instance ) throws Exception {
+			// nothing
+		}
+
+		@Override
+		public void start( Instance instance ) throws Exception {
+			// nothing
+		}
+
+		@Override
+		public void update( Instance instance ) throws Exception {
+			// nothing
+		}
+
+		@Override
+		public void stop( Instance instance ) throws Exception {
+			// nothing
+		}
+
+		@Override
+		public void undeploy( Instance instance ) throws Exception {
+			// nothing
+		}
+
+		@Override
+		public void setExecutionLevel( ExecutionLevel executionLevel ) {
+			// nothing
+		}
+
+		@Override
+		public void setDumpDirectory( File dumpDirectory ) {
+			// nothing
+		}
+
+		@Override
+		public void setAgentName( String agentName ) {
+			// nothing
+		}
+
+		@Override
+		public String getPluginName() {
+			return "iaas";
 		}
 	}
 }

@@ -117,7 +117,7 @@ public final class ProgramUtils {
 				br = new BufferedReader( new InputStreamReader( is ));
 
 				for( String line = br.readLine(); line != null; line = br.readLine())
-					this.logger.fine( prefix + line );
+					this.logger.info( prefix + line );
 
 			} catch( IOException e ) {
 				this.logger.severe( Utils.writeException( e ));

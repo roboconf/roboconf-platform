@@ -54,10 +54,10 @@ public class IaasLocalhost implements IaasInterface {
 	 */
 	@Override
 	public String createVM(
-			String ipMessagingServer,
-			String channelName,
-			String applicationName,
-			String rootInstanceName )
+			String machineImageId,
+			final String ipMessagingServer,
+			String rootInstanceName,
+			String applicationName )
 	throws IaasException, CommunicationToIaasException {
 
 		// Create the agent's data.

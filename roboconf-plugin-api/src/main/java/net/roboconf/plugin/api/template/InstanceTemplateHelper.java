@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.bash.template;
+package net.roboconf.plugin.api.template;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -28,20 +28,18 @@ import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 
 /**
- * 
  * Provides methods for injecting Instance data into a template file.
- * 
- * @author gcrosmarie  - Linagora
  *
+ * @author gcrosmarie  - Linagora
  */
 public class InstanceTemplateHelper {
-	
+
 	private static MustacheFactory mf = new DefaultMustacheFactory();
 
 	/**
 	 * Reads the import values of the instances and injects them into the template file.
-	 * See test resources to see the associated way to write templates 
-	 * @param instance 
+	 * See test resources to see the associated way to write templates
+	 * @param instance
 	 * @param templateFile
 	 * @param writer
 	 * @throws IOException
@@ -50,15 +48,15 @@ public class InstanceTemplateHelper {
 	    Mustache mustache = mf.compile(templateFile);
 	    mustache.execute(writer, new InstanceBean(instance)).flush();
 	}
-	
+
 	public static void injectInstanceImports(Instance instance, File templateFile, Writer writer) throws IOException {
 		injectInstanceImports(instance, templateFile.getAbsolutePath(), writer);
 	}
-	
+
 	public static void injectInstanceImports(Instance instance, String templateFile, File out) throws IOException {
 		injectInstanceImports(instance, templateFile, new FileWriter(out));
 	}
-	
+
 	public static void injectInstanceImports(Instance instance, File templateFile, File out) throws IOException {
 		injectInstanceImports(instance, templateFile.getAbsolutePath(), out);
 	}

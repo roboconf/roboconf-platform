@@ -327,7 +327,7 @@ public final class InstanceHelpers {
 	 */
 	public static File findInstanceDirectoryOnAgent( Instance instance, String pluginName ) {
 		String path = InstanceHelpers.computeInstancePath( instance );
-		path = path.substring( 1 ).replace( '/', '_' );
+		path = path.substring( 1 ).replace( '/', '_' ).replace( ' ', '_' );
 		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + pluginName + "/" + path );
 	}
 }

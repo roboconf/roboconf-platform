@@ -40,11 +40,29 @@ import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
- * A plug-in that executes Puppet manifests.
+ * The plug-in executes a Puppet manifests.
  * <p>
  * Modules will be installed automatically during the initialization.
  * Although there can be several manifests into the "manifests" directory,
  * only "init.pp" will be used. Other should be referenced through includes.
+ * </p>
+ * <p>
+ * The best solution is to use the default template to mutualize actions.
+ * Thus, start and stop can be achieved through a same script that will either
+ * have the running state to RUNNING or to STOPPED.
+ * </p>
+ * <p>
+ * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br />
+ * Let's take an example with the "start" action to understand the way this plug-in works.
+ * </p>
+ * <ul>
+ * 	<li>The plug-in will load manifests/start.pp</li>
+ * 	<li>If it is not found, it will try to load templates/start.pp.template</li>
+ * 	<li>If it is not found, it will try to load templates/default.pp.template</li>
+ * 	<li>If it is not found, the plug-in will do nothing</li>
+ * </ul>
+ * <p>
+ * The default template is used to factorize actions.
  * </p>
  *
  * @author Noël - LIG
@@ -55,7 +73,6 @@ public class PluginPuppet implements PluginInterface {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ExecutionLevel executionLevel;
-	private File dumpDirectory;
 	private String agentName;
 
 
@@ -74,7 +91,7 @@ public class PluginPuppet implements PluginInterface {
 
 	@Override
 	public void setDumpDirectory( File dumpDirectory ) {
-		this.dumpDirectory = dumpDirectory;
+		// nothing
 	}
 
 
@@ -220,14 +237,15 @@ public class PluginPuppet implements PluginInterface {
 	 */
 	private void callPuppetScript( Instance instance, String step, PuppetState puppetState, File instanceDirectory )
 	throws IOException, InterruptedException {
-        if (step == null) {
-            final String msg = "Puppet manifest to apply can not be null for instance " + instance.getName();
-            this.logger.warning(msg);
-            return;
+
+        File originalScript = new File(instanceDirectory, "manifests/" + step + ".pp");
+        if( ! originalScript.exists()) {
+        	this.logger.info( "No Puppet script was provided for " + step + ". The plug-in does nothing." );
+        	return;
         }
 
         File manifestFile = new File( instanceDirectory, "manifests/init.pp" );
-        Utils.copyStream(new File(instanceDirectory, "manifests/" + step + ".pp"), manifestFile);
+        Utils.copyStream( originalScript, manifestFile );
 
 		List<String> commands = new ArrayList<String> ();
 		commands.add( "puppet" );
@@ -238,12 +256,18 @@ public class PluginPuppet implements PluginInterface {
 		commands.add( "--execute" );
 		commands.add( generateCodeToExecute(instance, puppetState));
 
-		if( this.executionLevel == ExecutionLevel.LOG ) {
-			String[] params = commands.toArray( new String[ 0 ]);
-			this.logger.info( "Module installation: " + Arrays.toString( params ));
+		try {
+			if( this.executionLevel == ExecutionLevel.LOG ) {
+				String[] params = commands.toArray( new String[ 0 ]);
+				this.logger.info( "Module installation: " + Arrays.toString( params ));
 
-		} else {
-			ProgramUtils.executeCommand( this.logger, commands, null );
+			} else {
+				ProgramUtils.executeCommand( this.logger, commands, null );
+			}
+
+		} finally {
+			// Delete the init.pp file
+			Utils.deleteFilesRecursively( manifestFile );
 		}
 	}
 

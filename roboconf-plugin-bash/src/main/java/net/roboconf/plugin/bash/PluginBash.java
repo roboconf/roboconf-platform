@@ -31,9 +31,24 @@ import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
-import net.roboconf.plugin.bash.template.InstanceTemplateHelper;
+import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 /**
+ * The plug-in invokes a shell script on every life cycle change.
+ * <p>
+ * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br />
+ * Let's take an example with the "start" action to understand the way this plug-in works.
+ * </p>
+ * <ul>
+ * 	<li>The plug-in will load scripts/start.sh</li>
+ * 	<li>If it is not found, it will try to load templates/start.sh.template</li>
+ * 	<li>If it is not found, it will try to load templates/default.sh.template</li>
+ * 	<li>If it is not found, the plug-in will do nothing</li>
+ * </ul>
+ * <p>
+ * The default template is used to factorize actions.
+ * </p>
+ *
  * @author Noël - LIG
  * @author Linh-Manh Pham - LIG
  * @author Pierre-Yves Gibello - Linagora
@@ -144,16 +159,20 @@ public class PluginBash implements PluginInterface {
         File templatesFolder = new File(instanceDirectory, TEMPLATES_FOLDER_NAME);
 
         File script = new File(scriptsFolder, action + ".sh");
-        File template = new File(templatesFolder, action + ".sh");
+        File template = new File(templatesFolder, action + ".sh.template");
+        if( ! template.exists())
+        	template = new File(templatesFolder, "default.sh.template");
 
         if (script.exists()) {
             executeScript(script, instance);
+
         } else if (template.exists()) {
             File generated = generateTemplate(template, instance);
-            if (generated == null || !generated.exists()) {
+            if (generated == null || !generated.exists())
                 throw new IOException("Not able to get the generated file from template for action " + action);
-            }
+
             executeScript(generated, instance);
+
         } else {
             throw new IOException("Can not find a script or a template for action " + action);
         }
@@ -165,7 +184,7 @@ public class PluginBash implements PluginInterface {
      * @param template
      * @param instance
      * @return
-     * @throws IOException 
+     * @throws IOException
      */
     protected File generateTemplate(File template, Instance instance) throws IOException {
         File generated = File.createTempFile(instance.getName(), ".sh");

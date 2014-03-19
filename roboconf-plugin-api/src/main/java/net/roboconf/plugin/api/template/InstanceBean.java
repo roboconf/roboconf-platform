@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.bash.template;
+package net.roboconf.plugin.api.template;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,34 +25,33 @@ import net.roboconf.core.model.runtime.Instance;
 
 /**
  * Bean used to inject an data into a {@link Instance} template.
- * 
- * @author gcrosmarie - Linagora
  *
+ * @author gcrosmarie - Linagora
  */
 public class InstanceBean {
 
-	private Instance instance;
+	private final Instance instance;
 
 	public InstanceBean(Instance instance) {
 		this.instance = instance;
 	}
-	
+
 	public List<ImportListBean> getImportLists() {
 		List<ImportListBean> result = new ArrayList<InstanceBean.ImportListBean>();
-		for(String prefix : instance.getImports().keySet()) {
+		for(String prefix : this.instance.getImports().keySet()) {
 			List<ImportBean> importbeans = new ArrayList<ImportBean>();
-			for(Import imprt : instance.getImports().get(prefix)) {
+			for(Import imprt : this.instance.getImports().get(prefix)) {
 				importbeans.add(new ImportBean(imprt));
 			}
 			result.add(new ImportListBean(prefix, importbeans));
 		}
 		return result;
 	}
-	
+
 	static class ImportListBean {
 		String prefix;
 		Collection<ImportBean> imports;
-		
+
 		public ImportListBean(String prefix, Collection<ImportBean> imports) {
 			super();
 			this.prefix = prefix;

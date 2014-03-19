@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2014 Linagora, Université Joseph Fourier
+ * Copyright 2014 Linagora, Université Joseph Fourier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import java.util.Map;
 
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.plugin.api.template.ImportBean;
+import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,6 +39,9 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 
+/**
+ * @author Graham Crosmarie - Linagora
+ */
 public class InstanceTemplatingTest {
 
 	@Test
@@ -46,18 +51,18 @@ public class InstanceTemplatingTest {
 		vars.put("name2", "val2");
 		vars.put("name3", "val3");
 		Import impt = new Import("/", vars);
-		
+
 		MustacheFactory mf = new DefaultMustacheFactory();
-	    Mustache mustache = mf.compile("net/roboconf/plugin/bash/template/importTemplate.mustache");
+	    Mustache mustache = mf.compile("importTemplate.mustache");
 	    StringWriter writer = new StringWriter();
 	    mustache.execute(writer, new ImportBean(impt)).flush();
-	    
+
 	    String writtenString = writer.toString();
 	    for(String name : vars.keySet()) {
 	    	Assert.assertTrue("Var was not displayed correctly", writtenString.contains(name+" : "+vars.get(name)));
 	    }
 	}
-	
+
 	@Test
 	public void testInstanceTemplate() throws IOException {
 		Map<String, String> vars = new HashMap<String, String>();
@@ -65,23 +70,23 @@ public class InstanceTemplatingTest {
 		vars.put("name2", "val2");
 		vars.put("name3", "val3");
 		Import impt1 = new Import("/", vars);
-		
+
 		List<Import> imports = new ArrayList<Import>();
 		imports.add(impt1);
 		imports.add(impt1);
-		
+
 		Map<String, Collection<Import>> importsByPrefix = new HashMap<String, Collection<Import>>();
 		importsByPrefix.put("prefix1", imports);
 		importsByPrefix.put("prefix2", imports);
-		
-		Instance instance = new Instance("testInstance"); 
+
+		Instance instance = new Instance("testInstance");
 		instance.updateImports(importsByPrefix);
-		
+
 		//First test templating into a String
-		String template = "net/roboconf/plugin/bash/template/instanceTemplate.mustache";
+		String template = "instanceTemplate.mustache";
 		StringWriter writer = new StringWriter();
 		InstanceTemplateHelper.injectInstanceImports(instance, template, writer);
-	    
+
 	    String writtenString = writer.toString();
 	    for(String prefix : importsByPrefix.keySet()) {
 	    	Assert.assertTrue("Prefix was not displayed correctly", writtenString.contains("Prefix "+prefix));
@@ -89,16 +94,16 @@ public class InstanceTemplatingTest {
 	    for(String name : vars.keySet()) {
 	    	Assert.assertTrue("Var was not displayed correctly", writtenString.contains(name+" -> "+vars.get(name)));
 	    }
-	    
+
 	    //Test templating into a new file
 	    File generated = File.createTempFile(instance.getName(), ".pipo");
         InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
         Assert.assertTrue(generated.exists() && generated.isFile());
         Assert.assertEquals(readFile(generated.getAbsolutePath()), writtenString);
 	}
-	
-	
-	
+
+
+
 	private String readFile(String fileName) throws IOException {
 	    BufferedReader br = new BufferedReader(new FileReader(fileName));
 	    try {
@@ -115,6 +120,4 @@ public class InstanceTemplatingTest {
 	        br.close();
 	    }
 	}
-
-	
 }
