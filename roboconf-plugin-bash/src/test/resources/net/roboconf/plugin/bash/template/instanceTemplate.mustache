@@ -1,0 +1,15 @@
+Instance
+
+Imports By Prefix {{#importLists}}
+	
+-----------------------------------
+	Prefix {{prefix}}
+	Imports 
+	{{#imports}}
+		{{#exportedVars}}
+		VAR : {{name}} -> {{value}}
+		{{/exportedVars}} 
+	{{/imports}}
+-----------------------------------
+	
+{{/importLists}}
