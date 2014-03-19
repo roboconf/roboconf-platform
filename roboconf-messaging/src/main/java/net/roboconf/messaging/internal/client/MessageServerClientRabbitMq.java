@@ -80,6 +80,11 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 		// Initialize the connection
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost( this.messageServerIp );
+
+		// Hack for SSH tunnel
+		factory.setPort( 9999 );
+		// End of hack
+
 		this.connection = factory.newConnection();
 		this.channel = this.connection.createChannel();
 		this.connected = true;
