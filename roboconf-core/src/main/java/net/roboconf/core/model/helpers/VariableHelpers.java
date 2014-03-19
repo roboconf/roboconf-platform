@@ -98,7 +98,7 @@ public final class VariableHelpers {
 	public static boolean instanceHasVariablesWithPrefix( Instance instance, String componentOrFacetName ) {
 
 		boolean result = false;
-		for( String importedVar : instance.getComponent().getImportedVariableNames()) {
+		for( String importedVar : instance.getComponent().getImportedVariables().keySet()) {
 			if( importedVar.startsWith( componentOrFacetName + "." )) {
 				result = true;
 				break;
@@ -127,14 +127,20 @@ public final class VariableHelpers {
 
 	/**
 	 * Finds the component and facet names that prefix the variables of an instance.
+	 * <p>
+	 * Optional imports are skipped.
+	 * </p>
+	 *
 	 * @param instance an instance
 	 * @return a non-null set with all the component and facet names this instance imports
 	 */
 	public static Set<String> findImportedVariablePrefixes( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
-		for( String importedVariableName : instance.getComponent().getImportedVariableNames())
-			result.add( VariableHelpers.parseVariableName( importedVariableName ).getKey());
+		for( Map.Entry<String,Boolean> entry : instance.getComponent().getImportedVariables().entrySet()) {
+			if( ! entry.getValue())
+				result.add( VariableHelpers.parseVariableName( entry.getKey()).getKey());
+		}
 
 		return result;
 	}

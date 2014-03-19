@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -112,8 +113,15 @@ public class FromGraphs {
 
 		// Imported Variables
 		StringBuilder sb = new StringBuilder();
-		for( Iterator<String> it=component.getImportedVariableNames().iterator(); it.hasNext(); ) {
-			sb.append( it.next());
+		for( Iterator<Map.Entry<String,Boolean>> it=component.getImportedVariables().entrySet().iterator(); it.hasNext(); ) {
+
+			Map.Entry<String,Boolean> entry = it.next();
+			sb.append( entry.getKey());
+			if( entry.getValue()) {
+				sb.append( " " );
+				sb.append( Constants.PROPERTY_COMPONENT_OPTIONAL_IMPORT );
+			}
+
 			if( it.hasNext())
 				sb.append( ", " );
 		}

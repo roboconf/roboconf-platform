@@ -229,6 +229,11 @@ public class ParsingModelValidator {
 
 		} else if( Constants.PROPERTY_COMPONENT_IMPORTS.equals( name )) {
 			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
+
+				if( s.toLowerCase().endsWith( Constants.PROPERTY_COMPONENT_OPTIONAL_IMPORT ))
+					s = s.substring( 0, s.length() - Constants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length());
+
+				s = s.trim();
 				if( Utils.isEmptyOrWhitespaces( s ))
 					result.add( new ModelError( ErrorCode.PM_EMPTY_VARIABLE_NAME, line ));
 				else if( ! s.matches( ParsingConstants.PATTERN_ID ))

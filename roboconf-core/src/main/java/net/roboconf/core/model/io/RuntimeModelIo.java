@@ -154,6 +154,9 @@ public class RuntimeModelIo {
 
 		// Load the instances
 		INST: if( appDescriptor != null && instDirectory.exists()) {
+			if( appDescriptor.getInstanceEntryPoint() == null )
+				break INST;
+
 			File mainInstFile = new File( instDirectory, appDescriptor.getInstanceEntryPoint());
 			if( ! mainInstFile.exists()) {
 				RoboconfError error = new RoboconfError( ErrorCode.PROJ_MISSING_INSTANCE_EP );

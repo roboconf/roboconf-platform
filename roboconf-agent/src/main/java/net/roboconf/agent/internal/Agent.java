@@ -411,7 +411,16 @@ public class Agent implements IMessageProcessor {
 
 		// Go through all the instances to see which ones need an update
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+
+			// This instance does not depends on it
 			if( ! VariableHelpers.instanceHasVariablesWithPrefix( instance, msg.getComponentOrFacetName()))
+				continue;
+
+			// If an instance depends on its component, make sure it does not add itself to the imports.
+			// Example: MongoDB may depend on other MongoDB instances.
+			if( Utils.areEqual(
+					InstanceHelpers.computeInstancePath( instance ),
+					msg.getAddedInstancePath()))
 				continue;
 
 			// Add the import and publish an update to the DM
