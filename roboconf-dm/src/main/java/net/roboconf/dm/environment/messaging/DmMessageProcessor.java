@@ -16,12 +16,15 @@
 
 package net.roboconf.dm.environment.messaging;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.messaging.client.IMessageProcessor;
@@ -32,6 +35,8 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
+import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * This class is in charge of updating the model from messages / notifications.
@@ -120,6 +125,22 @@ public class DmMessageProcessor implements IMessageProcessor {
 			this.logger.warning( sb.toString());
 
 		} else {
+			ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( this.application.getName());
+			try {
+				if( ma == null )
+					throw new IOException( "No manager was found for " + this.application.getName() + "." );
+
+				MsgCmdInstanceAdd newMsg = new MsgCmdInstanceAdd( null, rootInstance );
+				ma.getMessagingClient().publish(
+						false,
+						MessagingUtils.buildRoutingKeyToAgent( rootInstance ),
+						newMsg );
+
+			} catch( IOException e ) {
+				this.logger.severe( "The DM failed to send the agent's model for " + rootInstanceName + ". " + e.getMessage());
+				this.logger.finest( Utils.writeException( e ));
+			}
+
 			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 			rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
 			this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );

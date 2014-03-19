@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import net.roboconf.core.internal.utils.ProgramUtils;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
@@ -39,6 +40,13 @@ public class PluginPuppet implements PluginInterface {
 	private ExecutionLevel executionLevel;
 	private File dumpDirectory;
 	private String agentName;
+
+
+
+	@Override
+	public String getPluginName() {
+		return "puppet";
+	}
 
 
 	@Override
@@ -101,9 +109,12 @@ public class PluginPuppet implements PluginInterface {
 	 * @throws Exception
 	 */
 	private void callPuppetScript(Instance instance, String serviceState) throws Exception {
+
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+
 		// TODO modulepath... requires a constant ??
 		// Beggining of the command to execute
-		String[] beginningOfCommand = { "puppet", "apply", "--verbose", "--modulepath", "/tmp/roboconf/puppet/modules", /*"--noop",*/"--execute" };
+		String[] beginningOfCommand = { "puppet", "apply", "--verbose", "--modulepath", instanceDirectory.getAbsolutePath(), /*"--noop",*/"--execute" };
 		// Puppet modules have to be in the folder /etc/puppet/modules... unless --modulepath specifies another place.
 
 		// Other part of the command

@@ -49,7 +49,6 @@ import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
 import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.messaging.client.IMessageServerClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
@@ -654,10 +653,6 @@ public final class Manager {
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
 				try {
-					ma.getMessagingClient().dmCreateAgentQueue( 
-							ma.getApplication().getName(),
-							instance.getName());
-					
 					IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
 					String machineId = iaasInterface.createVM(
 							this.messageServerIp, "",
@@ -667,23 +662,12 @@ public final class Manager {
 					// As soon as we know what it is useful for, re-add it (it is in the instance)
 					instance.getData().put( Instance.MACHINE_ID, machineId );
 
-					MsgCmdInstanceAdd message = new MsgCmdInstanceAdd( null, instance );
-					this.logger.warning( "Adding instance " + InstanceHelpers.computeInstancePath( instance ));
-					ma.getMessagingClient().publish(
-							false,
-							MessagingUtils.buildRoutingKeyToAgent( instance ),
-							message );
-
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
 					bulkException.getInstancesToException().put( instance, e );
 
 				} catch( CommunicationToIaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
-					bulkException.getInstancesToException().put( instance, e );
-
-				} catch( IOException e ) {
-					// The instance does not have any problem, just keep trace of the exception
 					bulkException.getInstancesToException().put( instance, e );
 				}
 

@@ -431,7 +431,7 @@ public class ManagerTest {
 
 			Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 			Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-			Assert.assertEquals( 2, msgClient.messageToRoutingKey.size());
+			Assert.assertEquals( 1, msgClient.messageToRoutingKey.size());
 
 			final String vmPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 			final String serverPath = InstanceHelpers.computeInstancePath( app.getMySql());

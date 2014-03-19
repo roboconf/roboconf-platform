@@ -88,4 +88,10 @@ public interface PluginInterface {
 	 * @param agentName the agent name
 	 */
 	void setAgentName( String agentName );
+
+
+	/**
+	 * @return the plug-in name
+	 */
+	String getPluginName();
 }

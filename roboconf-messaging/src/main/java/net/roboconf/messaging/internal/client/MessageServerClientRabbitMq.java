@@ -68,24 +68,6 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 	public void setSourceName( String sourceName ) {
 		this.sourceName = sourceName;
 	}
-	
-	
-	@Override
-	public void dmCreateAgentQueue( String appName, String rootInstanceName ) throws IOException {
-		
-		// 1 agent or 1 dm <=> 1 queue
-		String exchangeName = getExchangeName( false );
-
-		// Exchange declaration is idem-potent
-		this.channel.exchangeDeclare( exchangeName, TOPIC );
-		
-		String queueName = appName + "." + rootInstanceName;
-		this.channel.queueDeclare( queueName, true, false, true, null );
-		
-		// Binding
-		String routingKey = MessagingUtils.buildRoutingKeyToAgent( rootInstanceName );
-		this.channel.queueBind( queueName, getExchangeName(), routingKey );
-	}
 
 
 	@Override
@@ -161,6 +143,9 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 					}  catch( IOException e ) {
 						logger.severe( MessageServerClientRabbitMq.this.sourceName + ": a message could not be deserialized. I/O exception." );
 						logger.finest( Utils.writeException( e ));
+
+					} catch( Exception e ) {
+						e.printStackTrace();
 					}
 				}
 			};
@@ -215,8 +200,8 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 
 		if( this.connected ) {
 			final Logger logger = Logger.getLogger( MessageServerClientRabbitMq.this.loggerName );
-			logger.info( sourceName + " is publishing " + message.getClass().getSimpleName() + " to " + routingKey);
-			
+			logger.info( this.sourceName + " is publishing " + message.getClass().getSimpleName() + " to " + routingKey);
+
 			this.channel.basicPublish(
 					getExchangeName( toDm ), routingKey, null,
 					SerializationUtils.serializeObject( message ));

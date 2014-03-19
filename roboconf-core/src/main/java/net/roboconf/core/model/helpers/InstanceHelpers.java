@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model.helpers;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -316,5 +317,17 @@ public final class InstanceHelpers {
 		}
 
 		return success;
+	}
+
+
+	/**
+	 * Finds the directory where an agent stores the files for a given instance.
+	 * @param instance an instance (not null)
+	 * @return a file (not null, but may not exist)
+	 */
+	public static File findInstanceDirectoryOnAgent( Instance instance, String pluginName ) {
+		String path = InstanceHelpers.computeInstancePath( instance );
+		path = path.substring( 1 ).replace( '/', '_' );
+		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + pluginName + "/" + path );
 	}
 }

@@ -90,10 +90,4 @@ public class TestMessageServerClient implements IMessageServerClient {
 	throws IOException {
 		this.messageToRoutingKey.put( message, routingKey );
 	}
-
-
-	@Override
-	public void dmCreateAgentQueue( String appName, String rootInstanceName ) throws IOException {
-		// nothing, we do not care
-	}
 }
