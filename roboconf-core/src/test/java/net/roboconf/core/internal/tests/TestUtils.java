@@ -73,8 +73,9 @@ public class TestUtils {
 	public static File findTestFile( String fileName ) throws IOException, URISyntaxException {
 
 		URL url = ParsingModelIoTest.class.getResource( fileName );
-		File file = new File( url.toURI());
-		if( ! file.exists())
+		File file;
+		if( url == null
+				|| ! (file = new File( url.toURI())).exists())
 			throw new IOException( "Could not find the resource file." );
 
 		return file;

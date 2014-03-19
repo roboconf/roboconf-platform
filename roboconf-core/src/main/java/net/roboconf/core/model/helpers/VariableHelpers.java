@@ -48,7 +48,8 @@ public final class VariableHelpers {
 	 * prefixed by a component or facet name.
 	 * </p>
 	 * <p>
-	 * It is assumed the variable name has been validated before calling this method.
+	 * If the variable name was not prefixed by a component or a facet name, then
+	 * the couple ( "", &lt; originalVariableName &gt; ) is returned.
 	 * </p>
 	 *
 	 * @param variableName a variable name (not null)
@@ -56,7 +57,7 @@ public final class VariableHelpers {
 	 */
 	public static Map.Entry<String,String> parseVariableName( String variableName ) {
 
-		String componentOrFacetName = variableName, simpleName = "";
+		String componentOrFacetName = "", simpleName = variableName;
 		int index = variableName.indexOf( '.' );
 		if( index >= 0 ) {
 			componentOrFacetName = variableName.substring( 0, index ).trim();

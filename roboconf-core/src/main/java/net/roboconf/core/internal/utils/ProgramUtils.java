@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -42,7 +43,7 @@ public final class ProgramUtils {
 
 
 	/**
-	 * Execute a command on the VM and prints on the console its output
+	 * Executes a command on the VM and prints on the console its output
 	 * @param command a command to execute (not null, not empty)
 	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)
@@ -71,6 +72,24 @@ public final class ProgramUtils {
 			logger.severe( "Command execution returned a failure code. Code:" + exitValue );
 
 		return exitValue;
+	}
+
+
+	/**
+	 * Executes a command on the VM and prints on the console its output
+	 * @param command a command to execute (not null, not empty)
+	 * @param environmentVars a map containing environment variables (can be null)
+	 * @param logger a logger (not null)
+	 * @throws IOException if a new process could not be created
+	 * @throws InterruptedException if the new process encountered a process
+	 */
+	public static int executeCommand(
+			final Logger logger,
+			final List<String> command,
+			final Map<String,String> environmentVars )
+	throws IOException, InterruptedException {
+
+		return executeCommand( logger, command.toArray( new String[ 0 ]), environmentVars );
 	}
 
 

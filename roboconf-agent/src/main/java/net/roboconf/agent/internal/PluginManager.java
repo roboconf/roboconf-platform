@@ -81,6 +81,14 @@ public class PluginManager {
 
 
 	/**
+	 * @return the execution level
+	 */
+	public ExecutionLevel getExecutionLevel() {
+		return this.executionLevel;
+	}
+
+
+	/**
 	 * @param dumpDirectory the dumpDirectory to set.
 	 * p>
 	 * Only required if execution level is
@@ -89,5 +97,40 @@ public class PluginManager {
 	 */
 	public void setDumpDirectory( File dumpDirectory ) {
 		this.dumpDirectory = dumpDirectory;
+	}
+
+
+	/**
+	 * Initializes the plug-in for a given instance.
+	 * <p>
+	 * Plug-ins may require to be initialized.
+	 * As an example, the Puppet plug-ins may have to install modules
+	 * so that the manifests can run. If the plug-in initialization fails,
+	 * then the other plug-ins actions will not work.
+	 * </p>
+	 * <p>
+	 * If the instance to add contains children, the initialization
+	 * is also performed on the children.
+	 * </p>
+	 *
+	 * @param instanceToAdd the instance to add on this agent
+	 * @param executionLevel the execution level
+	 * @throws Exception if the initialization fails or if no plug-in was found
+	 */
+	public static void initializePluginForInstance( Instance instanceToAdd, ExecutionLevel executionLevel )
+	throws Exception {
+
+		Logger logger = Logger.getLogger( PluginManager.class.getName());
+		PluginManager pluginManager = new PluginManager();
+		pluginManager.setExecutionLevel( executionLevel );
+
+		for( Instance instance : InstanceHelpers.buildHierarchicalList( instanceToAdd )) {
+
+			PluginInterface plugin = pluginManager.findPlugin( instance, logger );
+			if( plugin == null )
+				throw new Exception( "No plugin was found for " + instance.getName() + "." );
+
+			plugin.initialize( instance );
+		}
 	}
 }

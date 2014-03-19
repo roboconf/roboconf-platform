@@ -43,6 +43,10 @@ public class VariableHelpersTest {
 			Assert.assertEquals( "Invalid component or facet name for " + s, value[ 0 ], entry.getKey());
 			Assert.assertEquals( "Invalid simple name for " + s, value[ 1 ], entry.getValue());
 		}
+
+		Map.Entry<String,String> entry = VariableHelpers.parseVariableName( "noPrefix" );
+		Assert.assertEquals( "noPrefix", entry.getValue());
+		Assert.assertEquals( "", entry.getKey());
 	}
 
 

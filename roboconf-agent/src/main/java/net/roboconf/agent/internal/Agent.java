@@ -238,8 +238,9 @@ public class Agent implements IMessageProcessor {
 	 * Adds an instance to the local model.
 	 * @param parentInstancePath the parent instance path (null to add a root instance)
 	 * @param newInstance the new instance to add
+	 * @throws Exception if the instance could not be added
 	 */
-	public void addInstance( String parentInstancePath, Instance newInstance ) {
+	public void addInstance( String parentInstancePath, Instance newInstance ) throws Exception {
 
 		// Update the network exports
 		if( newInstance != null )
@@ -248,6 +249,9 @@ public class Agent implements IMessageProcessor {
 		// Root instance
 		if( parentInstancePath == null ) {
 			if( this.rootInstance == null ) {
+
+				// Initialize the plug-in(s)
+				PluginManager.initializePluginForInstance( newInstance, this.pluginManager.getExecutionLevel());
 
 				// Update the model
 				this.rootInstance = newInstance;
@@ -279,6 +283,9 @@ public class Agent implements IMessageProcessor {
 
 		// Child instance
 		else {
+			// Initialize the plug-in(s)
+			PluginManager.initializePluginForInstance( newInstance, this.pluginManager.getExecutionLevel());
+
 			// Update the model
 			Instance parentInstance = InstanceHelpers.findInstanceByPath( this.rootInstance, parentInstancePath );
 			if( parentInstance == null )
@@ -445,7 +452,13 @@ public class Agent implements IMessageProcessor {
 		String parentInstancePath = msg.getParentInstancePath();
 
 		this.logger.fine( "Adding instance " + newInstance.getName() + " under " + parentInstancePath + "." );
-		addInstance( parentInstancePath, newInstance );
+		try {
+			addInstance( parentInstancePath, newInstance );
+
+		} catch( Exception e ) {
+			this.logger.severe( "The instance could not be added. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
