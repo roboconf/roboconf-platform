@@ -56,10 +56,10 @@ public interface IaasInterface {
 	 * @throws CommunicationToIaasException
 	 */
 	String createVM(
+			String machineImageId,
 			String ipMessagingServer,
 			String channelName,
-			String applicationName,
-			String rootInstanceName )
+			String applicationName)
 	throws IaasException, CommunicationToIaasException;
 
 

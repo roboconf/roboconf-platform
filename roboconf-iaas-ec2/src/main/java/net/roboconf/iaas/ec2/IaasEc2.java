@@ -96,10 +96,10 @@ public class IaasEc2 implements IaasInterface {
 	 */
 	@Override
 	public String createVM(
+			String machineImageId,
 			String ipMessagingServer,
 			String channelName,
-			String applicationName,
-			String rootInstanceName )
+			String applicationName)
 	throws IaasException, CommunicationToIaasException {
 
 		String instanceId = null;
@@ -107,7 +107,7 @@ public class IaasEc2 implements IaasInterface {
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode(
 					this.ec2Properties.getAmiVmNode(),
 					ipMessagingServer,
-					rootInstanceName,
+					channelName,
 					applicationName );
 
 			RunInstancesResult runInstanceResult = this.ec2.runInstances( runInstancesRequest );
@@ -117,7 +117,7 @@ public class IaasEc2 implements IaasInterface {
 			List<Tag> tags = new ArrayList<Tag>();
 			Tag t = new Tag();
 			t.setKey("Name");
-			t.setValue(applicationName + "." + rootInstanceName);
+			t.setValue(applicationName + "." + channelName);
 			tags.add(t);
 			CreateTagsRequest ctr = new CreateTagsRequest();
 			ctr.setTags(tags);
