@@ -94,7 +94,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		installPuppetModules( instance, instanceDirectory );
+		installPuppetModules(instance, instanceDirectory);
 	}
 
 
@@ -229,12 +229,18 @@ public class PluginPuppet implements PluginInterface {
 	 */
 	private void callPuppetScript( Instance instance, String step, PuppetState puppetState, File instanceDirectory )
 	throws IOException, InterruptedException {
+        if (step == null) {
+            final String msg = "Puppet manifest to apply can not be null for instance " + instance.getName();
+            this.logger.warning(msg);
+            return;
+        }
 
 		File modulesDirectory = new File( instanceDirectory, MODULES );
 		File manifestFile = new File( instanceDirectory, "manifests/" + step + ".pp" );
 		if( ! manifestFile.exists()
 				|| ! manifestFile.isFile()) {
             this.logger.warning("Puppet manifest " + manifestFile + " has not been found for instance " + instance.getName());
+            return;
         }
 
 		List<String> commands = new ArrayList<String> ();
