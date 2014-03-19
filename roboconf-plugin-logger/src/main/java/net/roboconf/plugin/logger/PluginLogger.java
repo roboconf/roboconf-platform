@@ -58,6 +58,12 @@ public class PluginLogger implements PluginInterface {
 
 
 	@Override
+	public void initialize( Instance instance ) throws Exception {
+		this.logger.fine( this.agentName + " is initializing the plug-in for " + instance.getName());
+	}
+
+
+	@Override
 	public void deploy( Instance instance ) throws Exception {
 		this.logger.info( this.agentName + " is deploying instance " + instance.getName());
 	}

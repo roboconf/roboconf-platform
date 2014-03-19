@@ -26,6 +26,17 @@ import net.roboconf.core.model.runtime.Instance;
 public interface PluginInterface {
 
 	/**
+	 * Initializes the plug-in for this instance.
+	 * <p>
+	 * As an example, in Puppet, this method install all the
+	 * modules that will be used by the manifest(s).
+	 * </p>
+	 *
+	 * @param instance
+	 */
+	void initialize( Instance instance ) throws Exception;
+
+	/**
 	 * Deploys an instance.
 	 * @param instance the instance to deploy
 	 */

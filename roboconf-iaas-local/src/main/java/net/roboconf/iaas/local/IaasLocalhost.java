@@ -16,17 +16,25 @@
 
 package net.roboconf.iaas.local;
 
+import java.io.File;
 import java.util.Map;
 
+import net.roboconf.agent.AgentData;
+import net.roboconf.agent.AgentLauncher;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
 import net.roboconf.iaas.api.exceptions.IaasException;
+import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
  * A IaaS emulation on the local host.
  * @author Pierre-Yves Gibello - Linagora
+ * @author Vincent Zurczak - Linagora
  */
 public class IaasLocalhost implements IaasInterface {
+
+	private AgentLauncher agentLauncher;
+
 
 	/*
 	 * (non-Javadoc)
@@ -51,9 +59,29 @@ public class IaasLocalhost implements IaasInterface {
 			String applicationName,
 			String rootInstanceName )
 	throws IaasException, CommunicationToIaasException {
-		// TBD startup script ?
-		System.out.println("IaaS localhost createVMNode");
-		return "localhost";
+
+		// Create the agent's data.
+		final AgentData agentData = new AgentData();
+		agentData.setApplicationName( applicationName );
+		agentData.setMessageServerIp( ipMessagingServer );
+		agentData.setIpAddress( "localhost" );
+		agentData.setRootInstanceName( rootInstanceName );
+
+		// Messaging subscriptions are handled automatically in a new thread (see *.messaging).
+		String agentName = rootInstanceName + " - In-Memory Agent";
+		this.agentLauncher = new AgentLauncher( agentName );
+
+		new Thread() {
+			@Override
+			public void run() {
+				IaasLocalhost.this.agentLauncher.launchAgent(
+						agentData,
+						ExecutionLevel.RUNNING,
+						new File( System.getProperty( "java.io.tmpdir" )));
+			};
+		}.start();
+
+		return rootInstanceName + " @ localhost";
 	}
 
 
@@ -63,8 +91,10 @@ public class IaasLocalhost implements IaasInterface {
 	 * #terminateVM(java.lang.String)
 	 */
 	@Override
-	public void terminateVM( String instanceId ) throws IaasException, CommunicationToIaasException {
-		// TBD shutdown script ?
-		System.out.println("IaaS localhost terminateVM");
+	public void terminateVM( String instanceId )
+	throws IaasException, CommunicationToIaasException {
+
+		if( this.agentLauncher != null )
+			this.agentLauncher.forceAgentToStop();
 	}
 }

@@ -42,12 +42,12 @@ public class PluginBash implements PluginInterface {
 
     private final Logger logger = Logger.getLogger( getClass().getName());
     private ExecutionLevel executionLevel;
-    private File dumpDirectory;
     private String agentName;
 
     private static String SCRIPTS_FOLDER_NAME = "scripts";
-
     private static String TEMPLATES_FOLDER_NAME = "templates";
+
+
 
     @Override
     public String getPluginName() {
@@ -63,7 +63,7 @@ public class PluginBash implements PluginInterface {
 
     @Override
     public void setDumpDirectory( File dumpDirectory ) {
-        this.dumpDirectory = dumpDirectory;
+        // nothing
     }
 
 
@@ -73,36 +73,63 @@ public class PluginBash implements PluginInterface {
     }
 
 
-    @Override
-    public void deploy( Instance instance ) throws Exception {
-        this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
-        prepareAndExecuteCommand( "setup", instance );
-    }
+	@Override
+	public void initialize( Instance instance ) throws Exception {
+		this.logger.fine( this.agentName + " is initializing the plug-in for " + instance.getName());
+	}
+
+
+	@Override
+	public void deploy( Instance instance ) throws Exception {
+
+		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
+		if( this.executionLevel == ExecutionLevel.LOG )
+			return;
+
+		prepareAndExecuteCommand( "deploy", instance );
+	}
 
 
     @Override
     public void start( Instance instance ) throws Exception {
+
         this.logger.fine( this.agentName + " is starting instance " + instance.getName());
+        if( this.executionLevel == ExecutionLevel.LOG )
+			return;
+
         prepareAndExecuteCommand( "start", instance );
     }
 
 
     @Override
     public void update( Instance instance ) throws Exception {
+
         this.logger.fine( this.agentName + " is updating instance " + instance.getName());
+        if( this.executionLevel == ExecutionLevel.LOG )
+			return;
+
         prepareAndExecuteCommand( "update", instance );
     }
 
 
     @Override
     public void stop( Instance instance ) throws Exception {
+
         this.logger.fine( this.agentName + " is stopping instance " + instance.getName());
+        if( this.executionLevel == ExecutionLevel.LOG )
+			return;
+
         prepareAndExecuteCommand( "stop", instance );
     }
 
 
     @Override
     public void undeploy( Instance instance ) throws Exception {
+
+    	this.logger.fine( this.agentName + " is undeploying instance " + instance.getName());
+    	if( this.executionLevel == ExecutionLevel.LOG )
+			return;
+
         prepareAndExecuteCommand( "undeploy", instance );
     }
 
@@ -131,9 +158,9 @@ public class PluginBash implements PluginInterface {
         }
     }
 
+
     /**
-     * Generate a file from the template and the instance
-     *
+     * Generates a file from the template and the instance.
      * @param template
      * @param instance
      * @return
@@ -141,6 +168,7 @@ public class PluginBash implements PluginInterface {
     protected File generateTemplate(File template, Instance instance) {
         return null;
     }
+
 
     protected void executeScript(File script, Instance instance) throws IOException, InterruptedException {
         String[] command = { "bash", script.getAbsolutePath()};
@@ -152,6 +180,7 @@ public class PluginBash implements PluginInterface {
         environmentVars.put("instanceName", instance.getName());
         ProgramUtils.executeCommand(this.logger, command, environmentVars);
     }
+
 
     private Map<String, String> formatExportedVars(Instance instance) {
         // The map we will return
