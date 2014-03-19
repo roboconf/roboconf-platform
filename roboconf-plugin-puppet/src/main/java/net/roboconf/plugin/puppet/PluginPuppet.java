@@ -106,7 +106,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, PuppetState.STOPPED, instanceDirectory );
+		callPuppetScript( instance, "deploy", PuppetState.STOPPED, instanceDirectory );
 	}
 
 
@@ -118,7 +118,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, PuppetState.RUNNING, instanceDirectory );
+		callPuppetScript( instance, "start", PuppetState.RUNNING, instanceDirectory );
 	}
 
 
@@ -130,7 +130,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, PuppetState.UNDEF, instanceDirectory );
+		callPuppetScript( instance, "update", PuppetState.UNDEF, instanceDirectory );
 	}
 
 
@@ -143,7 +143,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, PuppetState.STOPPED, instanceDirectory );
+		callPuppetScript( instance, "stop", PuppetState.STOPPED, instanceDirectory );
 	}
 
 
@@ -155,7 +155,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, PuppetState.UNDEF, instanceDirectory );
+		callPuppetScript( instance, "undeploy", PuppetState.UNDEF, instanceDirectory );
 	}
 
 
@@ -223,16 +223,19 @@ public class PluginPuppet implements PluginInterface {
 	/**
 	 * Invokes Puppet to inject variables into the instance's manifests.
 	 * @param instance the instance
-	 * @param serviceState a Puppet state
+     * @param step the running step
+	 * @param puppetState a Puppet state
+     * @param instanceDirectory where to find instance files
 	 */
-	private void callPuppetScript( Instance instance, PuppetState puppetState, File instanceDirectory )
+	private void callPuppetScript( Instance instance, String step, PuppetState puppetState, File instanceDirectory )
 	throws IOException, InterruptedException {
 
 		File modulesDirectory = new File( instanceDirectory, MODULES );
-		File manifestFile = new File( instanceDirectory, "manifests/init.pp" );
+		File manifestFile = new File( instanceDirectory, "manifests/" + step + ".pp" );
 		if( ! manifestFile.exists()
-				|| ! manifestFile.isFile())
-			throw new IOException( manifestFile.getAbsolutePath() + " does not exists or is not a file." );
+				|| ! manifestFile.isFile()) {
+            this.logger.warning("Puppet manifest " + manifestFile + " has not been found for instance " + instance.getName());
+        }
 
 		List<String> commands = new ArrayList<String> ();
 		commands.add( "puppet" );
