@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.api.template;
+package net.roboconf.plugin.api.internal.template;
 
 import java.util.ArrayList;
 import java.util.Collection;

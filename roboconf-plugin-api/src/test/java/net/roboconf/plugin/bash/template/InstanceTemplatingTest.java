@@ -16,10 +16,7 @@
 
 package net.roboconf.plugin.bash.template;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,9 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.plugin.api.template.ImportBean;
+import net.roboconf.plugin.api.internal.template.ImportBean;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 import org.junit.Assert;
@@ -45,7 +43,8 @@ import com.github.mustachejava.MustacheFactory;
 public class InstanceTemplatingTest {
 
 	@Test
-	public void testImportTemplate() throws IOException {
+	public void testImportTemplate() throws Exception {
+
 		Map<String, String> vars = new HashMap<String, String>();
 		vars.put("name1", "val1");
 		vars.put("name2", "val2");
@@ -53,7 +52,8 @@ public class InstanceTemplatingTest {
 		Import impt = new Import("/", vars);
 
 		MustacheFactory mf = new DefaultMustacheFactory();
-	    Mustache mustache = mf.compile("importTemplate.mustache");
+		File templateFile = TestUtils.findTestFile( "/importTemplate.mustache" );
+	    Mustache mustache = mf.compile( templateFile.getAbsolutePath());
 	    StringWriter writer = new StringWriter();
 	    mustache.execute(writer, new ImportBean(impt)).flush();
 
@@ -64,7 +64,8 @@ public class InstanceTemplatingTest {
 	}
 
 	@Test
-	public void testInstanceTemplate() throws IOException {
+	public void testInstanceTemplate() throws Exception {
+
 		Map<String, String> vars = new HashMap<String, String>();
 		vars.put("name1", "val1");
 		vars.put("name2", "val2");
@@ -83,9 +84,9 @@ public class InstanceTemplatingTest {
 		instance.updateImports(importsByPrefix);
 
 		//First test templating into a String
-		String template = "instanceTemplate.mustache";
+		File templateFile = TestUtils.findTestFile( "/instanceTemplate.mustache" );
 		StringWriter writer = new StringWriter();
-		InstanceTemplateHelper.injectInstanceImports(instance, template, writer);
+		InstanceTemplateHelper.injectInstanceImports(instance, templateFile, writer);
 
 	    String writtenString = writer.toString();
 	    for(String prefix : importsByPrefix.keySet()) {
@@ -97,27 +98,8 @@ public class InstanceTemplatingTest {
 
 	    //Test templating into a new file
 	    File generated = File.createTempFile(instance.getName(), ".pipo");
-        InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
+        InstanceTemplateHelper.injectInstanceImports(instance, templateFile, generated);
         Assert.assertTrue(generated.exists() && generated.isFile());
-        Assert.assertEquals(readFile(generated.getAbsolutePath()), writtenString);
-	}
-
-
-
-	private String readFile(String fileName) throws IOException {
-	    BufferedReader br = new BufferedReader(new FileReader(fileName));
-	    try {
-	        StringBuilder sb = new StringBuilder();
-	        String line = br.readLine();
-
-	        while (line != null) {
-	            sb.append(line);
-	            sb.append("\n");
-	            line = br.readLine();
-	        }
-	        return sb.toString();
-	    } finally {
-	        br.close();
-	    }
+        Assert.assertEquals( TestUtils.readFileContent( generated ), writtenString);
 	}
 }
