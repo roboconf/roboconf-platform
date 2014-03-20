@@ -113,6 +113,7 @@ public class Agent implements IMessageProcessor {
 	 * @param action an action
 	 * @param instancePath the instance's path
 	 * @param originalMessage the original message
+	 * FIXME: this method is a mess!
 	 */
 	public void performAction( ApplicationAction action, String instancePath, Message originalMessage ) {
 		Instance instance;
@@ -134,8 +135,18 @@ public class Agent implements IMessageProcessor {
 								instance, plugin.getPluginName(),
 								((MsgCmdInstanceDeploy) originalMessage).getFileNameToFileContent());
 
-						plugin.deploy( instance );
-						updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYED_STOPPED );
+						try {
+							PluginManager.initializePluginForInstance( instance, this.pluginManager.getExecutionLevel());
+							plugin.deploy( instance );
+							updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYED_STOPPED );
+
+						} catch( Exception e ) {
+							this.logger.severe( "An error occured while deploying " + instancePath );
+							this.logger.finest( Utils.writeException( e ));
+
+							updateAndNotifyNewStatus( instance, InstanceStatus.NOT_DEPLOYED );
+							deleteInstanceResources( instance, plugin.getPluginName());
+						}
 
 					} else {
 						this.logger.info(
@@ -250,9 +261,6 @@ public class Agent implements IMessageProcessor {
 		if( parentInstancePath == null ) {
 			if( this.rootInstance == null ) {
 
-				// Initialize the plug-in(s)
-				PluginManager.initializePluginForInstance( newInstance, this.pluginManager.getExecutionLevel());
-
 				// Update the model
 				this.rootInstance = newInstance;
 				this.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -284,9 +292,6 @@ public class Agent implements IMessageProcessor {
 
 		// Child instance
 		else {
-			// Initialize the plug-in(s)
-			PluginManager.initializePluginForInstance( newInstance, this.pluginManager.getExecutionLevel());
-
 			// Update the model
 			Instance parentInstance = InstanceHelpers.findInstanceByPath( this.rootInstance, parentInstancePath );
 			if( parentInstance == null )
@@ -585,8 +590,7 @@ public class Agent implements IMessageProcessor {
 			updateAndNotifyNewStatus( instance, InstanceStatus.UNDEPLOYING );
 
 			// Delete files
-			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, plugin.getPluginName());
-			Utils.deleteFilesRecursively( dir );
+			deleteInstanceResources( instance, plugin.getPluginName());
 
 			// Inform other agents this instance was removed
 			for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( instance )) {
@@ -696,5 +700,13 @@ public class Agent implements IMessageProcessor {
 			ByteArrayInputStream in = new ByteArrayInputStream( entry.getValue());
 			Utils.copyStream( in, f );
 		}
+	}
+
+
+	private void deleteInstanceResources( Instance instance, String pluginName )
+	throws IOException {
+
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, pluginName );
+		Utils.deleteFilesRecursively( dir );
 	}
 }

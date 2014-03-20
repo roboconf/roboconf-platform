@@ -43,6 +43,13 @@ import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 /**
  * The plug-in executes a Puppet manifests.
  * <p>
+ * WARNING: when this plug-in is used on a local IaaS / host,
+ * only the initialization will work. Other actions that require root
+ * permissions will fail. They may work on a real IaaS because the agent
+ * (which runs this plug-in) must be started with an "init.d" script. Thus,
+ * it automatically inherits root permissions.
+ * </p>
+ * <p>
  * Modules will be installed automatically during the initialization.
  * Although there can be several manifests into the "manifests" directory,
  * only "init.pp" will be used. Other should be referenced through includes.
@@ -73,8 +80,7 @@ import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 public class PluginPuppet implements PluginInterface {
 
 	private static final String MANIFESTS_FOLDER = "manifests";
-	private static final String TEMPLATES_FOLDER = "roboconf-templates";
-	private static final String INIT_PP_FILE = MANIFESTS_FOLDER + "/init.pp";
+	private static final String TEMPLATES_FOLDER = "roboconf_templates";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ExecutionLevel executionLevel;
@@ -237,6 +243,7 @@ public class PluginPuppet implements PluginInterface {
      * @param action the name of the action to run
 	 * @param puppetState a Puppet state
      * @param instanceDirectory where to find instance files
+     * FIXME: split this method for testability
 	 */
 	private void callPuppetScript( Instance instance, String action, PuppetState puppetState, File instanceDirectory )
 	throws IOException, InterruptedException {
@@ -245,14 +252,20 @@ public class PluginPuppet implements PluginInterface {
         // Copy the action file into "init.pp"
 		this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance.getName());
 
-		final File scriptsFolder = new File( instanceDirectory, "roboconf_" + instance.getName() + MANIFESTS_FOLDER );
+		final File scriptsFolder = new File(
+				instanceDirectory,
+				"roboconf_" + instance.getName().toLowerCase() + "/" + MANIFESTS_FOLDER );
+
 		final File templatesFolder = new File( instanceDirectory, TEMPLATES_FOLDER );
-		final File initPpFile = new File( instanceDirectory, INIT_PP_FILE );
+		final File initPpFile = new File( scriptsFolder, "init.pp" );
+		if( ! initPpFile.getParentFile().exists()
+				&& ! initPpFile.getParentFile().mkdirs())
+			throw new IOException( "The Puppet plug-in could not create intermediate directories." );
 
 		File scriptFile = new File( scriptsFolder, action + ".pp" );
 		File template = new File( templatesFolder, action + ".pp.template" );
 		if( ! template.exists())
-			template = new File(templatesFolder, "default.pp.template");
+			template = new File( templatesFolder, "default.pp.template" );
 
 		if( scriptFile.exists()) {
 			Utils.copyStream( scriptFile, initPpFile );
@@ -302,9 +315,15 @@ public class PluginPuppet implements PluginInterface {
 	 */
 	String generateCodeToExecute( Instance instance, PuppetState puppetState ) {
 
+		// When executed by hand, the "apply" command would expect
+		// this string to be returned to be between double quotes.
+		// Example: "class{ 'roboconf_redis': ... }"
+
+		// However, this does not work when executed from a Process builder.
+		// The double quotes must be removed so that it works.
 		String className = "roboconf_" + instance.getComponent().getName().toLowerCase();
 		StringBuilder sb = new StringBuilder();
-		sb.append( "\"class{'" );
+		sb.append( "class{'" );
 		sb.append( className );
 		sb.append( "': runningState => " );
 		sb.append( puppetState.toString());
@@ -319,7 +338,7 @@ public class PluginPuppet implements PluginInterface {
 		if( ! Utils.isEmptyOrWhitespaces( importedTypes ))
 			sb.append( ", " + importedTypes );
 
-		sb.append("}\"");
+		sb.append("}");
 		return sb.toString();
 	}
 

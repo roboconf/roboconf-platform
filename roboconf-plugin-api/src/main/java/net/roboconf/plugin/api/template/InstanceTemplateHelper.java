@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.plugin.api.internal.template.InstanceBean;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -30,11 +31,9 @@ import com.github.mustachejava.MustacheFactory;
 /**
  * Provides methods for injecting Instance data into a template file.
  *
- * @author gcrosmarie  - Linagora
+ * @author gcrosmarie - Linagora
  */
 public class InstanceTemplateHelper {
-
-	private static MustacheFactory mf = new DefaultMustacheFactory();
 
 	/**
 	 * Reads the import values of the instances and injects them into the template file.
@@ -44,20 +43,26 @@ public class InstanceTemplateHelper {
 	 * @param writer
 	 * @throws IOException
 	 */
-	public static void injectInstanceImports(Instance instance, String templateFile, Writer writer) throws IOException {
-	    Mustache mustache = mf.compile(templateFile);
+	public static void injectInstanceImports(Instance instance, File templateFile, Writer writer)
+	throws IOException {
+
+		MustacheFactory mf = new DefaultMustacheFactory( templateFile.getParentFile());
+	    Mustache mustache = mf.compile( templateFile.getName());
 	    mustache.execute(writer, new InstanceBean(instance)).flush();
 	}
 
-	public static void injectInstanceImports(Instance instance, File templateFile, Writer writer) throws IOException {
-		injectInstanceImports(instance, templateFile.getAbsolutePath(), writer);
+	public static void injectInstanceImports(Instance instance, String templateFilePath, Writer writer)
+	throws IOException {
+		injectInstanceImports(instance, new File( templateFilePath ), writer);
 	}
 
-	public static void injectInstanceImports(Instance instance, String templateFile, File out) throws IOException {
+	public static void injectInstanceImports(Instance instance, String templateFile, File out)
+	throws IOException {
 		injectInstanceImports(instance, templateFile, new FileWriter(out));
 	}
 
-	public static void injectInstanceImports(Instance instance, File templateFile, File out) throws IOException {
+	public static void injectInstanceImports(Instance instance, File templateFile, File out)
+	throws IOException {
 		injectInstanceImports(instance, templateFile.getAbsolutePath(), out);
 	}
 }
