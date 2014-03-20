@@ -38,6 +38,7 @@ import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
+import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 /**
  * The plug-in executes a Puppet manifests.
@@ -70,6 +71,10 @@ import net.roboconf.plugin.api.PluginInterface;
  * @author Christophe Hamerling - Linagora
  */
 public class PluginPuppet implements PluginInterface {
+
+	private static final String MANIFESTS_FOLDER = "manifests";
+	private static final String TEMPLATES_FOLDER = "roboconf-templates";
+	private static final String INIT_PP_FILE = MANIFESTS_FOLDER + "/init.pp";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ExecutionLevel executionLevel;
@@ -149,7 +154,6 @@ public class PluginPuppet implements PluginInterface {
 	}
 
 
-
 	@Override
 	public void stop( Instance instance ) throws Exception {
 
@@ -199,7 +203,6 @@ public class PluginPuppet implements PluginInterface {
 		}
 
         File realInstanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(instance, getPluginName());
-
 		for( Map.Entry<Object,Object> entry : props.entrySet()) {
 
 			List<String> commands = new ArrayList<String> ();
@@ -231,22 +234,41 @@ public class PluginPuppet implements PluginInterface {
 	/**
 	 * Invokes Puppet to inject variables into the instance's manifests.
 	 * @param instance the instance
-     * @param step the running step
+     * @param action the name of the action to run
 	 * @param puppetState a Puppet state
      * @param instanceDirectory where to find instance files
 	 */
-	private void callPuppetScript( Instance instance, String step, PuppetState puppetState, File instanceDirectory )
+	private void callPuppetScript( Instance instance, String action, PuppetState puppetState, File instanceDirectory )
 	throws IOException, InterruptedException {
 
-        File originalScript = new File(instanceDirectory, "manifests/" + step + ".pp");
-        if( ! originalScript.exists()) {
-        	this.logger.info( "No Puppet script was provided for " + step + ". The plug-in does nothing." );
-        	return;
-        }
+		// Find the action to execute
+        // Copy the action file into "init.pp"
+		this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance.getName());
 
-        File manifestFile = new File( instanceDirectory, "manifests/init.pp" );
-        Utils.copyStream( originalScript, manifestFile );
+		final File scriptsFolder = new File( instanceDirectory, "roboconf_" + instance.getName() + MANIFESTS_FOLDER );
+		final File templatesFolder = new File( instanceDirectory, TEMPLATES_FOLDER );
+		final File initPpFile = new File( instanceDirectory, INIT_PP_FILE );
 
+		File scriptFile = new File( scriptsFolder, action + ".pp" );
+		File template = new File( templatesFolder, action + ".pp.template" );
+		if( ! template.exists())
+			template = new File(templatesFolder, "default.pp.template");
+
+		if( scriptFile.exists()) {
+			Utils.copyStream( scriptFile, initPpFile );
+
+		} else if( template.exists()) {
+			InstanceTemplateHelper.injectInstanceImports( instance, template, initPpFile );
+            if( initPpFile == null || ! initPpFile.exists())
+                throw new IOException("Not able to get the generated file from template for action " + action);
+
+		} else {
+			this.logger.info( "No Puppet script was provided for " + action + ". The plug-in does nothing." );
+			return;
+		}
+
+
+        // Prepare the command and execute it
 		List<String> commands = new ArrayList<String> ();
 		commands.add( "puppet" );
 		commands.add( "apply" );
@@ -267,7 +289,7 @@ public class PluginPuppet implements PluginInterface {
 
 		} finally {
 			// Delete the init.pp file
-			Utils.deleteFilesRecursively( manifestFile );
+			Utils.deleteFilesRecursively( initPpFile );
 		}
 	}
 

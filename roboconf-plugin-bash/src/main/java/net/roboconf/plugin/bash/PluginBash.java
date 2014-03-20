@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import net.roboconf.core.internal.utils.ProgramUtils;
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
@@ -61,7 +62,7 @@ public class PluginBash implements PluginInterface {
     private String agentName;
 
     private static String SCRIPTS_FOLDER_NAME = "scripts";
-    private static String TEMPLATES_FOLDER_NAME = "templates";
+    private static String TEMPLATES_FOLDER_NAME = "roboconf-templates";
 
 
 
@@ -152,7 +153,7 @@ public class PluginBash implements PluginInterface {
 
     private void prepareAndExecuteCommand(String action, Instance instance) throws Exception {
 
-        this.logger.info("Calling of bash " + action + " for instance " + instance.getName());
+        this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance.getName());
         File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 
         File scriptsFolder = new File(instanceDirectory, SCRIPTS_FOLDER_NAME);
@@ -172,9 +173,10 @@ public class PluginBash implements PluginInterface {
                 throw new IOException("Not able to get the generated file from template for action " + action);
 
             executeScript(generated, instance);
+            Utils.deleteFilesRecursively( generated );
 
         } else {
-            throw new IOException("Can not find a script or a template for action " + action);
+            this.logger.info("Can not find a script or a template for action " + action);
         }
     }
 
