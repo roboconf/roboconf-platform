@@ -659,15 +659,17 @@ public final class Manager {
 					// It does not mean the VM is already created, it may take stome time.
 					String machineId = instance.getData().get( Instance.MACHINE_ID );
 					if( machineId == null ) {
+						instance.setStatus( InstanceStatus.DEPLOYING );
 						IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
 						machineId = iaasInterface.createVM(
-								null, this.messageServerIp, instance.getName(),
+								null,
+								this.messageServerIp,
+								instance.getName(),
 								ma.getApplication().getName());
 
 						// FIXME: the channel name is skipped here
 						// As soon as we know what it is useful for, re-add it (it is in the instance)
 						instance.getData().put( Instance.MACHINE_ID, machineId );
-						instance.setStatus( InstanceStatus.DEPLOYING );
 					}
 
 				} catch( IaasException e ) {

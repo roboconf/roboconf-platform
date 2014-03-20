@@ -148,4 +148,15 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( "another value", map.get( "var1" ));
 		Assert.assertEquals( "value2", map.get( "var2" ));
 	}
+
+
+	@Test
+	public void testCountInstances() {
+
+		Assert.assertEquals( 0, InstanceHelpers.countInstances( "" ));
+		Assert.assertEquals( 0, InstanceHelpers.countInstances( "toto" ));
+		Assert.assertEquals( 1, InstanceHelpers.countInstances( "/root-instance" ));
+		Assert.assertEquals( 2, InstanceHelpers.countInstances( "/root-instance/apache" ));
+		Assert.assertEquals( 3, InstanceHelpers.countInstances( "/root-instance/apache/war" ));
+	}
 }

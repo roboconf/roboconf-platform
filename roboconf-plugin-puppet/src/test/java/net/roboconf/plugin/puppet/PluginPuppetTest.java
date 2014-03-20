@@ -17,6 +17,7 @@
 package net.roboconf.plugin.puppet;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -89,10 +90,14 @@ public class PluginPuppetTest {
 	@Test
 	public void testInstallPuppetModules_withVersion() throws Exception {
 
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
+		if( ! instanceDirectory.exists()
+				&& ! instanceDirectory.mkdirs())
+			throw new IOException( "Failed to create the instance's directory." );
+
 		File propFile = TestUtils.findTestFile( "/with-version/modules.properties" );
 		this.plugin.installPuppetModules( this.instance, propFile.getParentFile());
 
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
 		File[] subFiles = instanceDirectory.listFiles();
 
 		Assert.assertNotNull( subFiles );
@@ -104,10 +109,14 @@ public class PluginPuppetTest {
 	@Test
 	public void testInstallPuppetModules_withoutVersion() throws Exception {
 
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
+		if( ! instanceDirectory.exists()
+				&& ! instanceDirectory.mkdirs())
+			throw new IOException( "Failed to create the instance's directory." );
+
 		File propFile = TestUtils.findTestFile( "/without-version/modules.properties" );
 		this.plugin.installPuppetModules( this.instance, propFile.getParentFile());
 
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
 		File[] subFiles = instanceDirectory.listFiles();
 
 		Assert.assertNotNull( subFiles );

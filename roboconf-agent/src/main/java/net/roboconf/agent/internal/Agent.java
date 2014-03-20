@@ -119,14 +119,26 @@ public class Agent implements IMessageProcessor {
 		Instance instance;
 		PluginInterface plugin;
 
-		if( this.rootInstance == null ) {
-			this.logger.info( "The agent's model has not yet been initialized. Request " + originalMessage.getClass().getSimpleName() + " is dropped." );
+		try {
+			if( this.rootInstance == null ) {
 
-		} else if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, instancePath )) == null ) {
-			this.logger.severe( "Instance " + instancePath + " was not found on this agent." );
+				// Incomplete model but request to undeploy the root?
+				// Stop everything and indicate to the DM it can delete the VM.
+				if( action == ApplicationAction.undeploy
+						&& InstanceHelpers.countInstances( instancePath ) == 1 ) {
 
-		} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) != null ) {
-			try {
+					MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( this.rootInstance.getName());
+					this.messagingService.publish( true, MessagingUtils.buildRoutingKeyToDm(), msg );
+					this.messagingService.stopHeartBeatTimer();
+
+				} else {
+					this.logger.info( "The agent's model has not yet been initialized. Request " + originalMessage.getClass().getSimpleName() + " is dropped." );
+				}
+
+			} else if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, instancePath )) == null ) {
+				this.logger.severe( "Instance " + instancePath + " was not found on this agent." );
+
+			} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) != null ) {
 				switch( action ) {
 				case deploy:
 					if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
@@ -224,11 +236,11 @@ public class Agent implements IMessageProcessor {
 				default:
 					break;
 				}
-
-			} catch( Exception e ) {
-				this.logger.severe( e.getMessage());
-				this.logger.finest( Utils.writeException( e ));
 			}
+
+		} catch( Exception e ) {
+			this.logger.severe( e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
