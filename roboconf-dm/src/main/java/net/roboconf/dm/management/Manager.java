@@ -472,7 +472,7 @@ public final class Manager {
 			} else {
 				this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted." );
 				IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
-				String machineId = rootInstance.getData().get( Instance.MACHINE_ID );
+				String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
 				iaasInterface.terminateVM( machineId );
 
 				this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted." );
@@ -653,14 +653,21 @@ public final class Manager {
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
 				try {
-					IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
-					String machineId = iaasInterface.createVM(
-							null, this.messageServerIp, instance.getName(),
-							ma.getApplication().getName());
 
-					// FIXME: the channel name is skipped here
-					// As soon as we know what it is useful for, re-add it (it is in the instance)
-					instance.getData().put( Instance.MACHINE_ID, machineId );
+					// If the VM creation was already requested...
+					// ... then its machine ID has already been set.
+					// It does not mean the VM is already created, it may take stome time.
+					String machineId = instance.getData().get( Instance.MACHINE_ID );
+					if( machineId == null ) {
+						IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
+						machineId = iaasInterface.createVM(
+								null, this.messageServerIp, instance.getName(),
+								ma.getApplication().getName());
+
+						// FIXME: the channel name is skipped here
+						// As soon as we know what it is useful for, re-add it (it is in the instance)
+						instance.getData().put( Instance.MACHINE_ID, machineId );
+					}
 
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
