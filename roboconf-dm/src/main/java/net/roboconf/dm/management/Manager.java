@@ -667,6 +667,7 @@ public final class Manager {
 						// FIXME: the channel name is skipped here
 						// As soon as we know what it is useful for, re-add it (it is in the instance)
 						instance.getData().put( Instance.MACHINE_ID, machineId );
+						instance.setStatus( InstanceStatus.DEPLOYING );
 					}
 
 				} catch( IaasException e ) {

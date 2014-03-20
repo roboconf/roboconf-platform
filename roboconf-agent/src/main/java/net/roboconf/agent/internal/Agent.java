@@ -263,7 +263,7 @@ public class Agent implements IMessageProcessor {
 
 				// Update the model
 				this.rootInstance = newInstance;
-				this.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+				updateAndNotifyNewStatus( newInstance, InstanceStatus.DEPLOYED_STARTED );
 
 				// Start listening
 				try {
