@@ -96,7 +96,6 @@ public class Agent implements IMessageProcessor {
 	 */
 	public void setAgentData( AgentData agentData ) {
 		this.agentData = agentData;
-		AgentUtils.configureLogger(this.logger, agentData.getRootInstanceName());
 	}
 
 
