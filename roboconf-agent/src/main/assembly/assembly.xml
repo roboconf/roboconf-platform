@@ -17,7 +17,7 @@
 		</file>
 		
 		<file>
-			<source>src/main/assembly/loggers.properties</source>
+			<source>src/main/assembly/logging.properties</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
 	</files>
