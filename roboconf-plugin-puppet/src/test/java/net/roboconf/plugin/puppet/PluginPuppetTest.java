@@ -238,7 +238,7 @@ public class PluginPuppetTest {
 		String expectedPrefix = "class{'roboconf_test-component': runningState => ";
 
 		for( PuppetState state : PuppetState.values()) {
-			String s = this.plugin.generateCodeToExecute( instance, state );
+			String s = this.plugin.generateCodeToExecute( "roboconf_test-component", instance, state );
 			Assert.assertTrue( state.toString(), s.startsWith( expectedPrefix + state.toString()));
 		}
 
