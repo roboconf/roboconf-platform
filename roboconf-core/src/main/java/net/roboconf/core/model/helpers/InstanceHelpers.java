@@ -330,4 +330,14 @@ public final class InstanceHelpers {
 		path = path.substring( 1 ).replace( '/', '_' ).replace( ' ', '_' );
 		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + pluginName + "/" + path );
 	}
+
+
+	/**
+	 * Count the number of instance names into a given path.
+	 * @param instancePath an instance path (not null)
+	 * @return an integer
+	 */
+	public static int countInstances( String instancePath ) {
+		return instancePath.split( "/" ).length - 1;
+	}
 }

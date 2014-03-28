@@ -8,16 +8,27 @@
 	<formats>
 		<format>zip</format>
 	</formats>
+	
+	<files>
+		<file>
+			<fileMode>0755</fileMode>
+			<source>src/main/assembly/start.sh</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		
+		<file>
+			<source>src/main/assembly/logging.properties</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+	</files>
 
 	<fileSets>
 		<fileSet>
-			<directory>src/main/assembly</directory>
-			<outputDirectory>/</outputDirectory>
-			<includes>
-				<include>start.sh</include>
-			</includes>
+			<directory>./</directory>
+			<outputDirectory>/logs</outputDirectory>
+			<excludes><exclude>*/**</exclude></excludes>
 		</fileSet>
-    </fileSets>
+	</fileSets>
 
 	<dependencySets>
 		<dependencySet>

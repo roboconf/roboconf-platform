@@ -71,7 +71,6 @@ public final class MessagingService {
 		this.agent = new Agent( agentName, pluginManager );
 		this.agent.setMessagingService( this );
 		this.agent.setAgentData( agentData );
-		AgentUtils.configureLogger(logger, agentData.getRootInstanceName());
 
 		this.client = new MessageServerClientFactory().create();
 		this.client.setMessageServerIp( agentData.getMessageServerIp());
@@ -159,8 +158,8 @@ public final class MessagingService {
 			MessagingService.this.logger.severe( e.getMessage());
 			MessagingService.this.logger.finest( Utils.writeException( e ));
 		}
-		
-		logger.info( "Agent is stopping now." );
+
+		this.logger.info( "Agent is stopping now." );
 	}
 
 

@@ -25,12 +25,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Properties;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Handler;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.core.internal.utils.Utils;
@@ -45,29 +40,7 @@ public final class AgentUtils {
 	private static final String PROPERTY_MESSAGE_SERVER_IP = "ipMessagingServer";
 	private static final String PROPERTY_ROOT_INSTANCE_NAME = "channelName";
 
-	public static void configureLogger( Logger logger, String rootInstanceName ) {
 
-        logger.setLevel(Level.ALL);
-        Handler consoleHandler = new ConsoleHandler();
-        consoleHandler.setLevel(Level.ALL);
-        consoleHandler.setFormatter(new SimpleFormatter());
-        logger.addHandler(consoleHandler);
-        Handler fileHandler;
-        try {
-            File file = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent_" + rootInstanceName + ".log" );
-            file.createNewFile();
-            fileHandler = new FileHandler( file.getAbsolutePath());
-            fileHandler.setLevel(Level.ALL);
-            fileHandler.setFormatter(new SimpleFormatter());
-            logger.addHandler(fileHandler);
-
-        } catch (SecurityException e) {
-            logger.severe( "Security exception: " + e.getMessage());
-
-        } catch (IOException e) {
-            logger.severe( "IO exception: " + e.getMessage());
-        }
-    }
 
 	/**
 	 * Private empty constructor.
