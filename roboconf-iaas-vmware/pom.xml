@@ -77,8 +77,4 @@
 		</plugins>
 	</build>
 
-	<!--
-	<scm> <connection>scm:svn:https://svn.petalslink.org/svnroot/trunk/product/dev/prod/petals</connection> 
-	<developerConnection>${project.scm.connection}</developerConnection> </scm>
-	-->
 </project>

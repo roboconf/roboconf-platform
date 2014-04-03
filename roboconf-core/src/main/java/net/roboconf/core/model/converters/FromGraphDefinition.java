@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.Set;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
+import net.roboconf.core.internal.model.converters.BlockFacetComparator;
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
 import net.roboconf.core.internal.utils.ModelUtils;
 import net.roboconf.core.model.ModelError;
@@ -328,9 +330,14 @@ public class FromGraphDefinition {
 			c.getFacetNames().addAll( additionalComponentFacets );
 			for( String facetName : c.getFacetNames()) {
 				List<BlockFacet> facets = this.facetNameToRelationFacets.get( facetName );
-				if( facets == null )
+				if( facets == null
+						|| facets.isEmpty())
 					continue;
 
+				// Sort facets by name and pick up the first one
+				Collections.sort( facets, new BlockFacetComparator());
+
+				// Process the facet
 				BlockFacet facet = facets.get( 0 );
 				c.getExportedVariables().putAll( ModelUtils.getExportedVariables( facet ));
 
