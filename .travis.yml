@@ -6,11 +6,9 @@ jdk:
   - openjdk6
   - openjdk7
 
-# Install a recent RabbitMq server
-before_install:
-  - sudo add-apt-repository "deb http://www.rabbitmq.com/debian/ testing main"
-  - sudo apt-get update
-  - sudo apt-get install rabbitmq-server
+# Make sure there is a RabbitMq server
+services:
+  - rabbitmq
 
 # Build with Maven  
 script:
