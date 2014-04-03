@@ -1,6 +1,17 @@
 language: java
 
+# Test several JDK
 jdk:
-        - oraclejdk7
-        - openjdk6
-        - openjdk7
+  - oraclejdk7
+  - openjdk6
+  - openjdk7
+
+# Install a recent RabbitMq server
+before_install:
+  - sudo add-apt-repository "deb http://www.rabbitmq.com/debian/ testing main"
+  - sudo apt-get update
+  - sudo apt-get install rabbitmq-server
+
+# Notify Coveralls
+after_success:
+  - mvn clean cobertura:cobertura coveralls:cobertura -P cobertura, coveralls
