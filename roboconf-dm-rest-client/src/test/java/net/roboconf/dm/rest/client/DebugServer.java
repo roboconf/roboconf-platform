@@ -51,9 +51,9 @@ public class DebugServer extends JerseyTest {
 		// Comment or un-comment if necessary.
 		Manager.INSTANCE.cleanUpAll();
 
-//		Manager.INSTANCE.tryToChangeMessageServerIp("ec2-54-72-90-105.eu-west-1.compute.amazonaws.com");
-//		Manager.INSTANCE.loadNewApplication( new File( "/home/gibello/OpenPAAS/roboconf.OLD/core/TEST/appdir/WallTest" ));
-
+		Manager.INSTANCE.tryToChangeMessageServerIp("ec2-54-72-78-37.eu-west-1.compute.amazonaws.com");
+		//Manager.INSTANCE.loadNewApplication( new File( "/home/gibello/OpenPAAS/use-cases/WallTest" ));
+		Manager.INSTANCE.loadNewApplication( new File( "/home/gibello/OpenPAAS/use-cases/apache-tomcat-webapp" ));
 
 //		Manager.INSTANCE.getAppNameToManagedApplication().clear();
 //		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
