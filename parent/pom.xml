@@ -77,6 +77,7 @@
 		</dependencies>
 	</dependencyManagement>
 	
+	<!-- This is applied to all the sub-modules that have this POM as parent -->
 	<build>
 		<defaultGoal>install</defaultGoal>
 		<pluginManagement>
@@ -104,29 +105,11 @@
 				
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
-	        		<artifactId>maven-enforcer-plugin</artifactId>
-	        		<version>1.1.1</version>
-	        		<configuration>
-						<fail>true</fail>
-	              		<rules><DependencyConvergence /></rules>
-					</configuration>
-				</plugin>
-				
-				<plugin>
-					<groupId>org.eluder.coveralls</groupId>
-					<artifactId>coveralls-maven-plugin</artifactId>
-					<version>2.2.0</version>
-				</plugin>
-					
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>cobertura-maven-plugin</artifactId>
-					<version>2.6</version>
-						
+					<artifactId>maven-enforcer-plugin</artifactId>
+					<version>1.1.1</version>
 					<configuration>
-						<format>xml</format>
-						<maxmem>256m</maxmem>
-						<aggregate>true</aggregate>
+						<fail>true</fail>
+						<rules><DependencyConvergence /></rules>
 					</configuration>
 				</plugin>
 			</plugins>
