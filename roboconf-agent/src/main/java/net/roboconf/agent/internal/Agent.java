@@ -141,6 +141,8 @@ public class Agent implements IMessageProcessor {
 				switch( action ) {
 				case deploy:
 					if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
+						deleteInstanceResources( instance, plugin.getPluginName()); // Cleanup eventual previous install of instance
+						
 						updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYING );
 						copyInstanceResources(
 								instance, plugin.getPluginName(),
@@ -156,7 +158,6 @@ public class Agent implements IMessageProcessor {
 							this.logger.finest( Utils.writeException( e ));
 
 							updateAndNotifyNewStatus( instance, InstanceStatus.NOT_DEPLOYED );
-							deleteInstanceResources( instance, plugin.getPluginName());
 						}
 
 					} else {
@@ -600,9 +601,6 @@ public class Agent implements IMessageProcessor {
 			// Update the statuses
 			updateAndNotifyNewStatus( instance, InstanceStatus.UNDEPLOYING );
 
-			// Delete files
-			deleteInstanceResources( instance, plugin.getPluginName());
-
 			// Inform other agents this instance was removed
 			for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( instance )) {
 				MsgCmdImportRemove msg = new MsgCmdImportRemove(
@@ -615,6 +613,11 @@ public class Agent implements IMessageProcessor {
 		// Undeploy the initial instance - if it makes sense!
 		if( instance.getParent() != null )
 			plugin.undeploy( instance );
+
+		// Delete files for undeployed instances
+		for( Instance i : instancesToStop ) {
+			deleteInstanceResources( instance, plugin.getPluginName());
+		}
 
 		// Update the status of all the instances
 		for( Instance i : instancesToStop )

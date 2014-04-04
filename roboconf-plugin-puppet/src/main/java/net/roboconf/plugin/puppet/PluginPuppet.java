@@ -79,7 +79,7 @@ import net.roboconf.plugin.api.PluginInterface;
  */
 public class PluginPuppet implements PluginInterface {
 
-	//private static final String MANIFESTS_FOLDER = "manifests";
+	private static final String MANIFESTS_FOLDER = "manifests";
 	//private static final String TEMPLATES_FOLDER = "roboconf_templates";
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
@@ -261,11 +261,11 @@ public class PluginPuppet implements PluginInterface {
 
 		if(moduleDirectory != null) {
 			String clazz = moduleDirectory.getName() + "::" + action;
-			File scriptFile = new File(moduleDirectory, action + ".pp");
+			File scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/" + action + ".pp");
 			
 			if(! scriptFile.exists()) {
 				clazz = moduleDirectory.getName();
-				scriptFile = new File(moduleDirectory, "init.pp");
+				scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/init.pp");
 			}
 
 			if(scriptFile.exists()) {
@@ -288,61 +288,6 @@ public class PluginPuppet implements PluginInterface {
 				}
 			}
 		}
-
-		/*
-		final File scriptsFolder = new File(
-				instanceDirectory,
-				"roboconf_" + instance.getName().toLowerCase() + "/" + MANIFESTS_FOLDER );
-
-		final File templatesFolder = new File( instanceDirectory, TEMPLATES_FOLDER );
-		final File initPpFile = new File( scriptsFolder, "init.pp" );
-		if( ! initPpFile.getParentFile().exists()
-				&& ! initPpFile.getParentFile().mkdirs())
-			throw new IOException( "The Puppet plug-in could not create intermediate directories." );
-
-		File scriptFile = new File( scriptsFolder, action + ".pp" );
-		File template = new File( templatesFolder, action + ".pp.template" );
-		if( ! template.exists())
-			template = new File( templatesFolder, "default.pp.template" );
-
-		if( scriptFile.exists()) {
-			Utils.copyStream( scriptFile, initPpFile );
-
-		} else if( template.exists()) {
-			InstanceTemplateHelper.injectInstanceImports( instance, template, initPpFile );
-            if( initPpFile == null || ! initPpFile.exists())
-                throw new IOException("Not able to get the generated file from template for action " + action);
-
-		} else {
-			this.logger.info( "No Puppet script was provided for " + action + ". The plug-in does nothing." );
-			return;
-		}
-
-
-        // Prepare the command and execute it
-		List<String> commands = new ArrayList<String> ();
-		commands.add( "puppet" );
-		commands.add( "apply" );
-		commands.add( "--verbose" );
-		commands.add( "--modulepath" );
-		commands.add( instanceDirectory.getAbsolutePath());
-		commands.add( "--execute" );
-		commands.add( generateCodeToExecute(instance, puppetState));
-
-		try {
-			if( this.executionLevel == ExecutionLevel.LOG ) {
-				String[] params = commands.toArray( new String[ 0 ]);
-				this.logger.info( "Module installation: " + Arrays.toString( params ));
-
-			} else {
-				ProgramUtils.executeCommand( this.logger, commands, null );
-			}
-
-		} finally {
-			// Delete the init.pp file
-			Utils.deleteFilesRecursively( initPpFile );
-		}
-		*/
 	}
 
 
@@ -413,7 +358,7 @@ public class PluginPuppet implements PluginInterface {
 				sb.append(", ");
 
 			String vname = VariableHelpers.parseVariableName( entry.getKey()).getValue();
-			sb.append( vname );
+			sb.append( vname.toLowerCase() );
 			sb.append( " => " );
 			if( Utils.isEmptyOrWhitespaces( entry.getValue()))
 				sb.append( "undef" );
@@ -447,7 +392,7 @@ public class PluginPuppet implements PluginInterface {
 
 			// Declare the first ImportedVar,
 			// Eg: "$workers = ..."
-			sb.append( facetOrComponentName );
+			sb.append( facetOrComponentName.toLowerCase() );
 			sb.append( " => " );
 
 			Collection<Import> imports = instance.getImports().get( facetOrComponentName );
