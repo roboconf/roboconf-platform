@@ -599,13 +599,13 @@ public class Agent implements IMessageProcessor {
 				continue;
 
 			// Update the statuses
-			updateAndNotifyNewStatus( instance, InstanceStatus.UNDEPLOYING );
+			updateAndNotifyNewStatus( i, InstanceStatus.UNDEPLOYING );
 
 			// Inform other agents this instance was removed
-			for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( instance )) {
+			for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( i )) {
 				MsgCmdImportRemove msg = new MsgCmdImportRemove(
 						facetOrComponentName,
-						InstanceHelpers.computeInstancePath( instance ));
+						InstanceHelpers.computeInstancePath( i ));
 				this.messagingService.publishExportOrImport( facetOrComponentName, msg, MessagingService.THOSE_THAT_EXPORT );
 			}
 		}
@@ -614,14 +614,12 @@ public class Agent implements IMessageProcessor {
 		if( instance.getParent() != null )
 			plugin.undeploy( instance );
 
-		// Delete files for undeployed instances
-		for( Instance i : instancesToStop ) {
-			deleteInstanceResources( instance, plugin.getPluginName());
-		}
-
 		// Update the status of all the instances
-		for( Instance i : instancesToStop )
+		for( Instance i : instancesToStop ) {
+			// Delete files for undeployed instances
+			deleteInstanceResources( i, plugin.getPluginName());
 			updateAndNotifyNewStatus( i, InstanceStatus.NOT_DEPLOYED );
+		}
 
 		// If the instance is a root instance, signal to the DM it is ready to be deleted
 		if( instance.equals( this.rootInstance )) {
