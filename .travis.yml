@@ -16,4 +16,4 @@ script:
 
 # Notify Coveralls
 after_success:
-  - mvn clean cobertura:cobertura coveralls:cobertura -P cobertura, coveralls
+  - mvn clean cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura
