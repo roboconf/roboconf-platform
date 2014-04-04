@@ -63,7 +63,7 @@ public class PluginBash implements PluginInterface {
 
     private static String SCRIPTS_FOLDER_NAME = "scripts";
     private static String TEMPLATES_FOLDER_NAME = "roboconf-templates";
-
+    private static String FILES_FOLDER_NAME = "files";
 
 
     @Override
@@ -165,14 +165,14 @@ public class PluginBash implements PluginInterface {
         	template = new File(templatesFolder, "default.sh.template");
 
         if (script.exists()) {
-            executeScript(script, instance);
+            executeScript(script, instance, instanceDirectory.getAbsolutePath());
 
         } else if (template.exists()) {
             File generated = generateTemplate(template, instance);
             if (generated == null || !generated.exists())
                 throw new IOException("Not able to get the generated file from template for action " + action);
 
-            executeScript(generated, instance);
+            executeScript(generated, instance, instanceDirectory.getAbsolutePath());
             Utils.deleteFilesRecursively( generated );
 
         } else {
@@ -195,14 +195,17 @@ public class PluginBash implements PluginInterface {
     }
 
 
-    protected void executeScript(File script, Instance instance) throws IOException, InterruptedException {
+    protected void executeScript(File script, Instance instance, String instanceDir) throws IOException, InterruptedException {
         String[] command = { "bash", script.getAbsolutePath()};
         Map<String, String> environmentVars = new HashMap<String, String>();
         Map<String, String> vars = formatExportedVars(instance);
         environmentVars.putAll(vars);
         Map<String, String> importedVars = formatImportedVars(instance);
         environmentVars.putAll(importedVars);
-        environmentVars.put("instanceName", instance.getName());
+        environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
+        environmentVars.put("ROBOCONF_FILES_DIR",
+        		instanceDir + (instanceDir.endsWith(File.separator) ? "" : File.separator)
+        		+ FILES_FOLDER_NAME);
         ProgramUtils.executeCommand(this.logger, command, environmentVars);
     }
 

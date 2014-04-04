@@ -67,7 +67,7 @@ public class AgentLauncher {
 			if( this.agentName != null )
 				finalAgentName = this.agentName;
 			else
-				finalAgentName = "Roboconf Agent - " + InetAddress.getLocalHost().getHostName();
+				finalAgentName = "Roboconf Agent -" + InetAddress.getLocalHost().getHostName();
 
 		} catch( UnknownHostException e ) {
 			logger.warning( "Network information could not be retrieved. Setting the agent name to default." );
