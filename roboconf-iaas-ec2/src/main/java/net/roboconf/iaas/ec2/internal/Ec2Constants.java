@@ -40,20 +40,20 @@ public interface Ec2Constants {
 	/**
 	 * The ID of the image to instantiate for new VMs.
 	 */
-	String AMI_VM_NODE = "ami.vm.node";
+	String AMI_VM_NODE = "ec2.ami";
 
 	/**
 	 * The kind of instance to create (<i>flavour</i>).
 	 */
-	String VM_INSTANCE_TYPE = "vm.instance.type";
+	String VM_INSTANCE_TYPE = "ec2.instance.type";
 
 	/**
 	 * The SSH key name.
 	 */
-	String SSH_KEY_NAME = "ssh.key.name";
+	String SSH_KEY_NAME = "ec2.ssh.key";
 
 	/**
 	 * The name of the security group for new VMs.
 	 */
-	String SECURITY_GROUP_NAME = "security.group.name";
+	String SECURITY_GROUP_NAME = "ec2.security.group";
 }
