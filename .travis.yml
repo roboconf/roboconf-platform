@@ -1,6 +1,19 @@
 language: java
 
+# Test several JDK
 jdk:
-        - oraclejdk7
-        - openjdk6
-        - openjdk7
+  - oraclejdk7
+  - openjdk6
+  - openjdk7
+
+# Make sure there is a RabbitMq server
+services:
+  - rabbitmq
+
+# Build with Maven  
+script:
+  - mvn clean install
+
+# Notify Coveralls
+after_success:
+  - mvn clean cobertura:cobertura coveralls:cobertura -P cobertura, coveralls

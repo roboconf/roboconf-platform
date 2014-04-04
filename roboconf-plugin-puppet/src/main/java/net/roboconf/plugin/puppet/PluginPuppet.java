@@ -440,5 +440,5 @@ public class PluginPuppet implements PluginInterface {
 		public String toString() {
 			return super.toString().toLowerCase();
 		};
-	}
+	}	
 }
