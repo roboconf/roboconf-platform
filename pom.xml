@@ -58,7 +58,10 @@
 		<module>roboconf-agent</module>
 	</modules>
 	
-	<!-- This is applied to all the project -->
+	<!-- 
+		Coveralls configuration must be located in the root POM.
+		And not in the parent POM.
+	 -->
 	<build>
 		<pluginManagement>
 			<plugins>
@@ -66,6 +69,11 @@
 					<groupId>org.eluder.coveralls</groupId>
 					<artifactId>coveralls-maven-plugin</artifactId>
 					<version>2.2.0</version>
+					
+					<configuration>
+						<coverallsFile>parent/target/coveralls.json</coverallsFile>
+						<coverageFile>parent/target/site/cobertura/coverage.xml</coverageFile>
+					</configuration>
 				</plugin>
 
 				<plugin>
