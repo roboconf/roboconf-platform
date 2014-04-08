@@ -83,6 +83,18 @@ public class MessageServerClientRabbitMqTest {
 			factory.setHost( MESSAGE_SERVER_IP );
 			connection = factory.newConnection();
 			channel = connection.createChannel();
+			
+			Object o = (Object) connection.getServerProperties().get( "version" );
+			String version = String.valueOf( o );
+			
+			// FIXME: find a better way so that we also run tests with 3.3, 3.4...
+			if( ! version.startsWith( "3.2" )) {
+				Logger logger = Logger.getLogger( getClass().getName());
+				logger.warning( "Tests are skipped because RabbitMQ must at least use a version 3.2.x." );
+				
+				this.running = false;
+				Assume.assumeNoException( new Exception( "fake one" ));
+			}
 
 		} catch( Exception e ) {
 			Logger logger = Logger.getLogger( getClass().getName());

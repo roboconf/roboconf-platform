@@ -11,6 +11,7 @@
 /.externalToolBuilders
 /target
 /maven-eclipse.xml
+/.settings
 
 #idea
 *.iml
