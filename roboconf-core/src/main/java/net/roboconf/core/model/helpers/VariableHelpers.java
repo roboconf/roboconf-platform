@@ -91,26 +91,6 @@ public final class VariableHelpers {
 
 
 	/**
-	 * Determines whether an instance imports a variable associated with a given component or facet.
-	 * @param instance the instance to check (not null)
-	 * @param componentOrFacetName a component or facet name
-	 * @return true if such a variable was found, false otherwise
-	 */
-	public static boolean instanceHasVariablesWithPrefix( Instance instance, String componentOrFacetName ) {
-
-		boolean result = false;
-		for( String importedVar : instance.getComponent().getImportedVariables().keySet()) {
-			if( importedVar.startsWith( componentOrFacetName + "." )) {
-				result = true;
-				break;
-			}
-		}
-
-		return result;
-	}
-
-
-	/**
 	 * Finds the component and facet names that prefix the variables of an instance.
 	 * @param instance an instance
 	 * @return a non-null set with all the component and facet names this instance exports
