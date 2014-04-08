@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
@@ -141,8 +142,10 @@ public class Agent implements IMessageProcessor {
 				switch( action ) {
 				case deploy:
 					if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
-						deleteInstanceResources( instance, plugin.getPluginName()); // Cleanup eventual previous install of instance
-						
+
+						// Clean up the potential remains of a previous installation
+						deleteInstanceResources( instance, plugin.getPluginName());
+
 						updateAndNotifyNewStatus( instance, InstanceStatus.DEPLOYING );
 						copyInstanceResources(
 								instance, plugin.getPluginName(),
@@ -384,7 +387,8 @@ public class Agent implements IMessageProcessor {
 			if( instance.getStatus() != InstanceStatus.DEPLOYED_STARTED )
 				continue;
 
-			if( ! VariableHelpers.instanceHasVariablesWithPrefix( instance, name ))
+			Set<String> exportPrefixes = VariableHelpers.findExportedVariablePrefixes( instance );
+			if( ! exportPrefixes.contains( name ))
 				continue;
 
 			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, instance.getName(), instance.getExports());
@@ -397,7 +401,9 @@ public class Agent implements IMessageProcessor {
 
 		// Go through all the instances to see which ones are impacted
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
-			if( ! VariableHelpers.instanceHasVariablesWithPrefix( instance, msg.getComponentOrFacetName()))
+
+			Set<String> importPrefixes = VariableHelpers.findImportedVariablePrefixes( instance );
+			if( ! importPrefixes.contains( msg.getComponentOrFacetName()))
 				continue;
 
 			// Is there an import to remove?
@@ -438,7 +444,8 @@ public class Agent implements IMessageProcessor {
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 
 			// This instance does not depends on it
-			if( ! VariableHelpers.instanceHasVariablesWithPrefix( instance, msg.getComponentOrFacetName()))
+			Set<String> importPrefixes = VariableHelpers.findImportedVariablePrefixes( instance );
+			if( ! importPrefixes.contains( msg.getComponentOrFacetName()))
 				continue;
 
 			// If an instance depends on its component, make sure it does not add itself to the imports.
