@@ -160,7 +160,7 @@ public final class MessageServerClientRabbitMq implements IMessageServerClient {
 		if( this.channel != null
 				&& this.channel.isOpen()) {
 			this.channel.basicCancel( this.consumerTag );
-			this.channel.queueDelete( this.queueName );
+			this.channel.queueDelete( this.queueName );			
 			this.channel.close();
 		}
 
