@@ -16,8 +16,6 @@
 
 package net.roboconf.dm.rest.client;
 
-import java.io.File;
-
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
 
@@ -50,10 +48,7 @@ public class DebugServer extends JerseyTest {
 		// Mock everything we can.
 		// Comment or un-comment if necessary.
 		Manager.INSTANCE.cleanUpAll();
-
-		Manager.INSTANCE.tryToChangeMessageServerIp("ec2-54-72-78-37.eu-west-1.compute.amazonaws.com");
-		//Manager.INSTANCE.loadNewApplication( new File( "/home/gibello/OpenPAAS/use-cases/WallTest" ));
-		Manager.INSTANCE.loadNewApplication( new File( "/home/gibello/OpenPAAS/use-cases/apache-tomcat-webapp" ));
+		// Manager.INSTANCE.loadNewApplication( new File( "/home/gibello/OpenPAAS/use-cases/apache-tomcat-webapp" ));
 
 //		Manager.INSTANCE.getAppNameToManagedApplication().clear();
 //		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());

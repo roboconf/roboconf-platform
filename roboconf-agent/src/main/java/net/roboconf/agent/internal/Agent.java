@@ -387,7 +387,7 @@ public class Agent implements IMessageProcessor {
 			if( instance.getStatus() != InstanceStatus.DEPLOYED_STARTED )
 				continue;
 
-			Set<String> exportPrefixes = VariableHelpers.findExportedVariablePrefixes( instance );
+			Set<String> exportPrefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
 			if( ! exportPrefixes.contains( name ))
 				continue;
 
@@ -402,7 +402,7 @@ public class Agent implements IMessageProcessor {
 		// Go through all the instances to see which ones are impacted
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 
-			Set<String> importPrefixes = VariableHelpers.findImportedVariablePrefixes( instance );
+			Set<String> importPrefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
 			if( ! importPrefixes.contains( msg.getComponentOrFacetName()))
 				continue;
 
@@ -444,7 +444,7 @@ public class Agent implements IMessageProcessor {
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 
 			// This instance does not depends on it
-			Set<String> importPrefixes = VariableHelpers.findImportedVariablePrefixes( instance );
+			Set<String> importPrefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
 			if( ! importPrefixes.contains( msg.getComponentOrFacetName()))
 				continue;
 
@@ -568,7 +568,7 @@ public class Agent implements IMessageProcessor {
 			updateAndNotifyNewStatus( instance, InstanceStatus.STOPPING );
 
 			// Inform other agents this instance was removed
-			for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( instance )) {
+			for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
 				MsgCmdImportRemove msg = new MsgCmdImportRemove(
 						facetOrComponentName,
 						InstanceHelpers.computeInstancePath( instance ));
@@ -609,7 +609,7 @@ public class Agent implements IMessageProcessor {
 			updateAndNotifyNewStatus( i, InstanceStatus.UNDEPLOYING );
 
 			// Inform other agents this instance was removed
-			for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( i )) {
+			for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( i )) {
 				MsgCmdImportRemove msg = new MsgCmdImportRemove(
 						facetOrComponentName,
 						InstanceHelpers.computeInstancePath( i ));
@@ -646,7 +646,7 @@ public class Agent implements IMessageProcessor {
 
 		// Do we have all the imports we need?
 		boolean haveAllImports = true;
-		for( String facetOrComponentName : VariableHelpers.findImportedVariablePrefixes( impactedInstance )) {
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( impactedInstance )) {
 			Collection<Import> imports = impactedInstance.getImports().get( facetOrComponentName );
 			if( imports != null && ! imports.isEmpty())
 				continue;
@@ -666,7 +666,7 @@ public class Agent implements IMessageProcessor {
 				updateAndNotifyNewStatus( impactedInstance, InstanceStatus.DEPLOYED_STARTED );
 
 				// Inform other agents this instance was removed
-				for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( impactedInstance )) {
+				for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( impactedInstance )) {
 
 					// FIXME: maybe we should filter the map to only keep the required variables. For security?
 					Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( impactedInstance );

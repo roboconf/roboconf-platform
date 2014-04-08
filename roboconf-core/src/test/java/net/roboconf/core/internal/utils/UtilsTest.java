@@ -191,4 +191,13 @@ public class UtilsTest {
 			Assert.fail();
 		}
 	}
+
+
+	@Test
+	public void testWriteException() {
+
+		String msg = "Hello from Roboconf.";
+		String stackTrace = Utils.writeException( new Exception( msg ));
+		Assert.assertTrue( stackTrace.contains( msg ));
+	}
 }
