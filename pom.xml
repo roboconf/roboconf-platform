@@ -137,6 +137,7 @@
 						</formats>
 						
 						<instrumentation>
+							<ignoreTrivial>true</ignoreTrivial>
 							<excludes>
 								<exclude>net/roboconf/**/*Exception.class</exclude>
 							</excludes>
