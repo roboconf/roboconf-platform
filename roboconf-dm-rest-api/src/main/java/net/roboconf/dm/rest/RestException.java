@@ -32,7 +32,7 @@ public class RestException extends Exception {
 	 * @param responseMessage the message
 	 */
 	public RestException( int responseStatus, String responseMessage ) {
-		super( responseStatus + " " + responseMessage );
+		super( responseStatus + ": " + responseMessage );
 		this.responseStatus = responseStatus;
 		this.responseMessage = responseMessage;
 	}

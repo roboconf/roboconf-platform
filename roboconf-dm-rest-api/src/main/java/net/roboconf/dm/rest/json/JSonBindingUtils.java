@@ -42,7 +42,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  * A set of utilities to bind Roboconf's runtime model to JSon.
  * @author Vincent Zurczak - Linagora
  */
-public class JSonBindingUtils {
+public final class JSonBindingUtils {
 
 	private static final String APP_NAME = "name";
 	private static final String APP_DESC = "desc";
@@ -58,6 +58,14 @@ public class JSonBindingUtils {
 	private static final String COMP_NAME = "name";
 	private static final String COMP_ALIAS = "alias";
 	private static final String COMP_INSTALLER = "installer";
+
+
+	/**
+	 * Private constructor.
+	 */
+	private JSonBindingUtils() {
+		// nothing
+	}
 
 
 	/**
