@@ -146,19 +146,11 @@ public class ParsingModelValidator {
 		// Basic checks
 		Collection<ModelError> result = validatePropertiesHolder( block, false );
 		BlockProperty prop = block.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_NAME );
-		if( prop == null ) {
-			result.add( new ModelError( ErrorCode.PM_MISSING_INSTANCE_NAME, block.getLine()));
 
-		} else {
-//			String name = prop.getValue();
-//			if( block.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_CARDINALITY ) != null ) {
-//				if( ! name.contains( ParsingConstants.INSTANCE_INDEX_MARKER ))
-//					result.add( new ModelError( ErrorCode.PM_MISSING_INDEX_REFERENCE, block.getLine()));
-//
-//			} else if( name.contains( ParsingConstants.INSTANCE_INDEX_MARKER )) {
-//				result.add( new ModelError( ErrorCode.PM_INVALID_INDEX_REFERENCE_USE, block.getLine()));
-//			}
-		}
+		if( prop == null )
+			result.add( new ModelError( ErrorCode.PM_MISSING_INSTANCE_NAME, block.getLine()));
+		else if( ! prop.getValue().matches( ParsingConstants.PATTERN_ID ))
+			result.add( new ModelError( ErrorCode.PM_INVALID_INSTANCE_NAME, block.getLine()));
 
 		// Check internal regions are supported
 		for( AbstractBlock region : block.getInnerBlocks()) {

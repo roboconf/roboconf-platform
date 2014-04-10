@@ -161,4 +161,9 @@ public class Component implements Serializable {
 	public int hashCode() {
 		return this.name == null ? 17 : this.name.hashCode();
 	}
+
+	@Override
+	public String toString() {
+		return this.name;
+	}
 }

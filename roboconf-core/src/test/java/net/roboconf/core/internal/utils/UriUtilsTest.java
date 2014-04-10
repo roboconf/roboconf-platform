@@ -17,7 +17,6 @@
 package net.roboconf.core.internal.utils;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 import junit.framework.Assert;
@@ -30,126 +29,114 @@ import org.junit.Test;
 public class UriUtilsTest {
 
 	@Test
-	public void testUrlToUri_1() {
-
-		try {
-			URL url = new URL( "http://roboconf.net" );
-			Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ));
-
-		} catch( Exception e ) {
-			Assert.fail( e.getMessage());
-		}
-
-		try {
-			URL url = new URL( "http://url.com/some%20folder" );
-			Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ));
-
-		} catch( Exception e ) {
-			Assert.fail( e.getMessage());
-		}
-
-		try {
-			URL url = new URL( "http://url.com/some folder" );
-			Assert.assertEquals( new URI( "http://url.com/some%20folder" ), UriUtils.urlToUri( url ));
-
-		} catch( Exception e ) {
-			Assert.fail( e.getMessage());
-		}
+	public void testUrlToUri_1() throws Exception {
+		URL url = new URL( "http://roboconf.net" );
+		Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ) );
 	}
 
 
 	@Test
-	public void testUrlToUri_2() {
-
-		try {
-			String url = "http://roboconf.net";
-			Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ));
-
-		} catch( Exception e ) {
-			Assert.fail( e.getMessage());
-		}
-
-		try {
-			String url = "http://url.com/some%20folder";
-			Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ));
-
-		} catch( Exception e ) {
-			Assert.fail( e.getMessage());
-		}
-
-		try {
-			String url = "http://url.com/some folder";
-			Assert.assertEquals( new URI( "http://url.com/some%20folder" ), UriUtils.urlToUri( url ));
-
-		} catch( Exception e ) {
-			Assert.fail( e.getMessage());
-		}
+	public void testUrlToUri_2() throws Exception {
+		URL url = new URL( "http://url.com/some%20folder" );
+		Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ) );
 	}
 
 
 	@Test
-	public void testBuildNewURI() {
+	public void testUrlToUri_3() throws Exception {
+		URL url = new URL( "http://url.com/some folder" );
+		Assert.assertEquals(
+				new URI( "http://url.com/some%20folder" ),
+				UriUtils.urlToUri( url ) );
+	}
 
-		try {
-			String suffix = "http://absolute-url.fr";
-			Assert.assertEquals( new URI( suffix ), UriUtils.buildNewURI( null, suffix ));
 
-		} catch( URISyntaxException e ) {
-			Assert.fail( e.getMessage());
-		}
+	@Test
+	public void testUrlToUri_4() throws Exception {
+		String url = "http://roboconf.net";
+		Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ) );
+	}
 
-		try {
-			String url = "http://absolute-url.fr/";
-			String suffix = "readme.txt";
-			Assert.assertEquals( new URI( url + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
 
-		} catch( URISyntaxException e ) {
-			Assert.fail( e.getMessage());
-		}
+	@Test
+	public void testUrlToUri_5() throws Exception {
+		String url = "http://url.com/some%20folder";
+		Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ) );
+	}
 
-		try {
-			String url = "http://absolute-url.fr";
-			String suffix = "readme.txt";
-			Assert.assertEquals( new URI( url + "/" + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
 
-		} catch( URISyntaxException e ) {
-			Assert.fail( e.getMessage());
-		}
+	@Test
+	public void testUrlToUri_6() throws Exception {
+		String url = "http://url.com/some folder";
+		Assert.assertEquals(
+				new URI( "http://url.com/some%20folder" ),
+				UriUtils.urlToUri( url ) );
+	}
 
-		try {
-			String url = "http://absolute-url.fr/folder";
-			String suffix = "readme.txt";
-			Assert.assertEquals( new URI( url + "/" + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
 
-		} catch( URISyntaxException e ) {
-			Assert.fail( e.getMessage());
-		}
+	@Test
+	public void testBuildNewURI_1() throws Exception {
+		String suffix = "http://absolute-url.fr";
+		Assert.assertEquals( new URI( suffix ), UriUtils.buildNewURI( null, suffix ));
+	}
 
-		try {
-			String url = "http://absolute-url.fr/folder";
-			String suffix = "../readme.txt";
-			Assert.assertEquals( new URI( "http://absolute-url.fr/readme.txt" ), UriUtils.buildNewURI( new URI( url ), suffix ));
 
-		} catch( URISyntaxException e ) {
-			Assert.fail( e.getMessage());
-		}
+	@Test
+	public void testBuildNewURI_2() throws Exception {
+		String url = "http://absolute-url.fr/";
+		String suffix = "readme.txt";
+		Assert.assertEquals( new URI( url + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
+	}
 
-		try {
-			String url = "http://absolute-url.fr/folder";
-			String suffix = "./readme.txt";
-			Assert.assertEquals( new URI( "http://absolute-url.fr/folder/readme.txt" ), UriUtils.buildNewURI( new URI( url ), suffix ));
 
-		} catch( URISyntaxException e ) {
-			Assert.fail( e.getMessage());
-		}
+	@Test
+	public void testBuildNewURI_3() throws Exception {
+		String url = "http://absolute-url.fr";
+		String suffix = "readme.txt";
+		Assert.assertEquals( new URI( url + "/" + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
+	}
 
-		try {
-			String url = "http://absolute-url.fr/folder";
-			String suffix = "f1/f2/f3/readme.txt";
-			Assert.assertEquals( new URI( "http://absolute-url.fr/folder/f1/f2/f3/readme.txt" ), UriUtils.buildNewURI( new URI( url ), suffix ));
 
-		} catch( URISyntaxException e ) {
-			Assert.fail( e.getMessage());
-		}
+	@Test
+	public void testBuildNewURI_4() throws Exception {
+		String url = "http://absolute-url.fr/folder";
+		String suffix = "readme.txt";
+		Assert.assertEquals( new URI( url + "/" + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
+	}
+
+
+	@Test
+	public void testBuildNewURI_5() throws Exception {
+		String url = "http://absolute-url.fr/folder";
+		String suffix = "../readme.txt";
+		Assert.assertEquals(
+				new URI( "http://absolute-url.fr/readme.txt" ),
+				UriUtils.buildNewURI( new URI( url ), suffix ));
+	}
+
+
+	@Test
+	public void testBuildNewURI_6() throws Exception {
+		String url = "http://absolute-url.fr/folder";
+		String suffix = "./readme.txt";
+		Assert.assertEquals(
+				new URI( "http://absolute-url.fr/folder/readme.txt" ),
+				UriUtils.buildNewURI( new URI( url ), suffix ));
+	}
+
+
+	@Test
+	public void testBuildNewURI_7() throws Exception {
+		String url = "http://absolute-url.fr/folder";
+		String suffix = "f1/f2/f3/readme.txt";
+		Assert.assertEquals(
+				new URI( "http://absolute-url.fr/folder/f1/f2/f3/readme.txt" ),
+				UriUtils.buildNewURI( new URI( url ), suffix ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testBuildNewURI_8() throws Exception {
+		UriUtils.buildNewURI( new URI( "http://absolute-url.fr/folder" ), null );
 	}
 }

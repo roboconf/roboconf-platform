@@ -26,6 +26,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockBlank;
 import net.roboconf.core.model.parsing.BlockComment;
@@ -101,15 +103,19 @@ public class FromGraphs {
 		BlockComponent blockComponent = new BlockComponent( file );
 		blockComponent.setName( component.getName());
 		result.add( blockComponent );
+		result.add( new BlockBlank( file, "\n" ));
 
 		BlockProperty p = new BlockProperty( file, Constants.PROPERTY_GRAPH_ICON_LOCATION, component.getIconLocation());
-		blockComponent.getInnerBlocks().add( p );
+		if( ! Utils.isEmptyOrWhitespaces( component.getIconLocation()))
+			blockComponent.getInnerBlocks().add( p );
 
 		p = new BlockProperty( file, Constants.PROPERTY_COMPONENT_ALIAS, component.getAlias());
-		blockComponent.getInnerBlocks().add( p );
+		if( ! Utils.isEmptyOrWhitespaces( component.getAlias()))
+			blockComponent.getInnerBlocks().add( p );
 
 		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_INSTALLER, component.getInstallerName());
-		blockComponent.getInnerBlocks().add( p );
+		if( ! Utils.isEmptyOrWhitespaces( component.getInstallerName()))
+			blockComponent.getInnerBlocks().add( p );
 
 		// Imported Variables
 		StringBuilder sb = new StringBuilder();
@@ -127,13 +133,25 @@ public class FromGraphs {
 		}
 
 		p = new BlockProperty( file, Constants.PROPERTY_COMPONENT_IMPORTS, sb.toString());
-		blockComponent.getInnerBlocks().add( p );
+		if( ! component.getImportedVariables().isEmpty())
+			blockComponent.getInnerBlocks().add( p );
 
 		// Exported variables
 		sb = new StringBuilder();
 		for( Iterator<Entry<String,String>> it=component.getExportedVariables().entrySet().iterator(); it.hasNext(); ) {
 			Entry<String,String> entry = it.next();
-			sb.append( entry.getKey());
+
+			// If the variable is exported by a facet, do not change its name.
+			// If it is exported by the component, remove the component prefix.
+			Entry<String,String> varParts = VariableHelpers.parseVariableName( entry.getKey());
+			String varName;
+			if( component.getName().equals( varParts.getKey()))
+				varName = varParts.getValue();
+			else
+				varName = entry.getKey();
+
+			// Write the variable
+			sb.append( varName );
 			if( entry.getValue() != null ) {
 				sb.append( "=" );
 				sb.append( entry.getValue());
@@ -144,7 +162,8 @@ public class FromGraphs {
 		}
 
 		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_EXPORTS, sb.toString());
-		blockComponent.getInnerBlocks().add( p );
+		if( ! component.getExportedVariables().isEmpty())
+			blockComponent.getInnerBlocks().add( p );
 
 		// Children
 		sb = new StringBuilder();
@@ -155,7 +174,8 @@ public class FromGraphs {
 		}
 
 		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_CHILDREN, sb.toString());
-		blockComponent.getInnerBlocks().add( p );
+		if( ! component.getChildren().isEmpty())
+			blockComponent.getInnerBlocks().add( p );
 
 		return result;
 	}

@@ -138,6 +138,9 @@
 						
 						<instrumentation>
 							<ignoreTrivial>true</ignoreTrivial>
+							<ignores>
+								<ignore>java.util.logging.*</ignore>
+							</ignores>
 							<excludes>
 								<exclude>net/roboconf/**/*Exception.class</exclude>
 							</excludes>

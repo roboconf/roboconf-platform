@@ -55,7 +55,6 @@ public class Import implements Serializable {
 	 * @param exportedVars
 	 */
 	public Import( String instancePath, Map<String,String> exportedVars ) {
-		super();
 		this.instancePath = instancePath;
 		this.exportedVars.putAll( exportedVars );
 	}
