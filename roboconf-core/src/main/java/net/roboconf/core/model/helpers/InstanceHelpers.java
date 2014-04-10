@@ -117,6 +117,12 @@ public final class InstanceHelpers {
 
 	/**
 	 * Inserts a child instance.
+	 * <p>
+	 * This method does not check anything.
+	 * In real implementations, such as in the DM, one should
+	 * use {@link #tryToInsertChildInstance(Application, Instance, Instance)}.
+	 * </p>
+	 *
 	 * @param child a child instance (not null)
 	 * @param parent a parent instance (not null)
 	 */

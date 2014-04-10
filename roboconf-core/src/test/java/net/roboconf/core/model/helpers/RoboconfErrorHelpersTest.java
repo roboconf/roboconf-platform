@@ -39,7 +39,7 @@ public class RoboconfErrorHelpersTest {
 		errors.add( new RoboconfError( ErrorCode.PM_MALFORMED_COMMENT ));
 		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( errors ));
 
-		errors.add( new RoboconfError( ErrorCode.PM_INVALID_INDEX_REFERENCE_USE ));
+		errors.add( new RoboconfError( ErrorCode.PM_DUPLICATE_PROPERTY ));
 		Assert.assertTrue( RoboconfErrorHelpers.containsCriticalErrors( errors ));
 	}
 }

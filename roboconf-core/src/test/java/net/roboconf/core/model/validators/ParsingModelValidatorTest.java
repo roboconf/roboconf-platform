@@ -18,11 +18,13 @@ package net.roboconf.core.model.validators;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Iterator;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockBlank;
 import net.roboconf.core.model.parsing.BlockComment;
 import net.roboconf.core.model.parsing.BlockComponent;
@@ -38,6 +40,23 @@ import org.junit.Test;
  * @author Vincent Zurczak - Linagora
  */
 public class ParsingModelValidatorTest {
+
+	@Test
+	public void testUknown() {
+
+		FileDefinition file = new FileDefinition( new File( "some-file" ));
+		AbstractBlock block = new AbstractBlock( file ) {
+			@Override
+			public int getInstructionType() {
+				return 501;
+			}
+		};
+
+		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, errors.iterator().next().getErrorCode());
+	}
+
 
 	@Test
 	public void testImport() {
@@ -204,6 +223,10 @@ public class ParsingModelValidatorTest {
 
 		block.setNameAndValue( Constants.PROPERTY_GRAPH_CHILDREN, "facet with spaces" );
 		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setNameAndValue( Constants.PROPERTY_GRAPH_CHILDREN, "facet with	tabs" );
+		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_CHILD_NAME, errors.iterator().next().getErrorCode());
 
@@ -256,6 +279,10 @@ public class ParsingModelValidatorTest {
 
 		block.setNameAndValue( Constants.PROPERTY_COMPONENT_FACETS, "facet with spaces" );
 		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setNameAndValue( Constants.PROPERTY_COMPONENT_FACETS, "facet with special ch@r@cters" );
+		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_FACET_NAME, errors.iterator().next().getErrorCode());
 
@@ -307,6 +334,10 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( ErrorCode.PM_INVALID_FACET_NAME, errors.iterator().next().getErrorCode());
 
 		block.setNameAndValue( Constants.PROPERTY_FACET_EXTENDS, "facet with spaces" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setNameAndValue( Constants.PROPERTY_FACET_EXTENDS, "facet with	tabs and speci@l" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_FACET_NAME, errors.iterator().next().getErrorCode());
@@ -485,6 +516,10 @@ public class ParsingModelValidatorTest {
 
 		block.setName( "facet name" );
 		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setName( "facet n@me" );
+		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_FACET_NAME, errors.iterator().next().getErrorCode());
 
@@ -540,6 +575,10 @@ public class ParsingModelValidatorTest {
 
 		block.setName( "component name" );
 		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setName( "component n*me" );
+		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
 
@@ -583,6 +622,17 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( ErrorCode.PM_MISSING_INSTANCE_NAME, errors.iterator().next().getErrorCode());
 
 		block.getInnerBlocks().add( new BlockProperty( file, Constants.PROPERTY_INSTANCE_NAME, "Any name" ));
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.getInnerBlocks().clear();
+		block.getInnerBlocks().add( new BlockProperty( file, Constants.PROPERTY_INSTANCE_NAME, "Any name?" ));
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_NAME, errors.iterator().next().getErrorCode());
+
+		block.getInnerBlocks().clear();
+		block.getInnerBlocks().add( new BlockProperty( file, Constants.PROPERTY_INSTANCE_NAME, "AnyName" ));
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 		block.setName( "_component" );
@@ -594,6 +644,10 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "component name" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setName( "component n@me" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
@@ -623,9 +677,25 @@ public class ParsingModelValidatorTest {
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 0, errors.size());
 
-		block.getInnerBlocks().add( new BlockProperty( file, Constants.PROPERTY_FACET_EXTENDS, "anyPropertyToOverride" ));
+		AbstractBlock childBlock = new BlockProperty( file, Constants.PROPERTY_FACET_EXTENDS, "anyPropertyToOverride" );
+		block.getInnerBlocks().add( childBlock );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_DUPLICATE_PROPERTY, errors.iterator().next().getErrorCode());
+		block.getInnerBlocks().remove( childBlock );
+
+		childBlock = new BlockProperty( file, Constants.PROPERTY_FACET_EXTENDS, "anyPropertyToOverride" ) {
+			@Override
+			public int getInstructionType() {
+				return 502;
+			}
+		};
+
+		block.getInnerBlocks().add( childBlock );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 2, errors.size());
+		Iterator<ModelError> iterator = errors.iterator();
+		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_ELEMENT, iterator.next().getErrorCode());
 	}
 }

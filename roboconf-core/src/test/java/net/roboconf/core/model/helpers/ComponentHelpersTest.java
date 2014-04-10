@@ -17,6 +17,7 @@
 package net.roboconf.core.model.helpers;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 
@@ -106,5 +107,27 @@ public class ComponentHelpersTest {
 		Assert.assertEquals( "c12 -> c121 -> c1 -> c12", ComponentHelpers.searchForLoop( c12 ));
 		Assert.assertEquals( "c121 -> c1 -> c12 -> c121", ComponentHelpers.searchForLoop( c121 ));
 		Assert.assertNull( ComponentHelpers.searchForLoop( c11 ));
+	}
+
+
+	@Test
+	public void testFindAllComponents() {
+
+		Application app = new Application();
+		Assert.assertEquals( 0, ComponentHelpers.findAllComponents( app ).size());
+
+		Graphs graphs = new Graphs();
+		app.setGraphs( graphs );
+		Component comp1 = new Component( "comp1" );
+		graphs.getRootComponents().add( comp1 );
+		Assert.assertEquals( 1, ComponentHelpers.findAllComponents( app ).size());
+
+		ComponentHelpers.insertChild( comp1, new Component( "comp-2" ));
+		Assert.assertEquals( 2, ComponentHelpers.findAllComponents( app ).size());
+
+		Component comp3 = new Component( "comp_3" );
+		graphs.getRootComponents().add( comp3 );
+		ComponentHelpers.insertChild( comp3, new Component( "comp-2" ));
+		Assert.assertEquals( 3, ComponentHelpers.findAllComponents( app ).size());
 	}
 }

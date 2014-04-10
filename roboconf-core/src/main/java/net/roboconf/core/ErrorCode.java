@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.roboconf.core.model.parsing.ParsingConstants;
+
 /**
  * All the error codes that can be encountered with a Roboconf model.
  * @author Vincent Zurczak - Linagora
@@ -53,20 +55,19 @@ public enum ErrorCode {
 	PM_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "A variable name is missing." ),
 
 	PM_INVALID_CHILD_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid child name. As a reminder, children names must be separated by a comma." ),
-	PM_INVALID_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid facet name. Facet names must be separated by a comma." ),
-	PM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid component name. Component names must be separated by a comma." ),
+	PM_INVALID_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid facet name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
+	PM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid component name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 	PM_INVALID_EXPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Exported variable names must be separated by a comma." ),
 	PM_INVALID_IMPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Imported variable names must be separated by a comma." ),
-	PM_INVALID_INSTALLER_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid installer name." ),
+	PM_INVALID_INSTALLER_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid installer name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 	PM_INVALID_ICON_LOCATION( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The icon location must end with an image extension (gif, jpg, jpeg, png)." ),
-	PM_INVALID_INDEX_REFERENCE_USE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The name contains ${index} but the cardinality property is not set." ),
 	PM_INVALID_INSTANCE_ELEMENT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An instance can only contain properties, other instances, blank lines or comments." ),
 
 	PM_PROPERTY_NOT_APPLIABLE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property does not apply to this element." ),
 	PM_DUPLICATE_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property was already set for this element." ),
 	PM_MISSING_ALIAS_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The 'alias' property is missing." ),
 	PM_MISSING_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The 'name' property is missing." ),
-	PM_MISSING_INDEX_REFERENCE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The 'cardinality' property is used but the name does not contain ${index}." ),
+	PM_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid instance name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 
 	PM_DOT_IS_NOT_ALLOWED( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Component and facet names cannot contain a dot." ),
 	PM_INCOMPLETE_IMPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Incomplete variable name. Imported variable names must be prefixed by a component or facet name, followed by a dot." ),
@@ -83,17 +84,20 @@ public enum ErrorCode {
 	CO_ALREADY_DEFINED_ROOT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This root instance was defined more than once." ),
 	CO_NOT_OVERRIDING( ErrorLevel.WARNING, ErrorCategory.CONVERSION, "A variable is exported in the instance but was not defined in its component." ),
 	CO_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A variable is exported in the instance but could not be resolved in its component." ),
+	CO_AMBIGUOUS_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A component does not specify its installer but inherits several ones from its facets." ),
 
 	// Runtime Model Errors
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
-	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must contain a graph definition." ),
+	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must have a graph definition." ),
 
 	RM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component name cannot be empty." ),
+	RM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid component name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 	RM_EMPTY_COMPONENT_ALIAS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component alias is mandatory." ),
 	RM_EMPTY_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component's installer name is mandatory." ),
-	RM_COMPONENT_IMPORTS_EXPORTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The component imports variables it exports." ),
+	RM_INVALID_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid installer name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
+	RM_COMPONENT_IMPORTS_EXPORTS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component imports a variable it exports (the import should be marked as optional)." ),
 
 	RM_DUPLICATE_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),
 	RM_CYCLE_IN_COMPONENTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),
@@ -101,6 +105,7 @@ public enum ErrorCode {
 	RM_UNRESOLVABLE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is imported but no component exports it." ),
 
 	RM_EMPTY_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance name cannot be empty." ),
+	RM_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid instance name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 	RM_EMPTY_INSTANCE_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance is not associated with a component." ),
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "An instance exports a variable which is not defined in its component (no override)." ),
 

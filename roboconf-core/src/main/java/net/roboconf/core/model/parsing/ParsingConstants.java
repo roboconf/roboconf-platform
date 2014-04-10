@@ -37,11 +37,6 @@ public interface ParsingConstants {
 	 */
 	String EQUAL_OPERATOR = "=";
 
-	/**
-	 * The marker indicating a generated index must be appended to an instance name.
-	 */
-	String INSTANCE_INDEX_MARKER = "${index}";
-
 
 	/**
 	 * Keyword to declare an import.
@@ -67,7 +62,7 @@ public interface ParsingConstants {
 	/**
 	 * The pattern for an ID (variable, plug-in, etc).
 	 */
-	String PATTERN_ID = "[a-zA-Z_](\\w|-|\\.)*";
+	String PATTERN_ID = "[a-zA-Z_](\\w|-| |\\.)*";
 
 	/**
 	 * The pattern for an image file name.

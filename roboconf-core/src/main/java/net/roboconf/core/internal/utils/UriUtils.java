@@ -113,7 +113,7 @@ public final class UriUtils {
 	public static URI buildNewURI( URI referenceUri, String uriSuffix ) throws URISyntaxException {
 
 		if( uriSuffix == null )
-			throw new NullPointerException( "The URI suffix cannot be null." );
+			throw new IllegalArgumentException( "The URI suffix cannot be null." );
 
 		uriSuffix = uriSuffix.replaceAll( "\\\\", "/" );
 		URI importUri = null;
