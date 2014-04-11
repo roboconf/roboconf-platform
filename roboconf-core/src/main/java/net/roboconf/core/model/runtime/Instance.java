@@ -172,7 +172,7 @@ public class Instance implements Serializable {
 	 * @return the real exports
 	 */
 	public Map<String,String> getExports() {
-		return exports;
+		return this.exports;
 	}
 
 	@Override
@@ -188,7 +188,7 @@ public class Instance implements Serializable {
 
 	@Override
 	public String toString() {
-		return getName();
+		return this.name;
 	}
 
 
@@ -225,7 +225,7 @@ public class Instance implements Serializable {
 		}
 
 		if( ! imports.contains( imp ))
-			imports.add(imp);
+			imports.add( imp );
 	}
 
 

@@ -26,7 +26,7 @@
 		<groupId>net.roboconf</groupId>
 		<artifactId>parent</artifactId>
 		<version>1.0-SNAPSHOT</version>
-		<relativePath>../parent/pom.xml</relativePath>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
@@ -35,12 +35,6 @@
 	<name>Roboconf :: Plugin :: Bash</name>
 	
 	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-		
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>

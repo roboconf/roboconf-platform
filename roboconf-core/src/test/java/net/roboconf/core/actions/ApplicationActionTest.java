@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.model.converters;
+package net.roboconf.core.actions;
 
-import java.util.Comparator;
+import junit.framework.Assert;
 
-import net.roboconf.core.model.parsing.BlockFacet;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class BlockFacetComparator implements Comparator<BlockFacet> {
+public class ApplicationActionTest {
 
-	@Override
-	public int compare( BlockFacet o1, BlockFacet o2 ) {
-
-		String s1 = o1.getName();
-		String s2 = o2.getName();
-
-		return s1.compareTo( s2 );
+	@Test
+	public void testWhichAction() {
+		Assert.assertEquals( ApplicationAction.deploy, ApplicationAction.whichAction( "deploy" ));
+		Assert.assertEquals( ApplicationAction.deploy, ApplicationAction.whichAction( "DEploY" ));
+		Assert.assertNull( ApplicationAction.whichAction( "not an action" ));
 	}
 }

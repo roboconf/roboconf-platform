@@ -118,6 +118,18 @@ public class UtilsTest {
 	}
 
 
+	@Test( expected = IllegalArgumentException.class )
+	public void testSplitNicely_illegalArgument_1() {
+		Utils.splitNicely( "once, upon, a , time   ", "" );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testSplitNicely_illegalArgument_2() {
+		Utils.splitNicely( "once, upon, a , time   ", null );
+	}
+
+
 	@Test
 	public void testAreEqual() {
 
@@ -160,6 +172,49 @@ public class UtilsTest {
 	}
 
 
+	@Test( expected = IllegalArgumentException.class )
+	public void testExtractZipArchive_illegalArgument_1() throws Exception {
+		File existingFile = new File( System.getProperty( "java.io.tmpdir" ));
+		Utils.extractZipArchive( new File( "file-that-does-not.exists" ), existingFile );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testExtractZipArchive_illegalArgument_2() throws Exception {
+		File existingFile = new File( System.getProperty( "java.io.tmpdir" ));
+		Utils.extractZipArchive( null, existingFile );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testExtractZipArchive_illegalArgument_3() throws Exception {
+		File existingFile = new File( System.getProperty( "java.io.tmpdir" ));
+		Utils.extractZipArchive( existingFile, null );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testExtractZipArchive_illegalArgument_4() throws Exception {
+		File existingFile = new File( System.getProperty( "java.io.tmpdir" ));
+		Utils.extractZipArchive( existingFile, new File( "file-that-does-not.exists" ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testExtractZipArchive_illegalArgument_5() throws Exception {
+
+		File tempDir = new File( System.getProperty( "java.io.tmpdir" ));
+		File tempFile = File.createTempFile( "roboconf_", "test" );
+		try {
+			Utils.extractZipArchive( tempDir, tempFile);
+
+		} finally {
+			if( ! tempFile.delete())
+				tempFile.deleteOnExit();
+		}
+	}
+
+
 	@Test
 	public void testCloseQuietly() {
 
@@ -190,5 +245,14 @@ public class UtilsTest {
 		} catch( Exception e ) {
 			Assert.fail();
 		}
+	}
+
+
+	@Test
+	public void testWriteException() {
+
+		String msg = "Hello from Roboconf.";
+		String stackTrace = Utils.writeException( new Exception( msg ));
+		Assert.assertTrue( stackTrace.contains( msg ));
 	}
 }

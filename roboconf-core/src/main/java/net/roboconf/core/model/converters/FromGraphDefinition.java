@@ -19,8 +19,8 @@ package net.roboconf.core.model.converters;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,7 +30,6 @@ import java.util.Set;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
-import net.roboconf.core.internal.model.converters.BlockFacetComparator;
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
 import net.roboconf.core.internal.utils.ModelUtils;
 import net.roboconf.core.model.ModelError;
@@ -294,6 +293,9 @@ public class FromGraphDefinition {
 					continue;
 				}
 
+				// No need to check whether this facet was defined several times,
+				// it is done in #checkUnicity().
+
 				// Find all the extended facets
 				Set<String> allFacets = new HashSet<String> ();
 				Set<String> alreadyProcessedFacets = new HashSet<String> ();
@@ -305,7 +307,7 @@ public class FromGraphDefinition {
 						ModelError error = new ModelError( ErrorCode.CO_CYCLE_IN_FACETS, 0 );
 						error.setDetails( currentFacet + " -> ... -> " + currentFacet );
 						this.errors.add( error );
-						continue;
+						break;
 					}
 
 					BlockFacet extendedFacet = this.facetNameToRelationFacets.get( currentFacet ).get( 0 );
@@ -313,10 +315,10 @@ public class FromGraphDefinition {
 						ModelError error = new ModelError( ErrorCode.CO_UNRESOLVED_FACET, 0 );
 						error.setDetails( "Facet name: " + currentFacet );
 						this.errors.add( error );
-						continue;
+						break;
 					}
 
-					for( String extendedFacetName : ModelUtils.getPropertyValues( extendedFacet, Constants.PROPERTY_COMPONENT_FACETS ))
+					for( String extendedFacetName : ModelUtils.getPropertyValues( extendedFacet, Constants.PROPERTY_FACET_EXTENDS ))
 						allFacets.add( extendedFacetName );
 
 					allFacets.remove( currentFacet );
@@ -327,6 +329,7 @@ public class FromGraphDefinition {
 			}
 
 			// Update the component with the inherited properties
+			Set<String> installerNames = new HashSet<String> ();
 			c.getFacetNames().addAll( additionalComponentFacets );
 			for( String facetName : c.getFacetNames()) {
 				List<BlockFacet> facets = this.facetNameToRelationFacets.get( facetName );
@@ -334,10 +337,6 @@ public class FromGraphDefinition {
 						|| facets.isEmpty())
 					continue;
 
-				// Sort facets by name and pick up the first one
-				Collections.sort( facets, new BlockFacetComparator());
-
-				// Process the facet
 				BlockFacet facet = facets.get( 0 );
 				c.getExportedVariables().putAll( ModelUtils.getExportedVariables( facet ));
 
@@ -349,15 +348,25 @@ public class FromGraphDefinition {
 					c.getImportedVariables().put( s, optional );
 				}
 
-				if( c.getInstallerName() == null )
-					c.setInstallerName( ModelUtils.getPropertyValue( facet, Constants.PROPERTY_GRAPH_INSTALLER ));
-
+				installerNames.add( ModelUtils.getPropertyValue( facet, Constants.PROPERTY_GRAPH_INSTALLER ));
 				if( c.getIconLocation() == null )
 					c.setIconLocation( ModelUtils.getPropertyValue( facet, Constants.PROPERTY_GRAPH_ICON_LOCATION ));
 
 				Collection<String> children = this.componentNameToComponentChildrenNames.get( c.getName());
 				children.addAll( ModelUtils.getPropertyValues( facet, Constants.PROPERTY_GRAPH_CHILDREN ));
 				this.componentNameToComponentChildrenNames.put( c.getName(), children );
+			}
+
+			// After the facets have been processed, check the installer name
+			if( c.getInstallerName() == null ) {
+				if( installerNames.size() == 1 ) {
+					c.setInstallerName( installerNames.iterator().next());
+
+				} else if( installerNames.size() > 1 ) {
+					ModelError error = new ModelError( ErrorCode.CO_AMBIGUOUS_INSTALLER, 0 );
+					error.setDetails( "Installer names: " + Arrays.toString( installerNames.toArray()));
+					this.errors.add( error );
+				}
 			}
 		}
 

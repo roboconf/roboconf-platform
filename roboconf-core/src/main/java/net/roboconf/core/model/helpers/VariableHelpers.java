@@ -91,31 +91,11 @@ public final class VariableHelpers {
 
 
 	/**
-	 * Determines whether an instance imports a variable associated with a given component or facet.
-	 * @param instance the instance to check (not null)
-	 * @param componentOrFacetName a component or facet name
-	 * @return true if such a variable was found, false otherwise
-	 */
-	public static boolean instanceHasVariablesWithPrefix( Instance instance, String componentOrFacetName ) {
-
-		boolean result = false;
-		for( String importedVar : instance.getComponent().getImportedVariables().keySet()) {
-			if( importedVar.startsWith( componentOrFacetName + "." )) {
-				result = true;
-				break;
-			}
-		}
-
-		return result;
-	}
-
-
-	/**
-	 * Finds the component and facet names that prefix the variables of an instance.
+	 * Finds the component and facet names that prefix the variables an instance exports.
 	 * @param instance an instance
 	 * @return a non-null set with all the component and facet names this instance exports
 	 */
-	public static Set<String> findExportedVariablePrefixes( Instance instance ) {
+	public static Set<String> findPrefixesForExportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
 		Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
@@ -127,7 +107,7 @@ public final class VariableHelpers {
 
 
 	/**
-	 * Finds the component and facet names that prefix the variables of an instance.
+	 * Finds the component and facet names that prefix the variables an instance imports.
 	 * <p>
 	 * Optional imports are skipped.
 	 * </p>
@@ -135,7 +115,7 @@ public final class VariableHelpers {
 	 * @param instance an instance
 	 * @return a non-null set with all the component and facet names this instance imports
 	 */
-	public static Set<String> findImportedVariablePrefixes( Instance instance ) {
+	public static Set<String> findPrefixesForImportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
 		for( Map.Entry<String,Boolean> entry : instance.getComponent().getImportedVariables().entrySet()) {

@@ -30,14 +30,24 @@ import com.github.mustachejava.MustacheFactory;
 
 /**
  * Provides methods for injecting Instance data into a template file.
- *
  * @author gcrosmarie - Linagora
  */
-public class InstanceTemplateHelper {
+public final class InstanceTemplateHelper {
+
+	/**
+	 * Private constructor.
+	 */
+	private InstanceTemplateHelper() {
+		// nothing
+	}
+
 
 	/**
 	 * Reads the import values of the instances and injects them into the template file.
+	 * <p>
 	 * See test resources to see the associated way to write templates
+	 * </p>
+	 *
 	 * @param instance
 	 * @param templateFile
 	 * @param writer
@@ -51,15 +61,18 @@ public class InstanceTemplateHelper {
 	    mustache.execute(writer, new InstanceBean(instance)).flush();
 	}
 
+
 	public static void injectInstanceImports(Instance instance, String templateFilePath, Writer writer)
 	throws IOException {
 		injectInstanceImports(instance, new File( templateFilePath ), writer);
 	}
 
+
 	public static void injectInstanceImports(Instance instance, String templateFile, File out)
 	throws IOException {
 		injectInstanceImports(instance, templateFile, new FileWriter(out));
 	}
+
 
 	public static void injectInstanceImports(Instance instance, File templateFile, File out)
 	throws IOException {

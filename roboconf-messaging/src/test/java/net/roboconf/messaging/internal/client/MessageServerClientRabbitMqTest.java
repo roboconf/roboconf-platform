@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import junit.framework.Assert;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.messaging.client.IMessageProcessor;
 import net.roboconf.messaging.messages.Message;
@@ -75,7 +76,6 @@ public class MessageServerClientRabbitMqTest {
 	@Before
 	public void checkRabbitMQIsRunning() throws Exception {
 
-		Assume.assumeTrue( this.running );
 		Connection connection = null;
 		Channel channel = null;
 		try {
@@ -83,17 +83,14 @@ public class MessageServerClientRabbitMqTest {
 			factory.setHost( MESSAGE_SERVER_IP );
 			connection = factory.newConnection();
 			channel = connection.createChannel();
-			
-			Object o = (Object) connection.getServerProperties().get( "version" );
+
+			Object o = connection.getServerProperties().get( "version" );
 			String version = String.valueOf( o );
-			
-			// FIXME: find a better way so that we also run tests with 3.3, 3.4...
-			if( ! version.startsWith( "3.2" )) {
+			if( ! isVersionGOEThreeDotTwo( version )) {
 				Logger logger = Logger.getLogger( getClass().getName());
-				logger.warning( "Tests are skipped because RabbitMQ must at least use a version 3.2.x." );
-				
+				logger.warning( "Tests are skipped because RabbitMQ must be at least in version 3.2.x." );
+
 				this.running = false;
-				Assume.assumeNoException( new Exception( "fake one" ));
 			}
 
 		} catch( Exception e ) {
@@ -102,7 +99,6 @@ public class MessageServerClientRabbitMqTest {
 			logger.finest( Utils.writeException( e ));
 
 			this.running = false;
-			Assume.assumeNoException( e );
 
 		} finally {
 			if( channel != null )
@@ -116,6 +112,7 @@ public class MessageServerClientRabbitMqTest {
 
 	@Test
 	public void closeConnectionShouldSupportNull() throws Exception {
+		Assume.assumeTrue( this.running );
 
 		MessageServerClientRabbitMq client = new MessageServerClientRabbitMq();
 		this.collector.checkThat( client.channel, nullValue());
@@ -127,6 +124,7 @@ public class MessageServerClientRabbitMqTest {
 
 	@Test
 	public void openAndCloseConnectionShouldWork() throws Exception {
+		Assume.assumeTrue( this.running );
 
 		MessageServerClientRabbitMq client = new MessageServerClientRabbitMq();
 		client.setMessageServerIp( MESSAGE_SERVER_IP );
@@ -156,6 +154,7 @@ public class MessageServerClientRabbitMqTest {
 
 	@Test
 	public void dmAndAgentCommunicationShouldWork() throws Exception {
+		Assume.assumeTrue( this.running );
 
 		// Create several clients for the agents...
 		final int agentsCount = 5;
@@ -236,6 +235,46 @@ public class MessageServerClientRabbitMqTest {
 		dmClient.closeConnection();
 		for( int i=0; i<agentsCount; i++ )
 			agentClients[ i ].closeConnection();
+	}
+
+
+	@Test
+	public void testIsVersionGreaterThanThreeDotTwo() {
+
+		Assert.assertTrue( isVersionGOEThreeDotTwo( "3.2" ));
+		Assert.assertTrue( isVersionGOEThreeDotTwo( "3.2.1" ));
+		Assert.assertTrue( isVersionGOEThreeDotTwo( "3.3" ));
+		Assert.assertTrue( isVersionGOEThreeDotTwo( "4.2" ));
+
+		Assert.assertFalse( isVersionGOEThreeDotTwo( "3.1" ));
+		Assert.assertFalse( isVersionGOEThreeDotTwo( "3.1.3" ));
+		Assert.assertFalse( isVersionGOEThreeDotTwo( "3.0" ));
+		Assert.assertFalse( isVersionGOEThreeDotTwo( "2.1" ));
+
+		Assert.assertFalse( isVersionGOEThreeDotTwo( "whatever" ));
+	}
+
+
+
+	/**
+	 * Checks that the RabbitMQ is greater or equal to 3.2.
+	 * @param rabbitMqVersion the Rabbit MQ version
+	 * @return true if it is at least a version 3.2, false otherwise
+	 */
+	private boolean isVersionGOEThreeDotTwo( String rabbitMqVersion ) {
+
+		String[] digits = rabbitMqVersion.split( "\\." );
+		boolean result = false;
+		try {
+			result = Integer.parseInt( digits[ 0 ]) == 3
+					&& Integer.parseInt( digits[ 1 ]) >= 2
+					|| Integer.parseInt( digits[ 0 ]) > 3;
+
+		} catch( NumberFormatException e ) {
+			// nothing
+		}
+
+		return result;
 	}
 
 

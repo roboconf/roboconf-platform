@@ -38,7 +38,6 @@ import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
-//import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 /**
  * The plug-in executes a Puppet manifests.
@@ -262,7 +261,7 @@ public class PluginPuppet implements PluginInterface {
 		if(moduleDirectory != null) {
 			String clazz = moduleDirectory.getName() + "::" + action;
 			File scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/" + action + ".pp");
-			
+
 			if(! scriptFile.exists()) {
 				clazz = moduleDirectory.getName();
 				scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/init.pp");
@@ -278,7 +277,7 @@ public class PluginPuppet implements PluginInterface {
 				commands.add( instanceDirectory.getAbsolutePath());
 				commands.add( "--execute" );
 				commands.add( generateCodeToExecute(clazz, instance, puppetState));
-				
+
 				if( this.executionLevel == ExecutionLevel.LOG ) {
 					String[] params = commands.toArray( new String[ 0 ]);
 					this.logger.info( "Module installation: " + Arrays.toString( params ));
@@ -305,7 +304,7 @@ public class PluginPuppet implements PluginInterface {
 
 		// However, this does not work when executed from a Process builder.
 		// The double quotes must be removed so that it works.
-		
+
 		//String className = "roboconf_" + instance.getComponent().getName().toLowerCase();
 		StringBuilder sb = new StringBuilder();
 		sb.append( "class{'" );
@@ -384,7 +383,7 @@ public class PluginPuppet implements PluginInterface {
 		StringBuilder sb = new StringBuilder();
 
 		boolean first = true;
-		for( String facetOrComponentName : VariableHelpers.findImportedVariablePrefixes( instance )) {
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( instance )) {
 			if( first )
 				first = false;
 			else
@@ -440,5 +439,5 @@ public class PluginPuppet implements PluginInterface {
 		public String toString() {
 			return super.toString().toLowerCase();
 		};
-	}	
+	}
 }

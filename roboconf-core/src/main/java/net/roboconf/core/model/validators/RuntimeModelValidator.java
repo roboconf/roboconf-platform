@@ -28,6 +28,7 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
@@ -50,15 +51,24 @@ public class RuntimeModelValidator {
 		// Basic checks
 		if( Utils.isEmptyOrWhitespaces( component.getName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_NAME ));
+		else if( ! component.getName().matches( ParsingConstants.PATTERN_ID ))
+			errors.add( new RoboconfError( ErrorCode.RM_INVALID_COMPONENT_NAME ));
 
 		if( Utils.isEmptyOrWhitespaces( component.getAlias()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_ALIAS ));
 
 		if( Utils.isEmptyOrWhitespaces( component.getInstallerName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER ));
+		else if( ! component.getInstallerName().matches( ParsingConstants.PATTERN_ID ))
+			errors.add( new RoboconfError( ErrorCode.RM_INVALID_COMPONENT_INSTALLER ));
 
-		// A component cannot import variables it exports
-		for( String var : component.getImportedVariables().keySet()) {
+		// A component cannot import variables it exports unless these imports are optional.
+		// This covers cluster uses cases (where an element may want to know where are the similar nodes).
+		for( Map.Entry<String,Boolean> entry : component.getImportedVariables().entrySet()) {
+			if( entry.getValue())
+				continue;
+
+			String var = entry.getKey();
 			if( component.getExportedVariables().containsKey( var )) {
 				RoboconfError error = new RoboconfError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS );
 				error.setDetails( "Variable name: " + var );
@@ -154,6 +164,8 @@ public class RuntimeModelValidator {
 		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
 		if( Utils.isEmptyOrWhitespaces( instance.getName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_NAME ));
+		else if( ! instance.getName().matches( ParsingConstants.PATTERN_ID ))
+			errors.add( new RoboconfError( ErrorCode.RM_INVALID_INSTANCE_NAME ));
 
 		if( instance.getComponent() == null )
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_COMPONENT ));

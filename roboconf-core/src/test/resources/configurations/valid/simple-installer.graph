@@ -1,0 +1,4 @@
+A {
+	alias: A component called A;
+	installer: my-own-installer;
+}
