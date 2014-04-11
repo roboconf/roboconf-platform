@@ -391,7 +391,7 @@ public class Agent implements IMessageProcessor {
 			if( ! exportPrefixes.contains( name ))
 				continue;
 
-			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, instance.getName(), instance.getExports());
+			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, InstanceHelpers.computeInstancePath(instance), instance.getExports());
 			this.messagingService.publishExportOrImport( name, newMsg, MessagingService.THOSE_THAT_EXPORT );
 		}
 	}
