@@ -24,6 +24,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
+import net.roboconf.iaas.azure.IaasAzure;
 import net.roboconf.iaas.ec2.IaasEc2;
 import net.roboconf.iaas.local.IaasLocalhost;
 import net.roboconf.iaas.openstack.IaasOpenstack;
@@ -90,6 +91,8 @@ public class IaasResolver {
 			result = new IaasOpenstack();
 		} else if("vmware".equals(iaasType)) {
 			result = new IaasVmware();
+		} else if("azure".equals(iaasType)) {
+			result = new IaasAzure();
 		}
 
 		return result;

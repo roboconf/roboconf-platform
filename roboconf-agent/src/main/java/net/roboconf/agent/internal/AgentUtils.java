@@ -27,6 +27,17 @@ import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.commons.codec.binary.Base64;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 import net.roboconf.agent.AgentData;
 import net.roboconf.core.internal.utils.Utils;
 
@@ -180,6 +191,108 @@ public final class AgentUtils {
 
 		} finally {
 			Utils.closeQuietly( in );
+		}
+
+		return result;
+	}
+	
+	private static String getValueOfTagInXMLFile(String filePath, String tagName) throws ParserConfigurationException, SAXException, IOException {
+		 
+		File fXmlFile = new File(filePath);
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(fXmlFile);
+	 
+		//optional, but recommended
+		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+		doc.getDocumentElement().normalize();
+	 
+		NodeList nList = doc.getElementsByTagName(tagName);
+	    String valueOfTagName = "";
+	    
+		for (int temp = 0; temp < nList.getLength(); temp++) {
+	 
+			Node nNode = nList.item(temp);
+			valueOfTagName = nNode.getTextContent();
+		}
+		return valueOfTagName;
+	}
+	
+	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName) throws ParserConfigurationException, SAXException, IOException {
+		File fXmlFile = new File(filePath);
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(fXmlFile);
+	 
+		doc.getDocumentElement().normalize();
+	
+		NodeList nList = doc.getElementsByTagName(tagName);
+	    Node aNode = nList.item(2);
+	    NamedNodeMap attributes = aNode.getAttributes();
+	    String attrValue = "";
+	    for (int a = 0; a < attributes.getLength(); a++) {
+	      Node theAttribute = attributes.item(a);
+	      if (attrName.equals(theAttribute.getNodeName())) attrValue = theAttribute.getTextContent().split(":")[0];	      
+	    }
+	    return attrValue;
+	}
+	
+	/**
+	 * Configures the agent from a IaaS registry.
+	 * @param logger a logger
+	 * @return the agent's data
+	 * This is dedicated to Azure.
+	 */
+	public static AgentData findParametersForAzure( Logger logger ) {
+		String content = "";
+		try {
+			// Get the user data from /var/lib/waagent/ovf-env.xml and decode it
+			String userDataEncoded = getValueOfTagInXMLFile("/var/lib/waagent/ovf-env.xml", "CustomData");
+			content = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" ) ));
+		} catch( IOException e ) {
+			logger.severe( "The agent properties could not be read. " + e.getMessage());
+			logger.finest( Utils.writeException( e ));
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		// Parse them
+		AgentData result = new AgentData();
+		for( String line : content.split( "\n" )) {
+			line = line.trim();
+
+			if( line.startsWith( PROPERTY_APPLICATION_NAME )) {
+				String[] data = line.split( "=" );
+				result.setApplicationName(data[ data.length - 1 ]);
+
+			} else if( line.startsWith( PROPERTY_MESSAGE_SERVER_IP )) {
+				String[] data = line.split( "=" );
+				result.setMessageServerIp( data[ data.length - 1 ]);
+
+			} else if( line.startsWith( PROPERTY_ROOT_INSTANCE_NAME )) {
+				String[] data = line.split( "=" );
+				result.setRootInstanceName( data[ data.length - 1 ]);
+			}
+		}
+		
+		// Get the public IP Address from /var/lib/waagent/SharedConfig.xml
+		String publicIPAddress;
+		try {
+			publicIPAddress = getSpecificAttributeOfTagInXMLFile("/var/lib/waagent/SharedConfig.xml", "Endpoint", "loadBalancedPublicAddress");
+			result.setIpAddress( publicIPAddress );
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 		return result;
