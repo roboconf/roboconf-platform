@@ -178,7 +178,7 @@ public class PluginPuppetTest {
 		instance.setComponent( component );
 
 		Assert.assertEquals(
-				"mysql => { 'toto' => { port => '3306' }}",
+				"mysql => { '/toto' => { port => '3306' }}",
 				this.plugin.formatInstanceImports( instance ));
 	}
 
@@ -200,7 +200,7 @@ public class PluginPuppetTest {
 		instance.setComponent( component );
 
 		Assert.assertEquals(
-				"mysql => { 'toto' => { port => '3306', ip => '172.16.20.12' }}",
+				"mysql => { '/toto' => { port => '3306', ip => '172.16.20.12' }}",
 				this.plugin.formatInstanceImports( instance ));
 	}
 
@@ -225,7 +225,7 @@ public class PluginPuppetTest {
 		instance.setComponent( component );
 
 		Assert.assertEquals(
-				"mysql => { 'toto-0' => { port => '3306', ip => '172.16.20.12' }, 'toto-1' => { port => '3307', ip => '172.16.20.13' }}",
+				"mysql => { '/toto-0' => { port => '3306', ip => '172.16.20.12' }, '/toto-1' => { port => '3307', ip => '172.16.20.13' }}",
 				this.plugin.formatInstanceImports( instance ));
 	}
 

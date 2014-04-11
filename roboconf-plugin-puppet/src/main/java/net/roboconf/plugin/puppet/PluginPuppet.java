@@ -408,10 +408,11 @@ public class PluginPuppet implements PluginInterface {
 				for( Iterator<Import> it = imports.iterator(); it.hasNext(); ) {
 					Import imp = it.next();
 
-					int index = imp.getInstancePath().lastIndexOf( '/' );
-					String instanceName = imp.getInstancePath().substring( index + 1 );
+					/*int index = imp.getInstancePath().lastIndexOf( '/' );
+					String instanceName = imp.getInstancePath().substring( index + 1 );*/
 					sb.append( "'" );
-					sb.append( instanceName );
+					//sb.append( instanceName );
+					sb.append(imp.getInstancePath());
 					sb.append( "' => { "  );
 					sb.append( formatExportedVariables( imp.getExportedVars()));
 					sb.append(" }");
