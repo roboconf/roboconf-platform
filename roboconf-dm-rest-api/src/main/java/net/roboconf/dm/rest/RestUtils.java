@@ -29,7 +29,16 @@ import net.roboconf.core.model.runtime.Instance;
  *
  * @author Vincent Zurczak - Linagora
  */
-public class RestUtils {
+public final class RestUtils {
+
+
+	/**
+	 * Private constructor.
+	 */
+	private RestUtils() {
+		// nothing
+	}
+
 
 	/**
 	 * Creates a restful path for an instance.

@@ -1,6 +1,6 @@
 # Roboconf 
-[![Build Status](https://travis-ci.org/roboconf/roboconf.png?branch=master)](https://travis-ci.org/roboconf/roboconf)
-[![Coverage Status](https://coveralls.io/repos/roboconf/roboconf/badge.png)](https://coveralls.io/r/roboconf/roboconf)
+[![Build Status](http://travis-ci.org/roboconf/roboconf.png?branch=master)](http://travis-ci.org/roboconf/roboconf)
+[![Coverage Status](http://coveralls.io/repos/roboconf/roboconf/badge.png)](http://coveralls.io/r/roboconf/roboconf)
 
 
 Roboconf is a solution for asynchronous and multi-target deployments.  

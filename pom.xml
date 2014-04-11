@@ -24,18 +24,260 @@
 	<modelVersion>4.0.0</modelVersion>
 	
 	<groupId>net.roboconf</groupId>
-	<artifactId>root</artifactId>
+	<artifactId>parent</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf</name>
 	<packaging>pom</packaging>
-	
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<jersey.stack.version>1.18</jersey.stack.version>
+		<jackson.stack.version>2.3.1</jackson.stack.version>
+		<java.compiler.version>1.6</java.compiler.version>
 	</properties>
+	
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.10</version>
+			</dependency>
+  			
+  			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+				<version>${jackson.stack.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-core</artifactId>
+	  			<version>${jackson.stack.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>com.sun.jersey</groupId>
+				<artifactId>jersey-core</artifactId>
+				<version>${jersey.stack.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>com.sun.jersey</groupId>
+				<artifactId>jersey-client</artifactId>
+				<version>${jersey.stack.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>com.sun.jersey.contribs</groupId>
+				<artifactId>jersey-multipart</artifactId>
+				<version>${jersey.stack.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	
+	<build>
+		<defaultGoal>install</defaultGoal>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.felix</groupId>
+					<artifactId>maven-bundle-plugin</artifactId>
+					<version>2.4.0</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>2.4</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>${java.compiler.version}</source>
+						<target>${java.compiler.version}</target>
+					</configuration>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-enforcer-plugin</artifactId>
+					<version>1.1.1</version>
+					<configuration>
+						<fail>true</fail>
+						<rules><DependencyConvergence /></rules>
+					</configuration>
+				</plugin>
+				
+				<!-- Required for Coveralls! -->
+				<plugin>
+					<groupId>org.eluder.coveralls</groupId>
+					<artifactId>coveralls-maven-plugin</artifactId>
+					<version>2.2.0</version>
+						
+					<configuration>
+						<coverallsFile>target/coveralls.json</coverallsFile>
+						<coverageFile>target/site/cobertura/coverage.xml</coverageFile>
+					</configuration>
+				</plugin>
+				
+				<!-- Required for Coveralls! -->	
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>cobertura-maven-plugin</artifactId>
+					<version>2.6</version>
+								
+					<configuration>
+						<formats>
+							<format>html</format>
+							<format>xml</format>
+						</formats>
+						
+						<instrumentation>
+							<ignoreTrivial>true</ignoreTrivial>
+							<ignores>
+								<ignore>java.util.logging.*</ignore>
+							</ignores>
+							<excludes>
+								<exclude>net/roboconf/**/*Exception.class</exclude>
+							</excludes>
+						</instrumentation>
+						
+						<maxmem>256m</maxmem>
+						<aggregate>true</aggregate>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		
+		<plugins>
+			<!-- Find Unused Dependencies -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.8</version>
+				<executions>
+					<execution>
+						<id>analyze</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>analyze-only</goal>
+						</goals>
+						<configuration>
+							<ignoreNonCompile>false</ignoreNonCompile>
+							<failOnWarning>false</failOnWarning>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- CheckStyle -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.11</version>
+				<configuration>
+					<consoleOutput>true</consoleOutput>
+					<logViolationsToConsole>true</logViolationsToConsole>
+					<includeTestSourceDirectory>false</includeTestSourceDirectory>
+				</configuration>
+				
+				<dependencies>
+					<dependency>
+						<groupId>net.roboconf</groupId>
+						<artifactId>build-tools</artifactId>
+						<version>1.0-SNAPSHOT</version>
+					</dependency>
+				</dependencies>
+				
+				<executions>
+				
+					<!-- Java Files -->
+					<execution>
+						<id>check-java</id>
+               			<phase>process-sources</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<configLocation>checkstyle-java-rules.xml</configLocation>
+							<headerLocation>header-java.txt</headerLocation>
+							<includes>**\/*.java</includes>
+							<excludes>**\/internal\/**\/*</excludes>
+						</configuration>
+					</execution>
+					
+					<!-- XML Files -->
+					<execution>
+						<id>check-xml</id>
+               			<phase>process-sources</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<configLocation>checkstyle-xml-rules.xml</configLocation>
+							<headerLocation>header-xml.txt</headerLocation>
+							<includes>**\/*.xml, **\/*.xsd</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	
+	<profiles>
+		<!-- Find Bugs -->
+		<profile>
+			<id>find-bugs</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>findbugs-maven-plugin</artifactId>
+						<version>2.5.3</version>
+						
+						<executions>
+							<execution>
+								<id>find-bugs</id>
+								<phase>compile</phase>
+								<goals>
+									<goal>check</goal>
+								</goals>
+								<configuration>
+									<failOnError>false</failOnError>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	
+		<!-- Sonar extension (tailored for a local installation) -->
+		<profile>
+            <id>sonar</id>
+            <activation>
+            	<activeByDefault>false</activeByDefault>
+            </activation>
+            
+            <properties>
+                <sonar.jdbc.url>jdbc:h2:tcp://localhost:9092/sonar</sonar.jdbc.url>
+                <sonar.jdbc.username>sonar</sonar.jdbc.username>
+                <sonar.jdbc.password>sonar</sonar.jdbc.password>
+                <!-- Optional URL to server. Default value is http://localhost:9000 -->
+                <!-- <sonar.host.url>http://myserver:9000</sonar.host.url> -->
+            </properties>
+        </profile>
+	</profiles>
 
 	<modules>
-		<module>parent</module>
 		<module>build-tools</module>
 		<module>roboconf-core</module>
 		<module>roboconf-messaging</module>
@@ -57,43 +299,5 @@
 		<module>roboconf-plugin-logger</module>
 		<module>roboconf-agent</module>
 	</modules>
-	
-	<!-- 
-		Coveralls configuration must be located in the root POM.
-		And not in the parent POM.
-	 -->
-	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.eluder.coveralls</groupId>
-					<artifactId>coveralls-maven-plugin</artifactId>
-					<version>2.2.0</version>
-					
-					<configuration>
-						<coverallsFile>parent/target/coveralls.json</coverallsFile>
-						<coverageFile>parent/target/site/cobertura/coverage.xml</coverageFile>
-					</configuration>
-				</plugin>
-
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>cobertura-maven-plugin</artifactId>
-					<version>2.6</version>
-						
-					<configuration>
-						<formats>
-							<format>html</format>
-							<format>xml</format>
-						</formats>
-						
-						<maxmem>256m</maxmem>
-						<aggregate>true</aggregate>
-						<forceMojoExecution>true</forceMojoExecution>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-	</build>
 	
 </project>

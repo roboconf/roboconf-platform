@@ -16,9 +16,13 @@
 
 package net.roboconf.core.model.helpers;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.runtime.Component;
+import net.roboconf.core.model.runtime.Instance;
 
 import org.junit.Test;
 
@@ -66,5 +70,67 @@ public class VariableHelpersTest {
 			Assert.assertEquals( "Invalid variable name for " + s, value[ 0 ], entry.getKey());
 			Assert.assertEquals( "Invalid default value for " + s, value[ 1 ], entry.getValue());
 		}
+	}
+
+
+	@Test
+	public void testFindPrefixesForExportedVariables() {
+
+		Component component = new Component( "comp" );
+		component.getExportedVariables().put( "comp.ip", "" );
+		component.getExportedVariables().put( "comp.split.property", "" );
+		component.getExportedVariables().put( "comp.port", "8000" );
+		component.getExportedVariables().put( "facet.desc", "some description" );
+
+		Instance instance = new Instance( "inst" );
+		instance.setComponent( component );
+
+		Set<String> prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
+		Assert.assertEquals( 2, prefixes.size());
+		Assert.assertTrue( prefixes.contains( "comp" ));
+		Assert.assertTrue( prefixes.contains( "facet" ));
+
+		component.getExportedVariables().clear();
+		prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
+		Assert.assertEquals( 0, prefixes.size());
+	}
+
+
+	@Test
+	public void testFindPrefixesForImportedVariables() {
+
+		Component component = new Component( "comp" );
+		component.getImportedVariables().put( "comp.ip", Boolean.FALSE );
+		component.getImportedVariables().put( "comp.split.property", Boolean.FALSE );
+		component.getImportedVariables().put( "comp.port", Boolean.FALSE );
+		component.getImportedVariables().put( "facet.desc", Boolean.FALSE );
+
+		Instance instance = new Instance( "inst" );
+		instance.setComponent( component );
+
+		Set<String> prefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
+		Assert.assertEquals( 2, prefixes.size());
+		Assert.assertTrue( prefixes.contains( "comp" ));
+		Assert.assertTrue( prefixes.contains( "facet" ));
+
+		component.getImportedVariables().clear();
+		prefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
+		Assert.assertEquals( 0, prefixes.size());
+	}
+
+
+	@Test
+	public void testUpdateNetworkVariables() {
+
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( "comp.ip", "" );
+		map.put( "ip", "" );
+		map.put( "not-ip", "" );
+
+		final String ip = "127.0.0.1";
+		VariableHelpers.updateNetworkVariables( map, ip );
+		Assert.assertEquals( ip, map.get( "comp.ip" ));
+		Assert.assertEquals( ip, map.get( "ip" ));
+		Assert.assertEquals( "", map.get( "not-ip" ));
 	}
 }

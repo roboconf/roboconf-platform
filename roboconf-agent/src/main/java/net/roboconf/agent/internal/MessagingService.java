@@ -173,7 +173,7 @@ public final class MessagingService {
 		String applicationName = this.agentData.getApplicationName();
 
 		// Process the exports
-		for( String facetOrComponentName : VariableHelpers.findExportedVariablePrefixes( instance )) {
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
 			if( init )
 				configureExports( applicationName, facetOrComponentName, instance );
 			else
@@ -181,7 +181,7 @@ public final class MessagingService {
 		}
 
 		// Process the imports
-		for( String facetOrComponentName : VariableHelpers.findImportedVariablePrefixes( instance )) {
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( instance )) {
 			if( init )
 				configureImports( applicationName, facetOrComponentName, instance );
 			else

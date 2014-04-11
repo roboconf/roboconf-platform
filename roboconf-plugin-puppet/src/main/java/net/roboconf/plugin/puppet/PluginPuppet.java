@@ -383,7 +383,7 @@ public class PluginPuppet implements PluginInterface {
 		StringBuilder sb = new StringBuilder();
 
 		boolean first = true;
-		for( String facetOrComponentName : VariableHelpers.findImportedVariablePrefixes( instance )) {
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( instance )) {
 			if( first )
 				first = false;
 			else

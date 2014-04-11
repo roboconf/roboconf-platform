@@ -17,16 +17,14 @@
 package net.roboconf.core.model.io;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.parsing.ParsingConstants;
 
 import org.junit.Test;
 
@@ -70,20 +68,9 @@ public class ParsingModelIoTest {
 
 
 	@Test
-	public void testLoadingAndWritingOfValidFile() {
+	public void testLoadingAndWritingOfValidFile() throws Exception {
 
-		// Find the files
-		List<File> validFiles;
-		try {
-			validFiles = TestUtils.findTestFiles( PATH );
-
-		} catch( Exception e ) {
-			e.printStackTrace();
-			Assert.fail( "Failed to initialize the test." );
-			return;
-		}
-
-		// For every of them, make some checks
+		List<File> validFiles = TestUtils.findTestFiles( PATH );
 		for( File f : validFiles )
 			testLoadingAndWritingOfValidFile( f );
 	}
@@ -92,21 +79,14 @@ public class ParsingModelIoTest {
 	/**
 	 * @param f
 	 */
-	private static void testLoadingAndWritingOfValidFile( File f ) {
+	private static void testLoadingAndWritingOfValidFile( File f ) throws Exception {
 
 		// Preserving comments
 		FileDefinition rel = ParsingModelIo.readConfigurationFile( f, false );
 		Assert.assertTrue(  f.getName() + ": parsing errors were found.", rel.getParsingErrors().isEmpty());
 
-		String fileContent;
-		try {
-			fileContent = TestUtils.readFileContent( f );
-			fileContent = fileContent.replaceAll( "\r?\n", System.getProperty( "line.separator" ));
-
-		} catch( IOException e ) {
-			Assert.fail( f.getName() + ": failed to read the file content." );
-			return;
-		}
+		String fileContent = TestUtils.readFileContent( f );
+		fileContent = fileContent.replaceAll( "\r?\n", System.getProperty( "line.separator" ));
 
 		String s = ParsingModelIo.writeConfigurationFile( rel, true, null );
 		Assert.assertEquals( f.getName() + ": serialized model is different from the source.",  fileContent, s );
@@ -136,10 +116,7 @@ public class ParsingModelIoTest {
 			File f = TestUtils.findTestFile( PATH + "/commented-import-2.graph" );
 			testLoadingAndWritingOfValidFile( f  );
 
-		} catch( IOException e ) {
-			e.printStackTrace();
-
-		} catch( URISyntaxException e ) {
+		} catch( Exception e ) {
 			e.printStackTrace();
 		}
 	}

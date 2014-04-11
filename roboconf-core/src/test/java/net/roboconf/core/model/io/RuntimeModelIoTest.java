@@ -17,12 +17,8 @@
 package net.roboconf.core.model.io;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode.ErrorLevel;
-import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Component;
@@ -37,23 +33,9 @@ import org.junit.Test;
 public class RuntimeModelIoTest {
 
 	@Test
-	public void testLoadApplication_Lamp_Legacy_1() {
+	public void testLoadApplication_Lamp_Legacy_1() throws Exception {
 
-		// Find the directory
-		File directory;
-		try {
-			directory = TestUtils.findTestFile( "/applications/lamp-legacy-1" );
-
-		} catch( IOException e ) {
-			Assert.fail( "IO exception: " + e.getMessage());
-			return;
-
-		} catch( URISyntaxException e ) {
-			Assert.fail( "URI syntax exception: " + e.getMessage());
-			return;
-		}
-
-		// Load the application and check some assertions
+		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-1" );
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
@@ -153,23 +135,9 @@ public class RuntimeModelIoTest {
 
 
 	@Test
-	public void testLoadApplication_Lamp_Legacy_2() {
+	public void testLoadApplication_Lamp_Legacy_2() throws Exception {
 
-		// Find the directory
-		File directory;
-		try {
-			directory = TestUtils.findTestFile( "/applications/lamp-legacy-2" );
-
-		} catch( IOException e ) {
-			Assert.fail( "IO exception: " + e.getMessage());
-			return;
-
-		} catch( URISyntaxException e ) {
-			Assert.fail( "URI syntax exception: " + e.getMessage());
-			return;
-		}
-
-		// Load the application and check some assertions
+		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-2" );
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
@@ -242,29 +210,13 @@ public class RuntimeModelIoTest {
 
 
 	@Test
-	public void testLoadApplication_Mongo() {
+	public void testLoadApplication_Mongo() throws Exception {
 
-		// Find the directory
-		File directory;
-		try {
-			directory = TestUtils.findTestFile( "/applications/mongo" );
-
-		} catch( IOException e ) {
-			Assert.fail( "IO exception: " + e.getMessage());
-			return;
-
-		} catch( URISyntaxException e ) {
-			Assert.fail( "URI syntax exception: " + e.getMessage());
-			return;
-		}
-
-		// Load the application and check some assertions
+		File directory = TestUtils.findTestFile( "/applications/valid/mongo" );
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
-		Assert.assertEquals( 2, result.loadErrors.size());
-		for( RoboconfError error : result.loadErrors )
-			Assert.assertEquals( ErrorLevel.WARNING, error.getErrorCode().getLevel());
+		Assert.assertEquals( 0, result.loadErrors.size());
 
 		Assert.assertEquals( "Mongo", result.application.getName());
 		Assert.assertNotNull( result.application.getGraphs());
