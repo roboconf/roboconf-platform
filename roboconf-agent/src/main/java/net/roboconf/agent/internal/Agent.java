@@ -625,6 +625,7 @@ public class Agent implements IMessageProcessor {
 		for( Instance i : instancesToStop ) {
 			// Delete files for undeployed instances
 			deleteInstanceResources( i, plugin.getPluginName());
+			i.getImports().clear(); // To prevent old imports from being resent later on
 			updateAndNotifyNewStatus( i, InstanceStatus.NOT_DEPLOYED );
 		}
 
