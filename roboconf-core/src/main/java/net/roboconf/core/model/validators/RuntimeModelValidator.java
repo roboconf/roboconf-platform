@@ -20,7 +20,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import net.roboconf.core.ErrorCode;
@@ -28,6 +30,7 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
@@ -51,7 +54,7 @@ public class RuntimeModelValidator {
 		// Basic checks
 		if( Utils.isEmptyOrWhitespaces( component.getName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_NAME ));
-		else if( ! component.getName().matches( ParsingConstants.PATTERN_ID ))
+		else if( ! component.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
 			errors.add( new RoboconfError( ErrorCode.RM_INVALID_COMPONENT_NAME ));
 
 		if( Utils.isEmptyOrWhitespaces( component.getAlias()))
@@ -59,19 +62,71 @@ public class RuntimeModelValidator {
 
 		if( Utils.isEmptyOrWhitespaces( component.getInstallerName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER ));
-		else if( ! component.getInstallerName().matches( ParsingConstants.PATTERN_ID ))
+		else if( ! component.getInstallerName().matches( ParsingConstants.PATTERN_FLEX_ID ))
 			errors.add( new RoboconfError( ErrorCode.RM_INVALID_COMPONENT_INSTALLER ));
+
+		// Facet names
+		for( String facetName : component.getFacetNames()) {
+			if( Utils.isEmptyOrWhitespaces( facetName )) {
+				errors.add( new RoboconfError( ErrorCode.RM_EMPTY_FACET_NAME ));
+
+			} else if( ! facetName.matches( ParsingConstants.PATTERN_FLEX_ID )) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_FACET_NAME );
+				error.setDetails( "Facet name: " + facetName );
+				errors.add( error );
+			}
+		}
 
 		// A component cannot import variables it exports unless these imports are optional.
 		// This covers cluster uses cases (where an element may want to know where are the similar nodes).
 		for( Map.Entry<String,Boolean> entry : component.getImportedVariables().entrySet()) {
+			String var = entry.getKey();
+
+			if( Utils.isEmptyOrWhitespaces( var )) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME );
+				error.setDetails( "Variable name: " + var );
+				errors.add( error );
+
+			} else if( ! var.matches( ParsingConstants.PATTERN_ID )) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME );
+				error.setDetails( "Variable name: " + var );
+				errors.add( error );
+			}
+
 			if( entry.getValue())
 				continue;
 
-			String var = entry.getKey();
 			if( component.getExportedVariables().containsKey( var )) {
 				RoboconfError error = new RoboconfError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS );
 				error.setDetails( "Variable name: " + var );
+				errors.add( error );
+			}
+		}
+
+		// Exported variables must either start with the component name or a facet name
+		for( String exportedVarName : component.getExportedVariables().keySet()) {
+			List<String> prefixes = new ArrayList<String>( component.getFacetNames());
+			prefixes.add( component.getName());
+			Entry<String,String> varParts = VariableHelpers.parseVariableName( exportedVarName );
+
+			if( Utils.isEmptyOrWhitespaces( exportedVarName )) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME );
+				error.setDetails( "Variable name: " + exportedVarName );
+				errors.add( error );
+
+			} else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID )) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME );
+				error.setDetails( "Variable name: " + exportedVarName );
+				errors.add( error );
+
+			} else if( ! prefixes.contains( varParts.getKey())) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_EXPORT_PREFIX );
+				error.setDetails( "Variable name: " + exportedVarName );
+				errors.add( error );
+
+			} else if( Utils.isEmptyOrWhitespaces( varParts.getValue())) {
+				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_EXPORT_NAME );
+				error.setDetails( "Variable name: " + exportedVarName );
 				errors.add( error );
 			}
 		}
@@ -164,7 +219,7 @@ public class RuntimeModelValidator {
 		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
 		if( Utils.isEmptyOrWhitespaces( instance.getName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_NAME ));
-		else if( ! instance.getName().matches( ParsingConstants.PATTERN_ID ))
+		else if( ! instance.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
 			errors.add( new RoboconfError( ErrorCode.RM_INVALID_INSTANCE_NAME ));
 
 		if( instance.getComponent() == null )

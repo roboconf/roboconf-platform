@@ -39,9 +39,31 @@ import org.junit.Test;
 public class FromGraphsTest {
 
 	@Test
-	public void testFromGraphs() throws Exception {
+	public void testFromGraphs_noFacet() throws Exception {
+		Graphs graphs = new Graphs();
 
-		// Build a graphs and save it
+		Component cA = new Component( "A" );
+		cA.setAlias( "A" );
+		cA.getExportedVariables().put( "A.port", "9000" );
+		cA.getExportedVariables().put( "A.ip", null );
+		cA.getImportedVariables().put( "B.port", Boolean.FALSE );
+		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
+		cA.setInstallerName( "installer A" );
+		graphs.getRootComponents().add( cA );
+
+		Component cB = new Component( "B" );
+		cB.setAlias( "B" );
+		cB.getExportedVariables().put( "B.port", "9000" );
+		cB.getExportedVariables().put( "B.ip", null );
+		cB.setInstallerName( "installer B" );
+		graphs.getRootComponents().add( cB );
+
+		compareGraphs( graphs );
+	}
+
+
+	@Test
+	public void testFromGraphs_oneFacet() throws Exception {
 		Graphs graphs = new Graphs();
 
 		Component cA = new Component( "A" );
@@ -51,18 +73,65 @@ public class FromGraphsTest {
 		cA.getImportedVariables().put( "B.port", Boolean.TRUE );
 		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
 
-		// FIXME: we must write facets (for the exported variables)
-		// cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
+		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
 		cA.setInstallerName( "installer A" );
 		graphs.getRootComponents().add( cA );
 
 		Component cB = new Component( "B" );
 		cB.setAlias( "B" );
+		cB.getFacetNames().add( "facetF" );
 		cB.getExportedVariables().put( "B.port", "9000" );
 		cB.getExportedVariables().put( "B.ip", null );
-		// cB.getExportedVariables().put( "facetF.props", null );
+		cB.getExportedVariables().put( "facetF.props", null );
 		cB.setInstallerName( "installer B" );
 		graphs.getRootComponents().add( cB );
+
+		compareGraphs( graphs );
+	}
+
+
+	@Test
+	public void testFromGraphs_threeFacets() throws Exception {
+		Graphs graphs = new Graphs();
+
+		Component cA = new Component( "A" );
+		cA.setAlias( "A" );
+		cA.setInstallerName( "installer A" );
+		graphs.getRootComponents().add( cA );
+
+		cA.getFacetNames().add( "my-facet-1" );
+
+		cA.getExportedVariables().put( "A.port", "9000" );
+		cA.getExportedVariables().put( "A.ip", null );
+		cA.getExportedVariables().put( "my-facet-1.data", "coucou" );
+
+		cA.getImportedVariables().put( "B.port", Boolean.TRUE );
+		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
+		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
+
+		Component cB = new Component( "B" );
+		cB.setAlias( "B" );
+		cB.setInstallerName( "installer B" );
+		graphs.getRootComponents().add( cB );
+
+		cB.getFacetNames().add( "facetF" );
+		cA.getFacetNames().add( "my-facet-2" );
+
+		cA.getExportedVariables().put( "my-facet-2.woo", "woo" );
+		cB.getExportedVariables().put( "B.port", "9000" );
+		cB.getExportedVariables().put( "B.ip", null );
+		cB.getExportedVariables().put( "facetF.props", null );
+
+		compareGraphs( graphs );
+	}
+
+
+	/**
+	 * Compares an in-memory graphs with its written/read version.
+	 * @param graphs a graphs
+	 * @throws Exception
+	 */
+	private void compareGraphs( Graphs graphs ) throws Exception {
 
 		Assert.assertEquals(  0, RuntimeModelValidator.validate( graphs ).size());
 		File targetFile = File.createTempFile( "roboconf_", "test" );
@@ -79,6 +148,7 @@ public class FromGraphsTest {
 
 		FromGraphDefinition fromDef = new FromGraphDefinition( def );
 		Graphs readGraphs = fromDef.buildGraphs();
+		Assert.assertEquals(  0, fromDef.getErrors().size());
 		Assert.assertEquals(  0, RuntimeModelValidator.validate( readGraphs ).size());
 
 		// Compare the graphs

@@ -61,7 +61,7 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		comp.setName( "my-component" );
+		comp.setName( "comp" );
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_ALIAS, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, iterator.next().getErrorCode());
@@ -269,6 +269,58 @@ public class RuntimeModelValidatorTest {
 		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
+	public void testExportedVariableNames() throws Exception {
+
+		Component component = new Component( "my-component" );
+		component.setAlias( "a component" );
+		component.setInstallerName( "an-installer" );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
+
+		component.getExportedVariables().put( "ip", null );
+		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( component ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		component.getExportedVariables().clear();
+		component.getExportedVariables().put( "my-component.ip", null );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
+
+		component.getExportedVariables().put( "ip", null );
+		iterator = RuntimeModelValidator.validate( component ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		component.getExportedVariables().clear();
+		component.getExportedVariables().put( "my-component.ip", null );
+		component.getExportedVariables().put( "my-facet.ip", null );
+		iterator = RuntimeModelValidator.validate( component ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		component.getFacetNames().add( "my-facet" );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
+
+		component.getExportedVariables().clear();
+		component.getExportedVariables().put( "my-component.", null );
+		iterator = RuntimeModelValidator.validate( component ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		component.getExportedVariables().clear();
+		component.getExportedVariables().put( "my-component.inva!id", null );
+		iterator = RuntimeModelValidator.validate( component ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		component.getExportedVariables().clear();
+		component.getExportedVariables().put( "", null );
+		iterator = RuntimeModelValidator.validate( component ).iterator();
+		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 	}
 }
