@@ -477,6 +477,7 @@ public final class Manager {
 
 				this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted." );
 				rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
+				rootInstance.getImports().clear(); // DM won't send old imports upon restart...
 			}
 
 		} catch( IaasException e ) {
