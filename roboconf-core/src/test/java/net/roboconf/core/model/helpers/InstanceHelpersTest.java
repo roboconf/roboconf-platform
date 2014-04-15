@@ -322,5 +322,9 @@ public class InstanceHelpersTest {
 
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, mySqlInstance_1 ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
+
+		Instance instanceWithNoComponent = new Instance( "MySQL-2" );
+		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instanceWithNoComponent ));
+		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 	}
 }

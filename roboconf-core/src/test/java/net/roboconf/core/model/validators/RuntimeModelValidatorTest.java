@@ -80,6 +80,20 @@ public class RuntimeModelValidatorTest {
 		comp.setInstallerName( "my installer" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
 
+		comp.getFacetNames().add( "" );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertEquals( ErrorCode.RM_EMPTY_FACET_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		comp.getFacetNames().clear();
+		comp.getFacetNames().add( "!nvalid-facet-n@me" );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_FACET_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		comp.getFacetNames().clear();
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
+
 		comp.getExportedVariables().put( "comp.ip", null );
 		comp.getExportedVariables().put( "comp.port", "9000" );
 		comp.getImportedVariables().put( "comp.ip", Boolean.FALSE );
@@ -89,6 +103,17 @@ public class RuntimeModelValidatorTest {
 
 		comp.getImportedVariables().put( "comp.ip", Boolean.TRUE );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
+
+		comp.getImportedVariables().put( "", Boolean.FALSE );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+		comp.getImportedVariables().remove( "" );
+
+		comp.getImportedVariables().put( "comp.inva!id", Boolean.FALSE );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
 	}
 
 

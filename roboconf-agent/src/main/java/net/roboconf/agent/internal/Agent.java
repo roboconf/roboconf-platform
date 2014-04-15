@@ -249,18 +249,6 @@ public class Agent implements IMessageProcessor {
 
 
 	/**
-	 *
-	 * @param instance
-	 * @throws Exception
-	 */
-	public void update( Instance instance ) throws Exception {
-		PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
-		if( plugin != null )
-			plugin.update( instance );
-	}
-
-
-	/**
 	 * Adds an instance to the local model.
 	 * @param parentInstancePath the parent instance path (null to add a root instance)
 	 * @param newInstance the new instance to add

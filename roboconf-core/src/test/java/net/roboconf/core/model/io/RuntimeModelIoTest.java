@@ -16,10 +16,21 @@
 
 package net.roboconf.core.model.io;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.UUID;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
+import net.roboconf.core.ErrorCode;
+import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
@@ -242,5 +253,91 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( 2, childComponent.getImportedVariables().size());
 		Assert.assertTrue( childComponent.getImportedVariables().containsKey( "Mongo.ip" ));
 		Assert.assertTrue( childComponent.getImportedVariables().containsKey( "Mongo.port" ));
+	}
+
+
+	@Test
+	public void testLoadApplicationErrors() throws Exception {
+
+		File tempDirectory = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString());
+		try {
+			if( ! tempDirectory.mkdir())
+				throw new IOException( "Failed to create a temporary directory." );
+
+			// Descriptor
+			Iterator<RoboconfError> iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, iterator.next().getErrorCode());
+
+			File appDir = new File( tempDirectory, Constants.PROJECT_DIR_DESC );
+			if( ! appDir.mkdir())
+				throw new IOException( "Failed to create the descriptor directory." );
+
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_NO_DESC_FILE, iterator.next().getErrorCode());
+
+			Properties props = new Properties();
+			props.setProperty( ApplicationDescriptor.APPLICATION_NAME, "app-name" );
+			props.setProperty( ApplicationDescriptor.APPLICATION_QUALIFIER, "snapshot" );
+			props.setProperty( ApplicationDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
+			FileOutputStream fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
+			props.store( fos, null );
+			Utils.closeQuietly( fos );
+
+			// Graph
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_NO_GRAPH_DIR, iterator.next().getErrorCode());
+
+			File graphDir = new File( tempDirectory, Constants.PROJECT_DIR_GRAPH );
+			if( ! graphDir.mkdir())
+				throw new IOException( "Failed to create the graph directory." );
+
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_MISSING_GRAPH_EP, iterator.next().getErrorCode());
+
+			File graphFile = new File( graphDir, "main.graph" );
+			if( ! graphFile.createNewFile())
+				throw new IOException( "Faild to create a graph file." );
+
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.P_NO_FILE_TYPE, iterator.next().getErrorCode());
+
+			String instanceContent = "instanceof Toto {\n\tname: toto;\n}";
+			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), graphFile );
+
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_NOT_A_GRAPH, iterator.next().getErrorCode());
+
+			instanceContent = "facet MyFacet {\n}\n\nA {\n\talias: A;\n\tinstaller: bash;\n}";
+			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), graphFile );
+
+			// Instances
+			Assert.assertEquals( 0, RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.size());
+
+			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
+			props.setProperty( ApplicationDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
+			props.store( fos, null );
+			Utils.closeQuietly( fos );
+
+			File instDir = new File( tempDirectory, Constants.PROJECT_DIR_INSTANCES );
+			if( ! instDir.mkdir())
+				throw new IOException( "Failed to create the instances directory." );
+
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_MISSING_INSTANCE_EP, iterator.next().getErrorCode());
+
+			File instancesFile = new File( instDir, "init.instances" );
+			instanceContent = "facet MyFacet {\n}\n\nA {\n\talias: A;\n\tinstaller: bash;\n}";
+			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), instancesFile );
+
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_NOT_AN_INSTANCE, iterator.next().getErrorCode());
+
+			instanceContent = "instanceof A {\n\tname: toto;\n}";
+			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), instancesFile );
+			Assert.assertEquals( 0, RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.size());
+
+		} finally {
+			Utils.deleteFilesRecursively( tempDirectory );
+		}
 	}
 }

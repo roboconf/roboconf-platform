@@ -17,6 +17,7 @@
 package net.roboconf.core.model.io;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,23 @@ public class ParsingModelIoTest {
 		List<File> validFiles = TestUtils.findTestFiles( PATH );
 		for( File f : validFiles )
 			testLoadingAndWritingOfValidFile( f );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void saveRelatrionFileRequiresTargetFile() throws Exception {
+
+		FileDefinition def = new FileDefinition((File) null );
+		ParsingModelIo.saveRelationsFile( def, true, "\n " );
+	}
+
+
+	@Test
+	public void testReadConfigurationFileFromString() throws Exception {
+
+		File f = TestUtils.findTestFile( PATH + "/only-component-3.graph" );
+		FileDefinition rel = ParsingModelIo.readConfigurationFile( f.toURI().toString(), false );
+		Assert.assertTrue(  f.getName() + ": parsing errors were found.", rel.getParsingErrors().isEmpty());
 	}
 
 
