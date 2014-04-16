@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,6 +31,7 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.runtime.Application;
@@ -222,6 +224,7 @@ public class RuntimeModelValidator {
 		else if( ! instance.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
 			errors.add( new RoboconfError( ErrorCode.RM_INVALID_INSTANCE_NAME ));
 
+		// Check exports
 		if( instance.getComponent() == null )
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_COMPONENT ));
 
@@ -229,6 +232,31 @@ public class RuntimeModelValidator {
 			if( ! instance.getComponent().getExportedVariables().containsKey( s )) {
 				RoboconfError error = new RoboconfError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE );
 				error.setDetails( "Variable name: " + s );
+				errors.add( error );
+			}
+		}
+
+		// Check that it has a valid parent with respect to the graph
+		if( instance.getComponent() != null ) {
+			ErrorCode errorCode = null;
+			if( instance.getParent() == null
+					&& ! instance.getComponent().getAncestors().isEmpty())
+				errorCode = ErrorCode.RM_MISSING_INSTANCE_PARENT;
+
+			else if( instance.getParent() != null
+					&& ! instance.getComponent().getAncestors().contains( instance.getParent().getComponent()))
+				errorCode = ErrorCode.RM_INVALID_INSTANCE_PARENT;
+
+			if( errorCode != null ) {
+				StringBuilder sb = new StringBuilder( "One of the following parent was expected: " );
+				for( Iterator<Component> it = instance.getComponent().getAncestors().iterator(); it.hasNext(); ) {
+					sb.append( it.next().getName());
+					if( it.hasNext())
+						sb.append( ", " );
+				}
+
+				RoboconfError error = new RoboconfError( errorCode );
+				error.setDetails( sb.toString());
 				errors.add( error );
 			}
 		}
@@ -271,7 +299,7 @@ public class RuntimeModelValidator {
 		else
 			errors.addAll( validate( app.getGraphs()));
 
-		errors.addAll( validate( app.getRootInstances()));
+		errors.addAll( validate( InstanceHelpers.getAllInstances( app )));
 		return errors;
 	}
 

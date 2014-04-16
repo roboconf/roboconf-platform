@@ -81,7 +81,7 @@ public enum ErrorCode {
 	CO_CYCLE_IN_FACETS( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A cycle was found in facet definitions." ),
 	CO_ALREADY_DEFINED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This facet was defined more than once." ),
 	CO_ALREADY_DEFINED_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This component was defined more than once." ),
-	CO_ALREADY_DEFINED_ROOT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This root instance was defined more than once." ),
+	CO_ALREADY_DEFINED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This instance was defined more than once." ),
 	CO_NOT_OVERRIDING( ErrorLevel.WARNING, ErrorCategory.CONVERSION, "A variable is exported in the instance but was not defined in its component." ),
 	CO_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A variable is exported in the instance but could not be resolved in its component." ),
 	CO_AMBIGUOUS_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A component does not specify its installer but inherits several ones from its facets." ),
@@ -115,6 +115,8 @@ public enum ErrorCode {
 	RM_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid instance name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_EMPTY_INSTANCE_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance is not associated with a component." ),
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "An instance exports a variable which is not defined in its component (no override)." ),
+	RM_MISSING_INSTANCE_PARENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "According to the graph(s), this instance should have a parent instance." ),
+	RM_INVALID_INSTANCE_PARENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "According to the graph(s), this instance cannot have this parent instance." ),
 
 	// Projects Errors
 	PROJ_NO_GRAPH_DIR( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A Roboconf project must contain a 'graph' directory with the graph(s) definition(s)." ),

@@ -55,10 +55,9 @@ public class FromInstanceDefinition {
 	private final FileDefinition definition;
 	private final Collection<ModelError> errors = new ArrayList<ModelError> ();
 
+	private Map<BlockInstanceOf,Instance> allBlocksToInstances;
 	private Map<String,BlockImport> importUriToImportDeclaration;
-	private Map<String,List<BlockInstanceOf>> rootInstanceNameToBlocks;
 	private Set<String> alreadyProcessedUris;
-	private Collection<Instance> rootInstances;
 	private Graphs graphs;
 
 
@@ -95,9 +94,8 @@ public class FromInstanceDefinition {
 
 		// Initialize collections
 		this.importUriToImportDeclaration = new HashMap<String,BlockImport> ();
-		this.rootInstanceNameToBlocks = new HashMap<String,List<BlockInstanceOf>> ();
+		this.allBlocksToInstances = new LinkedHashMap<BlockInstanceOf,Instance> ();
 		this.alreadyProcessedUris = new HashSet<String> ();
-		this.rootInstances = new ArrayList<Instance> ();
 		this.graphs = graphs;
 		this.errors.clear();
 
@@ -143,14 +141,17 @@ public class FromInstanceDefinition {
 		// Check uniqueness
 		if( this.errors.isEmpty())
 			checkUnicity();
-		
-		// Set real exports
-		for( Instance rootInstance : rootInstances ) {
-			for( Instance inst : InstanceHelpers.buildHierarchicalList( rootInstance ))
-				inst.getExports().putAll( InstanceHelpers.getExportedVariables( inst ));
+
+		// Find the root instances and set the real exports
+		Collection<Instance> rootInstances = new HashSet<Instance> ();
+		for( Instance instance : this.allBlocksToInstances.values()) {
+			if( instance.getParent() == null )
+				rootInstances.add( instance );
+
+			instance.getExports().putAll( InstanceHelpers.getExportedVariables( instance ));
 		}
-			
-		return this.rootInstances;
+
+		return rootInstances;
 	}
 
 
@@ -192,8 +193,9 @@ public class FromInstanceDefinition {
 
 		// Process the rootInstances
 		Map<BlockInstanceOf,Instance> blockToInstance = new LinkedHashMap<BlockInstanceOf,Instance> ();
-		Instance rootInstance = new Instance();
-		blockToInstance.put( block, rootInstance );
+		blockToInstance.put( block, new Instance());
+		this.allBlocksToInstances.putAll( blockToInstance );
+
 		while( ! blockToInstance.isEmpty()) {
 
 			// The current one to process won't be processed again
@@ -212,12 +214,11 @@ public class FromInstanceDefinition {
 				// Check overridden exports
 				if( innerBlock.getInstructionType() == AbstractBlock.PROPERTY ) {
 					String pName = ((BlockProperty) innerBlock).getName();
-					if( Constants.PROPERTY_INSTANCE_NAME.equals( pName )
-							|| Constants.PROPERTY_INSTANCE_NAME.equals( pName ))
+					if( Constants.PROPERTY_INSTANCE_NAME.equals( pName ))
 						continue;
 
 					String pValue = ((BlockProperty) innerBlock).getValue();
-					resolveOverriddenExport( innerBlock, instance, pName, pValue );
+					this.errors.addAll( analyzeOverriddenExport( innerBlock.getLine(), instance, pName, pValue ));
 					continue;
 				}
 
@@ -228,27 +229,35 @@ public class FromInstanceDefinition {
 				Instance newInstance = new Instance();
 				InstanceHelpers.insertChild( instance, newInstance );
 				blockToInstance.put((BlockInstanceOf) innerBlock, newInstance );
+				this.allBlocksToInstances.put((BlockInstanceOf) innerBlock, newInstance );
 			}
 		}
-
-		// Track the root instance
-		this.rootInstances.add( rootInstance );
-		List<BlockInstanceOf> instanceBlocks = this.rootInstanceNameToBlocks.get( rootInstance.getName());
-		if( instanceBlocks == null )
-			instanceBlocks = new ArrayList<BlockInstanceOf> ();
-
-		this.rootInstanceNameToBlocks.put( rootInstance.getName(), instanceBlocks );
 	}
 
 
 	private void checkUnicity() {
 
-		for( Map.Entry<String,List<BlockInstanceOf>> entry : this.rootInstanceNameToBlocks.entrySet()) {
+		// "allBlocksToInstances" associates blocks and instances.
+		// Unlike instances children which consider instances with the same path as the same,
+		// "allBlocksToInstances" allows to find instances with the same path.
+		Map<String,List<BlockInstanceOf>> instancePathToBlocks = new HashMap<String,List<BlockInstanceOf>> ();
+		for( Map.Entry<BlockInstanceOf,Instance> entry : this.allBlocksToInstances.entrySet()) {
+			String instancePath = InstanceHelpers.computeInstancePath( entry.getValue());
+			List<BlockInstanceOf> blocks = instancePathToBlocks.get( instancePath );
+			if( blocks == null )
+				blocks = new ArrayList<BlockInstanceOf> ();
+
+			blocks.add( entry.getKey());
+			instancePathToBlocks.put( instancePath, blocks );
+		}
+
+		// Let's now find the duplicate declarations
+		for( Map.Entry<String,List<BlockInstanceOf>> entry : instancePathToBlocks.entrySet()) {
 			if( entry.getValue().size() == 1 )
 				continue;
 
 			StringBuilder sb = new StringBuilder();
-			sb.append( "Root instance " );
+			sb.append( "Instance " );
 			sb.append( entry.getKey());
 			sb.append( " is defined in:\n" );
 			for( AbstractBlockHolder holder : entry.getValue()) {
@@ -266,21 +275,28 @@ public class FromInstanceDefinition {
 			}
 
 			for( AbstractBlockHolder holder : entry.getValue()) {
-				ModelError error = new ModelError( ErrorCode.CO_ALREADY_DEFINED_ROOT_INSTANCE, holder.getLine());
+				ModelError error = new ModelError( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, holder.getLine());
 				error.setDetails( sb.toString());
 				this.errors.add( error );
 			}
 		}
-
-		// The map is useless now
-		this.rootInstanceNameToBlocks = null;
 	}
 
 
-	private void resolveOverriddenExport( AbstractBlock holder, Instance instance, String varName, String varValue ) {
+	/**
+	 * Analyzes an overridden export (i.e. an export defined in an instance).
+	 * @param holderLine the line where this property was declared
+	 * @param instance the instance
+	 * @param varName the variable / property name
+	 * @param varValue the variable value
+	 * @return non-null list of errors
+	 */
+	static List<ModelError> analyzeOverriddenExport( int holderLine, Instance instance, String varName, String varValue ) {
+		List<ModelError> result = new ArrayList<ModelError> ();
 
 		// Component variables are prefixed by a component or a facet name.
 		// Instance variables may not be prefixed (user-friendly).
+		// This is an initial processing
 		Set<String> ambiguousNames = new HashSet<String> ();
 		for( String componentVarName : instance.getComponent().getExportedVariables().keySet()) {
 
@@ -290,12 +306,15 @@ public class FromInstanceDefinition {
 				ambiguousNames.add( componentVarName );
 		}
 
-		// Analyze the result
+		// If the variable name is prefixed correctly
+		if( instance.getComponent().getExportedVariables().containsKey( varName ))
+			instance.getOverriddenExports().put( varName, varValue );
+
 		// No name? Show a warning and it
-		if( ambiguousNames.isEmpty()) {
-			ModelError error = new ModelError( ErrorCode.CO_NOT_OVERRIDING, holder.getLine());
-			error.setDetails( "Variable name:" + varName );
-			this.errors.add( error );
+		else if( ambiguousNames.isEmpty()) {
+			ModelError error = new ModelError( ErrorCode.CO_NOT_OVERRIDING, holderLine );
+			error.setDetails( "Variable name: " + varName );
+			result.add( error );
 		}
 
 		// A single name: mark it as resolved
@@ -315,9 +334,11 @@ public class FromInstanceDefinition {
 					sb.append( ", " );
 			}
 
-			ModelError error = new ModelError( ErrorCode.CO_AMBIGUOUS_OVERRIDING, holder.getLine());
+			ModelError error = new ModelError( ErrorCode.CO_AMBIGUOUS_OVERRIDING, holderLine );
 			error.setDetails( sb.toString());
-			this.errors.add( error );
+			result.add( error );
 		}
+
+		return result;
 	}
 }

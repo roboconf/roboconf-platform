@@ -30,6 +30,7 @@ import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.converters.FromGraphDefinition;
 import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.io.ParsingModelIo;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Application;
@@ -125,14 +126,10 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_NO_ROOT_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		Component comp1 = new Component( "comp1" );
-		comp1.setAlias( "component 1" );
-		comp1.setInstallerName( "installer-1" );
+		Component comp1 = new Component( "comp1" ).alias( "component 1" ).installerName( "installer-1" );
 		graphs.getRootComponents().add( comp1 );
 
-		Component duplicateComp1 = new Component( "comp1" );
-		duplicateComp1.setAlias( "component 1" );
-		duplicateComp1.setInstallerName( "installer-1" );
+		Component duplicateComp1 = new Component( "comp1" ).alias( "component 1" ).installerName( "installer-1" );
 		graphs.getRootComponents().add( duplicateComp1 );
 
 		// The validator checks something that cannot happen for the moment.
@@ -158,9 +155,7 @@ public class RuntimeModelValidatorTest {
 		comp1.getImportedVariables().clear();
 
 		// Test for loops
-		Component comp2 = new Component( "comp2" );
-		comp2.setAlias( "component 2" );
-		comp2.setInstallerName( "installer-2" );
+		Component comp2 = new Component( "comp2" ).alias( "component 2" ).installerName( "installer-2" );
 		ComponentHelpers.insertChild( comp1, comp2 );
 		ComponentHelpers.insertChild( comp2, comp1 );
 
@@ -208,8 +203,7 @@ public class RuntimeModelValidatorTest {
 
 		List<Instance> instances = new ArrayList<Instance> ();
 		for( int i=0; i<10; i++ ) {
-			Instance inst = new Instance( "inst-" + i );
-			inst.setComponent( new Component( "comp" ));
+			Instance inst = new Instance( "inst-" + i ).component( new Component( "comp" ));
 			instances.add( inst );
 		}
 
@@ -243,9 +237,7 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_NO_ROOT_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		Component comp = new Component( "root" );
-		comp.setAlias( "a root component" );
-		comp.setInstallerName( "_my_installer" );
+		Component comp = new Component( "root" ).alias( "a root component" ).installerName( "_my_installer" );
 		app.getGraphs().getRootComponents().add( comp );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
 	}
@@ -301,9 +293,7 @@ public class RuntimeModelValidatorTest {
 	@Test
 	public void testExportedVariableNames() throws Exception {
 
-		Component component = new Component( "my-component" );
-		component.setAlias( "a component" );
-		component.setInstallerName( "an-installer" );
+		Component component = new Component( "my-component" ).alias( "a component" ).installerName( "an-installer" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
 
 		component.getExportedVariables().put( "ip", null );
@@ -347,5 +337,45 @@ public class RuntimeModelValidatorTest {
 		iterator = RuntimeModelValidator.validate( component ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
+	public void testInvalidChildInstance() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).alias( "a VM" ).installerName( "iaas" );
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "App Server" ).installerName( "puppet" );
+		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		// We cannot instantiate a VM under a VM
+		Instance vmInstance1 = new Instance("vm1" ).component( vmComponent );
+		Instance vmInstance2 = new Instance("vm2" ).component( vmComponent );
+		InstanceHelpers.insertChild( vmInstance1, vmInstance2 );
+
+		Application app = new Application( "app" ).qualifier( "snapshot" ).graphs( graphs );
+		app.getRootInstances().add( vmInstance1 );
+
+		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_INSTANCE_PARENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		// We cannot have a Tomcat as a root instance
+		Instance tomcatInstance = new Instance("tomcat" ).component( tomcatComponent );
+		app.getRootInstances().clear();
+		app.getRootInstances().add( tomcatInstance );
+
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_INSTANCE_PARENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		// We can insert a Tomcat under a VM
+		vmInstance1.getChildren().clear();
+		InstanceHelpers.insertChild( vmInstance1, tomcatInstance );
+		app.getRootInstances().clear();
+		app.getRootInstances().add( vmInstance1 );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
 	}
 }

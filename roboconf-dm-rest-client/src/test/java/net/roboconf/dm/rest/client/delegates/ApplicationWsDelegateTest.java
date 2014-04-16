@@ -293,9 +293,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertEquals( 2, app.getRootInstances().size());
 
-		Instance newInstance = new Instance( "vm-mail" );
-		newInstance.setComponent( app.getMySqlVm().getComponent());
-
+		Instance newInstance = new Instance( "vm-mail" ).component( app.getMySqlVm().getComponent());
 		client.getApplicationDelegate().addInstance( app.getName(), null, newInstance );
 		Assert.assertEquals( 3, app.getRootInstances().size());
 	}
@@ -326,8 +324,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
-		Instance newMysql = new Instance( "mysql-2" );
-		newMysql.setComponent( app.getMySql().getComponent());
+		Instance newMysql = new Instance( "mysql-2" ).component( app.getMySql().getComponent());
 
 		Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
 		Assert.assertFalse( app.getTomcatVm().getChildren().contains( newMysql ));
@@ -356,8 +353,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		// We cannot deploy a WAR directly on a VM!
 		// At least, this what the graph says.
 		WsClient client = RestTestUtils.buildWsClient();
-		Instance newWar = new Instance( "war-2" );
-		newWar.setComponent( app.getWar().getComponent());
+		Instance newWar = new Instance( "war-2" ).component( app.getWar().getComponent());
 
 		Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
 		Assert.assertFalse( app.getTomcatVm().getChildren().contains( newWar ));
@@ -374,8 +370,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
-		Instance newMysql = new Instance( "mysql-2" );
-		newMysql.setComponent( app.getMySql().getComponent());
+		Instance newMysql = new Instance( "mysql-2" ).component( app.getMySql().getComponent());
 		client.getApplicationDelegate().addInstance( "inexisting", InstanceHelpers.computeInstancePath( app.getTomcatVm()), newMysql );
 	}
 
@@ -389,8 +384,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 				new ManagedApplication( app, null, new TestMessageServerClient()));
 
 		WsClient client = RestTestUtils.buildWsClient();
-		Instance newMysql = new Instance( "mysql-2" );
-		newMysql.setComponent( app.getMySql().getComponent());
+		Instance newMysql = new Instance( "mysql-2" ).component( app.getMySql().getComponent());
 		client.getApplicationDelegate().addInstance( "inexisting", "/bip/bip", newMysql );
 	}
 }

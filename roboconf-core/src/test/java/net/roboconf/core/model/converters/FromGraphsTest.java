@@ -42,21 +42,19 @@ public class FromGraphsTest {
 	public void testFromGraphs_noFacet() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" );
-		cA.setAlias( "A" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
+		graphs.getRootComponents().add( cA );
+
 		cA.getExportedVariables().put( "A.port", "9000" );
 		cA.getExportedVariables().put( "A.ip", null );
 		cA.getImportedVariables().put( "B.port", Boolean.FALSE );
 		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
-		cA.setInstallerName( "installer A" );
-		graphs.getRootComponents().add( cA );
 
-		Component cB = new Component( "B" );
-		cB.setAlias( "B" );
+		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
+		graphs.getRootComponents().add( cB );
+
 		cB.getExportedVariables().put( "B.port", "9000" );
 		cB.getExportedVariables().put( "B.ip", null );
-		cB.setInstallerName( "installer B" );
-		graphs.getRootComponents().add( cB );
 
 		compareGraphs( graphs );
 	}
@@ -66,25 +64,22 @@ public class FromGraphsTest {
 	public void testFromGraphs_oneFacet() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" );
-		cA.setAlias( "A" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
+		graphs.getRootComponents().add( cA );
+		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
+
 		cA.getExportedVariables().put( "A.port", "9000" );
 		cA.getExportedVariables().put( "A.ip", null );
 		cA.getImportedVariables().put( "B.port", Boolean.TRUE );
 		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
 
-		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
-		cA.setInstallerName( "installer A" );
-		graphs.getRootComponents().add( cA );
+		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
+		graphs.getRootComponents().add( cB );
 
-		Component cB = new Component( "B" );
-		cB.setAlias( "B" );
 		cB.getFacetNames().add( "facetF" );
 		cB.getExportedVariables().put( "B.port", "9000" );
 		cB.getExportedVariables().put( "B.ip", null );
 		cB.getExportedVariables().put( "facetF.props", null );
-		cB.setInstallerName( "installer B" );
-		graphs.getRootComponents().add( cB );
 
 		compareGraphs( graphs );
 	}
@@ -94,9 +89,7 @@ public class FromGraphsTest {
 	public void testFromGraphs_threeFacets() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" );
-		cA.setAlias( "A" );
-		cA.setInstallerName( "installer A" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
 		graphs.getRootComponents().add( cA );
 
 		cA.getFacetNames().add( "my-facet-1" );
@@ -109,9 +102,7 @@ public class FromGraphsTest {
 		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
 		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
 
-		Component cB = new Component( "B" );
-		cB.setAlias( "B" );
-		cB.setInstallerName( "installer B" );
+		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
 		graphs.getRootComponents().add( cB );
 
 		cB.getFacetNames().add( "facetF" );

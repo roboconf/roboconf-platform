@@ -41,37 +41,19 @@ public class TestApplication extends Application {
 		setQualifier( "test" );
 
 		// Root instances
-		Component vmComponent = new Component( "vm" );
-		vmComponent.setInstallerName( "iaas" );
-		vmComponent.setAlias( "A virtual machine" );
-
-		this.tomcatVm = new Instance( "tomcat-vm" );
-		this.tomcatVm.setComponent( vmComponent );
-
-		this.mySqlVm = new Instance( "mysql-vm" );
-		this.mySqlVm.setComponent( vmComponent );
+		Component vmComponent = new Component( "vm" ).installerName( "iaas" ).alias( "A virtual machine" );
+		this.tomcatVm = new Instance( "tomcat-vm" ).component( vmComponent );
+		this.mySqlVm = new Instance( "mysql-vm" ).component( vmComponent );
 
 		// Children instances
-		Component tomcatComponent = new Component( "tomcat" );
-		tomcatComponent.setInstallerName( "puppet" );
-		tomcatComponent.setAlias( "An application server" );
+		Component tomcatComponent = new Component( "tomcat" ).installerName( "puppet" ).alias( "An application server" );
+		this.tomcat = new Instance( "tomcat-server" ).component( tomcatComponent );
 
-		this.tomcat = new Instance( "tomcat-server" );
-		this.tomcat.setComponent( tomcatComponent );
+		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" ).alias( "A database" );
+		this.mySql = new Instance( "mysql-server" ).component( mySqlComponent );
 
-		Component mySqlComponent = new Component( "mysql" );
-		mySqlComponent.setInstallerName( "puppet" );
-		mySqlComponent.setAlias( "A database" );
-
-		this.mySql = new Instance( "mysql-server" );
-		this.mySql.setComponent( mySqlComponent );
-
-		Component warComponent = new Component( "war" );
-		warComponent.setInstallerName( "bash" );
-		warComponent.setAlias( "A WAR application" );
-
-		this.war = new Instance( "hello-world" );
-		this.war.setComponent( warComponent );
+		Component warComponent = new Component( "war" ).installerName( "bash" ).alias( "A WAR application" );
+		this.war = new Instance( "hello-world" ).component( warComponent );
 
 		// Make the glue
 		InstanceHelpers.insertChild( this.tomcatVm, this.tomcat );
