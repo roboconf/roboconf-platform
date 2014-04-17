@@ -29,6 +29,7 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.io.ParsingModelIo;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
@@ -131,5 +132,48 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
+	public void testComplexInstances() throws Exception {
+
+		// The graph
+		Graphs graphs = new Graphs();
+		Component vmComponent = new Component( "VM" ).alias( "VM" ).installerName( "iaas" );
+		graphs.getRootComponents().add( vmComponent );
+
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
+		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
+		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+
+		Component warComponent = new Component( "WAR" ).alias( "A simple web application" ).installerName( "bash" );
+		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+
+		// The file to read
+		File f = TestUtils.findTestFile( "/configurations/valid/complex-instances.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+
+		// The assertions
+		Application app = new Application();
+		app.getRootInstances().addAll( rootInstances );
+
+		Assert.assertEquals( 3, rootInstances.size());
+		Assert.assertEquals( 8, InstanceHelpers.getAllInstances( app ).size());
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1/i-tomcat" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1/i-tomcat/i-war" ));
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-2" ));
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-3" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-3/i-tomcat-1" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-3/i-tomcat-2" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-3/i-tomcat-2/i-war" ));
 	}
 }

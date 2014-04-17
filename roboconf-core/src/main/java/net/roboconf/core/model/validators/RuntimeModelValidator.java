@@ -58,6 +58,8 @@ public class RuntimeModelValidator {
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_NAME ));
 		else if( ! component.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
 			errors.add( new RoboconfError( ErrorCode.RM_INVALID_COMPONENT_NAME ));
+		else if( component.getName().contains( "." ))
+			errors.add( new RoboconfError( ErrorCode.RM_DOT_IS_NOT_ALLOWED ));
 
 		if( Utils.isEmptyOrWhitespaces( component.getAlias()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_ALIAS ));

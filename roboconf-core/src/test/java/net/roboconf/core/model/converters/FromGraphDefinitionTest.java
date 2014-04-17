@@ -187,4 +187,28 @@ public class FromGraphDefinitionTest {
 		Assert.assertTrue( componentA.getImportedVariables().get( "A.port" ));
 		Assert.assertTrue( componentA.getImportedVariables().get( "A.ip" ));
 	}
+
+
+	@Test
+	public void testIDsWithSpaces() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/real-lamp-all-in-one-flex.graph" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+		Assert.assertEquals( 0, validationErrors.size());
+
+		FromGraphDefinition fromDef = new FromGraphDefinition( def );
+		Graphs graphs = fromDef.buildGraphs();
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		Component component = ComponentHelpers.findComponent( graphs, "hello world" );
+		Assert.assertNotNull( component );
+		Assert.assertTrue( component.getFacetNames().contains( "war archive" ));
+
+		component = ComponentHelpers.findComponent( graphs, "ecom" );
+		Assert.assertNotNull( component );
+		Assert.assertTrue( component.getFacetNames().contains( "war archive" ));
+	}
 }

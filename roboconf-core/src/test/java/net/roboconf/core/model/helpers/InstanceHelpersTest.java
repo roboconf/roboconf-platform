@@ -73,9 +73,13 @@ public class InstanceHelpersTest {
 	@Test
 	public void testBuildHierarchicalList() {
 
+		// Series 0
+		List<Instance> instances = InstanceHelpers.buildHierarchicalList( null );
+		Assert.assertEquals( 0, instances.size());
+
 		// Series 1
 		Instance instance_1 = new Instance( "inst 1" );
-		List<Instance> instances = InstanceHelpers.buildHierarchicalList( instance_1 );
+		instances = InstanceHelpers.buildHierarchicalList( instance_1 );
 		Assert.assertEquals( 1, instances.size());
 		Assert.assertEquals( instance_1, instances.get( 0 ));
 

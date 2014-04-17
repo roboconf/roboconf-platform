@@ -92,6 +92,7 @@ public enum ErrorCode {
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
 	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must have a graph definition." ),
 
+	RM_DOT_IS_NOT_ALLOWED( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Component names cannot contain a dot." ),
 	RM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component name cannot be empty." ),
 	RM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid component name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_EMPTY_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "This component references a facet whose name is null or empty." ),

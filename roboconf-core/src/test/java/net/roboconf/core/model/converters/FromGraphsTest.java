@@ -31,12 +31,18 @@ import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.validators.ParsingModelValidator;
 import net.roboconf.core.model.validators.RuntimeModelValidator;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class FromGraphsTest {
+
+	@Rule
+    public TemporaryFolder testFolder = new TemporaryFolder();
+
 
 	@Test
 	public void testFromGraphs_noFacet() throws Exception {
@@ -56,7 +62,7 @@ public class FromGraphsTest {
 		cB.getExportedVariables().put( "B.port", "9000" );
 		cB.getExportedVariables().put( "B.ip", null );
 
-		compareGraphs( graphs );
+		compareGraphs( graphs, false );
 	}
 
 
@@ -81,7 +87,7 @@ public class FromGraphsTest {
 		cB.getExportedVariables().put( "B.ip", null );
 		cB.getExportedVariables().put( "facetF.props", null );
 
-		compareGraphs( graphs );
+		compareGraphs( graphs, false );
 	}
 
 
@@ -113,26 +119,58 @@ public class FromGraphsTest {
 		cB.getExportedVariables().put( "B.ip", null );
 		cB.getExportedVariables().put( "facetF.props", null );
 
-		compareGraphs( graphs );
+		compareGraphs( graphs, false );
+	}
+
+
+	@Test
+	public void testFromGraphs_withComments() throws Exception {
+		Graphs graphs = new Graphs();
+
+		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
+		graphs.getRootComponents().add( cA );
+
+		cA.getFacetNames().add( "my-facet-1" );
+
+		cA.getExportedVariables().put( "A.port", "9000" );
+		cA.getExportedVariables().put( "A.ip", null );
+		cA.getExportedVariables().put( "my-facet-1.data", "coucou" );
+
+		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
+		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
+
+		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
+		graphs.getRootComponents().add( cB );
+
+		cB.getFacetNames().add( "facetF" );
+		cA.getFacetNames().add( "my-facet-2" );
+
+		cA.getExportedVariables().put( "my-facet-2.woo", "woo" );
+		cB.getExportedVariables().put( "B.port", "9000" );
+		cB.getExportedVariables().put( "B.ip", null );
+		cB.getExportedVariables().put( "facetF.props", null );
+
+		compareGraphs( graphs, true );
 	}
 
 
 	/**
 	 * Compares an in-memory graphs with its written/read version.
 	 * @param graphs a graphs
+	 * @param writeComments true to write the comments, false otherwise
 	 * @throws Exception
 	 */
-	private void compareGraphs( Graphs graphs ) throws Exception {
+	private void compareGraphs( Graphs graphs, boolean writeComments ) throws Exception {
 
 		Assert.assertEquals(  0, RuntimeModelValidator.validate( graphs ).size());
-		File targetFile = File.createTempFile( "roboconf_", "test" );
-		targetFile.deleteOnExit();
-		FileDefinition defToWrite = new FromGraphs().buildFileDefinition( graphs, targetFile, false );
-		ParsingModelIo.saveRelationsFile( defToWrite, false, System.getProperty( "line.separator" ));
+		File targetFile = this.testFolder.newFile( "roboconf_test.graph" );
+		FileDefinition defToWrite = new FromGraphs().buildFileDefinition( graphs, targetFile, writeComments );
+		ParsingModelIo.saveRelationsFile( defToWrite, writeComments, System.getProperty( "line.separator" ));
 
 		// Load the saved file
 		FileDefinition def = ParsingModelIo.readConfigurationFile( targetFile, true );
 		Assert.assertEquals( 0, def.getParsingErrors().size());
+		Assert.assertEquals( FileDefinition.GRAPH, def.getFileType());
 
 		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
 		Assert.assertEquals( 0, validationErrors.size());
@@ -150,6 +188,8 @@ public class FromGraphsTest {
 			Assert.assertNotNull( readComponent.getName(), originalComponent );
 			Assert.assertEquals( readComponent.getAlias(), originalComponent.getAlias());
 			Assert.assertEquals( readComponent.getInstallerName(), originalComponent.getInstallerName());
+			Assert.assertEquals( readComponent.getExportedVariables().size(), originalComponent.getExportedVariables().size());
+			Assert.assertEquals( readComponent.getImportedVariables().size(), originalComponent.getImportedVariables().size());
 
 			for( Map.Entry<String,String> entry : readComponent.getExportedVariables().entrySet()) {
 				Assert.assertTrue( readComponent.getName(), originalComponent.getExportedVariables().containsKey( entry.getKey()));

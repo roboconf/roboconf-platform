@@ -62,6 +62,13 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
+		comp.setName( "my.component" );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertEquals( ErrorCode.RM_DOT_IS_NOT_ALLOWED, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_ALIAS, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
 		comp.setName( "comp" );
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_ALIAS, iterator.next().getErrorCode());

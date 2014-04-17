@@ -196,6 +196,11 @@ public class FromInstanceDefinition {
 		blockToInstance.put( block, new Instance());
 		this.allBlocksToInstances.putAll( blockToInstance );
 
+		// We rely on a different collection than just Instance#getChildren().
+		// This is because getChildren() uses a hash set.
+		// But here, at parsing time, we need a list.
+		Map<Instance,List<Instance>> instanceToChildrenInstances = new HashMap<Instance,List<Instance>> ();
+
 		while( ! blockToInstance.isEmpty()) {
 
 			// The current one to process won't be processed again
@@ -226,11 +231,23 @@ public class FromInstanceDefinition {
 				if( innerBlock.getInstructionType() != AbstractBlock.INSTANCEOF )
 					continue;
 
+				List<Instance> childrenInstances = instanceToChildrenInstances.get( instance );
+				if( childrenInstances == null )
+					childrenInstances = new ArrayList<Instance> ();
+
 				Instance newInstance = new Instance();
-				InstanceHelpers.insertChild( instance, newInstance );
+				childrenInstances.add( newInstance );
+				instanceToChildrenInstances.put( instance, childrenInstances );
+
 				blockToInstance.put((BlockInstanceOf) innerBlock, newInstance );
 				this.allBlocksToInstances.put((BlockInstanceOf) innerBlock, newInstance );
 			}
+		}
+
+		// Associate instances with their children
+		for( Map.Entry<Instance,List<Instance>> entry : instanceToChildrenInstances.entrySet()) {
+			for( Instance childInstance : entry.getValue())
+				InstanceHelpers.insertChild( entry.getKey(), childInstance );
 		}
 	}
 
