@@ -215,7 +215,7 @@ public class IaasAzure implements IaasInterface {
     }
 	
 	
-	private static void replaceValueOfTagInXMLFile(String filePath, String tagName, String replacingValue) throws ParserConfigurationException, SAXException, IOException {
+	private void replaceValueOfTagInXMLFile(String filePath, String tagName, String replacingValue) throws ParserConfigurationException, SAXException, IOException {
 		File fXmlFile = new File(filePath);
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -238,7 +238,7 @@ public class IaasAzure implements IaasInterface {
 			StreamResult result = new StreamResult(new File(filePath));
 			transformer.transform(source, result);
 		} catch (TransformerException e) {
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		}
 	}
 
