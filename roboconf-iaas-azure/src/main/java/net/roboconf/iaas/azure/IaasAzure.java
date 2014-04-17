@@ -18,6 +18,7 @@ package net.roboconf.iaas.azure;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,6 +50,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
 import net.roboconf.iaas.api.exceptions.IaasException;
@@ -88,7 +90,7 @@ public class IaasAzure implements IaasInterface {
 		this.logger = logger;
 	}
 	
-	private static KeyStore getKeyStore(String keyStoreName, String password) throws IOException
+	private KeyStore getKeyStore(String keyStoreName, String password) throws IOException
 	{
 	    KeyStore ks = null;
 	    FileInputStream fis = null;
@@ -97,21 +99,20 @@ public class IaasAzure implements IaasInterface {
 	        char[] passwordArray = password.toCharArray();
 	        fis = new java.io.FileInputStream(keyStoreName);
 	        ks.load(fis, passwordArray);
-	        fis.close();
 	         
 	    } catch (Exception e) {
-	        e.printStackTrace();
+	    	this.logger.severe( e.getMessage() );
 	    }
 	    finally {
 	        if (fis != null) {
-	            fis.close();
+	        	Utils.closeQuietly( fis );
 	        }
 	    }
 	    return ks;
 	}
 	
-	private static SSLSocketFactory getSSLSocketFactory(String keyStoreName, String password) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
-	    KeyStore ks = getKeyStore(keyStoreName, password);
+	private SSLSocketFactory getSSLSocketFactory(String keyStoreName, String password) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
+	    KeyStore ks = this.getKeyStore(keyStoreName, password);
 	    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
 	    keyManagerFactory.init(ks, password.toCharArray());
 	 
@@ -121,7 +122,7 @@ public class IaasAzure implements IaasInterface {
 	      return context.getSocketFactory();
 	}
 	
-	private static String getStringFromInputStream(InputStream is) {
+	private String getStringFromInputStream(InputStream is) {
 	     BufferedReader br = null;
 	     StringBuilder sb = new StringBuilder();
 	     String line;
@@ -131,13 +132,13 @@ public class IaasAzure implements IaasInterface {
 	             sb.append(line);
 	         }
 	     } catch (IOException e) {
-	         e.printStackTrace();
+	    	 this.logger.severe( e.getMessage() );
 	     } finally {
 	         if (br != null) {
 	             try {
 	                 br.close();
 	             } catch (IOException e) {
-	                 e.printStackTrace();
+	            	 this.logger.severe( e.getMessage() );
 	             }
 	         }
 	     }
@@ -161,8 +162,8 @@ public class IaasAzure implements IaasInterface {
 		return resultBool;
 	}
 	
-	private static String processGetRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
-        SSLSocketFactory sslFactory = getSSLSocketFactory(keyStore, keyStorePassword);
+	private String processGetRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+        SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
         HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
         con.setSSLSocketFactory(sslFactory);
         con.setRequestMethod("GET");
@@ -174,8 +175,8 @@ public class IaasAzure implements IaasInterface {
     }
 	
 	
-	private static int processPostRequest(URL url, byte[] data, String contentType, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
-	    SSLSocketFactory sslFactory = getSSLSocketFactory(keyStore, keyStorePassword);
+	private int processPostRequest(URL url, byte[] data, String contentType, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+	    SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
 	    HttpsURLConnection con = null;
 	    con = (HttpsURLConnection) url.openConnection();
 	    con.setSSLSocketFactory(sslFactory);
@@ -192,8 +193,8 @@ public class IaasAzure implements IaasInterface {
 	    return con.getResponseCode();
 	}
 	
-	private static int processDeleteRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
-        SSLSocketFactory sslFactory = getSSLSocketFactory(keyStore, keyStorePassword);
+	private int processDeleteRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+        SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
         HttpsURLConnection con = null;
         con = (HttpsURLConnection) url.openConnection();
         con.setSSLSocketFactory(sslFactory);
@@ -202,24 +203,17 @@ public class IaasAzure implements IaasInterface {
         return con.getResponseCode();
     }
 	
-	private static byte[] convertFileToByte(String xmlFilePath)
+	private byte[] convertFileToByte(String xmlFilePath)
     {
-    	FileInputStream fileInputStream=null;
- 
-        File file = new File(xmlFilePath);
- 
-        byte[] bFile = new byte[(int) file.length()];
- 
-        try {
-            //convert file into array of bytes
-		    fileInputStream = new FileInputStream(file);
-		    fileInputStream.read(bFile);
-		    fileInputStream.close();
-        }catch(Exception e){
-        	e.printStackTrace();
-        }
-        return bFile;
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		try {
+			Utils.copyStream ( new File(xmlFilePath), os );
+		} catch (IOException e) {
+			this.logger.severe( e.getMessage() );
+		}
+		return os.toByteArray();
     }
+	
 	
 	private static void replaceValueOfTagInXMLFile(String filePath, String tagName, String replacingValue) throws ParserConfigurationException, SAXException, IOException {
 		File fXmlFile = new File(filePath);
@@ -279,7 +273,7 @@ public class IaasAzure implements IaasInterface {
 			// The following part enables to transmit data to the VM.
 			// When the VM is up, it will be able to read this data.
 			// TODO: Azure is not to allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts. 
-			channelName = channelName.replaceAll("\\s+","-").toLowerCase();
+			// channelName = channelName.replaceAll("\\s+","-").toLowerCase();
 			StringBuilder data = new StringBuilder();
 			data.append( "ipMessagingServer=" + ipMessagingServer + "\n" );
 			data.append( "applicationName=" + applicationName + "\n" );
@@ -326,26 +320,19 @@ public class IaasAzure implements IaasInterface {
 			this.logger.severe( "An error occurred while contacting Amazon EC2. " + e.getMessage());
 			throw new CommunicationToIaasException( e );
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (UnrecoverableKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (KeyManagementException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		}
 
 		return instanceId;
@@ -369,23 +356,17 @@ public class IaasAzure implements IaasInterface {
 			this.logger.info("Response Code: Delete VM: " + rescodeDeleteCloudService);
 
 		} catch (UnrecoverableKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (KeyManagementException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			this.logger.severe( e.getMessage() );
 		}
 	}
 

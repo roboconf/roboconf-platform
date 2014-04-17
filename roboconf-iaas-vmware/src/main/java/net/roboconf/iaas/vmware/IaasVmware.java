@@ -165,7 +165,7 @@ public class IaasVmware implements IaasInterface {
 				throw new IaasException("Failure -: Virtual Machine cannot be started");
 			}
 			
-			Thread.sleep(10000); // VMWare tools not yet started (!)
+			Thread.sleep(20000); // VMWare tools not yet started (!)
 			
 			GuestOperationsManager gom = vmwareServiceInstance.getGuestOperationsManager();
 			//GuestAuthManager gam = gom.getAuthManager(vm2);
