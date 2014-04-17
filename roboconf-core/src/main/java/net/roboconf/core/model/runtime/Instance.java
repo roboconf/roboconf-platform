@@ -193,6 +193,51 @@ public class Instance implements Serializable {
 
 
 	/**
+	 * Sets the name in a chain approach.
+	 */
+	public Instance name( String name ) {
+		this.name = name;
+		return this;
+	}
+
+
+	/**
+	 * Sets the channel in a chain approach.
+	 */
+	public Instance channel( String channel ) {
+		this.channel = channel;
+		return this;
+	}
+
+
+	/**
+	 * Sets the component in a chain approach.
+	 */
+	public Instance component( Component component ) {
+		this.component = component;
+		return this;
+	}
+
+
+	/**
+	 * Sets the parent in a chain approach.
+	 */
+	public Instance parent( Instance parent ) {
+		this.parent = parent;
+		return this;
+	}
+
+
+	/**
+	 * Sets the status in a chain approach.
+	 */
+	public synchronized Instance status( InstanceStatus status ) {
+		this.status = status;
+		return this;
+	}
+
+
+	/**
 	 * Updates the imports with new values.
 	 * @param variablePrefixToImports the new imports (can be null)
 	 */

@@ -126,7 +126,7 @@ public class Component implements Serializable {
 	 * Value = true if the import is optional, false if it is required
 	 * </p>
 	 */
-	public Map<String, Boolean> getImportedVariables() {
+	public Map<String,Boolean> getImportedVariables() {
 		return this.importedVariables;
 	}
 
@@ -165,5 +165,37 @@ public class Component implements Serializable {
 	@Override
 	public String toString() {
 		return this.name;
+	}
+
+	/**
+	 * Sets the name in a chain approach.
+	 */
+	public Component name( String name ) {
+		this.name = name;
+		return this;
+	}
+
+	/**
+	 * Sets the name in a chain approach.
+	 */
+	public Component alias( String alias ) {
+		this.alias = alias;
+		return this;
+	}
+
+	/**
+	 * Sets the installerName in a chain approach.
+	 */
+	public Component installerName( String installerName ) {
+		this.installerName = installerName;
+		return this;
+	}
+
+	/**
+	 * Sets the iconLocation in a chain approach.
+	 */
+	public Component iconLocation( String iconLocation ) {
+		this.iconLocation = iconLocation;
+		return this;
 	}
 }

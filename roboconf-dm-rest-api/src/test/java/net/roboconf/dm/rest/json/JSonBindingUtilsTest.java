@@ -40,11 +40,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"app1\",\"desc\":\"some text\",\"qualifier\":\"v1\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Application app = new Application();
-		app.setName( "app1" );
-		app.setDescription( "some text" );
-		app.setQualifier( "v1" );
-
+		Application app = new Application( "app1" ).description( "some text" ).qualifier( "v1" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
@@ -64,10 +60,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Application app = new Application();
-		app.setName( "my application" );
-		app.setQualifier( "v1-17.snapshot" );
-
+		Application app = new Application( "my application" ).qualifier( "v1-17.snapshot" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
@@ -103,11 +96,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"component 1\",\"alias\":\"A component\",\"installer\":\"iaas\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Component comp = new Component();
-		comp.setName( "component 1" );
-		comp.setAlias( "A component" );
-		comp.setInstallerName( "iaas" );
-
+		Component comp = new Component( "component 1" ).alias( "A component" ).installerName( "iaas" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, comp );
 		String s = writer.toString();
@@ -127,9 +116,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"alias\":\"A 'special' component\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Component comp = new Component();
-		comp.setAlias( "A \"special\" component" );
-
+		Component comp = new Component().alias( "A \"special\" component" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, comp );
 		String s = writer.toString();
@@ -149,9 +136,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"instance\",\"path\":\"|instance\",\"status\":\"NOT_DEPLOYED\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Instance inst = new Instance();
-		inst.setName( "instance" );
-
+		Instance inst = new Instance( "instance" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, inst );
 		String s = writer.toString();
@@ -170,11 +155,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"server\",\"path\":\"|server\",\"status\":\"STARTING\",\"channel\":\"channel4\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Instance inst = new Instance();
-		inst.setName( "server" );
-		inst.setChannel( "channel4" );
-		inst.setStatus( InstanceStatus.STARTING );
-
+		Instance inst = new Instance( "server" ).channel( "channel4" ).status( InstanceStatus.STARTING );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, inst );
 		String s = writer.toString();
@@ -194,16 +175,8 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"server\",\"path\":\"|vm|server\",\"status\":\"STARTING\",\"component\":{\"name\":\"server-component\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Instance inst = new Instance();
-		inst.setName( "server" );
-		inst.setStatus( InstanceStatus.STARTING );
-
-		Component comp = new Component();
-		comp.setName( "server-component" );
-		inst.setComponent( comp );
-
-		Instance parentInst = new Instance();
-		parentInst.setName( "vm" );
+		Instance inst = new Instance( "server" ).status( InstanceStatus.STARTING ).component( new Component( "server-component" ));
+		Instance parentInst = new Instance( "vm" );
 		InstanceHelpers.insertChild( parentInst, inst );
 
 		StringWriter writer = new StringWriter();
@@ -225,14 +198,8 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"server\",\"path\":\"|server\",\"status\":\"STOPPING\",\"component\":{\"name\":\"server-component\",\"alias\":\"this is a server!\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Instance inst = new Instance();
-		inst.setName( "server" );
-		inst.setStatus( InstanceStatus.STOPPING );
-
-		Component comp = new Component();
-		comp.setName( "server-component" );
-		comp.setAlias( "this is a server!" );
-		inst.setComponent( comp );
+		Component comp = new Component( "server-component" ).alias( "this is a server!" );
+		Instance inst = new Instance( "server" ).status( InstanceStatus.STOPPING ).component( comp );
 
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, inst );
@@ -255,8 +222,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"name\":\"instance\",\"path\":\"|instance\",\"status\":\"NOT_DEPLOYED\",\"data\":{\"ip\":\"127.0.0.1\",\"any field\":\"some value\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Instance inst = new Instance();
-		inst.setName( "instance" );
+		Instance inst = new Instance( "instance" );
 		inst.getData().put( "ip", "127.0.0.1" );
 		inst.getData().put( "any field", "some value" );
 

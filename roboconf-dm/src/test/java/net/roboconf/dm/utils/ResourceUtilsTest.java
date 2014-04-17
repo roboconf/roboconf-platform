@@ -44,8 +44,7 @@ public class ResourceUtilsTest {
 				expectedFile,
 				ResourceUtils.findInstanceResourcesDirectory( appDir, componentName ));
 
-		Instance instance = new Instance( "whatever" );
-		instance.setComponent( new Component( componentName ));
+		Instance instance = new Instance( "whatever" ).component( new Component( componentName ));
 		Assert.assertEquals(
 				expectedFile,
 				ResourceUtils.findInstanceResourcesDirectory( appDir, instance ));

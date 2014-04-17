@@ -45,8 +45,7 @@ public class IaasHelpersTest {
 			Utils.deleteFilesRecursively( applicationDirectory );
 
 		Assert.assertFalse( applicationDirectory.exists());
-		Instance instance = new Instance( "my-vm" );
-		instance.setComponent( new Component( "my-component" ));
+		Instance instance = new Instance( "my-vm" ).component( new Component( "my-component" ));
 		IaasHelpers.loadIaasProperties( applicationDirectory, instance );
 	}
 
@@ -81,8 +80,7 @@ public class IaasHelpersTest {
 		}
 
 		try {
-			Instance instance = new Instance( "my-vm-instance" );
-			instance.setComponent( new Component( componentName ));
+			Instance instance = new Instance( "my-vm-instance" ).component( new Component( componentName ));
 			Map<String, String> loadedProperties = IaasHelpers.loadIaasProperties( applicationDirectory, instance );
 			Assert.assertNotNull( loadedProperties );
 			Assert.assertEquals( "my value", loadedProperties.get("my-key"));

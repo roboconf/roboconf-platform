@@ -52,8 +52,15 @@ public class BlockInstanceOf extends AbstractBlockHolder {
 	 */
 	@Override
 	public String toString() {
+
+		// <componentName> as <instanceName>
 		BlockProperty p = findPropertyBlockByName( Constants.PROPERTY_INSTANCE_NAME );
-		StringBuilder sb = new StringBuilder( getName());
+		StringBuilder sb = new StringBuilder();
+		String componentName = getName();
+		if( ! Utils.isEmptyOrWhitespaces( componentName ))
+			sb.append( componentName );
+		else
+			sb.append( "Unspecified component" );
 
 		if( p != null
 				&& ! Utils.isEmptyOrWhitespaces( p.getValue())) {

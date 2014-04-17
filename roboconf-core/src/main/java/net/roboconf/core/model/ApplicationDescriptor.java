@@ -29,11 +29,11 @@ import net.roboconf.core.internal.utils.Utils;
  */
 public class ApplicationDescriptor {
 
-	private static final String APPLICATION_NAME = "application-name";
-	private static final String APPLICATION_QUALIFIER = "application-qualifier";
-	private static final String APPLICATION_DESCRIPTION = "application-description";
-	private static final String APPLICATION_GRAPH_EP = "graph-entry-point";
-	private static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
+	public static final String APPLICATION_NAME = "application-name";
+	public static final String APPLICATION_QUALIFIER = "application-qualifier";
+	public static final String APPLICATION_DESCRIPTION = "application-description";
+	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
+	public static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
 
 	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint;
 

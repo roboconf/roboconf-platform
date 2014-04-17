@@ -149,7 +149,7 @@ public class ParsingModelValidator {
 
 		if( prop == null )
 			result.add( new ModelError( ErrorCode.PM_MISSING_INSTANCE_NAME, block.getLine()));
-		else if( ! prop.getValue().matches( ParsingConstants.PATTERN_ID ))
+		else if( ! prop.getValue().matches( ParsingConstants.PATTERN_FLEX_ID ))
 			result.add( new ModelError( ErrorCode.PM_INVALID_INSTANCE_NAME, block.getLine()));
 
 		// Check internal regions are supported
@@ -194,7 +194,7 @@ public class ParsingModelValidator {
 
 		} else if( Constants.PROPERTY_GRAPH_CHILDREN.equals( name )) {
 			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
-				if( s.matches( ParsingConstants.PATTERN_ID ))
+				if( s.matches( ParsingConstants.PATTERN_FLEX_ID ))
 					continue;
 
 				ModelError error = new ModelError( ErrorCode.PM_INVALID_CHILD_NAME, line );
@@ -212,7 +212,7 @@ public class ParsingModelValidator {
 				if( Utils.isEmptyOrWhitespaces( s )) {
 					result.add( new ModelError( ErrorCode.PM_EMPTY_REFERENCED_FACET_NAME, line ));
 
-				} else if( ! s.matches( ParsingConstants.PATTERN_ID )) {
+				} else if( ! s.matches( ParsingConstants.PATTERN_FLEX_ID )) {
 					ModelError error = new ModelError( ErrorCode.PM_INVALID_FACET_NAME, line );
 					error.setDetails( "Facet name: " + s );
 					result.add( error );
@@ -249,7 +249,7 @@ public class ParsingModelValidator {
 				result.add( new ModelError( ErrorCode.PM_INVALID_ICON_LOCATION, line ));
 
 		} else if( Constants.PROPERTY_GRAPH_INSTALLER.equals( name )) {
-			if( ! value.matches( ParsingConstants.PATTERN_ID ))
+			if( ! value.matches( ParsingConstants.PATTERN_FLEX_ID ))
 				result.add( new ModelError( ErrorCode.PM_INVALID_INSTALLER_NAME, line ));
 
 		} else if( Constants.PROPERTY_INSTANCE_NAME.equals( name )) {
@@ -315,7 +315,7 @@ public class ParsingModelValidator {
 		String name = holder.getName();
 		if( Utils.isEmptyOrWhitespaces( name ))
 			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder.getLine()));
-		else if( ! name.matches( ParsingConstants.PATTERN_ID ))
+		else if( ! name.matches( ParsingConstants.PATTERN_FLEX_ID ))
 			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_INVALID_FACET_NAME : ErrorCode.PM_INVALID_COMPONENT_NAME, holder.getLine()));
 		else if( name.contains( "." ))
 			result.add( new ModelError( ErrorCode.PM_DOT_IS_NOT_ALLOWED, holder.getLine()));

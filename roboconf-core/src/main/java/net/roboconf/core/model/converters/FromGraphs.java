@@ -19,6 +19,7 @@ package net.roboconf.core.model.converters;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -32,6 +33,7 @@ import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockBlank;
 import net.roboconf.core.model.parsing.BlockComment;
 import net.roboconf.core.model.parsing.BlockComponent;
+import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Component;
@@ -43,6 +45,9 @@ import net.roboconf.core.model.runtime.Graphs;
  */
 public class FromGraphs {
 
+	private final Map<String,BlockFacet> facets = new HashMap<String,BlockFacet> ();
+
+
 	/**
 	 * Builds a file definition from a graph.
 	 * @param graphs the graphs
@@ -52,6 +57,7 @@ public class FromGraphs {
 	 */
 	public FileDefinition buildFileDefinition( Graphs graphs, File targetFile, boolean addComment ) {
 
+		// Build the global structure
 		FileDefinition result = new FileDefinition( targetFile );
 		result.setFileType( FileDefinition.GRAPH );
 		if( addComment ) {
@@ -61,6 +67,7 @@ public class FromGraphs {
 			result.getBlocks().add( new BlockBlank( result, "\n" ));
 		}
 
+		// Process and serialize the components
 		Set<String> alreadySerializedComponentNames = new HashSet<String> ();
 		ArrayList<Component> toProcess = new ArrayList<Component> ();
 		toProcess.addAll( graphs.getRootComponents());
@@ -75,6 +82,13 @@ public class FromGraphs {
 			alreadySerializedComponentNames.add( c.getName());
 
 			toProcess.addAll( c.getChildren());
+		}
+
+		// Write the facets
+		for( BlockFacet facet : this.facets.values()) {
+			result.getBlocks().add( new BlockComment( result, "# Facets" ));
+			result.getBlocks().add( facet );
+			result.getBlocks().add( new BlockBlank( result, "\n" ));
 		}
 
 		return result;
@@ -105,20 +119,45 @@ public class FromGraphs {
 		result.add( blockComponent );
 		result.add( new BlockBlank( file, "\n" ));
 
-		BlockProperty p = new BlockProperty( file, Constants.PROPERTY_GRAPH_ICON_LOCATION, component.getIconLocation());
-		if( ! Utils.isEmptyOrWhitespaces( component.getIconLocation()))
+		BlockProperty p;
+		if( ! Utils.isEmptyOrWhitespaces( component.getIconLocation())) {
+			p = new BlockProperty( file, Constants.PROPERTY_GRAPH_ICON_LOCATION, component.getIconLocation());
 			blockComponent.getInnerBlocks().add( p );
+		}
 
-		p = new BlockProperty( file, Constants.PROPERTY_COMPONENT_ALIAS, component.getAlias());
-		if( ! Utils.isEmptyOrWhitespaces( component.getAlias()))
+		if( ! Utils.isEmptyOrWhitespaces( component.getAlias())) {
+			p = new BlockProperty( file, Constants.PROPERTY_COMPONENT_ALIAS, component.getAlias());
 			blockComponent.getInnerBlocks().add( p );
+		}
 
-		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_INSTALLER, component.getInstallerName());
-		if( ! Utils.isEmptyOrWhitespaces( component.getInstallerName()))
+		if( ! Utils.isEmptyOrWhitespaces( component.getInstallerName())) {
+			p = new BlockProperty( file, Constants.PROPERTY_GRAPH_INSTALLER, component.getInstallerName());
 			blockComponent.getInnerBlocks().add( p );
+		}
+
+		// Facets
+		StringBuilder sb = new StringBuilder();
+		for( Iterator<String> it = component.getFacetNames().iterator(); it.hasNext(); ) {
+
+			String facetName = it.next();
+			sb.append( facetName );
+			if( it.hasNext())
+				sb.append( ", " );
+
+			if( ! this.facets.containsKey( facetName )) {
+				BlockFacet blockFacet = new BlockFacet( file );
+				blockFacet.setName( facetName );
+				this.facets.put( facetName, blockFacet );
+			}
+		}
+
+		if( sb.length() > 0 ) {
+			p = new BlockProperty( file, Constants.PROPERTY_COMPONENT_FACETS, sb.toString());
+			blockComponent.getInnerBlocks().add( p );
+		}
 
 		// Imported Variables
-		StringBuilder sb = new StringBuilder();
+		sb = new StringBuilder();
 		for( Iterator<Map.Entry<String,Boolean>> it=component.getImportedVariables().entrySet().iterator(); it.hasNext(); ) {
 
 			Map.Entry<String,Boolean> entry = it.next();
@@ -144,21 +183,23 @@ public class FromGraphs {
 			// If the variable is exported by a facet, do not change its name.
 			// If it is exported by the component, remove the component prefix.
 			Entry<String,String> varParts = VariableHelpers.parseVariableName( entry.getKey());
-			String varName;
-			if( component.getName().equals( varParts.getKey()))
-				varName = varParts.getValue();
-			else
-				varName = entry.getKey();
 
-			// Write the variable
-			sb.append( varName );
-			if( entry.getValue() != null ) {
-				sb.append( "=" );
-				sb.append( entry.getValue());
+			// The variable is exported by the component (i.e. it is prefixed by the component name)
+			if( component.getName().equals( varParts.getKey())) {
+				sb.append( varParts.getValue());
+				if( entry.getValue() != null ) {
+					sb.append( "=" );
+					sb.append( entry.getValue());
+				}
+
+				if( it.hasNext())
+					sb.append( ", " );
 			}
 
-			if( it.hasNext())
-				sb.append( ", " );
+			// Or it is exported by a facet (not prefixed by the component name)
+			else {
+				processFacetVariable( file, varParts.getKey(), varParts.getValue(), entry.getValue());
+			}
 		}
 
 		p = new BlockProperty( file, Constants.PROPERTY_GRAPH_EXPORTS, sb.toString());
@@ -178,5 +219,26 @@ public class FromGraphs {
 			blockComponent.getInnerBlocks().add( p );
 
 		return result;
+	}
+
+
+	private void processFacetVariable( FileDefinition file, String facetName, String exportedVariableName, String variableValue ) {
+
+		BlockFacet blockFacet = this.facets.get( facetName );
+		BlockProperty exportsProperty = blockFacet.findPropertyBlockByName( Constants.PROPERTY_GRAPH_EXPORTS );
+		if( exportsProperty == null ) {
+			exportsProperty = new BlockProperty( file );
+			exportsProperty.setName( Constants.PROPERTY_GRAPH_EXPORTS );
+			blockFacet.getInnerBlocks().add( exportsProperty );
+		}
+
+		String decl = exportedVariableName;
+		if( ! Utils.isEmptyOrWhitespaces( variableValue ))
+			decl += " = " + variableValue;
+
+		if( Utils.isEmptyOrWhitespaces( exportsProperty.getValue()))
+			exportsProperty.setValue( decl );
+		else
+			exportsProperty.setValue( exportsProperty.getValue() + ", " + decl );
 	}
 }
