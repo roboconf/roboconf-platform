@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockBlank;
 import net.roboconf.core.model.parsing.BlockComment;
@@ -72,6 +73,7 @@ public class FromInstances {
 		instanceToBlock.put( rootInstance, rootBlock );
 
 		List<Instance> toProcess = new ArrayList<Instance> ();
+		toProcess.add( rootInstance );
 		while( ! toProcess.isEmpty()) {
 
 			// Process the current instance
@@ -79,11 +81,16 @@ public class FromInstances {
 			BlockInstanceOf currentBlock = instanceToBlock.get( instance );
 			currentBlock.setName( instance.getComponent().getName());
 
-			BlockProperty p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_NAME, instance.getName());
-			currentBlock.getInnerBlocks().add( p );
+			BlockProperty p;
+			if( ! Utils.isEmptyOrWhitespaces( instance.getName())) {
+				p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_NAME, instance.getName());
+				currentBlock.getInnerBlocks().add( p );
+			}
 
-			p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_CHANNEL, instance.getChannel());
-			currentBlock.getInnerBlocks().add( p );
+			if( ! Utils.isEmptyOrWhitespaces( instance.getChannel())) {
+				p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_CHANNEL, instance.getChannel());
+				currentBlock.getInnerBlocks().add( p );
+			}
 
 			for( Map.Entry<String,String> export : instance.getOverriddenExports().entrySet()) {
 				p = new BlockProperty( file, export.getKey(), export.getValue());
@@ -98,8 +105,10 @@ public class FromInstances {
 			}
 
 			// Children
-			for( Instance child : instance.getChildren())
+			for( Instance child : instance.getChildren()) {
 				instanceToBlock.put( child, new BlockInstanceOf( file ));
+				toProcess.add( child );
+			}
 		}
 
 		// Add the root instance to the result

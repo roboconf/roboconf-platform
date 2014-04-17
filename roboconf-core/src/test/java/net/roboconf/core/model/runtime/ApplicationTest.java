@@ -59,4 +59,15 @@ public class ApplicationTest {
 		set.add( app2 );
 		Assert.assertEquals( 1, set.size());
 	}
+
+
+	@Test
+	public void testChain() {
+
+		Application app = new Application().name( "ins" ).description( "desc" ).qualifier( "snapshot" ).graphs( new Graphs());
+		Assert.assertEquals( "ins", app.getName());
+		Assert.assertEquals( "desc", app.getDescription());
+		Assert.assertEquals( "snapshot", app.getQualifier());
+		Assert.assertNotNull( app.getGraphs());
+	}
 }

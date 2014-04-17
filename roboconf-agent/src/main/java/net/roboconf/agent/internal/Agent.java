@@ -249,18 +249,6 @@ public class Agent implements IMessageProcessor {
 
 
 	/**
-	 *
-	 * @param instance
-	 * @throws Exception
-	 */
-	public void update( Instance instance ) throws Exception {
-		PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
-		if( plugin != null )
-			plugin.update( instance );
-	}
-
-
-	/**
 	 * Adds an instance to the local model.
 	 * @param parentInstancePath the parent instance path (null to add a root instance)
 	 * @param newInstance the new instance to add
@@ -391,7 +379,7 @@ public class Agent implements IMessageProcessor {
 			if( ! exportPrefixes.contains( name ))
 				continue;
 
-			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, instance.getName(), instance.getExports());
+			MsgCmdImportAdd newMsg = new MsgCmdImportAdd( name, InstanceHelpers.computeInstancePath(instance), instance.getExports());
 			this.messagingService.publishExportOrImport( name, newMsg, MessagingService.THOSE_THAT_EXPORT );
 		}
 	}
@@ -625,6 +613,7 @@ public class Agent implements IMessageProcessor {
 		for( Instance i : instancesToStop ) {
 			// Delete files for undeployed instances
 			deleteInstanceResources( i, plugin.getPluginName());
+			i.getImports().clear(); // To prevent old imports from being resent later on
 			updateAndNotifyNewStatus( i, InstanceStatus.NOT_DEPLOYED );
 		}
 

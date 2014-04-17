@@ -440,7 +440,7 @@ public class FileDefinitionParserTest {
 
 
 	@Test
-	public void testRecognizeFacet() {
+	public void testRecognizeFacet() throws Exception {
 
 		Map<String,ModelError> resourceNameToErrorCode = new LinkedHashMap<String,ModelError> ();
 		resourceNameToErrorCode.put( "facet-invalid-property.graph", new ModelError( ErrorCode.P_INVALID_PROPERTY, 2 ));
@@ -455,7 +455,7 @@ public class FileDefinitionParserTest {
 
 
 	@Test
-	public void testRecognizeComponent() {
+	public void testRecognizeComponent() throws Exception {
 
 		Map<String,ModelError> resourceNameToErrorCode = new LinkedHashMap<String,ModelError> ();
 		resourceNameToErrorCode.put( "component-invalid-property.graph", new ModelError( ErrorCode.P_INVALID_PROPERTY, 2 ));
@@ -470,7 +470,7 @@ public class FileDefinitionParserTest {
 
 
 	@Test
-	public void testRecognizeInstanceOf() {
+	public void testRecognizeInstanceOf() throws Exception {
 
 		Map<String,ModelError> resourceNameToErrorCode = new LinkedHashMap<String,ModelError> ();
 		resourceNameToErrorCode.put( "instanceof-invalid-property.instances", new ModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, 2 ));
@@ -496,7 +496,8 @@ public class FileDefinitionParserTest {
 	}
 
 
-	private void testRecognizePropertiesHolder( Map<String,ModelError> resourceNameToErrorCode, int blockType ) {
+	private void testRecognizePropertiesHolder( Map<String,ModelError> resourceNameToErrorCode, int blockType )
+	throws Exception {
 
 		final String root = "/configurations/invalid/";
 		for( Map.Entry<String,ModelError> entry : resourceNameToErrorCode.entrySet()) {
@@ -525,12 +526,6 @@ public class FileDefinitionParserTest {
 				Assert.assertEquals( "Expected error code " + entry.getValue().getErrorCode() + " for '" + entry.getKey() + "'", entry.getValue().getErrorCode(), error.getErrorCode());
 				Assert.assertEquals( "Expected error line to be " + entry.getValue().getLine() + " for '" + entry.getKey() + "'", entry.getValue().getLine(), error.getLine());
 				Assert.assertEquals( "Expected a parsing error for '" + entry.getKey() + "'", ErrorCategory.PARSING, error.getErrorCode().getCategory());
-
-			} catch( Exception e ) {
-				if( Utils.isEmptyOrWhitespaces( e.getMessage()))
-					Assert.fail( "Got an exception (" + e.getClass().getSimpleName() + ") for " + entry.getKey());
-				else
-					Assert.fail( "Got an exception for " + entry.getKey() + ": " + e.getMessage());
 
 			} finally {
 				if( br != null ) {

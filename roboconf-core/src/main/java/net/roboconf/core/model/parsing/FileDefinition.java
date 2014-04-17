@@ -115,20 +115,6 @@ public class FileDefinition {
 		this.fileType = fileType;
 	}
 
-	/**
-	 * @return true if this file is a graph definition file
-	 */
-	public boolean isGraphFile() {
-		return this.fileType == GRAPH;
-	}
-
-	/**
-	 * @return true if this file is an instance definition file
-	 */
-	public boolean isInstanceFile() {
-		return this.fileType == GRAPH;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Object#toString()

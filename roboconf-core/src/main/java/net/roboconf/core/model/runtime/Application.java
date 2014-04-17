@@ -36,6 +36,21 @@ public class Application implements Serializable {
 
 
 	/**
+	 * Constructor.
+	 */
+	public Application() {
+		// nothing
+	}
+
+	/**
+	 * Constructor.
+	 * @param name
+	 */
+	public Application( String name ) {
+		this.name = name;
+	}
+
+	/**
 	 * @return the name
 	 */
 	public String getName() {
@@ -110,5 +125,37 @@ public class Application implements Serializable {
 		int i1 = this.name == null ? 29 : this.name.hashCode();
 		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
 		return i1 * i2;
+	}
+
+	/**
+	 * Sets the name in a chain approach.
+	 */
+	public Application name( String name ) {
+		this.name = name;
+		return this;
+	}
+
+	/**
+	 * Sets the qualifier in a chain approach.
+	 */
+	public Application qualifier( String qualifier ) {
+		this.qualifier = qualifier;
+		return this;
+	}
+
+	/**
+	 * Sets the description in a chain approach.
+	 */
+	public Application description( String description ) {
+		this.description = description;
+		return this;
+	}
+
+	/**
+	 * Sets the graphs in a chain approach.
+	 */
+	public Application graphs( Graphs graphs ) {
+		this.graphs = graphs;
+		return this;
 	}
 }

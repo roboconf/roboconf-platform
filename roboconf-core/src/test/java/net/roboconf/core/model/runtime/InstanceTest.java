@@ -93,4 +93,16 @@ public class InstanceTest {
 		Assert.assertEquals( 3, inst.getImports().get( "comp" ).size());
 		Assert.assertEquals( 2, inst.getImports().keySet().size());
 	}
+
+
+	@Test
+	public void testChain() {
+
+		Instance inst = new Instance().name( "ins" ).channel( "ch" ).status( InstanceStatus.DEPLOYING ).component( null ).parent( null );
+		Assert.assertEquals( "ch", inst.getChannel());
+		Assert.assertEquals( "ins", inst.getName());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, inst.getStatus());
+		Assert.assertNull( inst.getComponent());
+		Assert.assertNull( inst.getParent());
+	}
 }

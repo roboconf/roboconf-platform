@@ -143,10 +143,7 @@ public class PluginPuppetTest {
 	@Test
 	public void testFormatInstanceImports_noImportAtAll() {
 
-		Instance instance = new Instance( "test" );
-		Component component = new Component( "test-component" );
-		instance.setComponent( component );
-
+		Instance instance = new Instance( "test" ).component( new Component( "test-component" ));
 		Assert.assertEquals( "", this.plugin.formatInstanceImports( instance ));
 	}
 
@@ -154,10 +151,9 @@ public class PluginPuppetTest {
 	@Test
 	public void testFormatInstanceImports_noImport() {
 
-		Instance instance = new Instance( "test" );
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
-		instance.setComponent( component );
+		Instance instance = new Instance( "test" ).component( component );
 
 		Assert.assertEquals( "mysql => undef", this.plugin.formatInstanceImports( instance ));
 	}
@@ -170,15 +166,14 @@ public class PluginPuppetTest {
 		exports.put( "MySQL.port", "3306" );
 		Import imp = new Import( "/toto", exports );
 
-		Instance instance = new Instance( "test" );
-		instance.getImports().put( "MySQL", Arrays.asList( imp ));
-
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
-		instance.setComponent( component );
+
+		Instance instance = new Instance( "test" ).component( component );
+		instance.getImports().put( "MySQL", Arrays.asList( imp ));
 
 		Assert.assertEquals(
-				"mysql => { 'toto' => { port => '3306' }}",
+				"mysql => { '/toto' => { port => '3306' }}",
 				this.plugin.formatInstanceImports( instance ));
 	}
 
@@ -191,16 +186,15 @@ public class PluginPuppetTest {
 		exports.put( "MySQL.ip", "172.16.20.12" );
 		Import imp = new Import( "/toto", exports );
 
-		Instance instance = new Instance( "test" );
-		instance.getImports().put( "MySQL", Arrays.asList( imp ));
-
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
 		component.getImportedVariables().put( "MySQL.ip", false );
-		instance.setComponent( component );
+
+		Instance instance = new Instance( "test" ).component( component );
+		instance.getImports().put( "MySQL", Arrays.asList( imp ));
 
 		Assert.assertEquals(
-				"mysql => { 'toto' => { port => '3306', ip => '172.16.20.12' }}",
+				"mysql => { '/toto' => { port => '3306', ip => '172.16.20.12' }}",
 				this.plugin.formatInstanceImports( instance ));
 	}
 
@@ -216,16 +210,15 @@ public class PluginPuppetTest {
 			imports.add( new Import( "/toto-" + i, exports ));
 		}
 
-		Instance instance = new Instance( "test" );
-		instance.getImports().put( "MySQL", imports );
-
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
 		component.getImportedVariables().put( "MySQL.ip", false );
-		instance.setComponent( component );
+
+		Instance instance = new Instance( "test" ).component( component );
+		instance.getImports().put( "MySQL", imports );
 
 		Assert.assertEquals(
-				"mysql => { 'toto-0' => { port => '3306', ip => '172.16.20.12' }, 'toto-1' => { port => '3307', ip => '172.16.20.13' }}",
+				"mysql => { '/toto-0' => { port => '3306', ip => '172.16.20.12' }, '/toto-1' => { port => '3307', ip => '172.16.20.13' }}",
 				this.plugin.formatInstanceImports( instance ));
 	}
 
@@ -242,8 +235,7 @@ public class PluginPuppetTest {
 	@Test
 	public void testGenerateCodeToExecute() {
 
-		Instance instance = new Instance( "test" );
-		instance.setComponent( new Component( "test-component" ));
+		Instance instance = new Instance( "test" ).component( new Component( "test-component" ));
 		String expectedPrefix = "class{'roboconf_test-component': runningState => ";
 
 		for( PuppetState state : PuppetState.values()) {
