@@ -376,13 +376,18 @@ public class IaasAzure implements IaasInterface {
 	 * @param iaasProperties the IaaS properties
 	 * @throws InvalidIaasPropertiesException
 	 */
-	private void parseProperties( Map<String, String> iaasProperties ) throws InvalidIaasPropertiesException {
+	private void parseProperties( Map<String,String> iaasProperties ) throws InvalidIaasPropertiesException {
 
 		// Quick check
 		String[] properties = {
 			AzureConstants.AZURE_SUBSCRIPTION_ID,
 			AzureConstants.AZURE_KEY_STORE_FILE,
-			AzureConstants.AZURE_KEY_STORE_PASSWORD
+			AzureConstants.AZURE_KEY_STORE_PASSWORD,
+			AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE,
+			AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE,
+			AzureConstants.AZURE_LOCATION,
+			AzureConstants.AZURE_VM_SIZE,
+			AzureConstants.AZURE_VM_TEMPLATE
 		};
 
 		for( String property : properties ) {
@@ -392,13 +397,38 @@ public class IaasAzure implements IaasInterface {
 
 		// Create a bean
 		this.azureProperties = new AzureProperties();
-		this.azureProperties.setSubscriptionId( iaasProperties.get( AzureConstants.AZURE_SUBSCRIPTION_ID ).trim());
-		this.azureProperties.setKeyStoreFile( iaasProperties.get( AzureConstants.AZURE_KEY_STORE_FILE ).trim());
-		this.azureProperties.setKeyStorePassword( iaasProperties.get( AzureConstants.AZURE_KEY_STORE_PASSWORD ).trim());
-		this.azureProperties.setCreateCloudServiceTemplate( iaasProperties.get( AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE ).trim());
-		this.azureProperties.setCreateDeploymentTemplate( iaasProperties.get( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE ).trim());
-		this.azureProperties.setLocation( iaasProperties.get( AzureConstants.AZURE_LOCATION ).trim());
-		this.azureProperties.setVMSize( iaasProperties.get( AzureConstants.AZURE_VM_SIZE ).trim());
-		this.azureProperties.setVMTemplate( iaasProperties.get( AzureConstants.AZURE_VM_TEMPLATE ).trim());
+		
+		String s = iaasProperties.get( AzureConstants.AZURE_SUBSCRIPTION_ID );
+		if( s != null )
+			this.azureProperties.setSubscriptionId( s.trim());
+		
+		s = iaasProperties.get( AzureConstants.AZURE_KEY_STORE_FILE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+		
+		s = iaasProperties.get( AzureConstants.AZURE_KEY_STORE_PASSWORD );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+		
+		s = iaasProperties.get( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+		
+		s = iaasProperties.get( AzureConstants.AZURE_LOCATION );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+		
+		s = iaasProperties.get( AzureConstants.AZURE_VM_SIZE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+		
+		s = iaasProperties.get( AzureConstants.AZURE_VM_TEMPLATE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+		
 	}
 }

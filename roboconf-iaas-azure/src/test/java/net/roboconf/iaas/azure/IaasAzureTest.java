@@ -53,6 +53,7 @@ public class IaasAzureTest {
 		iaasProperties.put( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE, "create deployment template" );
 		iaasProperties.put( AzureConstants.AZURE_LOCATION, "azure location" );
 		iaasProperties.put( AzureConstants.AZURE_VM_SIZE, "azure VM size" );
+		iaasProperties.put( AzureConstants.AZURE_VM_TEMPLATE, "azure VM template" );
 		try {
 			azure.setIaasProperties( iaasProperties );
 
