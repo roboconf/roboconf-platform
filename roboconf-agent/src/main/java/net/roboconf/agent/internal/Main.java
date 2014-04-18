@@ -40,6 +40,10 @@ public class Main {
 		AgentData agentData = null;
 		if( args.length == 1 )
 			agentData = AgentUtils.findParametersInPropertiesFile( logger, args[ 0 ]);
+		else if( args.length == 2 && "platform".equals(args[ 0 ]) && "azure".equals(args[ 1 ]))		// for Azure
+			agentData = AgentUtils.findParametersForAzure( logger );
+		else if( args.length == 2 && !"platform".equals(args[ 0 ]))
+			logger.severe( "If agent's main class has 2 arguments. The first argument must named 'platform' and the second one must be platform's name. Default is EC2." );
 		else if( args.length == 4 )
 			agentData = AgentUtils.findParametersInProgramArguments( args );
 		else if( args.length > 0 )
