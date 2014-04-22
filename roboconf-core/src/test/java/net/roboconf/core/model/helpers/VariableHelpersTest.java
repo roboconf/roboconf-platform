@@ -82,8 +82,7 @@ public class VariableHelpersTest {
 		component.getExportedVariables().put( "comp.port", "8000" );
 		component.getExportedVariables().put( "facet.desc", "some description" );
 
-		Instance instance = new Instance( "inst" );
-		instance.setComponent( component );
+		Instance instance = new Instance( "inst" ).component( component );
 
 		Set<String> prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
 		Assert.assertEquals( 2, prefixes.size());
@@ -105,8 +104,7 @@ public class VariableHelpersTest {
 		component.getImportedVariables().put( "comp.port", Boolean.FALSE );
 		component.getImportedVariables().put( "facet.desc", Boolean.FALSE );
 
-		Instance instance = new Instance( "inst" );
-		instance.setComponent( component );
+		Instance instance = new Instance( "inst" ).component( component );
 
 		Set<String> prefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
 		Assert.assertEquals( 2, prefixes.size());

@@ -332,8 +332,7 @@ public class ManagerTest {
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			Assert.assertEquals( 2, app.getRootInstances().size());
-			Instance newInstance = new Instance( "mail-vm" );
-			newInstance.setComponent( app.getMySqlVm().getComponent());
+			Instance newInstance = new Instance( "mail-vm" ).component( app.getMySqlVm().getComponent());
 
 			Manager.INSTANCE.addInstance( app.getName(), null, newInstance );
 
@@ -358,8 +357,7 @@ public class ManagerTest {
 
 			// Insert a MySQL instance under the Tomcat VM
 			Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
-			Instance newInstance = new Instance( app.getMySql().getName());
-			newInstance.setComponent( app.getMySql().getComponent());
+			Instance newInstance = new Instance( app.getMySql().getName()).component( app.getMySql().getComponent());
 			String instancePath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
 
 			Manager.INSTANCE.addInstance( app.getName(), instancePath, newInstance );

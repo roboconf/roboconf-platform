@@ -72,4 +72,15 @@ public class FileDefinitionTest {
 		FileDefinition def = new FileDefinition( new File( "toto.txt" ));
 		def.setFileType( 87 );
 	}
+
+
+	@Test
+	public void testToString() {
+
+		FileDefinition def = new FileDefinition( new File( "toto.txt" ));
+		Assert.assertNotNull( def.toString());
+
+		def = new FileDefinition( new File( "htpp://roboconf.net/toto.txt" ));
+		Assert.assertNotNull( def.toString());
+	}
 }

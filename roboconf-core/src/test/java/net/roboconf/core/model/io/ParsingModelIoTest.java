@@ -17,12 +17,16 @@
 package net.roboconf.core.model.io;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.parsing.AbstractBlock;
+import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.parsing.ParsingConstants;
 
@@ -46,6 +50,7 @@ public class ParsingModelIoTest {
 
 		fileNameToFileType.put( "only-component-3.graph", FileDefinition.GRAPH );
 		fileNameToFileType.put( "real-lamp-all-in-one.graph", FileDefinition.GRAPH );
+		fileNameToFileType.put( "real-lamp-all-in-one-flex.graph", FileDefinition.GRAPH );
 		fileNameToFileType.put( "real-lamp-components.graph", FileDefinition.GRAPH );
 		fileNameToFileType.put( "commented-component-2.graph", FileDefinition.GRAPH );
 
@@ -58,12 +63,39 @@ public class ParsingModelIoTest {
 				File f = TestUtils.findTestFile( PATH + "/" + entry.getKey());
 				FileDefinition rel = ParsingModelIo.readConfigurationFile( f, false );
 				Assert.assertEquals( "Invalid file type for " + entry.getKey(), entry.getValue().intValue(), rel.getFileType());
+				Assert.assertEquals( entry.getKey(), 0, rel.getParsingErrors().size());
 
 			} catch( Exception e ) {
-				e.printStackTrace();
 				Assert.fail( "Failed to find " + entry.getKey());
 			}
 		}
+	}
+
+
+	@Test
+	public void testComplexInstances() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/complex-instances.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		List<AbstractBlock> toProcess = new ArrayList<AbstractBlock> ();
+		toProcess.addAll( def.getBlocks());
+
+		List<BlockInstanceOf> instances = new ArrayList<BlockInstanceOf> ();
+		while( ! toProcess.isEmpty()) {
+			AbstractBlock currentBlock = toProcess.remove( 0 );
+
+			if( currentBlock.getInstructionType() == AbstractBlock.INSTANCEOF ) {
+				BlockInstanceOf blockInstanceOf = (BlockInstanceOf) currentBlock;
+				instances.add( blockInstanceOf );
+				toProcess.addAll( blockInstanceOf.getInnerBlocks());
+			}
+		}
+
+		// Keep a list instead of a count, so that we can read the
+		// list content at debug time.
+		Assert.assertEquals( 8, instances.size());
 	}
 
 
@@ -73,6 +105,23 @@ public class ParsingModelIoTest {
 		List<File> validFiles = TestUtils.findTestFiles( PATH );
 		for( File f : validFiles )
 			testLoadingAndWritingOfValidFile( f );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void saveRelatrionFileRequiresTargetFile() throws Exception {
+
+		FileDefinition def = new FileDefinition((File) null );
+		ParsingModelIo.saveRelationsFile( def, true, "\n " );
+	}
+
+
+	@Test
+	public void testReadConfigurationFileFromString() throws Exception {
+
+		File f = TestUtils.findTestFile( PATH + "/only-component-3.graph" );
+		FileDefinition rel = ParsingModelIo.readConfigurationFile( f.toURI().toString(), false );
+		Assert.assertTrue(  f.getName() + ": parsing errors were found.", rel.getParsingErrors().isEmpty());
 	}
 
 

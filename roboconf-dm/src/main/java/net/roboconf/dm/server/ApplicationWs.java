@@ -31,10 +31,10 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
-import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.RestUtils;
 import net.roboconf.dm.rest.api.IApplicationWs;
@@ -324,8 +324,7 @@ public class ApplicationWs implements IApplicationWs {
 		// The interest of this operation is to display default export values
 		// in a web console (as an example) and thus allow to override them if necessary.
 		if( comp != null ) {
-			result = new Instance( "new-instance" );
-			result.setComponent( comp );
+			result = new Instance( "new-instance" ).component( comp );
 		}
 
 		return result;

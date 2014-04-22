@@ -60,9 +60,14 @@ public interface ParsingConstants {
 
 
 	/**
+	 * The pattern for a flexible ID (allows spaces).
+	 */
+	String PATTERN_FLEX_ID = "[a-zA-Z_](\\w|-| |\\.)*";
+
+	/**
 	 * The pattern for an ID (variable, plug-in, etc).
 	 */
-	String PATTERN_ID = "[a-zA-Z_](\\w|-| |\\.)*";
+	String PATTERN_ID = "[a-zA-Z_](\\w|-|\\.)*";
 
 	/**
 	 * The pattern for an image file name.

@@ -73,9 +73,13 @@ public class InstanceHelpersTest {
 	@Test
 	public void testBuildHierarchicalList() {
 
+		// Series 0
+		List<Instance> instances = InstanceHelpers.buildHierarchicalList( null );
+		Assert.assertEquals( 0, instances.size());
+
 		// Series 1
 		Instance instance_1 = new Instance( "inst 1" );
-		List<Instance> instances = InstanceHelpers.buildHierarchicalList( instance_1 );
+		instances = InstanceHelpers.buildHierarchicalList( instance_1 );
 		Assert.assertEquals( 1, instances.size());
 		Assert.assertEquals( instance_1, instances.get( 0 ));
 
@@ -226,25 +230,13 @@ public class InstanceHelpersTest {
 	public void testFindInstancesByComponentName() {
 
 		Application app = new Application();
-		Component tomcat = new Component( "tomcat" );
-		tomcat.setAlias( "Tomcat server" );
-		tomcat.setInstallerName( "puppet" );
+		Component tomcat = new Component( "tomcat" ).alias( "Tomcat server" ).installerName( "puppet" );
+		Component other = new Component( "other" ).alias( "Another component" ).installerName( "chef" );
 
-		Component other = new Component( "other" );
-		other.setAlias( "Another component" );
-		other.setInstallerName( "chef" );
-
-		Instance i1 = new Instance( "i1" );
-		i1.setComponent( tomcat );
-
-		Instance i2 = new Instance( "i2" );
-		i2.setComponent( tomcat );
-
-		Instance i3 = new Instance( "i3" );
-		i3.setComponent( other );
-
-		Instance i4 = new Instance( "i4" );
-		i4.setComponent( other );
+		Instance i1 = new Instance( "i1" ).component( tomcat );
+		Instance i2 = new Instance( "i2" ).component( tomcat );
+		Instance i3 = new Instance( "i3" ).component( other );
+		Instance i4 = new Instance( "i4" ).component( other );
 
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( other );
@@ -302,25 +294,26 @@ public class InstanceHelpersTest {
 		app.getRootInstances().clear();
 		Assert.assertEquals( 0, InstanceHelpers.getAllInstances( app ).size());
 
-		Instance vmInstance = new Instance( "vm-1" );
-		vmInstance.setComponent( ComponentHelpers.findComponent( app.getGraphs(), "VM" ));
+		Instance vmInstance = new Instance( "vm-1" ).component( ComponentHelpers.findComponent( app.getGraphs(), "VM" ));
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, null, vmInstance ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, null, vmInstance ));
 		Assert.assertEquals( 1, InstanceHelpers.getAllInstances( app ).size());
 
-		Instance tomcatInstance_1 = new Instance( "tomcat-1" );
-		tomcatInstance_1.setComponent( ComponentHelpers.findComponent( app.getGraphs(), "Tomcat" ));
+		Instance tomcatInstance_1 = new Instance( "tomcat-1" ).component( ComponentHelpers.findComponent( app.getGraphs(), "Tomcat" ));
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, tomcatInstance_1 ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, tomcatInstance_1 ));
 		Assert.assertEquals( 2, InstanceHelpers.getAllInstances( app ).size());
 
-		Instance mySqlInstance_1 = new Instance( "MySQL-1" );
-		mySqlInstance_1.setComponent( ComponentHelpers.findComponent( app.getGraphs(), "MySQL" ));
+		Instance mySqlInstance_1 = new Instance( "MySQL-1" ).component( ComponentHelpers.findComponent( app.getGraphs(), "MySQL" ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, tomcatInstance_1, mySqlInstance_1 ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, mySqlInstance_1, tomcatInstance_1 ));
 		Assert.assertEquals( 2, InstanceHelpers.getAllInstances( app ).size());
 
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, mySqlInstance_1 ));
+		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
+
+		Instance instanceWithNoComponent = new Instance( "MySQL-2" );
+		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instanceWithNoComponent ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 	}
 }

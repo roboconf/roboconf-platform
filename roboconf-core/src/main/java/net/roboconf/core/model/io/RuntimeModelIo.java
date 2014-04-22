@@ -20,8 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.UUID;
-import java.util.zip.ZipException;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
@@ -87,8 +85,7 @@ public class RuntimeModelIo {
 				app.setQualifier( appDescriptor.getQualifier());
 
 				Collection<RoboconfError> errors = RuntimeModelValidator.validate( appDescriptor );
-				if( ! errors.isEmpty())
-					result.loadErrors.addAll( errors );
+				result.loadErrors.addAll( errors );
 
 			} catch( IOException e ) {
 				RoboconfError error = new RoboconfError( ErrorCode.PROJ_READ_DESC_FILE );
@@ -145,8 +142,7 @@ public class RuntimeModelIo {
 			}
 
 			Collection<RoboconfError> errors = RuntimeModelValidator.validate( graph );
-			if( ! errors.isEmpty())
-				result.loadErrors.addAll( errors );
+			result.loadErrors.addAll( errors );
 
 			app.setGraphs( graph );
 		}
@@ -154,7 +150,7 @@ public class RuntimeModelIo {
 
 		// Load the instances
 		INST: if( appDescriptor != null && instDirectory.exists()) {
-			if( appDescriptor.getInstanceEntryPoint() == null )
+			if( Utils.isEmptyOrWhitespaces( appDescriptor.getInstanceEntryPoint()))
 				break INST;
 
 			File mainInstFile = new File( instDirectory, appDescriptor.getInstanceEntryPoint());
@@ -191,77 +187,12 @@ public class RuntimeModelIo {
 			}
 
 			Collection<RoboconfError> errors = RuntimeModelValidator.validate( instances );
-			if( ! errors.isEmpty())
-				result.loadErrors.addAll( errors );
+			result.loadErrors.addAll( errors );
 
 			app.getRootInstances().addAll( instances );
 		}
 
 		result.application = app;
-		return result;
-	}
-
-
-	/**
-	 * Loads an application from a ZIP archive.
-	 * @param zipFile the ZIP file (not null)
-	 * @return a load result (not null)
-	 */
-	public static LoadResult loadApplicationFromArchive( File zipFile ) {
-
-		LoadResult result = new LoadResult();;
-		File tempDir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_" + UUID.randomUUID().toString());
-
-		try {
-			// Extract the file in the temporary directory
-			if( ! tempDir.mkdir()) {
-				RoboconfError error = new RoboconfError( ErrorCode.PROJ_EXTRACT_TEMP );
-				error.setDetails( "Temporary directory that could not be created: " + tempDir.getName());
-				result.loadErrors.add( error );
-
-			} else {
-				Utils.extractZipArchive( zipFile, tempDir );
-				result = loadApplication( tempDir );
-			}
-
-		} catch( ZipException e ) {
-			// Handle exceptions
-			RoboconfError error = new RoboconfError( ErrorCode.PROJ_EXTRACT_ZIP );
-			StringBuilder sb = new StringBuilder( "ZIP exception." );
-			if( e.getMessage() != null ) {
-				sb.append( " " );
-				sb.append( e.getMessage());
-			}
-
-			error.setDetails( sb.toString());
-			result.loadErrors.add( error );
-
-		} catch( IOException e ) {
-			// Handle exceptions
-			RoboconfError error = new RoboconfError( ErrorCode.PROJ_EXTRACT_ZIP );
-			StringBuilder sb = new StringBuilder( "IO exception." );
-			if( e.getMessage() != null ) {
-				sb.append( " " );
-				sb.append( e.getMessage());
-			}
-
-			error.setDetails( sb.toString());
-			result.loadErrors.add( error );
-
-		} finally {
-			// Delete the temporary files
-			try {
-				Utils.deleteFilesRecursively( tempDir );
-
-			} catch( IOException e ) {
-				RoboconfError error = new RoboconfError( ErrorCode.PROJ_DELETE_TEMP );
-				if( e.getMessage() != null )
-					error.setDetails( e.getMessage());
-
-				result.loadErrors.add( error );
-			}
-		}
-
 		return result;
 	}
 

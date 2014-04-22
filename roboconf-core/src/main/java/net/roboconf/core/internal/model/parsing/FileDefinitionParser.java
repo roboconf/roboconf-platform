@@ -43,8 +43,8 @@ import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.parsing.ParsingConstants;
 
 /**
  * A parser for relation files.
@@ -182,7 +182,7 @@ public class FileDefinitionParser {
 
 		int result = P_CODE_NO;
 		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )) {
-			String newLine = line.replaceAll( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_FACET ), "" );
+			String newLine = line.replaceFirst( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_FACET ), "" );
 			result = recognizePropertiesHolder( newLine, br, new BlockFacet( this.definitionFile ));
 		}
 
@@ -199,7 +199,7 @@ public class FileDefinitionParser {
 
 		int result = P_CODE_NO;
 		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )) {
-			String newLine = line.replaceAll( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_INSTANCE_OF ), "" );
+			String newLine = line.replaceFirst( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_INSTANCE_OF ), "" );
 			BlockInstanceOf newInstance = new BlockInstanceOf( this.definitionFile );
 			result = recognizePropertiesHolder( newLine, br, newInstance );
 
