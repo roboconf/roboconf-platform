@@ -30,6 +30,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
@@ -103,7 +104,7 @@ public class PluginBash implements PluginInterface {
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-		prepareAndExecuteCommand( "deploy", instance );
+		prepareAndExecuteCommand( "deploy", instance, null, null );
 	}
 
 
@@ -114,18 +115,18 @@ public class PluginBash implements PluginInterface {
         if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "start", instance );
+        prepareAndExecuteCommand( "start", instance, null, null );
     }
 
 
     @Override
-    public void update( Instance instance ) throws Exception {
+    public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception {
 
         this.logger.fine( this.agentName + " is updating instance " + instance.getName());
         if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "update", instance );
+        prepareAndExecuteCommand( "update", instance, importChanged, statusChanged );
     }
 
 
@@ -136,7 +137,7 @@ public class PluginBash implements PluginInterface {
         if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "stop", instance );
+        prepareAndExecuteCommand( "stop", instance, null, null );
     }
 
 
@@ -147,11 +148,11 @@ public class PluginBash implements PluginInterface {
     	if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "undeploy", instance );
+        prepareAndExecuteCommand( "undeploy", instance, null, null );
     }
 
 
-    private void prepareAndExecuteCommand(String action, Instance instance) throws Exception {
+    private void prepareAndExecuteCommand(String action, Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception {
 
         this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance.getName());
         File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
@@ -165,14 +166,14 @@ public class PluginBash implements PluginInterface {
         	template = new File(templatesFolder, "default.sh.template");
 
         if (script.exists()) {
-            executeScript(script, instance, instanceDirectory.getAbsolutePath());
+            executeScript(script, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
 
         } else if (template.exists()) {
             File generated = generateTemplate(template, instance);
             if (generated == null || !generated.exists())
                 throw new IOException("Not able to get the generated file from template for action " + action);
 
-            executeScript(generated, instance, instanceDirectory.getAbsolutePath());
+            executeScript(generated, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
             Utils.deleteFilesRecursively( generated );
 
         } else {
@@ -195,7 +196,7 @@ public class PluginBash implements PluginInterface {
     }
 
 
-    protected void executeScript(File script, Instance instance, String instanceDir) throws IOException, InterruptedException {
+    protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir) throws IOException, InterruptedException {
         String[] command = { "bash", script.getAbsolutePath()};
         Map<String, String> environmentVars = new HashMap<String, String>();
         Map<String, String> vars = formatExportedVars(instance);
@@ -206,6 +207,22 @@ public class PluginBash implements PluginInterface {
         environmentVars.put("ROBOCONF_FILES_DIR",
         		instanceDir + (instanceDir.endsWith(File.separator) ? "" : File.separator)
         		+ FILES_FOLDER_NAME);
+        // Upon update, retrieve the status of the instance that triggered the update.
+        // Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...
+        if(statusChanged != null) {
+        	environmentVars.put("ROBOCONF_UPDATE_STATUS", statusChanged.toString());
+        }
+        // Upon update, retrieve the import that changed
+        // (removed when an instance stopped, or added when it started)
+        if(importChanged != null) {
+        	environmentVars.put("ROBOCONF_IMPORT_CHANGED_INSTANCE_PATH", importChanged.getInstancePath());
+        	for (Entry<String, String> entry : importChanged.getExportedVars().entrySet()) {
+        		// "ROBOCONF_IMPORT_CHANGED_ip=127.0.0.1"
+        		String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
+        		importedVars.put("ROBOCONF_IMPORT_CHANGED_" + vname, entry.getValue());
+        	}
+        }
+        
         ProgramUtils.executeCommand(this.logger, command, environmentVars);
     }
 
@@ -257,10 +274,11 @@ public class PluginBash implements PluginInterface {
             for(Import imprt : importList) {
                 // "workers_0_name=tomcat1"
 
-                int index = imprt.getInstancePath().lastIndexOf( '/' );
+                /*int index = imprt.getInstancePath().lastIndexOf( '/' );
                 String instanceName = imprt.getInstancePath().substring( index + 1 );
-
-                importedVars.put(importTypeName + "_" + i + "_name", instanceName);
+                importedVars.put(importTypeName + "_" + i + "_name", instanceName);*/
+                
+                importedVars.put(importTypeName + "_" + i + "_name", imprt.getInstancePath());
                 for (Entry<String, String> entry2 : imprt.getExportedVars().entrySet()) {
                     // "workers_0_ip=127.0.0.1"
                     String vname = VariableHelpers.parseVariableName(entry2.getKey()).getValue();

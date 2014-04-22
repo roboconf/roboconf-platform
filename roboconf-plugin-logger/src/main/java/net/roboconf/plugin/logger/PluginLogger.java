@@ -19,7 +19,9 @@ package net.roboconf.plugin.logger;
 import java.io.File;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -76,7 +78,7 @@ public class PluginLogger implements PluginInterface {
 
 
 	@Override
-	public void update( Instance instance ) throws Exception {
+	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception {
 		this.logger.info( this.agentName + " is updating instance " + instance.getName());
 	}
 

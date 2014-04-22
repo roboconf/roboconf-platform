@@ -18,7 +18,9 @@ package net.roboconf.plugin.api;
 
 import java.io.File;
 
+import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 
 /**
  * @author Noël - LIG
@@ -54,8 +56,8 @@ public interface PluginInterface {
 	 * Updates an instance.
 	 * @param instance the instance to update
 	 */
-	void update( Instance instance ) throws Exception;
-
+	void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception;
+	
 	/**
 	 * Stops an instance.
 	 * @param instance the instance to stop
