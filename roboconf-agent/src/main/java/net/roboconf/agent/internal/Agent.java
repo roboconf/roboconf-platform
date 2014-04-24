@@ -173,7 +173,7 @@ public class Agent implements IMessageProcessor {
 				case start:
 					if( instance.getStatus() == InstanceStatus.DEPLOYED_STOPPED ) {
 						updateAndNotifyNewStatus( instance, InstanceStatus.STARTING );
-						updateStateFromImports( instance, plugin );
+						updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
 
 					} else {
 						this.logger.info(
@@ -246,7 +246,6 @@ public class Agent implements IMessageProcessor {
 			this.logger.finest( Utils.writeException( e ));
 		}
 	}
-
 
 	/**
 	 * Adds an instance to the local model.
@@ -399,9 +398,17 @@ public class Agent implements IMessageProcessor {
 			if( imports == null )
 				continue;
 
-			Import imp = new Import( msg.getRemovedInstancePath());
-			if( ! imports.remove( imp ))
-				continue;
+			boolean found = false;
+			Import toRemove = new Import(msg.getRemovedInstancePath());
+			for(Import imp : imports) {
+				if(toRemove.equals(imp)) {
+					found = true;
+					toRemove = imp;
+					imports.remove(imp);
+					break;
+				}
+			}
+			if(! found) continue;
 
 			// Remove the import and publish an update to the DM
 			this.logger.fine(
@@ -416,7 +423,7 @@ public class Agent implements IMessageProcessor {
 			// Update the life cycle if necessary
 			PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
 			if( plugin != null )
-				updateStateFromImports( instance, plugin );
+				updateStateFromImports( instance, plugin, toRemove, InstanceStatus.DEPLOYED_STOPPED );
 		}
 	}
 
@@ -454,7 +461,7 @@ public class Agent implements IMessageProcessor {
 			// Update the life cycle if necessary
 			PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
 			if( plugin != null )
-				updateStateFromImports( instance, plugin );
+				updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
 		}
 	}
 
@@ -630,8 +637,10 @@ public class Agent implements IMessageProcessor {
 	 * Updates the status of an instance based on the imports.
 	 * @param impactedInstance the instance whose imports may have changed
 	 * @param plugin the plug-in to use to apply a concrete modification
+	 * @param statusChanged The changed status of the instance that changed (eg. that provided new imports)
+	 * @param importChanged The individual imports that changed
 	 */
-	private void updateStateFromImports( Instance impactedInstance, PluginInterface plugin ) throws Exception {
+	private void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws Exception {
 
 		// Do we have all the imports we need?
 		boolean haveAllImports = true;
@@ -654,7 +663,7 @@ public class Agent implements IMessageProcessor {
 				plugin.start( impactedInstance );
 				updateAndNotifyNewStatus( impactedInstance, InstanceStatus.DEPLOYED_STARTED );
 
-				// Inform other agents this instance was removed
+				// Inform other agents this instance was started
 				for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( impactedInstance )) {
 
 					// FIXME: maybe we should filter the map to only keep the required variables. For security?
@@ -670,7 +679,7 @@ public class Agent implements IMessageProcessor {
 
 			} else if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 				// FIXME: there should be a way to determine whether an update is necessary
-				plugin.update( impactedInstance );
+				plugin.update( impactedInstance, importChanged, statusChanged );
 
 			} else {
 				this.logger.fine( InstanceHelpers.computeInstancePath( impactedInstance ) + " checked import changes but has nothing to update." );

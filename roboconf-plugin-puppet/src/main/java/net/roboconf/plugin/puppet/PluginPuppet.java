@@ -36,6 +36,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -130,7 +131,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "deploy", PuppetState.STOPPED, instanceDirectory );
+		callPuppetScript( instance, "deploy", PuppetState.STOPPED, null, false, instanceDirectory );
 	}
 
 
@@ -142,19 +143,20 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "start", PuppetState.RUNNING, instanceDirectory );
+		callPuppetScript( instance, "start", PuppetState.RUNNING, null, false, instanceDirectory );
 	}
 
 
 	@Override
-	public void update( Instance instance ) throws Exception {
+	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception {
 
 		this.logger.fine( this.agentName + " is updating instance " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "update", PuppetState.UNDEF, instanceDirectory );
+		callPuppetScript( instance, "update", PuppetState.UNDEF,
+				importChanged, (statusChanged == InstanceStatus.DEPLOYED_STARTED), instanceDirectory );
 	}
 
 
@@ -166,7 +168,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "stop", PuppetState.STOPPED, instanceDirectory );
+		callPuppetScript( instance, "stop", PuppetState.STOPPED, null, false, instanceDirectory );
 	}
 
 
@@ -178,7 +180,7 @@ public class PluginPuppet implements PluginInterface {
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "undeploy", PuppetState.UNDEF, instanceDirectory );
+		callPuppetScript( instance, "undeploy", PuppetState.UNDEF, null, false, instanceDirectory );
 	}
 
 
@@ -240,10 +242,12 @@ public class PluginPuppet implements PluginInterface {
 	 * @param instance the instance
      * @param action the name of the action to run
 	 * @param puppetState a Puppet state
+	 * @param importChanged The import that changed (added or removed) upon update
+	 * @param importAdded true if the changed import is added, false if it is removed
      * @param instanceDirectory where to find instance files
      * FIXME: split this method for testability
 	 */
-	private void callPuppetScript( Instance instance, String action, PuppetState puppetState, File instanceDirectory )
+	private void callPuppetScript( Instance instance, String action, PuppetState puppetState, Import importChanged, boolean importAdded, File instanceDirectory )
 	throws IOException, InterruptedException {
 
 		// Find the action to execute
@@ -276,7 +280,7 @@ public class PluginPuppet implements PluginInterface {
 				commands.add( "--modulepath" );
 				commands.add( instanceDirectory.getAbsolutePath());
 				commands.add( "--execute" );
-				commands.add( generateCodeToExecute(clazz, instance, puppetState));
+				commands.add( generateCodeToExecute(clazz, instance, puppetState, importChanged, importAdded));
 
 				if( this.executionLevel == ExecutionLevel.LOG ) {
 					String[] params = commands.toArray( new String[ 0 ]);
@@ -294,9 +298,11 @@ public class PluginPuppet implements PluginInterface {
 	 * Generates the code to be injected by Puppet into the manifest.
 	 * @param instance the instance
 	 * @param puppetState the Puppet state
+	 * @param importChanged The import that changed (added or removed) upon update
+	 * @param importAdded true if the changed import is added, false if it is removed
 	 * @return a non-null string
 	 */
-	String generateCodeToExecute( String className, Instance instance, PuppetState puppetState ) {
+	String generateCodeToExecute( String className, Instance instance, PuppetState puppetState, Import importChanged, boolean importAdded ) {
 
 		// When executed by hand, the "apply" command would expect
 		// this string to be returned to be between double quotes.
@@ -321,6 +327,12 @@ public class PluginPuppet implements PluginInterface {
 
 		if( ! Utils.isEmptyOrWhitespaces( importedTypes ))
 			sb.append( ", " + importedTypes );
+
+		if(importChanged != null) {
+			sb.append(", " 
+					+ (importAdded ? "importAdded => {" : "importRemoved => {")
+					+ formatImport(importChanged) + "}");
+		}
 
 		sb.append("}");
 		return sb.toString();
@@ -406,17 +418,8 @@ public class PluginPuppet implements PluginInterface {
 				sb.append( "{ " );
 
 				for( Iterator<Import> it = imports.iterator(); it.hasNext(); ) {
-					Import imp = it.next();
-
-					/*int index = imp.getInstancePath().lastIndexOf( '/' );
-					String instanceName = imp.getInstancePath().substring( index + 1 );*/
-					sb.append( "'" );
-					//sb.append( instanceName );
-					sb.append(imp.getInstancePath());
-					sb.append( "' => { "  );
-					sb.append( formatExportedVariables( imp.getExportedVars()));
-					sb.append(" }");
-
+					sb.append(formatImport(it.next()));
+					
 					if( it.hasNext())
 						sb.append(", ");
 				}
@@ -428,6 +431,15 @@ public class PluginPuppet implements PluginInterface {
 		return sb.toString();
 	}
 
+	private String formatImport(Import imp) {
+		StringBuilder sb = new StringBuilder();
+		sb.append( "'" );
+		sb.append(imp.getInstancePath());
+		sb.append( "' => { "  );
+		sb.append( formatExportedVariables( imp.getExportedVars()));
+		sb.append(" }");
+		return sb.toString();
+	}
 
 	/**
 	 * The running states for Puppet.
