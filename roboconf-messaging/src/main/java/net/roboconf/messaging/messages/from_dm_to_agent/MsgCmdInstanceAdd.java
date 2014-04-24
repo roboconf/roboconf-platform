@@ -16,6 +16,7 @@
 
 package net.roboconf.messaging.messages.from_dm_to_agent;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
@@ -30,13 +31,22 @@ public class MsgCmdInstanceAdd extends Message {
 
 	/**
 	 * Constructor.
-	 * @param componentInstanceToAdd
+	 * @param instanceToAdd
 	 * @param parentInstancePath
 	 */
 	public MsgCmdInstanceAdd( String parentInstancePath, Instance instanceToAdd ) {
 		super();
 		this.instanceToAdd = instanceToAdd;
 		this.parentInstancePath = parentInstancePath;
+	}
+
+	/**
+	 * Constructor.
+	 * @param parentInstance
+	 * @param instanceToAdd
+	 */
+	public MsgCmdInstanceAdd( Instance parentInstance, Instance instanceToAdd ) {
+		this( InstanceHelpers.computeInstancePath( parentInstance ), instanceToAdd );
 	}
 
 	/**

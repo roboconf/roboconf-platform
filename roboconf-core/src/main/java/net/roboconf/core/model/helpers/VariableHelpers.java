@@ -118,9 +118,8 @@ public final class VariableHelpers {
 	public static Set<String> findPrefixesForImportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
-		for( Map.Entry<String,Boolean> entry : instance.getComponent().getImportedVariables().entrySet()) {
-			if( ! entry.getValue())
-				result.add( VariableHelpers.parseVariableName( entry.getKey()).getKey());
+		for( String variableName : instance.getComponent().getImportedVariables().keySet()) {
+			result.add( VariableHelpers.parseVariableName( variableName ).getKey());
 		}
 
 		return result;
@@ -142,7 +141,7 @@ public final class VariableHelpers {
 		Set<String> keysToUpdate = new HashSet<String> ();
 		for( Map.Entry<String,String> entry : instanceExports.entrySet()) {
 			String suffix = parseVariableName( entry.getKey()).getValue();
-			if( IP.equals( suffix ))
+			if( IP.equalsIgnoreCase( suffix ))
 				keysToUpdate.add( entry.getKey());
 		}
 

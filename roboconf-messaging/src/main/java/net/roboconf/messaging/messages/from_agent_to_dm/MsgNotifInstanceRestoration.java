@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2014 Linagora, Université Joseph Fourier
+ * Copyright 2014 Linagora, Université Joseph Fourier
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,35 +20,27 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**
- * @author Noël - LIG
+ * @author Vincent Zurczak - Linagora
  */
-public class MsgNotifMachineDown extends Message {
+public class MsgNotifInstanceRestoration extends Message {
 
-	private static final long serialVersionUID = 2204000792853175646L;
-	private final String rootInstanceName;
+	private static final long serialVersionUID = -5927123069258379645L;
+	private final Instance rootInstance;
 
 
 	/**
 	 * Constructor.
-	 * @param rootInstanceName the root instance (machine) name
+	 * @param rootInstance
 	 */
-	public MsgNotifMachineDown( String rootInstanceName ) {
+	public MsgNotifInstanceRestoration( Instance rootInstance ) {
 		super();
-		this.rootInstanceName = rootInstanceName;
+		this.rootInstance = rootInstance;
 	}
 
 	/**
-	 * Constructor.
-	 * @param rootInstance the root instance
+	 * @return the rootInstance
 	 */
-	public MsgNotifMachineDown( Instance rootInstance ) {
-		this( rootInstance.getName());
-	}
-
-	/**
-	 * @return the rootInstanceName
-	 */
-	public String getRootInstanceName() {
-		return this.rootInstanceName;
+	public Instance getRootInstance() {
+		return this.rootInstance;
 	}
 }

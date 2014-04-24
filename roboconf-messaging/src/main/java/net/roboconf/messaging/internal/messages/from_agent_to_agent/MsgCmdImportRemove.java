@@ -14,54 +14,43 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.messages.from_dm_to_agent;
+package net.roboconf.messaging.internal.messages.from_agent_to_agent;
 
 import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Noël - LIG
- * FIXME: is it used yet?
  */
-public class MsgCmdFirewallAdd extends Message {
+public class MsgCmdImportRemove extends Message {
 
-	private static final long serialVersionUID = 2087714421499704920L;
+	private static final long serialVersionUID = -2597875984409385732L;
 
-	private final String sourceIp;
-	private final String destIp;
-	private final int port;
+	private final String componentOrFacetName;
+	private final String removedInstancePath;
 
 
 	/**
 	 * Constructor.
-	 * @param sourceIp
-	 * @param destIp
-	 * @param port
+	 * @param componentOrFacetName
+	 * @param removedInstancePath
 	 */
-	public MsgCmdFirewallAdd( String sourceIp, String destIp, int port ) {
+	public MsgCmdImportRemove( String componentOrFacetName, String removedInstancePath ) {
 		super();
-		this.sourceIp = sourceIp;
-		this.destIp = destIp;
-		this.port = port;
+		this.componentOrFacetName = componentOrFacetName;
+		this.removedInstancePath = removedInstancePath;
 	}
 
 	/**
-	 * @return the sourceIp
+	 * @return the component or facet name
 	 */
-	public String getSourceIp() {
-		return this.sourceIp;
+	public String getComponentOrFacetName() {
+		return this.componentOrFacetName;
 	}
 
 	/**
-	 * @return the destIp
+	 * @return the removedInstancePath
 	 */
-	public String getDestIp() {
-		return this.destIp;
-	}
-
-	/**
-	 * @return the port
-	 */
-	public int getPort() {
-		return this.port;
+	public String getRemovedInstancePath() {
+		return this.removedInstancePath;
 	}
 }

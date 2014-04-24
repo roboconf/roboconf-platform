@@ -26,7 +26,6 @@ import net.roboconf.messaging.messages.Message;
 public class MsgNotifInstanceRemoved extends Message {
 
 	private static final long serialVersionUID = -5023778542512797206L;
-
 	private final String instancePath;
 
 

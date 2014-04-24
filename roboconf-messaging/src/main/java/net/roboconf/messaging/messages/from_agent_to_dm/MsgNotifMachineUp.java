@@ -16,6 +16,7 @@
 
 package net.roboconf.messaging.messages.from_agent_to_dm;
 
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -32,11 +33,21 @@ public class MsgNotifMachineUp extends Message {
 	/**
 	 * Constructor.
 	 * @param rootInstanceName the root instance (machine) name
+	 * @param ipAddress the IP address
 	 */
 	public MsgNotifMachineUp( String rootInstanceName, String ipAddress ) {
 		super();
 		this.rootInstanceName = rootInstanceName;
 		this.ipAddress = ipAddress;
+	}
+
+	/**
+	 * Constructor.
+	 * @param rootInstance the root instance
+	 * @param ipAddress the IP address
+	 */
+	public MsgNotifMachineUp( Instance rootInstance, String ipAddress ) {
+		this( rootInstance.getName(), ipAddress );
 	}
 
 	/**

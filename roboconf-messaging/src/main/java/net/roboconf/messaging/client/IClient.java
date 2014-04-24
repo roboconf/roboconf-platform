@@ -16,16 +16,37 @@
 
 package net.roboconf.messaging.client;
 
-import net.roboconf.messaging.messages.Message;
+import java.io.IOException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface IMessageProcessor {
+public interface IClient {
 
 	/**
-	 * Processes a message.
-	 * @param message a message
+	 * Start or stop listening to events.
+	 * @author Vincent Zurczak - Linagora
 	 */
-	void processMessage( Message message );
+	public enum ListenerCommand {
+		START, STOP
+	};
+
+
+	/**
+	 * Sets the location of the message server.
+	 */
+	void setMessageServerIp( String messageServerIp );
+
+	/**
+	 * Opens a connection with the message server.
+	 * <p>
+	 * The message processor will be used for any subsequent subscription.
+	 * </p>
+	 */
+	void openConnection( AbstractMessageProcessor messageProcessor ) throws IOException;
+
+	/**
+	 * Closes the connection with the message server.
+	 */
+	void closeConnection() throws IOException;
 }

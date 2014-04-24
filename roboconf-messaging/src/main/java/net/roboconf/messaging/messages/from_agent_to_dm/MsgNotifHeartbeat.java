@@ -16,6 +16,7 @@
 
 package net.roboconf.messaging.messages.from_agent_to_dm;
 
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -34,6 +35,14 @@ public class MsgNotifHeartbeat extends Message {
 	public MsgNotifHeartbeat( String rootInstanceName ) {
 		super();
 		this.rootInstanceName = rootInstanceName;
+	}
+
+	/**
+	 * Constructor.
+	 * @param rootInstance the root instance
+	 */
+	public MsgNotifHeartbeat( Instance rootInstance ) {
+		this( rootInstance.getName());
 	}
 
 	/**

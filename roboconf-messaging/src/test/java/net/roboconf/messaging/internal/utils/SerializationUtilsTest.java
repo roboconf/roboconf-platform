@@ -22,18 +22,17 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportAdd;
+import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportRemove;
+import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdFirewallAdd;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdFirewallRemove;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
@@ -71,6 +70,9 @@ public class SerializationUtilsTest {
 
 		MsgNotifMachineUp msg = new MsgNotifMachineUp( "instance1", "127.0.0.1" );
 		checkBasics( msg, MsgNotifMachineUp.class );
+
+		msg = new MsgNotifMachineUp( new Instance( "instance2" ), "192.168.1.2" );
+		checkBasics( msg, MsgNotifMachineUp.class );
 	}
 
 
@@ -79,6 +81,17 @@ public class SerializationUtilsTest {
 
 		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( "instance1" );
 		checkBasics( msg, MsgNotifMachineReadyToBeDeleted.class );
+
+		msg = new MsgNotifMachineReadyToBeDeleted( new Instance( "instance2" ));
+		checkBasics( msg, MsgNotifMachineReadyToBeDeleted.class );
+	}
+
+
+	@Test
+	public void testMessage_instanceRestoration() throws Exception {
+
+		MsgNotifInstanceRestoration msg = new MsgNotifInstanceRestoration( new Instance( "root" ));
+		checkBasics( msg, MsgNotifInstanceRestoration.class );
 	}
 
 
@@ -129,25 +142,12 @@ public class SerializationUtilsTest {
 
 
 	@Test
-	public void testMessage_firewallAdd() throws Exception {
-
-		MsgCmdFirewallAdd msg = new MsgCmdFirewallAdd( "s", "t", 223 );
-		checkBasics( msg, MsgCmdFirewallAdd.class );
-	}
-
-
-	@Test
-	public void testMessage_firewallRemove() throws Exception {
-
-		MsgCmdFirewallRemove msg = new MsgCmdFirewallRemove();
-		checkBasics( msg, MsgCmdFirewallRemove.class );
-	}
-
-
-	@Test
 	public void testMessage_instanceAdd() throws Exception {
 
 		MsgCmdInstanceAdd msg = new MsgCmdInstanceAdd( "/parent", new Instance( "instance1" ));
+		checkBasics( msg, MsgCmdInstanceAdd.class );
+
+		msg = new MsgCmdInstanceAdd( new Instance( "root" ), new Instance( "instance2" ));
 		checkBasics( msg, MsgCmdInstanceAdd.class );
 	}
 
@@ -156,6 +156,9 @@ public class SerializationUtilsTest {
 	public void testMessage_instanceRemove() throws Exception {
 
 		MsgCmdInstanceRemove msg = new MsgCmdInstanceRemove( "/inst1" );
+		checkBasics( msg, MsgCmdInstanceRemove.class );
+
+		msg = new MsgCmdInstanceRemove( new Instance( "root" ));
 		checkBasics( msg, MsgCmdInstanceRemove.class );
 	}
 
@@ -173,6 +176,9 @@ public class SerializationUtilsTest {
 
 		MsgCmdInstanceStop msg = new MsgCmdInstanceStop( "/o/m/k" );
 		checkBasics( msg, MsgCmdInstanceStop.class );
+
+		msg = new MsgCmdInstanceStop( new Instance( "root" ));
+		checkBasics( msg, MsgCmdInstanceStop.class );
 	}
 
 
@@ -180,6 +186,9 @@ public class SerializationUtilsTest {
 	public void testMessage_instanceUndeploy() throws Exception {
 
 		MsgCmdInstanceUndeploy msg = new MsgCmdInstanceUndeploy( "/o/mp/k" );
+		checkBasics( msg, MsgCmdInstanceUndeploy.class );
+
+		msg = new MsgCmdInstanceUndeploy( new Instance( "root" ));
 		checkBasics( msg, MsgCmdInstanceUndeploy.class );
 	}
 
@@ -191,6 +200,9 @@ public class SerializationUtilsTest {
 		fileNameToFileContent.put( "readme.txt", new byte[ 90 ]);
 
 		MsgCmdInstanceDeploy msg = new MsgCmdInstanceDeploy( "/o/mp/k", fileNameToFileContent );
+		checkBasics( msg, MsgCmdInstanceDeploy.class );
+
+		msg = new MsgCmdInstanceDeploy( new Instance( "root" ), fileNameToFileContent );
 		checkBasics( msg, MsgCmdInstanceDeploy.class );
 	}
 
