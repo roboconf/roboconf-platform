@@ -44,17 +44,14 @@ import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.utils.ResourceUtils;
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.IaasException;
-import net.roboconf.messaging.client.IMessageServerClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
-import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * A class to manage a collection of applications.
@@ -484,11 +481,6 @@ public final class Manager {
 			rootInstance.setStatus( InstanceStatus.PROBLEM );
 			this.logger.severe( "Machine " + rootInstance.getName() + " could not be deleted. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
-
-		} catch( CommunicationToIaasException e ) {
-			rootInstance.setStatus( InstanceStatus.PROBLEM );
-			this.logger.severe( "Machine " + rootInstance.getName() + " could not be deleted. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -674,10 +666,6 @@ public final class Manager {
 					}
 
 				} catch( IaasException e ) {
-					instance.setStatus( InstanceStatus.PROBLEM );
-					bulkException.getInstancesToException().put( instance, e );
-
-				} catch( CommunicationToIaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
 					bulkException.getInstancesToException().put( instance, e );
 				}

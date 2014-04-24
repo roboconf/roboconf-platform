@@ -21,9 +21,8 @@ import java.util.Map;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.AgentLauncher;
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
@@ -58,7 +57,7 @@ public class IaasLocalhost implements IaasInterface {
 			final String ipMessagingServer,
 			String rootInstanceName,
 			String applicationName )
-	throws IaasException, CommunicationToIaasException {
+	throws IaasException {
 
 		// Create the agent's data.
 		final AgentData agentData = new AgentData();
@@ -92,7 +91,7 @@ public class IaasLocalhost implements IaasInterface {
 	 */
 	@Override
 	public void terminateVM( String instanceId )
-	throws IaasException, CommunicationToIaasException {
+	throws IaasException {
 
 		if( this.agentLauncher != null )
 			this.agentLauncher.forceAgentToStop();

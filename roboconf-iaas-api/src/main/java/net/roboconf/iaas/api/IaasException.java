@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.api.exceptions;
+package net.roboconf.iaas.api;
 
 /**
- * An exception indicating a communication issue.
+ * A wrapper for exceptions thrown by IaaS APIs.
  * @author Vincent Zurczak - Linagora
  */
-public class CommunicationToIaasException extends Exception {
+public class IaasException extends Exception {
 
-	private static final long serialVersionUID = 3194704649495618424L;
+	private static final long serialVersionUID = -3878252569987562024L;
 
 
 	/**
@@ -30,7 +30,7 @@ public class CommunicationToIaasException extends Exception {
 	 * @param message
 	 * @param cause
 	 */
-	public CommunicationToIaasException( String message, Throwable cause ) {
+	public IaasException( String message, Throwable cause ) {
 		super( message, cause );
 	}
 
@@ -38,7 +38,7 @@ public class CommunicationToIaasException extends Exception {
 	 * Constructor.
 	 * @param message
 	 */
-	public CommunicationToIaasException( String message ) {
+	public IaasException( String message ) {
 		super( message );
 	}
 
@@ -46,7 +46,7 @@ public class CommunicationToIaasException extends Exception {
 	 * Constructor.
 	 * @param cause
 	 */
-	public CommunicationToIaasException( Throwable cause ) {
+	public IaasException( Throwable cause ) {
 		super( cause );
 	}
 }

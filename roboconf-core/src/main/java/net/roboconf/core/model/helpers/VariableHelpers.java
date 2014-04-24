@@ -108,10 +108,6 @@ public final class VariableHelpers {
 
 	/**
 	 * Finds the component and facet names that prefix the variables an instance imports.
-	 * <p>
-	 * Optional imports are skipped.
-	 * </p>
-	 *
 	 * @param instance an instance
 	 * @return a non-null set with all the component and facet names this instance imports
 	 */

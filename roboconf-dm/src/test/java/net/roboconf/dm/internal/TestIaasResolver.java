@@ -22,9 +22,9 @@ import java.util.Map;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.environment.iaas.IaasResolver;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.IaasException;
 import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
 
 /**

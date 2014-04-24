@@ -18,9 +18,8 @@ package net.roboconf.iaas.embedded;
 
 import java.util.Map;
 
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.IaasException;
 
 /**
  * A IaaS emulation on embedded systems (eg. the local host).
@@ -50,7 +49,7 @@ public class IaasEmbedded implements IaasInterface {
 			String ipMessagingServer,
 			String channelName,
 			String applicationName)
-	throws IaasException, CommunicationToIaasException {
+	throws IaasException {
 		// TBD startup script ?
 		return "localhost";
 	}
@@ -62,7 +61,7 @@ public class IaasEmbedded implements IaasInterface {
 	 * #terminateVM(java.lang.String)
 	 */
 	@Override
-	public void terminateVM( String instanceId ) throws IaasException, CommunicationToIaasException {
+	public void terminateVM( String instanceId ) throws IaasException {
 		// TBD shutdown script ?
 	}
 }

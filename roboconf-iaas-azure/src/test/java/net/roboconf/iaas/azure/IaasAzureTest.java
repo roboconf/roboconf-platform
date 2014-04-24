@@ -20,8 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
-import net.roboconf.iaas.azure.IaasAzure;
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.azure.internal.AzureConstants;
 
 import org.junit.Test;
@@ -41,7 +40,7 @@ public class IaasAzureTest {
 			azure.setIaasProperties( iaasProperties );
 			Assert.fail( "An invalid configuration should have been detected." );
 
-		} catch( InvalidIaasPropertiesException e ) {
+		} catch( IaasException e ) {
 			Assert.assertTrue( e.getMessage().toLowerCase().contains( "subscription" ));
 		}
 
@@ -57,7 +56,7 @@ public class IaasAzureTest {
 		try {
 			azure.setIaasProperties( iaasProperties );
 
-		} catch( InvalidIaasPropertiesException e ) {
+		} catch( IaasException e ) {
 			Assert.fail( "An invalid configuration was detected while it was valid." );
 		}
 	}
