@@ -32,6 +32,7 @@ import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.plugin.api.ExecutionLevel;
+import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
@@ -92,63 +93,88 @@ public class PluginBash implements PluginInterface {
 
 
 	@Override
-	public void initialize( Instance instance ) throws Exception {
+	public void initialize( Instance instance ) throws PluginException {
 		this.logger.fine( this.agentName + " is initializing the plug-in for " + instance.getName());
 	}
 
 
 	@Override
-	public void deploy( Instance instance ) throws Exception {
+	public void deploy( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-		prepareAndExecuteCommand( "deploy", instance, null, null );
+		try {
+			prepareAndExecuteCommand( "deploy", instance, null, null );
+
+		} catch( Exception e ) {
+			throw new PluginException( e );
+		}
 	}
 
 
     @Override
-    public void start( Instance instance ) throws Exception {
+    public void start( Instance instance ) throws PluginException {
 
         this.logger.fine( this.agentName + " is starting instance " + instance.getName());
         if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "start", instance, null, null );
+        try {
+			prepareAndExecuteCommand( "start", instance, null, null );
+
+		} catch( Exception e ) {
+			throw new PluginException( e );
+		}
     }
 
 
     @Override
-    public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception {
+    public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
 
         this.logger.fine( this.agentName + " is updating instance " + instance.getName());
         if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "update", instance, importChanged, statusChanged );
+        try {
+			prepareAndExecuteCommand( "update", instance, importChanged, statusChanged );
+
+		} catch( Exception e ) {
+			throw new PluginException( e );
+		}
     }
 
 
     @Override
-    public void stop( Instance instance ) throws Exception {
+    public void stop( Instance instance ) throws PluginException {
 
         this.logger.fine( this.agentName + " is stopping instance " + instance.getName());
         if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "stop", instance, null, null );
+        try {
+			prepareAndExecuteCommand( "stop", instance, null, null );
+
+		} catch( Exception e ) {
+			throw new PluginException( e );
+		}
     }
 
 
     @Override
-    public void undeploy( Instance instance ) throws Exception {
+    public void undeploy( Instance instance ) throws PluginException {
 
     	this.logger.fine( this.agentName + " is undeploying instance " + instance.getName());
     	if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
-        prepareAndExecuteCommand( "undeploy", instance, null, null );
+        try {
+			prepareAndExecuteCommand( "undeploy", instance, null, null );
+
+		} catch( Exception e ) {
+			throw new PluginException( e );
+		}
     }
 
 
@@ -222,7 +248,7 @@ public class PluginBash implements PluginInterface {
         		importedVars.put("ROBOCONF_IMPORT_CHANGED_" + vname, entry.getValue());
         	}
         }
-        
+
         ProgramUtils.executeCommand(this.logger, command, environmentVars);
     }
 
@@ -277,7 +303,7 @@ public class PluginBash implements PluginInterface {
                 /*int index = imprt.getInstancePath().lastIndexOf( '/' );
                 String instanceName = imprt.getInstancePath().substring( index + 1 );
                 importedVars.put(importTypeName + "_" + i + "_name", instanceName);*/
-                
+
                 importedVars.put(importTypeName + "_" + i + "_name", imprt.getInstancePath());
                 for (Entry<String, String> entry2 : imprt.getExportedVars().entrySet()) {
                     // "workers_0_ip=127.0.0.1"

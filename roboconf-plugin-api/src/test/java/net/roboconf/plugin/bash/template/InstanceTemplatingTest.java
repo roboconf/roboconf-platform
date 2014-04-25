@@ -58,8 +58,8 @@ public class InstanceTemplatingTest {
 	    mustache.execute(writer, new ImportBean(impt)).flush();
 
 	    String writtenString = writer.toString();
-	    for(String name : vars.keySet()) {
-	    	Assert.assertTrue("Var was not displayed correctly", writtenString.contains(name+" : "+vars.get(name)));
+	    for( Map.Entry<String,String> entry : vars.entrySet()) {
+	    	Assert.assertTrue("Var was not displayed correctly", writtenString.contains( entry.getKey() + " : " + entry.getValue()));
 	    }
 	}
 
