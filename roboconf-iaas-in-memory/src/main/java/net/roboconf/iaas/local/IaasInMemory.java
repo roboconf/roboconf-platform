@@ -17,20 +17,23 @@
 package net.roboconf.iaas.local;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.AgentLauncher;
+import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
- * A IaaS emulation on the local host.
+ * A IaaS emulation that runs agents in memory.
  * @author Pierre-Yves Gibello - Linagora
  * @author Vincent Zurczak - Linagora
  */
-public class IaasLocalhost implements IaasInterface {
+public class IaasInMemory implements IaasInterface {
 
 	private AgentLauncher agentLauncher;
 
@@ -68,15 +71,22 @@ public class IaasLocalhost implements IaasInterface {
 
 		// Messaging subscriptions are handled automatically in a new thread (see *.messaging).
 		String agentName = rootInstanceName + " - In-Memory Agent";
-		this.agentLauncher = new AgentLauncher( agentName );
+		this.agentLauncher = new AgentLauncher( agentName, agentData );
 
 		new Thread() {
 			@Override
 			public void run() {
-				IaasLocalhost.this.agentLauncher.launchAgent(
-						agentData,
-						ExecutionLevel.RUNNING,
-						new File( System.getProperty( "java.io.tmpdir" )));
+
+				try {
+					IaasInMemory.this.agentLauncher.launchAgent(
+							ExecutionLevel.RUNNING,
+							new File( System.getProperty( "java.io.tmpdir" )));
+
+				} catch( IOException e ) {
+					Logger logger = Logger.getLogger( getClass().getName());
+					logger.severe( "An error occurred in an agent (in-memory). " + e.getMessage());
+					logger.finest( Utils.writeException( e ));
+				}
 			};
 		}.start();
 
@@ -94,6 +104,6 @@ public class IaasLocalhost implements IaasInterface {
 	throws IaasException {
 
 		if( this.agentLauncher != null )
-			this.agentLauncher.forceAgentToStop();
+			this.agentLauncher.stopAgent();
 	}
 }

@@ -21,7 +21,7 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.ec2.IaasEc2;
-import net.roboconf.iaas.local.IaasLocalhost;
+import net.roboconf.iaas.local.IaasInMemory;
 
 import org.junit.Test;
 
@@ -38,7 +38,7 @@ public class IaasResolverTest {
 		Assert.assertNull( resolver.findIaasHandler( props ));
 
 		props.put( IaasResolver.IAAS_TYPE, "local" );
-		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasLocalhost );
+		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasInMemory );
 
 		props.put( IaasResolver.IAAS_TYPE, "ec2" );
 		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasEc2 );

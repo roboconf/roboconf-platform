@@ -25,7 +25,7 @@ import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.azure.IaasAzure;
 import net.roboconf.iaas.ec2.IaasEc2;
-import net.roboconf.iaas.local.IaasLocalhost;
+import net.roboconf.iaas.local.IaasInMemory;
 import net.roboconf.iaas.openstack.IaasOpenstack;
 import net.roboconf.iaas.vmware.IaasVmware;
 
@@ -79,8 +79,8 @@ public class IaasResolver {
 
 		IaasInterface result = null;
 		String iaasType = iaasProperties.get( IAAS_TYPE );
-		if( "local".equals( iaasType )) {
-			result = new IaasLocalhost();
+		if( "in-memory".equals( iaasType )) {
+			result = new IaasInMemory();
 		} else if("embedded".equals(iaasType)) {
 			result = new IaasEmbedded();
 		} else if( "ec2".equals( iaasType )) {

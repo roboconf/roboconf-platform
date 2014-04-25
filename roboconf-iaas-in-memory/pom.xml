@@ -30,9 +30,9 @@
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
-	<artifactId>roboconf-iaas-local</artifactId>
+	<artifactId>roboconf-iaas-in-memory</artifactId>
 	<version>1.0-SNAPSHOT</version>
-	<name>Roboconf :: IaaS :: Local</name>
+	<name>Roboconf :: IaaS :: In-Memory</name>
 	<packaging>bundle</packaging>
 	
 	<dependencies>
