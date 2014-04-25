@@ -278,6 +278,9 @@ public class InstanceHelpersTest {
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( rootInstance, "whatever" ));
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( rootInstance, "/root/whatever" ));
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( rootInstance, "/root/i-1/i-3" ));
+
+		Assert.assertNull( InstanceHelpers.findInstanceByPath((Instance) null, "/root/i-1/i-3" ));
+		Assert.assertNull( InstanceHelpers.findInstanceByPath( rootInstance, null ));
 	}
 
 

@@ -26,12 +26,12 @@ import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportAdd;
-import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportRemove;
-import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -173,16 +173,28 @@ public class AgentClient implements IAgentClient {
 
 		// For all the exported variables...
 		// ... find the component or facet name...
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance ))
+			publishExports( instance, facetOrComponentName );
+	}
 
-			// Find the variables to export.
-			Map<String,String> toPublish = new HashMap<String,String> ();
-			for( Map.Entry<String,String> entry : InstanceHelpers.getExportedVariables( instance ).entrySet()) {
-				if( entry.getKey().startsWith( facetOrComponentName + "." ))
-					toPublish.put( entry.getKey(), entry.getValue());
-			}
 
-			// Publish them
+	/* (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IAgentClient
+	 * #publishExports(net.roboconf.core.model.runtime.Instance)
+	 */
+	@Override
+	public void publishExports( Instance instance, String facetOrComponentName ) throws IOException {
+		this.logger.fine( "Agent " + this.rootInstanceName + " is publishing its exports prefixed by " + facetOrComponentName + "." );
+
+		// Find the variables to export.
+		Map<String,String> toPublish = new HashMap<String,String> ();
+		for( Map.Entry<String,String> entry : InstanceHelpers.getExportedVariables( instance ).entrySet()) {
+			if( entry.getKey().startsWith( facetOrComponentName + "." ))
+				toPublish.put( entry.getKey(), entry.getValue());
+		}
+
+		// Publish them
+		if( ! toPublish.isEmpty()) {
 			MsgCmdImportAdd message = new MsgCmdImportAdd(
 					facetOrComponentName,
 					InstanceHelpers.computeInstancePath( instance ),

@@ -14,55 +14,43 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.internal.messages.from_agent_to_agent;
-
-import java.util.Map;
+package net.roboconf.messaging.messages.from_agent_to_agent;
 
 import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Noël - LIG
  */
-public class MsgCmdImportAdd extends Message {
+public class MsgCmdImportRemove extends Message {
 
-	private static final long serialVersionUID = -374008319791927432L;
+	private static final long serialVersionUID = -2597875984409385732L;
 
 	private final String componentOrFacetName;
-	private final String addedInstancePath;
-	private final Map<String,String> exportedVariables;
+	private final String removedInstancePath;
 
 
 	/**
 	 * Constructor.
 	 * @param componentOrFacetName
-	 * @param addedInstancePath
-	 * @param exportedVariables
+	 * @param removedInstancePath
 	 */
-	public MsgCmdImportAdd( String componentOrFacetName, String addedInstancePath, Map<String,String> exportedVariables ) {
+	public MsgCmdImportRemove( String componentOrFacetName, String removedInstancePath ) {
 		super();
 		this.componentOrFacetName = componentOrFacetName;
-		this.addedInstancePath = addedInstancePath;
-		this.exportedVariables = exportedVariables;
+		this.removedInstancePath = removedInstancePath;
 	}
 
 	/**
-	 * @return the componentOrFacetName
+	 * @return the component or facet name
 	 */
 	public String getComponentOrFacetName() {
 		return this.componentOrFacetName;
 	}
 
 	/**
-	 * @return the addedInstancePath
+	 * @return the removedInstancePath
 	 */
-	public String getAddedInstancePath() {
-		return this.addedInstancePath;
-	}
-
-	/**
-	 * @return the exportedVariables
-	 */
-	public Map<String, String> getExportedVariables() {
-		return this.exportedVariables;
+	public String getRemovedInstancePath() {
+		return this.removedInstancePath;
 	}
 }

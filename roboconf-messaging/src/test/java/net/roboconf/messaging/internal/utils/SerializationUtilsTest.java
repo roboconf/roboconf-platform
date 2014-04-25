@@ -22,10 +22,10 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportAdd;
-import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportRemove;
-import net.roboconf.messaging.internal.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;

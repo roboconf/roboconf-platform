@@ -14,30 +14,28 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.internal.messages.from_agent_to_agent;
+package net.roboconf.messaging.messages.from_agent_to_agent;
 
 import net.roboconf.messaging.messages.Message;
 
 /**
+ * A message to indicate we need an import.
  * @author Noël - LIG
  */
-public class MsgCmdImportRemove extends Message {
+public class MsgCmdImportRequest extends Message {
 
-	private static final long serialVersionUID = -2597875984409385732L;
-
+	private static final long serialVersionUID = 5366599037551758208L;
 	private final String componentOrFacetName;
-	private final String removedInstancePath;
 
 
 	/**
 	 * Constructor.
-	 * @param componentOrFacetName
-	 * @param removedInstancePath
+	 * @param variableName
+	 * @param subChannelName
 	 */
-	public MsgCmdImportRemove( String componentOrFacetName, String removedInstancePath ) {
+	public MsgCmdImportRequest( String componentOrFacetName ) {
 		super();
 		this.componentOrFacetName = componentOrFacetName;
-		this.removedInstancePath = removedInstancePath;
 	}
 
 	/**
@@ -45,12 +43,5 @@ public class MsgCmdImportRemove extends Message {
 	 */
 	public String getComponentOrFacetName() {
 		return this.componentOrFacetName;
-	}
-
-	/**
-	 * @return the removedInstancePath
-	 */
-	public String getRemovedInstancePath() {
-		return this.removedInstancePath;
 	}
 }

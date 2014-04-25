@@ -27,6 +27,7 @@ import java.util.Map;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.validators.RuntimeModelValidator;
 
@@ -162,8 +163,12 @@ public final class InstanceHelpers {
 	public static Instance findInstanceByPath( Application application, String instancePath ) {
 
 		Collection<Instance> currentList = application.getRootInstances();
-		List<String> instanceNames = new ArrayList<String>( Arrays.asList( instancePath.split( "/" )));
-		if( Utils.isEmptyOrWhitespaces( instanceNames.get( 0 )))
+		List<String> instanceNames = new ArrayList<String> ();
+		if( instancePath != null )
+			instanceNames.addAll( Arrays.asList( instancePath.split( "/" )));
+
+		if( instanceNames.size() > 0
+				&& Utils.isEmptyOrWhitespaces( instanceNames.get( 0 )))
 			instanceNames.remove( 0 );
 
 		// Every path segment points to an instance
@@ -199,9 +204,32 @@ public final class InstanceHelpers {
 	public static Instance findInstanceByPath( Instance rootInstance, String instancePath ) {
 
 		Application tempApplication = new Application();
-		tempApplication.getRootInstances().add( rootInstance );
+		if( rootInstance != null )
+			tempApplication.getRootInstances().add( rootInstance );
 
 		return findInstanceByPath( tempApplication, instancePath );
+	}
+
+
+	/**
+	 * Finds a specific import from the path of the instance that exports it.
+	 * @param imports a collection of imports (that can be null)
+	 * @param exportingInstancePath the path of the exporting instance (not null)
+	 * @return an import, or null if none was found
+	 */
+	public static Import findImportByExportingInstance( Collection<Import> imports, String exportingInstancePath ) {
+
+		Import result = null;
+		if( imports != null ) {
+			for( Import imp : imports ) {
+				if( exportingInstancePath.equals( imp.getInstancePath())) {
+					result = imp;
+					break;
+				}
+			}
+		}
+
+		return result;
 	}
 
 

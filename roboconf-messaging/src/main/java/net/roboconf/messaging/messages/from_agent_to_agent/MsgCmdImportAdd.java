@@ -14,34 +14,55 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.internal.messages.from_agent_to_agent;
+package net.roboconf.messaging.messages.from_agent_to_agent;
+
+import java.util.Map;
 
 import net.roboconf.messaging.messages.Message;
 
 /**
- * A message to indicate we need an import.
  * @author Noël - LIG
  */
-public class MsgCmdImportRequest extends Message {
+public class MsgCmdImportAdd extends Message {
 
-	private static final long serialVersionUID = 5366599037551758208L;
+	private static final long serialVersionUID = -374008319791927432L;
+
 	private final String componentOrFacetName;
+	private final String addedInstancePath;
+	private final Map<String,String> exportedVariables;
 
 
 	/**
 	 * Constructor.
-	 * @param variableName
-	 * @param subChannelName
+	 * @param componentOrFacetName
+	 * @param addedInstancePath
+	 * @param exportedVariables
 	 */
-	public MsgCmdImportRequest( String componentOrFacetName ) {
+	public MsgCmdImportAdd( String componentOrFacetName, String addedInstancePath, Map<String,String> exportedVariables ) {
 		super();
 		this.componentOrFacetName = componentOrFacetName;
+		this.addedInstancePath = addedInstancePath;
+		this.exportedVariables = exportedVariables;
 	}
 
 	/**
-	 * @return the component or facet name
+	 * @return the componentOrFacetName
 	 */
 	public String getComponentOrFacetName() {
 		return this.componentOrFacetName;
+	}
+
+	/**
+	 * @return the addedInstancePath
+	 */
+	public String getAddedInstancePath() {
+		return this.addedInstancePath;
+	}
+
+	/**
+	 * @return the exportedVariables
+	 */
+	public Map<String, String> getExportedVariables() {
+		return this.exportedVariables;
 	}
 }

@@ -20,11 +20,20 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 
-import net.roboconf.agent.internal.MessagingService;
+import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.PluginManager;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.client.IClient.ListenerCommand;
+import net.roboconf.messaging.client.MessageServerClientFactory;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
@@ -32,23 +41,40 @@ import net.roboconf.plugin.api.ExecutionLevel;
  */
 public class AgentLauncher {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String agentName;
-	private MessagingService msgService;
+	private final AgentData agentData;
+
+	private Timer heartBeatTimer;
+	private IAgentClient messagingClient;
+	private MessageServerClientFactory factory = new MessageServerClientFactory();
 
 
 	/**
 	 * Constructor.
+	 * @param agentData
 	 */
-	public AgentLauncher() {
-		// nothing
+	public AgentLauncher( AgentData agentData ) {
+		this.agentData = agentData;
 	}
 
 
 	/**
 	 * Constructor.
+	 * @param agentName
+	 * @param agentData
 	 */
-	public AgentLauncher( String agentName ) {
+	public AgentLauncher( String agentName, AgentData agentData ) {
+		this( agentData );
 		this.agentName = agentName;
+	}
+
+
+	/**
+	 * @param factory the factory to set
+	 */
+	public void setFactory( MessageServerClientFactory factory ) {
+		this.factory = factory;
 	}
 
 
@@ -57,36 +83,76 @@ public class AgentLauncher {
 	 * @param agentData the agent data
 	 * @param executionLevel the execution level
 	 * @param dumpDirectory the dump directory (if execution level is {@link ExecutionLevel#GENERATE_FILES})
+	 * @throws IOException if there was a problem while initializing the messaging
 	 */
-	public void launchAgent( AgentData agentData, ExecutionLevel executionLevel, File dumpDirectory ) {
-		Logger logger = Logger.getLogger( getClass().getName());
+	public void launchAgent( ExecutionLevel executionLevel, File dumpDirectory ) throws IOException {
 
-		// The agent
-		String finalAgentName;
-		try {
-			if( this.agentName != null )
-				finalAgentName = this.agentName;
-			else
-				finalAgentName = "Roboconf Agent -" + InetAddress.getLocalHost().getHostName();
+		// Update the agent's name if necessary
+		if( this.agentName == null ) {
+			try {
+				this.agentName = "Roboconf Agent - " + InetAddress.getLocalHost().getHostName();
 
-		} catch( UnknownHostException e ) {
-			logger.warning( "Network information could not be retrieved. Setting the agent name to default." );
-			finalAgentName = "Roboconf Agent";
+			} catch( UnknownHostException e ) {
+				this.logger.warning( "Network information could not be retrieved. Setting the agent name to default." );
+				this.agentName = "Roboconf Agent";
+			}
 		}
 
+		// Keep a trace of the launching
+		this.logger.fine( "Agent " + this.agentName + " is being launched." );
+
+		// The plug-ins configuration
 		PluginManager pluginManager = new PluginManager();
 		pluginManager.setDumpDirectory( dumpDirectory );
 		pluginManager.setExecutionLevel( executionLevel );
 
-		// Initialize the agent's connections
-		try {
-			this.msgService = new MessagingService();
-			this.msgService.initializeAgentConnection( agentData, finalAgentName, pluginManager );
+		// Create the messaging client
+		this.messagingClient = this.factory.createAgentClient();
+		this.messagingClient.setMessageServerIp( this.agentData.getMessageServerIp());
+		this.messagingClient.setApplicationName( this.agentData.getApplicationName());
+		this.messagingClient.setRootInstanceName( this.agentData.getRootInstanceName());
 
-		} catch( IOException e ) {
-			logger.severe( "A connection could not be established with the message server. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
-		}
+		// Create the message processor
+		AgentMessageProcessor messageProcessor = new AgentMessageProcessor(
+				this.agentName,
+				this.agentData.getIpAddress(),
+				pluginManager,
+				this.messagingClient,
+				this.heartBeatTimer );
+
+		// Open a connection with the messaging server
+		this.messagingClient.listenToTheDm( ListenerCommand.START );
+		this.messagingClient.openConnection( messageProcessor );
+
+		// Add a hook for when the VM shutdowns
+		Runtime.getRuntime().addShutdownHook( new Thread(new Runnable() {
+			@Override
+			public void run() {
+				stopAgent();
+			}
+		}));
+
+		// Send an "UP" message
+		MsgNotifMachineUp machineIsUp = new MsgNotifMachineUp( this.agentData.getRootInstanceName(), this.agentData.getIpAddress());
+		this.messagingClient.sendMessageToTheDm( machineIsUp );
+
+		// Initialize a timer to regularly send a heart beat
+		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
+		TimerTask timerTask = new TimerTask() {
+			@Override
+			public void run() {
+				try {
+					MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( AgentLauncher.this.agentData.getRootInstanceName());
+					AgentLauncher.this.messagingClient.sendMessageToTheDm( heartBeat );
+
+				} catch( IOException e ) {
+					AgentLauncher.this.logger.severe( e.getMessage());
+					AgentLauncher.this.logger.finest( Utils.writeException( e ));
+				}
+			}
+		};
+
+		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
 	}
 
 
@@ -96,9 +162,21 @@ public class AgentLauncher {
 	 * The agent will stop sending heart beats and send a MachineDown notification.
 	 * </p>
 	 */
-	public void forceAgentToStop() {
+	public void stopAgent() {
 
-		if( this.msgService != null )
-			this.msgService.agentIsTerminating();
+		this.logger.fine( "Agent " + this.agentName + " is being stopped." );
+		try {
+			this.heartBeatTimer.cancel();
+
+			MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown( this.agentData.getRootInstanceName());
+			this.messagingClient.sendMessageToTheDm( machineIsDown );
+			this.messagingClient.closeConnection();
+
+			this.logger.fine( "Agent " + this.agentName + " was successfully stopped." );
+
+		} catch( IOException e ) {
+			this.logger.severe( e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 }

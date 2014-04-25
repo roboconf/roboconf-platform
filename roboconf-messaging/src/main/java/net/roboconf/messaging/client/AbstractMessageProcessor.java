@@ -30,6 +30,23 @@ public abstract class AbstractMessageProcessor extends Thread {
 
 
 	/**
+	 * Constructor.
+	 */
+	public AbstractMessageProcessor() {
+		super( "Roboconf - Message Processor" );
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param threadName the thread name
+	 */
+	public AbstractMessageProcessor( String threadName ) {
+		super( threadName );
+	}
+
+
+	/**
 	 * Stores a message so that it can be processed later.
 	 * @param message a message to store
 	 */

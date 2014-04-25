@@ -16,6 +16,7 @@
 
 package net.roboconf.agent.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,6 +25,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -31,15 +33,17 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import net.roboconf.agent.AgentData;
+import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.Instance;
+
 import org.apache.commons.codec.binary.Base64;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-
-import net.roboconf.agent.AgentData;
-import net.roboconf.core.internal.utils.Utils;
 
 /**
  * @author Noël - LIG
@@ -195,48 +199,48 @@ public final class AgentUtils {
 
 		return result;
 	}
-	
+
 	private static String getValueOfTagInXMLFile(String filePath, String tagName) throws ParserConfigurationException, SAXException, IOException {
-		 
+
 		File fXmlFile = new File(filePath);
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 		Document doc = dBuilder.parse(fXmlFile);
-	 
+
 		//optional, but recommended
 		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
 		doc.getDocumentElement().normalize();
-	 
+
 		NodeList nList = doc.getElementsByTagName(tagName);
 	    String valueOfTagName = "";
-	    
+
 		for (int temp = 0; temp < nList.getLength(); temp++) {
-	 
+
 			Node nNode = nList.item(temp);
 			valueOfTagName = nNode.getTextContent();
 		}
 		return valueOfTagName;
 	}
-	
+
 	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName) throws ParserConfigurationException, SAXException, IOException {
 		File fXmlFile = new File(filePath);
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 		Document doc = dBuilder.parse(fXmlFile);
-	 
+
 		doc.getDocumentElement().normalize();
-	
+
 		NodeList nList = doc.getElementsByTagName(tagName);
 	    Node aNode = nList.item(2);
 	    NamedNodeMap attributes = aNode.getAttributes();
 	    String attrValue = "";
 	    for (int a = 0; a < attributes.getLength(); a++) {
 	      Node theAttribute = attributes.item(a);
-	      if (attrName.equals(theAttribute.getNodeName())) attrValue = theAttribute.getTextContent().split(":")[0];	      
+	      if (attrName.equals(theAttribute.getNodeName())) attrValue = theAttribute.getTextContent().split(":")[0];
 	    }
 	    return attrValue;
 	}
-	
+
 	/**
 	 * Configures the agent from a IaaS registry.
 	 * @param logger a logger
@@ -259,7 +263,7 @@ public final class AgentUtils {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		// Parse them
 		AgentData result = new AgentData();
 		for( String line : content.split( "\n" )) {
@@ -278,7 +282,7 @@ public final class AgentUtils {
 				result.setRootInstanceName( data[ data.length - 1 ]);
 			}
 		}
-		
+
 		// Get the public IP Address from /var/lib/waagent/SharedConfig.xml
 		String publicIPAddress;
 		try {
@@ -296,5 +300,46 @@ public final class AgentUtils {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Copies the resources of an instance on the disk.
+	 * @param instance an instance
+	 * @param pluginName the plug-in's name
+	 * @param fileNameToFileContent the files to write down (key = relative file location, value = file's content)
+	 * @throws IOException if the copy encountered a problem
+	 */
+	public static void copyInstanceResources( Instance instance, String pluginName, Map<String,byte[]> fileNameToFileContent )
+	throws IOException {
+
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, pluginName );
+		if( ! dir.exists()
+				&& ! dir.mkdirs())
+			throw new IOException( "The directory " + dir.getAbsolutePath() + " could not be created." );
+
+		for( Map.Entry<String,byte[]> entry : fileNameToFileContent.entrySet()) {
+
+			File f = new File( dir, entry.getKey());
+			if( ! f.getParentFile().exists()
+					&& ! f.getParentFile().mkdirs())
+				throw new IOException( "The directory " + dir.getAbsolutePath() + " could not be created." );
+
+			ByteArrayInputStream in = new ByteArrayInputStream( entry.getValue());
+			Utils.copyStream( in, f );
+		}
+	}
+
+
+	/**
+	 * Deletes the resources for a given instance.
+	 * @param instance an instance
+	 * @param pluginName the plug-in's name
+	 * @throws IOException if resources could not be deleted
+	 */
+	public static void deleteInstanceResources( Instance instance, String pluginName )
+	throws IOException {
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, pluginName );
+		Utils.deleteFilesRecursively( dir );
 	}
 }

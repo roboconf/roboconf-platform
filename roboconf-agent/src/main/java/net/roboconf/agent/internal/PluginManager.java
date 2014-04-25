@@ -24,6 +24,7 @@ import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.plugin.api.ExecutionLevel;
+import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.bash.PluginBash;
 import net.roboconf.plugin.logger.PluginLogger;
@@ -146,33 +147,32 @@ public class PluginManager {
 	private static class NilPlugin implements PluginInterface {
 
 		@Override
-		public void initialize( Instance instance ) throws Exception {
+		public void initialize( Instance instance ) throws PluginException {
 			// nothing
 		}
 
 		@Override
-		public void deploy( Instance instance ) throws Exception {
+		public void deploy( Instance instance ) throws PluginException {
 			// nothing
 		}
 
 		@Override
-		public void start( Instance instance ) throws Exception {
+		public void start( Instance instance ) throws PluginException {
 			// nothing
 		}
 
 		@Override
-		public void update(Instance impactedInstance, Import importChanged,
-				InstanceStatus statusChanged) {
-			// nothing	
-		}
-
-		@Override
-		public void stop( Instance instance ) throws Exception {
+		public void update(Instance impactedInstance, Import importChanged, InstanceStatus statusChanged) {
 			// nothing
 		}
 
 		@Override
-		public void undeploy( Instance instance ) throws Exception {
+		public void stop( Instance instance ) throws PluginException {
+			// nothing
+		}
+
+		@Override
+		public void undeploy( Instance instance ) throws PluginException {
 			// nothing
 		}
 

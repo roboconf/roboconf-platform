@@ -58,6 +58,14 @@ public interface IAgentClient extends IClient {
 	void publishExports( Instance instance ) throws IOException;
 
 	/**
+	 * Publishes specific exports for a given instance.
+	 * @param instance the instance whose exports must be published
+	 * @param facetOrComponentName the prefix of the variables to publish
+	 * @throws IOException if something went wrong
+	 */
+	void publishExports( Instance instance, String facetOrComponentName ) throws IOException;
+
+	/**
 	 * Un-publishes the exports for a given instance.
 	 * <p>
 	 * This method indicates to other instances that the variables exported
