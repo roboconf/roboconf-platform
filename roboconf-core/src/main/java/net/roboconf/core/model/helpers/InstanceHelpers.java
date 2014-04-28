@@ -162,7 +162,10 @@ public final class InstanceHelpers {
 	 */
 	public static Instance findInstanceByPath( Application application, String instancePath ) {
 
-		Collection<Instance> currentList = application.getRootInstances();
+		Collection<Instance> currentList = new ArrayList<Instance> ();
+		if( application != null )
+			currentList.addAll( application.getRootInstances());
+
 		List<String> instanceNames = new ArrayList<String> ();
 		if( instancePath != null )
 			instanceNames.addAll( Arrays.asList( instancePath.split( "/" )));

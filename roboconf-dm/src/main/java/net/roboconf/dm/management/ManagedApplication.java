@@ -20,7 +20,6 @@ import java.io.File;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.messaging.client.IMessageServerClient;
 
 /**
  * A class to store runtime information for an application.
@@ -32,9 +31,7 @@ public class ManagedApplication {
 	private final Application application;
 	private final File applicationFilesDirectory;
 	private final Logger logger;
-
 	private final MachineMonitor monitor;
-	private final IMessageServerClient messagingClient;
 
 
 	/**
@@ -42,12 +39,10 @@ public class ManagedApplication {
 	 */
 	public ManagedApplication(
 			Application application,
-			File applicationFilesDirectory,
-			IMessageServerClient messagingClient ) {
+			File applicationFilesDirectory ) {
 
 		this.applicationFilesDirectory = applicationFilesDirectory;
 		this.application = application;
-		this.messagingClient = messagingClient;
 
 		this.monitor = new MachineMonitor( application );
 		this.logger = Logger.getLogger( Manager.class.getName() + "." + application.getName());
@@ -66,11 +61,6 @@ public class ManagedApplication {
 
 	public MachineMonitor getMonitor() {
 		return this.monitor;
-	}
-
-
-	public IMessageServerClient getMessagingClient() {
-		return this.messagingClient;
 	}
 
 

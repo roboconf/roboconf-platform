@@ -26,15 +26,18 @@ public class MsgNotifInstanceRestoration extends Message {
 
 	private static final long serialVersionUID = -5927123069258379645L;
 	private final Instance rootInstance;
+	private final String applicationName;
 
 
 	/**
 	 * Constructor.
-	 * @param rootInstance
+	 * @param applicationName the application name
+	 * @param rootInstance the root instance
 	 */
-	public MsgNotifInstanceRestoration( Instance rootInstance ) {
+	public MsgNotifInstanceRestoration( String applicationName, Instance rootInstance ) {
 		super();
 		this.rootInstance = rootInstance;
+		this.applicationName = applicationName;
 	}
 
 	/**
@@ -42,5 +45,12 @@ public class MsgNotifInstanceRestoration extends Message {
 	 */
 	public Instance getRootInstance() {
 		return this.rootInstance;
+	}
+
+	/**
+	 * @return the applicationName
+	 */
+	public String getApplicationName() {
+		return this.applicationName;
 	}
 }

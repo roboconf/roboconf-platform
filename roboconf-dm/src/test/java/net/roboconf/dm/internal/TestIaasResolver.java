@@ -24,8 +24,6 @@ import net.roboconf.dm.environment.iaas.IaasResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -43,13 +41,13 @@ public class TestIaasResolver extends IaasResolver {
 
 			@Override
 			public void setIaasProperties( Map<String, String> iaasProperties )
-			throws InvalidIaasPropertiesException {
+			throws IaasException {
 				// nothing
 			}
 
 			@Override
 			public String createVM( String ipMessagingServer, String channelName, String applicationName, String rootInstanceName )
-			throws IaasException, CommunicationToIaasException {
+			throws IaasException {
 
 				TestIaasResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );
 				return null;
@@ -57,7 +55,7 @@ public class TestIaasResolver extends IaasResolver {
 
 			@Override
 			public void terminateVM( String machineId )
-			throws IaasException, CommunicationToIaasException {
+			throws IaasException {
 
 				TestIaasResolver.this.instanceToRunningStatus.put( instance, Boolean.FALSE );
 			}

@@ -115,7 +115,7 @@ public class AgentLauncher {
 		// Create the message processor
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor(
 				this.agentName,
-				this.agentData.getIpAddress(),
+				this.agentData,
 				pluginManager,
 				this.messagingClient,
 				this.heartBeatTimer );
@@ -133,7 +133,10 @@ public class AgentLauncher {
 		}));
 
 		// Send an "UP" message
-		MsgNotifMachineUp machineIsUp = new MsgNotifMachineUp( this.agentData.getRootInstanceName(), this.agentData.getIpAddress());
+		MsgNotifMachineUp machineIsUp = new MsgNotifMachineUp(
+				this.agentData.getApplicationName(),
+				this.agentData.getRootInstanceName(),
+				this.agentData.getIpAddress());
 		this.messagingClient.sendMessageToTheDm( machineIsUp );
 
 		// Initialize a timer to regularly send a heart beat
@@ -142,7 +145,9 @@ public class AgentLauncher {
 			@Override
 			public void run() {
 				try {
-					MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( AgentLauncher.this.agentData.getRootInstanceName());
+					MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat(
+							AgentLauncher.this.agentData.getApplicationName(),
+							AgentLauncher.this.agentData.getRootInstanceName());
 					AgentLauncher.this.messagingClient.sendMessageToTheDm( heartBeat );
 
 				} catch( IOException e ) {
@@ -168,7 +173,10 @@ public class AgentLauncher {
 		try {
 			this.heartBeatTimer.cancel();
 
-			MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown( this.agentData.getRootInstanceName());
+			MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown(
+					this.agentData.getApplicationName(),
+					this.agentData.getRootInstanceName());
+
 			this.messagingClient.sendMessageToTheDm( machineIsDown );
 			this.messagingClient.closeConnection();
 

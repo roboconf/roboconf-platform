@@ -50,7 +50,7 @@ public final class IaasHelpers {
 	 * @return a non-null properties
 	 * @throws IOException if the IaaS properties file was not found
 	 */
-	public static Map<String, String> loadIaasProperties( File applicationFilesDirectory, Instance rootInstance ) throws IOException {
+	public static Map<String,String> loadIaasProperties( File applicationFilesDirectory, Instance rootInstance ) throws IOException {
 
 		if( rootInstance.getParent() != null )
 			throw new IllegalArgumentException( "A root instance was expected as parameter." );
@@ -63,10 +63,11 @@ public final class IaasHelpers {
 		try {
 			Properties p = new Properties();
 			in = new FileInputStream(f);
-			p.load(in);
-			for(Object name : p.keySet()) {
-				result.put(name.toString(), p.get(name).toString());
+			p.load( in );
+			for( Map.Entry<Object,Object> entry : p.entrySet()) {
+				result.put( entry.getKey().toString(), entry.getValue().toString());
 			}
+
 		} finally {
 			Utils.closeQuietly( in );
 		}

@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.logging.Logger;
 
+import net.roboconf.agent.AgentData;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
@@ -59,8 +60,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final PluginManager pluginManager;
 	private final IAgentClient messagingClient;
-	private final String ipAddress;
 	private final Timer heartBeatTimer;
+	private final String ipAddress, appName;
 
 	private Instance rootInstance;
 
@@ -68,22 +69,24 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	/**
 	 * Constructor.
 	 * @param threadName
-	 * @param ipAddress
+	 * @param agentData
 	 * @param pluginManager
 	 * @param messagingClient
 	 */
 	public AgentMessageProcessor(
 			String threadName,
-			String ipAddress,
+			AgentData agentData,
 			PluginManager pluginManager,
 			IAgentClient messagingClient,
 			Timer heartBeatTimer ) {
 
 		super( threadName );
-		this.ipAddress = ipAddress;
 		this.messagingClient = messagingClient;
 		this.pluginManager = pluginManager;
 		this.heartBeatTimer = heartBeatTimer;
+
+		this.ipAddress = agentData.getIpAddress();
+		this.appName = agentData.getApplicationName();
 	}
 
 
@@ -227,7 +230,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		// Configure the messaging
 		if( instance != null ) {
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceRemoved( instance ));
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceRemoved( this.appName, instance ));
 			for( Instance instanceToProcess : InstanceHelpers.buildHierarchicalList( instance )) {
 				this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.STOP, instanceToProcess );
 			}
@@ -267,7 +270,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			// User reporting => deploying...
 			instance.setStatus( InstanceStatus.DEPLOYING );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( instance ));
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Clean up the potential remains of a previous installation
 			AgentUtils.deleteInstanceResources( instance, plugin.getPluginName());
@@ -280,7 +283,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				PluginManager.initializePluginForInstance( instance, this.pluginManager.getExecutionLevel());
 				plugin.deploy( instance );
 				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( instance ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 				result = true;
 
 			} catch( Exception e ) {
@@ -288,7 +291,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				this.logger.finest( Utils.writeException( e ));
 
 				instance.setStatus( InstanceStatus.NOT_DEPLOYED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( instance ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 			}
 		}
 
@@ -316,7 +319,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				&& InstanceHelpers.countInstances( instancePath ) == 1 ) {
 
 			String rootInstanceName = instancePath.substring( 1 );
-			MsgNotifMachineReadyToBeDeleted newMsg = new MsgNotifMachineReadyToBeDeleted( rootInstanceName );
+			MsgNotifMachineReadyToBeDeleted newMsg = new MsgNotifMachineReadyToBeDeleted( this.appName, rootInstanceName );
 			this.messagingClient.sendMessageToTheDm( newMsg );
 
 			this.heartBeatTimer.cancel();
@@ -353,7 +356,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 					continue;
 
 				i.setStatus( InstanceStatus.UNDEPLOYING );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( i ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 				this.messagingClient.unpublishExports( i );
 			}
 
@@ -379,7 +382,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 				// Propagate the changes
 				i.setStatus( InstanceStatus.NOT_DEPLOYED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( i ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 			}
 		}
 
@@ -411,7 +414,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		} else {
 			try {
 				instance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( instance ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 				updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
 				result = true;
 
@@ -449,7 +452,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 					continue;
 
 				i.setStatus( InstanceStatus.DEPLOYED_STOPPED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( i ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 			}
 
 			result = true;
@@ -511,7 +514,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.fine( "Removing import from " + InstanceHelpers.computeInstancePath( instance )
 					+ ". Removed exporting instance: " + msg.getRemovedInstancePath());
 
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( instance ));
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Update the life cycle if necessary
 			PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
@@ -552,7 +555,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			// Add the import and publish an update to the DM
 			this.logger.fine( "Adding import to " + InstanceHelpers.computeInstancePath( instance ) + ". New import: " + imp );
 			instance.addImport( msg.getComponentOrFacetName(), imp );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( instance ));
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Update the life cycle if necessary
 			PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
@@ -591,7 +594,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				// Start this instance
 				plugin.start( impactedInstance );
 				impactedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( impactedInstance ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, impactedInstance ));
 				this.messagingClient.publishExports( impactedInstance );
 
 			} else if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
@@ -639,7 +642,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				continue;
 
 			i.setStatus( InstanceStatus.STOPPING );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( i ));
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 			this.messagingClient.unpublishExports( i );
 		}
 
@@ -655,7 +658,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				continue;
 
 			i.setStatus( newStatus );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( i ));
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 		}
 	}
 }

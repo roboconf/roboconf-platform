@@ -16,6 +16,7 @@
 
 package net.roboconf.messaging.messages.from_agent_to_dm;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
@@ -26,23 +27,27 @@ public class MsgNotifHeartbeat extends Message {
 
 	private static final long serialVersionUID = -5112964737944073719L;
 	private final String rootInstanceName;
+	private final String applicationName;
 
 
 	/**
 	 * Constructor.
+	 * @param applicationName the application name
 	 * @param rootInstanceName the root instance (machine) name
 	 */
-	public MsgNotifHeartbeat( String rootInstanceName ) {
+	public MsgNotifHeartbeat( String applicationName, String rootInstanceName ) {
 		super();
 		this.rootInstanceName = rootInstanceName;
+		this.applicationName = applicationName;
 	}
 
 	/**
 	 * Constructor.
+	 * @param applicationName the application name
 	 * @param rootInstance the root instance
 	 */
-	public MsgNotifHeartbeat( Instance rootInstance ) {
-		this( rootInstance.getName());
+	public MsgNotifHeartbeat( String applicationName, Instance rootInstance ) {
+		this( applicationName, InstanceHelpers.findRootInstance( rootInstance ).getName());
 	}
 
 	/**
@@ -50,5 +55,12 @@ public class MsgNotifHeartbeat extends Message {
 	 */
 	public String getRootInstanceName() {
 		return this.rootInstanceName;
+	}
+
+	/**
+	 * @return the applicationName
+	 */
+	public String getApplicationName() {
+		return this.applicationName;
 	}
 }

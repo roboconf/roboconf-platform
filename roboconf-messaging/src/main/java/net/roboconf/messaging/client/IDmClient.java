@@ -60,4 +60,9 @@ public interface IDmClient extends IClient {
 	 * @throws IOException if something went wrong
 	 */
 	void deleteMessagingServerArtifacts( Application application ) throws IOException;
+
+	/**
+	 * @return true if the client is connected, false otherwise
+	 */
+	boolean isConnected();
 }

@@ -59,6 +59,17 @@ public class DmClient implements IDmClient {
 	}
 
 
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IDmClient
+	 * #isConnected()
+	 */
+	@Override
+	public boolean isConnected() {
+		return this.channel != null;
+	}
+
+
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IClient
 	 * #openConnection(net.roboconf.messaging.client.AbstractMessageProcessor)
@@ -69,7 +80,7 @@ public class DmClient implements IDmClient {
 
 		// Already connected? Do nothing
 		this.logger.fine( "The DM is opening a connection to RabbitMQ." );
-		if( this.channel != null ) {
+		if( isConnected()) {
 			this.logger.info( "The DM has already a connection to RabbitMQ." );
 			return;
 		}
@@ -189,23 +200,9 @@ public class DmClient implements IDmClient {
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 
-		if( this.channel != null )
-			throw new IOException( "This instance is already connected to the messaging server." );
-
-		this.logger.fine( "The DM is deleting messaging artifacts for the '" + application.getName() + "' application." );
-		Channel tChannel = null;
-		try {
-			ConnectionFactory factory = new ConnectionFactory();
-			factory.setHost( this.messageServerIp );
-			tChannel = factory.newConnection().createChannel();
-
-			// We delete the exchanges
-			tChannel.exchangeDelete( RabbitMqUtils.buildExchangeName( application, true ));
-			tChannel.exchangeDelete( RabbitMqUtils.buildExchangeName( application, false ));
-			// Queues are deleted automatically by RabbitMQ
-
-		} finally {
-			RabbitMqUtils.closeConnection( tChannel );
-		}
+		// We delete the exchanges
+		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeName( application, true ));
+		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeName( application, false ));
+		// Queues are deleted automatically by RabbitMQ
 	}
 }

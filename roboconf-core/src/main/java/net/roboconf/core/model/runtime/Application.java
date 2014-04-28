@@ -127,6 +127,11 @@ public class Application implements Serializable {
 		return i1 * i2;
 	}
 
+	@Override
+	public String toString() {
+		return this.name;
+	}
+
 	/**
 	 * Sets the name in a chain approach.
 	 */

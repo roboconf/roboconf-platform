@@ -17,21 +17,23 @@
 package net.roboconf.dm.internal;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import net.roboconf.messaging.client.IMessageProcessor;
-import net.roboconf.messaging.client.IMessageServerClient;
+import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.messaging.client.AbstractMessageProcessor;
+import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 
 /**
  * A class to mock the messaging server and the IaaS.
  * @author Vincent Zurczak - Linagora
  */
-public class TestMessageServerClient implements IMessageServerClient {
+public class TestMessageServerClient implements IDmClient {
 
-	public final Map<Message,String> messageToRoutingKey = new HashMap<Message,String> ();
+	public final List<Message> sentMessages = new ArrayList<Message> ();
 	public AtomicBoolean connectionOpen = new AtomicBoolean( false );
 	public AtomicBoolean connectionClosed = new AtomicBoolean( false );
 
@@ -44,50 +46,41 @@ public class TestMessageServerClient implements IMessageServerClient {
 
 
 	@Override
-	public void setApplicationName( String applicationName ) {
-		// nothing, we do not care
-	}
-
-
-	@Override
-	public void setSourceName( String sourceName ) {
-		// nothing, we do not care
-	}
-
-
-	@Override
-	public void openConnection( IMessageProcessor messageProcessor ) throws IOException {
-		this.connectionOpen.set( true );
-	}
-
-
-	@Override
 	public void closeConnection() throws IOException {
 		this.connectionClosed.set( true );
 	}
 
 
 	@Override
-	public void bind( String routingKey ) throws IOException {
-		// nothing, we do not care
-	}
-
-
-	@Override
-	public void unbind( String routingKey ) throws IOException {
-		// nothing, we do not care
-	}
-
-
-	@Override
-	public void cleanAllMessagingServerArtifacts() throws IOException {
-		// nothing, we do not care
-	}
-
-
-	@Override
-	public void publish( boolean toDm, String routingKey, Message message )
+	public void openConnection( AbstractMessageProcessor messageProcessor )
 	throws IOException {
-		this.messageToRoutingKey.put( message, routingKey );
+		this.connectionOpen.set( true );
+	}
+
+
+	@Override
+	public void sendMessageToAgent( Application application, Instance instance, Message message )
+	throws IOException {
+		this.sentMessages.add( message );
+	}
+
+
+	@Override
+	public void listenToAgentMessages( Application application, ListenerCommand command )
+	throws IOException {
+		// nothing, we do not care
+	}
+
+
+	@Override
+	public void deleteMessagingServerArtifacts( Application application )
+	throws IOException {
+		// nothing, we do not care
+	}
+
+
+	@Override
+	public boolean isConnected() {
+		return true;
 	}
 }

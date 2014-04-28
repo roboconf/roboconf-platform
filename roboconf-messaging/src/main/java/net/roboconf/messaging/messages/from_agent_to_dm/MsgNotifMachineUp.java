@@ -28,17 +28,20 @@ public class MsgNotifMachineUp extends Message {
 
 	private final String ipAddress;
 	private final String rootInstanceName;
+	private final String applicationName;
 
 
 	/**
 	 * Constructor.
+	 * @param applicationName the application name
 	 * @param rootInstanceName the root instance (machine) name
 	 * @param ipAddress the IP address
 	 */
-	public MsgNotifMachineUp( String rootInstanceName, String ipAddress ) {
+	public MsgNotifMachineUp( String applicationName, String rootInstanceName, String ipAddress ) {
 		super();
 		this.rootInstanceName = rootInstanceName;
 		this.ipAddress = ipAddress;
+		this.applicationName = applicationName;
 	}
 
 	/**
@@ -46,8 +49,8 @@ public class MsgNotifMachineUp extends Message {
 	 * @param rootInstance the root instance
 	 * @param ipAddress the IP address
 	 */
-	public MsgNotifMachineUp( Instance rootInstance, String ipAddress ) {
-		this( rootInstance.getName(), ipAddress );
+	public MsgNotifMachineUp( String applicationName, Instance rootInstance, String ipAddress ) {
+		this( applicationName, rootInstance.getName(), ipAddress );
 	}
 
 	/**
@@ -62,5 +65,12 @@ public class MsgNotifMachineUp extends Message {
 	 */
 	public String getIpAddress() {
 		return this.ipAddress;
+	}
+
+	/**
+	 * @return the applicationName
+	 */
+	public String getApplicationName() {
+		return this.applicationName;
 	}
 }

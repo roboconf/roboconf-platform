@@ -52,7 +52,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_heartbeat() throws Exception {
 
-		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( "instance1" );
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( "app1", "instance1" );
 		checkBasics( msg, MsgNotifHeartbeat.class );
 	}
 
@@ -60,7 +60,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_machineDown() throws Exception {
 
-		MsgNotifMachineDown msg = new MsgNotifMachineDown( "instance1" );
+		MsgNotifMachineDown msg = new MsgNotifMachineDown( "app1", "instance1" );
 		checkBasics( msg, MsgNotifMachineDown.class );
 	}
 
@@ -68,10 +68,10 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_machineUp() throws Exception {
 
-		MsgNotifMachineUp msg = new MsgNotifMachineUp( "instance1", "127.0.0.1" );
+		MsgNotifMachineUp msg = new MsgNotifMachineUp( "app1", "instance1", "127.0.0.1" );
 		checkBasics( msg, MsgNotifMachineUp.class );
 
-		msg = new MsgNotifMachineUp( new Instance( "instance2" ), "192.168.1.2" );
+		msg = new MsgNotifMachineUp( "app1", new Instance( "instance2" ), "192.168.1.2" );
 		checkBasics( msg, MsgNotifMachineUp.class );
 	}
 
@@ -79,10 +79,10 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_readyToBeDeleted() throws Exception {
 
-		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( "instance1" );
+		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( "app1", "instance1" );
 		checkBasics( msg, MsgNotifMachineReadyToBeDeleted.class );
 
-		msg = new MsgNotifMachineReadyToBeDeleted( new Instance( "instance2" ));
+		msg = new MsgNotifMachineReadyToBeDeleted( "app1", new Instance( "instance2" ));
 		checkBasics( msg, MsgNotifMachineReadyToBeDeleted.class );
 	}
 
@@ -90,7 +90,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_instanceRestoration() throws Exception {
 
-		MsgNotifInstanceRestoration msg = new MsgNotifInstanceRestoration( new Instance( "root" ));
+		MsgNotifInstanceRestoration msg = new MsgNotifInstanceRestoration( "app2", new Instance( "root" ));
 		checkBasics( msg, MsgNotifInstanceRestoration.class );
 	}
 
@@ -98,7 +98,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_instanceChanged() throws Exception {
 
-		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( new Instance( "instance1" ));
+		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( "app2", new Instance( "instance1" ));
 		checkBasics( msg, MsgNotifInstanceChanged.class );
 	}
 
@@ -106,7 +106,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_instanceRemoved() throws Exception {
 
-		MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( new Instance( "instance1" ));
+		MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( "app2", new Instance( "instance1" ));
 		checkBasics( msg, MsgNotifInstanceRemoved.class );
 	}
 

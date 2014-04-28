@@ -21,12 +21,16 @@ import java.util.List;
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.internal.TestApplication;
+import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.client.IDmClient;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -58,6 +62,19 @@ public class ManagementWsDelegateTest extends JerseyTest {
 	public void resetManager() {
 		Manager.INSTANCE.cleanUpAll();
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+
+		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
+		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
+			@Override
+			public IAgentClient createAgentClient() {
+				return null;
+			}
+
+			@Override
+			public IDmClient createDmClient() {
+				return new TestMessageServerClient();
+			}
+		});
 	}
 
 
@@ -72,7 +89,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		TestApplication app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put(
 				app.getName(),
-				new ManagedApplication( app, null, new TestMessageServerClient()));
+				new ManagedApplication( app, null ));
 
 		apps = client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
@@ -96,9 +113,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 	public void testShutdownApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		Manager.INSTANCE.getAppNameToManagedApplication().put(
-				app.getName(),
-				new ManagedApplication( app, null, new TestMessageServerClient()));
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		client.getManagementDelegate().shutdownApplication( app.getName());
@@ -117,9 +132,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 	public void testDeleteApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		Manager.INSTANCE.getAppNameToManagedApplication().put(
-				app.getName(),
-				new ManagedApplication( app, null, new TestMessageServerClient()));
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
 
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertEquals( 1, client.getManagementDelegate().listApplications().size());

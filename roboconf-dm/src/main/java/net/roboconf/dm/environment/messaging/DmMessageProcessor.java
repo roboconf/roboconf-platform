@@ -26,8 +26,7 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.exceptions.InexistingException;
-import net.roboconf.messaging.client.IMessageProcessor;
+import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
@@ -36,7 +35,6 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
-import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * This class is in charge of updating the model from messages / notifications.
@@ -46,19 +44,10 @@ import net.roboconf.messaging.utils.MessagingUtils;
  *
  * @author Noël - LIG
  */
-public class DmMessageProcessor implements IMessageProcessor {
+public class DmMessageProcessor extends AbstractMessageProcessor {
 
-	private final Application application;
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 
-
-	/**
-	 * Constructor.
-	 * @param application
-	 */
-	public DmMessageProcessor( Application application ) {
-		this.application = application;
-	}
 
 
 	/**
@@ -95,16 +84,21 @@ public class DmMessageProcessor implements IMessageProcessor {
 	private void processMsgNotifReadyToBeDeleted( MsgNotifMachineReadyToBeDeleted message ) {
 
 		String rootInstanceName = message.getRootInstanceName();
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( this.application, "/" + rootInstanceName );
+		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
 
+		// If 'app' is null, then 'instance' is also null.
 		if( rootInstance == null ) {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A machine signaled it is ready to be deleted, but this machine is unknown: " );
 			sb.append( rootInstanceName );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
 		} else {
-			Manager.INSTANCE.terminateMachine( this.application.getName(), rootInstance );
+			Manager.INSTANCE.terminateMachine( app.getName(), rootInstance );
 			this.logger.fine( "Machine " + rootInstanceName + " is ready to be deleted." );
 		}
 	}
@@ -114,36 +108,34 @@ public class DmMessageProcessor implements IMessageProcessor {
 
 		String ipAddress = message.getIpAddress();
 		String rootInstanceName = message.getRootInstanceName();
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( this.application, "/" + rootInstanceName );
+		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
 
+		// If 'app' is null, then 'instance' is also null.
 		if( rootInstance == null ) {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "An 'UP' notification was received from an unknown machine: " );
 			sb.append( rootInstanceName );
 			sb.append( " @ " );
 			sb.append( ipAddress );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
 		} else {
-			ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( this.application.getName());
-			try {
-				if( ma == null )
-					throw new IOException( "No manager was found for " + this.application.getName() + "." );
+			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+			rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
+			this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
 
-				MsgCmdInstanceAdd newMsg = new MsgCmdInstanceAdd( null, rootInstance );
-				ma.getMessagingClient().publish(
-						false,
-						MessagingUtils.buildRoutingKeyToAgent( rootInstance ),
-						newMsg );
+			try {
+				MsgCmdInstanceAdd newMsg = new MsgCmdInstanceAdd((String) null, rootInstance );
+				Manager.INSTANCE.sendModelToAgent( app, rootInstance, newMsg );
 
 			} catch( IOException e ) {
 				this.logger.severe( "The DM failed to send the agent's model for " + rootInstanceName + ". " + e.getMessage());
 				this.logger.finest( Utils.writeException( e ));
 			}
-
-			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-			rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
-			this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
 		}
 	}
 
@@ -151,10 +143,18 @@ public class DmMessageProcessor implements IMessageProcessor {
 	private void processMsgNotifMachineDown( MsgNotifMachineDown message ) {
 
 		String rootInstanceName = message.getRootInstanceName();
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( this.application, "/" + rootInstanceName );
+		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
 
+		// If 'app' is null, then 'instance' is also null.
 		if( rootInstance == null ) {
-			this.logger.warning( "A 'DOWN' notification was received from an unknown machine: " + rootInstanceName + "." );
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A 'DOWN' notification was received from an unknown machine: " );
+			sb.append( rootInstanceName );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
+			this.logger.warning( sb.toString());
 
 		} else {
 			rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
@@ -167,21 +167,23 @@ public class DmMessageProcessor implements IMessageProcessor {
 	private void processMsgNotifHeartbeat( MsgNotifHeartbeat message ) {
 
 		String rootInstanceName = message.getRootInstanceName();
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( this.application, "/" + rootInstanceName );
+		ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( message.getApplicationName());
+		Application app = ma == null ? null : ma.getApplication();
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
 
+		// If 'app' is null, then 'instance' is also null.
 		if( rootInstance == null ) {
-			this.logger.warning( "A 'HEART BEAT' was received from an unknown machine: " + rootInstanceName + "." );
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A 'HEART BEAT' was received from an unknown machine: " );
+			sb.append( rootInstanceName );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
+			this.logger.warning( sb.toString());
 
 		} else {
-			try {
-				Manager.INSTANCE.acknowledgeHeartBeat( this.application.getName(), rootInstance );
-				this.logger.fine( rootInstanceName + " is alive." );
-
-			} catch( InexistingException e ) {
-				// This SHOULD NEVER happen.
-				// It would mean the Manager is not consistent and that life cycle management screwed up.
-				this.logger.warning( "A 'HEART BEAT' was received for an application which was not found: " + this.application.getName() + "." );
-			}
+			ma.getMonitor().acknowledgeHeartBeat( rootInstance );
+			ma.getLogger().finest( "A heart beat was acknowledged for " + rootInstance.getName() + " in the application " + app.getName() + "." );
 		}
 	}
 
@@ -189,10 +191,18 @@ public class DmMessageProcessor implements IMessageProcessor {
 	private void processMsgNotifInstanceChanged( MsgNotifInstanceChanged message ) {
 
 		String instancePath = message.getInstancePath();
-		Instance instance = InstanceHelpers.findInstanceByPath( this.application, instancePath );
+		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
 
+		// If 'app' is null, then 'instance' is also null.
 		if( instance == null ) {
-			this.logger.warning( "A 'CHANGED' notification was received from an unknown instance: " + instancePath );
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A 'CHANGED' notification was received from an unknown instance: " );
+			sb.append( instancePath );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
+			this.logger.warning( sb.toString());
 
 		} else {
 			InstanceStatus oldStatus = instance.getStatus();
@@ -215,9 +225,18 @@ public class DmMessageProcessor implements IMessageProcessor {
 	private void processMsgNotifInstanceRemoved( MsgNotifInstanceRemoved message ) {
 
 		String instancePath = message.getInstancePath();
-		Instance instance = InstanceHelpers.findInstanceByPath( this.application, instancePath );
+		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
+
+		// If 'app' is null, then 'instance' is also null.
 		if( instance == null ) {
-			this.logger.warning( "A 'REMOVE' notification was received for an unknown instance: " + instancePath + "." );
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A 'REMOVE' notification was received for an unknown instance: " );
+			sb.append( instancePath );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
+			this.logger.warning( sb.toString());
 
 		} else {
 			if( instance.getParent() == null )
