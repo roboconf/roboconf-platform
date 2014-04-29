@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.IMessageServerClient;
@@ -240,7 +241,7 @@ public final class MessagingService {
 
 		// FIXME: maybe we should filter the map to only keep the required variables. For security?
 		this.logger.fine( "Instance " + instance.getName() + " is signaling it does not export variables anymore." );
-		MsgCmdImportRemove message = new MsgCmdImportRemove( facetOrComponentName, instance.getName());
+		MsgCmdImportRemove message = new MsgCmdImportRemove( facetOrComponentName, InstanceHelpers.computeInstancePath(instance));
 		publishExportOrImport( facetOrComponentName, message, THOSE_THAT_EXPORT );
 	}
 
