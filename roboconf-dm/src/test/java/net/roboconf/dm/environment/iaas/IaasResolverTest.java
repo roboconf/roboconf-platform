@@ -20,8 +20,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.iaas.azure.IaasAzure;
 import net.roboconf.iaas.ec2.IaasEc2;
+import net.roboconf.iaas.embedded.IaasEmbedded;
 import net.roboconf.iaas.local.IaasInMemory;
+import net.roboconf.iaas.openstack.IaasOpenstack;
+import net.roboconf.iaas.vmware.IaasVmware;
 
 import org.junit.Test;
 
@@ -37,10 +41,25 @@ public class IaasResolverTest {
 		Map<String, String> props = new HashMap<String, String>();
 		Assert.assertNull( resolver.findIaasHandler( props ));
 
-		props.put( IaasResolver.IAAS_TYPE, "local" );
+		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_IN_MEMORY );
 		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasInMemory );
 
-		props.put( IaasResolver.IAAS_TYPE, "ec2" );
+		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_EC2 );
 		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasEc2 );
+
+		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_AZURE );
+		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasAzure );
+
+		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_EMBEDDED );
+		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasEmbedded );
+
+		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_VMWARE );
+		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasVmware );
+
+		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_OPENSTACK );
+		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasOpenstack );
+
+		props.put( IaasResolver.IAAS_TYPE, "whatever" );
+		Assert.assertNull( resolver.findIaasHandler( props ));
 	}
 }

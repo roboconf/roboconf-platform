@@ -52,8 +52,8 @@ public interface IDmClient extends IClient {
 	/**
 	 * Deletes all the server artifacts related to this application.
 	 * <p>
-	 * This method must be called when ALL the agents and the DM
-	 * have stopped sending and listening messages on the server.
+	 * This method must be called when ALL the agents have closed
+	 * their connection and BEFORE the DM's connection is closed.
 	 * </p>
 	 *
 	 * @param application the application whose messaging artifacts must be deleted

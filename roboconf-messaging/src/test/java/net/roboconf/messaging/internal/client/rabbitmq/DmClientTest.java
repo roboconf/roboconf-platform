@@ -16,8 +16,6 @@
 
 package net.roboconf.messaging.internal.client.rabbitmq;
 
-import java.io.IOException;
-
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
@@ -66,20 +64,12 @@ public class DmClientTest {
 		dmClient.listenToAgentMessages( new Application( "app" ), ListenerCommand.STOP );
 		Assert.assertEquals( 0, dmClient.applicationNameToConsumerTag.size());
 
-		try {
-			dmClient.deleteMessagingServerArtifacts( new Application( "app" ));
-			Assert.fail( "Artifacts cannot be deleted because the DM is still connected to RabbitMQ." );
-
-		} catch( IOException e ) {
-			// nothing
-		}
+		dmClient.deleteMessagingServerArtifacts( new Application( "app" ));
 
 		Assert.assertTrue( dmClient.messageProcessor.isAlive());
 		dmClient.closeConnection();
 		Assert.assertFalse( dmClient.messageProcessor.isAlive());
 		Assert.assertNull( dmClient.channel );
-
-		dmClient.deleteMessagingServerArtifacts( new Application( "app" ));
 	}
 
 

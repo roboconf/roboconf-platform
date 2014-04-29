@@ -37,6 +37,12 @@ import net.roboconf.iaas.vmware.IaasVmware;
 public class IaasResolver {
 
 	public static final String IAAS_TYPE = "iaas.type";
+	public static final String IAAS_IN_MEMORY = "in-memory";
+	public static final String IAAS_EMBEDDED = "embedded";
+	public static final String IAAS_EC2 = "ec2";
+	public static final String IAAS_OPENSTACK = "openstack";
+	public static final String IAAS_VMWARE = "vmware";
+	public static final String IAAS_AZURE = "azure";
 
 
 	/**
@@ -77,20 +83,25 @@ public class IaasResolver {
 	 * TODO: move this method in the IaaS implementations
 	 */
 	IaasInterface findIaasHandler(Map<String, String> iaasProperties) {
-
 		IaasInterface result = null;
 		String iaasType = iaasProperties.get( IAAS_TYPE );
-		if( "in-memory".equals( iaasType )) {
+
+		if( IAAS_IN_MEMORY.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasInMemory();
-		} else if("embedded".equals(iaasType)) {
+
+		} else if( IAAS_EMBEDDED.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasEmbedded();
-		} else if( "ec2".equals( iaasType )) {
+
+		} else if( IAAS_EC2.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasEc2();
-		} else if("openstack".equals(iaasType)) {
+
+		} else if( IAAS_OPENSTACK.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasOpenstack();
-		} else if("vmware".equals(iaasType)) {
+
+		} else if( IAAS_VMWARE.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasVmware();
-		} else if("azure".equals(iaasType)) {
+
+		} else if( IAAS_AZURE.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasAzure();
 		}
 

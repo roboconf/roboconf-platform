@@ -129,12 +129,14 @@ public abstract class MessagingTestUtils {
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 1, dmProcessor.receivedMessages.size());
 
-		// Disconnect
+		// Disconnect the agent
 		agentClient.closeConnection();
-		dmClient.closeConnection();
 
 		// Clean artifacts
 		dmClient.deleteMessagingServerArtifacts( app );
+
+		// Disconnect the DM
+		dmClient.closeConnection();
 	}
 
 
@@ -217,15 +219,17 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessorApp2.receivedMessages.get( 1 ).getClass());
 		Assert.assertEquals( MsgCmdInstanceStop.class, agentProcessorApp2.receivedMessages.get( 2 ).getClass());
 
-		// Disconnect
+		// Disconnect the agents
 		agentClientApp1_1.closeConnection();
 		agentClientApp1_2.closeConnection();
 		agentClientApp2.closeConnection();
-		dmClient.closeConnection();
 
 		// Clean artifacts
 		dmClient.deleteMessagingServerArtifacts( app1 );
 		dmClient.deleteMessagingServerArtifacts( app2 );
+
+		// Disconnect the DM
+		dmClient.closeConnection();
 	}
 
 
