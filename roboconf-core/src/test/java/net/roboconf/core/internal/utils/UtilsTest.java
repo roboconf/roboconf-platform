@@ -29,12 +29,18 @@ import java.util.UUID;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class UtilsTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test
 	public void testDeleteFilesRecursively() {
@@ -156,18 +162,70 @@ public class UtilsTest {
 
 
 	@Test
-	public void testExtractZipArchive() {
+	public void testExtractZipArchive() throws Exception {
 
-		File zipFile = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString() + ".zip" );
-		zipFile.deleteOnExit();
+		// Prepare the original ZIP
+		File zipFile = this.folder.newFile( "roboconf_test.zip" );
+		Map<String,String> entryToContent = TestUtils.buildZipContent();
 
-		try {
-			Map<String,String> entryToContent = TestUtils.buildZipContent();
-			TestUtils.createZipFile( entryToContent, zipFile );
-			TestUtils.compareZipContent( zipFile, entryToContent );
+		TestUtils.createZipFile( entryToContent, zipFile );
+		TestUtils.compareZipContent( zipFile, entryToContent );
 
-		} catch( IOException e ) {
-			Assert.fail( e.getMessage());
+		// Prepare the output directory
+		File existingDirectory = this.folder.newFolder( "roboconf_test" );
+		Assert.assertTrue( existingDirectory.exists());
+		Assert.assertEquals( 0, Utils.listAllFiles( existingDirectory ).size());
+
+		// Extract
+		Utils.extractZipArchive( zipFile, existingDirectory );
+
+		// And compare
+		Assert.assertNotSame( 0, Utils.listAllFiles( existingDirectory ).size());
+		Map<String,String> fileToContent = Utils.storeDirectoryResourcesAsString( existingDirectory );
+		for( Map.Entry<String,String> entry : fileToContent.entrySet()) {
+			Assert.assertTrue( entryToContent.containsKey( entry.getKey()));
+			String value = entryToContent.remove( entry.getKey());
+			Assert.assertEquals( entry.getValue(), value );
+		}
+
+		// Only directories should remain
+		for( Map.Entry<String,String> entry : entryToContent.entrySet()) {
+			Assert.assertNull( entry.getKey(), entry.getValue());
+		}
+	}
+
+
+	@Test
+	public void testExtractZipArchive_inexistingDirectory() throws Exception {
+
+		// Prepare the original ZIP
+		File zipFile = this.folder.newFile( "roboconf_test.zip" );
+		Map<String,String> entryToContent = TestUtils.buildZipContent();
+		TestUtils.createZipFile( entryToContent, zipFile );
+
+		// Prepare the output directory
+		File unexistingDirectory = this.folder.newFolder( "roboconf_test" );
+		if( ! unexistingDirectory.delete())
+			throw new IOException( "Failed to delete a directory." );
+
+		Assert.assertFalse( unexistingDirectory.exists());
+
+		// Extract
+		Utils.extractZipArchive( zipFile, unexistingDirectory );
+		Assert.assertTrue( unexistingDirectory.exists());
+
+		// And compare
+		Assert.assertNotSame( 0, Utils.listAllFiles( unexistingDirectory ).size());
+		Map<String,String> fileToContent = Utils.storeDirectoryResourcesAsString( unexistingDirectory );
+		for( Map.Entry<String,String> entry : fileToContent.entrySet()) {
+			Assert.assertTrue( entryToContent.containsKey( entry.getKey()));
+			String value = entryToContent.remove( entry.getKey());
+			Assert.assertEquals( entry.getValue(), value );
+		}
+
+		// Only directories should remain
+		for( Map.Entry<String,String> entry : entryToContent.entrySet()) {
+			Assert.assertNull( entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -195,56 +253,38 @@ public class UtilsTest {
 
 	@Test( expected = IllegalArgumentException.class )
 	public void testExtractZipArchive_illegalArgument_4() throws Exception {
+
 		File existingFile = new File( System.getProperty( "java.io.tmpdir" ));
-		Utils.extractZipArchive( existingFile, new File( "file-that-does-not.exists" ));
+		File unexistingFile = new File( existingFile, UUID.randomUUID().toString());
+
+		Assert.assertFalse( unexistingFile.exists());
+		Utils.extractZipArchive( existingFile, unexistingFile );
 	}
 
 
 	@Test( expected = IllegalArgumentException.class )
 	public void testExtractZipArchive_illegalArgument_5() throws Exception {
 
-		File tempDir = new File( System.getProperty( "java.io.tmpdir" ));
-		File tempFile = File.createTempFile( "roboconf_", "test" );
-		try {
-			Utils.extractZipArchive( tempDir, tempFile);
-
-		} finally {
-			if( ! tempFile.delete())
-				tempFile.deleteOnExit();
-		}
+		File tempZip = this.folder.newFile( "roboconf_test_zip.zip" );
+		File tempFile = this.folder.newFile( "roboconf_test.txt" );
+		Utils.extractZipArchive( tempZip, tempFile );
 	}
 
 
 	@Test
-	public void testCloseQuietly() {
+	public void testCloseQuietly() throws Exception {
 
-		try {
-			InputStream in = null;
-			Utils.closeQuietly( in );
-		} catch( Exception e ) {
-			Assert.fail();
-		}
+		InputStream in = null;
+		Utils.closeQuietly( in );
 
-		try {
-			InputStream in = new ByteArrayInputStream( new byte[ 0 ]);
-			Utils.closeQuietly( in );
-		} catch( Exception e ) {
-			Assert.fail();
-		}
+		in = new ByteArrayInputStream( new byte[ 0 ]);
+		Utils.closeQuietly( in );
 
-		try {
-			OutputStream out = new ByteArrayOutputStream();
-			Utils.closeQuietly( out );
-		} catch( Exception e ) {
-			Assert.fail();
-		}
+		OutputStream out = new ByteArrayOutputStream();
+		Utils.closeQuietly( out );
 
-		try {
-			OutputStream out = null;
-			Utils.closeQuietly( out );
-		} catch( Exception e ) {
-			Assert.fail();
-		}
+		out = null;
+		Utils.closeQuietly( out );
 	}
 
 
@@ -254,5 +294,85 @@ public class UtilsTest {
 		String msg = "Hello from Roboconf.";
 		String stackTrace = Utils.writeException( new Exception( msg ));
 		Assert.assertTrue( stackTrace.contains( msg ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testComputeFileRelativeLocation_failure_notASubFile() {
+
+		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ));
+		Utils.computeFileRelativeLocation( rootDir, new File( "invalid-path" ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testComputeFileRelativeLocation_failure_sameFile() {
+
+		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ));
+		Utils.computeFileRelativeLocation( rootDir, rootDir );
+	}
+
+
+	@Test
+	public void testComputeFileRelativeLocation_success() {
+
+		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ));
+		File directChildFile = new File( rootDir, "woo.txt" );
+		Assert.assertEquals(
+				directChildFile.getName(),
+				Utils.computeFileRelativeLocation( rootDir, directChildFile ));
+
+		String indirectChildPath = "dir1/dir2/script.sh";
+		File indirectChildFile = new File( rootDir, indirectChildPath );
+		Assert.assertEquals(
+				indirectChildPath,
+				Utils.computeFileRelativeLocation( rootDir, indirectChildFile ));
+	}
+
+
+	@Test
+	public void testListAllFiles() throws Exception {
+
+		final File tempDir = this.folder.newFolder( "roboconf_test" );
+		String[] paths = new String[] { "dir1", "dir2", "dir1/dir3" };
+		for( String path : paths ) {
+			if( ! new File( tempDir, path ).mkdir())
+				throw new IOException( "Failed to create " + path );
+		}
+
+		paths = new String[] { "dir1/toto.txt", "dir2/script.sh", "dir1/dir3/smart.png" };
+		for( String path : paths ) {
+			if( ! new File( tempDir, path ).createNewFile())
+				throw new IOException( "Failed to create " + path );
+		}
+
+		List<File> files = Utils.listAllFiles( tempDir );
+		Assert.assertEquals( 3, files.size());
+		for( String path : paths )
+			Assert.assertTrue( path, files.contains( new File( tempDir, path )));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testListAllFiles_inexistingFile() throws Exception {
+		Utils.listAllFiles( new File( "/not/existing/file" ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testListAllFiles_invalidParameter() throws Exception {
+		Utils.listAllFiles( this.folder.newFile( "roboconf.txt" ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testStoreDirectoryResourcesAsBytes_illegalArgument_1() throws Exception {
+		Utils.storeDirectoryResourcesAsBytes( new File( "/not/existing/file" ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testStoreDirectoryResourcesAsBytes_illegalArgument_2() throws Exception {
+		Utils.storeDirectoryResourcesAsBytes( this.folder.newFile( "roboconf.txt" ));
 	}
 }

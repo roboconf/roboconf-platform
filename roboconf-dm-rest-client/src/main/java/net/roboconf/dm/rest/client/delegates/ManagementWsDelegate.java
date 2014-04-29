@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.rest.UrlConstants;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
@@ -137,34 +136,6 @@ public class ManagementWsDelegate {
 			this.logger.finer( "No application was found on the DM." );
 
 		return result != null ? result : new ArrayList<Application> ();
-	}
-
-
-	/**
-	 * Gets the model data for an application.
-	 * @param applicationName the application name
-	 * @param targetFile the target file to save the ZIP archive with the model files
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
-	 * @throws ManagementException if a problem occurred with the applications management
-	 * @throws IOException if the target file could not be created or written
-	 */
-	public void downloadApplicationModelData( String applicationName, File targetFile ) throws ManagementException, IOException {
-		this.logger.finer( "Getting application model for " + applicationName + "..." );
-
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName ).path( "download" )
-				.accept( "application/zip" )
-				.get( ClientResponse.class );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		Utils.copyStream( response.getEntityInputStream(), targetFile );
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
 

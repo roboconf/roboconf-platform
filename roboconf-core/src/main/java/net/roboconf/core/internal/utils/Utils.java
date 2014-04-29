@@ -16,6 +16,7 @@
 
 package net.roboconf.core.internal.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,7 +28,9 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
@@ -191,9 +194,115 @@ public final class Utils {
 
 
 	/**
+	 * Finds all the files (direct and indirect) from a directory.
+	 * <p>
+	 * This method skips hidden files and files whose name starts
+	 * with a dot.
+	 * </p>
+	 *
+	 * @param directory an existing directory
+	 * @return a non-null list of files
+	 */
+	public static List<File> listAllFiles( File directory ) {
+
+		if( ! directory.exists()
+				|| ! directory.isDirectory())
+			throw new IllegalArgumentException( directory.getAbsolutePath() + " does not exist or is not a directory." );
+
+		List<File> result = new ArrayList<File> ();
+		List<File> directoriesToInspect = new ArrayList<File> ();
+		directoriesToInspect.add( directory );
+
+		while( ! directoriesToInspect.isEmpty()) {
+			File[] subFiles = directoriesToInspect.remove( 0 ).listFiles();
+			if( subFiles == null )
+				continue;
+
+			for( File subFile : subFiles ) {
+				if(  subFile.isHidden()
+						|| subFile.getName().startsWith( "." ))
+					continue;
+
+				if( subFile.isFile())
+					result.add( subFile );
+				else
+					directoriesToInspect.add( subFile );
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Stores the resources from a directory into a map.
+	 * @param directory an existing directory
+	 * @return a non-null map (key = the file location, relative to the directory, value = file content)
+	 * @throws IOException if something went wrong while reading a file
+	 */
+	public static Map<String,byte[]> storeDirectoryResourcesAsBytes( File directory ) throws IOException {
+
+		if( ! directory.exists())
+			throw new IllegalArgumentException( "The resource directory was not found. " + directory.getAbsolutePath());
+
+		if( ! directory.isDirectory())
+			throw new IllegalArgumentException( "The resource directory is not a valid directory. " + directory.getAbsolutePath());
+
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		List<File> resourceFiles = listAllFiles( directory );
+		for( File file : resourceFiles ) {
+
+			String key = computeFileRelativeLocation( directory, file );
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStream( file, os );
+			result.put( key, os.toByteArray());
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Stores the resources from a directory into a map.
+	 * @param directory an existing directory
+	 * @return a non-null map (key = the file location, relative to the directory, value = file content)
+	 * @throws IOException if something went wrong while reading a file
+	 */
+	public static Map<String,String> storeDirectoryResourcesAsString( File directory ) throws IOException {
+
+		Map<String,byte[]> map = storeDirectoryResourcesAsBytes( directory );
+		Map<String,String> result = new HashMap<String,String>( map.size());
+		for( Map.Entry<String,byte[]> entry : map.entrySet())
+			result.put( entry.getKey(), new String( entry.getValue(), "UTF-8" ));
+
+		return result;
+	}
+
+
+	/**
+	 * Computes the relative location of a file with respect to a root directory.
+	 * @param rootDirectory a directory
+	 * @param subFile a file contained (directly or indirectly) in the directory
+	 * @return a non-null string
+	 */
+	public static String computeFileRelativeLocation( File rootDirectory, File subFile ) {
+
+		String rootPath = rootDirectory.getAbsolutePath();
+		String subPath = subFile.getAbsolutePath();
+		if(  ! subPath.startsWith( rootPath ))
+			throw new IllegalArgumentException( "The sub-file must be contained in the directory." );
+
+		if(  rootDirectory.equals( subFile ))
+			throw new IllegalArgumentException( "The sub-file must be different than the directory." );
+
+		return subPath.substring( rootPath.length() + 1 ).replace( '\\', '/' );
+	}
+
+
+	/**
 	 * Extracts a ZIP archive in a directory.
 	 * @param zipFile a ZIP file (not null, must exist)
-	 * @param targetDirectory the target directory (must exist and be a directory)
+	 * @param targetDirectory the target directory (may not exist but must be a directory)
 	 * @throws ZipException if something went wrong
 	 * @throws IOException if something went wrong
 	 */
@@ -204,11 +313,13 @@ public final class Utils {
 		if( zipFile == null || targetDirectory == null )
 			throw new IllegalArgumentException( "The ZIP file and the target directory cannot be null." );
 
-		if( ! zipFile.exists())
+		if( ! zipFile.exists()
+				|| ! zipFile.isFile())
 			throw new IllegalArgumentException( "ZIP file " + targetDirectory.getName() + " does not exist." );
 
-		if( ! targetDirectory.exists())
-			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " does not exist." );
+		if( ! targetDirectory.exists()
+				&& ! targetDirectory.mkdirs())
+			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " could not be created." );
 
 		if( ! targetDirectory.isDirectory())
 			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " is not a directory." );

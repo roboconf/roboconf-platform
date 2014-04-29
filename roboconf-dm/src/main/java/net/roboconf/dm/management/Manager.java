@@ -426,8 +426,7 @@ public final class Manager {
 
 		this.logger.info( "Cleaning up all the resources (connections, listeners, etc)." );
 		for( ManagedApplication ma : this.appNameToManagedApplication.values()) {
-			if( ma != null )
-				cleanUp( ma );
+			cleanUp( ma );
 		}
 
 		try {

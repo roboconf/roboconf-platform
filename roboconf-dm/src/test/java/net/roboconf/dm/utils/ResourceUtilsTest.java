@@ -17,24 +17,27 @@
 package net.roboconf.dm.utils;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class ResourceUtilsTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
+
 	@Test
-	public void testFindInstanceResourcesDirectory() {
+	public void testFindInstanceResourcesDirectory_success() {
 
 		final File appDir = new File( System.getProperty( "java.io.tmpdir" ));
 		final String componentName = "my-component";
@@ -52,60 +55,18 @@ public class ResourceUtilsTest {
 
 
 	@Test( expected = IllegalArgumentException.class )
-	public void testComputeFileRelativeLocation_failure() {
+	public void testStoreInstanceResources_inexistingDirectory() throws Exception {
 
-		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ));
-		ResourceUtils.computeFileRelativeLocation( rootDir, new File( "invalid-path" ));
+		Instance instance = new Instance( "whatever" ).component( new Component( "comp" ));
+		ResourceUtils.storeInstanceResources( new File( "/file/does/not/exist" ),  instance );
 	}
 
 
-	@Test
-	public void testComputeFileRelativeLocation_success() {
+	@Test( expected = IllegalArgumentException.class )
+	public void testStoreInstanceResources_notADirectory() throws Exception {
 
-		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ));
-		File directChildFile = new File( rootDir, "woo.txt" );
-		Assert.assertEquals(
-				directChildFile.getName(),
-				ResourceUtils.computeFileRelativeLocation( rootDir, directChildFile ));
-
-		String indirectChildPath = "dir1/dir2/script.sh";
-		File indirectChildFile = new File( rootDir, indirectChildPath );
-		Assert.assertEquals(
-				indirectChildPath,
-				ResourceUtils.computeFileRelativeLocation( rootDir, indirectChildFile ));
-	}
-
-
-	@Test
-	public void testListAllFiles() throws Exception {
-
-		final File tempDir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_test" );
-		if( tempDir.exists())
-			Utils.deleteFilesRecursively( tempDir );
-
-		if( ! tempDir.mkdir())
-			throw new IOException( "Failed to create a tempoary directory." );
-
-		try {
-			String[] paths = new String[] { "dir1", "dir2", "dir1/dir3" };
-			for( String path : paths ) {
-				if( ! new File( tempDir, path ).mkdir())
-					throw new IOException( "Failed to create " + path );
-			}
-
-			paths = new String[] { "dir1/toto.txt", "dir2/script.sh", "dir1/dir3/smart.png" };
-			for( String path : paths ) {
-				if( ! new File( tempDir, path ).createNewFile())
-					throw new IOException( "Failed to create " + path );
-			}
-
-			List<File> files = ResourceUtils.listAllFiles( tempDir );
-			Assert.assertEquals( 3, files.size());
-			for( String path : paths )
-				Assert.assertTrue( path, files.contains( new File( tempDir, path )));
-
-		} finally {
-			Utils.deleteFilesRecursively( tempDir );
-		}
+		Instance instance = new Instance( "whatever" ).component( new Component( "comp" ));
+		File f = this.folder.newFile( "roboconf_.txt" );
+		ResourceUtils.storeInstanceResources( f, instance );
 	}
 }

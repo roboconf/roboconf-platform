@@ -70,7 +70,7 @@ public class ManagementWs implements IManagementWs {
 			response = loadApplication( dir.getAbsolutePath());
 
 		} catch( IOException e ) {
-			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( e.getMessage()).build();
+			response = Response.status( Status.NOT_ACCEPTABLE ).entity( "A ZIP file was expected. " + e.getMessage()).build();
 
 		} finally {
 			Utils.closeQuietly( uploadedInputStream );
@@ -117,45 +117,6 @@ public class ManagementWs implements IManagementWs {
 	public List<Application> listApplications() {
 		this.logger.fine( "Request: list all the applications." );
 		return Manager.INSTANCE.listApplications();
-	}
-
-
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.rest.client.exceptions.server.IApplicationWs
-	 * #downloadApplicationModelData(java.lang.String)
-	 */
-	@Override
-	public Response downloadApplicationModelData( String applicationName ) {
-
-		this.logger.fine( "Request: download model data for " + applicationName + "." );
-
-		// Get the ZIP file to return.
-		// Here, we will created an arbitrary one.
-//		Map<String,String> entryToContent = TestUtils.buildZipContent();
-//		File zipFile = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString() + ".zip" );
-//		zipFile.deleteOnExit();
-//
-//		// Create the ZIP file to transfer
-//		ZipOutputStream zos = null;
-//		try {
-//			zos = new ZipOutputStream( new FileOutputStream( zipFile ));
-//			for( Map.Entry<String,String> entry : entryToContent.entrySet()) {
-//				zos.putNextEntry( new ZipEntry( entry.getKey()));
-//				ByteArrayInputStream is = new ByteArrayInputStream( entry.getValue().getBytes( "UTF-8" ));
-//				Utils.copyStream( is, zos );
-//			}
-//
-//		} catch( IOException e ) {
-//			Assert.fail( "Failed to create the ZIP. " + e.getMessage());
-//
-//		} finally {
-//			Utils.closeQuietly( zos );
-//		}
-
-		// Return it
-		// return Response.ok( zipFile ).header( "content-disposition","attachment; filename = " + zipFile.getName()).build();
-		// TODO: review once the app manager has been refactored.
-		return Response.status( Status.FORBIDDEN ).build();
 	}
 
 

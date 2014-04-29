@@ -16,12 +16,8 @@
 
 package net.roboconf.dm.utils;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
@@ -52,22 +48,12 @@ public final class ResourceUtils {
 
 		File instanceResourcesDirectory = findInstanceResourcesDirectory( applicationFilesDirectory, instance );
 		if( ! instanceResourcesDirectory.exists())
-			throw new IOException( "The resource directory was not found for instance " + instance.getName() + ". " + instanceResourcesDirectory.getAbsolutePath());
+			throw new IllegalArgumentException( "The resource directory was not found for instance " + instance.getName() + ". " + instanceResourcesDirectory.getAbsolutePath());
 
 		if( ! instanceResourcesDirectory.isDirectory())
-			throw new IOException( "The resource directory for instance " + instance.getName() + " is not a valid directory. " + instanceResourcesDirectory.getAbsolutePath());
+			throw new IllegalArgumentException( "The resource directory for instance " + instance.getName() + " is not a valid directory. " + instanceResourcesDirectory.getAbsolutePath());
 
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
-		List<File> resourceFiles = listAllFiles( instanceResourcesDirectory );
-		for( File file : resourceFiles ) {
-
-			String key = computeFileRelativeLocation( instanceResourcesDirectory, file );
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( file, os );
-			result.put( key, os.toByteArray());
-		}
-
-		return result;
+		return Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory );
 	}
 
 
@@ -94,66 +80,5 @@ public final class ResourceUtils {
 		result = new File( result, componentName);
 
 		return result;
-	}
-
-
-	/**
-	 * Finds all the files (direct and indirect) from a directory.
-	 * <p>
-	 * This method skips hidden files and files whose name starts
-	 * with a dot.
-	 * </p>
-	 *
-	 * @param directory an existing directory
-	 * @return a non-null list of files
-	 */
-	public static List<File> listAllFiles( File directory ) {
-
-		if( ! directory.exists()
-				|| ! directory.isDirectory())
-			throw new IllegalArgumentException( directory.getAbsolutePath() + " does not exist or is not a directory." );
-
-		List<File> result = new ArrayList<File> ();
-		List<File> directoriesToInspect = new ArrayList<File> ();
-		directoriesToInspect.add( directory );
-
-		while( ! directoriesToInspect.isEmpty()) {
-			File[] subFiles = directoriesToInspect.remove( 0 ).listFiles();
-			if( subFiles == null )
-				continue;
-
-			for( File subFile : subFiles ) {
-				if(  subFile.isHidden()
-						|| subFile.getName().startsWith( "." ))
-					continue;
-
-				if( subFile.isFile())
-					result.add( subFile );
-				else
-					directoriesToInspect.add( subFile );
-			}
-		}
-
-		return result;
-	}
-
-
-	/**
-	 * Computes the relative location of a file with respect to a root directory.
-	 * @param rootDirectory a directory
-	 * @param subFile a file contained (directly or indirectly) in the directory
-	 * @return a non-null string
-	 */
-	public static String computeFileRelativeLocation( File rootDirectory, File subFile ) {
-
-		String rootPath = rootDirectory.getAbsolutePath();
-		String subPath = subFile.getAbsolutePath();
-		if(  ! subPath.startsWith( rootPath ))
-			throw new IllegalArgumentException( "The sub-file must be contained in the directory." );
-
-		if(  rootDirectory.equals( subFile ))
-			throw new IllegalArgumentException( "The sub-file must be different than the directory." );
-
-		return subPath.substring( rootPath.length() + 1 ).replace( '\\', '/' );
 	}
 }

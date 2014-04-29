@@ -23,6 +23,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.actions.ApplicationAction;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
@@ -31,9 +32,11 @@ import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
+import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
+import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.messaging.client.IAgentClient;
@@ -53,7 +56,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ManagerTest {
+public class ManagerWithMockedMessagingClientTest {
 
 	@Before
 	public void resetManager() {
@@ -553,7 +556,7 @@ public class ManagerTest {
 
 
 	@Test
-	public void testFindInstancesToProcess() throws Exception {
+	public void testFindInstancesToProcess_success() throws Exception {
 
 		TestApplication app = new TestApplication();
 		List<Instance> instances = Manager.INSTANCE.findInstancesToProcess( app, null, true );
@@ -589,5 +592,50 @@ public class ManagerTest {
 		instances = Manager.INSTANCE.findInstancesToProcess( app, InstanceHelpers.computeInstancePath( app.getWar()), false );
 		Assert.assertEquals( 1, instances.size());
 		Assert.assertTrue( instances.contains( app.getWar()));
+	}
+
+
+	@Test( expected = InexistingException.class )
+	public void testFindInstancesToProcess_inexistingInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.findInstancesToProcess( app, "/pop", true );
+	}
+
+
+	@Test
+	public void testIsConnectedToTheMessagingServer() {
+		Assert.assertTrue( Manager.INSTANCE.isConnectedToTheMessagingServer());
+	}
+
+
+	@Test
+	public void testLoadNewApplication_success() throws Exception {
+
+		File directory = TestUtils.findTestFile( "/lamp" );
+		Assert.assertTrue( directory.exists());
+		ManagedApplication ma = Manager.INSTANCE.loadNewApplication( directory );
+
+		Assert.assertNotNull( ma );
+		Assert.assertEquals( directory, ma.getApplicationFilesDirectory());
+		Assert.assertEquals( "Legacy LAMP", ma.getApplication().getName());
+	}
+
+
+	@Test( expected = AlreadyExistingException.class )
+	public void testLoadNewApplication_conflict() throws Exception {
+
+		Application app = new Application( "Legacy LAMP" );
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+
+		File directory = TestUtils.findTestFile( "/lamp" );
+		Assert.assertTrue( directory.exists());
+		Manager.INSTANCE.loadNewApplication( directory );
+	}
+
+
+	@Test( expected = InvalidApplicationException.class )
+	public void testLoadNewApplication_invalidApplication() throws Exception {
+		Manager.INSTANCE.loadNewApplication( new File( System.getProperty( "java.io.tmpdir" )));
 	}
 }

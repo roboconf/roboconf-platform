@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasInterface;
@@ -46,16 +47,14 @@ public final class IaasHelpers {
 	/**
 	 * Loads the IaaS properties.
 	 * @param applicationFilesDirectory the directory where application resources are stored
-	 * @param rootInstance the root instance to find the IaaS properties
+	 * @param instance the root instance to find the IaaS properties
 	 * @return a non-null properties
 	 * @throws IOException if the IaaS properties file was not found
 	 */
-	public static Map<String,String> loadIaasProperties( File applicationFilesDirectory, Instance rootInstance ) throws IOException {
+	public static Map<String,String> loadIaasProperties( File applicationFilesDirectory, Instance instance ) throws IOException {
 
-		if( rootInstance.getParent() != null )
-			throw new IllegalArgumentException( "A root instance was expected as parameter." );
-
-		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, rootInstance );
+		Instance realRootInstance = InstanceHelpers.findRootInstance( instance );
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, realRootInstance );
 		f = new File( f, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
 
 		Map<String, String> result = new HashMap<String, String>();

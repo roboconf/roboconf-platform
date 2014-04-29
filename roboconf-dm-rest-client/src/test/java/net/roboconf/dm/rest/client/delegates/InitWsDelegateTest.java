@@ -60,6 +60,18 @@ public class InitWsDelegateTest extends JerseyTest {
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertFalse( client.getInitDelegate().isDeploymentManagerInitialized());
 		client.getInitDelegate().initializeDeploymentManager( "127.0.0.1" );
+		Assert.assertEquals( "127.0.0.1", Manager.INSTANCE.getMessageServerIp());
+		Assert.assertTrue( client.getInitDelegate().isDeploymentManagerInitialized());
+	}
+
+
+	@Test
+	public void testInitialization_default() throws Exception {
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Assert.assertFalse( client.getInitDelegate().isDeploymentManagerInitialized());
+		client.getInitDelegate().initializeDeploymentManager( null );
+		Assert.assertEquals( "localhost", Manager.INSTANCE.getMessageServerIp());
 		Assert.assertTrue( client.getInitDelegate().isDeploymentManagerInitialized());
 	}
 
