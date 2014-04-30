@@ -172,6 +172,10 @@ public class Instance implements Serializable {
 	 * @return the real exports
 	 */
 	public Map<String,String> getExports() {
+
+		if( this.exports.isEmpty())
+			this.exports.putAll( InstanceHelpers.getExportedVariables( this ));
+
 		return this.exports;
 	}
 

@@ -21,6 +21,10 @@ import java.io.File;
 import junit.framework.Assert;
 import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.dm.internal.TestApplication;
+import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
@@ -30,7 +34,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ManagerTest {
+public class ManagerWithNoConnectionTest {
 
 	@Before
 	public void resetManager() throws Exception {
@@ -100,5 +104,67 @@ public class ManagerTest {
 
 		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
 		Manager.INSTANCE.cleanUp( null );
+	}
+
+
+	@Test
+	public void testTerminateMachine_notConnected() {
+
+		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+
+		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
+		Manager.INSTANCE.terminateMachine( app.getName(), app.getMySqlVm());
+	}
+
+
+	@Test
+	public void testTerminateMachine() {
+
+		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+
+		TestIaasResolver iaasResolver = new TestIaasResolver();
+		Manager.INSTANCE.setIaasResolver( iaasResolver );
+
+		iaasResolver.instanceToRunningStatus.put( app.getMySqlVm(), Boolean.TRUE );
+		app.getMySqlVm().getData().put( Instance.MACHINE_ID, "whatever" );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		Manager.INSTANCE.terminateMachine( app.getName(), app.getMySqlVm());
+
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Assert.assertNull( app.getMySqlVm().getData().get( Instance.MACHINE_ID ));
+		Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+		Assert.assertEquals( Boolean.FALSE, iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+	}
+
+
+	@Test
+	public void testShutdown() throws Exception {
+
+		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+
+		TestIaasResolver iaasResolver = new TestIaasResolver();
+		Manager.INSTANCE.setIaasResolver( iaasResolver );
+
+		for( Instance rootInstance : app.getRootInstances()) {
+			iaasResolver.instanceToRunningStatus.put( rootInstance, Boolean.TRUE );
+			rootInstance.getData().put( Instance.MACHINE_ID, "whatever" );
+			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+		}
+
+		Manager.INSTANCE.shutdownApplication( app.getName());
+
+		for( Instance rootInstance : app.getRootInstances()) {
+			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
+			Assert.assertNull( rootInstance.getData().get( Instance.MACHINE_ID ));
+			Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( rootInstance ));
+			Assert.assertEquals( Boolean.FALSE, iaasResolver.instanceToRunningStatus.get( rootInstance ));
+		}
 	}
 }

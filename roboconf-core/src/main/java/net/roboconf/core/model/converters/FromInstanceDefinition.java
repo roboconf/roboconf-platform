@@ -147,8 +147,6 @@ public class FromInstanceDefinition {
 		for( Instance instance : this.allBlocksToInstances.values()) {
 			if( instance.getParent() == null )
 				rootInstances.add( instance );
-
-			instance.getExports().putAll( InstanceHelpers.getExportedVariables( instance ));
 		}
 
 		return rootInstances;

@@ -43,7 +43,7 @@ public final class ProgramUtils {
 
 
 	/**
-	 * Executes a command on the VM and prints on the console its output
+	 * Executes a command on the VM and prints on the console its output.
 	 * @param command a command to execute (not null, not empty)
 	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)
@@ -78,7 +78,7 @@ public final class ProgramUtils {
 
 
 	/**
-	 * Executes a command on the VM and prints on the console its output
+	 * Executes a command on the VM and prints on the console its output.
 	 * @param command a command to execute (not null, not empty)
 	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)

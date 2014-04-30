@@ -419,9 +419,22 @@ public final class Manager {
 		// Undeploy everything correctly so that we keep the message server clean.
 		// Also, this is useful for deployments on machines (not just on VM).
 		BulkActionException bulkException = new BulkActionException( false );
-		for( Instance instance : ma.getApplication().getRootInstances()) {
-			if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				undeploy( ma, Arrays.asList( instance ));
+		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
+			if( rootInstance.getStatus() == InstanceStatus.NOT_DEPLOYED )
+				continue;
+
+			// Undeploy things (useful when the root instance was not created by the DM).
+			// Example: device, existing machine, etc.
+			try {
+				if( isConnectedToTheMessagingServer())
+					undeploy( ma, Arrays.asList( rootInstance ));
+
+			} catch( BulkActionException e ) {
+				bulkException.getInstancesToException().putAll( e.getInstancesToException());
+			}
+
+			// Force the termination
+			terminateMachine( applicationName, rootInstance );
 		}
 
 		if( ! bulkException.getInstancesToException().isEmpty()) {
@@ -511,7 +524,8 @@ public final class Manager {
 				this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted." );
 				IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
 				String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
-				iaasInterface.terminateVM( machineId );
+				if( machineId != null )
+					iaasInterface.terminateVM( machineId );
 
 				this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted." );
 				rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
@@ -521,6 +535,8 @@ public final class Manager {
 			}
 
 		} catch( IaasException e ) {
+			e.printStackTrace();
+
 			rootInstance.setStatus( InstanceStatus.PROBLEM );
 			this.logger.severe( "Machine " + rootInstance.getName() + " could not be deleted. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));

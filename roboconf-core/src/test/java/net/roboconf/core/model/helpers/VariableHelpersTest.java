@@ -74,7 +74,7 @@ public class VariableHelpersTest {
 
 
 	@Test
-	public void testFindPrefixesForExportedVariables() {
+	public void testFindPrefixesForExportedVariables_withComponentVariables() {
 
 		Component component = new Component( "comp" );
 		component.getExportedVariables().put( "comp.ip", "" );
@@ -88,10 +88,31 @@ public class VariableHelpersTest {
 		Assert.assertEquals( 2, prefixes.size());
 		Assert.assertTrue( prefixes.contains( "comp" ));
 		Assert.assertTrue( prefixes.contains( "facet" ));
+	}
 
-		component.getExportedVariables().clear();
-		prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
+
+	@Test
+	public void testFindPrefixesForExportedVariables_withVariable() {
+
+		Instance instance = new Instance( "inst" ).component( new Component( "comp" ));
+		Set<String> prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
 		Assert.assertEquals( 0, prefixes.size());
+	}
+
+
+	@Test
+	public void testFindPrefixesForExportedVariables_withInstanceVariablesOnly() {
+
+		Instance instance = new Instance( "inst" ).component( new Component( "comp" ));
+		instance.getOverriddenExports().put( "comp.ip", "" );
+		instance.getOverriddenExports().put( "comp.split.property", "" );
+		instance.getOverriddenExports().put( "comp.port", "8000" );
+		instance.getOverriddenExports().put( "facet.desc", "some description" );
+
+		Set<String> prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
+		Assert.assertEquals( 2, prefixes.size());
+		Assert.assertTrue( prefixes.contains( "comp" ));
+		Assert.assertTrue( prefixes.contains( "facet" ));
 	}
 
 

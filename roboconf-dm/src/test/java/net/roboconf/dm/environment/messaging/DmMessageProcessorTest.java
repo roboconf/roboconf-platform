@@ -226,6 +226,8 @@ public class DmMessageProcessorTest {
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
 		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( this.app.getName(), this.app.getMySql());
+		this.app.getMySqlVm().getData().put( Instance.MACHINE_ID, "whatever" );
+
 		for( Instance inst : InstanceHelpers.getAllInstances( this.app ))
 			iaasResolver.instanceToRunningStatus.put( inst, Boolean.TRUE );
 
