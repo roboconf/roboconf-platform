@@ -17,6 +17,7 @@
 package net.roboconf.dm.server;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -25,6 +26,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
@@ -145,6 +147,8 @@ public class ApplicationWs implements IApplicationWs {
 			}
 		}
 
+		// Bug #64: sort instance paths for the clients
+		Collections.sort( result, new InstanceComparator());
 		return result;
 	}
 
@@ -182,6 +186,8 @@ public class ApplicationWs implements IApplicationWs {
 				result.addAll( inst.getChildren());
 		}
 
+		// Bug #64: sort instance paths for the clients
+		Collections.sort( result, new InstanceComparator());
 		return result;
 	}
 
