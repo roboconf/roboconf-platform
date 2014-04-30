@@ -121,8 +121,8 @@ public class AgentLauncher {
 				this.heartBeatTimer );
 
 		// Open a connection with the messaging server
-		this.messagingClient.listenToTheDm( ListenerCommand.START );
 		this.messagingClient.openConnection( messageProcessor );
+		this.messagingClient.listenToTheDm( ListenerCommand.START );
 
 		// Add a hook for when the VM shutdowns
 		Runtime.getRuntime().addShutdownHook( new Thread(new Runnable() {

@@ -82,10 +82,22 @@ public class IaasResolver {
 	 * @return a IaaS interface, or null if none matched
 	 * TODO: move this method in the IaaS implementations
 	 */
-	IaasInterface findIaasHandler(Map<String, String> iaasProperties) {
-		IaasInterface result = null;
-		String iaasType = iaasProperties.get( IAAS_TYPE );
+	IaasInterface findIaasHandler( Map<String,String> iaasProperties ) {
 
+		String iaasType = iaasProperties.get( IAAS_TYPE );
+		return findIaasHandler( iaasType );
+	}
+
+
+	/**
+	 * Finds the right IaaS handler.
+	 * @param iaasType the IaaS type
+	 * @return a IaaS interface, or null if none matched
+	 * TODO: move this method in the IaaS implementations
+	 */
+	protected IaasInterface findIaasHandler( String iaasType ) {
+
+		IaasInterface result = null;
 		if( IAAS_IN_MEMORY.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasInMemory();
 

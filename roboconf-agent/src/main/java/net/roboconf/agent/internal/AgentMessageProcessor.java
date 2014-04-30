@@ -413,7 +413,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		} else {
 			try {
-				instance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+				instance.setStatus( InstanceStatus.STARTING );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 				updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
 				result = true;
@@ -442,20 +442,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		if( instance == null ) {
 			this.logger.severe( "No instance matched " + msg.getInstancePath() + " on the agent. Request to stop it is dropped." );
 
-		} else if( instance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+		} else if( instance.getStatus() != InstanceStatus.DEPLOYED_STARTED
+				&& instance.getStatus() != InstanceStatus.STARTING ) {
+
 			this.logger.info( "Invalid status for instance " + msg.getInstancePath() + ". Status = "
 					+ instance.getStatus() + ". Stop request is dropped." );
-
-		} else if( instance.getStatus() == InstanceStatus.STARTING ) {
-			for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
-				if( i.getStatus() != InstanceStatus.STARTING )
-					continue;
-
-				i.setStatus( InstanceStatus.DEPLOYED_STOPPED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
-			}
-
-			result = true;
 
 		} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) == null ) {
 			this.logger.severe( "No plug-in was found to stop " + msg.getInstancePath() + "." );
@@ -511,6 +502,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				continue;
 
 			// Remove the import and publish an update to the DM
+			imports.remove( toRemove );
 			this.logger.fine( "Removing import from " + InstanceHelpers.computeInstancePath( instance )
 					+ ". Removed exporting instance: " + msg.getRemovedInstancePath());
 
@@ -638,7 +630,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		// Update the statuses if necessary
 		for( Instance i : instancesToStop ) {
-			if( i.getStatus() != InstanceStatus.DEPLOYED_STARTED )
+			if( i.getStatus() != InstanceStatus.DEPLOYED_STARTED
+					&& i.getStatus() != InstanceStatus.STARTING )
 				continue;
 
 			i.setStatus( InstanceStatus.STOPPING );
