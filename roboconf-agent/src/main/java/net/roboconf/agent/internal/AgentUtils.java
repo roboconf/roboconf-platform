@@ -187,6 +187,19 @@ public final class AgentUtils {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 
 			Utils.copyStream( in, os );
+			String ip = os.toString( "UTF-8" );
+			if(! isValidIP(ip)) {
+				// Failed retrieving public IP: try private one instead
+				Utils.closeQuietly( in );
+				userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/local-ipv4" );
+				in = userDataUrl.openStream();
+				os = new ByteArrayOutputStream();
+
+				Utils.copyStream( in, os );
+				ip = os.toString( "UTF-8" );
+			}
+			if(! isValidIP(ip)) throw new IOException("Can\'t retrieve IP address (either public-ipv4 or local-ipv4)");
+
 			result.setIpAddress( os.toString( "UTF-8" ));
 
 		} catch( IOException e ) {
@@ -200,6 +213,8 @@ public final class AgentUtils {
 		return result;
 	}
 
+
+	// FIXME: there must be a shorter way with XPath...
 	private static String getValueOfTagInXMLFile(String filePath, String tagName) throws ParserConfigurationException, SAXException, IOException {
 
 		File fXmlFile = new File(filePath);
@@ -221,6 +236,7 @@ public final class AgentUtils {
 
 		return valueOfTagName;
 	}
+
 
 	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName)
 	throws ParserConfigurationException, SAXException, IOException {
@@ -244,11 +260,42 @@ public final class AgentUtils {
 	    return attrValue;
 	}
 
+
 	/**
-	 * Configures the agent from a IaaS registry.
+	 * Checks the syntax of an IP address (basic check, not exhaustive).
+	 * @param ip The IP to check
+	 * @return true if IP looks like an IP address, false otherwise
+	 */
+	public static boolean isValidIP( String ip ) {
+
+		boolean result = false;
+		try {
+			String[] parts;
+			if( ! Utils.isEmptyOrWhitespaces( ip )
+					&& (parts = ip.split("\\.")).length == 4 ) {
+
+				result = true;
+				for( String s : parts ) {
+		            int part = Integer.parseInt( s );
+		            if( part < 0 || part > 255 ) {
+		            	result = false;
+		            	break;
+		            }
+		        }
+			}
+
+	    } catch( NumberFormatException e ) {
+	        result = false;
+	    }
+
+		return result;
+	}
+
+
+	/**
+	 * Configures the agent from Azure.
 	 * @param logger a logger
 	 * @return the agent's data
-	 * This is dedicated to Azure.
 	 */
 	public static AgentData findParametersForAzure( Logger logger ) {
 
