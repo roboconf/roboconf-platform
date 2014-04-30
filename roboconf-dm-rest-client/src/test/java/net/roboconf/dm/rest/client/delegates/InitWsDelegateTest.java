@@ -21,6 +21,7 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.InitializationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +52,7 @@ public class InitWsDelegateTest extends JerseyTest {
 	public void resetManager() {
 		Manager.INSTANCE.cleanUpAll();
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory());
 	}
 
 
