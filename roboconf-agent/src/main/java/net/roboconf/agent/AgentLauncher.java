@@ -113,6 +113,7 @@ public class AgentLauncher {
 		this.messagingClient.setRootInstanceName( this.agentData.getRootInstanceName());
 
 		// Create the message processor
+		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor(
 				this.agentName,
 				this.agentData,
@@ -140,7 +141,6 @@ public class AgentLauncher {
 		this.messagingClient.sendMessageToTheDm( machineIsUp );
 
 		// Initialize a timer to regularly send a heart beat
-		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		TimerTask timerTask = new TimerTask() {
 			@Override
 			public void run() {

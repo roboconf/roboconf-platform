@@ -336,6 +336,15 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.info( "Instance " + instancePath + " is already un-deployed. Undeploy request is dropped." );
 		}
 
+		// Is it the root instance to undeploy?
+		else if( instance.getParent() == null ) {
+			MsgNotifMachineReadyToBeDeleted newMsg = new MsgNotifMachineReadyToBeDeleted( this.appName, this.rootInstance.getName());
+			this.messagingClient.sendMessageToTheDm( newMsg );
+
+			this.heartBeatTimer.cancel();
+			result = true;
+		}
+
 		// Do we have the right plug-in?
 		else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) == null ) {
 			this.logger.severe( "No plug-in was found to undeploy " + msg.getInstancePath() + "." );

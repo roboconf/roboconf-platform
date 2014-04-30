@@ -430,7 +430,6 @@ public final class Manager {
 			throw bulkException;
 		}
 
-		cleanMessagingServer( ma );
 		ma.getLogger().fine( "Application " + applicationName + " was successfully shutdown." );
 	}
 
@@ -507,6 +506,8 @@ public final class Manager {
 				this.logger.severe( "Machine " + rootInstance.getName() + " failed to be resolved for application " + applicationName + "." );
 
 			} else {
+
+				// Terminate the machine
 				this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted." );
 				IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
 				String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
@@ -514,7 +515,9 @@ public final class Manager {
 
 				this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted." );
 				rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
-				rootInstance.getImports().clear(); // DM won't send old imports upon restart...
+
+				// DM won't send old imports upon restart...
+				rootInstance.getImports().clear();
 			}
 
 		} catch( IaasException e ) {
@@ -558,6 +561,7 @@ public final class Manager {
 	void cleanMessagingServer( ManagedApplication ma ) {
 
 		try {
+			this.logger.info( "Cleaning the messaging server for application " + ma.getApplication().getName());
 			if( this.messagingClient.isConnected())
 				this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
 
