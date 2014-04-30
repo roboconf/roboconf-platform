@@ -21,7 +21,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * The descriptor for an application to deploy with Roboconf.

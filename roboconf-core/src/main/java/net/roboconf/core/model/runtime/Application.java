@@ -20,7 +20,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * An application groups an identifier, graph definitions and instances.

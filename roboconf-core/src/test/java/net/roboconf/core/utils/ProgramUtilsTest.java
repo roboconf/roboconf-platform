@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.utils;
+package net.roboconf.core.utils;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Logger;
+
+import net.roboconf.core.utils.ProgramUtils;
 
 import org.junit.Assume;
 import org.junit.Test;

@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * A component represents a Software item (hardware, software, whatever).

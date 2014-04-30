@@ -32,7 +32,6 @@ import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.ErrorCode.ErrorCategory;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.io.ParsingModelIo;
 import net.roboconf.core.model.parsing.AbstractBlock;
@@ -43,6 +42,7 @@ import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Test;
 

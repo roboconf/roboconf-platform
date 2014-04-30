@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.actions.ApplicationAction;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo;
@@ -34,6 +33,7 @@ import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.environment.iaas.IaasResolver;
 import net.roboconf.dm.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;

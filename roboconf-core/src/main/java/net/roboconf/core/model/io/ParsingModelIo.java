@@ -24,8 +24,8 @@ import java.net.URISyntaxException;
 
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
 import net.roboconf.core.internal.model.parsing.FileDefinitionSerializer;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.utils.Utils;
 
 /**
  * An API set of helpers to read and write a parsing model.

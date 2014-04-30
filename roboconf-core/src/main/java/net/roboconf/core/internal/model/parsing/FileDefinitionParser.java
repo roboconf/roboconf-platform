@@ -30,8 +30,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.ErrorCode;
-import net.roboconf.core.internal.utils.UriUtils;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.AbstractBlockHolder;
@@ -45,6 +43,8 @@ import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.parsing.ParsingConstants;
+import net.roboconf.core.utils.UriUtils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * A parser for relation files.

@@ -29,13 +29,13 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Test;
 

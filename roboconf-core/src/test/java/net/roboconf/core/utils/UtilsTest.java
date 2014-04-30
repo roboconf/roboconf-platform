@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.utils;
+package net.roboconf.core.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +28,7 @@ import java.util.UUID;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Rule;
 import org.junit.Test;

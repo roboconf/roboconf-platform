@@ -34,9 +34,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import net.roboconf.agent.AgentData;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 
 import org.apache.commons.codec.binary.Base64;
 import org.w3c.dom.Document;

@@ -25,11 +25,11 @@ import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.validators.RuntimeModelValidator;
+import net.roboconf.core.utils.Utils;
 
 /**
  * Helpers related to instances.

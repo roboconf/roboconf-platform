@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.PluginManager;
 import net.roboconf.core.Constants;
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.MessageServerClientFactory;

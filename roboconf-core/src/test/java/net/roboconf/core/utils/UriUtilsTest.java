@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.utils;
+package net.roboconf.core.utils;
 
 import java.net.URI;
 import java.net.URL;
 
 import junit.framework.Assert;
+import net.roboconf.core.utils.UriUtils;
 
 import org.junit.Test;
 

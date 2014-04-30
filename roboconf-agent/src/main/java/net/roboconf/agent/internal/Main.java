@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.AgentLauncher;
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**

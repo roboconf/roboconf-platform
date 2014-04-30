@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -24,9 +24,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasInterface;
 

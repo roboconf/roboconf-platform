@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.utils;
+package net.roboconf.core.utils;
 
 import java.net.URI;
 import java.net.URISyntaxException;

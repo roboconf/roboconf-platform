@@ -25,8 +25,8 @@ import javax.ws.rs.core.Response.Status;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;

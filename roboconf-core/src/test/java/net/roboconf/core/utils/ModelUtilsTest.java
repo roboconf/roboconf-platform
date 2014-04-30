@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.internal.utils;
+package net.roboconf.core.utils;
 
 import java.net.URI;
 import java.util.List;
@@ -26,6 +26,7 @@ import net.roboconf.core.model.parsing.AbstractBlockHolder;
 import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.utils.ModelUtils;
 
 import org.junit.Test;
 

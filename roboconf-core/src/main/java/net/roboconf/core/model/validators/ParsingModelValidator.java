@@ -26,7 +26,6 @@ import java.util.Set;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.parsing.AbstractBlock;
@@ -40,6 +39,7 @@ import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.parsing.ParsingConstants;
+import net.roboconf.core.utils.Utils;
 
 /**
  * A set of methods to validate parsing model objects.

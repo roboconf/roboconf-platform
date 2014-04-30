@@ -33,8 +33,8 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.io.ParsingModelIoTest;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
