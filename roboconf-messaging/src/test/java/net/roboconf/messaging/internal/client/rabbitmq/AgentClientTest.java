@@ -42,7 +42,7 @@ public class AgentClientTest {
 		agentClient.openConnection( new StorageMessageProcessor());
 		Assert.assertNotNull( agentClient.channel );
 		Assert.assertNotNull( agentClient.messageProcessor );
-		Assert.assertTrue( agentClient.messageProcessor.isAlive());
+		Assert.assertTrue( agentClient.messageProcessor.isRunning());
 
 		Channel oldChannel = agentClient.channel;
 		AbstractMessageProcessor oldProcessor = agentClient.messageProcessor;
@@ -52,9 +52,9 @@ public class AgentClientTest {
 		Assert.assertEquals( oldProcessor, agentClient.messageProcessor );
 		Assert.assertEquals( oldConsumerTag, agentClient.consumerTag );
 
-		Assert.assertTrue( agentClient.messageProcessor.isAlive());
+		Assert.assertTrue( agentClient.messageProcessor.isRunning());
 		agentClient.closeConnection();
-		Assert.assertFalse( agentClient.messageProcessor.isAlive());
+		Assert.assertFalse( agentClient.messageProcessor.isRunning());
 		Assert.assertNull( agentClient.channel );
 		Assert.assertNull( agentClient.consumerTag );
 	}
