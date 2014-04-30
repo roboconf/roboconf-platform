@@ -96,10 +96,9 @@ public final class VariableHelpers {
 	 * @return a non-null set with all the component and facet names this instance exports
 	 */
 	public static Set<String> findPrefixesForExportedVariables( Instance instance ) {
-		Set<String> result = new HashSet<String> ();
 
-		Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
-		for( String exportedVariableName : instanceExports.keySet())
+		Set<String> result = new HashSet<String> ();
+		for( String exportedVariableName : instance.getExports().keySet())
 			result.add( VariableHelpers.parseVariableName( exportedVariableName ).getKey());
 
 		return result;

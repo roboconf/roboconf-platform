@@ -199,7 +199,7 @@ public class AgentClient implements IAgentClient {
 
 		// Find the variables to export.
 		Map<String,String> toPublish = new HashMap<String,String> ();
-		for( Map.Entry<String,String> entry : InstanceHelpers.getExportedVariables( instance ).entrySet()) {
+		for( Map.Entry<String,String> entry : instance.getExports().entrySet()) {
 			if( entry.getKey().startsWith( facetOrComponentName + "." ))
 				toPublish.put( entry.getKey(), entry.getValue());
 		}
