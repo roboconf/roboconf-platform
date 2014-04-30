@@ -183,6 +183,19 @@ public final class AgentUtils {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 
 			Utils.copyStream( in, os );
+			String ip = os.toString( "UTF-8" );
+			if(! isValidIP(ip)) {
+				// Failed retrieving public IP: try private one instead
+				Utils.closeQuietly( in );
+				userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/local-ipv4" );
+				in = userDataUrl.openStream();
+				os = new ByteArrayOutputStream();
+
+				Utils.copyStream( in, os );
+				ip = os.toString( "UTF-8" );
+			}
+			if(! isValidIP(ip)) throw new IOException("Can\'t retrieve IP address (either public-ipv4 or local-ipv4)");
+			
 			result.setIpAddress( os.toString( "UTF-8" ));
 
 		} catch( IOException e ) {
@@ -236,7 +249,30 @@ public final class AgentUtils {
 	    }
 	    return attrValue;
 	}
-	
+
+	/**
+	 * Check IP address syntax (basic check, not exhaustive)
+	 * @param ip The IP to check
+	 * @return true if ip looks like an IP address, false otherwise
+	 */
+	private static boolean isValidIP(String ip) {
+		try {
+	        if (ip == null || ip.trim().isEmpty()) return false;
+
+	        String[] parts = ip.split("\\.");
+	        if (parts.length != 4) return false;
+
+	        for (String s : parts) {
+	            int part = Integer.parseInt(s);
+	            if (part < 0 || part > 255) return false;
+	        }
+
+	        return true;
+	    } catch (NumberFormatException e) {
+	        return false;
+	    }
+	}
+
 	/**
 	 * Configures the agent from a IaaS registry.
 	 * @param logger a logger
