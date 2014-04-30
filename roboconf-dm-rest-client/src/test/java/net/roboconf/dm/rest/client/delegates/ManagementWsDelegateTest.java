@@ -29,14 +29,12 @@ import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
-import net.roboconf.dm.internal.TestMessageServerClient;
+import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;
@@ -76,17 +74,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
 
 		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
-		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
-			@Override
-			public IAgentClient createAgentClient() {
-				return null;
-			}
-
-			@Override
-			public IDmClient createDmClient() {
-				return new TestMessageServerClient();
-			}
-		});
+		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
 	}
 
 
@@ -150,6 +138,26 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		Assert.assertEquals( 1, client.getManagementDelegate().listApplications().size());
 		client.getManagementDelegate().deleteApplication( app.getName());
 		Assert.assertEquals( 0, client.getManagementDelegate().listApplications().size());
+	}
+
+
+	@Test
+	public void testDeleteApplication_notConnected() throws Exception {
+
+		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory());
+		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+
+		WsClient client = RestTestUtils.buildWsClient();
+		try {
+			client.getManagementDelegate().deleteApplication( app.getName());
+			Assert.fail( "An exception was expected." );
+
+		} catch( ManagementException e ) {
+			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
+		}
 	}
 
 
@@ -329,5 +337,25 @@ public class ManagementWsDelegateTest extends JerseyTest {
 		}
 
 		Assert.assertEquals( 0, client.getManagementDelegate().listApplications().size());
+	}
+
+
+	@Test
+	public void testLoadApplication_notConnected() throws Exception {
+
+		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory());
+		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
+
+		File directory = TestUtils.findTestFile( "/lamp" );
+		Assert.assertTrue( directory.exists());
+
+		WsClient client = RestTestUtils.buildWsClient();
+		try {
+			client.getManagementDelegate().loadApplication( directory.getAbsolutePath());
+			Assert.fail( "An exception was expected." );
+
+		} catch( ManagementException e ) {
+			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
+		}
 	}
 }

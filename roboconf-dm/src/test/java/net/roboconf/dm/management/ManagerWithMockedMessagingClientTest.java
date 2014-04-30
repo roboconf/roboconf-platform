@@ -32,6 +32,7 @@ import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
+import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
@@ -39,9 +40,6 @@ import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.utils.ResourceUtils;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
@@ -63,17 +61,7 @@ public class ManagerWithMockedMessagingClientTest {
 
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
 		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
-		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
-			@Override
-			public IAgentClient createAgentClient() {
-				return null;
-			}
-
-			@Override
-			public IDmClient createDmClient() {
-				return new TestMessageServerClient();
-			}
-		});
+		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
 	}
 
 

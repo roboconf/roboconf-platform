@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.core.Response.Status;
+
 import junit.framework.Assert;
 import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.internal.utils.Utils;
@@ -31,14 +33,13 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
+import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
 import net.roboconf.dm.utils.ResourceUtils;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;
@@ -78,17 +79,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		this.app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
 		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
-		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
-			@Override
-			public IAgentClient createAgentClient() {
-				return null;
-			}
-
-			@Override
-			public IDmClient createDmClient() {
-				return new TestMessageServerClient();
-			}
-		});
+		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
 
 		this.client = RestTestUtils.buildWsClient();
 	}
@@ -115,6 +106,27 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	@Test( expected = ApplicationException.class )
 	public void testPerform_invalidAction() throws Exception {
 		this.client.getApplicationDelegate().perform( this.app.getName(), null, null, true );
+	}
+
+
+	@Test
+	public void testPerform_notConnected() throws Exception {
+
+		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory());
+		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
+
+		try {
+			this.client.getApplicationDelegate().perform(
+					this.app.getName(),
+					ApplicationAction.deploy,
+					InstanceHelpers.computeInstancePath( this.app.getMySqlVm()),
+					false );
+
+			Assert.fail( "An exception was expected." );
+
+		} catch( ApplicationException e ) {
+			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
+		}
 	}
 
 

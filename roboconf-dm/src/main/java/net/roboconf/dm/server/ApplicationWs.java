@@ -32,6 +32,7 @@ import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.BulkActionException;
+import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
@@ -100,6 +101,9 @@ public class ApplicationWs implements IApplicationWs {
 
 		} catch( BulkActionException e ) {
 			response = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
+
+		} catch( DmWasNotInitializedException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
 		return response;

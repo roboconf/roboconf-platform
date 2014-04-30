@@ -24,7 +24,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
+import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IDmClient;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -82,5 +84,21 @@ public class TestMessageServerClient implements IDmClient {
 	@Override
 	public boolean isConnected() {
 		return true;
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static final class DmMessageServerClientFactory extends MessageServerClientFactory {
+		@Override
+		public IAgentClient createAgentClient() {
+			return null;
+		}
+
+		@Override
+		public IDmClient createDmClient() {
+			return new TestMessageServerClient();
+		}
 	}
 }

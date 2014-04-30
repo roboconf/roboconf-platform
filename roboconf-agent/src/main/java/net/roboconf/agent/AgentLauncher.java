@@ -171,16 +171,18 @@ public class AgentLauncher {
 
 		this.logger.fine( "Agent " + this.agentName + " is being stopped." );
 		try {
-			this.heartBeatTimer.cancel();
+			if( this.heartBeatTimer != null )
+				this.heartBeatTimer.cancel();
 
-			MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown(
-					this.agentData.getApplicationName(),
-					this.agentData.getRootInstanceName());
+			if( this.messagingClient.isConnected()) {
+				MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown(
+						this.agentData.getApplicationName(),
+						this.agentData.getRootInstanceName());
 
-			this.messagingClient.sendMessageToTheDm( machineIsDown );
-			this.messagingClient.closeConnection();
-
-			this.logger.fine( "Agent " + this.agentName + " was successfully stopped." );
+				this.messagingClient.sendMessageToTheDm( machineIsDown );
+				this.messagingClient.closeConnection();
+				this.logger.fine( "Agent " + this.agentName + " was successfully stopped." );
+			}
 
 		} catch( IOException e ) {
 			this.logger.severe( e.getMessage());

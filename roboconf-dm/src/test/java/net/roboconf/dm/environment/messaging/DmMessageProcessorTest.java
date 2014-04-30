@@ -22,12 +22,9 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
-import net.roboconf.dm.internal.TestMessageServerClient;
+import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
@@ -58,17 +55,7 @@ public class DmMessageProcessorTest {
 		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
 
 		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
-		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory() {
-			@Override
-			public IAgentClient createAgentClient() {
-				return null;
-			}
-
-			@Override
-			public IDmClient createDmClient() {
-				return new TestMessageServerClient();
-			}
-		});
+		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
 	}
 
 

@@ -31,6 +31,7 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.BulkActionException;
+import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -103,6 +104,9 @@ public class ManagementWs implements IManagementWs {
 
 		} catch( IOException e ) {
 			response = Response.status( Status.UNAUTHORIZED ).entity( e.getMessage()).build();
+
+		} catch( DmWasNotInitializedException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
 		return response;
@@ -136,6 +140,9 @@ public class ManagementWs implements IManagementWs {
 			result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
 
 		} catch( UnauthorizedActionException e ) {
+			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+
+		} catch( DmWasNotInitializedException e ) {
 			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 

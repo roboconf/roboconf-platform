@@ -38,6 +38,11 @@ public interface IClient {
 	void setMessageServerIp( String messageServerIp );
 
 	/**
+	 * @return true if the client is connected, false otherwise
+	 */
+	boolean isConnected();
+
+	/**
 	 * Opens a connection with the message server.
 	 * <p>
 	 * The message processor will be used for any subsequent subscription.

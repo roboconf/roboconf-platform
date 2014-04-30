@@ -61,7 +61,7 @@ public class DmClient implements IDmClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IDmClient
+	 * @see net.roboconf.messaging.client.IClient
 	 * #isConnected()
 	 */
 	@Override

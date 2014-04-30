@@ -179,7 +179,7 @@ public final class AgentUtils {
 			}
 		}
 
-		// FIXME VZ: seriously, why do we need to ask our IP address?
+		// We need to ask our IP address because we may have several network interfaces.
 		in = null;
 		try {
 			URL userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/public-ipv4" );
@@ -215,14 +215,16 @@ public final class AgentUtils {
 	    String valueOfTagName = "";
 
 		for (int temp = 0; temp < nList.getLength(); temp++) {
-
 			Node nNode = nList.item(temp);
 			valueOfTagName = nNode.getTextContent();
 		}
+
 		return valueOfTagName;
 	}
 
-	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName) throws ParserConfigurationException, SAXException, IOException {
+	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName)
+	throws ParserConfigurationException, SAXException, IOException {
+
 		File fXmlFile = new File(filePath);
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -238,6 +240,7 @@ public final class AgentUtils {
 	      Node theAttribute = attributes.item(a);
 	      if (attrName.equals(theAttribute.getNodeName())) attrValue = theAttribute.getTextContent().split(":")[0];
 	    }
+
 	    return attrValue;
 	}
 
@@ -248,20 +251,24 @@ public final class AgentUtils {
 	 * This is dedicated to Azure.
 	 */
 	public static AgentData findParametersForAzure( Logger logger ) {
+
 		String content = "";
 		try {
 			// Get the user data from /var/lib/waagent/ovf-env.xml and decode it
 			String userDataEncoded = getValueOfTagInXMLFile("/var/lib/waagent/ovf-env.xml", "CustomData");
 			content = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" ) ));
+
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
+
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.severe( "The agent properties could not be read. " + e.getMessage());
+			logger.finest( Utils.writeException( e ));
+
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.severe( "The agent properties could not be read. " + e.getMessage());
+			logger.finest( Utils.writeException( e ));
 		}
 
 		// Parse them
@@ -288,15 +295,18 @@ public final class AgentUtils {
 		try {
 			publicIPAddress = getSpecificAttributeOfTagInXMLFile("/var/lib/waagent/SharedConfig.xml", "Endpoint", "loadBalancedPublicAddress");
 			result.setIpAddress( publicIPAddress );
+
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
+			logger.finest( Utils.writeException( e ));
+
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
+			logger.finest( Utils.writeException( e ));
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
+			logger.finest( Utils.writeException( e ));
 		}
 
 		return result;
@@ -323,7 +333,7 @@ public final class AgentUtils {
 			File f = new File( dir, entry.getKey());
 			if( ! f.getParentFile().exists()
 					&& ! f.getParentFile().mkdirs())
-				throw new IOException( "The directory " + dir.getAbsolutePath() + " could not be created." );
+				throw new IOException( "The directory " + f.getParentFile() + " could not be created." );
 
 			ByteArrayInputStream in = new ByteArrayInputStream( entry.getValue());
 			Utils.copyStream( in, f );

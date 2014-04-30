@@ -67,6 +67,17 @@ public class AgentClient implements IAgentClient {
 
 	/*
 	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient
+	 * #isConnected()
+	 */
+	@Override
+	public boolean isConnected() {
+		return this.channel != null;
+	}
+
+
+	/*
+	 * (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IAgentClient
 	 * #setRootInstanceName(java.lang.String)
 	 */
