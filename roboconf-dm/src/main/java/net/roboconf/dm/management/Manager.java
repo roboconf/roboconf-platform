@@ -528,15 +528,14 @@ public final class Manager {
 					iaasInterface.terminateVM( machineId );
 
 				this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted." );
-				rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
-
-				// DM won't send old imports upon restart...
-				rootInstance.getImports().clear();
+				for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
+					i.setStatus( InstanceStatus.NOT_DEPLOYED );
+					// DM won't send old imports upon restart...
+					i.getImports().clear();
+				}
 			}
 
 		} catch( IaasException e ) {
-			e.printStackTrace();
-
 			rootInstance.setStatus( InstanceStatus.PROBLEM );
 			this.logger.severe( "Machine " + rootInstance.getName() + " could not be deleted. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));

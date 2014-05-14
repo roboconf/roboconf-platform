@@ -26,6 +26,7 @@ import net.roboconf.agent.AgentLauncher;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
+import net.roboconf.iaas.local.internal.utils.AgentManager;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
@@ -34,9 +35,6 @@ import net.roboconf.plugin.api.ExecutionLevel;
  * @author Vincent Zurczak - Linagora
  */
 public class IaasInMemory implements IaasInterface {
-
-	private AgentLauncher agentLauncher;
-
 
 	/*
 	 * (non-Javadoc)
@@ -71,26 +69,22 @@ public class IaasInMemory implements IaasInterface {
 
 		// Messaging subscriptions are handled automatically in a new thread (see *.messaging).
 		String agentName = rootInstanceName + " - In-Memory Agent";
-		this.agentLauncher = new AgentLauncher( agentName, agentData );
+		AgentLauncher agentLauncher = new AgentLauncher( agentName, agentData );
+		try {
+			File tempDir = new File( System.getProperty( "java.io.tmpdir" ));
+			agentLauncher.launchAgent( ExecutionLevel.RUNNING, tempDir );
 
-		new Thread() {
-			@Override
-			public void run() {
+		} catch( IOException e ) {
+			Logger logger = Logger.getLogger( getClass().getName());
+			logger.severe( "An error occurred in an agent (in-memory). " + e.getMessage());
+			logger.finest( Utils.writeException( e ));
+		}
 
-				try {
-					IaasInMemory.this.agentLauncher.launchAgent(
-							ExecutionLevel.RUNNING,
-							new File( System.getProperty( "java.io.tmpdir" )));
+		// Store the agent's launcher, so that we can stop it later
+		String machineId = rootInstanceName + " @ localhost";
+		AgentManager.INSTANCE.registerMachine( machineId, agentLauncher );
 
-				} catch( IOException e ) {
-					Logger logger = Logger.getLogger( getClass().getName());
-					logger.severe( "An error occurred in an agent (in-memory). " + e.getMessage());
-					logger.finest( Utils.writeException( e ));
-				}
-			};
-		}.start();
-
-		return rootInstanceName + " @ localhost";
+		return machineId;
 	}
 
 
@@ -100,10 +94,11 @@ public class IaasInMemory implements IaasInterface {
 	 * #terminateVM(java.lang.String)
 	 */
 	@Override
-	public void terminateVM( String instanceId )
+	public void terminateVM( String machineId )
 	throws IaasException {
 
-		if( this.agentLauncher != null )
-			this.agentLauncher.stopAgent();
+		AgentLauncher agentLauncher = AgentManager.INSTANCE.unregisterMachine( machineId );
+		if( agentLauncher != null )
+			agentLauncher.stopAgent();
 	}
 }
