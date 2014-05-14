@@ -155,7 +155,7 @@ public class AgentClient implements IAgentClient {
 
 		// Stop processing messages
 		if( this.messageProcessor != null
-				&& this.messageProcessor.isAlive())
+				&& this.messageProcessor.isRunning())
 			this.messageProcessor.interrupt();
 
 		// Close the connection

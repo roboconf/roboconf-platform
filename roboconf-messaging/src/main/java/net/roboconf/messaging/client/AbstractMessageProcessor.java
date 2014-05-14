@@ -27,7 +27,7 @@ import net.roboconf.messaging.messages.Message;
 public abstract class AbstractMessageProcessor extends Thread {
 
 	private final LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<Message> ();
-	private boolean running = false;
+	private boolean running = true;
 
 
 	/**
@@ -63,7 +63,6 @@ public abstract class AbstractMessageProcessor extends Thread {
 	@Override
 	public final void run() {
 
-		this.running = true;
 		for( ;; ) {
 			try {
 				// Blocking call

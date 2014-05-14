@@ -105,7 +105,7 @@ public class DmClient implements IDmClient {
 		this.logger.fine( "The DM is closing its connection to RabbitMQ." );
 
 		if( this.messageProcessor != null
-				&& this.messageProcessor.isAlive())
+				&& this.messageProcessor.isRunning())
 			this.messageProcessor.interrupt();
 
 		RabbitMqUtils.closeConnection( this.channel );

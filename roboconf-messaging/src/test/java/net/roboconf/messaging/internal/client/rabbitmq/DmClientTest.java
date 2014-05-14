@@ -42,7 +42,8 @@ public class DmClientTest {
 		dmClient.openConnection( new StorageMessageProcessor());
 		Assert.assertNotNull( dmClient.channel );
 		Assert.assertNotNull( dmClient.messageProcessor );
-		Assert.assertTrue( dmClient.messageProcessor.isAlive());
+		Assert.assertTrue( dmClient.messageProcessor instanceof StorageMessageProcessor );
+		Assert.assertTrue( dmClient.messageProcessor.isRunning());
 
 		Channel oldChannel = dmClient.channel;
 		AbstractMessageProcessor oldProcessor = dmClient.messageProcessor;
@@ -66,9 +67,9 @@ public class DmClientTest {
 
 		dmClient.deleteMessagingServerArtifacts( new Application( "app" ));
 
-		Assert.assertTrue( dmClient.messageProcessor.isAlive());
+		Assert.assertTrue( dmClient.messageProcessor.isRunning());
 		dmClient.closeConnection();
-		Assert.assertFalse( dmClient.messageProcessor.isAlive());
+		Assert.assertFalse( dmClient.messageProcessor.isRunning());
 		Assert.assertNull( dmClient.channel );
 	}
 
