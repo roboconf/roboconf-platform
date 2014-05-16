@@ -38,6 +38,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.EbsBlockDevice;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
@@ -222,6 +223,27 @@ public class IaasEc2 implements IaasInterface {
 		runInstancesRequest.setKeyName( this.ec2Properties.getSshKeyName());
 		runInstancesRequest.setSecurityGroups( Arrays.asList( this.ec2Properties.getSecurityGroupName()));
 
+/*	
+		// Create the block device mapping to describe the root partition.
+		BlockDeviceMapping blockDeviceMapping = new BlockDeviceMapping();
+		blockDeviceMapping.setDeviceName("/dev/sda1");
+
+		// Set the delete on termination flag to false.
+		EbsBlockDevice ebs = new EbsBlockDevice();
+		ebs.setSnapshotId(snapshotId);
+		ebs.setDeleteOnTermination(Boolean.FALSE);
+
+		blockDeviceMapping.setEbs(ebs);
+
+		// Add the block device mapping to the block list.
+		ArrayList<BlockDeviceMapping> blockList = new ArrayList<BlockDeviceMapping>();
+		blockList.add(blockDeviceMapping);
+
+		// Set the block device mapping configuration in the launch specifications.
+		runInstancesRequest.setBlockDeviceMappings(blockList);
+*/
+		
+		
 		// The following part enables to transmit data to the VM.
 		// When the VM is up, it will be able to read this data.
 		StringBuilder data = new StringBuilder();
