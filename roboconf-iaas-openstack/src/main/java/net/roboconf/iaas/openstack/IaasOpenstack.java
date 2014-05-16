@@ -34,12 +34,17 @@ import com.woorea.openstack.keystone.api.TokensResource.Authenticate;
 import com.woorea.openstack.keystone.model.Access;
 import com.woorea.openstack.keystone.model.authentication.UsernamePassword;
 import com.woorea.openstack.nova.Nova;
+import com.woorea.openstack.nova.api.extensions.VolumesExtension;
+import com.woorea.openstack.nova.api.extensions.VolumesExtension.List;
 import com.woorea.openstack.nova.model.Flavor;
 import com.woorea.openstack.nova.model.Flavors;
 import com.woorea.openstack.nova.model.FloatingIp;
 import com.woorea.openstack.nova.model.FloatingIps;
 import com.woorea.openstack.nova.model.Server;
 import com.woorea.openstack.nova.model.ServerForCreate;
+import com.woorea.openstack.nova.model.Volume;
+import com.woorea.openstack.nova.model.VolumeForCreate;
+import com.woorea.openstack.nova.model.Volumes;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -163,7 +168,29 @@ public class IaasOpenstack implements IaasInterface {
 				+ "\nipMessagingServer=" + ipMessagingServer;
 		serverForCreate.setUserData(new String(Base64.encodeBase64(userData.getBytes())));
 		
+		Volume toAttach = null;
+		/*
+		String volumeName = TBD extract volume name from config;
+		if(volumeName != null) {
+			Volumes volumes = this.novaClient.volumes().list(false).execute();
+			for(Volume volume : volumes) {
+				if(volume.getName().equals(volumeName)) {
+					toAttach = volume;
+					break;
+				}
+			}
+			if(toAttach == null) {
+				VolumeForCreate volumeForCreate = new VolumeForCreate();
+				volumeForCreate.setName(volumeName);
+				volumeForCreate.setDescription("Created by Roboconf");
+				volumeForCreate.setSize(new Integer(sizeInGB));
+				toAttach = this.novaClient.volumes().create(volumeForCreate).execute();
+			}
+		}
+		*/
+
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
+		if(toAttach != null) this.novaClient.servers().attachVolume(server.getId(), toAttach.getId(), "vda").execute();
 		System.out.println(server);
 
 		// Wait for server to be in ACTIVE state, before associating floating IP

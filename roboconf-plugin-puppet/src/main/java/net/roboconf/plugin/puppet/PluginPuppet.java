@@ -250,13 +250,18 @@ public class PluginPuppet implements PluginInterface {
 	private void callPuppetScript( Instance instance, String action, PuppetState puppetState, Import importChanged, boolean importAdded, File instanceDirectory )
 	throws IOException, InterruptedException {
 
+		if(instance == null || instanceDirectory == null) {
+			this.logger.finest("Ignoring null instance" + (instanceDirectory == null ? " directory" : ""));
+			return;
+		}
+
 		// Find the action to execute
         // If not found, try init.pp
 		this.logger.info("Preparing the invocation of " + action + ".pp for instance " + instance.getName());
 
 		File moduleDirectory = null;
 		for (File f : instanceDirectory.listFiles()) {
-			if(f.isDirectory() && ! f.getName().startsWith(".roboconf")) {
+			if(f.isDirectory() && f.getName().startsWith("roboconf_")) {
 					moduleDirectory = f; // Found module dir
 					break;
 			}
@@ -277,8 +282,14 @@ public class PluginPuppet implements PluginInterface {
 				commands.add( "puppet" );
 				commands.add( "apply" );
 				commands.add( "--verbose" );
+				
+				String modpath = System.getenv("MODULEPATH");
+				if(modpath != null) modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
+				else modpath = "";
+				modpath += instanceDirectory.getAbsolutePath();
 				commands.add( "--modulepath" );
-				commands.add( instanceDirectory.getAbsolutePath());
+				commands.add(modpath);
+
 				commands.add( "--execute" );
 				commands.add( generateCodeToExecute(clazz, instance, puppetState, importChanged, importAdded));
 
