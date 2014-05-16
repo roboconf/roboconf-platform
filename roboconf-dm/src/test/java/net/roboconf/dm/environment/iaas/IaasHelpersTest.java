@@ -24,18 +24,24 @@ import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasInterface;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class IaasHelpersTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test( expected = IOException.class )
 	public void testLoadIaasProperties_inexistingFile() throws Exception {
@@ -55,7 +61,7 @@ public class IaasHelpersTest {
 
 		final String componentName = "my-vm";
 
-		File applicationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_test" );
+		File applicationDirectory = this.folder.newFolder( "roboconf_test" );
 		if( applicationDirectory.exists())
 			Utils.deleteFilesRecursively( applicationDirectory );
 
@@ -72,21 +78,13 @@ public class IaasHelpersTest {
 			props.setProperty( "my-key", "my value" );
 			props.store( fos, null );
 
-		} catch( Exception e ) {
-			Utils.deleteFilesRecursively( applicationDirectory );
-
 		} finally {
 			Utils.closeQuietly( fos );
 		}
 
-		try {
-			Instance instance = new Instance( "my-vm-instance" ).component( new Component( componentName ));
-			Map<String, String> loadedProperties = IaasHelpers.loadIaasProperties( applicationDirectory, instance );
-			Assert.assertNotNull( loadedProperties );
-			Assert.assertEquals( "my value", loadedProperties.get("my-key"));
-
-		} finally {
-			Utils.deleteFilesRecursively( applicationDirectory );
-		}
+		Instance instance = new Instance( "my-vm-instance" ).component( new Component( componentName ));
+		Map<String, String> loadedProperties = IaasHelpers.loadIaasProperties( applicationDirectory, instance );
+		Assert.assertNotNull( loadedProperties );
+		Assert.assertEquals( "my value", loadedProperties.get("my-key"));
 	}
 }

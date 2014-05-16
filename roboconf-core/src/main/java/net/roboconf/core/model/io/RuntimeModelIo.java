@@ -24,7 +24,6 @@ import java.util.Collection;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.converters.FromGraphDefinition;
@@ -35,6 +34,7 @@ import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.validators.ParsingModelValidator;
 import net.roboconf.core.model.validators.RuntimeModelValidator;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora

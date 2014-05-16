@@ -16,7 +16,8 @@
 
 package net.roboconf.messaging.client;
 
-import net.roboconf.messaging.internal.client.MessageServerClientRabbitMq;
+import net.roboconf.messaging.internal.client.rabbitmq.AgentClient;
+import net.roboconf.messaging.internal.client.rabbitmq.DmClient;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -26,7 +27,15 @@ public class MessageServerClientFactory {
 	/**
 	 * @return a new instance of message server client
 	 */
-	public IMessageServerClient create() {
-		return new MessageServerClientRabbitMq();
+	public IDmClient createDmClient() {
+		return new DmClient();
+	}
+
+
+	/**
+	 * @return a new instance of message server client
+	 */
+	public IAgentClient createAgentClient() {
+		return new AgentClient();
 	}
 }

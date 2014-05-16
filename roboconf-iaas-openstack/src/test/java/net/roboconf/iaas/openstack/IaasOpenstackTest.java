@@ -19,8 +19,7 @@ package net.roboconf.iaas.openstack;
 import java.util.HashMap;
 
 import junit.framework.Assert;
-import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
-import net.roboconf.iaas.openstack.IaasOpenstack;
+import net.roboconf.iaas.api.IaasException;
 
 import org.junit.Test;
 
@@ -39,7 +38,7 @@ public class IaasOpenstackTest {
 			iaas.setIaasProperties( iaasProperties );
 			Assert.fail( "An invalid configuration should have been detected." );
 
-		} catch( InvalidIaasPropertiesException e ) {
+		} catch( IaasException e ) {
 			Assert.assertTrue(true);
 		}
 
@@ -49,7 +48,7 @@ public class IaasOpenstackTest {
 			iaas.setIaasProperties( iaasProperties );
 			Assert.fail( "An invalid configuration should have been detected." );
 
-		} catch( InvalidIaasPropertiesException e ) {
+		} catch( IaasException e ) {
 			Assert.assertTrue(true);
 		}
 

@@ -27,7 +27,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockBlank;
@@ -38,6 +37,7 @@ import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
+import net.roboconf.core.utils.Utils;
 
 /**
  * To dump a {@link Graphs} into a file.

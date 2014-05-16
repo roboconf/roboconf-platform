@@ -30,14 +30,15 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import net.roboconf.core.internal.utils.ProgramUtils;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.utils.ProgramUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.ExecutionLevel;
+import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
@@ -112,75 +113,127 @@ public class PluginPuppet implements PluginInterface {
 
 
 	@Override
-	public void initialize( Instance instance ) throws Exception {
+	public void initialize( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentName + " is initializing the plug-in for " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		installPuppetModules(instance, instanceDirectory);
+		try {
+			installPuppetModules(instance, instanceDirectory);
+
+		} catch( IOException e ) {
+			throw new PluginException( e );
+
+		} catch( InterruptedException e ) {
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
 	@Override
-	public void deploy( Instance instance ) throws Exception {
+	public void deploy( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "deploy", PuppetState.STOPPED, null, false, instanceDirectory );
+		try {
+			callPuppetScript( instance, "deploy", PuppetState.STOPPED, null, false, instanceDirectory );
+
+		} catch( IOException e ) {
+			throw new PluginException( e );
+
+		} catch( InterruptedException e ) {
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
 	@Override
-	public void start( Instance instance ) throws Exception {
+	public void start( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentName + " is starting instance " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "start", PuppetState.RUNNING, null, false, instanceDirectory );
+		try {
+			callPuppetScript( instance, "start", PuppetState.RUNNING, null, false, instanceDirectory );
+
+		} catch( IOException e ) {
+			throw new PluginException( e );
+
+		} catch( InterruptedException e ) {
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
 	@Override
-	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception {
+	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
 
 		this.logger.fine( this.agentName + " is updating instance " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "update", PuppetState.UNDEF,
-				importChanged, (statusChanged == InstanceStatus.DEPLOYED_STARTED), instanceDirectory );
+		try {
+			callPuppetScript(
+					instance, "update",
+					PuppetState.UNDEF,
+					importChanged,
+					(statusChanged == InstanceStatus.DEPLOYED_STARTED),
+					instanceDirectory );
+
+		} catch( IOException e ) {
+			throw new PluginException( e );
+
+		} catch( InterruptedException e ) {
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
 	@Override
-	public void stop( Instance instance ) throws Exception {
+	public void stop( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentName + " is stopping instance " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "stop", PuppetState.STOPPED, null, false, instanceDirectory );
+		try {
+			callPuppetScript( instance, "stop", PuppetState.STOPPED, null, false, instanceDirectory );
+
+		} catch( IOException e ) {
+			throw new PluginException( e );
+
+		} catch( InterruptedException e ) {
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
 	@Override
-	public void undeploy( Instance instance ) throws Exception {
+	public void undeploy( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentName + " is undeploying instance " + instance.getName());
 		if( this.executionLevel == ExecutionLevel.LOG )
 			return;
 
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
-		callPuppetScript( instance, "undeploy", PuppetState.UNDEF, null, false, instanceDirectory );
+		try {
+			callPuppetScript( instance, "undeploy", PuppetState.UNDEF, null, false, instanceDirectory );
+
+		} catch( IOException e ) {
+			throw new PluginException( e );
+
+		} catch( InterruptedException e ) {
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
@@ -340,7 +393,7 @@ public class PluginPuppet implements PluginInterface {
 			sb.append( ", " + importedTypes );
 
 		if(importChanged != null) {
-			sb.append(", " 
+			sb.append(", "
 					+ (importAdded ? "importAdded => {" : "importRemoved => {")
 					+ formatImport(importChanged) + "}");
 		}
@@ -430,7 +483,7 @@ public class PluginPuppet implements PluginInterface {
 
 				for( Iterator<Import> it = imports.iterator(); it.hasNext(); ) {
 					sb.append(formatImport(it.next()));
-					
+
 					if( it.hasNext())
 						sb.append(", ");
 				}

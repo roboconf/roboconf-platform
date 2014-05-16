@@ -23,7 +23,6 @@ import net.roboconf.core.model.runtime.Import;
 
 /**
  * Bean used to inject an data into a {@link Import} template.
- *
  * @author gcrosmarie - Linagora
  */
 public class ImportBean {
@@ -39,15 +38,24 @@ public class ImportBean {
 		for(String name : this.imprt.getExportedVars().keySet()) {
 			result.add(new Var(name, this.imprt.getExportedVars().get(name)));
 		}
+
 		return result;
 	}
 
 	static class Var {
+		String name, value;
+
 		public Var(String name, String value) {
-			super();
 			this.name = name;
 			this.value = value;
 		}
-		String name,value;
+
+		public String getValue() {
+			return this.value;
+		}
+
+		public void setValue( String value ) {
+			this.value = value;
+		}
 	}
 }

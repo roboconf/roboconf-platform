@@ -50,11 +50,9 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.IaasException;
-import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
 import net.roboconf.iaas.azure.internal.AzureConstants;
 import net.roboconf.iaas.azure.internal.AzureProperties;
 
@@ -89,7 +87,7 @@ public class IaasAzure implements IaasInterface {
 	public void setLogger( Logger logger ) {
 		this.logger = logger;
 	}
-	
+
 	private KeyStore getKeyStore(String keyStoreName, String password) throws IOException
 	{
 	    KeyStore ks = null;
@@ -99,7 +97,7 @@ public class IaasAzure implements IaasInterface {
 	        char[] passwordArray = password.toCharArray();
 	        fis = new java.io.FileInputStream(keyStoreName);
 	        ks.load(fis, passwordArray);
-	         
+
 	    } catch (Exception e) {
 	    	this.logger.severe( e.getMessage() );
 	    }
@@ -110,18 +108,18 @@ public class IaasAzure implements IaasInterface {
 	    }
 	    return ks;
 	}
-	
+
 	private SSLSocketFactory getSSLSocketFactory(String keyStoreName, String password) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
 	    KeyStore ks = this.getKeyStore(keyStoreName, password);
 	    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
 	    keyManagerFactory.init(ks, password.toCharArray());
-	 
+
 	      SSLContext context = SSLContext.getInstance("TLS");
 	      context.init(keyManagerFactory.getKeyManagers(), null, new SecureRandom());
-	 
+
 	      return context.getSocketFactory();
 	}
-	
+
 	private String getStringFromInputStream(InputStream is) {
 	     BufferedReader br = null;
 	     StringBuilder sb = new StringBuilder();
@@ -144,7 +142,7 @@ public class IaasAzure implements IaasInterface {
 	     }
 	     return sb.toString();
 	}
-	
+
 	private static boolean getExistResutlFromXML(String xmlStr, String nameOfNode) throws ParserConfigurationException, UnsupportedEncodingException, SAXException, IOException {
 		DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
 		DocumentBuilder b;
@@ -158,10 +156,10 @@ public class IaasAzure implements IaasInterface {
 			 result = node.getTextContent();
 		}
 		boolean resultBool = false;
-		if ("true".equals(result)) resultBool = true;   
+		if ("true".equals(result)) resultBool = true;
 		return resultBool;
 	}
-	
+
 	private String processGetRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
         SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
         HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
@@ -173,8 +171,8 @@ public class IaasAzure implements IaasInterface {
         responseStream.close();
         return response;
     }
-	
-	
+
+
 	private int processPostRequest(URL url, byte[] data, String contentType, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
 	    SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
 	    HttpsURLConnection con = null;
@@ -185,14 +183,14 @@ public class IaasAzure implements IaasInterface {
 	    con.addRequestProperty("x-ms-version", "2014-04-01");
 	    con.setRequestProperty("Content-Length", String.valueOf(data.length));
 	    con.setRequestProperty("Content-Type", contentType);
-	     
+
 	    DataOutputStream  requestStream = new DataOutputStream (con.getOutputStream());
 	    requestStream.write(data);
 	    requestStream.flush();
 	    requestStream.close();
 	    return con.getResponseCode();
 	}
-	
+
 	private int processDeleteRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
         SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
         HttpsURLConnection con = null;
@@ -202,7 +200,7 @@ public class IaasAzure implements IaasInterface {
         con.addRequestProperty("x-ms-version", "2014-04-01");
         return con.getResponseCode();
     }
-	
+
 	private byte[] convertFileToByte(String xmlFilePath)
     {
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -213,22 +211,22 @@ public class IaasAzure implements IaasInterface {
 		}
 		return os.toByteArray();
     }
-	
-	
+
+
 	private void replaceValueOfTagInXMLFile(String filePath, String tagName, String replacingValue) throws ParserConfigurationException, SAXException, IOException {
 		File fXmlFile = new File(filePath);
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
 		Document doc = dBuilder.parse(fXmlFile);
-		
+
 		//optional, but recommended
 		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
 		doc.getDocumentElement().normalize();
-		 
+
 		NodeList nList = doc.getElementsByTagName(tagName);
 		Node nNode = nList.item(0);
 		nNode.setTextContent(replacingValue);
-		
+
 		// write the modified content into xml file
 		TransformerFactory transformerFactory = TransformerFactory.newInstance();
 		Transformer transformer;
@@ -237,6 +235,7 @@ public class IaasAzure implements IaasInterface {
 			DOMSource source = new DOMSource(doc);
 			StreamResult result = new StreamResult(new File(filePath));
 			transformer.transform(source, result);
+
 		} catch (TransformerException e) {
 			this.logger.severe( e.getMessage() );
 		}
@@ -248,10 +247,59 @@ public class IaasAzure implements IaasInterface {
 	 * #setIaasProperties(java.util.Properties)
 	 */
 	@Override
-	public void setIaasProperties(Map<String, String> iaasProperties) throws InvalidIaasPropertiesException {
+	public void setIaasProperties(Map<String, String> iaasProperties) throws IaasException {
 
-		// Check the properties
-		parseProperties( iaasProperties );
+		// Quick check
+		String[] properties = {
+				AzureConstants.AZURE_SUBSCRIPTION_ID,
+				AzureConstants.AZURE_KEY_STORE_FILE,
+				AzureConstants.AZURE_KEY_STORE_PASSWORD,
+				AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE,
+				AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE,
+				AzureConstants.AZURE_LOCATION,
+				AzureConstants.AZURE_VM_SIZE,
+				AzureConstants.AZURE_VM_TEMPLATE
+		};
+
+		for( String property : properties ) {
+			if( StringUtils.isBlank( iaasProperties.get( property )))
+				throw new IaasException( "The value for " + property + " cannot be null or empty." );
+		}
+
+		// Create a bean
+		this.azureProperties = new AzureProperties();
+
+		String s = iaasProperties.get( AzureConstants.AZURE_SUBSCRIPTION_ID );
+		if( s != null )
+			this.azureProperties.setSubscriptionId( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_KEY_STORE_FILE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_KEY_STORE_PASSWORD );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_LOCATION );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_VM_SIZE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
+
+		s = iaasProperties.get( AzureConstants.AZURE_VM_TEMPLATE );
+		if( s != null )
+			this.azureProperties.setKeyStoreFile( s.trim());
 	}
 
 
@@ -266,13 +314,13 @@ public class IaasAzure implements IaasInterface {
 			String ipMessagingServer,
 			String channelName,
 			String applicationName)
-	throws IaasException, CommunicationToIaasException {
+	throws IaasException {
 
 		String instanceId = null;
 		try {
 			// The following part enables to transmit data to the VM.
 			// When the VM is up, it will be able to read this data.
-			// TODO: Azure is not to allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts. 
+			// TODO: Azure is not to allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
 			// channelName = channelName.replaceAll("\\s+","-").toLowerCase();
 			StringBuilder data = new StringBuilder();
 			data.append( "ipMessagingServer=" + ipMessagingServer + "\n" );
@@ -298,12 +346,12 @@ public class IaasAzure implements IaasInterface {
 			String checkCloudServiceURL = baseURL+"/hostedservices/operations/isavailable/"+channelName;
 			String createCloudServiceURL = baseURL+"/hostedservices";
 			String createDeploymentURL = baseURL+"/hostedservices/"+channelName+"/deployments";
-			
+
 			// check if Cloud Service exist
 			String responseCheckCloudService = processGetRequest(new URL(checkCloudServiceURL), this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());
 			boolean checkResult = getExistResutlFromXML(responseCheckCloudService, "Result");	// true means the name still available
 			this.logger.info( "Response Result: Cloud Service Name is still available: " + checkResult);
-			
+
 			// create Cloud Service, Deployment & Add a Role (Linux VM), maybe add a second Role (another Linux VM)
 			int rescodeCreateCloudService = -1;
 			if (checkResult) rescodeCreateCloudService = processPostRequest(new URL(createCloudServiceURL), requestBodyCreateCloudService, requestHeaderContentType, this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());	// rescode shoud be 201
@@ -313,26 +361,32 @@ public class IaasAzure implements IaasInterface {
 				int rescodeCreateDeployment = processPostRequest(new URL(createDeploymentURL), requestBodyCreateDeployment, requestHeaderContentType, this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());	// rescode shoud be 202
 				this.logger.info( "Create VM: Response Code: " + rescodeCreateDeployment);
 			}
-			
+
 			instanceId = channelName;	// instanceID in this context should be channelName
-			
+
 		} catch( UnsupportedEncodingException e ) {
-			this.logger.severe( "An error occurred while contacting Amazon EC2. " + e.getMessage());
-			throw new CommunicationToIaasException( e );
-		} catch (ParserConfigurationException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (SAXException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (IOException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (UnrecoverableKeyException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (KeyManagementException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (KeyStoreException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (NoSuchAlgorithmException e) {
-			this.logger.severe( e.getMessage() );
+			throw new IaasException( e );
+
+		} catch( ParserConfigurationException e ) {
+			throw new IaasException( e );
+
+		} catch( SAXException e ) {
+			throw new IaasException( e );
+
+		} catch( IOException e ) {
+			throw new IaasException( e );
+
+		} catch( UnrecoverableKeyException e ) {
+			throw new IaasException( e );
+
+		} catch( KeyManagementException e ) {
+			throw new IaasException( e );
+
+		} catch( KeyStoreException e ) {
+			throw new IaasException( e );
+
+		} catch( NoSuchAlgorithmException e ) {
+			throw new IaasException( e );
 		}
 
 		return instanceId;
@@ -346,89 +400,32 @@ public class IaasAzure implements IaasInterface {
 	 * instanceID is CloudServiceName
 	 */
 	@Override
-	public void terminateVM( String instanceId ) throws IaasException, CommunicationToIaasException {
+	public void terminateVM( String instanceId ) throws IaasException {
 		try {
 			String baseURL = String.format("https://management.core.windows.net/%s/services", this.azureProperties.getSubscriptionId());
 			String deleteCloudServiceURL = baseURL+"/hostedservices/"+instanceId+"?comp=media";
-			
+
 			// delete Cloud Service, also delete all things related
 			int rescodeDeleteCloudService = processDeleteRequest(new URL(deleteCloudServiceURL), this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());		// rescode shoud be 202
 			this.logger.info("Response Code: Delete VM: " + rescodeDeleteCloudService);
 
-		} catch (UnrecoverableKeyException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (KeyManagementException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (KeyStoreException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (NoSuchAlgorithmException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (MalformedURLException e) {
-			this.logger.severe( e.getMessage() );
-		} catch (IOException e) {
-			this.logger.severe( e.getMessage() );
+		} catch( UnrecoverableKeyException e ) {
+			throw new IaasException( e );
+
+		} catch( KeyManagementException e ) {
+			throw new IaasException( e );
+
+		} catch( KeyStoreException e ) {
+			throw new IaasException( e );
+
+		} catch( NoSuchAlgorithmException e ) {
+			throw new IaasException( e );
+
+		} catch( MalformedURLException e ) {
+			throw new IaasException( e );
+
+		} catch( IOException e ) {
+			throw new IaasException( e );
 		}
-	}
-
-
-	/**
-	 * Parses the properties and saves them in a Java bean.
-	 * @param iaasProperties the IaaS properties
-	 * @throws InvalidIaasPropertiesException
-	 */
-	private void parseProperties( Map<String,String> iaasProperties ) throws InvalidIaasPropertiesException {
-
-		// Quick check
-		String[] properties = {
-			AzureConstants.AZURE_SUBSCRIPTION_ID,
-			AzureConstants.AZURE_KEY_STORE_FILE,
-			AzureConstants.AZURE_KEY_STORE_PASSWORD,
-			AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE,
-			AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE,
-			AzureConstants.AZURE_LOCATION,
-			AzureConstants.AZURE_VM_SIZE,
-			AzureConstants.AZURE_VM_TEMPLATE
-		};
-
-		for( String property : properties ) {
-			if( StringUtils.isBlank( iaasProperties.get( property )))
-				throw new InvalidIaasPropertiesException( "The value for " + property + " cannot be null or empty." );
-		}
-
-		// Create a bean
-		this.azureProperties = new AzureProperties();
-		
-		String s = iaasProperties.get( AzureConstants.AZURE_SUBSCRIPTION_ID );
-		if( s != null )
-			this.azureProperties.setSubscriptionId( s.trim());
-		
-		s = iaasProperties.get( AzureConstants.AZURE_KEY_STORE_FILE );
-		if( s != null )
-			this.azureProperties.setKeyStoreFile( s.trim());
-		
-		s = iaasProperties.get( AzureConstants.AZURE_KEY_STORE_PASSWORD );
-		if( s != null )
-			this.azureProperties.setKeyStoreFile( s.trim());
-
-		s = iaasProperties.get( AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE );
-		if( s != null )
-			this.azureProperties.setKeyStoreFile( s.trim());
-		
-		s = iaasProperties.get( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE );
-		if( s != null )
-			this.azureProperties.setKeyStoreFile( s.trim());
-		
-		s = iaasProperties.get( AzureConstants.AZURE_LOCATION );
-		if( s != null )
-			this.azureProperties.setKeyStoreFile( s.trim());
-		
-		s = iaasProperties.get( AzureConstants.AZURE_VM_SIZE );
-		if( s != null )
-			this.azureProperties.setKeyStoreFile( s.trim());
-		
-		s = iaasProperties.get( AzureConstants.AZURE_VM_TEMPLATE );
-		if( s != null )
-			this.azureProperties.setKeyStoreFile( s.trim());
-		
 	}
 }

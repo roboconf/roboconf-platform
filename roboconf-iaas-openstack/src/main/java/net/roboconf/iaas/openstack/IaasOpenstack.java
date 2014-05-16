@@ -22,10 +22,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.IaasException;
-import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -89,7 +87,7 @@ public class IaasOpenstack implements IaasInterface {
 	 * #setIaasProperties(net.roboconf.iaas.api.IaasProperties)
 	 */
 	@Override
-	public void setIaasProperties(Map<String, String> iaasProperties) throws InvalidIaasPropertiesException {
+	public void setIaasProperties(Map<String, String> iaasProperties) throws IaasException {
 
 		this.iaasProperties = iaasProperties;
 
@@ -101,14 +99,14 @@ public class IaasOpenstack implements IaasInterface {
 		if(val != null) this.flavor = val;
 		val = iaasProperties.get("openstack.securityGroup");
 		if(val != null) this.securityGroup = val;
-		
+
 		this.identityUrl = iaasProperties.get("openstack.identityUrl");
 		this.computeUrl = iaasProperties.get("openstack.computeUrl");
-		
+
 		try {
 			Keystone keystone = new Keystone(this.identityUrl);
 			//Keystone keystone = new Keystone("http://localhost:8888/v2.0");
-			
+
 			Authenticate auth = keystone.tokens().authenticate(
 					new UsernamePassword(iaasProperties.get("openstack.user"),
 							iaasProperties.get("openstack.password")));
@@ -124,7 +122,7 @@ public class IaasOpenstack implements IaasInterface {
 			this.novaClient.token(this.token);
 
 		} catch(Exception e) {
-			throw new InvalidIaasPropertiesException(e);
+			throw new IaasException(e);
 		}
 	}
 
@@ -139,7 +137,7 @@ public class IaasOpenstack implements IaasInterface {
 			String ipMessagingServer,
 			String channelName,
 			String applicationName)
-	throws IaasException, CommunicationToIaasException {
+	throws IaasException {
 
 		if(machineImageId == null || "".equals(machineImageId))
 			machineImageId = this.machineImageId;
@@ -159,7 +157,7 @@ public class IaasOpenstack implements IaasInterface {
 		if(this.keypair != null) serverForCreate.setKeyName(this.keypair);
 		serverForCreate.getSecurityGroups().add(
 			new ServerForCreate.SecurityGroup(this.securityGroup));
-		
+
 		// User data will be retrieved (like on Amazon WS) on guest OS as
 		// http://169.254.169.254/latest/user-data
 		String userData = "applicationName=" + applicationName
@@ -189,6 +187,7 @@ public class IaasOpenstack implements IaasInterface {
 		}
 		*/
 
+
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
 		if(toAttach != null) this.novaClient.servers().attachVolume(server.getId(), toAttach.getId(), "vda").execute();
 		System.out.println(server);
@@ -197,7 +196,7 @@ public class IaasOpenstack implements IaasInterface {
 		try {
 			final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(1);
 			timer.scheduleAtFixedRate(new Runnable() {
-				
+
 				@Override
 				public void run() {
 					Server checked = IaasOpenstack.this.novaClient.servers().show(server.getId()).execute();
@@ -212,7 +211,7 @@ public class IaasOpenstack implements IaasInterface {
 		// Associate floating IP
 		if(this.floatingIpPool != null) {
 			FloatingIps ips = this.novaClient.floatingIps().list().execute();
-			
+
 			FloatingIp ip = null;
 			for(FloatingIp ip2 : ips) {
 				System.out.println("ip=" + ip2);
@@ -224,7 +223,7 @@ public class IaasOpenstack implements IaasInterface {
 						server.getId(), ip.getIp()).execute();
 			}
 		}
-		
+
 		return server.getId();
 	}
 
@@ -234,21 +233,21 @@ public class IaasOpenstack implements IaasInterface {
 	 * #terminateVM(java.lang.String)
 	 */
 	@Override
-	public void terminateVM(String instanceId) throws IaasException, CommunicationToIaasException {
+	public void terminateVM(String instanceId) throws IaasException {
 		try {
 			this.novaClient.servers().delete(instanceId).execute();
 		} catch(Exception e) {
-			throw new CommunicationToIaasException(e);
+			throw new IaasException(e);
 		}
 	}
 
 	public static void main(String args[]) throws Exception {
-		
+
 		Map<String, String> conf = new HashMap<String, String>();
-		
+
 		java.util.Properties p = new java.util.Properties();
 		p.load(new java.io.FileReader(args[0]));
-		
+
 		for(Object name : p.keySet()) {
 			conf.put(name.toString(), p.get(name).toString());
 		}

@@ -16,6 +16,7 @@
 
 package net.roboconf.dm.server;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -43,10 +44,16 @@ public class InitWs implements IInitWs {
 
 		this.logger.fine( "Request: initialize the DM with message server IP " + amqpIp );
 		Response response;
-		if( Manager.INSTANCE.tryToChangeMessageServerIp( amqpIp ))
-			response = Response.ok().build();
-		else
-			response = Response.status( Status.FORBIDDEN ).entity( "There must be no application to be able to update the message server IP." ).build();
+		try {
+			boolean wasChanged = Manager.INSTANCE.tryToChangeMessageServerIp( amqpIp );
+			if( wasChanged )
+				response = Response.ok().build();
+			else
+				response = Response.status( Status.FORBIDDEN ).entity( "There must be no application to be able to update the message server IP." ).build();
+
+		} catch( IOException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( "The messaging client could not be updated." ).build();
+		}
 
 		return response;
 	}
@@ -59,7 +66,7 @@ public class InitWs implements IInitWs {
 	public Response isInitialized() {
 
 		this.logger.fine( "Request: determine whether the DM was already initialized." );
-		boolean isInitialized = Manager.INSTANCE.getMessageServerIp() != null;
+		boolean isInitialized = Manager.INSTANCE.isConnectedToTheMessagingServer();
 		String s = String.valueOf( isInitialized );
 
 		return Response.ok( s ).build();

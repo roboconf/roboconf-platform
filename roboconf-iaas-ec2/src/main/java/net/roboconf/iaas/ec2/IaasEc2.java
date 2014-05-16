@@ -23,10 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.api.exceptions.CommunicationToIaasException;
-import net.roboconf.iaas.api.exceptions.IaasException;
-import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
 import net.roboconf.iaas.ec2.internal.Ec2Constants;
 import net.roboconf.iaas.ec2.internal.Ec2Properties;
 
@@ -78,7 +76,7 @@ public class IaasEc2 implements IaasInterface {
 	 * #setIaasProperties(java.util.Properties)
 	 */
 	@Override
-	public void setIaasProperties(Map<String, String> iaasProperties) throws InvalidIaasPropertiesException {
+	public void setIaasProperties(Map<String, String> iaasProperties) throws IaasException {
 
 		// Check the properties
 		parseProperties( iaasProperties );
@@ -101,7 +99,7 @@ public class IaasEc2 implements IaasInterface {
 			String ipMessagingServer,
 			String channelName,
 			String applicationName)
-	throws IaasException, CommunicationToIaasException {
+	throws IaasException {
 
 		String instanceId = null;
 		try {
@@ -131,11 +129,11 @@ public class IaasEc2 implements IaasInterface {
 
 		} catch( AmazonClientException e ) {
 			this.logger.severe( "An error occurred while creating a machine on Amazon EC2. " + e.getMessage());
-			throw new CommunicationToIaasException( e );
+			throw new IaasException( e );
 
 		} catch( UnsupportedEncodingException e ) {
 			this.logger.severe( "An error occurred while contacting Amazon EC2. " + e.getMessage());
-			throw new CommunicationToIaasException( e );
+			throw new IaasException( e );
 		}
 
 		return instanceId;
@@ -148,7 +146,7 @@ public class IaasEc2 implements IaasInterface {
 	 * #terminateVM(java.lang.String)
 	 */
 	@Override
-	public void terminateVM( String instanceId ) throws IaasException, CommunicationToIaasException {
+	public void terminateVM( String instanceId ) throws IaasException {
 		try {
 			TerminateInstancesRequest terminateInstancesRequest = new TerminateInstancesRequest();
 			terminateInstancesRequest.withInstanceIds( instanceId );
@@ -160,7 +158,7 @@ public class IaasEc2 implements IaasInterface {
 
 		} catch( AmazonClientException e ) {
 			this.logger.severe( "An error occurred while terminating a machine on Amazon EC2. " + e.getMessage());
-			throw new CommunicationToIaasException( e );
+			throw new IaasException( e );
 		}
 	}
 
@@ -170,7 +168,7 @@ public class IaasEc2 implements IaasInterface {
 	 * @param iaasProperties the IaaS properties
 	 * @throws InvalidIaasPropertiesException
 	 */
-	private void parseProperties( Map<String, String> iaasProperties ) throws InvalidIaasPropertiesException {
+	private void parseProperties( Map<String, String> iaasProperties ) throws IaasException {
 
 		// Quick check
 		String[] properties = {
@@ -185,7 +183,7 @@ public class IaasEc2 implements IaasInterface {
 
 		for( String property : properties ) {
 			if( StringUtils.isBlank( iaasProperties.get( property )))
-				throw new InvalidIaasPropertiesException( "The value for " + property + " cannot be null or empty." );
+				throw new IaasException( "The value for " + property + " cannot be null or empty." );
 		}
 
 		// Create a bean

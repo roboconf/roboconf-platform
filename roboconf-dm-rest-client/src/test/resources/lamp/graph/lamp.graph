@@ -1,0 +1,36 @@
+###################################
+##             LAMP              ##
+###################################
+
+# Here, we only have components.
+# We do not use facets.
+# See lamp-legacy-2 for a version with facets.
+
+# The VM
+VM {
+	alias: Virtual Machine;
+	installer: iaas;
+	children: MySQL, Tomcat, Apache;
+}
+
+# MySQL database
+MySQL {
+	alias: MySQL;
+	installer: puppet;
+	exports: ip, port = 3306;
+}
+
+# Tomcat
+Tomcat {
+	alias: Tomcat with Rubis;
+	installer: puppet;
+	exports: ip, portAJP = 8009;
+	imports: MySQL.ip, MySQL.port;
+}
+
+# Apache Load Balancer
+Apache {
+	alias: Apache Load Balancer;
+	installer: puppet;
+	imports: Tomcat.portAJP, Tomcat.ip;
+}

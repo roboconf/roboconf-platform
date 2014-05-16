@@ -96,10 +96,9 @@ public final class VariableHelpers {
 	 * @return a non-null set with all the component and facet names this instance exports
 	 */
 	public static Set<String> findPrefixesForExportedVariables( Instance instance ) {
-		Set<String> result = new HashSet<String> ();
 
-		Map<String,String> instanceExports = InstanceHelpers.getExportedVariables( instance );
-		for( String exportedVariableName : instanceExports.keySet())
+		Set<String> result = new HashSet<String> ();
+		for( String exportedVariableName : instance.getExports().keySet())
 			result.add( VariableHelpers.parseVariableName( exportedVariableName ).getKey());
 
 		return result;
@@ -108,19 +107,14 @@ public final class VariableHelpers {
 
 	/**
 	 * Finds the component and facet names that prefix the variables an instance imports.
-	 * <p>
-	 * Optional imports are skipped.
-	 * </p>
-	 *
 	 * @param instance an instance
 	 * @return a non-null set with all the component and facet names this instance imports
 	 */
 	public static Set<String> findPrefixesForImportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
-		for( Map.Entry<String,Boolean> entry : instance.getComponent().getImportedVariables().entrySet()) {
-			if( ! entry.getValue())
-				result.add( VariableHelpers.parseVariableName( entry.getKey()).getKey());
+		for( String variableName : instance.getComponent().getImportedVariables().keySet()) {
+			result.add( VariableHelpers.parseVariableName( variableName ).getKey());
 		}
 
 		return result;
@@ -142,7 +136,7 @@ public final class VariableHelpers {
 		Set<String> keysToUpdate = new HashSet<String> ();
 		for( Map.Entry<String,String> entry : instanceExports.entrySet()) {
 			String suffix = parseVariableName( entry.getKey()).getValue();
-			if( IP.equals( suffix ))
+			if( IP.equalsIgnoreCase( suffix ))
 				keysToUpdate.add( entry.getKey());
 		}
 

@@ -16,6 +16,7 @@
 
 package net.roboconf.messaging.messages.from_agent_to_dm;
 
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -25,15 +26,27 @@ public class MsgNotifMachineDown extends Message {
 
 	private static final long serialVersionUID = 2204000792853175646L;
 	private final String rootInstanceName;
+	private final String applicationName;
 
 
 	/**
 	 * Constructor.
+	 * @param applicationName the application name
 	 * @param rootInstanceName the root instance (machine) name
 	 */
-	public MsgNotifMachineDown( String rootInstanceName ) {
+	public MsgNotifMachineDown( String applicationName, String rootInstanceName ) {
 		super();
 		this.rootInstanceName = rootInstanceName;
+		this.applicationName = applicationName;
+	}
+
+	/**
+	 * Constructor.
+	 * @param applicationName the application name
+	 * @param rootInstance the root instance
+	 */
+	public MsgNotifMachineDown( String applicationName, Instance rootInstance ) {
+		this( applicationName, rootInstance.getName());
 	}
 
 	/**
@@ -41,5 +54,12 @@ public class MsgNotifMachineDown extends Message {
 	 */
 	public String getRootInstanceName() {
 		return this.rootInstanceName;
+	}
+
+	/**
+	 * @return the applicationName
+	 */
+	public String getApplicationName() {
+		return this.applicationName;
 	}
 }

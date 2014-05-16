@@ -283,7 +283,7 @@
 		<module>roboconf-messaging</module>
 		
 		<module>roboconf-iaas-api</module>
-		<module>roboconf-iaas-local</module>
+		<module>roboconf-iaas-in-memory</module>
 		<module>roboconf-iaas-embedded</module>
 		<module>roboconf-iaas-azure</module>
 		<module>roboconf-iaas-ec2</module>

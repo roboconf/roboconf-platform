@@ -17,6 +17,7 @@
 package net.roboconf.dm.server;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -24,14 +25,16 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.BulkActionException;
+import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
@@ -100,6 +103,9 @@ public class ApplicationWs implements IApplicationWs {
 
 		} catch( BulkActionException e ) {
 			response = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
+
+		} catch( DmWasNotInitializedException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
 		return response;
@@ -141,6 +147,8 @@ public class ApplicationWs implements IApplicationWs {
 			}
 		}
 
+		// Bug #64: sort instance paths for the clients
+		Collections.sort( result, new InstanceComparator());
 		return result;
 	}
 
@@ -178,6 +186,8 @@ public class ApplicationWs implements IApplicationWs {
 				result.addAll( inst.getChildren());
 		}
 
+		// Bug #64: sort instance paths for the clients
+		Collections.sort( result, new InstanceComparator());
 		return result;
 	}
 

@@ -16,6 +16,8 @@
 
 package net.roboconf.messaging.messages.from_dm_to_agent;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -34,6 +36,14 @@ public class MsgCmdInstanceRemove extends Message {
 	public MsgCmdInstanceRemove( String instancePath ) {
 		super();
 		this.instancePath = instancePath;
+	}
+
+	/**
+	 * Constructor.
+	 * @param instance
+	 */
+	public MsgCmdInstanceRemove( Instance instance ) {
+		this( InstanceHelpers.computeInstancePath( instance ));
 	}
 
 	/**

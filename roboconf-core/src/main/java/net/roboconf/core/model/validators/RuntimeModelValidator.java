@@ -28,7 +28,6 @@ import java.util.Set;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -38,6 +37,7 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 
 /**
  * A set of methods to validate runtime model objects.
