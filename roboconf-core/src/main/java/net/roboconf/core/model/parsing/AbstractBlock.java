@@ -16,7 +16,7 @@
 
 package net.roboconf.core.model.parsing;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * The base definition for all the blocks.

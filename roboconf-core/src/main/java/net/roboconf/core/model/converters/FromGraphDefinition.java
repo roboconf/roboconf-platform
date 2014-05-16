@@ -31,7 +31,6 @@ import java.util.Set;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.model.parsing.FileDefinitionParser;
-import net.roboconf.core.internal.utils.ModelUtils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.parsing.AbstractBlock;
@@ -42,6 +41,7 @@ import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
+import net.roboconf.core.utils.ModelUtils;
 
 /**
  * To build a {@link Graphs} from a {@link FileDefinition}.

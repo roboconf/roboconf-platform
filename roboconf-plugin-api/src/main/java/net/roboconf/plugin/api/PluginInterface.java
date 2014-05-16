@@ -36,40 +36,40 @@ public interface PluginInterface {
 	 *
 	 * @param instance
 	 */
-	void initialize( Instance instance ) throws Exception;
+	void initialize( Instance instance ) throws PluginException;
 
 	/**
 	 * Deploys an instance.
 	 * @param instance the instance to deploy
 	 */
-	void deploy( Instance instance ) throws Exception;
+	void deploy( Instance instance ) throws PluginException;
 
 
 	/**
 	 * Starts an instance.
 	 * @param instance the instance to start
 	 */
-	void start( Instance instance ) throws Exception;
+	void start( Instance instance ) throws PluginException;
 
 
 	/**
 	 * Updates an instance.
 	 * @param instance the instance to update
 	 */
-	void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception;
-	
+	void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException;
+
 	/**
 	 * Stops an instance.
 	 * @param instance the instance to stop
 	 */
-	void stop( Instance instance ) throws Exception;
+	void stop( Instance instance ) throws PluginException;
 
 
 	/**
 	 * Undeploys an instance.
 	 * @param instance the instance to undeploy
 	 */
-	void undeploy( Instance instance ) throws Exception;
+	void undeploy( Instance instance ) throws PluginException;
 
 
 	/**

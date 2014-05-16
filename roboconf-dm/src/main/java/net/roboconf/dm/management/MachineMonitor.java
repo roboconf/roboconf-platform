@@ -24,10 +24,10 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.messaging.utils.MessagingUtils;
 
 /**
  * @author Noël - LIG
@@ -59,7 +59,7 @@ public class MachineMonitor {
 			}
 		};
 
-		this.timer.scheduleAtFixedRate( timerTask, 0, MessagingUtils.HEARTBEAT_PERIOD );
+		this.timer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
 	}
 
 

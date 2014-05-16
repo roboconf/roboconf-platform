@@ -18,6 +18,8 @@ package net.roboconf.messaging.messages.from_dm_to_agent;
 
 import java.util.Map;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -39,6 +41,15 @@ public class MsgCmdInstanceDeploy extends Message {
 		super();
 		this.instancePath = instancePath;
 		this.fileNameToFileContent = fileNameToFileContent;
+	}
+
+	/**
+	 * Constructor.
+	 * @param instance
+	 * @param fileNameToFileContent
+	 */
+	public MsgCmdInstanceDeploy( Instance instance, Map<String, byte[]> fileNameToFileContent ) {
+		this( InstanceHelpers.computeInstancePath( instance ), fileNameToFileContent );
 	}
 
 	/**

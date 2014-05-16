@@ -29,12 +29,13 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.ApplicationDescriptor;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Test;
 
@@ -339,5 +340,22 @@ public class RuntimeModelIoTest {
 		} finally {
 			Utils.deleteFilesRecursively( tempDirectory );
 		}
+	}
+
+
+	@Test
+	public void testLoadApplication_KarafJoramJndi() throws Exception {
+
+		File directory = TestUtils.findTestFile( "/applications/valid/karaf-joram-jndi" );
+		LoadResult result = RuntimeModelIo.loadApplication( directory );
+		Assert.assertNotNull( result );
+		Assert.assertNotNull( result.application );
+		Assert.assertEquals( 0, result.loadErrors.size());
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec21" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec21/jndiec2" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec22" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec22/joramec2" ));
 	}
 }

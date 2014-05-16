@@ -23,6 +23,11 @@ package net.roboconf.core;
 public interface Constants {
 
 	/**
+	 * The heart beat period (in milliseconds).
+	 */
+	long HEARTBEAT_PERIOD = 60000;
+
+	/**
 	 * Keyword for facet property.
 	 */
 	String PROPERTY_FACET_EXTENDS = "extends";

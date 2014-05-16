@@ -91,16 +91,6 @@ public interface IManagementWs {
 	List<Application> listApplications();
 
 	/**
-	 * Gets the model of an application (model files in a ZIP archive).
-	 * @param applicationName the application name
-	 * @return a response with the ZIP archive
-	 */
-	@GET
-	@Path("/{name}/download")
-	@Produces( "application/zip" )
-	Response downloadApplicationModelData( @PathParam("name") String applicationName );
-
-	/**
 	 * Shutdowns an application.
 	 * <p>
 	 * Shutdowns means removing everything Roboconf deployed or created.

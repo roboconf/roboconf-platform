@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockBlank;
 import net.roboconf.core.model.parsing.BlockComment;
@@ -32,6 +31,7 @@ import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 
 /**
  * To dump a collection of root {@link Instance}s into a file.

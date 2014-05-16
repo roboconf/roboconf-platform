@@ -32,6 +32,7 @@ public class MsgNotifInstanceChanged extends Message {
 
 	private static final long serialVersionUID = -5023778542512797206L;
 
+	private final String applicationName;
 	private final String instancePath;
 	private final Map<String,Collection<Import>> newImports;
 	private InstanceStatus newStatus;
@@ -39,13 +40,22 @@ public class MsgNotifInstanceChanged extends Message {
 
 	/**
 	 * Constructor.
+	 * @param applicationName the application name
 	 * @param componentInstance
 	 */
-	public MsgNotifInstanceChanged( Instance instance ) {
+	public MsgNotifInstanceChanged( String applicationName, Instance instance ) {
 		super();
 		this.instancePath = InstanceHelpers.computeInstancePath( instance );
 		this.newImports = instance.getImports();
 		this.newStatus = instance.getStatus();
+		this.applicationName = applicationName;
+	}
+
+	/**
+	 * @return the applicationName
+	 */
+	public String getApplicationName() {
+		return this.applicationName;
 	}
 
 	/**

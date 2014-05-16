@@ -21,6 +21,7 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.InitializationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,6 +52,7 @@ public class InitWsDelegateTest extends JerseyTest {
 	public void resetManager() {
 		Manager.INSTANCE.cleanUpAll();
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory());
 	}
 
 
@@ -60,6 +62,18 @@ public class InitWsDelegateTest extends JerseyTest {
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertFalse( client.getInitDelegate().isDeploymentManagerInitialized());
 		client.getInitDelegate().initializeDeploymentManager( "127.0.0.1" );
+		Assert.assertEquals( "127.0.0.1", Manager.INSTANCE.getMessageServerIp());
+		Assert.assertTrue( client.getInitDelegate().isDeploymentManagerInitialized());
+	}
+
+
+	@Test
+	public void testInitialization_default() throws Exception {
+
+		WsClient client = RestTestUtils.buildWsClient();
+		Assert.assertFalse( client.getInitDelegate().isDeploymentManagerInitialized());
+		client.getInitDelegate().initializeDeploymentManager( null );
+		Assert.assertEquals( "localhost", Manager.INSTANCE.getMessageServerIp());
 		Assert.assertTrue( client.getInitDelegate().isDeploymentManagerInitialized());
 	}
 

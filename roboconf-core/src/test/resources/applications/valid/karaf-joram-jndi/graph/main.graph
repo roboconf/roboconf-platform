@@ -1,0 +1,51 @@
+#################################
+##  Karaf / Joram / JNDI   ##
+#################################
+
+# Here, we only have components.
+# We do not use facets.
+
+# The VMware VM
+VM_VMWARE {
+	alias: Virtual Machine VMWare;
+	installer: iaas;
+	children: Karaf;
+}
+
+VM_EC2 {
+	alias: Virtual Machine EC2;
+	installer: iaas;
+	children: Karaf;
+}
+
+VM_AZURE {
+	alias: Virtual Machine Azure;
+	installer: iaas;
+	children: Karaf;
+}
+
+
+# Karaf OSGi Framework
+Karaf {
+	alias: Karaf;
+	installer: bash;
+	exports: ip, agentID = 1;
+	children: Joram, JNDI;
+}
+
+# Joram Application OSGi Server
+Joram {
+	alias: Joram OSGi;
+	installer: bash;
+	exports: portJR = 16001;
+	imports: Karaf.agentID, Karaf.ip;
+}
+
+# JNDI OSGi
+JNDI {
+	alias: JNDI OSGi;
+	installer: bash;
+	exports: portJNDI = 16401;
+	imports: Karaf.agentID, Karaf.ip;
+}
+

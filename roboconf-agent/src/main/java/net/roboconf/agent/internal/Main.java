@@ -16,10 +16,12 @@
 
 package net.roboconf.agent.internal;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.AgentLauncher;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
@@ -37,6 +39,7 @@ public class Main {
 		Logger logger = Logger.getLogger( Main.class.getName());
 		logger.info( "A stand-alone agent is starting." );
 
+		// Get the agent's data
 		AgentData agentData = null;
 		if( args.length == 1 )
 			agentData = AgentUtils.findParametersInPropertiesFile( logger, args[ 0 ]);
@@ -51,15 +54,21 @@ public class Main {
 		else
 			agentData = AgentUtils.findParametersInWsInfo( logger );
 
+		// Launch the agent
 		// TODO: validate the agent's data
 		if( agentData == null
 				|| agentData.getMessageServerIp() == null ) {
 			logger.severe( "The agent's data (message server IP) could not be retrieved." );
 
 		} else {
-			new AgentLauncher().launchAgent( agentData, ExecutionLevel.RUNNING, null );
-			logger.info( "Agent launched !" );
-		}
+			try {
+				new AgentLauncher( agentData ).launchAgent( ExecutionLevel.RUNNING, null );
+				logger.info( "Agent launched !" );
 
+			} catch( IOException e ) {
+				logger.severe( "Agent failed to be launched. " + e.getMessage());
+				logger.finest( Utils.writeException( e ));
+			}
+		}
 	}
 }

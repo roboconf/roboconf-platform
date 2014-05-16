@@ -24,9 +24,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
 import net.roboconf.core.actions.ApplicationAction;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.RestUtils;
 import net.roboconf.dm.rest.UrlConstants;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;

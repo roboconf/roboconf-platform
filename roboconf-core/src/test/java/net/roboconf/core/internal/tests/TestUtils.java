@@ -33,8 +33,8 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.io.ParsingModelIoTest;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -131,7 +131,7 @@ public class TestUtils {
 	 * @param entryToContent a map (key = ZIP entry, value = entry content, null for a directory)
 	 * @param targetZipFile
 	 */
-	public static void createZipFile( Map<String,String> entryToContent, File targetZipFile ) {
+	public static void createZipFile( Map<String,String> entryToContent, File targetZipFile ) throws IOException {
 
 		ZipOutputStream zos = null;
 		try {
@@ -146,9 +146,6 @@ public class TestUtils {
 
 				zos.closeEntry();
 			}
-
-		} catch( IOException e ) {
-			Assert.fail( "Failed to create the ZIP. " + e.getMessage());
 
 		} finally {
 			Utils.closeQuietly( zos );
@@ -196,14 +193,9 @@ public class TestUtils {
 				continue;
 			}
 
-			try {
-				Assert.assertTrue( entry.getKey() + " was supposed to be a file.", extractedFile.isFile());
-				String fileContent = TestUtils.readFileContent( extractedFile );
-				Assert.assertEquals( entry.getValue(), fileContent );
-
-			} catch( IOException e ) {
-				Assert.fail( "Failed to compare file content. " + e.getMessage());
-			}
+			Assert.assertTrue( entry.getKey() + " was supposed to be a file.", extractedFile.isFile());
+			String fileContent = TestUtils.readFileContent( extractedFile );
+			Assert.assertEquals( entry.getValue(), fileContent );
 		}
 	}
 }

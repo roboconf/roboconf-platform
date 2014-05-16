@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.iaas.api.exceptions.InvalidIaasPropertiesException;
+import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.ec2.internal.Ec2Constants;
 
 import org.junit.Test;
@@ -40,7 +40,7 @@ public class IaasEc2Test {
 			ec2.setIaasProperties( iaasProperties );
 			Assert.fail( "An invalid configuration should have been detected." );
 
-		} catch( InvalidIaasPropertiesException e ) {
+		} catch( IaasException e ) {
 			Assert.assertTrue( e.getMessage().toLowerCase().contains( "endpoint" ));
 		}
 
@@ -55,7 +55,7 @@ public class IaasEc2Test {
 		try {
 			ec2.setIaasProperties( iaasProperties );
 
-		} catch( InvalidIaasPropertiesException e ) {
+		} catch( IaasException e ) {
 			Assert.fail( "An invalid configuration was detected while it was valid." );
 		}
 	}

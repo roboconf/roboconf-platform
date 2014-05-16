@@ -20,7 +20,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * An application groups an identifier, graph definitions and instances.
@@ -125,6 +125,11 @@ public class Application implements Serializable {
 		int i1 = this.name == null ? 29 : this.name.hashCode();
 		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
 		return i1 * i2;
+	}
+
+	@Override
+	public String toString() {
+		return this.name;
 	}
 
 	/**

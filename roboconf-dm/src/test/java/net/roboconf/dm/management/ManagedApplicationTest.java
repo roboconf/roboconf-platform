@@ -17,50 +17,43 @@
 package net.roboconf.dm.management;
 
 import java.io.File;
-import java.io.IOException;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.internal.TestApplication;
-import net.roboconf.dm.internal.TestMessageServerClient;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class ManagedApplicationTest {
 
+	@Rule
+	public final TemporaryFolder folder = new TemporaryFolder();
+
+
 	@Test
 	public void testConstructor() throws Exception {
 
-		File f = new File( System.getProperty( "java.io.tmpdir" ), "test_roboconf_" );
-		if( f.exists())
-			Utils.deleteFilesRecursively( f );
-
-		if( ! f.mkdir())
-			throw new IOException( "Failed to create a temporary directory." );
-
+		File f = this.folder.newFolder( "Roboconf_test" );
 		ManagedApplication ma = null;
 		try {
 			Application app = new TestApplication();
-			TestMessageServerClient client = new TestMessageServerClient();
-			ma = new ManagedApplication( app, f, client );
+			ma = new ManagedApplication( app, f );
 
 			Assert.assertNotNull( ma.getLogger());
 			Assert.assertTrue( ma.getLogger().getName().endsWith( "." + app.getName()));
 
 			Assert.assertNotNull( ma.getMonitor());
-			Assert.assertEquals( client, ma.getMessagingClient());
 			Assert.assertEquals( app, ma.getApplication());
 
 		} finally {
 			if( ma != null
 					&& ma.getMonitor() != null )
 				ma.getMonitor().stopTimer();
-
-			Utils.deleteFilesRecursively( f );
 		}
 	}
 }

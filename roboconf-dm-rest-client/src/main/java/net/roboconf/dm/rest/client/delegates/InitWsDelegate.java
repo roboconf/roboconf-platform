@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.core.internal.utils.Utils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.UrlConstants;
 import net.roboconf.dm.rest.client.exceptions.InitializationException;
 

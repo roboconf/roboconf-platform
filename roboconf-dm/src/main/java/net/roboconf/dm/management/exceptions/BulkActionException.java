@@ -19,8 +19,8 @@ package net.roboconf.dm.management.exceptions;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.roboconf.core.internal.utils.Utils;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 
 /**
  * An exception that stores several exceptions.

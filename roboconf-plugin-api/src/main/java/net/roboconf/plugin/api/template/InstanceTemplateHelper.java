@@ -17,9 +17,11 @@
 package net.roboconf.plugin.api.template;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.internal.template.InstanceBean;
@@ -70,7 +72,12 @@ public final class InstanceTemplateHelper {
 
 	public static void injectInstanceImports(Instance instance, String templateFile, File out)
 	throws IOException {
-		injectInstanceImports(instance, templateFile, new FileWriter(out));
+
+		OutputStreamWriter writer = new OutputStreamWriter(
+				new FileOutputStream( out ),
+				Charset.forName( "UTF-8" ).newEncoder());
+
+		injectInstanceImports( instance, templateFile, writer );
 	}
 
 
