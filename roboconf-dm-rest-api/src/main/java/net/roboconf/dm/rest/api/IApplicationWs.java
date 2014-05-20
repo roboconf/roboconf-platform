@@ -18,11 +18,13 @@ package net.roboconf.dm.rest.api;
 
 import java.util.List;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -30,6 +32,7 @@ import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.rest.UrlConstants;
+import net.roboconf.dm.rest.json.MapHolder;
 
 /**
  * The REST API to manipulate instances on the DM.
@@ -42,8 +45,6 @@ import net.roboconf.dm.rest.UrlConstants;
  */
 public interface IApplicationWs {
 
-	String INSTANCE_PATH_PREFIX = "/instance/";
-	String OPTIONAL_INSTANCE_PATH = "{instancePath:(" + INSTANCE_PATH_PREFIX + "[^/]+?)?}";
 	String PATH = "/" + UrlConstants.APP + "/{name}";
 
 
@@ -51,18 +52,19 @@ public interface IApplicationWs {
 	 * Performs an action on an instance of an application.
 	 * @param applicationName the application name
 	 * @param action see {@link ApplicationAction}
-	 * @param instancePath the instance path (optional, null to consider the application as the root)
-	 * @param applyToAllChildren only makes sense when instancePath is not null
+	 * @param mapHolder a map holder
 	 * <p>
-	 * True to apply this action to all the children too, false to apply it only to this instance.
+	 * {@link MapHolder#INSTANCE_PATH}: the instance path property (if null, we consider the application as the root)<br />
+	 * {@link MapHolder#APPLY_TO_CHILDREN}: true to apply this action to all the children too, false to apply it only to this instance.
+	 * Only makes sense when instancePath is not null.
 	 * </p>
 	 *
 	 * @return a response
 	 */
 	@POST
-	@Path( "/{action}" + OPTIONAL_INSTANCE_PATH )
-	@Produces( MediaType.APPLICATION_JSON )
-	Response perform( @PathParam("name") String applicationName, @PathParam("action") String action, @PathParam("instancePath") String instancePath, boolean applyToAllChildren );
+	@Path( "/{action}" )
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response perform( @PathParam("name") String applicationName, @PathParam("action") String action, MapHolder mapHolder );
 
 
 	/**
@@ -73,33 +75,33 @@ public interface IApplicationWs {
 	 * @return a response
 	 */
 	@POST
-	@Path( "/add" + OPTIONAL_INSTANCE_PATH )
-	@Produces( MediaType.APPLICATION_JSON )
-	Response addInstance( @PathParam("name") String applicationName, @PathParam("instancePath") String parentInstancePath, Instance instance );
+	@Path( "/add" )
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response addInstance( @PathParam("name") String applicationName, @QueryParam("instance-path") String parentInstancePath, Instance instance );
 
 
 	/**
 	 * Lists the paths of the children of an instance.
 	 * @param applicationName the application name
-	 * @param instancePath the instance path (optional, null to consider the application as the root)
+	 * @param instancePath the instance path (if null, we consider the application as the root)
 	 * @return a non-null list
 	 */
 	@GET
-	@Path( "/children" + OPTIONAL_INSTANCE_PATH )
+	@Path( "/children" )
 	@Produces( MediaType.APPLICATION_JSON )
-	List<Instance> listChildrenInstances( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
+	List<Instance> listChildrenInstances( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
 	/**
 	 * Lists the paths of the children of an instance.
 	 * @param applicationName the application name
-	 * @param instancePath the instance path (optional, null to consider the application as the root)
+	 * @param instancePath the instance path (if null, we consider the application as the root)
 	 * @return a non-null list
 	 */
 	@GET
-	@Path( "/all-children" + OPTIONAL_INSTANCE_PATH )
+	@Path( "/all-children" )
 	@Produces( MediaType.APPLICATION_JSON )
-	List<Instance> listAllChildrenInstances( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
+	List<Instance> listAllChildrenInstances( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
 	/**
@@ -109,13 +111,13 @@ public interface IApplicationWs {
 	 * </p>
 	 *
 	 * @param applicationName the application name
-	 * @param instancePath the instance path (optional, null to consider the application as the root)
+	 * @param instancePath the instance path (if null, we consider the application as the root)
 	 * @return a non-null list of components names
 	 */
 	@GET
-	@Path( "/possibilities" + OPTIONAL_INSTANCE_PATH )
+	@Path( "/possibilities" )
 	@Produces( MediaType.APPLICATION_JSON )
-	List<Component> findPossibleComponentChildren( @PathParam("name") String applicationName, @PathParam("instancePath") String instancePath );
+	List<Component> findPossibleComponentChildren( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
 	/**

@@ -31,6 +31,7 @@ import javax.ws.rs.core.Response;
 
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.rest.UrlConstants;
+import net.roboconf.dm.rest.json.MapHolder;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
@@ -75,12 +76,14 @@ public interface IManagementWs {
 	 * on the DM's machine.
 	 * </p>
 	 *
-	 * @param localFilePath the file path of a file located on the DM's machine
+	 * @param mapHolder a map holder with a single key whose value is the path of a file on the DM's machine
+	 * @see MapHolder#FILE_LOCAL_PATH
 	 * @return a response
 	 */
 	@POST
 	@Path("/local")
-	Response loadApplication( String localFilePath );
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response loadApplication( MapHolder mapHolder );
 
 	/**
 	 * Lists the applications.
@@ -112,6 +115,5 @@ public interface IManagementWs {
 	 */
 	@DELETE
 	@Path("/{name}/delete")
-	@Produces( MediaType.APPLICATION_JSON )
 	Response deleteApplication( @PathParam("name") String applicationName );
 }

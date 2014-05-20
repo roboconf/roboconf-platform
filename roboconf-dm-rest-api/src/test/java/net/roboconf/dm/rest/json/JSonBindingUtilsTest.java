@@ -17,6 +17,7 @@
 package net.roboconf.dm.rest.json;
 
 import java.io.StringWriter;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -133,7 +134,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_1() throws Exception {
 
-		final String result = "{\"name\":\"instance\",\"path\":\"|instance\",\"status\":\"NOT_DEPLOYED\"}";
+		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Instance inst = new Instance( "instance" );
@@ -152,7 +153,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_2() throws Exception {
 
-		final String result = "{\"name\":\"server\",\"path\":\"|server\",\"status\":\"STARTING\",\"channel\":\"channel4\"}";
+		final String result = "{\"name\":\"server\",\"path\":\"/server\",\"status\":\"STARTING\",\"channel\":\"channel4\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Instance inst = new Instance( "server" ).channel( "channel4" ).status( InstanceStatus.STARTING );
@@ -172,7 +173,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_3() throws Exception {
 
-		final String result = "{\"name\":\"server\",\"path\":\"|vm|server\",\"status\":\"STARTING\",\"component\":{\"name\":\"server-component\"}}";
+		final String result = "{\"name\":\"server\",\"path\":\"/vm/server\",\"status\":\"STARTING\",\"component\":{\"name\":\"server-component\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Instance inst = new Instance( "server" ).status( InstanceStatus.STARTING ).component( new Component( "server-component" ));
@@ -195,7 +196,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_4() throws Exception {
 
-		final String result = "{\"name\":\"server\",\"path\":\"|server\",\"status\":\"STOPPING\",\"component\":{\"name\":\"server-component\",\"alias\":\"this is a server!\"}}";
+		final String result = "{\"name\":\"server\",\"path\":\"/server\",\"status\":\"STOPPING\",\"component\":{\"name\":\"server-component\",\"alias\":\"this is a server!\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Component comp = new Component( "server-component" ).alias( "this is a server!" );
@@ -219,7 +220,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_5() throws Exception {
 
-		final String result = "{\"name\":\"instance\",\"path\":\"|instance\",\"status\":\"NOT_DEPLOYED\",\"data\":{\"ip\":\"127.0.0.1\",\"any field\":\"some value\"}}";
+		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\",\"data\":{\"ip\":\"127.0.0.1\",\"any field\":\"some value\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Instance inst = new Instance( "instance" );
@@ -231,5 +232,34 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+	}
+
+
+	@Test
+	public void testMapHolder() throws Exception {
+
+		final String result = "{\"toto\":\"yes\",\"name\":\"roger\",\"\":\"value\",\"key\":\"\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		MapHolder holder = new MapHolder();
+		holder.getMap().put( "toto", "yes" );
+		holder.getMap().put( "name", "roger" );
+		holder.getMap().put( "", "value" );
+		holder.getMap().put( "key", "" );
+		holder.getMap().put( "null-value", null );
+		holder.getMap().put( null, "null-key" );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, holder );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		MapHolder readHolder = mapper.readValue( result, MapHolder.class );
+		Assert.assertEquals( holder.getMap().size() - 2, readHolder.getMap().size());
+
+		for( Map.Entry<String,String> entry : readHolder.getMap().entrySet()) {
+			Assert.assertTrue( entry.getKey(), holder.getMap().containsKey( entry.getKey()));
+			Assert.assertEquals( entry.getKey(),  entry.getValue(), holder.getMap().get( entry.getKey()));
+		}
 	}
 }

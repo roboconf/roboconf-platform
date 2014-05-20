@@ -293,6 +293,29 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	}
 
 
+	@Test
+	public void testAddInstance_child_incompleteComponent() throws Exception {
+
+		// Pass an incomplete component object to the REST API
+		String mySqlComponentName = this.app.getMySql().getComponent().getName();
+		Instance newMysql = new Instance( "mysql-2" ).component( new Component( mySqlComponentName ));
+
+		Assert.assertEquals( 1, this.app.getTomcatVm().getChildren().size());
+		Assert.assertFalse( this.app.getTomcatVm().getChildren().contains( newMysql ));
+
+		this.client.getApplicationDelegate().addInstance( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm()), newMysql );
+		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
+
+		List<String> paths = new ArrayList<String> ();
+		for( Instance inst : this.app.getTomcatVm().getChildren())
+			paths.add( InstanceHelpers.computeInstancePath( inst ));
+
+		String rootPath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		Assert.assertTrue( paths.contains( rootPath + "/" + newMysql.getName()));
+		Assert.assertTrue( paths.contains( rootPath + "/" + this.app.getTomcat().getName()));
+	}
+
+
 	@Test( expected = ApplicationException.class )
 	public void testAddInstance_child_failure() throws Exception {
 

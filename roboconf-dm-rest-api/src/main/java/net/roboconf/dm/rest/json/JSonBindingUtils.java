@@ -17,13 +17,14 @@
 package net.roboconf.dm.rest.json;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.rest.RestUtils;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -87,6 +88,9 @@ public final class JSonBindingUtils {
 
 		module.addSerializer( Component.class, new ComponentSerializer());
 		module.addDeserializer( Component.class, new ComponentDeserializer());
+
+		module.addSerializer( MapHolder.class, new MapHolderSerializer());
+		module.addDeserializer( MapHolder.class, new MapHolderDeserializer());
 
 		mapper.registerModule( module );
 		return mapper;
@@ -165,8 +169,7 @@ public final class JSonBindingUtils {
 			generator.writeStartObject();
 			if( instance.getName() != null ) {
 				generator.writeStringField( INST_NAME, instance.getName());
-				String path = RestUtils.toRestfulPath( instance );
-				generator.writeStringField( INST_PATH, path );
+				generator.writeStringField( INST_PATH, InstanceHelpers.computeInstancePath( instance ));
 			}
 
 			if( instance.getStatus() != null )
@@ -286,6 +289,54 @@ public final class JSonBindingUtils {
 	        	component.setInstallerName( n.textValue());
 
 			return component;
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for map holders.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class MapHolderSerializer extends JsonSerializer<MapHolder> {
+
+		@Override
+		public void serialize(
+				MapHolder holder,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			for( Map.Entry<String,String> entry : holder.getMap().entrySet()) {
+				if( entry.getKey() != null
+						&& entry.getValue() != null )
+					generator.writeStringField( entry.getKey(), entry.getValue());
+			}
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for a map holder.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class MapHolderDeserializer extends JsonDeserializer<MapHolder> {
+
+		@Override
+		public MapHolder deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        MapHolder result = new MapHolder();
+
+	        for( Iterator<Map.Entry<String,JsonNode>> it = node.fields(); it.hasNext(); ) {
+	        	Map.Entry<String,JsonNode> n = it.next();
+	        	result.getMap().put( n.getKey(), n.getValue().textValue());
+	        }
+
+			return result;
 		}
 	}
 }
