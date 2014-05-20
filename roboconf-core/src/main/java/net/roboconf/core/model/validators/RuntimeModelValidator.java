@@ -245,9 +245,11 @@ public class RuntimeModelValidator {
 					&& ! instance.getComponent().getAncestors().isEmpty())
 				errorCode = ErrorCode.RM_MISSING_INSTANCE_PARENT;
 
-			else if( instance.getParent() != null
-					&& ! instance.getComponent().getAncestors().contains( instance.getParent().getComponent()))
-				errorCode = ErrorCode.RM_INVALID_INSTANCE_PARENT;
+			else if( instance.getParent() != null ) {
+				if( ! instance.getComponent().getAncestors().contains( instance.getParent().getComponent())
+						|| ! instance.getParent().getComponent().getChildren().contains( instance.getComponent()))
+					errorCode = ErrorCode.RM_INVALID_INSTANCE_PARENT;
+			}
 
 			if( errorCode != null ) {
 				StringBuilder sb = new StringBuilder( "One of the following parent was expected: " );
