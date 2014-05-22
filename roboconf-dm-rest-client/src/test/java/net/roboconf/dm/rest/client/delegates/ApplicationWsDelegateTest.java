@@ -29,6 +29,7 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
@@ -39,7 +40,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
-import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;

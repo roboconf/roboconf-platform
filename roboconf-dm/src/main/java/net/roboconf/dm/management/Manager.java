@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.RoboconfError;
 import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
@@ -33,6 +34,7 @@ import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.environment.iaas.IaasResolver;
 import net.roboconf.dm.environment.messaging.DmMessageProcessor;
@@ -44,7 +46,6 @@ import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.utils.ResourceUtils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
@@ -206,6 +207,15 @@ public final class Manager {
 		LoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
 		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
 			throw new InvalidApplicationException( lr.getLoadErrors());
+
+		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( lr.getLoadErrors())) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( warning.getErrorCode().getMsg());
+			if( ! Utils.isEmptyOrWhitespaces( warning.getDetails()))
+				sb.append( warning.getDetails());
+
+			this.logger.info( sb.toString());
+		}
 
 		Application application = lr.getApplication();
 		if( null != findApplicationByName( application.getName()))

@@ -31,6 +31,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
@@ -100,6 +101,10 @@ public class ApplicationWs implements IApplicationWs {
 
 		} catch( DmWasNotInitializedException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+
+		} catch( Exception e ) {
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( e.getMessage()).build();
+			this.logger.finest( Utils.writeException( e ));
 		}
 
 		return response;

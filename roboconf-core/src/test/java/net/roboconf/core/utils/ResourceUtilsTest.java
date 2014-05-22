@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.utils;
+package net.roboconf.core.utils;
 
 import java.io.File;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
@@ -54,19 +55,21 @@ public class ResourceUtilsTest {
 	}
 
 
-	@Test( expected = IllegalArgumentException.class )
+	@Test
 	public void testStoreInstanceResources_inexistingDirectory() throws Exception {
 
 		Instance instance = new Instance( "whatever" ).component( new Component( "comp" ));
-		ResourceUtils.storeInstanceResources( new File( "/file/does/not/exist" ),  instance );
+		Map<?,?> map = ResourceUtils.storeInstanceResources( new File( "/file/does/not/exist" ),  instance );
+		Assert.assertEquals( 0, map.size());
 	}
 
 
-	@Test( expected = IllegalArgumentException.class )
+	@Test
 	public void testStoreInstanceResources_notADirectory() throws Exception {
 
 		Instance instance = new Instance( "whatever" ).component( new Component( "comp" ));
 		File f = this.folder.newFile( "roboconf_.txt" );
-		ResourceUtils.storeInstanceResources( f, instance );
+		Map<?,?> map = ResourceUtils.storeInstanceResources( f, instance );
+		Assert.assertEquals( 0, map.size());
 	}
 }

@@ -52,7 +52,7 @@ public class RoboconfLogFormatter extends Formatter {
 
 		// Format the entire record
 		StringBuilder sb = new StringBuilder();
-		sb.append( "[ " ).append( DF.format( new Date( record.getMillis()))).append(" ] " );
+		sb.append( "[ " ).append( DF.format( new Date( record.getMillis()))).append(" ]" );
 		sb.append( "[ ").append( sbLevel ).append( " ] " );
 		sb.append( record.getSourceClassName()).append("#");
 		sb.append( record.getSourceMethodName());

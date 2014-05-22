@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model.validators;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -136,6 +138,28 @@ public class RuntimeModelValidator {
 		}
 
 		return errors;
+	}
+
+
+	/**
+	 * Validates graph resources.
+	 * @param graphs the graph(s)
+	 * @param projectDirectory the project's directory
+	 * @return a non-null collection of errors
+	 */
+	public static Collection<RoboconfError> validate( Graphs graphs, File projectDirectory ) {
+
+		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
+		for( Component c : ComponentHelpers.findAllComponents( graphs )) {
+			File componentDirectory = ResourceUtils.findInstanceResourcesDirectory( projectDirectory, c.getName());
+			if( ! componentDirectory.exists()) {
+				RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY );
+				error.setDetails( "Component name: " + c.getName());
+				result.add( error );
+			}
+		}
+
+		return result;
 	}
 
 

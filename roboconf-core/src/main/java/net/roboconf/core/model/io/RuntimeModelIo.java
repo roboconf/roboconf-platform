@@ -145,6 +145,9 @@ public class RuntimeModelIo {
 			Collection<RoboconfError> errors = RuntimeModelValidator.validate( graph );
 			result.loadErrors.addAll( errors );
 
+			errors = RuntimeModelValidator.validate( graph, projectDirectory );
+			result.loadErrors.addAll( errors );
+
 			app.setGraphs( graph );
 		}
 
