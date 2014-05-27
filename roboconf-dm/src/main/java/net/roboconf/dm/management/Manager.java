@@ -727,11 +727,8 @@ public final class Manager {
 			}
 		}
 
-		if( ! bulkException.getInstancesToException().isEmpty()) {
-			ma.getLogger().severe( bulkException.getLogMessage( false ));
-			ma.getLogger().finest( bulkException.getLogMessage( true ));
+		if( ! bulkException.getInstancesToException().isEmpty())
 			throw bulkException;
-		}
 	}
 
 
@@ -753,11 +750,8 @@ public final class Manager {
 			}
 		}
 
-		if( ! bulkException.getInstancesToException().isEmpty()) {
-			ma.getLogger().severe( bulkException.getLogMessage( false ));
-			ma.getLogger().finest( bulkException.getLogMessage( true ));
+		if( ! bulkException.getInstancesToException().isEmpty())
 			throw bulkException;
-		}
 	}
 
 
@@ -779,11 +773,8 @@ public final class Manager {
 			}
 		}
 
-		if( ! bulkException.getInstancesToException().isEmpty()) {
-			ma.getLogger().severe( bulkException.getLogMessage( false ));
-			ma.getLogger().finest( bulkException.getLogMessage( true ));
+		if( ! bulkException.getInstancesToException().isEmpty())
 			throw bulkException;
-		}
 	}
 
 
@@ -802,11 +793,8 @@ public final class Manager {
 			}
 		}
 
-		if( ! bulkException.getInstancesToException().isEmpty()) {
-			ma.getLogger().severe( bulkException.getLogMessage( false ));
-			ma.getLogger().finest( bulkException.getLogMessage( true ));
+		if( ! bulkException.getInstancesToException().isEmpty())
 			throw bulkException;
-		}
 	}
 
 
@@ -855,11 +843,8 @@ public final class Manager {
 			}
 		}
 
-		if( ! bulkException.getInstancesToException().isEmpty()) {
-			ma.getLogger().severe( bulkException.getLogMessage( false ));
-			ma.getLogger().finest( bulkException.getLogMessage( true ));
+		if( ! bulkException.getInstancesToException().isEmpty())
 			throw bulkException;
-		}
 	}
 
 

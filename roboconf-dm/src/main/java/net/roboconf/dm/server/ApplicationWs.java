@@ -98,6 +98,8 @@ public class ApplicationWs implements IApplicationWs {
 
 		} catch( BulkActionException e ) {
 			response = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
+			this.logger.severe( e.getLogMessage( false ));
+			this.logger.finest( e.getLogMessage( true ));
 
 		} catch( DmWasNotInitializedException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
