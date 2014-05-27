@@ -27,11 +27,13 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.actions.ApplicationAction;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo;
 import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ResourceUtils;
@@ -42,10 +44,17 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.BulkActionException;
 import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
+import net.roboconf.dm.management.exceptions.ImpossibleRestorationException;
 import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.dm.persistence.IDmStorage;
+import net.roboconf.dm.persistence.IDmStorage.DmStorageApplicationBean;
+import net.roboconf.dm.persistence.IDmStorage.DmStorageBean;
+import net.roboconf.dm.persistence.IDmStorage.DmStorageRootInstanceBean;
+import net.roboconf.dm.persistence.NoStorage;
+import net.roboconf.dm.utils.PersistenceUtils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
@@ -54,6 +63,7 @@ import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
@@ -82,10 +92,12 @@ public final class Manager {
 	private final Map<String,ManagedApplication> appNameToManagedApplication;
 	private final Logger logger;
 
-	private MessageServerClientFactory factory = new MessageServerClientFactory();
-	private IaasResolver iaasResolver;
-	private IDmClient messagingClient;
-	private String messageServerIp;
+	private MessageServerClientFactory factory;
+	private IDmStorage storage;
+
+	IaasResolver iaasResolver;
+	IDmClient messagingClient;
+	String messageServerIp;
 
 
 
@@ -95,6 +107,9 @@ public final class Manager {
 	private Manager() {
 		this.appNameToManagedApplication = new HashMap<String,ManagedApplication> ();
 		this.logger = Logger.getLogger( getClass().getName());
+
+		this.factory = new MessageServerClientFactory();
+		this.storage = new NoStorage();
 		this.iaasResolver = new IaasResolver();
 		this.messagingClient = this.factory.createDmClient();
 	}
@@ -103,7 +118,7 @@ public final class Manager {
 	/**
 	 * @return the appNameToManagedApplication
 	 */
-	public Map<String, ManagedApplication> getAppNameToManagedApplication() {
+	public Map<String,ManagedApplication> getAppNameToManagedApplication() {
 		return this.appNameToManagedApplication;
 	}
 
@@ -117,7 +132,7 @@ public final class Manager {
 	 *
 	 * @param messageServerIp the message Server IP to set
 	 * @return true if the change was made, false otherwise
-	 * @throws IOException
+	 * @throws IOException if a connection could not be established
 	 */
 	public boolean tryToChangeMessageServerIp( String messageServerIp ) throws IOException {
 
@@ -141,14 +156,6 @@ public final class Manager {
 		}
 
 		return canChange;
-	}
-
-
-	/**
-	 * @return the messageServerIp
-	 */
-	public String getMessageServerIp() {
-		return this.messageServerIp;
 	}
 
 
@@ -179,19 +186,18 @@ public final class Manager {
 	 * @return an application, or null if it was not found
 	 */
 	public Application findApplicationByName( String applicationName ) {
-
 		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
-		Application result = null;
-		if( ma != null )
-			result = ma.getApplication();
-
-		return result;
+		return ma != null ? ma.getApplication() : null;
 	}
 
 
 	/**
 	 * Loads a new application.
-	 * @param applicationFilesDirectory
+	 * <p>
+	 * An application cannot be loaded before the messaging client connection was established.
+	 * </p>
+	 *
+	 * @param applicationFilesDirectory the application's directory
 	 * @return the managed application that was created
 	 * @throws AlreadyExistingException if the application already exists
 	 * @throws InvalidApplicationException if the application contains critical errors
@@ -204,30 +210,124 @@ public final class Manager {
 		if( ! isConnectedToTheMessagingServer())
 			throw new DmWasNotInitializedException();
 
-		LoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
-		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
-			throw new InvalidApplicationException( lr.getLoadErrors());
+		ManagedApplication ma = load( applicationFilesDirectory );
+		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values(), ma, this.messageServerIp );
+		this.storage.saveManagerState( managerState );
 
-		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( lr.getLoadErrors())) {
-			StringBuilder sb = new StringBuilder();
-			sb.append( warning.getErrorCode().getMsg());
-			if( ! Utils.isEmptyOrWhitespaces( warning.getDetails()))
-				sb.append( warning.getDetails());
-
-			this.logger.info( sb.toString());
-		}
-
-		Application application = lr.getApplication();
-		if( null != findApplicationByName( application.getName()))
-			throw new AlreadyExistingException( application.getName());
-
-		this.messagingClient.listenToAgentMessages( application, ListenerCommand.START );
-
-		ManagedApplication ma = new ManagedApplication( application, applicationFilesDirectory );
-		this.appNameToManagedApplication.put( application.getName(), ma );
-		ma.getLogger().fine( "Application " + application.getName() + " was successfully loaded and added." );
+		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
+		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
+		ma.getLogger().fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 
 		return ma;
+	}
+
+
+	/**
+	 * Retrieves the manager's state.
+	 * <p>
+	 * This operation must be called before loading manually an application.
+	 * When an application's state is restored, and that this
+	 * restoration encounters an error, this application is skipped and a log entry is created.
+	 * </p>
+	 * <p>
+	 * If the saved IP address for the messaging server is valid, there is no need to
+	 * invoke {@link #tryToChangeMessageServerIp(String)}. It will be restored automatically.
+	 * Otherwise, if it has changed, then {@link #tryToChangeMessageServerIp(String)} should be invoked
+	 * before this method.
+	 * </p>
+	 *
+	 * @throws IOException if the manager's state could not be read
+	 * @throws ImpossibleRestorationException if the restoration cannot be performed
+	 */
+	public void restoreManagerState() throws IOException, ImpossibleRestorationException {
+
+		// Do nothing if application where already registered
+		if( ! this.appNameToManagedApplication.isEmpty())
+			throw new ImpossibleRestorationException();
+
+		DmStorageBean managerState = this.storage.restoreManagerState();
+		for( DmStorageApplicationBean app : managerState.getApplications()) {
+
+			// Load the application
+			if( Utils.isEmptyOrWhitespaces( app.getApplicationDirectoryPath())) {
+				this.logger.warning( "Skipping application " + app.getApplicationName() + ": no directory was saved." );
+				continue;
+			}
+
+			File dir = new File( app.getApplicationDirectoryPath());
+			if( ! dir.exists() || ! dir.isDirectory()) {
+				this.logger.warning( "Skipping application " + app.getApplicationName() + ": the directory " + dir.getAbsolutePath() + " does not exist." );
+				continue;
+			}
+
+			ManagedApplication ma;
+			try {
+				ma = load( dir );
+
+			} catch( AlreadyExistingException e ) {
+				this.logger.warning( "Skipping application " + app.getApplicationName() + ": it was already loaded." );
+				this.logger.finest( Utils.writeException( e ));
+				continue;
+
+			} catch( InvalidApplicationException e ) {
+				this.logger.warning( "Skipping application " + app.getApplicationName() + ": invalid application." );
+				this.logger.finest( Utils.writeException( e ));
+				continue;
+			}
+
+			// Update the instances
+			for( DmStorageRootInstanceBean root : app.getRootInstances()) {
+				Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/" + root.getRootInstanceName());
+				if( rootInstance == null ) {
+					Component rootComponent = ComponentHelpers.findComponent( ma.getApplication().getGraphs(), root.getComponentName());
+					if( rootComponent == null ) {
+						this.logger.warning( "Skipping application " + app.getApplicationName() + ": instance " + root.getRootInstanceName() + " could not be resolved." );
+						continue;
+					}
+
+					rootInstance = new Instance( root.getRootInstanceName()).component( rootComponent );
+					ma.getApplication().getRootInstances().add( rootInstance );
+				}
+
+				rootInstance.setStatus( InstanceStatus.RESTORING );
+				rootInstance.getData().put( Instance.IP_ADDRESS, root.getIpAddress());
+				rootInstance.getData().put( Instance.MACHINE_ID, root.getMachineId());
+			}
+
+			// So far, so good...
+			this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
+			ma.getLogger().fine( "Application " + ma.getApplication().getName() + " was successfully loaded for restoration. Remote states still have to be retrieved." );
+		}
+
+		// Restore the messaging?
+		if( ! tryToChangeMessageServerIp( managerState.getMessagingServerIp()))
+			this.logger.info( "Could not restore the messaging server IP. The current one will be used." );
+
+		// Send messages to the agents to get their model.
+		if( this.storage.requiresAgentContact()) {
+			for( ManagedApplication m : this.appNameToManagedApplication.values()) {
+				for( Instance rootInstance : m.getApplication().getRootInstances()) {
+					if( rootInstance.getStatus() == InstanceStatus.RESTORING )
+						this.messagingClient.sendMessageToAgent( m.getApplication(), rootInstance, new MsgCmdInstanceRestore());
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Saves the manager's state.
+	 */
+	public void saveManagerState() {
+
+		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values(), this.messageServerIp );
+		try {
+			this.storage.saveManagerState( managerState );
+
+		} catch( IOException e ) {
+			this.logger.severe( "The deployment manager's state could not be saved." );
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
@@ -323,9 +423,9 @@ public final class Manager {
 			throw new DmWasNotInitializedException();
 
 		// Find the instances to work on
-		// Undeploy are automatically applied to children on the agent
-		// FIXME: there is something to do also for stop
-		if( action == ApplicationAction.undeploy )
+		// Undeploy and stop are automatically applied to children on the agent
+		if( action == ApplicationAction.undeploy
+				|| action == ApplicationAction.stop )
 			applyToAllChildren = false;
 
 		List<Instance> instances = findInstancesToProcess( ma.getApplication(), instancePath, applyToAllChildren );
@@ -360,7 +460,7 @@ public final class Manager {
 		StringBuilder sb = new StringBuilder();
 		sb.append( "Action " );
 		sb.append( actionAS );
-		sb.append( " was succesfully transmitted to " );
+		sb.append( " was successfully transmitted to " );
 		if( instancePath == null ) {
 			sb.append( "all the instances" );
 
@@ -490,19 +590,11 @@ public final class Manager {
 
 
 	/**
-	 * @return the iaasResolver
+	 * Sets the storage handler to use.
+	 * @param storage a non-null storage handler
 	 */
-	public IaasResolver getIaasResolver() {
-		return this.iaasResolver;
-	}
-
-
-	/**
-	 * Mainly for tests.
-	 * @return the messagingClient
-	 */
-	public IDmClient getMessagingClient() {
-		return this.messagingClient;
+	public void setStorage( IDmStorage storage ) {
+		this.storage = storage;
 	}
 
 
@@ -550,6 +642,8 @@ public final class Manager {
 			this.logger.severe( "Machine " + rootInstance.getName() + " could not be deleted. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
+
+		saveManagerState();
 	}
 
 
@@ -722,11 +816,12 @@ public final class Manager {
 		BulkActionException bulkException = new BulkActionException( true );
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
+				saveManagerState();
 				try {
 
 					// If the VM creation was already requested...
 					// ... then its machine ID has already been set.
-					// It does not mean the VM is already created, it may take stome time.
+					// It does not mean the VM is already created, it may take some time.
 					String machineId = instance.getData().get( Instance.MACHINE_ID );
 					if( machineId == null ) {
 						instance.setStatus( InstanceStatus.DEPLOYING );
@@ -749,7 +844,6 @@ public final class Manager {
 
 			} else {
 				try {
-					// FIXME: we may have to add the instance on the agent too, just like for root instances
 					Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
 					MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( InstanceHelpers.computeInstancePath( instance ), instanceResources );
 					this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
@@ -766,5 +860,29 @@ public final class Manager {
 			ma.getLogger().finest( bulkException.getLogMessage( true ));
 			throw bulkException;
 		}
+	}
+
+
+
+	private ManagedApplication load( File applicationFilesDirectory ) throws AlreadyExistingException, InvalidApplicationException {
+
+		LoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
+		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
+			throw new InvalidApplicationException( lr.getLoadErrors());
+
+		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( lr.getLoadErrors())) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( warning.getErrorCode().getMsg());
+			if( ! Utils.isEmptyOrWhitespaces( warning.getDetails()))
+				sb.append( " " + warning.getDetails());
+
+			this.logger.warning( sb.toString());
+		}
+
+		Application application = lr.getApplication();
+		if( null != findApplicationByName( application.getName()))
+			throw new AlreadyExistingException( application.getName());
+
+		return new ManagedApplication( application, applicationFilesDirectory );
 	}
 }

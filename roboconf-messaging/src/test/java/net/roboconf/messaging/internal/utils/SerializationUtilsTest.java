@@ -36,6 +36,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
@@ -160,6 +161,14 @@ public class SerializationUtilsTest {
 
 		msg = new MsgCmdInstanceRemove( new Instance( "root" ));
 		checkBasics( msg, MsgCmdInstanceRemove.class );
+	}
+
+
+	@Test
+	public void testMessage_instanceRestore() throws Exception {
+
+		MsgCmdInstanceRestore msg = new MsgCmdInstanceRestore();
+		checkBasics( msg, MsgCmdInstanceRestore.class );
 	}
 
 

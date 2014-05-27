@@ -71,17 +71,17 @@ public class ManagerWithMockedMessagingClientTest {
 		final String ip = "192.168.1.15";
 		final String newIp = "192.168.1.14";
 
-		Assert.assertNull( Manager.INSTANCE.getMessageServerIp());
+		Assert.assertNull( Manager.INSTANCE.messageServerIp );
 		Assert.assertTrue( Manager.INSTANCE.tryToChangeMessageServerIp( ip ));
-		Assert.assertEquals( ip, Manager.INSTANCE.getMessageServerIp());
+		Assert.assertEquals( ip, Manager.INSTANCE.messageServerIp );
 
 		Manager.INSTANCE.getAppNameToManagedApplication().put( "app1", null );
 		Assert.assertFalse( Manager.INSTANCE.tryToChangeMessageServerIp( newIp ));
-		Assert.assertEquals( ip, Manager.INSTANCE.getMessageServerIp());
+		Assert.assertEquals( ip, Manager.INSTANCE.messageServerIp );
 
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
 		Assert.assertTrue( Manager.INSTANCE.tryToChangeMessageServerIp( newIp ));
-		Assert.assertEquals( newIp, Manager.INSTANCE.getMessageServerIp());
+		Assert.assertEquals( newIp, Manager.INSTANCE.messageServerIp );
 	}
 
 
@@ -143,7 +143,7 @@ public class ManagerWithMockedMessagingClientTest {
 			app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
 			Manager.INSTANCE.shutdownApplication( app.getName());
 
-			TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+			TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 			Assert.assertEquals( 1, client.sentMessages.size());
 			Assert.assertEquals( MsgCmdInstanceUndeploy.class, client.sentMessages.get( 0 ).getClass());
 
@@ -203,7 +203,7 @@ public class ManagerWithMockedMessagingClientTest {
 			ManagedApplication ma = new ManagedApplication( app, f );
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-			TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+			TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 			Assert.assertFalse( client.connectionClosed.get());
 
 			Manager.INSTANCE.cleanUpAll();
@@ -374,10 +374,10 @@ public class ManagerWithMockedMessagingClientTest {
 			ManagedApplication ma = new ManagedApplication( app, rootDir );
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-			TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+			TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.iaasResolver;
 			Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-			TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+			TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 			Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 			String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
@@ -417,10 +417,10 @@ public class ManagerWithMockedMessagingClientTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.iaasResolver;
 		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
@@ -440,13 +440,19 @@ public class ManagerWithMockedMessagingClientTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.iaasResolver;
 		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
+		// Stopping a root => no message sent to the children
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		Manager.INSTANCE.perform( app.getName(), ApplicationAction.stop.toString(), instancePath, true );
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+
+		// Stop a child directly when it is not a VM => 1 message
+		instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.stop.toString(), instancePath, true );
 
 		Assert.assertEquals( 1, msgClient.sentMessages.size());
@@ -463,10 +469,10 @@ public class ManagerWithMockedMessagingClientTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
+		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.iaasResolver;
 		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
@@ -497,7 +503,7 @@ public class ManagerWithMockedMessagingClientTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 
 		// Set up a "trap".
 		// Remove MySQL will fail. But removing Tomcat instances will succeed.
@@ -532,7 +538,7 @@ public class ManagerWithMockedMessagingClientTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 

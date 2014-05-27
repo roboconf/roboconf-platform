@@ -90,7 +90,7 @@ public class TestMessageServerClient implements IDmClient {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	public static final class DmMessageServerClientFactory extends MessageServerClientFactory {
+	public static class DmMessageServerClientFactory extends MessageServerClientFactory {
 		@Override
 		public IAgentClient createAgentClient() {
 			return null;

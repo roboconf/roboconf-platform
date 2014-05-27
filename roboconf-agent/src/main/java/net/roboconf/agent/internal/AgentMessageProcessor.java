@@ -41,10 +41,12 @@ import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
@@ -127,8 +129,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			else if( message instanceof MsgCmdImportRequest )
 				processMsgImportRequest((MsgCmdImportRequest) message );
 
+			else if( message instanceof MsgCmdInstanceRestore )
+				processMsgInstanceRestore((MsgCmdInstanceRestore) message );
+
 			else
-				this.logger.warning( getName() + ": got an undetermined message to process. " + message.getClass().getName());
+				this.logger.warning( getName() + " got an undetermined message to process. " + message.getClass().getName());
 
 		} catch( IOException e ) {
 			this.logger.severe( "A problem occurred with the messaging. " + e.getMessage());
@@ -139,6 +144,17 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.finest( Utils.writeException( e ));
 		}
 	}
+
+
+	/**
+	 * Sends the local model to the DM.
+	 * @param message the initial request
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	void processMsgInstanceRestore( MsgCmdInstanceRestore message ) throws IOException {
+		this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceRestoration( this.appName, this.rootInstance ));
+	}
+
 
 
 	/**

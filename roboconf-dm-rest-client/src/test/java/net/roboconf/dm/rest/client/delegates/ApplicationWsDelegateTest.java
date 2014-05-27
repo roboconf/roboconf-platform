@@ -40,6 +40,7 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
+import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;
@@ -161,8 +162,15 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		// The interest of this method is to check that URLs
 		// and instance paths are correctly handled by the DM.
+		final TestMessageServerClient msgClient = new TestMessageServerClient();
+		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory() {
+			@Override
+			public IDmClient createDmClient() {
+				return msgClient;
+			}
+		});
+
 		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, rootDir ));
-		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
 		try {
 			Assert.assertEquals( 0, msgClient.sentMessages.size());
 			this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, null, true );
