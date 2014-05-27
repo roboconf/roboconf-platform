@@ -30,7 +30,7 @@ public interface OpenstackConstants {
 	String COMPUTE_URL = "openstack.computeUrl";
 	String USER = "openstack.user";
 	String PASSWORD = "openstack.password";
-	String VOLUME_NAME = "openstack.volumeName";
+	String VOLUME_ID = "openstack.volumeId";
 	String VOLUME_MOUNT_POINT = "openstack.volumeMountPoint";
 	String VOLUME_SIZE_GB = "openstack.volumeSizeGb";
 }
