@@ -26,7 +26,6 @@ import java.util.logging.Logger;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.ec2.internal.Ec2Constants;
-import net.roboconf.iaas.ec2.internal.Ec2Properties;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +37,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.EbsBlockDevice;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
@@ -51,7 +51,7 @@ public class IaasEc2 implements IaasInterface {
 
 	private Logger logger;
 	private AmazonEC2 ec2;
-	private Ec2Properties ec2Properties;
+	private Map<String, String> iaasProperties;
 
 
 	/**
@@ -79,14 +79,14 @@ public class IaasEc2 implements IaasInterface {
 	public void setIaasProperties(Map<String, String> iaasProperties) throws IaasException {
 
 		// Check the properties
-		parseProperties( iaasProperties );
+		parseProperties(iaasProperties );
+		this.iaasProperties = iaasProperties;
 
 		// Configure the IaaS client
-		AWSCredentials credentials = new BasicAWSCredentials( this.ec2Properties.getAccessKey(), this.ec2Properties.getSecretKey());
+		AWSCredentials credentials = new BasicAWSCredentials( iaasProperties.get(Ec2Constants.EC2_ACCESS_KEY), iaasProperties.get(Ec2Constants.EC2_SECRET_KEY));
 		this.ec2 = new AmazonEC2Client( credentials );
-		this.ec2.setEndpoint( this.ec2Properties.getEndpoint());
+		this.ec2.setEndpoint( iaasProperties.get(Ec2Constants.EC2_ENDPOINT));
 	}
-
 
 	/*
 	 * (non-Javadoc)
@@ -104,7 +104,7 @@ public class IaasEc2 implements IaasInterface {
 		String instanceId = null;
 		try {
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode(
-					this.ec2Properties.getAmiVmNode(),
+					this.iaasProperties.get(Ec2Constants.AMI_VM_NODE),
 					ipMessagingServer,
 					channelName,
 					applicationName );
@@ -185,18 +185,7 @@ public class IaasEc2 implements IaasInterface {
 			if( StringUtils.isBlank( iaasProperties.get( property )))
 				throw new IaasException( "The value for " + property + " cannot be null or empty." );
 		}
-
-		// Create a bean
-		this.ec2Properties = new Ec2Properties();
-		this.ec2Properties.setEndpoint( iaasProperties.get( Ec2Constants.EC2_ENDPOINT ).trim());
-		this.ec2Properties.setAccessKey( iaasProperties.get( Ec2Constants.EC2_ACCESS_KEY ).trim());
-		this.ec2Properties.setSecretKey( iaasProperties.get( Ec2Constants.EC2_SECRET_KEY ).trim());
-		this.ec2Properties.setAmiVmNode( iaasProperties.get( Ec2Constants.AMI_VM_NODE ).trim());
-		this.ec2Properties.setVmInstanceType( iaasProperties.get( Ec2Constants.VM_INSTANCE_TYPE ).trim());
-		this.ec2Properties.setSshKeyName( iaasProperties.get( Ec2Constants.SSH_KEY_NAME ).trim());
-		this.ec2Properties.setSecurityGroupName( iaasProperties.get( Ec2Constants.SECURITY_GROUP_NAME ).trim());
 	}
-
 
 	/**
 	 * Prepares the request.
@@ -210,9 +199,9 @@ public class IaasEc2 implements IaasInterface {
 	private RunInstancesRequest prepareEC2RequestNode( String machineImageId, String ipMessagingServer, String channelName, String applicationName ) throws UnsupportedEncodingException {
 
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
-		runInstancesRequest.setInstanceType( this.ec2Properties.getVmInstanceType());
+		runInstancesRequest.setInstanceType( this.iaasProperties.get(Ec2Constants.VM_INSTANCE_TYPE));
 		if( StringUtils.isBlank( machineImageId ))
-			runInstancesRequest.setImageId( this.ec2Properties.getAmiVmNode());
+			runInstancesRequest.setImageId( this.iaasProperties.get(Ec2Constants.AMI_VM_NODE));
 		else
 			runInstancesRequest.setImageId( machineImageId );
 
@@ -220,8 +209,8 @@ public class IaasEc2 implements IaasInterface {
 		runInstancesRequest.setKernelId( "aki-62695816" );
 		runInstancesRequest.setMinCount( 1 );
 		runInstancesRequest.setMaxCount( 1 );
-		runInstancesRequest.setKeyName( this.ec2Properties.getSshKeyName());
-		runInstancesRequest.setSecurityGroups( Arrays.asList( this.ec2Properties.getSecurityGroupName()));
+		runInstancesRequest.setKeyName( this.iaasProperties.get(Ec2Constants.SSH_KEY_NAME));
+		runInstancesRequest.setSecurityGroups( Arrays.asList( this.iaasProperties.get(Ec2Constants.SECURITY_GROUP_NAME)));
 
 /*	
 		// Create the block device mapping to describe the root partition.
