@@ -46,14 +46,12 @@
 			<groupId>com.cloudbees.thirdparty</groupId>
 			<artifactId>vijava</artifactId>
 			<version>5.1</version>
-			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>
-			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -73,7 +71,7 @@
 					<instructions>
 						<Import-Package>net.roboconf.iaas.api.*</Import-Package>
 						<Export-Package>net.roboconf.iaas.vmware</Export-Package>
-						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Dependency>*;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>

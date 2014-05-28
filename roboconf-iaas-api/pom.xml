@@ -44,7 +44,7 @@
 				<configuration>
 					<instructions>
 						<Export-Package>net.roboconf.iaas.api.*</Export-Package>
-						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Dependency>*;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>

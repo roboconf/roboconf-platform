@@ -46,42 +46,36 @@
 			<groupId>com.woorea</groupId>
 			<artifactId>nova-client</artifactId>
 			<version>3.2.1</version>
-			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>keystone-client</artifactId>
 			<version>3.2.1</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>jersey-connector</artifactId>
 			<version>3.2.1</version>
-			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>nova-model</artifactId>
 			<version>3.2.1</version>
-			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>keystone-model</artifactId>
 			<version>3.2.1</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>20041127.091804</version>
-			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -101,7 +95,7 @@
 					<instructions>
 						<Import-Package>net.roboconf.iaas.api.*</Import-Package>
 						<Export-Package>net.roboconf.iaas.openstack</Export-Package>
-						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Dependency>*;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
