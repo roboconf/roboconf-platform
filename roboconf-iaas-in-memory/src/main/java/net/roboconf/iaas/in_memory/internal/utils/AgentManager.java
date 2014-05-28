@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.local.internal.utils;
+package net.roboconf.iaas.in_memory.internal.utils;
 
 import java.util.HashMap;
 import java.util.Map;

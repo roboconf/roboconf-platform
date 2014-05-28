@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.local;
+package net.roboconf.iaas.in_memory;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import net.roboconf.agent.AgentLauncher;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.local.internal.utils.AgentManager;
+import net.roboconf.iaas.in_memory.internal.utils.AgentManager;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**

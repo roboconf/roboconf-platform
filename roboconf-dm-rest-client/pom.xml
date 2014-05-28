@@ -118,6 +118,20 @@
   			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-messaging</artifactId>
+  			<version>1.0-SNAPSHOT</version>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-iaas-api</artifactId>
+  			<version>1.0-SNAPSHOT</version>
+  			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>

@@ -33,6 +33,7 @@
 	<artifactId>roboconf-dm</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: Deployment Manager</name>
+	<packaging>bundle</packaging>
 	
 	<dependencies>
 		<dependency>
@@ -69,28 +70,12 @@
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-iaas-azure</artifactId>
   			<version>1.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-codec</groupId>
-					<artifactId>commons-codec</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-iaas-ec2</artifactId>
 			<version>1.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-codec</groupId>
-					<artifactId>commons-codec</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-annotations</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		
 		<dependency>
@@ -109,42 +94,19 @@
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-iaas-openstack</artifactId>
   			<version>1.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-codec</groupId>
-					<artifactId>commons-codec</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.woorea</groupId>
-					<artifactId>nova-client</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.woorea</groupId>
-					<artifactId>keystone-client</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>com.woorea</groupId>
-					<artifactId>jersey-connector</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-iaas-vmware</artifactId>
   			<version>1.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.codehaus.jackson</groupId>
-					<artifactId>jackson-core-asl</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<dependency>
   			<groupId>com.sun.jersey</groupId>
   			<artifactId>jersey-core</artifactId>
   			<version>${jersey.stack.version}</version>
+  			<scope>provided</scope>
 		</dependency>
 		
 		<!-- Unlike what the Maven dependency plug-in says, this dependency is required! -->
@@ -152,6 +114,7 @@
 			<groupId>com.fasterxml.jackson.jaxrs</groupId>
 			<artifactId>jackson-jaxrs-json-provider</artifactId>
 			<version>${jackson.stack.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<!-- Be careful, these dependencies are required through the web.xml -->
@@ -159,18 +122,21 @@
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>
 			<version>4.2</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-server</artifactId>
 			<version>${jersey.stack.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-servlet</artifactId>
 			<version>${jersey.stack.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -194,6 +160,19 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Import-Package>net.roboconf.core.*;net.roboconf.dm.rest</Import-Package>
+						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+					</instructions>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

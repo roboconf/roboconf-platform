@@ -52,12 +52,14 @@
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 			<version>1.3</version>
+			<scope>provided</scope>
 		</dependency>  
 		
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.1</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -75,8 +77,10 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Import-Package>net.roboconf.iaas.api.*</Import-Package>
+						<Import-Package>net.roboconf.iaas.api.*;net.roboconf.core.utils.*</Import-Package>
 						<Export-Package>net.roboconf.iaas.azure</Export-Package>
+						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

@@ -33,6 +33,7 @@
 	<artifactId>roboconf-plugin-logger</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: Plugin :: Logger</name>
+	<packaging>bundle</packaging>
 	
 	<dependencies>
 		<dependency>
@@ -47,4 +48,22 @@
   			<version>1.0-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Import-Package>net.roboconf.core.*;net.roboconf.plugin.api</Import-Package>
+						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
 </project>

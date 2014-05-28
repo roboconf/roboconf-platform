@@ -70,7 +70,9 @@
 				<configuration>
 					<instructions>
 						<Import-Package>net.roboconf.iaas.api.*</Import-Package>
-						<Export-Package>net.roboconf.iaas.local</Export-Package>
+						<Export-Package>net.roboconf.iaas.in_memory</Export-Package>
+						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

@@ -47,6 +47,7 @@
 			<groupId>com.rabbitmq</groupId>
 			<artifactId>amqp-client</artifactId>
 			<version>3.2.4</version>
+			<scope>provided</scope>
 		</dependency>
 	
 		<dependency>
@@ -65,6 +66,8 @@
 				<configuration>
 					<instructions>
 						<Export-Package>!net.roboconf.messaging.internal.*, net.roboconf.messaging.*</Export-Package>
+						<Embed-Dependency>*;scope=provided;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>
