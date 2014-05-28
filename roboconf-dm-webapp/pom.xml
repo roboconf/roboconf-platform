@@ -35,6 +35,10 @@
 	<name>Roboconf :: Deployment Manager :: Web Application</name>
 	<packaging>war</packaging>
 	
+	<properties>
+		<web.client.git.url>git://github.com/roboconf/roboconf-web-administration.git</web.client.git.url>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -74,8 +78,52 @@
 			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<phase>generate-sources</phase>
+						<configuration>
+							<target>
+								<!-- Clone the Git repository -->
+								<exec dir="${project.build.directory}" executable="git" failonerror="true">
+									<arg value="clone" />
+									<arg value="${web.client.git.url}" />
+								</exec>
+								
+								<!-- Execute npm install -->
+								<exec executable="cmd" dir="${project.build.directory}/roboconf-web-administration" osfamily="windows" failonerror="true">
+									<arg line="/c npm install"/>
+								</exec>
+								<exec executable="bash" dir="${project.build.directory}/roboconf-web-administration" osfamily="unix" failonerror="true">
+									<arg line="npm install"/>
+								</exec>
+								
+								<!-- 
+									TODO: we should use grunt to assemble the final package.
+									See http://addyosmani.com/blog/making-maven-grunt/ 
+								-->
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.3</version>
+				<configuration>
+					<webResources>
+						<resource>
+							<directory>${project.build.directory}/roboconf-web-administration/app</directory>
+							<targetPath>client</targetPath>
+						</resource>
+					</webResources>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
