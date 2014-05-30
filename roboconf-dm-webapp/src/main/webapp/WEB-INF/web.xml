@@ -17,7 +17,7 @@
 		
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-			<param-value>net.roboconf.dm.server;net.roboconf.dm.rest.json</param-value>
+			<param-value>com.fasterxml.jackson.jaxrs.json;net.roboconf.dm.server;net.roboconf.dm.rest.json</param-value>
 		</init-param>
 		
 		<init-param>

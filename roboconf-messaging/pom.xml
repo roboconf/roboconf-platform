@@ -41,6 +41,7 @@
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-core</artifactId>
 			<version>1.0-SNAPSHOT</version>
+			<scope>provided</scope>
 		</dependency>
 	
 		<dependency>
@@ -65,7 +66,7 @@
 				<configuration>
 					<instructions>
 						<Export-Package>!net.roboconf.messaging.internal.*, net.roboconf.messaging.*</Export-Package>
-						<Embed-Dependency>*;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
