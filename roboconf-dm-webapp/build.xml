@@ -8,7 +8,7 @@
 	</target>
 
 	<!-- Clone the Git repository -->
-	<target name="target.clone" depends="target.check" unless="already.cloned" description="Cloning the web-administration repository...">
+	<target name="target.clone" depends="target.check" description="Cloning the web-administration repository...">
 		<exec dir="${project.build.directory}" executable="git" failonerror="true">
 			<arg value="clone" />
 			<arg value="${web.client.git.url}" />
