@@ -39,13 +39,14 @@ import com.woorea.openstack.nova.model.FloatingIps;
 import com.woorea.openstack.nova.model.Server;
 import com.woorea.openstack.nova.model.ServerForCreate;
 import com.woorea.openstack.nova.model.Volume;
+import com.woorea.openstack.nova.model.VolumeForCreate;
+import com.woorea.openstack.nova.model.Volumes;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
 public class IaasOpenstack implements IaasInterface {
 
-	//TODO replace all println() with logger...
 	private Logger logger;
 
 	private String machineImageId;
@@ -87,25 +88,25 @@ public class IaasOpenstack implements IaasInterface {
 
 		this.iaasProperties = iaasProperties;
 
-		this.machineImageId = iaasProperties.get("openstack.image");
-		this.tenantId = iaasProperties.get("openstack.tenantId");
-		this.keypair = iaasProperties.get("openstack.keypair");
-		this.floatingIpPool = iaasProperties.get("openstack.floatingIpPool");
-		String val = iaasProperties.get("openstack.flavor");
+		this.machineImageId = iaasProperties.get(OpenstackConstants.IMAGE);
+		this.tenantId = iaasProperties.get(OpenstackConstants.TENANT_ID);
+		this.keypair = iaasProperties.get(OpenstackConstants.KEYPAIR);
+		this.floatingIpPool = iaasProperties.get(OpenstackConstants.FLOATING_IP_POOL);
+		String val = iaasProperties.get(OpenstackConstants.FLAVOR);
 		if(val != null) this.flavor = val;
-		val = iaasProperties.get("openstack.securityGroup");
+		val = iaasProperties.get(OpenstackConstants.SECURITY_GROUP);
 		if(val != null) this.securityGroup = val;
 
-		this.identityUrl = iaasProperties.get("openstack.identityUrl");
-		this.computeUrl = iaasProperties.get("openstack.computeUrl");
+		this.identityUrl = iaasProperties.get(OpenstackConstants.IDENTITY_URL);
+		this.computeUrl = iaasProperties.get(OpenstackConstants.COMPUTE_URL);
 
 		try {
 			Keystone keystone = new Keystone(this.identityUrl);
 			//Keystone keystone = new Keystone("http://localhost:8888/v2.0");
 
 			Authenticate auth = keystone.tokens().authenticate(
-					new UsernamePassword(iaasProperties.get("openstack.user"),
-							iaasProperties.get("openstack.password")));
+					new UsernamePassword(iaasProperties.get(OpenstackConstants.USER),
+							iaasProperties.get(OpenstackConstants.PASSWORD)));
 			if(this.tenantId != null) auth = auth.withTenantId(this.tenantId);
 
 			Access access = auth.execute();
@@ -161,33 +162,63 @@ public class IaasOpenstack implements IaasInterface {
 				+ "\nchannelName=" + channelName
 				+ "\nipMessagingServer=" + ipMessagingServer;
 		serverForCreate.setUserData(new String(Base64.encodeBase64(userData.getBytes())));
+		
+		// Is there any volume (ID or name) to attach ?
+		String volumeIdToAttach = iaasProperties.get(OpenstackConstants.VOLUME_ID);
+		if(volumeIdToAttach != null) {
 
-		Volume toAttach = null;
-		/*
-		String volumeName = TBD extract volume name from config;
-		if(volumeName != null) {
-			Volumes volumes = this.novaClient.volumes().list(false).execute();
-			for(Volume volume : volumes) {
-				if(volume.getName().equals(volumeName)) {
-					toAttach = volume;
-					break;
+			boolean volumeFound = false;
+			try {
+				// Volume not found may return a 404... that in turn throws a RuntimeException !
+				volumeFound = (this.novaClient.volumes().show(volumeIdToAttach).execute() != null);
+			} catch(Throwable t) {
+				volumeFound = false;
+			}
+
+			if(! volumeFound) {
+				// Volume not found: assume volume ID is in fact a volume name.
+				String volumeName = new String(volumeIdToAttach);
+				volumeIdToAttach = null;
+				Volumes volumes = this.novaClient.volumes().list(false).execute();
+				for(Volume volume : volumes) {
+					if(volume.getName().equals(volumeName)) {
+						volumeIdToAttach = volume.getId();
+						break;
+					}
+				}
+
+				// Volume not found by name ? Create one if requested (= size specified)
+				String size = iaasProperties.get(OpenstackConstants.VOLUME_SIZE_GB);
+				if(volumeIdToAttach == null && size != null) {
+					VolumeForCreate volumeForCreate = new VolumeForCreate();
+					volumeForCreate.setName(volumeName);
+					volumeForCreate.setDescription("Created by Roboconf");
+					volumeForCreate.setSize(new Integer(size));
+
+					volumeIdToAttach = this.novaClient.volumes().create(volumeForCreate).execute().getId();
+					/*
+				SnapshotForCreate snapshotForCreate = new SnapshotForCreate();
+				snapshotForCreate.setName(volumeName);
+				snapshotForCreate.setVolumeId(volume.getId());
+				snapshotForCreate.setDescription("Created by Roboconf");
+
+				this.novaClient.snapshots().create(snapshotForCreate).execute();
+
+				for(Snapshot snapshot : snapshots) {
+					if(snapshot.getName().equals(volumeName)) {
+						toAttach = snapshot;
+						break;
+					}
+				}
+					 */
 				}
 			}
-			if(toAttach == null) {
-				VolumeForCreate volumeForCreate = new VolumeForCreate();
-				volumeForCreate.setName(volumeName);
-				volumeForCreate.setDescription("Created by Roboconf");
-				volumeForCreate.setSize(new Integer(sizeInGB));
-				toAttach = this.novaClient.volumes().create(volumeForCreate).execute();
-			}
 		}
-		*/
 
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
-		if(toAttach != null) this.novaClient.servers().attachVolume(server.getId(), toAttach.getId(), "vda").execute();
-		System.out.println(server);
+		//System.out.println(server);
 
-		// Wait for server to be in ACTIVE state, before associating floating IP
+		// Wait for server to be in ACTIVE state, before associating floating IP and/or attaching volumes
 		try {
 			final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(1);
 			timer.scheduleAtFixedRate(new Runnable() {
@@ -203,13 +234,20 @@ public class IaasOpenstack implements IaasInterface {
 			timer.awaitTermination(120, TimeUnit.SECONDS);
 		} catch (Exception ignore) { /*ignore*/ }
 
+		// Attach volume if required
+		if(volumeIdToAttach != null) {
+			String mountPoint = iaasProperties.get(OpenstackConstants.VOLUME_MOUNT_POINT);
+			if(mountPoint == null) mountPoint = "/dev/vdb";
+			this.novaClient.servers().attachVolume(server.getId(), volumeIdToAttach, mountPoint).execute();
+		}
+		
 		// Associate floating IP
 		if(this.floatingIpPool != null) {
 			FloatingIps ips = this.novaClient.floatingIps().list().execute();
 
 			FloatingIp ip = null;
 			for(FloatingIp ip2 : ips) {
-				System.out.println("ip=" + ip2);
+				//System.out.println("ip=" + ip2);
 				ip = ip2;
 			}
 			//FloatingIp ip = ips.allocate(this.floatingIpPool).execute();
@@ -246,12 +284,12 @@ public class IaasOpenstack implements IaasInterface {
 		for(Object name : p.keySet()) {
 			conf.put(name.toString(), p.get(name).toString());
 		}
-		// conf.put("openstack.computeUrl", "http://localhost:8888/v2");
+		// conf.put(OpenstackConstants.COMPUTE_URL, "http://localhost:8888/v2");
 
 		IaasOpenstack iaas = new IaasOpenstack();
 		iaas.setIaasProperties(conf);
 
-		String machineImageId = conf.get("openstack.image");
+		String machineImageId = conf.get(OpenstackConstants.IMAGE);
 		String channelName = "test";
 		String applicationName = "roboconf";
 		String ipMessagingServer = "localhost";
