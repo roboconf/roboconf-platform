@@ -27,22 +27,17 @@ import net.roboconf.iaas.api.IaasInterface;
 
 import org.apache.commons.codec.binary.Base64;
 
-import com.woorea.openstack.base.client.Entity;
 import com.woorea.openstack.keystone.Keystone;
 import com.woorea.openstack.keystone.api.TokensResource.Authenticate;
 import com.woorea.openstack.keystone.model.Access;
 import com.woorea.openstack.keystone.model.authentication.UsernamePassword;
 import com.woorea.openstack.nova.Nova;
-import com.woorea.openstack.nova.api.ServersResource.Boot;
 import com.woorea.openstack.nova.model.Flavor;
 import com.woorea.openstack.nova.model.Flavors;
 import com.woorea.openstack.nova.model.FloatingIp;
 import com.woorea.openstack.nova.model.FloatingIps;
 import com.woorea.openstack.nova.model.Server;
 import com.woorea.openstack.nova.model.ServerForCreate;
-import com.woorea.openstack.nova.model.Snapshot;
-import com.woorea.openstack.nova.model.SnapshotForCreate;
-import com.woorea.openstack.nova.model.Snapshots;
 import com.woorea.openstack.nova.model.Volume;
 import com.woorea.openstack.nova.model.VolumeForCreate;
 import com.woorea.openstack.nova.model.Volumes;
@@ -219,10 +214,7 @@ public class IaasOpenstack implements IaasInterface {
 				}
 			}
 		}
-		
-		/*.put("block_device_mapping_v2",
-				"[{\"device_name\": \"/dev/sda1\",\"source_type\": \"volume\",\"destination_type\": \"volume\",\"uuid\": \"fake-volume-id-1\",\"boot_index\": \"0\"}]");
-		*/
+
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
 		//System.out.println(server);
 
