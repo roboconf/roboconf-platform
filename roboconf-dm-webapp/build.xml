@@ -3,9 +3,7 @@
 	<!-- Do not clone if the target directory was not "cleaned" -->
 	<target name="target.check" description="Checking if the web-administration was already cloned...">
 		<condition property="already.cloned">
-			<resourceexists>
-				<file file="${project.build.directory}/roboconf-web-administration" />
-			</resourceexists>
+			<available file="${project.build.directory}/roboconf-web-administration" />
 		</condition>
 	</target>
 
