@@ -589,11 +589,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 * @param statusChanged The changed status of the instance that changed (eg. that provided new imports)
 	 * @param importChanged The individual imports that changed
 	 */
-	private void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws IOException, PluginException {
+	void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws IOException, PluginException {
 
 		// Do we have all the imports we need?
 		boolean haveAllImports = true;
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( impactedInstance )) {
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForMandatoryImportedVariables( impactedInstance )) {
 			Collection<Import> imports = impactedInstance.getImports().get( facetOrComponentName );
 			if( imports != null && ! imports.isEmpty())
 				continue;
