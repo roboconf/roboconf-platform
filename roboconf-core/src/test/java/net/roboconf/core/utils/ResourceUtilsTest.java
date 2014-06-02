@@ -59,7 +59,7 @@ public class ResourceUtilsTest {
 	public void testStoreInstanceResources_inexistingDirectory() throws Exception {
 
 		Instance instance = new Instance( "whatever" ).component( new Component( "comp" ));
-		Map<?,?> map = ResourceUtils.storeInstanceResources( new File( "/file/does/not/exist" ),  instance );
+		Map<?,?> map = ResourceUtils.storeInstanceResources( new File( "file/does/not/exist" ),  instance );
 		Assert.assertEquals( 0, map.size());
 	}
 

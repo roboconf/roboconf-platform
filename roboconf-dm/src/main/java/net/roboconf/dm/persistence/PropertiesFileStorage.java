@@ -35,14 +35,13 @@ public class PropertiesFileStorage implements IDmStorage {
 			"roboconf.dm.state.properties" );
 
 	static final String APPS = "apps";
-	static final String MESSAGING_SERVER_IP = "messaging-server-ip";
-
 	static final String DOT = ".";
 	static final String DOT_DIRECTORY = ".directory";
 	static final String DOT_ROOT_INSTANCES = ".roots";
 	static final String DOT_INSTANCE_IP = ".ip";
 	static final String DOT_INSTANCE_COMPONENT = ".component";
 	static final String DOT_INSTANCE_MACHINE_ID = ".machine-id";
+	static final String DOT_INSTANCE_STATUS = ".status";
 
 
 	/*
@@ -102,7 +101,6 @@ public class PropertiesFileStorage implements IDmStorage {
 
 		// Convert it to beans
 		DmStorageBean result = new DmStorageBean();
-		result.messagingServerIp( props.getProperty( MESSAGING_SERVER_IP ));
 
 		// Restore the applications
 		for( String appName : props.getProperty( APPS, "" ).split( "," )) {
@@ -118,7 +116,7 @@ public class PropertiesFileStorage implements IDmStorage {
 
 			for( String rootInstanceName : props.getProperty( appName + DOT_ROOT_INSTANCES, "" ).split( "," )) {
 				rootInstanceName = rootInstanceName.trim();
-				if( Utils.isEmptyOrWhitespaces( appName ))
+				if( Utils.isEmptyOrWhitespaces( rootInstanceName ))
 					continue;
 
 				DmStorageRootInstanceBean rootInstanceBean = new DmStorageRootInstanceBean();
@@ -128,6 +126,7 @@ public class PropertiesFileStorage implements IDmStorage {
 				rootInstanceBean.ipAddress( props.getProperty( appName + DOT + rootInstanceName + DOT_INSTANCE_IP ));
 				rootInstanceBean.machineId( props.getProperty( appName + DOT + rootInstanceName + DOT_INSTANCE_MACHINE_ID ));
 				rootInstanceBean.componentName( props.getProperty( appName + DOT + rootInstanceName + DOT_INSTANCE_COMPONENT ));
+				rootInstanceBean.status( props.getProperty( appName + DOT + rootInstanceName + DOT_INSTANCE_STATUS ));
 			}
 		}
 
@@ -143,9 +142,6 @@ public class PropertiesFileStorage implements IDmStorage {
 	static Properties extractApplicationsProperties( DmStorageBean managerState ) {
 
 		Properties props = new Properties();
-		if( ! Utils.isEmptyOrWhitespaces( managerState.getMessagingServerIp()))
-			props.setProperty( MESSAGING_SERVER_IP, managerState.getMessagingServerIp());
-
 		StringBuilder sb = new StringBuilder();
 		for( Iterator<DmStorageApplicationBean> itMa = managerState.getApplications().iterator(); itMa.hasNext(); ) {
 
@@ -163,6 +159,9 @@ public class PropertiesFileStorage implements IDmStorage {
 					roots.append( ", " );
 
 				String prefix = bean.getApplicationName() + DOT + rootInstance.getRootInstanceName();
+				if( rootInstance.getStatus() != null )
+					props.setProperty( prefix + DOT_INSTANCE_STATUS, rootInstance.getStatus());
+
 				if( ! Utils.isEmptyOrWhitespaces( rootInstance.getIpAddress()))
 					props.setProperty( prefix + DOT_INSTANCE_IP, rootInstance.getIpAddress());
 

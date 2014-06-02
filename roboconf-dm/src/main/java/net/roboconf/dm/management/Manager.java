@@ -80,6 +80,30 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
  * The agents are the most well-placed to manage life cycles and the states
  * of instances. Therefore, the DM does the minimal set of actions on instances.
  * </p>
+ * <p>
+ * By default, the list of deployed applications and root instances is
+ * not persisted. Here is the way the DM should be initialized.
+ * </p>
+ * <pre>
+ * // To use a custom Iaas resolver
+ * Manager.INSTANCE.setIaasResolver( ... );
+ *
+ * // To use a custom messaging client
+ * Manager.INSTANCE.setMessagingClientFactory( ... );
+ *
+ * // Change the message server IP.
+ * Manager.INSTANCE.tryToChangeMessageServerIp( ... );
+ *
+ * // To persist the DM states
+ * Manager.INSTANCE.setStorage( ... );
+ * // e.g.
+ * Manager.INSTANCE.setStorage( new PropertiesFileStorage());
+ *
+ * // To restore the DM states.
+ * Manager.INSTANCE.restoreManagerState();
+ *
+ * // Only then, you can load new applications.
+ * </pre>
  *
  * @author Noël - LIG
  * @author Pierre-Yves Gibello - Linagora
@@ -163,7 +187,8 @@ public final class Manager {
 	 * @return true if the DM is connected to the messaging server, false otherwise
 	 */
 	public boolean isConnectedToTheMessagingServer() {
-		return this.messagingClient.isConnected();
+		return this.messagingClient != null
+				&& this.messagingClient.isConnected();
 	}
 
 
@@ -211,7 +236,7 @@ public final class Manager {
 			throw new DmWasNotInitializedException();
 
 		ManagedApplication ma = load( applicationFilesDirectory );
-		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values(), ma, this.messageServerIp );
+		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values(), ma );
 		this.storage.saveManagerState( managerState );
 
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
@@ -289,19 +314,17 @@ public final class Manager {
 					ma.getApplication().getRootInstances().add( rootInstance );
 				}
 
-				rootInstance.setStatus( InstanceStatus.RESTORING );
-				rootInstance.getData().put( Instance.IP_ADDRESS, root.getIpAddress());
-				rootInstance.getData().put( Instance.MACHINE_ID, root.getMachineId());
+				if( InstanceStatus.wichStatus( root.getStatus()) != InstanceStatus.NOT_DEPLOYED ) {
+					rootInstance.setStatus( InstanceStatus.RESTORING );
+					rootInstance.getData().put( Instance.IP_ADDRESS, root.getIpAddress());
+					rootInstance.getData().put( Instance.MACHINE_ID, root.getMachineId());
+				}
 			}
 
 			// So far, so good...
 			this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
 			ma.getLogger().fine( "Application " + ma.getApplication().getName() + " was successfully loaded for restoration. Remote states still have to be retrieved." );
 		}
-
-		// Restore the messaging?
-		if( ! tryToChangeMessageServerIp( managerState.getMessagingServerIp()))
-			this.logger.info( "Could not restore the messaging server IP. The current one will be used." );
 
 		// Send messages to the agents to get their model.
 		if( this.storage.requiresAgentContact()) {
@@ -320,7 +343,7 @@ public final class Manager {
 	 */
 	public void saveManagerState() {
 
-		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values(), this.messageServerIp );
+		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values());
 		try {
 			this.storage.saveManagerState( managerState );
 
@@ -341,8 +364,10 @@ public final class Manager {
 	public void sendModelToAgent( Application application, Instance rootInstance, MsgCmdInstanceAdd message )
 	throws IOException {
 
-		if( this.messagingClient.isConnected())
+		if( isConnectedToTheMessagingServer())
 			this.messagingClient.sendMessageToAgent( application, rootInstance, message );
+		else
+			this.logger.warning( "The DM cannot send the model to the agent. It is not connected to the messaging server." );
 	}
 
 
@@ -384,6 +409,7 @@ public final class Manager {
 		cleanUp( ma );
 		cleanMessagingServer( ma );
 		this.appNameToManagedApplication.remove( applicationName );
+		saveManagerState();
 	}
 
 
@@ -502,8 +528,8 @@ public final class Manager {
 		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
 			throw new ImpossibleInsertionException( instance.getName());
 
+		saveManagerState();
 		ma.getLogger().fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + applicationName + "." );
-
 
 		// FIXME: hey! We do not propagate the model to the agent???
 	}
@@ -572,6 +598,7 @@ public final class Manager {
 
 		try {
 			this.messagingClient.closeConnection();
+			this.messageServerIp = null;
 
 		} catch( IOException e ) {
 			this.logger.severe( e.getMessage());
@@ -804,7 +831,6 @@ public final class Manager {
 		BulkActionException bulkException = new BulkActionException( true );
 		for( Instance instance : instances ) {
 			if( instance.getParent() == null ) {
-				saveManagerState();
 				try {
 
 					// If the VM creation was already requested...
@@ -828,6 +854,9 @@ public final class Manager {
 				} catch( IaasException e ) {
 					instance.setStatus( InstanceStatus.PROBLEM );
 					bulkException.getInstancesToException().put( instance, e );
+
+				} finally {
+					saveManagerState();
 				}
 
 			} else {

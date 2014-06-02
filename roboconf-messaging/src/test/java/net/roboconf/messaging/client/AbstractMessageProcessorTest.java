@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.persistence;
+package net.roboconf.messaging.client;
 
 import junit.framework.Assert;
-import net.roboconf.dm.persistence.IDmStorage.DmStorageBean;
+import net.roboconf.messaging.messages.Message;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class NoStorageTest {
+public class AbstractMessageProcessorTest {
 
 	@Test
-	public void testRestorationAndPersistence() throws Exception {
+	public void testCustomName() {
 
-		DmStorageBean bean = new DmStorageBean();
-		IDmStorage storage = new NoStorage();
-		storage.saveManagerState( bean );
+		AbstractMessageProcessor processor = new AbstractMessageProcessor( "yo" ) {
+			@Override
+			protected void processMessage( Message message ) {
+				// nothing
+			}
+		};
 
-		DmStorageBean restoredBean = storage.restoreManagerState();
-		Assert.assertNotNull( restoredBean );
-		Assert.assertEquals( 0, restoredBean.getApplications().size());
+		Assert.assertEquals( "yo", processor.getName());
 	}
 }

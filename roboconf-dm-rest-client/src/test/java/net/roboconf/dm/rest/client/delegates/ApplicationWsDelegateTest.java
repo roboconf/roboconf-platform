@@ -43,6 +43,7 @@ import net.roboconf.dm.rest.client.test.RestTestUtils;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,6 +59,13 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 	private TestApplication app;
 	private WsClient client;
+
+
+	@After
+	public void destroyClient() {
+		if( this.client != null )
+			this.client.destroy();
+	}
 
 
 	@Override

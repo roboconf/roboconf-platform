@@ -303,17 +303,17 @@ public final class AgentUtils {
 		try {
 			// Get the user data from /var/lib/waagent/ovf-env.xml and decode it
 			String userDataEncoded = getValueOfTagInXMLFile("/var/lib/waagent/ovf-env.xml", "CustomData");
-			content = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" ) ));
+			content = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" )));
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
 
-		} catch (ParserConfigurationException e) {
+		} catch( ParserConfigurationException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
 
-		} catch (SAXException e) {
+		} catch( SAXException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
 		}

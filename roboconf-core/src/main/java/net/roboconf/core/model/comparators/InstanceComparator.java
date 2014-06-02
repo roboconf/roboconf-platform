@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model.comparators;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -24,7 +25,9 @@ import net.roboconf.core.model.runtime.Instance;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InstanceComparator implements Comparator<Instance> {
+public class InstanceComparator implements Serializable, Comparator<Instance> {
+	private static final long serialVersionUID = 3420271536889564843L;
+
 
 	@Override
 	public int compare( Instance o1, Instance o2 ) {

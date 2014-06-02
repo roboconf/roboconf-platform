@@ -41,7 +41,6 @@ public class PropertiesFileStorageTest {
 
 		// Create the bean
 		DmStorageBean managerState = new DmStorageBean();
-		managerState.messagingServerIp( "192.168.1.19" );
 
 		DmStorageApplicationBean app1 = new DmStorageApplicationBean();
 		app1.applicationDirectoryPath( "/whatever" ).applicationName( "app 1" );
@@ -72,7 +71,6 @@ public class PropertiesFileStorageTest {
 		Assert.assertTrue( PropertiesFileStorage.STATE_FILE.exists());
 
 		// Compare
-		Assert.assertEquals( managerState.getMessagingServerIp(), restoredBean.getMessagingServerIp());
 		Assert.assertEquals( managerState.getApplications().size(), restoredBean.getApplications().size());
 
 		DmStorageApplicationBean[] apps = managerState.getApplications().toArray( new DmStorageApplicationBean[ 0 ]);
@@ -115,7 +113,6 @@ public class PropertiesFileStorageTest {
 		Assert.assertTrue( PropertiesFileStorage.STATE_FILE.exists());
 		DmStorageBean restoredBean = storage.restoreManagerState();
 		Assert.assertNotNull( restoredBean );
-		Assert.assertNull( restoredBean.getMessagingServerIp());
 		Assert.assertEquals( 0, restoredBean.getApplications().size());
 	}
 
@@ -128,7 +125,6 @@ public class PropertiesFileStorageTest {
 
 		DmStorageBean restoredBean = storage.restoreManagerState();
 		Assert.assertNotNull( restoredBean );
-		Assert.assertNull( restoredBean.getMessagingServerIp());
 		Assert.assertEquals( 0, restoredBean.getApplications().size());
 	}
 }

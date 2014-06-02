@@ -52,18 +52,7 @@ public interface IDmStorage {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class DmStorageBean {
-		private String messagingServerIp;
 		private final Collection<DmStorageApplicationBean> applications = new ArrayList<IDmStorage.DmStorageApplicationBean> ();
-
-
-		public DmStorageBean messagingServerIp( String messagingServerIp ) {
-			this.messagingServerIp = messagingServerIp;
-			return this;
-		}
-
-		public String getMessagingServerIp() {
-			return messagingServerIp;
-		}
 
 		public Collection<DmStorageApplicationBean> getApplications() {
 			return applications;
@@ -108,6 +97,11 @@ public interface IDmStorage {
 		public List<DmStorageRootInstanceBean> getRootInstances() {
 			return rootInstances;
 		}
+
+		@Override
+		public String toString() {
+			return applicationName;
+		}
 	}
 
 
@@ -116,7 +110,7 @@ public interface IDmStorage {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class DmStorageRootInstanceBean {
-		private String rootInstanceName, ipAddress, machineId, componentName;
+		private String rootInstanceName, ipAddress, machineId, componentName, status;
 
 
 		public DmStorageRootInstanceBean rootInstanceName( String rootInstanceName ) {
@@ -126,6 +120,11 @@ public interface IDmStorage {
 
 		public DmStorageRootInstanceBean ipAddress( String ipAddress ) {
 			this.ipAddress = ipAddress;
+			return this;
+		}
+
+		public DmStorageRootInstanceBean status( String status ) {
+			this.status = status;
 			return this;
 		}
 
@@ -151,8 +150,17 @@ public interface IDmStorage {
 			return machineId;
 		}
 
+		public String getStatus() {
+			return status;
+		}
+
 		public String getComponentName() {
 			return componentName;
+		}
+
+		@Override
+		public String toString() {
+			return rootInstanceName;
 		}
 	}
 }

@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.persistence.IDmStorage.DmStorageApplicationBean;
 import net.roboconf.dm.persistence.IDmStorage.DmStorageBean;
@@ -39,33 +38,28 @@ public class PersistenceUtils {
 	 *
 	 * @param alreadyLoadedApplications a non-null list of already loaded {@link ManagedApplication}s
 	 * @param newApplication an application which is being loaded but not yet registered into the manager
-	 * @param messagingServerIp the IP address of the messaging server
 	 * @return a non-null bean with information to be persisted
 	 */
 	public static DmStorageBean retrieveManagerState(
 			Collection<ManagedApplication> alreadyLoadedApplications,
-			ManagedApplication newApplication,
-			String messagingServerIp  ) {
+			ManagedApplication newApplication ) {
 
 		Collection<ManagedApplication> apps = new ArrayList<ManagedApplication> ();
 		apps.addAll( alreadyLoadedApplications );
 		apps.add( newApplication );
 
-		return retrieveManagerState( apps, messagingServerIp );
+		return retrieveManagerState( apps );
 	}
 
 
 	/**
 	 * Retrieves the manager's state and stores it into a bean to be persisted later.
 	 * @param applications a non-null list of {@link ManagedApplication}s
-	 * @param messagingServerIp the IP address of the messaging server
 	 * @return a non-null bean with information to be persisted
 	 */
-	public static DmStorageBean retrieveManagerState( Collection<ManagedApplication> applications, String messagingServerIp  ) {
+	public static DmStorageBean retrieveManagerState( Collection<ManagedApplication> applications  ) {
 
 		DmStorageBean result = new DmStorageBean();
-		result.messagingServerIp( messagingServerIp );
-
 		for( ManagedApplication ma : applications ) {
 			DmStorageApplicationBean appBean = new DmStorageApplicationBean();
 			result.getApplications().add( appBean );
@@ -74,9 +68,6 @@ public class PersistenceUtils {
 			appBean.applicationDirectoryPath( ma.getApplicationFilesDirectory());
 
 			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-				if( rootInstance.getStatus() == InstanceStatus.NOT_DEPLOYED )
-					continue;
-
 				DmStorageRootInstanceBean rootInstanceBean = new DmStorageRootInstanceBean();
 				appBean.getRootInstances().add( rootInstanceBean );
 
@@ -84,6 +75,7 @@ public class PersistenceUtils {
 				rootInstanceBean.ipAddress( rootInstance.getData().get( Instance.IP_ADDRESS ));
 				rootInstanceBean.machineId( rootInstance.getData().get( Instance.MACHINE_ID ));
 				rootInstanceBean.componentName( rootInstance.getComponent().getName());
+				rootInstanceBean.status( rootInstance.getStatus().toString());
 			}
 		}
 

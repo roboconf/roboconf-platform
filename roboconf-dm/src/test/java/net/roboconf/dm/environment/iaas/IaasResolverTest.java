@@ -28,6 +28,7 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.ResourceUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
@@ -96,8 +97,15 @@ public class IaasResolverTest {
 		File propsFile = new File( propsDir, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
 		props.setProperty( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_EMBEDDED );
-		FileOutputStream os = new FileOutputStream( propsFile );
-		props.store( os, null );
+
+		FileOutputStream os = null;
+		try {
+			os = new FileOutputStream( propsFile );
+			props.store( os, null );
+
+		} finally {
+			Utils.closeQuietly( os );
+		}
 
 		IaasResolver resolver = new IaasResolver();
 		IaasInterface itf = resolver.findIaasInterface( ma, rootInstance );
@@ -120,8 +128,15 @@ public class IaasResolverTest {
 		File propsFile = new File( propsDir, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
 		props.setProperty( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_EMBEDDED );
-		FileOutputStream os = new FileOutputStream( propsFile );
-		props.store( os, null );
+
+		FileOutputStream os = null;
+		try {
+			os = new FileOutputStream( propsFile );
+			props.store( os, null );
+
+		} finally {
+			Utils.closeQuietly( os );
+		}
 
 		IaasResolver resolver = new IaasResolver();
 		resolver.findIaasInterface( ma, rootInstance );
@@ -143,8 +158,15 @@ public class IaasResolverTest {
 		File propsFile = new File( propsDir, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
 		props.setProperty( IaasResolver.IAAS_TYPE, "oops" );
-		FileOutputStream os = new FileOutputStream( propsFile );
-		props.store( os, null );
+
+		FileOutputStream os = null;
+		try {
+			os = new FileOutputStream( propsFile );
+			props.store( os, null );
+
+		} finally {
+			Utils.closeQuietly( os );
+		}
 
 		IaasResolver resolver = new IaasResolver();
 		resolver.findIaasInterface( ma, rootInstance );

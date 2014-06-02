@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.persistence;
+package net.roboconf.iaas.in_memory.internal;
 
 import junit.framework.Assert;
-import net.roboconf.dm.persistence.IDmStorage.DmStorageBean;
+import net.roboconf.agent.AgentLauncher;
+import net.roboconf.iaas.in_memory.internal.utils.AgentManager;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class NoStorageTest {
+public class AgentManagerTest {
 
 	@Test
-	public void testRestorationAndPersistence() throws Exception {
+	public void testManager() {
 
-		DmStorageBean bean = new DmStorageBean();
-		IDmStorage storage = new NoStorage();
-		storage.saveManagerState( bean );
-
-		DmStorageBean restoredBean = storage.restoreManagerState();
-		Assert.assertNotNull( restoredBean );
-		Assert.assertEquals( 0, restoredBean.getApplications().size());
+		AgentLauncher launcher = new AgentLauncher( null );
+		AgentManager.INSTANCE.registerMachine( "id-0", launcher );
+		Assert.assertNull( AgentManager.INSTANCE.unregisterMachine( "invalid id" ));
+		Assert.assertNull( AgentManager.INSTANCE.unregisterMachine( null ));
+		Assert.assertEquals( launcher, AgentManager.INSTANCE.unregisterMachine( "id-0" ));
 	}
 }

@@ -28,8 +28,8 @@ import java.util.logging.LogRecord;
  */
 public class RoboconfLogFormatter extends Formatter {
 
-	private static final DateFormat DF = new SimpleDateFormat( "dd/MM/yyyy hh:mm:ss.SSS" );
 	private static final int LEVEL_SPAN = findMaxLevelLength();
+	private final DateFormat df = new SimpleDateFormat( "dd/MM/yyyy hh:mm:ss.SSS" );
 
 
 	/*
@@ -52,7 +52,7 @@ public class RoboconfLogFormatter extends Formatter {
 
 		// Format the entire record
 		StringBuilder sb = new StringBuilder();
-		sb.append( "[ " ).append( DF.format( new Date( record.getMillis()))).append(" ]" );
+		sb.append( "[ " ).append( this.df.format( new Date( record.getMillis()))).append(" ]" );
 		sb.append( "[ ").append( sbLevel ).append( " ] " );
 		sb.append( record.getSourceClassName()).append("#");
 		sb.append( record.getSourceMethodName());

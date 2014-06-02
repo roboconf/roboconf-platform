@@ -25,7 +25,6 @@ import net.roboconf.core.model.runtime.Instance;
 
 /**
  * Bean used to inject an data into a {@link Instance} template.
- *
  * @author gcrosmarie - Linagora
  */
 public class InstanceBean {

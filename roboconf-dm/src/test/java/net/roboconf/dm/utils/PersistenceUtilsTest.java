@@ -41,7 +41,7 @@ public class PersistenceUtilsTest {
 
 		// Current application
 		TestApplication testApp = new TestApplication();
-		File testDir = new File( "/test-app" );
+		File testDir = new File( "test-app" );
 		ManagedApplication testMa = new ManagedApplication( testApp, testDir );
 
 		// Old app
@@ -55,18 +55,15 @@ public class PersistenceUtilsTest {
 			inst.getData().put( Instance.MACHINE_ID, inst.getName() + "-id" );
 		}
 
-		File oldDir = new File( "/old app" );
+		File oldDir = new File( "old app" );
 		ManagedApplication oldMa = new ManagedApplication( oldApp, oldDir );
 
 		// Generate a persistence bean
-		String messagingServerIp = "192.168.1.14";
-		DmStorageBean bean = PersistenceUtils.retrieveManagerState( Arrays.asList( oldMa ), testMa, messagingServerIp );
+		DmStorageBean bean = PersistenceUtils.retrieveManagerState( Arrays.asList( oldMa ), testMa );
 
 		// Check the result
 		Assert.assertNotNull( bean );
-		Assert.assertEquals( messagingServerIp, bean.getMessagingServerIp());
 		Assert.assertEquals( 2, bean.getApplications().size());
-
 		DmStorageApplicationBean[] apps = bean.getApplications().toArray( new DmStorageApplicationBean[ 0 ]);
 
 		// Check the old application
@@ -82,12 +79,16 @@ public class PersistenceUtilsTest {
 			Instance inst = InstanceHelpers.findInstanceByPath( oldApp, "/" + rootInstanceBean.getRootInstanceName());
 			Assert.assertNotNull( inst );
 			Assert.assertEquals( inst.getComponent().getName(), rootInstanceBean.getComponentName());
+			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED.toString(), rootInstanceBean.getStatus());
 		}
 
 		// Check the new application
 		currentAppBean = apps[ 1 ];
 		Assert.assertEquals( testApp.getName(), currentAppBean.getApplicationName());
 		Assert.assertEquals( testDir.getAbsolutePath(), currentAppBean.getApplicationDirectoryPath());
-		Assert.assertEquals( 0, currentAppBean.getRootInstances().size());
+		Assert.assertEquals( 2, currentAppBean.getRootInstances().size());
+
+		for( DmStorageRootInstanceBean rootInstanceBean : currentAppBean.getRootInstances())
+			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED.toString(), rootInstanceBean.getStatus());
 	}
 }

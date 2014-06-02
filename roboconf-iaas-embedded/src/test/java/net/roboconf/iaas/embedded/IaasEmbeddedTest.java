@@ -14,27 +14,33 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.persistence;
+package net.roboconf.iaas.embedded;
+
+import java.util.HashMap;
 
 import junit.framework.Assert;
-import net.roboconf.dm.persistence.IDmStorage.DmStorageBean;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class NoStorageTest {
+public class IaasEmbeddedTest {
 
 	@Test
-	public void testRestorationAndPersistence() throws Exception {
+	public void testIaasEmbedded() throws Exception {
 
-		DmStorageBean bean = new DmStorageBean();
-		IDmStorage storage = new NoStorage();
-		storage.saveManagerState( bean );
+		IaasEmbedded iaas = new IaasEmbedded();
+		iaas.terminateVM( null );
+		iaas.terminateVM( "anything" );
 
-		DmStorageBean restoredBean = storage.restoreManagerState();
-		Assert.assertNotNull( restoredBean );
-		Assert.assertEquals( 0, restoredBean.getApplications().size());
+		Assert.assertNotNull( iaas.createVM( "ami", "ip", "nothing", "app" ));
+		Assert.assertNotNull( iaas.createVM( null, null, null, null ));
+
+		iaas.setIaasProperties( null );
+		iaas.setIaasProperties( new HashMap<String,String>( 0 ));
+
+		iaas.terminateVM( null );
+		iaas.terminateVM( "anything" );
 	}
 }

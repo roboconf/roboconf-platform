@@ -62,36 +62,42 @@ public class PluginLogger implements PluginInterface {
 
 	@Override
 	public void initialize( Instance instance ) throws PluginException {
-		this.logger.fine( this.agentName + " is initializing the plug-in for " + instance.getName() + "." );
+		String name = instance != null ? instance.getName() : null;
+		this.logger.fine( this.agentName + " is initializing the plug-in for " + name + "." );
 	}
 
 
 	@Override
 	public void deploy( Instance instance ) throws PluginException {
-		this.logger.info( this.agentName + " is deploying instance " + instance.getName() + "." );
+		String name = instance != null ? instance.getName() : null;
+		this.logger.info( this.agentName + " is deploying instance " + name + "." );
 	}
 
 
 	@Override
 	public void start( Instance instance ) throws PluginException {
-		this.logger.info( this.agentName + " is starting instance " + instance.getName() + "." );
+		String name = instance != null ? instance.getName() : null;
+		this.logger.info( this.agentName + " is starting instance " + name + "." );
 	}
 
 
 	@Override
 	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
-		this.logger.info( this.agentName + " is updating instance " + instance.getName() + "." );
+		String name = instance != null ? instance.getName() : null;
+		this.logger.info( this.agentName + " is updating instance " + name + "." );
 	}
 
 
 	@Override
 	public void stop( Instance instance ) throws PluginException {
-		this.logger.info( this.agentName + " is stopping instance " + instance.getName() + "." );
+		String name = instance != null ? instance.getName() : null;
+		this.logger.info( this.agentName + " is stopping instance " + name + "." );
 	}
 
 
 	@Override
 	public void undeploy( Instance instance ) throws PluginException {
-		this.logger.info( this.agentName + " is undeploying instance " + instance.getName() + "." );
+		String name = instance != null ? instance.getName() : null;
+		this.logger.info( this.agentName + " is undeploying instance " + name + "." );
 	}
 }
