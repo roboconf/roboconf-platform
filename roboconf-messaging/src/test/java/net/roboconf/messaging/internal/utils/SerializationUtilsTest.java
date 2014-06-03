@@ -31,7 +31,6 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
@@ -74,17 +73,6 @@ public class SerializationUtilsTest {
 
 		msg = new MsgNotifMachineUp( "app1", new Instance( "instance2" ), "192.168.1.2" );
 		checkBasics( msg, MsgNotifMachineUp.class );
-	}
-
-
-	@Test
-	public void testMessage_readyToBeDeleted() throws Exception {
-
-		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( "app1", "instance1" );
-		checkBasics( msg, MsgNotifMachineReadyToBeDeleted.class );
-
-		msg = new MsgNotifMachineReadyToBeDeleted( "app1", new Instance( "instance2" ));
-		checkBasics( msg, MsgNotifMachineReadyToBeDeleted.class );
 	}
 
 

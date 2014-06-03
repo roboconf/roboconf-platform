@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.Timer;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
@@ -42,7 +41,6 @@ import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
@@ -62,7 +60,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final PluginManager pluginManager;
 	private final IAgentClient messagingClient;
-	private final Timer heartBeatTimer;
 	private final String ipAddress, appName;
 
 	private Instance rootInstance;
@@ -79,13 +76,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			String threadName,
 			AgentData agentData,
 			PluginManager pluginManager,
-			IAgentClient messagingClient,
-			Timer heartBeatTimer ) {
+			IAgentClient messagingClient ) {
 
 		super( threadName );
 		this.messagingClient = messagingClient;
 		this.pluginManager = pluginManager;
-		this.heartBeatTimer = heartBeatTimer;
 
 		this.ipAddress = agentData.getIpAddress();
 		this.appName = agentData.getApplicationName();
@@ -328,22 +323,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		Instance instance;
 		PluginInterface plugin;
 
-		// If the root model has not yet been initialized and that the message
-		// indicates it will undeploy a root instance, then this is a signal that
-		// the agent must stop.
-		if( this.rootInstance == null
-				&& InstanceHelpers.countInstances( instancePath ) == 1 ) {
-
-			String rootInstanceName = instancePath.substring( 1 );
-			MsgNotifMachineReadyToBeDeleted newMsg = new MsgNotifMachineReadyToBeDeleted( this.appName, rootInstanceName );
-			this.messagingClient.sendMessageToTheDm( newMsg );
-
-			this.heartBeatTimer.cancel();
-			result = true;
-		}
-
 		// No root instance
-		else if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getInstancePath())) == null ) {
+		if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getInstancePath())) == null ) {
 			this.logger.severe( "No instance matched " + msg.getInstancePath() + " on the agent. Request to undeploy it is dropped." );
 		}
 
@@ -354,11 +335,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		// Is it the root instance to undeploy?
 		else if( instance.getParent() == null ) {
-			MsgNotifMachineReadyToBeDeleted newMsg = new MsgNotifMachineReadyToBeDeleted( this.appName, this.rootInstance.getName());
-			this.messagingClient.sendMessageToTheDm( newMsg );
-
-			this.heartBeatTimer.cancel();
-			result = true;
+			this.logger.severe( "Request to undeploy the root instance is dropped." );
 		}
 
 		// Do we have the right plug-in?

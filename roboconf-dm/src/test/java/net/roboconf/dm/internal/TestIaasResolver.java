@@ -50,7 +50,7 @@ public class TestIaasResolver extends IaasResolver {
 			throws IaasException {
 
 				TestIaasResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );
-				return null;
+				return "generated machine id for " + rootInstanceName;
 			}
 
 			@Override

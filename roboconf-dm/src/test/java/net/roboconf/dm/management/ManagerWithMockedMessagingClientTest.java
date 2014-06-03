@@ -139,13 +139,17 @@ public class ManagerWithMockedMessagingClientTest {
 			ManagedApplication ma = new ManagedApplication( app, f );
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-			app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-			app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
-			Manager.INSTANCE.shutdownApplication( app.getName());
+			TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.iaasResolver;
+			Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
 
-			TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
-			Assert.assertEquals( 1, client.sentMessages.size());
-			Assert.assertEquals( MsgCmdInstanceUndeploy.class, client.sentMessages.get( 0 ).getClass());
+			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+			Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), InstanceHelpers.computeInstancePath( app.getMySqlVm()), false );
+			Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+
+			Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
+			Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+			Manager.INSTANCE.shutdownApplication( app.getName());
+			Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
 		} finally {
 			Utils.deleteFilesRecursively( f );
@@ -475,12 +479,12 @@ public class ManagerWithMockedMessagingClientTest {
 		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
 		Manager.INSTANCE.perform( app.getName(), ApplicationAction.undeploy.toString(), instancePath, true );
 
 		Assert.assertEquals( 1, msgClient.sentMessages.size());
 		Assert.assertEquals(
-				InstanceHelpers.computeInstancePath( app.getMySqlVm()),
+				InstanceHelpers.computeInstancePath( app.getMySql()),
 				((MsgCmdInstanceUndeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
 	}
 

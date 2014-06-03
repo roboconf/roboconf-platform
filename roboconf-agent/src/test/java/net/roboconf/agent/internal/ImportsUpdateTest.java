@@ -16,8 +16,6 @@
 
 package net.roboconf.agent.internal;
 
-import java.util.Timer;
-
 import junit.framework.Assert;
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.tests.NilMessagingClient;
@@ -54,8 +52,7 @@ public class ImportsUpdateTest {
 				"my agent",
 				new AgentData(),
 				new PluginManager(),
-				new NilMessagingClient(),
-				new Timer());
+				new NilMessagingClient());
 
 		// The cluster node does not know about another node
 		Assert.assertEquals( InstanceStatus.STARTING, i1.getStatus());
@@ -100,8 +97,7 @@ public class ImportsUpdateTest {
 				"my agent",
 				new AgentData(),
 				new PluginManager(),
-				new NilMessagingClient(),
-				new Timer());
+				new NilMessagingClient());
 
 		// The application server does not know about the database
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
