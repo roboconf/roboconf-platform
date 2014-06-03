@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
+import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
@@ -421,7 +422,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			try {
 				instance.setStatus( InstanceStatus.STARTING );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
-				if( InstanceHelpers.hasAllRequiredImports( instance, this.logger )) {
+				if( ImportHelpers.hasAllRequiredImports( instance, this.logger )) {
 					updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
 					result = true;
 
@@ -538,11 +539,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 */
 	void processMsgImportAdd( MsgCmdImportAdd msg ) throws IOException, PluginException {
 
-		// Create the import
-		Import imp = new Import(
-				msg.getAddedInstancePath(),
-				msg.getExportedVariables());
-
 		// Go through all the instances to see which ones need an update
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 
@@ -558,9 +554,12 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 					msg.getAddedInstancePath()))
 				continue;
 
+			// Create the right import
+			Import imp = ImportHelpers.buildTailoredImport( instance, msg.getAddedInstancePath(), msg.getExportedVariables());
+
 			// Add the import and publish an update to the DM
 			this.logger.fine( "Adding import to " + InstanceHelpers.computeInstancePath( instance ) + ". New import: " + imp );
-			instance.addImport( msg.getComponentOrFacetName(), imp );
+			ImportHelpers.addImport( instance, msg.getComponentOrFacetName(), imp );
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Update the life cycle if necessary
@@ -581,7 +580,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws IOException, PluginException {
 
 		// Do we have all the imports we need?
-		boolean haveAllImports = InstanceHelpers.hasAllRequiredImports( impactedInstance, this.logger );
+		boolean haveAllImports = ImportHelpers.hasAllRequiredImports( impactedInstance, this.logger );
 
 		// Update the life cycle of this instance if necessary
 		// Maybe we have something to start

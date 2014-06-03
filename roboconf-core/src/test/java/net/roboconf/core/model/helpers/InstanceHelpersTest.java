@@ -28,9 +28,7 @@ import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 
 import org.junit.Test;
 
@@ -322,71 +320,5 @@ public class InstanceHelpersTest {
 		Instance instanceWithNoComponent = new Instance( "MySQL-2" );
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instanceWithNoComponent ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
-	}
-
-
-	@Test
-	public void testHasAllRequiredImports_optional() throws Exception {
-
-		Component clusterNodeComponent = new Component( "cluster" ).alias( "a cluster node" ).installerName( "whatever" );
-		clusterNodeComponent.getImportedVariables().put( "cluster.ip", Boolean.TRUE );
-		clusterNodeComponent.getImportedVariables().put( "cluster.port", Boolean.TRUE );
-		clusterNodeComponent.getExportedVariables().put( "cluster.ip", null );
-		clusterNodeComponent.getExportedVariables().put( "cluster.port", "9007" );
-
-		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
-		i1.getExports().put( "cluster.ip", "192.168.1.15" );
-		i1.setStatus( InstanceStatus.STARTING );
-
-		Instance i2 = new Instance( "inst 2" ).component( clusterNodeComponent );
-		i2.getExports().put( "cluster.ip", "192.168.1.28" );
-
-		// The cluster node does not know about the other node
-		Assert.assertTrue( InstanceHelpers.hasAllRequiredImports( i1, null ));
-		Assert.assertTrue( InstanceHelpers.hasAllRequiredImports( i2, null ));
-
-		// The node is now aware of another node
-		i1.addImport( "cluster", new Import( i2 ));
-		i1.setStatus( InstanceStatus.STARTING );
-		Assert.assertTrue( InstanceHelpers.hasAllRequiredImports( i1, null ));
-		Assert.assertTrue( InstanceHelpers.hasAllRequiredImports( i2, null ));
-
-		i1.getImports().clear();
-		Assert.assertTrue( InstanceHelpers.hasAllRequiredImports( i1, null ));
-		Assert.assertTrue( InstanceHelpers.hasAllRequiredImports( i2, null ));
-	}
-
-
-	@Test
-	public void testHasAllRequiredImports_required() throws Exception {
-
-		Component dbComponent = new Component( "database" ).alias( "a database" ).installerName( "whatever" );
-		dbComponent.getExportedVariables().put( "database.ip", null );
-		dbComponent.getExportedVariables().put( "database.port", "3009" );
-		dbComponent.getExportedVariables().put( "database.collection", "whatever" );
-
-		Component appServerComponent = new Component( "app-server" ).alias( "an application server" ).installerName( "whatever" );
-		appServerComponent.getExportedVariables().put( "app-server.ip", null );
-		appServerComponent.getExportedVariables().put( "app-server.port", "8009" );
-		appServerComponent.getImportedVariables().put( "database.ip", Boolean.FALSE );
-		appServerComponent.getImportedVariables().put( "database.port", Boolean.FALSE );
-		appServerComponent.getImportedVariables().put( "database.collection", Boolean.TRUE );
-
-		Instance appServer = new Instance( "app server" ).component( appServerComponent );
-		appServer.getExports().put( "app-server.ip", "192.168.1.15" );
-		appServer.setStatus( InstanceStatus.STARTING );
-
-		Instance database = new Instance( "database" ).component( dbComponent );
-		database.getExports().put( "database.ip", "192.168.1.28" );
-
-		// The application server does not know about the database
-		Assert.assertFalse( InstanceHelpers.hasAllRequiredImports( appServer, null ));
-
-		// The application server is now aware of the database
-		appServer.addImport( "database", new Import( database ));
-		Assert.assertTrue( InstanceHelpers.hasAllRequiredImports( appServer, null ));
-
-		appServer.getImports().clear();
-		Assert.assertFalse( InstanceHelpers.hasAllRequiredImports( appServer, null ));
 	}
 }

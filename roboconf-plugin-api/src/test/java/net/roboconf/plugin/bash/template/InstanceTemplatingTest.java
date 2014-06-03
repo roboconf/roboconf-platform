@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.internal.template.ImportBean;
@@ -81,7 +82,7 @@ public class InstanceTemplatingTest {
 		importsByPrefix.put("prefix2", imports);
 
 		Instance instance = new Instance("testInstance");
-		instance.updateImports(importsByPrefix);
+		ImportHelpers.updateImports( instance, importsByPrefix );
 
 		//First test templating into a String
 		File templateFile = TestUtils.findTestFile( "/instanceTemplate.mustache" );

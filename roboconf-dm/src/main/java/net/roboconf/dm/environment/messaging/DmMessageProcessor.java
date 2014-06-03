@@ -19,6 +19,7 @@ package net.roboconf.dm.environment.messaging;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
@@ -206,7 +207,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 		} else {
 			InstanceStatus oldStatus = instance.getStatus();
 			instance.setStatus( message.getNewStatus());
-			instance.updateImports( message.getNewImports());
+			ImportHelpers.updateImports( instance, message.getNewImports());
 
 			StringBuilder sb = new StringBuilder();
 			sb.append( "Status changed from " );
