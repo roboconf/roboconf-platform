@@ -289,7 +289,8 @@ public class Instance implements Serializable {
 		DEPLOYED_STARTED( true ),
 		STOPPING( false ),
 		UNDEPLOYING( false ),
-		PROBLEM( false );
+		PROBLEM( false ),
+		RESTORING( false );
 
 
 		private final boolean stable;

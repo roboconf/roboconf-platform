@@ -37,11 +37,13 @@ public class AgentClientTest {
 		agentClient.setApplicationName( "app" );
 		agentClient.setRootInstanceName( "root" );
 
+		Assert.assertFalse( agentClient.isConnected());
 		Assert.assertNull( agentClient.channel );
 		Assert.assertNull( agentClient.messageProcessor );
 		agentClient.openConnection( new StorageMessageProcessor());
 		Assert.assertNotNull( agentClient.channel );
 		Assert.assertNotNull( agentClient.messageProcessor );
+		Assert.assertTrue( agentClient.isConnected());
 		Assert.assertTrue( agentClient.messageProcessor.isRunning());
 
 		Channel oldChannel = agentClient.channel;

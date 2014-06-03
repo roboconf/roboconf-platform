@@ -43,5 +43,8 @@ public class ImportTest {
 		exportedVars.put( "comp.data", null );
 		imp = new Import( "/root/node", exportedVars );
 		Assert.assertNotNull( imp.toString());
+
+		imp = new Import( new Instance( "my VM" ));
+		Assert.assertEquals( "/my VM", imp.getInstancePath());
 	}
 }

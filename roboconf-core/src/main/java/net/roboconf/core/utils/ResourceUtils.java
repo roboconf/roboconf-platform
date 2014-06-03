@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.utils;
+package net.roboconf.core.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -46,14 +46,15 @@ public final class ResourceUtils {
 	 */
 	public static Map<String,byte[]> storeInstanceResources( File applicationFilesDirectory, Instance instance ) throws IOException {
 
+		Map<String,byte[]> result;
 		File instanceResourcesDirectory = findInstanceResourcesDirectory( applicationFilesDirectory, instance );
-		if( ! instanceResourcesDirectory.exists())
-			throw new IllegalArgumentException( "The resource directory was not found for instance " + instance.getName() + ". " + instanceResourcesDirectory.getAbsolutePath());
+		if( instanceResourcesDirectory.exists()
+				&& instanceResourcesDirectory.isDirectory())
+			result = Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory );
+		else
+			result = Collections.emptyMap();
 
-		if( ! instanceResourcesDirectory.isDirectory())
-			throw new IllegalArgumentException( "The resource directory for instance " + instance.getName() + " is not a valid directory. " + instanceResourcesDirectory.getAbsolutePath());
-
-		return Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory );
+		return result;
 	}
 
 

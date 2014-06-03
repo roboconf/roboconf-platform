@@ -40,18 +40,7 @@
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-iaas-api</artifactId>
 			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-plugin-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-agent</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -71,6 +60,8 @@
 					<instructions>
 						<Import-Package>net.roboconf.iaas.api.*</Import-Package>
 						<Export-Package>net.roboconf.iaas.embedded</Export-Package>
+						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

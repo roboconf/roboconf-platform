@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -38,6 +39,16 @@ public class Import implements Serializable {
 
 	private final String instancePath;
 	private final Map<String,String> exportedVars = new HashMap<String,String> ();
+
+
+	/**
+	 * Constructor.
+	 * @param instance
+	 * @param exportedVars
+	 */
+	public Import( Instance instance ) {
+		this( InstanceHelpers.computeInstancePath( instance ), instance.getExports());
+	}
 
 
 	/**

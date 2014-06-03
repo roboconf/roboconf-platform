@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.UUID;
@@ -51,7 +52,9 @@ public class RuntimeModelIoTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
-		Assert.assertEquals( 0, result.loadErrors.size());
+		Assert.assertEquals( 4, result.loadErrors.size());
+		for( RoboconfError error : result.loadErrors )
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
 		Assert.assertEquals( "Legacy LAMP", result.application.getName());
 		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());
@@ -153,7 +156,9 @@ public class RuntimeModelIoTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
-		Assert.assertEquals( 0, result.loadErrors.size());
+		Assert.assertEquals( 4, result.loadErrors.size());
+		for( RoboconfError error : result.loadErrors )
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
 		Assert.assertEquals( "Legacy LAMP", result.application.getName());
 		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());
@@ -228,7 +233,9 @@ public class RuntimeModelIoTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
-		Assert.assertEquals( 0, result.loadErrors.size());
+		Assert.assertEquals( 2, result.loadErrors.size());
+		for( RoboconfError error : result.loadErrors )
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
 		Assert.assertEquals( "Mongo", result.application.getName());
 		Assert.assertNotNull( result.application.getGraphs());
@@ -312,7 +319,9 @@ public class RuntimeModelIoTest {
 			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), graphFile );
 
 			// Instances
-			Assert.assertEquals( 0, RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.size());
+			Collection<RoboconfError> errors = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors;
+			Assert.assertEquals( 1, errors.size());
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
 
 			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
 			props.setProperty( ApplicationDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
@@ -324,6 +333,7 @@ public class RuntimeModelIoTest {
 				throw new IOException( "Failed to create the instances directory." );
 
 			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
 			Assert.assertEquals( ErrorCode.PROJ_MISSING_INSTANCE_EP, iterator.next().getErrorCode());
 
 			File instancesFile = new File( instDir, "init.instances" );
@@ -331,11 +341,14 @@ public class RuntimeModelIoTest {
 			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), instancesFile );
 
 			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
 			Assert.assertEquals( ErrorCode.PROJ_NOT_AN_INSTANCE, iterator.next().getErrorCode());
 
 			instanceContent = "instanceof A {\n\tname: toto;\n}";
 			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), instancesFile );
-			Assert.assertEquals( 0, RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.size());
+			errors =  RuntimeModelIo.loadApplication( tempDirectory ).loadErrors;
+			Assert.assertEquals( 1, errors.size());
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
 
 		} finally {
 			Utils.deleteFilesRecursively( tempDirectory );
@@ -350,7 +363,9 @@ public class RuntimeModelIoTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
-		Assert.assertEquals( 0, result.loadErrors.size());
+		Assert.assertEquals( 6, result.loadErrors.size());
+		for( RoboconfError error : result.loadErrors )
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec21" ));

@@ -348,7 +348,7 @@ public class RuntimeModelValidatorTest {
 
 
 	@Test
-	public void testInvalidChildInstance() throws Exception {
+	public void testInvalidChildInstance_1() throws Exception {
 
 		Component vmComponent = new Component( "VM" ).alias( "a VM" ).installerName( "iaas" );
 		Component tomcatComponent = new Component( "Tomcat" ).alias( "App Server" ).installerName( "puppet" );
@@ -384,5 +384,28 @@ public class RuntimeModelValidatorTest {
 		app.getRootInstances().clear();
 		app.getRootInstances().add( vmInstance1 );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
+	}
+
+
+	@Test
+	public void testInvalidChildInstance_2() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).alias( "a VM" ).installerName( "iaas" );
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "App Server" ).installerName( "puppet" );
+
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		// We cannot instantiate a VM under a VM
+		Instance vmInstance = new Instance("vm" ).component( vmComponent );
+		Instance tomcatInstance = new Instance("tomcat" ).component( tomcatComponent );
+		InstanceHelpers.insertChild( vmInstance, tomcatInstance );
+
+		Application app = new Application( "app" ).qualifier( "snapshot" ).graphs( graphs );
+		app.getRootInstances().add( vmInstance );
+
+		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_INSTANCE_PARENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
 	}
 }

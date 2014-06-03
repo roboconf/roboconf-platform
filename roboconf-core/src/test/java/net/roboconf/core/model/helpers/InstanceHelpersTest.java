@@ -293,7 +293,7 @@ public class InstanceHelpersTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.getApplication());
-		Assert.assertEquals( 0, result.getLoadErrors().size());
+		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( result.getLoadErrors()));
 
 		Application app = result.getApplication();
 		app.getRootInstances().clear();

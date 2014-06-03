@@ -29,6 +29,7 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
@@ -39,9 +40,10 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
-import net.roboconf.dm.utils.ResourceUtils;
+import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -57,6 +59,13 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 	private TestApplication app;
 	private WsClient client;
+
+
+	@After
+	public void destroyClient() {
+		if( this.client != null )
+			this.client.destroy();
+	}
 
 
 	@Override
@@ -161,8 +170,15 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		// The interest of this method is to check that URLs
 		// and instance paths are correctly handled by the DM.
+		final TestMessageServerClient msgClient = new TestMessageServerClient();
+		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory() {
+			@Override
+			public IDmClient createDmClient() {
+				return msgClient;
+			}
+		});
+
 		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, rootDir ));
-		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
 		try {
 			Assert.assertEquals( 0, msgClient.sentMessages.size());
 			this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, null, true );
@@ -276,6 +292,29 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	public void testAddInstance_child_success() throws Exception {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
+
+		Assert.assertEquals( 1, this.app.getTomcatVm().getChildren().size());
+		Assert.assertFalse( this.app.getTomcatVm().getChildren().contains( newMysql ));
+
+		this.client.getApplicationDelegate().addInstance( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm()), newMysql );
+		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
+
+		List<String> paths = new ArrayList<String> ();
+		for( Instance inst : this.app.getTomcatVm().getChildren())
+			paths.add( InstanceHelpers.computeInstancePath( inst ));
+
+		String rootPath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		Assert.assertTrue( paths.contains( rootPath + "/" + newMysql.getName()));
+		Assert.assertTrue( paths.contains( rootPath + "/" + this.app.getTomcat().getName()));
+	}
+
+
+	@Test
+	public void testAddInstance_child_incompleteComponent() throws Exception {
+
+		// Pass an incomplete component object to the REST API
+		String mySqlComponentName = this.app.getMySql().getComponent().getName();
+		Instance newMysql = new Instance( "mysql-2" ).component( new Component( mySqlComponentName ));
 
 		Assert.assertEquals( 1, this.app.getTomcatVm().getChildren().size());
 		Assert.assertFalse( this.app.getTomcatVm().getChildren().contains( newMysql ));

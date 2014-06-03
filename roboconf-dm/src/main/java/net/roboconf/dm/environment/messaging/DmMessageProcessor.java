@@ -31,6 +31,7 @@ import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
@@ -75,8 +76,34 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 		else if( message instanceof MsgNotifMachineReadyToBeDeleted )
 			processMsgNotifReadyToBeDeleted((MsgNotifMachineReadyToBeDeleted) message );
 
+		else if( message instanceof MsgNotifInstanceRestoration )
+			processMsgNotifInstanceRestoration((MsgNotifInstanceRestoration) message );
+
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
+	}
+
+
+
+	private void processMsgNotifInstanceRestoration( MsgNotifInstanceRestoration message ) {
+
+		Instance rootInstance = message.getRootInstance();
+		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		Instance currentRootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstance.getName());
+
+		// If 'app' is null, then 'instance' is also null.
+		if( currentRootInstance == null ) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "Instance " );
+			sb.append( rootInstance.getName());
+			sb.append( " (app =  " );
+			sb.append( message.getApplicationName());
+			sb.append( ") was bnot found and cannot be restored." );
+			this.logger.warning( sb.toString());
+
+		} else {
+			// TODO... The graph objects are not the same!!!!
+		}
 	}
 
 

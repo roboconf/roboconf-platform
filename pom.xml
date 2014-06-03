@@ -110,6 +110,13 @@
 						<fail>true</fail>
 						<rules><DependencyConvergence /></rules>
 					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>enforce</goal>
+							</goals>
+						</execution>
+					</executions>
 				</plugin>
 				
 				<!-- Required for Coveralls! -->

@@ -17,10 +17,8 @@
 package net.roboconf.dm.rest.client;
 
 import net.roboconf.dm.rest.api.IApplicationWs;
-import net.roboconf.dm.rest.api.IInitWs;
 import net.roboconf.dm.rest.api.IManagementWs;
 import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
-import net.roboconf.dm.rest.client.delegates.InitWsDelegate;
 import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
 import net.roboconf.dm.rest.json.ObjectMapperProvider;
 
@@ -70,7 +68,6 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
  */
 public class WsClient {
 
-	private final InitWsDelegate initDelegate;
 	private final ApplicationWsDelegate applicationDelegate;
 	private final ManagementWsDelegate managementDelegate;
 
@@ -90,7 +87,6 @@ public class WsClient {
 		this.client.setFollowRedirects( true );
 		WebResource resource = this.client.resource( rootUrl );
 
-		this.initDelegate = new InitWsDelegate( resource );
 		this.applicationDelegate = new ApplicationWsDelegate( resource );
 		this.managementDelegate = new ManagementWsDelegate( resource );
 
@@ -119,14 +115,6 @@ public class WsClient {
 	 */
 	public void destroy() {
 		this.client.destroy();
-	}
-
-
-	/**
-	 * @return the initDelegate
-	 */
-	public InitWsDelegate getInitDelegate() {
-		return this.initDelegate;
 	}
 
 

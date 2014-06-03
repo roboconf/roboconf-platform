@@ -131,6 +131,7 @@ public enum ErrorCode {
 	PROJ_EXTRACT_ZIP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Roboconf failed to extract the ZIP archive (ZIP reading)." ),
 	PROJ_DELETE_TEMP( ErrorLevel.WARNING, ErrorCategory.PROJECT, "Roboconf failed to delete a temporary directory." ),
 	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
+	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource directory." ),
 
 
 	// Execution Errors

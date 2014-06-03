@@ -26,7 +26,7 @@ import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.azure.IaasAzure;
 import net.roboconf.iaas.ec2.IaasEc2;
 import net.roboconf.iaas.embedded.IaasEmbedded;
-import net.roboconf.iaas.local.IaasInMemory;
+import net.roboconf.iaas.in_memory.IaasInMemory;
 import net.roboconf.iaas.openstack.IaasOpenstack;
 import net.roboconf.iaas.vmware.IaasVmware;
 

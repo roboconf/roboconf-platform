@@ -28,7 +28,6 @@ import java.util.UUID;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.utils.Utils;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -356,7 +355,7 @@ public class UtilsTest {
 
 	@Test( expected = IllegalArgumentException.class )
 	public void testListAllFiles_inexistingFile() throws Exception {
-		Utils.listAllFiles( new File( "/not/existing/file" ));
+		Utils.listAllFiles( new File( "not/existing/file" ));
 	}
 
 
@@ -368,7 +367,7 @@ public class UtilsTest {
 
 	@Test( expected = IllegalArgumentException.class )
 	public void testStoreDirectoryResourcesAsBytes_illegalArgument_1() throws Exception {
-		Utils.storeDirectoryResourcesAsBytes( new File( "/not/existing/file" ));
+		Utils.storeDirectoryResourcesAsBytes( new File( "not/existing/file" ));
 	}
 
 

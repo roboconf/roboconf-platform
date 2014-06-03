@@ -26,6 +26,7 @@ import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
+import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.Before;
@@ -104,6 +105,15 @@ public class ManagerWithNoConnectionTest {
 
 		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
 		Manager.INSTANCE.cleanUp( null );
+	}
+
+
+	@Test( expected = InvalidActionException.class )
+	public void testInvalidAction() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+		Manager.INSTANCE.perform( app.getName(), "eat", "/whatever", false );
 	}
 
 

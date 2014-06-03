@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.local.internal.utils;
+package net.roboconf.iaas.in_memory.internal.utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,5 +55,13 @@ public class AgentManager {
 	 */
 	public AgentLauncher unregisterMachine( String machineId ) {
 		return this.machineIdToAgentLauncher.remove( machineId );
+	}
+
+
+	/**
+	 * @return the machineIdToAgentLauncher
+	 */
+	public Map<String,AgentLauncher> getMachineIdToAgentLauncher() {
+		return this.machineIdToAgentLauncher;
 	}
 }

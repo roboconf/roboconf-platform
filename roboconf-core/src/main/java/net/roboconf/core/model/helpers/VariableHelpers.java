@@ -122,6 +122,28 @@ public final class VariableHelpers {
 
 
 	/**
+	 * Finds the component and facet names that prefix the variables an instance requires.
+	 * <p>
+	 * Only the mandatory variables are returned. Optional imports are not considered by this method.
+	 * </p>
+	 *
+	 * @param instance an instance
+	 * @return a non-null set with all the component and facet names this instance imports
+	 */
+	public static Set<String> findPrefixesForMandatoryImportedVariables( Instance instance ) {
+		Set<String> result = new HashSet<String> ();
+
+		for( Map.Entry<String,Boolean> entry : instance.getComponent().getImportedVariables().entrySet()) {
+			String variableName = entry.getKey();
+			if( ! entry.getValue())
+				result.add( VariableHelpers.parseVariableName( variableName ).getKey());
+		}
+
+		return result;
+	}
+
+
+	/**
 	 * Updates the exports of an instance with network values.
 	 * <p>
 	 * For the moment, only IP is supported.

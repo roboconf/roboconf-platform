@@ -33,7 +33,7 @@ public class IaasEmbedded implements IaasInterface {
 	 * #setIaasProperties(net.roboconf.iaas.api.IaasProperties)
 	 */
 	@Override
-	public void setIaasProperties(Map<String, String> iaasProperties) {
+	public void setIaasProperties( Map<String,String> iaasProperties ) {
 		// nothing
 	}
 

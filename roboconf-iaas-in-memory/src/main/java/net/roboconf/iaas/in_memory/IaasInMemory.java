@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.local;
+package net.roboconf.iaas.in_memory;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import net.roboconf.agent.AgentLauncher;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.local.internal.utils.AgentManager;
+import net.roboconf.iaas.in_memory.internal.utils.AgentManager;
 import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
@@ -60,6 +60,11 @@ public class IaasInMemory implements IaasInterface {
 			String applicationName )
 	throws IaasException {
 
+		// Check no agent is already registered for this instance
+		String machineId = rootInstanceName + " @ localhost";
+		if( AgentManager.INSTANCE.getMachineIdToAgentLauncher().containsKey( machineId ))
+			throw new IaasException( "In-Memory agent " + rootInstanceName + " is already running." );
+
 		// Create the agent's data.
 		final AgentData agentData = new AgentData();
 		agentData.setApplicationName( applicationName );
@@ -69,20 +74,27 @@ public class IaasInMemory implements IaasInterface {
 
 		// Messaging subscriptions are handled automatically in a new thread (see *.messaging).
 		String agentName = rootInstanceName + " - In-Memory Agent";
-		AgentLauncher agentLauncher = new AgentLauncher( agentName, agentData );
-		try {
-			File tempDir = new File( System.getProperty( "java.io.tmpdir" ));
-			agentLauncher.launchAgent( ExecutionLevel.RUNNING, tempDir );
-
-		} catch( IOException e ) {
-			Logger logger = Logger.getLogger( getClass().getName());
-			logger.severe( "An error occurred in an agent (in-memory). " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
-		}
+		final AgentLauncher agentLauncher = new AgentLauncher( agentName, agentData );
 
 		// Store the agent's launcher, so that we can stop it later
-		String machineId = rootInstanceName + " @ localhost";
 		AgentManager.INSTANCE.registerMachine( machineId, agentLauncher );
+
+		// Run the agent in another thread
+		new Thread( agentName ) {
+			@Override
+			public void run() {
+
+				try {
+					File tempDir = new File( System.getProperty( "java.io.tmpdir" ));
+					agentLauncher.launchAgent( ExecutionLevel.RUNNING, tempDir );
+
+				} catch( IOException e ) {
+					Logger logger = Logger.getLogger( getClass().getName());
+					logger.severe( "An error occurred in an agent (in-memory). " + e.getMessage());
+					logger.finest( Utils.writeException( e ));
+				}
+			};
+		}.start();
 
 		return machineId;
 	}

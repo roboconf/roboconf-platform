@@ -28,6 +28,7 @@ import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.converters.FromGraphDefinition;
 import net.roboconf.core.model.converters.FromInstanceDefinition;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Graphs;
@@ -144,6 +145,9 @@ public class RuntimeModelIo {
 			Collection<RoboconfError> errors = RuntimeModelValidator.validate( graph );
 			result.loadErrors.addAll( errors );
 
+			errors = RuntimeModelValidator.validate( graph, projectDirectory );
+			result.loadErrors.addAll( errors );
+
 			app.setGraphs( graph );
 		}
 
@@ -192,6 +196,15 @@ public class RuntimeModelIo {
 			app.getRootInstances().addAll( instances );
 		}
 
+
+		// Validate the entire application
+		if( ! RoboconfErrorHelpers.containsCriticalErrors( result.loadErrors )) {
+			Collection<RoboconfError> errors = RuntimeModelValidator.validate( app );
+			result.loadErrors.addAll( errors );
+		}
+
+
+		// Complete the result
 		result.application = app;
 		return result;
 	}

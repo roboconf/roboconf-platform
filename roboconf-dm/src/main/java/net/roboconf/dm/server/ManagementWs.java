@@ -36,6 +36,7 @@ import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IManagementWs;
+import net.roboconf.dm.rest.json.MapHolder;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -68,7 +69,9 @@ public class ManagementWs implements IManagementWs {
 			Utils.extractZipArchive( tempZipFile, dir );
 
 			// Load the application
-			response = loadApplication( dir.getAbsolutePath());
+			MapHolder mapHolder = new MapHolder();
+			mapHolder.getMap().put( MapHolder.FILE_LOCAL_PATH, dir.getAbsolutePath());
+			response = loadApplication( mapHolder );
 
 		} catch( IOException e ) {
 			response = Response.status( Status.NOT_ACCEPTABLE ).entity( "A ZIP file was expected. " + e.getMessage()).build();
@@ -84,11 +87,15 @@ public class ManagementWs implements IManagementWs {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.dm.rest.client.exceptions.server.IApplicationWs
-	 * #loadApplication(java.lang.String)
+	 * @see net.roboconf.dm.rest.api.IManagementWs
+	 * #loadApplication(net.roboconf.dm.rest.json.MapHolder)
 	 */
 	@Override
-	public Response loadApplication( String localFilePath ) {
+	public Response loadApplication( MapHolder mapHolder ) {
+
+		String localFilePath = mapHolder.getMap().get( MapHolder.FILE_LOCAL_PATH );
+		if( localFilePath == null )
+			localFilePath = "null";
 
 		this.logger.fine( "Request: load application from " + localFilePath + "." );
 		Response response;

@@ -48,6 +48,7 @@ public class AgentLauncher {
 	private Timer heartBeatTimer;
 	private IAgentClient messagingClient;
 	private MessageServerClientFactory factory = new MessageServerClientFactory();
+	private boolean running = false;
 
 
 	/**
@@ -67,6 +68,22 @@ public class AgentLauncher {
 	public AgentLauncher( String agentName, AgentData agentData ) {
 		this( agentData );
 		this.agentName = agentName;
+	}
+
+
+	/**
+	 * @return the agentData
+	 */
+	public AgentData getAgentData() {
+		return this.agentData;
+	}
+
+
+	/**
+	 * @return the running
+	 */
+	public boolean isRunning() {
+		return this.running;
 	}
 
 
@@ -122,6 +139,7 @@ public class AgentLauncher {
 				this.heartBeatTimer );
 
 		// Open a connection with the messaging server
+		this.running = true;
 		this.messagingClient.openConnection( messageProcessor );
 		this.messagingClient.listenToTheDm( ListenerCommand.START );
 
@@ -174,7 +192,9 @@ public class AgentLauncher {
 			if( this.heartBeatTimer != null )
 				this.heartBeatTimer.cancel();
 
-			if( this.messagingClient.isConnected()) {
+			if( this.messagingClient != null
+					&& this.messagingClient.isConnected()) {
+
 				MsgNotifMachineDown machineIsDown = new MsgNotifMachineDown(
 						this.agentData.getApplicationName(),
 						this.agentData.getRootInstanceName());
@@ -188,5 +208,7 @@ public class AgentLauncher {
 			this.logger.severe( e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
+
+		this.running = false;
 	}
 }
