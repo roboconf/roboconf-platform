@@ -103,12 +103,12 @@ public class ImportsUpdateTest {
 				new NilMessagingClient(),
 				new Timer());
 
-		// The cluster node does not know about another node
+		// The application server does not know about the database
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
 		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
 
-		// The node is now aware of another node
+		// The application server is now aware of the database
 		appServer.addImport( "database", new Import( database ));
 		appServer.setStatus( InstanceStatus.STARTING );
 		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );

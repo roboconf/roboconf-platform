@@ -429,7 +429,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		if( instance == null ) {
 			this.logger.severe( "No instance matched " + msg.getInstancePath() + " on the agent. Request to start it is dropped." );
 
-		} else if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED ) {
+		} else if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED
+				&& instance.getStatus() != InstanceStatus.STARTING ) {
+
+			// Starting may be blocked because of concurrency issues.
+			// So, we allow starting something which is already starting...
 			this.logger.info( "Invalid status for instance " + msg.getInstancePath() + ". Status = "
 					+ instance.getStatus() + ". Start request is dropped." );
 
@@ -440,8 +444,16 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			try {
 				instance.setStatus( InstanceStatus.STARTING );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
-				updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
-				result = true;
+				if( InstanceHelpers.hasAllRequiredImports( instance, this.logger )) {
+					updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
+					result = true;
+
+				} else {
+					this.logger.fine(
+							"Instance " + InstanceHelpers.computeInstancePath( instance )
+							+ " cannot be started, dependencies are missing. Requesting exports from other agents." );
+					this.messagingClient.requestExportsFromOtherAgents( instance );
+				}
 
 			} catch( PluginException e ) {
 				this.logger.severe( "An error occured while starting " + InstanceHelpers.computeInstancePath( instance ));
@@ -592,16 +604,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws IOException, PluginException {
 
 		// Do we have all the imports we need?
-		boolean haveAllImports = true;
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForMandatoryImportedVariables( impactedInstance )) {
-			Collection<Import> imports = impactedInstance.getImports().get( facetOrComponentName );
-			if( imports != null && ! imports.isEmpty())
-				continue;
-
-			haveAllImports = false;
-			this.logger.fine( InstanceHelpers.computeInstancePath( impactedInstance ) + " is still missing dependencies '" + facetOrComponentName + ".*'." );
-			break;
-		}
+		boolean haveAllImports = InstanceHelpers.hasAllRequiredImports( impactedInstance, this.logger );
 
 		// Update the life cycle of this instance if necessary
 		// Maybe we have something to start
@@ -613,6 +616,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				impactedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, impactedInstance ));
 				this.messagingClient.publishExports( impactedInstance );
+				this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.START, impactedInstance );
 
 			} else if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 				// FIXME: there should be a way to determine whether an update is necessary
@@ -661,6 +665,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			i.setStatus( InstanceStatus.STOPPING );
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+			this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.STOP, i );
 			this.messagingClient.unpublishExports( i );
 		}
 

@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.runtime.Application;
@@ -376,5 +377,34 @@ public final class InstanceHelpers {
 	 */
 	public static int countInstances( String instancePath ) {
 		return instancePath.split( "/" ).length - 1;
+	}
+
+
+	/**
+	 * Determines whether an instance has all the imports it needs.
+	 * <p>
+	 * By definition, optional imports are not considered to be required.
+	 * </p>
+	 *
+	 * @param instance a non-null instance
+	 * @param logger a logger (can be null)
+	 * @return true if all its (mandatory) imports are resolved, false otherwise
+	 */
+	public static boolean hasAllRequiredImports( Instance instance, Logger logger ) {
+
+		boolean haveAllImports = true;
+		for( String facetOrComponentName : VariableHelpers.findPrefixesForMandatoryImportedVariables( instance )) {
+			Collection<Import> imports = instance.getImports().get( facetOrComponentName );
+			if( imports != null && ! imports.isEmpty())
+				continue;
+
+			haveAllImports = false;
+			if( logger != null )
+				logger.fine( InstanceHelpers.computeInstancePath( instance ) + " is still missing dependencies '" + facetOrComponentName + ".*'." );
+
+			break;
+		}
+
+		return haveAllImports;
 	}
 }
