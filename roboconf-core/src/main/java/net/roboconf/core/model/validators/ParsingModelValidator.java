@@ -258,6 +258,20 @@ public class ParsingModelValidator {
 		} else if( Constants.PROPERTY_INSTANCE_CHANNEL.equals( name )) {
 			// TODO: what is expected?
 
+		} else if( Constants.PROPERTY_INSTANCE_COUNT.equals( name )) {
+			int count = -1;
+			try {
+				count = Integer.parseInt( value );
+
+			} catch( NumberFormatException e ) {
+				// nothing
+			}
+
+			if( count < 1 )
+				result.add( new ModelError( ErrorCode.PM_INVALID_INSTANCE_COUNT, line ));
+			else if( count == 1 )
+				result.add( new ModelError( ErrorCode.PM_USELESS_INSTANCE_COUNT, line ));
+
 		} else {
 			ModelError error = new ModelError( ErrorCode.PM_UNKNOWN_PROPERTY_NAME, line );
 			error.setDetails( "Property name: " + name );

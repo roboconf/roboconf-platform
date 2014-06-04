@@ -22,9 +22,11 @@ instanceof VM {
 
 # A VM with Tomcat only
 instanceof VM {
-	name: Tomcat VM 1;
+	name: Tomcat VM ;	# Keep the space at the end (nicer for display when count > 1)
+	count: 3;	# Create 3 such VM
 	
 	instanceof Tomcat {
 		name: Tomcat;
+		portAJP: 9021;
 	}
 }

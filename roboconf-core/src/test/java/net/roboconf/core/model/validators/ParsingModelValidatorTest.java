@@ -481,6 +481,41 @@ public class ParsingModelValidatorTest {
 			Assert.assertEquals( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, modelError.getErrorCode());
 
 
+		// Count property
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_EMPTY_PROPERTY_VALUE, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "a" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_COUNT, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "woo" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_COUNT, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "-5" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_COUNT, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "2.3" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_COUNT, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "1" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_USELESS_INSTANCE_COUNT, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "3" );
+		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
+
+
 		// Invalid property
 		block.setNameAndValue( "An Invalid Property", "" );
 		errors = ParsingModelValidator.validate( block );

@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Component;
@@ -91,7 +93,7 @@ public class ImportHelpersTest {
 		database.getExports().put( "database.ip", "192.168.1.28" );
 
 		// The application server does not know about the database
-		Assert.assertFalse( ImportHelpers.hasAllRequiredImports( appServer, null ));
+		Assert.assertFalse( ImportHelpers.hasAllRequiredImports( appServer, Logger.getAnonymousLogger()));
 
 		// The application server is now aware of the database
 		ImportHelpers.addImport( appServer, "database", new Import( database ));
@@ -128,6 +130,9 @@ public class ImportHelpersTest {
 		iterator = inst.getImports().get( "comp" ).iterator();
 		Assert.assertEquals( "/root1", iterator.next().getInstancePath());
 		Assert.assertFalse( iterator.hasNext());
+
+		ImportHelpers.updateImports( inst, null );
+		Assert.assertEquals( 0, inst.getImports().size());
 	}
 
 
@@ -150,6 +155,11 @@ public class ImportHelpersTest {
 		Assert.assertTrue( inst.getImports().keySet().contains( "wow" ));
 
 		Assert.assertEquals( 2, inst.getImports().get( "comp" ).size());
+		ImportHelpers.addImport( inst, "comp", new Import( "/root3" ));
+		Assert.assertEquals( 3, inst.getImports().get( "comp" ).size());
+		Assert.assertEquals( 2, inst.getImports().keySet().size());
+
+		// We cannot insert the same import twice
 		ImportHelpers.addImport( inst, "comp", new Import( "/root3" ));
 		Assert.assertEquals( 3, inst.getImports().get( "comp" ).size());
 		Assert.assertEquals( 2, inst.getImports().keySet().size());
@@ -189,5 +199,22 @@ public class ImportHelpersTest {
 		Assert.assertEquals( 2, imp.getExportedVars().size());
 		Assert.assertEquals( "127.0.0.1", imp.getExportedVars().get( "comp1.ip" ));
 		Assert.assertEquals( "ciao!", imp.getExportedVars().get( "comp2.option" ));
+	}
+
+
+	@Test
+	public void testFindImportByExportingInstance() {
+
+		Collection<Import> imports = new HashSet<Import> ();
+		imports.add( new Import( "/some/path" ));
+		imports.add( new Import( "/some/path/deeper" ));
+		imports.add( new Import( "/some/other-path" ));
+
+		Assert.assertNull( ImportHelpers.findImportByExportingInstance( null, null ));
+		Assert.assertNull( ImportHelpers.findImportByExportingInstance( null, "/some/path" ));
+		Assert.assertNull( ImportHelpers.findImportByExportingInstance( imports, null ));
+		Assert.assertNull( ImportHelpers.findImportByExportingInstance( imports, "/wrong/path" ));
+		Assert.assertEquals( "/some/path", ImportHelpers.findImportByExportingInstance( imports, "/some/path" ).getInstancePath());
+		Assert.assertEquals( "/some/path/deeper", ImportHelpers.findImportByExportingInstance( imports, "/some/path/deeper" ).getInstancePath());
 	}
 }

@@ -53,11 +53,6 @@ public interface ParsingConstants {
 	 */
 	String KEYWORD_INSTANCE_OF = "instanceof";
 
-	/**
-	 * Keyword to declare a joker instance.
-	 */
-	String KEYWORD_INSTANCE_GROUP = "<group>";
-
 
 	/**
 	 * The pattern for a flexible ID (allows spaces).

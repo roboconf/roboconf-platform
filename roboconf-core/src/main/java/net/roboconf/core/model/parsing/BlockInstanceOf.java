@@ -37,7 +37,8 @@ public class BlockInstanceOf extends AbstractBlockHolder {
 	public String[] getSupportedPropertyNames() {
 		return new String[] {
 			Constants.PROPERTY_INSTANCE_NAME,
-			Constants.PROPERTY_INSTANCE_CHANNEL
+			Constants.PROPERTY_INSTANCE_CHANNEL,
+			Constants.PROPERTY_INSTANCE_COUNT
 		};
 	}
 

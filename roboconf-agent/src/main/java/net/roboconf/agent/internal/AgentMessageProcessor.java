@@ -512,7 +512,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			// Is there an import to remove?
 			Collection<Import> imports = instance.getImports().get( msg.getComponentOrFacetName());
-			Import toRemove = InstanceHelpers.findImportByExportingInstance( imports, msg.getRemovedInstancePath());
+			Import toRemove = ImportHelpers.findImportByExportingInstance( imports, msg.getRemovedInstancePath());
 			if( toRemove == null )
 				continue;
 

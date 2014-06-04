@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -51,6 +52,8 @@ import net.roboconf.core.utils.ModelUtils;
  * @author Vincent Zurczak - Linagora
  */
 public class FromInstanceDefinition {
+
+	private static final String INST_COUNT = "count";
 
 	private final FileDefinition definition;
 	private final Collection<ModelError> errors = new ArrayList<ModelError> ();
@@ -142,11 +145,31 @@ public class FromInstanceDefinition {
 		if( this.errors.isEmpty())
 			checkUnicity();
 
-		// Find the root instances and set the real exports
+		// Find the root instances
 		Collection<Instance> rootInstances = new HashSet<Instance> ();
 		for( Instance instance : this.allBlocksToInstances.values()) {
 			if( instance.getParent() == null )
 				rootInstances.add( instance );
+		}
+
+		// So far, we have found all the instance definitions.
+		if( this.errors.isEmpty()) {
+
+			// What we have to do, is to duplicate those whose "count" is higher than 1.
+			List<Instance> newRootInstances = new ArrayList<Instance> ();
+			for( Instance rootInstance : rootInstances )
+				newRootInstances.addAll( duplicateInstancesFrom( rootInstance ));
+
+			// At this level, there may be new naming conflicts...
+			List<Instance> tempNewRootInstances = new ArrayList<Instance>( newRootInstances );
+			tempNewRootInstances.retainAll( rootInstances );
+			for( Instance instance : tempNewRootInstances ) {
+				ModelError error = new ModelError( ErrorCode.CO_CONFLICTING_INFERRED_INSTANCE, -1 );
+				error.setDetails( "Instance path: " + InstanceHelpers.computeInstancePath( instance ));
+				this.errors.add( error );
+			}
+
+			rootInstances.addAll( newRootInstances );
 		}
 
 		return rootInstances;
@@ -196,7 +219,7 @@ public class FromInstanceDefinition {
 
 		// We rely on a different collection than just Instance#getChildren().
 		// This is because getChildren() uses a hash set.
-		// But here, at parsing time, we need a list.
+		// But here, at parsing time, we need a list (if there are duplicates, we need to know them).
 		Map<Instance,List<Instance>> instanceToChildrenInstances = new HashMap<Instance,List<Instance>> ();
 
 		while( ! blockToInstance.isEmpty()) {
@@ -207,17 +230,28 @@ public class FromInstanceDefinition {
 
 			// Process the current
 			BlockInstanceOf currentBlock = entry.getKey();
+
+			// Do we need to create several instances?
+			String countAsString = ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_COUNT );
+
+			// Process the instance
 			Instance instance = entry.getValue();
 			instance.setName( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_NAME ));
 			instance.setChannel( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_CHANNEL ));
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
+
+			// Since instance hash changes when we update their parent, we cannot rely on hash map
+			// to store the count for a given instance. So, we will temporarily use instance#getData().
+			instance.getData().put( INST_COUNT, countAsString );
 
 			for( AbstractBlock innerBlock : currentBlock.getInnerBlocks()) {
 
 				// Check overridden exports
 				if( innerBlock.getInstructionType() == AbstractBlock.PROPERTY ) {
 					String pName = ((BlockProperty) innerBlock).getName();
-					if( Constants.PROPERTY_INSTANCE_NAME.equals( pName ))
+					if( Constants.PROPERTY_INSTANCE_NAME.equals( pName )
+							|| Constants.PROPERTY_INSTANCE_CHANNEL.equals( pName )
+							|| Constants.PROPERTY_INSTANCE_COUNT.equals( pName ))
 						continue;
 
 					String pValue = ((BlockProperty) innerBlock).getValue();
@@ -242,11 +276,50 @@ public class FromInstanceDefinition {
 			}
 		}
 
-		// Associate instances with their children
+		// Associate instances with their children.
+		// Since we change the path, we also change the hash computing.
 		for( Map.Entry<Instance,List<Instance>> entry : instanceToChildrenInstances.entrySet()) {
 			for( Instance childInstance : entry.getValue())
 				InstanceHelpers.insertChild( entry.getKey(), childInstance );
 		}
+	}
+
+
+	private Collection<Instance> duplicateInstancesFrom( Instance rootInstance ) {
+		Collection<Instance> newRootInstances = new ArrayList<Instance> ();
+
+		// Begin with the duplicates of the deepest instances.
+		List<Instance> orderedInstances = InstanceHelpers.buildHierarchicalList( rootInstance );
+		Collections.reverse( orderedInstances );
+
+		for( Instance instance : orderedInstances ) {
+			String countAsString = instance.getData().remove( INST_COUNT );
+			Integer count = 1;
+			try {
+				count = Integer.parseInt( countAsString );
+			} catch( NumberFormatException e ) {
+				// ignore, the validator for the parsing model should handle this
+			}
+
+			if( count <= 1 )
+				continue;
+
+			String format = "%0" + String.valueOf( count ).length() + "d";
+			for( int i=2; i<=count; i++ ) {
+				Instance copy = InstanceHelpers.duplicateInstance( instance );
+				copy.name( copy.getName() + String.format( format, i ));
+
+				if( instance.getParent() != null )
+					InstanceHelpers.insertChild( instance.getParent(), copy );
+				else
+					newRootInstances.add( copy );
+			}
+
+			// Update the first one
+			instance.name( instance.getName() + String.format( format, 1 ));
+		}
+
+		return newRootInstances;
 	}
 
 

@@ -116,4 +116,26 @@ public class ImportHelpers {
 		if( variablePrefixToImports != null )
 			instance.getImports().putAll( variablePrefixToImports );
 	}
+
+
+	/**
+	 * Finds a specific import from the path of the instance that exports it.
+	 * @param imports a collection of imports (that can be null)
+	 * @param exportingInstancePath the path of the exporting instance
+	 * @return an import, or null if none was found
+	 */
+	public static Import findImportByExportingInstance( Collection<Import> imports, String exportingInstancePath ) {
+
+		Import result = null;
+		if( imports != null && exportingInstancePath != null ) {
+			for( Import imp : imports ) {
+				if( exportingInstancePath.equals( imp.getInstancePath())) {
+					result = imp;
+					break;
+				}
+			}
+		}
+
+		return result;
+	}
 }
