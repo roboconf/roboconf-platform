@@ -222,7 +222,9 @@ public class PluginBash implements PluginInterface {
     }
 
 
-    protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir) throws IOException, InterruptedException {
+    protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir)
+    throws IOException, InterruptedException {
+
         String[] command = { "bash", script.getAbsolutePath()};
         Map<String, String> environmentVars = new HashMap<String, String>();
         Map<String, String> vars = formatExportedVars(instance);
@@ -230,14 +232,14 @@ public class PluginBash implements PluginInterface {
         Map<String, String> importedVars = formatImportedVars(instance);
         environmentVars.putAll(importedVars);
         environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
-        environmentVars.put("ROBOCONF_FILES_DIR",
-        		instanceDir + (instanceDir.endsWith(File.separator) ? "" : File.separator)
-        		+ FILES_FOLDER_NAME);
+        environmentVars.put("ROBOCONF_FILES_DIR", new File( instanceDir, FILES_FOLDER_NAME ).getAbsolutePath());
+
         // Upon update, retrieve the status of the instance that triggered the update.
         // Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...
         if(statusChanged != null) {
         	environmentVars.put("ROBOCONF_UPDATE_STATUS", statusChanged.toString());
         }
+
         // Upon update, retrieve the import that changed
         // (removed when an instance stopped, or added when it started)
         if(importChanged != null) {
@@ -254,21 +256,24 @@ public class PluginBash implements PluginInterface {
 
 
     private Map<String, String> formatExportedVars(Instance instance) {
-        // The map we will return
+
+    	// The map we will return
         Map<String, String> exportedVars = new HashMap<String, String>();
         for(Entry<String, String> entry : instance.getExports().entrySet()) {
             String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
             exportedVars.put(vname, entry.getValue());
         }
+
         return exportedVars;
     }
 
 
     /**
-     * Simple vars are formatted a simple way ("myVarName=varValue"),
-     * while Imported vars must be formatted in a more complex way.
+     * Simple vars are formatted a simple way ("myVarName=varValue"), while Imported vars must be formatted in a more complex way.
+     * <p>
      * Taking the example of Apache needing workers in the example Apache-Tomcat-SQL,
      * we chose to adopt the following style:
+     * <pre>
      * ==========================
      * "workers_size=3"
      * "workers_0_name=tomcat1"
@@ -278,13 +283,15 @@ public class PluginBash implements PluginInterface {
      * .....
      * "workers_2_portAJP=8010"
      * ==========================
+     * </pre>
      * With this way of formatting vars, the Bash script will know
      * everything it needs to use these vars
+     * </p>
      *
      * @param instance
      * @return
      */
-    private Map<String, String> formatImportedVars(Instance instance) {
+    private Map<String,String> formatImportedVars( Instance instance ) {
 
         // The map we will return
         Map<String, String> importedVars = new HashMap<String, String>();
@@ -297,7 +304,7 @@ public class PluginBash implements PluginInterface {
 
             // Now put each var contained in an Import
             int i = 0;
-            for(Import imprt : importList) {
+            for( Import imprt : importList ) {
                 // "workers_0_name=tomcat1"
 
                 /*int index = imprt.getInstancePath().lastIndexOf( '/' );

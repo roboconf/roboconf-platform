@@ -562,8 +562,7 @@ public final class Manager {
 			// Undeploy things (useful when the root instance was not created by the DM).
 			// Example: device, existing machine, etc.
 			try {
-				if( isConnectedToTheMessagingServer())
-					undeploy( ma, Arrays.asList( rootInstance ));
+				undeploy( ma, Arrays.asList( rootInstance ));
 
 			} catch( BulkActionException e ) {
 				bulkException.getInstancesToException().putAll( e.getInstancesToException());
@@ -811,8 +810,13 @@ public final class Manager {
 		BulkActionException bulkException = new BulkActionException( false );
 		for( Instance instance : instances ) {
 			try {
-				MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( InstanceHelpers.computeInstancePath( instance ));
-				this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
+				if( instance.getParent() == null ) {
+					terminateMachine( ma.getApplication().getName(), instance );
+
+				} else {
+					MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( InstanceHelpers.computeInstancePath( instance ));
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
+				}
 
 			} catch( IOException e ) {
 				// The instance does not have any problem, just keep trace of the exception

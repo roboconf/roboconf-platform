@@ -16,11 +16,10 @@
 
 package net.roboconf.agent.internal;
 
-import java.util.Timer;
-
 import junit.framework.Assert;
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.tests.NilMessagingClient;
+import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
@@ -54,8 +53,7 @@ public class ImportsUpdateTest {
 				"my agent",
 				new AgentData(),
 				new PluginManager(),
-				new NilMessagingClient(),
-				new Timer());
+				new NilMessagingClient());
 
 		// The cluster node does not know about another node
 		Assert.assertEquals( InstanceStatus.STARTING, i1.getStatus());
@@ -63,7 +61,7 @@ public class ImportsUpdateTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
 
 		// The node is now aware of another node
-		i1.addImport( "cluster", new Import( i2 ));
+		ImportHelpers.addImport( i1, "cluster", new Import( i2 ));
 		i1.setStatus( InstanceStatus.STARTING );
 		processor.updateStateFromImports( i1, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
@@ -100,16 +98,15 @@ public class ImportsUpdateTest {
 				"my agent",
 				new AgentData(),
 				new PluginManager(),
-				new NilMessagingClient(),
-				new Timer());
+				new NilMessagingClient());
 
-		// The cluster node does not know about another node
+		// The application server does not know about the database
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
 		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
 
-		// The node is now aware of another node
-		appServer.addImport( "database", new Import( database ));
+		// The application server is now aware of the database
+		ImportHelpers.addImport( appServer, "database", new Import( database ));
 		appServer.setStatus( InstanceStatus.STARTING );
 		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, appServer.getStatus());

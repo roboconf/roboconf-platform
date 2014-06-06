@@ -26,7 +26,6 @@ import java.util.Map;
 
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.validators.RuntimeModelValidator;
 import net.roboconf.core.utils.Utils;
@@ -215,28 +214,6 @@ public final class InstanceHelpers {
 
 
 	/**
-	 * Finds a specific import from the path of the instance that exports it.
-	 * @param imports a collection of imports (that can be null)
-	 * @param exportingInstancePath the path of the exporting instance (not null)
-	 * @return an import, or null if none was found
-	 */
-	public static Import findImportByExportingInstance( Collection<Import> imports, String exportingInstancePath ) {
-
-		Import result = null;
-		if( imports != null ) {
-			for( Import imp : imports ) {
-				if( exportingInstancePath.equals( imp.getInstancePath())) {
-					result = imp;
-					break;
-				}
-			}
-		}
-
-		return result;
-	}
-
-
-	/**
 	 * Finds instances by component name.
 	 * @param application an application (not null)
 	 * @param componentName a component name (not null)
@@ -376,5 +353,44 @@ public final class InstanceHelpers {
 	 */
 	public static int countInstances( String instancePath ) {
 		return instancePath.split( "/" ).length - 1;
+	}
+
+
+	/**
+	 * Duplicates an instance and its children.
+	 * <p>
+	 * The result does not have any parent. It does not have any
+	 * data, nor imports or real exports. In fact, only the name,
+	 * the component association, the channel and the overridden exports
+	 * are copied. The children are not "copied" but duplicated.
+	 * </p>
+	 *
+	 * @param instance a non-null instance to duplicate
+	 * @return a non-null instance
+	 */
+	public static Instance duplicateInstance( Instance instance ) {
+
+		Map<Instance,Instance> instanceToDuplicate = new HashMap<Instance,Instance> ();
+		List<Instance> toProcess = new ArrayList<Instance> ();
+		toProcess.add( instance );
+
+		while( ! toProcess.isEmpty()) {
+			Instance current = toProcess.remove( 0 );
+
+			Instance copy = new Instance();
+			copy.name( current.getName());
+			copy.component( current.getComponent());
+			copy.channel( current.getChannel());
+			copy.getOverriddenExports().putAll( current.getOverriddenExports());
+			instanceToDuplicate.put( current, copy );
+
+			Instance parent = instanceToDuplicate.get( current.getParent());
+			if( parent != null )
+				insertChild( parent, copy );
+
+			toProcess.addAll( current.getChildren());
+		}
+
+		return instanceToDuplicate.get( instance );
 	}
 }

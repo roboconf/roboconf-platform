@@ -135,8 +135,7 @@ public class AgentLauncher {
 				this.agentName,
 				this.agentData,
 				pluginManager,
-				this.messagingClient,
-				this.heartBeatTimer );
+				this.messagingClient );
 
 		// Open a connection with the messaging server
 		this.running = true;
@@ -144,7 +143,7 @@ public class AgentLauncher {
 		this.messagingClient.listenToTheDm( ListenerCommand.START );
 
 		// Add a hook for when the VM shutdowns
-		Runtime.getRuntime().addShutdownHook( new Thread(new Runnable() {
+		Runtime.getRuntime().addShutdownHook( new Thread( new Runnable() {
 			@Override
 			public void run() {
 				stopAgent();

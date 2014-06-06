@@ -85,6 +85,11 @@ public interface Constants {
 	 */
 	String PROPERTY_INSTANCE_CHANNEL = "channel";
 
+	/**
+	 * Keyword to create several instances at once.
+	 */
+	String PROPERTY_INSTANCE_COUNT = "count";
+
 
 	/**
 	 * The <strong>graph</strong> directory.

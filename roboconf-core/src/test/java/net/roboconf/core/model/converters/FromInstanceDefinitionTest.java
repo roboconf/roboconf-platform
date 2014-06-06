@@ -158,6 +158,7 @@ public class FromInstanceDefinitionTest {
 
 		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
 		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
 
 		// The assertions
 		Application app = new Application();
@@ -175,5 +176,148 @@ public class FromInstanceDefinitionTest {
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-3/i-tomcat-1" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-3/i-tomcat-2" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-3/i-tomcat-2/i-war" ));
+	}
+
+
+	@Test
+	public void test_N_Instantiations() throws Exception {
+
+		// The graph
+		Graphs graphs = new Graphs();
+		Component vmComponent = new Component( "VM" ).alias( "VM" ).installerName( "iaas" );
+		graphs.getRootComponents().add( vmComponent );
+
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
+		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
+		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+
+		Component warComponent = new Component( "WAR" ).alias( "A simple web application" ).installerName( "bash" );
+		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+
+		// The file to read
+		File f = TestUtils.findTestFile( "/configurations/valid/n-instances.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		// The assertions
+		Application app = new Application();
+		app.getRootInstances().addAll( rootInstances );
+
+		Assert.assertEquals( 14, rootInstances.size());
+		Assert.assertEquals( 3688, InstanceHelpers.getAllInstances( app ).size());
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1/i-tomcat" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1/i-tomcat/i-war" ));
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-2" ));
+
+		// The n-instantiated begin here
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-01" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-01/i-tomcat-1" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-01/i-tomcat-1/i-war001" ));
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-12" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-12/i-tomcat-1" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-12/i-tomcat-1/i-war001" ));
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-09" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-09/i-tomcat-3" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-09/i-tomcat-3/i-war001" ));
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-09" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-09/i-tomcat-2" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-09/i-tomcat-2/i-war101" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-09/i-tomcat-2/i-war025" ));
+	}
+
+
+	@Test
+	public void test_N_medium_Instantiations() throws Exception {
+
+		// The graph
+		Graphs graphs = new Graphs();
+		Component vmComponent = new Component( "VM" ).alias( "VM" ).installerName( "iaas" );
+		graphs.getRootComponents().add( vmComponent );
+
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
+		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
+		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+
+		Component warComponent = new Component( "WAR" ).alias( "A simple web application" ).installerName( "bash" );
+		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+
+		// The file to read
+		File f = TestUtils.findTestFile( "/configurations/valid/n-medium-instances.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		// The assertions
+		Application app = new Application();
+		app.getRootInstances().addAll( rootInstances );
+
+		Assert.assertEquals( 3, rootInstances.size());
+		Assert.assertEquals( 2045, InstanceHelpers.getAllInstances( app ).size());
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1/i-tomcat" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-1/i-tomcat/i-war" ));
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-2" ));
+
+		// The n-instantiated begin here
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-/i-tomcat-0001" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-/i-tomcat-0001/i-war" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-/i-tomcat-1001" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-/i-tomcat-1001/i-war" ));
+
+		Assert.assertNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-/i-tomcat-1001/i-war1" ));
+		Assert.assertNull( InstanceHelpers.findInstanceByPath( app, "/i-vm-/i-tomcat-1001/i-war01" ));
+	}
+
+
+
+	@Test
+	public void test_N_InstantiationsWithConflict() throws Exception {
+
+		// The graph
+		Graphs graphs = new Graphs();
+		Component vmComponent = new Component( "VM" ).alias( "VM" ).installerName( "iaas" );
+		graphs.getRootComponents().add( vmComponent );
+
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
+		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
+		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+
+		Component warComponent = new Component( "WAR" ).alias( "A simple web application" ).installerName( "bash" );
+		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+
+		// The file to read
+		File f = TestUtils.findTestFile( "/configurations/invalid/instanceof-name-conflict-with-count.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+		Assert.assertEquals( 1, fromDef.getErrors().size());
+		Assert.assertEquals( ErrorCode.CO_CONFLICTING_INFERRED_INSTANCE, fromDef.getErrors().iterator().next().getErrorCode());
+
+		// The assertions
+		Application app = new Application();
+		app.getRootInstances().addAll( rootInstances );
+
+		Assert.assertEquals( 5, rootInstances.size());
+		// Should be 6, but there two have the same path.
+		// So, one is overriding the other.
 	}
 }
