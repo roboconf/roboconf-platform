@@ -16,6 +16,7 @@
 
 package net.roboconf.dm.server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -32,15 +34,13 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.exceptions.BulkActionException;
-import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
-import net.roboconf.dm.management.exceptions.InexistingException;
-import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IApplicationWs;
 import net.roboconf.dm.rest.json.MapHolder;
+import net.roboconf.iaas.api.IaasException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -60,7 +60,7 @@ public class ApplicationWs implements IApplicationWs {
 	public Response perform( String applicationName, String actionAS, MapHolder mapHolder ) {
 
 		String instancePath = mapHolder.getMap().get( MapHolder.INSTANCE_PATH );
-		boolean applyToAllChildren = Boolean.parseBoolean( mapHolder.getMap().get( MapHolder.APPLY_TO_CHILDREN ));
+		boolean applyToChildren = Boolean.parseBoolean( mapHolder.getMap().get( MapHolder.APPLY_TO_CHILDREN ));
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "Request: perform action '" );
@@ -68,40 +68,65 @@ public class ApplicationWs implements IApplicationWs {
 		sb.append( "' in " );
 		sb.append( applicationName );
 
-		if( instancePath == null && applyToAllChildren ) {
+		if( instancePath == null && applyToChildren ) {
 			sb.append( " on all the instances." );
 
 		} else if( instancePath != null ) {
 			sb.append( ", instance " + instancePath );
-			if( applyToAllChildren )
+			if( applyToChildren )
 				sb.append( " and its children" );
 			sb.append( "." );
-
-		} else {
-			sb.append( ". This request should result in an error." );
 		}
 
 		this.logger.fine( sb.toString());
 		Response response;
 		try {
-			Manager.INSTANCE.perform( applicationName, actionAS, instancePath, applyToAllChildren );
-			response = Response.ok().build();
+			ManagedApplication ma;
+			Instance instance;
+			ApplicationAction action = ApplicationAction.whichAction( actionAS );
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
-		} catch( InexistingException e ) {
-			response = Response.status( Status.NOT_FOUND ).entity( e.getMessage()).build();
+			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
 
-		} catch( InvalidActionException e ) {
-			response = Response.status( Status.BAD_REQUEST ).entity( e.getMessage()).build();
+			else if( action == ApplicationAction.deploy ) {
+				if( instance.getParent() == null )
+					Manager.INSTANCE.deployRoot( ma, instance, applyToChildren );
+				else
+					Manager.INSTANCE.deploy( ma, instance, applyToChildren );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.start ) {
+				Manager.INSTANCE.start( ma, instance, applyToChildren );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.stop ) {
+				Manager.INSTANCE.stop( ma, instance );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.undeploy ) {
+				if( instance.getParent() == null )
+					Manager.INSTANCE.undeployRoot( ma, instance );
+				else
+					Manager.INSTANCE.undeploy( ma, instance );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.remove ) {
+				Manager.INSTANCE.removeInstance( ma, instance );
+				response = Response.ok().build();
+
+			} else {
+				response = Response.status( Status.BAD_REQUEST ).entity( "Invalid action: " + actionAS ).build();
+			}
 
 		} catch( UnauthorizedActionException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
-		} catch( BulkActionException e ) {
-			response = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
-			this.logger.severe( e.getLogMessage( false ));
-			this.logger.finest( e.getLogMessage( true ));
+		} catch( IOException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
-		} catch( DmWasNotInitializedException e ) {
+		} catch( IaasException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
 		} catch( Exception e ) {
@@ -192,11 +217,18 @@ public class ApplicationWs implements IApplicationWs {
 
 		Response response;
 		try {
-			Manager.INSTANCE.addInstance( applicationName, parentInstancePath, instance );
-			response = Response.ok().build();
+			ManagedApplication ma;
+			Instance parentInstance;
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
-		} catch( InexistingException e ) {
-			response = Response.status( Status.NOT_FOUND ).entity( e.getMessage()).build();
+			else if(( parentInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), parentInstancePath )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + parentInstancePath + " was not found." ).build();
+
+			else {
+				Manager.INSTANCE.addInstance( ma, parentInstance, instance );
+				response = Response.ok().build();
+			}
 
 		} catch( ImpossibleInsertionException e ) {
 			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();

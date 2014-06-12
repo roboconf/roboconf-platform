@@ -103,7 +103,7 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( MsgNotifMachineDown.class, dmProcessor.receivedMessages.get( 0 ).getClass());
 
 		// The DM sends another message
-		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceStart( rootInstance ));
+		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceStart( rootInstance, false ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 2, agentProcessor.receivedMessages.size());
 		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessor.receivedMessages.get( 0 ).getClass());
@@ -111,7 +111,7 @@ public abstract class MessagingTestUtils {
 
 		// The agent stops listening the DM
 		agentClient.listenToTheDm( ListenerCommand.STOP );
-		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceStart( rootInstance ));
+		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceStart( rootInstance, true ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 2, agentProcessor.receivedMessages.size());
 		Thread.sleep( DELAY );

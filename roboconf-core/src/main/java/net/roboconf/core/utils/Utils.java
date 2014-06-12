@@ -406,4 +406,30 @@ public final class Utils {
 
 		return sw.toString();
 	}
+
+
+	/**
+	 * Determines whether a file is a parent of another file.
+	 * <p>
+	 * This method supports intermediate '.' and '..' segments.
+	 * </p>
+	 *
+	 * @param potentialAncestor a file that may contain the other one
+	 * @param file a file
+	 * @return true if the path of 'file' starts with the path of 'potentialAncestor', false otherwise
+	 * @throws IOException if the file location cannot be made canonical
+	 */
+	public static boolean isAncestorFile( File potentialAncestor, File file ) throws IOException {
+
+		String ancestorPath = potentialAncestor.getCanonicalPath();
+		String path = file.getCanonicalPath();
+
+		boolean result = false;
+		if( path.startsWith( ancestorPath )) {
+			String s = path.substring( ancestorPath.length());
+			result = s.isEmpty() || s.startsWith( System.getProperty( "file.separator" ));
+		}
+
+		return result;
+	}
 }

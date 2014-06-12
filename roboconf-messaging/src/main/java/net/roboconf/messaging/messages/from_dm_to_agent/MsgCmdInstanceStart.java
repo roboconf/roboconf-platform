@@ -27,23 +27,25 @@ public class MsgCmdInstanceStart extends Message {
 
 	private static final long serialVersionUID = -1559142939128959150L;
 	private final String instancePath;
+	private final boolean applyToChildren;
 
 
 	/**
 	 * Constructor.
 	 * @param instancePath
 	 */
-	public MsgCmdInstanceStart( String instancePath ) {
+	public MsgCmdInstanceStart( String instancePath, boolean applyToChildren ) {
 		super();
 		this.instancePath = instancePath;
+		this.applyToChildren = applyToChildren;
 	}
 
 	/**
 	 * Constructor.
 	 * @param instance
 	 */
-	public MsgCmdInstanceStart( Instance instance ) {
-		this( InstanceHelpers.computeInstancePath( instance ));
+	public MsgCmdInstanceStart( Instance instance, boolean applyToChildren ) {
+		this( InstanceHelpers.computeInstancePath( instance ), applyToChildren );
 	}
 
 	/**
@@ -51,5 +53,12 @@ public class MsgCmdInstanceStart extends Message {
 	 */
 	public String getInstancePath() {
 		return this.instancePath;
+	}
+
+	/**
+	 * @return the applyToChildren
+	 */
+	public boolean isApplyToChildren() {
+		return this.applyToChildren;
 	}
 }

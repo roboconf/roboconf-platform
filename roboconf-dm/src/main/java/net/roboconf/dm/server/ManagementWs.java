@@ -28,11 +28,9 @@ import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
-import net.roboconf.dm.management.exceptions.BulkActionException;
-import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
-import net.roboconf.dm.management.exceptions.InexistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IManagementWs;
@@ -111,9 +109,6 @@ public class ManagementWs implements IManagementWs {
 
 		} catch( IOException e ) {
 			response = Response.status( Status.UNAUTHORIZED ).entity( e.getMessage()).build();
-
-		} catch( DmWasNotInitializedException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
 		return response;
@@ -141,15 +136,16 @@ public class ManagementWs implements IManagementWs {
 		this.logger.fine( "Request: delete application " + applicationName + "." );
 		Response result = Response.ok().build();
 		try {
-			Manager.INSTANCE.deleteApplication( applicationName );
-
-		} catch( InexistingException e ) {
-			result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
+			ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName );
+			if( ma == null )
+				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
+			else
+				Manager.INSTANCE.deleteApplication( ma );
 
 		} catch( UnauthorizedActionException e ) {
 			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
-		} catch( DmWasNotInitializedException e ) {
+		} catch( IOException e ) {
 			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
@@ -168,12 +164,13 @@ public class ManagementWs implements IManagementWs {
 		this.logger.fine( "Request: shutdown application " + applicationName + "." );
 		Response result = Response.ok().build();
 		try {
-			Manager.INSTANCE.shutdownApplication( applicationName );
+			ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName );
+			if( ma == null )
+				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
+			else
+				Manager.INSTANCE.shutdownApplication( ma );
 
-		} catch( InexistingException e ) {
-			result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
-
-		} catch( BulkActionException e ) {
+		} catch( IOException e ) {
 			result = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
 		}
 

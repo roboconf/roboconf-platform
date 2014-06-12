@@ -375,4 +375,36 @@ public class UtilsTest {
 	public void testStoreDirectoryResourcesAsBytes_illegalArgument_2() throws Exception {
 		Utils.storeDirectoryResourcesAsBytes( this.folder.newFile( "roboconf.txt" ));
 	}
+
+
+	@Test
+	public void testIsAncestorFile() throws Exception {
+
+		File parent = new File( "home/toto/whatever" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, parent ));
+
+		File comp = new File( "home/toto/whatever/" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/./whatever/" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/../toto/whatever/" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whatever/some-file.txt" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whatever/some/dir/some-file.txt" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/" );
+		Assert.assertFalse( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whateve" );
+		Assert.assertFalse( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whatevereeeeeee" );
+		Assert.assertFalse( Utils.isAncestorFile( parent, comp ));
+	}
 }

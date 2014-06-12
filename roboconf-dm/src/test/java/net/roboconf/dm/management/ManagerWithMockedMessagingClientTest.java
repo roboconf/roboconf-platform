@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
@@ -36,8 +35,6 @@ import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
-import net.roboconf.dm.management.exceptions.InexistingException;
-import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.messages.Message;
@@ -56,32 +53,23 @@ import org.junit.Test;
  */
 public class ManagerWithMockedMessagingClientTest {
 
+
+
+
 	@Before
 	public void resetManager() {
 
-		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+		Manager.INSTANCE.shutdown();
 		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
 		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
 	}
 
 
 	@Test
-	public void testMessageServerIp() throws Exception {
+	public void testInitializeAndShutdown() throws Exception {
 
-		final String ip = "192.168.1.15";
-		final String newIp = "192.168.1.14";
-
-		Assert.assertNull( Manager.INSTANCE.messageServerIp );
-		Assert.assertTrue( Manager.INSTANCE.tryToChangeMessageServerIp( ip ));
-		Assert.assertEquals( ip, Manager.INSTANCE.messageServerIp );
-
-		Manager.INSTANCE.getAppNameToManagedApplication().put( "app1", null );
-		Assert.assertFalse( Manager.INSTANCE.tryToChangeMessageServerIp( newIp ));
-		Assert.assertEquals( ip, Manager.INSTANCE.messageServerIp );
-
-		Manager.INSTANCE.getAppNameToManagedApplication().clear();
-		Assert.assertTrue( Manager.INSTANCE.tryToChangeMessageServerIp( newIp ));
-		Assert.assertEquals( newIp, Manager.INSTANCE.messageServerIp );
+		Manager.INSTANCE.shutdown();
+		// ManagerConfiguration conf = n
 	}
 
 
@@ -123,12 +111,6 @@ public class ManagerWithMockedMessagingClientTest {
 	}
 
 
-	@Test( expected = InexistingException.class )
-	public void testShutdownApplication_inexisting() throws Exception {
-		Manager.INSTANCE.shutdownApplication( "inexisting" );
-	}
-
-
 	@Test
 	public void testShutdownApplication_success() throws Exception {
 
@@ -143,12 +125,12 @@ public class ManagerWithMockedMessagingClientTest {
 			Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
 
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-			Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), InstanceHelpers.computeInstancePath( app.getMySqlVm()), false );
+			Manager.INSTANCE.deployRoot( ma, app.getMySqlVm(), true );
 			Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 
 			Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
 			Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-			Manager.INSTANCE.shutdownApplication( app.getName());
+			Manager.INSTANCE.shutdownApplication( ma );
 			Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
 		} finally {
@@ -157,22 +139,17 @@ public class ManagerWithMockedMessagingClientTest {
 	}
 
 
-	@Test( expected = InexistingException.class )
-	public void testDeleteApplication_inexisting() throws Exception {
-		Manager.INSTANCE.deleteApplication( "inexisting" );
-	}
-
-
 	@Test( expected = UnauthorizedActionException.class )
 	public void testDeleteApplication_unauthorized() throws Exception {
 
 		TestApplication app = new TestApplication();
 		File f = File.createTempFile( "roboconf_", ".folder" );
+		ManagedApplication ma = new ManagedApplication( app, f );
 
 		try {
-			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, f ));
+			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 			app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-			Manager.INSTANCE.deleteApplication( app.getName());
+			Manager.INSTANCE.deleteApplication( ma );
 
 		} finally {
 			Utils.deleteFilesRecursively( f );
@@ -185,10 +162,11 @@ public class ManagerWithMockedMessagingClientTest {
 
 		TestApplication app = new TestApplication();
 		File f = File.createTempFile( "roboconf_", ".folder" );
+		ManagedApplication ma = new ManagedApplication( app, f );
 
 		try {
-			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, f ));
-			Manager.INSTANCE.deleteApplication( app.getName());
+			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+			Manager.INSTANCE.deleteApplication( ma );
 			Assert.assertEquals( 0, Manager.INSTANCE.getAppNameToManagedApplication().size());
 
 		} finally {
@@ -198,7 +176,7 @@ public class ManagerWithMockedMessagingClientTest {
 
 
 	@Test
-	public void testCleanUpAll() throws Exception {
+	public void testShutdown() throws Exception {
 
 		TestApplication app = new TestApplication();
 		File f = File.createTempFile( "roboconf_", ".folder" );
@@ -210,31 +188,8 @@ public class ManagerWithMockedMessagingClientTest {
 			TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 			Assert.assertFalse( client.connectionClosed.get());
 
-			Manager.INSTANCE.cleanUpAll();
+			Manager.INSTANCE.shutdown();
 			Assert.assertTrue( client.connectionClosed.get());
-
-		} finally {
-			Utils.deleteFilesRecursively( f );
-		}
-	}
-
-
-	@Test( expected = InexistingException.class )
-	public void testAddInstance_inexistingApplication() throws Exception {
-		Manager.INSTANCE.addInstance( "inexisting", null, null );
-	}
-
-
-	@Test( expected = InexistingException.class )
-	public void testAddInstance_inexistingParent() throws Exception {
-
-		TestApplication app = new TestApplication();
-		File f = File.createTempFile( "roboconf_", ".folder" );
-
-		try {
-			ManagedApplication ma = new ManagedApplication( app, f );
-			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-			Manager.INSTANCE.addInstance( app.getName(), "inexisting", new Instance( "mail-vm" ));
 
 		} finally {
 			Utils.deleteFilesRecursively( f );
@@ -253,7 +208,7 @@ public class ManagerWithMockedMessagingClientTest {
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 			String existingInstanceName = app.getMySqlVm().getName();
-			Manager.INSTANCE.addInstance( app.getName(), null, new Instance( existingInstanceName ));
+			Manager.INSTANCE.addInstance( ma, null, new Instance( existingInstanceName ));
 
 		} finally {
 			Utils.deleteFilesRecursively( f );
@@ -271,9 +226,8 @@ public class ManagerWithMockedMessagingClientTest {
 			ManagedApplication ma = new ManagedApplication( app, f );
 			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-			String parentPath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
 			String existingInstanceName = app.getMySql().getName();
-			Manager.INSTANCE.addInstance( app.getName(), parentPath, new Instance( existingInstanceName ));
+			Manager.INSTANCE.addInstance( ma, app.getMySqlVm(), new Instance( existingInstanceName ));
 
 		} finally {
 			Utils.deleteFilesRecursively( f );
@@ -294,7 +248,7 @@ public class ManagerWithMockedMessagingClientTest {
 			Assert.assertEquals( 2, app.getRootInstances().size());
 			Instance newInstance = new Instance( "mail-vm" ).component( app.getMySqlVm().getComponent());
 
-			Manager.INSTANCE.addInstance( app.getName(), null, newInstance );
+			Manager.INSTANCE.addInstance( ma, null, newInstance );
 
 			Assert.assertEquals( 3, app.getRootInstances().size());
 			Assert.assertTrue( app.getRootInstances().contains( newInstance ));
@@ -318,9 +272,8 @@ public class ManagerWithMockedMessagingClientTest {
 			// Insert a MySQL instance under the Tomcat VM
 			Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
 			Instance newInstance = new Instance( app.getMySql().getName()).component( app.getMySql().getComponent());
-			String instancePath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
 
-			Manager.INSTANCE.addInstance( app.getName(), instancePath, newInstance );
+			Manager.INSTANCE.addInstance( ma, app.getTomcatVm(), newInstance );
 			Assert.assertEquals( 2, app.getTomcatVm().getChildren().size());
 			Assert.assertTrue( app.getTomcatVm().getChildren().contains( newInstance ));
 
@@ -330,34 +283,8 @@ public class ManagerWithMockedMessagingClientTest {
 	}
 
 
-	@Test( expected = InexistingException.class )
-	public void testPerform_inexisstingAppliation() throws Exception {
-		Manager.INSTANCE.perform( "inexisting", ApplicationAction.deploy.toString(), null, true );
-	}
-
-
-	@Test( expected = InvalidActionException.class )
-	public void testPerform_invalidAction_1() throws Exception {
-
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-		Manager.INSTANCE.perform( app.getName(), "eat", null, true );
-	}
-
-
-	@Test( expected = InvalidActionException.class )
-	public void testPerform_invalidAction_2() throws Exception {
-
-		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), null, false );
-	}
-
-
 	@Test
-	public void testPerformDeploy() throws Exception {
+	public void testDeploy() throws Exception {
 		TestApplication app = new TestApplication();
 
 		// Create temporary directories
@@ -384,8 +311,7 @@ public class ManagerWithMockedMessagingClientTest {
 			TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 			Assert.assertEquals( 0, msgClient.sentMessages.size());
 
-			String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-			Manager.INSTANCE.perform( app.getName(), ApplicationAction.deploy.toString(), instancePath, true );
+			Manager.INSTANCE.deploy( ma, app.getMySqlVm(), true );
 
 			Assert.assertNotNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 			Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
@@ -415,7 +341,7 @@ public class ManagerWithMockedMessagingClientTest {
 
 
 	@Test
-	public void testPerformStart() throws Exception {
+	public void testStart() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
@@ -427,8 +353,7 @@ public class ManagerWithMockedMessagingClientTest {
 		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.start.toString(), instancePath, true );
+		Manager.INSTANCE.start( ma, app.getMySqlVm(), true );
 
 		Assert.assertEquals( 1, msgClient.sentMessages.size());
 		Assert.assertEquals(
@@ -438,7 +363,7 @@ public class ManagerWithMockedMessagingClientTest {
 
 
 	@Test
-	public void testPerformStop() throws Exception {
+	public void testStop() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
@@ -451,13 +376,11 @@ public class ManagerWithMockedMessagingClientTest {
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// Stopping a root => no message sent to the children
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.stop.toString(), instancePath, true );
+		Manager.INSTANCE.stop( ma, app.getMySqlVm());
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// Stop a child directly when it is not a VM => 1 message
-		instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.stop.toString(), instancePath, true );
+		Manager.INSTANCE.stop( ma, app.getMySql());
 
 		Assert.assertEquals( 1, msgClient.sentMessages.size());
 		Assert.assertEquals(
@@ -467,7 +390,7 @@ public class ManagerWithMockedMessagingClientTest {
 
 
 	@Test
-	public void testPerformUndeploy() throws Exception {
+	public void testUndeploy() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
@@ -479,8 +402,7 @@ public class ManagerWithMockedMessagingClientTest {
 		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.undeploy.toString(), instancePath, true );
+		Manager.INSTANCE.undeploy( ma, app.getMySql());
 
 		Assert.assertEquals( 1, msgClient.sentMessages.size());
 		Assert.assertEquals(
@@ -490,19 +412,19 @@ public class ManagerWithMockedMessagingClientTest {
 
 
 	@Test( expected = UnauthorizedActionException.class )
-	public void testPerformRemove_unauthorized() throws Exception {
+	public void testRemoveInstance_unauthorized() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.remove.toString(), null, true );
+		Manager.INSTANCE.removeInstance( ma, null );
 	}
 
 
 	@Test
-	public void testPerformRemove_success_1() throws Exception {
+	public void testRemoveInstance_success_1() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
@@ -515,8 +437,7 @@ public class ManagerWithMockedMessagingClientTest {
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
-		String tomcatVmInstancePath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.remove.toString(), tomcatVmInstancePath, true );
+		Manager.INSTANCE.removeInstance( ma, app.getTomcatVm());
 
 		Assert.assertEquals( 1, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
@@ -536,7 +457,7 @@ public class ManagerWithMockedMessagingClientTest {
 
 
 	@Test
-	public void testPerformRemove_success_2() throws Exception {
+	public void testRemoveInstance_success_2() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
@@ -546,64 +467,10 @@ public class ManagerWithMockedMessagingClientTest {
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
-		Manager.INSTANCE.perform( app.getName(), ApplicationAction.remove.toString(), null, true );
+		Manager.INSTANCE.removeInstance( ma, null );
 
 		Assert.assertEquals( 0, app.getRootInstances().size());
 		Assert.assertEquals( 3, msgClient.sentMessages.size());
-	}
-
-
-	@Test
-	public void testFindInstancesToProcess_success() throws Exception {
-
-		TestApplication app = new TestApplication();
-		List<Instance> instances = Manager.INSTANCE.findInstancesToProcess( app, null, true );
-		Assert.assertEquals( 5, instances.size());
-		Assert.assertTrue( instances.contains( app.getMySql()));
-		Assert.assertTrue( instances.contains( app.getMySqlVm()));
-		Assert.assertTrue( instances.contains( app.getTomcat()));
-		Assert.assertTrue( instances.contains( app.getTomcatVm()));
-		Assert.assertTrue( instances.contains( app.getWar()));
-
-		instances = Manager.INSTANCE.findInstancesToProcess( app, InstanceHelpers.computeInstancePath( app.getMySqlVm()), true );
-		Assert.assertEquals( 2, instances.size());
-		Assert.assertTrue( instances.contains( app.getMySql()));
-		Assert.assertTrue( instances.contains( app.getMySqlVm()));
-
-		instances = Manager.INSTANCE.findInstancesToProcess( app, InstanceHelpers.computeInstancePath( app.getMySqlVm()), false );
-		Assert.assertEquals( 1, instances.size());
-		Assert.assertTrue( instances.contains( app.getMySqlVm()));
-
-		instances = Manager.INSTANCE.findInstancesToProcess( app, InstanceHelpers.computeInstancePath( app.getTomcat()), true );
-		Assert.assertEquals( 2, instances.size());
-		Assert.assertTrue( instances.contains( app.getTomcat()));
-		Assert.assertTrue( instances.contains( app.getWar()));
-
-		instances = Manager.INSTANCE.findInstancesToProcess( app, InstanceHelpers.computeInstancePath( app.getTomcat()), false );
-		Assert.assertEquals( 1, instances.size());
-		Assert.assertTrue( instances.contains( app.getTomcat()));
-
-		instances = Manager.INSTANCE.findInstancesToProcess( app, InstanceHelpers.computeInstancePath( app.getWar()), true );
-		Assert.assertEquals( 1, instances.size());
-		Assert.assertTrue( instances.contains( app.getWar()));
-
-		instances = Manager.INSTANCE.findInstancesToProcess( app, InstanceHelpers.computeInstancePath( app.getWar()), false );
-		Assert.assertEquals( 1, instances.size());
-		Assert.assertTrue( instances.contains( app.getWar()));
-	}
-
-
-	@Test( expected = InexistingException.class )
-	public void testFindInstancesToProcess_inexistingInstance() throws Exception {
-
-		TestApplication app = new TestApplication();
-		Manager.INSTANCE.findInstancesToProcess( app, "/pop", true );
-	}
-
-
-	@Test
-	public void testIsConnectedToTheMessagingServer() {
-		Assert.assertTrue( Manager.INSTANCE.isConnectedToTheMessagingServer());
 	}
 
 

@@ -41,7 +41,6 @@ import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
 import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
 
 import org.junit.After;
 import org.junit.Before;
@@ -82,8 +81,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 	@Before
 	public void resetManager() {
-		Manager.INSTANCE.cleanUpAll();
-		Manager.INSTANCE.getAppNameToManagedApplication().clear();
+		Manager.INSTANCE.shutdown();
 
 		this.app = new TestApplication();
 		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
@@ -120,9 +118,6 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 	@Test
 	public void testPerform_notConnected() throws Exception {
-
-		Manager.INSTANCE.setMessagingClientFactory( new MessageServerClientFactory());
-		Assert.assertFalse( Manager.INSTANCE.isConnectedToTheMessagingServer());
 
 		try {
 			this.client.getApplicationDelegate().perform(
