@@ -17,6 +17,7 @@
 package net.roboconf.core.model.helpers;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
+import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 
 import org.junit.Test;
@@ -293,7 +295,7 @@ public class InstanceHelpersTest {
 		LoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.getApplication());
-		Assert.assertEquals( 0, result.getLoadErrors().size());
+		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( result.getLoadErrors()));
 
 		Application app = result.getApplication();
 		app.getRootInstances().clear();
@@ -320,5 +322,103 @@ public class InstanceHelpersTest {
 		Instance instanceWithNoComponent = new Instance( "MySQL-2" );
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instanceWithNoComponent ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
+	}
+
+
+	@Test
+	public void testDuplicateInstance_singleInstance() {
+
+		Instance original = new Instance( "inst" ).channel( "chan" ).component( new Component( "comp" ));
+		original.getOverriddenExports().put( "test", "test" );
+		original.getOverriddenExports().put( "A.port", "8012" );
+		original.getData().put( "some", "data" );
+		original.getImports().put( "facet-name", new ArrayList<Import> ());
+
+		Instance copy = InstanceHelpers.duplicateInstance( original );
+		Assert.assertEquals( original.getName(), copy.getName());
+		Assert.assertEquals( original.getChannel(), copy.getChannel());
+		Assert.assertEquals( original.getOverriddenExports().size(), copy.getOverriddenExports().size());
+		Assert.assertEquals( "test", copy.getOverriddenExports().get( "test" ));
+		Assert.assertEquals( "8012", copy.getOverriddenExports().get( "A.port" ));
+		Assert.assertEquals( 0, copy.getImports().size());
+		Assert.assertEquals( original.getComponent(), copy.getComponent());
+	}
+
+
+	@Test
+	public void testDuplicateInstance_withChildren() {
+
+		// The originals
+		Instance original_1 = new Instance( "inst-1" ).channel( "chan" ).component( new Component( "comp-1" ));
+		original_1.getOverriddenExports().put( "test", "test" );
+		original_1.getOverriddenExports().put( "A.port", "8012" );
+
+		Instance original_2 = new Instance( "inst-2" ).channel( "chan" ).component( new Component( "comp-2" ));
+		original_2.getOverriddenExports().put( "port", "8012" );
+
+		Instance original_22 = new Instance( "inst-22" ).channel( "chan" ).component( new Component( "comp-78" ));
+
+		Instance original_3 = new Instance( "inst-3" ).channel( "chan" ).component( new Component( "comp-3" ));
+		original_3.getOverriddenExports().put( "ip", "localhost" );
+
+		InstanceHelpers.insertChild( original_1, original_2 );
+		InstanceHelpers.insertChild( original_1, original_22 );
+		InstanceHelpers.insertChild( original_2, original_3 );
+
+		// Perform a copy of the root
+		Instance copy = InstanceHelpers.duplicateInstance( original_1 );
+		Assert.assertEquals( original_1.getName(), copy.getName());
+		Assert.assertEquals( original_1.getChannel(), copy.getChannel());
+		Assert.assertEquals( original_1.getOverriddenExports().size(), copy.getOverriddenExports().size());
+		Assert.assertEquals( "test", copy.getOverriddenExports().get( "test" ));
+		Assert.assertEquals( "8012", copy.getOverriddenExports().get( "A.port" ));
+		Assert.assertEquals( original_1.getComponent(), copy.getComponent());
+		Assert.assertEquals( 2, copy.getChildren().size());
+		Assert.assertNull( copy.getParent());
+
+		Instance[] children = copy.getChildren().toArray( new Instance[ 0 ]);
+		Assert.assertEquals( original_2.getName(), children[ 0 ].getName());
+		Assert.assertEquals( original_2.getChannel(), children[ 0 ].getChannel());
+		Assert.assertEquals( original_2.getOverriddenExports().size(), children[ 0 ].getOverriddenExports().size());
+		Assert.assertEquals( "8012", children[ 0 ].getOverriddenExports().get( "port" ));
+		Assert.assertEquals( original_2.getComponent(), children[ 0 ].getComponent());
+		Assert.assertEquals( 1, children[ 0 ].getChildren().size());
+		Assert.assertEquals( copy, children[ 0 ].getParent());
+
+		Assert.assertEquals( original_22.getName(), children[ 1 ].getName());
+		Assert.assertEquals( original_22.getChannel(), children[ 1 ].getChannel());
+		Assert.assertEquals( 0, children[ 1 ].getOverriddenExports().size());
+		Assert.assertEquals( original_22.getComponent(), children[ 1 ].getComponent());
+		Assert.assertEquals( 0, children[ 1 ].getChildren().size());
+		Assert.assertEquals( copy, children[ 1 ].getParent());
+
+		Instance lastChild = children[ 0 ].getChildren().iterator().next();
+		Assert.assertEquals( original_3.getName(), lastChild.getName());
+		Assert.assertEquals( original_3.getChannel(), lastChild.getChannel());
+		Assert.assertEquals( original_3.getOverriddenExports().size(), lastChild.getOverriddenExports().size());
+		Assert.assertEquals( "localhost", lastChild.getOverriddenExports().get( "ip" ));
+		Assert.assertEquals( original_3.getComponent(), lastChild.getComponent());
+		Assert.assertEquals( 0, lastChild.getChildren().size());
+		Assert.assertEquals( children[ 0 ], lastChild.getParent());
+
+		// Perform a copy of the first child (the one which has a child)
+		copy = InstanceHelpers.duplicateInstance( original_2 );
+		Assert.assertEquals( original_2.getName(), copy.getName());
+		Assert.assertEquals( original_2.getChannel(), copy.getChannel());
+		Assert.assertEquals( original_2.getOverriddenExports().size(), copy.getOverriddenExports().size());
+		Assert.assertEquals( "8012", copy.getOverriddenExports().get( "port" ));
+		Assert.assertEquals( original_2.getComponent(), copy.getComponent());
+		Assert.assertEquals( 1, copy.getChildren().size());
+		Assert.assertNull( copy.getParent());
+		Assert.assertNotNull( original_2.getParent());
+
+		lastChild = copy.getChildren().iterator().next();
+		Assert.assertEquals( original_3.getName(), lastChild.getName());
+		Assert.assertEquals( original_3.getChannel(), lastChild.getChannel());
+		Assert.assertEquals( original_3.getOverriddenExports().size(), lastChild.getOverriddenExports().size());
+		Assert.assertEquals( "localhost", lastChild.getOverriddenExports().get( "ip" ));
+		Assert.assertEquals( original_3.getComponent(), lastChild.getComponent());
+		Assert.assertEquals( 0, lastChild.getChildren().size());
+		Assert.assertEquals( copy, lastChild.getParent());
 	}
 }

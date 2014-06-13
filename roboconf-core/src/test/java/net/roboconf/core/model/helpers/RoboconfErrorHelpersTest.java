@@ -17,6 +17,7 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -41,5 +42,21 @@ public class RoboconfErrorHelpersTest {
 
 		errors.add( new RoboconfError( ErrorCode.PM_DUPLICATE_PROPERTY ));
 		Assert.assertTrue( RoboconfErrorHelpers.containsCriticalErrors( errors ));
+	}
+
+
+	@Test
+	public void testFindWarnings() {
+
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		Assert.assertEquals( 0, RoboconfErrorHelpers.findWarnings( errors ).size());
+
+		errors.add( new RoboconfError( ErrorCode.PM_DUPLICATE_PROPERTY ));
+		Assert.assertEquals( 0, RoboconfErrorHelpers.findWarnings( errors ).size());
+
+		errors.add( new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY ));
+		errors = RoboconfErrorHelpers.findWarnings( errors );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
 	}
 }

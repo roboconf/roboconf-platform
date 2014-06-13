@@ -242,39 +242,10 @@ public class Instance implements Serializable {
 
 
 	/**
-	 * Updates the imports with new values.
-	 * @param variablePrefixToImports the new imports (can be null)
-	 */
-	public void updateImports( Map<String,Collection<Import>> variablePrefixToImports ) {
-		this.variablePrefixToImports.clear();
-		if( variablePrefixToImports != null )
-			this.variablePrefixToImports.putAll( variablePrefixToImports );
-	}
-
-
-	/**
 	 * @return the imports (not null, key: component or facet name, value: the associated imports)
 	 */
 	public Map<String,Collection<Import>> getImports() {
 		return this.variablePrefixToImports;
-	}
-
-
-	/**
-	 * Adds an import.
-	 * @param componentOrFacetName a component or a prefix name
-	 * @param imp the import to add
-	 */
-	public void addImport( String componentOrFacetName, Import imp ) {
-
-		Collection<Import> imports = this.variablePrefixToImports.get( componentOrFacetName );
-		if(imports == null) {
-			imports = new LinkedHashSet<Import> ();
-			this.variablePrefixToImports.put( componentOrFacetName, imports );
-		}
-
-		if( ! imports.contains( imp ))
-			imports.add( imp );
 	}
 
 
@@ -289,7 +260,8 @@ public class Instance implements Serializable {
 		DEPLOYED_STARTED( true ),
 		STOPPING( false ),
 		UNDEPLOYING( false ),
-		PROBLEM( false );
+		PROBLEM( false ),
+		RESTORING( false );
 
 
 		private final boolean stable;

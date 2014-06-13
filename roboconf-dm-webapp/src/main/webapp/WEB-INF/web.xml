@@ -17,7 +17,7 @@
 		
 		<init-param>
 			<param-name>com.sun.jersey.config.property.packages</param-name>
-			<param-value>net.roboconf.dm.server;net.roboconf.dm.rest.json</param-value>
+			<param-value>com.fasterxml.jackson.jaxrs.json;net.roboconf.dm.server;net.roboconf.dm.rest.json</param-value>
 		</init-param>
 		
 		<init-param>
@@ -40,10 +40,37 @@
 	
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
-		<url-pattern>/</url-pattern>
-		<url-pattern>/index.html</url-pattern>
-		<url-pattern>/error.html</url-pattern>
-		<url-pattern>/roboconf.png</url-pattern>
+		<url-pattern>*.js</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.css</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.jpg</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.png</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.gif</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.htm</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.html</url-pattern>
 	</servlet-mapping>
 	
 	<servlet-mapping>

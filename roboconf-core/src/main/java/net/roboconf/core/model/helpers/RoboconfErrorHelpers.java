@@ -16,6 +16,7 @@
 
 package net.roboconf.core.model.helpers;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import net.roboconf.core.ErrorCode.ErrorLevel;
@@ -45,6 +46,23 @@ public final class RoboconfErrorHelpers {
 		for( RoboconfError error : errors ) {
 			if(( result = error.getErrorCode().getLevel() == ErrorLevel.SEVERE ))
 				break;
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the warnings among a collection of Roboconf errors.
+	 * @param errors a non-null collection of errors
+	 * @return a non-null collection of warnings
+	 */
+	public static Collection<RoboconfError> findWarnings( Collection<RoboconfError> errors ) {
+
+		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
+		for( RoboconfError error : errors ) {
+			if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
+				result.add( error );
 		}
 
 		return result;

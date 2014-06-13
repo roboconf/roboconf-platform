@@ -200,7 +200,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 	@Test
 	public void testLoadApplication_localPath_invalidApplication() throws Exception {
 
-		File directory = new File( "/not/existing/file" );
+		File directory = new File( "not/existing/file" );
 		WsClient client = RestTestUtils.buildWsClient();
 		Assert.assertEquals( 0, client.getManagementDelegate().listApplications().size());
 
@@ -300,7 +300,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 	@Test( expected = IOException.class )
 	public void testLoadApplication_zip_inexistingZip() throws Exception {
 
-		File targetFile = new File( "/not/existing/file" );
+		File targetFile = new File( "not/existing/file" );
 		WsClient client = RestTestUtils.buildWsClient();
 		client.getManagementDelegate().loadApplication( targetFile );
 	}

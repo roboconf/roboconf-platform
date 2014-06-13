@@ -15,7 +15,8 @@ instanceof vm {
 
 instanceof vm {
 
-	name: vm2;	# the VM name
+	name: vm-;	# the VM name
+	count: 7;
 	
 	instanceof server {
 		name: server4osgi;

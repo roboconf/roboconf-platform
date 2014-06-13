@@ -162,9 +162,9 @@ public class IaasOpenstack implements IaasInterface {
 				+ "\nchannelName=" + channelName
 				+ "\nipMessagingServer=" + ipMessagingServer;
 		serverForCreate.setUserData(new String(Base64.encodeBase64(userData.getBytes())));
-		
+
 		// Is there any volume (ID or name) to attach ?
-		String volumeIdToAttach = iaasProperties.get(OpenstackConstants.VOLUME_ID);
+		String volumeIdToAttach = this.iaasProperties.get(OpenstackConstants.VOLUME_ID);
 		if(volumeIdToAttach != null) {
 
 			boolean volumeFound = false;
@@ -177,7 +177,7 @@ public class IaasOpenstack implements IaasInterface {
 
 			if(! volumeFound) {
 				// Volume not found: assume volume ID is in fact a volume name.
-				String volumeName = new String(volumeIdToAttach);
+				String volumeName = volumeIdToAttach;
 				volumeIdToAttach = null;
 				Volumes volumes = this.novaClient.volumes().list(false).execute();
 				for(Volume volume : volumes) {
@@ -188,7 +188,7 @@ public class IaasOpenstack implements IaasInterface {
 				}
 
 				// Volume not found by name ? Create one if requested (= size specified)
-				String size = iaasProperties.get(OpenstackConstants.VOLUME_SIZE_GB);
+				String size = this.iaasProperties.get(OpenstackConstants.VOLUME_SIZE_GB);
 				if(volumeIdToAttach == null && size != null) {
 					VolumeForCreate volumeForCreate = new VolumeForCreate();
 					volumeForCreate.setName(volumeName);
@@ -232,15 +232,18 @@ public class IaasOpenstack implements IaasInterface {
 				}
 			}, 10, 5, TimeUnit.SECONDS);
 			timer.awaitTermination(120, TimeUnit.SECONDS);
-		} catch (Exception ignore) { /*ignore*/ }
+
+		} catch (Exception ignore) {
+			// nothing
+		}
 
 		// Attach volume if required
 		if(volumeIdToAttach != null) {
-			String mountPoint = iaasProperties.get(OpenstackConstants.VOLUME_MOUNT_POINT);
+			String mountPoint = this.iaasProperties.get(OpenstackConstants.VOLUME_MOUNT_POINT);
 			if(mountPoint == null) mountPoint = "/dev/vdb";
 			this.novaClient.servers().attachVolume(server.getId(), volumeIdToAttach, mountPoint).execute();
 		}
-		
+
 		// Associate floating IP
 		if(this.floatingIpPool != null) {
 			FloatingIps ips = this.novaClient.floatingIps().list().execute();
@@ -281,8 +284,8 @@ public class IaasOpenstack implements IaasInterface {
 		java.util.Properties p = new java.util.Properties();
 		p.load(new java.io.FileReader(args[0]));
 
-		for(Object name : p.keySet()) {
-			conf.put(name.toString(), p.get(name).toString());
+		for( Map.Entry<Object,Object> entry : p.entrySet()) {
+			conf.put( entry.getKey().toString(), entry.getValue().toString());
 		}
 		// conf.put(OpenstackConstants.COMPUTE_URL, "http://localhost:8888/v2");
 

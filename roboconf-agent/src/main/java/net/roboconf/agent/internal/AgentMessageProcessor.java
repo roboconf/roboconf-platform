@@ -22,10 +22,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.Timer;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentData;
+import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Import;
@@ -41,10 +41,11 @@ import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
@@ -60,7 +61,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final PluginManager pluginManager;
 	private final IAgentClient messagingClient;
-	private final Timer heartBeatTimer;
 	private final String ipAddress, appName;
 
 	private Instance rootInstance;
@@ -77,13 +77,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			String threadName,
 			AgentData agentData,
 			PluginManager pluginManager,
-			IAgentClient messagingClient,
-			Timer heartBeatTimer ) {
+			IAgentClient messagingClient ) {
 
 		super( threadName );
 		this.messagingClient = messagingClient;
 		this.pluginManager = pluginManager;
-		this.heartBeatTimer = heartBeatTimer;
 
 		this.ipAddress = agentData.getIpAddress();
 		this.appName = agentData.getApplicationName();
@@ -127,8 +125,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			else if( message instanceof MsgCmdImportRequest )
 				processMsgImportRequest((MsgCmdImportRequest) message );
 
+			else if( message instanceof MsgCmdInstanceRestore )
+				processMsgInstanceRestore((MsgCmdInstanceRestore) message );
+
 			else
-				this.logger.warning( getName() + ": got an undetermined message to process. " + message.getClass().getName());
+				this.logger.warning( getName() + " got an undetermined message to process. " + message.getClass().getName());
 
 		} catch( IOException e ) {
 			this.logger.severe( "A problem occurred with the messaging. " + e.getMessage());
@@ -139,6 +140,17 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.finest( Utils.writeException( e ));
 		}
 	}
+
+
+	/**
+	 * Sends the local model to the DM.
+	 * @param message the initial request
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	void processMsgInstanceRestore( MsgCmdInstanceRestore message ) throws IOException {
+		this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceRestoration( this.appName, this.rootInstance ));
+	}
+
 
 
 	/**
@@ -312,22 +324,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		Instance instance;
 		PluginInterface plugin;
 
-		// If the root model has not yet been initialized and that the message
-		// indicates it will undeploy a root instance, then this is a signal that
-		// the agent must stop.
-		if( this.rootInstance == null
-				&& InstanceHelpers.countInstances( instancePath ) == 1 ) {
-
-			String rootInstanceName = instancePath.substring( 1 );
-			MsgNotifMachineReadyToBeDeleted newMsg = new MsgNotifMachineReadyToBeDeleted( this.appName, rootInstanceName );
-			this.messagingClient.sendMessageToTheDm( newMsg );
-
-			this.heartBeatTimer.cancel();
-			result = true;
-		}
-
 		// No root instance
-		else if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getInstancePath())) == null ) {
+		if(( instance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getInstancePath())) == null ) {
 			this.logger.severe( "No instance matched " + msg.getInstancePath() + " on the agent. Request to undeploy it is dropped." );
 		}
 
@@ -338,11 +336,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		// Is it the root instance to undeploy?
 		else if( instance.getParent() == null ) {
-			MsgNotifMachineReadyToBeDeleted newMsg = new MsgNotifMachineReadyToBeDeleted( this.appName, this.rootInstance.getName());
-			this.messagingClient.sendMessageToTheDm( newMsg );
-
-			this.heartBeatTimer.cancel();
-			result = true;
+			this.logger.severe( "Request to undeploy the root instance is dropped." );
 		}
 
 		// Do we have the right plug-in?
@@ -413,7 +407,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		if( instance == null ) {
 			this.logger.severe( "No instance matched " + msg.getInstancePath() + " on the agent. Request to start it is dropped." );
 
-		} else if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED ) {
+		} else if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED
+				&& instance.getStatus() != InstanceStatus.STARTING ) {
+
+			// Starting may be blocked because of concurrency issues.
+			// So, we allow starting something which is already starting...
 			this.logger.info( "Invalid status for instance " + msg.getInstancePath() + ". Status = "
 					+ instance.getStatus() + ". Start request is dropped." );
 
@@ -424,8 +422,16 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			try {
 				instance.setStatus( InstanceStatus.STARTING );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
-				updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
-				result = true;
+				if( ImportHelpers.hasAllRequiredImports( instance, this.logger )) {
+					updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
+					result = true;
+
+				} else {
+					this.logger.fine(
+							"Instance " + InstanceHelpers.computeInstancePath( instance )
+							+ " cannot be started, dependencies are missing. Requesting exports from other agents." );
+					this.messagingClient.requestExportsFromOtherAgents( instance );
+				}
 
 			} catch( PluginException e ) {
 				this.logger.severe( "An error occured while starting " + InstanceHelpers.computeInstancePath( instance ));
@@ -506,7 +512,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			// Is there an import to remove?
 			Collection<Import> imports = instance.getImports().get( msg.getComponentOrFacetName());
-			Import toRemove = InstanceHelpers.findImportByExportingInstance( imports, msg.getRemovedInstancePath());
+			Import toRemove = ImportHelpers.findImportByExportingInstance( imports, msg.getRemovedInstancePath());
 			if( toRemove == null )
 				continue;
 
@@ -533,11 +539,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 */
 	void processMsgImportAdd( MsgCmdImportAdd msg ) throws IOException, PluginException {
 
-		// Create the import
-		Import imp = new Import(
-				msg.getAddedInstancePath(),
-				msg.getExportedVariables());
-
 		// Go through all the instances to see which ones need an update
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 
@@ -553,9 +554,12 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 					msg.getAddedInstancePath()))
 				continue;
 
+			// Create the right import
+			Import imp = ImportHelpers.buildTailoredImport( instance, msg.getAddedInstancePath(), msg.getExportedVariables());
+
 			// Add the import and publish an update to the DM
 			this.logger.fine( "Adding import to " + InstanceHelpers.computeInstancePath( instance ) + ". New import: " + imp );
-			instance.addImport( msg.getComponentOrFacetName(), imp );
+			ImportHelpers.addImport( instance, msg.getComponentOrFacetName(), imp );
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Update the life cycle if necessary
@@ -573,19 +577,10 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 * @param statusChanged The changed status of the instance that changed (eg. that provided new imports)
 	 * @param importChanged The individual imports that changed
 	 */
-	private void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws IOException, PluginException {
+	void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws IOException, PluginException {
 
 		// Do we have all the imports we need?
-		boolean haveAllImports = true;
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( impactedInstance )) {
-			Collection<Import> imports = impactedInstance.getImports().get( facetOrComponentName );
-			if( imports != null && ! imports.isEmpty())
-				continue;
-
-			haveAllImports = false;
-			this.logger.fine( InstanceHelpers.computeInstancePath( impactedInstance ) + " is still missing dependencies '" + facetOrComponentName + ".*'." );
-			break;
-		}
+		boolean haveAllImports = ImportHelpers.hasAllRequiredImports( impactedInstance, this.logger );
 
 		// Update the life cycle of this instance if necessary
 		// Maybe we have something to start
@@ -597,6 +592,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				impactedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, impactedInstance ));
 				this.messagingClient.publishExports( impactedInstance );
+				this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.START, impactedInstance );
 
 			} else if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 				// FIXME: there should be a way to determine whether an update is necessary
@@ -645,6 +641,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			i.setStatus( InstanceStatus.STOPPING );
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+			this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.STOP, i );
 			this.messagingClient.unpublishExports( i );
 		}
 

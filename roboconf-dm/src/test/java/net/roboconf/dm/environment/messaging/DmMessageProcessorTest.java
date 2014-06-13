@@ -29,7 +29,6 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 
 import org.junit.Before;
@@ -42,6 +41,7 @@ public class DmMessageProcessorTest {
 
 	private TestApplication app;
 	private DmMessageProcessor processor;
+	private TestIaasResolver iaasResolver;
 
 
 
@@ -54,7 +54,8 @@ public class DmMessageProcessorTest {
 		Manager.INSTANCE.getAppNameToManagedApplication().clear();
 		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
 
-		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
+		this.iaasResolver = new TestIaasResolver();
+		Manager.INSTANCE.setIaasResolver( this.iaasResolver );
 		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
 	}
 
@@ -218,62 +219,6 @@ public class DmMessageProcessorTest {
 
 		this.processor.processMessage( msg );
 		Assert.assertEquals( instancesCount, InstanceHelpers.getAllInstances( this.app ).size());
-	}
-
-
-	@Test
-	public void testMsgNotifMachineReadyToBeDeleted_success() {
-
-		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
-		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( this.app.getName(), this.app.getMySql());
-		this.app.getMySqlVm().getData().put( Instance.MACHINE_ID, "whatever" );
-
-		for( Instance inst : InstanceHelpers.getAllInstances( this.app ))
-			iaasResolver.instanceToRunningStatus.put( inst, Boolean.TRUE );
-
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getTomcatVm()));
-
-		this.processor.processMessage( msg );
-
-		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getTomcatVm()));
-	}
-
-
-	@Test
-	public void testMsgNotifMachineReadyToBeDeleted_invalidApplication() {
-
-		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
-		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( "app-76", this.app.getMySql());
-		for( Instance inst : InstanceHelpers.getAllInstances( this.app ))
-			iaasResolver.instanceToRunningStatus.put( inst, Boolean.TRUE );
-
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getTomcatVm()));
-
-		this.processor.processMessage( msg );
-
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getTomcatVm()));
-	}
-
-
-	@Test
-	public void testMsgNotifMachineReadyToBeDeleted_invalidInstance() {
-
-		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.getIaasResolver();
-		MsgNotifMachineReadyToBeDeleted msg = new MsgNotifMachineReadyToBeDeleted( this.app.getName(), new Instance( "whatever" ));
-		for( Instance inst : InstanceHelpers.getAllInstances( this.app ))
-			iaasResolver.instanceToRunningStatus.put( inst, Boolean.TRUE );
-
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getTomcatVm()));
-
-		this.processor.processMessage( msg );
-
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getTomcatVm()));
 	}
 
 

@@ -139,6 +139,30 @@ public class VariableHelpersTest {
 
 
 	@Test
+	public void testFindPrefixesForMandatoryImportedVariables() {
+
+		Component component = new Component( "comp" );
+		component.getImportedVariables().put( "comp.ip", Boolean.FALSE );
+		component.getImportedVariables().put( "comp.split.property", Boolean.FALSE );
+		component.getImportedVariables().put( "comp.port", Boolean.FALSE );
+		component.getImportedVariables().put( "facet.desc", Boolean.TRUE );
+		component.getImportedVariables().put( "facet-n.prop1", Boolean.TRUE );
+		component.getImportedVariables().put( "facet-n.prop2", Boolean.FALSE );
+
+		Instance instance = new Instance( "inst" ).component( component );
+
+		Set<String> prefixes = VariableHelpers.findPrefixesForMandatoryImportedVariables( instance );
+		Assert.assertEquals( 2, prefixes.size());
+		Assert.assertTrue( prefixes.contains( "comp" ));
+		Assert.assertTrue( prefixes.contains( "facet-n" ));
+
+		component.getImportedVariables().clear();
+		prefixes = VariableHelpers.findPrefixesForMandatoryImportedVariables( instance );
+		Assert.assertEquals( 0, prefixes.size());
+	}
+
+
+	@Test
 	public void testUpdateNetworkVariables() {
 
 		Map<String,String> map = new HashMap<String,String> ();

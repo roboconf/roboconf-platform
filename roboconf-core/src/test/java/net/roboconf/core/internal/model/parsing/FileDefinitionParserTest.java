@@ -610,15 +610,20 @@ public class FileDefinitionParserTest {
 		Assert.assertEquals( "vm", block.getName());
 		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 0 ).getInstructionType());
 		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 1 ).getInstructionType());
-		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 2 ).getInstructionType());
-		Assert.assertEquals( AbstractBlock.INSTANCEOF, block.getInnerBlocks().get( 3 ).getInstructionType());
-		Assert.assertEquals( 4, block.getInnerBlocks().size());
+		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 2 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.BLANK, block.getInnerBlocks().get( 3 ).getInstructionType());
+		Assert.assertEquals( AbstractBlock.INSTANCEOF, block.getInnerBlocks().get( 4 ).getInstructionType());
+		Assert.assertEquals( 5, block.getInnerBlocks().size());
 
 		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 1 )).getName());
-		Assert.assertEquals( "vm2", ((BlockProperty) block.getInnerBlocks().get( 1 )).getValue());
+		Assert.assertEquals( "vm-", ((BlockProperty) block.getInnerBlocks().get( 1 )).getValue());
 		Assert.assertFalse( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 1 )).getInlineComment()));
 
-		block = (BlockInstanceOf) block.getInnerBlocks().get( 3 );
+		Assert.assertEquals( "count", ((BlockProperty) block.getInnerBlocks().get( 2 )).getName());
+		Assert.assertEquals( "7", ((BlockProperty) block.getInnerBlocks().get( 2 )).getValue());
+		Assert.assertTrue( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 2 )).getInlineComment()));
+
+		block = (BlockInstanceOf) block.getInnerBlocks().get( 4 );
 		Assert.assertEquals( "server", block.getName());
 		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 0 ).getInstructionType());
 		Assert.assertEquals( AbstractBlock.PROPERTY, block.getInnerBlocks().get( 1 ).getInstructionType());

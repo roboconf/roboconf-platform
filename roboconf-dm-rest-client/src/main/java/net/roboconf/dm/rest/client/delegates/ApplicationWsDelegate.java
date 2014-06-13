@@ -26,10 +26,9 @@ import javax.ws.rs.core.Response.Status.Family;
 import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.rest.RestUtils;
 import net.roboconf.dm.rest.UrlConstants;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
+import net.roboconf.dm.rest.json.MapHolder;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
@@ -100,13 +99,14 @@ public class ApplicationWsDelegate {
 		this.logger.finer(sb.toString());
 
 		// Invoke the client
-		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( String.valueOf( action ));
-		if( ! Utils.isEmptyOrWhitespaces( instancePath ))
-			path = path.path( "instance" ).path( RestUtils.toRestfulPath( instancePath ));
+		MapHolder holder = new MapHolder();
+		holder.getMap().put( MapHolder.INSTANCE_PATH, instancePath );
+		holder.getMap().put( MapHolder.APPLY_TO_CHILDREN, String.valueOf( applyToAllChildren ));
 
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( String.valueOf( action ));
 		ClientResponse response = path
 				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
-				.post( ClientResponse.class, applyToAllChildren );
+				.post( ClientResponse.class, holder );
 
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
@@ -134,13 +134,10 @@ public class ApplicationWsDelegate {
 		else
 			path = path.path( "children" );
 
-		if( ! Utils.isEmptyOrWhitespaces( instancePath ))
-			path = path.path( "instance" ).path( RestUtils.toRestfulPath( instancePath ));
+		if( instancePath != null )
+			path = path.queryParam( "instance-path", instancePath );
 
-		List<Instance> result = path
-				.accept( MediaType.APPLICATION_JSON )
-				.get( new GenericType<List<Instance>> () {});
-
+		List<Instance> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Instance>> () {});
 		if( result != null )
 			this.logger.finer( result.size() + " children instances were found for " + instancePath + " in " + applicationName + "." );
 		else
@@ -161,8 +158,8 @@ public class ApplicationWsDelegate {
 		this.logger.finer( "Adding an instance to the application " + applicationName + "..." );
 
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "add" );
-		if( ! Utils.isEmptyOrWhitespaces( parentInstancePath ))
-			path = path.path( "instance" ).path( RestUtils.toRestfulPath( parentInstancePath ));
+		if( parentInstancePath != null )
+			path = path.queryParam( "instance-path", parentInstancePath );
 
 		ClientResponse response = path
 				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
@@ -210,8 +207,8 @@ public class ApplicationWsDelegate {
 		this.logger.finer( "Listing possible child components for instance " + instancePath + "..." );
 
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "possibilities" );
-		if( ! Utils.isEmptyOrWhitespaces( instancePath ))
-			path = path.path( "instance" ).path( RestUtils.toRestfulPath( instancePath ));
+		if( instancePath != null )
+			path = path.queryParam( "instance-path", instancePath );
 
 		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
 		if( result != null )

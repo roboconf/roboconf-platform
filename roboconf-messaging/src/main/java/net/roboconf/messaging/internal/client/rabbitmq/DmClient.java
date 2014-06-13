@@ -129,6 +129,8 @@ public class DmClient implements IDmClient {
 		this.channel.basicPublish(
 				exchangeName, routingKey, null,
 				SerializationUtils.serializeObject( message ));
+
+		this.logger.fine( "The DM sent a message to " + routingKey + ". Message type: " + message.getClass().getSimpleName());
 	}
 
 

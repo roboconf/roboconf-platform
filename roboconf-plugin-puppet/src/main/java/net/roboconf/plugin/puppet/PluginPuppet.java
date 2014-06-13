@@ -304,13 +304,13 @@ public class PluginPuppet implements PluginInterface {
 	throws IOException, InterruptedException {
 
 		if(instance == null || instanceDirectory == null) {
-			this.logger.finest("Ignoring null instance" + (instanceDirectory == null ? " directory" : ""));
+			this.logger.fine("Ignoring null instance" + (instanceDirectory == null ? " directory" : ""));
 			return;
 		}
 
 		// Find the action to execute
         // If not found, try init.pp
-		this.logger.info("Preparing the invocation of " + action + ".pp for instance " + instance.getName());
+		this.logger.info("Preparing the invocation of the script for " + action + " and instance " + instance.getName() + ".");
 
 		File moduleDirectory = null;
 		for (File f : instanceDirectory.listFiles()) {
@@ -335,7 +335,7 @@ public class PluginPuppet implements PluginInterface {
 				commands.add( "puppet" );
 				commands.add( "apply" );
 				commands.add( "--verbose" );
-				
+
 				String modpath = System.getenv("MODULEPATH");
 				if(modpath != null) modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
 				else modpath = "";
@@ -375,7 +375,6 @@ public class PluginPuppet implements PluginInterface {
 		// However, this does not work when executed from a Process builder.
 		// The double quotes must be removed so that it works.
 
-		//String className = "roboconf_" + instance.getComponent().getName().toLowerCase();
 		StringBuilder sb = new StringBuilder();
 		sb.append( "class{'" );
 		sb.append( className );
@@ -448,7 +447,10 @@ public class PluginPuppet implements PluginInterface {
 	 * Returns a String representing all the imports and their values.
 	 * <p>
 	 * Must be that way:
-	 * {@code importTypeName => { 'importTypeName11' => { 'varName1' => 'varValue1', 'varName2' => 'varValue2' }, 'importTypeName12' => { 'varName1' => 'varValue1', 'varName2' => 'varValue2' } }, $importTypeName2 => undef }
+	 * <code>
+	 * { importTypeName => { 'importTypeName11' => { 'varName1' => 'varValue1', 'varName2' => 'varValue2' },
+	 * 'importTypeName12' => { 'varName1' => 'varValue1', 'varName2' => 'varValue2' } }, $importTypeName2 => undef }
+	 * </code>
 	 * </p>
 	 *
 	 * @param instance the instance
@@ -482,7 +484,7 @@ public class PluginPuppet implements PluginInterface {
 				sb.append( "{ " );
 
 				for( Iterator<Import> it = imports.iterator(); it.hasNext(); ) {
-					sb.append(formatImport(it.next()));
+					sb.append( formatImport( it.next()));
 
 					if( it.hasNext())
 						sb.append(", ");

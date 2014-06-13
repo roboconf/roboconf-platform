@@ -41,7 +41,7 @@ public class ParsingModelIoTest {
 
 
 	@Test
-	public void testFileTypes() {
+	public void testFileTypes() throws Exception {
 
 		Map<String,Integer> fileNameToFileType = new LinkedHashMap<String,Integer> ();
 		fileNameToFileType.put( "commented-import-1.graph", FileDefinition.AGGREGATOR );
@@ -59,15 +59,10 @@ public class ParsingModelIoTest {
 		fileNameToFileType.put( "instance-imbricated-3.instances", FileDefinition.INSTANCE );
 
 		for( Map.Entry<String,Integer> entry : fileNameToFileType.entrySet()) {
-			try {
-				File f = TestUtils.findTestFile( PATH + "/" + entry.getKey());
-				FileDefinition rel = ParsingModelIo.readConfigurationFile( f, false );
-				Assert.assertEquals( "Invalid file type for " + entry.getKey(), entry.getValue().intValue(), rel.getFileType());
-				Assert.assertEquals( entry.getKey(), 0, rel.getParsingErrors().size());
-
-			} catch( Exception e ) {
-				Assert.fail( "Failed to find " + entry.getKey());
-			}
+			File f = TestUtils.findTestFile( PATH + "/" + entry.getKey());
+			FileDefinition rel = ParsingModelIo.readConfigurationFile( f, false );
+			Assert.assertEquals( "Invalid file type for " + entry.getKey(), entry.getValue().intValue(), rel.getFileType());
+			Assert.assertEquals( entry.getKey(), 0, rel.getParsingErrors().size());
 		}
 	}
 

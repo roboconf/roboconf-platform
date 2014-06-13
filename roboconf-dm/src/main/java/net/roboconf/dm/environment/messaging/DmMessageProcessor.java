@@ -19,6 +19,7 @@ package net.roboconf.dm.environment.messaging;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
@@ -31,8 +32,8 @@ import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineReadyToBeDeleted;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 
@@ -72,8 +73,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 		else if( message instanceof MsgNotifHeartbeat )
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
 
-		else if( message instanceof MsgNotifMachineReadyToBeDeleted )
-			processMsgNotifReadyToBeDeleted((MsgNotifMachineReadyToBeDeleted) message );
+		else if( message instanceof MsgNotifInstanceRestoration )
+			processMsgNotifInstanceRestoration((MsgNotifInstanceRestoration) message );
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
@@ -81,25 +82,24 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 
 
 
-	private void processMsgNotifReadyToBeDeleted( MsgNotifMachineReadyToBeDeleted message ) {
+	private void processMsgNotifInstanceRestoration( MsgNotifInstanceRestoration message ) {
 
-		String rootInstanceName = message.getRootInstanceName();
+		Instance rootInstance = message.getRootInstance();
 		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
+		Instance currentRootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstance.getName());
 
 		// If 'app' is null, then 'instance' is also null.
-		if( rootInstance == null ) {
+		if( currentRootInstance == null ) {
 			StringBuilder sb = new StringBuilder();
-			sb.append( "A machine signaled it is ready to be deleted, but this machine is unknown: " );
-			sb.append( rootInstanceName );
+			sb.append( "Instance " );
+			sb.append( rootInstance.getName());
 			sb.append( " (app =  " );
-			sb.append( app );
-			sb.append( ")." );
+			sb.append( message.getApplicationName());
+			sb.append( ") was bnot found and cannot be restored." );
 			this.logger.warning( sb.toString());
 
 		} else {
-			Manager.INSTANCE.terminateMachine( app.getName(), rootInstance );
-			this.logger.fine( "Machine " + rootInstanceName + " is ready to be deleted." );
+			// TODO: The graph objects are not the same!!!!
 		}
 	}
 
@@ -207,7 +207,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 		} else {
 			InstanceStatus oldStatus = instance.getStatus();
 			instance.setStatus( message.getNewStatus());
-			instance.updateImports( message.getNewImports());
+			ImportHelpers.updateImports( instance, message.getNewImports());
 
 			StringBuilder sb = new StringBuilder();
 			sb.append( "Status changed from " );

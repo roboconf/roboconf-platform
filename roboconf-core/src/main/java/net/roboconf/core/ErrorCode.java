@@ -62,6 +62,8 @@ public enum ErrorCode {
 	PM_INVALID_INSTALLER_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid installer name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	PM_INVALID_ICON_LOCATION( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The icon location must end with an image extension (gif, jpg, jpeg, png)." ),
 	PM_INVALID_INSTANCE_ELEMENT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An instance can only contain properties, other instances, blank lines or comments." ),
+	PM_INVALID_INSTANCE_COUNT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The 'count' property for instances must be a positive integer." ),
+	PM_USELESS_INSTANCE_COUNT( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "The 'count' property is useless here, the default value is already 1." ),
 
 	PM_PROPERTY_NOT_APPLIABLE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property does not apply to this element." ),
 	PM_DUPLICATE_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property was already set for this element." ),
@@ -82,6 +84,7 @@ public enum ErrorCode {
 	CO_ALREADY_DEFINED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This facet was defined more than once." ),
 	CO_ALREADY_DEFINED_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This component was defined more than once." ),
 	CO_ALREADY_DEFINED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This instance was defined more than once." ),
+	CO_CONFLICTING_INFERRED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "An inferred instance (count = ...) is in conflict with another instance. They both have the same name and path." ),
 	CO_NOT_OVERRIDING( ErrorLevel.WARNING, ErrorCategory.CONVERSION, "A variable is exported in the instance but was not defined in its component." ),
 	CO_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A variable is exported in the instance but could not be resolved in its component." ),
 	CO_AMBIGUOUS_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A component does not specify its installer but inherits several ones from its facets." ),
@@ -131,6 +134,7 @@ public enum ErrorCode {
 	PROJ_EXTRACT_ZIP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Roboconf failed to extract the ZIP archive (ZIP reading)." ),
 	PROJ_DELETE_TEMP( ErrorLevel.WARNING, ErrorCategory.PROJECT, "Roboconf failed to delete a temporary directory." ),
 	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
+	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource directory." ),
 
 
 	// Execution Errors
