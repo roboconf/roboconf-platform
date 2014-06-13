@@ -56,4 +56,6 @@ public interface Ec2Constants {
 	 * The name of the security group for new VMs.
 	 */
 	String SECURITY_GROUP_NAME = "ec2.security.group";
+	
+	String VOLUME_SNAPSHOT_ID = "ec2.volume.snapshot.id";
 }

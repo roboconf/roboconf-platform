@@ -36,13 +36,22 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
+import com.amazonaws.services.ec2.model.AttachVolumeResult;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeResult;
+import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumeAttributeRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
 import com.amazonaws.services.ec2.model.EbsBlockDevice;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.elasticmapreduce.model.InstanceState;
 
 /**
  * @author Noël - LIG
@@ -112,6 +121,59 @@ public class IaasEc2 implements IaasInterface {
 			RunInstancesResult runInstanceResult = this.ec2.runInstances( runInstancesRequest );
 			instanceId = runInstanceResult.getReservation().getInstances().get( 0 ).getInstanceId();
 
+			// Is there any volume (ID or name) to attach ?
+			String snapshotIdToAttach = iaasProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+			if(snapshotIdToAttach != null) {
+				boolean running = false;
+				while(! running) {
+					DescribeInstancesRequest dis = new DescribeInstancesRequest();
+					ArrayList<String> instanceIds = new ArrayList<String>();
+					instanceIds.add(instanceId);
+					dis.setInstanceIds(instanceIds);
+					DescribeInstancesResult disresult = ec2.describeInstances(dis);
+					running = "running".equals(disresult.getReservations().get(0).getInstances().get(0).getState().getName());
+					if(! running) {
+						try {
+							Thread.sleep(5000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+				CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
+					.withAvailabilityZone("eu-west-1c")
+					.withSnapshotId(snapshotIdToAttach);
+					//.withSize(2); // The size of the volume, in gigabytes.
+
+				CreateVolumeResult createVolumeResult = ec2.createVolume(createVolumeRequest);
+				
+				running = false;
+				while(! running) {
+					DescribeVolumesRequest dvs = new DescribeVolumesRequest();
+					ArrayList<String> volumeIds = new ArrayList<String>();
+					volumeIds.add(createVolumeResult.getVolume().getVolumeId());
+					DescribeVolumesResult dvsresult = ec2.describeVolumes(dvs);
+					running = "available".equals(dvsresult.getVolumes().get(0).getState());
+					System.out.println(dvsresult.getVolumes().get(0).getState());
+					if(! running) {
+						try {
+							Thread.sleep(5000);
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+
+				AttachVolumeRequest attachRequest = new AttachVolumeRequest()
+					.withInstanceId(instanceId)
+					.withDevice("/dev/sda2")
+					.withVolumeId(createVolumeResult.getVolume().getVolumeId());
+
+				AttachVolumeResult attachResult = ec2.attachVolume(attachRequest);
+			}
+			
 			// Set name tag for instance (human-readable in AWS webapp)
 			List<Tag> tags = new ArrayList<Tag>();
 			Tag t = new Tag();
