@@ -154,10 +154,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_instanceStart() throws Exception {
 
-		MsgCmdInstanceStart msg = new MsgCmdInstanceStart( "/o/mp/k", true );
-		checkBasics( msg, MsgCmdInstanceStart.class );
-
-		msg = new MsgCmdInstanceStart( "/o/mp/k", false );
+		MsgCmdInstanceStart msg = new MsgCmdInstanceStart( "/o/mp/k" );
 		checkBasics( msg, MsgCmdInstanceStart.class );
 	}
 

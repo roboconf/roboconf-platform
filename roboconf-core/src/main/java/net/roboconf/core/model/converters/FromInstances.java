@@ -104,25 +104,20 @@ public class FromInstances {
 				p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_STATE, instance.getStatus().toString());
 				currentBlock.getInnerBlocks().add( p );
 
-				if( saveRuntimeInformation ) {
-					p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_STATE, instance.getStatus().toString());
+				StringBuilder sb = new StringBuilder();
+				for( Iterator<Map.Entry<String,String>> it = instance.getData().entrySet().iterator(); it.hasNext(); ) {
+					Map.Entry<String,String> entry = it.next();
+					sb.append( entry.getKey());
+					sb.append( " = " );
+					sb.append( entry.getValue());
+
+					if( it.hasNext())
+						sb.append( ", " );
+				}
+
+				if( sb.length() > 0 ) {
+					p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_DATA, sb.toString());
 					currentBlock.getInnerBlocks().add( p );
-
-					StringBuilder sb = new StringBuilder();
-					for( Iterator<Map.Entry<String,String>> it = instance.getData().entrySet().iterator(); it.hasNext(); ) {
-						Map.Entry<String,String> entry = it.next();
-						sb.append( entry.getKey());
-						sb.append( " = " );
-						sb.append( entry.getValue());
-
-						if( it.hasNext())
-							sb.append( ", " );
-					}
-
-					if( sb.length() > 0 ) {
-						p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_DATA, sb.toString());
-						currentBlock.getInnerBlocks().add( p );
-					}
 				}
 			}
 

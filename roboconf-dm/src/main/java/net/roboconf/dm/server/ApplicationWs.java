@@ -92,13 +92,13 @@ public class ApplicationWs implements IApplicationWs {
 
 			else if( action == ApplicationAction.deploy ) {
 				if( instance.getParent() == null )
-					Manager.INSTANCE.deployRoot( ma, instance, applyToChildren );
+					Manager.INSTANCE.deployRoot( ma, instance );
 				else
-					Manager.INSTANCE.deploy( ma, instance, applyToChildren );
+					Manager.INSTANCE.deploy( ma, instance );
 				response = Response.ok().build();
 
 			} else if( action == ApplicationAction.start ) {
-				Manager.INSTANCE.start( ma, instance, applyToChildren );
+				Manager.INSTANCE.start( ma, instance );
 				response = Response.ok().build();
 
 			} else if( action == ApplicationAction.stop ) {

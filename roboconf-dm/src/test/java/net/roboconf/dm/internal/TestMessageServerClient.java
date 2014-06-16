@@ -83,7 +83,7 @@ public class TestMessageServerClient implements IDmClient {
 
 	@Override
 	public boolean isConnected() {
-		return true;
+		return this.connectionOpen.get() && ! this.connectionClosed.get();
 	}
 
 

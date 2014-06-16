@@ -406,7 +406,7 @@ public final class Utils {
 	/**
 	 * Determines whether a file is a parent of another file.
 	 * <p>
-	 * This method supports intermediate '.' and '..' segments.
+	 * This method handles intermediate '.' and '..' segments.
 	 * </p>
 	 *
 	 * @param potentialAncestor a file that may contain the other one
@@ -426,5 +426,35 @@ public final class Utils {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Copies a directory.
+	 * <p>
+	 * This method copies the content of the source directory
+	 * into the a target directory. This latter is created if necessary.
+	 * </p>
+	 *
+	 * @param source the directory to copy
+	 * @param target the target directory
+	 * @throws IOException if a problem occurred during the copy
+	 */
+	public static void copyDirectory( File source, File target ) throws IOException {
+
+		if( ! target.exists()
+				&& ! target.mkdirs())
+			throw new IOException( "The directory " + target + " could not be created." );
+
+		for( File sourceFile : listAllFiles( source )) {
+			String path = computeFileRelativeLocation( source, sourceFile );
+			File targetFile = new File( target, path );
+
+			if( ! targetFile.getParentFile().exists()
+					&& ! targetFile.getParentFile().mkdirs())
+				throw new IOException( "The directory " + targetFile.getParentFile() + " could not be created." );
+
+			copyStream( sourceFile, targetFile );
+		}
 	}
 }

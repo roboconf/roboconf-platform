@@ -66,7 +66,7 @@ public class ManagedApplicationTest {
 	public void testGetName() {
 
 		ManagedApplication ma = new ManagedApplication( null, null );
-		Assert.assertNotNull( ma.getName());
+		Assert.assertNull( ma.getName());
 
 		ma = new ManagedApplication( this.app, null );
 		Assert.assertEquals( this.app.getName(), ma.getName());

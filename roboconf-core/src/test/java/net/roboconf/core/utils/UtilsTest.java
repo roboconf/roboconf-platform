@@ -450,4 +450,60 @@ public class UtilsTest {
 		comp = new File( "home/toto/whatevereeeeeee" );
 		Assert.assertFalse( Utils.isAncestorFile( parent, comp ));
 	}
+
+
+	@Test
+	public void testCopyDirectory_existingTarget() throws Exception {
+
+		// Create a source
+		File source = this.folder.newFolder();
+		File dir1 = new File( source, "lol/whatever/sub" );
+		dir1.mkdirs();
+		File dir2 = new File( source, "sub" );
+		dir2.mkdirs();
+
+		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes()), new File( dir1, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes()), new File( dir1, "f2" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes()), new File( dir1, "f3" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( source, "f" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( dir2, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes()), new File( dir2, "f45678" ));
+
+		// Copy
+		File target = this.folder.newFolder();
+		Assert.assertEquals( 0, Utils.listAllFiles( target ).size());
+		Utils.copyDirectory( source, target );
+		Assert.assertEquals( 6, Utils.listAllFiles( target ).size());
+	}
+
+
+	@Test
+	public void testCopyDirectory_inexistingTarget() throws Exception {
+
+		// Create a source
+		File source = this.folder.newFolder();
+		File dir1 = new File( source, "lol/whatever/sub/many/more/" );
+		dir1.mkdirs();
+		File dir2 = new File( source, "sub" );
+		dir2.mkdirs();
+
+		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes()), new File( dir1, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes()), new File( dir1, "f2" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes()), new File( dir1, "f3" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( source, "f" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( dir2, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes()), new File( dir2, "f4" ));
+		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes()), new File( dir2, "f45678" ));
+
+		// Copy
+		File target = new File( this.folder.newFolder(), "some" );
+		Assert.assertFalse( target.exists());
+		Utils.copyDirectory( source, target );
+		Assert.assertTrue( target.exists());
+		Assert.assertEquals( 7, Utils.listAllFiles( target ).size());
+	}
 }

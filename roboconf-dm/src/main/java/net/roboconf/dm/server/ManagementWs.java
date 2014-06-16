@@ -35,6 +35,7 @@ import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IManagementWs;
 import net.roboconf.dm.rest.json.MapHolder;
+import net.roboconf.iaas.api.IaasException;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -170,7 +171,11 @@ public class ManagementWs implements IManagementWs {
 			else
 				Manager.INSTANCE.shutdownApplication( ma );
 
+			// FIXME: invalid return code
 		} catch( IOException e ) {
+			result = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
+
+		} catch( IaasException e ) {
 			result = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
 		}
 
