@@ -261,6 +261,8 @@ public class IaasEc2 implements IaasInterface {
 	private RunInstancesRequest prepareEC2RequestNode( String machineImageId, String ipMessagingServer, String channelName, String applicationName ) throws UnsupportedEncodingException {
 
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
+		String flavor = this.iaasProperties.get(Ec2Constants.VM_INSTANCE_TYPE);
+		if(StringUtils.isBlank(flavor)) flavor = "t1.micro";
 		runInstancesRequest.setInstanceType( this.iaasProperties.get(Ec2Constants.VM_INSTANCE_TYPE));
 		if( StringUtils.isBlank( machineImageId ))
 			runInstancesRequest.setImageId( this.iaasProperties.get(Ec2Constants.AMI_VM_NODE));
@@ -272,7 +274,9 @@ public class IaasEc2 implements IaasInterface {
 		runInstancesRequest.setMinCount( 1 );
 		runInstancesRequest.setMaxCount( 1 );
 		runInstancesRequest.setKeyName( this.iaasProperties.get(Ec2Constants.SSH_KEY_NAME));
-		runInstancesRequest.setSecurityGroups( Arrays.asList( this.iaasProperties.get(Ec2Constants.SECURITY_GROUP_NAME)));
+		String secGroup = this.iaasProperties.get(Ec2Constants.SECURITY_GROUP_NAME);
+		if(StringUtils.isBlank(secGroup)) secGroup = "default";
+		runInstancesRequest.setSecurityGroups(Arrays.asList(secGroup));
 
 /*	
 		// Create the block device mapping to describe the root partition.
