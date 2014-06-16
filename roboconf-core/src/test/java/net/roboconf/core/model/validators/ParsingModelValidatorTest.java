@@ -286,6 +286,11 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_FACET_NAME, errors.iterator().next().getErrorCode());
 
+		block.setNameAndValue( Constants.PROPERTY_COMPONENT_FACETS, "facet1, , facet2" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_EMPTY_REFERENCED_FACET_NAME, errors.iterator().next().getErrorCode());
+
 
 		// Extended Facets
 		block.setNameAndValue( Constants.PROPERTY_FACET_EXTENDS, "" );
@@ -341,6 +346,11 @@ public class ParsingModelValidatorTest {
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_FACET_NAME, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_FACET_EXTENDS, "facet1,,facet2" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_EMPTY_REFERENCED_FACET_NAME, errors.iterator().next().getErrorCode());
 
 
 		// Exported variables
@@ -404,6 +414,11 @@ public class ParsingModelValidatorTest {
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( Constants.PROPERTY_GRAPH_EXPORTS, "var2, , var1" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_EMPTY_VARIABLE_NAME, errors.iterator().next().getErrorCode());
 
 		block.setNameAndValue( Constants.PROPERTY_GRAPH_EXPORTS, "var#, var2;" );
 		errors = ParsingModelValidator.validate( block );
@@ -480,6 +495,11 @@ public class ParsingModelValidatorTest {
 		for( ModelError modelError : errors )
 			Assert.assertEquals( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, modelError.getErrorCode());
 
+		block.setNameAndValue( Constants.PROPERTY_COMPONENT_IMPORTS, ", comp.var1" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_EMPTY_VARIABLE_NAME, errors.iterator().next().getErrorCode());
+
 
 		// Count property
 		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "" );
@@ -513,6 +533,11 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( ErrorCode.PM_USELESS_INSTANCE_COUNT, errors.iterator().next().getErrorCode());
 
 		block.setNameAndValue( Constants.PROPERTY_INSTANCE_COUNT, "3" );
+		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
+
+
+		// Instance channel
+		block.setNameAndValue( Constants.PROPERTY_INSTANCE_CHANNEL, "whatever, there is no validation yet" );
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 

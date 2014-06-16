@@ -42,7 +42,7 @@ public class ManagedApplication {
 
 	private final Application application;
 	private final File applicationFilesDirectory;
-	private final Logger logger;
+	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	final Map<Instance,List<Message>> rootInstanceToAwaitingMessages;
 	final Map<Instance,Integer> rootInstanceToMissedHeartBeatsCount;
@@ -55,7 +55,6 @@ public class ManagedApplication {
 	public ManagedApplication( Application application, File applicationFilesDirectory ) {
 		this.applicationFilesDirectory = applicationFilesDirectory;
 		this.application = application;
-		this.logger = Logger.getLogger( Manager.class.getName() + "." + application.getName());
 
 		this.rootInstanceToAwaitingMessages = new HashMap<Instance,List<Message>> ();
 		this.rootInstanceToMissedHeartBeatsCount = new ConcurrentHashMap<Instance,Integer> ();
@@ -72,8 +71,11 @@ public class ManagedApplication {
 	}
 
 
-	public Logger getLogger() {
-		return this.logger;
+	/**
+	 * @return the application's name
+	 */
+	public String getName() {
+		return this.application == null ? null : this.application.getName();
 	}
 
 

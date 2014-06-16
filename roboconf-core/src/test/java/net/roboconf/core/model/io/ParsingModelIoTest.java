@@ -71,7 +71,7 @@ public class ParsingModelIoTest {
 	public void testComplexInstances() throws Exception {
 
 		File f = TestUtils.findTestFile( "/configurations/valid/complex-instances.instances" );
-		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f.toURI(), true );
 		Assert.assertEquals( 0, def.getParsingErrors().size());
 
 		List<AbstractBlock> toProcess = new ArrayList<AbstractBlock> ();

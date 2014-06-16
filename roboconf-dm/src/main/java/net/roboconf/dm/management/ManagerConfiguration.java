@@ -19,12 +19,16 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Logger;
 
+import net.roboconf.core.model.io.RuntimeModelIo;
+import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -39,7 +43,9 @@ public class ManagerConfiguration {
 	private static final String APPLICATIONS = "applications";
 	private static final String INSTANCES = "instances";
 	private static final String CONF = "conf";
+	private static final String CONF_PROPERTIES = "configuration.properties";
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String messageServerIp;
 	private File configurationDirectory;
 
@@ -54,7 +60,7 @@ public class ManagerConfiguration {
 		this.configurationDirectory = configurationDirectory;
 
 		Properties props = new Properties();
-		File conf = new File( this.configurationDirectory, CONF + "/" + "configuration.properties" );
+		File conf = new File( this.configurationDirectory, CONF + "/" + CONF_PROPERTIES );
 		FileInputStream in = null;
 		try {
 			in = new FileInputStream( conf );
@@ -98,13 +104,36 @@ public class ManagerConfiguration {
 	}
 
 
+	/**
+	 * Saves the instances into a file.
+	 * @param ma the application
+	 * @throws IOException if something went wrong
+	 */
 	public void saveInstances( ManagedApplication ma ) {
 
+		File targetFile = new File( this.configurationDirectory, ma.getName() + ".instances" );
+		try {
+			RuntimeModelIo.writeInstances( targetFile, ma.getApplication().getRootInstances());
+
+		} catch( IOException e ) {
+			this.logger.severe( "Failed to save instances. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
+	/**
+	 * Restores instances and set them in the application.
+	 * @param ma the application
+	 */
 	public void restoreInstances( ManagedApplication ma ) {
 
+		File sourceFile = new File( this.configurationDirectory, ma.getName() + ".instances" );
+		InstancesLoadResult ilr = RuntimeModelIo.loadInstances( sourceFile, ma.getApplication().getGraphs());
+
+		// TODO: what happens if there are errors?
+		ma.getApplication().getRootInstances().clear();;
+		ma.getApplication().getRootInstances().addAll( ilr.getRootInstances());
 	}
 
 
@@ -118,8 +147,7 @@ public class ManagerConfiguration {
 
 	/**
 	 * Finds the configuration directory.
-	 * @return a file (that may not exist)
-	 * @throws IOException
+	 * @return a directory (that may not exist)
 	 */
 	public static File findConfigurationDirectory() {
 
@@ -130,14 +158,71 @@ public class ManagerConfiguration {
 	}
 
 
-	public static ManagerConfiguration createConfiguration( File configurationDirectory, String messagingServerIp ) {
+	/**
+	 * Creates a configuration from given parameters.
+	 * <p>
+	 * The directory and its structure will be created if necessary.
+	 * </p>
+	 *
+	 * @param configurationDirectory an existing directory
+	 * @param messagingServerIp a non-null IP address
+	 * @return a non-null configuration
+	 * @throws IOException if some directories could not be created
+	 */
+	public static ManagerConfiguration createTemporaryConfiguration( File configurationDirectory, String messagingServerIp )
+	throws IOException {
 
-		return null;
+		// Create the structure
+		if( ! configurationDirectory.exists()
+				&& ! configurationDirectory.mkdirs())
+			throw new IOException( "Could not create " + configurationDirectory );
+
+		File f = new File( configurationDirectory, APPLICATIONS );
+		if( ! f.exists() && ! f.mkdirs())
+			throw new IOException( "Could not create " + f );
+
+		f = new File( configurationDirectory, INSTANCES );
+		if( ! f.exists() && ! f.mkdirs())
+			throw new IOException( "Could not create " + f );
+
+		// Save the configuration
+		Properties props = new Properties();
+		props.setProperty( "PROP_MESSAGING_IP", messagingServerIp );
+		f = new File( f, CONF_PROPERTIES  );
+
+		FileOutputStream os = null;
+		try {
+			os = new FileOutputStream( f );
+			props.store( os, "Temporary configuration" );
+
+		} finally {
+			Utils.closeQuietly( os );
+		}
+
+		// Create the configuration
+		ManagerConfiguration conf = new ManagerConfiguration();
+		conf.messageServerIp = messagingServerIp;
+		conf.configurationDirectory = configurationDirectory;
+
+
+		return conf;
 	}
 
 
-	public static ManagerConfiguration createConfigurationDirectory( File configurationDirectory ) {
-
-		return null;
+	/**
+	 * Creates a temporary configuration from given parameters.
+	 * <p>
+	 * Equivalent to <code>createTemporaryConfiguration( configurationDirectory, "localhost" );</code>
+	 * </p>
+	 * <p>
+	 * The directory and its structure will be created if necessary.
+	 * </p>
+	 *
+	 * @param configurationDirectory an existing directory
+	 * @return a non-null configuration
+	 * @throws IOException if some directories could not be created
+	 */
+	public static ManagerConfiguration createTemporaryConfiguration( File configurationDirectory ) throws IOException {
+		return createTemporaryConfiguration( configurationDirectory, "localhost" );
 	}
 }

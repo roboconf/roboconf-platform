@@ -145,7 +145,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 
 		} else {
 			ma.acknowledgeHeartBeat( rootInstance );
-			ma.getLogger().finest( "A heart beat was acknowledged for " + rootInstance.getName() + " in the application " + app.getName() + "." );
+			this.logger.finest( "A heart beat was acknowledged for " + rootInstance.getName() + " in the application " + app.getName() + "." );
 		}
 	}
 

@@ -58,10 +58,18 @@ public class ManagedApplicationTest {
 
 	@Test
 	public void testConstructor() throws Exception {
-
-		Assert.assertNotNull( this.ma.getLogger());
-		Assert.assertTrue( this.ma.getLogger().getName().endsWith( "." + this.app.getName()));
 		Assert.assertEquals( this.app, this.ma.getApplication());
+	}
+
+
+	@Test
+	public void testGetName() {
+
+		ManagedApplication ma = new ManagedApplication( null, null );
+		Assert.assertNotNull( ma.getName());
+
+		ma = new ManagedApplication( this.app, null );
+		Assert.assertEquals( this.app.getName(), ma.getName());
 	}
 
 

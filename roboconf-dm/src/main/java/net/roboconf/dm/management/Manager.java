@@ -29,7 +29,7 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
+import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
@@ -247,7 +247,7 @@ public final class Manager {
 	throws AlreadyExistingException, InvalidApplicationException, IOException {
 
 		this.logger.fine( "Loading application from " + applicationFilesDirectory + "..." );
-		LoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
+		ApplicationLoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
 		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
 			throw new InvalidApplicationException( lr.getLoadErrors());
 
@@ -271,7 +271,7 @@ public final class Manager {
 		ManagedApplication ma = new ManagedApplication( application, targetDirectory );
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
-		ma.getLogger().fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
+		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 
 		return ma;
 	}
@@ -353,7 +353,7 @@ public final class Manager {
 		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
 			throw new ImpossibleInsertionException( instance.getName());
 
-		ma.getLogger().fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added." );
+		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + ma.getName() + "." );
 
 		// Store the message because we want to make sure the message is not lost
 		ma.storeAwaitingMessage( instance, new MsgCmdInstanceAdd( parentInstance, instance ));
@@ -372,12 +372,13 @@ public final class Manager {
 
 		for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
 			if( i.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed." );
+				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed in " + ma.getName() + "." );
 		}
 
+		String instancePath = InstanceHelpers.computeInstancePath( instance );
 		if( InstanceHelpers.findRootInstance( instance ).getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 			// There should be a model on the agent. Even if it is not set, we expect the agent to acknowledge.
-			MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( InstanceHelpers.computeInstancePath( instance ));
+			MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( instancePath );
 			// Make sure the message will arrive.
 			ma.storeAwaitingMessage( instance, message );
 		}
@@ -387,7 +388,7 @@ public final class Manager {
 		else
 			instance.getParent().getChildren().remove( instance );
 
-		ma.getLogger().fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed." );
+		this.logger.fine( "Instance " + instancePath + " was successfully removed in " + ma.getName() + "." );
 		this.configuration.saveInstances( ma );
 	}
 
@@ -402,9 +403,9 @@ public final class Manager {
 	public void deploy( ManagedApplication ma, Instance instance, boolean applyToChildren ) throws IOException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		ma.getLogger().fine( "Deploying " + instancePath + "... Applied to children: " + applyToChildren + "." );
+		this.logger.fine( "Deploying " + instancePath + " in " + ma.getName() + "... Applied to children: " + applyToChildren + "." );
 		if( instance.getParent() != null ) {
-			ma.getLogger().fine( "Deploy action for " + instancePath + " is cancelled." );
+			this.logger.fine( "Deploy action for " + instancePath + " is cancelled in " + ma.getName() + "." );
 			return;
 		}
 
@@ -420,7 +421,7 @@ public final class Manager {
 			send( ma, message, i );
 		}
 
-		ma.getLogger().fine( "A message was (or will be) sent to the agent to deploy " + instancePath );
+		this.logger.fine( "A message was (or will be) sent to the agent to deploy " + instancePath + " in " + ma.getName() + "." );
 	}
 
 
@@ -434,14 +435,14 @@ public final class Manager {
 	public void start( ManagedApplication ma, Instance instance, boolean applyToChildren ) throws IOException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		ma.getLogger().fine( "Starting " + instancePath + "... Applied to children: " + applyToChildren + "." );
+		this.logger.fine( "Starting " + instancePath + " in " + ma.getName() + "... Applied to children: " + applyToChildren + "." );
 		if( instance.getParent() != null ) {
 			MsgCmdInstanceStart message = new MsgCmdInstanceStart( instance, applyToChildren );
 			send( ma, message, instance );
-			ma.getLogger().fine( "A message was (or will be) sent to the agent to start " + instancePath );
+			this.logger.fine( "A message was (or will be) sent to the agent to start " + instancePath + " in " + ma.getName() + "." );
 
 		} else {
-			ma.getLogger().fine( "Start action for " + instancePath + " is cancelled." );
+			this.logger.fine( "Start action for " + instancePath + " is cancelled in " + ma.getName() + "." );
 		}
 	}
 
@@ -455,14 +456,14 @@ public final class Manager {
 	public void stop( ManagedApplication ma, Instance instance ) throws IOException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		ma.getLogger().fine( "Stopping " + instancePath + "..." );
+		this.logger.fine( "Stopping " + instancePath + " in " + ma.getName() + "..." );
 		if( instance.getParent() != null ) {
 			MsgCmdInstanceStop message = new MsgCmdInstanceStop( instance );
 			send( ma, message, instance );
-			ma.getLogger().fine( "A message was (or will be) sent to the agent to stop " + instancePath );
+			this.logger.fine( "A message was (or will be) sent to the agent to stop " + instancePath + " in " + ma.getName() + "." );
 
 		} else {
-			ma.getLogger().fine( "Stop action for " + instancePath + " is cancelled." );
+			this.logger.fine( "Stop action for " + instancePath + " is cancelled in " + ma.getName() + "." );
 		}
 	}
 
@@ -476,14 +477,14 @@ public final class Manager {
 	public void undeploy( ManagedApplication ma, Instance instance ) throws IOException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		ma.getLogger().fine( "Undeploying " + instancePath + "..." );
+		this.logger.fine( "Undeploying " + instancePath + " in " + ma.getName() + "..." );
 		if( instance.getParent() != null ) {
 			MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( instance );
 			send( ma, message, instance );
-			ma.getLogger().fine( "A message was (or will be) sent to the agent to undeploy " + instancePath );
+			this.logger.fine( "A message was (or will be) sent to the agent to undeploy " + instancePath + " in " + ma.getName() + "." );
 
 		} else {
-			ma.getLogger().fine( "Undeploy action for " + instancePath + " is cancelled." );
+			this.logger.fine( "Undeploy action for " + instancePath + " is cancelled in " + ma.getName() + "." );
 		}
 	}
 
@@ -498,9 +499,9 @@ public final class Manager {
 	 */
 	public void deployRoot( ManagedApplication ma, Instance rootInstance, boolean applyToChildren ) throws IaasException, IOException {
 
-		ma.getLogger().fine( "Deploying rootinstance " + rootInstance.getName() + "..." );
+		this.logger.fine( "Deploying rootinstance " + rootInstance.getName() + " in " + ma.getName() + "..." );
 		if( rootInstance.getParent() != null ) {
-			ma.getLogger().fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled. Not a root instance." );
+			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;
 		}
 
@@ -508,7 +509,7 @@ public final class Manager {
 		// It does not mean the VM is already created, it may take some time.
 		String machineId = rootInstance.getData().get( Instance.MACHINE_ID );
 		if( machineId != null ) {
-			ma.getLogger().fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled. Already associated with a machine." );
+			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
 			return;
 		}
 
@@ -528,11 +529,11 @@ public final class Manager {
 					rootInstance.getName(), ma.getApplication().getName());
 
 			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
-			ma.getLogger().fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested. Machine ID: " + machineId );
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
 		} catch( IaasException e ) {
-			ma.getLogger().severe( "Failed to deploy root instance " + rootInstance.getName() + " . " + e.getMessage());
-			ma.getLogger().finest( Utils.writeException( e ));
+			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
 
 			rootInstance.setStatus( InstanceStatus.PROBLEM );
 			throw e;
@@ -552,9 +553,9 @@ public final class Manager {
 	 */
 	public void undeployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
 
-		ma.getLogger().fine( "Undeploying rootinstance " + rootInstance.getName() + "..." );
+		this.logger.fine( "Undeploying rootinstance " + rootInstance.getName() + " in " + ma.getName() + "..." );
 		if( rootInstance.getParent() != null ) {
-			ma.getLogger().fine( "Undeploy action for instance " + rootInstance.getName() + " is cancelled. Not a root instance." );
+			this.logger.fine( "Undeploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;
 		}
 
@@ -565,24 +566,24 @@ public final class Manager {
 			this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, message );
 
 			// Terminate the machine
-			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted." );
+			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
 			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
 			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
 			if( machineId != null )
 				iaasInterface.terminateVM( machineId );
 
-			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted." );
+			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
 			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
 				i.setStatus( InstanceStatus.NOT_DEPLOYED );
 				// DM won't send old imports upon restart...
 				i.getImports().clear();
 			}
 
-			ma.getLogger().fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested." );
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( IaasException e ) {
-			ma.getLogger().severe( "Failed to undeploy root instance " + rootInstance.getName() + " . " + e.getMessage());
-			ma.getLogger().finest( Utils.writeException( e ));
+			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
 
 			rootInstance.setStatus( InstanceStatus.PROBLEM );
 			throw e;

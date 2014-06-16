@@ -52,7 +52,7 @@ public class FromInstancesTest {
 	@Test
 	public void testZeroInstance() throws Exception {
 
-		FileDefinition def = new FromInstances().buildFileDefinition( new ArrayList<Instance>( 0 ), new File( "whatever.txt" ), false );
+		FileDefinition def = new FromInstances().buildFileDefinition( new ArrayList<Instance>( 0 ), new File( "whatever.txt" ), false, false );
 		Assert.assertEquals( FileDefinition.INSTANCE, def.getFileType());
 		Assert.assertEquals( 0, def.getBlocks().size());
 	}
@@ -182,7 +182,7 @@ public class FromInstancesTest {
 		}
 
 		File targetFile = this.testFolder.newFile( "roboconf_test.instances" );
-		FileDefinition defToWrite = new FromInstances().buildFileDefinition( rootInstances, targetFile, writeComments );
+		FileDefinition defToWrite = new FromInstances().buildFileDefinition( rootInstances, targetFile, writeComments, false );
 		ParsingModelIo.saveRelationsFile( defToWrite, writeComments, System.getProperty( "line.separator" ));
 
 		// Load the saved file
@@ -230,6 +230,7 @@ public class FromInstancesTest {
 				Assert.assertEquals( instance.getComponent(), newInstance.getComponent());
 				Assert.assertEquals( instance.getStatus(), newInstance.getStatus());
 				Assert.assertEquals( instance.getChildren().size(), newInstance.getChildren().size());
+				Assert.assertEquals( instance.getData().size(), newInstance.getData().size());
 				Assert.assertEquals( instance.getOverriddenExports().size(), newInstance.getOverriddenExports().size());
 
 				for( Map.Entry<String,String> entry : instance.getOverriddenExports().entrySet()) {

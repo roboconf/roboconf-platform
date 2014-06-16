@@ -81,6 +81,16 @@ public interface Constants {
 	String PROPERTY_INSTANCE_NAME = "name";
 
 	/**
+	 * Keyword for an instance property (runtime, not meant to be set manually).
+	 */
+	String PROPERTY_INSTANCE_DATA = "instance-data";
+
+	/**
+	 * Keyword for an instance property (runtime, not meant to be set manually).
+	 */
+	String PROPERTY_INSTANCE_STATE = "instance-state";
+
+	/**
 	 * Keyword for an instance property.
 	 */
 	String PROPERTY_INSTANCE_CHANNEL = "channel";

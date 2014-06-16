@@ -70,7 +70,7 @@ public final class Utils {
 
 
 	/**
-	 * Splits a string, ignores invalid sequences and formats the result.
+	 * Splits a string and formats the result.
 	 * @param toSplit the string to split (can be null)
 	 * @param separator the separator (cannot be null or the empty string)
 	 * @return a list of items (never null)
@@ -81,11 +81,9 @@ public final class Utils {
 			throw new IllegalArgumentException( "The separator cannot be null or the empty string." );
 
 		List<String> result = new ArrayList<String> ();
-		if( toSplit != null ) {
-			for( String s : toSplit.split( Pattern.quote( separator ))) {
-				if( ! Utils.isEmptyOrWhitespaces( s ))
-					result.add( s .trim());
-			}
+		if( ! Utils.isEmptyOrWhitespaces( toSplit )) {
+			for( String s : toSplit.split( Pattern.quote( separator )))
+				result.add( s .trim());
 		}
 
 		return result;
@@ -155,10 +153,6 @@ public final class Utils {
 	 * @throws IOException if the file could not be created
 	 */
 	public static void copyStream( InputStream in, File outputFile ) throws IOException {
-
-		if( ! outputFile.exists() && ! outputFile.createNewFile())
-			throw new IOException( "Failed to create " + outputFile.getAbsolutePath() + "." );
-
 		OutputStream os = new FileOutputStream( outputFile );
 		copyStream( in, os );
 		os.close ();
@@ -307,7 +301,7 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void extractZipArchive( File zipFile, File targetDirectory )
-    throws ZipException, IOException {
+	throws ZipException, IOException {
 
 		// Make some checks
 		if( zipFile == null || targetDirectory == null )
@@ -317,12 +311,13 @@ public final class Utils {
 				|| ! zipFile.isFile())
 			throw new IllegalArgumentException( "ZIP file " + targetDirectory.getName() + " does not exist." );
 
+		if( targetDirectory.exists()
+				&& ! targetDirectory.isDirectory())
+			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " is not a directory." );
+
 		if( ! targetDirectory.exists()
 				&& ! targetDirectory.mkdirs())
-			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " could not be created." );
-
-		if( ! targetDirectory.isDirectory())
-			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " is not a directory." );
+			throw new IOException( "Target directory " + targetDirectory.getName() + " could not be created." );
 
 		// Load the ZIP file
 		ZipFile theZipFile = new ZipFile( zipFile );

@@ -112,15 +112,20 @@ public class UtilsTest {
 		Assert.assertEquals( "time", result.get( 3 ));
 
 		result = Utils.splitNicely( "once \n\n, upon, a , time \n  ", "\n" );
-		Assert.assertEquals( 2, result.size());
+		Assert.assertEquals( 4, result.size());
 		Assert.assertEquals( "once", result.get( 0 ));
-		Assert.assertEquals( ", upon, a , time", result.get( 1 ));
+		Assert.assertEquals( "", result.get( 1 ).trim());
+		Assert.assertEquals( ", upon, a , time", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 3 ).trim());
 
 		result = Utils.splitNicely( "once $ $a$ $$ time", "$" );
-		Assert.assertEquals( 3, result.size());
+		Assert.assertEquals( 6, result.size());
 		Assert.assertEquals( "once", result.get( 0 ));
-		Assert.assertEquals( "a", result.get( 1 ));
-		Assert.assertEquals( "time", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 1 ).trim());
+		Assert.assertEquals( "a", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 3 ).trim());
+		Assert.assertEquals( "", result.get( 4 ).trim());
+		Assert.assertEquals( "time", result.get( 5 ));
 	}
 
 
@@ -284,6 +289,44 @@ public class UtilsTest {
 		Utils.closeQuietly( out );
 
 		out = null;
+		Utils.closeQuietly( out );
+	}
+
+
+	@Test
+	public void testCloseQuietly_silentInput() throws Exception {
+
+		InputStream in = new InputStream() {
+			@Override
+			public int read() throws IOException {
+				return 0;
+			}
+
+			@Override
+			public void close() throws IOException {
+				throw new IOException();
+			}
+		};
+
+		Utils.closeQuietly( in );
+	}
+
+
+	@Test
+	public void testCloseQuietly_silentOutput() throws Exception {
+
+		OutputStream out = new OutputStream() {
+			@Override
+			public void write( int b ) throws IOException {
+				// nothing
+			}
+
+			@Override
+			public void close() throws IOException {
+				throw new IOException();
+			}
+		};
+
 		Utils.closeQuietly( out );
 	}
 

@@ -27,8 +27,8 @@ import net.roboconf.core.model.parsing.BlockFacet;
 import net.roboconf.core.model.parsing.BlockImport;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.parsing.FileDefinition;
+import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.model.validators.ParsingModelValidator;
 
 /**
@@ -76,13 +76,13 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param block an blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
 	public String write( AbstractBlock block, boolean writeComments ) {
 
-		String result;
+		String result = null;
 		switch( block.getInstructionType()) {
 		case AbstractBlock.COMPONENT:
 			result = write((BlockComponent) block, writeComments );
@@ -113,7 +113,6 @@ public class FileDefinitionSerializer {
 			break;
 
 		default:
-			result = null;
 			break;
 		}
 
@@ -122,7 +121,7 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param block the blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
@@ -142,7 +141,7 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param block the blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
@@ -152,7 +151,7 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param block the blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
@@ -162,7 +161,7 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param block the blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @param indentationLevel the indentation level
 	 * @return a string (never null)
@@ -180,30 +179,28 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param block the blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
 	public String write( BlockBlank block, boolean writeComments ) {
 
 		StringBuilder sb = new StringBuilder();
-		if( writeComments ) {
-			// Invalid blank sections can be "repaired" even if they are invalid.
-			// Here, we replace it by a line break.
-			// The error is signaled as a warning in the validation.
-			// Useful if a blank section was built programmatically.
-			if( ParsingModelValidator.validate( block ).isEmpty())
-				sb.append( block.getContent());
-			else
-				sb.append( this.lineSeparator );
-		}
+		// Invalid blank sections can be "repaired" even if they are invalid.
+		// Here, we replace it by a line break.
+		// The error is signaled as a warning in the validation.
+		// Useful if a blank section was built programmatically.
+		if( ParsingModelValidator.validate( block ).isEmpty())
+			sb.append( block.getContent());
+		else
+			sb.append( this.lineSeparator );
 
 		return sb.toString();
 	}
 
 
 	/**
-	 * @param block the blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
@@ -224,7 +221,7 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param block the blockuction
+	 * @param block a block
 	 * @param writeComments true to write comments
 	 * @return a string (never null)
 	 */
@@ -241,11 +238,11 @@ public class FileDefinitionSerializer {
 
 			} else {
 				for( String s : block.getContent().split( "\n" )) {
-					if( s.trim().startsWith( ParsingConstants.COMMENT_DELIMITER ))
+					if( ! s.trim().startsWith( ParsingConstants.COMMENT_DELIMITER ))
 						sb.append( "# " );
 
 					sb.append( s );
-					sb.append( "\n" );
+					sb.append( this.lineSeparator );
 				}
 			}
 		}
@@ -255,7 +252,7 @@ public class FileDefinitionSerializer {
 
 
 	/**
-	 * @param holder the blockuction
+	 * @param holder a block
 	 * @param writeComments true to write comments
 	 * @param indentationLevel the indentation level
 	 * @return a string (never null)

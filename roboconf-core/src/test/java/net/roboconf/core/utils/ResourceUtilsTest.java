@@ -17,6 +17,7 @@
 package net.roboconf.core.utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -38,9 +39,9 @@ public class ResourceUtilsTest {
 
 
 	@Test
-	public void testFindInstanceResourcesDirectory_success() {
+	public void testFindInstanceResourcesDirectory_success() throws Exception {
 
-		final File appDir = new File( System.getProperty( "java.io.tmpdir" ));
+		final File appDir = this.folder.newFolder();
 		final String componentName = "my-component";
 		final File expectedFile = new File( appDir, Constants.PROJECT_DIR_GRAPH + File.separator + componentName );
 
@@ -67,9 +68,32 @@ public class ResourceUtilsTest {
 	@Test
 	public void testStoreInstanceResources_notADirectory() throws Exception {
 
-		Instance instance = new Instance( "whatever" ).component( new Component( "comp" ));
-		File f = this.folder.newFile( "roboconf_.txt" );
-		Map<?,?> map = ResourceUtils.storeInstanceResources( f, instance );
+		final File appDir = this.folder.newFolder();
+		final String componentName = "my-component";
+		final File componentDirectory = new File( appDir, Constants.PROJECT_DIR_GRAPH + File.separator + componentName );
+		if( ! componentDirectory.getParentFile().mkdirs())
+			throw new IOException( "Could not create the parent directory." );
+
+		if( ! componentDirectory.createNewFile())
+			throw new IOException( "Could not create " + componentDirectory );
+
+		Instance instance = new Instance( "whatever" ).component( new Component( componentName ));
+		Map<?,?> map = ResourceUtils.storeInstanceResources( appDir, instance );
+		Assert.assertEquals( 0, map.size());
+	}
+
+
+	@Test
+	public void testStoreInstanceResources() throws Exception {
+
+		final File appDir = this.folder.newFolder();
+		final String componentName = "my-component";
+		final File componentDirectory = new File( appDir, Constants.PROJECT_DIR_GRAPH + File.separator + componentName );
+		if( ! componentDirectory.mkdirs())
+			throw new IOException( "Could not create " + componentDirectory );
+
+		Instance instance = new Instance( "whatever" ).component( new Component( componentName ));
+		Map<?,?> map = ResourceUtils.storeInstanceResources( appDir, instance );
 		Assert.assertEquals( 0, map.size());
 	}
 }

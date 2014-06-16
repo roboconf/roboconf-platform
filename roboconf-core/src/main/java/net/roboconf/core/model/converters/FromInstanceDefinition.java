@@ -45,6 +45,7 @@ import net.roboconf.core.model.parsing.BlockProperty;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ModelUtils;
 
 /**
@@ -240,6 +241,15 @@ public class FromInstanceDefinition {
 			instance.setChannel( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_CHANNEL ));
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
 
+			// Runtime data
+			String state = ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_STATE );
+			if( state != null )
+				instance.setStatus( InstanceStatus.wichStatus( state ));
+
+			for( Map.Entry<String,String> dataEntry : ModelUtils.getData( currentBlock ).entrySet()) {
+				instance.getData().put( dataEntry.getKey(), dataEntry.getValue());
+			}
+
 			// Since instance hash changes when we update their parent, we cannot rely on hash map
 			// to store the count for a given instance. So, we will temporarily use instance#getData().
 			instance.getData().put( INST_COUNT, countAsString );
@@ -251,6 +261,8 @@ public class FromInstanceDefinition {
 					String pName = ((BlockProperty) innerBlock).getName();
 					if( Constants.PROPERTY_INSTANCE_NAME.equals( pName )
 							|| Constants.PROPERTY_INSTANCE_CHANNEL.equals( pName )
+							| Constants.PROPERTY_INSTANCE_DATA.equals( pName )
+							| Constants.PROPERTY_INSTANCE_STATE.equals( pName )
 							|| Constants.PROPERTY_INSTANCE_COUNT.equals( pName ))
 						continue;
 
