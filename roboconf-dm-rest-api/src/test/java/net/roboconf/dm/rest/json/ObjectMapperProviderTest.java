@@ -16,25 +16,19 @@
 
 package net.roboconf.dm.rest.json;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class MapHolder {
+public class ObjectMapperProviderTest {
 
-	public static final String FILE_LOCAL_PATH = "file-local-path";
-	public static final String INSTANCE_PATH = "instance-path";
-	public static final String APPLY_TO_CHILDREN = "apply-to-children";
+	@Test
+	public void testGetContext() {
 
-	private final Map<String,String> map = new LinkedHashMap<String,String> ();
-
-
-	/**
-	 * @return the map
-	 */
-	public Map<String, String> getMap() {
-		return this.map;
+		ObjectMapperProvider provider = new ObjectMapperProvider();
+		Assert.assertNotNull( provider.getContext( null ));
+		Assert.assertNotNull( provider.getContext( String.class ));
 	}
 }

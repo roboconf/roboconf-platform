@@ -458,18 +458,18 @@ public class UtilsTest {
 		// Create a source
 		File source = this.folder.newFolder();
 		File dir1 = new File( source, "lol/whatever/sub" );
-		dir1.mkdirs();
+		Assert.assertTrue( dir1.mkdirs());
 		File dir2 = new File( source, "sub" );
-		dir2.mkdirs();
+		Assert.assertTrue( dir2.mkdirs());
 
-		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes()), new File( dir1, "f1" ));
-		Utils.copyStream( new ByteArrayInputStream( "".getBytes()), new File( dir1, "f2" ));
-		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes()), new File( dir1, "f3" ));
+		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes( "UTF-8" )), new File( dir1, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes( "UTF-8" )), new File( dir1, "f2" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes( "UTF-8" )), new File( dir1, "f3" ));
 
-		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( source, "f" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( source, "f" ));
 
-		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( dir2, "f1" ));
-		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes()), new File( dir2, "f45678" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( dir2, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes( "UTF-8" )), new File( dir2, "f45678" ));
 
 		// Copy
 		File target = this.folder.newFolder();
@@ -485,19 +485,19 @@ public class UtilsTest {
 		// Create a source
 		File source = this.folder.newFolder();
 		File dir1 = new File( source, "lol/whatever/sub/many/more/" );
-		dir1.mkdirs();
+		Assert.assertTrue( dir1.mkdirs());
 		File dir2 = new File( source, "sub" );
-		dir2.mkdirs();
+		Assert.assertTrue( dir2.mkdirs());
 
-		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes()), new File( dir1, "f1" ));
-		Utils.copyStream( new ByteArrayInputStream( "".getBytes()), new File( dir1, "f2" ));
-		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes()), new File( dir1, "f3" ));
+		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes( "UTF-8" )), new File( dir1, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes( "UTF-8" )), new File( dir1, "f2" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes( "UTF-8" )), new File( dir1, "f3" ));
 
-		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( source, "f" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( source, "f" ));
 
-		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes()), new File( dir2, "f1" ));
-		Utils.copyStream( new ByteArrayInputStream( "".getBytes()), new File( dir2, "f4" ));
-		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes()), new File( dir2, "f45678" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( dir2, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes( "UTF-8" )), new File( dir2, "f4" ));
+		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes( "UTF-8" )), new File( dir2, "f45678" ));
 
 		// Copy
 		File target = new File( this.folder.newFolder(), "some" );

@@ -28,11 +28,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.rest.UrlConstants;
-import net.roboconf.dm.rest.json.MapHolder;
 
 /**
  * The REST API to manipulate instances on the DM.
@@ -52,19 +50,49 @@ public interface IApplicationWs {
 	 * Performs an action on an instance of an application.
 	 * @param applicationName the application name
 	 * @param action see {@link ApplicationAction}
-	 * @param mapHolder a map holder
-	 * <p>
-	 * {@link MapHolder#INSTANCE_PATH}: the instance path property (if null, we consider the application as the root)<br />
-	 * {@link MapHolder#APPLY_TO_CHILDREN}: true to apply this action to all the children too, false to apply it only to this instance.
-	 * Only makes sense when instancePath is not null.
-	 * </p>
-	 *
+	 * @param instancePath the instance pat (not null)
 	 * @return a response
 	 */
 	@POST
 	@Path( "/{action}" )
 	@Consumes( MediaType.APPLICATION_JSON )
-	Response perform( @PathParam("name") String applicationName, @PathParam("action") String action, MapHolder mapHolder );
+	Response perform( @PathParam("name") String applicationName, @PathParam("action") String action, @QueryParam("instance-path") String instancePath );
+
+
+	/**
+	 * Deploys and starts several instances at once.
+	 * @param applicationName the application name
+	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @return a response
+	 */
+	@POST
+	@Path( "/deploy-all" )
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response deployAndStartAll( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
+
+
+	/**
+	 * Stops several instances at once.
+	 * @param applicationName the application name
+	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @return a response
+	 */
+	@POST
+	@Path( "/stop-all" )
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response stopAll( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
+
+
+	/**
+	 * Undeploys several instances at once.
+	 * @param applicationName the application name
+	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @return a response
+	 */
+	@POST
+	@Path( "/undeploy-all" )
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response undeployAll( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
 	/**
@@ -83,25 +111,17 @@ public interface IApplicationWs {
 	/**
 	 * Lists the paths of the children of an instance.
 	 * @param applicationName the application name
-	 * @param instancePath the instance path (if null, we consider the application as the root)
+	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @param allChildren true to get all the children, false to only get the direct children
 	 * @return a non-null list
 	 */
 	@GET
 	@Path( "/children" )
 	@Produces( MediaType.APPLICATION_JSON )
-	List<Instance> listChildrenInstances( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
-
-
-	/**
-	 * Lists the paths of the children of an instance.
-	 * @param applicationName the application name
-	 * @param instancePath the instance path (if null, we consider the application as the root)
-	 * @return a non-null list
-	 */
-	@GET
-	@Path( "/all-children" )
-	@Produces( MediaType.APPLICATION_JSON )
-	List<Instance> listAllChildrenInstances( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
+	List<Instance> listChildrenInstances(
+			@PathParam("name") String applicationName,
+			@QueryParam("instance-path") String instancePath,
+			@QueryParam("all-children") boolean allChildren );
 
 
 	/**

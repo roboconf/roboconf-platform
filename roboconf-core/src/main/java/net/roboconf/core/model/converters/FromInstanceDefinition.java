@@ -261,8 +261,8 @@ public class FromInstanceDefinition {
 					String pName = ((BlockProperty) innerBlock).getName();
 					if( Constants.PROPERTY_INSTANCE_NAME.equals( pName )
 							|| Constants.PROPERTY_INSTANCE_CHANNEL.equals( pName )
-							| Constants.PROPERTY_INSTANCE_DATA.equals( pName )
-							| Constants.PROPERTY_INSTANCE_STATE.equals( pName )
+							|| Constants.PROPERTY_INSTANCE_DATA.equals( pName )
+							|| Constants.PROPERTY_INSTANCE_STATE.equals( pName )
 							|| Constants.PROPERTY_INSTANCE_COUNT.equals( pName ))
 						continue;
 

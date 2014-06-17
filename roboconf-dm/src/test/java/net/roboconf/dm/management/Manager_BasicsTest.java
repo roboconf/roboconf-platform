@@ -50,7 +50,7 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ManagerBasicsTest {
+public class Manager_BasicsTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
@@ -60,6 +60,7 @@ public class ManagerBasicsTest {
 	@Before
 	public void resetManager() throws Exception {
 
+		// Shutdown used with a temporary folder will cause "IO Exceptions" (failed to save instances)
 		Manager.INSTANCE.shutdown();
 		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
 		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
@@ -123,29 +124,6 @@ public class ManagerBasicsTest {
 
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, f ));
 		Assert.assertEquals( app, Manager.INSTANCE.findApplicationByName( app.getName()));
-	}
-
-
-	@Test
-	public void testShutdownApplication_success() throws Exception {
-
-		TestApplication app = new TestApplication();
-		File f = this.folder.newFolder();
-
-		ManagedApplication ma = new ManagedApplication( app, f );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-
-		TestIaasResolver iaasResolver = (TestIaasResolver) Manager.INSTANCE.iaasResolver;
-		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Manager.INSTANCE.deployRoot( ma, app.getMySqlVm());
-		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
-
-		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-		Manager.INSTANCE.shutdownApplication( ma );
-		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 	}
 
 

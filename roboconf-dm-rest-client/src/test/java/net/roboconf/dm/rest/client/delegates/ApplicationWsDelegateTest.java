@@ -17,34 +17,35 @@
 package net.roboconf.dm.rest.client.delegates;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.core.Response.Status;
-
 import junit.framework.Assert;
-import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.utils.ResourceUtils;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.ManagerConfiguration;
+import net.roboconf.dm.rest.api.ApplicationAction;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
-import net.roboconf.messaging.client.IDmClient;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.JerseyTest;
@@ -55,6 +56,9 @@ import com.sun.jersey.test.framework.spi.container.grizzly2.web.GrizzlyWebTestCo
  * @author Vincent Zurczak - Linagora
  */
 public class ApplicationWsDelegateTest extends JerseyTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 	private TestApplication app;
 	private WsClient client;
@@ -80,110 +84,155 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 
 	@Before
-	public void resetManager() {
-		Manager.INSTANCE.shutdown();
+	public void resetManager() throws Exception {
 
-		this.app = new TestApplication();
-		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		// Shutdown used with a temporary folder will cause "IO Exceptions" (failed to save instances)
+		Manager.INSTANCE.shutdown();
 		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
 		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
 
+		File dir = this.folder.newFolder();
+		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir );
+		Manager.INSTANCE.initialize( conf );
+
+		// Load an application
+		this.app = new TestApplication();
+		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
 		this.client = RestTestUtils.buildWsClient();
-	}
-
-
-	@Test( expected = IllegalArgumentException.class )
-	public void testPerform_illegalArgument() throws Exception {
-		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, null, false );
 	}
 
 
 	@Test( expected = ApplicationException.class )
 	public void testPerform_inexistingApplication() throws Exception {
-		this.client.getApplicationDelegate().perform( "inexisting", ApplicationAction.deploy, null, true );
+		this.client.getApplicationDelegate().perform( "inexisting", ApplicationAction.deploy, null );
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testPerform_inexistingInstance_null() throws Exception {
+		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, null );
 	}
 
 
 	@Test( expected = ApplicationException.class )
 	public void testPerform_inexistingInstance() throws Exception {
-		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, "/bip/bip", false );
+		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, "/bip/bip" );
 	}
 
 
 	@Test( expected = ApplicationException.class )
 	public void testPerform_invalidAction() throws Exception {
-		this.client.getApplicationDelegate().perform( this.app.getName(), null, null, true );
+		this.client.getApplicationDelegate().perform( this.app.getName(), null, null );
 	}
 
 
 	@Test
-	public void testPerform_notConnected() throws Exception {
+	public void testPerform_deployRoot_success() throws Exception {
 
-		try {
-			this.client.getApplicationDelegate().perform(
-					this.app.getName(),
-					ApplicationAction.deploy,
-					InstanceHelpers.computeInstancePath( this.app.getMySqlVm()),
-					false );
+		TestIaasResolver iaasResolver = new TestIaasResolver();
+		Manager.INSTANCE.setIaasResolver( iaasResolver );
 
-			Assert.fail( "An exception was expected." );
+		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
+		this.client.getApplicationDelegate().perform(
+				this.app.getName(),
+				ApplicationAction.deploy,
+				InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
 
-		} catch( ApplicationException e ) {
-			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
-		}
+		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
+		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
 	}
 
 
 	@Test
 	public void testPerform_deploy_success() throws Exception {
 
-		// The interest of this method is to check that URLs
-		// and instance paths are correctly handled by the DM.
-		this.client.getApplicationDelegate().perform(
-				this.app.getName(),
-				ApplicationAction.deploy,
-				InstanceHelpers.computeInstancePath( this.app.getMySqlVm()),
-				false );
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
+		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, instancePath );
+
+		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( MsgCmdInstanceDeploy.class, msgClient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdInstanceDeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
 	}
 
 
 	@Test
-	public void testPerform_deployRoots_success() throws Exception {
+	public void testStopAll() throws Exception {
 
-		// Create temporary directories
-		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_app" );
-		if( ! rootDir.exists()
-				&& ! rootDir.mkdir())
-			throw new IOException( "Failed to create a root directory for tests." );
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
-		for( Instance inst : InstanceHelpers.getAllInstances( this.app )) {
-			File f = ResourceUtils.findInstanceResourcesDirectory( rootDir, inst );
-			if( ! f.exists()
-					&& ! f.mkdirs())
-				throw new IOException( "Failed to create a directory for tests. " + f.getAbsolutePath());
-		}
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
+		this.client.getApplicationDelegate().stopAll( this.app.getName(), instancePath );
 
-		// The interest of this method is to check that URLs
-		// and instance paths are correctly handled by the DM.
-		final TestMessageServerClient msgClient = new TestMessageServerClient();
-		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory() {
-			@Override
-			public IDmClient createDmClient() {
-				return msgClient;
-			}
-		});
+		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( MsgCmdInstanceStop.class, msgClient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdInstanceStop) msgClient.sentMessages.get( 0 )).getInstancePath());
+	}
 
-		Manager.INSTANCE.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, rootDir ));
-		try {
-			Assert.assertEquals( 0, msgClient.sentMessages.size());
-			this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.deploy, null, true );
 
-			int expected = InstanceHelpers.getAllInstances( this.app ).size() - this.app.getRootInstances().size();
-			Assert.assertEquals( expected, msgClient.sentMessages.size());
+	@Test( expected = ApplicationException.class )
+	public void testStopAll_invalidApp() throws Exception {
 
-		} finally {
-			Utils.deleteFilesRecursively( rootDir );
-		}
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
+		this.client.getApplicationDelegate().stopAll( "oops", instancePath );
+	}
+
+
+	@Test
+	public void testUndeployAll() throws Exception {
+
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
+		this.client.getApplicationDelegate().undeployAll( this.app.getName(), instancePath );
+
+		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msgClient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testUndeployAll_invalidApp() throws Exception {
+
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
+		this.client.getApplicationDelegate().undeployAll( "oops", instancePath );
+	}
+
+
+	@Test
+	public void testDeployAndStartAll() throws Exception {
+
+		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
+		this.client.getApplicationDelegate().deployAndStartAll( this.app.getName(), instancePath );
+		Assert.assertEquals( 4, msgClient.sentMessages.size());
+
+		Assert.assertEquals( MsgCmdInstanceDeploy.class, msgClient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdInstanceDeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
+
+		Assert.assertEquals( MsgCmdInstanceStart.class, msgClient.sentMessages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdInstanceStart) msgClient.sentMessages.get( 1 )).getInstancePath());
+
+		Assert.assertEquals( MsgCmdInstanceDeploy.class, msgClient.sentMessages.get( 2 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdInstanceDeploy) msgClient.sentMessages.get( 2 )).getInstancePath());
+
+		Assert.assertEquals( MsgCmdInstanceStart.class, msgClient.sentMessages.get( 3 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdInstanceStart) msgClient.sentMessages.get( 3 )).getInstancePath());
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testDeployAndStartAll_invalidApp() throws Exception {
+
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
+		this.client.getApplicationDelegate().deployAndStartAll( "oops", instancePath );
 	}
 
 
@@ -198,6 +247,9 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		instances = this.client.getApplicationDelegate().listChildrenInstances( this.app.getName(), null, true );
 		Assert.assertEquals( InstanceHelpers.getAllInstances( this.app ).size(), instances.size());
+
+		instances = this.client.getApplicationDelegate().listChildrenInstances( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm()), false );
+		Assert.assertEquals( 1, instances.size());
 
 		instances = this.client.getApplicationDelegate().listChildrenInstances( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm()), true );
 		Assert.assertEquals( 2, instances.size());

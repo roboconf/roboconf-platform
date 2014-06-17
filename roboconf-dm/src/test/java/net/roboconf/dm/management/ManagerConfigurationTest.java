@@ -128,10 +128,10 @@ public class ManagerConfigurationTest {
 
 		File apps = new File( dir, ManagerConfiguration.APPLICATIONS );
 		Assert.assertTrue( apps.exists());
-		apps.delete();
+		Assert.assertTrue( apps.delete());
 		Assert.assertFalse( apps.exists());
 
-		apps.createNewFile();
+		Assert.assertTrue( apps.createNewFile());
 		Assert.assertTrue( apps.exists());
 
 		Assert.assertEquals( 0, conf.findApplicationDirectories().size());
@@ -143,9 +143,9 @@ public class ManagerConfigurationTest {
 
 		File dir = this.folder.newFolder();
 		File f1 = new File( dir, ManagerConfiguration.APPLICATIONS + "/app 1" );
-		f1.mkdirs();
+		Assert.assertTrue( f1.mkdirs());
 		File f2 = new File( dir, ManagerConfiguration.APPLICATIONS + "/app-2" );
-		f2.mkdirs();
+		Assert.assertTrue( f2.mkdirs());
 
 		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir );
 		Assert.assertEquals( 2, conf.findApplicationDirectories().size());

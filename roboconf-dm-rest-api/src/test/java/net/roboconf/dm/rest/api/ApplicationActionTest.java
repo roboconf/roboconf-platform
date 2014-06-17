@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.actions;
+package net.roboconf.dm.rest.api;
 
 import junit.framework.Assert;
 

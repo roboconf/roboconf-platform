@@ -28,7 +28,6 @@ import javax.ws.rs.core.Response.Status.Family;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.rest.UrlConstants;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
-import net.roboconf.dm.rest.json.MapHolder;
 
 import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
@@ -102,14 +101,11 @@ public class ManagementWsDelegate {
 	public void loadApplication( String remoteFilePath ) throws ManagementException {
 		this.logger.finer( "Loading an already-uploaded application. " + remoteFilePath );
 
-		MapHolder holder = new MapHolder();
-		holder.getMap().put( MapHolder.FILE_LOCAL_PATH, remoteFilePath );
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "local" );
+		if( remoteFilePath != null )
+			path = path.queryParam( "local-file-path", remoteFilePath );
 
-		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( "local" )
-				.type( MediaType.APPLICATION_JSON )
-				.post( ClientResponse.class, holder );
-
+		ClientResponse response = path.type( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.actions;
+package net.roboconf.dm.rest.api;
 
 /**
  * Actions to apply on instances.
