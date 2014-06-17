@@ -40,7 +40,7 @@ import com.rabbitmq.client.QueueingConsumer;
 public class DmClient implements IDmClient {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String messageServerIp;
+	private String messageServerIp, username, password;
 
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<String,String> ();
 	Channel channel;
@@ -51,11 +51,13 @@ public class DmClient implements IDmClient {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IClient
-	 * #setMessageServerIp(java.lang.String)
+	 * #setParameters(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void setMessageServerIp( String messageServerIp ) {
+	public void setParameters( String messageServerIp, String username, String password ) {
 		this.messageServerIp = messageServerIp;
+		this.username = username;
+		this.password = password;
 	}
 
 
@@ -87,7 +89,7 @@ public class DmClient implements IDmClient {
 
 		// Initialize the connection
 		ConnectionFactory factory = new ConnectionFactory();
-		RabbitMqUtils.configureFactory( factory, this.messageServerIp );
+		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.username, this.password );
 		this.channel = factory.newConnection().createChannel();
 
 		// Store the message processor for later

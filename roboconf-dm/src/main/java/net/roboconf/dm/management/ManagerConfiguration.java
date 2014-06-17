@@ -39,6 +39,8 @@ public final class ManagerConfiguration {
 
 	private static final String ROBOCONF_DM_DIR = "ROBOCONF_DM_DIR";
 	private static final String PROP_MESSAGING_IP = "messaging.ip";
+	private static final String PROP_MESSAGING_USERNAME = "messaging.username";
+	private static final String PROP_MESSAGING_PASSWORD = "messaging.password";
 
 	static final String APPLICATIONS = "applications";
 	static final String INSTANCES = "instances";
@@ -46,7 +48,7 @@ public final class ManagerConfiguration {
 	static final String CONF_PROPERTIES = "configuration.properties";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String messageServerIp;
+	private String messageServerIp, messageServerUsername, messageServerPassword;
 	private File configurationDirectory;
 
 
@@ -133,6 +135,22 @@ public final class ManagerConfiguration {
 
 
 	/**
+	 * @return the messageServerUsername
+	 */
+	public String getMessageServerUsername() {
+		return this.messageServerUsername;
+	}
+
+
+	/**
+	 * @return the messageServerPassword
+	 */
+	public String getMessageServerPassword() {
+		return this.messageServerPassword;
+	}
+
+
+	/**
 	 * @return the configurationDirectory
 	 */
 	public File getConfigurationDirectory() {
@@ -157,10 +175,16 @@ public final class ManagerConfiguration {
 	 *
 	 * @param configurationDirectory an existing directory
 	 * @param messagingServerIp a non-null IP address
+	 * @param messageServerUsername the user name to connect to the messaging server
+	 * @param messageServerPassword the password to connect to the messaging server
 	 * @return a non-null configuration
 	 * @throws IOException if some directories could not be created
 	 */
-	public static ManagerConfiguration createConfiguration( File configurationDirectory, String messagingServerIp )
+	public static ManagerConfiguration createConfiguration(
+			File configurationDirectory,
+			String messagingServerIp,
+			String messageServerUsername,
+			String messageServerPassword )
 	throws IOException {
 
 		// Create the structure
@@ -183,6 +207,8 @@ public final class ManagerConfiguration {
 		// Save the configuration
 		Properties props = new Properties();
 		props.setProperty( PROP_MESSAGING_IP, messagingServerIp );
+		props.setProperty( PROP_MESSAGING_USERNAME, messageServerUsername );
+		props.setProperty( PROP_MESSAGING_PASSWORD, messageServerPassword );
 		f = new File( f, CONF_PROPERTIES  );
 
 		FileOutputStream os = null;
@@ -197,6 +223,8 @@ public final class ManagerConfiguration {
 		// Create the configuration
 		ManagerConfiguration conf = new ManagerConfiguration();
 		conf.messageServerIp = messagingServerIp;
+		conf.messageServerPassword = messageServerPassword;
+		conf.messageServerUsername = messageServerUsername;
 		conf.configurationDirectory = configurationDirectory;
 
 
@@ -218,7 +246,7 @@ public final class ManagerConfiguration {
 	 * @throws IOException if some directories could not be created
 	 */
 	public static ManagerConfiguration createConfiguration( File configurationDirectory ) throws IOException {
-		return createConfiguration( configurationDirectory, "localhost" );
+		return createConfiguration( configurationDirectory, "localhost", "guest", "guest" );
 	}
 
 
@@ -248,6 +276,8 @@ public final class ManagerConfiguration {
 		ManagerConfiguration conf = new ManagerConfiguration();
 		conf.configurationDirectory = configurationDirectory;
 		conf.messageServerIp = props.getProperty( PROP_MESSAGING_IP );
+		conf.messageServerUsername = props.getProperty( PROP_MESSAGING_USERNAME );
+		conf.messageServerPassword = props.getProperty( PROP_MESSAGING_PASSWORD );
 
 		return conf;
 	}

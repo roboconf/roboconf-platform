@@ -88,14 +88,20 @@ public class RabbitMqUtils {
 	 * Configures the connection factory with the right settings.
 	 * @param factory the connection factory
 	 * @param messageServerIp the message server IP (can contain a port)
+	 * @param messageServerUsername the user name for the message server
+	 * @param messageServerPassword the password for the message server
 	 * @throws IOException if something went wrong
 	 */
-	public static void configureFactory( ConnectionFactory factory, String messageServerIp ) throws IOException {
+	public static void configureFactory( ConnectionFactory factory, String messageServerIp, String messageServerUsername, String messageServerPassword )
+	throws IOException {
 
 		Map.Entry<String,Integer> entry = findUrlAndPort( messageServerIp );
 		factory.setHost( entry.getKey());
 		if( entry.getValue() > 0 )
 			factory.setPort( entry.getValue());
+
+		factory.setUsername( messageServerUsername );
+		factory.setPassword( messageServerPassword );
 	}
 
 

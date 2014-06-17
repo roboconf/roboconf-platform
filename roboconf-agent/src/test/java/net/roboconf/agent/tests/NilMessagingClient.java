@@ -29,7 +29,7 @@ import net.roboconf.messaging.messages.Message;
 public class NilMessagingClient implements IAgentClient {
 
 	@Override
-	public void setMessageServerIp( String messageServerIp ) {
+	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
 		// nothing
 	}
 

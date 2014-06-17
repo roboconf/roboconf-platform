@@ -33,9 +33,12 @@ public interface IClient {
 
 
 	/**
-	 * Sets the location of the message server.
+	 * Sets the connection parameters.
+	 * @param messageServerIp the IP address of the messaging server
+	 * @param messageServerUsername the user name to connect to the server
+	 * @param messageServerPassword the password to connect to the server
 	 */
-	void setMessageServerIp( String messageServerIp );
+	void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword );
 
 	/**
 	 * @return true if the client is connected, false otherwise

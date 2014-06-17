@@ -33,7 +33,7 @@ public class AgentClientTest {
 	public void testExceptions() throws Exception {
 
 		AgentClient agentClient = new AgentClient();
-		agentClient.setMessageServerIp( "127.0.0.1" );
+		agentClient.setParameters( "localhost", "guest", "guest" );
 		agentClient.setApplicationName( "app" );
 		agentClient.setRootInstanceName( "root" );
 
@@ -66,7 +66,7 @@ public class AgentClientTest {
 	public void testCloseConnectionOnNull() throws Exception {
 
 		AgentClient agentClient = new AgentClient();
-		agentClient.setMessageServerIp( "127.0.0.1" );
+		agentClient.setParameters( "localhost", "guest", "guest" );
 
 		Assert.assertNull( agentClient.channel );
 		Assert.assertNull( agentClient.messageProcessor );

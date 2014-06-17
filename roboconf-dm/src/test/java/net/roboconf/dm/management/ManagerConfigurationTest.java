@@ -49,6 +49,8 @@ public class ManagerConfigurationTest {
 		File dir = this.folder.newFolder();
 		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir );
 		Assert.assertEquals( "localhost", conf.getMessageServerIp());
+		Assert.assertEquals( "guest", conf.getMessageServerPassword());
+		Assert.assertEquals( "guest", conf.getMessageServerUsername());
 		Assert.assertEquals( dir, conf.getConfigurationDirectory());
 		Assert.assertEquals( 0, conf.findApplicationDirectories().size());
 
@@ -66,8 +68,10 @@ public class ManagerConfigurationTest {
 	public void testCreateConfiguration_given() throws Exception {
 
 		File dir = this.folder.newFolder();
-		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir, "192.168.1.40" );
+		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir, "192.168.1.40", "oasis", "wonderwall" );
 		Assert.assertEquals( "192.168.1.40", conf.getMessageServerIp());
+		Assert.assertEquals( "wonderwall", conf.getMessageServerPassword());
+		Assert.assertEquals( "oasis", conf.getMessageServerUsername());
 		Assert.assertEquals( dir, conf.getConfigurationDirectory());
 		Assert.assertEquals( 0, conf.findApplicationDirectories().size());
 

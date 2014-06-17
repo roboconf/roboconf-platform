@@ -35,7 +35,7 @@ public class DmClientTest {
 	public void testExceptions() throws Exception {
 
 		DmClient dmClient = new DmClient();
-		dmClient.setMessageServerIp( "127.0.0.1" );
+		dmClient.setParameters( "localhost", "guest", "guest" );
 
 		Assert.assertNull( dmClient.channel );
 		Assert.assertNull( dmClient.messageProcessor );
@@ -78,7 +78,7 @@ public class DmClientTest {
 	public void testCloseConnectionOnNull() throws Exception {
 
 		DmClient dmClient = new DmClient();
-		dmClient.setMessageServerIp( "127.0.0.1" );
+		dmClient.setParameters( "localhost", "guest", "guest" );
 
 		Assert.assertNull( dmClient.channel );
 		Assert.assertNull( dmClient.messageProcessor );

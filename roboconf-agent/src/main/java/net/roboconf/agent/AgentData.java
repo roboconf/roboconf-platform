@@ -21,7 +21,8 @@ package net.roboconf.agent;
  */
 public class AgentData {
 
-	private String applicationName, ipAddress, rootInstanceName, messageServerIp;
+	private String applicationName, ipAddress, rootInstanceName;
+	private String messageServerIp, messageServerUsername, messageServerPassword;
 
 
 	/**
@@ -85,5 +86,37 @@ public class AgentData {
 	 */
 	public void setMessageServerIp( String messageServerIp ) {
 		this.messageServerIp = messageServerIp;
+	}
+
+
+	/**
+	 * @return the messageServerUsername
+	 */
+	public String getMessageServerUsername() {
+		return this.messageServerUsername;
+	}
+
+
+	/**
+	 * @param messageServerUsername the messageServerUsername to set
+	 */
+	public void setMessageServerUsername( String messageServerUsername ) {
+		this.messageServerUsername = messageServerUsername;
+	}
+
+
+	/**
+	 * @return the messageServerPassword
+	 */
+	public String getMessageServerPassword() {
+		return this.messageServerPassword;
+	}
+
+
+	/**
+	 * @param messageServerPassword the messageServerPassword to set
+	 */
+	public void setMessageServerPassword( String messageServerPassword ) {
+		this.messageServerPassword = messageServerPassword;
 	}
 }

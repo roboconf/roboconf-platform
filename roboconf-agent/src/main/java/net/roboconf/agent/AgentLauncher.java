@@ -125,7 +125,11 @@ public class AgentLauncher {
 
 		// Create the messaging client
 		this.messagingClient = this.factory.createAgentClient();
-		this.messagingClient.setMessageServerIp( this.agentData.getMessageServerIp());
+		this.messagingClient.setParameters(
+				this.agentData.getMessageServerIp(),
+				this.agentData.getMessageServerUsername(),
+				this.agentData.getMessageServerPassword());
+
 		this.messagingClient.setApplicationName( this.agentData.getApplicationName());
 		this.messagingClient.setRootInstanceName( this.agentData.getRootInstanceName());
 

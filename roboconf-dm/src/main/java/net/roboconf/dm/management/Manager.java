@@ -138,7 +138,11 @@ public final class Manager {
 		this.configuration = configuration;
 		this.messagingClient = this.factory.createDmClient();
 		this.logger.info( "Setting the message server IP to " + configuration.getMessageServerIp());
-		this.messagingClient.setMessageServerIp( configuration.getMessageServerIp());
+		this.messagingClient.setParameters(
+				configuration.getMessageServerIp(),
+				configuration.getMessageServerUsername(),
+				configuration.getMessageServerPassword());
+
 		this.messagingClient.openConnection( new DmMessageProcessor());
 
 		// Restore applications

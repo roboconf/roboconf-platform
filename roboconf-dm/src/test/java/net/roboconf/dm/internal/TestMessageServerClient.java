@@ -42,8 +42,8 @@ public class TestMessageServerClient implements IDmClient {
 
 
 	@Override
-	public void setMessageServerIp( String messageServerIp ) {
-		// nothing, we do not care
+	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
+		// Nothing, we don't care
 	}
 
 
