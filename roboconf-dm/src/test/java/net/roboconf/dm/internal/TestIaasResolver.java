@@ -46,7 +46,7 @@ public class TestIaasResolver extends IaasResolver {
 			}
 
 			@Override
-			public String createVM( String ipMessagingServer, String channelName, String applicationName, String rootInstanceName )
+			public String createVM( String messagingIp, String messagingUsername, String messagingPassword, String rootInstanceName, String applicationName )
 			throws IaasException {
 
 				TestIaasResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );

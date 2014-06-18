@@ -51,12 +51,6 @@ import org.xml.sax.SAXException;
  */
 public final class AgentUtils {
 
-	private static final String PROPERTY_APPLICATION_NAME = "applicationName";
-	private static final String PROPERTY_MESSAGE_SERVER_IP = "ipMessagingServer";
-	private static final String PROPERTY_ROOT_INSTANCE_NAME = "channelName";
-
-
-
 	/**
 	 * Private empty constructor.
 	 */
@@ -76,7 +70,9 @@ public final class AgentUtils {
     	result.setApplicationName( args[ 0 ]);
     	result.setRootInstanceName( args[ 1 ]);
     	result.setMessageServerIp( args[ 2 ]);
-		result.setIpAddress( args[ 3 ]);
+    	result.setMessageServerUsername( args[ 3 ]);
+    	result.setMessageServerPassword( args[ 4 ]);
+		result.setIpAddress( args[ 5 ]);
 
 		return result;
 	}
@@ -117,10 +113,7 @@ public final class AgentUtils {
 			Utils.closeQuietly( in );
 		}
 
-    	AgentData result = new AgentData();
-    	result.setApplicationName( props.getProperty( PROPERTY_APPLICATION_NAME ));
-    	result.setRootInstanceName( props.getProperty( PROPERTY_ROOT_INSTANCE_NAME ));
-    	result.setMessageServerIp( props.getProperty( PROPERTY_MESSAGE_SERVER_IP ));
+    	AgentData result = AgentData.readIaasProperties( props );
     	try {
 			result.setIpAddress( InetAddress.getLocalHost().getHostAddress());
 
@@ -137,12 +130,11 @@ public final class AgentUtils {
 	 * Configures the agent from a IaaS registry.
 	 * @param logger a logger
 	 * @return the agent's data
-	 * FIXME: this is too specific for EC2.
 	 */
 	public static AgentData findParametersInWsInfo( Logger logger ) {
 
 		// Copy the user data
-		String content = "";
+		String userData = "";
 		InputStream in = null;
 		try {
 			URL userDataUrl = new URL( "http://169.254.169.254/latest/user-data" );
@@ -150,7 +142,7 @@ public final class AgentUtils {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 
 			Utils.copyStream( in, os );
-			content = os.toString( "UTF-8" );
+			userData = os.toString( "UTF-8" );
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
@@ -161,23 +153,7 @@ public final class AgentUtils {
 		}
 
 		// Parse them
-		AgentData result = new AgentData();
-		for( String line : content.split( "\n" )) {
-			line = line.trim();
-
-			if( line.startsWith( PROPERTY_APPLICATION_NAME )) {
-				String[] data = line.split( "=" );
-				result.setApplicationName(data[ data.length - 1 ]);
-
-			} else if( line.startsWith( PROPERTY_MESSAGE_SERVER_IP )) {
-				String[] data = line.split( "=" );
-				result.setMessageServerIp( data[ data.length - 1 ]);
-
-			} else if( line.startsWith( PROPERTY_ROOT_INSTANCE_NAME )) {
-				String[] data = line.split( "=" );
-				result.setRootInstanceName( data[ data.length - 1 ]);
-			}
-		}
+		AgentData result = AgentData.readIaasProperties( userData, logger );
 
 		// We need to ask our IP address because we may have several network interfaces.
 		in = null;
@@ -198,7 +174,9 @@ public final class AgentUtils {
 				Utils.copyStream( in, os );
 				ip = os.toString( "UTF-8" );
 			}
-			if(! isValidIP(ip)) throw new IOException("Can\'t retrieve IP address (either public-ipv4 or local-ipv4)");
+
+			if(! isValidIP(ip))
+				throw new IOException("Can\'t retrieve IP address (either public-ipv4 or local-ipv4)");
 
 			result.setIpAddress( os.toString( "UTF-8" ));
 
@@ -211,53 +189,6 @@ public final class AgentUtils {
 		}
 
 		return result;
-	}
-
-
-	// FIXME: there must be a shorter way with XPath...
-	private static String getValueOfTagInXMLFile(String filePath, String tagName) throws ParserConfigurationException, SAXException, IOException {
-
-		File fXmlFile = new File(filePath);
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-		Document doc = dBuilder.parse(fXmlFile);
-
-		//optional, but recommended
-		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
-		doc.getDocumentElement().normalize();
-
-		NodeList nList = doc.getElementsByTagName(tagName);
-	    String valueOfTagName = "";
-
-		for (int temp = 0; temp < nList.getLength(); temp++) {
-			Node nNode = nList.item(temp);
-			valueOfTagName = nNode.getTextContent();
-		}
-
-		return valueOfTagName;
-	}
-
-
-	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName)
-	throws ParserConfigurationException, SAXException, IOException {
-
-		File fXmlFile = new File(filePath);
-		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-		Document doc = dBuilder.parse(fXmlFile);
-
-		doc.getDocumentElement().normalize();
-
-		NodeList nList = doc.getElementsByTagName(tagName);
-	    Node aNode = nList.item(2);
-	    NamedNodeMap attributes = aNode.getAttributes();
-	    String attrValue = "";
-	    for (int a = 0; a < attributes.getLength(); a++) {
-	      Node theAttribute = attributes.item(a);
-	      if (attrName.equals(theAttribute.getNodeName())) attrValue = theAttribute.getTextContent().split(":")[0];
-	    }
-
-	    return attrValue;
 	}
 
 
@@ -299,11 +230,11 @@ public final class AgentUtils {
 	 */
 	public static AgentData findParametersForAzure( Logger logger ) {
 
-		String content = "";
+		String userData = "";
 		try {
 			// Get the user data from /var/lib/waagent/ovf-env.xml and decode it
 			String userDataEncoded = getValueOfTagInXMLFile("/var/lib/waagent/ovf-env.xml", "CustomData");
-			content = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" )));
+			userData = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" )), "UTF-8" );
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
@@ -319,23 +250,7 @@ public final class AgentUtils {
 		}
 
 		// Parse them
-		AgentData result = new AgentData();
-		for( String line : content.split( "\n" )) {
-			line = line.trim();
-
-			if( line.startsWith( PROPERTY_APPLICATION_NAME )) {
-				String[] data = line.split( "=" );
-				result.setApplicationName(data[ data.length - 1 ]);
-
-			} else if( line.startsWith( PROPERTY_MESSAGE_SERVER_IP )) {
-				String[] data = line.split( "=" );
-				result.setMessageServerIp( data[ data.length - 1 ]);
-
-			} else if( line.startsWith( PROPERTY_ROOT_INSTANCE_NAME )) {
-				String[] data = line.split( "=" );
-				result.setRootInstanceName( data[ data.length - 1 ]);
-			}
-		}
+		AgentData result = AgentData.readIaasProperties( userData, logger );
 
 		// Get the public IP Address from /var/lib/waagent/SharedConfig.xml
 		String publicIPAddress;
@@ -398,5 +313,53 @@ public final class AgentUtils {
 	throws IOException {
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, pluginName );
 		Utils.deleteFilesRecursively( dir );
+	}
+
+
+	// FIXME: there must be a shorter way with XPath...
+	private static String getValueOfTagInXMLFile(String filePath, String tagName)
+	throws ParserConfigurationException, SAXException, IOException {
+
+		File fXmlFile = new File(filePath);
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(fXmlFile);
+
+		//optional, but recommended
+		//read this - http://stackoverflow.com/questions/13786607/normalization-in-dom-parsing-with-java-how-does-it-work
+		doc.getDocumentElement().normalize();
+
+		NodeList nList = doc.getElementsByTagName(tagName);
+		String valueOfTagName = "";
+
+		for (int temp = 0; temp < nList.getLength(); temp++) {
+			Node nNode = nList.item(temp);
+			valueOfTagName = nNode.getTextContent();
+		}
+
+		return valueOfTagName;
+	}
+
+
+	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName)
+	throws ParserConfigurationException, SAXException, IOException {
+
+		File fXmlFile = new File(filePath);
+		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+		Document doc = dBuilder.parse(fXmlFile);
+
+		doc.getDocumentElement().normalize();
+
+		NodeList nList = doc.getElementsByTagName(tagName);
+		Node aNode = nList.item(2);
+		NamedNodeMap attributes = aNode.getAttributes();
+		String attrValue = "";
+		for (int a = 0; a < attributes.getLength(); a++) {
+			Node theAttribute = attributes.item(a);
+			if (attrName.equals(theAttribute.getNodeName())) attrValue = theAttribute.getTextContent().split(":")[0];
+		}
+
+		return attrValue;
 	}
 }

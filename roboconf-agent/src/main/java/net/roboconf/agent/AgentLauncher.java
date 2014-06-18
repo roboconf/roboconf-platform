@@ -25,13 +25,13 @@ import java.util.TimerTask;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.AgentMessageProcessor;
+import net.roboconf.agent.internal.HeartbeatTask;
 import net.roboconf.agent.internal.PluginManager;
 import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.MessageServerClientFactory;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.plugin.api.ExecutionLevel;
@@ -57,6 +57,13 @@ public class AgentLauncher {
 	 */
 	public AgentLauncher( AgentData agentData ) {
 		this.agentData = agentData;
+		try {
+			this.agentName = "Roboconf Agent - " + InetAddress.getLocalHost().getHostName();
+
+		} catch( UnknownHostException e ) {
+			this.logger.warning( "Network information could not be retrieved. Setting the agent name to default." );
+			this.agentName = "Roboconf Agent";
+		}
 	}
 
 
@@ -103,17 +110,6 @@ public class AgentLauncher {
 	 * @throws IOException if there was a problem while initializing the messaging
 	 */
 	public void launchAgent( ExecutionLevel executionLevel, File dumpDirectory ) throws IOException {
-
-		// Update the agent's name if necessary
-		if( this.agentName == null ) {
-			try {
-				this.agentName = "Roboconf Agent - " + InetAddress.getLocalHost().getHostName();
-
-			} catch( UnknownHostException e ) {
-				this.logger.warning( "Network information could not be retrieved. Setting the agent name to default." );
-				this.agentName = "Roboconf Agent";
-			}
-		}
 
 		// Keep a trace of the launching
 		this.logger.fine( "Agent " + this.agentName + " is being launched." );
@@ -162,22 +158,7 @@ public class AgentLauncher {
 		this.messagingClient.sendMessageToTheDm( machineIsUp );
 
 		// Initialize a timer to regularly send a heart beat
-		TimerTask timerTask = new TimerTask() {
-			@Override
-			public void run() {
-				try {
-					MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat(
-							AgentLauncher.this.agentData.getApplicationName(),
-							AgentLauncher.this.agentData.getRootInstanceName());
-					AgentLauncher.this.messagingClient.sendMessageToTheDm( heartBeat );
-
-				} catch( IOException e ) {
-					AgentLauncher.this.logger.severe( e.getMessage());
-					AgentLauncher.this.logger.finest( Utils.writeException( e ));
-				}
-			}
-		};
-
+		TimerTask timerTask = new HeartbeatTask( this.agentData.getApplicationName(), this.agentData.getRootInstanceName(), this.messagingClient );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
 	}
 

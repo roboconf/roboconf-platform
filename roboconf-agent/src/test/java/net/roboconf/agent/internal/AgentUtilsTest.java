@@ -33,6 +33,8 @@ public class AgentUtilsTest {
 				"app-name",
 				"rootInstanceName",
 				"192.168.1.10",
+				"user",
+				"p w d",
 				"192.168.1.5"
 		});
 
@@ -40,6 +42,8 @@ public class AgentUtilsTest {
 		Assert.assertEquals( "rootInstanceName", data.getRootInstanceName());
 		Assert.assertEquals( "192.168.1.10", data.getMessageServerIp());
 		Assert.assertEquals( "192.168.1.5", data.getIpAddress());
+		Assert.assertEquals( "user", data.getMessageServerUsername());
+		Assert.assertEquals( "p w d", data.getMessageServerPassword());
 	}
 
 

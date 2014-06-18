@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.openstack;
+package net.roboconf.iaas.openstack.internal;
 
 /**
  * @author Pierre-Yves Gibello - Linagora

@@ -513,8 +513,9 @@ public final class Manager {
 
 			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
 			machineId = iaasInterface.createVM(
-					null,
 					this.configuration.getMessageServerIp(),
+					this.configuration.getMessageServerUsername(),
+					this.configuration.getMessageServerPassword(),
 					rootInstance.getName(),
 					ma.getApplication().getName());
 

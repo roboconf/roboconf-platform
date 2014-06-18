@@ -41,17 +41,18 @@ public class IaasEmbedded implements IaasInterface {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface
-	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createVM(
-			String ami,
-			String ipMessagingServer,
-			String channelName,
-			String applicationName)
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
 	throws IaasException {
-		// TBD startup script ?
-		return "localhost";
+
+		return rootInstanceName + " (embedded)";
 	}
 
 

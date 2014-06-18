@@ -34,7 +34,8 @@ public interface IaasInterface {
 	 * </p>
 	 * @param iaasProperties the IaaS properties (not null)
 	 */
-	void setIaasProperties(Map<String, String> iaasProperties) throws IaasException;
+	void setIaasProperties( Map<String,String> iaasProperties ) throws IaasException;
+
 
 	/**
 	 * Creates a VM containing a message server in it.
@@ -43,17 +44,19 @@ public interface IaasInterface {
 	 * including the queue location.
 	 * </p>
 	 *
-	 * @param ipMessagingServer the IP of the messaging server
-	 * @param channelName the channel name
+	 * @param messagingIp the IP of the messaging server
+	 * @param messagingUsername the user name to connect to the messaging server
+	 * @param messagingPassword the password to connect to the messaging server
 	 * @param applicationName the application name
 	 * @param rootInstanceName the name of the root instance associated with this VM
 	 * @return the (machine) ID of this VM relative to the IaaS
 	 * @throws IaasException
 	 */
 	String createVM(
-			String machineImageId,
-			String ipMessagingServer,
-			String channelName,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
 			String applicationName)
 	throws IaasException;
 

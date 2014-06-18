@@ -16,11 +16,14 @@
 
 package net.roboconf.iaas.vmware;
 
+import java.io.IOException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 
@@ -47,20 +50,12 @@ import com.vmware.vim25.mo.VirtualMachine;
  */
 public class IaasVmware implements IaasInterface {
 
-	//TODO replace all println() with logger...
-	private Logger logger;
+	private Logger logger = Logger.getLogger( getClass().getName());
 	private ServiceInstance vmwareServiceInstance;
 	private ComputeResource vmwareComputeResource;
 	private String vmwareDataCenter;
 	private String machineImageId;
 	private  Map<String, String> iaasProperties;
-
-	/**
-	 * Constructor.
-	 */
-	public IaasVmware() {
-		this.logger = Logger.getLogger( getClass().getName());
-	}
 
 
 	/**
@@ -89,41 +84,42 @@ public class IaasVmware implements IaasInterface {
 					iaasProperties.get("vmware.user"),
 					iaasProperties.get("vmware.password"),
 					Boolean.parseBoolean(iaasProperties.get("vmware.ignorecert")));
-			//vmwareServiceInstance.getPropertyCollector().
-			this.vmwareComputeResource = (ComputeResource)(new InventoryNavigator(this.vmwareServiceInstance.getRootFolder())
-				.searchManagedEntity("ComputeResource", iaasProperties.get("vmware.cluster")));
+
+			this.vmwareComputeResource = (ComputeResource)(
+					new InventoryNavigator( this.vmwareServiceInstance.getRootFolder())
+					.searchManagedEntity("ComputeResource", iaasProperties.get("vmware.cluster")));
 
 		} catch(Exception e) {
 			throw new IaasException(e);
 		}
 	}
 
+
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface
-	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createVM(
-			String machineImageId,
-			String ipMessagingServer,
-			String channelName,
-			String applicationName)
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
 	throws IaasException {
 
-		if(machineImageId == null || "".equals(machineImageId))
-			machineImageId = this.machineImageId;
-
 		try {
+			// Generate the user data first, so that nothing has been done on the IaaS if it fails
+			String userData = DataHelpers.writeIaasDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
 
 			//String instanceId = null;
-			VirtualMachine vm = getVirtualMachine(machineImageId);
+			VirtualMachine vm = getVirtualMachine(this.machineImageId);
 			//Folder vmFolder = this.vmwareServiceInstance.getRootFolder();
 			Folder vmFolder = ((Datacenter)(new InventoryNavigator(this.vmwareServiceInstance.getRootFolder())
 				.searchManagedEntity("Datacenter", this.vmwareDataCenter))).getVmFolder();
 
-			// TODO remove system.out logs (in the whole file...)
-			System.out.println("machineImageId=" + machineImageId);
+			this.logger.fine("machineImageId=" + this.machineImageId);
 			if (vm == null || vmFolder == null)
 				throw new IaasException("VirtualMachine (= " + vm + " ) or Datacenter path (= " + vmFolder + " ) is NOT correct. Pls double check.");
 
@@ -133,23 +129,18 @@ public class IaasVmware implements IaasInterface {
 			cloneSpec.setTemplate(true);
 
 			VirtualMachineConfigSpec vmSpec = new VirtualMachineConfigSpec();
-			String userData = "applicationName=" + applicationName
-					+ "\\nmachineName=" + channelName //TBD machineName=channelName
-					+ "\\nchannelName=" + channelName
-					+ "\\nipMessagingServer=" + ipMessagingServer;
-			vmSpec.setAnnotation(userData);
+			vmSpec.setAnnotation( userData );
 
 			cloneSpec.setConfig(vmSpec);
 
-			Task task = vm.cloneVM_Task(vmFolder, channelName, cloneSpec);
-			System.out.println("Cloning the template: "+machineImageId+" ...");
+			Task task = vm.cloneVM_Task( vmFolder, rootInstanceName, cloneSpec );
+			this.logger.fine("Cloning the template: "+this.machineImageId+" ...");
 			String status = task.waitForTask();
-			if (!status.equals(Task.SUCCESS)) {
+			if (!status.equals(Task.SUCCESS))
 				throw new IaasException("Failure: Virtual Machine cannot be cloned");
-			}
 
-			VirtualMachine vm2 = getVirtualMachine(channelName);
-			System.out.println("Transforming the clone template to Virtual machine ...");
+			VirtualMachine vm2 = getVirtualMachine( rootInstanceName );
+			this.logger.fine("Transforming the clone template to Virtual machine ...");
 			vm2.markAsVirtualMachine(this.vmwareComputeResource.getResourcePool(), null); // host=null means IaaS-managed choice
 
 			DynamicProperty dprop = new DynamicProperty();
@@ -158,11 +149,10 @@ public class IaasVmware implements IaasInterface {
             vm2.getGuest().setDynamicProperty(new DynamicProperty[]{dprop});
 
 			task = vm2.powerOnVM_Task(null);
-			System.out.println("Starting the virtual machine: "+channelName+" ...");
+			this.logger.fine("Starting the virtual machine: "+ rootInstanceName +" ...");
 			status = task.waitForTask();
-			if (!status.equals(Task.SUCCESS)) {
+			if (!status.equals(Task.SUCCESS))
 				throw new IaasException("Failure -: Virtual Machine cannot be started");
-			}
 
 			Thread.sleep(20000); // VMWare tools not yet started (!)
 
@@ -175,11 +165,11 @@ public class IaasVmware implements IaasInterface {
 
 		    spec.programPath = "/bin/echo";
 		    spec.arguments = "$\'" + userData + "\' > /tmp/roboconf.properties";
-		    //System.out.println(spec.programPath + " " + spec.arguments);
+		    this.logger.fine(spec.programPath + " " + spec.arguments);
 
 		    GuestProcessManager gpm = gom.getProcessManager(vm2);
 		    long pid = gpm.startProgramInGuest(npa, spec);
-		    System.out.println("pid: " + pid);
+		    this.logger.fine("pid: " + pid);
 
 			return vm2.getName();
 			//return instanceId;
@@ -188,6 +178,9 @@ public class IaasVmware implements IaasInterface {
 			throw new IaasException(e);
 
 		} catch (InterruptedException e) {
+			throw new IaasException(e);
+
+		} catch( IOException e ) {
 			throw new IaasException(e);
 		}
 	}
@@ -211,6 +204,7 @@ public class IaasVmware implements IaasInterface {
 					throw new IaasException("error when trying to stop vm: "+instanceId);
 				}
 			} catch (InterruptedException ignore) { /*ignore*/ }
+
 			task = vm.destroy_Task();
 			try {
 				if(!(task.waitForTask()).equals(Task.SUCCESS)) {
@@ -223,9 +217,11 @@ public class IaasVmware implements IaasInterface {
 		}
 	}
 
+
 	private VirtualMachine getVirtualMachine(String virtualmachineName)
 	throws InvalidProperty, RuntimeFault, RemoteException {
-		if(virtualmachineName == null || virtualmachineName.equals(""))
+
+		if( Utils.isEmptyOrWhitespaces( virtualmachineName ))
 			return null;
 
 		Folder rootFolder = this.vmwareServiceInstance.getRootFolder();
