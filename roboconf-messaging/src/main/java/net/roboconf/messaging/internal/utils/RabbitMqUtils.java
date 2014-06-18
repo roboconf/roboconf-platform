@@ -39,7 +39,15 @@ import com.rabbitmq.client.ShutdownSignalException;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqUtils {
+public final class RabbitMqUtils {
+
+	/**
+	 * Constructor.
+	 */
+	private RabbitMqUtils() {
+		// nothing
+	}
+
 
 	/**
 	 * Builds the exchange name for RabbitMQ.

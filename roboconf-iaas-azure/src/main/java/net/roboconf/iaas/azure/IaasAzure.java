@@ -141,7 +141,7 @@ public class IaasAzure implements IaasInterface {
 
 
 	private static boolean getExistResutlFromXML(String xmlStr, String nameOfNode)
-	throws ParserConfigurationException, UnsupportedEncodingException, SAXException, IOException {
+	throws ParserConfigurationException, SAXException, IOException {
 
 		DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
 		DocumentBuilder b;
@@ -170,8 +170,7 @@ public class IaasAzure implements IaasInterface {
         InputStream responseStream = (InputStream) con.getContent();
 
         try {
-        	String response = getStringFromInputStream(responseStream);
-        	return response;
+        	return getStringFromInputStream(responseStream);
 
         } finally {
         	Utils.closeQuietly( responseStream );
@@ -365,12 +364,14 @@ public class IaasAzure implements IaasInterface {
 
 			// create Cloud Service, Deployment & Add a Role (Linux VM), maybe add a second Role (another Linux VM)
 			int rescodeCreateCloudService = -1;
-			if (checkResult) rescodeCreateCloudService = processPostRequest(
+			if (checkResult) {
+				rescodeCreateCloudService = processPostRequest(
 					new URL(createCloudServiceURL),
 					requestBodyCreateCloudService,
 					requestHeaderContentType,
 					this.azureProperties.getKeyStoreFile(),
 					this.azureProperties.getKeyStorePassword());	// rescode shoud be 201
+			}
 
 			this.logger.info( "Create Cloud Service: Response Code: " + rescodeCreateCloudService);
 			this.logger.info( "Creating Azure VM in progress: " + rootInstanceName);

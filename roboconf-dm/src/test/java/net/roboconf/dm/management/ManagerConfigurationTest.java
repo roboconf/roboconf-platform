@@ -237,4 +237,20 @@ public class ManagerConfigurationTest {
 			}
 		}
 	}
+
+
+	@Test
+	public void testDeleteInstancesFile() throws Exception {
+
+		File dir = this.folder.newFolder();
+		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir );
+		conf.deleteInstancesFile( "inexisting-app" );
+
+		File f = new File( dir, ManagerConfiguration.INSTANCES + "/some-app.instances" );
+		Assert.assertTrue( f.createNewFile());
+		Assert.assertTrue( f.exists());
+
+		conf.deleteInstancesFile( "some-app" );
+		Assert.assertFalse( f.exists());
+	}
 }

@@ -41,7 +41,15 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RuntimeModelIo {
+public final class RuntimeModelIo {
+
+	/**
+	 * Constructor.
+	 */
+	private RuntimeModelIo() {
+		// nothing
+	}
+
 
 	/**
 	 * Loads an application from a directory.

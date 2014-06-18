@@ -78,7 +78,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 
 		String ipAddress = message.getIpAddress();
 		String rootInstanceName = message.getRootInstanceName();
-		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( message.getApplicationName());
+		Application app = ma != null ? ma.getApplication() : null;
 		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -89,7 +90,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 			sb.append( " @ " );
 			sb.append( ipAddress );
 			sb.append( " (app =  " );
-			sb.append( app );
+			sb.append( message.getApplicationName());
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
@@ -98,6 +99,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 			rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
 			this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
 			// The UP message has already been stored by the manager. It will be sent on the next timer tick.
+			Manager.INSTANCE.saveConfiguration( ma );
 		}
 	}
 

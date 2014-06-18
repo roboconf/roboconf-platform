@@ -28,9 +28,17 @@ import net.roboconf.plugin.api.ExecutionLevel;
  * The main program when the agent runs in stand-alone mode.
  * @author Noël - LIG
  */
-public class Main {
+public final class Main {
 
 	private static final String PLATFORM = "platform";
+
+
+	/**
+	 * Constructor.
+	 */
+	private Main() {
+		// nothing
+	}
 
 
 	/**

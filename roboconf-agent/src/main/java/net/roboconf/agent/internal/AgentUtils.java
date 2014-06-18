@@ -357,7 +357,8 @@ public final class AgentUtils {
 		String attrValue = "";
 		for (int a = 0; a < attributes.getLength(); a++) {
 			Node theAttribute = attributes.item(a);
-			if (attrName.equals(theAttribute.getNodeName())) attrValue = theAttribute.getTextContent().split(":")[0];
+			if (attrName.equals(theAttribute.getNodeName()))
+				attrValue = theAttribute.getTextContent().split(":")[0];
 		}
 
 		return attrValue;

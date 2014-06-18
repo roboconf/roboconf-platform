@@ -110,6 +110,19 @@ public final class ManagerConfiguration {
 
 
 	/**
+	 * Deletes the instances definition for a given application.
+	 * @param applicationName the application name
+	 */
+	public void deleteInstancesFile( String applicationName ) {
+
+		File targetFile = new File( this.configurationDirectory, INSTANCES + "/" + applicationName + ".instances" );
+		if( targetFile.exists()
+				&& ! targetFile.delete())
+			targetFile.deleteOnExit();
+	}
+
+
+	/**
 	 * Restores instances and set them in the application.
 	 * @param ma the application
 	 */

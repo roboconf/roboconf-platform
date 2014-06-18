@@ -25,13 +25,21 @@ import java.util.Properties;
  * A set of helpers to write and read data for agents.
  * @author Vincent Zurczak - Linagora
  */
-public class DataHelpers {
+public final class DataHelpers {
 
 	public static final String MESSAGING_IP = "messaging.ip";
 	public static final String MESSAGING_USERNAME = "messaging.username";
 	public static final String MESSAGING_PASSWORD = "messaging.password";
 	public static final String ROOT_INSTANCE_NAME = "root.instance.name";
 	public static final String APPLICATION_NAME = "application.name";
+
+
+	/**
+	 * Constructor.
+	 */
+	private DataHelpers() {
+		// nothing
+	}
 
 
 	/**

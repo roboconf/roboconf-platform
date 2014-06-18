@@ -29,9 +29,7 @@ import net.roboconf.iaas.api.IaasInterface;
 
 import com.vmware.vim25.DynamicProperty;
 import com.vmware.vim25.GuestProgramSpec;
-import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.NamePasswordAuthentication;
-import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigSpec;
 import com.vmware.vim25.VirtualMachineRelocateSpec;
@@ -141,8 +139,9 @@ public class IaasVmware implements IaasInterface {
 
 			VirtualMachine vm2 = getVirtualMachine( rootInstanceName );
 			this.logger.fine("Transforming the clone template to Virtual machine ...");
-			vm2.markAsVirtualMachine(this.vmwareComputeResource.getResourcePool(), null); // host=null means IaaS-managed choice
+			vm2.markAsVirtualMachine(this.vmwareComputeResource.getResourcePool(), null);
 
+			// host=null means IaaS-managed choice
 			DynamicProperty dprop = new DynamicProperty();
             dprop.setName("guestinfo.userdata");
             dprop.setVal(userData);
@@ -154,7 +153,8 @@ public class IaasVmware implements IaasInterface {
 			if (!status.equals(Task.SUCCESS))
 				throw new IaasException("Failure -: Virtual Machine cannot be started");
 
-			Thread.sleep(20000); // VMWare tools not yet started (!)
+			// VMWare tools not yet started (!)
+			Thread.sleep( 20000 );
 
 			GuestOperationsManager gom = this.vmwareServiceInstance.getGuestOperationsManager();
 			//GuestAuthManager gam = gom.getAuthManager(vm2);
@@ -218,9 +218,7 @@ public class IaasVmware implements IaasInterface {
 	}
 
 
-	private VirtualMachine getVirtualMachine(String virtualmachineName)
-	throws InvalidProperty, RuntimeFault, RemoteException {
-
+	private VirtualMachine getVirtualMachine(String virtualmachineName) throws RemoteException {
 		if( Utils.isEmptyOrWhitespaces( virtualmachineName ))
 			return null;
 

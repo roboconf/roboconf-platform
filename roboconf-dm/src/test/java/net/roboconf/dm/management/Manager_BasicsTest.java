@@ -39,6 +39,7 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
 
@@ -68,6 +69,31 @@ public class Manager_BasicsTest {
 		File dir = this.folder.newFolder();
 		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir );
 		Manager.INSTANCE.initialize( conf );
+	}
+
+
+	@Test
+	public void testSaveConfiguration_nullConfiguration() {
+
+		Manager.INSTANCE.shutdown();
+		Assert.assertNull( Manager.INSTANCE.configuration );
+		Manager.INSTANCE.saveConfiguration( null );
+		Manager.INSTANCE.saveConfiguration( new ManagedApplication( new TestApplication(), null ));
+	}
+
+
+	@Test
+	public void testSaveConfiguration() {
+
+		TestApplication app = new TestApplication();
+		File instancesFile = new File(
+				Manager.INSTANCE.configuration.getConfigurationDirectory(),
+				ManagerConfiguration.INSTANCES + "/" + app.getName() + ".instances" );
+
+		Assert.assertFalse( instancesFile.exists());
+		Assert.assertNotNull( Manager.INSTANCE.configuration );
+		Manager.INSTANCE.saveConfiguration( new ManagedApplication( app, null ));
+		Assert.assertTrue( instancesFile.exists());
 	}
 
 
@@ -254,7 +280,6 @@ public class Manager_BasicsTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
 
@@ -262,7 +287,14 @@ public class Manager_BasicsTest {
 
 		Assert.assertEquals( 1, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+
+		List<Message> messages = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm());
+		Assert.assertEquals( 1, messages.size());
+		Assert.assertEquals( MsgCmdInstanceRemove.class, messages.get( 0 ).getClass());
+		Assert.assertEquals(
+				InstanceHelpers.computeInstancePath( app.getTomcatVm()),
+				((MsgCmdInstanceRemove) messages.get( 0 )).getInstancePath());
 	}
 
 

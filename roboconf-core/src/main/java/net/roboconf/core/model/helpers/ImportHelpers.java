@@ -28,7 +28,15 @@ import net.roboconf.core.model.runtime.Instance;
  * A set of helpers for instance imports.
  * @author Vincent Zurczak - Linagora
  */
-public class ImportHelpers {
+public final class ImportHelpers {
+
+	/**
+	 * Constructor.
+	 */
+	private ImportHelpers() {
+		// nothing
+	}
+
 
 	/**
 	 * Determines whether an instance has all the imports it needs.

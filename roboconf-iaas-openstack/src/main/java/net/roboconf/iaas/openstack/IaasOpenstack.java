@@ -96,10 +96,14 @@ public class IaasOpenstack implements IaasInterface {
 		this.tenantId = iaasProperties.get(OpenstackConstants.TENANT_ID);
 		this.keypair = iaasProperties.get(OpenstackConstants.KEYPAIR);
 		this.floatingIpPool = iaasProperties.get(OpenstackConstants.FLOATING_IP_POOL);
+
 		String val = iaasProperties.get(OpenstackConstants.FLAVOR);
-		if(val != null) this.flavor = val;
+		if(val != null)
+			this.flavor = val;
+
 		val = iaasProperties.get(OpenstackConstants.SECURITY_GROUP);
-		if(val != null) this.securityGroup = val;
+		if(val != null)
+			this.securityGroup = val;
 
 		this.identityUrl = iaasProperties.get(OpenstackConstants.IDENTITY_URL);
 		this.computeUrl = iaasProperties.get(OpenstackConstants.COMPUTE_URL);
@@ -108,10 +112,12 @@ public class IaasOpenstack implements IaasInterface {
 			Keystone keystone = new Keystone(this.identityUrl);
 			//Keystone keystone = new Keystone("http://localhost:8888/v2.0");
 
-			Authenticate auth = keystone.tokens().authenticate(
-					new UsernamePassword(iaasProperties.get(OpenstackConstants.USER),
+			Authenticate auth = keystone.tokens().authenticate( new UsernamePassword(
+							iaasProperties.get(OpenstackConstants.USER),
 							iaasProperties.get(OpenstackConstants.PASSWORD)));
-			if(this.tenantId != null) auth = auth.withTenantId(this.tenantId);
+
+			if(this.tenantId != null)
+				auth = auth.withTenantId(this.tenantId);
 
 			Access access = auth.execute();
 			this.token = access.getToken().getId();
@@ -203,7 +209,7 @@ public class IaasOpenstack implements IaasInterface {
 					VolumeForCreate volumeForCreate = new VolumeForCreate();
 					volumeForCreate.setName(volumeName);
 					volumeForCreate.setDescription("Created by Roboconf");
-					volumeForCreate.setSize(new Integer(size));
+					volumeForCreate.setSize( Integer.valueOf( size ));
 
 					volumeIdToAttach = this.novaClient.volumes().create(volumeForCreate).execute().getId();
 					/*
@@ -250,7 +256,9 @@ public class IaasOpenstack implements IaasInterface {
 		// Attach volume if required
 		if(volumeIdToAttach != null) {
 			String mountPoint = this.iaasProperties.get(OpenstackConstants.VOLUME_MOUNT_POINT);
-			if(mountPoint == null) mountPoint = "/dev/vdb";
+			if(mountPoint == null)
+				mountPoint = "/dev/vdb";
+
 			this.novaClient.servers().attachVolume(server.getId(), volumeIdToAttach, mountPoint).execute();
 		}
 

@@ -34,7 +34,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ManagerTimerTaskTest {
+public class CheckerMessagesTaskTest {
 
 	@Before
 	public void shutdownDm() {
@@ -46,7 +46,7 @@ public class ManagerTimerTaskTest {
 	public void testRun_noApplication() {
 
 		TestMessageServerClient client = new TestMessageServerClient();
-		ManagerTimerTask task = new ManagerTimerTask( client );
+		CheckerMessagesTask task = new CheckerMessagesTask( client );
 
 		Assert.assertEquals( 0, Manager.INSTANCE.getAppNameToManagedApplication().size());
 		Assert.assertEquals( 0, client.sentMessages.size());
@@ -62,7 +62,7 @@ public class ManagerTimerTaskTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		ManagerTimerTask task = new ManagerTimerTask( new TestMessageServerClient() {
+		CheckerMessagesTask task = new CheckerMessagesTask( new TestMessageServerClient() {
 			@Override
 			public void sendMessageToAgent( Application application, Instance instance, Message message )
 			throws IOException {
@@ -92,7 +92,7 @@ public class ManagerTimerTaskTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-		ManagerTimerTask task = new ManagerTimerTask( new TestMessageServerClient());
+		CheckerMessagesTask task = new CheckerMessagesTask( new TestMessageServerClient());
 
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdInstanceRestore());

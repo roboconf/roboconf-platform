@@ -70,29 +70,29 @@ public class ApplicationWs implements IApplicationWs {
 			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
 
-			else if( action == ApplicationAction.deploy ) {
+			else if( action == ApplicationAction.DEPLOY ) {
 				if( instance.getParent() == null )
 					Manager.INSTANCE.deployRoot( ma, instance );
 				else
 					Manager.INSTANCE.deploy( ma, instance );
 				response = Response.ok().build();
 
-			} else if( action == ApplicationAction.start ) {
+			} else if( action == ApplicationAction.START ) {
 				Manager.INSTANCE.start( ma, instance );
 				response = Response.ok().build();
 
-			} else if( action == ApplicationAction.stop ) {
+			} else if( action == ApplicationAction.STOP ) {
 				Manager.INSTANCE.stop( ma, instance );
 				response = Response.ok().build();
 
-			} else if( action == ApplicationAction.undeploy ) {
+			} else if( action == ApplicationAction.UNDEPLOY ) {
 				if( instance.getParent() == null )
 					Manager.INSTANCE.undeployRoot( ma, instance );
 				else
 					Manager.INSTANCE.undeploy( ma, instance );
 				response = Response.ok().build();
 
-			} else if( action == ApplicationAction.remove ) {
+			} else if( action == ApplicationAction.REMOVE ) {
 				Manager.INSTANCE.removeInstance( ma, instance );
 				response = Response.ok().build();
 

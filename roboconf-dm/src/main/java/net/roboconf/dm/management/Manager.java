@@ -27,6 +27,7 @@ import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
@@ -183,10 +184,20 @@ public final class Manager {
 				this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdInstanceRestore());
 		}
 
-		// Start the timer
-		ManagerTimerTask timerTask = new ManagerTimerTask( this.messagingClient );
+		// Start the timers
 		this.timer = new Timer( "Roboconf's Management Timer", true );
-		this.timer.scheduleAtFixedRate( timerTask, 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.messagingClient ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask(), 0, Constants.HEARTBEAT_PERIOD );
+	}
+
+
+	/**
+	 * Saves the configuration (instances).
+	 * @param ma a non-null managed application
+	 */
+	public void saveConfiguration( ManagedApplication ma ) {
+		if( this.configuration != null )
+			this.configuration.saveInstances( ma );
 	}
 
 
@@ -214,7 +225,7 @@ public final class Manager {
 
 		if( this.configuration != null ) {
 			for( ManagedApplication ma : this.appNameToManagedApplication.values())
-				this.configuration.saveInstances( ma );
+				saveConfiguration( ma );
 		}
 
 		this.appNameToManagedApplication.clear();
@@ -323,6 +334,7 @@ public final class Manager {
 		this.logger.fine( "Deleting application " + applicationName + "..." );
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
 		Utils.deleteFilesRecursively( ma.getApplicationFilesDirectory());
+		this.configuration.deleteInstancesFile( ma.getName());
 
 		this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
 		this.appNameToManagedApplication.remove( applicationName );
@@ -365,7 +377,7 @@ public final class Manager {
 
 		// Store the message because we want to make sure the message is not lost
 		ma.storeAwaitingMessage( instance, new MsgCmdInstanceAdd( parentInstance, instance ));
-		this.configuration.saveInstances( ma );
+		saveConfiguration( ma );
 	}
 
 
@@ -393,7 +405,7 @@ public final class Manager {
 			instance.getParent().getChildren().remove( instance );
 
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
-		this.configuration.saveInstances( ma );
+		saveConfiguration( ma );
 	}
 
 
@@ -530,7 +542,7 @@ public final class Manager {
 			throw e;
 
 		} finally {
-			this.configuration.saveInstances( ma );
+			saveConfiguration( ma );
 		}
 	}
 
@@ -551,11 +563,6 @@ public final class Manager {
 		}
 
 		try {
-			// Send a message to undeploy the model.
-			// This is useful when the root was not created by the DM (example: a device)
-			MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( rootInstance );
-			send( ma, message, rootInstance );
-
 			// Terminate the machine
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
 			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
@@ -570,6 +577,8 @@ public final class Manager {
 				i.getImports().clear();
 			}
 
+			// Remove useless data for the configuration backup
+			rootInstance.getData().clear();
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( IaasException e ) {
@@ -580,7 +589,7 @@ public final class Manager {
 			throw e;
 
 		} finally {
-			this.configuration.saveInstances( ma );
+			saveConfiguration( ma );
 		}
 	}
 
@@ -687,16 +696,31 @@ public final class Manager {
 	 */
 	void send( ManagedApplication ma, Message message, Instance instance ) throws IOException {
 
-		Instance rootInstance;
+		// Either ignore or store the message
 		if( this.messagingClient == null
 				|| ! this.messagingClient.isConnected())
 			this.logger.severe( "The connection with the messaging server was badly initialized. Message dropped." );
-
-		else if(( rootInstance = InstanceHelpers.findRootInstance( instance )).getStatus() == InstanceStatus.DEPLOYING )
-			ma.storeAwaitingMessage( rootInstance, message );
-
 		else
-			this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, message );
+			ma.storeAwaitingMessage( instance, message );
+
+		// If the VM is online, process awaiting messages to prevent waiting.
+		// This can work concurrently with the messages timer.
+		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
+		if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
+			List<Message> messages = ma.removeAwaitingMessages( instance );
+			if( ! messages.isEmpty())
+				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + rootInstance.getName() + "." );
+
+			for( Message msg : messages ) {
+				try {
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
+
+				} catch( IOException e ) {
+					this.logger.severe( "Error while sending a stored message. " + e.getMessage());
+					this.logger.finest( Utils.writeException( e ));
+				}
+			}
+		}
 	}
 
 

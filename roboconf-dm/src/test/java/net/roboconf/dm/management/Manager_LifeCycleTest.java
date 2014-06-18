@@ -63,7 +63,7 @@ public class Manager_LifeCycleTest {
 		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir );
 		Manager.INSTANCE.initialize( conf );
 
-		// Disable the timer for predictability
+		// Disable the messages timer for predictability
 		Manager.INSTANCE.timer.cancel();
 	}
 
@@ -85,13 +85,16 @@ public class Manager_LifeCycleTest {
 		Manager.INSTANCE.deploy( ma, app.getMySqlVm());
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
 
 		// Let's try with a child instance
 		Manager.INSTANCE.deploy( ma, app.getMySql());
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
-		Message msg = msgClient.sentMessages.get( 0 );
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdInstanceDeploy.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
@@ -158,9 +161,11 @@ public class Manager_LifeCycleTest {
 		// Let's try with a child instance
 		Manager.INSTANCE.start( ma, app.getMySql());
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
-		Message msg = msgClient.sentMessages.get( 0 );
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdInstanceStart.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
@@ -221,9 +226,11 @@ public class Manager_LifeCycleTest {
 		// Let's try with a child instance
 		Manager.INSTANCE.stop( ma, app.getMySql());
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
-		Message msg = msgClient.sentMessages.get( 0 );
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
@@ -284,9 +291,11 @@ public class Manager_LifeCycleTest {
 		// Let's try with a child instance
 		Manager.INSTANCE.undeploy( ma, app.getMySql());
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
-		Message msg = msgClient.sentMessages.get( 0 );
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
@@ -443,13 +452,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
-
-		Message msg = msgClient.sentMessages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
-
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) msg).getInstancePath());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
 	}
 
 
@@ -480,13 +483,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( app.getMySqlVm().getData().get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
-
-		Message msg = msgClient.sentMessages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
-
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) msg).getInstancePath());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
 	}
 
 
@@ -516,17 +513,11 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertNull( app.getMySqlVm().getData().get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
-
-		Message msg = msgClient.sentMessages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
-
-		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) msg).getInstancePath());
 
 		// The state means nothing in fact, the machine ID does
-		msgClient.sentMessages.clear();
+		ma.rootInstanceToAwaitingMessages.clear();
 		app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
 		app.getMySqlVm().getData().put( Instance.MACHINE_ID, "something" );
 		Manager.INSTANCE.undeployRoot( ma, app.getMySqlVm());
@@ -535,12 +526,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( app.getMySqlVm().getData().get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
-
-		msg = msgClient.sentMessages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) msg).getInstancePath());
 	}
 
 
@@ -763,14 +750,18 @@ public class Manager_LifeCycleTest {
 		Manager.INSTANCE.stopAll( ma, null );
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 2, msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 2, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
-		Assert.assertEquals( MsgCmdInstanceStop.class, msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdInstanceStop) msgClient.sentMessages.get( 0 )).getInstancePath());
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
+		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()),((MsgCmdInstanceStop) msg).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStop.class, msgClient.sentMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msgClient.sentMessages.get( 1 )).getInstancePath());
+		msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
+		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msg).getInstancePath());
 	}
 
 
@@ -791,11 +782,13 @@ public class Manager_LifeCycleTest {
 		Manager.INSTANCE.stopAll( ma, app.getTomcatVm());
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
-		Assert.assertEquals( MsgCmdInstanceStop.class, msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msgClient.sentMessages.get( 0 )).getInstancePath());
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
+		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msg).getInstancePath());
 	}
 
 
@@ -816,11 +809,13 @@ public class Manager_LifeCycleTest {
 		Manager.INSTANCE.stopAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
-		Assert.assertEquals( MsgCmdInstanceStop.class, msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msgClient.sentMessages.get( 0 )).getInstancePath());
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
+		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msg).getInstancePath());
 	}
 
 
@@ -844,14 +839,9 @@ public class Manager_LifeCycleTest {
 
 		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getTomcatVm()));
-		Assert.assertEquals( 2, msgClient.sentMessages.size());
+
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
-
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySqlVm()), ((MsgCmdInstanceUndeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
-
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msgClient.sentMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcatVm()), ((MsgCmdInstanceUndeploy) msgClient.sentMessages.get( 1 )).getInstancePath());
 	}
 
 
@@ -874,11 +864,8 @@ public class Manager_LifeCycleTest {
 
 		Assert.assertNull( iaasResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertFalse( iaasResolver.instanceToRunningStatus.get( app.getTomcatVm()));
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
-
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcatVm()), ((MsgCmdInstanceUndeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
 	}
 
 
@@ -899,10 +886,12 @@ public class Manager_LifeCycleTest {
 		Manager.INSTANCE.undeployAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 1, msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceUndeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
+		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
+		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceUndeploy) msg).getInstancePath());
 	}
 }

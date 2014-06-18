@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.api;
+package net.roboconf.dm.management;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import java.util.TimerTask;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ApplicationActionTest {
+public class CheckerHeartbeatsTask extends TimerTask {
 
-	@Test
-	public void testWhichAction() {
-		Assert.assertEquals( ApplicationAction.DEPLOY, ApplicationAction.whichAction( "deploy" ));
-		Assert.assertEquals( ApplicationAction.DEPLOY, ApplicationAction.whichAction( "DEploY" ));
-		Assert.assertNull( ApplicationAction.whichAction( "not an action" ));
+	/*
+	 * (non-Javadoc)
+	 * @see java.util.TimerTask#run()
+	 */
+	@Override
+	public void run() {
+		for( ManagedApplication ma : Manager.INSTANCE.getAppNameToManagedApplication().values())
+			ma.checkStates();
 	}
 }

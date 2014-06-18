@@ -46,7 +46,15 @@ import net.roboconf.core.utils.Utils;
  * A set of methods to validate runtime model objects.
  * @author Vincent Zurczak - Linagora
  */
-public class RuntimeModelValidator {
+public final class RuntimeModelValidator {
+
+	/**
+	 * Constructor.
+	 */
+	private RuntimeModelValidator() {
+		// nothing
+	}
+
 
 	/**
 	 * Validates a component.
@@ -197,6 +205,7 @@ public class RuntimeModelValidator {
 			// Duplicate component?
 			Component associatedComponent = alreadyChecked.get( c.getName());
 			if( associatedComponent != null ) {
+				// FIXME: add a unit test to check this (BTW, equals would not work)
 				if( associatedComponent != c ) {
 					RoboconfError error = new RoboconfError( ErrorCode.RM_DUPLICATE_COMPONENT );
 					error.setDetails( "Component name: " + c.getName());

@@ -45,7 +45,15 @@ import net.roboconf.core.utils.Utils;
  * A set of methods to validate parsing model objects.
  * @author Vincent Zurczak - Linagora
  */
-public class ParsingModelValidator {
+public final class ParsingModelValidator {
+
+	/**
+	 * Constructor.
+	 */
+	private ParsingModelValidator() {
+		// nothing
+	}
+
 
 	/**
 	 * @param definitionFile a definition file

@@ -14,21 +14,40 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.api;
+package net.roboconf.dm.management;
 
-import junit.framework.Assert;
+import net.roboconf.dm.internal.TestApplication;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ApplicationActionTest {
+public class CheckerHeartbeatsTaskTest {
+
+	@Before
+	public void shutdownDm() {
+		Manager.INSTANCE.shutdown();
+	}
+
 
 	@Test
-	public void testWhichAction() {
-		Assert.assertEquals( ApplicationAction.DEPLOY, ApplicationAction.whichAction( "deploy" ));
-		Assert.assertEquals( ApplicationAction.DEPLOY, ApplicationAction.whichAction( "DEploY" ));
-		Assert.assertNull( ApplicationAction.whichAction( "not an action" ));
+	public void testRun_noApplication() {
+
+		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask();
+		task.run();
+	}
+
+
+	@Test
+	public void testRun() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+
+		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask();
+		task.run();
 	}
 }

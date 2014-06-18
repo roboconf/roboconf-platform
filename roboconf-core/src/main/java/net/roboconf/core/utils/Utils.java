@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 /**
@@ -297,11 +296,10 @@ public final class Utils {
 	 * Extracts a ZIP archive in a directory.
 	 * @param zipFile a ZIP file (not null, must exist)
 	 * @param targetDirectory the target directory (may not exist but must be a directory)
-	 * @throws ZipException if something went wrong
 	 * @throws IOException if something went wrong
 	 */
 	public static void extractZipArchive( File zipFile, File targetDirectory )
-	throws ZipException, IOException {
+	throws IOException {
 
 		// Make some checks
 		if( zipFile == null || targetDirectory == null )

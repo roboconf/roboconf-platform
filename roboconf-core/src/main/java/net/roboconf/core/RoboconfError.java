@@ -23,8 +23,8 @@ package net.roboconf.core;
  */
 public class RoboconfError {
 
-	protected ErrorCode errorCode;
-	protected String details;
+	private ErrorCode errorCode;
+	private String details;
 
 
 	/**

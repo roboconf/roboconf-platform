@@ -38,7 +38,7 @@ import net.roboconf.messaging.messages.Message;
  */
 public class ManagedApplication {
 
-	final static int MISSED_HEARTBEATS_THRESHOLD = 2;
+	static final int MISSED_HEARTBEATS_THRESHOLD = 2;
 
 	private final Application application;
 	private final File applicationFilesDirectory;

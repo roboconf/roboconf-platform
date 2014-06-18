@@ -124,7 +124,7 @@ public class FromInstances {
 			// Update the parent
 			BlockInstanceOf parentBlock = instanceToBlock.get( instance.getParent());
 			if( parentBlock != null ) {
-				parentBlock.getInnerBlocks().add( new BlockBlank( file, "\n" ));
+				parentBlock.getInnerBlocks().add( new BlockBlank( file, "" ));
 				parentBlock.getInnerBlocks().add( currentBlock );
 			}
 
