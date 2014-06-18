@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -38,12 +39,18 @@ import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class RuntimeModelValidatorTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test
 	public void testComponent() {
@@ -407,5 +414,30 @@ public class RuntimeModelValidatorTest {
 		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_INSTANCE_PARENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
+	public void testIaasInstaller() throws Exception {
+
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( new Component( "VM" ).alias( "a VM" ).installerName( "iaas" ));
+
+		File appDir = this.folder.newFolder();
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs, appDir );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
+
+		File componentDir = new File( appDir, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		Assert.assertTrue( componentDir.mkdirs());
+
+		errors = RuntimeModelValidator.validate( graphs, appDir );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_IAAS_PROPERTIES, errors.iterator().next().getErrorCode());
+
+		File iaasPropertiesFile = new File( componentDir, Constants.IAAS_PROPERTIES_FILE_NAME );
+		Assert.assertTrue( iaasPropertiesFile.createNewFile());
+		errors = RuntimeModelValidator.validate( graphs, appDir );
+		Assert.assertEquals( 0, errors.size());
 	}
 }

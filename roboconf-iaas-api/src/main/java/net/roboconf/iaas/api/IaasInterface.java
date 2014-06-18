@@ -24,9 +24,6 @@ import java.util.Map;
  */
 public interface IaasInterface {
 
-	String DEFAULT_IAAS_PROPERTIES_FILE_NAME = "iaas.properties";
-
-
 	/**
 	 * Sets all the properties that will be used when instantiating machines.
 	 * <p>

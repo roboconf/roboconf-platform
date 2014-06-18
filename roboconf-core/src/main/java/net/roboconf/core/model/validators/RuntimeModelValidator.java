@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.ApplicationDescriptor;
@@ -156,6 +157,14 @@ public class RuntimeModelValidator {
 				RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY );
 				error.setDetails( "Component name: " + c.getName());
 				result.add( error );
+
+			} else if( Constants.IAAS_INSTALLER.equalsIgnoreCase( c.getInstallerName())) {
+				File iaasPropertiesFile = new File( componentDirectory, Constants.IAAS_PROPERTIES_FILE_NAME );
+				if( ! iaasPropertiesFile.exists()) {
+					RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_IAAS_PROPERTIES );
+					error.setDetails( "Component name: " + c.getName());
+					result.add( error );
+				}
 			}
 		}
 

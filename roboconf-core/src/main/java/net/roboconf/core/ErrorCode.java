@@ -135,6 +135,7 @@ public enum ErrorCode {
 	PROJ_DELETE_TEMP( ErrorLevel.WARNING, ErrorCategory.PROJECT, "Roboconf failed to delete a temporary directory." ),
 	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
 	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource directory." ),
+	PROJ_NO_IAAS_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A IaaS component does not have a iaas.properties file in its resources." ),
 
 
 	// Execution Errors
