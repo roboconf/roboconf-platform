@@ -290,7 +290,7 @@ public final class Manager {
 	public ManagedApplication loadNewApplication( File applicationFilesDirectory )
 	throws AlreadyExistingException, InvalidApplicationException, IOException {
 
-		this.logger.fine( "Loading application from " + applicationFilesDirectory + "..." );
+		this.logger.info( "Loading application from " + applicationFilesDirectory + "..." );
 		ApplicationLoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
 		checkErrors( lr.getLoadErrors());
 
