@@ -22,6 +22,7 @@ import java.util.List;
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.messaging.messages.Message;
@@ -87,13 +88,14 @@ public class CheckerMessagesTaskTest {
 
 
 	@Test
-	public void testRun_normal() {
+	public void testRun_normal_rootIsStarted() {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
 		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 		CheckerMessagesTask task = new CheckerMessagesTask( new TestMessageServerClient());
 
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdInstanceRestore());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdInstanceStop( "/whatever" ));
@@ -103,5 +105,49 @@ public class CheckerMessagesTaskTest {
 		task.run();
 		Assert.assertNull( ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+	}
+
+
+	@Test
+	public void testRun_rootDeploying() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		CheckerMessagesTask task = new CheckerMessagesTask( new TestMessageServerClient());
+
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
+		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdInstanceRestore());
+		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdInstanceStop( "/whatever" ));
+
+		// Messages are still there
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 2, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
+		task.run();
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 2, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
+	}
+
+
+	@Test
+	public void testRun_rootNotStarted() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		CheckerMessagesTask task = new CheckerMessagesTask( new TestMessageServerClient());
+
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
+		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdInstanceRestore());
+		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdInstanceStop( "/whatever" ));
+
+		// Messages are still there
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 2, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
+		task.run();
+		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 2, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 	}
 }

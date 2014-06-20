@@ -22,6 +22,7 @@ import java.util.TimerTask;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
@@ -54,6 +55,8 @@ public class CheckerMessagesTask extends TimerTask {
 
 		for( ManagedApplication ma : Manager.INSTANCE.getAppNameToManagedApplication().values()) {
 			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
+				if( rootInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED )
+					continue;
 
 				List<Message> messages = ma.removeAwaitingMessages( rootInstance );
 				if( ! messages.isEmpty())
