@@ -23,12 +23,11 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.core.actions.ApplicationAction;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.rest.UrlConstants;
+import net.roboconf.dm.rest.api.ApplicationAction;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
-import net.roboconf.dm.rest.json.MapHolder;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
@@ -55,12 +54,7 @@ public class ApplicationWsDelegate {
 
 
 	/**
-	 * Performs an action on instance (and potentially, on its children too).
-	 * <p>
-	 * If applyToChildren is true, the action will be performed on the given instance
-	 * and its children. In addition, if the given instance is null, then the action will be
-	 * applied to all the instances of the application.
-	 * </p>
+	 * Performs an action on a single instance.
 	 * <p>
 	 * Notice that these actions, like of most of the others, are performed asynchronously.
 	 * It means invoking these REST operations is equivalent to submitting a request. How it
@@ -69,45 +63,97 @@ public class ApplicationWsDelegate {
 	 *
 	 * @param applicationName the application name
 	 * @param action the action to perform
-	 * @param instancePath the instance path (can be null if applyToChildren is true)
-	 * @param applyToAllChildren true to apply to children too
+	 * @param instancePath the instance path (not null)
 	 * @throws ApplicationException if something went wrong
 	 */
-	public void perform( String applicationName, ApplicationAction action, String instancePath, boolean applyToAllChildren )
+	public void perform( String applicationName, ApplicationAction action, String instancePath )
 	throws ApplicationException {
 
-		if( instancePath == null && ! applyToAllChildren )
-			throw new IllegalArgumentException( "When applyToChildren is false, the instance path cannot be null." );
-
-		// Log
-		StringBuilder sb = new StringBuilder();
-		sb.append( "Performing action '" );
-		sb.append( action );
-		sb.append( "' in " );
-		sb.append( applicationName );
-
-		if( instancePath == null && applyToAllChildren ) {
-			sb.append( " on all the instances." );
-
-		} else if( instancePath != null ) {
-			sb.append( ", instance " + instancePath );
-			if( applyToAllChildren )
-				sb.append( " and its children" );
-			sb.append( "..." );
-		}
-
-		this.logger.finer(sb.toString());
-
-		// Invoke the client
-		MapHolder holder = new MapHolder();
-		holder.getMap().put( MapHolder.INSTANCE_PATH, instancePath );
-		holder.getMap().put( MapHolder.APPLY_TO_CHILDREN, String.valueOf( applyToAllChildren ));
+		this.logger.finer( "Performing action '" + action + "' in " + applicationName + " from instance = " + instancePath  );
 
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( String.valueOf( action ));
-		ClientResponse response = path
-				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
-				.post( ClientResponse.class, holder );
+		if( instancePath != null )
+			path = path.queryParam( "instance-path", instancePath );
 
+		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
+			String value = response.getEntity( String.class );
+			this.logger.finer( response.getStatusInfo() + ": " + value );
+			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+		}
+
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
+	}
+
+
+	/**
+	 * Deploys and starts several instances at once.
+	 * @param applicationName the application name
+	 * @param instancePath the instance path (null for all the application instances)
+	 * @throws ApplicationException if something went wrong
+	 */
+	public void deployAndStartAll( String applicationName, String instancePath )
+	throws ApplicationException {
+
+		this.logger.finer( "Deploying and starting instances in " + applicationName + " from instance = " + instancePath  );
+
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "deploy-all" );
+		if( instancePath != null )
+			path = path.queryParam( "instance-path", instancePath );
+
+		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
+			String value = response.getEntity( String.class );
+			this.logger.finer( response.getStatusInfo() + ": " + value );
+			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+		}
+
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
+	}
+
+
+	/**
+	 * Stops several instances at once.
+	 * @param applicationName the application name
+	 * @param instancePath the path of the instance to stop (null for all the application instances)
+	 * @throws ApplicationException if something went wrong
+	 */
+	public void stopAll( String applicationName, String instancePath )
+	throws ApplicationException {
+
+		this.logger.finer( "Stopping instances in " + applicationName + " from instance = " + instancePath  );
+
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "stop-all" );
+		if( instancePath != null )
+			path = path.queryParam( "instance-path", instancePath );
+
+		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
+			String value = response.getEntity( String.class );
+			this.logger.finer( response.getStatusInfo() + ": " + value );
+			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+		}
+
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
+	}
+
+
+	/**
+	 * Undeploys several instances at once.
+	 * @param applicationName the application name
+	 * @param instancePath the path of the instance to undeploy (null for all the application instances)
+	 * @throws ApplicationException if something went wrong
+	 */
+	public void undeployAll( String applicationName, String instancePath )
+	throws ApplicationException {
+
+		this.logger.finer( "Undeploying instances in " + applicationName + " from instance = " + instancePath  );
+
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "undeploy-all" );
+		if( instancePath != null )
+			path = path.queryParam( "instance-path", instancePath );
+
+		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
@@ -128,16 +174,18 @@ public class ApplicationWsDelegate {
 	public List<Instance> listChildrenInstances( String applicationName, String instancePath, boolean all ) {
 		this.logger.finer( "Listing children instances for " + instancePath + " in " + applicationName + "." );
 
-		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName );
-		if( all )
-			path = path.path( "all-children" );
-		else
-			path = path.path( "children" );
+		WebResource path = this.resource
+				.path( UrlConstants.APP ).path( applicationName ).path( "children" )
+				.queryParam( "all-children", String.valueOf( all ));
 
 		if( instancePath != null )
 			path = path.queryParam( "instance-path", instancePath );
 
-		List<Instance> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Instance>> () {});
+		List<Instance> result =
+				path.accept( MediaType.APPLICATION_JSON )
+				.type( MediaType.APPLICATION_JSON )
+				.get( new GenericType<List<Instance>> () {});
+
 		if( result != null )
 			this.logger.finer( result.size() + " children instances were found for " + instancePath + " in " + applicationName + "." );
 		else

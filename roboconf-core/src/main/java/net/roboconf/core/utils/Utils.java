@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 /**
@@ -70,7 +69,7 @@ public final class Utils {
 
 
 	/**
-	 * Splits a string, ignores invalid sequences and formats the result.
+	 * Splits a string and formats the result.
 	 * @param toSplit the string to split (can be null)
 	 * @param separator the separator (cannot be null or the empty string)
 	 * @return a list of items (never null)
@@ -81,11 +80,9 @@ public final class Utils {
 			throw new IllegalArgumentException( "The separator cannot be null or the empty string." );
 
 		List<String> result = new ArrayList<String> ();
-		if( toSplit != null ) {
-			for( String s : toSplit.split( Pattern.quote( separator ))) {
-				if( ! Utils.isEmptyOrWhitespaces( s ))
-					result.add( s .trim());
-			}
+		if( ! Utils.isEmptyOrWhitespaces( toSplit )) {
+			for( String s : toSplit.split( Pattern.quote( separator )))
+				result.add( s .trim());
 		}
 
 		return result;
@@ -155,10 +152,6 @@ public final class Utils {
 	 * @throws IOException if the file could not be created
 	 */
 	public static void copyStream( InputStream in, File outputFile ) throws IOException {
-
-		if( ! outputFile.exists() && ! outputFile.createNewFile())
-			throw new IOException( "Failed to create " + outputFile.getAbsolutePath() + "." );
-
 		OutputStream os = new FileOutputStream( outputFile );
 		copyStream( in, os );
 		os.close ();
@@ -303,11 +296,10 @@ public final class Utils {
 	 * Extracts a ZIP archive in a directory.
 	 * @param zipFile a ZIP file (not null, must exist)
 	 * @param targetDirectory the target directory (may not exist but must be a directory)
-	 * @throws ZipException if something went wrong
 	 * @throws IOException if something went wrong
 	 */
 	public static void extractZipArchive( File zipFile, File targetDirectory )
-    throws ZipException, IOException {
+	throws IOException {
 
 		// Make some checks
 		if( zipFile == null || targetDirectory == null )
@@ -317,12 +309,13 @@ public final class Utils {
 				|| ! zipFile.isFile())
 			throw new IllegalArgumentException( "ZIP file " + targetDirectory.getName() + " does not exist." );
 
+		if( targetDirectory.exists()
+				&& ! targetDirectory.isDirectory())
+			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " is not a directory." );
+
 		if( ! targetDirectory.exists()
 				&& ! targetDirectory.mkdirs())
-			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " could not be created." );
-
-		if( ! targetDirectory.isDirectory())
-			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " is not a directory." );
+			throw new IOException( "Target directory " + targetDirectory.getName() + " could not be created." );
 
 		// Load the ZIP file
 		ZipFile theZipFile = new ZipFile( zipFile );
@@ -405,5 +398,61 @@ public final class Utils {
 		e.printStackTrace(new PrintWriter( sw ));
 
 		return sw.toString();
+	}
+
+
+	/**
+	 * Determines whether a file is a parent of another file.
+	 * <p>
+	 * This method handles intermediate '.' and '..' segments.
+	 * </p>
+	 *
+	 * @param potentialAncestor a file that may contain the other one
+	 * @param file a file
+	 * @return true if the path of 'file' starts with the path of 'potentialAncestor', false otherwise
+	 * @throws IOException if the file location cannot be made canonical
+	 */
+	public static boolean isAncestorFile( File potentialAncestor, File file ) throws IOException {
+
+		String ancestorPath = potentialAncestor.getCanonicalPath();
+		String path = file.getCanonicalPath();
+
+		boolean result = false;
+		if( path.startsWith( ancestorPath )) {
+			String s = path.substring( ancestorPath.length());
+			result = s.isEmpty() || s.startsWith( System.getProperty( "file.separator" ));
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Copies a directory.
+	 * <p>
+	 * This method copies the content of the source directory
+	 * into the a target directory. This latter is created if necessary.
+	 * </p>
+	 *
+	 * @param source the directory to copy
+	 * @param target the target directory
+	 * @throws IOException if a problem occurred during the copy
+	 */
+	public static void copyDirectory( File source, File target ) throws IOException {
+
+		if( ! target.exists()
+				&& ! target.mkdirs())
+			throw new IOException( "The directory " + target + " could not be created." );
+
+		for( File sourceFile : listAllFiles( source )) {
+			String path = computeFileRelativeLocation( source, sourceFile );
+			File targetFile = new File( target, path );
+
+			if( ! targetFile.getParentFile().exists()
+					&& ! targetFile.getParentFile().mkdirs())
+				throw new IOException( "The directory " + targetFile.getParentFile() + " could not be created." );
+
+			copyStream( sourceFile, targetFile );
+		}
 	}
 }

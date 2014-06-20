@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management.exceptions;
+package net.roboconf.dm.management;
+
+import java.util.TimerTask;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InvalidActionException extends Exception {
-	private static final long serialVersionUID = -3300720358732873210L;
+public class CheckerHeartbeatsTask extends TimerTask {
 
-
-	/**
-	 * Constructor.
-	 * @param action
+	/*
+	 * (non-Javadoc)
+	 * @see java.util.TimerTask#run()
 	 */
-	public InvalidActionException( String action ) {
-		super( "Invalid action: " + action );
+	@Override
+	public void run() {
+		for( ManagedApplication ma : Manager.INSTANCE.getAppNameToManagedApplication().values())
+			ma.checkStates();
 	}
 }

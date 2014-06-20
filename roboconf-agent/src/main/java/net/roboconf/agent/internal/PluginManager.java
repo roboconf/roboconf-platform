@@ -20,9 +20,7 @@ import java.io.File;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
@@ -52,8 +50,7 @@ public class PluginManager {
 		PluginInterface[] plugins = new PluginInterface[] {
 				new PluginBash(),
 				new PluginPuppet(),
-				new PluginLogger(),
-				new NilPlugin()
+				new PluginLogger()
 		};
 
 		for( PluginInterface pi : plugins ) {
@@ -119,10 +116,10 @@ public class PluginManager {
 	 *
 	 * @param instanceToAdd the instance to add on this agent
 	 * @param executionLevel the execution level
-	 * @throws Exception if the initialization fails or if no plug-in was found
+	 * @throws PluginException if the initialization fails or if no plug-in was found
 	 */
 	public static void initializePluginForInstance( Instance instanceToAdd, ExecutionLevel executionLevel )
-	throws Exception {
+	throws PluginException {
 
 		Logger logger = Logger.getLogger( PluginManager.class.getName());
 		PluginManager pluginManager = new PluginManager();
@@ -133,67 +130,9 @@ public class PluginManager {
 			String installerName = instance.getComponent().getInstallerName();
 			PluginInterface plugin = pluginManager.findPlugin( instance, logger );
 			if( plugin == null )
-				throw new Exception( "No plugin was found for " + instance.getName() + ". Installer name:" + installerName );
+				throw new PluginException( "No plugin was found for " + instance.getName() + ". Installer name:" + installerName );
 
 			plugin.initialize( instance );
-		}
-	}
-
-
-	/**
-	 * A class used for the IaaS (which is considered as any other installer by the agent).
-	 * @author Vincent Zurczak - Linagora
-	 */
-	private static class NilPlugin implements PluginInterface {
-
-		@Override
-		public void initialize( Instance instance ) throws PluginException {
-			// nothing
-		}
-
-		@Override
-		public void deploy( Instance instance ) throws PluginException {
-			// nothing
-		}
-
-		@Override
-		public void start( Instance instance ) throws PluginException {
-			// nothing
-		}
-
-		@Override
-		public void update(Instance impactedInstance, Import importChanged, InstanceStatus statusChanged) {
-			// nothing
-		}
-
-		@Override
-		public void stop( Instance instance ) throws PluginException {
-			// nothing
-		}
-
-		@Override
-		public void undeploy( Instance instance ) throws PluginException {
-			// nothing
-		}
-
-		@Override
-		public void setExecutionLevel( ExecutionLevel executionLevel ) {
-			// nothing
-		}
-
-		@Override
-		public void setDumpDirectory( File dumpDirectory ) {
-			// nothing
-		}
-
-		@Override
-		public void setAgentName( String agentName ) {
-			// nothing
-		}
-
-		@Override
-		public String getPluginName() {
-			return "iaas";
 		}
 	}
 }

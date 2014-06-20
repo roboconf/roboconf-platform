@@ -24,7 +24,7 @@ import net.roboconf.agent.AgentLauncher;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentManager {
+public final class AgentManager {
 
 	public static final AgentManager INSTANCE = new AgentManager();
 	private final Map<String,AgentLauncher> machineIdToAgentLauncher = new HashMap<String,AgentLauncher> ();

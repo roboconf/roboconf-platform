@@ -29,7 +29,6 @@ import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
@@ -73,14 +72,6 @@ public class SerializationUtilsTest {
 
 		msg = new MsgNotifMachineUp( "app1", new Instance( "instance2" ), "192.168.1.2" );
 		checkBasics( msg, MsgNotifMachineUp.class );
-	}
-
-
-	@Test
-	public void testMessage_instanceRestoration() throws Exception {
-
-		MsgNotifInstanceRestoration msg = new MsgNotifInstanceRestoration( "app2", new Instance( "root" ));
-		checkBasics( msg, MsgNotifInstanceRestoration.class );
 	}
 
 

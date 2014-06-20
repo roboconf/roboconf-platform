@@ -53,6 +53,8 @@ public abstract class MessagingTestUtils {
 
 	private static final int DELAY = 700;
 	private static final String URL = "localhost";
+	private static final String USER = "guest";
+	private static final String PWD = "guest";
 
 
 	/**
@@ -67,13 +69,13 @@ public abstract class MessagingTestUtils {
 		MessageServerClientFactory factory = new MessageServerClientFactory();
 
 		IDmClient dmClient = factory.createDmClient();
-		dmClient.setMessageServerIp( URL );
+		dmClient.setParameters( URL, USER, PWD );
 		StorageMessageProcessor dmProcessor = new StorageMessageProcessor();
 		dmClient.openConnection( dmProcessor );
 
 		IAgentClient agentClient = factory.createAgentClient();
 		agentClient.setApplicationName( app.getName());
-		agentClient.setMessageServerIp( URL );
+		agentClient.setParameters( URL, USER, PWD );
 		agentClient.setRootInstanceName( rootInstance.getName());
 		StorageMessageProcessor agentProcessor = new StorageMessageProcessor();
 		agentClient.openConnection( agentProcessor );
@@ -160,13 +162,13 @@ public abstract class MessagingTestUtils {
 		MessageServerClientFactory factory = new MessageServerClientFactory();
 
 		IDmClient dmClient = factory.createDmClient();
-		dmClient.setMessageServerIp( URL );
+		dmClient.setParameters( URL, USER, PWD );
 		StorageMessageProcessor dmProcessor = new StorageMessageProcessor();
 		dmClient.openConnection( dmProcessor );
 
 		IAgentClient agentClientApp1_1 = factory.createAgentClient();
 		agentClientApp1_1.setApplicationName( app1.getName());
-		agentClientApp1_1.setMessageServerIp( URL );
+		agentClientApp1_1.setParameters( URL, USER, PWD );
 		agentClientApp1_1.setRootInstanceName( app1_root1.getName());
 		StorageMessageProcessor agentProcessorApp1_1 = new StorageMessageProcessor();
 		agentClientApp1_1.openConnection( agentProcessorApp1_1 );
@@ -174,7 +176,7 @@ public abstract class MessagingTestUtils {
 
 		IAgentClient agentClientApp1_2 = factory.createAgentClient();
 		agentClientApp1_2.setApplicationName( app1.getName());
-		agentClientApp1_2.setMessageServerIp( URL );
+		agentClientApp1_2.setParameters( URL, USER, PWD );
 		agentClientApp1_2.setRootInstanceName( app1_root2.getName());
 		StorageMessageProcessor agentProcessorApp1_2 = new StorageMessageProcessor();
 		agentClientApp1_2.openConnection( agentProcessorApp1_2 );
@@ -182,7 +184,7 @@ public abstract class MessagingTestUtils {
 
 		IAgentClient agentClientApp2 = factory.createAgentClient();
 		agentClientApp2.setApplicationName( app2.getName());
-		agentClientApp2.setMessageServerIp( URL );
+		agentClientApp2.setParameters( URL, USER, PWD );
 		agentClientApp2.setRootInstanceName( app2_root.getName());
 		StorageMessageProcessor agentProcessorApp2 = new StorageMessageProcessor();
 		agentClientApp2.openConnection( agentProcessorApp2 );
@@ -277,28 +279,28 @@ public abstract class MessagingTestUtils {
 
 		IAgentClient tomcatClient = factory.createAgentClient();
 		tomcatClient.setApplicationName( app1.getName());
-		tomcatClient.setMessageServerIp( URL );
+		tomcatClient.setParameters( URL, USER, PWD );
 		tomcatClient.setRootInstanceName( tomcat.getName());
 		StorageMessageProcessor tomcatProcessor = new StorageMessageProcessor();
 		tomcatClient.openConnection( tomcatProcessor );
 
 		IAgentClient apacheClient = factory.createAgentClient();
 		apacheClient.setApplicationName( app1.getName());
-		apacheClient.setMessageServerIp( URL );
+		apacheClient.setParameters( URL, USER, PWD );
 		apacheClient.setRootInstanceName( apache.getName());
 		StorageMessageProcessor apacheProcessor = new StorageMessageProcessor();
 		apacheClient.openConnection( apacheProcessor );
 
 		IAgentClient mysqlClient = factory.createAgentClient();
 		mysqlClient.setApplicationName( app1.getName());
-		mysqlClient.setMessageServerIp( URL );
+		mysqlClient.setParameters( URL, USER, PWD );
 		mysqlClient.setRootInstanceName( mysql.getName());
 		StorageMessageProcessor mysqlProcessor = new StorageMessageProcessor();
 		mysqlClient.openConnection( mysqlProcessor );
 
 		IAgentClient otherClient = factory.createAgentClient();
 		otherClient.setApplicationName( app2.getName());
-		otherClient.setMessageServerIp( URL );
+		otherClient.setParameters( URL, USER, PWD );
 		otherClient.setRootInstanceName( other.getName());
 		StorageMessageProcessor otherProcessor = new StorageMessageProcessor();
 		otherClient.openConnection( otherProcessor );
@@ -460,28 +462,28 @@ public abstract class MessagingTestUtils {
 
 		IAgentClient tomcatClient = factory.createAgentClient();
 		tomcatClient.setApplicationName( app1.getName());
-		tomcatClient.setMessageServerIp( URL );
+		tomcatClient.setParameters( URL, USER, PWD );
 		tomcatClient.setRootInstanceName( tomcat.getName());
 		StorageMessageProcessor tomcatProcessor = new StorageMessageProcessor();
 		tomcatClient.openConnection( tomcatProcessor );
 
 		IAgentClient apacheClient = factory.createAgentClient();
 		apacheClient.setApplicationName( app1.getName());
-		apacheClient.setMessageServerIp( URL );
+		apacheClient.setParameters( URL, USER, PWD );
 		apacheClient.setRootInstanceName( apache.getName());
 		StorageMessageProcessor apacheProcessor = new StorageMessageProcessor();
 		apacheClient.openConnection( apacheProcessor );
 
 		IAgentClient mysqlClient = factory.createAgentClient();
 		mysqlClient.setApplicationName( app1.getName());
-		mysqlClient.setMessageServerIp( URL );
+		mysqlClient.setParameters( URL, USER, PWD );
 		mysqlClient.setRootInstanceName( mysql.getName());
 		StorageMessageProcessor mysqlProcessor = new StorageMessageProcessor();
 		mysqlClient.openConnection( mysqlProcessor );
 
 		IAgentClient otherClient = factory.createAgentClient();
 		otherClient.setApplicationName( app2.getName());
-		otherClient.setMessageServerIp( URL );
+		otherClient.setParameters( URL, USER, PWD );
 		otherClient.setRootInstanceName( other.getName());
 		StorageMessageProcessor otherProcessor = new StorageMessageProcessor();
 		otherClient.openConnection( otherProcessor );
@@ -564,14 +566,14 @@ public abstract class MessagingTestUtils {
 
 		IAgentClient instanceClient1 = factory.createAgentClient();
 		instanceClient1.setApplicationName( app.getName());
-		instanceClient1.setMessageServerIp( URL );
+		instanceClient1.setParameters( URL, USER, PWD );
 		instanceClient1.setRootInstanceName( instance1.getName());
 		StorageMessageProcessor instanceProcessor1 = new StorageMessageProcessor();
 		instanceClient1.openConnection( instanceProcessor1 );
 
 		IAgentClient instanceClient2 = factory.createAgentClient();
 		instanceClient2.setApplicationName( app.getName());
-		instanceClient2.setMessageServerIp( URL );
+		instanceClient2.setParameters( URL, USER, PWD );
 		instanceClient2.setRootInstanceName( instance2.getName());
 		StorageMessageProcessor instanceProcessor2 = new StorageMessageProcessor();
 		instanceClient2.openConnection( instanceProcessor2 );

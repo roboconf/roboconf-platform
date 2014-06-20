@@ -16,24 +16,64 @@
 
 package net.roboconf.dm.webapp.listener;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Logger;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.ManagerConfiguration;
 
 /**
  * @author Noël - LIG
  */
 public class ServletContextListenerImpl implements ServletContextListener {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
+
+
 	@Override
 	public void contextInitialized( ServletContextEvent sce ) {
-		// nothing
+
+		// Load and/or create a configuration
+		ManagerConfiguration conf = null;
+		File defaultDir = ManagerConfiguration.findConfigurationDirectory();
+		if( defaultDir.exists()) {
+			try {
+				conf = ManagerConfiguration.loadConfiguration( defaultDir );
+
+			} catch( IOException e ) {
+				this.logger.severe( "Failed to load the default configuration. " + e.getMessage());
+				this.logger.finest( Utils.writeException( e ));
+			}
+		}
+
+		if( conf == null ) {
+			try {
+				conf = ManagerConfiguration.createConfiguration( defaultDir );
+
+			} catch( IOException e ) {
+				this.logger.severe( "Failed to create a configuration. " + e.getMessage());
+				this.logger.finest( Utils.writeException( e ));
+			}
+		}
+
+		// Initialize the DM
+		try {
+			Manager.INSTANCE.initialize( conf );
+
+		} catch( IOException e ) {
+			this.logger.severe( "The DM initialization failed. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
 	@Override
 	public void contextDestroyed( ServletContextEvent sce ) {
-		Manager.INSTANCE.cleanUpAll();
+		Manager.INSTANCE.shutdown();
 	}
 }

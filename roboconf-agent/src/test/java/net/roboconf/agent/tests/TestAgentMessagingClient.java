@@ -17,6 +17,8 @@
 package net.roboconf.agent.tests;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
@@ -26,16 +28,20 @@ import net.roboconf.messaging.messages.Message;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class NilMessagingClient implements IAgentClient {
+public class TestAgentMessagingClient implements IAgentClient {
+
+	public final List<Message> messagesForTheDm = new ArrayList<Message> ();
+
+
 
 	@Override
-	public void setMessageServerIp( String messageServerIp ) {
+	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
 		// nothing
 	}
 
 	@Override
 	public boolean isConnected() {
-		return false;
+		return true;
 	}
 
 	@Override
@@ -93,7 +99,7 @@ public class NilMessagingClient implements IAgentClient {
 
 	@Override
 	public void sendMessageToTheDm( Message message ) throws IOException {
-		// nothing
+		this.messagesForTheDm.add( message );
 	}
 
 	@Override

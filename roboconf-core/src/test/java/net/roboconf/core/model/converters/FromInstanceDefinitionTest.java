@@ -33,6 +33,7 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 
 import org.junit.Test;
 
@@ -319,5 +320,36 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( 5, rootInstances.size());
 		// Should be 6, but there two have the same path.
 		// So, one is overriding the other.
+	}
+
+
+	@Test
+	public void testRuntimeData() throws Exception {
+
+		// The graph
+		Graphs graphs = new Graphs();
+		Component vmComponent = new Component( "vm" ).alias( "VM" ).installerName( "iaas" );
+		graphs.getRootComponents().add( vmComponent );
+
+		// The file to read
+		File f = TestUtils.findTestFile( "/configurations/valid/single-runtime-instance.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		// The assertions
+		Assert.assertEquals( 1, rootInstances.size());
+		Instance instance = rootInstances.iterator().next();
+
+		Assert.assertEquals( "vm 1", instance.getName());
+		Assert.assertEquals( vmComponent, instance.getComponent());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, instance.getStatus());
+		Assert.assertEquals( 3, instance.getData().size());
+		Assert.assertEquals( "127.0.0.1", instance.getData().get( "ip" ));
+		Assert.assertEquals( "mach-ID", instance.getData().get( "machine-id" ));
+		Assert.assertEquals( "something different", instance.getData().get( "whatever" ));
 	}
 }

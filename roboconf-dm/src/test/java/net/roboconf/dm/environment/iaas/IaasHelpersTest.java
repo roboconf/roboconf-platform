@@ -24,11 +24,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.iaas.api.IaasInterface;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,7 +66,7 @@ public class IaasHelpersTest {
 			Utils.deleteFilesRecursively( applicationDirectory );
 
 		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, componentName );
-		f = new File( f, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
+		f = new File( f, Constants.IAAS_PROPERTIES_FILE_NAME );
 
 		OutputStream fos = null;
 		try {

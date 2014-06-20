@@ -13,7 +13,7 @@ instanceof vm {
 }
 
 
-instanceof vm {
+instanceof vm {	# inline comment for a property holder
 	name: vm2;	# the VM name
 	
 	# It should not have any overridden property, but hey, it's a test!

@@ -25,7 +25,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
+import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
@@ -292,7 +292,7 @@ public class InstanceHelpersTest {
 	public void testTryToInsertChildInstance() throws Exception {
 
 		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-2" );
-		LoadResult result = RuntimeModelIo.loadApplication( directory );
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.getApplication());
 		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( result.getLoadErrors()));

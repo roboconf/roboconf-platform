@@ -112,15 +112,20 @@ public class UtilsTest {
 		Assert.assertEquals( "time", result.get( 3 ));
 
 		result = Utils.splitNicely( "once \n\n, upon, a , time \n  ", "\n" );
-		Assert.assertEquals( 2, result.size());
+		Assert.assertEquals( 4, result.size());
 		Assert.assertEquals( "once", result.get( 0 ));
-		Assert.assertEquals( ", upon, a , time", result.get( 1 ));
+		Assert.assertEquals( "", result.get( 1 ).trim());
+		Assert.assertEquals( ", upon, a , time", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 3 ).trim());
 
 		result = Utils.splitNicely( "once $ $a$ $$ time", "$" );
-		Assert.assertEquals( 3, result.size());
+		Assert.assertEquals( 6, result.size());
 		Assert.assertEquals( "once", result.get( 0 ));
-		Assert.assertEquals( "a", result.get( 1 ));
-		Assert.assertEquals( "time", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 1 ).trim());
+		Assert.assertEquals( "a", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 3 ).trim());
+		Assert.assertEquals( "", result.get( 4 ).trim());
+		Assert.assertEquals( "time", result.get( 5 ));
 	}
 
 
@@ -289,6 +294,44 @@ public class UtilsTest {
 
 
 	@Test
+	public void testCloseQuietly_silentInput() throws Exception {
+
+		InputStream in = new InputStream() {
+			@Override
+			public int read() throws IOException {
+				return 0;
+			}
+
+			@Override
+			public void close() throws IOException {
+				throw new IOException();
+			}
+		};
+
+		Utils.closeQuietly( in );
+	}
+
+
+	@Test
+	public void testCloseQuietly_silentOutput() throws Exception {
+
+		OutputStream out = new OutputStream() {
+			@Override
+			public void write( int b ) throws IOException {
+				// nothing
+			}
+
+			@Override
+			public void close() throws IOException {
+				throw new IOException();
+			}
+		};
+
+		Utils.closeQuietly( out );
+	}
+
+
+	@Test
 	public void testWriteException() {
 
 		String msg = "Hello from Roboconf.";
@@ -374,5 +417,93 @@ public class UtilsTest {
 	@Test( expected = IllegalArgumentException.class )
 	public void testStoreDirectoryResourcesAsBytes_illegalArgument_2() throws Exception {
 		Utils.storeDirectoryResourcesAsBytes( this.folder.newFile( "roboconf.txt" ));
+	}
+
+
+	@Test
+	public void testIsAncestorFile() throws Exception {
+
+		File parent = new File( "home/toto/whatever" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, parent ));
+
+		File comp = new File( "home/toto/whatever/" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/./whatever/" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/../toto/whatever/" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whatever/some-file.txt" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whatever/some/dir/some-file.txt" );
+		Assert.assertTrue( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/" );
+		Assert.assertFalse( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whateve" );
+		Assert.assertFalse( Utils.isAncestorFile( parent, comp ));
+
+		comp = new File( "home/toto/whatevereeeeeee" );
+		Assert.assertFalse( Utils.isAncestorFile( parent, comp ));
+	}
+
+
+	@Test
+	public void testCopyDirectory_existingTarget() throws Exception {
+
+		// Create a source
+		File source = this.folder.newFolder();
+		File dir1 = new File( source, "lol/whatever/sub" );
+		Assert.assertTrue( dir1.mkdirs());
+		File dir2 = new File( source, "sub" );
+		Assert.assertTrue( dir2.mkdirs());
+
+		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes( "UTF-8" )), new File( dir1, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes( "UTF-8" )), new File( dir1, "f2" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes( "UTF-8" )), new File( dir1, "f3" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( source, "f" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( dir2, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes( "UTF-8" )), new File( dir2, "f45678" ));
+
+		// Copy
+		File target = this.folder.newFolder();
+		Assert.assertEquals( 0, Utils.listAllFiles( target ).size());
+		Utils.copyDirectory( source, target );
+		Assert.assertEquals( 6, Utils.listAllFiles( target ).size());
+	}
+
+
+	@Test
+	public void testCopyDirectory_inexistingTarget() throws Exception {
+
+		// Create a source
+		File source = this.folder.newFolder();
+		File dir1 = new File( source, "lol/whatever/sub/many/more/" );
+		Assert.assertTrue( dir1.mkdirs());
+		File dir2 = new File( source, "sub" );
+		Assert.assertTrue( dir2.mkdirs());
+
+		Utils.copyStream( new ByteArrayInputStream( ",kklmsdff sdfl sdfkkl".getBytes( "UTF-8" )), new File( dir1, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes( "UTF-8" )), new File( dir1, "f2" ));
+		Utils.copyStream( new ByteArrayInputStream( "sd".getBytes( "UTF-8" )), new File( dir1, "f3" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( source, "f" ));
+
+		Utils.copyStream( new ByteArrayInputStream( "sd\ndsfg".getBytes( "UTF-8" )), new File( dir2, "f1" ));
+		Utils.copyStream( new ByteArrayInputStream( "".getBytes( "UTF-8" )), new File( dir2, "f4" ));
+		Utils.copyStream( new ByteArrayInputStream( "sdf df fg".getBytes( "UTF-8" )), new File( dir2, "f45678" ));
+
+		// Copy
+		File target = new File( this.folder.newFolder(), "some" );
+		Assert.assertFalse( target.exists());
+		Utils.copyDirectory( source, target );
+		Assert.assertTrue( target.exists());
+		Assert.assertEquals( 7, Utils.listAllFiles( target ).size());
 	}
 }

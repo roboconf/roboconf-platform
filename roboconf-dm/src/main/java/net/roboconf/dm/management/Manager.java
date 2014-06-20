@@ -20,20 +20,21 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.actions.ApplicationAction;
-import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
+import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ResourceUtils;
@@ -41,25 +42,15 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.environment.iaas.IaasResolver;
 import net.roboconf.dm.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
-import net.roboconf.dm.management.exceptions.BulkActionException;
-import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
-import net.roboconf.dm.management.exceptions.ImpossibleRestorationException;
-import net.roboconf.dm.management.exceptions.InexistingException;
-import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.persistence.IDmStorage;
-import net.roboconf.dm.persistence.IDmStorage.DmStorageApplicationBean;
-import net.roboconf.dm.persistence.IDmStorage.DmStorageBean;
-import net.roboconf.dm.persistence.IDmStorage.DmStorageRootInstanceBean;
-import net.roboconf.dm.persistence.NoStorage;
-import net.roboconf.dm.utils.PersistenceUtils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
+import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
@@ -80,10 +71,6 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
  * The agents are the most well-placed to manage life cycles and the states
  * of instances. Therefore, the DM does the minimal set of actions on instances.
  * </p>
- * <p>
- * By default, the list of deployed applications and root instances is
- * not persisted. Here is the way the DM should be initialized.
- * </p>
  * <pre>
  * // To use a custom Iaas resolver
  * Manager.INSTANCE.setIaasResolver( ... );
@@ -91,18 +78,14 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
  * // To use a custom messaging client
  * Manager.INSTANCE.setMessagingClientFactory( ... );
  *
- * // Change the message server IP.
- * Manager.INSTANCE.tryToChangeMessageServerIp( ... );
- *
- * // To persist the DM states
- * Manager.INSTANCE.setStorage( ... );
- * // e.g.
- * Manager.INSTANCE.setStorage( new PropertiesFileStorage());
- *
- * // To restore the DM states.
- * Manager.INSTANCE.restoreManagerState();
+ * // Initialize the DM
+ * Manager.INSTANCE.initialize( ... );
  *
  * // Only then, you can load new applications.
+ * ..
+ *
+ * // Shutdown the manager
+ * Manager.INSTANCE.shutdown();
  * </pre>
  *
  * @author Noël - LIG
@@ -112,16 +95,16 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
 public final class Manager {
 
 	public static final Manager INSTANCE = new Manager();
+	private static final long TIMER_PERIOD = 6000;
 
 	private final Map<String,ManagedApplication> appNameToManagedApplication;
 	private final Logger logger;
-
 	private MessageServerClientFactory factory;
-	private IDmStorage storage;
 
+	Timer timer;
+	ManagerConfiguration configuration;
 	IaasResolver iaasResolver;
 	IDmClient messagingClient;
-	String messageServerIp;
 
 
 
@@ -129,18 +112,131 @@ public final class Manager {
 	 * Constructor.
 	 */
 	private Manager() {
-		this.appNameToManagedApplication = new HashMap<String,ManagedApplication> ();
+		this.appNameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
 		this.logger = Logger.getLogger( getClass().getName());
 
 		this.factory = new MessageServerClientFactory();
-		this.storage = new NoStorage();
 		this.iaasResolver = new IaasResolver();
-		this.messagingClient = this.factory.createDmClient();
 	}
 
 
 	/**
-	 * @return the appNameToManagedApplication
+	 * Initializes the DM.
+	 * <p>
+	 * This method is in charge of connecting to the messaging server.
+	 * It also handles the restoration of a previous state.
+	 * </p>
+	 *
+	 * @param configuration the manager's configuration
+	 * @throws IOException if an error occurs with the messaging
+	 */
+	public void initialize( ManagerConfiguration configuration ) throws IOException {
+
+		if( this.configuration != null )
+			throw new IOException( "The Deployment Manager was already initialized." );
+
+		// Load the configuration and initialize the messaging
+		this.configuration = configuration;
+		this.messagingClient = this.factory.createDmClient();
+		this.logger.info( "Setting the message server IP to " + configuration.getMessageServerIp());
+		this.messagingClient.setParameters(
+				configuration.getMessageServerIp(),
+				configuration.getMessageServerUsername(),
+				configuration.getMessageServerPassword());
+
+		this.messagingClient.openConnection( new DmMessageProcessor());
+
+		// Restore applications
+		for( File dir : configuration.findApplicationDirectories()) {
+			try {
+				loadNewApplication( dir );
+
+			} catch( AlreadyExistingException e ) {
+				this.logger.severe( "Cannot restore application in " + dir + " (already existing)." );
+				this.logger.finest( Utils.writeException( e ));
+
+			} catch( InvalidApplicationException e ) {
+				this.logger.severe( "Cannot restore application in " + dir + " (invalid application)." );
+				this.logger.finest( Utils.writeException( e ));
+			}
+		}
+
+		// Restore instances
+		for( ManagedApplication ma : this.appNameToManagedApplication.values()) {
+
+			// Instance definition
+			InstancesLoadResult ilr = configuration.restoreInstances( ma );
+			try {
+				checkErrors( ilr.getLoadErrors());
+				if( ilr.getRootInstances().isEmpty())
+					continue;
+
+				ma.getApplication().getRootInstances().clear();
+				ma.getApplication().getRootInstances().addAll( ilr.getRootInstances());
+
+			} catch( InvalidApplicationException e ) {
+				this.logger.severe( "Cannot restore instances for application " + ma.getName() + " (errors were found)." );
+				this.logger.finest( Utils.writeException( e ));
+			}
+
+			// States
+			for( Instance rootInstance : ma.getApplication().getRootInstances())
+				this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdInstanceRestore());
+		}
+
+		// Start the timers
+		this.timer = new Timer( "Roboconf's Management Timer", true );
+		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.messagingClient ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask(), 0, Constants.HEARTBEAT_PERIOD );
+	}
+
+
+	/**
+	 * Saves the configuration (instances).
+	 * @param ma a non-null managed application
+	 */
+	public void saveConfiguration( ManagedApplication ma ) {
+		if( this.configuration != null )
+			this.configuration.saveInstances( ma );
+	}
+
+
+	/**
+	 * Shutdowns the manager.
+	 * <p>
+	 * This method is idem-potent.
+	 * </p>
+	 */
+	public void shutdown() {
+
+		if( this.timer != null )
+			this.timer.cancel();
+
+		this.logger.info( "Cleaning up all the resources (connections, listeners, etc)." );
+		try {
+			if( this.messagingClient != null
+					&& this.messagingClient.isConnected())
+				this.messagingClient.closeConnection();
+
+		} catch( IOException e ) {
+			this.logger.severe( e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
+
+		if( this.configuration != null ) {
+			for( ManagedApplication ma : this.appNameToManagedApplication.values())
+				saveConfiguration( ma );
+		}
+
+		this.appNameToManagedApplication.clear();
+		this.configuration = null;
+		this.timer = null;
+		this.messagingClient = null;
+	}
+
+
+	/**
+	 * @return a non-null map (key = application name, value = managed application)
 	 */
 	public Map<String,ManagedApplication> getAppNameToManagedApplication() {
 		return this.appNameToManagedApplication;
@@ -148,47 +244,10 @@ public final class Manager {
 
 
 	/**
-	 * Configures the messaging client with a new message server IP.
-	 * <p>
-	 * Such a change is possible only if it was never set,
-	 * or if there is no application registered.
-	 * </p>
-	 *
-	 * @param messageServerIp the message Server IP to set
-	 * @return true if the change was made, false otherwise
-	 * @throws IOException if a connection could not be established
+	 * @return the messagingClient (for tests only)
 	 */
-	public boolean tryToChangeMessageServerIp( String messageServerIp ) throws IOException {
-
-		boolean canChange = messageServerIp == null
-				|| this.appNameToManagedApplication.isEmpty();
-
-		if( canChange ) {
-			this.messageServerIp = messageServerIp;
-
-			if( this.messagingClient.isConnected()) {
-				this.messagingClient.closeConnection();
-				this.messagingClient = this.factory.createDmClient();
-			}
-
-			this.logger.info( "Changing the message server IP to " + messageServerIp );
-			this.messagingClient.setMessageServerIp( messageServerIp );
-			this.messagingClient.openConnection( new DmMessageProcessor());
-
-		} else {
-			this.logger.info( "Discarding a request to change the message server IP to " + messageServerIp );
-		}
-
-		return canChange;
-	}
-
-
-	/**
-	 * @return true if the DM is connected to the messaging server, false otherwise
-	 */
-	public boolean isConnectedToTheMessagingServer() {
-		return this.messagingClient != null
-				&& this.messagingClient.isConnected();
+	public IDmClient getMessagingClient() {
+		return this.messagingClient;
 	}
 
 
@@ -226,383 +285,60 @@ public final class Manager {
 	 * @return the managed application that was created
 	 * @throws AlreadyExistingException if the application already exists
 	 * @throws InvalidApplicationException if the application contains critical errors
-	 * @throws IOException if the messaging could;not be initialized
-	 * @throws DmWasNotInitializedException if the DM was not initialized
+	 * @throws IOException if the messaging could not be initialized
 	 */
 	public ManagedApplication loadNewApplication( File applicationFilesDirectory )
-	throws AlreadyExistingException, InvalidApplicationException, IOException, DmWasNotInitializedException {
+	throws AlreadyExistingException, InvalidApplicationException, IOException {
 
-		if( ! isConnectedToTheMessagingServer())
-			throw new DmWasNotInitializedException();
+		this.logger.fine( "Loading application from " + applicationFilesDirectory + "..." );
+		ApplicationLoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
+		checkErrors( lr.getLoadErrors());
 
-		ManagedApplication ma = load( applicationFilesDirectory );
-		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values(), ma );
-		this.storage.saveManagerState( managerState );
+		Application application = lr.getApplication();
+		if( null != findApplicationByName( application.getName()))
+			throw new AlreadyExistingException( application.getName());
 
+		File targetDirectory = this.configuration.findApplicationdirectory( application.getName());
+		if( ! applicationFilesDirectory.equals( targetDirectory )) {
+			if( Utils.isAncestorFile( targetDirectory, applicationFilesDirectory ))
+				throw new IOException( "Cannot move " + applicationFilesDirectory + " in Roboconf's work directory. Already a child directory." );
+			else
+				Utils.copyDirectory( applicationFilesDirectory, targetDirectory );
+		}
+
+		ManagedApplication ma = new ManagedApplication( application, targetDirectory );
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
-		ma.getLogger().fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
+		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 
 		return ma;
 	}
 
 
 	/**
-	 * Retrieves the manager's state.
-	 * <p>
-	 * This operation must be called before loading manually an application.
-	 * When an application's state is restored, and that this
-	 * restoration encounters an error, this application is skipped and a log entry is created.
-	 * </p>
-	 * <p>
-	 * If the saved IP address for the messaging server is valid, there is no need to
-	 * invoke {@link #tryToChangeMessageServerIp(String)}. It will be restored automatically.
-	 * Otherwise, if it has changed, then {@link #tryToChangeMessageServerIp(String)} should be invoked
-	 * before this method.
-	 * </p>
-	 *
-	 * @throws IOException if the manager's state could not be read
-	 * @throws ImpossibleRestorationException if the restoration cannot be performed
-	 */
-	public void restoreManagerState() throws IOException, ImpossibleRestorationException {
-
-		// Do nothing if application where already registered
-		if( ! this.appNameToManagedApplication.isEmpty())
-			throw new ImpossibleRestorationException();
-
-		DmStorageBean managerState = this.storage.restoreManagerState();
-		for( DmStorageApplicationBean app : managerState.getApplications()) {
-
-			// Load the application
-			if( Utils.isEmptyOrWhitespaces( app.getApplicationDirectoryPath())) {
-				this.logger.warning( "Skipping application " + app.getApplicationName() + ": no directory was saved." );
-				continue;
-			}
-
-			File dir = new File( app.getApplicationDirectoryPath());
-			if( ! dir.exists() || ! dir.isDirectory()) {
-				this.logger.warning( "Skipping application " + app.getApplicationName() + ": the directory " + dir.getAbsolutePath() + " does not exist." );
-				continue;
-			}
-
-			ManagedApplication ma;
-			try {
-				ma = load( dir );
-
-			} catch( AlreadyExistingException e ) {
-				this.logger.warning( "Skipping application " + app.getApplicationName() + ": it was already loaded." );
-				this.logger.finest( Utils.writeException( e ));
-				continue;
-
-			} catch( InvalidApplicationException e ) {
-				this.logger.warning( "Skipping application " + app.getApplicationName() + ": invalid application." );
-				this.logger.finest( Utils.writeException( e ));
-				continue;
-			}
-
-			// Update the instances
-			for( DmStorageRootInstanceBean root : app.getRootInstances()) {
-				Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/" + root.getRootInstanceName());
-				if( rootInstance == null ) {
-					Component rootComponent = ComponentHelpers.findComponent( ma.getApplication().getGraphs(), root.getComponentName());
-					if( rootComponent == null ) {
-						this.logger.warning( "Skipping application " + app.getApplicationName() + ": instance " + root.getRootInstanceName() + " could not be resolved." );
-						continue;
-					}
-
-					rootInstance = new Instance( root.getRootInstanceName()).component( rootComponent );
-					ma.getApplication().getRootInstances().add( rootInstance );
-				}
-
-				if( InstanceStatus.wichStatus( root.getStatus()) != InstanceStatus.NOT_DEPLOYED ) {
-					rootInstance.setStatus( InstanceStatus.RESTORING );
-					rootInstance.getData().put( Instance.IP_ADDRESS, root.getIpAddress());
-					rootInstance.getData().put( Instance.MACHINE_ID, root.getMachineId());
-				}
-			}
-
-			// So far, so good...
-			this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
-			ma.getLogger().fine( "Application " + ma.getApplication().getName() + " was successfully loaded for restoration. Remote states still have to be retrieved." );
-		}
-
-		// Send messages to the agents to get their model.
-		if( this.storage.requiresAgentContact()) {
-			for( ManagedApplication m : this.appNameToManagedApplication.values()) {
-				for( Instance rootInstance : m.getApplication().getRootInstances()) {
-					if( rootInstance.getStatus() == InstanceStatus.RESTORING )
-						this.messagingClient.sendMessageToAgent( m.getApplication(), rootInstance, new MsgCmdInstanceRestore());
-				}
-			}
-		}
-	}
-
-
-	/**
-	 * Saves the manager's state.
-	 */
-	public void saveManagerState() {
-
-		DmStorageBean managerState = PersistenceUtils.retrieveManagerState( this.appNameToManagedApplication.values());
-		try {
-			this.storage.saveManagerState( managerState );
-
-		} catch( IOException e ) {
-			this.logger.severe( "The deployment manager's state could not be saved." );
-			this.logger.finest( Utils.writeException( e ));
-		}
-	}
-
-
-	/**
-	 * Sends the model to an agent.
-	 * @param application the application associated with this agent
-	 * @param rootInstance the root instance associated with this agent
-	 * @param message the message to send (with the model)
-	 * @throws IOException if the message could not be sent
-	 */
-	public void sendModelToAgent( Application application, Instance rootInstance, MsgCmdInstanceAdd message )
-	throws IOException {
-
-		if( isConnectedToTheMessagingServer())
-			this.messagingClient.sendMessageToAgent( application, rootInstance, message );
-		else
-			this.logger.warning( "The DM cannot send the model to the agent. It is not connected to the messaging server." );
-	}
-
-
-	/**
 	 * Deletes an application.
-	 * @param applicationName an application name
-	 * @throws InexistingException if such an application does not exist
+	 * @param ma the managed application
 	 * @throws UnauthorizedActionException if parts of the application are still running
-	 * @throws DmWasNotInitializedException if the DM was not initialized
+	 * @throws IOException
 	 */
-	public void deleteApplication( String applicationName )
-	throws InexistingException, UnauthorizedActionException, DmWasNotInitializedException {
-
-		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
-		if( ma == null )
-			throw new InexistingException( applicationName );
+	public void deleteApplication( ManagedApplication ma ) throws UnauthorizedActionException, IOException {
 
 		// Check we can do this
+		String applicationName = ma.getApplication().getName();
 		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 			if( rootInstance.getStatus() != InstanceStatus.NOT_DEPLOYED )
 				throw new UnauthorizedActionException( applicationName + " contains instances that are still deployed." );
 		}
 
-		// Are we connected?
-		if( ! isConnectedToTheMessagingServer())
-			throw new DmWasNotInitializedException();
-
 		// If yes, do it
-		ma.getLogger().fine( "Deleting application " + applicationName + "." );
-		try {
-			this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
-			Utils.deleteFilesRecursively( ma.getApplicationFilesDirectory());
+		this.logger.fine( "Deleting application " + applicationName + "..." );
+		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
+		Utils.deleteFilesRecursively( ma.getApplicationFilesDirectory());
+		this.configuration.deleteInstancesFile( ma.getName());
 
-		} catch( IOException e ) {
-			ma.getLogger().warning( "Application resources failed to be completely deleted. " + e.getMessage());
-			ma.getLogger().finest( Utils.writeException( e ));
-		}
-
-		cleanUp( ma );
-		cleanMessagingServer( ma );
+		this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
 		this.appNameToManagedApplication.remove( applicationName );
-		saveManagerState();
-	}
-
-
-
-	/**
-	 * Performs an action on the instance of an application.
-	 * <p>
-	 * Most of the actions result in the sending of messages to the agents.
-	 * </p>
-	 *
-	 * @param applicationName the application name (not null)
-	 * @param actionAS the action to perform (see {@link ApplicationAction}).
-	 * @param instancePath the instance path (null to apply to all the instances)
-	 * @param applyToAllChildren if instancePath is not null, then true to start all the children too, false for this instance only
-	 * @throws InexistingException if the application or the instance does not exist
-	 * @throws InvalidActionException if the action is invalid
-	 * @throws UnauthorizedActionException if an action could not be performed
-	 * @throws BulkActionException if an error occurred while terminating machines
-	 * @throws DmWasNotInitializedException if the DM was not initialized
-	 */
-	public void perform( String applicationName, String actionAS, String instancePath, boolean applyToAllChildren )
-	throws InexistingException, InvalidActionException, UnauthorizedActionException, BulkActionException, DmWasNotInitializedException {
-
-		// Check the parameters
-		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
-		if( ma == null )
-			throw new InexistingException( applicationName );
-
-		ApplicationAction action = ApplicationAction.whichAction( actionAS );
-		if( action == null )
-			throw new InvalidActionException( actionAS );
-
-		if( instancePath == null && ! applyToAllChildren )
-			throw new InvalidActionException( "specify an instance path or apply to all the children." );
-
-		if( ! isConnectedToTheMessagingServer())
-			throw new DmWasNotInitializedException();
-
-		// Find the instances to work on
-		// Undeploy and stop are automatically applied to children on the agent
-		if( action == ApplicationAction.undeploy
-				|| action == ApplicationAction.stop )
-			applyToAllChildren = false;
-
-		List<Instance> instances = findInstancesToProcess( ma.getApplication(), instancePath, applyToAllChildren );
-
-		// Performing the actions only means we send messages to the agent.
-		switch( action ) {
-		case deploy:
-			deploy( ma, instances );
-			break;
-
-		case undeploy:
-			undeploy( ma, instances );
-			break;
-
-		case remove:
-			remove( ma, instances );
-			break;
-
-		case start:
-			start( ma, instances );
-			break;
-
-		case stop:
-			stop( ma, instances );
-			break;
-
-		default:
-			throw new InvalidActionException( actionAS );
-		}
-
-		// Log an entry
-		StringBuilder sb = new StringBuilder();
-		sb.append( "Action " );
-		sb.append( actionAS );
-		sb.append( " was successfully transmitted to " );
-		if( instancePath == null ) {
-			sb.append( "all the instances" );
-
-		} else {
-			sb.append( instancePath );
-			if( applyToAllChildren )
-				sb.append( " and its children" );
-		}
-
-		sb.append( " in the application " );
-		sb.append( applicationName );
-		sb.append( "." );
-		ma.getLogger().fine( sb.toString());
-	}
-
-
-	/**
-	 * Adds an instance.
-	 * @param applicationName the application name
-	 * @param parentInstancePath the path of the instance to remove
-	 * @param instance the instance to insert
-	 * @throws InexistingException if the application or the parent instance does not exist
-	 * @throws ImpossibleInsertionException if the instance could not be added
-	 */
-	public void addInstance( String applicationName, String parentInstancePath, Instance instance )
-	throws InexistingException, ImpossibleInsertionException {
-
-		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
-		if( ma == null )
-			throw new InexistingException( applicationName );
-
-		Instance parentInstance = null;
-		if( parentInstancePath != null
-				&& ( parentInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), parentInstancePath )) == null )
-			throw new InexistingException( parentInstancePath );
-
-		// 1. Insert the instance in the model first.
-		// 2. Only then, propagate the information.
-		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
-			throw new ImpossibleInsertionException( instance.getName());
-
-		saveManagerState();
-		ma.getLogger().fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + applicationName + "." );
-
-		// FIXME: hey! We do not propagate the model to the agent???
-	}
-
-
-	/**
-	 * Shutdowns an application.
-	 * <p>
-	 * It means Roboconf deletes every machine it
-	 * created for this application.
-	 * </p>
-	 *
-	 * @param applicationName the application name
-	 * @throws InexistingException if the application or the parent instance does not exist
-	 * @throws BulkActionException if an error occurred while terminating machines
-	 */
-	public void shutdownApplication( String applicationName ) throws InexistingException, BulkActionException {
-
-		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
-		if( ma == null )
-			throw new InexistingException( applicationName );
-
-		// Undeploy everything correctly so that we keep the message server clean.
-		// Also, this is useful for deployments on machines (not just on VM).
-		BulkActionException bulkException = new BulkActionException( false );
-		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-			if( rootInstance.getStatus() == InstanceStatus.NOT_DEPLOYED )
-				continue;
-
-			// Undeploy things (useful when the root instance was not created by the DM).
-			// Example: device, existing machine, etc.
-			try {
-				undeploy( ma, Arrays.asList( rootInstance ));
-
-			} catch( BulkActionException e ) {
-				bulkException.getInstancesToException().putAll( e.getInstancesToException());
-			}
-
-			// Force the termination
-			terminateMachine( applicationName, rootInstance );
-		}
-
-		if( ! bulkException.getInstancesToException().isEmpty()) {
-			ma.getLogger().severe( bulkException.getLogMessage( false ));
-			ma.getLogger().finest( bulkException.getLogMessage( true ));
-			throw bulkException;
-		}
-
-		ma.getLogger().fine( "Application " + applicationName + " was successfully shutdown." );
-	}
-
-
-	/**
-	 * Cleans all the connections and listeners.
-	 * <p>
-	 * This method should be called when the DM is shutdown or when it should be reinitialized.
-	 * </p>
-	 */
-	public void cleanUpAll() {
-
-		this.logger.info( "Cleaning up all the resources (connections, listeners, etc)." );
-		for( ManagedApplication ma : this.appNameToManagedApplication.values()) {
-			cleanUp( ma );
-		}
-
-		try {
-			this.messagingClient.closeConnection();
-			this.messageServerIp = null;
-
-		} catch( IOException e ) {
-			this.logger.severe( e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
-		}
+		this.logger.fine( "Application " + applicationName + " was successfully deleted." );
 	}
 
 
@@ -616,279 +352,389 @@ public final class Manager {
 
 
 	/**
-	 * Sets the storage handler to use.
-	 * @param storage a non-null storage handler
-	 */
-	public void setStorage( IDmStorage storage ) {
-		this.storage = storage;
-	}
-
-
-	/**
 	 * To use for tests only.
 	 * @param factory the factory for messaging clients
 	 */
 	public void setMessagingClientFactory( MessageServerClientFactory factory ) {
 		this.factory = factory;
-		this.messagingClient = factory.createDmClient();
 	}
 
 
 	/**
-	 * Terminates a VM.
-	 * @param applicationName the application name
-	 * @param rootInstance the root instance associated with a machine
+	 * Adds an instance.
+	 * @param ma the managed application
+	 * @param parentInstance the parent instance
+	 * @param instance the instance to insert (not null)
+	 * @throws ImpossibleInsertionException if the instance could not be added
 	 */
-	public void terminateMachine( String applicationName, Instance rootInstance ) {
+	public void addInstance( ManagedApplication ma, Instance parentInstance, Instance instance )
+	throws ImpossibleInsertionException {
 
-		try {
-			ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
-			if( ma == null ) {
-				this.logger.severe( "Machine " + rootInstance.getName() + " failed to be resolved for application " + applicationName + "." );
+		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
+			throw new ImpossibleInsertionException( instance.getName());
 
-			} else {
+		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + ma.getName() + "." );
 
-				// Terminate the machine
-				this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted." );
-				IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
-				String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
-				if( machineId != null )
-					iaasInterface.terminateVM( machineId );
+		// Store the message because we want to make sure the message is not lost
+		ma.storeAwaitingMessage( instance, new MsgCmdInstanceAdd( parentInstance, instance ));
+		saveConfiguration( ma );
+	}
 
-				this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted." );
-				for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
-					i.setStatus( InstanceStatus.NOT_DEPLOYED );
-					// DM won't send old imports upon restart...
-					i.getImports().clear();
-				}
-			}
 
-		} catch( IaasException e ) {
-			rootInstance.setStatus( InstanceStatus.PROBLEM );
-			this.logger.severe( "Machine " + rootInstance.getName() + " could not be deleted. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+	/**
+	 * Removes an instance.
+	 * @param ma the managed application
+	 * @param instance the instance to remove (not null)
+	 * @throws UnauthorizedActionException if we try to remove an instance that seems to be running
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	public void removeInstance( ManagedApplication ma, Instance instance ) throws UnauthorizedActionException, IOException {
+
+		for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
+			if( i.getStatus() != InstanceStatus.NOT_DEPLOYED )
+				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed in " + ma.getName() + "." );
 		}
 
-		saveManagerState();
+		// Whatever is the state of the agent, we try to send a message.
+		MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( instance );
+		send( ma, message, instance );
+
+		if( instance.getParent() == null )
+			ma.getApplication().getRootInstances().remove( instance );
+		else
+			instance.getParent().getChildren().remove( instance );
+
+		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
+		saveConfiguration( ma );
 	}
 
 
 	/**
-	 * Lists the instances to process.
-	 * @param app the application
-	 * @param instancePath the instance path root (can be null if applyToChildren is false)
-	 * @param applyToAllChildren true to include children
-	 * @return a non-null list of instances
-	 * @throws InexistingException if the instance path is not null and does not match any instance
+	 * Deploys an instance.
+	 * @param ma the managed application
+	 * @param instance the instance to deploy (not null)
+	 * @throws IOException if an error occurred with the messaging
 	 */
-	List<Instance> findInstancesToProcess( Application app, String instancePath, boolean applyToAllChildren )
-	throws InexistingException {
+	public void deploy( ManagedApplication ma, Instance instance ) throws IOException {
 
-		List<Instance> instances = new ArrayList<Instance> ();
-		Instance initialInstance = null;
-		if( instancePath == null ) {
-			instances.addAll( InstanceHelpers.getAllInstances( app ));
+		String instancePath = InstanceHelpers.computeInstancePath( instance );
+		this.logger.fine( "Deploying " + instancePath + " in " + ma.getName() + "..." );
+		if( instance.getParent() != null ) {
 
-		} else if(( initialInstance = InstanceHelpers.findInstanceByPath( app, instancePath )) == null ) {
-			throw new InexistingException( instancePath );
-
-		} else if( applyToAllChildren ) {
-			instances.addAll( InstanceHelpers.buildHierarchicalList( initialInstance ));
+			Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
+			MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( instance, instanceResources );
+			send( ma, message, instance );
+			this.logger.fine( "A message was (or will be) sent to the agent to deploy " + instancePath + " in " + ma.getName() + "." );
 
 		} else {
-			instances.add( initialInstance );
+			this.logger.fine( "Deploy action for " + instancePath + " is cancelled in " + ma.getName() + "." );
 		}
-
-		return instances;
 	}
 
 
-	void cleanMessagingServer( ManagedApplication ma ) {
+	/**
+	 * Starts an instance.
+	 * @param ma the managed application
+	 * @param instance the instance to start (not null)
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	public void start( ManagedApplication ma, Instance instance ) throws IOException {
+
+		String instancePath = InstanceHelpers.computeInstancePath( instance );
+		this.logger.fine( "Starting " + instancePath + " in " + ma.getName() + "..." );
+		if( instance.getParent() != null ) {
+			MsgCmdInstanceStart message = new MsgCmdInstanceStart( instance );
+			send( ma, message, instance );
+			this.logger.fine( "A message was (or will be) sent to the agent to start " + instancePath + " in " + ma.getName() + "." );
+
+		} else {
+			this.logger.fine( "Start action for " + instancePath + " is cancelled in " + ma.getName() + "." );
+		}
+	}
+
+
+	/**
+	 * Stops an instance.
+	 * @param ma the managed application
+	 * @param instance the instance to stop (not null)
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	public void stop( ManagedApplication ma, Instance instance ) throws IOException {
+
+		String instancePath = InstanceHelpers.computeInstancePath( instance );
+		this.logger.fine( "Stopping " + instancePath + " in " + ma.getName() + "..." );
+		if( instance.getParent() != null ) {
+			MsgCmdInstanceStop message = new MsgCmdInstanceStop( instance );
+			send( ma, message, instance );
+			this.logger.fine( "A message was (or will be) sent to the agent to stop " + instancePath + " in " + ma.getName() + "." );
+
+		} else {
+			this.logger.fine( "Stop action for " + instancePath + " is cancelled in " + ma.getName() + "." );
+		}
+	}
+
+
+	/**
+	 * Undeploys an instance.
+	 * @param ma the managed application
+	 * @param instance the instance to undeploy (not null)
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	public void undeploy( ManagedApplication ma, Instance instance ) throws IOException {
+
+		String instancePath = InstanceHelpers.computeInstancePath( instance );
+		this.logger.fine( "Undeploying " + instancePath + " in " + ma.getName() + "..." );
+		if( instance.getParent() != null ) {
+			MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( instance );
+			send( ma, message, instance );
+			this.logger.fine( "A message was (or will be) sent to the agent to undeploy " + instancePath + " in " + ma.getName() + "." );
+
+		} else {
+			this.logger.fine( "Undeploy action for " + instancePath + " is cancelled in " + ma.getName() + "." );
+		}
+	}
+
+
+	/**
+	 * Deploys a root instance.
+	 * @param ma the managed application
+	 * @param rootInstance the instance to deploy (not null)
+	 * @throws IOException if an error occurred with the messaging
+	 * @throws IaasException if an error occurred with the IaaS
+	 */
+	public void deployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
+
+		this.logger.fine( "Deploying rootinstance " + rootInstance.getName() + " in " + ma.getName() + "..." );
+		if( rootInstance.getParent() != null ) {
+			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
+			return;
+		}
+
+		// If the VM creation was already requested, then its machine ID has already been set.
+		// It does not mean the VM is already created, it may take some time.
+		String machineId = rootInstance.getData().get( Instance.MACHINE_ID );
+		if( machineId != null ) {
+			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
+			return;
+		}
 
 		try {
-			this.logger.info( "Cleaning the messaging server for application " + ma.getApplication().getName());
-			if( this.messagingClient.isConnected())
-				this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
+			rootInstance.setStatus( InstanceStatus.DEPLOYING );
+			MsgCmdInstanceAdd msg = new MsgCmdInstanceAdd((String) null, rootInstance );
+			send( ma, msg, rootInstance );
 
-		} catch( IOException e ) {
-			ma.getLogger().warning( "Messaging server artifacts could not be cleaned for " + ma.getApplication().getName() + ". " + e.getMessage());
-			ma.getLogger().finest( Utils.writeException( e ));
+			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
+			machineId = iaasInterface.createVM(
+					this.configuration.getMessageServerIp(),
+					this.configuration.getMessageServerUsername(),
+					this.configuration.getMessageServerPassword(),
+					rootInstance.getName(),
+					ma.getApplication().getName());
+
+			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
+
+		} catch( IaasException e ) {
+			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+
+			rootInstance.setStatus( InstanceStatus.PROBLEM );
+			throw e;
+
+		} finally {
+			saveConfiguration( ma );
 		}
 	}
 
 
-	void cleanUp( ManagedApplication ma ) {
+	/**
+	 * Undeploys a root instance.
+	 * @param ma the managed application
+	 * @param rootInstance the instance to undeploy (not null)
+	 * @throws IOException if an error occurred with the messaging
+	 * @throws IaasException if an error occurred with the IaaS
+	 */
+	public void undeployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
 
-		MachineMonitor monitor = ma != null ? ma.getMonitor() : null;
-		if( monitor != null )
-			monitor.stopTimer();
-	}
-
-
-	private void remove( ManagedApplication ma, List<Instance> instances ) throws UnauthorizedActionException, BulkActionException {
-
-		for( Instance instance : instances ) {
-			if( instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed." );
+		this.logger.fine( "Undeploying rootinstance " + rootInstance.getName() + " in " + ma.getName() + "..." );
+		if( rootInstance.getParent() != null ) {
+			this.logger.fine( "Undeploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
+			return;
 		}
 
-		BulkActionException bulkException = new BulkActionException( false );
-		for( Instance instance : instances ) {
+		try {
+			// Terminate the machine
+			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
+			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
+			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
+			if( machineId != null )
+				iaasInterface.terminateVM( machineId );
 
-			if( instance.getParent() != null ) {
-				try {
-					MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( InstanceHelpers.computeInstancePath( instance ));
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
-
-					// The instance will be removed once the agent has indicated it was removed.
-					// See DmMessageProcessor.
-
-				} catch( IOException e ) {
-					// The instance does not have any problem, just keep trace of the exception
-					bulkException.getInstancesToException().put( instance, e );
-				}
-
-			} else {
-				ma.getApplication().getRootInstances().remove( instance );
+			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
+			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
+				i.setStatus( InstanceStatus.NOT_DEPLOYED );
+				// DM won't send old imports upon restart...
+				i.getImports().clear();
 			}
-		}
 
-		if( ! bulkException.getInstancesToException().isEmpty())
-			throw bulkException;
+			// Remove useless data for the configuration backup
+			rootInstance.getData().clear();
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
+
+		} catch( IaasException e ) {
+			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+
+			rootInstance.setStatus( InstanceStatus.PROBLEM );
+			throw e;
+
+		} finally {
+			saveConfiguration( ma );
+		}
 	}
 
 
+	/**
+	 * Deploys and starts all the instances of an application.
+	 * @param ma an application
+	 * @param instance the instance from which we deploy and start (can be null)
+	 * <p>
+	 * This instance and all its children will be deployed and started.
+	 * If null, then all the application instances are considered.
+	 * </p>
+	 *
+	 * @throws IaasException if a problem occurred with the IaaS
+	 * @throws IOException if a problem occurred with the messaging
+	 */
+	public void deployAndStartAll( ManagedApplication ma, Instance instance ) throws IaasException, IOException {
 
-	private void start( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
+		Collection<Instance> initialInstances;
+		if( instance != null )
+			initialInstances = Arrays.asList( instance );
+		else
+			initialInstances = ma.getApplication().getRootInstances();
 
-		BulkActionException bulkException = new BulkActionException( false );
-		for( Instance instance : instances ) {
-			if( instance.getParent() == null )
-				continue;
-
-			try {
-				MsgCmdInstanceStart message = new MsgCmdInstanceStart( InstanceHelpers.computeInstancePath( instance ));
-				this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
-
-			} catch( IOException e ) {
-				// The instance does not have any problem, just keep trace of the exception
-				bulkException.getInstancesToException().put( instance, e );
-			}
-		}
-
-		if( ! bulkException.getInstancesToException().isEmpty())
-			throw bulkException;
-	}
-
-
-
-	private void stop( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
-
-		BulkActionException bulkException = new BulkActionException( false );
-		for( Instance instance : instances ) {
-			if( instance.getParent() == null )
-				continue;
-
-			try {
-				MsgCmdInstanceStop message = new MsgCmdInstanceStop( InstanceHelpers.computeInstancePath( instance ));
-				this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
-
-			} catch( IOException e ) {
-				// The instance does not have any problem, just keep trace of the exception
-				bulkException.getInstancesToException().put( instance, e );
-			}
-		}
-
-		if( ! bulkException.getInstancesToException().isEmpty())
-			throw bulkException;
-	}
-
-
-
-	private void undeploy( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
-
-		BulkActionException bulkException = new BulkActionException( false );
-		for( Instance instance : instances ) {
-			try {
-				if( instance.getParent() == null ) {
-					terminateMachine( ma.getApplication().getName(), instance );
+		for( Instance initialInstance : initialInstances ) {
+			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance )) {
+				if( i.getParent() == null ) {
+					deployRoot( ma, i );
 
 				} else {
-					MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( InstanceHelpers.computeInstancePath( instance ));
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
+					deploy( ma, i );
+					start( ma, i );
 				}
-
-			} catch( IOException e ) {
-				// The instance does not have any problem, just keep trace of the exception
-				bulkException.getInstancesToException().put( instance, e );
 			}
 		}
-
-		if( ! bulkException.getInstancesToException().isEmpty())
-			throw bulkException;
 	}
 
 
+	/**
+	 * Stops all the started instances of an application.
+	 * @param ma an application
+	 * @param instance the instance from which we deploy and start (can be null)
+	 * <p>
+	 * This instance and all its children will be deployed and started.
+	 * If null, then all the application instances are considered.
+	 * </p>
+	 *
+	 * @throws IOException if a problem occurred with the messaging
+	 */
+	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException {
 
-	private void deploy( ManagedApplication ma, List<Instance> instances ) throws BulkActionException {
+		Collection<Instance> initialInstances;
+		if( instance != null )
+			initialInstances = Arrays.asList( instance );
+		else
+			initialInstances = ma.getApplication().getRootInstances();
 
-		BulkActionException bulkException = new BulkActionException( true );
-		for( Instance instance : instances ) {
-			if( instance.getParent() == null ) {
+		// We do not need to stop all the instances, just the first children
+		for( Instance initialInstance : initialInstances ) {
+			if( initialInstance.getParent() != null )
+				stop( ma, initialInstance );
+			else for( Instance i : initialInstance.getChildren())
+				stop( ma, i );
+		}
+	}
+
+
+	/**
+	 * Undeploys all the instances of an application.
+	 * @param ma an application
+	 * @param instance the instance from which we deploy and start (can be null)
+	 * <p>
+	 * This instance and all its children will be deployed and started.
+	 * If null, then all the application instances are considered.
+	 * </p>
+	 *
+	 * @throws IOException if a problem occurred with the messaging
+	 * @throws IaasException if a problem occurred with the IaaS
+	 */
+	public void undeployAll( ManagedApplication ma, Instance instance ) throws IOException, IaasException {
+
+		Collection<Instance> initialInstances;
+		if( instance != null )
+			initialInstances = Arrays.asList( instance );
+		else
+			initialInstances = ma.getApplication().getRootInstances();
+
+		// We do not need to undeploy all the instances, just the first instance
+		for( Instance initialInstance : initialInstances ) {
+			if( initialInstance.getParent() != null )
+				undeploy( ma, initialInstance );
+			else
+				undeployRoot( ma, initialInstance );
+		}
+	}
+
+
+	/**
+	 * Sends a message, or stores it if the target machine is not yet online.
+	 * @param ma the managed application
+	 * @param message the message to send (or store)
+	 * @param instance the target instance
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	void send( ManagedApplication ma, Message message, Instance instance ) throws IOException {
+
+		// Either ignore or store the message
+		if( this.messagingClient == null
+				|| ! this.messagingClient.isConnected())
+			this.logger.severe( "The connection with the messaging server was badly initialized. Message dropped." );
+		else
+			ma.storeAwaitingMessage( instance, message );
+
+		// If the VM is online, process awaiting messages to prevent waiting.
+		// This can work concurrently with the messages timer.
+		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
+		if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
+			List<Message> messages = ma.removeAwaitingMessages( instance );
+			if( ! messages.isEmpty())
+				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + rootInstance.getName() + "." );
+
+			for( Message msg : messages ) {
 				try {
-
-					// If the VM creation was already requested...
-					// ... then its machine ID has already been set.
-					// It does not mean the VM is already created, it may take some time.
-					String machineId = instance.getData().get( Instance.MACHINE_ID );
-					if( machineId == null ) {
-						instance.setStatus( InstanceStatus.DEPLOYING );
-						IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, instance );
-						machineId = iaasInterface.createVM(
-								null,
-								this.messageServerIp,
-								instance.getName(),
-								ma.getApplication().getName());
-
-						// FIXME: the channel name is skipped here
-						// As soon as we know what it is useful for, re-add it (it is in the instance)
-						instance.getData().put( Instance.MACHINE_ID, machineId );
-					}
-
-				} catch( IaasException e ) {
-					instance.setStatus( InstanceStatus.PROBLEM );
-					bulkException.getInstancesToException().put( instance, e );
-
-				} finally {
-					saveManagerState();
-				}
-
-			} else {
-				try {
-					Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
-					MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( InstanceHelpers.computeInstancePath( instance ), instanceResources );
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), instance, message );
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
 
 				} catch( IOException e ) {
-					// The instance does not have any problem, just keep trace of the exception
-					bulkException.getInstancesToException().put( instance, e );
+					this.logger.severe( "Error while sending a stored message. " + e.getMessage());
+					this.logger.finest( Utils.writeException( e ));
 				}
 			}
 		}
-
-		if( ! bulkException.getInstancesToException().isEmpty())
-			throw bulkException;
 	}
 
 
+	/**
+	 * Check errors.
+	 * @param errors a list of errors and warnings (not null but may be empty)
+	 * @throws InvalidApplicationException if the list contains criticial errors
+	 */
+	void checkErrors( Collection<RoboconfError> errors ) throws InvalidApplicationException {
 
-	private ManagedApplication load( File applicationFilesDirectory ) throws AlreadyExistingException, InvalidApplicationException {
+		if( RoboconfErrorHelpers.containsCriticalErrors( errors ))
+			throw new InvalidApplicationException( errors );
 
-		LoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
-		if( RoboconfErrorHelpers.containsCriticalErrors( lr.getLoadErrors()))
-			throw new InvalidApplicationException( lr.getLoadErrors());
-
-		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( lr.getLoadErrors())) {
+		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( errors )) {
 			StringBuilder sb = new StringBuilder();
 			sb.append( warning.getErrorCode().getMsg());
 			if( ! Utils.isEmptyOrWhitespaces( warning.getDetails()))
@@ -896,11 +742,5 @@ public final class Manager {
 
 			this.logger.warning( sb.toString());
 		}
-
-		Application application = lr.getApplication();
-		if( null != findApplicationByName( application.getName()))
-			throw new AlreadyExistingException( application.getName());
-
-		return new ManagedApplication( application, applicationFilesDirectory );
 	}
 }

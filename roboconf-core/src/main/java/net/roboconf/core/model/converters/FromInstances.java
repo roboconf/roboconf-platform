@@ -19,6 +19,7 @@ package net.roboconf.core.model.converters;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +45,10 @@ public class FromInstances {
 	 * @param rootInstances the root instances (not null)
 	 * @param targetFile the target file (will not be written)
 	 * @param addComment true to insert generated comments
+	 * @param saveRuntimeInformation true to save runtime information (such as IP...), false otherwise
 	 * @return a non-null file definition
 	 */
-	public FileDefinition buildFileDefinition( Collection<Instance> rootInstances, File targetFile, boolean addComment ) {
+	public FileDefinition buildFileDefinition( Collection<Instance> rootInstances, File targetFile, boolean addComment, boolean saveRuntimeInformation ) {
 
 		FileDefinition result = new FileDefinition( targetFile );
 		result.setFileType( FileDefinition.INSTANCE );
@@ -58,13 +60,13 @@ public class FromInstances {
 		}
 
 		for( Instance rootInstance : rootInstances )
-			result.getBlocks().addAll( buildInstanceOf( result, rootInstance, addComment ));
+			result.getBlocks().addAll( buildInstanceOf( result, rootInstance, addComment, saveRuntimeInformation ));
 
 		return result;
 	}
 
 
-	private Collection<AbstractBlock> buildInstanceOf( FileDefinition file, Instance rootInstance, boolean addComment ) {
+	private Collection<AbstractBlock> buildInstanceOf( FileDefinition file, Instance rootInstance, boolean addComment, boolean saveRuntimeInformation ) {
 		Collection<AbstractBlock> result = new ArrayList<AbstractBlock> ();
 
 		// Process the root instance
@@ -97,10 +99,32 @@ public class FromInstances {
 				currentBlock.getInnerBlocks().add( p );
 			}
 
+			// Runtime information
+			if( saveRuntimeInformation ) {
+				p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_STATE, instance.getStatus().toString());
+				currentBlock.getInnerBlocks().add( p );
+
+				StringBuilder sb = new StringBuilder();
+				for( Iterator<Map.Entry<String,String>> it = instance.getData().entrySet().iterator(); it.hasNext(); ) {
+					Map.Entry<String,String> entry = it.next();
+					sb.append( entry.getKey());
+					sb.append( " = " );
+					sb.append( entry.getValue());
+
+					if( it.hasNext())
+						sb.append( ", " );
+				}
+
+				if( sb.length() > 0 ) {
+					p = new BlockProperty( file, Constants.PROPERTY_INSTANCE_DATA, sb.toString());
+					currentBlock.getInnerBlocks().add( p );
+				}
+			}
+
 			// Update the parent
 			BlockInstanceOf parentBlock = instanceToBlock.get( instance.getParent());
 			if( parentBlock != null ) {
-				parentBlock.getInnerBlocks().add( new BlockBlank( file, "\n" ));
+				parentBlock.getInnerBlocks().add( new BlockBlank( file, "" ));
 				parentBlock.getInnerBlocks().add( currentBlock );
 			}
 

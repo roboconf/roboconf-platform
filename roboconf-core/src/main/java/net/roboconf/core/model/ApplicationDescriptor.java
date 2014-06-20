@@ -145,6 +145,9 @@ public class ApplicationDescriptor {
 			Utils.closeQuietly( in );
 		}
 
+		if( properties.get( "fail.read" ) != null )
+			throw new IOException( "This is for test purpose..." );
+
 		return load( properties );
 	}
 }

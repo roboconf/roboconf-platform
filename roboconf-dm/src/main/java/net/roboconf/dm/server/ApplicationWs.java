@@ -16,6 +16,7 @@
 
 package net.roboconf.dm.server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,15 +33,13 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.exceptions.BulkActionException;
-import net.roboconf.dm.management.exceptions.DmWasNotInitializedException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
-import net.roboconf.dm.management.exceptions.InexistingException;
-import net.roboconf.dm.management.exceptions.InvalidActionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.dm.rest.api.ApplicationAction;
 import net.roboconf.dm.rest.api.IApplicationWs;
-import net.roboconf.dm.rest.json.MapHolder;
+import net.roboconf.iaas.api.IaasException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -54,54 +53,60 @@ public class ApplicationWs implements IApplicationWs {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.api.IApplicationWs
-	 * #perform(java.lang.String, java.lang.String, net.roboconf.dm.rest.json.MapHolder)
+	 * #perform(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response perform( String applicationName, String actionAS, MapHolder mapHolder ) {
+	public Response perform( String applicationName, String actionAS, String instancePath ) {
 
-		String instancePath = mapHolder.getMap().get( MapHolder.INSTANCE_PATH );
-		boolean applyToAllChildren = Boolean.parseBoolean( mapHolder.getMap().get( MapHolder.APPLY_TO_CHILDREN ));
-
-		StringBuilder sb = new StringBuilder();
-		sb.append( "Request: perform action '" );
-		sb.append( actionAS );
-		sb.append( "' in " );
-		sb.append( applicationName );
-
-		if( instancePath == null && applyToAllChildren ) {
-			sb.append( " on all the instances." );
-
-		} else if( instancePath != null ) {
-			sb.append( ", instance " + instancePath );
-			if( applyToAllChildren )
-				sb.append( " and its children" );
-			sb.append( "." );
-
-		} else {
-			sb.append( ". This request should result in an error." );
-		}
-
-		this.logger.fine( sb.toString());
+		this.logger.fine( "Request: perform action '" + actionAS + "' in " + applicationName + ", instance " + instancePath + "." );
 		Response response;
 		try {
-			Manager.INSTANCE.perform( applicationName, actionAS, instancePath, applyToAllChildren );
-			response = Response.ok().build();
+			ManagedApplication ma;
+			Instance instance;
+			ApplicationAction action = ApplicationAction.whichAction( actionAS );
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
-		} catch( InexistingException e ) {
-			response = Response.status( Status.NOT_FOUND ).entity( e.getMessage()).build();
+			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
 
-		} catch( InvalidActionException e ) {
-			response = Response.status( Status.BAD_REQUEST ).entity( e.getMessage()).build();
+			else if( action == ApplicationAction.DEPLOY ) {
+				if( instance.getParent() == null )
+					Manager.INSTANCE.deployRoot( ma, instance );
+				else
+					Manager.INSTANCE.deploy( ma, instance );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.START ) {
+				Manager.INSTANCE.start( ma, instance );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.STOP ) {
+				Manager.INSTANCE.stop( ma, instance );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.UNDEPLOY ) {
+				if( instance.getParent() == null )
+					Manager.INSTANCE.undeployRoot( ma, instance );
+				else
+					Manager.INSTANCE.undeploy( ma, instance );
+				response = Response.ok().build();
+
+			} else if( action == ApplicationAction.REMOVE ) {
+				Manager.INSTANCE.removeInstance( ma, instance );
+				response = Response.ok().build();
+
+			} else {
+				response = Response.status( Status.BAD_REQUEST ).entity( "Invalid action: " + actionAS ).build();
+			}
 
 		} catch( UnauthorizedActionException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
-		} catch( BulkActionException e ) {
-			response = Response.status( Status.ACCEPTED ).entity( e.getMessage()).build();
-			this.logger.severe( e.getLogMessage( false ));
-			this.logger.finest( e.getLogMessage( true ));
+		} catch( IOException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
-		} catch( DmWasNotInitializedException e ) {
+		} catch( IaasException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
 		} catch( Exception e ) {
@@ -116,59 +121,125 @@ public class ApplicationWs implements IApplicationWs {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.api.IApplicationWs
-	 * #listAllChildrenInstances(java.lang.String, java.lang.String)
+	 * #deployAndStartAll(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<Instance> listAllChildrenInstances( String applicationName, String instancePath ) {
+	public Response deployAndStartAll( String applicationName, String instancePath ) {
 
-		if( instancePath == null )
-			this.logger.fine( "Request: list all the instances for " + applicationName + "." );
-		else
-			this.logger.fine( "Request: list all the children instances for " + instancePath + " in " + applicationName + "." );
-
-		List<Instance> result = new ArrayList<Instance> ();
-		Application app = Manager.INSTANCE.findApplicationByName( applicationName );
-		Instance inst = null;
-
-		if( app != null ) {
-			if( instancePath == null ) {
-				result.addAll( InstanceHelpers.getAllInstances( app ));
-
-			} else if(( inst = InstanceHelpers.findInstanceByPath( app, instancePath )) != null ) {
-				result.addAll( InstanceHelpers.buildHierarchicalList( inst ));
-				result.remove( inst );
+		this.logger.fine( "Request: deploy and start instances in " + applicationName + ", from instance = " + instancePath + "." );
+		Response response;
+		ManagedApplication ma;
+		try {
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+			} else {
+				Manager.INSTANCE.deployAndStartAll( ma, InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath ));
+				response = Response.ok().build();
 			}
+
+		} catch( IaasException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+
+		} catch( IOException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
-		// Bug #64: sort instance paths for the clients
-		Collections.sort( result, new InstanceComparator());
-		return result;
+		return response;
 	}
 
 
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.api.IApplicationWs
-	 * #listChildrenInstances(java.lang.String, java.lang.String)
+	 * #stopAll(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<Instance> listChildrenInstances( String applicationName, String instancePath ) {
+	public Response stopAll( String applicationName, String instancePath ) {
 
-		if( instancePath == null )
-			this.logger.fine( "Request: list root instances for " + applicationName + "." );
-		else
-			this.logger.fine( "Request: list direct children instances for " + instancePath + " in " + applicationName + "." );
+		this.logger.fine( "Request: stop instances in " + applicationName + ", from instance = " + instancePath + "." );
+		Response response;
+		ManagedApplication ma;
+		try {
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+			} else {
+				Manager.INSTANCE.stopAll( ma, InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath ));
+				response = Response.ok().build();
+			}
+
+		} catch( IOException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.api.IApplicationWs
+	 * #undeployAll(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Response undeployAll( String applicationName, String instancePath ) {
+
+		this.logger.fine( "Request: deploy and start instances in " + applicationName + ", from instance = " + instancePath + "." );
+		Response response;
+		ManagedApplication ma;
+		try {
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+			} else {
+				Manager.INSTANCE.undeployAll( ma, InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath ));
+				response = Response.ok().build();
+			}
+
+		} catch( IaasException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+
+		} catch( IOException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.api.IApplicationWs
+	 * #listChildrenInstances(java.lang.String, java.lang.String, boolean)
+	 */
+	@Override
+	public List<Instance> listChildrenInstances( String applicationName, String instancePath, boolean allChildren ) {
 
 		List<Instance> result = new ArrayList<Instance> ();
 		Application app = Manager.INSTANCE.findApplicationByName( applicationName );
 
+		// Log
+		if( instancePath == null )
+			this.logger.fine( "Request: list " + (allChildren ? "all" : "root") + " instances for " + applicationName + "." );
+		else
+			this.logger.fine( "Request: list " + (allChildren ? "all" : "direct") + " children instances for " + instancePath + " in " + applicationName + "." );
+
+		// Find the instances
 		Instance inst;
 		if( app != null ) {
-			if( instancePath == null )
-				result.addAll( app.getRootInstances());
+			if( instancePath == null ) {
+				if( allChildren )
+					result.addAll( InstanceHelpers.getAllInstances( app ));
+				else
+					result.addAll( app.getRootInstances());
+			}
 
-			else if(( inst = InstanceHelpers.findInstanceByPath( app, instancePath )) != null )
-				result.addAll( inst.getChildren());
+			else if(( inst = InstanceHelpers.findInstanceByPath( app, instancePath )) != null ) {
+				if( allChildren ) {
+					result.addAll( InstanceHelpers.buildHierarchicalList( inst ));
+					result.remove( inst );
+				} else {
+					result.addAll( inst.getChildren());
+				}
+			}
 		}
 
 		// Bug #64: sort instance paths for the clients
@@ -192,11 +263,15 @@ public class ApplicationWs implements IApplicationWs {
 
 		Response response;
 		try {
-			Manager.INSTANCE.addInstance( applicationName, parentInstancePath, instance );
-			response = Response.ok().build();
+			ManagedApplication ma;
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
-		} catch( InexistingException e ) {
-			response = Response.status( Status.NOT_FOUND ).entity( e.getMessage()).build();
+			} else {
+				Instance parentInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), parentInstancePath );
+				Manager.INSTANCE.addInstance( ma, parentInstance, instance );
+				response = Response.ok().build();
+			}
 
 		} catch( ImpossibleInsertionException e ) {
 			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();

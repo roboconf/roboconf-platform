@@ -31,7 +31,15 @@ import net.roboconf.core.utils.Utils;
  * An API set of helpers to read and write a parsing model.
  * @author Vincent Zurczak - Linagora
  */
-public class ParsingModelIo {
+public final class ParsingModelIo {
+
+	/**
+	 * Constructor.
+	 */
+	private ParsingModelIo() {
+		// nothing
+	}
+
 
 	/**
 	 * Reads a definition file.

@@ -63,9 +63,9 @@ public class PluginBash implements PluginInterface {
     private ExecutionLevel executionLevel;
     private String agentName;
 
-    private static String SCRIPTS_FOLDER_NAME = "scripts";
-    private static String TEMPLATES_FOLDER_NAME = "roboconf-templates";
-    private static String FILES_FOLDER_NAME = "files";
+    private static final String SCRIPTS_FOLDER_NAME = "scripts";
+    private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
+    private static final String FILES_FOLDER_NAME = "files";
 
 
     @Override
@@ -178,7 +178,8 @@ public class PluginBash implements PluginInterface {
     }
 
 
-    private void prepareAndExecuteCommand(String action, Instance instance, Import importChanged, InstanceStatus statusChanged) throws Exception {
+    private void prepareAndExecuteCommand(String action, Instance instance, Import importChanged, InstanceStatus statusChanged)
+    throws IOException, InterruptedException {
 
         this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance.getName());
         File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());

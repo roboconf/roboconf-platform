@@ -17,7 +17,6 @@
 package net.roboconf.dm.rest.json;
 
 import java.io.StringWriter;
-import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -232,34 +231,5 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
-	}
-
-
-	@Test
-	public void testMapHolder() throws Exception {
-
-		final String result = "{\"toto\":\"yes\",\"name\":\"roger\",\"\":\"value\",\"key\":\"\"}";
-		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
-
-		MapHolder holder = new MapHolder();
-		holder.getMap().put( "toto", "yes" );
-		holder.getMap().put( "name", "roger" );
-		holder.getMap().put( "", "value" );
-		holder.getMap().put( "key", "" );
-		holder.getMap().put( "null-value", null );
-		holder.getMap().put( null, "null-key" );
-
-		StringWriter writer = new StringWriter();
-		mapper.writeValue( writer, holder );
-		String s = writer.toString();
-
-		Assert.assertEquals( result, s );
-		MapHolder readHolder = mapper.readValue( result, MapHolder.class );
-		Assert.assertEquals( holder.getMap().size() - 2, readHolder.getMap().size());
-
-		for( Map.Entry<String,String> entry : readHolder.getMap().entrySet()) {
-			Assert.assertTrue( entry.getKey(), holder.getMap().containsKey( entry.getKey()));
-			Assert.assertEquals( entry.getKey(),  entry.getValue(), holder.getMap().get( entry.getKey()));
-		}
 	}
 }

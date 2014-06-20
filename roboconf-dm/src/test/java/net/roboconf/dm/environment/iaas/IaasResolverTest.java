@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
@@ -94,7 +95,7 @@ public class IaasResolverTest {
 		if( ! propsDir.mkdirs())
 			throw new IOException( "Failed to create sub-directories." );
 
-		File propsFile = new File( propsDir, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
+		File propsFile = new File( propsDir, Constants.IAAS_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
 		props.setProperty( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_EMBEDDED );
 
@@ -125,7 +126,7 @@ public class IaasResolverTest {
 		if( ! propsDir.mkdirs())
 			throw new IOException( "Failed to create sub-directories." );
 
-		File propsFile = new File( propsDir, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
+		File propsFile = new File( propsDir, Constants.IAAS_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
 		props.setProperty( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_EMBEDDED );
 
@@ -155,7 +156,7 @@ public class IaasResolverTest {
 		if( ! propsDir.mkdirs())
 			throw new IOException( "Failed to create sub-directories." );
 
-		File propsFile = new File( propsDir, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
+		File propsFile = new File( propsDir, Constants.IAAS_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
 		props.setProperty( IaasResolver.IAAS_TYPE, "oops" );
 

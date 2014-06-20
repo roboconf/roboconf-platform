@@ -45,7 +45,7 @@ public class IaasInMemoryTest {
 		Assert.assertEquals( 0, AgentManager.INSTANCE.getMachineIdToAgentLauncher().size());
 		IaasInMemory iaas = new IaasInMemory();
 
-		String machineId = iaas.createVM( "machine-image-id", "192.168.1.14", "my root", "my app" );
+		String machineId = iaas.createVM( "192.168.1.14", "user", "my-password", "my root", "my app" );
 		Assert.assertNotNull( machineId );
 		Assert.assertEquals( 1, AgentManager.INSTANCE.getMachineIdToAgentLauncher().size());
 
@@ -77,7 +77,7 @@ public class IaasInMemoryTest {
 	public void testDuplicateAgent() throws Exception {
 
 		IaasInMemory iaas = new IaasInMemory();
-		iaas.createVM( "machine-image-id", "192.168.1.14", "my root", "my app" );
-		iaas.createVM( "machine-image-id", "192.168.1.14", "my root", "my app" );
+		iaas.createVM( "192.168.1.14", "u", "p", "my root", "my app" );
+		iaas.createVM( "192.168.1.14", "u", "p", "my root", "my app" );
 	}
 }

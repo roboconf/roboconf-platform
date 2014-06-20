@@ -42,8 +42,8 @@ public class TestMessageServerClient implements IDmClient {
 
 
 	@Override
-	public void setMessageServerIp( String messageServerIp ) {
-		// nothing, we do not care
+	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
+		// Nothing, we don't care
 	}
 
 
@@ -83,7 +83,7 @@ public class TestMessageServerClient implements IDmClient {
 
 	@Override
 	public boolean isConnected() {
-		return true;
+		return this.connectionOpen.get() && ! this.connectionClosed.get();
 	}
 
 

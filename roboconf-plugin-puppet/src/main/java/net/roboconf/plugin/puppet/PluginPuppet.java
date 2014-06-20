@@ -303,8 +303,11 @@ public class PluginPuppet implements PluginInterface {
 	private void callPuppetScript( Instance instance, String action, PuppetState puppetState, Import importChanged, boolean importAdded, File instanceDirectory )
 	throws IOException, InterruptedException {
 
-		if(instance == null || instanceDirectory == null) {
-			this.logger.fine("Ignoring null instance" + (instanceDirectory == null ? " directory" : ""));
+		if( instance == null
+				|| instanceDirectory == null
+				|| ! instanceDirectory.exists()
+				|| ! instanceDirectory.isDirectory()) {
+			this.logger.fine("Ignoring null instance" + (instance != null ? " directory" : ""));
 			return;
 		}
 
@@ -315,8 +318,8 @@ public class PluginPuppet implements PluginInterface {
 		File moduleDirectory = null;
 		for (File f : instanceDirectory.listFiles()) {
 			if(f.isDirectory() && f.getName().startsWith("roboconf_")) {
-					moduleDirectory = f; // Found module dir
-					break;
+				moduleDirectory = f;
+				break;
 			}
 		}
 
@@ -337,8 +340,11 @@ public class PluginPuppet implements PluginInterface {
 				commands.add( "--verbose" );
 
 				String modpath = System.getenv("MODULEPATH");
-				if(modpath != null) modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
-				else modpath = "";
+				if(modpath != null)
+					modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
+				else
+					modpath = "";
+
 				modpath += instanceDirectory.getAbsolutePath();
 				commands.add( "--modulepath" );
 				commands.add(modpath);

@@ -41,7 +41,6 @@ import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
@@ -143,12 +142,13 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 
 	/**
-	 * Sends the local model to the DM.
+	 * Sends the local states to the DM.
 	 * @param message the initial request
 	 * @throws IOException if an error occurred with the messaging
 	 */
 	void processMsgInstanceRestore( MsgCmdInstanceRestore message ) throws IOException {
-		this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceRestoration( this.appName, this.rootInstance ));
+		for( Instance i : InstanceHelpers.buildHierarchicalList( this.rootInstance ))
+			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 	}
 
 
