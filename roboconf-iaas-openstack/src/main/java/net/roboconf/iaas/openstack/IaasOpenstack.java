@@ -217,7 +217,7 @@ public class IaasOpenstack implements IaasInterface {
 
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
 		//System.out.println(server);
-
+		
 		// Wait for server to be in ACTIVE state, before associating floating IP and/or attaching volumes
 		try {
 			final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(1);

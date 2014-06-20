@@ -43,34 +43,35 @@
 			<scope>provided</scope>
 		</dependency>
 		
+		<!-- Latest release is 3.2.1, but missing network config -->
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>nova-client</artifactId>
-			<version>3.2.1</version>
+			<version>3.2.2-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>keystone-client</artifactId>
-			<version>3.2.1</version>
+			<version>3.2.2-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>jersey-connector</artifactId>
-			<version>3.2.1</version>
+			<version>3.2.2-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>nova-model</artifactId>
-			<version>3.2.1</version>
+			<version>3.2.2-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>keystone-model</artifactId>
-			<version>3.2.1</version>
+			<version>3.2.2-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
