@@ -177,8 +177,8 @@ public class FromGraphs {
 
 		// Exported variables
 		sb = new StringBuilder();
-		for( Iterator<Entry<String,String>> it=component.getExportedVariables().entrySet().iterator(); it.hasNext(); ) {
-			Entry<String,String> entry = it.next();
+		boolean first = true;
+		for( Map.Entry<String,String> entry : component.getExportedVariables().entrySet()) {
 
 			// If the variable is exported by a facet, do not change its name.
 			// If it is exported by the component, remove the component prefix.
@@ -186,14 +186,16 @@ public class FromGraphs {
 
 			// The variable is exported by the component (i.e. it is prefixed by the component name)
 			if( component.getName().equals( varParts.getKey())) {
+				if( first )
+					first = false;
+				else
+					sb.append( ", " );
+
 				sb.append( varParts.getValue());
 				if( entry.getValue() != null ) {
 					sb.append( "=" );
 					sb.append( entry.getValue());
 				}
-
-				if( it.hasNext())
-					sb.append( ", " );
 			}
 
 			// Or it is exported by a facet (not prefixed by the component name)

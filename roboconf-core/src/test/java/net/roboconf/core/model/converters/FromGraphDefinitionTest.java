@@ -113,6 +113,42 @@ public class FromGraphDefinitionTest {
 
 
 	@Test
+	public void testDuplicateComponent() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/duplicate-component.graph" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+		Assert.assertEquals( 0, validationErrors.size());
+
+		FromGraphDefinition fromDef = new FromGraphDefinition( def );
+		fromDef.buildGraphs();
+		Assert.assertEquals( 2, fromDef.getErrors().size());
+		for( ModelError error : fromDef.getErrors())
+			Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_COMPONENT, error.getErrorCode());
+	}
+
+
+	@Test
+	public void testDuplicateFacet() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/duplicate-facet.graph" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+		Assert.assertEquals( 0, validationErrors.size());
+
+		FromGraphDefinition fromDef = new FromGraphDefinition( def );
+		fromDef.buildGraphs();
+		Assert.assertEquals( 3, fromDef.getErrors().size());
+		for( ModelError error : fromDef.getErrors())
+			Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_FACET, error.getErrorCode());
+	}
+
+
+	@Test
 	public void testUnresolvedFacet() throws Exception {
 
 		File f = TestUtils.findTestFile( "/configurations/invalid/unresolved-facet.graph" );

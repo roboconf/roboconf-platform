@@ -26,12 +26,12 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.rest.UrlConstants;
-import net.roboconf.dm.rest.json.MapHolder;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
@@ -65,7 +65,7 @@ public interface IManagementWs {
 	/**
 	 * Loads an application from a local ZIP file.
 	 * <p>
-	 * A ZIP file containing a Roboconf application (model + resources)
+	 * A directory containing a Roboconf application (model + resources)
 	 * could be fairly heavy (several hundreds of megabytes). We must
 	 * consider the possibility someone uses a (S)FTP server (or some
 	 * equivalent solution) to upload a file on the DM's machine.
@@ -76,14 +76,13 @@ public interface IManagementWs {
 	 * on the DM's machine.
 	 * </p>
 	 *
-	 * @param mapHolder a map holder with a single key whose value is the path of a file on the DM's machine
-	 * @see MapHolder#FILE_LOCAL_PATH
+	 * @param localFilePath the local file path of the application directory
 	 * @return a response
 	 */
 	@POST
 	@Path("/local")
 	@Consumes( MediaType.APPLICATION_JSON )
-	Response loadApplication( MapHolder mapHolder );
+	Response loadApplication( @QueryParam( "local-file-path" ) String localFilePath );
 
 	/**
 	 * Lists the applications.

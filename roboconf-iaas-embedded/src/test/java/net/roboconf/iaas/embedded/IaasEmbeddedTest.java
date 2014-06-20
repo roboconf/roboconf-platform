@@ -34,8 +34,8 @@ public class IaasEmbeddedTest {
 		iaas.terminateVM( null );
 		iaas.terminateVM( "anything" );
 
-		Assert.assertNotNull( iaas.createVM( "ami", "ip", "nothing", "app" ));
-		Assert.assertNotNull( iaas.createVM( null, null, null, null ));
+		Assert.assertNotNull( iaas.createVM( "ip", "user", "pwd", "nothing", "app" ));
+		Assert.assertNotNull( iaas.createVM( null, null, null, null, null ));
 
 		iaas.setIaasProperties( null );
 		iaas.setIaasProperties( new HashMap<String,String>( 0 ));

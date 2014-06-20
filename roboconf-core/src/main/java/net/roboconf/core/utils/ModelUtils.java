@@ -55,7 +55,6 @@ public final class ModelUtils {
 	/**
 	 * Gets and splits property values separated by a comma.
 	 * @param holder a property holder (not null)
-	 * @param propertyName a property name (not null)
 	 * @return a non-null list of non-null values
 	 */
 	public static List<String> getPropertyValues( AbstractBlockHolder holder, String propertyName ) {
@@ -66,12 +65,32 @@ public final class ModelUtils {
 
 
 	/**
+	 * Gets and splits data separated by a comma.
+	 * @param holder a property holder (not null)
+	 * @return a non-null map (key = data name, value = data value, which can be null)
+	 */
+	public static Map<String,String> getData( AbstractBlockHolder holder ) {
+
+		BlockProperty p = holder.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_DATA );
+		Map<String,String> result = new HashMap<String,String> ();
+
+		String propertyValue = p == null ? null : p.getValue();
+		for( String s : Utils.splitNicely( propertyValue, ParsingConstants.PROPERTY_SEPARATOR )) {
+			Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
+			result.put( entry.getKey(), entry.getValue());
+		}
+
+		return result;
+	}
+
+
+	/**
 	 * Gets and splits exported variables separated by a comma.
 	 * @param holder a property holder (not null)
-	 * @param propertyName a property name (not null)
 	 * @return a non-null map (key = exported variable name, value = default value, which can be null)
 	 */
 	public static Map<String,String> getExportedVariables( AbstractBlockHolder holder ) {
+
 		BlockProperty p = holder.findPropertyBlockByName( Constants.PROPERTY_GRAPH_EXPORTS );
 		Map<String,String> result = new HashMap<String,String> ();
 

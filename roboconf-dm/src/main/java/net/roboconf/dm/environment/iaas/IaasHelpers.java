@@ -24,11 +24,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.iaas.api.IaasInterface;
 
 /**
  * Utilities related to Iaas.
@@ -55,7 +55,7 @@ public final class IaasHelpers {
 
 		Instance realRootInstance = InstanceHelpers.findRootInstance( instance );
 		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, realRootInstance );
-		f = new File( f, IaasInterface.DEFAULT_IAAS_PROPERTIES_FILE_NAME );
+		f = new File( f, Constants.IAAS_PROPERTIES_FILE_NAME );
 
 		Map<String, String> result = new HashMap<String, String>();
 		InputStream in = null;

@@ -20,6 +20,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -34,24 +36,31 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.io.RuntimeModelIo.LoadResult;
+import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Graphs;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class RuntimeModelIoTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
+
 	@Test
 	public void testLoadApplication_Lamp_Legacy_1() throws Exception {
 
 		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-1" );
-		LoadResult result = RuntimeModelIo.loadApplication( directory );
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
 		Assert.assertEquals( 4, result.loadErrors.size());
@@ -155,7 +164,7 @@ public class RuntimeModelIoTest {
 	public void testLoadApplication_Lamp_Legacy_2() throws Exception {
 
 		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-2" );
-		LoadResult result = RuntimeModelIo.loadApplication( directory );
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
 		Assert.assertEquals( 4, result.loadErrors.size());
@@ -276,7 +285,7 @@ public class RuntimeModelIoTest {
 	public void testLoadApplication_Mongo() throws Exception {
 
 		File directory = TestUtils.findTestFile( "/applications/valid/mongo" );
-		LoadResult result = RuntimeModelIo.loadApplication( directory );
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
 		Assert.assertEquals( 2, result.loadErrors.size());
@@ -406,7 +415,7 @@ public class RuntimeModelIoTest {
 	public void testLoadApplication_KarafJoramJndi() throws Exception {
 
 		File directory = TestUtils.findTestFile( "/applications/valid/karaf-joram-jndi" );
-		LoadResult result = RuntimeModelIo.loadApplication( directory );
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.application );
 		Assert.assertEquals( 6, result.loadErrors.size());
@@ -418,5 +427,51 @@ public class RuntimeModelIoTest {
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec21/jndiec2" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec22" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec22/joramec2" ));
+	}
+
+
+	@Test
+	public void testInvalidApplicationDescriptor() throws Exception {
+
+		File appDirectory = this.folder.newFolder();
+		File descDirectory = new File( appDirectory, Constants.PROJECT_DIR_DESC );
+		if( ! descDirectory.mkdir())
+			throw new IOException();
+
+		File descFile = new File( descDirectory, Constants.PROJECT_FILE_DESCRIPTOR );
+		if( ! descFile.createNewFile())
+			throw new IOException();
+
+		String content = "fail.read = true";
+		Utils.copyStream( new ByteArrayInputStream( content.getBytes( "UTF-8" )), descFile );
+
+		ApplicationLoadResult lr = RuntimeModelIo.loadApplication( appDirectory );
+		Assert.assertTrue( 1 < lr.getLoadErrors().size());
+		Assert.assertEquals( ErrorCode.PROJ_READ_DESC_FILE, lr.getLoadErrors().iterator().next().getErrorCode());
+	}
+
+
+	@Test
+	public void testWriteInstances_empty() throws Exception {
+
+		File targetFile = this.folder.newFile();
+		RuntimeModelIo.writeInstances( targetFile, new ArrayList<Instance>( 0 ));
+		Assert.assertTrue( targetFile.exists());
+		Assert.assertEquals( 0, targetFile.length());
+	}
+
+
+	@Test
+	public void testWriteInstances_notEmpty() throws Exception {
+
+		Component component = new Component( "comp" ).alias( "my component" );
+		Instance instance = new Instance( "inst" ).component( component ).status( InstanceStatus.DEPLOYING ).channel( "c" );
+		instance.getOverriddenExports().put( "check", "true" );
+		instance.getData().put( "something", "else" );
+
+		File targetFile = this.folder.newFile();
+		RuntimeModelIo.writeInstances( targetFile, Arrays.asList( instance ));
+		Assert.assertTrue( targetFile.exists());
+		Assert.assertTrue( 0 < targetFile.length());
 	}
 }

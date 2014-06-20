@@ -16,7 +16,6 @@
 
 package net.roboconf.dm.environment.messaging;
 
-import java.io.IOException;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.helpers.ImportHelpers;
@@ -24,7 +23,6 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
@@ -32,10 +30,8 @@ import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRestoration;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
 
 /**
  * This class is in charge of updating the model from messages / notifications.
@@ -73,34 +69,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 		else if( message instanceof MsgNotifHeartbeat )
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
 
-		else if( message instanceof MsgNotifInstanceRestoration )
-			processMsgNotifInstanceRestoration((MsgNotifInstanceRestoration) message );
-
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
-	}
-
-
-
-	private void processMsgNotifInstanceRestoration( MsgNotifInstanceRestoration message ) {
-
-		Instance rootInstance = message.getRootInstance();
-		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
-		Instance currentRootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstance.getName());
-
-		// If 'app' is null, then 'instance' is also null.
-		if( currentRootInstance == null ) {
-			StringBuilder sb = new StringBuilder();
-			sb.append( "Instance " );
-			sb.append( rootInstance.getName());
-			sb.append( " (app =  " );
-			sb.append( message.getApplicationName());
-			sb.append( ") was bnot found and cannot be restored." );
-			this.logger.warning( sb.toString());
-
-		} else {
-			// TODO: The graph objects are not the same!!!!
-		}
 	}
 
 
@@ -108,7 +78,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 
 		String ipAddress = message.getIpAddress();
 		String rootInstanceName = message.getRootInstanceName();
-		Application app = Manager.INSTANCE.findApplicationByName( message.getApplicationName());
+		ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( message.getApplicationName());
+		Application app = ma != null ? ma.getApplication() : null;
 		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -119,7 +90,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 			sb.append( " @ " );
 			sb.append( ipAddress );
 			sb.append( " (app =  " );
-			sb.append( app );
+			sb.append( message.getApplicationName());
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
@@ -127,15 +98,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 			rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
 			this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
-
-			try {
-				MsgCmdInstanceAdd newMsg = new MsgCmdInstanceAdd((String) null, rootInstance );
-				Manager.INSTANCE.sendModelToAgent( app, rootInstance, newMsg );
-
-			} catch( IOException e ) {
-				this.logger.severe( "The DM failed to send the agent's model for " + rootInstanceName + ". " + e.getMessage());
-				this.logger.finest( Utils.writeException( e ));
-			}
+			// The UP message has already been stored by the manager. It will be sent on the next timer tick.
+			Manager.INSTANCE.saveConfiguration( ma );
 		}
 	}
 
@@ -182,8 +146,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 			this.logger.warning( sb.toString());
 
 		} else {
-			ma.getMonitor().acknowledgeHeartBeat( rootInstance );
-			ma.getLogger().finest( "A heart beat was acknowledged for " + rootInstance.getName() + " in the application " + app.getName() + "." );
+			ma.acknowledgeHeartBeat( rootInstance );
+			this.logger.finest( "A heart beat was acknowledged for " + rootInstance.getName() + " in the application " + app.getName() + "." );
 		}
 	}
 

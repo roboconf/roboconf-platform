@@ -551,7 +551,6 @@ public class FileDefinitionParserTest {
 			def = ParsingModelIo.readConfigurationFile( f, false );
 
 		} catch( Exception e ) {
-			e.printStackTrace();
 			Assert.fail( "Failed to find the file." );
 			return;
 		}
@@ -657,5 +656,27 @@ public class FileDefinitionParserTest {
 		Assert.assertEquals( "name", ((BlockProperty) block.getInnerBlocks().get( 1 )).getName());
 		Assert.assertEquals( "my-bundle", ((BlockProperty) block.getInnerBlocks().get( 1 )).getValue());
 		Assert.assertTrue( Utils.isEmptyOrWhitespaces(((BlockProperty) block.getInnerBlocks().get( 1 )).getInlineComment()));
+	}
+
+
+	@Test
+	public void testParsingWithRuntimeInformation() {
+
+		// Parse the file
+		FileDefinition def;
+		File f;
+		try {
+			f = TestUtils.findTestFile( "/configurations/valid/single-runtime-instance.instances" );
+			def = ParsingModelIo.readConfigurationFile( f, false );
+
+		} catch( Exception e ) {
+			Assert.fail( "Failed to find the file." );
+			return;
+		}
+
+		// Make some checks to be sure it is parsed correctly
+		Assert.assertEquals( FileDefinition.INSTANCE, def.getFileType());
+		Assert.assertEquals( f, def.getEditedFile());
+		Assert.assertEquals( 0, def.getParsingErrors().size());
 	}
 }

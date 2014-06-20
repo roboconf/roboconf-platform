@@ -127,7 +127,7 @@ public class FromGraphsTest {
 	public void testFromGraphs_withComments() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" ).iconLocation( "some-location.jpg" );
 		graphs.getRootComponents().add( cA );
 
 		cA.getFacetNames().add( "my-facet-1" );
@@ -140,8 +140,6 @@ public class FromGraphsTest {
 		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
 
 		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
-		graphs.getRootComponents().add( cB );
-
 		cB.getFacetNames().add( "facetF" );
 		cA.getFacetNames().add( "my-facet-2" );
 
@@ -150,6 +148,16 @@ public class FromGraphsTest {
 		cB.getExportedVariables().put( "B.ip", null );
 		cB.getExportedVariables().put( "facetF.props", null );
 
+		Component cC = new Component( "C" ).alias( "C" ).installerName( "installer C" );
+		cC.getFacetNames().add( "facetF" );
+		cC.getFacetNames().add( "my-facet-2" );
+
+		cC.getExportedVariables().put( "my-facet-2.woo", "woo" );
+		cC.getExportedVariables().put( "C.port", "9000" );
+		cC.getExportedVariables().put( "facetF.props", null );
+
+		ComponentHelpers.insertChild( cA, cB );
+		ComponentHelpers.insertChild( cA, cC );
 		compareGraphs( graphs, true );
 	}
 
@@ -188,6 +196,7 @@ public class FromGraphsTest {
 			Assert.assertNotNull( readComponent.getName(), originalComponent );
 			Assert.assertEquals( readComponent.getAlias(), originalComponent.getAlias());
 			Assert.assertEquals( readComponent.getInstallerName(), originalComponent.getInstallerName());
+			Assert.assertEquals( readComponent.getIconLocation(), originalComponent.getIconLocation());
 			Assert.assertEquals( readComponent.getExportedVariables().size(), originalComponent.getExportedVariables().size());
 			Assert.assertEquals( readComponent.getImportedVariables().size(), originalComponent.getImportedVariables().size());
 

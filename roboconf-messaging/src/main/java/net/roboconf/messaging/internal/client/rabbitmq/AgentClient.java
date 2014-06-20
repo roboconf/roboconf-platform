@@ -47,7 +47,7 @@ public class AgentClient implements IAgentClient {
 	private static final String THOSE_THAT_IMPORT = "those.that.import.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String applicationName, rootInstanceName, messageServerIp;
+	private String applicationName, rootInstanceName, messageServerIp, messageServerUsername, messageServerPassword;
 
 	String consumerTag;
 	Channel	channel;
@@ -57,11 +57,13 @@ public class AgentClient implements IAgentClient {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IClient
-	 * #setMessageServerIp(java.lang.String)
+	 * #setParameters(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void setMessageServerIp( String messageServerIp ) {
+	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
 		this.messageServerIp = messageServerIp;
+		this.messageServerUsername = messageServerUsername;
+		this.messageServerPassword = messageServerPassword;
 	}
 
 
@@ -104,7 +106,7 @@ public class AgentClient implements IAgentClient {
 
 		// Initialize the connection
 		ConnectionFactory factory = new ConnectionFactory();
-		RabbitMqUtils.configureFactory( factory, this.messageServerIp );
+		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
 		this.channel = factory.newConnection().createChannel();
 
 		// Store the message processor for later

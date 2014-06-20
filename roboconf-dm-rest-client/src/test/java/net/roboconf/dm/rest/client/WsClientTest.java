@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.client.exceptions;
+package net.roboconf.dm.rest.client;
+
+import net.roboconf.dm.rest.client.test.RestTestUtils;
+
+import org.junit.Test;
 
 /**
- * The exception related to the DM's initialization.
  * @author Vincent Zurczak - Linagora
  */
-public class InitializationException extends RestException {
-	private static final long serialVersionUID = 9148345461406336450L;
+public class WsClientTest {
 
-	public InitializationException( int responseStatus, String responseMessage ) {
-		super( responseStatus, responseMessage );
+	@Test
+	public void testDestroy() {
+
+		WsClient client = RestTestUtils.buildWsClient();
+		client.destroy();
+
+		// Test a second call
+		client.destroy();
 	}
 }

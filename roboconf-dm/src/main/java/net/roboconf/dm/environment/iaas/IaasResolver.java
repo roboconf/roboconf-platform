@@ -19,6 +19,7 @@ package net.roboconf.dm.environment.iaas;
 import java.io.IOException;
 import java.util.Map;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
@@ -58,7 +59,7 @@ public class IaasResolver {
 		IaasInterface iaasInterface;
 		try {
 			String installerName = instance.getComponent().getInstallerName();
-			if( ! "iaas".equalsIgnoreCase( installerName ))
+			if( ! Constants.IAAS_INSTALLER.equalsIgnoreCase( installerName ))
 				throw new IaasException( "Unsupported installer name: " + installerName );
 
 			Map<String, String> props = IaasHelpers.loadIaasProperties( ma.getApplicationFilesDirectory(), instance );

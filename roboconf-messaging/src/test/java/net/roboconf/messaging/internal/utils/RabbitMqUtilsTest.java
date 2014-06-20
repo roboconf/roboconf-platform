@@ -135,14 +135,18 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 
 		String address = "http://roboconf.net/some/path";
 		int port = 18547;
+		String username = "toto";
+		String password= "123456789";
 
 		ConnectionFactory factory = new ConnectionFactory();
 		Assert.assertNotSame( address, factory.getHost());
 		Assert.assertNotSame( port, factory.getPort());
 
-		RabbitMqUtils.configureFactory( factory, "http://roboconf.net:" + port + "/some/path" );
+		RabbitMqUtils.configureFactory( factory, "http://roboconf.net:" + port + "/some/path", username, password );
 		Assert.assertEquals( address, factory.getHost());
 		Assert.assertEquals( port, factory.getPort());
+		Assert.assertEquals( username, factory.getUsername());
+		Assert.assertEquals( password, factory.getPassword());
 	}
 
 

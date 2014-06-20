@@ -28,7 +28,18 @@ import net.roboconf.plugin.api.ExecutionLevel;
  * The main program when the agent runs in stand-alone mode.
  * @author Noël - LIG
  */
-public class Main {
+public final class Main {
+
+	private static final String PLATFORM = "platform";
+
+
+	/**
+	 * Constructor.
+	 */
+	private Main() {
+		// nothing
+	}
+
 
 	/**
 	 * Main method.
@@ -43,30 +54,40 @@ public class Main {
 		AgentData agentData = null;
 		if( args.length == 1 )
 			agentData = AgentUtils.findParametersInPropertiesFile( logger, args[ 0 ]);
-		else if( args.length == 2 && "platform".equals(args[ 0 ]) && "azure".equals(args[ 1 ]))		// for Azure
+
+		else if( args.length == 2 && PLATFORM.equals(args[ 0 ])
+				&& "azure".equalsIgnoreCase( args[ 1 ]))
 			agentData = AgentUtils.findParametersForAzure( logger );
-		else if( args.length == 2 && !"platform".equals(args[ 0 ]))
-			logger.severe( "If agent's main class has 2 arguments. The first argument must named 'platform' and the second one must be platform's name. Default is EC2." );
-		else if( args.length == 4 )
+
+		else if( args.length == 2
+				&& ! PLATFORM.equals(args[ 0 ]))
+			logger.severe( "If the main class has 2 arguments, then the first argument must be named 'platform'." );
+
+		else if( args.length == 6 )
 			agentData = AgentUtils.findParametersInProgramArguments( args );
+
 		else if( args.length > 0 )
-			logger.severe( "Agent's main class requires 1, 4 or 0 arguments. Any other number of arguments is invalid." );
+			logger.severe( "Agent's main class requires 1, 2, 6 or 0 arguments. Any other number of arguments is invalid." );
+
 		else
 			agentData = AgentUtils.findParametersInWsInfo( logger );
 
+
 		// Launch the agent
-		// TODO: validate the agent's data
-		if( agentData == null
-				|| agentData.getMessageServerIp() == null ) {
-			logger.severe( "The agent's data (message server IP) could not be retrieved." );
+		String error;
+		if( agentData == null ) {
+			logger.severe( "No agent data was found." );
+
+		} else if(( error = agentData.validate()) != null ) {
+			logger.severe( "Error in the agent's data. " + error );
 
 		} else {
 			try {
 				new AgentLauncher( agentData ).launchAgent( ExecutionLevel.RUNNING, null );
-				logger.info( "Agent launched !" );
+				logger.info( "The agent was launched by the main program." );
 
 			} catch( IOException e ) {
-				logger.severe( "Agent failed to be launched. " + e.getMessage());
+				logger.severe( "The agent failed to be launched by the main program. " + e.getMessage());
 				logger.finest( Utils.writeException( e ));
 			}
 		}

@@ -14,20 +14,40 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management.exceptions;
+package net.roboconf.dm.management;
+
+import net.roboconf.dm.internal.TestApplication;
+
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public final class InexistingException extends Exception {
-	private static final long serialVersionUID = 8661210873590211657L;
+public class CheckerHeartbeatsTaskTest {
+
+	@Before
+	public void shutdownDm() {
+		Manager.INSTANCE.shutdown();
+	}
 
 
-	/**
-	 * Constructor.
-	 * @param elementName an element name
-	 */
-	public InexistingException( String elementName ) {
-		super( elementName + " does not exist." );
+	@Test
+	public void testRun_noApplication() {
+
+		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask();
+		task.run();
+	}
+
+
+	@Test
+	public void testRun() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+
+		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask();
+		task.run();
 	}
 }

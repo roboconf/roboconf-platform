@@ -16,8 +16,6 @@
 
 package net.roboconf.dm.rest.client;
 
-import net.roboconf.dm.rest.api.IApplicationWs;
-import net.roboconf.dm.rest.api.IManagementWs;
 import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
 import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
 import net.roboconf.dm.rest.json.ObjectMapperProvider;
@@ -31,13 +29,7 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
  * A client for the REST API of the Deployment Manager.
  * <p>
  * This client is configured for the REST implementations that use the predefined
- * PATH constants. See {@link IInitWs#PATH}, See {@link IApplicationWs#PATH}, See {@link IManagementWs#PATH}
- * and See {@link IGraphWs#PATH}.
- * </p>
- * <p>
- * It is possible to force the release of the JAX-RS client.
- * See {@link #destroy()}. If it is not called, this class
- * will handle the destruction of the JAX-RS client automatically.
+ * PATH constants. Users should call {@link #destroy()} to release the connection.
  * </p>
  * <p>
  * The following rules apply to the client implementation.
@@ -96,17 +88,6 @@ public class WsClient {
 				WsClient.this.client.destroy();
 			}
 		});
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#finalize()
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		WsClient.this.client.destroy();
-		super.finalize();
 	}
 
 

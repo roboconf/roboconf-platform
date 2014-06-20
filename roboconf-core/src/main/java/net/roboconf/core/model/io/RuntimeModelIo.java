@@ -28,6 +28,7 @@ import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.converters.FromGraphDefinition;
 import net.roboconf.core.model.converters.FromInstanceDefinition;
+import net.roboconf.core.model.converters.FromInstances;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.runtime.Application;
@@ -40,7 +41,15 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RuntimeModelIo {
+public final class RuntimeModelIo {
+
+	/**
+	 * Constructor.
+	 */
+	private RuntimeModelIo() {
+		// nothing
+	}
+
 
 	/**
 	 * Loads an application from a directory.
@@ -56,8 +65,8 @@ public class RuntimeModelIo {
 	 * @param projectDirectory the project directory
 	 * @return a load result (never null)
 	 */
-	public static LoadResult loadApplication( File projectDirectory ) {
-		LoadResult result = new LoadResult();
+	public static ApplicationLoadResult loadApplication( File projectDirectory ) {
+		ApplicationLoadResult result = new ApplicationLoadResult();
 		Application app = new Application();
 
 		ApplicationDescriptor appDescriptor = null;
@@ -158,42 +167,10 @@ public class RuntimeModelIo {
 				break INST;
 
 			File mainInstFile = new File( instDirectory, appDescriptor.getInstanceEntryPoint());
-			if( ! mainInstFile.exists()) {
-				RoboconfError error = new RoboconfError( ErrorCode.PROJ_MISSING_INSTANCE_EP );
-				error.setDetails( "Expected path: " + mainInstFile.getAbsolutePath());
-				result.loadErrors.add( error );
-				break INST;
-			}
+			InstancesLoadResult ilr = loadInstances( mainInstFile, app.getGraphs());
 
-			FileDefinition def = ParsingModelIo.readConfigurationFile( mainInstFile, true );
-			if( ! def.getParsingErrors().isEmpty()) {
-				result.loadErrors.addAll( def.getParsingErrors());
-				break INST;
-			}
-
-			if( def.getFileType() != FileDefinition.INSTANCE
-					&& def.getFileType() != FileDefinition.AGGREGATOR ) {
-				result.loadErrors.add( new ModelError( ErrorCode.PROJ_NOT_AN_INSTANCE, 1 ));
-				break INST;
-			}
-
-			Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
-			if( ! validationErrors.isEmpty()) {
-				result.loadErrors.addAll( validationErrors );
-				break INST;
-			}
-
-			FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
-			Collection<Instance> instances = fromDef.buildInstances( app.getGraphs());
-			if( ! fromDef.getErrors().isEmpty()) {
-				result.loadErrors.addAll( fromDef.getErrors());
-				break INST;
-			}
-
-			Collection<RoboconfError> errors = RuntimeModelValidator.validate( instances );
-			result.loadErrors.addAll( errors );
-
-			app.getRootInstances().addAll( instances );
+			result.loadErrors.addAll( ilr.getLoadErrors());
+			app.getRootInstances().addAll( ilr.getRootInstances());
 		}
 
 
@@ -213,7 +190,7 @@ public class RuntimeModelIo {
 	/**
 	 * A bean that stores both the application and loading errors.
 	 */
-	public static class LoadResult {
+	public static class ApplicationLoadResult {
 		Application application;
 		final Collection<RoboconfError> loadErrors = new ArrayList<RoboconfError> ();
 
@@ -230,5 +207,92 @@ public class RuntimeModelIo {
 		public Collection<RoboconfError> getLoadErrors() {
 			return this.loadErrors;
 		}
+	}
+
+
+	/**
+	 * A bean that stores both root instances and loading errors.
+	 */
+	public static class InstancesLoadResult {
+		Collection<Instance> rootInstances = new ArrayList<Instance> ();
+		final Collection<RoboconfError> loadErrors = new ArrayList<RoboconfError> ();
+
+		/**
+		 * @return the root instances (never null)
+		 */
+		public Collection<Instance> getRootInstances() {
+			return this.rootInstances;
+		}
+
+		/**
+		 * @return the load errors (never null)
+		 */
+		public Collection<RoboconfError> getLoadErrors() {
+			return this.loadErrors;
+		}
+	}
+
+
+	/**
+	 * Loads instances from a file.
+	 * @param instancesFile the file definition of the instances (can have imports)
+	 * @param graph the graph to use to resolve instances
+	 * @return a non-null result
+	 */
+	public static InstancesLoadResult loadInstances( File instancesFile, Graphs graph ) {
+
+		InstancesLoadResult result = new InstancesLoadResult();
+		INST: {
+			if( ! instancesFile.exists()) {
+				RoboconfError error = new RoboconfError( ErrorCode.PROJ_MISSING_INSTANCE_EP );
+				error.setDetails( "Expected path: " + instancesFile.getAbsolutePath());
+				result.loadErrors.add( error );
+				break INST;
+			}
+
+			FileDefinition def = ParsingModelIo.readConfigurationFile( instancesFile, true );
+			if( ! def.getParsingErrors().isEmpty()) {
+				result.loadErrors.addAll( def.getParsingErrors());
+				break INST;
+			}
+
+			if( def.getFileType() != FileDefinition.INSTANCE
+					&& def.getFileType() != FileDefinition.AGGREGATOR ) {
+				result.loadErrors.add( new ModelError( ErrorCode.PROJ_NOT_AN_INSTANCE, 1 ));
+				break INST;
+			}
+
+			Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+			if( ! validationErrors.isEmpty()) {
+				result.loadErrors.addAll( validationErrors );
+				break INST;
+			}
+
+			FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+			Collection<Instance> instances = fromDef.buildInstances( graph );
+			if( ! fromDef.getErrors().isEmpty()) {
+				result.loadErrors.addAll( fromDef.getErrors());
+				break INST;
+			}
+
+			Collection<RoboconfError> errors = RuntimeModelValidator.validate( instances );
+			result.loadErrors.addAll( errors );
+			result.getRootInstances().addAll( instances );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Writes all the instances into a file.
+	 * @param targetFile the file to save
+	 * @param rootInstances the root instances (not null)
+	 * @throws IOException if something went wrong
+	 */
+	public static void writeInstances( File targetFile, Collection<Instance> rootInstances ) throws IOException {
+
+		FileDefinition def = new FromInstances().buildFileDefinition( rootInstances, targetFile, false, true );
+		ParsingModelIo.saveRelationsFile( def, false, "\n" );
 	}
 }

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.ApplicationDescriptor;
@@ -45,7 +46,15 @@ import net.roboconf.core.utils.Utils;
  * A set of methods to validate runtime model objects.
  * @author Vincent Zurczak - Linagora
  */
-public class RuntimeModelValidator {
+public final class RuntimeModelValidator {
+
+	/**
+	 * Constructor.
+	 */
+	private RuntimeModelValidator() {
+		// nothing
+	}
+
 
 	/**
 	 * Validates a component.
@@ -156,6 +165,14 @@ public class RuntimeModelValidator {
 				RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY );
 				error.setDetails( "Component name: " + c.getName());
 				result.add( error );
+
+			} else if( Constants.IAAS_INSTALLER.equalsIgnoreCase( c.getInstallerName())) {
+				File iaasPropertiesFile = new File( componentDirectory, Constants.IAAS_PROPERTIES_FILE_NAME );
+				if( ! iaasPropertiesFile.exists()) {
+					RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_IAAS_PROPERTIES );
+					error.setDetails( "Component name: " + c.getName());
+					result.add( error );
+				}
 			}
 		}
 
@@ -188,6 +205,7 @@ public class RuntimeModelValidator {
 			// Duplicate component?
 			Component associatedComponent = alreadyChecked.get( c.getName());
 			if( associatedComponent != null ) {
+				// FIXME: add a unit test to check this (BTW, equals would not work)
 				if( associatedComponent != c ) {
 					RoboconfError error = new RoboconfError( ErrorCode.RM_DUPLICATE_COMPONENT );
 					error.setDetails( "Component name: " + c.getName());

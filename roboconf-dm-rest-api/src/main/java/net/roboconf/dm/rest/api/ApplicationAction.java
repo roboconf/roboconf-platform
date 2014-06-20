@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.actions;
+package net.roboconf.dm.rest.api;
 
 /**
  * Actions to apply on instances.
@@ -32,7 +32,7 @@ package net.roboconf.core.actions;
  * @author Vincent Zurczak - Linagora
  */
 public enum ApplicationAction {
-	deploy, undeploy, start, stop, remove;
+	DEPLOY, UNDEPLOY, START, STOP, REMOVE;
 
 	public static ApplicationAction whichAction( String s ) {
 

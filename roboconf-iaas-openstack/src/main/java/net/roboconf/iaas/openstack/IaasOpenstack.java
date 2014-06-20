@@ -16,14 +16,19 @@
 
 package net.roboconf.iaas.openstack;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
+import net.roboconf.iaas.openstack.internal.OpenstackConstants;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -36,6 +41,7 @@ import com.woorea.openstack.nova.model.Flavor;
 import com.woorea.openstack.nova.model.Flavors;
 import com.woorea.openstack.nova.model.FloatingIp;
 import com.woorea.openstack.nova.model.FloatingIps;
+import com.woorea.openstack.nova.model.NetworkForCreate;
 import com.woorea.openstack.nova.model.Server;
 import com.woorea.openstack.nova.model.ServerForCreate;
 import com.woorea.openstack.nova.model.Volume;
@@ -92,10 +98,14 @@ public class IaasOpenstack implements IaasInterface {
 		this.tenantId = iaasProperties.get(OpenstackConstants.TENANT_ID);
 		this.keypair = iaasProperties.get(OpenstackConstants.KEYPAIR);
 		this.floatingIpPool = iaasProperties.get(OpenstackConstants.FLOATING_IP_POOL);
+
 		String val = iaasProperties.get(OpenstackConstants.FLAVOR);
-		if(val != null) this.flavor = val;
+		if(val != null)
+			this.flavor = val;
+
 		val = iaasProperties.get(OpenstackConstants.SECURITY_GROUP);
-		if(val != null) this.securityGroup = val;
+		if(val != null)
+			this.securityGroup = val;
 
 		this.identityUrl = iaasProperties.get(OpenstackConstants.IDENTITY_URL);
 		this.computeUrl = iaasProperties.get(OpenstackConstants.COMPUTE_URL);
@@ -104,10 +114,12 @@ public class IaasOpenstack implements IaasInterface {
 			Keystone keystone = new Keystone(this.identityUrl);
 			//Keystone keystone = new Keystone("http://localhost:8888/v2.0");
 
-			Authenticate auth = keystone.tokens().authenticate(
-					new UsernamePassword(iaasProperties.get(OpenstackConstants.USER),
+			Authenticate auth = keystone.tokens().authenticate( new UsernamePassword(
+							iaasProperties.get(OpenstackConstants.USER),
 							iaasProperties.get(OpenstackConstants.PASSWORD)));
-			if(this.tenantId != null) auth = auth.withTenantId(this.tenantId);
+
+			if(this.tenantId != null)
+				auth = auth.withTenantId(this.tenantId);
 
 			Access access = auth.execute();
 			this.token = access.getToken().getId();
@@ -123,45 +135,51 @@ public class IaasOpenstack implements IaasInterface {
 		}
 	}
 
+
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface
-	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createVM(
-			String machineImageId,
-			String ipMessagingServer,
-			String channelName,
-			String applicationName)
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
 	throws IaasException {
-
-		if(machineImageId == null || "".equals(machineImageId))
-			machineImageId = this.machineImageId;
 
 		// Normally we use flavor names in the configuration, not IDs
 		// But lets's assume it can be an ID...
 		String flavorId = this.flavor;
 		Flavors flavors = this.novaClient.flavors().list(true).execute();
 		for(Flavor f : flavors) {
-			if(f.getName().equals(this.flavor)) flavorId = f.getId();
+			if(f.getName().equals(this.flavor))
+				flavorId = f.getId();
 		}
 
 		ServerForCreate serverForCreate = new ServerForCreate();
-		serverForCreate.setName(applicationName + "." + channelName);
+		serverForCreate.setName( applicationName + "." + rootInstanceName );
 		serverForCreate.setFlavorRef(flavorId);
-		serverForCreate.setImageRef(machineImageId);
-		if(this.keypair != null) serverForCreate.setKeyName(this.keypair);
-		serverForCreate.getSecurityGroups().add(
-			new ServerForCreate.SecurityGroup(this.securityGroup));
+		serverForCreate.setImageRef(this.machineImageId);
+		if(this.keypair != null)
+			serverForCreate.setKeyName(this.keypair);
+
+		serverForCreate.getSecurityGroups().add( new ServerForCreate.SecurityGroup(this.securityGroup));
 
 		// User data will be retrieved (like on Amazon WS) on guest OS as
 		// http://169.254.169.254/latest/user-data
-		String userData = "applicationName=" + applicationName
-				+ "\nmachineName=" + channelName //TBD machineName=channelName
-				+ "\nchannelName=" + channelName
-				+ "\nipMessagingServer=" + ipMessagingServer;
-		serverForCreate.setUserData(new String(Base64.encodeBase64(userData.getBytes())));
+		try {
+			String userData = DataHelpers.writeIaasDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
+			serverForCreate.setUserData( encodedUserData );
+
+		} catch( IOException e ) {
+			this.logger.severe( "Failed to create user data. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+			throw new IaasException( e );
+		}
 
 		// Is there any volume (ID or name) to attach ?
 		String volumeIdToAttach = this.iaasProperties.get(OpenstackConstants.VOLUME_ID);
@@ -193,7 +211,7 @@ public class IaasOpenstack implements IaasInterface {
 					VolumeForCreate volumeForCreate = new VolumeForCreate();
 					volumeForCreate.setName(volumeName);
 					volumeForCreate.setDescription("Created by Roboconf");
-					volumeForCreate.setSize(new Integer(size));
+					volumeForCreate.setSize( Integer.valueOf( size ));
 
 					volumeIdToAttach = this.novaClient.volumes().create(volumeForCreate).execute().getId();
 					/*
@@ -217,7 +235,7 @@ public class IaasOpenstack implements IaasInterface {
 
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
 		//System.out.println(server);
-		
+
 		// Wait for server to be in ACTIVE state, before associating floating IP and/or attaching volumes
 		try {
 			final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(1);
@@ -240,7 +258,9 @@ public class IaasOpenstack implements IaasInterface {
 		// Attach volume if required
 		if(volumeIdToAttach != null) {
 			String mountPoint = this.iaasProperties.get(OpenstackConstants.VOLUME_MOUNT_POINT);
-			if(mountPoint == null) mountPoint = "/dev/vdb";
+			if(mountPoint == null)
+				mountPoint = "/dev/vdb";
+
 			this.novaClient.servers().attachVolume(server.getId(), volumeIdToAttach, mountPoint).execute();
 		}
 
@@ -253,13 +273,12 @@ public class IaasOpenstack implements IaasInterface {
 				//System.out.println("ip=" + ip2);
 				ip = ip2;
 			}
-			//FloatingIp ip = ips.allocate(this.floatingIpPool).execute();
-			if(ip != null) {
-				this.novaClient.servers().associateFloatingIp(
-						server.getId(), ip.getIp()).execute();
-			}
-		}
 
+			//FloatingIp ip = ips.allocate(this.floatingIpPool).execute();
+			if( ip != null )
+				this.novaClient.servers().associateFloatingIp( server.getId(), ip.getIp()).execute();
+		}
+		
 		return server.getId();
 	}
 
@@ -292,11 +311,12 @@ public class IaasOpenstack implements IaasInterface {
 		IaasOpenstack iaas = new IaasOpenstack();
 		iaas.setIaasProperties(conf);
 
-		String machineImageId = conf.get(OpenstackConstants.IMAGE);
 		String channelName = "test";
 		String applicationName = "roboconf";
 		String ipMessagingServer = "localhost";
-		String serverId = iaas.createVM(machineImageId, ipMessagingServer, channelName, applicationName);
+		String user = "guest";
+		String pwd = "guest";
+		String serverId = iaas.createVM( ipMessagingServer, user, pwd, channelName, applicationName);
 		/*Thread.sleep(25000);
 		iaas.terminateVM(serverId);*/
 	}

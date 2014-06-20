@@ -50,12 +50,13 @@ public class IaasInMemory implements IaasInterface {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface
-	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createVM(
-			String machineImageId,
-			final String ipMessagingServer,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
 			String rootInstanceName,
 			String applicationName )
 	throws IaasException {
@@ -68,7 +69,9 @@ public class IaasInMemory implements IaasInterface {
 		// Create the agent's data.
 		final AgentData agentData = new AgentData();
 		agentData.setApplicationName( applicationName );
-		agentData.setMessageServerIp( ipMessagingServer );
+		agentData.setMessageServerIp( messagingIp );
+		agentData.setMessageServerUsername( messagingUsername );
+		agentData.setMessageServerPassword( messagingPassword );
 		agentData.setIpAddress( "localhost" );
 		agentData.setRootInstanceName( rootInstanceName );
 

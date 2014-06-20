@@ -16,6 +16,7 @@
 
 package net.roboconf.iaas.ec2;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.ec2.internal.Ec2Constants;
@@ -92,31 +94,35 @@ public class IaasEc2 implements IaasInterface {
 		this.iaasProperties = iaasProperties;
 
 		// Configure the IaaS client
-		AWSCredentials credentials = new BasicAWSCredentials( iaasProperties.get(Ec2Constants.EC2_ACCESS_KEY), iaasProperties.get(Ec2Constants.EC2_SECRET_KEY));
+		AWSCredentials credentials = new BasicAWSCredentials(
+				iaasProperties.get(Ec2Constants.EC2_ACCESS_KEY),
+				iaasProperties.get(Ec2Constants.EC2_SECRET_KEY));
+
 		this.ec2 = new AmazonEC2Client( credentials );
 		this.ec2.setEndpoint( iaasProperties.get(Ec2Constants.EC2_ENDPOINT));
 	}
 
+
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface
-	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createVM(
-			String machineImageId,
-			String ipMessagingServer,
-			String channelName,
-			String applicationName)
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
 	throws IaasException {
 
 		String instanceId = null;
 		try {
+			String userData = DataHelpers.writeIaasDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode(
 					this.iaasProperties.get(Ec2Constants.AMI_VM_NODE),
-					ipMessagingServer,
-					channelName,
-					applicationName );
+					userData );
 
 			RunInstancesResult runInstanceResult = this.ec2.runInstances( runInstancesRequest );
 			instanceId = runInstanceResult.getReservation().getInstances().get( 0 ).getInstanceId();
@@ -178,7 +184,7 @@ public class IaasEc2 implements IaasInterface {
 			List<Tag> tags = new ArrayList<Tag>();
 			Tag t = new Tag();
 			t.setKey("Name");
-			t.setValue(applicationName + "." + channelName);
+			t.setValue(applicationName + "." + rootInstanceName);
 			tags.add(t);
 			CreateTagsRequest ctr = new CreateTagsRequest();
 			ctr.setTags(tags);
@@ -195,6 +201,10 @@ public class IaasEc2 implements IaasInterface {
 
 		} catch( UnsupportedEncodingException e ) {
 			this.logger.severe( "An error occurred while contacting Amazon EC2. " + e.getMessage());
+			throw new IaasException( e );
+
+		} catch( IOException e ) {
+			this.logger.severe( "An error occurred while preparing the user data. " + e.getMessage());
 			throw new IaasException( e );
 		}
 
@@ -251,14 +261,13 @@ public class IaasEc2 implements IaasInterface {
 
 	/**
 	 * Prepares the request.
-	 * @param machineImageId
-	 * @param ipMessagingServer
-	 * @param channelName
-	 * @param applicationName
+	 * @param machineImageId the ID of the image to use
+	 * @param userData the user data to pass
 	 * @return a request
 	 * @throws UnsupportedEncodingException
 	 */
-	private RunInstancesRequest prepareEC2RequestNode( String machineImageId, String ipMessagingServer, String channelName, String applicationName ) throws UnsupportedEncodingException {
+	private RunInstancesRequest prepareEC2RequestNode( String machineImageId, String userData )
+	throws UnsupportedEncodingException {
 
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
 		String flavor = this.iaasProperties.get(Ec2Constants.VM_INSTANCE_TYPE);
@@ -278,7 +287,7 @@ public class IaasEc2 implements IaasInterface {
 		if(StringUtils.isBlank(secGroup)) secGroup = "default";
 		runInstancesRequest.setSecurityGroups(Arrays.asList(secGroup));
 
-/*	
+/*
 		// Create the block device mapping to describe the root partition.
 		BlockDeviceMapping blockDeviceMapping = new BlockDeviceMapping();
 		blockDeviceMapping.setDeviceName("/dev/sda1");
@@ -297,18 +306,12 @@ public class IaasEc2 implements IaasInterface {
 		// Set the block device mapping configuration in the launch specifications.
 		runInstancesRequest.setBlockDeviceMappings(blockList);
 */
-		
-		
+
+
 		// The following part enables to transmit data to the VM.
 		// When the VM is up, it will be able to read this data.
-		StringBuilder data = new StringBuilder();
-		data.append( "ipMessagingServer=" + ipMessagingServer + "\n" );
-		data.append( "applicationName=" + applicationName + "\n" );
-		data.append( "channelName=" + channelName + "\n" );
-
-		String dataToPass = data.toString();
-		String userData = new String( Base64.encodeBase64( dataToPass.getBytes( "UTF-8" )));
-		runInstancesRequest.setUserData( userData );
+		String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
+		runInstancesRequest.setUserData( encodedUserData );
 
 		return runInstancesRequest;
 	}

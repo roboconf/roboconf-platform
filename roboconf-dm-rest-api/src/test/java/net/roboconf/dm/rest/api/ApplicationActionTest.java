@@ -14,20 +14,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management.exceptions;
+package net.roboconf.dm.rest.api;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmWasNotInitializedException extends Exception {
+public class ApplicationActionTest {
 
-	private static final long serialVersionUID = 8234967453024345058L;
-
-
-	/**
-	 * Constructor.
-	 */
-	public DmWasNotInitializedException() {
-		super( "The deployment manager was not initialized. No connection has been established with the messaging server." );
+	@Test
+	public void testWhichAction() {
+		Assert.assertEquals( ApplicationAction.DEPLOY, ApplicationAction.whichAction( "deploy" ));
+		Assert.assertEquals( ApplicationAction.DEPLOY, ApplicationAction.whichAction( "DEploY" ));
+		Assert.assertNull( ApplicationAction.whichAction( "not an action" ));
 	}
 }

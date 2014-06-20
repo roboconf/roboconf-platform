@@ -23,6 +23,16 @@ package net.roboconf.core;
 public interface Constants {
 
 	/**
+	 * The name of the IaaS installer (which is somehow specific).
+	 */
+	String IAAS_INSTALLER = "iaas";
+
+	/**
+	 * The name of the file that contain IaaS properties.
+	 */
+	String IAAS_PROPERTIES_FILE_NAME = "iaas.properties";
+
+	/**
 	 * The heart beat period (in milliseconds).
 	 */
 	long HEARTBEAT_PERIOD = 60000;
@@ -79,6 +89,16 @@ public interface Constants {
 	 * Keyword for an instance property.
 	 */
 	String PROPERTY_INSTANCE_NAME = "name";
+
+	/**
+	 * Keyword for an instance property (runtime, not meant to be set manually).
+	 */
+	String PROPERTY_INSTANCE_DATA = "instance-data";
+
+	/**
+	 * Keyword for an instance property (runtime, not meant to be set manually).
+	 */
+	String PROPERTY_INSTANCE_STATE = "instance-state";
 
 	/**
 	 * Keyword for an instance property.

@@ -16,7 +16,6 @@
 
 package net.roboconf.iaas.azure;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -24,7 +23,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -50,6 +48,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
@@ -88,8 +87,8 @@ public class IaasAzure implements IaasInterface {
 		this.logger = logger;
 	}
 
-	private KeyStore getKeyStore(String keyStoreName, String password) throws IOException
-	{
+
+	private KeyStore getKeyStore(String keyStoreName, String password) throws IOException {
 	    KeyStore ks = null;
 	    FileInputStream fis = null;
 	    try {
@@ -109,7 +108,10 @@ public class IaasAzure implements IaasInterface {
 	    return ks;
 	}
 
-	private SSLSocketFactory getSSLSocketFactory(String keyStoreName, String password) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
+
+	private SSLSocketFactory getSSLSocketFactory( String keyStoreName, String password )
+	throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException, IOException {
+
 	    KeyStore ks = this.getKeyStore(keyStoreName, password);
 	    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
 	    keyManagerFactory.init(ks, password.toCharArray());
@@ -120,30 +122,27 @@ public class IaasAzure implements IaasInterface {
 	      return context.getSocketFactory();
 	}
 
-	private String getStringFromInputStream(InputStream is) {
-	     BufferedReader br = null;
-	     StringBuilder sb = new StringBuilder();
-	     String line;
-	     try {
-	         br = new BufferedReader(new InputStreamReader(is));
-	         while ((line = br.readLine()) != null) {
-	             sb.append(line);
-	         }
-	     } catch (IOException e) {
-	    	 this.logger.severe( e.getMessage() );
-	     } finally {
-	         if (br != null) {
-	             try {
-	                 br.close();
-	             } catch (IOException e) {
-	            	 this.logger.severe( e.getMessage() );
-	             }
-	         }
-	     }
-	     return sb.toString();
+
+	private String getStringFromInputStream( InputStream in ) {
+
+		String result = "";
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		try {
+			Utils.copyStream( in, os );
+			result = os.toString( "UTF-8" );
+
+		} catch( IOException e ) {
+			this.logger.severe( e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
+
+	     return result;
 	}
 
-	private static boolean getExistResutlFromXML(String xmlStr, String nameOfNode) throws ParserConfigurationException, UnsupportedEncodingException, SAXException, IOException {
+
+	private static boolean getExistResutlFromXML(String xmlStr, String nameOfNode)
+	throws ParserConfigurationException, SAXException, IOException {
+
 		DocumentBuilderFactory f = DocumentBuilderFactory.newInstance();
 		DocumentBuilder b;
 		b = f.newDocumentBuilder();
@@ -155,25 +154,33 @@ public class IaasAzure implements IaasInterface {
 			 Element node = (Element) nodes.item(i);
 			 result = node.getTextContent();
 		}
-		boolean resultBool = false;
-		if ("true".equals(result)) resultBool = true;
-		return resultBool;
+
+		return Boolean.parseBoolean( result );
 	}
 
-	private String processGetRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+
+	private String processGetRequest(URL url, String keyStore, String keyStorePassword)
+	throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+
         SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
         HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
         con.setSSLSocketFactory(sslFactory);
         con.setRequestMethod("GET");
         con.addRequestProperty("x-ms-version", "2014-04-01");
         InputStream responseStream = (InputStream) con.getContent();
-        String response = getStringFromInputStream(responseStream);
-        responseStream.close();
-        return response;
+
+        try {
+        	return getStringFromInputStream(responseStream);
+
+        } finally {
+        	Utils.closeQuietly( responseStream );
+        }
     }
 
 
-	private int processPostRequest(URL url, byte[] data, String contentType, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+	private int processPostRequest(URL url, byte[] data, String contentType, String keyStore, String keyStorePassword)
+	throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+
 	    SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
 	    HttpsURLConnection con = null;
 	    con = (HttpsURLConnection) url.openConnection();
@@ -191,7 +198,10 @@ public class IaasAzure implements IaasInterface {
 	    return con.getResponseCode();
 	}
 
-	private int processDeleteRequest(URL url, String keyStore, String keyStorePassword) throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+
+	private int processDeleteRequest(URL url, String keyStore, String keyStorePassword)
+	throws UnrecoverableKeyException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, IOException {
+
         SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
         HttpsURLConnection con = null;
         con = (HttpsURLConnection) url.openConnection();
@@ -201,19 +211,22 @@ public class IaasAzure implements IaasInterface {
         return con.getResponseCode();
     }
 
-	private byte[] convertFileToByte(String xmlFilePath)
-    {
+	private byte[] convertFileToByte(String xmlFilePath) {
+
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		try {
 			Utils.copyStream ( new File(xmlFilePath), os );
 		} catch (IOException e) {
-			this.logger.severe( e.getMessage() );
+			this.logger.severe( e.getMessage());
 		}
+
 		return os.toByteArray();
     }
 
 
-	private void replaceValueOfTagInXMLFile(String filePath, String tagName, String replacingValue) throws ParserConfigurationException, SAXException, IOException {
+	private void replaceValueOfTagInXMLFile(String filePath, String tagName, String replacingValue)
+	throws ParserConfigurationException, SAXException, IOException {
+
 		File fXmlFile = new File(filePath);
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
@@ -306,35 +319,32 @@ public class IaasAzure implements IaasInterface {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface
-	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createVM(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createVM(
-			String machineImageId,
-			String ipMessagingServer,
-			String channelName,
-			String applicationName)
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
 	throws IaasException {
 
 		String instanceId = null;
 		try {
 			// The following part enables to transmit data to the VM.
 			// When the VM is up, it will be able to read this data.
-			// TODO: Azure is not to allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
+			// TODO: Azure does not allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
 			// channelName = channelName.replaceAll("\\s+","-").toLowerCase();
-			StringBuilder data = new StringBuilder();
-			data.append( "ipMessagingServer=" + ipMessagingServer + "\n" );
-			data.append( "applicationName=" + applicationName + "\n" );
-			data.append( "channelName=" + channelName + "\n" );
+			String userData = DataHelpers.writeIaasDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
 
-			String dataToPass = data.toString();
-			String userData = new String( Base64.encodeBase64( dataToPass.getBytes( "UTF-8" )));
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateCloudServiceTemplate(), "ServiceName", channelName );
+			replaceValueOfTagInXMLFile(this.azureProperties.getCreateCloudServiceTemplate(), "ServiceName", rootInstanceName );
 			replaceValueOfTagInXMLFile(this.azureProperties.getCreateCloudServiceTemplate(), "Location", this.azureProperties.getLocation() );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "CustomData", userData );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "Name", channelName );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "HostName", channelName );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "RoleName", channelName );
+			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "CustomData", encodedUserData );
+			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "Name", rootInstanceName );
+			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "HostName", rootInstanceName );
+			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "RoleName", rootInstanceName );
 			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "RoleSize", this.azureProperties.getVMSize() );
 			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "SourceImageName", this.azureProperties.getVMTemplate() );
 
@@ -343,9 +353,9 @@ public class IaasAzure implements IaasInterface {
 			String requestHeaderContentType = "application/xml";
 			byte[] requestBodyCreateCloudService = convertFileToByte(this.azureProperties.getCreateCloudServiceTemplate());
 			byte[] requestBodyCreateDeployment = convertFileToByte(this.azureProperties.getCreateDeploymentTemplate());
-			String checkCloudServiceURL = baseURL+"/hostedservices/operations/isavailable/"+channelName;
+			String checkCloudServiceURL = baseURL+"/hostedservices/operations/isavailable/"+rootInstanceName;
 			String createCloudServiceURL = baseURL+"/hostedservices";
-			String createDeploymentURL = baseURL+"/hostedservices/"+channelName+"/deployments";
+			String createDeploymentURL = baseURL+"/hostedservices/"+rootInstanceName+"/deployments";
 
 			// check if Cloud Service exist
 			String responseCheckCloudService = processGetRequest(new URL(checkCloudServiceURL), this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());
@@ -354,15 +364,29 @@ public class IaasAzure implements IaasInterface {
 
 			// create Cloud Service, Deployment & Add a Role (Linux VM), maybe add a second Role (another Linux VM)
 			int rescodeCreateCloudService = -1;
-			if (checkResult) rescodeCreateCloudService = processPostRequest(new URL(createCloudServiceURL), requestBodyCreateCloudService, requestHeaderContentType, this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());	// rescode shoud be 201
+			if (checkResult) {
+				rescodeCreateCloudService = processPostRequest(
+					new URL(createCloudServiceURL),
+					requestBodyCreateCloudService,
+					requestHeaderContentType,
+					this.azureProperties.getKeyStoreFile(),
+					this.azureProperties.getKeyStorePassword());	// rescode shoud be 201
+			}
+
 			this.logger.info( "Create Cloud Service: Response Code: " + rescodeCreateCloudService);
-			this.logger.info( "Creating Azure VM in progress: " + channelName);
+			this.logger.info( "Creating Azure VM in progress: " + rootInstanceName);
 			if (rescodeCreateCloudService == 201) {
-				int rescodeCreateDeployment = processPostRequest(new URL(createDeploymentURL), requestBodyCreateDeployment, requestHeaderContentType, this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());	// rescode shoud be 202
+				int rescodeCreateDeployment = processPostRequest(
+						new URL(createDeploymentURL),
+						requestBodyCreateDeployment,
+						requestHeaderContentType,
+						this.azureProperties.getKeyStoreFile(),
+						this.azureProperties.getKeyStorePassword());	// rescode shoud be 202
+
 				this.logger.info( "Create VM: Response Code: " + rescodeCreateDeployment);
 			}
 
-			instanceId = channelName;	// instanceID in this context should be channelName
+			instanceId = rootInstanceName;	// instanceID in this context should be rootInstanceName
 
 		} catch( UnsupportedEncodingException e ) {
 			throw new IaasException( e );
@@ -405,8 +429,12 @@ public class IaasAzure implements IaasInterface {
 			String baseURL = String.format("https://management.core.windows.net/%s/services", this.azureProperties.getSubscriptionId());
 			String deleteCloudServiceURL = baseURL+"/hostedservices/"+instanceId+"?comp=media";
 
-			// delete Cloud Service, also delete all things related
-			int rescodeDeleteCloudService = processDeleteRequest(new URL(deleteCloudServiceURL), this.azureProperties.getKeyStoreFile(), this.azureProperties.getKeyStorePassword());		// rescode shoud be 202
+			// Delete Cloud Service, and also delete all the related things
+			int rescodeDeleteCloudService = processDeleteRequest(
+					new URL(deleteCloudServiceURL),
+					this.azureProperties.getKeyStoreFile(),
+					this.azureProperties.getKeyStorePassword());		// rescode shoud be 202
+
 			this.logger.info("Response Code: Delete VM: " + rescodeDeleteCloudService);
 
 		} catch( UnrecoverableKeyException e ) {

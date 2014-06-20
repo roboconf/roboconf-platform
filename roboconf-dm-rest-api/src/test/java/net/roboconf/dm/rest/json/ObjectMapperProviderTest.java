@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.persistence;
+package net.roboconf.dm.rest.json;
 
-import junit.framework.Assert;
-import net.roboconf.dm.persistence.IDmStorage.DmStorageBean;
-
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class NoStorageTest {
+public class ObjectMapperProviderTest {
 
 	@Test
-	public void testRestorationAndPersistence() throws Exception {
+	public void testGetContext() {
 
-		DmStorageBean bean = new DmStorageBean();
-		IDmStorage storage = new NoStorage();
-		storage.saveManagerState( bean );
-
-		DmStorageBean restoredBean = storage.restoreManagerState();
-		Assert.assertNotNull( restoredBean );
-		Assert.assertEquals( 0, restoredBean.getApplications().size());
+		ObjectMapperProvider provider = new ObjectMapperProvider();
+		Assert.assertNotNull( provider.getContext( null ));
+		Assert.assertNotNull( provider.getContext( String.class ));
 	}
 }
