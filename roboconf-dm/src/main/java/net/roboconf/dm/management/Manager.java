@@ -504,7 +504,7 @@ public final class Manager {
 	 */
 	public void deployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
 
-		this.logger.fine( "Deploying rootinstance " + rootInstance.getName() + " in " + ma.getName() + "..." );
+		this.logger.fine( "Deploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
 		if( rootInstance.getParent() != null ) {
 			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;
@@ -556,7 +556,7 @@ public final class Manager {
 	 */
 	public void undeployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
 
-		this.logger.fine( "Undeploying rootinstance " + rootInstance.getName() + " in " + ma.getName() + "..." );
+		this.logger.fine( "Undeploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
 		if( rootInstance.getParent() != null ) {
 			this.logger.fine( "Undeploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;

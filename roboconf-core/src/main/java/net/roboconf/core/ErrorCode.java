@@ -88,6 +88,7 @@ public enum ErrorCode {
 	CO_NOT_OVERRIDING( ErrorLevel.WARNING, ErrorCategory.CONVERSION, "A variable is exported in the instance but was not defined in its component." ),
 	CO_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A variable is exported in the instance but could not be resolved in its component." ),
 	CO_AMBIGUOUS_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A component does not specify its installer but inherits several ones from its facets." ),
+	CO_INEXISTING_CHILD( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "No child matching this name (component or facet) was found." ),
 
 	// Runtime Model Errors
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),

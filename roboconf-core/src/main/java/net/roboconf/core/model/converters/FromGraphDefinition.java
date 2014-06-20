@@ -382,10 +382,19 @@ public class FromGraphDefinition {
 			for( String childName : entry.getValue()) {
 
 				// Children can be determined by component name or by facet name
+				int insertionCount = 0;
 				for( Component c : this.componentNameToComponent.values()) {
 					if( childName.equals( c.getName())
-							|| c.getFacetNames().contains( childName ))
+							|| c.getFacetNames().contains( childName )) {
 						ComponentHelpers.insertChild( component, c );
+						insertionCount ++;
+					}
+				}
+
+				if( insertionCount == 0 ) {
+					ModelError error = new ModelError( ErrorCode.CO_INEXISTING_CHILD, 0 );
+					error.setDetails( "Child name: " + childName );
+					this.errors.add( error );
 				}
 			}
 		}

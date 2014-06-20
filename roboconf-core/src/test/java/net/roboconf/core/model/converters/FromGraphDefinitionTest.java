@@ -247,4 +247,44 @@ public class FromGraphDefinitionTest {
 		Assert.assertNotNull( component );
 		Assert.assertTrue( component.getFacetNames().contains( "war archive" ));
 	}
+
+
+	@Test
+	public void testInexistingChildren_components() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/component-inexisting-children.graph" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+		Assert.assertEquals( 0, validationErrors.size());
+
+		FromGraphDefinition fromDef = new FromGraphDefinition( def );
+		fromDef.buildGraphs();
+		Assert.assertEquals( 2, fromDef.getErrors().size());
+
+		ModelError[] errors = fromDef.getErrors().toArray( new ModelError[ 2 ]);
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 0 ].getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 1 ].getErrorCode());
+	}
+
+
+	@Test
+	public void testInexistingChildren_facets() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/component-inexisting-child-facet.graph" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+		Assert.assertEquals( 0, validationErrors.size());
+
+		FromGraphDefinition fromDef = new FromGraphDefinition( def );
+		fromDef.buildGraphs();
+		Assert.assertEquals( 1, fromDef.getErrors().size());
+
+		ModelError[] errors = fromDef.getErrors().toArray( new ModelError[ 1 ]);
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 0 ].getErrorCode());
+		Assert.assertTrue( errors[ 0 ].getDetails().contains( "Fa2" ));
+	}
 }
