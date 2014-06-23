@@ -82,6 +82,9 @@ public abstract class MessagingTestUtils {
 
 		// The DM sends some message to the client
 		Assert.assertEquals( 0, agentProcessor.receivedMessages.size());
+
+		// The agent is not listening to the DM.
+		// With RabbitMQ, the next invocation will result in a NO_ROUTE error in the channel.
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceAdd((String) null, rootInstance ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 0, agentProcessor.receivedMessages.size());
@@ -113,6 +116,9 @@ public abstract class MessagingTestUtils {
 
 		// The agent stops listening the DM
 		agentClient.listenToTheDm( ListenerCommand.STOP );
+
+		// The agent is not listening to the DM anymore.
+		// With RabbitMQ, the next invocation will result in a NO_ROUTE error in the channel.
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceStart( rootInstance ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 2, agentProcessor.receivedMessages.size());
