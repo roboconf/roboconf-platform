@@ -24,6 +24,8 @@ public interface OpenstackConstants {
 	String TENANT_ID = "openstack.tenantId";
 	String KEYPAIR = "openstack.keypair";
 	String FLOATING_IP_POOL = "openstack.floatingIpPool";
+	String NETWORK_ID = "openstack.networkId";
+	String FIXED_IP = "openstack.fixedIp";
 	String FLAVOR = "openstack.flavor";
 	String SECURITY_GROUP = "openstack.securityGroup";
 	String IDENTITY_URL = "openstack.identityUrl";

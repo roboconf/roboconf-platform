@@ -233,6 +233,14 @@ public class IaasOpenstack implements IaasInterface {
 			}
 		}
 
+		// If a network ID is specified (neutron network), use it
+		String networkId = this.iaasProperties.get(OpenstackConstants.NETWORK_ID);
+		if(networkId != null) {
+			String fixedIp = this.iaasProperties.get(OpenstackConstants.FIXED_IP);
+			// fixedIp may be null (DHCP).
+			serverForCreate.addNetworks(networkId, fixedIp);	
+		}
+
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
 		//System.out.println(server);
 
@@ -264,7 +272,7 @@ public class IaasOpenstack implements IaasInterface {
 			this.novaClient.servers().attachVolume(server.getId(), volumeIdToAttach, mountPoint).execute();
 		}
 
-		// Associate floating IP
+		// Associate floating IP (nova network) if specified
 		if(this.floatingIpPool != null) {
 			FloatingIps ips = this.novaClient.floatingIps().list().execute();
 
