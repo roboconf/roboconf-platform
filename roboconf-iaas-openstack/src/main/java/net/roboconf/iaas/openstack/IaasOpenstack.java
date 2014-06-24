@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -274,17 +275,19 @@ public class IaasOpenstack implements IaasInterface {
 
 		// Associate floating IP (nova network) if specified
 		if(this.floatingIpPool != null) {
-			FloatingIps ips = this.novaClient.floatingIps().list().execute();
+			FloatingIp ip = requestFloatingIp(this.novaClient, server.getId());
+			
+			/*FloatingIps ips = this.novaClient.floatingIps().list().execute();
 
 			FloatingIp ip = null;
 			for(FloatingIp ip2 : ips) {
-				//System.out.println("ip=" + ip2);
-				ip = ip2;
-			}
+				// Look for an IP that is not yet associated to a VM
+				if(ip2.getInstanceId() == null) ip = ip2;
+			}*/
 
-			//FloatingIp ip = ips.allocate(this.floatingIpPool).execute();
-			if( ip != null )
+			if( ip != null ) {
 				this.novaClient.servers().associateFloatingIp( server.getId(), ip.getIp()).execute();
+			}
 		}
 		
 		return server.getId();
@@ -299,9 +302,34 @@ public class IaasOpenstack implements IaasInterface {
 	public void terminateVM(String instanceId) throws IaasException {
 		try {
 			this.novaClient.servers().delete(instanceId).execute();
+			synchronized(ipAssociations) {
+				for(Map.Entry<String, String> entry : ipAssociations.entrySet()) {
+					if(instanceId.equals(entry.getValue())) {
+						ipAssociations.remove(entry.getKey());
+						break;
+					}
+				}
+			}
 		} catch(Exception e) {
 			throw new IaasException(e);
 		}
+	}
+
+	private static HashMap<String, String> ipAssociations = new HashMap<String, String>();
+
+	private static synchronized FloatingIp requestFloatingIp(Nova novaClient, String serverId) {
+		FloatingIps ips = novaClient.floatingIps().list().execute();
+
+		FloatingIp ip = null;
+		for(FloatingIp ip2 : ips) {
+			// Look for an IP that is not yet associated to a VM
+			if(ip2.getInstanceId() == null && ipAssociations.get(ip2.getId()) == null) {
+				ip = ip2;
+				ipAssociations.put(ip2.getId(), serverId);
+				break;
+			}
+		}
+		return ip;
 	}
 
 	public static void main(String args[]) throws Exception {
