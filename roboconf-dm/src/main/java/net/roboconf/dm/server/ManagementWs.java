@@ -56,15 +56,16 @@ public class ManagementWs implements IManagementWs {
 	public Response loadApplication( InputStream uploadedInputStream, FormDataContentDisposition fileDetail ) {
 
 		this.logger.fine( "Request: load application from uploaded ZIP file (" + fileDetail.getFileName() + ")." );
-		Response response;
 		File tempZipFile = new File( System.getProperty( "java.io.tmpdir" ), fileDetail.getFileName());
+		File dir = null;
+		Response response;
 		try {
 			// Copy the uploaded ZIP file on the disk
 			Utils.copyStream( uploadedInputStream, tempZipFile );
 
 			// Extract the ZIP content
 			String appName = fileDetail.getFileName().replace( ".zip", "" );
-			File dir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf/" + appName );
+			dir = new File( System.getProperty( "java.io.tmpdir" ), "roboconf/" + appName );
 			Utils.extractZipArchive( tempZipFile, dir );
 
 			// Load the application
@@ -75,8 +76,16 @@ public class ManagementWs implements IManagementWs {
 
 		} finally {
 			Utils.closeQuietly( uploadedInputStream );
-			if( ! tempZipFile.delete())
-				tempZipFile.deleteOnExit();
+			try {
+				// We do not need the extracted application anymore.
+				// In case of success, it was copied in the DM's configuration.
+				Utils.deleteFilesRecursively( dir );
+				if( ! tempZipFile.delete())
+					tempZipFile.deleteOnExit();
+
+			} catch( IOException e ) {
+				this.logger.finest( Utils.writeException( e ));
+			}
 		}
 
 		return response;
