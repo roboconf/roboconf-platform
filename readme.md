@@ -8,7 +8,7 @@ It allows to deploy distributed applications over several machines (VM, connecte
 groups of machines (multi-IaaS, hybrid cloud). Transposing the concepts of component models like OSGi,
 Roboconf can install and also reconfigure dynamically a topology of applications.
 
-Roboconf brings asynchronous configuration to solutions like Bash, Puppet or Chief.  
+Roboconf brings asynchronous configuration to solutions like Bash, Puppet or Chef.  
 For the moment, only Puppet and bash plugins are available.
 
 The project is still incubating, but we hope to have a stable version soon.  
