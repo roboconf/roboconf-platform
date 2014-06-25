@@ -434,6 +434,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				}
 
 			} catch( PluginException e ) {
+				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
 				this.logger.severe( "An error occured while starting " + InstanceHelpers.computeInstancePath( instance ));
 				this.logger.finest( Utils.writeException( e ));
 			}
