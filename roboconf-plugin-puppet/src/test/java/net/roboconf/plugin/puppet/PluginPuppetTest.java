@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,9 +29,12 @@ import java.util.logging.Logger;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.io.RuntimeModelIo;
+import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.puppet.PluginPuppet.PuppetState;
@@ -125,6 +129,137 @@ public class PluginPuppetTest {
 		Assert.assertTrue( subFiles[ 1 ].isDirectory());
 	}
 
+	/**
+	 * Test Puppet plugin on a real instance (from a fully functional app).
+	 * Puppet module with only one init.pp manifest.
+	 * The manifest produces files (based on templates) for each operation
+	 * (deploy/start/stop/undeploy).
+	 * @throws Exception
+	 */
+	@Test
+	public void testPuppetPlugin_WithInit() throws Exception {
+		Instance inst = findInstance("/puppetplugin-unit-tests", "WithInit");
+		//System.out.println("*** INSTANCE NAME=" + inst.getName());
+
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(inst, plugin.getPluginName());
+		
+		Utils.copyDirectory(TestUtils.findTestFile("/puppetplugin-unit-tests/graph/WithInit"),
+				instanceDirectory);
+		
+		PluginPuppet plugin = new PluginPuppet();
+		File file;
+		
+		plugin.deploy(inst);
+		file = new File("/tmp/WithInitFile.stopped");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithInitTemplate.stopped");
+		Assert.assertTrue(file.exists());
+		file.delete();
+
+		plugin.start(inst);
+		file = new File("/tmp/WithInitFile.running");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithInitTemplate.running");
+		Assert.assertTrue(file.exists());
+		file.delete();
+
+		plugin.stop(inst);
+		file = new File("/tmp/WithInitFile.stopped");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithInitTemplate.stopped");
+		Assert.assertTrue(file.exists());
+		file.delete();
+
+		plugin.undeploy(inst);
+		file = new File("/tmp/WithInitFile.");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithInitTemplate.");
+		Assert.assertTrue(file.exists());
+		file.delete();
+
+		Utils.deleteFilesRecursively(instanceDirectory);
+	}
+
+	/**
+	 * Test Puppet plugin on a real instance (from a fully functional app).
+	 * Puppet module with one manifest per operation.
+	 * The manifest produces files (based on templates) for each operation
+	 * (deploy/start/stop/undeploy).
+	 * @throws Exception
+	 */
+	@Test
+	public void testPuppetPlugin_WithOperations() throws Exception {
+		Instance inst = findInstance("/puppetplugin-unit-tests", "WithOperations");
+		//System.out.println("*** INSTANCE NAME=" + inst.getName());
+
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(inst, plugin.getPluginName());
+		
+		Utils.copyDirectory(TestUtils.findTestFile("/puppetplugin-unit-tests/graph/WithOperations"),
+				instanceDirectory);
+		
+		PluginPuppet plugin = new PluginPuppet();
+		File file;
+		
+		plugin.deploy(inst);
+		file = new File("/tmp/WithOperationsFile.deploy");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithOperationsTemplate.deploy");
+		Assert.assertTrue(file.exists());
+		file.delete();
+
+		plugin.start(inst);
+		file = new File("/tmp/WithOperationsFile.start");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithOperationsTemplate.start");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		
+		/*
+		Map<String, String> exportedVars = new HashMap<String, String>();
+		exportedVars.put("test.ip", "127.0.0.1");
+		Import changed = new Import("/app/testinstance", exportedVars);
+		plugin.update(inst, changed, InstanceStatus.DEPLOYED_STARTED);
+		*/
+		
+		plugin.stop(inst);
+		file = new File("/tmp/WithOperationsFile.stop");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithOperationsTemplate.stop");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		
+		plugin.undeploy(inst);
+		file = new File("/tmp/WithOperationsFile.undeploy");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithOperationsTemplate.undeploy");
+		Assert.assertTrue(file.exists());
+		file.delete();
+
+		Utils.deleteFilesRecursively(instanceDirectory);
+	}
+
+
+	private Instance findInstance(String appDirPath, String instanceName) throws Exception {
+		File appDir = TestUtils.findTestFile(appDirPath);
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication(appDir);
+		List<Instance> instances = null;
+		for(Instance root : result.getApplication().getRootInstances()) {
+			instances = InstanceHelpers.buildHierarchicalList(root);
+			
+			for(Instance inst : instances) {
+				if(inst.getName().equals(instanceName)) return inst;
+			}
+		}
+		return null;
+	}
 
 	@Test
 	public void testFormatExportedVariables() {
@@ -244,4 +379,5 @@ public class PluginPuppetTest {
 		}
 
 	}
+
 }
