@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,6 @@ import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.puppet.PluginPuppet.PuppetState;
@@ -138,6 +136,7 @@ public class PluginPuppetTest {
 	 */
 	@Test
 	public void testPuppetPlugin_WithInit() throws Exception {
+		PluginPuppet plugin = new PluginPuppet();
 		Instance inst = findInstance("/puppetplugin-unit-tests", "WithInit");
 		//System.out.println("*** INSTANCE NAME=" + inst.getName());
 
@@ -145,8 +144,7 @@ public class PluginPuppetTest {
 		
 		Utils.copyDirectory(TestUtils.findTestFile("/puppetplugin-unit-tests/graph/WithInit"),
 				instanceDirectory);
-		
-		PluginPuppet plugin = new PluginPuppet();
+
 		File file;
 		
 		plugin.deploy(inst);
@@ -193,6 +191,7 @@ public class PluginPuppetTest {
 	 */
 	@Test
 	public void testPuppetPlugin_WithOperations() throws Exception {
+		PluginPuppet plugin = new PluginPuppet();
 		Instance inst = findInstance("/puppetplugin-unit-tests", "WithOperations");
 		//System.out.println("*** INSTANCE NAME=" + inst.getName());
 
@@ -200,8 +199,7 @@ public class PluginPuppetTest {
 		
 		Utils.copyDirectory(TestUtils.findTestFile("/puppetplugin-unit-tests/graph/WithOperations"),
 				instanceDirectory);
-		
-		PluginPuppet plugin = new PluginPuppet();
+
 		File file;
 		
 		plugin.deploy(inst);

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cp $ROBOCONF_FILES_DIR/BashTemplateFile.txt /tmp/BashTemplateFile.update
+

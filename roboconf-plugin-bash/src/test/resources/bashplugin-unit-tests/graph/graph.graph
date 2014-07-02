@@ -1,0 +1,20 @@
+
+# The VM
+VM_local {
+	alias: Virtual Machine;
+	installer: iaas;
+	children: BashScript, BashTemplate;
+}
+
+BashScript {
+	alias: BashScript;
+	installer: bash;
+#	exports: ip, port = 1234;
+}
+
+BashTemplate {
+	alias: BashTemplate;
+	installer: bash;
+#	imports: WithInit.port, WithInit.ip;
+}
+
