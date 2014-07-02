@@ -9,16 +9,6 @@ jdk:
 # Make sure there is a RabbitMq server
 services:
   - rabbitmq
-  
-# Roboconf uses a snapshot version of Woorea for OpenStack.
-# Since there is no snapshot repository, we will build it locally.
-before_install:
-  - git clone git://github.com/woorea/openstack-java-sdk.git ~/builds/repo2
-  - pushd ~/builds/repo2
-  - mvn clean install -Dskip.sign=true
-  - popd
-  
-# This is really dirty!!!
 
 # Build with Maven.
 # Use -q option to only display Maven errors and warnings.
