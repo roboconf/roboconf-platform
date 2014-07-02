@@ -42,7 +42,6 @@ import com.woorea.openstack.nova.model.Flavor;
 import com.woorea.openstack.nova.model.Flavors;
 import com.woorea.openstack.nova.model.FloatingIp;
 import com.woorea.openstack.nova.model.FloatingIps;
-import com.woorea.openstack.nova.model.NetworkForCreate;
 import com.woorea.openstack.nova.model.Server;
 import com.woorea.openstack.nova.model.ServerForCreate;
 import com.woorea.openstack.nova.model.Volume;
@@ -239,7 +238,10 @@ public class IaasOpenstack implements IaasInterface {
 		if(networkId != null) {
 			String fixedIp = this.iaasProperties.get(OpenstackConstants.FIXED_IP);
 			// fixedIp may be null (DHCP).
-			serverForCreate.addNetworks(networkId, fixedIp);	
+			
+			// TODO: uncomment the next line if you want Neutron support
+			// (think about updating the openstack-java-sdk version in the POM).
+			// serverForCreate.addNetworks(networkId, fixedIp);	
 		}
 
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();

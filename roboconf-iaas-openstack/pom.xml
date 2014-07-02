@@ -35,6 +35,11 @@
 	<name>Roboconf :: IaaS :: OpenStack</name>
 	<packaging>bundle</packaging>
 	
+	<properties>
+		<!-- Use version 3.2.2-SNAPSHOT for network configuration -->
+		<openstack.version>3.2.1</openstack.version>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>net.roboconf</groupId>
@@ -50,35 +55,34 @@
 			<scope>provided</scope>
 		</dependency>
 		
-		<!-- Latest release is 3.2.1, but missing network config -->
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>nova-client</artifactId>
-			<version>3.2.2-SNAPSHOT</version>
+			<version>${openstack.version}</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>keystone-client</artifactId>
-			<version>3.2.2-SNAPSHOT</version>
+			<version>${openstack.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>jersey-connector</artifactId>
-			<version>3.2.2-SNAPSHOT</version>
+			<version>${openstack.version}</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>nova-model</artifactId>
-			<version>3.2.2-SNAPSHOT</version>
+			<version>${openstack.version}</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.woorea</groupId>
 			<artifactId>keystone-model</artifactId>
-			<version>3.2.2-SNAPSHOT</version>
+			<version>${openstack.version}</version>
 		</dependency>
 
 		<dependency>
