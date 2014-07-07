@@ -19,13 +19,16 @@ package net.roboconf.plugin.bash;
 import static org.junit.Assert.*;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo;
 import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.Test;
@@ -38,6 +41,7 @@ public class PluginBashTest {
 	 * for each operation (deploy/start/stop/undeploy).
 	 * @throws Exception
 	 */
+	@SuppressWarnings("serial")
 	@Test
 	public void testBashPlugin_Script() throws Exception {
 
@@ -61,6 +65,16 @@ public class PluginBashTest {
 		file = new File("/tmp/BashScriptFile.start");
 		assertTrue(file.exists());
 		file.delete();
+		
+		// Test update, passing changed import + status
+		Import importChanged = new Import(
+			InstanceHelpers.computeInstancePath(inst) + "Test",
+			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		plugin.update(inst, importChanged, statusChanged);
+		file = new File("/tmp/BashScriptFile.update");
+		assertTrue(file.exists());
+		file.delete();
 
 		plugin.stop(inst);
 		file = new File("/tmp/BashScriptFile.stop");
@@ -81,6 +95,7 @@ public class PluginBashTest {
 	 * for each operation (deploy/start/stop/undeploy).
 	 * @throws Exception
 	 */
+	@SuppressWarnings("serial")
 	@Test
 	public void testBashPlugin_Template() throws Exception {
 
@@ -105,6 +120,16 @@ public class PluginBashTest {
 		assertTrue(file.exists());
 		file.delete();
 
+		// Test update, passing changed import + status
+		Import importChanged = new Import(
+			InstanceHelpers.computeInstancePath(inst) + "Test",
+			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		plugin.update(inst, importChanged, statusChanged);
+		file = new File("/tmp/BashTemplateFile.update");
+		assertTrue(file.exists());
+		file.delete();
+	
 		plugin.stop(inst);
 		file = new File("/tmp/BashTemplateFile.stop");
 		assertTrue(file.exists());

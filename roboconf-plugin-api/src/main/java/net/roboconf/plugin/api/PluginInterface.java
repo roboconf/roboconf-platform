@@ -55,6 +55,8 @@ public interface PluginInterface {
 	/**
 	 * Updates an instance.
 	 * @param instance the instance to update
+	 * @param importChanged the changed import, if any (null if no change)
+	 * @param statusChanged the new status of the instance that triggered the update, when applicable (null if N/A)
 	 */
 	void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException;
 

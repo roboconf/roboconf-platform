@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.puppet.PluginPuppet.PuppetState;
@@ -134,6 +136,7 @@ public class PluginPuppetTest {
 	 * (deploy/start/stop/undeploy).
 	 * @throws Exception
 	 */
+	@SuppressWarnings("serial")
 	@Test
 	public void testPuppetPlugin_WithInit() throws Exception {
 		PluginPuppet plugin = new PluginPuppet();
@@ -163,6 +166,19 @@ public class PluginPuppetTest {
 		Assert.assertTrue(file.exists());
 		file.delete();
 
+		// Test update, passing changed import + status
+		Import importChanged = new Import(
+			InstanceHelpers.computeInstancePath(inst) + "Test",
+			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		plugin.update(inst, importChanged, statusChanged);
+		file = new File("/tmp/WithInitFile.");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithInitTemplate.");
+		Assert.assertTrue(file.exists());
+		file.delete();
+
 		plugin.stop(inst);
 		file = new File("/tmp/WithInitFile.stopped");
 		Assert.assertTrue(file.exists());
@@ -189,6 +205,7 @@ public class PluginPuppetTest {
 	 * (deploy/start/stop/undeploy).
 	 * @throws Exception
 	 */
+	@SuppressWarnings("serial")
 	@Test
 	public void testPuppetPlugin_WithOperations() throws Exception {
 		PluginPuppet plugin = new PluginPuppet();
@@ -217,13 +234,19 @@ public class PluginPuppetTest {
 		file = new File("/tmp/WithOperationsTemplate.start");
 		Assert.assertTrue(file.exists());
 		file.delete();
-		
-		/*
-		Map<String, String> exportedVars = new HashMap<String, String>();
-		exportedVars.put("test.ip", "127.0.0.1");
-		Import changed = new Import("/app/testinstance", exportedVars);
-		plugin.update(inst, changed, InstanceStatus.DEPLOYED_STARTED);
-		*/
+
+		// Test update, passing changed import + status
+		Import importChanged = new Import(
+			InstanceHelpers.computeInstancePath(inst) + "Test",
+			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		plugin.update(inst, importChanged, statusChanged);
+		file = new File("/tmp/WithOperationsFile.update");
+		Assert.assertTrue(file.exists());
+		file.delete();
+		file = new File("/tmp/WithOperationsTemplate.update");
+		Assert.assertTrue(file.exists());
+		file.delete();
 		
 		plugin.stop(inst);
 		file = new File("/tmp/WithOperationsFile.stop");
