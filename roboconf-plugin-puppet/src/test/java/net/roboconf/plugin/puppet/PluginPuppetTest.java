@@ -139,6 +139,10 @@ public class PluginPuppetTest {
 	@SuppressWarnings("serial")
 	@Test
 	public void testPuppetPlugin_WithInit() throws Exception {
+		// Check for /tmp directory (skip if not present & writable)
+		File tmp = new File("/tmp");
+		if(! tmp.exists() && tmp.canWrite()) return;
+
 		PluginPuppet plugin = new PluginPuppet();
 		Instance inst = findInstance("/puppetplugin-unit-tests", "WithInit");
 		//System.out.println("*** INSTANCE NAME=" + inst.getName());
@@ -208,6 +212,10 @@ public class PluginPuppetTest {
 	@SuppressWarnings("serial")
 	@Test
 	public void testPuppetPlugin_WithOperations() throws Exception {
+		// Check for /tmp directory (skip if not present & writable)
+		File tmp = new File("/tmp");
+		if(! tmp.exists() && tmp.canWrite()) return;
+				
 		PluginPuppet plugin = new PluginPuppet();
 		Instance inst = findInstance("/puppetplugin-unit-tests", "WithOperations");
 		//System.out.println("*** INSTANCE NAME=" + inst.getName());

@@ -44,6 +44,9 @@ public class PluginBashTest {
 	@SuppressWarnings("serial")
 	@Test
 	public void testBashPlugin_Script() throws Exception {
+		// Check for /tmp directory (skip if not present & writable)
+		File tmp = new File("/tmp");
+		if(! tmp.exists() && tmp.canWrite()) return;
 
 		PluginBash plugin = new PluginBash();
 		Instance inst = findInstance("/bashplugin-unit-tests", "BashScript");
@@ -98,6 +101,9 @@ public class PluginBashTest {
 	@SuppressWarnings("serial")
 	@Test
 	public void testBashPlugin_Template() throws Exception {
+		// Check for /tmp directory (skip if not present & writable)
+		File tmp = new File("/tmp");
+		if(! tmp.exists() && tmp.canWrite()) return;
 
 		PluginBash plugin = new PluginBash();
 		Instance inst = findInstance("/bashplugin-unit-tests", "BashTemplate");
