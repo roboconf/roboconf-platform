@@ -1,0 +1,13 @@
+
+instanceof VM_local {
+	name: Test VM;
+	
+	instanceof BashScript {
+		name: BashScript;
+	}
+
+	instanceof BashTemplate {
+		name: BashTemplate;
+	}
+}
+

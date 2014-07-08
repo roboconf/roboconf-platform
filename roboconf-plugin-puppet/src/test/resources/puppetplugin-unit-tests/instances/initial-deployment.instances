@@ -1,0 +1,12 @@
+
+instanceof VM_local {
+	name: Test VM;
+	
+	instanceof WithInit {
+		name: WithInit;
+	}
+	instanceof WithOperations {
+		name: WithOperations;
+	}
+}
+
