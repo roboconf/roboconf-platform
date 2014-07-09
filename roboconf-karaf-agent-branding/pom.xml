@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2013-2014 Linagora, Université Joseph Fourier
+   Copyright 2014 Linagora, Université Joseph Fourier
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -28,43 +28,37 @@
 		<version>1.0-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
-	
-	<groupId>net.roboconf</groupId>
-	<artifactId>roboconf-iaas-embedded</artifactId>
+
+    <groupId>net.roboconf</groupId>
+	<artifactId>roboconf-karaf-agent-branding</artifactId>
 	<version>1.0-SNAPSHOT</version>
-	<name>Roboconf :: IaaS :: Local</name>
+	<name>Roboconf :: Karaf Branding for the Agent</name>
 	<packaging>bundle</packaging>
-	
-	<dependencies>
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-iaas-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
-	
+
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>**/*.*</include>
+				</includes>
+			</resource>
+		</resources> 
+	
 		<plugins>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Import-Package>net.roboconf.iaas.api.*</Import-Package>
-						<Export-Package>net.roboconf.iaas.embedded</Export-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
+							<Import-Package>*</Import-Package>
+							<Private-Package>!*</Private-Package>
+							<Export-Package>org.apache.karaf.branding</Export-Package>
+							<Spring-Context>*;public-context:=false</Spring-Context>
 					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

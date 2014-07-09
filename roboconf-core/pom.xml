@@ -49,7 +49,6 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<extensions>true</extensions>
 				<configuration>
 					<instructions>
 						<Export-Package>!net.roboconf.core.internal.*, net.roboconf.core.*</Export-Package>

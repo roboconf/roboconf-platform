@@ -170,7 +170,6 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<extensions>true</extensions>
 				<configuration>
 					<instructions>
 						<Import-Package>net.roboconf.core.*;net.roboconf.dm.rest</Import-Package>

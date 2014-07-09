@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.bash;
+package net.roboconf.plugin.bash.internal;
 
 import static org.junit.Assert.*;
 

@@ -10,11 +10,9 @@
 .classpath
 /.externalToolBuilders
 /target
+/bin
 /maven-eclipse.xml
 /.settings
-
-# Linux
-*~
 
 #idea
 *.iml

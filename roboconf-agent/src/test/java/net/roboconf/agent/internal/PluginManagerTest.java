@@ -25,7 +25,7 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
-import net.roboconf.plugin.bash.PluginBash;
+import net.roboconf.plugin.bash.internal.PluginBash;
 import net.roboconf.plugin.logger.PluginLogger;
 import net.roboconf.plugin.puppet.PluginPuppet;
 

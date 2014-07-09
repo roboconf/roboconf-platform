@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features 
+	name="A Karaf Feature for Roboconf's Agent"
+	xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+
+	<!-- The feature associated with the agent -->
+    <feature name="roboconf-agent" version="${project.version}">
+        <bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-messaging/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-agent/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-api/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-bash/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-logger/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-puppet/${project.version}</bundle>
+    </feature>
+    
+    <!-- The feature associated with the DM -->
+    <!-- 
+    <feature name="roboconf-dm" version="${project.version}">
+        <bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-messaging/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-dm-rest-api/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-iaas-api/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-iaas-azure/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-iaas-ec2/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-iaas-embedded/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-iaas-in-memory/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-iaas-openstack/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-iaas-vmware/${project.version}</bundle>
+    </feature>
+    -->
+</features>
