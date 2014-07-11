@@ -38,7 +38,7 @@
 		<jersey.stack.version>1.18</jersey.stack.version>
 		<jackson.stack.version>2.3.1</jackson.stack.version>
 		<java.compiler.version>1.6</java.compiler.version>
-		<karaf.version>3.0.2</karaf.version>
+		<karaf.version>3.0.1</karaf.version>
 		<ipojo.version>1.12.0</ipojo.version>
 	</properties>
 	
@@ -306,38 +306,42 @@
 	</profiles>
 
 	<modules>
+		<!-- Build utilities -->
 		<module>build-tools</module>
-		<module>roboconf-core</module>
-		<module>roboconf-messaging</module>
 		
-		<module>roboconf-iaas-api</module>
+		<!-- Roboconf bundles -->
+		<module>bundles/roboconf-core</module>
+		<module>bundles/roboconf-messaging</module>
+		
+		<module>bundles/roboconf-iaas-api</module>
 		<!--
 			Quite complicated with OSGi... 
-		<module>roboconf-iaas-in-memory</module>
+		<module>bundles/roboconf-iaas-in-memory</module>
 		 -->
-		<module>roboconf-iaas-embedded</module>
-		<module>roboconf-iaas-azure</module>
-		<module>roboconf-iaas-ec2</module>
-		<module>roboconf-iaas-openstack</module>
-		<module>roboconf-iaas-vmware</module>
+		<module>bundles/roboconf-iaas-embedded</module>
+		<module>bundles/roboconf-iaas-azure</module>
+		<module>bundles/roboconf-iaas-ec2</module>
+		<module>bundles/roboconf-iaas-openstack</module>
+		<module>bundles/roboconf-iaas-vmware</module>
 		
-		<module>roboconf-dm-rest-api</module>
-		<module>roboconf-dm-rest-client</module>
-		<module>roboconf-dm</module>
+		<module>bundles/roboconf-dm-rest-api</module>
+		<module>bundles/roboconf-dm-rest-client</module>
+		<module>bundles/roboconf-dm</module>
 		<!--
 			Useless for the moment 
-		<module>roboconf-dm-webapp</module>
+		<module>bundles/roboconf-dm-webapp</module>
 		 -->
 		
-		<module>roboconf-plugin-api</module>
-		<module>roboconf-plugin-bash</module>
-		<module>roboconf-plugin-puppet</module>
-		<module>roboconf-plugin-logger</module>
-		<module>roboconf-agent</module>
+		<module>bundles/roboconf-plugin-api</module>
+		<module>bundles/roboconf-plugin-bash</module>
+		<module>bundles/roboconf-plugin-puppet</module>
+		<module>bundles/roboconf-plugin-logger</module>
+		<module>bundles/roboconf-agent</module>
 		
-		<module>roboconf-karaf-agent-branding</module>
-		<module>roboconf-karaf-agent-feature</module>
-		<module>roboconf-karaf-agent-dist</module>
+		<!-- Karaf distributions -->
+		<module>karaf/roboconf-karaf-agent-branding</module>
+		<module>karaf/roboconf-karaf-agent-feature</module>
+		<module>karaf/roboconf-karaf-agent-dist</module>
 	</modules>
 	
 </project>
