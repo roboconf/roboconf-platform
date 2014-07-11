@@ -48,6 +48,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -58,11 +59,14 @@ import net.roboconf.plugin.api.PluginInterface;
 public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final PluginManager pluginManager;
 	private final IAgentClient messagingClient;
 	private final String ipAddress, appName;
 
 	private Instance rootInstance;
+	private final ExecutionLevel executionLevel = ExecutionLevel.RUNNING;
+
+	// Will be injected by iPojo
+	private PluginInterface[] plugins;
 
 
 	/**
@@ -75,13 +79,10 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	public AgentMessageProcessor(
 			String threadName,
 			AgentData agentData,
-			PluginManager pluginManager,
 			IAgentClient messagingClient ) {
 
 		super( threadName );
 		this.messagingClient = messagingClient;
-		this.pluginManager = pluginManager;
-
 		this.ipAddress = agentData.getIpAddress();
 		this.appName = agentData.getApplicationName();
 	}
@@ -274,7 +275,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				&& instance.getParent().getStatus() != InstanceStatus.DEPLOYED_STOPPED ) {
 			this.logger.warning( "Instance " + msg.getInstancePath() + " cannot be deployed because its parent is not deployed. Parent status: " + instance.getParent().getStatus() + "." );
 
-		} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) == null ) {
+		} else if(( plugin = findPlugin( instance )) == null ) {
 			this.logger.severe( "No plug-in was found to deploy " + msg.getInstancePath() + "." );
 
 		} else {
@@ -292,7 +293,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			// Invoke the plug-in
 			try {
-				PluginManager.initializePluginForInstance( instance, this.pluginManager.getExecutionLevel());
+				initializePluginForInstance( instance );
 				plugin.deploy( instance );
 				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
@@ -340,7 +341,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		}
 
 		// Do we have the right plug-in?
-		else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) == null ) {
+		else if(( plugin = findPlugin( instance )) == null ) {
 			this.logger.severe( "No plug-in was found to undeploy " + msg.getInstancePath() + "." );
 		}
 
@@ -415,7 +416,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.info( "Invalid status for instance " + msg.getInstancePath() + ". Status = "
 					+ instance.getStatus() + ". Start request is dropped." );
 
-		} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) == null ) {
+		} else if(( plugin = findPlugin( instance )) == null ) {
 			this.logger.severe( "No plug-in was found to start " + msg.getInstancePath() + "." );
 
 		} else {
@@ -464,7 +465,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.info( "Invalid status for instance " + msg.getInstancePath() + ". Status = "
 					+ instance.getStatus() + ". Stop request is dropped." );
 
-		} else if(( plugin = this.pluginManager.findPlugin( instance, this.logger )) == null ) {
+		} else if(( plugin = findPlugin( instance )) == null ) {
 			this.logger.severe( "No plug-in was found to stop " + msg.getInstancePath() + "." );
 
 		} else {
@@ -525,7 +526,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Update the life cycle if necessary
-			PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
+			PluginInterface plugin = findPlugin( instance );
 			if( plugin != null )
 				updateStateFromImports( instance, plugin, toRemove, InstanceStatus.DEPLOYED_STOPPED );
 		}
@@ -564,7 +565,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Update the life cycle if necessary
-			PluginInterface plugin = this.pluginManager.findPlugin( instance, this.logger );
+			PluginInterface plugin = findPlugin( instance );
 			if( plugin != null )
 				updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
 		}
@@ -578,7 +579,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 * @param statusChanged The changed status of the instance that changed (eg. that provided new imports)
 	 * @param importChanged The individual imports that changed
 	 */
-	void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged ) throws IOException, PluginException {
+	void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged )
+	throws IOException, PluginException {
 
 		// Do we have all the imports we need?
 		boolean haveAllImports = ImportHelpers.hasAllRequiredImports( impactedInstance, this.logger );
@@ -659,6 +661,71 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			i.setStatus( newStatus );
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+		}
+	}
+
+
+	/**
+	 * Finds the plug-in associated with a given instance.
+	 * @param instance an instance
+	 * @return a plug-in instance (null if none was found)
+	 */
+	private PluginInterface findPlugin( Instance instance ) {
+
+		PluginInterface result = null;
+		String installerName = instance.getComponent().getInstallerName();
+
+		// Run through available plug-ins
+		// Handle the case of unit tests (without iPojo)
+		if( this.plugins != null ) {
+			for( PluginInterface pi : this.plugins ) {
+				if( pi.getPluginName().equalsIgnoreCase( installerName )) {
+					result = pi;
+					break;
+				}
+			}
+		}
+
+		// Initialize the result, if any
+		if( result == null ) {
+			this.logger.severe( "No plugin was found for instance " + instance.getName() + " with installer " + installerName + "." );
+
+		} else {
+			result.setExecutionLevel( this.executionLevel );
+			result.setAgentName( "Agent " + InstanceHelpers.findRootInstance( instance ).getName());
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Initializes the plug-in for a given instance.
+	 * <p>
+	 * Plug-ins may require to be initialized.
+	 * As an example, the Puppet plug-ins may have to install modules
+	 * so that the manifests can run. If the plug-in initialization fails,
+	 * then the other plug-ins actions will not work.
+	 * </p>
+	 * <p>
+	 * If the instance to add contains children, the initialization
+	 * is also performed on the children.
+	 * </p>
+	 *
+	 * @param instanceToAdd the instance to add on this agent
+	 * @throws PluginException if the initialization fails or if no plug-in was found
+	 */
+	private void initializePluginForInstance( Instance instanceToAdd )
+	throws PluginException {
+
+		for( Instance instance : InstanceHelpers.buildHierarchicalList( instanceToAdd )) {
+
+			String installerName = instance.getComponent().getInstallerName();
+			PluginInterface plugin = findPlugin( instance );
+			if( plugin == null )
+				throw new PluginException( "No plugin was found for " + instance.getName() + ". Installer name:" + installerName );
+
+			plugin.initialize( instance );
 		}
 	}
 }

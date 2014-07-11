@@ -81,12 +81,6 @@ public class PluginBash implements PluginInterface {
 
 
     @Override
-    public void setDumpDirectory( File dumpDirectory ) {
-        // nothing
-    }
-
-
-    @Override
     public void setAgentName( String agentName ) {
         this.agentName = agentName;
     }

@@ -21,7 +21,6 @@ import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
-import net.roboconf.plugin.api.ExecutionLevel;
 
 import org.junit.Test;
 
@@ -64,7 +63,7 @@ public class AgentLauncherTest {
 		});
 
 		Assert.assertFalse( launcher.isRunning());
-		launcher.launchAgent( ExecutionLevel.LOG, null );
+		launcher.launchAgent();
 		Assert.assertTrue( launcher.isRunning());
 
 		launcher.stopAgent();

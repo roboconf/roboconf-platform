@@ -16,7 +16,6 @@
 
 package net.roboconf.iaas.in_memory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -27,7 +26,6 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.in_memory.internal.utils.AgentManager;
-import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
  * A IaaS emulation that runs agents in memory.
@@ -88,8 +86,7 @@ public class IaasInMemory implements IaasInterface {
 			public void run() {
 
 				try {
-					File tempDir = new File( System.getProperty( "java.io.tmpdir" ));
-					agentLauncher.launchAgent( ExecutionLevel.RUNNING, tempDir );
+					agentLauncher.launchAgent();
 
 				} catch( IOException e ) {
 					Logger logger = Logger.getLogger( getClass().getName());

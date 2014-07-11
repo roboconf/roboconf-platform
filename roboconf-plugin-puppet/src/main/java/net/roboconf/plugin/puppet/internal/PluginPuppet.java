@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.puppet;
+package net.roboconf.plugin.puppet.internal;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -97,12 +97,6 @@ public class PluginPuppet implements PluginInterface {
 	@Override
 	public void setExecutionLevel( ExecutionLevel executionLevel ) {
 		this.executionLevel = executionLevel;
-	}
-
-
-	@Override
-	public void setDumpDirectory( File dumpDirectory ) {
-		// nothing
 	}
 
 

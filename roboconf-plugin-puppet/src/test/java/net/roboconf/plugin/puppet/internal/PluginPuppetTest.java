@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.puppet;
+package net.roboconf.plugin.puppet.internal;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +37,8 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.plugin.puppet.PluginPuppet.PuppetState;
+import net.roboconf.plugin.puppet.internal.PluginPuppet;
+import net.roboconf.plugin.puppet.internal.PluginPuppet.PuppetState;
 
 import org.junit.After;
 import org.junit.Assume;

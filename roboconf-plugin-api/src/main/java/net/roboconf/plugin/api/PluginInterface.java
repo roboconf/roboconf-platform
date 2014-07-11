@@ -16,8 +16,6 @@
 
 package net.roboconf.plugin.api;
 
-import java.io.File;
-
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
@@ -89,13 +87,6 @@ public interface PluginInterface {
 	 * @param executionLevel the execution level
 	 */
 	void setExecutionLevel( ExecutionLevel executionLevel );
-
-
-	/**
-	 * Sets the directory to use when the execution level is {@link ExecutionLevel#GENERATE_FILES}.
-	 * @param dumpDirectory the dump directory (not null)
-	 */
-	void setDumpDirectory( File dumpDirectory );
 
 
 	/**

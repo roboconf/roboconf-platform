@@ -64,27 +64,6 @@
 		
 		<dependency>
   			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-plugin-bash</artifactId>
-  			<version>1.0-SNAPSHOT</version>
-  			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-plugin-puppet</artifactId>
-  			<version>1.0-SNAPSHOT</version>
-  			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-plugin-logger</artifactId>
-  			<version>1.0-SNAPSHOT</version>
-  			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-messaging</artifactId>
   			<version>1.0-SNAPSHOT</version>
   			<scope>provided</scope>
@@ -103,6 +82,18 @@
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-ipojo-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>ipojo-bundle</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

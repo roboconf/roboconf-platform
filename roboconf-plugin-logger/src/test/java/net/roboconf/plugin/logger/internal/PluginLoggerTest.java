@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.logger;
-
-import java.io.File;
+package net.roboconf.plugin.logger.internal;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Instance;
@@ -36,8 +34,6 @@ public class PluginLoggerTest {
 
 		// Make sure we can invoke invoke method in any order
 		pl.setAgentName( "My Agent" );
-		pl.setDumpDirectory( null );
-		pl.setDumpDirectory( new File( "whatever" ));
 
 		pl.undeploy( null );
 		pl.undeploy( new Instance( "inst" ));

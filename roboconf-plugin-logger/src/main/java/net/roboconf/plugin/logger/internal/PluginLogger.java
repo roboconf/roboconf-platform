@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.logger;
+package net.roboconf.plugin.logger.internal;
 
-import java.io.File;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.runtime.Import;
@@ -45,12 +44,6 @@ public class PluginLogger implements PluginInterface {
 	@Override
 	public void setExecutionLevel( ExecutionLevel executionLevel ) {
 		this.logger.fine( "The execution level is: " + executionLevel );
-	}
-
-
-	@Override
-	public void setDumpDirectory( File dumpDirectory ) {
-		this.logger.fine( "The dump directory is: " + dumpDirectory );
 	}
 
 

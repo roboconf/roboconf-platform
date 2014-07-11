@@ -22,7 +22,6 @@ import java.util.logging.Logger;
 import net.roboconf.agent.AgentData;
 import net.roboconf.agent.AgentLauncher;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
  * The main program when the agent runs in stand-alone mode.
@@ -83,7 +82,7 @@ public final class Main {
 
 		} else {
 			try {
-				new AgentLauncher( agentData ).launchAgent( ExecutionLevel.RUNNING, null );
+				new AgentLauncher( agentData ).launchAgent();
 				logger.info( "The agent was launched by the main program." );
 
 			} catch( IOException e ) {

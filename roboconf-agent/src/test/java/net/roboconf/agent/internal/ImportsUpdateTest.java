@@ -24,7 +24,9 @@ import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.plugin.logger.PluginLogger;
+import net.roboconf.plugin.api.ExecutionLevel;
+import net.roboconf.plugin.api.PluginException;
+import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Test;
 
@@ -52,24 +54,23 @@ public class ImportsUpdateTest {
 		AgentMessageProcessor processor = new AgentMessageProcessor(
 				"my agent",
 				new AgentData(),
-				new PluginManager(),
 				new TestAgentMessagingClient());
 
 		// The cluster node does not know about another node
 		Assert.assertEquals( InstanceStatus.STARTING, i1.getStatus());
-		processor.updateStateFromImports( i1, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( i1, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
 
 		// The node is now aware of another node
 		ImportHelpers.addImport( i1, "cluster", new Import( i2 ));
 		i1.setStatus( InstanceStatus.STARTING );
-		processor.updateStateFromImports( i1, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( i1, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
-		processor.updateStateFromImports( i1, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( i1, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
 
 		i1.getImports().clear();
-		processor.updateStateFromImports( i1, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( i1, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
 	}
 
@@ -97,24 +98,76 @@ public class ImportsUpdateTest {
 		AgentMessageProcessor processor = new AgentMessageProcessor(
 				"my agent",
 				new AgentData(),
-				new PluginManager(),
 				new TestAgentMessagingClient());
 
 		// The application server does not know about the database
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
-		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( appServer, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
 
 		// The application server is now aware of the database
 		ImportHelpers.addImport( appServer, "database", new Import( database ));
 		appServer.setStatus( InstanceStatus.STARTING );
-		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( appServer, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, appServer.getStatus());
-		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( appServer, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, appServer.getStatus());
 
 		appServer.getImports().clear();
-		processor.updateStateFromImports( appServer, new PluginLogger(), null, InstanceStatus.DEPLOYED_STARTED );
+		processor.updateStateFromImports( appServer, new PluginNil(), null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
+	}
+
+
+	/**
+	 * A plug-in for test purpose.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static final class PluginNil implements PluginInterface {
+
+		@Override
+		public void initialize( Instance instance ) throws PluginException {
+			// nothing
+		}
+
+		@Override
+		public void deploy( Instance instance ) throws PluginException {
+			// nothing
+		}
+
+		@Override
+		public void start( Instance instance ) throws PluginException {
+			// nothing
+		}
+
+		@Override
+		public void update( Instance instance, Import importChanged, InstanceStatus statusChanged ) throws PluginException {
+			// nothing
+		}
+
+		@Override
+		public void stop( Instance instance ) throws PluginException {
+			// nothing
+		}
+
+		@Override
+		public void undeploy( Instance instance ) throws PluginException {
+			// nothing
+		}
+
+		@Override
+		public void setExecutionLevel( ExecutionLevel executionLevel ) {
+			// nothing
+		}
+
+		@Override
+		public void setAgentName( String agentName ) {
+			// nothing
+		}
+
+		@Override
+		public String getPluginName() {
+			return "nil";
+		}
 	}
 }

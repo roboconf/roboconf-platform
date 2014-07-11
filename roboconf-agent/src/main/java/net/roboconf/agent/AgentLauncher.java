@@ -16,7 +16,6 @@
 
 package net.roboconf.agent;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -26,7 +25,6 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.HeartbeatTask;
-import net.roboconf.agent.internal.PluginManager;
 import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
@@ -34,7 +32,6 @@ import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
-import net.roboconf.plugin.api.ExecutionLevel;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -104,20 +101,12 @@ public class AgentLauncher {
 
 	/**
 	 * Launches an agent.
-	 * @param agentData the agent data
-	 * @param executionLevel the execution level
-	 * @param dumpDirectory the dump directory (if execution level is {@link ExecutionLevel#GENERATE_FILES})
 	 * @throws IOException if there was a problem while initializing the messaging
 	 */
-	public void launchAgent( ExecutionLevel executionLevel, File dumpDirectory ) throws IOException {
+	public void launchAgent() throws IOException {
 
 		// Keep a trace of the launching
 		this.logger.fine( "Agent " + this.agentName + " is being launched." );
-
-		// The plug-ins configuration
-		PluginManager pluginManager = new PluginManager();
-		pluginManager.setDumpDirectory( dumpDirectory );
-		pluginManager.setExecutionLevel( executionLevel );
 
 		// Create the messaging client
 		this.messagingClient = this.factory.createAgentClient();
@@ -133,7 +122,6 @@ public class AgentLauncher {
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor(
 				this.agentName,
 				this.agentData,
-				pluginManager,
 				this.messagingClient );
 
 		// Open a connection with the messaging server

@@ -4,7 +4,7 @@
 		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
 		xmlns="org.apache.felix.ipojo">
 
-	<component classname="net.roboconf.plugin.logger.PluginLogger" name="Logger Plugin">
+	<component classname="net.roboconf.plugin.logger.internal.PluginLogger" name="Logger Plugin">
 		<!-- Instances will be created on the fly, for every request. -->
 		<!-- All the interfaces will be "provided". Only PluginInterface matters. -->
 		<provides strategy="SERVICE" />
