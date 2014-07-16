@@ -1,0 +1,49 @@
+.TH roboconf-agent 1 "${current-date} (svn#${buildNumber})"
+.SH NAME
+Roboconf Agent
+.SH SYNOPSIS
+.B roboconf-agent -u
+.I container-cfg-url
+.B [stop] [-e]
+.br
+.B roboconf-agent -h
+.br
+.B roboconf-agent -V
+.SH DESCRIPTION
+Roboconf Agent is a local manager for a Roboconf installation.
+.PP
+.B roboconf-agent
+is used to start and stop manually a Roboconf Agent container.
+.SH OPTIONS
+.TP
+\-e, \-\-error
+Print the extended error message (stack-trace).
+.TP
+\-h, \-\-help
+Print usage.
+.TP
+\-u, \-\-url container-cfg-url
+The URL of the Petals container configuration.
+.TP
+\-V, \-\-version
+Print the version number and exit.
+.TP
+stop
+Stop the local Roboconf Agent container
+.SH FILES
+.TP
+server.properties
+The configuration base file of a Roboconf Agent container. See petal-esb(5) for further details.
+.TP
+topology.xml
+The description of the Roboconf Agent topology. See roboconf-agent(5) for further details.
+.TP
+logger.properties
+The configuration of the logging system. See roboconf-agent(5) for further details.
+.TP
+log4j.properties
+The configuration of the Log4J logging system. See roboconf-agent(5) for further details.
+.SH AUTHOR
+Vincent ZURCZAK - Linagora <vincent dot zurczak at linagora dot com>
+.SH "SEE ALSO"
+Roboconf Agent is documented on Roboconf's web site: http://roboconf.net

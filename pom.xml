@@ -94,6 +94,12 @@
 				</plugin>
 				
 				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-antrun-plugin</artifactId>
+					<version>1.7</version>
+				</plugin>
+				
+				<plugin>
 					<groupId>org.apache.karaf.tooling</groupId>
 					<artifactId>features-maven-plugin</artifactId>
 					<version>2.3.5</version>
@@ -103,6 +109,13 @@
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-ipojo-plugin</artifactId>
 					<version>${ipojo.version}</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.codehaus.izpack</groupId>
+					<artifactId>izpack-maven-plugin</artifactId>
+					<version>5.0.0-rc2</version>
+					<extensions>true</extensions>
 				</plugin>
 				
 				<plugin>
@@ -342,6 +355,10 @@
 		<module>karaf/roboconf-karaf-agent-branding</module>
 		<module>karaf/roboconf-karaf-agent-feature</module>
 		<module>karaf/roboconf-karaf-agent-dist</module>
+		
+		<!-- System distributions -->
+		<module>distributions/roboconf-dist-agent-izpack</module>
+		<module>distributions/roboconf-dist-agent-deb</module>
 	</modules>
 	
 </project>
