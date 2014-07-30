@@ -24,10 +24,14 @@
 USER=roboconf-agent
 GROUP=roboconf-agent
 
-# Create the directory /etc/roboconf-agent/karaf
-ROBOCONF_AGENT_ETC=/etc/roboconf-agent/karaf
+# Create the directory /etc/ directories
+ROBOCONF_AGENT_ETC=/etc/roboconf-agent
 mkdir -p $ROBOCONF_AGENT_ETC > /dev/null 2>&1 || true
 chown $USER:$GROUP $ROBOCONF_AGENT_ETC > /dev/null 2>&1 || true
+
+ROBOCONF_AGENT_KARAF_ETC=/etc/roboconf-agent
+mkdir -p $ROBOCONF_AGENT_KARAF_ETC > /dev/null 2>&1 || true
+chown $USER:$GROUP $ROBOCONF_AGENT_KARAF_ETC > /dev/null 2>&1 || true
 
 # Create the directory /var/log/roboconf-agent
 ROBOCONF_AGENT_VAR_LOG=/var/log/roboconf-agent

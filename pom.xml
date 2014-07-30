@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2013 Linagora, Université Joseph Fourier
+   Copyright 2013-2014 Linagora, Université Joseph Fourier
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -30,8 +30,57 @@
 	<artifactId>parent</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf</name>
+	<description>A solution for elastic deployments</description>
 	<packaging>pom</packaging>
+	<url>http://roboconf.net</url>
 
+	<modules>
+		<!-- Build utilities -->
+		<module>build-tools</module>
+		
+		<!-- Roboconf bundles -->
+		<module>bundles/roboconf-core</module>
+		<module>bundles/roboconf-messaging</module>
+		
+		<module>bundles/roboconf-iaas-api</module>
+		<!--
+			Quite complicated with OSGi... 
+		<module>bundles/roboconf-iaas-in-memory</module>
+		 -->
+		<module>bundles/roboconf-iaas-embedded</module>
+		<module>bundles/roboconf-iaas-azure</module>
+		<module>bundles/roboconf-iaas-ec2</module>
+		<module>bundles/roboconf-iaas-openstack</module>
+		<module>bundles/roboconf-iaas-vmware</module>
+		
+		<module>bundles/roboconf-dm-rest-api</module>
+		<module>bundles/roboconf-dm</module>
+		<!--
+			Useless for the moment 
+		<module>bundles/roboconf-dm-webapp</module>
+		 -->
+		
+		<module>bundles/roboconf-plugin-api</module>
+		<module>bundles/roboconf-plugin-bash</module>
+		<module>bundles/roboconf-plugin-puppet</module>
+		<module>bundles/roboconf-plugin-logger</module>
+		<module>bundles/roboconf-agent</module>
+		
+		<!-- Karaf distributions -->
+		<module>karaf/roboconf-karaf-agent-branding</module>
+		<module>karaf/roboconf-karaf-agent-feature</module>
+		<module>karaf/roboconf-karaf-agent-dist</module>
+		
+		<!-- System distributions -->
+		<module>distributions/roboconf-dist-agent-izpack</module>
+		<module>distributions/roboconf-dist-agent-deb</module>
+		
+		<!-- Utilities -->
+		<module>utilities/roboconf-dm-rest-client</module>
+	</modules>
+
+
+	<!-- Properties and other things... -->
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -318,47 +367,61 @@
         </profile>
 	</profiles>
 
-	<modules>
-		<!-- Build utilities -->
-		<module>build-tools</module>
-		
-		<!-- Roboconf bundles -->
-		<module>bundles/roboconf-core</module>
-		<module>bundles/roboconf-messaging</module>
-		
-		<module>bundles/roboconf-iaas-api</module>
-		<!--
-			Quite complicated with OSGi... 
-		<module>bundles/roboconf-iaas-in-memory</module>
-		 -->
-		<module>bundles/roboconf-iaas-embedded</module>
-		<module>bundles/roboconf-iaas-azure</module>
-		<module>bundles/roboconf-iaas-ec2</module>
-		<module>bundles/roboconf-iaas-openstack</module>
-		<module>bundles/roboconf-iaas-vmware</module>
-		
-		<module>bundles/roboconf-dm-rest-api</module>
-		<module>bundles/roboconf-dm-rest-client</module>
-		<module>bundles/roboconf-dm</module>
-		<!--
-			Useless for the moment 
-		<module>bundles/roboconf-dm-webapp</module>
-		 -->
-		
-		<module>bundles/roboconf-plugin-api</module>
-		<module>bundles/roboconf-plugin-bash</module>
-		<module>bundles/roboconf-plugin-puppet</module>
-		<module>bundles/roboconf-plugin-logger</module>
-		<module>bundles/roboconf-agent</module>
-		
-		<!-- Karaf distributions -->
-		<module>karaf/roboconf-karaf-agent-branding</module>
-		<module>karaf/roboconf-karaf-agent-feature</module>
-		<module>karaf/roboconf-karaf-agent-dist</module>
-		
-		<!-- System distributions -->
-		<module>distributions/roboconf-dist-agent-izpack</module>
-		<module>distributions/roboconf-dist-agent-deb</module>
-	</modules>
+
+	<!-- Required Information to publish artifacts to Maven Central -->
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Vincent ZURCZAK</name>
+			<email>vzurczak (at) linagora.com</email>
+			<url>https://github.com/vincent-zurczak</url>
+			<organization>Linagora</organization>
+			<organizationUrl>http://linagora.com</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<name>Pierre-Yves GIBELLO</name>
+			<email>pygibello (at) linagora.com</email>
+			<organization>Linagora</organization>
+			<organizationUrl>http://linagora.com</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<name>Didier DONSEZ</name>
+			<email>Didier.Donsez (at) imag.fr</email>
+			<organization>LIG (Université Joseph Fourier)</organization>
+			<organizationUrl>http://www.liglab.fr</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+	
+	<contributors>
+		<contributor>
+			<name>Noël DE PALMA</name>
+			<email>noel.depalma (at) imag.fr</email>
+			<organization>LIG (Université Joseph Fourier)</organization>
+			<organizationUrl>http://www.liglab.fr</organizationUrl>
+			<timezone>+1</timezone>
+		</contributor>
+		<contributor>
+			<name>Linh-Manh PHAM</name>
+			<email>Linh-Manh.Pham (at) imag.fr</email>
+			<organization>LIG (Université Joseph Fourier)</organization>
+			<organizationUrl>http://www.liglab.fr</organizationUrl>
+			<timezone>+1</timezone>
+		</contributor>
+	</contributors>
+
+	<scm>
+		<connection>scm:git:git@github.com:roboconf/roboconf.git</connection>
+		<developerConnection>scm:git:git@github.com:roboconf/roboconf.git</developerConnection>
+		<url>git@github.com:roboconf/roboconf.git</url>
+	</scm>
 	
 </project>

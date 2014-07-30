@@ -20,7 +20,7 @@
 #
 ################################################################################
 
-# Stop Petals
+# Stop the Agent
 if which invoke-rc.d >/dev/null 2>&1; then
    invoke-rc.d roboconf-agent stop
 else
