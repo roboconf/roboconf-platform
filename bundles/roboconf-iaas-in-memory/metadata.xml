@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<component classname="net.roboconf.iaas.in_memory.internal.IaasInMemory" name="roboconf-iaas-in-memory">
+		<!-- Instances will be created on the fly, for every request. -->
+		<!-- All the interfaces will be "provided". Only IaasInterface matters. -->
+		<provides strategy="SERVICE" />
+		<requires filter="(factory.name=roboconf-agent-in-memory)" field="agentFactory" />
+	</component>
+</ipojo>

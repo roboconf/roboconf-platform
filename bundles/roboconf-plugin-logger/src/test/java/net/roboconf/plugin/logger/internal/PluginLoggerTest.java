@@ -33,7 +33,7 @@ public class PluginLoggerTest {
 		Assert.assertEquals( "logger", pl.getPluginName());
 
 		// Make sure we can invoke invoke method in any order
-		pl.setAgentName( "My Agent" );
+		pl.setNames( "My Agent", null );
 
 		pl.undeploy( null );
 		pl.undeploy( new Instance( "inst" ));

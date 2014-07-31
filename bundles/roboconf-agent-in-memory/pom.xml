@@ -30,44 +30,17 @@
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
-	<artifactId>roboconf-iaas-in-memory</artifactId>
+	<artifactId>roboconf-agent-in-memory</artifactId>
 	<version>1.0-SNAPSHOT</version>
-	<name>Roboconf :: IaaS :: In-Memory</name>
+	<name>Roboconf :: Agent :: In-Memory Implementation</name>
 	<packaging>bundle</packaging>
 	
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.ipojo</artifactId>
-			<version>${ipojo.version}</version>
-			<scope>provided</scope>
-		</dependency>
-	
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-iaas-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-agent-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-core</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-agent-api</artifactId>
+  			<version>1.0-SNAPSHOT</version>
+  			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	
@@ -78,7 +51,8 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Import-Package>net.roboconf.iaas.api.*</Import-Package>
+						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

@@ -56,6 +56,14 @@ public abstract class AbstractMessageProcessor extends Thread {
 	}
 
 
+	/**
+	 * @return true if there is no process to process, false otherwise
+	 */
+	public final boolean hasNoMessage() {
+		return this.messages.isEmpty();
+	}
+
+
 	/*
 	 * (non-Javadoc)
 	 * @see java.lang.Thread#run()

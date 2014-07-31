@@ -43,10 +43,7 @@
 		<module>bundles/roboconf-messaging</module>
 		
 		<module>bundles/roboconf-iaas-api</module>
-		<!--
-			Quite complicated with OSGi... 
 		<module>bundles/roboconf-iaas-in-memory</module>
-		 -->
 		<module>bundles/roboconf-iaas-embedded</module>
 		<module>bundles/roboconf-iaas-azure</module>
 		<module>bundles/roboconf-iaas-ec2</module>
@@ -64,7 +61,10 @@
 		<module>bundles/roboconf-plugin-bash</module>
 		<module>bundles/roboconf-plugin-puppet</module>
 		<module>bundles/roboconf-plugin-logger</module>
-		<module>bundles/roboconf-agent</module>
+		
+		<module>bundles/roboconf-agent-api</module>
+		<module>bundles/roboconf-agent-impl</module>
+		<module>bundles/roboconf-agent-in-memory</module>
 		
 		<!-- Karaf distributions -->
 		<module>karaf/roboconf-karaf-agent-branding</module>
@@ -72,7 +72,9 @@
 		<module>karaf/roboconf-karaf-agent-dist</module>
 		
 		<!-- System distributions -->
+		<!--
 		<module>distributions/roboconf-dist-agent-izpack</module>
+		-->
 		<module>distributions/roboconf-dist-agent-deb</module>
 		
 		<!-- Utilities -->

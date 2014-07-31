@@ -36,6 +36,7 @@ public interface PluginInterface {
 	 */
 	void initialize( Instance instance ) throws PluginException;
 
+
 	/**
 	 * Deploys an instance.
 	 * @param instance the instance to deploy
@@ -58,6 +59,7 @@ public interface PluginInterface {
 	 */
 	void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException;
 
+
 	/**
 	 * Stops an instance.
 	 * @param instance the instance to stop
@@ -73,27 +75,11 @@ public interface PluginInterface {
 
 
 	/**
-	 * Sets the execution level.
-	 * <p>
-	 * This method allows to define until which steps a plug-in must go.
-	 * It allows, as an example, to only log an action.
-	 * Or to only generate files (if it generates ones).
-	 * </p>
-	 * <p>
-	 * This is particularly useful to debug or to test plug-ins and
-	 * Roboconf deployments.
-	 * </p>
-	 *
-	 * @param executionLevel the execution level
+	 * Sets the names (useful for debug and analyzing logs).
+	 * @param applicationName the application name
+	 * @param the root instance name the root instance name
 	 */
-	void setExecutionLevel( ExecutionLevel executionLevel );
-
-
-	/**
-	 * Sets the agent name (useful for debug and analyzing logs).
-	 * @param agentName the agent name
-	 */
-	void setAgentName( String agentName );
+	void setNames( String applicationName, String rootInstanceName );
 
 
 	/**

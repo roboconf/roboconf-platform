@@ -37,7 +37,6 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -84,8 +83,8 @@ public class PluginPuppet implements PluginInterface {
 	//private static final String TEMPLATES_FOLDER = "roboconf_templates";
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
-	private ExecutionLevel executionLevel;
-	private String agentName;
+	private String agentId;
+
 
 
 	@Override
@@ -95,24 +94,15 @@ public class PluginPuppet implements PluginInterface {
 
 
 	@Override
-	public void setExecutionLevel( ExecutionLevel executionLevel ) {
-		this.executionLevel = executionLevel;
-	}
-
-
-	@Override
-	public void setAgentName( String agentName ) {
-		this.agentName = agentName;
+	public void setNames( String applicationName, String rootInstanceName ) {
+		this.agentId = "'" + rootInstanceName + "' agent";
 	}
 
 
 	@Override
 	public void initialize( Instance instance ) throws PluginException {
 
-		this.logger.fine( this.agentName + " is initializing the plug-in for " + instance.getName());
-		if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+		this.logger.fine( this.agentId + " is initializing the plug-in for " + instance.getName());
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 		try {
 			installPuppetModules(instance, instanceDirectory);
@@ -129,10 +119,7 @@ public class PluginPuppet implements PluginInterface {
 	@Override
 	public void deploy( Instance instance ) throws PluginException {
 
-		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
-		if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+		this.logger.fine( this.agentId + " is deploying instance " + instance.getName());
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 		try {
 			callPuppetScript( instance, "deploy", PuppetState.STOPPED, null, false, instanceDirectory );
@@ -149,10 +136,7 @@ public class PluginPuppet implements PluginInterface {
 	@Override
 	public void start( Instance instance ) throws PluginException {
 
-		this.logger.fine( this.agentName + " is starting instance " + instance.getName());
-		if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+		this.logger.fine( this.agentId + " is starting instance " + instance.getName());
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 		try {
 			callPuppetScript( instance, "start", PuppetState.RUNNING, null, false, instanceDirectory );
@@ -169,10 +153,7 @@ public class PluginPuppet implements PluginInterface {
 	@Override
 	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
 
-		this.logger.fine( this.agentName + " is updating instance " + instance.getName());
-		if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+		this.logger.fine( this.agentId + " is updating instance " + instance.getName());
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 		try {
 			callPuppetScript(
@@ -194,10 +175,7 @@ public class PluginPuppet implements PluginInterface {
 	@Override
 	public void stop( Instance instance ) throws PluginException {
 
-		this.logger.fine( this.agentName + " is stopping instance " + instance.getName());
-		if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+		this.logger.fine( this.agentId + " is stopping instance " + instance.getName());
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 		try {
 			callPuppetScript( instance, "stop", PuppetState.STOPPED, null, false, instanceDirectory );
@@ -214,10 +192,7 @@ public class PluginPuppet implements PluginInterface {
 	@Override
 	public void undeploy( Instance instance ) throws PluginException {
 
-		this.logger.fine( this.agentName + " is undeploying instance " + instance.getName());
-		if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+		this.logger.fine( this.agentId + " is undeploying instance " + instance.getName());
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 		try {
 			callPuppetScript( instance, "undeploy", PuppetState.UNDEF, null, false, instanceDirectory );
@@ -273,13 +248,9 @@ public class PluginPuppet implements PluginInterface {
 			commands.add( "--target-dir" );
 			commands.add( realInstanceDirectory.getAbsolutePath());
 
-			if( this.executionLevel == ExecutionLevel.LOG ) {
-				String[] params = commands.toArray( new String[ 0 ]);
-				this.logger.info( "Module installation: " + Arrays.toString( params ));
-
-			} else {
-				ProgramUtils.executeCommand( this.logger, commands, null );
-			}
+			String[] params = commands.toArray( new String[ 0 ]);
+			this.logger.fine( "Module installation: " + Arrays.toString( params ));
+			ProgramUtils.executeCommand( this.logger, commands, null );
 		}
 	}
 
@@ -346,13 +317,9 @@ public class PluginPuppet implements PluginInterface {
 				commands.add( "--execute" );
 				commands.add( generateCodeToExecute(clazz, instance, puppetState, importChanged, importAdded));
 
-				if( this.executionLevel == ExecutionLevel.LOG ) {
-					String[] params = commands.toArray( new String[ 0 ]);
-					this.logger.info( "Module installation: " + Arrays.toString( params ));
-
-				} else {
-					ProgramUtils.executeCommand( this.logger, commands, null );
-				}
+				String[] params = commands.toArray( new String[ 0 ]);
+				this.logger.fine( "Module installation: " + Arrays.toString( params ));
+				ProgramUtils.executeCommand( this.logger, commands, null );
 			}
 		}
 	}

@@ -31,7 +31,6 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.plugin.api.ExecutionLevel;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
@@ -60,8 +59,7 @@ import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 public class PluginBash implements PluginInterface {
 
     private final Logger logger = Logger.getLogger( getClass().getName());
-    private ExecutionLevel executionLevel;
-    private String agentName;
+    private String agentId;
 
     private static final String SCRIPTS_FOLDER_NAME = "scripts";
     private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
@@ -75,30 +73,21 @@ public class PluginBash implements PluginInterface {
 
 
     @Override
-    public void setExecutionLevel( ExecutionLevel executionLevel ) {
-        this.executionLevel = executionLevel;
-    }
-
-
-    @Override
-    public void setAgentName( String agentName ) {
-        this.agentName = agentName;
-    }
+	public void setNames( String applicationName, String rootInstanceName ) {
+		this.agentId = "'" + rootInstanceName + "' agent";
+	}
 
 
 	@Override
 	public void initialize( Instance instance ) throws PluginException {
-		this.logger.fine( this.agentName + " is initializing the plug-in for " + instance.getName());
+		this.logger.fine( this.agentId + " is initializing the plug-in for " + instance.getName());
 	}
 
 
 	@Override
 	public void deploy( Instance instance ) throws PluginException {
 
-		this.logger.fine( this.agentName + " is deploying instance " + instance.getName());
-		if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+		this.logger.fine( this.agentId + " is deploying instance " + instance.getName());
 		try {
 			prepareAndExecuteCommand( "deploy", instance, null, null );
 
@@ -111,10 +100,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void start( Instance instance ) throws PluginException {
 
-        this.logger.fine( this.agentName + " is starting instance " + instance.getName());
-        if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+        this.logger.fine( this.agentId + " is starting instance " + instance.getName());
         try {
 			prepareAndExecuteCommand( "start", instance, null, null );
 
@@ -127,10 +113,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
 
-        this.logger.fine( this.agentName + " is updating instance " + instance.getName());
-        if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+        this.logger.fine( this.agentId + " is updating instance " + instance.getName());
         try {
 			prepareAndExecuteCommand( "update", instance, importChanged, statusChanged );
 
@@ -143,10 +126,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void stop( Instance instance ) throws PluginException {
 
-        this.logger.fine( this.agentName + " is stopping instance " + instance.getName());
-        if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+        this.logger.fine( this.agentId + " is stopping instance " + instance.getName());
         try {
 			prepareAndExecuteCommand( "stop", instance, null, null );
 
@@ -159,10 +139,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void undeploy( Instance instance ) throws PluginException {
 
-    	this.logger.fine( this.agentName + " is undeploying instance " + instance.getName());
-    	if( this.executionLevel == ExecutionLevel.LOG )
-			return;
-
+    	this.logger.fine( this.agentId + " is undeploying instance " + instance.getName());
         try {
 			prepareAndExecuteCommand( "undeploy", instance, null, null );
 

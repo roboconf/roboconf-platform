@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.logger.internal;
+package net.roboconf.agent.api.internal;
 
 import java.util.logging.Logger;
 
@@ -27,7 +27,7 @@ import net.roboconf.plugin.api.PluginInterface;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class PluginLogger implements PluginInterface {
+public class PluginMock implements PluginInterface {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String agentId;
@@ -36,7 +36,7 @@ public class PluginLogger implements PluginInterface {
 
 	@Override
 	public String getPluginName() {
-		return "logger";
+		return "mock";
 	}
 
 
