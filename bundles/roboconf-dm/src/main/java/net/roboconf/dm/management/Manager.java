@@ -541,7 +541,7 @@ public final class Manager {
 			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 
-			rootInstance.setStatus( InstanceStatus.PROBLEM );
+			rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
 			throw e;
 
 		} finally {
@@ -588,7 +588,7 @@ public final class Manager {
 			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 
-			rootInstance.setStatus( InstanceStatus.PROBLEM );
+			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 			throw e;
 
 		} finally {
