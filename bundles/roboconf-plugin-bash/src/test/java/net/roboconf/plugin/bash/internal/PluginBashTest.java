@@ -16,150 +16,340 @@
 
 package net.roboconf.plugin.bash.internal;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Map;
 
+import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.plugin.api.PluginException;
 
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * @author Pierre-Yves Gibello - Linagora
+ */
 public class PluginBashTest {
 
-	/**
-	 * Test Bash plugin (scripts only) on a real instance (from a fully functional app).
-	 * The bash scripts produce files (some based on templates)
-	 * for each operation (deploy/start/stop/undeploy).
-	 * @throws Exception
-	 */
-	@SuppressWarnings("serial")
-	@Test
-	public void testBashPlugin_Script() throws Exception {
-		// Check for /tmp directory (skip if not present & writable)
-		File tmp = new File("/tmp");
-		if(! tmp.exists() && tmp.canWrite()) return;
+	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-bash" );
 
-		PluginBash plugin = new PluginBash();
-		Instance inst = findInstance("/bashplugin-unit-tests", "BashScript");
-		//System.out.println("*** INSTANCE NAME=" + inst.getName());
+	private final Instance inst = new Instance( "sample" ).component( new Component( "some-component" ));
+	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst, PluginBash.PLUGIN_NAME );
+	private PluginBash plugin;
 
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(inst, plugin.getPluginName());
-		
-		Utils.copyDirectory(TestUtils.findTestFile("/bashplugin-unit-tests/graph/BashScript"),
-				instanceDirectory);
-		
-		File file;
-		
-		plugin.deploy(inst);
-		file = new File("/tmp/BashScriptFile.deploy");
-		assertTrue(file.exists());
-		file.delete();
 
-		plugin.start(inst);
-		file = new File("/tmp/BashScriptFile.start");
-		assertTrue(file.exists());
-		file.delete();
-		
-		// Test update, passing changed import + status
-		Import importChanged = new Import(
-			InstanceHelpers.computeInstancePath(inst) + "Test",
-			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
-		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
-		plugin.update(inst, importChanged, statusChanged);
-		file = new File("/tmp/BashScriptFile.update");
-		assertTrue(file.exists());
-		file.delete();
+	@Before
+	public void resetPlugin() throws Exception {
 
-		plugin.stop(inst);
-		file = new File("/tmp/BashScriptFile.stop");
-		assertTrue(file.exists());
-		file.delete();
+		// New plugin instance
+		this.plugin = new PluginBash();
+		this.plugin.setNames( "app", "test" );
 
-		plugin.undeploy(inst);
-		file = new File("/tmp/BashScriptFile.undeploy");
-		assertTrue(file.exists());
-		file.delete();
+		// Useful to watch real bash content on debug (and for code coverage)
+		this.inst.getExports().put( "facet.prop1", "value1" );
+		this.inst.getExports().put( "some-component.prop2", "value2" );
+		this.inst.getExports().put( "prop3", "value3" );
 
-		Utils.deleteFilesRecursively(instanceDirectory);
+		Map<String,String> exportedVariables1 = new HashMap<String,String> ();
+		exportedVariables1.put( "ip", "http://192.168.1.15" );
+		exportedVariables1.put( "port", "80" );
+
+		Map<String,String> exportedVariables2 = new HashMap<String,String>( exportedVariables1 );
+		exportedVariables1.put( "ip", "http://192.168.1.84" );
+
+		Import imp1 = new Import( "/vm1/apache", exportedVariables1 );
+		Import imp2 = new Import( "/vm1/apache", exportedVariables2 );
+		this.inst.getImports().clear();
+		this.inst.getImports().put( "apache", Arrays.asList( imp1, imp2 ));
 	}
 
-	/**
-	 * Test Bash plugin (templates only) on a real instance (from a fully functional app).
-	 * The bash scripts produce files (some based on templates)
-	 * for each operation (deploy/start/stop/undeploy).
-	 * @throws Exception
-	 */
-	@SuppressWarnings("serial")
-	@Test
-	public void testBashPlugin_Template() throws Exception {
-		// Check for /tmp directory (skip if not present & writable)
-		File tmp = new File("/tmp");
-		if(! tmp.exists() && tmp.canWrite()) return;
 
-		PluginBash plugin = new PluginBash();
-		Instance inst = findInstance("/bashplugin-unit-tests", "BashTemplate");
-		//System.out.println("*** INSTANCE NAME=" + inst.getName());
-
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(inst, plugin.getPluginName());
-		
-		Utils.copyDirectory(TestUtils.findTestFile("/bashplugin-unit-tests/graph/BashTemplate"),
-				instanceDirectory);
-		
-		File file;
-		
-		plugin.deploy(inst);
-		file = new File("/tmp/BashTemplateFile.deploy");
-		assertTrue(file.exists());
-		file.delete();
-
-		plugin.start(inst);
-		file = new File("/tmp/BashTemplateFile.start");
-		assertTrue(file.exists());
-		file.delete();
-
-		// Test update, passing changed import + status
-		Import importChanged = new Import(
-			InstanceHelpers.computeInstancePath(inst) + "Test",
-			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
-		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
-		plugin.update(inst, importChanged, statusChanged);
-		file = new File("/tmp/BashTemplateFile.update");
-		assertTrue(file.exists());
-		file.delete();
-	
-		plugin.stop(inst);
-		file = new File("/tmp/BashTemplateFile.stop");
-		assertTrue(file.exists());
-		file.delete();
-
-		plugin.undeploy(inst);
-		file = new File("/tmp/BashTemplateFile.undeploy");
-		assertTrue(file.exists());
-		file.delete();
-
-		Utils.deleteFilesRecursively(instanceDirectory);
+	@After
+	public void clearPreviousOutputs() throws Exception {
+		Utils.deleteFilesRecursively( this.instanceDirectory );
+		Utils.deleteFilesRecursively( OUTPUT_DIR );
 	}
 
-	private Instance findInstance(String appDirPath, String instanceName) throws Exception {
-		File appDir = TestUtils.findTestFile(appDirPath);
-		ApplicationLoadResult result = RuntimeModelIo.loadApplication(appDir);
-		List<Instance> instances = null;
-		for(Instance root : result.getApplication().getRootInstances()) {
-			instances = InstanceHelpers.buildHierarchicalList(root);
-			
-			for(Instance inst : instances) {
-				if(inst.getName().equals(instanceName)) return inst;
-			}
-		}
-		return null;
+
+	@Test
+	public void testSetNames() {
+
+		Assert.assertNotNull( this.plugin.agentId );
+		this.plugin.agentId = null;
+		Assert.assertNull( this.plugin.agentId );
+
+		this.plugin.setNames( "app", null );
+		Assert.assertNotNull( this.plugin.agentId );
+
+		this.plugin.setNames( null, "test" );
+		Assert.assertNotNull( this.plugin.agentId );
+	}
+
+
+	@Test
+	public void testInitialize() throws Exception {
+		this.plugin.initialize( null );
+		this.plugin.initialize( new Instance( "whatever" ));
+	}
+
+
+	@Test
+	public void testDeploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScript" );
+
+		File file = new File( OUTPUT_DIR, "BashScriptFile.deploy" );
+		Assert.assertFalse( file.exists());
+		this.plugin.deploy( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testDeploy_exception() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScriptError" );
+		this.plugin.deploy( this.inst );
+	}
+
+
+	@Test
+	public void testDeploy_template() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashTemplate" );
+
+		File file = new File( OUTPUT_DIR, "BashTemplateFile.deploy" );
+		Assert.assertFalse( file.exists());
+		this.plugin.deploy( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test
+	public void testStart() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScript" );
+
+		File file = new File( OUTPUT_DIR, "BashScriptFile.start" );
+		Assert.assertFalse( file.exists());
+		this.plugin.start( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testStart_exception() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScriptError" );
+		this.plugin.start( this.inst );
+	}
+
+
+	@Test
+	public void testStart_template() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashTemplate" );
+
+		File file = new File( OUTPUT_DIR, "BashTemplateFile.start" );
+		Assert.assertFalse( file.exists());
+		this.plugin.start( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test
+	public void testStop() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScript" );
+
+		File file = new File( OUTPUT_DIR, "BashScriptFile.stop" );
+		Assert.assertFalse( file.exists());
+		this.plugin.stop( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testStop_exception() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScriptError" );
+		this.plugin.stop( this.inst );
+	}
+
+
+	@Test
+	public void testStop_template() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashTemplate" );
+
+		File file = new File( OUTPUT_DIR, "BashTemplateFile.stop" );
+		Assert.assertFalse( file.exists());
+		this.plugin.stop( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test
+	public void testUndeploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScript" );
+
+		File file = new File( OUTPUT_DIR, "BashScriptFile.undeploy" );
+		Assert.assertFalse( file.exists());
+		this.plugin.undeploy( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testUndeploy_exception() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScriptError" );
+		this.plugin.undeploy( this.inst );
+	}
+
+
+	@Test
+	public void testUndeploy_template() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashTemplate" );
+
+		File file = new File( OUTPUT_DIR, "BashTemplateFile.undeploy" );
+		Assert.assertFalse( file.exists());
+		this.plugin.undeploy( this.inst );
+		assertTrue( file.exists());
+	}
+
+
+	@Test
+	public void testUpdate() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScript" );
+
+		File file = new File( OUTPUT_DIR, "BashScriptFile.update" );
+		Assert.assertFalse( file.exists());
+
+		Import importChanged = new Import( this.inst );
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		this.plugin.update( this.inst, importChanged, statusChanged );
+
+		assertTrue( file.exists());
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testUpdate_exception() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScriptError" );
+
+		Import importChanged = new Import( this.inst );
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		this.plugin.update( this.inst, importChanged, statusChanged );
+	}
+
+
+	@Test
+	public void testUpdate_template() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashTemplate" );
+
+		File file = new File( OUTPUT_DIR, "BashTemplateFile.update" );
+		Assert.assertFalse( file.exists());
+
+		Map<String,String> exports = new HashMap<String,String> ();
+		exports.put( "ip", "127.0.0.1" );
+		exports.put( "port", "8091" );
+
+		Import importChanged = new Import( InstanceHelpers.computeInstancePath( this.inst ), exports );
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		this.plugin.update( this.inst, importChanged, statusChanged );
+
+		assertTrue( file.exists());
+	}
+
+
+	@Test
+	public void testUpdate_scriptWithExports() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashScript" );
+
+		File file = new File( OUTPUT_DIR, "BashScriptFile.update" );
+		Assert.assertFalse( file.exists());
+
+		Map<String,String> exports = new HashMap<String,String> ();
+		exports.put( "ip", "127.0.0.1" );
+		exports.put( "port", "8091" );
+
+		Import importChanged = new Import( InstanceHelpers.computeInstancePath( this.inst ), exports );
+		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
+		this.plugin.update( this.inst, importChanged, statusChanged );
+
+		assertTrue( file.exists());
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testInvalidTemplate() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashTemplateInvalid" );
+		this.plugin.deploy( this.inst );
+	}
+
+
+	@Test
+	public void testInexistingTemplate() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/BashTemplateInvalid" );
+
+		Assert.assertFalse( OUTPUT_DIR.exists());
+		this.plugin.start( this.inst );
+		Assert.assertFalse( OUTPUT_DIR.exists());
+	}
+
+
+	/**
+	 * @return true if it seems to be a Linux system
+	 * <p>
+	 * Strong assumption to suppose Bash is installed, but whatever...
+	 * </p>
+	 */
+	private boolean isLinuxSystem() {
+		return new File( "/tmp" ).exists();
+	}
+
+
+	private void copyResources( String resourcesPath ) throws Exception {
+		File toCopy = TestUtils.findTestFile( resourcesPath );
+		Utils.copyDirectory( toCopy, this.instanceDirectory);
 	}
 }

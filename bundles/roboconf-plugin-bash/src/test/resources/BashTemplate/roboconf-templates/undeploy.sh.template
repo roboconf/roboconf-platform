@@ -1,0 +1,3 @@
+#!/bin/bash
+mkdir -p /tmp/roboconf-test-for-bash
+cp $ROBOCONF_FILES_DIR/BashTemplateFile.txt /tmp/roboconf-test-for-bash/BashTemplateFile.undeploy

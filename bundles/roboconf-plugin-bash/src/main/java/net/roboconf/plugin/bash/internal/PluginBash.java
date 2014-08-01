@@ -58,8 +58,10 @@ import net.roboconf.plugin.api.template.InstanceTemplateHelper;
  */
 public class PluginBash implements PluginInterface {
 
+	public static final String PLUGIN_NAME = "bash";
+
     private final Logger logger = Logger.getLogger( getClass().getName());
-    private String agentId;
+    String agentId;
 
     private static final String SCRIPTS_FOLDER_NAME = "scripts";
     private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
@@ -68,26 +70,26 @@ public class PluginBash implements PluginInterface {
 
     @Override
     public String getPluginName() {
-        return "bash";
+    	return PLUGIN_NAME;
     }
 
 
     @Override
-	public void setNames( String applicationName, String rootInstanceName ) {
-		this.agentId = "'" + rootInstanceName + "' agent";
-	}
+    public void setNames( String applicationName, String rootInstanceName ) {
+    	this.agentId = "'" + rootInstanceName + "' agent";
+    }
 
 
 	@Override
 	public void initialize( Instance instance ) throws PluginException {
-		this.logger.fine( this.agentId + " is initializing the plug-in for " + instance.getName());
+		this.logger.fine( this.agentId + " has nothing to initialize in the plugin for " + instance );
 	}
 
 
 	@Override
 	public void deploy( Instance instance ) throws PluginException {
 
-		this.logger.fine( this.agentId + " is deploying instance " + instance.getName());
+		this.logger.fine( this.agentId + " is deploying instance " + instance );
 		try {
 			prepareAndExecuteCommand( "deploy", instance, null, null );
 
@@ -100,7 +102,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void start( Instance instance ) throws PluginException {
 
-        this.logger.fine( this.agentId + " is starting instance " + instance.getName());
+        this.logger.fine( this.agentId + " is starting instance " + instance );
         try {
 			prepareAndExecuteCommand( "start", instance, null, null );
 
@@ -113,7 +115,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
 
-        this.logger.fine( this.agentId + " is updating instance " + instance.getName());
+        this.logger.fine( this.agentId + " is updating instance " + instance );
         try {
 			prepareAndExecuteCommand( "update", instance, importChanged, statusChanged );
 
@@ -126,7 +128,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void stop( Instance instance ) throws PluginException {
 
-        this.logger.fine( this.agentId + " is stopping instance " + instance.getName());
+        this.logger.fine( this.agentId + " is stopping instance " + instance );
         try {
 			prepareAndExecuteCommand( "stop", instance, null, null );
 
@@ -139,7 +141,7 @@ public class PluginBash implements PluginInterface {
     @Override
     public void undeploy( Instance instance ) throws PluginException {
 
-    	this.logger.fine( this.agentId + " is undeploying instance " + instance.getName());
+    	this.logger.fine( this.agentId + " is undeploying instance " + instance );
         try {
 			prepareAndExecuteCommand( "undeploy", instance, null, null );
 
@@ -152,7 +154,7 @@ public class PluginBash implements PluginInterface {
     private void prepareAndExecuteCommand(String action, Instance instance, Import importChanged, InstanceStatus statusChanged)
     throws IOException, InterruptedException {
 
-        this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance.getName());
+        this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance );
         File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 
         File scriptsFolder = new File(instanceDirectory, SCRIPTS_FOLDER_NAME);
@@ -168,14 +170,11 @@ public class PluginBash implements PluginInterface {
 
         } else if (template.exists()) {
             File generated = generateTemplate(template, instance);
-            if (generated == null || !generated.exists())
-                throw new IOException("Not able to get the generated file from template for action " + action);
-
             executeScript(generated, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
             Utils.deleteFilesRecursively( generated );
 
         } else {
-            this.logger.info("Can not find a script or a template for action " + action);
+            this.logger.fine("Can not find a script or a template for action " + action);
         }
     }
 
@@ -197,31 +196,30 @@ public class PluginBash implements PluginInterface {
     protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir)
     throws IOException, InterruptedException {
 
-        String[] command = { "bash", script.getAbsolutePath()};
-        Map<String, String> environmentVars = new HashMap<String, String>();
-        Map<String, String> vars = formatExportedVars(instance);
-        environmentVars.putAll(vars);
-        Map<String, String> importedVars = formatImportedVars(instance);
-        environmentVars.putAll(importedVars);
-        environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
-        environmentVars.put("ROBOCONF_FILES_DIR", new File( instanceDir, FILES_FOLDER_NAME ).getAbsolutePath());
+    	String[] command = { "bash", script.getAbsolutePath()};
+    	Map<String, String> environmentVars = new HashMap<String, String>();
+    	Map<String, String> vars = formatExportedVars(instance);
+    	environmentVars.putAll(vars);
+    	Map<String, String> importedVars = formatImportedVars(instance);
+    	environmentVars.putAll(importedVars);
+    	environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
+    	environmentVars.put("ROBOCONF_FILES_DIR", new File( instanceDir, FILES_FOLDER_NAME ).getAbsolutePath());
 
-        // Upon update, retrieve the status of the instance that triggered the update.
-        // Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...
-        if(statusChanged != null) {
-        	environmentVars.put("ROBOCONF_UPDATE_STATUS", statusChanged.toString());
-        }
+    	// Upon update, retrieve the status of the instance that triggered the update.
+    	// Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...
+    	if( statusChanged != null )
+    		environmentVars.put("ROBOCONF_UPDATE_STATUS", statusChanged.toString());
 
-        // Upon update, retrieve the import that changed
-        // (removed when an instance stopped, or added when it started)
-        if(importChanged != null) {
-        	environmentVars.put("ROBOCONF_IMPORT_CHANGED_INSTANCE_PATH", importChanged.getInstancePath());
-        	for (Entry<String, String> entry : importChanged.getExportedVars().entrySet()) {
-        		// "ROBOCONF_IMPORT_CHANGED_ip=127.0.0.1"
-        		String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
-        		importedVars.put("ROBOCONF_IMPORT_CHANGED_" + vname, entry.getValue());
-        	}
-        }
+    	// Upon update, retrieve the import that changed
+    	// (removed when an instance stopped, or added when it started)
+    	if( importChanged != null ) {
+    		environmentVars.put("ROBOCONF_IMPORT_CHANGED_INSTANCE_PATH", importChanged.getInstancePath());
+    		for (Entry<String, String> entry : importChanged.getExportedVars().entrySet()) {
+    			// "ROBOCONF_IMPORT_CHANGED_ip=127.0.0.1"
+    			String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
+    			importedVars.put("ROBOCONF_IMPORT_CHANGED_" + vname, entry.getValue());
+    		}
+    	}
 
         ProgramUtils.executeCommand(this.logger, command, environmentVars);
     }
