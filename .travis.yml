@@ -12,10 +12,8 @@ services:
 
 # Install Puppet to test the Puppet plugin
 before_script:
- - sudo apt-get update -qq
- - sudo apt-get install rubygems
- - sudo gem install puppet
- - echo $PATH
+  - sudo apt-get install rubygems
+  - sudo gem install puppet-module
 
 # Build with Maven.
 # Use -q option to only display Maven errors and warnings.
@@ -26,3 +24,4 @@ script:
 # Use -q option to only display Maven errors and warnings.
 after_success:
   - mvn clean cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura -q
+
