@@ -34,10 +34,15 @@ public class TestIaasResolver extends IaasResolver {
 
 
 	@Override
-	public IaasInterface findIaasInterface( ManagedApplication ma, final Instance instance )
+	public IaasInterface findIaasInterface( IaasInterface[] iaas, ManagedApplication ma, final Instance instance )
 	throws IaasException {
 
 		return new IaasInterface() {
+
+			@Override
+			public String getIaasType() {
+				return "test";
+			}
 
 			@Override
 			public void setIaasProperties( Map<String, String> iaasProperties )

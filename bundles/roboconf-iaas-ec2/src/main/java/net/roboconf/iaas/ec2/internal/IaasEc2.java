@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.ec2;
+package net.roboconf.iaas.ec2.internal;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.ec2.internal.Ec2Constants;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -44,23 +43,20 @@ import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeVolumeAttributeRequest;
+import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
 import com.amazonaws.services.ec2.model.DescribeVolumesResult;
-import com.amazonaws.services.ec2.model.EbsBlockDevice;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.elasticmapreduce.model.InstanceState;
 
 /**
  * @author Noël - LIG
  */
 public class IaasEc2 implements IaasInterface {
 
-	private Logger logger;
+	private final Logger logger;
 	private AmazonEC2 ec2;
 	private Map<String, String> iaasProperties;
 
@@ -73,11 +69,13 @@ public class IaasEc2 implements IaasInterface {
 	}
 
 
-	/**
-	 * @param logger the logger to set
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.iaas.api.IaasInterface#getIaasType()
 	 */
-	public void setLogger( Logger logger ) {
-		this.logger = logger;
+	@Override
+	public String getIaasType() {
+		return "ec2";
 	}
 
 
@@ -128,7 +126,7 @@ public class IaasEc2 implements IaasInterface {
 			instanceId = runInstanceResult.getReservation().getInstances().get( 0 ).getInstanceId();
 
 			// Is there any volume (ID or name) to attach ?
-			String snapshotIdToAttach = iaasProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+			String snapshotIdToAttach = this.iaasProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
 			if(snapshotIdToAttach != null) {
 				boolean running = false;
 				while(! running) {
@@ -136,7 +134,7 @@ public class IaasEc2 implements IaasInterface {
 					ArrayList<String> instanceIds = new ArrayList<String>();
 					instanceIds.add(instanceId);
 					dis.setInstanceIds(instanceIds);
-					DescribeInstancesResult disresult = ec2.describeInstances(dis);
+					DescribeInstancesResult disresult = this.ec2.describeInstances(dis);
 					running = "running".equals(disresult.getReservations().get(0).getInstances().get(0).getState().getName());
 					if(! running) {
 						try {
@@ -152,14 +150,14 @@ public class IaasEc2 implements IaasInterface {
 					.withSnapshotId(snapshotIdToAttach);
 					//.withSize(2); // The size of the volume, in gigabytes.
 
-				CreateVolumeResult createVolumeResult = ec2.createVolume(createVolumeRequest);
-				
+				CreateVolumeResult createVolumeResult = this.ec2.createVolume(createVolumeRequest);
+
 				running = false;
 				while(! running) {
 					DescribeVolumesRequest dvs = new DescribeVolumesRequest();
 					ArrayList<String> volumeIds = new ArrayList<String>();
 					volumeIds.add(createVolumeResult.getVolume().getVolumeId());
-					DescribeVolumesResult dvsresult = ec2.describeVolumes(dvs);
+					DescribeVolumesResult dvsresult = this.ec2.describeVolumes(dvs);
 					running = "available".equals(dvsresult.getVolumes().get(0).getState());
 					System.out.println(dvsresult.getVolumes().get(0).getState());
 					if(! running) {
@@ -177,9 +175,9 @@ public class IaasEc2 implements IaasInterface {
 					.withDevice("/dev/sda2")
 					.withVolumeId(createVolumeResult.getVolume().getVolumeId());
 
-				AttachVolumeResult attachResult = ec2.attachVolume(attachRequest);
+				AttachVolumeResult attachResult = this.ec2.attachVolume(attachRequest);
 			}
-			
+
 			// Set name tag for instance (human-readable in AWS webapp)
 			List<Tag> tags = new ArrayList<Tag>();
 			Tag t = new Tag();

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.vmware;
+package net.roboconf.iaas.vmware.internal;
 
 import java.io.IOException;
 import java.net.URL;
@@ -48,7 +48,7 @@ import com.vmware.vim25.mo.VirtualMachine;
  */
 public class IaasVmware implements IaasInterface {
 
-	private Logger logger = Logger.getLogger( getClass().getName());
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ServiceInstance vmwareServiceInstance;
 	private ComputeResource vmwareComputeResource;
 	private String vmwareDataCenter;
@@ -56,11 +56,13 @@ public class IaasVmware implements IaasInterface {
 	private  Map<String, String> iaasProperties;
 
 
-	/**
-	 * @param logger the logger to set
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.iaas.api.IaasInterface#getIaasType()
 	 */
-	public void setLogger( Logger logger ) {
-		this.logger = logger;
+	@Override
+	public String getIaasType() {
+		return "vmware";
 	}
 
 

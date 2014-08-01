@@ -69,48 +69,6 @@
   			<version>1.0-SNAPSHOT</version>
   			<scope>provided</scope>
 		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-iaas-azure</artifactId>
-  			<version>1.0-SNAPSHOT</version>
-  			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-iaas-ec2</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-iaas-embedded</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-iaas-in-memory</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-iaas-openstack</artifactId>
-  			<version>1.0-SNAPSHOT</version>
-  			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-iaas-vmware</artifactId>
-  			<version>1.0-SNAPSHOT</version>
-  			<scope>provided</scope>
-		</dependency>
 
 		<dependency>
   			<groupId>com.sun.jersey</groupId>
@@ -177,6 +135,18 @@
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-ipojo-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>ipojo-bundle</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

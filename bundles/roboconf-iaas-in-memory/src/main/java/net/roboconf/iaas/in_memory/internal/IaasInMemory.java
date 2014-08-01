@@ -41,6 +41,16 @@ public class IaasInMemory implements IaasInterface {
 
 	/*
 	 * (non-Javadoc)
+	 * @see net.roboconf.iaas.api.IaasInterface#getIaasType()
+	 */
+	@Override
+	public String getIaasType() {
+		return "in-memory";
+	}
+
+
+	/*
+	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface
 	 * #setIaasProperties(java.util.Properties)
 	 */

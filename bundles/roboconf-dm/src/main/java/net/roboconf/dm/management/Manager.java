@@ -101,6 +101,9 @@ public final class Manager {
 	private final Logger logger;
 	private MessageServerClientFactory factory;
 
+	// Injected by iPojo
+	private IaasInterface[] iaas;
+
 	Timer timer;
 	ManagerConfiguration configuration;
 	IaasResolver iaasResolver;
@@ -523,7 +526,7 @@ public final class Manager {
 			MsgCmdInstanceAdd msg = new MsgCmdInstanceAdd((String) null, rootInstance );
 			send( ma, msg, rootInstance );
 
-			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
+			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );
 			machineId = iaasInterface.createVM(
 					this.configuration.getMessageServerIp(),
 					this.configuration.getMessageServerUsername(),
@@ -565,7 +568,7 @@ public final class Manager {
 		try {
 			// Terminate the machine
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
-			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( ma, rootInstance );
+			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );
 			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
 			if( machineId != null )
 				iaasInterface.terminateVM( machineId );

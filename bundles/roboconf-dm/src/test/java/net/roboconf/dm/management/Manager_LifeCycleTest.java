@@ -404,7 +404,8 @@ public class Manager_LifeCycleTest {
 
 		TestIaasResolver newResolver = new TestIaasResolver() {
 			@Override
-			public IaasInterface findIaasInterface( ManagedApplication ma, Instance instance ) throws IaasException {
+			public IaasInterface findIaasInterface( IaasInterface[] iaas, ManagedApplication ma, Instance instance )
+			throws IaasException {
 				throw new IaasException( "For test purpose!" );
 			}
 		};
@@ -540,7 +541,8 @@ public class Manager_LifeCycleTest {
 
 		TestIaasResolver newResolver = new TestIaasResolver() {
 			@Override
-			public IaasInterface findIaasInterface( ManagedApplication ma, Instance instance ) throws IaasException {
+			public IaasInterface findIaasInterface( IaasInterface[] iaas, ManagedApplication ma, Instance instance )
+			throws IaasException {
 				throw new IaasException( "For test purpose!" );
 			}
 		};

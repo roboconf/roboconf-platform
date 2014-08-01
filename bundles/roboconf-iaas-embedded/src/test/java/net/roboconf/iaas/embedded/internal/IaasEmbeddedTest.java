@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.embedded;
+package net.roboconf.iaas.embedded.internal;
 
 import java.util.HashMap;
 
 import junit.framework.Assert;
+import net.roboconf.iaas.embedded.internal.IaasEmbedded;
 
 import org.junit.Test;
 

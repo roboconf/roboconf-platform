@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.openstack;
+package net.roboconf.iaas.openstack.internal;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
@@ -29,7 +27,6 @@ import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.openstack.internal.OpenstackConstants;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -53,7 +50,7 @@ import com.woorea.openstack.nova.model.Volumes;
  */
 public class IaasOpenstack implements IaasInterface {
 
-	private Logger logger;
+	private final Logger logger;
 
 	private String machineImageId;
 	private  Map<String, String> iaasProperties;
@@ -76,11 +73,13 @@ public class IaasOpenstack implements IaasInterface {
 	}
 
 
-	/**
-	 * @param logger the logger to set
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.iaas.api.IaasInterface#getIaasType()
 	 */
-	public void setLogger( Logger logger ) {
-		this.logger = logger;
+	@Override
+	public String getIaasType() {
+		return "openstack";
 	}
 
 
@@ -238,10 +237,10 @@ public class IaasOpenstack implements IaasInterface {
 		if(networkId != null) {
 			String fixedIp = this.iaasProperties.get(OpenstackConstants.FIXED_IP);
 			// fixedIp may be null (DHCP).
-			
+
 			// TODO: uncomment the next line if you want Neutron support
 			// (think about updating the openstack-java-sdk version in the POM).
-			// serverForCreate.addNetworks(networkId, fixedIp);	
+			// serverForCreate.addNetworks(networkId, fixedIp);
 		}
 
 		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
@@ -278,7 +277,7 @@ public class IaasOpenstack implements IaasInterface {
 		// Associate floating IP (nova network) if specified
 		if(this.floatingIpPool != null) {
 			FloatingIp ip = requestFloatingIp(this.novaClient, server.getId());
-			
+
 			/*FloatingIps ips = this.novaClient.floatingIps().list().execute();
 
 			FloatingIp ip = null;
@@ -291,7 +290,7 @@ public class IaasOpenstack implements IaasInterface {
 				this.novaClient.servers().associateFloatingIp( server.getId(), ip.getIp()).execute();
 			}
 		}
-		
+
 		return server.getId();
 	}
 

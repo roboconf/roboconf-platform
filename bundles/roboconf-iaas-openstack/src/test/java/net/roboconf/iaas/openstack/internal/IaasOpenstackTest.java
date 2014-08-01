@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.openstack;
+package net.roboconf.iaas.openstack.internal;
 
 import java.util.HashMap;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.IaasException;
+import net.roboconf.iaas.openstack.internal.IaasOpenstack;
 
 import org.junit.Test;
 

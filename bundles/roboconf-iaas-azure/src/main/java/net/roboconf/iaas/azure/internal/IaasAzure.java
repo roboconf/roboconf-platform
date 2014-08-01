@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.azure;
+package net.roboconf.iaas.azure.internal;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,8 +52,6 @@ import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.azure.internal.AzureConstants;
-import net.roboconf.iaas.azure.internal.AzureProperties;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -68,7 +66,7 @@ import org.xml.sax.SAXException;
  */
 public class IaasAzure implements IaasInterface {
 
-	private Logger logger;
+	private final Logger logger;
 	private AzureProperties azureProperties;
 
 
@@ -80,11 +78,13 @@ public class IaasAzure implements IaasInterface {
 	}
 
 
-	/**
-	 * @param logger the logger to set
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.iaas.api.IaasInterface#getIaasType()
 	 */
-	public void setLogger( Logger logger ) {
-		this.logger = logger;
+	@Override
+	public String getIaasType() {
+		return "azure";
 	}
 
 

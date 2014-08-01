@@ -24,13 +24,6 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.azure.IaasAzure;
-import net.roboconf.iaas.ec2.IaasEc2;
-import net.roboconf.iaas.embedded.IaasEmbedded;
-import net.roboconf.iaas.in_memory.internal.IaasInMemory;
-import net.roboconf.iaas.openstack.IaasOpenstack;
-import net.roboconf.iaas.vmware.IaasVmware;
-
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -38,24 +31,18 @@ import net.roboconf.iaas.vmware.IaasVmware;
 public class IaasResolver {
 
 	public static final String IAAS_TYPE = "iaas.type";
-	public static final String IAAS_IN_MEMORY = "in-memory";
-	public static final String IAAS_EMBEDDED = "embedded";
-	public static final String IAAS_EC2 = "ec2";
-	public static final String IAAS_OPENSTACK = "openstack";
-	public static final String IAAS_VMWARE = "vmware";
-	public static final String IAAS_AZURE = "azure";
 
 
 	/**
 	 * Finds the right IaaS interface for a given instance.
 	 * @param ma the managed application
+	 * @param iaas the list of available IaaS (can be null)
 	 * @param instance the (root) instance associated with a IaaS
 	 * @return a IaaS interface
 	 * @throws IaasException if no IaaS interface was found
 	 */
-	public IaasInterface findIaasInterface( ManagedApplication ma, Instance instance ) throws IaasException {
+	public IaasInterface findIaasInterface( IaasInterface[] iaas, ManagedApplication ma, Instance instance ) throws IaasException {
 
-		// FIXME: Not very "plug-in-like"
 		IaasInterface iaasInterface;
 		try {
 			String installerName = instance.getComponent().getInstallerName();
@@ -63,7 +50,7 @@ public class IaasResolver {
 				throw new IaasException( "Unsupported installer name: " + installerName );
 
 			Map<String, String> props = IaasHelpers.loadIaasProperties( ma.getApplicationFilesDirectory(), instance );
-			iaasInterface = findIaasHandler( props );
+			iaasInterface = findIaasHandler( iaas, props );
 			if( iaasInterface == null )
 				throw new IaasException( "No IaaS handler was found for " + instance.getName() + "." );
 
@@ -79,43 +66,33 @@ public class IaasResolver {
 
 	/**
 	 * Finds the right IaaS handler.
+	 * @param iaas the list of available IaaS (can be null)
 	 * @param iaasProperties non-null properties
 	 * @return a IaaS interface, or null if none matched
-	 * TODO: move this method in the IaaS implementations
 	 */
-	IaasInterface findIaasHandler( Map<String,String> iaasProperties ) {
+	IaasInterface findIaasHandler( IaasInterface[] iaas, Map<String,String> iaasProperties ) {
 
 		String iaasType = iaasProperties.get( IAAS_TYPE );
-		return findIaasHandler( iaasType );
+		return findIaasHandler( iaas, iaasType );
 	}
 
 
 	/**
 	 * Finds the right IaaS handler.
+	 * @param iaas the list of available IaaS (can be null)
 	 * @param iaasType the IaaS type
 	 * @return a IaaS interface, or null if none matched
-	 * TODO: move this method in the IaaS implementations
 	 */
-	protected IaasInterface findIaasHandler( String iaasType ) {
+	protected IaasInterface findIaasHandler( IaasInterface[] iaas, String iaasType ) {
 
 		IaasInterface result = null;
-		if( IAAS_IN_MEMORY.equalsIgnoreCase( iaasType ) ) {
-			result = new IaasInMemory();
-
-		} else if( IAAS_EMBEDDED.equalsIgnoreCase( iaasType ) ) {
-			result = new IaasEmbedded();
-
-		} else if( IAAS_EC2.equalsIgnoreCase( iaasType ) ) {
-			result = new IaasEc2();
-
-		} else if( IAAS_OPENSTACK.equalsIgnoreCase( iaasType ) ) {
-			result = new IaasOpenstack();
-
-		} else if( IAAS_VMWARE.equalsIgnoreCase( iaasType ) ) {
-			result = new IaasVmware();
-
-		} else if( IAAS_AZURE.equalsIgnoreCase( iaasType ) ) {
-			result = new IaasAzure();
+		if( iaas != null ) {
+			for( IaasInterface itf : iaas ) {
+				if( iaasType.equalsIgnoreCase( itf.getIaasType())) {
+					result = itf;
+					break;
+				}
+			}
 		}
 
 		return result;

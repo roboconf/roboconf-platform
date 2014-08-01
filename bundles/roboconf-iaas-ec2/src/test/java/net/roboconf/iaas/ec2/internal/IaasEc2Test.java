@@ -14,59 +14,50 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.vmware;
+package net.roboconf.iaas.ec2.internal;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.IaasException;
+import net.roboconf.iaas.ec2.internal.Ec2Constants;
+import net.roboconf.iaas.ec2.internal.IaasEc2;
 
 import org.junit.Test;
 
 /**
- * @author Pierre-Yves Gibello - Linagora
+ * @author Vincent Zurczak - Linagora
  */
-public class IaasVmwareTest {
+public class IaasEc2Test {
 
 	@Test
 	public void testConfigurationParsing() {
 
 		// Empty configuration
-		HashMap<String, String> iaasProperties = new HashMap<String, String>();
-		IaasVmware iaas = new IaasVmware();
+		Map<String, String> iaasProperties = new HashMap<String, String>();
+		IaasEc2 ec2 = new IaasEc2();
 		try {
-			iaas.setIaasProperties( iaasProperties );
+			ec2.setIaasProperties( iaasProperties );
 			Assert.fail( "An invalid configuration should have been detected." );
 
 		} catch( IaasException e ) {
-			Assert.assertTrue(true);
+			Assert.assertTrue( e.getMessage().toLowerCase().contains( "endpoint" ));
 		}
 
-		// Move on
-		iaasProperties.put("ipMessagingServer", "127.0.0.1" );
-		try {
-			iaas.setIaasProperties( iaasProperties );
-			Assert.fail( "An invalid configuration should have been detected." );
-
-		} catch( IaasException e ) {
-			Assert.assertTrue(true);
-		}
-
-		//TODO parameterize test with external file for IaaS credentials ?
-		/*
 		// Fill-in everything
-		iaasProperties.put( "vmware.url", "https://localhost:8890/sdk" );
-		iaasProperties.put( "vmware.user", "roboconf" );
-		iaasProperties.put( "vmware.password", "password" );
-		iaasProperties.put( "vmware.ignorecert", "true" );
-		iaasProperties.put( "vmware.cluster", "MYCLUSTER" );
+		iaasProperties.put( Ec2Constants.EC2_ENDPOINT, "127.0.0.1" );
+		iaasProperties.put( Ec2Constants.EC2_ACCESS_KEY, "my access key" );
+		iaasProperties.put( Ec2Constants.EC2_SECRET_KEY, "my secret key" );
+		iaasProperties.put( Ec2Constants.AMI_VM_NODE, "the node" );
+		iaasProperties.put( Ec2Constants.VM_INSTANCE_TYPE, "tiny" );
+		iaasProperties.put( Ec2Constants.SSH_KEY_NAME, "secret_key" );
+		iaasProperties.put( Ec2Constants.SECURITY_GROUP_NAME, "WorldWideVisible" );
 		try {
-			iaas.setIaasProperties( iaasProperties );
+			ec2.setIaasProperties( iaasProperties );
 
-		} catch( InvalidIaasPropertiesException e ) {
-			e.printStackTrace();
+		} catch( IaasException e ) {
 			Assert.fail( "An invalid configuration was detected while it was valid." );
 		}
-		*/
 	}
 }

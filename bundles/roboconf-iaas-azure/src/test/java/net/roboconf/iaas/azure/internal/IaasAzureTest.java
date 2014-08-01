@@ -14,46 +14,48 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.ec2;
+package net.roboconf.iaas.azure.internal;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.IaasException;
-import net.roboconf.iaas.ec2.internal.Ec2Constants;
+import net.roboconf.iaas.azure.internal.AzureConstants;
+import net.roboconf.iaas.azure.internal.IaasAzure;
 
 import org.junit.Test;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * @author Linh-Manh Pham - LIG
  */
-public class IaasEc2Test {
+public class IaasAzureTest {
 
 	@Test
 	public void testConfigurationParsing() {
 
 		// Empty configuration
 		Map<String, String> iaasProperties = new HashMap<String, String>();
-		IaasEc2 ec2 = new IaasEc2();
+		IaasAzure azure = new IaasAzure();
 		try {
-			ec2.setIaasProperties( iaasProperties );
+			azure.setIaasProperties( iaasProperties );
 			Assert.fail( "An invalid configuration should have been detected." );
 
 		} catch( IaasException e ) {
-			Assert.assertTrue( e.getMessage().toLowerCase().contains( "endpoint" ));
+			Assert.assertTrue( e.getMessage().toLowerCase().contains( "subscription" ));
 		}
 
 		// Fill-in everything
-		iaasProperties.put( Ec2Constants.EC2_ENDPOINT, "127.0.0.1" );
-		iaasProperties.put( Ec2Constants.EC2_ACCESS_KEY, "my access key" );
-		iaasProperties.put( Ec2Constants.EC2_SECRET_KEY, "my secret key" );
-		iaasProperties.put( Ec2Constants.AMI_VM_NODE, "the node" );
-		iaasProperties.put( Ec2Constants.VM_INSTANCE_TYPE, "tiny" );
-		iaasProperties.put( Ec2Constants.SSH_KEY_NAME, "secret_key" );
-		iaasProperties.put( Ec2Constants.SECURITY_GROUP_NAME, "WorldWideVisible" );
+		iaasProperties.put( AzureConstants.AZURE_SUBSCRIPTION_ID, "my subscription id" );
+		iaasProperties.put( AzureConstants.AZURE_KEY_STORE_FILE, "path to key store file" );
+		iaasProperties.put( AzureConstants.AZURE_KEY_STORE_PASSWORD, "key store password" );
+		iaasProperties.put( AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE, "create cloud service template" );
+		iaasProperties.put( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE, "create deployment template" );
+		iaasProperties.put( AzureConstants.AZURE_LOCATION, "azure location" );
+		iaasProperties.put( AzureConstants.AZURE_VM_SIZE, "azure VM size" );
+		iaasProperties.put( AzureConstants.AZURE_VM_TEMPLATE, "azure VM template" );
 		try {
-			ec2.setIaasProperties( iaasProperties );
+			azure.setIaasProperties( iaasProperties );
 
 		} catch( IaasException e ) {
 			Assert.fail( "An invalid configuration was detected while it was valid." );

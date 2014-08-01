@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<component classname="net.roboconf.dm.management.Manager" immediate="true" name="roboconf-dm" public="false">
+		<requires field="iaas" optional="true" />
+		<properties updated="updateConfiguration">
+		
+			<!-- Due to a limitation in iPojo 1.x, we must use the setter method and not the field name -->
+			<property name="message-server-ip" method="setMessageServerIp" />
+			<property name="message-server-username" method="setMessageServerUsername" />
+			<property name="message-server-password" method="setMessageServerPassword" />
+		</properties>
+	</component>
+</ipojo>

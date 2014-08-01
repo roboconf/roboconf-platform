@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.embedded;
+package net.roboconf.iaas.embedded.internal;
 
 import java.util.Map;
 
@@ -26,6 +26,16 @@ import net.roboconf.iaas.api.IaasInterface;
  * @author Pierre-Yves Gibello - Linagora
  */
 public class IaasEmbedded implements IaasInterface {
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.iaas.api.IaasInterface#getIaasType()
+	 */
+	@Override
+	public String getIaasType() {
+		return "embedded";
+	}
+
 
 	/*
 	 * (non-Javadoc)

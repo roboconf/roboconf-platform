@@ -25,6 +25,12 @@ import java.util.Map;
 public interface IaasInterface {
 
 	/**
+	 * @return the IaaS type
+	 */
+	String getIaasType();
+
+
+	/**
 	 * Sets all the properties that will be used when instantiating machines.
 	 * <p>
 	 * Examples: access key, secret key, ami, ssh key, etc.
