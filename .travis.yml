@@ -11,15 +11,11 @@ services:
   - rabbitmq
 
 # Install Puppet to test the Puppet plugin
-# Travis uses Ubuntu 12.04 LTS, which has some problems with Puppet. => Install Rack
-# See https://groups.google.com/forum/#!msg/puppet-users/Z71Bj0uddfs/r5OmWqGs_zYJ
+# Travis uses Ubuntu 12.04 LTS, which has some problems with Puppet.
 before_script:
   - sudo apt-get install rubygems
-  - sudo gem install puppet
-  - sudo gem install puppet-module
-  - sudo gem install rack --version=1.1.0
-  - sudo gem install rack --version=1.1.2
-  - puppet --version
+  - gem install puppet
+#  - puppet --version
 
 # Build with Maven.
 # Use -q option to only display Maven errors and warnings.
