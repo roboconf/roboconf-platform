@@ -10,6 +10,12 @@ jdk:
 services:
   - rabbitmq
 
+# Install Puppet to test the Puppet plugin.
+# Do not use "sudo gem install", it alters the system path.
+before_script:
+  - sudo apt-get install rubygems
+  - gem install puppet
+
 # Build with Maven.
 # Use -q option to only display Maven errors and warnings.
 script:
