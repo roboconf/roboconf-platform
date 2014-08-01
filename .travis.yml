@@ -10,6 +10,12 @@ jdk:
 services:
   - rabbitmq
 
+# Install Puppet to test the Puppet plugin
+before_script:
+ - sudo apt-get install rubygems
+ - sudo gem install facter
+ - sudo gem install puppet
+
 # Build with Maven.
 # Use -q option to only display Maven errors and warnings.
 script:
