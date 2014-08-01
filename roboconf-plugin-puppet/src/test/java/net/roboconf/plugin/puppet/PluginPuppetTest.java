@@ -64,17 +64,16 @@ public class PluginPuppetTest {
 	public void checkPuppetIsInstalled() throws Exception {
 
 		Assume.assumeTrue( this.running );
+		Logger logger = Logger.getLogger( getClass().getName());
 		try {
 			List<String> command = new ArrayList<String> ();
 			command.add( "puppet" );
 			command.add( "--version" );
 
-			Logger logger = Logger.getLogger( getClass().getName());
 			ProgramUtils.executeCommand( logger, command, null );
 
 		} catch( Exception e ) {
-			Logger logger = Logger.getLogger( getClass().getName());
-			logger.warning( "Tests are skipped because Puppet is not installed." );
+			logger.warning( "Tests are skipped because Puppet is not installed. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
 
 			this.running = false;

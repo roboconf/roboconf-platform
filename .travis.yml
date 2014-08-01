@@ -12,7 +12,7 @@ services:
 
 # Install Puppet to test the Puppet plugin
 before_script:
- - sudo apt-get install ruby
+ - sudo apt-get install rubygems
  - sudo gem install facter
  - sudo gem install puppet
 
