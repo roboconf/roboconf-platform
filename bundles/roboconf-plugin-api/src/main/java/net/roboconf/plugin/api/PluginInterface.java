@@ -77,7 +77,7 @@ public interface PluginInterface {
 	/**
 	 * Sets the names (useful for debug and analyzing logs).
 	 * @param applicationName the application name
-	 * @param the root instance name the root instance name
+	 * @param rootInstanceName the root instance name
 	 */
 	void setNames( String applicationName, String rootInstanceName );
 

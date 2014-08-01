@@ -19,11 +19,13 @@ package net.roboconf.plugin.api.template;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.internal.template.InstanceBean;
 
 import com.github.mustachejava.DefaultMustacheFactory;
@@ -50,39 +52,76 @@ public final class InstanceTemplateHelper {
 	 * See test resources to see the associated way to write templates
 	 * </p>
 	 *
-	 * @param instance
-	 * @param templateFile
-	 * @param writer
-	 * @throws IOException
+	 * @param instance the instance whose imports must be injected
+	 * @param templateFile the template file
+	 * @param writer a writer
+	 * @throws IOException if something went wrong
 	 */
 	public static void injectInstanceImports(Instance instance, File templateFile, Writer writer)
 	throws IOException {
 
 		MustacheFactory mf = new DefaultMustacheFactory( templateFile.getParentFile());
 	    Mustache mustache = mf.compile( templateFile.getName());
-	    mustache.execute(writer, new InstanceBean(instance)).flush();
+	    mustache.execute(writer, new InstanceBean( instance )).flush();
 	}
 
 
+	/**
+	 * Reads the import values of the instances and injects them into the template file.
+	 * <p>
+	 * See test resources to see the associated way to write templates
+	 * </p>
+	 *
+	 * @param instance the instance whose imports must be injected
+	 * @param templateFilePath the path of the template file
+	 * @param writer a writer
+	 * @throws IOException if something went wrong
+	 */
 	public static void injectInstanceImports(Instance instance, String templateFilePath, Writer writer)
 	throws IOException {
 		injectInstanceImports(instance, new File( templateFilePath ), writer);
 	}
 
 
-	public static void injectInstanceImports(Instance instance, String templateFile, File out)
+	/**
+	 * Reads the import values of the instances and injects them into the template file.
+	 * <p>
+	 * See test resources to see the associated way to write templates
+	 * </p>
+	 *
+	 * @param instance the instance whose imports must be injected
+	 * @param templateFilePath the path of the template file
+	 * @param targetFile the file to write into
+	 * @throws IOException if something went wrong
+	 */
+	public static void injectInstanceImports(Instance instance, String templateFilePath, File targetFile)
 	throws IOException {
 
-		OutputStreamWriter writer = new OutputStreamWriter(
-				new FileOutputStream( out ),
-				Charset.forName( "UTF-8" ).newEncoder());
+		OutputStream os = null;
+		try {
+			os = new FileOutputStream( targetFile );
+			OutputStreamWriter writer = new OutputStreamWriter( os, Charset.forName( "UTF-8" ).newEncoder());
+			injectInstanceImports( instance, templateFilePath, writer );
 
-		injectInstanceImports( instance, templateFile, writer );
+		} finally {
+			Utils.closeQuietly( os );
+		}
 	}
 
 
+	/**
+	 * Reads the import values of the instances and injects them into the template file.
+	 * <p>
+	 * See test resources to see the associated way to write templates
+	 * </p>
+	 *
+	 * @param instance the instance whose imports must be injected
+	 * @param templateFile the template file
+	 * @param targetFile the file to write into
+	 * @throws IOException if something went wrong
+	 */
 	public static void injectInstanceImports(Instance instance, File templateFile, File out)
 	throws IOException {
-		injectInstanceImports(instance, templateFile.getAbsolutePath(), out);
+		injectInstanceImports( instance, templateFile.getAbsolutePath(), out );
 	}
 }

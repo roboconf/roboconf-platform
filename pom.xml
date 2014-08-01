@@ -324,8 +324,8 @@
 							<goal>check</goal>
 						</goals>
 						<configuration>
-							<configLocation>checkstyle-java-rules.xml</configLocation>
-							<headerLocation>header-java.txt</headerLocation>
+							<configLocation>checkstyle/checkstyle-java-rules.xml</configLocation>
+							<headerLocation>checkstyle/header-java.txt</headerLocation>
 							<includes>**\/*.java</includes>
 							<excludes>**\/internal\/**\/*</excludes>
 							<resourceExcludes>**/*.properties</resourceExcludes>
@@ -340,8 +340,8 @@
 							<goal>check</goal>
 						</goals>
 						<configuration>
-							<configLocation>checkstyle-xml-rules.xml</configLocation>
-							<headerLocation>header-xml.txt</headerLocation>
+							<configLocation>checkstyle/checkstyle-xml-rules.xml</configLocation>
+							<headerLocation>checkstyle/header-xml.txt</headerLocation>
 							<includes>**\/*.xml, **\/*.xsd</includes>
 							<resourceExcludes>**/*.properties</resourceExcludes>
 						</configuration>
@@ -354,19 +354,69 @@
 	<profiles>
 		<!-- Sonar extension (tailored for a local installation) -->
 		<profile>
-            <id>sonar</id>
-            <activation>
-            	<activeByDefault>false</activeByDefault>
-            </activation>
-            
-            <properties>
-                <sonar.jdbc.url>jdbc:h2:tcp://localhost:9092/sonar</sonar.jdbc.url>
-                <sonar.jdbc.username>sonar</sonar.jdbc.username>
-                <sonar.jdbc.password>sonar</sonar.jdbc.password>
-                <!-- Optional URL to server. Default value is http://localhost:9000 -->
-                <!-- <sonar.host.url>http://myserver:9000</sonar.host.url> -->
-            </properties>
-        </profile>
+			<id>sonar</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+	
+			<properties>
+				<sonar.jdbc.url>jdbc:h2:tcp://localhost:9092/sonar</sonar.jdbc.url>
+				<sonar.jdbc.username>sonar</sonar.jdbc.username>
+				<sonar.jdbc.password>sonar</sonar.jdbc.password>
+				<!-- Optional URL to server. Default value is http://localhost:9000 -->
+				<!-- <sonar.host.url>http://myserver:9000</sonar.host.url> -->
+			</properties>
+		</profile>
+	
+		<!-- For releases, we need to generate javadoc and sources JAR -->
+		<profile>
+			<id>release</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+	
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>2.3</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>2.9.1</version>
+						<executions>
+							<execution>
+								<id>attach-javadoc</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<stylesheetfile>javadoc/stylesheet.css</stylesheetfile>
+								</configuration>
+							</execution>
+						</executions>
+						<dependencies>
+							<dependency>
+								<groupId>net.roboconf</groupId>
+								<artifactId>build-tools</artifactId>
+								<version>1.0-SNAPSHOT</version>
+							</dependency>
+						</dependencies>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
 
