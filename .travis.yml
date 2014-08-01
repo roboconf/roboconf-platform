@@ -13,8 +13,7 @@ services:
 # Install Puppet to test the Puppet plugin
 before_install:
  - sudo apt-get update -qq
- - sudo apt-get install rubygems
- - sudo gem install puppet
+ - sudo apt-get install puppet
 
 # Build with Maven.
 # Use -q option to only display Maven errors and warnings.
