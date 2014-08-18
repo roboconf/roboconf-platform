@@ -19,9 +19,7 @@ package net.roboconf.plugin.puppet.internal;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -29,16 +27,13 @@ import java.util.logging.Logger;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.plugin.puppet.internal.PluginPuppet;
-import net.roboconf.plugin.puppet.internal.PluginPuppet.PuppetState;
+import net.roboconf.plugin.api.PluginException;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -50,9 +45,14 @@ import org.junit.Test;
  */
 public class PluginPuppetTest {
 
-	final Instance instance = new Instance( "test-instance" );
-	final PluginPuppet plugin = new PluginPuppet();
+	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-puppet" );
+
+	private final Instance inst = new Instance( "sample" ).component( new Component( "some-component" ));
+	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst, PluginPuppet.PLUGIN_NAME );
+	private PluginPuppet plugin;
+
 	private boolean running = true;
+
 
 
 	/**
@@ -84,330 +84,362 @@ public class PluginPuppetTest {
 	}
 
 
+	@Before
+	public void resetPlugin() throws Exception {
+		this.plugin = new PluginPuppet();
+		this.plugin.setNames( "app", "test" );
+
+		if( ! OUTPUT_DIR.exists()
+				&& ! OUTPUT_DIR.mkdirs())
+			throw new IOException( "The output directory could not be created." );
+	}
+
+
 	@After
-	public void clearTestDirectory() throws Exception {
-
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
-		Utils.deleteFilesRecursively( instanceDirectory );
+	public void clearPreviousOutputs() throws Exception {
+		Utils.deleteFilesRecursively( this.instanceDirectory );
+		Utils.deleteFilesRecursively( OUTPUT_DIR );
 	}
 
 
 	@Test
-	public void testInstallPuppetModules_withVersion() throws Exception {
+	public void testSetNames() {
 
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
-		if( ! instanceDirectory.exists()
-				&& ! instanceDirectory.mkdirs())
-			throw new IOException( "Failed to create the instance's directory." );
+		Assert.assertNotNull( this.plugin.agentId );
+		this.plugin.agentId = null;
+		Assert.assertNull( this.plugin.agentId );
 
-		File propFile = TestUtils.findTestFile( "/with-version/modules.properties" );
-		this.plugin.installPuppetModules( this.instance, propFile.getParentFile());
+		this.plugin.setNames( "app", null );
+		Assert.assertNotNull( this.plugin.agentId );
 
-		File[] subFiles = instanceDirectory.listFiles();
+		this.plugin.setNames( null, "test" );
+		Assert.assertNotNull( this.plugin.agentId );
+	}
 
-		Assert.assertNotNull( subFiles );
+
+	@Test
+	public void testInitialize_withVersion() throws Exception {
+
+		Assume.assumeTrue( this.running );
+		copyResources( "/with-version" );
+
+		File[] subFiles = this.instanceDirectory.listFiles();
 		Assert.assertEquals( 1, subFiles.length );
-		Assert.assertTrue( subFiles[ 0 ].isDirectory());
-	}
 
+		File moduleDirectory = new File( this.instanceDirectory, "sysctl" );
+		Assert.assertFalse( moduleDirectory.exists());
 
-	@Test
-	public void testInstallPuppetModules_withoutVersion() throws Exception {
+		this.plugin.initialize( this.inst );
 
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.instance, this.plugin.getPluginName());
-		if( ! instanceDirectory.exists()
-				&& ! instanceDirectory.mkdirs())
-			throw new IOException( "Failed to create the instance's directory." );
-
-		File propFile = TestUtils.findTestFile( "/without-version/modules.properties" );
-		this.plugin.installPuppetModules( this.instance, propFile.getParentFile());
-
-		File[] subFiles = instanceDirectory.listFiles();
-
+		subFiles = this.instanceDirectory.listFiles();
 		Assert.assertNotNull( subFiles );
 		Assert.assertEquals( 2, subFiles.length );
-		Assert.assertTrue( subFiles[ 0 ].isDirectory());
-		Assert.assertTrue( subFiles[ 1 ].isDirectory());
-	}
 
-	/**
-	 * Test Puppet plugin on a real instance (from a fully functional app).
-	 * Puppet module with only one init.pp manifest.
-	 * The manifest produces files (based on templates) for each operation
-	 * (deploy/start/stop/undeploy).
-	 * @throws Exception
-	 */
-	@SuppressWarnings("serial")
-	@Test
-	public void testPuppetPlugin_WithInit() throws Exception {
-		// Check for /tmp directory (skip if not present & writable)
-		File tmp = new File("/tmp");
-		if(! tmp.exists() && tmp.canWrite()) return;
-
-		PluginPuppet plugin = new PluginPuppet();
-		Instance inst = findInstance("/puppetplugin-unit-tests", "WithInit");
-		//System.out.println("*** INSTANCE NAME=" + inst.getName());
-
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(inst, plugin.getPluginName());
-		
-		Utils.copyDirectory(TestUtils.findTestFile("/puppetplugin-unit-tests/graph/WithInit"),
-				instanceDirectory);
-
-		File file;
-		
-		plugin.deploy(inst);
-		file = new File("/tmp/WithInitFile.stopped");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithInitTemplate.stopped");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		plugin.start(inst);
-		file = new File("/tmp/WithInitFile.running");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithInitTemplate.running");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		// Test update, passing changed import + status
-		Import importChanged = new Import(
-			InstanceHelpers.computeInstancePath(inst) + "Test",
-			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
-		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
-		plugin.update(inst, importChanged, statusChanged);
-		file = new File("/tmp/WithInitFile.");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithInitTemplate.");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		plugin.stop(inst);
-		file = new File("/tmp/WithInitFile.stopped");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithInitTemplate.stopped");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		plugin.undeploy(inst);
-		file = new File("/tmp/WithInitFile.");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithInitTemplate.");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		Utils.deleteFilesRecursively(instanceDirectory);
-	}
-
-	/**
-	 * Test Puppet plugin on a real instance (from a fully functional app).
-	 * Puppet module with one manifest per operation.
-	 * The manifest produces files (based on templates) for each operation
-	 * (deploy/start/stop/undeploy).
-	 * @throws Exception
-	 */
-	@SuppressWarnings("serial")
-	@Test
-	public void testPuppetPlugin_WithOperations() throws Exception {
-		// Check for /tmp directory (skip if not present & writable)
-		File tmp = new File("/tmp");
-		if(! tmp.exists() && tmp.canWrite()) return;
-				
-		PluginPuppet plugin = new PluginPuppet();
-		Instance inst = findInstance("/puppetplugin-unit-tests", "WithOperations");
-		//System.out.println("*** INSTANCE NAME=" + inst.getName());
-
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(inst, plugin.getPluginName());
-		
-		Utils.copyDirectory(TestUtils.findTestFile("/puppetplugin-unit-tests/graph/WithOperations"),
-				instanceDirectory);
-
-		File file;
-		
-		plugin.deploy(inst);
-		file = new File("/tmp/WithOperationsFile.deploy");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithOperationsTemplate.deploy");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		plugin.start(inst);
-		file = new File("/tmp/WithOperationsFile.start");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithOperationsTemplate.start");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		// Test update, passing changed import + status
-		Import importChanged = new Import(
-			InstanceHelpers.computeInstancePath(inst) + "Test",
-			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
-		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
-		plugin.update(inst, importChanged, statusChanged);
-		file = new File("/tmp/WithOperationsFile.update");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithOperationsTemplate.update");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		
-		plugin.stop(inst);
-		file = new File("/tmp/WithOperationsFile.stop");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithOperationsTemplate.stop");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		
-		plugin.undeploy(inst);
-		file = new File("/tmp/WithOperationsFile.undeploy");
-		Assert.assertTrue(file.exists());
-		file.delete();
-		file = new File("/tmp/WithOperationsTemplate.undeploy");
-		Assert.assertTrue(file.exists());
-		file.delete();
-
-		Utils.deleteFilesRecursively(instanceDirectory);
-	}
-
-
-	private Instance findInstance(String appDirPath, String instanceName) throws Exception {
-		File appDir = TestUtils.findTestFile(appDirPath);
-		ApplicationLoadResult result = RuntimeModelIo.loadApplication(appDir);
-		List<Instance> instances = null;
-		for(Instance root : result.getApplication().getRootInstances()) {
-			instances = InstanceHelpers.buildHierarchicalList(root);
-			
-			for(Instance inst : instances) {
-				if(inst.getName().equals(instanceName)) return inst;
-			}
-		}
-		return null;
-	}
-
-	@Test
-	public void testFormatExportedVariables() {
-
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
-		exports.put( "port", "3306" );
-		exports.put( "MySQL.port", "3306" );
-		exports.put( "ip", "" );
-		exports.put( "MySQL.ip", null );
-
-		String expected = "port => '3306', port => '3306', ip => undef, ip => undef";
-		Assert.assertEquals( expected, this.plugin.formatExportedVariables( exports ));
+		Assert.assertTrue( moduleDirectory.exists());
+		Assert.assertTrue( moduleDirectory.isDirectory());
 	}
 
 
 	@Test
-	public void testFormatInstanceImports_noImportAtAll() {
+	public void testInitialize_withoutVersion() throws Exception {
 
-		Instance instance = new Instance( "test" ).component( new Component( "test-component" ));
-		Assert.assertEquals( "", this.plugin.formatInstanceImports( instance ));
-	}
+		Assume.assumeTrue( this.running );
+		copyResources( "/without-version" );
 
+		File[] moduleDirectories = new File[ 2 ];
+		moduleDirectories[ 0 ] = new File( this.instanceDirectory, "sysctl" );
+		moduleDirectories[ 1 ] = new File( this.instanceDirectory, "redis" );
 
-	@Test
-	public void testFormatInstanceImports_noImport() {
+		for( File f : moduleDirectories )
+			Assert.assertFalse( f.getAbsolutePath(), f.exists());
 
-		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
-		Instance instance = new Instance( "test" ).component( component );
+		this.plugin.initialize( this.inst );
 
-		Assert.assertEquals( "mysql => undef", this.plugin.formatInstanceImports( instance ));
-	}
-
-
-	@Test
-	public void testFormatInstanceImports_oneImportOneVariable() {
-
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
-		exports.put( "MySQL.port", "3306" );
-		Import imp = new Import( "/toto", exports );
-
-		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
-
-		Instance instance = new Instance( "test" ).component( component );
-		instance.getImports().put( "MySQL", Arrays.asList( imp ));
-
-		Assert.assertEquals(
-				"mysql => { '/toto' => { port => '3306' }}",
-				this.plugin.formatInstanceImports( instance ));
-	}
-
-
-	@Test
-	public void testFormatInstanceImports_oneImportTwoVariables() {
-
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
-		exports.put( "MySQL.port", "3306" );
-		exports.put( "MySQL.ip", "172.16.20.12" );
-		Import imp = new Import( "/toto", exports );
-
-		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
-		component.getImportedVariables().put( "MySQL.ip", false );
-
-		Instance instance = new Instance( "test" ).component( component );
-		instance.getImports().put( "MySQL", Arrays.asList( imp ));
-
-		Assert.assertEquals(
-				"mysql => { '/toto' => { port => '3306', ip => '172.16.20.12' }}",
-				this.plugin.formatInstanceImports( instance ));
-	}
-
-
-	@Test
-	public void testFormatInstanceImports_twoImportsTwoVariables() {
-
-		List<Import> imports = new ArrayList<Import> ();
-		for( int i=0; i<2; i++ ) {
-			Map<String,String> exports = new LinkedHashMap<String,String> ();
-			exports.put( "MySQL.port", String.valueOf( 3306 + i ));
-			exports.put( "MySQL.ip", "172.16.20." + String.valueOf( 12 + i ));
-			imports.add( new Import( "/toto-" + i, exports ));
-		}
-
-		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
-		component.getImportedVariables().put( "MySQL.ip", false );
-
-		Instance instance = new Instance( "test" ).component( component );
-		instance.getImports().put( "MySQL", imports );
-
-		Assert.assertEquals(
-				"mysql => { '/toto-0' => { port => '3306', ip => '172.16.20.12' }, '/toto-1' => { port => '3307', ip => '172.16.20.13' }}",
-				this.plugin.formatInstanceImports( instance ));
-	}
-
-
-	@Test
-	public void testPuppetState() {
-
-		for( PuppetState state : PuppetState.values()) {
-			Assert.assertEquals( state.toString(), state.toString().toLowerCase(), state.toString());
+		for( File f : moduleDirectories ) {
+			Assert.assertTrue( f.getAbsolutePath(), f.exists());
+			Assert.assertTrue( f.getAbsolutePath(), f.isDirectory());
 		}
 	}
 
 
 	@Test
-	public void testGenerateCodeToExecute() {
+	public void testInitialize_inexistingDirectory() throws Exception {
 
-		Instance instance = new Instance( "test" ).component( new Component( "test-component" ));
-		String expectedPrefix = "class{'roboconf_test-component': runningState => ";
+		Assume.assumeTrue( this.running );
+		Utils.deleteFilesRecursively( this.instanceDirectory );
 
-		for( PuppetState state : PuppetState.values()) {
-			String s = this.plugin.generateCodeToExecute( "roboconf_test-component", instance, state, null, false );
-			Assert.assertTrue( state.toString(), s.startsWith( expectedPrefix + state.toString()));
-		}
-
+		this.plugin.initialize( this.inst );
+		Assert.assertFalse( this.instanceDirectory.exists());
 	}
 
+
+	@Test( expected = PluginException.class )
+	public void testInitialize_withInvalidModule() throws Exception {
+
+		Assume.assumeTrue( this.running );
+		copyResources( "/with-invalid-module" );
+		this.plugin.initialize( this.inst );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withInit_deploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init" );
+
+		this.plugin.deploy( this.inst );
+		checkGeneratedFiles( "WithInit", "stopped" );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withInit_start() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init" );
+
+		this.plugin.start( this.inst );
+		checkGeneratedFiles( "WithInit", "running" );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withInit_stop() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init" );
+
+		this.plugin.stop( this.inst );
+		checkGeneratedFiles( "WithInit", "stopped" );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withInit_undeploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init" );
+
+		this.plugin.undeploy( this.inst );
+		checkGeneratedFiles( "WithInit", "" );	// UNDEF
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withInit_update() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init" );
+
+		Map<String,String> variables = new HashMap<String,String> ();
+		variables.put( "ip", "127.0.0.1" );
+
+		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STARTED );
+		checkGeneratedFiles( "WithInit", "" );	// UNDEF
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withOperations_deploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-operations" );
+
+		this.plugin.deploy( this.inst );
+		checkGeneratedFiles( "WithOperations", "deploy" );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withOperations_start() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-operations" );
+
+		this.plugin.start( this.inst );
+		checkGeneratedFiles( "WithOperations", "start" );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withOperations_stop() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-operations" );
+
+		this.plugin.stop( this.inst );
+		checkGeneratedFiles( "WithOperations", "stop" );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withOperations_undeploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-operations" );
+
+		this.plugin.undeploy( this.inst );
+		checkGeneratedFiles( "WithOperations", "undeploy" );
+	}
+
+
+	@Test
+	public void testPuppetPlugin_withOperations_update() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-operations" );
+
+		Map<String,String> variables = new HashMap<String,String> ();
+		variables.put( "ip", "127.0.0.1" );
+
+		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STOPPED );
+		checkGeneratedFiles( "WithOperations", "update" );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_exception_deploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-invalid" );
+		this.plugin.deploy( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_exception_start() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-invalid" );
+		this.plugin.start( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_exception_stop() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-invalid" );
+		this.plugin.stop( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_exception_undeploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-invalid" );
+		this.plugin.undeploy( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_exception_update() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-invalid" );
+
+		Map<String,String> variables = new HashMap<String,String> ();
+		variables.put( "ip", "127.0.0.1" );
+
+		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STARTED );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testNoModuleDirectory() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		Assert.assertTrue( new File( this.instanceDirectory, "whatever" ).mkdirs());
+		Assert.assertTrue( new File( this.instanceDirectory, "whatever.txt" ).createNewFile());
+		this.plugin.undeploy( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testNoScriptToExecute() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		Assert.assertTrue( new File( this.instanceDirectory, "roboconf_empty_puppet_module" ).mkdirs());
+		this.plugin.undeploy( this.inst );
+	}
+
+
+	// The next commented lines are unit tests for when a Puppet module execute a faling command.
+	// See https://github.com/roboconf/roboconf/issues/123
+
+//	@Test( expected = PluginException.class )
+//	public void testPuppetPlugin_withInit_nonZeroCode_deploy() throws Exception {
+//
+//		Assume.assumeTrue( isLinuxSystem());
+//		copyResources( "/with-init-exit-1" );
+//		this.plugin.deploy( this.inst );
+//	}
+//
+//
+//	@Test( expected = PluginException.class )
+//	public void testPuppetPlugin_withInit_nonZeroCode_start() throws Exception {
+//
+//		Assume.assumeTrue( isLinuxSystem());
+//		copyResources( "/with-init-exit-1" );
+//		this.plugin.start( this.inst );
+//	}
+//
+//
+//	@Test( expected = PluginException.class )
+//	public void testPuppetPlugin_withInit_nonZeroCode_stop() throws Exception {
+//
+//		Assume.assumeTrue( isLinuxSystem());
+//		copyResources( "/with-init-exit-1" );
+//		this.plugin.stop( this.inst );
+//	}
+//
+//
+//	@Test( expected = PluginException.class )
+//	public void testPuppetPlugin_withInit_nonZeroCode_undeploy() throws Exception {
+//
+//		Assume.assumeTrue( isLinuxSystem());
+//		copyResources( "/with-init-exit-1" );
+//		this.plugin.undeploy( this.inst );
+//	}
+//
+//
+//	@Test( expected = PluginException.class )
+//	public void testPuppetPlugin_withInit_nonZeroCode_update() throws Exception {
+//
+//		Assume.assumeTrue( isLinuxSystem());
+//		copyResources( "/with-init-exit-1" );
+//
+//		Map<String,String> variables = new HashMap<String,String> ();
+//		variables.put( "ip", "127.0.0.1" );
+//
+//		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STARTED );
+//	}
+
+
+	private void checkGeneratedFiles( String prefix, String suffix ) {
+
+		File fromTpl = new File( OUTPUT_DIR, prefix + ".tpl." + suffix );
+		Assert.assertTrue( fromTpl.exists());
+		Assert.assertTrue( fromTpl.length() > 0 );
+
+		File fromStatic = new File( OUTPUT_DIR, prefix + ".file." + suffix );
+		Assert.assertTrue( fromStatic.exists());
+		Assert.assertTrue( fromStatic.length() > 0 );
+
+		File[] subFiles = OUTPUT_DIR.listFiles();
+		Assert.assertEquals( 2, subFiles.length );
+	}
+
+
+	private void copyResources( String resourcesPath ) throws Exception {
+		File toCopy = TestUtils.findTestFile( resourcesPath );
+		Utils.copyDirectory( toCopy, this.instanceDirectory);
+	}
+
+
+	private boolean isLinuxSystem() {
+		return new File( "/tmp" ).exists();
+	}
 }

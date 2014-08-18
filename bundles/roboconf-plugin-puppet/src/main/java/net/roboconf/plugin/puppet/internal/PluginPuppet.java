@@ -79,17 +79,17 @@ import net.roboconf.plugin.api.PluginInterface;
  */
 public class PluginPuppet implements PluginInterface {
 
+	public static final String PLUGIN_NAME = "puppet";
 	private static final String MANIFESTS_FOLDER = "manifests";
-	//private static final String TEMPLATES_FOLDER = "roboconf_templates";
 
-	private final Logger logger = Logger.getLogger(getClass().getName());
-	private String agentId;
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	String agentId;
 
 
 
 	@Override
 	public String getPluginName() {
-		return "puppet";
+		return PLUGIN_NAME;
 	}
 
 
@@ -103,15 +103,11 @@ public class PluginPuppet implements PluginInterface {
 	public void initialize( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentId + " is initializing the plug-in for " + instance.getName());
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
 		try {
-			installPuppetModules(instance, instanceDirectory);
+			installPuppetModules( instance );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new PluginException( e );
-
-		} catch( InterruptedException e ) {
-			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -124,11 +120,8 @@ public class PluginPuppet implements PluginInterface {
 		try {
 			callPuppetScript( instance, "deploy", PuppetState.STOPPED, null, false, instanceDirectory );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new PluginException( e );
-
-		} catch( InterruptedException e ) {
-			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -141,11 +134,8 @@ public class PluginPuppet implements PluginInterface {
 		try {
 			callPuppetScript( instance, "start", PuppetState.RUNNING, null, false, instanceDirectory );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new PluginException( e );
-
-		} catch( InterruptedException e ) {
-			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -163,11 +153,8 @@ public class PluginPuppet implements PluginInterface {
 					(statusChanged == InstanceStatus.DEPLOYED_STARTED),
 					instanceDirectory );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new PluginException( e );
-
-		} catch( InterruptedException e ) {
-			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -180,11 +167,8 @@ public class PluginPuppet implements PluginInterface {
 		try {
 			callPuppetScript( instance, "stop", PuppetState.STOPPED, null, false, instanceDirectory );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new PluginException( e );
-
-		} catch( InterruptedException e ) {
-			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -197,11 +181,8 @@ public class PluginPuppet implements PluginInterface {
 		try {
 			callPuppetScript( instance, "undeploy", PuppetState.UNDEF, null, false, instanceDirectory );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new PluginException( e );
-
-		} catch( InterruptedException e ) {
-			this.logger.finest( Utils.writeException( e ));
 		}
 	}
 
@@ -212,10 +193,10 @@ public class PluginPuppet implements PluginInterface {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	void installPuppetModules( Instance instance, File instanceDirectory )
-	throws IOException, InterruptedException {
+	void installPuppetModules( Instance instance ) throws IOException, InterruptedException {
 
 		// Load the modules names
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(instance, getPluginName());
 		File modulesFile = new File( instanceDirectory, "modules.properties" );
 		if( ! modulesFile.exists())
 			return;
@@ -230,7 +211,6 @@ public class PluginPuppet implements PluginInterface {
 			Utils.closeQuietly( in );
 		}
 
-        File realInstanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(instance, getPluginName());
 		for( Map.Entry<Object,Object> entry : props.entrySet()) {
 
 			List<String> commands = new ArrayList<String> ();
@@ -238,7 +218,7 @@ public class PluginPuppet implements PluginInterface {
 			commands.add( "module" );
 			commands.add( "install" );
 
-			String value = entry.getValue() == null ? null : entry.getValue().toString();
+			String value = entry.getValue().toString();
 			if( ! Utils.isEmptyOrWhitespaces( value )) {
 				commands.add( "--version" );
 				commands.add( value );
@@ -246,7 +226,7 @@ public class PluginPuppet implements PluginInterface {
 
 			commands.add((String) entry.getKey());
 			commands.add( "--target-dir" );
-			commands.add( realInstanceDirectory.getAbsolutePath());
+			commands.add( instanceDirectory.getAbsolutePath());
 
 			String[] params = commands.toArray( new String[ 0 ]);
 			this.logger.fine( "Module installation: " + Arrays.toString( params ));
@@ -263,65 +243,71 @@ public class PluginPuppet implements PluginInterface {
 	 * @param importChanged The import that changed (added or removed) upon update
 	 * @param importAdded true if the changed import is added, false if it is removed
      * @param instanceDirectory where to find instance files
-     * FIXME: split this method for testability
 	 */
-	private void callPuppetScript( Instance instance, String action, PuppetState puppetState, Import importChanged, boolean importAdded, File instanceDirectory )
+	void callPuppetScript(
+			Instance instance,
+			String action,
+			PuppetState puppetState,
+			Import importChanged,
+			boolean importAdded,
+			File instanceDirectory )
 	throws IOException, InterruptedException {
 
 		if( instance == null
 				|| instanceDirectory == null
 				|| ! instanceDirectory.exists()
 				|| ! instanceDirectory.isDirectory()) {
-			this.logger.fine("Ignoring null instance" + (instance != null ? " directory" : ""));
+			this.logger.fine( "Ignoring null or invalid instance directory" );
 			return;
 		}
 
 		// Find the action to execute
-        // If not found, try init.pp
+		// If not found, try init.pp
 		this.logger.info("Preparing the invocation of the script for " + action + " and instance " + instance.getName() + ".");
-
 		File moduleDirectory = null;
-		for (File f : instanceDirectory.listFiles()) {
-			if(f.isDirectory() && f.getName().startsWith("roboconf_")) {
+		for( File f : instanceDirectory.listFiles()) {
+			if(f.isDirectory() && f.getName().startsWith( "roboconf_" )) {
 				moduleDirectory = f;
 				break;
 			}
 		}
 
-		if(moduleDirectory != null) {
-			String clazz = moduleDirectory.getName() + "::" + action;
-			File scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/" + action + ".pp");
+		if( moduleDirectory == null )
+			throw new IOException( "The module directory could not be found. The module to execute must begin with 'roboconf_'." );
 
-			if(! scriptFile.exists()) {
-				clazz = moduleDirectory.getName();
-				scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/init.pp");
-			}
+		String clazz = moduleDirectory.getName() + "::" + action;
+		File scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/" + action + ".pp");
 
-			if(scriptFile.exists()) {
-		        // Prepare the command and execute it
-				List<String> commands = new ArrayList<String> ();
-				commands.add( "puppet" );
-				commands.add( "apply" );
-				commands.add( "--verbose" );
-
-				String modpath = System.getenv("MODULEPATH");
-				if(modpath != null)
-					modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
-				else
-					modpath = "";
-
-				modpath += instanceDirectory.getAbsolutePath();
-				commands.add( "--modulepath" );
-				commands.add(modpath);
-
-				commands.add( "--execute" );
-				commands.add( generateCodeToExecute(clazz, instance, puppetState, importChanged, importAdded));
-
-				String[] params = commands.toArray( new String[ 0 ]);
-				this.logger.fine( "Module installation: " + Arrays.toString( params ));
-				ProgramUtils.executeCommand( this.logger, commands, null );
-			}
+		if( ! scriptFile.exists()) {
+			clazz = moduleDirectory.getName();
+			scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/init.pp");
 		}
+
+		if( ! scriptFile.exists())
+			throw new IOException( "The module directory could not be found. The module to execute must begin with 'roboconf_'." );
+
+		// Prepare the command and execute it
+		List<String> commands = new ArrayList<String> ();
+		commands.add( "puppet" );
+		commands.add( "apply" );
+		commands.add( "--verbose" );
+
+		String modpath = System.getenv("MODULEPATH");
+		if( modpath != null )
+			modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
+		else
+			modpath = "";
+
+		modpath += instanceDirectory.getAbsolutePath();
+		commands.add( "--modulepath" );
+		commands.add(modpath);
+
+		commands.add( "--execute" );
+		commands.add( generateCodeToExecute(clazz, instance, puppetState, importChanged, importAdded));
+
+		String[] params = commands.toArray( new String[ 0 ]);
+		this.logger.fine( "Module installation: " + Arrays.toString( params ));
+		ProgramUtils.executeCommand( this.logger, commands, null );
 	}
 
 
@@ -333,7 +319,12 @@ public class PluginPuppet implements PluginInterface {
 	 * @param importAdded true if the changed import is added, false if it is removed
 	 * @return a non-null string
 	 */
-	String generateCodeToExecute( String className, Instance instance, PuppetState puppetState, Import importChanged, boolean importAdded ) {
+	String generateCodeToExecute(
+			String className,
+			Instance instance,
+			PuppetState puppetState,
+			Import importChanged,
+			boolean importAdded ) {
 
 		// When executed by hand, the "apply" command would expect
 		// this string to be returned to be between double quotes.

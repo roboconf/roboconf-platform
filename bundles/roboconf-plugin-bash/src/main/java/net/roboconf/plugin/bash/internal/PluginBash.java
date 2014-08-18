@@ -59,13 +59,13 @@ import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 public class PluginBash implements PluginInterface {
 
 	public static final String PLUGIN_NAME = "bash";
+	private static final String SCRIPTS_FOLDER_NAME = "scripts";
+    private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
+    private static final String FILES_FOLDER_NAME = "files";
 
     private final Logger logger = Logger.getLogger( getClass().getName());
     String agentId;
 
-    private static final String SCRIPTS_FOLDER_NAME = "scripts";
-    private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
-    private static final String FILES_FOLDER_NAME = "files";
 
 
     @Override

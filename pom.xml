@@ -319,7 +319,7 @@
 					<!-- Java Files -->
 					<execution>
 						<id>check-java</id>
-               			<phase>process-sources</phase>
+						<phase>process-sources</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
@@ -335,7 +335,7 @@
 					<!-- XML Files -->
 					<execution>
 						<id>check-xml</id>
-               			<phase>process-sources</phase>
+						<phase>process-sources</phase>
 						<goals>
 							<goal>check</goal>
 						</goals>
