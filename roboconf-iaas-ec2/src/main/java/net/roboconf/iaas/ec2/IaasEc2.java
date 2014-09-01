@@ -44,16 +44,14 @@ import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
-import com.amazonaws.services.ec2.model.DescribeVolumeAttributeRequest;
 import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
 import com.amazonaws.services.ec2.model.DescribeVolumesResult;
-import com.amazonaws.services.ec2.model.EbsBlockDevice;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.elasticmapreduce.model.InstanceState;
+
 
 /**
  * @author Noël - LIG
@@ -278,8 +276,8 @@ public class IaasEc2 implements IaasInterface {
 		else
 			runInstancesRequest.setImageId( machineImageId );
 
-		// FIXME (VZ): why this kernel ID?
-		runInstancesRequest.setKernelId( "aki-62695816" );
+		// TBD provide kernel ID (eg. "aki-62695816") ?
+		//runInstancesRequest.setKernelId(this.iaasProperties.get(Ec2Constants.KERNEL_ID);
 		runInstancesRequest.setMinCount( 1 );
 		runInstancesRequest.setMaxCount( 1 );
 		runInstancesRequest.setKeyName( this.iaasProperties.get(Ec2Constants.SSH_KEY_NAME));
