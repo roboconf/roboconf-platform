@@ -64,7 +64,7 @@ public final class AgentUtils {
 	 * @param args the program arguments
 	 * @return the agent's data
 	 */
-	public static AgentData findParametersInProgramArguments( String[] args ) {
+	public static AgentData findParametersInProgramArguments( Logger logger, String[] args ) {
 
 		AgentData result = new AgentData();
     	result.setApplicationName( args[ 0 ]);
@@ -72,7 +72,17 @@ public final class AgentUtils {
     	result.setMessageServerIp( args[ 2 ]);
     	result.setMessageServerUsername( args[ 3 ]);
     	result.setMessageServerPassword( args[ 4 ]);
-		result.setIpAddress( args[ 5 ]);
+		
+    	if(args.length > 5) result.setIpAddress( args[ 5 ]);
+    	else {
+    		try {
+				result.setIpAddress(InetAddress.getLocalHost().getHostAddress());
+			} catch (UnknownHostException e) {
+				result.setIpAddress("127.0.0.1");
+				logger.severe( "The IP address could not be found. " + e.getMessage());
+				logger.finest( Utils.writeException( e ));
+			}
+    	}
 
 		return result;
 	}
@@ -118,6 +128,7 @@ public final class AgentUtils {
 			result.setIpAddress( InetAddress.getLocalHost().getHostAddress());
 
 		} catch( UnknownHostException e ) {
+			result.setIpAddress("127.0.0.1");
 			logger.severe( "The IP address could not be found. " + e.getMessage());
 			logger.finest( Utils.writeException( e ));
 		}
