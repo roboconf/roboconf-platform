@@ -16,6 +16,8 @@
 
 package net.roboconf.agent.internal;
 
+import java.util.logging.Logger;
+
 import junit.framework.Assert;
 import net.roboconf.agent.AgentData;
 
@@ -29,7 +31,9 @@ public class AgentUtilsTest {
 	@Test
 	public void testFindParametersInProgramArguments() {
 
-		AgentData data = AgentUtils.findParametersInProgramArguments( new String[] {
+		AgentData data = AgentUtils.findParametersInProgramArguments(
+			Logger.getLogger(getClass().getName()),
+			new String[] {
 				"app-name",
 				"rootInstanceName",
 				"192.168.1.10",

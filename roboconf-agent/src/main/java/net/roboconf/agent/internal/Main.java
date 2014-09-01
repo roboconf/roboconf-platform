@@ -63,11 +63,11 @@ public final class Main {
 				&& ! PLATFORM.equals(args[ 0 ]))
 			logger.severe( "If the main class has 2 arguments, then the first argument must be named 'platform'." );
 
-		else if( args.length == 6 )
-			agentData = AgentUtils.findParametersInProgramArguments( args );
+		else if( args.length == 5 || args.length == 6 )
+			agentData = AgentUtils.findParametersInProgramArguments( logger, args );
 
 		else if( args.length > 0 )
-			logger.severe( "Agent's main class requires 1, 2, 6 or 0 arguments. Any other number of arguments is invalid." );
+			logger.severe( "Agent's main class requires 1, 2, 5, 6 or 0 arguments. Any other number of arguments is invalid." );
 
 		else
 			agentData = AgentUtils.findParametersInWsInfo( logger );
