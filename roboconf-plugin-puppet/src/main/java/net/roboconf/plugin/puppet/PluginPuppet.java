@@ -338,6 +338,7 @@ public class PluginPuppet implements PluginInterface {
 				commands.add( "puppet" );
 				commands.add( "apply" );
 				commands.add( "--verbose" );
+				commands.add("--detailed-exitcodes");
 
 				String modpath = System.getenv("MODULEPATH");
 				if(modpath != null)
@@ -357,7 +358,20 @@ public class PluginPuppet implements PluginInterface {
 					this.logger.info( "Module installation: " + Arrays.toString( params ));
 
 				} else {
-					ProgramUtils.executeCommand( this.logger, commands, null );
+					int exitCode = ProgramUtils.executeCommand( this.logger, commands, null );
+					switch(exitCode) {
+						case 0: // Normal puppet exit codes (2 = with changes, 0 = no change ?)
+						case 2:
+							this.logger.fine("Puppet script properly completed with exit code " + exitCode + " (success codes are 2 or 0)");
+							break;
+						case 6: // Error + changes... log it as warning !
+							this.logger.warning("Puppet script completed with errors + changes (exit code 6)");
+							break;
+						case 4: // Error exit code
+						default:
+							this.logger.severe("Puppet script execution failed (exit code " + exitCode + ")");
+							break;
+					}
 				}
 			}
 		}
@@ -401,6 +415,8 @@ public class PluginPuppet implements PluginInterface {
 			sb.append(", "
 					+ (importAdded ? "importAdded => {" : "importRemoved => {")
 					+ formatImport(importChanged) + "}");
+			String componentName = importChanged.getComponentName();
+			sb.append(", importComponent => " + (componentName != null ? componentName : "undef"));
 		}
 
 		sb.append("}");

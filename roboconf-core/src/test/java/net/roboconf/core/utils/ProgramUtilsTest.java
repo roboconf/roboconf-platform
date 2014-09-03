@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Logger;
 
+import junit.framework.Assert;
 import net.roboconf.core.utils.ProgramUtils;
 
 import org.junit.Assume;
@@ -87,19 +88,20 @@ public class ProgramUtilsTest {
 	}
 
 
-	@Test( expected = IOException.class )
+	@Test
 	public void testExecutionFailure_Windows() throws Exception {
 
 		boolean isWin = System.getProperty( "os.name" ).toLowerCase().contains( "win" );
 		Assume.assumeTrue( isWin );
-		ProgramUtils.executeCommand(
+		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "help" ),
 				null );
+		Assert.assertFalse(exitCode == 0);
 	}
 
 
-	@Test( expected = IOException.class )
+	@Test
 	public void testExecutionFailure_UnixFamily() throws Exception {
 
 		String osName = System.getProperty( "os.name" ).toLowerCase();
@@ -108,20 +110,20 @@ public class ProgramUtilsTest {
 				|| osName.contains( "freebsd" );
 
 		Assume.assumeTrue( isUnix );
-		ProgramUtils.executeCommand(
+		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "apt-get-update" ),
 				new HashMap<String,String> ());
 
 		// Either it requires root privileges, or it is not installed.
+		Assert.assertFalse(exitCode == 0);
 	}
 
 
-	@Test( expected = IOException.class )
+	@Test (expected = IOException.class)
 	public void testInvalidCommand() throws Exception {
-
 		ProgramUtils.executeCommand(
-				Logger.getLogger( getClass().getName()),
-				Arrays.asList( "whatever" ), null );
+			Logger.getLogger( getClass().getName()),
+			Arrays.asList( "whatever" ), null );
 	}
 }

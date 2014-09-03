@@ -32,16 +32,16 @@ public class ImportTest {
 	public void testToString() {
 
 		Map<String,String> exportedVars = null;
-		Import imp = new Import( "/root/node", exportedVars );
+		Import imp = new Import( "/root/node", "comp1", exportedVars );
 		Assert.assertNotNull( imp.toString());
 
 		exportedVars = new HashMap<String,String> ();
-		imp = new Import( "/root/node", exportedVars );
+		imp = new Import( "/root/node", "comp1", exportedVars );
 		Assert.assertNotNull( imp.toString());
 
 		exportedVars.put( "comp.ip", "127.0.0.1" );
 		exportedVars.put( "comp.data", null );
-		imp = new Import( "/root/node", exportedVars );
+		imp = new Import( "/root/node", "comp1", exportedVars );
 		Assert.assertNotNull( imp.toString());
 
 		imp = new Import( new Instance( "my VM" ));

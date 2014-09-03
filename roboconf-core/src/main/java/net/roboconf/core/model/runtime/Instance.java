@@ -43,7 +43,11 @@ public class Instance implements Serializable {
 	 */
 	public static final String MACHINE_ID = "machine.id";
 
-
+	/**
+	 * A constant to store the application name in {@link #getData()}.
+	 * <p>Storing this information in a root instance is enough.</p>
+	 */
+	public static final String APPLICATION_NAME = "application.name";
 
 	private static final long serialVersionUID = -3320865356277185064L;
 

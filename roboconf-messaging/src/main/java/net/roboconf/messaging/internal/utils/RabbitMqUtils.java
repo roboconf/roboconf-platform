@@ -166,6 +166,8 @@ public final class RabbitMqUtils {
 	 */
 	public static void declareApplicationExchanges( String applicationName, Channel channel ) throws IOException {
 
+		if(channel == null) throw new IOException("RabbitMQ messaging not available: please check and fix configuration !");
+		
 		// Exchange declaration is idem-potent
 		String dmExchangeName = buildExchangeName( applicationName, true );
 		channel.exchangeDeclare( dmExchangeName, "fanout" );
