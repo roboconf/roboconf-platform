@@ -25,6 +25,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.azure.IaasAzure;
+import net.roboconf.iaas.docker.IaasDocker;
 import net.roboconf.iaas.ec2.IaasEc2;
 import net.roboconf.iaas.embedded.IaasEmbedded;
 import net.roboconf.iaas.in_memory.IaasInMemory;
@@ -44,6 +45,7 @@ public class IaasResolver {
 	public static final String IAAS_OPENSTACK = "openstack";
 	public static final String IAAS_VMWARE = "vmware";
 	public static final String IAAS_AZURE = "azure";
+	public static final String IAAS_DOCKER= "docker";
 
 
 	/**
@@ -116,6 +118,9 @@ public class IaasResolver {
 
 		} else if( IAAS_AZURE.equalsIgnoreCase( iaasType ) ) {
 			result = new IaasAzure();
+
+		} else if( IAAS_DOCKER.equalsIgnoreCase( iaasType ) ) {
+			result = new IaasDocker();
 		}
 
 		return result;

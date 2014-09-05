@@ -34,6 +34,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.iaas.azure.IaasAzure;
+import net.roboconf.iaas.docker.IaasDocker;
 import net.roboconf.iaas.ec2.IaasEc2;
 import net.roboconf.iaas.embedded.IaasEmbedded;
 import net.roboconf.iaas.in_memory.IaasInMemory;
@@ -77,6 +78,9 @@ public class IaasResolverTest {
 
 		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_OPENSTACK );
 		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasOpenstack );
+
+		props.put( IaasResolver.IAAS_TYPE, IaasResolver.IAAS_DOCKER );
+		Assert.assertTrue( resolver.findIaasHandler( props ) instanceof IaasDocker );
 
 		props.put( IaasResolver.IAAS_TYPE, "whatever" );
 		Assert.assertNull( resolver.findIaasHandler( props ));
