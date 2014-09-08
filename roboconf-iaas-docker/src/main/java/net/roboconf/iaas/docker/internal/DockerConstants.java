@@ -20,7 +20,7 @@ package net.roboconf.iaas.docker.internal;
  * @author Pierre-Yves Gibello - Linagora
  */
 public interface DockerConstants {
-	String IMAGE_ID = "docker.imageId";
+	String IMAGE_ID = "docker.image";
 	String ENDPOINT = "docker.endpoint";
 	String USER = "docker.user";
 	String PASSWORD = "docker.password";

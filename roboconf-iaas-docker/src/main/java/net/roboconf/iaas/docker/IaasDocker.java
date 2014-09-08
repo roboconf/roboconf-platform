@@ -16,7 +16,6 @@
 
 package net.roboconf.iaas.docker;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -130,44 +129,10 @@ public class IaasDocker implements IaasInterface {
 	public void terminateVM(String instanceId) throws IaasException {
 		try {
 			this.docker.killContainerCmd(instanceId).exec();
+			this.docker.removeContainerCmd(instanceId).exec();
 		} catch(Exception e) {
 			throw new IaasException(e);
 		}
 	}
 
-	public static void main(String args[]) throws Exception {
-
-		Map<String, String> conf = new HashMap<String, String>();
-
-		java.util.Properties p = new java.util.Properties();
-		if(args.length > 0) p.load(new java.io.FileReader(args[0]));
-		else p.load(new java.io.FileReader("/tmp/docker.properties"));
-
-		for( Map.Entry<Object,Object> entry : p.entrySet()) {
-			conf.put( entry.getKey().toString(), entry.getValue().toString());
-		}
-
-		IaasDocker iaas = new IaasDocker();
-		iaas.setIaasProperties(conf);
-		
-		String rootInstanceName = "test";
-		String applicationName = "roboconf";
-		
-		String ipMessagingServer = java.net.InetAddress.getLocalHost().getHostAddress();
-		java.net.NetworkInterface ni = java.net.NetworkInterface.getByName("eth0");    
-		java.util.Enumeration<java.net.InetAddress> inetAddresses =  ni.getInetAddresses();
-		while(inetAddresses.hasMoreElements()) {  
-		         java.net.InetAddress ia = inetAddresses.nextElement();  
-		         if(!ia.isLinkLocalAddress()) {  
-		        	 ipMessagingServer = ia.getHostAddress();
-		         }    
-		}
-
-		String user = "roboconf";
-		String pwd = "roboconf";
-		String containerId = iaas.createVM( ipMessagingServer, user, pwd, rootInstanceName, applicationName);
-		System.out.println("Docker container ID=" + containerId);
-		/*Thread.sleep(25000);
-		iaas.terminateVM(containerId);*/
-	}
 }
