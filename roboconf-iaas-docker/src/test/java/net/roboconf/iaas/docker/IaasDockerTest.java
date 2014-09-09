@@ -17,8 +17,10 @@
 package net.roboconf.iaas.docker;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -74,7 +76,7 @@ public class IaasDockerTest {
 			Logger logger = Logger.getLogger( getClass().getName());
 			ProgramUtils.executeCommand( logger, command, null );
 
-			checkDockerTcpConfig(this.dockerTcpPort);
+			checkOrUpdateDockerTcpConfig(this.dockerTcpPort);
 
 		} catch(Exception e) {
 			Logger logger = Logger.getLogger( getClass().getName());
@@ -85,6 +87,8 @@ public class IaasDockerTest {
 			Assume.assumeNoException(e);
 		}
 		
+		if(! running) return;
+
 		try {
 			prepareDockerTest();
 		} catch(Exception e) {
@@ -96,6 +100,10 @@ public class IaasDockerTest {
 		}
 	}
 
+	/**
+	 * Prepare docker environment (image, etc...) for testing.
+	 * @throws IOException
+	 */
 	private void prepareDockerTest() throws IOException {
 		String endpoint = "http://localhost:" + this.dockerTcpPort;
 		
@@ -109,10 +117,13 @@ public class IaasDockerTest {
 		BuildImageCmd img = docker.buildImageCmd(baseDir).withNoCache().withTag("roboconf-test");
 		CreateImageResponse rsp = docker.createImageCmd("roboconf-test", img.getTarInputStream())
 				.exec();
-		System.out.println("IMAGE ID=" + rsp.getId());
+
 		this.dockerImageId = rsp.getId();
 	}
 
+	/**
+	 * Test the parsing of Docker config.
+	 */
 	@Test
 	public void testConfigurationParsing() {
 
@@ -138,6 +149,9 @@ public class IaasDockerTest {
 		}
 	}
 	
+	/**
+	 * Test creating and deleting a Docker VM.
+	 */
 	@Test
 	public void testCreateVM() {
 
@@ -185,7 +199,7 @@ public class IaasDockerTest {
 			Assert.fail("Error terminating Docker container VM #" + containerId);
 		}
 	}
-	
+
 	@After
 	public void dockerCleanup() {
 		if(this.docker != null) {
@@ -194,6 +208,11 @@ public class IaasDockerTest {
 		}
 	}
 	
+	/**
+	 * Load IaaS properties for Docker configuration
+	 * @return
+	 * @throws Exception
+	 */
 	private Map<String, String> loadIaasProperties() throws Exception {
 		Properties p = new Properties();
 		p.load(new FileReader(new File(Thread.currentThread().getContextClassLoader()
@@ -207,23 +226,48 @@ public class IaasDockerTest {
 		return iaasProperties;
 	}
 	
-	private void checkDockerTcpConfig(String port) throws IOException {
-		BufferedReader in = new BufferedReader(new FileReader("/etc/default/docker"));
+	/**
+	 * Check that Docker is configured to listen on specified TCP port.
+	 * If not, try to change Docker config and restart (may require root access).
+	 * @param port The TCP port for Docker daemon to listen
+	 * @throws IOException, InterruptedException
+	 */
+	private void checkOrUpdateDockerTcpConfig(String port) throws IOException, InterruptedException {
+		File dockerConf = new File("/etc/default/docker");
+		if(! dockerConf.exists() || ! dockerConf.canRead())
+			throw new IOException("File " + dockerConf + " not found or not readable");
+		BufferedReader in = new BufferedReader(new FileReader(dockerConf));
 		String line;
 		boolean ok = false;
 		while((line = in.readLine()) != null) {
 			if(line.indexOf("#") < 0
-				&& line.indexOf("-H=tcp:") > 0
+				&& line.indexOf("DOCKER_OPTS") >= 0
+				&& (line.indexOf("-H=tcp:") > 0 || line.indexOf("-H tcp:") > 0)
 				&& line.indexOf(":" + port) > 0) {
 					ok = true;
 					break;
 			}
 		}
 		in.close();
+
 		if(! ok) {
-			throw new IOException("No TCP configuration on port " + port
-				+ " in /etc/default/docker: specify DOCKER_OPTS=\"-H=tcp://0.0.0.0:"
-				+ port + " -H unix:///var/run/docker.sock\"");
+			// Try to update Docker config, then restart daemon
+			if(! dockerConf.canWrite()) {
+				throw new IOException("No TCP configuration on port " + port
+					+ " in " + dockerConf
+					+ ": specify DOCKER_OPTS=\"-H tcp://0.0.0.0:"
+					+ port + " -H unix:///var/run/docker.sock\"");
+			}
+
+			BufferedWriter out = new BufferedWriter(new FileWriter(dockerConf, true));
+			out.append("DOCKER_OPTS=\"-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock\"\n");
+			out.close();
+			
+			List<String> command = new ArrayList<String> ();
+			command.add("restart");
+			command.add("docker");
+			Logger logger = Logger.getLogger(getClass().getName());
+			ProgramUtils.executeCommand(logger, command, null);
 		}
 	}
 
