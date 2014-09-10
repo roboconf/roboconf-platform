@@ -50,7 +50,7 @@ public class InstanceTemplatingTest {
 		vars.put("name1", "val1");
 		vars.put("name2", "val2");
 		vars.put("name3", "val3");
-		Import impt = new Import("/", vars);
+		Import impt = new Import("/", "component1", vars);
 
 		MustacheFactory mf = new DefaultMustacheFactory();
 		File templateFile = TestUtils.findTestFile( "/importTemplate.mustache" );
@@ -71,7 +71,7 @@ public class InstanceTemplatingTest {
 		vars.put("name1", "val1");
 		vars.put("name2", "val2");
 		vars.put("name3", "val3");
-		Import impt1 = new Import("/", vars);
+		Import impt1 = new Import("/", "component1", vars);
 
 		List<Import> imports = new ArrayList<Import>();
 		imports.add(impt1);

@@ -81,9 +81,9 @@ public final class ImportHelpers {
 	 * @param exportedVariables the variables to add in the imports
 	 * @return a non-null import
 	 */
-	public static Import buildTailoredImport( Instance instanceThatUseTheImport, String exportingInstancePath, Map<String,String> exportedVariables ) {
+	public static Import buildTailoredImport( Instance instanceThatUseTheImport, String exportingInstancePath, String exportingInstanceComponent, Map<String,String> exportedVariables ) {
 
-		Import imp = new Import( exportingInstancePath );
+		Import imp = new Import( exportingInstancePath, exportingInstanceComponent );
 		if( exportedVariables != null && ! exportedVariables.isEmpty()) {
 			for( String importedVariable : instanceThatUseTheImport.getComponent().getImportedVariables().keySet()) {
 				if( exportedVariables.containsKey( importedVariable ))

@@ -540,6 +540,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 */
 	void processMsgImportAdd( MsgCmdImportAdd msg ) throws IOException, PluginException {
 
+		// Determine component name for added import
+		String importComponentName = msg.getComponentOrFacetName(); 
+				
 		// Go through all the instances to see which ones need an update
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 
@@ -556,7 +559,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				continue;
 
 			// Create the right import
-			Import imp = ImportHelpers.buildTailoredImport( instance, msg.getAddedInstancePath(), msg.getExportedVariables());
+			Import imp = ImportHelpers.buildTailoredImport( instance, msg.getAddedInstancePath(), importComponentName, msg.getExportedVariables());
 
 			// Add the import and publish an update to the DM
 			this.logger.fine( "Adding import to " + InstanceHelpers.computeInstancePath( instance ) + ". New import: " + imp );

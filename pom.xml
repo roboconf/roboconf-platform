@@ -278,6 +278,7 @@
 		<module>roboconf-iaas-in-memory</module>
 		<module>roboconf-iaas-embedded</module>
 		<module>roboconf-iaas-azure</module>
+		<module>roboconf-iaas-docker</module>
 		<module>roboconf-iaas-ec2</module>
 		<module>roboconf-iaas-openstack</module>
 		<module>roboconf-iaas-vmware</module>

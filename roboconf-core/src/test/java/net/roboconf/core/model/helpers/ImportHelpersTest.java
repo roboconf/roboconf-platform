@@ -109,8 +109,8 @@ public class ImportHelpersTest {
 
 		Map<String,Collection<Import>> prefixToImports = new HashMap<String,Collection<Import>> ();
 		prefixToImports.put( "comp", Arrays.asList(
-				new Import( "/root1" ),
-				new Import( "/root2" )));
+				new Import( "/root1", "comp1" ),
+				new Import( "/root2", "comp1" )));
 
 		Instance inst = new Instance( "inst" );
 		Assert.assertEquals( 0, inst.getImports().size());
@@ -123,7 +123,7 @@ public class ImportHelpersTest {
 		Assert.assertEquals( "/root2", iterator.next().getInstancePath());
 		Assert.assertFalse( iterator.hasNext());
 
-		prefixToImports.put( "comp", Arrays.asList( new Import( "/root1" )));
+		prefixToImports.put( "comp", Arrays.asList( new Import( "/root1", "comp1" )));
 		ImportHelpers.updateImports( inst, prefixToImports );
 		Assert.assertEquals( 1, inst.getImports().size());
 
@@ -141,26 +141,26 @@ public class ImportHelpersTest {
 
 		Map<String,Collection<Import>> prefixToImports = new HashMap<String,Collection<Import>> ();
 		prefixToImports.put( "comp", new ArrayList<Import>( Arrays.asList(
-				new Import( "/root1" ),
-				new Import( "/root2" ))));
+				new Import( "/root1", "comp1" ),
+				new Import( "/root2", "comp1" ))));
 
 		Instance inst = new Instance( "inst" );
 		inst.getImports().putAll( prefixToImports );
 		Assert.assertEquals( 1, inst.getImports().keySet().size());
 		Assert.assertTrue( inst.getImports().keySet().contains( "comp" ));
 
-		ImportHelpers.addImport( inst, "wow", new Import( "/root" ));
+		ImportHelpers.addImport( inst, "wow", new Import( "/root", "comp1" ));
 		Assert.assertEquals( 2, inst.getImports().keySet().size());
 		Assert.assertTrue( inst.getImports().keySet().contains( "comp" ));
 		Assert.assertTrue( inst.getImports().keySet().contains( "wow" ));
 
 		Assert.assertEquals( 2, inst.getImports().get( "comp" ).size());
-		ImportHelpers.addImport( inst, "comp", new Import( "/root3" ));
+		ImportHelpers.addImport( inst, "comp", new Import( "/root3", "comp1" ));
 		Assert.assertEquals( 3, inst.getImports().get( "comp" ).size());
 		Assert.assertEquals( 2, inst.getImports().keySet().size());
 
 		// We cannot insert the same import twice
-		ImportHelpers.addImport( inst, "comp", new Import( "/root3" ));
+		ImportHelpers.addImport( inst, "comp", new Import( "/root3", "comp1" ));
 		Assert.assertEquals( 3, inst.getImports().get( "comp" ).size());
 		Assert.assertEquals( 2, inst.getImports().keySet().size());
 	}
@@ -178,12 +178,12 @@ public class ImportHelpersTest {
 		Instance inst = new Instance( "inst" ).component( comp );
 
 		// Null map
-		Import imp = ImportHelpers.buildTailoredImport( inst, instancePath, null );
+		Import imp = ImportHelpers.buildTailoredImport( inst, instancePath, "comp", null );
 		Assert.assertEquals( instancePath, imp.getInstancePath());
 		Assert.assertEquals( 0, imp.getExportedVars().size());
 
 		// Empty map
-		imp = ImportHelpers.buildTailoredImport( inst, instancePath, new HashMap<String,String> ());
+		imp = ImportHelpers.buildTailoredImport( inst, instancePath, "comp", new HashMap<String,String> ());
 		Assert.assertEquals( 0, imp.getExportedVars().size());
 
 		// Map with various variable
@@ -194,9 +194,10 @@ public class ImportHelpersTest {
 		map.put( null, "null" );
 		map.put( "", "hop" );
 
-		imp = ImportHelpers.buildTailoredImport( inst, instancePath, map );
+		imp = ImportHelpers.buildTailoredImport( inst, instancePath, "comp", map );
 		Assert.assertEquals( instancePath, imp.getInstancePath());
 		Assert.assertEquals( 2, imp.getExportedVars().size());
+		Assert.assertEquals("comp", imp.getComponentName());
 		Assert.assertEquals( "127.0.0.1", imp.getExportedVars().get( "comp1.ip" ));
 		Assert.assertEquals( "ciao!", imp.getExportedVars().get( "comp2.option" ));
 	}
@@ -206,9 +207,9 @@ public class ImportHelpersTest {
 	public void testFindImportByExportingInstance() {
 
 		Collection<Import> imports = new HashSet<Import> ();
-		imports.add( new Import( "/some/path" ));
-		imports.add( new Import( "/some/path/deeper" ));
-		imports.add( new Import( "/some/other-path" ));
+		imports.add( new Import( "/some/path", "comp1" ));
+		imports.add( new Import( "/some/path/deeper", "comp1" ));
+		imports.add( new Import( "/some/other-path", "comp1" ));
 
 		Assert.assertNull( ImportHelpers.findImportByExportingInstance( null, null ));
 		Assert.assertNull( ImportHelpers.findImportByExportingInstance( null, "/some/path" ));

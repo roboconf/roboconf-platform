@@ -245,6 +245,7 @@ public class PluginBash implements PluginInterface {
         // (removed when an instance stopped, or added when it started)
         if(importChanged != null) {
         	environmentVars.put("ROBOCONF_IMPORT_CHANGED_INSTANCE_PATH", importChanged.getInstancePath());
+        	environmentVars.put("ROBOCONF_IMPORT_CHANGED_COMPONENT", importChanged.getComponentName());
         	for (Entry<String, String> entry : importChanged.getExportedVars().entrySet()) {
         		// "ROBOCONF_IMPORT_CHANGED_ip=127.0.0.1"
         		String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
@@ -252,7 +253,10 @@ public class PluginBash implements PluginInterface {
         	}
         }
 
-        ProgramUtils.executeCommand(this.logger, command, environmentVars);
+        int exitCode = ProgramUtils.executeCommand(this.logger, command, environmentVars);
+        if(exitCode != 0) {
+        	throw new IOException( "Bash script execution failed. Exit code: " + exitCode );
+        }
     }
 
 

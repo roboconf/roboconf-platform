@@ -72,6 +72,7 @@ public class PluginBashTest {
 		// Test update, passing changed import + status
 		Import importChanged = new Import(
 			InstanceHelpers.computeInstancePath(inst) + "Test",
+			inst.getComponent().getName(),
 			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
 		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
 		plugin.update(inst, importChanged, statusChanged);
@@ -129,6 +130,7 @@ public class PluginBashTest {
 		// Test update, passing changed import + status
 		Import importChanged = new Import(
 			InstanceHelpers.computeInstancePath(inst) + "Test",
+			inst.getComponent().getName(),
 			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
 		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
 		plugin.update(inst, importChanged, statusChanged);

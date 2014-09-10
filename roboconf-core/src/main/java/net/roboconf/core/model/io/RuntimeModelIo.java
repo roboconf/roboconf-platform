@@ -167,7 +167,7 @@ public final class RuntimeModelIo {
 				break INST;
 
 			File mainInstFile = new File( instDirectory, appDescriptor.getInstanceEntryPoint());
-			InstancesLoadResult ilr = loadInstances( mainInstFile, app.getGraphs());
+			InstancesLoadResult ilr = loadInstances( mainInstFile, app.getGraphs(), app.getName());
 
 			result.loadErrors.addAll( ilr.getLoadErrors());
 			app.getRootInstances().addAll( ilr.getRootInstances());
@@ -237,9 +237,10 @@ public final class RuntimeModelIo {
 	 * Loads instances from a file.
 	 * @param instancesFile the file definition of the instances (can have imports)
 	 * @param graph the graph to use to resolve instances
+	 * @param applicationName the application name
 	 * @return a non-null result
 	 */
-	public static InstancesLoadResult loadInstances( File instancesFile, Graphs graph ) {
+	public static InstancesLoadResult loadInstances( File instancesFile, Graphs graph, String applicationName ) {
 
 		InstancesLoadResult result = new InstancesLoadResult();
 		INST: {
@@ -280,6 +281,9 @@ public final class RuntimeModelIo {
 			result.getRootInstances().addAll( instances );
 		}
 
+		for( Instance rootInstance : result.rootInstances )
+			rootInstance.getData().put( Instance.APPLICATION_NAME, applicationName );
+		
 		return result;
 	}
 

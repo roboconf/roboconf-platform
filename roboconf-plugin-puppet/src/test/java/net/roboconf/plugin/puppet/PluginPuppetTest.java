@@ -172,6 +172,7 @@ public class PluginPuppetTest {
 		// Test update, passing changed import + status
 		Import importChanged = new Import(
 			InstanceHelpers.computeInstancePath(inst) + "Test",
+			inst.getComponent().getName(),
 			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
 		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
 		plugin.update(inst, importChanged, statusChanged);
@@ -245,6 +246,7 @@ public class PluginPuppetTest {
 		// Test update, passing changed import + status
 		Import importChanged = new Import(
 			InstanceHelpers.computeInstancePath(inst) + "Test",
+			inst.getComponent().getName(),
 			new HashMap<String, String>() {{ put("ip", "127.0.0.1"); }});
 		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
 		plugin.update(inst, importChanged, statusChanged);
@@ -327,7 +329,7 @@ public class PluginPuppetTest {
 
 		Map<String,String> exports = new LinkedHashMap<String,String> ();
 		exports.put( "MySQL.port", "3306" );
-		Import imp = new Import( "/toto", exports );
+		Import imp = new Import( "/toto", "component1", exports );
 
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
@@ -347,7 +349,7 @@ public class PluginPuppetTest {
 		Map<String,String> exports = new LinkedHashMap<String,String> ();
 		exports.put( "MySQL.port", "3306" );
 		exports.put( "MySQL.ip", "172.16.20.12" );
-		Import imp = new Import( "/toto", exports );
+		Import imp = new Import( "/toto", "component1", exports );
 
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
@@ -370,7 +372,7 @@ public class PluginPuppetTest {
 			Map<String,String> exports = new LinkedHashMap<String,String> ();
 			exports.put( "MySQL.port", String.valueOf( 3306 + i ));
 			exports.put( "MySQL.ip", "172.16.20." + String.valueOf( 12 + i ));
-			imports.add( new Import( "/toto-" + i, exports ));
+			imports.add( new Import( "/toto-" + i, "component1", exports ));
 		}
 
 		Component component = new Component( "test-component" );
