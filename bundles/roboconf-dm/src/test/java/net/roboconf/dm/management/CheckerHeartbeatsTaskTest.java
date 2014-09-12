@@ -16,7 +16,7 @@
 
 package net.roboconf.dm.management;
 
-import net.roboconf.dm.internal.TestApplication;
+import net.roboconf.core.internal.tests.TestApplication;
 
 import org.junit.Before;
 import org.junit.Test;

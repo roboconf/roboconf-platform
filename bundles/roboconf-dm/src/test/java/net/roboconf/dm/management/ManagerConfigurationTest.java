@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.management.ManagerConfiguration.EnvResolver;
 
 import org.junit.Rule;

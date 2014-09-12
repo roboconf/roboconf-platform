@@ -21,23 +21,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 
 import org.junit.Test;
 
@@ -92,29 +93,29 @@ public class SerializationUtilsTest {
 
 
 	@Test
-	public void testMessage_importRemove() throws Exception {
+	public void testMessage_removeImport() throws Exception {
 
-		MsgCmdImportRemove msg = new MsgCmdImportRemove( "change-me", "anything" );
-		checkBasics( msg, MsgCmdImportRemove.class );
+		MsgCmdRemoveImport msg = new MsgCmdRemoveImport( "change-me", "anything" );
+		checkBasics( msg, MsgCmdRemoveImport.class );
 	}
 
 
 	@Test
-	public void testMessage_importAdd() throws Exception {
+	public void testMessage_addImport() throws Exception {
 
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( "yeah", "value" );
 
-		MsgCmdImportAdd msg = new MsgCmdImportAdd( "change-me", "anything", map );
-		checkBasics( msg, MsgCmdImportAdd.class );
+		MsgCmdAddImport msg = new MsgCmdAddImport( "change-me", "anything", map );
+		checkBasics( msg, MsgCmdAddImport.class );
 	}
 
 
 	@Test
-	public void testMessage_importRequest() throws Exception {
+	public void testMessage_requestImport() throws Exception {
 
-		MsgCmdImportRequest msg = new MsgCmdImportRequest( "dsf" );
-		checkBasics( msg, MsgCmdImportRequest.class );
+		MsgCmdRequestImport msg = new MsgCmdRequestImport( "dsf" );
+		checkBasics( msg, MsgCmdRequestImport.class );
 	}
 
 
@@ -122,76 +123,67 @@ public class SerializationUtilsTest {
 
 
 	@Test
-	public void testMessage_instanceAdd() throws Exception {
+	public void testMessage_setRootInstance() throws Exception {
 
-		MsgCmdInstanceAdd msg = new MsgCmdInstanceAdd( "/parent", new Instance( "instance1" ));
-		checkBasics( msg, MsgCmdInstanceAdd.class );
-
-		msg = new MsgCmdInstanceAdd( new Instance( "root" ), new Instance( "instance2" ));
-		checkBasics( msg, MsgCmdInstanceAdd.class );
+		MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( new Instance( "instance1" ));
+		checkBasics( msg, MsgCmdSetRootInstance.class );
 	}
 
 
 	@Test
-	public void testMessage_instanceRemove() throws Exception {
+	public void testMessage_removeInstance() throws Exception {
 
-		MsgCmdInstanceRemove msg = new MsgCmdInstanceRemove( "/inst1" );
-		checkBasics( msg, MsgCmdInstanceRemove.class );
+		MsgCmdRemoveInstance msg = new MsgCmdRemoveInstance( "/inst1" );
+		checkBasics( msg, MsgCmdRemoveInstance.class );
 
-		msg = new MsgCmdInstanceRemove( new Instance( "root" ));
-		checkBasics( msg, MsgCmdInstanceRemove.class );
+		msg = new MsgCmdRemoveInstance( new Instance( "root" ));
+		checkBasics( msg, MsgCmdRemoveInstance.class );
 	}
 
 
 	@Test
-	public void testMessage_instanceRestore() throws Exception {
+	public void testMessage_addInstance() throws Exception {
 
-		MsgCmdInstanceRestore msg = new MsgCmdInstanceRestore();
-		checkBasics( msg, MsgCmdInstanceRestore.class );
+		Instance child = new Instance( "child" ).channel( "channel 4" ).status( InstanceStatus.DEPLOYED_STOPPED );
+		child.component( new Component( "comp_child" ).alias( "component" ).installerName( "whatever" ));
+
+		MsgCmdAddInstance msg = new MsgCmdAddInstance( child );
+		checkBasics( msg, MsgCmdAddInstance.class );
+
+		Instance root = new Instance( "root" ).status( InstanceStatus.DEPLOYED_STARTED );
+		root.component( new Component( "comp_root" ).alias( "component" ).installerName( "whatever" ));
+		InstanceHelpers.insertChild( root, child );
+
+		msg = new MsgCmdAddInstance( child );
+		checkBasics( msg, MsgCmdAddInstance.class );
 	}
 
 
 	@Test
-	public void testMessage_instanceStart() throws Exception {
+	public void testMessage_restoreInstance() throws Exception {
 
-		MsgCmdInstanceStart msg = new MsgCmdInstanceStart( "/o/mp/k" );
-		checkBasics( msg, MsgCmdInstanceStart.class );
+		MsgCmdSendInstances msg = new MsgCmdSendInstances();
+		checkBasics( msg, MsgCmdSendInstances.class );
 	}
 
 
 	@Test
-	public void testMessage_instanceStop() throws Exception {
+	public void testMessage_changeInstanceState() throws Exception {
 
-		MsgCmdInstanceStop msg = new MsgCmdInstanceStop( "/o/m/k" );
-		checkBasics( msg, MsgCmdInstanceStop.class );
+		MsgCmdChangeInstanceState msg = new MsgCmdChangeInstanceState( "/o/mp/k", InstanceStatus.DEPLOYED_STARTED );
+		checkBasics( msg, MsgCmdChangeInstanceState.class );
 
-		msg = new MsgCmdInstanceStop( new Instance( "root" ));
-		checkBasics( msg, MsgCmdInstanceStop.class );
-	}
-
-
-	@Test
-	public void testMessage_instanceUndeploy() throws Exception {
-
-		MsgCmdInstanceUndeploy msg = new MsgCmdInstanceUndeploy( "/o/mp/k" );
-		checkBasics( msg, MsgCmdInstanceUndeploy.class );
-
-		msg = new MsgCmdInstanceUndeploy( new Instance( "root" ));
-		checkBasics( msg, MsgCmdInstanceUndeploy.class );
-	}
-
-
-	@Test
-	public void testMessage_instanceDeploy() throws Exception {
+		msg = new MsgCmdChangeInstanceState((String) null, InstanceStatus.NOT_DEPLOYED );
+		checkBasics( msg, MsgCmdChangeInstanceState.class );
 
 		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
 		fileNameToFileContent.put( "readme.txt", new byte[ 90 ]);
 
-		MsgCmdInstanceDeploy msg = new MsgCmdInstanceDeploy( "/o/mp/k", fileNameToFileContent );
-		checkBasics( msg, MsgCmdInstanceDeploy.class );
+		msg = new MsgCmdChangeInstanceState( "/oops", InstanceStatus.NOT_DEPLOYED, fileNameToFileContent );
+		checkBasics( msg, MsgCmdChangeInstanceState.class );
 
-		msg = new MsgCmdInstanceDeploy( new Instance( "root" ), fileNameToFileContent );
-		checkBasics( msg, MsgCmdInstanceDeploy.class );
+		msg = new MsgCmdChangeInstanceState((Instance) null, InstanceStatus.NOT_DEPLOYED, fileNameToFileContent );
+		checkBasics( msg, MsgCmdChangeInstanceState.class );
 	}
 
 

@@ -51,13 +51,10 @@ import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 
 /**
  * A class to manage a collection of applications.
@@ -184,7 +181,7 @@ public final class Manager {
 
 			// States
 			for( Instance rootInstance : ma.getApplication().getRootInstances())
-				this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdInstanceRestore());
+				this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
 		}
 
 		// Start the timers
@@ -377,9 +374,10 @@ public final class Manager {
 			throw new ImpossibleInsertionException( instance.getName());
 
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + ma.getName() + "." );
+		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
 
 		// Store the message because we want to make sure the message is not lost
-		ma.storeAwaitingMessage( instance, new MsgCmdInstanceAdd( parentInstance, instance ));
+		ma.storeAwaitingMessage( instance, new MsgCmdSetRootInstance( rootInstance ));
 		saveConfiguration( ma );
 	}
 
@@ -399,7 +397,7 @@ public final class Manager {
 		}
 
 		// Whatever is the state of the agent, we try to send a message.
-		MsgCmdInstanceRemove message = new MsgCmdInstanceRemove( instance );
+		MsgCmdRemoveInstance message = new MsgCmdRemoveInstance( instance );
 		send( ma, message, instance );
 
 		if( instance.getParent() == null )
@@ -425,7 +423,7 @@ public final class Manager {
 		if( instance.getParent() != null ) {
 
 			Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
-			MsgCmdInstanceDeploy message = new MsgCmdInstanceDeploy( instance, instanceResources );
+			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, instanceResources );
 			send( ma, message, instance );
 			this.logger.fine( "A message was (or will be) sent to the agent to deploy " + instancePath + " in " + ma.getName() + "." );
 
@@ -446,7 +444,7 @@ public final class Manager {
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
 		this.logger.fine( "Starting " + instancePath + " in " + ma.getName() + "..." );
 		if( instance.getParent() != null ) {
-			MsgCmdInstanceStart message = new MsgCmdInstanceStart( instance );
+			MsgCmdStartInstance message = new MsgCmdStartInstance( instance );
 			send( ma, message, instance );
 			this.logger.fine( "A message was (or will be) sent to the agent to start " + instancePath + " in " + ma.getName() + "." );
 
@@ -467,7 +465,7 @@ public final class Manager {
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
 		this.logger.fine( "Stopping " + instancePath + " in " + ma.getName() + "..." );
 		if( instance.getParent() != null ) {
-			MsgCmdInstanceStop message = new MsgCmdInstanceStop( instance );
+			MsgCmdStopInstance message = new MsgCmdStopInstance( instance );
 			send( ma, message, instance );
 			this.logger.fine( "A message was (or will be) sent to the agent to stop " + instancePath + " in " + ma.getName() + "." );
 
@@ -488,7 +486,7 @@ public final class Manager {
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
 		this.logger.fine( "Undeploying " + instancePath + " in " + ma.getName() + "..." );
 		if( instance.getParent() != null ) {
-			MsgCmdInstanceUndeploy message = new MsgCmdInstanceUndeploy( instance );
+			MsgCmdUndeployInstance message = new MsgCmdUndeployInstance( instance );
 			send( ma, message, instance );
 			this.logger.fine( "A message was (or will be) sent to the agent to undeploy " + instancePath + " in " + ma.getName() + "." );
 
@@ -523,7 +521,7 @@ public final class Manager {
 
 		try {
 			rootInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdInstanceAdd msg = new MsgCmdInstanceAdd((String) null, rootInstance );
+			MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( rootInstance );
 			send( ma, msg, rootInstance );
 
 			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );

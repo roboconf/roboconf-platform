@@ -18,9 +18,9 @@ package net.roboconf.messaging.internal.client.rabbitmq;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.messaging.internal.AbstractRabbitMqTest;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
+import net.roboconf.messaging.internal.AbstractRabbitMqTest;
 import net.roboconf.messaging.internal.MessagingTestUtils.StorageMessageProcessor;
 
 import org.junit.Assume;

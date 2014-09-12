@@ -19,18 +19,24 @@ package net.roboconf.messaging.internal.utils;
 import java.io.File;
 import java.net.URI;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.internal.AbstractRabbitMqTest;
+import net.roboconf.messaging.messages.Message;
 
 import org.junit.Assume;
 import org.junit.Test;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.ConsumerCancelledException;
+import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.ShutdownSignalException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -173,5 +179,53 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 		RabbitMqUtils.closeConnection( channel );
 		Assert.assertFalse( channel.isOpen());
 		Assert.assertFalse( channel.getConnection().isOpen());
+	}
+
+
+	@Test( timeout = 2000 )
+	public void testListenToRabbitMq_rabbitExceptions() throws Exception {
+
+		// In these tests, Rabbit exceptions break the processing loop
+		Channel channel = createTestChannel();
+		Logger logger = Logger.getLogger( getClass().getName());
+		AbstractMessageProcessor messageProcessor = new AbstractMessageProcessor() {
+			@Override
+			protected void processMessage( Message message ) {
+				// nothing
+			}
+		};
+
+		// Shutdown
+		QueueingConsumer consumer = new QueueingConsumer( channel ) {
+			@Override
+			public Delivery nextDelivery()
+			throws InterruptedException, ShutdownSignalException, ConsumerCancelledException {
+				throw new ShutdownSignalException( false, false, null, "for tests" );
+			}
+		};
+
+		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messageProcessor );
+
+		// Interrupted
+		consumer = new QueueingConsumer( channel ) {
+			@Override
+			public Delivery nextDelivery()
+			throws InterruptedException, ShutdownSignalException, ConsumerCancelledException {
+				throw new InterruptedException( "for tests" );
+			}
+		};
+
+		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messageProcessor );
+
+		// Consumer
+		consumer = new QueueingConsumer( channel ) {
+			@Override
+			public Delivery nextDelivery()
+			throws InterruptedException, ShutdownSignalException, ConsumerCancelledException {
+				throw new ConsumerCancelledException();
+			}
+		};
+
+		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messageProcessor );
 	}
 }

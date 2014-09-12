@@ -24,6 +24,7 @@ import java.util.List;
 import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -31,7 +32,6 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
@@ -40,8 +40,8 @@ import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRestore;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -291,10 +291,10 @@ public class Manager_BasicsTest {
 
 		List<Message> messages = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 0 ).getClass());
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getTomcatVm()),
-				((MsgCmdInstanceRemove) messages.get( 0 )).getInstancePath());
+				((MsgCmdRemoveInstance) messages.get( 0 )).getInstancePath());
 	}
 
 
@@ -315,9 +315,9 @@ public class Manager_BasicsTest {
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
 		Assert.assertEquals( 1, msgclient.sentMessages.size());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, msgclient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, msgclient.sentMessages.get( 0 ).getClass());
 
-		MsgCmdInstanceRemove msg = (MsgCmdInstanceRemove) msgclient.sentMessages.get( 0 );
+		MsgCmdRemoveInstance msg = (MsgCmdRemoveInstance) msgclient.sentMessages.get( 0 );
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), msg.getInstancePath());
 	}
 
@@ -496,12 +496,12 @@ public class Manager_BasicsTest {
 		TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
 
 		Manager.INSTANCE.messagingClient.closeConnection();
-		Manager.INSTANCE.send( ma, new MsgCmdInstanceRestore(), new Instance());
+		Manager.INSTANCE.send( ma, new MsgCmdSendInstances(), new Instance());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
 		Assert.assertEquals( 0, client.sentMessages.size());
 
 		Manager.INSTANCE.shutdown();
-		Manager.INSTANCE.send( ma, new MsgCmdInstanceRestore(), new Instance());
+		Manager.INSTANCE.send( ma, new MsgCmdSendInstances(), new Instance());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
 		Assert.assertEquals( 0, client.sentMessages.size());
 	}

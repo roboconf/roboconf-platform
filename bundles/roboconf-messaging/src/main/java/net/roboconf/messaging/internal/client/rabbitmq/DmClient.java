@@ -228,7 +228,7 @@ public class DmClient implements IDmClient {
 					RabbitMqUtils.listenToRabbitMq(
 							"The DM", DmClient.this.logger,
 							consumer, DmClient.this.messageProcessor );
-				};
+				}
 
 			}.start();
 		}

@@ -23,22 +23,21 @@ import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceRemove;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 
 /**
  * This class defines messaging tests, independently of the implementation.
@@ -85,15 +84,15 @@ public abstract class MessagingTestUtils {
 
 		// The agent is not listening to the DM.
 		// With RabbitMQ, the next invocation will result in a NO_ROUTE error in the channel.
-		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceAdd((String) null, rootInstance ));
+		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdSetRootInstance( rootInstance ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 0, agentProcessor.receivedMessages.size());
 
 		agentClient.listenToTheDm( ListenerCommand.START );
-		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceRemove( rootInstance ));
+		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdRemoveInstance( rootInstance ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 1, agentProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentProcessor.receivedMessages.get( 0 ).getClass());
 
 		// The agent sends a message to the DM
 		Assert.assertEquals( 0, dmProcessor.receivedMessages.size());
@@ -108,18 +107,18 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( MsgNotifMachineDown.class, dmProcessor.receivedMessages.get( 0 ).getClass());
 
 		// The DM sends another message
-		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceStart( rootInstance ));
+		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 2, agentProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessor.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceStart.class, agentProcessor.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentProcessor.receivedMessages.get( 1 ).getClass());
 
 		// The agent stops listening the DM
 		agentClient.listenToTheDm( ListenerCommand.STOP );
 
 		// The agent is not listening to the DM anymore.
 		// With RabbitMQ, the next invocation will result in a NO_ROUTE error in the channel.
-		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdInstanceStart( rootInstance ));
+		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 2, agentProcessor.receivedMessages.size());
 		Thread.sleep( DELAY );
@@ -197,35 +196,35 @@ public abstract class MessagingTestUtils {
 		agentClientApp2.listenToTheDm( ListenerCommand.START );
 
 		// The DM sends messages
-		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdInstanceAdd((String) null, app1_root1 ));
-		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdInstanceAdd((String) null, app2_root ));
-		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdInstanceAdd((String) null, app1_root2 ));
-		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdInstanceRemove( app2_root ));
-		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdInstanceStop( app2_root ));
-		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdInstanceRemove( app1_root2 ));
-		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdInstanceRemove( app1_root2 ));
-		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdInstanceUndeploy( app1_root2 ));
-		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdInstanceRemove( app1_root1 ));
-		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdInstanceAdd((String) null, app1_root1 ));
+		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetRootInstance( app1_root1 ));
+		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdSetRootInstance( app2_root ));
+		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdSetRootInstance( app1_root2 ));
+		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdRemoveInstance( app2_root ));
+		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdChangeInstanceState( app2_root, InstanceStatus.DEPLOYED_STOPPED ));
+		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdRemoveInstance( app1_root2 ));
+		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdRemoveInstance( app1_root2 ));
+		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdChangeInstanceState( app1_root2, InstanceStatus.NOT_DEPLOYED ));
+		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdRemoveInstance( app1_root1 ));
+		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetRootInstance( app1_root1 ));
 
 		// Check what was received
 		Thread.sleep( DELAY );
 
 		Assert.assertEquals( 3, agentProcessorApp1_1.receivedMessages.size());
-		Assert.assertEquals( MsgCmdInstanceAdd.class, agentProcessorApp1_1.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessorApp1_1.receivedMessages.get( 1 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceAdd.class, agentProcessorApp1_1.receivedMessages.get( 2 ).getClass());
+		Assert.assertEquals( MsgCmdSetRootInstance.class, agentProcessorApp1_1.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentProcessorApp1_1.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdSetRootInstance.class, agentProcessorApp1_1.receivedMessages.get( 2 ).getClass());
 
 		Assert.assertEquals( 4, agentProcessorApp1_2.receivedMessages.size());
-		Assert.assertEquals( MsgCmdInstanceAdd.class, agentProcessorApp1_2.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessorApp1_2.receivedMessages.get( 1 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessorApp1_2.receivedMessages.get( 2 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, agentProcessorApp1_2.receivedMessages.get( 3 ).getClass());
+		Assert.assertEquals( MsgCmdSetRootInstance.class, agentProcessorApp1_2.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentProcessorApp1_2.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentProcessorApp1_2.receivedMessages.get( 2 ).getClass());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentProcessorApp1_2.receivedMessages.get( 3 ).getClass());
 
 		Assert.assertEquals( 3, agentProcessorApp2.receivedMessages.size());
-		Assert.assertEquals( MsgCmdInstanceAdd.class, agentProcessorApp2.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceRemove.class, agentProcessorApp2.receivedMessages.get( 1 ).getClass());
-		Assert.assertEquals( MsgCmdInstanceStop.class, agentProcessorApp2.receivedMessages.get( 2 ).getClass());
+		Assert.assertEquals( MsgCmdSetRootInstance.class, agentProcessorApp2.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentProcessorApp2.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentProcessorApp2.receivedMessages.get( 2 ).getClass());
 
 		// Disconnect the agents
 		agentClientApp1_1.closeConnection();
@@ -331,14 +330,22 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( 0, apacheProcessor.receivedMessages.size());
 		Assert.assertEquals( 0, otherProcessor.receivedMessages.size());
 		Assert.assertEquals( 1, tomcatProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportAdd.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdAddImport.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
 
-		MsgCmdImportAdd msg = (MsgCmdImportAdd) tomcatProcessor.receivedMessages.get( 0 );
+		MsgCmdAddImport msg = (MsgCmdAddImport) tomcatProcessor.receivedMessages.get( 0 );
 		Assert.assertEquals( "MySQL", msg.getComponentOrFacetName());
 		Assert.assertEquals( "/mysql", msg.getAddedInstancePath());
 		Assert.assertEquals( 2, msg.getExportedVariables().size());
 		Assert.assertTrue( msg.getExportedVariables().containsKey( "MySQL.port" ));
 		Assert.assertTrue( msg.getExportedVariables().containsKey( "MySQL.ip" ));
+
+		// Let's publish an unknown facet. Nobody should receive it.
+		mysqlClient.publishExports( mysql, "an-unknown-facet-or-component-name" );
+
+		Assert.assertEquals( 0, mysqlProcessor.receivedMessages.size());
+		Assert.assertEquals( 0, apacheProcessor.receivedMessages.size());
+		Assert.assertEquals( 0, otherProcessor.receivedMessages.size());
+		Assert.assertEquals( 1, tomcatProcessor.receivedMessages.size());
 
 		// Other publishes its exports.
 		// Tomcat is not supposed to receive it.
@@ -349,7 +356,7 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( 0, apacheProcessor.receivedMessages.size());
 		Assert.assertEquals( 0, otherProcessor.receivedMessages.size());
 		Assert.assertEquals( 1, tomcatProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportAdd.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdAddImport.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
 
 		// Everybody is listening...
 		// Tomcat publishes its exports.
@@ -362,9 +369,9 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( 0, otherProcessor.receivedMessages.size());
 		Assert.assertEquals( 1, tomcatProcessor.receivedMessages.size());
 		Assert.assertEquals( 1, apacheProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportAdd.class, apacheProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdAddImport.class, apacheProcessor.receivedMessages.get( 0 ).getClass());
 
-		msg = (MsgCmdImportAdd) apacheProcessor.receivedMessages.get( 0 );
+		msg = (MsgCmdAddImport) apacheProcessor.receivedMessages.get( 0 );
 		Assert.assertEquals( "Tomcat", msg.getComponentOrFacetName());
 		Assert.assertEquals( "/tomcat", msg.getAddedInstancePath());
 		Assert.assertEquals( 2, msg.getExportedVariables().size());
@@ -379,10 +386,10 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( 0, otherProcessor.receivedMessages.size());
 		Assert.assertEquals( 1, apacheProcessor.receivedMessages.size());
 		Assert.assertEquals( 2, tomcatProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportAdd.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdImportAdd.class, tomcatProcessor.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdAddImport.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdAddImport.class, tomcatProcessor.receivedMessages.get( 1 ).getClass());
 
-		msg = (MsgCmdImportAdd) tomcatProcessor.receivedMessages.get( 1 );
+		msg = (MsgCmdAddImport) tomcatProcessor.receivedMessages.get( 1 );
 		Assert.assertEquals( "MySQL", msg.getComponentOrFacetName());
 		Assert.assertEquals( "/mysql", msg.getAddedInstancePath());
 		Assert.assertEquals( 2, msg.getExportedVariables().size());
@@ -397,11 +404,11 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( 0, otherProcessor.receivedMessages.size());
 		Assert.assertEquals( 1, apacheProcessor.receivedMessages.size());
 		Assert.assertEquals( 3, tomcatProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportAdd.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdImportAdd.class, tomcatProcessor.receivedMessages.get( 1 ).getClass());
-		Assert.assertEquals( MsgCmdImportRemove.class, tomcatProcessor.receivedMessages.get( 2 ).getClass());
+		Assert.assertEquals( MsgCmdAddImport.class, tomcatProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdAddImport.class, tomcatProcessor.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveImport.class, tomcatProcessor.receivedMessages.get( 2 ).getClass());
 
-		MsgCmdImportRemove newMsg = (MsgCmdImportRemove) tomcatProcessor.receivedMessages.get( 2 );
+		MsgCmdRemoveImport newMsg = (MsgCmdRemoveImport) tomcatProcessor.receivedMessages.get( 2 );
 		Assert.assertEquals( "MySQL", newMsg.getComponentOrFacetName());
 		Assert.assertEquals( "/mysql", newMsg.getRemovedInstancePath());
 
@@ -514,9 +521,9 @@ public abstract class MessagingTestUtils {
 		Assert.assertEquals( 0, tomcatProcessor.receivedMessages.size());
 		Assert.assertEquals( 0, otherProcessor.receivedMessages.size());
 		Assert.assertEquals( 1, mysqlProcessor.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportRequest.class, mysqlProcessor.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRequestImport.class, mysqlProcessor.receivedMessages.get( 0 ).getClass());
 
-		MsgCmdImportRequest msg = (MsgCmdImportRequest) mysqlProcessor.receivedMessages.get( 0 );
+		MsgCmdRequestImport msg = (MsgCmdRequestImport) mysqlProcessor.receivedMessages.get( 0 );
 		Assert.assertEquals( "MySQL", msg.getComponentOrFacetName());
 
 		// Now, let's do it again but MySQL stops listening.
@@ -597,11 +604,11 @@ public abstract class MessagingTestUtils {
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 0, instanceProcessor1.receivedMessages.size());
 		Assert.assertEquals( 2, instanceProcessor2.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportRequest.class, instanceProcessor2.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdImportRequest.class, instanceProcessor2.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdRequestImport.class, instanceProcessor2.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRequestImport.class, instanceProcessor2.receivedMessages.get( 1 ).getClass());
 
-		String facet1 = ((MsgCmdImportRequest) instanceProcessor2.receivedMessages.get( 0 )).getComponentOrFacetName();
-		String facet2 = ((MsgCmdImportRequest) instanceProcessor2.receivedMessages.get( 1 )).getComponentOrFacetName();
+		String facet1 = ((MsgCmdRequestImport) instanceProcessor2.receivedMessages.get( 0 )).getComponentOrFacetName();
+		String facet2 = ((MsgCmdRequestImport) instanceProcessor2.receivedMessages.get( 1 )).getComponentOrFacetName();
 		Assert.assertNotSame( facet1, facet2 );
 		Assert.assertTrue( facet1.equals( "Component" ) || facet1.equals( "facet" ));
 		Assert.assertTrue( facet2.equals( "Component" ) || facet2.equals( "facet" ));
@@ -616,11 +623,11 @@ public abstract class MessagingTestUtils {
 
 		Assert.assertEquals( 2, instanceProcessor2.receivedMessages.size());
 		Assert.assertEquals( 2, instanceProcessor1.receivedMessages.size());
-		Assert.assertEquals( MsgCmdImportRequest.class, instanceProcessor1.receivedMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdImportRequest.class, instanceProcessor1.receivedMessages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdRequestImport.class, instanceProcessor1.receivedMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRequestImport.class, instanceProcessor1.receivedMessages.get( 1 ).getClass());
 
-		facet1 = ((MsgCmdImportRequest) instanceProcessor1.receivedMessages.get( 0 )).getComponentOrFacetName();
-		facet2 = ((MsgCmdImportRequest) instanceProcessor1.receivedMessages.get( 1 )).getComponentOrFacetName();
+		facet1 = ((MsgCmdRequestImport) instanceProcessor1.receivedMessages.get( 0 )).getComponentOrFacetName();
+		facet2 = ((MsgCmdRequestImport) instanceProcessor1.receivedMessages.get( 1 )).getComponentOrFacetName();
 		Assert.assertNotSame( facet1, facet2 );
 		Assert.assertTrue( facet1.equals( "Component" ) || facet1.equals( "facet" ));
 		Assert.assertTrue( facet2.equals( "Component" ) || facet2.equals( "facet" ));

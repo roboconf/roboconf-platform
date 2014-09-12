@@ -17,10 +17,10 @@
 package net.roboconf.dm.environment.messaging;
 
 import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;

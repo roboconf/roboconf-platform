@@ -62,9 +62,7 @@
 		<module>bundles/roboconf-plugin-puppet</module>
 		<module>bundles/roboconf-plugin-logger</module>
 		
-		<module>bundles/roboconf-agent-api</module>
-		<module>bundles/roboconf-agent-impl</module>
-		<module>bundles/roboconf-agent-in-memory</module>
+		<module>bundles/roboconf-agent</module>
 		
 		<!-- Karaf distributions -->
 		<module>karaf/roboconf-karaf-agent-branding</module>

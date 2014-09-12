@@ -29,9 +29,9 @@ import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportAdd;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRemove;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdImportRequest;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -136,7 +136,7 @@ public class AgentClient implements IAgentClient {
 				RabbitMqUtils.listenToRabbitMq(
 						AgentClient.this.rootInstanceName, AgentClient.this.logger,
 						consumer, AgentClient.this.messageProcessor );
-			};
+			}
 
 		}.start();
 	}
@@ -208,7 +208,7 @@ public class AgentClient implements IAgentClient {
 
 		// Publish them
 		if( ! toPublish.isEmpty()) {
-			MsgCmdImportAdd message = new MsgCmdImportAdd(
+			MsgCmdAddImport message = new MsgCmdAddImport(
 					facetOrComponentName,
 					InstanceHelpers.computeInstancePath( instance ),
 					toPublish );
@@ -235,7 +235,7 @@ public class AgentClient implements IAgentClient {
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
 
 			// Publish them
-			MsgCmdImportRemove message = new MsgCmdImportRemove(
+			MsgCmdRemoveImport message = new MsgCmdRemoveImport(
 					facetOrComponentName,
 					InstanceHelpers.computeInstancePath( instance ));
 
@@ -291,7 +291,7 @@ public class AgentClient implements IAgentClient {
 
 			// ... and ask to publish them.
 			// Grouping variable requests by prefix reduces the number of messages.
-			MsgCmdImportRequest message = new MsgCmdImportRequest( facetOrComponentName );
+			MsgCmdRequestImport message = new MsgCmdRequestImport( facetOrComponentName );
 			this.channel.basicPublish(
 					RabbitMqUtils.buildExchangeName( this.applicationName, false ),
 					THOSE_THAT_EXPORT + facetOrComponentName,

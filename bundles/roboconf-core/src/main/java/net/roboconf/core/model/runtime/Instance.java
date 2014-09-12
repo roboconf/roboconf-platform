@@ -57,7 +57,7 @@ public class Instance implements Serializable {
 	private final Map<String,String> overridenExports = new HashMap<String,String> ();
 	private final Map<String,String> exports = new HashMap<String,String> ();
 
-	// At runtime, exported variables are grouped by prefix.
+	// At runtime, imported variables are grouped by prefix.
 	// The prefix is a component or a facet name.
 	private final Map<String,Collection<Import>> variablePrefixToImports = new HashMap<String,Collection<Import>> ();
 

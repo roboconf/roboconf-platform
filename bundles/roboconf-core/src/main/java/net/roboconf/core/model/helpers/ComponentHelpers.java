@@ -67,6 +67,22 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds a sub-component by name.
+	 * @param component the component used to build a partial graph (should not be null)
+	 * @param componentName the component name (not null)
+	 * @return a component (can be null)
+	 */
+	public static Component findSubComponent( Component component, String componentName ) {
+
+		Graphs partialGraph = new Graphs();
+		if( component != null )
+			partialGraph.getRootComponents().add( component );
+
+		return findComponent( partialGraph, componentName );
+	}
+
+
+	/**
 	 * Inserts (if necessary) a child component.
 	 * @param child a child component (not null)
 	 * @param ancestor an ancestor component (not null)

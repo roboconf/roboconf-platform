@@ -19,21 +19,21 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.util.List;
 
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceAdd;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdStartInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdStopInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdUndeployInstance;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -95,13 +95,13 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, msg.getClass());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceDeploy) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) msg).getInstancePath());
 
 		// There is no component directory, so 0 file to send during this test
-		Assert.assertEquals( 0, ((MsgCmdInstanceDeploy) msg).getFileNameToFileContent().size());
+		Assert.assertEquals( 0, ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent().size());
 	}
 
 
@@ -130,13 +130,13 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, msg.getClass());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceDeploy) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) msg).getInstancePath());
 
 		// There is no component directory, so 0 file to send during this test
-		Assert.assertEquals( 0, ((MsgCmdInstanceDeploy) msg).getFileNameToFileContent().size());
+		Assert.assertEquals( 0, ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent().size());
 	}
 
 
@@ -166,10 +166,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStart.class, msg.getClass());
+		Assert.assertEquals( MsgCmdStartInstance.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceStart) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdStartInstance) msg).getInstancePath());
 	}
 
 
@@ -198,10 +198,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStart.class, msg.getClass());
+		Assert.assertEquals( MsgCmdStartInstance.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceStart) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdStartInstance) msg).getInstancePath());
 	}
 
 
@@ -231,10 +231,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
+		Assert.assertEquals( MsgCmdStopInstance.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceStop) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdStopInstance) msg).getInstancePath());
 	}
 
 
@@ -263,10 +263,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
+		Assert.assertEquals( MsgCmdStopInstance.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceStop) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdStopInstance) msg).getInstancePath());
 	}
 
 
@@ -296,10 +296,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
+		Assert.assertEquals( MsgCmdUndeployInstance.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdUndeployInstance) msg).getInstancePath());
 	}
 
 
@@ -328,10 +328,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
+		Assert.assertEquals( MsgCmdUndeployInstance.class, msg.getClass());
 
 		String instancePath = InstanceHelpers.computeInstancePath( app.getMySql());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) msg).getInstancePath());
+		Assert.assertEquals( instancePath, ((MsgCmdUndeployInstance) msg).getInstancePath());
 	}
 
 
@@ -364,10 +364,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
-		Assert.assertEquals( MsgCmdInstanceAdd.class, msg.getClass());
+		Assert.assertEquals( MsgCmdAddInstance.class, msg.getClass());
 
-		Assert.assertNull(((MsgCmdInstanceAdd) msg).getParentInstancePath());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdInstanceAdd) msg).getInstanceToAdd());
+		Assert.assertNull(((MsgCmdAddInstance) msg).getParentInstancePath());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdAddInstance) msg).getInstanceToAdd());
 	}
 
 
@@ -586,35 +586,35 @@ public class Manager_LifeCycleTest {
 		List<Message> mySqlMessages = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm());
 		Assert.assertEquals( 3, mySqlMessages.size());
 
-		Assert.assertEquals( MsgCmdInstanceAdd.class, mySqlMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdInstanceAdd)mySqlMessages.get( 0 )).getInstanceToAdd());
-		Assert.assertNull(((MsgCmdInstanceAdd) mySqlMessages.get( 0 )).getParentInstancePath());
+		Assert.assertEquals( MsgCmdAddInstance.class, mySqlMessages.get( 0 ).getClass());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdAddInstance)mySqlMessages.get( 0 )).getInstanceToAdd());
+		Assert.assertNull(((MsgCmdAddInstance) mySqlMessages.get( 0 )).getParentInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, mySqlMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdInstanceDeploy) mySqlMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, mySqlMessages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) mySqlMessages.get( 1 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, mySqlMessages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdInstanceStart) mySqlMessages.get( 2 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, mySqlMessages.get( 2 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdStartInstance) mySqlMessages.get( 2 )).getInstancePath());
 
 		// Tomcat
 		List<Message> tomcatMessages = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm());
 		Assert.assertEquals( 5, tomcatMessages.size());
 
-		Assert.assertEquals( MsgCmdInstanceAdd.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdInstanceAdd) tomcatMessages.get( 0 )).getInstanceToAdd());
-		Assert.assertNull(((MsgCmdInstanceAdd) tomcatMessages.get( 0 )).getParentInstancePath());
+		Assert.assertEquals( MsgCmdAddInstance.class, tomcatMessages.get( 0 ).getClass());
+		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdAddInstance) tomcatMessages.get( 0 )).getInstanceToAdd());
+		Assert.assertNull(((MsgCmdAddInstance) tomcatMessages.get( 0 )).getParentInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, tomcatMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceDeploy) tomcatMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, tomcatMessages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStart) tomcatMessages.get( 2 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, tomcatMessages.get( 2 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdStartInstance) tomcatMessages.get( 2 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, tomcatMessages.get( 3 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceDeploy) tomcatMessages.get( 3 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 3 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 3 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, tomcatMessages.get( 4 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceStart) tomcatMessages.get( 4 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, tomcatMessages.get( 4 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdStartInstance) tomcatMessages.get( 4 )).getInstancePath());
 	}
 
 
@@ -643,21 +643,21 @@ public class Manager_LifeCycleTest {
 		List<Message> tomcatMessages = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm());
 		Assert.assertEquals( 5, tomcatMessages.size());
 
-		Assert.assertEquals( MsgCmdInstanceAdd.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdInstanceAdd) tomcatMessages.get( 0 )).getInstanceToAdd());
-		Assert.assertNull(((MsgCmdInstanceAdd) tomcatMessages.get( 0 )).getParentInstancePath());
+		Assert.assertEquals( MsgCmdAddInstance.class, tomcatMessages.get( 0 ).getClass());
+		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdAddInstance) tomcatMessages.get( 0 )).getInstanceToAdd());
+		Assert.assertNull(((MsgCmdAddInstance) tomcatMessages.get( 0 )).getParentInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, tomcatMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceDeploy) tomcatMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, tomcatMessages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStart) tomcatMessages.get( 2 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, tomcatMessages.get( 2 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdStartInstance) tomcatMessages.get( 2 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, tomcatMessages.get( 3 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceDeploy) tomcatMessages.get( 3 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 3 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 3 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, tomcatMessages.get( 4 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceStart) tomcatMessages.get( 4 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, tomcatMessages.get( 4 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdStartInstance) tomcatMessages.get( 4 )).getInstancePath());
 	}
 
 
@@ -682,17 +682,17 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 4, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceDeploy) msgClient.sentMessages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, msgClient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msgClient.sentMessages.get( 0 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, msgClient.sentMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStart) msgClient.sentMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, msgClient.sentMessages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdStartInstance) msgClient.sentMessages.get( 1 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, msgClient.sentMessages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceDeploy) msgClient.sentMessages.get( 2 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, msgClient.sentMessages.get( 2 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) msgClient.sentMessages.get( 2 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, msgClient.sentMessages.get( 3 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceStart) msgClient.sentMessages.get( 3 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, msgClient.sentMessages.get( 3 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdStartInstance) msgClient.sentMessages.get( 3 )).getInstancePath());
 	}
 
 
@@ -721,17 +721,17 @@ public class Manager_LifeCycleTest {
 		List<Message> tomcatMessages = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm());
 		Assert.assertEquals( 4, tomcatMessages.size());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceDeploy) tomcatMessages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 0 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 0 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, tomcatMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStart) tomcatMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, tomcatMessages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdStartInstance) tomcatMessages.get( 1 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, tomcatMessages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceDeploy) tomcatMessages.get( 2 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 2 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 2 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, tomcatMessages.get( 3 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdInstanceStart) tomcatMessages.get( 3 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, tomcatMessages.get( 3 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdStartInstance) tomcatMessages.get( 3 )).getInstancePath());
 	}
 
 
@@ -758,12 +758,12 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getMySqlVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()),((MsgCmdInstanceStop) msg).getInstancePath());
+		Assert.assertEquals( MsgCmdStopInstance.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()),((MsgCmdStopInstance) msg).getInstancePath());
 
 		msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msg).getInstancePath());
+		Assert.assertEquals( MsgCmdStopInstance.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdStopInstance) msg).getInstancePath());
 	}
 
 
@@ -789,8 +789,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msg).getInstancePath());
+		Assert.assertEquals( MsgCmdStopInstance.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdStopInstance) msg).getInstancePath());
 	}
 
 
@@ -816,8 +816,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceStop.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceStop) msg).getInstancePath());
+		Assert.assertEquals( MsgCmdStopInstance.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdStopInstance) msg).getInstancePath());
 	}
 
 
@@ -893,7 +893,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).size());
 
 		Message msg = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm()).get( 0 );
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, msg.getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdInstanceUndeploy) msg).getInstancePath());
+		Assert.assertEquals( MsgCmdUndeployInstance.class, msg.getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdUndeployInstance) msg).getInstancePath());
 	}
 }

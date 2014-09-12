@@ -21,11 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.dm.internal.TestApplication;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
@@ -37,10 +37,10 @@ import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceDeploy;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStart;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceStop;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdInstanceUndeploy;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdStartInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdStopInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdUndeployInstance;
 
 import org.junit.After;
 import org.junit.Before;
@@ -159,8 +159,8 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceDeploy) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
 	}
 
 
@@ -177,8 +177,8 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdInstanceStop.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceStop) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStopInstance.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdStopInstance) messages.get( 0 )).getInstancePath());
 	}
 
 
@@ -203,8 +203,8 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdInstanceUndeploy.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( instancePath, ((MsgCmdInstanceUndeploy) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdUndeployInstance.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdUndeployInstance) messages.get( 0 )).getInstancePath());
 	}
 
 
@@ -230,17 +230,17 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 4, messages.size());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdInstanceDeploy) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, messages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdInstanceStart) messages.get( 1 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, messages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdStartInstance) messages.get( 1 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceDeploy.class, messages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdInstanceDeploy) messages.get( 2 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 2 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdChangeInstanceState) messages.get( 2 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdInstanceStart.class, messages.get( 3 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdInstanceStart) messages.get( 3 )).getInstancePath());
+		Assert.assertEquals( MsgCmdStartInstance.class, messages.get( 3 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdStartInstance) messages.get( 3 )).getInstancePath());
 	}
 
 

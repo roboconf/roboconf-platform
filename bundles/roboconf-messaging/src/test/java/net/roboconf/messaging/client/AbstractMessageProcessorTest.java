@@ -18,6 +18,7 @@ package net.roboconf.messaging.client;
 
 import junit.framework.Assert;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 import org.junit.Test;
 
@@ -37,5 +38,9 @@ public class AbstractMessageProcessorTest {
 		};
 
 		Assert.assertEquals( "yo", processor.getName());
+		Assert.assertTrue( processor.hasNoMessage());
+
+		processor.storeMessage( new MsgCmdSendInstances());
+		Assert.assertFalse( processor.hasNoMessage());
 	}
 }
