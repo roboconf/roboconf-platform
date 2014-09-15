@@ -31,6 +31,7 @@ public class PluginMock implements PluginInterface {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String agentId;
+	private InstanceStatus currentState = InstanceStatus.NOT_DEPLOYED;
 
 
 
@@ -57,6 +58,7 @@ public class PluginMock implements PluginInterface {
 	public void deploy( Instance instance ) throws PluginException {
 		String name = instance != null ? instance.getName() : null;
 		this.logger.info( this.agentId + " is deploying instance " + name + "." );
+		this.currentState = InstanceStatus.DEPLOYED_STOPPED;
 	}
 
 
@@ -64,6 +66,7 @@ public class PluginMock implements PluginInterface {
 	public void start( Instance instance ) throws PluginException {
 		String name = instance != null ? instance.getName() : null;
 		this.logger.info( this.agentId + " is starting instance " + name + "." );
+		this.currentState = InstanceStatus.DEPLOYED_STARTED;
 	}
 
 
@@ -78,6 +81,7 @@ public class PluginMock implements PluginInterface {
 	public void stop( Instance instance ) throws PluginException {
 		String name = instance != null ? instance.getName() : null;
 		this.logger.info( this.agentId + " is stopping instance " + name + "." );
+		this.currentState = InstanceStatus.DEPLOYED_STOPPED;
 	}
 
 
@@ -85,5 +89,11 @@ public class PluginMock implements PluginInterface {
 	public void undeploy( Instance instance ) throws PluginException {
 		String name = instance != null ? instance.getName() : null;
 		this.logger.info( this.agentId + " is undeploying instance " + name + "." );
+		this.currentState = InstanceStatus.NOT_DEPLOYED;
+	}
+
+
+	public InstanceStatus getCurrentState() {
+		return this.currentState;
 	}
 }

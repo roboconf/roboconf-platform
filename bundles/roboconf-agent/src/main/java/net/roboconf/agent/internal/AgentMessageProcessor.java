@@ -227,6 +227,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.fine( "Setting the root instance." );
 			this.rootInstance = newRootInstance;
 			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.rootInstance ));
+
+			if( this.rootInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+				this.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.agent.getApplicationName(), newRootInstance ));
+			}
 		}
 
 		// Configure the messaging
@@ -427,7 +432,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			// Update the life cycle if necessary
 			PluginInterface plugin = this.agent.findPlugin( instance );
-			if( plugin != null )
+			if( plugin == null )
 				throw new PluginException( "No plugin was found for " + InstanceHelpers.computeInstancePath( instance ));
 
 			AbstractLifeCycleManager

@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.agent.internal.lifecycle.AbstractLifeCycleManager;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.model.helpers.ImportHelpers;
@@ -83,6 +82,11 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 		i1.getImports().clear();
 		lfm.updateStateFromImports( i1, plugin, null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
+
+		// Imports update does nothing on a stopped instance
+		i1.setStatus( InstanceStatus.DEPLOYED_STOPPED );
+		lfm.updateStateFromImports( i1, plugin, null, InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, i1.getStatus());
 	}
 
 

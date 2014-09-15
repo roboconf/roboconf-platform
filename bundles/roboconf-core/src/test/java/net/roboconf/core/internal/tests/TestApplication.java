@@ -50,9 +50,15 @@ public class TestApplication extends Application {
 		this.tomcat = new Instance( "tomcat-server" ).component( tomcatComponent );
 
 		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" ).alias( "A database" );
+		mySqlComponent.getExportedVariables().put( "mysql.port", "3306" );
+		mySqlComponent.getExportedVariables().put( "mysql.ip", null );
 		this.mySql = new Instance( "mysql-server" ).component( mySqlComponent );
 
 		Component warComponent = new Component( "war" ).installerName( "bash" ).alias( "A WAR application" );
+		warComponent.getExportedVariables().put( "war.port", "8080" );
+		warComponent.getExportedVariables().put( "war.ip", null );
+		warComponent.getImportedVariables().put( "mysql.port", false );
+		warComponent.getImportedVariables().put( "mysql.ip", false );
 		this.war = new Instance( "hello-world" ).component( warComponent );
 
 		// Make the glue

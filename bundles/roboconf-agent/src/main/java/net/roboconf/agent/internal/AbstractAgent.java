@@ -23,9 +23,9 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.IAgent;
 import net.roboconf.agent.internal.misc.AgentConstants;
-import net.roboconf.agent.internal.misc.AgentUtils;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
@@ -48,14 +48,14 @@ public abstract class AbstractAgent implements IAgent {
 	// Component properties (ipojo)
 	protected String messageServerIp, messageServerUsername, messageServerPassword;
 	protected String applicationName, rootInstanceName, ipAddress, iaasType;
-	protected boolean overrideProperties = true;
+	protected boolean overrideProperties = false;
 
 	// Internal fields
 	protected final Logger logger;
-	protected IAgentClient messagingClient;
 	protected MessageServerClientFactory factory = new MessageServerClientFactory();
 
 	final AgentMessageProcessor messageProcessor;
+	IAgentClient messagingClient;
 	Timer heartBeatTimer;
 	boolean running = false;
 
@@ -98,25 +98,33 @@ public abstract class AbstractAgent implements IAgent {
 	public void stop() {
 
 		this.logger.fine( "Agent " + getAgentId() + " is being stopped." );
-		try {
-			if( this.heartBeatTimer != null )
-				this.heartBeatTimer.cancel();
+		if( this.heartBeatTimer != null )
+			this.heartBeatTimer.cancel();
 
+		try {
+			// Send a message to the DM.
+			// We cannot consider the agent to be stopped if this message is not sent.
 			if( this.messagingClient != null
 					&& this.messagingClient.isConnected()) {
 
 				this.messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.rootInstanceName ));
-				this.messagingClient.closeConnection();
-			}
+				this.logger.fine( "Agent " + getAgentId() + " notified the DM it was about to stop." );
 
-			this.logger.fine( "Agent " + getAgentId() + " was successfully stopped." );
+				// We can ignore errors when we disconnect the agent's client.
+				// We can thus consider it is stopped.
+				this.running = false;
+
+				this.messagingClient.closeConnection();
+				this.logger.fine( "Agent " + getAgentId() + " was successfully stopped." );
+
+			} else {
+				this.running = false;
+			}
 
 		} catch( IOException e ) {
 			this.logger.severe( e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
-
-		this.running = false;
 	}
 
 
@@ -153,11 +161,11 @@ public abstract class AbstractAgent implements IAgent {
 
 			AgentProperties props = null;
 			if( AgentConstants.PLATFORM_AZURE.equals( this.iaasType ))
-				props = AgentUtils.findParametersForAzure( this.logger );
+				props = UserDataUtils.findParametersForAzure( this.logger );
 
 			else if( AgentConstants.PLATFORM_EC2.equals( this.iaasType )
 					|| AgentConstants.PLATFORM_OPENSTACK.equals( this.iaasType ))
-				props = AgentUtils.findParametersForAmazonOrOpenStack( this.logger );
+				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
 
 			String s;
 			if( props != null ) {
@@ -315,7 +323,7 @@ public abstract class AbstractAgent implements IAgent {
 	/**
 	 * @return the agent's ID (a human-readable identifier)
 	 */
-	private String getAgentId() {
+	String getAgentId() {
 		return this.rootInstanceName + " @ " + this.applicationName;
 	}
 }

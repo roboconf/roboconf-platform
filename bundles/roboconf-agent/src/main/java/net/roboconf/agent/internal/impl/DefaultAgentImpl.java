@@ -31,6 +31,16 @@ public class DefaultAgentImpl extends AbstractAgent implements IAgent {
 	protected PluginInterface[] plugins;
 
 
+
+	/**
+	 * Constructor.
+	 */
+	public DefaultAgentImpl() {
+		super();
+		this.overrideProperties = true;
+	}
+
+
 	/**
 	 * Finds the right plug-in for an instance.
 	 * <p>
@@ -45,7 +55,9 @@ public class DefaultAgentImpl extends AbstractAgent implements IAgent {
 	public PluginInterface findPlugin( Instance instance ) {
 
 		PluginInterface result = null;
-		String installerName = instance.getComponent().getInstallerName();
+		String installerName = null;
+		if( instance.getComponent() != null )
+			installerName = instance.getComponent().getInstallerName();
 
 		// Run through available plug-ins
 		if( this.plugins != null ) {
@@ -59,10 +71,18 @@ public class DefaultAgentImpl extends AbstractAgent implements IAgent {
 
 		// Initialize the result, if any
 		if( result == null )
-			this.logger.severe( "No plugin was found for instance " + instance.getName() + " with installer " + installerName + "." );
+			this.logger.severe( "No plugin was found for instance '" + instance.getName() + "' with installer '" + installerName + "'." );
 		else
 			result.setNames( this.applicationName, this.rootInstanceName );
 
 		return result;
+	}
+
+
+	/**
+	 * @param plugins the plugins to set
+	 */
+	void setPlugins( PluginInterface[] plugins ) {
+		this.plugins = plugins;
 	}
 }

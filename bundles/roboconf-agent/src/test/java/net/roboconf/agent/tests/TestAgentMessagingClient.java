@@ -34,6 +34,8 @@ public class TestAgentMessagingClient implements IAgentClient {
 	public final List<Message> messagesForTheDm = new ArrayList<Message> ();
 	public AtomicInteger messagesForAgentsCount = new AtomicInteger();
 
+	private boolean connected = false;
+
 
 
 	@Override
@@ -43,18 +45,17 @@ public class TestAgentMessagingClient implements IAgentClient {
 
 	@Override
 	public boolean isConnected() {
-		return true;
+		return this.connected;
 	}
 
 	@Override
 	public void openConnection( AbstractMessageProcessor messageProcessor ) throws IOException {
-		// nothing
-
+		this.connected = true;
 	}
 
 	@Override
 	public void closeConnection() throws IOException {
-		// nothing
+		this.connected = false;
 	}
 
 	@Override

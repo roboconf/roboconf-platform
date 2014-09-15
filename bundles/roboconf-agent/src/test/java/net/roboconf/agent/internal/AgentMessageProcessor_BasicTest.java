@@ -27,6 +27,7 @@ import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
+import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
@@ -134,6 +135,11 @@ public class AgentMessageProcessor_BasicTest {
 			public void closeConnection() throws IOException {
 				throw new IOException( "For tests." );
 			}
+
+			@Override
+			public boolean isConnected() {
+				return true;
+			}
 		};
 
 		processor.configure();
@@ -217,6 +223,7 @@ public class AgentMessageProcessor_BasicTest {
 		// Insert a root
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, client.messagesForAgentsCount.get());
 
 		// We cannot change the root
@@ -225,6 +232,16 @@ public class AgentMessageProcessor_BasicTest {
 
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcat()));
 		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
+
+		// Make sure the final state of the root instance is always "deployed and started"
+		processor.rootInstance = null;
+		client.messagesForAgentsCount.set( 0 );
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, client.messagesForAgentsCount.get());
 	}
 
 
@@ -300,5 +317,36 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getMySql()),
 				((MsgNotifInstanceRemoved) client.messagesForTheDm.get( 1 )).getInstancePath());
+	}
+
+
+	@Test
+	public void testUnknownMessage() {
+
+		AbstractAgent agent = new InMemoryAgentImpl();
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		processor.setMessagingClient( new TestAgentMessagingClient());
+
+		processor.processMessage( new Message() {
+			private static final long serialVersionUID = -3312628850227527510L;
+		});
+	}
+
+
+	@Test
+	public void checkIoExceptionsAreHandled() {
+
+		AbstractAgent agent = new InMemoryAgentImpl();
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		processor.setMessagingClient( new TestAgentMessagingClient() {
+			@Override
+			public void sendMessageToTheDm( Message message ) throws IOException {
+				throw new IOException();
+			}
+		});
+
+		processor.rootInstance = new TestApplication().getMySqlVm();
+		processor.processMessage( new MsgCmdSendInstances());
+		// The processor won't be able to send the model through the messaging.
 	}
 }
