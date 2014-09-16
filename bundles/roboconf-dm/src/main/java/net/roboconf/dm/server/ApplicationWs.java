@@ -32,12 +32,11 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
-import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.rest.api.ApplicationAction;
 import net.roboconf.dm.rest.api.IApplicationWs;
 import net.roboconf.iaas.api.IaasException;
 
@@ -53,55 +52,28 @@ public class ApplicationWs implements IApplicationWs {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.api.IApplicationWs
-	 * #perform(java.lang.String, java.lang.String, java.lang.String)
+	 * #changeInstanceState(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public Response perform( String applicationName, String actionAS, String instancePath ) {
+	public Response changeInstanceState( String applicationName, String newState, String instancePath ) {
 
-		this.logger.fine( "Request: perform action '" + actionAS + "' in " + applicationName + ", instance " + instancePath + "." );
-		Response response;
+		this.logger.fine( "Request: change state of " + instancePath + " to '" + newState + "' in " + applicationName + "." );
+		Response response = Response.ok().build();
 		try {
 			ManagedApplication ma;
 			Instance instance;
-			ApplicationAction action = ApplicationAction.whichAction( actionAS );
-			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null )
+			InstanceStatus newStatus = InstanceStatus.valueOf( newState );
+			if( newStatus == null )
+				response = Response.status( Status.FORBIDDEN ).entity( "Status '" + newState + "' does not exist." ).build();
+
+			else if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
 
-			else if( action == ApplicationAction.DEPLOY ) {
-				if( instance.getParent() == null )
-					Manager.INSTANCE.deployRoot( ma, instance );
-				else
-					Manager.INSTANCE.deploy( ma, instance );
-				response = Response.ok().build();
-
-			} else if( action == ApplicationAction.START ) {
-				Manager.INSTANCE.start( ma, instance );
-				response = Response.ok().build();
-
-			} else if( action == ApplicationAction.STOP ) {
-				Manager.INSTANCE.stop( ma, instance );
-				response = Response.ok().build();
-
-			} else if( action == ApplicationAction.UNDEPLOY ) {
-				if( instance.getParent() == null )
-					Manager.INSTANCE.undeployRoot( ma, instance );
-				else
-					Manager.INSTANCE.undeploy( ma, instance );
-				response = Response.ok().build();
-
-			} else if( action == ApplicationAction.REMOVE ) {
-				Manager.INSTANCE.removeInstance( ma, instance );
-				response = Response.ok().build();
-
-			} else {
-				response = Response.status( Status.BAD_REQUEST ).entity( "Invalid action: " + actionAS ).build();
-			}
-
-		} catch( UnauthorizedActionException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			else
+				Manager.INSTANCE.changeInstanceState( ma, instance, newStatus );
 
 		} catch( IOException e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
@@ -167,7 +139,7 @@ public class ApplicationWs implements IApplicationWs {
 				response = Response.ok().build();
 			}
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 

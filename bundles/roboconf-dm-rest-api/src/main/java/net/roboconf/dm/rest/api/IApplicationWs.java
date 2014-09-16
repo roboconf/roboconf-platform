@@ -30,6 +30,7 @@ import javax.ws.rs.core.Response;
 
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.rest.UrlConstants;
 
 /**
@@ -47,16 +48,16 @@ public interface IApplicationWs {
 
 
 	/**
-	 * Performs an action on an instance of an application.
+	 * Changes the state of an instance for a given application.
 	 * @param applicationName the application name
-	 * @param action see {@link ApplicationAction}
+	 * @param newState the new state (see {@link InstanceStatus})
 	 * @param instancePath the instance pat (not null)
 	 * @return a response
 	 */
 	@POST
-	@Path( "/{action}" )
+	@Path( "/change-state" )
 	@Consumes( MediaType.APPLICATION_JSON )
-	Response perform( @PathParam("name") String applicationName, @PathParam("action") String action, @QueryParam("instance-path") String instancePath );
+	Response changeInstanceState( @PathParam("name") String applicationName, @QueryParam("new-state") String newState, @QueryParam("instance-path") String instancePath );
 
 
 	/**

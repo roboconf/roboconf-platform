@@ -19,25 +19,22 @@ package net.roboconf.iaas.docker.internal;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.iaas.api.IaasException;
+import net.roboconf.iaas.api.IaasInterface;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.core.DockerClientImpl;
 
-import net.roboconf.iaas.api.IaasException;
-import net.roboconf.iaas.api.IaasInterface;
-import net.roboconf.iaas.docker.internal.DockerConstants;
-
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
 public class IaasDocker implements IaasInterface {
 
-	private Logger logger;
-
+	private final Logger logger;
 	private String machineImageId;
-	private Map<String, String> iaasProperties;
 	private DockerClient docker;
 
 	/**
@@ -48,11 +45,14 @@ public class IaasDocker implements IaasInterface {
 	}
 
 
-	/**
-	 * @param logger the logger to set
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.iaas.api.IaasInterface
+	 * #getIaasType()
 	 */
-	public void setLogger( Logger logger ) {
-		this.logger = logger;
+	@Override
+	public String getIaasType() {
+		return "docker";
 	}
 
 
@@ -62,25 +62,25 @@ public class IaasDocker implements IaasInterface {
 	 * #setIaasProperties(net.roboconf.iaas.api.IaasProperties)
 	 */
 	@Override
-	public void setIaasProperties(Map<String, String> iaasProperties) throws IaasException {
+	public void setIaasProperties( Map<String, String> iaasProperties ) throws IaasException {
 
-		this.iaasProperties = iaasProperties;
-		if((this.machineImageId = iaasProperties.get(DockerConstants.IMAGE_ID)) == null) {
-			throw new IaasException(DockerConstants.IMAGE_ID + " is missing!");
-		}
+		if((this.machineImageId = iaasProperties.get(DockerConstants.IMAGE_ID)) == null)
+			throw new IaasException(DockerConstants.IMAGE_ID + " is missing.");
 
 		String endpoint = iaasProperties.get(DockerConstants.ENDPOINT);
-		
 		DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
-		if(endpoint != null) config.withUri(endpoint);
+		if(endpoint != null)
+			config.withUri(endpoint);
 
 		String username = iaasProperties.get(DockerConstants.USER);
 		if(username != null) {
 			String password = iaasProperties.get(DockerConstants.PASSWORD);
-			if(password == null) password = "";
 			String email = iaasProperties.get(DockerConstants.EMAIL);
-			if(email == null) email = "";
-			
+			if(password == null)
+				password = "";
+			if(email == null)
+				email = "";
+
 			config.withUsername(username);
 			config.withPassword(password);
 			config.withEmail(email);
@@ -116,7 +116,7 @@ public class IaasDocker implements IaasInterface {
 
 		this.docker.startContainerCmd(container.getId()).exec();
 		//this.docker.waitContainerCmd(container.getId()).exec();
-		
+
 		return container.getId();
 	}
 
@@ -130,9 +130,9 @@ public class IaasDocker implements IaasInterface {
 		try {
 			this.docker.killContainerCmd(instanceId).exec();
 			this.docker.removeContainerCmd(instanceId).exec();
+
 		} catch(Exception e) {
 			throw new IaasException(e);
 		}
 	}
-
 }

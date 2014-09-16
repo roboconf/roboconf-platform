@@ -25,8 +25,8 @@ import javax.ws.rs.core.Response.Status.Family;
 
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.rest.UrlConstants;
-import net.roboconf.dm.rest.api.ApplicationAction;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 
 import com.sun.jersey.api.client.ClientResponse;
@@ -54,7 +54,7 @@ public class ApplicationWsDelegate {
 
 
 	/**
-	 * Performs an action on a single instance.
+	 * Changes the state of an instance.
 	 * <p>
 	 * Notice that these actions, like of most of the others, are performed asynchronously.
 	 * It means invoking these REST operations is equivalent to submitting a request. How it
@@ -62,18 +62,21 @@ public class ApplicationWsDelegate {
 	 * </p>
 	 *
 	 * @param applicationName the application name
-	 * @param action the action to perform
+	 * @param newStatus the new state of the instance
 	 * @param instancePath the instance path (not null)
 	 * @throws ApplicationException if something went wrong
 	 */
-	public void perform( String applicationName, ApplicationAction action, String instancePath )
+	public void changeInstanceState( String applicationName, InstanceStatus newStatus, String instancePath )
 	throws ApplicationException {
 
-		this.logger.finer( "Performing action '" + action + "' in " + applicationName + " from instance = " + instancePath  );
+		this.logger.finer( "Changing state of " + instancePath + " to '" + newStatus + "' in " + applicationName + "."  );
 
-		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( String.valueOf( action ));
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "change-state" );
 		if( instancePath != null )
 			path = path.queryParam( "instance-path", instancePath );
+
+		if( newStatus != null )
+			path = path.queryParam( "new-state", newStatus.toString());
 
 		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {

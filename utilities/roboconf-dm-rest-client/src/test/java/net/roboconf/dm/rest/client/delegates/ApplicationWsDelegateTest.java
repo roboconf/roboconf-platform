@@ -26,21 +26,18 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.TestIaasResolver;
 import net.roboconf.dm.internal.TestMessageServerClient;
 import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.ManagerConfiguration;
-import net.roboconf.dm.rest.api.ApplicationAction;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdStartInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdStopInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdUndeployInstance;
 
 import org.junit.After;
 import org.junit.Before;
@@ -106,39 +103,39 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 
 	@Test( expected = ApplicationException.class )
-	public void testPerform_inexistingApplication() throws Exception {
-		this.client.getApplicationDelegate().perform( "inexisting", ApplicationAction.DEPLOY, null );
+	public void testChangeInstanceStatet_inexistingApplication() throws Exception {
+		this.client.getApplicationDelegate().changeInstanceState( "inexisting", InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testPerform_inexistingInstance_null() throws Exception {
-		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.DEPLOY, null );
+	public void testChangeInstanceStatet_inexistingInstance_null() throws Exception {
+		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testPerform_inexistingInstance() throws Exception {
-		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.DEPLOY, "/bip/bip" );
+	public void testChangeInstanceStatet_inexistingInstance() throws Exception {
+		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, "/bip/bip" );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testPerform_invalidAction() throws Exception {
-		this.client.getApplicationDelegate().perform( this.app.getName(), null, null );
+	public void testChangeInstanceStatet_invalidState() throws Exception {
+		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), null, null );
 	}
 
 
 	@Test
-	public void testPerform_deployRoot_success() throws Exception {
+	public void testChangeInstanceStatet_deployRoot_success() throws Exception {
 
 		TestIaasResolver iaasResolver = new TestIaasResolver();
 		Manager.INSTANCE.setIaasResolver( iaasResolver );
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		this.client.getApplicationDelegate().perform(
+		this.client.getApplicationDelegate().changeInstanceState(
 				this.app.getName(),
-				ApplicationAction.DEPLOY,
+				InstanceStatus.DEPLOYED_STARTED,
 				InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
 
 		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
@@ -147,14 +144,14 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 
 	@Test
-	public void testPerform_deploy_success() throws Exception {
+	public void testChangeInstanceStatet_deploy_success() throws Exception {
 
 		TestMessageServerClient msgClient = (TestMessageServerClient) Manager.INSTANCE.getMessagingClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
-		this.client.getApplicationDelegate().perform( this.app.getName(), ApplicationAction.DEPLOY, instancePath );
+		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, instancePath );
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
@@ -177,8 +174,9 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdStopInstance.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( instancePath, ((MsgCmdStopInstance) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) messages.get( 0 )).getNewState());
 	}
 
 
@@ -203,8 +201,9 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdUndeployInstance.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( instancePath, ((MsgCmdUndeployInstance) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) messages.get( 0 )).getNewState());
 	}
 
 
@@ -228,19 +227,13 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
-		Assert.assertEquals( 4, messages.size());
+		Assert.assertEquals( 2, messages.size());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
 
-		Assert.assertEquals( MsgCmdStartInstance.class, messages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getTomcat()), ((MsgCmdStartInstance) messages.get( 1 )).getInstancePath());
-
-		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 2 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdChangeInstanceState) messages.get( 2 )).getInstancePath());
-
-		Assert.assertEquals( MsgCmdStartInstance.class, messages.get( 3 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdStartInstance) messages.get( 3 )).getInstancePath());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( this.app.getWar()), ((MsgCmdChangeInstanceState) messages.get( 1 )).getInstancePath());
 	}
 
 

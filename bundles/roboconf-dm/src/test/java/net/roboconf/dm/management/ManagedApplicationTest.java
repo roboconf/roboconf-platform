@@ -25,9 +25,9 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdStopInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdUndeployInstance;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -87,20 +87,20 @@ public class ManagedApplicationTest {
 
 		Instance childInstance = new Instance( "child" );
 		InstanceHelpers.insertChild( rootInstance, childInstance );
-		this.ma.storeAwaitingMessage( childInstance, new MsgCmdStopInstance( childInstance ));
+		this.ma.storeAwaitingMessage( childInstance, new MsgCmdAddInstance( childInstance ));
 		Assert.assertEquals( 1, this.ma.rootInstanceToAwaitingMessages.size());
 
 		Assert.assertEquals( 2, messages.size());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdStopInstance.class, messages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdAddInstance.class, messages.get( 1 ).getClass());
 
 		childInstance.setParent( null );
-		this.ma.storeAwaitingMessage( childInstance, new MsgCmdUndeployInstance( childInstance ));
+		this.ma.storeAwaitingMessage( childInstance, new MsgCmdRemoveInstance( childInstance ));
 		Assert.assertEquals( 2, this.ma.rootInstanceToAwaitingMessages.size());
 
 		messages = this.ma.rootInstanceToAwaitingMessages.get( childInstance );
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdUndeployInstance.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 0 ).getClass());
 	}
 
 
@@ -139,10 +139,10 @@ public class ManagedApplicationTest {
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 1 ).getClass());
 		Assert.assertEquals( 0, this.ma.rootInstanceToAwaitingMessages.size());
 
-		this.ma.storeAwaitingMessage( rootInstance, new MsgCmdUndeployInstance( rootInstance ));
+		this.ma.storeAwaitingMessage( rootInstance, new MsgCmdRemoveInstance( rootInstance ));
 		messages = this.ma.rootInstanceToAwaitingMessages.get( rootInstance );
 		Assert.assertEquals( 1, messages.size());
-		Assert.assertEquals( MsgCmdUndeployInstance.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 0 ).getClass());
 	}
 
 

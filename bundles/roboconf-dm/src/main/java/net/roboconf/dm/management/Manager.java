@@ -411,186 +411,37 @@ public final class Manager {
 
 
 	/**
-	 * Deploys an instance.
+	 * Changes the state of an instance.
 	 * @param ma the managed application
-	 * @param instance the instance to deploy (not null)
+	 * @param instance the instance whose state must be updated
+	 * @param newStatus the new status
 	 * @throws IOException if an error occurred with the messaging
+	 * @throws IaasException if an error occurred with a IaaS
 	 */
-	public void deploy( ManagedApplication ma, Instance instance ) throws IOException {
+	public void changeInstanceState( ManagedApplication ma, Instance instance, InstanceStatus newStatus )
+	throws IOException, IaasException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.logger.fine( "Deploying " + instancePath + " in " + ma.getName() + "..." );
-		if( instance.getParent() != null ) {
+		this.logger.fine( "Changing state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 
-			Map<String,byte[]> instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
-			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, instanceResources );
-			send( ma, message, instance );
-			this.logger.fine( "A message was (or will be) sent to the agent to deploy " + instancePath + " in " + ma.getName() + "." );
+		if( instance.getParent() == null ) {
+			if( ( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED || instance.getStatus() == InstanceStatus.DEPLOYING )
+					&& newStatus == InstanceStatus.NOT_DEPLOYED )
+				undeployRoot( ma, instance );
 
-		} else {
-			this.logger.fine( "Deploy action for " + instancePath + " is cancelled in " + ma.getName() + "." );
-		}
-	}
-
-
-	/**
-	 * Starts an instance.
-	 * @param ma the managed application
-	 * @param instance the instance to start (not null)
-	 * @throws IOException if an error occurred with the messaging
-	 */
-	public void start( ManagedApplication ma, Instance instance ) throws IOException {
-
-		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.logger.fine( "Starting " + instancePath + " in " + ma.getName() + "..." );
-		if( instance.getParent() != null ) {
-			MsgCmdStartInstance message = new MsgCmdStartInstance( instance );
-			send( ma, message, instance );
-			this.logger.fine( "A message was (or will be) sent to the agent to start " + instancePath + " in " + ma.getName() + "." );
+			else if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED
+					&& newStatus == InstanceStatus.DEPLOYED_STARTED )
+				deployRoot( ma, instance );
 
 		} else {
-			this.logger.fine( "Start action for " + instancePath + " is cancelled in " + ma.getName() + "." );
-		}
-	}
+			Map<String,byte[]> instanceResources = null;
+			if( newStatus == InstanceStatus.DEPLOYED_STARTED
+					|| newStatus == InstanceStatus.DEPLOYED_STOPPED )
+				instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
 
-
-	/**
-	 * Stops an instance.
-	 * @param ma the managed application
-	 * @param instance the instance to stop (not null)
-	 * @throws IOException if an error occurred with the messaging
-	 */
-	public void stop( ManagedApplication ma, Instance instance ) throws IOException {
-
-		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.logger.fine( "Stopping " + instancePath + " in " + ma.getName() + "..." );
-		if( instance.getParent() != null ) {
-			MsgCmdStopInstance message = new MsgCmdStopInstance( instance );
+			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, newStatus, instanceResources );
 			send( ma, message, instance );
-			this.logger.fine( "A message was (or will be) sent to the agent to stop " + instancePath + " in " + ma.getName() + "." );
-
-		} else {
-			this.logger.fine( "Stop action for " + instancePath + " is cancelled in " + ma.getName() + "." );
-		}
-	}
-
-
-	/**
-	 * Undeploys an instance.
-	 * @param ma the managed application
-	 * @param instance the instance to undeploy (not null)
-	 * @throws IOException if an error occurred with the messaging
-	 */
-	public void undeploy( ManagedApplication ma, Instance instance ) throws IOException {
-
-		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.logger.fine( "Undeploying " + instancePath + " in " + ma.getName() + "..." );
-		if( instance.getParent() != null ) {
-			MsgCmdUndeployInstance message = new MsgCmdUndeployInstance( instance );
-			send( ma, message, instance );
-			this.logger.fine( "A message was (or will be) sent to the agent to undeploy " + instancePath + " in " + ma.getName() + "." );
-
-		} else {
-			this.logger.fine( "Undeploy action for " + instancePath + " is cancelled in " + ma.getName() + "." );
-		}
-	}
-
-
-	/**
-	 * Deploys a root instance.
-	 * @param ma the managed application
-	 * @param rootInstance the instance to deploy (not null)
-	 * @throws IOException if an error occurred with the messaging
-	 * @throws IaasException if an error occurred with the IaaS
-	 */
-	public void deployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
-
-		this.logger.fine( "Deploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
-		if( rootInstance.getParent() != null ) {
-			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
-			return;
-		}
-
-		// If the VM creation was already requested, then its machine ID has already been set.
-		// It does not mean the VM is already created, it may take some time.
-		String machineId = rootInstance.getData().get( Instance.MACHINE_ID );
-		if( machineId != null ) {
-			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
-			return;
-		}
-
-		try {
-			rootInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( rootInstance );
-			send( ma, msg, rootInstance );
-
-			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );
-			machineId = iaasInterface.createVM(
-					this.configuration.getMessageServerIp(),
-					this.configuration.getMessageServerUsername(),
-					this.configuration.getMessageServerPassword(),
-					rootInstance.getName(),
-					ma.getApplication().getName());
-
-			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
-			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
-
-		} catch( IaasException e ) {
-			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
-
-			rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
-			throw e;
-
-		} finally {
-			saveConfiguration( ma );
-		}
-	}
-
-
-	/**
-	 * Undeploys a root instance.
-	 * @param ma the managed application
-	 * @param rootInstance the instance to undeploy (not null)
-	 * @throws IOException if an error occurred with the messaging
-	 * @throws IaasException if an error occurred with the IaaS
-	 */
-	public void undeployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
-
-		this.logger.fine( "Undeploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
-		if( rootInstance.getParent() != null ) {
-			this.logger.fine( "Undeploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
-			return;
-		}
-
-		try {
-			// Terminate the machine
-			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
-			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );
-			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
-			if( machineId != null )
-				iaasInterface.terminateVM( machineId );
-
-			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
-			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
-				i.setStatus( InstanceStatus.NOT_DEPLOYED );
-				// DM won't send old imports upon restart...
-				i.getImports().clear();
-			}
-
-			// Remove useless data for the configuration backup
-			rootInstance.getData().clear();
-			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
-
-		} catch( IaasException e ) {
-			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
-
-			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-			throw e;
-
-		} finally {
-			saveConfiguration( ma );
+			this.logger.fine( "A message was (or will be) sent to the agent to change the state of " + instancePath + " in " + ma.getName() + "." );
 		}
 	}
 
@@ -617,13 +468,10 @@ public final class Manager {
 
 		for( Instance initialInstance : initialInstances ) {
 			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance )) {
-				if( i.getParent() == null ) {
+				if( i.getParent() == null )
 					deployRoot( ma, i );
-
-				} else {
-					deploy( ma, i );
-					start( ma, i );
-				}
+				else
+					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STARTED );
 			}
 		}
 	}
@@ -639,8 +487,10 @@ public final class Manager {
 	 * </p>
 	 *
 	 * @throws IOException if a problem occurred with the messaging
+	 * @throws IaasException if a problem occurred with a IaaS
 	 */
-	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException {
+	public void stopAll( ManagedApplication ma, Instance instance )
+	throws IOException, IaasException {
 
 		Collection<Instance> initialInstances;
 		if( instance != null )
@@ -651,9 +501,9 @@ public final class Manager {
 		// We do not need to stop all the instances, just the first children
 		for( Instance initialInstance : initialInstances ) {
 			if( initialInstance.getParent() != null )
-				stop( ma, initialInstance );
+				changeInstanceState( ma, initialInstance, InstanceStatus.DEPLOYED_STOPPED );
 			else for( Instance i : initialInstance.getChildren())
-				stop( ma, i );
+				changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STOPPED );
 		}
 	}
 
@@ -681,7 +531,7 @@ public final class Manager {
 		// We do not need to undeploy all the instances, just the first instance
 		for( Instance initialInstance : initialInstances ) {
 			if( initialInstance.getParent() != null )
-				undeploy( ma, initialInstance );
+				changeInstanceState( ma, initialInstance, InstanceStatus.NOT_DEPLOYED );
 			else
 				undeployRoot( ma, initialInstance );
 		}
@@ -742,6 +592,105 @@ public final class Manager {
 				sb.append( " " + warning.getDetails());
 
 			this.logger.warning( sb.toString());
+		}
+	}
+
+
+	/**
+	 * Deploys a root instance.
+	 * @param ma the managed application
+	 * @param rootInstance the instance to deploy (not null)
+	 * @throws IOException if an error occurred with the messaging
+	 * @throws IaasException if an error occurred with the IaaS
+	 */
+	void deployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
+
+		this.logger.fine( "Deploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
+		if( rootInstance.getParent() != null ) {
+			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
+			return;
+		}
+
+		// If the VM creation was already requested, then its machine ID has already been set.
+		// It does not mean the VM is already created, it may take some time.
+		String machineId = rootInstance.getData().get( Instance.MACHINE_ID );
+		if( machineId != null ) {
+			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
+			return;
+		}
+
+		try {
+			rootInstance.setStatus( InstanceStatus.DEPLOYING );
+			MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( rootInstance );
+			send( ma, msg, rootInstance );
+
+			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );
+			machineId = iaasInterface.createVM(
+					this.configuration.getMessageServerIp(),
+					this.configuration.getMessageServerUsername(),
+					this.configuration.getMessageServerPassword(),
+					rootInstance.getName(),
+					ma.getApplication().getName());
+
+			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
+
+		} catch( IaasException e ) {
+			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+
+			rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
+			throw e;
+
+		} finally {
+			saveConfiguration( ma );
+		}
+	}
+
+
+	/**
+	 * Undeploys a root instance.
+	 * @param ma the managed application
+	 * @param rootInstance the instance to undeploy (not null)
+	 * @throws IOException if an error occurred with the messaging
+	 * @throws IaasException if an error occurred with the IaaS
+	 */
+	void undeployRoot( ManagedApplication ma, Instance rootInstance ) throws IaasException, IOException {
+
+		this.logger.fine( "Undeploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
+		if( rootInstance.getParent() != null ) {
+			this.logger.fine( "Undeploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
+			return;
+		}
+
+		try {
+			// Terminate the machine
+			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
+			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );
+			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
+			if( machineId != null )
+				iaasInterface.terminateVM( machineId );
+
+			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
+			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
+				i.setStatus( InstanceStatus.NOT_DEPLOYED );
+				// DM won't send old imports upon restart...
+				i.getImports().clear();
+			}
+
+			// Remove useless data for the configuration backup
+			rootInstance.getData().clear();
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
+
+		} catch( IaasException e ) {
+			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+
+			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+			throw e;
+
+		} finally {
+			saveConfiguration( ma );
 		}
 	}
 }
