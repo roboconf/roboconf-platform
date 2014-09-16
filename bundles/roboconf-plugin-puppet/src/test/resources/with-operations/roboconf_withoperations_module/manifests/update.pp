@@ -1,4 +1,4 @@
-class roboconf_withoperations_module::update($runningState = undef, $withinit = undef, $importAdded = undef, $importRemoved = undef) {
+class roboconf_withoperations_module::update($runningState = undef, $withinit = undef, $importAdded = undef, $importRemoved = undef, $importComponent = undef) {
 
   file{"/tmp/roboconf-test-for-puppet/WithOperations.tpl.update":
     ensure  => file,

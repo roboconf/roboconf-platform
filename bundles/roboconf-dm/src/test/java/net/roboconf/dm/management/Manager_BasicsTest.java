@@ -466,10 +466,11 @@ public class Manager_BasicsTest {
 
 		apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
 		Assert.assertEquals( InstanceStatus.PROBLEM, apache.getStatus());
-		Assert.assertEquals( 3, apache.getData().size());
+		Assert.assertEquals( 4, apache.getData().size());
 		Assert.assertEquals( "192.168.1.23", apache.getData().get( Instance.IP_ADDRESS ));
 		Assert.assertEquals( "my id", apache.getData().get( Instance.MACHINE_ID ));
 		Assert.assertEquals( "something", apache.getData().get( "whatever" ));
+		Assert.assertEquals( ma.getName(), apache.getData().get( Instance.APPLICATION_NAME ));
 	}
 
 

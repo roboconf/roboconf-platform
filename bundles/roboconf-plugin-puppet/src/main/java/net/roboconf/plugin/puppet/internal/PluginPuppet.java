@@ -192,8 +192,10 @@ public class PluginPuppet implements PluginInterface {
 	 * @param instance the instance
 	 * @throws IOException
 	 * @throws InterruptedException
+	 * @throws PluginException
 	 */
-	void installPuppetModules( Instance instance ) throws IOException, InterruptedException {
+	void installPuppetModules( Instance instance )
+	throws IOException, InterruptedException {
 
 		// Load the modules names
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(instance, getPluginName());
@@ -230,7 +232,10 @@ public class PluginPuppet implements PluginInterface {
 
 			String[] params = commands.toArray( new String[ 0 ]);
 			this.logger.fine( "Module installation: " + Arrays.toString( params ));
-			ProgramUtils.executeCommand( this.logger, commands, null );
+
+			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null );
+			if( exitCode != 0 )
+				throw new IOException( "Puppet modules could not be installed for " + instance + "." );
 		}
 	}
 
@@ -243,6 +248,8 @@ public class PluginPuppet implements PluginInterface {
 	 * @param importChanged The import that changed (added or removed) upon update
 	 * @param importAdded true if the changed import is added, false if it is removed
      * @param instanceDirectory where to find instance files
+   	 * @throws IOException if the puppet execution could not start
+	 * @throws InterruptedException if the Puppet execution was interrupted
 	 */
 	void callPuppetScript(
 			Instance instance,
@@ -291,6 +298,7 @@ public class PluginPuppet implements PluginInterface {
 		commands.add( "puppet" );
 		commands.add( "apply" );
 		commands.add( "--verbose" );
+		commands.add("--detailed-exitcodes");
 
 		String modpath = System.getenv("MODULEPATH");
 		if( modpath != null )
@@ -307,7 +315,27 @@ public class PluginPuppet implements PluginInterface {
 
 		String[] params = commands.toArray( new String[ 0 ]);
 		this.logger.fine( "Module installation: " + Arrays.toString( params ));
-		ProgramUtils.executeCommand( this.logger, commands, null );
+
+		// Execute Puppet.
+		// Puppet normalized exit codes to provide feedback about the execution.
+		// 0 or 2 => correct execution.
+		// 4 => errors during execution.
+		// 6 => changes were applied, but errors occurred too.
+		int exitCode = ProgramUtils.executeCommand( this.logger, commands, null );
+		switch( exitCode ) {
+		case 0:
+		case 2:
+			this.logger.fine( "Puppet script properly completed with exit code " + exitCode + " (success codes are 2 and 0)." );
+			break;
+
+		case 6:
+			this.logger.warning( "Puppet script completed with changes and errors (exit code 6)." );
+			break;
+
+		case 4:
+		default:
+			throw new IOException( "Puppet script execution failed (exit code " + exitCode + ")." );
+		}
 	}
 
 
@@ -353,6 +381,9 @@ public class PluginPuppet implements PluginInterface {
 			sb.append(", "
 					+ (importAdded ? "importAdded => {" : "importRemoved => {")
 					+ formatImport(importChanged) + "}");
+
+			String componentName = importChanged.getComponentName();
+			sb.append(", importComponent => " + (componentName != null ? componentName : "undef"));
 		}
 
 		sb.append("}");

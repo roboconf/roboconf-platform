@@ -207,6 +207,9 @@ public class ManagerConfigurationTest {
 		app.getMySqlVm().getData().put( Instance.MACHINE_ID, "xx45s5s645" );
 		app.getMySql().status( InstanceStatus.DEPLOYED_STOPPED );
 
+		app.getMySqlVm().getData().put( Instance.APPLICATION_NAME, app.getName());
+		app.getTomcatVm().getData().put( Instance.APPLICATION_NAME, app.getName());
+
 		ManagedApplication ma = new ManagedApplication( app, conf.findApplicationdirectory( app.getName()));
 		conf.saveInstances( ma );
 

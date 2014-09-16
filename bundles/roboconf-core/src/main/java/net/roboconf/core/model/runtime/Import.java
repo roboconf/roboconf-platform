@@ -38,6 +38,7 @@ public class Import implements Serializable {
 	private static final long serialVersionUID = 1926254974053785327L;
 
 	private final String instancePath;
+	private final String componentName;
 	private final Map<String,String> exportedVars = new HashMap<String,String> ();
 
 
@@ -47,16 +48,20 @@ public class Import implements Serializable {
 	 * @param exportedVars
 	 */
 	public Import( Instance instance ) {
-		this( InstanceHelpers.computeInstancePath( instance ), instance.getExports());
+		this(
+				InstanceHelpers.computeInstancePath( instance ),
+				(instance.getComponent() == null ? null : instance.getComponent().getName()),
+				instance.getExports());
 	}
 
 
 	/**
 	 * Constructor.
 	 * @param instancePath
+	 * @param componentName
 	 */
-	public Import( String instancePath ) {
-		this.instancePath = instancePath;
+	public Import( String instancePath, String componentName ) {
+		this( instancePath, componentName, null );
 	}
 
 
@@ -65,8 +70,9 @@ public class Import implements Serializable {
 	 * @param instancePath
 	 * @param exportedVars
 	 */
-	public Import( String instancePath, Map<String,String> exportedVars ) {
+	public Import( String instancePath, String componentName, Map<String,String> exportedVars ) {
 		this.instancePath = instancePath;
+		this.componentName = componentName;
 		if( exportedVars != null )
 			this.exportedVars.putAll( exportedVars );
 	}
@@ -85,6 +91,14 @@ public class Import implements Serializable {
 	 */
 	public String getInstancePath() {
 		return this.instancePath;
+	}
+
+
+	/**
+	 * @return the componentName
+	 */
+	public String getComponentName() {
+		return this.componentName;
 	}
 
 

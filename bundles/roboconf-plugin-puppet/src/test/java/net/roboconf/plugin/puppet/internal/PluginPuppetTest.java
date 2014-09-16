@@ -235,7 +235,11 @@ public class PluginPuppetTest {
 		Map<String,String> variables = new HashMap<String,String> ();
 		variables.put( "ip", "127.0.0.1" );
 
-		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STARTED );
+		this.plugin.update(
+				this.inst,
+				new Import( "/some/path", "component1", variables ),
+				InstanceStatus.DEPLOYED_STARTED );
+
 		checkGeneratedFiles( "WithInit", "" );	// UNDEF
 	}
 
@@ -293,7 +297,11 @@ public class PluginPuppetTest {
 		Map<String,String> variables = new HashMap<String,String> ();
 		variables.put( "ip", "127.0.0.1" );
 
-		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STOPPED );
+		this.plugin.update(
+				this.inst,
+				new Import( "/some/path", "component1", variables ),
+				InstanceStatus.DEPLOYED_STOPPED );
+
 		checkGeneratedFiles( "WithOperations", "update" );
 	}
 
@@ -343,7 +351,10 @@ public class PluginPuppetTest {
 		Map<String,String> variables = new HashMap<String,String> ();
 		variables.put( "ip", "127.0.0.1" );
 
-		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STARTED );
+		this.plugin.update(
+				this.inst,
+				new Import( "/some/path", "component1", variables ),
+				InstanceStatus.DEPLOYED_STARTED );
 	}
 
 
@@ -366,56 +377,56 @@ public class PluginPuppetTest {
 	}
 
 
-	// The next commented lines are unit tests for when a Puppet module execute a faling command.
-	// See https://github.com/roboconf/roboconf/issues/123
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_nonZeroCode_deploy() throws Exception {
 
-//	@Test( expected = PluginException.class )
-//	public void testPuppetPlugin_withInit_nonZeroCode_deploy() throws Exception {
-//
-//		Assume.assumeTrue( isLinuxSystem());
-//		copyResources( "/with-init-exit-1" );
-//		this.plugin.deploy( this.inst );
-//	}
-//
-//
-//	@Test( expected = PluginException.class )
-//	public void testPuppetPlugin_withInit_nonZeroCode_start() throws Exception {
-//
-//		Assume.assumeTrue( isLinuxSystem());
-//		copyResources( "/with-init-exit-1" );
-//		this.plugin.start( this.inst );
-//	}
-//
-//
-//	@Test( expected = PluginException.class )
-//	public void testPuppetPlugin_withInit_nonZeroCode_stop() throws Exception {
-//
-//		Assume.assumeTrue( isLinuxSystem());
-//		copyResources( "/with-init-exit-1" );
-//		this.plugin.stop( this.inst );
-//	}
-//
-//
-//	@Test( expected = PluginException.class )
-//	public void testPuppetPlugin_withInit_nonZeroCode_undeploy() throws Exception {
-//
-//		Assume.assumeTrue( isLinuxSystem());
-//		copyResources( "/with-init-exit-1" );
-//		this.plugin.undeploy( this.inst );
-//	}
-//
-//
-//	@Test( expected = PluginException.class )
-//	public void testPuppetPlugin_withInit_nonZeroCode_update() throws Exception {
-//
-//		Assume.assumeTrue( isLinuxSystem());
-//		copyResources( "/with-init-exit-1" );
-//
-//		Map<String,String> variables = new HashMap<String,String> ();
-//		variables.put( "ip", "127.0.0.1" );
-//
-//		this.plugin.update( this.inst, new Import( "/some/path", variables ), InstanceStatus.DEPLOYED_STARTED );
-//	}
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-exit-1" );
+		this.plugin.deploy( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_nonZeroCode_start() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-exit-1" );
+		this.plugin.start( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_nonZeroCode_stop() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-exit-1" );
+		this.plugin.stop( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_nonZeroCode_undeploy() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-exit-1" );
+		this.plugin.undeploy( this.inst );
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testPuppetPlugin_withInit_nonZeroCode_update() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-exit-1" );
+
+		Map<String,String> variables = new HashMap<String,String> ();
+		variables.put( "ip", "127.0.0.1" );
+
+		this.plugin.update(
+				this.inst,
+				new Import( "/some/path", "component1", variables ),
+				InstanceStatus.DEPLOYED_STARTED );
+	}
 
 
 	private void checkGeneratedFiles( String prefix, String suffix ) {

@@ -69,8 +69,8 @@ public class PluginBashTest {
 		Map<String,String> exportedVariables2 = new HashMap<String,String>( exportedVariables1 );
 		exportedVariables1.put( "ip", "http://192.168.1.84" );
 
-		Import imp1 = new Import( "/vm1/apache", exportedVariables1 );
-		Import imp2 = new Import( "/vm1/apache", exportedVariables2 );
+		Import imp1 = new Import( "/vm1/apache", "apache", exportedVariables1 );
+		Import imp2 = new Import( "/vm1/apache", "apache", exportedVariables2 );
 		this.inst.getImports().clear();
 		this.inst.getImports().put( "apache", Arrays.asList( imp1, imp2 ));
 	}
@@ -287,7 +287,11 @@ public class PluginBashTest {
 		exports.put( "ip", "127.0.0.1" );
 		exports.put( "port", "8091" );
 
-		Import importChanged = new Import( InstanceHelpers.computeInstancePath( this.inst ), exports );
+		Import importChanged = new Import(
+				InstanceHelpers.computeInstancePath( this.inst ),
+				this.inst.getComponent().getName(),
+				exports );
+
 		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
 		this.plugin.update( this.inst, importChanged, statusChanged );
 
@@ -308,10 +312,13 @@ public class PluginBashTest {
 		exports.put( "ip", "127.0.0.1" );
 		exports.put( "port", "8091" );
 
-		Import importChanged = new Import( InstanceHelpers.computeInstancePath( this.inst ), exports );
+		Import importChanged = new Import(
+				InstanceHelpers.computeInstancePath( this.inst ),
+				this.inst.getComponent().getName(),
+				exports );
+
 		InstanceStatus statusChanged = InstanceStatus.DEPLOYED_STARTED;
 		this.plugin.update( this.inst, importChanged, statusChanged );
-
 		assertTrue( file.exists());
 	}
 

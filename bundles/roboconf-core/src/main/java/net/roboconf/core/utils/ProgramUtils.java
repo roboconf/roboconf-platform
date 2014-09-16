@@ -68,10 +68,8 @@ public final class ProgramUtils {
 		new Thread( new OutputRunnable( process, false, logger )).start();
 
 		int exitValue = process.waitFor();
-		if( exitValue != 0 ) {
+		if( exitValue != 0 )
 			logger.severe( "Command execution returned a failure code. Code:" + exitValue );
-			throw new IOException( "Process execution failed. Exit code: " + exitValue );
-		}
 
 		return exitValue;
 	}

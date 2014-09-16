@@ -100,7 +100,7 @@ public class BasicPluginPuppetTest {
 
 		Map<String,String> exports = new LinkedHashMap<String,String> ();
 		exports.put( "MySQL.port", "3306" );
-		Import imp = new Import( "/toto", exports );
+		Import imp = new Import( "/toto", "component1", exports );
 
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
@@ -120,7 +120,7 @@ public class BasicPluginPuppetTest {
 		Map<String,String> exports = new LinkedHashMap<String,String> ();
 		exports.put( "MySQL.port", "3306" );
 		exports.put( "MySQL.ip", "172.16.20.12" );
-		Import imp = new Import( "/toto", exports );
+		Import imp = new Import( "/toto", "component1", exports );
 
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );
@@ -143,13 +143,13 @@ public class BasicPluginPuppetTest {
 			Map<String,String> exports = new LinkedHashMap<String,String> ();
 			exports.put( "MySQL.port", String.valueOf( 3306 + i ));
 			exports.put( "MySQL.ip", "172.16.20." + String.valueOf( 12 + i ));
-			mySqlImports.add( new Import( "/toto-" + i, exports ));
+			mySqlImports.add( new Import( "/toto-" + i, "component1", exports ));
 		}
 
 		List<Import> somethingImports = new ArrayList<Import> ();
 		Map<String,String> exports = new LinkedHashMap<String,String> ();
 		exports.put( "Something.test", "true" );
-		somethingImports.add( new Import( "/oops", exports ));
+		somethingImports.add( new Import( "/oops", "component2", exports ));
 
 		Component component = new Component( "test-component" );
 		component.getImportedVariables().put( "MySQL.port", false );

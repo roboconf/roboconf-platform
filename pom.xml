@@ -49,6 +49,7 @@
 		<module>bundles/roboconf-iaas-ec2</module>
 		<module>bundles/roboconf-iaas-openstack</module>
 		<module>bundles/roboconf-iaas-vmware</module>
+		<module>bundles/roboconf-iaas-docker</module>
 		
 		<module>bundles/roboconf-dm-rest-api</module>
 		<module>bundles/roboconf-dm</module>
@@ -416,7 +417,6 @@
 			</build>
 		</profile>
 	</profiles>
-
 
 	<!-- Required Information to publish artifacts to Maven Central -->
 	<licenses>

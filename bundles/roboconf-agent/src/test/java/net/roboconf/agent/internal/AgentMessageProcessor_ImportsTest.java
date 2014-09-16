@@ -201,7 +201,7 @@ public class AgentMessageProcessor_ImportsTest {
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		List<Import> imports = new ArrayList<Import>( Arrays.asList( new Import( "mysql-vm-1/mysql" )));
+		List<Import> imports = new ArrayList<Import>( Arrays.asList( new Import( "mysql-vm-1/mysql", "mysql" )));
 		app.getWar().getImports().put( "mysql", imports );
 
 		// Remove the MySQL export

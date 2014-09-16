@@ -131,7 +131,7 @@ public final class ManagerConfiguration {
 		File sourceFile = new File( this.configurationDirectory, INSTANCES + "/" + ma.getName() + ".instances" );
 		InstancesLoadResult result;
 		if( sourceFile.exists())
-			result = RuntimeModelIo.loadInstances( sourceFile, ma.getApplication().getGraphs());
+			result = RuntimeModelIo.loadInstances( sourceFile, ma.getApplication().getGraphs(), ma.getApplication().getName());
 		else
 			result = new InstancesLoadResult();
 

@@ -423,7 +423,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				continue;
 
 			// Create the right import
-			Import imp = ImportHelpers.buildTailoredImport( instance, msg.getAddedInstancePath(), msg.getExportedVariables());
+			Import imp = ImportHelpers.buildTailoredImport(
+					instance,
+					msg.getAddedInstancePath(),
+					msg.getComponentOrFacetName(),
+					msg.getExportedVariables());
 
 			// Add the import and publish an update to the DM
 			this.logger.fine( "Adding import to " + InstanceHelpers.computeInstancePath( instance ) + ". New import: " + imp );

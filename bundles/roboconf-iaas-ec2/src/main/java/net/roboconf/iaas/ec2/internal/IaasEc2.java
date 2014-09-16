@@ -38,7 +38,6 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
-import com.amazonaws.services.ec2.model.AttachVolumeResult;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeResult;
@@ -117,7 +116,10 @@ public class IaasEc2 implements IaasInterface {
 
 		String instanceId = null;
 		try {
-			String userData = DataHelpers.writeIaasDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			String userData = DataHelpers.writeIaasDataAsString(
+					messagingIp, messagingUsername, messagingPassword,
+					applicationName, rootInstanceName );
+
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode(
 					this.iaasProperties.get(Ec2Constants.AMI_VM_NODE),
 					userData );
@@ -139,9 +141,9 @@ public class IaasEc2 implements IaasInterface {
 					if(! running) {
 						try {
 							Thread.sleep(5000);
+
 						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							// nothing
 						}
 					}
 				}
@@ -159,13 +161,12 @@ public class IaasEc2 implements IaasInterface {
 					volumeIds.add(createVolumeResult.getVolume().getVolumeId());
 					DescribeVolumesResult dvsresult = this.ec2.describeVolumes(dvs);
 					running = "available".equals(dvsresult.getVolumes().get(0).getState());
-					System.out.println(dvsresult.getVolumes().get(0).getState());
 					if(! running) {
 						try {
 							Thread.sleep(5000);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+
+						} catch( InterruptedException e ) {
+							// nothing
 						}
 					}
 				}
@@ -175,7 +176,7 @@ public class IaasEc2 implements IaasInterface {
 					.withDevice("/dev/sda2")
 					.withVolumeId(createVolumeResult.getVolume().getVolumeId());
 
-				AttachVolumeResult attachResult = this.ec2.attachVolume(attachRequest);
+				this.ec2.attachVolume( attachRequest );
 			}
 
 			// Set name tag for instance (human-readable in AWS webapp)
@@ -276,8 +277,8 @@ public class IaasEc2 implements IaasInterface {
 		else
 			runInstancesRequest.setImageId( machineImageId );
 
-		// FIXME (VZ): why this kernel ID?
-		runInstancesRequest.setKernelId( "aki-62695816" );
+		// TBD provide kernel ID (eg. "aki-62695816")?
+		// runInstancesRequest.setKernelId(this.iaasProperties.get(Ec2Constants.KERNEL_ID);
 		runInstancesRequest.setMinCount( 1 );
 		runInstancesRequest.setMaxCount( 1 );
 		runInstancesRequest.setKeyName( this.iaasProperties.get(Ec2Constants.SSH_KEY_NAME));
