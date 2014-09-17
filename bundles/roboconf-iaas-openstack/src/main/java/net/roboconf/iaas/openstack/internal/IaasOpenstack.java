@@ -50,8 +50,9 @@ import com.woorea.openstack.nova.model.Volumes;
  */
 public class IaasOpenstack implements IaasInterface {
 
-	private final Logger logger;
+	public static final String IAAS_TYPE = "openstack";
 
+	private final Logger logger;
 	private String machineImageId;
 	private  Map<String, String> iaasProperties;
 
@@ -79,7 +80,7 @@ public class IaasOpenstack implements IaasInterface {
 	 */
 	@Override
 	public String getIaasType() {
-		return "openstack";
+		return IAAS_TYPE;
 	}
 
 
@@ -97,15 +98,8 @@ public class IaasOpenstack implements IaasInterface {
 		this.tenantId = iaasProperties.get(OpenstackConstants.TENANT_ID);
 		this.keypair = iaasProperties.get(OpenstackConstants.KEYPAIR);
 		this.floatingIpPool = iaasProperties.get(OpenstackConstants.FLOATING_IP_POOL);
-
-		String val = iaasProperties.get(OpenstackConstants.FLAVOR);
-		if(val != null)
-			this.flavor = val;
-
-		val = iaasProperties.get(OpenstackConstants.SECURITY_GROUP);
-		if(val != null)
-			this.securityGroup = val;
-
+		this.flavor = iaasProperties.get(OpenstackConstants.FLAVOR);
+		this.securityGroup = iaasProperties.get(OpenstackConstants.SECURITY_GROUP);
 		this.identityUrl = iaasProperties.get(OpenstackConstants.IDENTITY_URL);
 		this.computeUrl = iaasProperties.get(OpenstackConstants.COMPUTE_URL);
 
@@ -124,10 +118,15 @@ public class IaasOpenstack implements IaasInterface {
 			this.token = access.getToken().getId();
 			keystone.token(this.token);
 
-			this.novaClient = new Nova(this.computeUrl
-					+ (this.tenantId == null ? ""
-						: (this.computeUrl.endsWith("/") ? "" : "/") + this.tenantId));
-			this.novaClient.token(this.token);
+			String url = this.computeUrl;
+			if( ! url.endsWith( "/" ))
+				url += "/";
+
+			if( this.tenantId != null )
+				url += this.tenantId;
+
+			this.novaClient = new Nova( url );
+			this.novaClient.token( this.token );
 
 		} catch(Exception e) {
 			throw new IaasException(e);
@@ -316,8 +315,8 @@ public class IaasOpenstack implements IaasInterface {
 		}
 	}
 
-	private static HashMap<String, String> ipAssociations = new HashMap<String, String>();
 
+	private static HashMap<String, String> ipAssociations = new HashMap<String, String>();
 	private static synchronized FloatingIp requestFloatingIp(Nova novaClient, String serverId) {
 		FloatingIps ips = novaClient.floatingIps().list().execute();
 
@@ -333,28 +332,29 @@ public class IaasOpenstack implements IaasInterface {
 		return ip;
 	}
 
-	public static void main(String args[]) throws Exception {
 
-		Map<String, String> conf = new HashMap<String, String>();
-
-		java.util.Properties p = new java.util.Properties();
-		p.load(new java.io.FileReader(args[0]));
-
-		for( Map.Entry<Object,Object> entry : p.entrySet()) {
-			conf.put( entry.getKey().toString(), entry.getValue().toString());
-		}
-		// conf.put(OpenstackConstants.COMPUTE_URL, "http://localhost:8888/v2");
-
-		IaasOpenstack iaas = new IaasOpenstack();
-		iaas.setIaasProperties(conf);
-
-		String channelName = "test";
-		String applicationName = "roboconf";
-		String ipMessagingServer = "localhost";
-		String user = "guest";
-		String pwd = "guest";
-		String serverId = iaas.createVM( ipMessagingServer, user, pwd, channelName, applicationName);
-		/*Thread.sleep(25000);
-		iaas.terminateVM(serverId);*/
-	}
+//	public static void main(String args[]) throws Exception {
+//
+//		Map<String, String> conf = new HashMap<String, String>();
+//
+//		java.util.Properties p = new java.util.Properties();
+//		p.load(new java.io.FileReader(args[0]));
+//
+//		for( Map.Entry<Object,Object> entry : p.entrySet()) {
+//			conf.put( entry.getKey().toString(), entry.getValue().toString());
+//		}
+//		// conf.put(OpenstackConstants.COMPUTE_URL, "http://localhost:8888/v2");
+//
+//		IaasOpenstack iaas = new IaasOpenstack();
+//		iaas.setIaasProperties(conf);
+//
+//		String channelName = "test";
+//		String applicationName = "roboconf";
+//		String ipMessagingServer = "localhost";
+//		String user = "guest";
+//		String pwd = "guest";
+//		String serverId = iaas.createVM( ipMessagingServer, user, pwd, channelName, applicationName);
+//		/*Thread.sleep(25000);
+//		iaas.terminateVM(serverId);*/
+//	}
 }

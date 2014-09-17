@@ -49,7 +49,7 @@ public class IaasResolver {
 			if( ! Constants.IAAS_INSTALLER.equalsIgnoreCase( installerName ))
 				throw new IaasException( "Unsupported installer name: " + installerName );
 
-			Map<String, String> props = IaasHelpers.loadIaasProperties( ma.getApplicationFilesDirectory(), instance );
+			Map<String,String> props = IaasHelpers.loadIaasProperties( ma.getApplicationFilesDirectory(), instance );
 			iaasInterface = findIaasHandler( iaas, props );
 			if( iaasInterface == null )
 				throw new IaasException( "No IaaS handler was found for " + instance.getName() + "." );

@@ -243,12 +243,12 @@ public class PluginPuppet implements PluginInterface {
 	/**
 	 * Invokes Puppet to inject variables into the instance's manifests.
 	 * @param instance the instance
-     * @param action the name of the action to run
+	 * @param action the name of the action to run
 	 * @param puppetState a Puppet state
 	 * @param importChanged The import that changed (added or removed) upon update
 	 * @param importAdded true if the changed import is added, false if it is removed
-     * @param instanceDirectory where to find instance files
-   	 * @throws IOException if the puppet execution could not start
+	 * @param instanceDirectory where to find instance files
+	 * @throws IOException if the puppet execution could not start
 	 * @throws InterruptedException if the Puppet execution was interrupted
 	 */
 	void callPuppetScript(
@@ -329,6 +329,7 @@ public class PluginPuppet implements PluginInterface {
 			break;
 
 		case 6:
+			// FIXME: should we throw an exception?
 			this.logger.warning( "Puppet script completed with changes and errors (exit code 6)." );
 			break;
 

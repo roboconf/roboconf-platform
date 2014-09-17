@@ -208,7 +208,7 @@ public class ApplicationWsDelegate {
 	public void addInstance( String applicationName, String parentInstancePath, Instance instance ) throws ApplicationException {
 		this.logger.finer( "Adding an instance to the application " + applicationName + "..." );
 
-		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "add" );
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "instances" );
 		if( parentInstancePath != null )
 			path = path.queryParam( "instance-path", parentInstancePath );
 

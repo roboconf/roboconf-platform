@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.impl.InMemoryAgentImpl;
+import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -34,8 +35,11 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.plugin.api.PluginException;
+import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Test;
 
@@ -43,6 +47,37 @@ import org.junit.Test;
  * @author Vincent Zurczak - Linagora
  */
 public class AgentMessageProcessor_BasicTest {
+
+	@Test
+	public void testInitializePlugin() throws Exception {
+
+		AbstractAgent agent = new InMemoryAgentImpl();
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		TestApplication app = new TestApplication();
+
+		processor.initializePluginForInstance( app.getMySqlVm());
+		Assert.assertNull( app.getMySqlVm().getData().get( PluginMock.INIT_PROPERTY ));
+
+		processor.initializePluginForInstance( app.getMySql());
+		Assert.assertEquals( "true", app.getMySql().getData().get( PluginMock.INIT_PROPERTY ));
+	}
+
+
+	@Test( expected = PluginException.class )
+	public void testInitializePlugin_noPlugin() throws Exception {
+
+		AbstractAgent agent = new InMemoryAgentImpl() {
+			@Override
+			public PluginInterface findPlugin( Instance instance ) {
+				return null;
+			}
+		};
+
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		TestApplication app = new TestApplication();
+		processor.initializePluginForInstance( app.getMySql());
+	}
+
 
 	@Test
 	public void testSetMessagingClient() throws Exception {
@@ -179,6 +214,7 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( app.getMySql(), newChild );
 		Assert.assertEquals( 1, newChild.getOverriddenExports().size());
 		Assert.assertEquals( "loop", newChild.getOverriddenExports().get( "some-value" ));
+		Assert.assertEquals( "true", newChild.getData().get( PluginMock.INIT_PROPERTY ));
 
 		// Inserting an existing child fails
 		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( newMySqlVm ).size());
@@ -242,6 +278,13 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, client.messagesForAgentsCount.get());
+
+		// All the instances must have been initialized (their plug-in in fact).
+		// All, except the root instance.
+		for( Instance inst : InstanceHelpers.buildHierarchicalList( processor.rootInstance )) {
+			if( inst.getParent() != null )
+				Assert.assertEquals( inst.getName(), "true", inst.getData().get( PluginMock.INIT_PROPERTY ));
+		}
 	}
 
 
@@ -272,6 +315,48 @@ public class AgentMessageProcessor_BasicTest {
 
 		for( int i=1; i<4; i++ )
 			Assert.assertEquals( "Index " + i, MsgNotifInstanceChanged.class, client.messagesForTheDm.get( i ).getClass());
+	}
+
+
+	@Test
+	public void testResynchronize() {
+
+		// Initialize all the stuff
+		AbstractAgent agent = new InMemoryAgentImpl();
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		TestAgentMessagingClient client = new TestAgentMessagingClient();
+		processor.setMessagingClient( client );
+
+		// No root instance
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( MsgNotifMachineUp.class, client.messagesForTheDm.iterator().next().getClass());
+
+		processor.processMessage( new MsgCmdResynchronize());
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 0, client.messagesForAgentsCount.get());
+
+		// With a root instance which has no variable.
+		// Unlike with a real messaging client, we do not check variables in our test client.
+		// So, one processed instance = one message sent other agents.
+		TestApplication app = new TestApplication();
+		processor.rootInstance = app.getTomcatVm();
+		processor.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		processor.processMessage( new MsgCmdResynchronize());
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
+
+		// With a child instance
+		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		processor.processMessage( new MsgCmdResynchronize());
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 3, client.messagesForAgentsCount.get());
+
+		// With another started child
+		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		processor.processMessage( new MsgCmdResynchronize());
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 6, client.messagesForAgentsCount.get());
 	}
 
 

@@ -21,8 +21,6 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.IaasException;
-import net.roboconf.iaas.ec2.internal.Ec2Constants;
-import net.roboconf.iaas.ec2.internal.IaasEc2;
 
 import org.junit.Test;
 
@@ -31,21 +29,20 @@ import org.junit.Test;
  */
 public class IaasEc2Test {
 
+	@Test( expected = IaasException.class )
+	public void testInvalidConfiguration() throws Exception {
+
+		IaasEc2 iaas = new IaasEc2();
+		iaas.setIaasProperties( new HashMap<String,String> ());
+	}
+
+
 	@Test
-	public void testConfigurationParsing() {
+	public void testValidConfiguration() throws Exception {
 
-		// Empty configuration
-		Map<String, String> iaasProperties = new HashMap<String, String>();
-		IaasEc2 ec2 = new IaasEc2();
-		try {
-			ec2.setIaasProperties( iaasProperties );
-			Assert.fail( "An invalid configuration should have been detected." );
+		Map<String, String> iaasProperties = new HashMap<String,String> ();
+		IaasEc2 iaas = new IaasEc2();
 
-		} catch( IaasException e ) {
-			Assert.assertTrue( e.getMessage().toLowerCase().contains( "endpoint" ));
-		}
-
-		// Fill-in everything
 		iaasProperties.put( Ec2Constants.EC2_ENDPOINT, "127.0.0.1" );
 		iaasProperties.put( Ec2Constants.EC2_ACCESS_KEY, "my access key" );
 		iaasProperties.put( Ec2Constants.EC2_SECRET_KEY, "my secret key" );
@@ -53,11 +50,13 @@ public class IaasEc2Test {
 		iaasProperties.put( Ec2Constants.VM_INSTANCE_TYPE, "tiny" );
 		iaasProperties.put( Ec2Constants.SSH_KEY_NAME, "secret_key" );
 		iaasProperties.put( Ec2Constants.SECURITY_GROUP_NAME, "WorldWideVisible" );
-		try {
-			ec2.setIaasProperties( iaasProperties );
 
-		} catch( IaasException e ) {
-			Assert.fail( "An invalid configuration was detected while it was valid." );
-		}
+		iaas.setIaasProperties( iaasProperties );
+	}
+
+
+	@Test
+	public void testGetIaasType() {
+		Assert.assertEquals( IaasEc2.IAAS_TYPE, new IaasEc2().getIaasType());
 	}
 }

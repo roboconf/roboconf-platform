@@ -429,6 +429,15 @@ public class PluginPuppetTest {
 	}
 
 
+	@Test
+	public void testPuppetPlugin_withInit_nonZeroCode_changesAndErrors() throws Exception {
+
+		Assume.assumeTrue( isLinuxSystem());
+		copyResources( "/with-init-changes-and-errors" );
+		this.plugin.undeploy( this.inst );
+	}
+
+
 	private void checkGeneratedFiles( String prefix, String suffix ) {
 
 		File fromTpl = new File( OUTPUT_DIR, prefix + ".tpl." + suffix );

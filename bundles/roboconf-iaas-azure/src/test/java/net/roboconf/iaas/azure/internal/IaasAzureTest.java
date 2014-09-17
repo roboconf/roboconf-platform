@@ -21,8 +21,6 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.IaasException;
-import net.roboconf.iaas.azure.internal.AzureConstants;
-import net.roboconf.iaas.azure.internal.IaasAzure;
 
 import org.junit.Test;
 
@@ -31,21 +29,20 @@ import org.junit.Test;
  */
 public class IaasAzureTest {
 
+	@Test( expected = IaasException.class )
+	public void testInvalidConfiguration() throws Exception {
+
+		IaasAzure iaas = new IaasAzure();
+		iaas.setIaasProperties( new HashMap<String,String> ());
+	}
+
+
 	@Test
-	public void testConfigurationParsing() {
+	public void testValidConfiguration() throws Exception {
 
-		// Empty configuration
-		Map<String, String> iaasProperties = new HashMap<String, String>();
-		IaasAzure azure = new IaasAzure();
-		try {
-			azure.setIaasProperties( iaasProperties );
-			Assert.fail( "An invalid configuration should have been detected." );
+		Map<String, String> iaasProperties = new HashMap<String,String> ();
+		IaasAzure iaas = new IaasAzure();
 
-		} catch( IaasException e ) {
-			Assert.assertTrue( e.getMessage().toLowerCase().contains( "subscription" ));
-		}
-
-		// Fill-in everything
 		iaasProperties.put( AzureConstants.AZURE_SUBSCRIPTION_ID, "my subscription id" );
 		iaasProperties.put( AzureConstants.AZURE_KEY_STORE_FILE, "path to key store file" );
 		iaasProperties.put( AzureConstants.AZURE_KEY_STORE_PASSWORD, "key store password" );
@@ -54,11 +51,13 @@ public class IaasAzureTest {
 		iaasProperties.put( AzureConstants.AZURE_LOCATION, "azure location" );
 		iaasProperties.put( AzureConstants.AZURE_VM_SIZE, "azure VM size" );
 		iaasProperties.put( AzureConstants.AZURE_VM_TEMPLATE, "azure VM template" );
-		try {
-			azure.setIaasProperties( iaasProperties );
 
-		} catch( IaasException e ) {
-			Assert.fail( "An invalid configuration was detected while it was valid." );
-		}
+		iaas.setIaasProperties( iaasProperties );
+	}
+
+
+	@Test
+	public void testGetIaasType() {
+		Assert.assertEquals( IaasAzure.IAAS_TYPE, new IaasAzure().getIaasType());
 	}
 }

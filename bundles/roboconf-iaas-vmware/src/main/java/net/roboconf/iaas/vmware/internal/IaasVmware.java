@@ -48,6 +48,8 @@ import com.vmware.vim25.mo.VirtualMachine;
  */
 public class IaasVmware implements IaasInterface {
 
+	public static final String IAAS_TYPE = "vmware";
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private ServiceInstance vmwareServiceInstance;
 	private ComputeResource vmwareComputeResource;
@@ -62,7 +64,7 @@ public class IaasVmware implements IaasInterface {
 	 */
 	@Override
 	public String getIaasType() {
-		return "vmware";
+		return IAAS_TYPE;
 	}
 
 
@@ -145,9 +147,9 @@ public class IaasVmware implements IaasInterface {
 
 			// host=null means IaaS-managed choice
 			DynamicProperty dprop = new DynamicProperty();
-            dprop.setName("guestinfo.userdata");
-            dprop.setVal(userData);
-            vm2.getGuest().setDynamicProperty(new DynamicProperty[]{dprop});
+			dprop.setName("guestinfo.userdata");
+			dprop.setVal(userData);
+			vm2.getGuest().setDynamicProperty(new DynamicProperty[]{dprop});
 
 			task = vm2.powerOnVM_Task(null);
 			this.logger.fine("Starting the virtual machine: "+ rootInstanceName +" ...");

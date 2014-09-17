@@ -37,6 +37,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 
@@ -131,6 +132,14 @@ public class SerializationUtilsTest {
 
 
 	@Test
+	public void testMessage_resynchronize() throws Exception {
+
+		MsgCmdResynchronize msg = new MsgCmdResynchronize();
+		checkBasics( msg, MsgCmdResynchronize.class );
+	}
+
+
+	@Test
 	public void testMessage_removeInstance() throws Exception {
 
 		MsgCmdRemoveInstance msg = new MsgCmdRemoveInstance( "/inst1" );
@@ -155,6 +164,9 @@ public class SerializationUtilsTest {
 		InstanceHelpers.insertChild( root, child );
 
 		msg = new MsgCmdAddInstance( child );
+		checkBasics( msg, MsgCmdAddInstance.class );
+
+		msg = new MsgCmdAddInstance( new Instance( "instance without component" ));
 		checkBasics( msg, MsgCmdAddInstance.class );
 	}
 

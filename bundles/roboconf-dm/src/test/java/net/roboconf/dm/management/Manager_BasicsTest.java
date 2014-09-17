@@ -41,6 +41,7 @@ import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 import org.junit.Before;
@@ -104,7 +105,7 @@ public class Manager_BasicsTest {
 		Manager.INSTANCE.shutdown();
 		Assert.assertNull( Manager.INSTANCE.messagingClient );
 
-		// Test idem-potence of the shutdown() method
+		// Test the idempotence of the shutdown() method
 		Manager.INSTANCE.shutdown();
 		Assert.assertNull( Manager.INSTANCE.messagingClient );
 	}
@@ -115,6 +116,26 @@ public class Manager_BasicsTest {
 
 		Assert.assertNotNull( Manager.INSTANCE.messagingClient );
 		Manager.INSTANCE.messagingClient.closeConnection();
+		Manager.INSTANCE.shutdown();
+		Assert.assertNull( Manager.INSTANCE.messagingClient );
+	}
+
+
+	@Test
+	public void testShutdown_withErrorOnCloseConnection() throws Exception {
+
+		Manager.INSTANCE.messagingClient = new TestMessageServerClient() {
+			@Override
+			public void closeConnection() throws IOException {
+				throw new IOException();
+			}
+
+			@Override
+			public boolean isConnected() {
+				return true;
+			}
+		};
+
 		Manager.INSTANCE.shutdown();
 		Assert.assertNull( Manager.INSTANCE.messagingClient );
 	}
@@ -504,6 +525,47 @@ public class Manager_BasicsTest {
 		Manager.INSTANCE.shutdown();
 		Manager.INSTANCE.send( ma, new MsgCmdSendInstances(), new Instance());
 		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 0, client.sentMessages.size());
+	}
+
+
+	@Test
+	public void testResynchronizeAgents_withConnection() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
+
+		Manager.INSTANCE.resynchronizeAgents( ma );
+		Assert.assertEquals( 0, client.sentMessages.size());
+
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
+		Manager.INSTANCE.resynchronizeAgents( ma );
+		Assert.assertEquals( 1, client.sentMessages.size());
+		Assert.assertEquals( MsgCmdResynchronize.class, client.sentMessages.get( 0 ).getClass());
+
+		client.sentMessages.clear();
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		Manager.INSTANCE.resynchronizeAgents( ma );
+		Assert.assertEquals( 2, client.sentMessages.size());
+		Assert.assertEquals( MsgCmdResynchronize.class, client.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdResynchronize.class, client.sentMessages.get( 1 ).getClass());
+	}
+
+
+	@Test
+	public void testResynchronizeAgents_noConnection() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
+
+		Manager.INSTANCE.messagingClient.closeConnection();
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		Manager.INSTANCE.resynchronizeAgents( ma );
 		Assert.assertEquals( 0, client.sentMessages.size());
 	}
 }

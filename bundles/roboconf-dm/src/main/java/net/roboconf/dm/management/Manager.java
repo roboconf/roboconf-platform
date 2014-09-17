@@ -53,6 +53,7 @@ import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 
@@ -407,6 +408,23 @@ public final class Manager {
 
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
 		saveConfiguration( ma );
+	}
+
+
+	/**
+	 * Notifies all the agents they must re-export their variables.
+	 * <p>
+	 * Such an operation can be used when the messaging server was down and
+	 * that messages were lost.
+	 * </p>
+	 * @throws IOException
+	 */
+	public void resynchronizeAgents( ManagedApplication ma ) throws IOException {
+
+		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
+			if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED )
+				send ( ma, new MsgCmdResynchronize(), rootInstance );
+		}
 	}
 
 

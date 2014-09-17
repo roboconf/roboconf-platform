@@ -47,6 +47,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 import net.roboconf.plugin.api.PluginException;
@@ -171,6 +172,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			else if( message instanceof MsgCmdSendInstances )
 				processMsgSendInstances((MsgCmdSendInstances) message );
 
+			else if( message instanceof MsgCmdResynchronize )
+				processMsgResynchronize((MsgCmdResynchronize) message );
+
 			else
 				this.logger.warning( getName() + " got an undetermined message to process. " + message.getClass().getName());
 
@@ -181,6 +185,22 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		}  catch( PluginException e ) {
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
+		}
+	}
+
+
+	/**
+	 * Republishes all the variables managed by this agent.
+	 * @param message the initial request
+	 * @throws IOException if an error occurred with the messaging
+	 */
+	void processMsgResynchronize( MsgCmdResynchronize message ) throws IOException {
+
+		if( this.rootInstance != null ) {
+			for( Instance i : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+				if( i.getStatus() == InstanceStatus.DEPLOYED_STARTED )
+					this.messagingClient.publishExports( i );
+			}
 		}
 	}
 
@@ -213,8 +233,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 *
 	 * @param msg the message to process
 	 * @throws IOException if an error occurred with the messaging
+	 * @throws PluginException if an error occurred while initializing the plug-in
 	 */
-	void processMsgSetRootInstance( MsgCmdSetRootInstance msg ) throws IOException {
+	void processMsgSetRootInstance( MsgCmdSetRootInstance msg ) throws IOException, PluginException {
 
 		Instance newRootInstance = msg.getRootInstance();
 		List<Instance> instancesToProcess = new ArrayList<Instance> ();
@@ -236,6 +257,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		// Configure the messaging
 		for( Instance instanceToProcess : instancesToProcess ) {
+			initializePluginForInstance( instanceToProcess );
 			VariableHelpers.updateNetworkVariables( instanceToProcess.getExports(), this.agent.getIpAddress());
 			this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, instanceToProcess );
 			this.messagingClient.requestExportsFromOtherAgents( instanceToProcess );
@@ -283,8 +305,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 * Adds an instance to the local model.
 	 * @param msg the message to process
 	 * @throws IOException if an error occurred with the messaging
+	 * @throws PluginException if an error occurred while initializing the plug-in
 	 */
-	void processMsgAddInstance( MsgCmdAddInstance msg ) throws IOException {
+	void processMsgAddInstance( MsgCmdAddInstance msg ) throws IOException, PluginException {
 
 		Component instanceComponent;
 		Instance parentInstance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getParentInstancePath());
@@ -308,6 +331,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				this.logger.severe( "The new '" + msg.getInstanceName() + "' instance could not be inserted into the local model." );
 
 			} else {
+				initializePluginForInstance( newInstance );
+
 				VariableHelpers.updateNetworkVariables( newInstance.getExports(), this.agent.getIpAddress());
 				this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, newInstance );
 				this.messagingClient.requestExportsFromOtherAgents( newInstance );
@@ -442,6 +467,24 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			AbstractLifeCycleManager
 			.build( instance, this.agent.getApplicationName(), this.messagingClient )
 			.updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
+		}
+	}
+
+
+	/**
+	 * Initializes the plug-in for a given instance.
+	 * @param instance an instance
+	 * @throws PluginException
+	 */
+	void initializePluginForInstance( Instance instance ) throws PluginException {
+
+		// Do not initialize root instances, they do not have any plug-in on the agent.
+		if( instance.getParent() != null ) {
+			PluginInterface plugin = this.agent.findPlugin( instance );
+			if( plugin == null )
+				throw new PluginException( "No plugin was found for " + InstanceHelpers.computeInstancePath( instance ));
+
+			plugin.initialize( instance );
 		}
 	}
 }

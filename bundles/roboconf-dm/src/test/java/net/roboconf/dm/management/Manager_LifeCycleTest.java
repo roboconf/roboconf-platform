@@ -98,6 +98,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetRootInstance) msg).getRootInstance());
 
 		// ... or NOT_DEPLOYED (the current state is DEPLOYING)
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+		Manager.INSTANCE.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.STARTING );
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+
 		Manager.INSTANCE.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
@@ -108,6 +112,9 @@ public class Manager_LifeCycleTest {
 
 		// ... Same thing if the current state is DEPLOYED_STARTED
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		Manager.INSTANCE.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.STARTING );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+
 		Manager.INSTANCE.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());

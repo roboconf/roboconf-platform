@@ -19,6 +19,7 @@ package net.roboconf.dm.rest.api;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -104,9 +105,31 @@ public interface IApplicationWs {
 	 * @return a response
 	 */
 	@POST
-	@Path( "/add" )
+	@Path( "/instances" )
 	@Consumes( MediaType.APPLICATION_JSON )
 	Response addInstance( @PathParam("name") String applicationName, @QueryParam("instance-path") String parentInstancePath, Instance instance );
+
+
+	/**
+	 * Removes an instance.
+	 * @param applicationName the application name
+	 * @param instancePath the path of the instance to remove
+	 * @return a response
+	 */
+	@DELETE
+	@Path( "/instances" )
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response removeInstance( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
+
+
+	/**
+	 * Resynchronizes all the instances / agents.
+	 * @param applicationName the application name
+	 * @return a response
+	 */
+	@POST
+	@Path( "/" )
+	Response resynchronize( @PathParam("name") String applicationName );
 
 
 	/**

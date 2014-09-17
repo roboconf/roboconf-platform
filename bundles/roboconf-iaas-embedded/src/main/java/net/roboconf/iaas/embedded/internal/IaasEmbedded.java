@@ -27,13 +27,16 @@ import net.roboconf.iaas.api.IaasInterface;
  */
 public class IaasEmbedded implements IaasInterface {
 
+	public static final String IAAS_TYPE = "embedded";
+
+
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.iaas.api.IaasInterface#getIaasType()
 	 */
 	@Override
 	public String getIaasType() {
-		return "embedded";
+		return IAAS_TYPE;
 	}
 
 
@@ -62,7 +65,7 @@ public class IaasEmbedded implements IaasInterface {
 			String applicationName )
 	throws IaasException {
 
-		return rootInstanceName + " (embedded)";
+		return rootInstanceName + " (" + IAAS_TYPE + ")";
 	}
 
 

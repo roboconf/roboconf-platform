@@ -14,34 +14,30 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.embedded.internal;
+package net.roboconf.iaas.docker.internal;
 
 import java.util.HashMap;
 
 import junit.framework.Assert;
+import net.roboconf.iaas.api.IaasException;
 
 import org.junit.Test;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * @author Pierre-Yves Gibello - Linagora
  */
-public class IaasEmbeddedTest {
+public class IaasDocker_withoutContainerTest {
 
 	@Test
-	public void testIaasEmbedded() throws Exception {
+	public void testGetIaasType() {
+		Assert.assertEquals( IaasDocker.IAAS_TYPE, new IaasDocker().getIaasType());
+	}
 
-		IaasEmbedded iaas = new IaasEmbedded();
-		Assert.assertEquals( IaasEmbedded.IAAS_TYPE, iaas.getIaasType());
-		iaas.terminateVM( null );
-		iaas.terminateVM( "anything" );
 
-		Assert.assertNotNull( iaas.createVM( "ip", "user", "pwd", "nothing", "app" ));
-		Assert.assertNotNull( iaas.createVM( null, null, null, null, null ));
+	@Test( expected = IaasException.class )
+	public void testInvalidConfiguration() throws Exception {
 
-		iaas.setIaasProperties( null );
-		iaas.setIaasProperties( new HashMap<String,String>( 0 ));
-
-		iaas.terminateVM( null );
-		iaas.terminateVM( "anything" );
+		IaasDocker iaas = new IaasDocker();
+		iaas.setIaasProperties( new HashMap<String,String> ());
 	}
 }

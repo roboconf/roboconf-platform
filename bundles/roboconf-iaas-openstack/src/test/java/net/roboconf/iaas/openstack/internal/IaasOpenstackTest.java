@@ -20,7 +20,6 @@ import java.util.HashMap;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.IaasException;
-import net.roboconf.iaas.openstack.internal.IaasOpenstack;
 
 import org.junit.Test;
 
@@ -29,50 +28,47 @@ import org.junit.Test;
  */
 public class IaasOpenstackTest {
 
-	@Test
-	public void testConfigurationParsing() {
+	@Test( expected = IaasException.class )
+	public void testInvalidConfiguration_1() throws Exception {
 
-		// Empty configuration
-		HashMap<String, String> iaasProperties = new HashMap<String, String>();
 		IaasOpenstack iaas = new IaasOpenstack();
-		try {
-			iaas.setIaasProperties( iaasProperties );
-			Assert.fail( "An invalid configuration should have been detected." );
+		iaas.setIaasProperties( new HashMap<String, String>());
+	}
 
-		} catch( IaasException e ) {
-			Assert.assertTrue(true);
-		}
 
-		// Move on
+	@Test( expected = IaasException.class )
+	public void testInvalidConfiguration_2() throws Exception {
+
+		IaasOpenstack iaas = new IaasOpenstack();
+		HashMap<String, String> iaasProperties = new HashMap<String, String>();
 		iaasProperties.put("ipMessagingServer", "127.0.0.1" );
-		try {
-			iaas.setIaasProperties( iaasProperties );
-			Assert.fail( "An invalid configuration should have been detected." );
 
-		} catch( IaasException e ) {
-			Assert.assertTrue(true);
-		}
+		iaas.setIaasProperties( iaasProperties );
+	}
 
-		//TODO parameterize test with external file for IaaS credentials ?
-		/*
-		// Fill-in everything
-		iaasProperties.put("openstack.tenantId", "bf6110e105824ae2b412c7db53d4d79a");
-		iaasProperties.put("openstack.user", "username");
-		iaasProperties.put("openstack.password", "password");
-		iaasProperties.put("openstack.keypair", "mykey");
-		iaasProperties.put("openstack.flavor", "m1.small");
-		iaasProperties.put("openstack.floatingIpPool", "public");
-		iaasProperties.put("openstack.identityUrl", "http://mystack:5000/v2.0");
-		iaasProperties.put("openstack.computeUrl", "http://mystack:8774/v2");
-		iaasProperties.put("openstack.image", "92a3c0b8-eef6-4b64-b569-2cdf85101d15");
 
-		try {
-			iaas.setIaasProperties( iaasProperties );
+//	@Test
+//	public void testValidConfiguration() throws Exception {
+//
+//		IaasOpenstack iaas = new IaasOpenstack();
+//		HashMap<String, String> iaasProperties = new HashMap<String, String>();
+//
+//		iaasProperties.put("openstack.tenantId", "bf6110e105824ae2b412c7db53d4d79a");
+//		iaasProperties.put("openstack.user", "username");
+//		iaasProperties.put("openstack.password", "password");
+//		iaasProperties.put("openstack.keypair", "mykey");
+//		iaasProperties.put("openstack.flavor", "m1.small");
+//		iaasProperties.put("openstack.floatingIpPool", "public");
+//		iaasProperties.put("openstack.identityUrl", "http://my-own-stack:5000/v2.0");
+//		iaasProperties.put("openstack.computeUrl", "http://my-own-stack:8774/v2");
+//		iaasProperties.put("openstack.image", "92a3c0b8-eef6-4b64-b569-2cdf85101d15");
+//
+//		iaas.setIaasProperties( iaasProperties );
+//	}
 
-		} catch( InvalidIaasPropertiesException e ) {
-			e.printStackTrace();
-			Assert.fail( "An invalid configuration was detected while it was valid." );
-		}
-		*/
+
+	@Test
+	public void testGetIaasType() {
+		Assert.assertEquals( IaasOpenstack.IAAS_TYPE, new IaasOpenstack().getIaasType());
 	}
 }

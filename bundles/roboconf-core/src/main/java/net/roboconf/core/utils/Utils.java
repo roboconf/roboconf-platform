@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -112,6 +114,36 @@ public final class Utils {
 		if( out != null ) {
 			try {
 				out.close();
+			} catch( IOException e ) {
+				// nothing
+			}
+		}
+	}
+
+
+	/**
+	 * Closes a reader quietly.
+	 * @param reader a reader (can be null)
+	 */
+	public static void closeQuietly( Reader reader ) {
+		if( reader != null ) {
+			try {
+				reader.close();
+			} catch( IOException e ) {
+				// nothing
+			}
+		}
+	}
+
+
+	/**
+	 * Closes a writer quietly.
+	 * @param writer a writer (can be null)
+	 */
+	public static void closeQuietly( Writer writer ) {
+		if( writer != null ) {
+			try {
+				writer.close();
 			} catch( IOException e ) {
 				// nothing
 			}

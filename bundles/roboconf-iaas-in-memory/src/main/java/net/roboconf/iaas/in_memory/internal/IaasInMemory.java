@@ -36,6 +36,7 @@ import org.apache.felix.ipojo.UnacceptableConfiguration;
  */
 public class IaasInMemory implements IaasInterface {
 
+	public static final String IAAS_TYPE = "in-memory";
 	private Factory agentFactory;
 
 
@@ -45,7 +46,7 @@ public class IaasInMemory implements IaasInterface {
 	 */
 	@Override
 	public String getIaasType() {
-		return "in-memory";
+		return IAAS_TYPE;
 	}
 
 
@@ -84,6 +85,9 @@ public class IaasInMemory implements IaasInterface {
 	    String machineId = rootInstanceName + " @ " + applicationName;
 	    configuration.put( Factory.INSTANCE_NAME_PROPERTY, machineId );
 
+	    if( this.agentFactory == null )
+	    	throw new IaasException( "The iPojo  factory was not available." );
+
 	    try {
 	    	ComponentInstance instance = this.agentFactory.createComponentInstance( configuration );
 	    	instance.start();
@@ -110,10 +114,12 @@ public class IaasInMemory implements IaasInterface {
 	@Override
 	public void terminateVM( String machineId ) throws IaasException {
 
-		for( ComponentInstance instance : this.agentFactory.getInstances()) {
-			if( machineId.equals( instance.getInstanceName())) {
-				instance.dispose();
-				break;
+		if( this.agentFactory != null ) {
+			for( ComponentInstance instance : this.agentFactory.getInstances()) {
+				if( machineId.equals( instance.getInstanceName())) {
+					instance.dispose();
+					break;
+				}
 			}
 		}
 	}

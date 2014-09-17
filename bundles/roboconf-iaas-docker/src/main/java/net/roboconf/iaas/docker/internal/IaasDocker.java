@@ -26,12 +26,15 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
-import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.jaxrs.DockerClientBuilder;
+import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
 public class IaasDocker implements IaasInterface {
+
+	public static final String IAAS_TYPE = "docker";
 
 	private final Logger logger;
 	private String machineImageId;
@@ -52,7 +55,7 @@ public class IaasDocker implements IaasInterface {
 	 */
 	@Override
 	public String getIaasType() {
-		return "docker";
+		return IAAS_TYPE;
 	}
 
 
@@ -64,6 +67,7 @@ public class IaasDocker implements IaasInterface {
 	@Override
 	public void setIaasProperties( Map<String, String> iaasProperties ) throws IaasException {
 
+		this.logger.fine( "Setting the IaaS properties." );
 		if((this.machineImageId = iaasProperties.get(DockerConstants.IMAGE_ID)) == null)
 			throw new IaasException(DockerConstants.IMAGE_ID + " is missing.");
 
@@ -86,7 +90,9 @@ public class IaasDocker implements IaasInterface {
 			config.withEmail(email);
 		}
 
-		this.docker = new DockerClientImpl(config.build());
+		this.docker = DockerClientBuilder
+				.getInstance( config.build())
+				.withDockerCmdExecFactory( new DockerCmdExecFactoryImpl()).build();
 	}
 
 
@@ -104,6 +110,7 @@ public class IaasDocker implements IaasInterface {
 			String applicationName )
 	throws IaasException {
 
+		this.logger.fine( "Creating a new machine." );
 		CreateContainerResponse container = this.docker
 			.createContainerCmd(this.machineImageId)
 			.withCmd("/etc/rc.local",
@@ -127,6 +134,8 @@ public class IaasDocker implements IaasInterface {
 	 */
 	@Override
 	public void terminateVM(String instanceId) throws IaasException {
+
+		this.logger.fine( "Terminating machine " + instanceId );
 		try {
 			this.docker.killContainerCmd(instanceId).exec();
 			this.docker.removeContainerCmd(instanceId).exec();

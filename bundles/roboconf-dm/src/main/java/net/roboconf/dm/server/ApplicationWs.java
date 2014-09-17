@@ -37,6 +37,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
+import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.api.IApplicationWs;
 import net.roboconf.iaas.api.IaasException;
 
@@ -227,7 +228,6 @@ public class ApplicationWs implements IApplicationWs {
 	@Override
 	public Response addInstance( String applicationName, String parentInstancePath, Instance instance ) {
 
-		// Invoke the manager
 		if( parentInstancePath == null )
 			this.logger.fine( "Request: add root instance " + instance.getName() + " in " + applicationName + "." );
 		else
@@ -246,6 +246,64 @@ public class ApplicationWs implements IApplicationWs {
 			}
 
 		} catch( ImpossibleInsertionException e ) {
+			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.api.IApplicationWs
+	 * #removeInstance(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Response removeInstance( String applicationName, String instancePath ) {
+
+		this.logger.fine( "Request: remove " + instancePath + " in " + applicationName + "." );
+		Response response = Response.ok().build();
+		Instance instance;
+		try {
+			ManagedApplication ma;
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
+
+			else
+				Manager.INSTANCE.removeInstance( ma, instance );
+
+		} catch( UnauthorizedActionException e ) {
+			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+
+		} catch( IOException e ) {
+			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.api.IApplicationWs
+	 * #resynchronize(java.lang.String)
+	 */
+	@Override
+	public Response resynchronize( String applicationName ) {
+
+		this.logger.fine( "Request: resynchronize all the agents." );
+		Response response = Response.ok().build();
+		try {
+			ManagedApplication ma;
+			if(( ma = Manager.INSTANCE.getAppNameToManagedApplication().get( applicationName )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+			else
+				Manager.INSTANCE.resynchronizeAgents( ma );
+
+		} catch( IOException e ) {
 			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
 		}
 

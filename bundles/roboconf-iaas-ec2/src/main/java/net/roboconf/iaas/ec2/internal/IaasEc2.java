@@ -55,6 +55,8 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
  */
 public class IaasEc2 implements IaasInterface {
 
+	public static final String IAAS_TYPE = "ec2";
+
 	private final Logger logger;
 	private AmazonEC2 ec2;
 	private Map<String, String> iaasProperties;
@@ -74,7 +76,7 @@ public class IaasEc2 implements IaasInterface {
 	 */
 	@Override
 	public String getIaasType() {
-		return "ec2";
+		return IAAS_TYPE;
 	}
 
 

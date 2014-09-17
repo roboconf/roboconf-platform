@@ -20,7 +20,6 @@ import java.util.HashMap;
 
 import junit.framework.Assert;
 import net.roboconf.iaas.api.IaasException;
-import net.roboconf.iaas.vmware.internal.IaasVmware;
 
 import org.junit.Test;
 
@@ -29,45 +28,43 @@ import org.junit.Test;
  */
 public class IaasVmwareTest {
 
-	@Test
-	public void testConfigurationParsing() {
+	@Test( expected = IaasException.class )
+	public void testInvalidConfiguration_1() throws Exception {
 
-		// Empty configuration
-		HashMap<String, String> iaasProperties = new HashMap<String, String>();
 		IaasVmware iaas = new IaasVmware();
-		try {
-			iaas.setIaasProperties( iaasProperties );
-			Assert.fail( "An invalid configuration should have been detected." );
+		iaas.setIaasProperties( new HashMap<String,String> ());
+	}
 
-		} catch( IaasException e ) {
-			Assert.assertTrue(true);
-		}
 
-		// Move on
+	@Test( expected = IaasException.class )
+	public void testInvalidConfiguration_2() throws Exception {
+
+		IaasVmware iaas = new IaasVmware();
+		HashMap<String, String> iaasProperties = new HashMap<String,String> ();
 		iaasProperties.put("ipMessagingServer", "127.0.0.1" );
-		try {
-			iaas.setIaasProperties( iaasProperties );
-			Assert.fail( "An invalid configuration should have been detected." );
 
-		} catch( IaasException e ) {
-			Assert.assertTrue(true);
-		}
+		iaas.setIaasProperties( iaasProperties );
+	}
 
-		//TODO parameterize test with external file for IaaS credentials ?
-		/*
-		// Fill-in everything
-		iaasProperties.put( "vmware.url", "https://localhost:8890/sdk" );
-		iaasProperties.put( "vmware.user", "roboconf" );
-		iaasProperties.put( "vmware.password", "password" );
-		iaasProperties.put( "vmware.ignorecert", "true" );
-		iaasProperties.put( "vmware.cluster", "MYCLUSTER" );
-		try {
-			iaas.setIaasProperties( iaasProperties );
 
-		} catch( InvalidIaasPropertiesException e ) {
-			e.printStackTrace();
-			Assert.fail( "An invalid configuration was detected while it was valid." );
-		}
-		*/
+//	@Test
+//	public void testValidConfiguration() throws Exception {
+//
+//		Map<String, String> iaasProperties = new HashMap<String,String> ();
+//		IaasVmware iaas = new IaasVmware();
+//
+//		iaasProperties.put( "vmware.url", "https://localhost:8890/sdk" );
+//		iaasProperties.put( "vmware.user", "roboconf" );
+//		iaasProperties.put( "vmware.password", "password" );
+//		iaasProperties.put( "vmware.ignorecert", "true" );
+//		iaasProperties.put( "vmware.cluster", "MYCLUSTER" );
+//
+//		iaas.setIaasProperties( iaasProperties );
+//	}
+
+
+	@Test
+	public void testGetIaasType() {
+		Assert.assertEquals( IaasVmware.IAAS_TYPE, new IaasVmware().getIaasType());
 	}
 }

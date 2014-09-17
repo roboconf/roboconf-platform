@@ -18,10 +18,14 @@ package net.roboconf.core.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -97,6 +101,13 @@ public class UtilsTest {
 
 		} catch( IOException e ) {
 			Assert.fail( "Array of null files must be supported" );
+		}
+
+		try {
+			Utils.deleteFilesRecursively( new File( "inexisting-file" ));
+
+		} catch( IOException e ) {
+			Assert.fail( "Inexisting files must be supported" );
 		}
 	}
 
@@ -290,6 +301,18 @@ public class UtilsTest {
 
 		out = null;
 		Utils.closeQuietly( out );
+
+		Reader reader = null;
+		Utils.closeQuietly( reader );
+
+		reader = new CharArrayReader( new char[ 0 ]);
+		Utils.closeQuietly( reader );
+
+		Writer writer = null;
+		Utils.closeQuietly( writer );
+
+		writer = new StringWriter();
+		Utils.closeQuietly( writer );
 	}
 
 
@@ -328,6 +351,49 @@ public class UtilsTest {
 		};
 
 		Utils.closeQuietly( out );
+	}
+
+
+	@Test
+	public void testCloseQuietly_silentReader() throws Exception {
+
+		Reader reader = new Reader() {
+			@Override
+			public int read( char[] cbuf, int off, int len ) throws IOException {
+				return 0;
+			}
+
+			@Override
+			public void close() throws IOException {
+				throw new IOException();
+			}
+		};
+
+		Utils.closeQuietly( reader );
+	}
+
+
+	@Test
+	public void testCloseQuietly_silentWriter() throws Exception {
+
+		Writer writer = new Writer() {
+			@Override
+			public void write( char[] arg0, int arg1, int arg2 ) throws IOException {
+				// nothing
+			}
+
+			@Override
+			public void flush() throws IOException {
+				// nothing
+			}
+
+			@Override
+			public void close() throws IOException {
+				throw new IOException();
+			}
+		};
+
+		Utils.closeQuietly( writer );
 	}
 
 

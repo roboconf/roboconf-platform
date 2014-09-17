@@ -29,6 +29,8 @@ import net.roboconf.plugin.api.PluginInterface;
  */
 public class PluginMock implements PluginInterface {
 
+	public static final String INIT_PROPERTY = "initialized";
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String agentId;
 	private InstanceStatus currentState = InstanceStatus.NOT_DEPLOYED;
@@ -51,6 +53,11 @@ public class PluginMock implements PluginInterface {
 	public void initialize( Instance instance ) throws PluginException {
 		String name = instance != null ? instance.getName() : null;
 		this.logger.fine( this.agentId + " is initializing the plug-in for " + name + "." );
+
+		// This class is mainly used for test and dev' purpose.
+		// So, we can store the information in the instance without any major impact.
+		if( instance != null )
+			instance.getData().put( INIT_PROPERTY, "true" );
 	}
 
 

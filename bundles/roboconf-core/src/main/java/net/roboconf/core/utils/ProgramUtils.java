@@ -123,14 +123,7 @@ public final class ProgramUtils {
 				this.logger.severe( Utils.writeException( e ));
 
 			} finally {
-				try {
-					if( br != null )
-						br.close();
-
-				} catch( IOException e ) {
-					this.logger.warning( "Minor error while closing a reader. " + e.getMessage());
-					this.logger.finest( Utils.writeException( e ));
-				}
+				Utils.closeQuietly( br );
 			}
 		}
 	}

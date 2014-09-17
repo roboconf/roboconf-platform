@@ -181,10 +181,21 @@ public class BasicPluginPuppetTest {
 		Instance instance = new Instance( "test" ).component( new Component( "test-component" ));
 		String expectedPrefix = "class{'roboconf_test-component': runningState => ";
 
+		// Try all the states
 		for( PuppetState state : PuppetState.values()) {
 			String s = this.plugin.generateCodeToExecute( "roboconf_test-component", instance, state, null, false );
 			Assert.assertTrue( state.toString(), s.startsWith( expectedPrefix + state.toString()));
 		}
+
+		// Try with the changed import
+		Import imp = new Import( "/vm/sth", "some component" );
+		String s = this.plugin.generateCodeToExecute( "roboconf_test-component", instance, PuppetState.RUNNING, imp, false );
+		Assert.assertTrue( s.endsWith( ", importComponent => some component}" ));
+
+		// And when the component is null
+		imp = new Import( "/vm/sth", null );
+		s = this.plugin.generateCodeToExecute( "roboconf_test-component", instance, PuppetState.RUNNING, imp, false );
+		Assert.assertTrue( s.endsWith( ", importComponent => undef}" ));
 	}
 
 
@@ -192,9 +203,9 @@ public class BasicPluginPuppetTest {
 	public void testCallPuppetScriptBasics() throws Exception {
 
 		// Check that invalid parameters are skipped
-		this.plugin.callPuppetScript( null, "deploy", PuppetState.STOPPED, null, false, new File( "/whatever" ));
+		this.plugin.callPuppetScript( null, "deploy", PuppetState.STOPPED, null, false, new File( "whatever" ));
 		this.plugin.callPuppetScript( new Instance( "inst" ), "deploy", PuppetState.STOPPED, null, false, null );
-		this.plugin.callPuppetScript( new Instance( "inst" ), "deploy", PuppetState.STOPPED, null, false, new File( "/whatever" ));
+		this.plugin.callPuppetScript( new Instance( "inst" ), "deploy", PuppetState.STOPPED, null, false, new File( "whatever" ));
 
 		File f = this.folder.newFile();
 		this.plugin.callPuppetScript( new Instance( "inst" ), "deploy", PuppetState.STOPPED, null, false, f );

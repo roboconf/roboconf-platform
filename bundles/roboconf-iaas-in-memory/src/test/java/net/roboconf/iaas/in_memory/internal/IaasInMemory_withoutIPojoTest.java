@@ -14,34 +14,31 @@
  * limitations under the License.
  */
 
-package net.roboconf.iaas.embedded.internal;
-
-import java.util.HashMap;
+package net.roboconf.iaas.in_memory.internal;
 
 import junit.framework.Assert;
+import net.roboconf.iaas.api.IaasException;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class IaasEmbeddedTest {
+public class IaasInMemory_withoutIPojoTest {
 
 	@Test
-	public void testIaasEmbedded() throws Exception {
+	public void checkBasics() throws Exception {
 
-		IaasEmbedded iaas = new IaasEmbedded();
-		Assert.assertEquals( IaasEmbedded.IAAS_TYPE, iaas.getIaasType());
-		iaas.terminateVM( null );
-		iaas.terminateVM( "anything" );
+		IaasInMemory iaas = new IaasInMemory();
+		Assert.assertEquals( IaasInMemory.IAAS_TYPE, iaas.getIaasType());
 
-		Assert.assertNotNull( iaas.createVM( "ip", "user", "pwd", "nothing", "app" ));
-		Assert.assertNotNull( iaas.createVM( null, null, null, null, null ));
+		iaas.terminateVM( "whatever" );
+	}
 
-		iaas.setIaasProperties( null );
-		iaas.setIaasProperties( new HashMap<String,String>( 0 ));
 
-		iaas.terminateVM( null );
-		iaas.terminateVM( "anything" );
+	@Test( expected = IaasException.class )
+	public void testCreateVm() throws Exception {
+
+		new IaasInMemory().createVM( "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
 	}
 }
