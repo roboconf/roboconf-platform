@@ -25,13 +25,12 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>0.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-iaas-openstack</artifactId>
-	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: IaaS :: OpenStack</name>
 	<packaging>bundle</packaging>
 	
@@ -44,14 +43,14 @@
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-core</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-iaas-api</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		

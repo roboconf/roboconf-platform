@@ -25,13 +25,12 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>0.1-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-plugin-api</artifactId>
-	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: Plugin :: API</name>
 	<packaging>bundle</packaging>
 	
@@ -45,7 +44,7 @@
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
-  			<version>1.0-SNAPSHOT</version>
+  			<version>${project.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		
@@ -58,7 +57,7 @@
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
-  			<version>1.0-SNAPSHOT</version>
+  			<version>${project.version}</version>
   			<type>test-jar</type>
   			<scope>test</scope>
 		</dependency>
