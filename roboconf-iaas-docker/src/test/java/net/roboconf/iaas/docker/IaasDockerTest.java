@@ -203,7 +203,8 @@ public class IaasDockerTest {
 	@After
 	public void dockerCleanup() {
 		if(this.docker != null) {
-			this.docker.removeImageCmd(this.dockerImageId).exec();
+			if( dockerImageId != null )
+				this.docker.removeImageCmd(this.dockerImageId).exec();
 			try { this.docker.close(); } catch (IOException e) { /*ignore*/ }
 		}
 	}

@@ -30,7 +30,9 @@
 	<artifactId>parent</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf</name>
+	<description>A solution for elastic deployments</description>
 	<packaging>pom</packaging>
+	<url>http://roboconf.net</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -39,6 +41,32 @@
 		<jackson.stack.version>2.3.1</jackson.stack.version>
 		<java.compiler.version>1.6</java.compiler.version>
 	</properties>
+	
+	<modules>
+		<module>build-tools</module>
+		<module>roboconf-core</module>
+		<module>roboconf-messaging</module>
+		
+		<module>roboconf-iaas-api</module>
+		<module>roboconf-iaas-in-memory</module>
+		<module>roboconf-iaas-embedded</module>
+		<module>roboconf-iaas-azure</module>
+		<module>roboconf-iaas-docker</module>
+		<module>roboconf-iaas-ec2</module>
+		<module>roboconf-iaas-openstack</module>
+		<module>roboconf-iaas-vmware</module>
+		
+		<module>roboconf-dm-rest-api</module>
+		<module>roboconf-dm-rest-client</module>
+		<module>roboconf-dm</module>
+		<module>roboconf-dm-webapp</module>
+		
+		<module>roboconf-plugin-api</module>
+		<module>roboconf-plugin-bash</module>
+		<module>roboconf-plugin-puppet</module>
+		<module>roboconf-plugin-logger</module>
+		<module>roboconf-agent</module>
+	</modules>
 	
 	<dependencyManagement>
 		<dependencies>
@@ -254,45 +282,125 @@
 	<profiles>
 		<!-- Sonar extension (tailored for a local installation) -->
 		<profile>
-            <id>sonar</id>
-            <activation>
-            	<activeByDefault>false</activeByDefault>
-            </activation>
-            
-            <properties>
-                <sonar.jdbc.url>jdbc:h2:tcp://localhost:9092/sonar</sonar.jdbc.url>
-                <sonar.jdbc.username>sonar</sonar.jdbc.username>
-                <sonar.jdbc.password>sonar</sonar.jdbc.password>
-                <!-- Optional URL to server. Default value is http://localhost:9000 -->
-                <!-- <sonar.host.url>http://myserver:9000</sonar.host.url> -->
-            </properties>
-        </profile>
+			<id>sonar</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+	
+			<properties>
+				<sonar.jdbc.url>jdbc:h2:tcp://localhost:9092/sonar</sonar.jdbc.url>
+				<sonar.jdbc.username>sonar</sonar.jdbc.username>
+				<sonar.jdbc.password>sonar</sonar.jdbc.password>
+				<!-- Optional URL to server. Default value is http://localhost:9000 -->
+				<!-- <sonar.host.url>http://myserver:9000</sonar.host.url> -->
+			</properties>
+		</profile>
+	
+		<!-- For releases, we need to generate javadoc and sources JAR -->
+		<profile>
+			<id>release</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+	
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>2.3</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar-no-fork</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>2.9.1</version>
+						<executions>
+							<execution>
+								<id>attach-javadoc</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<stylesheetfile>javadoc/stylesheet.css</stylesheetfile>
+								</configuration>
+							</execution>
+						</executions>
+						<dependencies>
+							<dependency>
+								<groupId>net.roboconf</groupId>
+								<artifactId>build-tools</artifactId>
+								<version>1.0-SNAPSHOT</version>
+							</dependency>
+						</dependencies>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
 	</profiles>
 
-	<modules>
-		<module>build-tools</module>
-		<module>roboconf-core</module>
-		<module>roboconf-messaging</module>
-		
-		<module>roboconf-iaas-api</module>
-		<module>roboconf-iaas-in-memory</module>
-		<module>roboconf-iaas-embedded</module>
-		<module>roboconf-iaas-azure</module>
-		<module>roboconf-iaas-docker</module>
-		<module>roboconf-iaas-ec2</module>
-		<module>roboconf-iaas-openstack</module>
-		<module>roboconf-iaas-vmware</module>
-		
-		<module>roboconf-dm-rest-api</module>
-		<module>roboconf-dm-rest-client</module>
-		<module>roboconf-dm</module>
-		<module>roboconf-dm-webapp</module>
-		
-		<module>roboconf-plugin-api</module>
-		<module>roboconf-plugin-bash</module>
-		<module>roboconf-plugin-puppet</module>
-		<module>roboconf-plugin-logger</module>
-		<module>roboconf-agent</module>
-	</modules>
+	<!-- Required Information to publish artifacts to Maven Central -->
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Vincent ZURCZAK</name>
+			<email>vzurczak (at) linagora.com</email>
+			<url>https://github.com/vincent-zurczak</url>
+			<organization>Linagora</organization>
+			<organizationUrl>http://linagora.com</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<name>Pierre-Yves GIBELLO</name>
+			<email>pygibello (at) linagora.com</email>
+			<organization>Linagora</organization>
+			<organizationUrl>http://linagora.com</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<name>Didier DONSEZ</name>
+			<email>Didier.Donsez (at) imag.fr</email>
+			<organization>LIG (Université Joseph Fourier)</organization>
+			<organizationUrl>http://www.liglab.fr</organizationUrl>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+	
+	<contributors>
+		<contributor>
+			<name>Noël DE PALMA</name>
+			<email>noel.depalma (at) imag.fr</email>
+			<organization>LIG (Université Joseph Fourier)</organization>
+			<organizationUrl>http://www.liglab.fr</organizationUrl>
+			<timezone>+1</timezone>
+		</contributor>
+		<contributor>
+			<name>Linh-Manh PHAM</name>
+			<email>Linh-Manh.Pham (at) imag.fr</email>
+			<organization>LIG (Université Joseph Fourier)</organization>
+			<organizationUrl>http://www.liglab.fr</organizationUrl>
+			<timezone>+1</timezone>
+		</contributor>
+	</contributors>
+
+	<scm>
+		<connection>scm:git:git@github.com:roboconf/roboconf.git</connection>
+		<developerConnection>scm:git:git@github.com:roboconf/roboconf.git</developerConnection>
+		<url>git@github.com:roboconf/roboconf.git</url>
+	</scm>
 	
 </project>

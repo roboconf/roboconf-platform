@@ -369,8 +369,7 @@ public class PluginPuppet implements PluginInterface {
 							break;
 						case 4: // Error exit code
 						default:
-							this.logger.severe("Puppet script execution failed (exit code " + exitCode + ")");
-							break;
+							throw new IOException("Puppet script execution failed (exit code " + exitCode + ")");
 					}
 				}
 			}
