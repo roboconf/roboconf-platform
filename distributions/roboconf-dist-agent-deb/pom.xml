@@ -25,13 +25,12 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>0.1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
     <groupId>net.roboconf</groupId>
 	<artifactId>roboconf-dist-agent-deb</artifactId>
-	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: Agent Distribution :: Debian Package</name>
 	<packaging>pom</packaging>
 

@@ -25,8 +25,24 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.roboconf</groupId>
 	<artifactId>build-tools</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.1-SNAPSHOT</version>
 	<name>Roboconf :: Build Tools</name>
+	<description>A set of resources for the build (checkstyle, Javadoc stylesheet, etc)</description>
+	
+	<!-- 
+		We cannot use the root POM as our parent.
+		It results in circular dependencies.
+		
+		This can be avoided for the Checkstyle plug-ins by disabling
+		them (configuration -> skip = true).
+		
+		But we get the problem for the Javadoc generation.
+		And there is no workaround.
+		
+		So, no parent / child relation.
+		Build-tools is a simple module.
+		It MUST have the same version that the root POM.
+	 -->
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -39,6 +55,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
 				<executions>
 					<execution>
 						<id>empty-javadoc-jar</id>
@@ -49,6 +66,18 @@
 						<configuration>
 							<classifier>javadoc</classifier>
 							<classesDirectory>${basedir}/javadoc</classesDirectory>
+						</configuration>
+					</execution>
+					
+					<execution>
+						<id>empty-sources-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>sources</classifier>
+							<classesDirectory>${basedir}/src/main/resources</classesDirectory>
 						</configuration>
 					</execution>
 				</executions>

@@ -25,13 +25,12 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>0.1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-dist-agent-izpack</artifactId>
-	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: Agent Distribution :: IzPack</name>
 	<packaging>izpack-jar</packaging>
 

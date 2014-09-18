@@ -25,13 +25,12 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>parent</artifactId>
-		<version>1.0-SNAPSHOT</version>
+		<version>0.1-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
     <groupId>net.roboconf</groupId>
 	<artifactId>roboconf-karaf-agent-dist</artifactId>
-	<version>1.0-SNAPSHOT</version>
 	<name>Roboconf :: Karaf Distribution for the Agent</name>
 	<packaging>karaf-assembly</packaging>
 
