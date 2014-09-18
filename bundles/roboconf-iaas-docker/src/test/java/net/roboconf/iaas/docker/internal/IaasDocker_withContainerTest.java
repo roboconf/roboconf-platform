@@ -48,7 +48,6 @@ import com.github.dockerjava.api.command.CreateImageResponse;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.jaxrs.DockerClientBuilder;
-import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 
 /**
  * FIXME (VZ): tests do not run on my machine, and they will most likely not run on Travis CI.
@@ -250,10 +249,7 @@ public class IaasDocker_withContainerTest {
 		DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
 		config.withUri( "http://localhost:" + DOCKER_TCP_PORT );
 
-		this.docker = DockerClientBuilder
-				.getInstance( config.build())
-				.withDockerCmdExecFactory( new DockerCmdExecFactoryImpl()).build();
-
+		this.docker = DockerClientBuilder.getInstance( config.build()).build();
 		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource("image").getFile());
 		BuildImageCmd img = this.docker.buildImageCmd(baseDir).withNoCache().withTag("roboconf-test");
 		CreateImageResponse rsp = this.docker.createImageCmd( "roboconf-test", img.getTarInputStream()).exec();

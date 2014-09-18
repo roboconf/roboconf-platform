@@ -27,7 +27,6 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.jaxrs.DockerClientBuilder;
-import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -90,9 +89,7 @@ public class IaasDocker implements IaasInterface {
 			config.withEmail(email);
 		}
 
-		this.docker = DockerClientBuilder
-				.getInstance( config.build())
-				.withDockerCmdExecFactory( new DockerCmdExecFactoryImpl()).build();
+		this.docker = DockerClientBuilder.getInstance( config.build()).build();
 	}
 
 
