@@ -16,7 +16,10 @@
    limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project 
+		xmlns="http://maven.apache.org/POM/4.0.0" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<prerequisites>
@@ -25,7 +28,7 @@
 	
 	<groupId>net.roboconf</groupId>
 	<artifactId>parent</artifactId>
-	<version>0.2-SNAPSHOT</version>
+	<version>0.1-SNAPSHOT</version>
 	<name>Roboconf</name>
 	<description>A solution for elastic deployments</description>
 	<packaging>pom</packaging>
@@ -443,8 +446,7 @@
 		<connection>scm:git:git@github.com:roboconf/roboconf.git</connection>
 		<developerConnection>scm:git:git@github.com:roboconf/roboconf.git</developerConnection>
 		<url>http://github.com/roboconf/roboconf</url>
-	  <tag>HEAD</tag>
-  </scm>
+	</scm>
 
 	<distributionManagement>
 		<snapshotRepository>
