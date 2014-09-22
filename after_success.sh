@@ -18,6 +18,6 @@ VER=`java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q'`
 # 5. Use --settings to force the usage of our "settings.xml" file.
 
 if [ $VER == "16" ]; then
-	curl -o settings.xml http://roboconf.net/resources/build/settings.xml
+	wget http://roboconf.net/resources/build/settings.xml
 	mvn clean deploy cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura -q --settings settings.xml
 fi
