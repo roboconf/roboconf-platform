@@ -22,7 +22,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.roboconf</groupId>
 	<artifactId>build-tools</artifactId>
-	<version>0.1</version>
+	<version>0.2-SNAPSHOT</version>
 	<name>Roboconf :: Build Tools</name>
 	<description>A set of resources for the build (checkstyle, Javadoc stylesheet, etc)</description>
 	
