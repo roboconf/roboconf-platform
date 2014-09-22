@@ -1,9 +1,0 @@
-# Maven related elements or those that can be generated from the POM
-.project
-/target
-/maven-eclipse.xml
-
-#idea
-*.iml
-.idea/
-.settings/

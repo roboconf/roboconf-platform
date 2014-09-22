@@ -26,24 +26,24 @@
 		<maven>3.0.3</maven>
 	</prerequisites>
 	
+	<parent>
+		<groupId>net.roboconf</groupId>
+		<artifactId>roboconf-parent</artifactId>
+		<version>1.0</version>
+	</parent>
+	
 	<groupId>net.roboconf</groupId>
-	<artifactId>parent</artifactId>
+	<artifactId>roboconf-platform-parent</artifactId>
 	<version>0.1-SNAPSHOT</version>
-	<name>Roboconf</name>
-	<description>A solution for elastic deployments</description>
+	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
-	<url>http://roboconf.net</url>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<jersey.stack.version>1.18</jersey.stack.version>
 		<jackson.stack.version>2.3.1</jackson.stack.version>
-		<java.compiler.version>1.6</java.compiler.version>
 	</properties>
 	
 	<modules>
-		<module>build-tools</module>
 		<module>roboconf-core</module>
 		<module>roboconf-messaging</module>
 		
@@ -109,7 +109,6 @@
 	</dependencyManagement>
 	
 	<build>
-		<defaultGoal>install</defaultGoal>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -117,39 +116,7 @@
 					<artifactId>maven-bundle-plugin</artifactId>
 					<version>2.4.0</version>
 				</plugin>
-				
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>2.4</version>
-				</plugin>
-				
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<configuration>
-						<source>${java.compiler.version}</source>
-						<target>${java.compiler.version}</target>
-					</configuration>
-				</plugin>
-				
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-enforcer-plugin</artifactId>
-					<version>1.1.1</version>
-					<configuration>
-						<fail>true</fail>
-						<rules><DependencyConvergence /></rules>
-					</configuration>
-					<executions>
-						<execution>
-							<goals>
-								<goal>enforce</goal>
-							</goals>
-						</execution>
-					</executions>
-				</plugin>
-				
+			
 				<!-- Required for Coveralls! -->
 				<plugin>
 					<groupId>org.eluder.coveralls</groupId>
@@ -196,269 +163,19 @@
 						<systemProperties>
 							<property>
 								<name>java.util.logging.config.file</name>
-								<value>${basedir}/../build-tools/src/main/resources/build-logging.properties</value>
+								<value>${basedir}/build-logging.properties</value>
 							</property>
 						</systemProperties>
 					</configuration>
 				</plugin>
 			</plugins>
 		</pluginManagement>
-		
-		<plugins>
-			<!-- Find Unused Dependencies -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.8</version>
-				<executions>
-					<execution>
-						<id>analyze</id>
-						<phase>test-compile</phase>
-						<goals>
-							<goal>analyze-only</goal>
-						</goals>
-						<configuration>
-							<ignoreNonCompile>false</ignoreNonCompile>
-							<failOnWarning>false</failOnWarning>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			
-			<!-- CheckStyle -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-				<version>2.11</version>
-				<configuration>
-					<consoleOutput>true</consoleOutput>
-					<logViolationsToConsole>true</logViolationsToConsole>
-					<includeTestSourceDirectory>false</includeTestSourceDirectory>
-				</configuration>
-				
-				<dependencies>
-					<dependency>
-						<groupId>net.roboconf</groupId>
-						<artifactId>build-tools</artifactId>
-						<version>${project.version}</version>
-					</dependency>
-				</dependencies>
-				
-				<executions>
-				
-					<!-- Java Files -->
-					<execution>
-						<id>check-java</id>
-               			<phase>process-sources</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-						<configuration>
-							<configLocation>checkstyle-java-rules.xml</configLocation>
-							<headerLocation>header-java.txt</headerLocation>
-							<includes>**\/*.java</includes>
-							<excludes>**\/internal\/**\/*</excludes>
-						</configuration>
-					</execution>
-					
-					<!-- XML Files -->
-					<execution>
-						<id>check-xml</id>
-               			<phase>process-sources</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-						<configuration>
-							<configLocation>checkstyle-xml-rules.xml</configLocation>
-							<headerLocation>header-xml.txt</headerLocation>
-							<includes>**\/*.xml, **\/*.xsd</includes>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>2.5</version>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<version>2.8.2</version>
-				<configuration>
-					<deployAtEnd>-true</deployAtEnd>
-				</configuration>
-			</plugin>
-		</plugins>
 	</build>
-	
-	<profiles>
-		<!-- Sonar extension (tailored for a local installation) -->
-		<profile>
-			<id>sonar</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-	
-			<properties>
-				<sonar.jdbc.url>jdbc:h2:tcp://localhost:9092/sonar</sonar.jdbc.url>
-				<sonar.jdbc.username>sonar</sonar.jdbc.username>
-				<sonar.jdbc.password>sonar</sonar.jdbc.password>
-				<!-- Optional URL to server. Default value is http://localhost:9000 -->
-				<!-- <sonar.host.url>http://myserver:9000</sonar.host.url> -->
-			</properties>
-		</profile>
-	
-		<!-- A profile to generate javadoc and sources JAR -->
-		<profile>
-			<id>jdoc-and-sources</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-	
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-source-plugin</artifactId>
-						<version>2.3</version>
-						<executions>
-							<execution>
-								<id>attach-sources</id>
-								<goals>
-									<goal>jar-no-fork</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.9.1</version>
-						<executions>
-							<execution>
-								<id>attach-javadoc</id>
-								<goals>
-									<goal>jar</goal>
-								</goals>
-								<configuration>
-									<stylesheetfile>javadoc/stylesheet.css</stylesheetfile>
-								</configuration>
-							</execution>
-						</executions>
-						<dependencies>
-							<dependency>
-								<groupId>net.roboconf</groupId>
-								<artifactId>build-tools</artifactId>
-								<version>${project.version}</version>
-							</dependency>
-						</dependencies>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		
-		<!-- We also have a profile to sign our artifacts -->
-		<profile>
-			<id>release</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-	
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.5</version>
-						<configuration>
-							<useAgent>true</useAgent>
-						</configuration>
-						<executions>
-							<execution>
-								<id>sign-artifacts</id>
-								<phase>verify</phase>
-								<goals>
-									<goal>sign</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
-
-	<!-- Required Information to publish artifacts to Maven Central -->
-	<licenses>
-		<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
-
-	<developers>
-		<developer>
-			<name>Vincent ZURCZAK</name>
-			<email>vzurczak (at) linagora.com</email>
-			<url>https://github.com/vincent-zurczak</url>
-			<organization>Linagora</organization>
-			<organizationUrl>http://linagora.com</organizationUrl>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<name>Pierre-Yves GIBELLO</name>
-			<email>pygibello (at) linagora.com</email>
-			<organization>Linagora</organization>
-			<organizationUrl>http://linagora.com</organizationUrl>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<name>Didier DONSEZ</name>
-			<email>Didier.Donsez (at) imag.fr</email>
-			<organization>LIG (Université Joseph Fourier)</organization>
-			<organizationUrl>http://www.liglab.fr</organizationUrl>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
-	
-	<contributors>
-		<contributor>
-			<name>Noël DE PALMA</name>
-			<email>noel.depalma (at) imag.fr</email>
-			<organization>LIG (Université Joseph Fourier)</organization>
-			<organizationUrl>http://www.liglab.fr</organizationUrl>
-			<timezone>+1</timezone>
-		</contributor>
-		<contributor>
-			<name>Linh-Manh PHAM</name>
-			<email>Linh-Manh.Pham (at) imag.fr</email>
-			<organization>LIG (Université Joseph Fourier)</organization>
-			<organizationUrl>http://www.liglab.fr</organizationUrl>
-			<timezone>+1</timezone>
-		</contributor>
-	</contributors>
 
 	<scm>
-		<connection>scm:git:git@github.com:roboconf/roboconf.git</connection>
-		<developerConnection>scm:git:git@github.com:roboconf/roboconf.git</developerConnection>
-		<url>http://github.com/roboconf/roboconf</url>
+		<connection>scm:git:git@github.com:roboconf/roboconf-platform.git</connection>
+		<developerConnection>scm:git:git@github.com:roboconf/roboconf-platform.git</developerConnection>
+		<url>http://github.com/roboconf/roboconf-platform</url>
 	</scm>
-
-	<distributionManagement>
-		<snapshotRepository>
-			<id>sonatype-snapshots</id>
-			<name>Sonatype Nexus snapshot repository</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</snapshotRepository>
-		<repository>
-			<id>sonatype-release-staging</id>
-			<name>Sonatype Nexus release repository</name>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-		</repository>
-	</distributionManagement>
 	
 </project>
