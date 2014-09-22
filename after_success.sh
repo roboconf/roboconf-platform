@@ -16,8 +16,11 @@ VER=`java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q'`
 # 3. Upload artifacts to Sonatype.
 # 4. Use -q option to only display Maven errors and warnings.
 # 5. Use --settings to force the usage of our "settings.xml" file.
+# 6. Enable the profile that generates the javadoc and the sources archives.
 
 if [ $VER == "16" ]; then
 	wget http://roboconf.net/resources/build/settings.xml
-	mvn clean deploy cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura -q --settings settings.xml
+	mvn clean deploy cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura -q --settings settings.xml -P jdoc-and-sources
+else
+	echo "No action to undertake (not a JDK 6)."
 fi
