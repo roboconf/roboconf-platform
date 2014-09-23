@@ -1,7 +1,12 @@
 # Roboconf 
-[![Build Status](http://travis-ci.org/roboconf/roboconf.png?branch=master)](http://travis-ci.org/roboconf/roboconf)
-[![Coverage Status](http://coveralls.io/repos/roboconf/roboconf/badge.png)](http://coveralls.io/r/roboconf/roboconf)
+[![Build Status](http://travis-ci.org/roboconf/roboconf-platform.png?branch=master)](http://travis-ci.org/roboconf/roboconf-platform)
+[![Coverage Status](http://coveralls.io/repos/roboconf/roboconf-platform/badge.png)](http://coveralls.io/r/roboconf/roboconf-platform)
 
+Website: [http://roboconf.net](http://roboconf.net)  
+Licensed under the terms of the **Apache License v2**.
+
+This repository contains the source code for the Roboconf platform.  
+This includes the **Deployment Manager**, the **Agents** and their default distributions.
 
 Roboconf is a solution for asynchronous and multi-target deployments.  
 It allows to deploy distributed applications over several machines (VM, connected objects, IoT) or
@@ -10,6 +15,3 @@ Roboconf can install and also reconfigure dynamically a topology of applications
 
 Roboconf brings asynchronous configuration to solutions like Bash, Puppet or Chef.  
 For the moment, only Puppet and bash plugins are available.
-
-The project is still incubating, but we hope to have a stable version soon.  
-More information is available at [roboconf.net](http://roboconf.github.io/en/index.html).

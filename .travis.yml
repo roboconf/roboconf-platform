@@ -16,12 +16,14 @@ before_script:
   - sudo apt-get install rubygems
   - gem install puppet
 
+# For debug only
+#  - puppet --version
+
 # Build with Maven.
 # Use -q option to only display Maven errors and warnings.
 script:
   - mvn clean install -q
 
-# Notify Coveralls.
-# Use -q option to only display Maven errors and warnings.
+# Actions to perform after the build (only for Java 6).
 after_success:
-  - mvn clean cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura -q
+  - ./after_success.sh
