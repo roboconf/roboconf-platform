@@ -47,6 +47,7 @@
 		<module>bundles/roboconf-iaas-docker</module>
 		<module>bundles/roboconf-dm-rest-api</module>
 		<module>bundles/roboconf-dm</module>
+		<module>roboconf-dm-web-administration</module>
 		<!--
 			Useless for the moment 
 		<module>bundles/roboconf-dm-webapp</module>
@@ -57,15 +58,15 @@
 		<module>bundles/roboconf-plugin-logger</module>
 		<module>bundles/roboconf-agent</module>
 		
-		<module>karaf/roboconf-karaf-agent-branding</module>
-		<module>karaf/roboconf-karaf-agent-feature</module>
-		<module>karaf/roboconf-karaf-agent-dist</module>
+		<module>karaf/roboconf-karaf-branding-agent</module>
+		<module>karaf/roboconf-karaf-branding-dm</module>
+		<module>karaf/roboconf-karaf-feature-agent</module>
+		<module>karaf/roboconf-karaf-feature-dm</module>
+		<module>karaf/roboconf-karaf-dist-agent</module>
+		<module>karaf/roboconf-karaf-dist-dm</module>
 		
-		<!--
-		<module>distributions/roboconf-dist-agent-izpack</module>
-		-->
-		<module>distributions/roboconf-dist-agent-deb</module>
-		
+		<module>distributions/roboconf-dist-debian-agent</module>
+		<module>distributions/roboconf-dist-debian-dm</module>
 		<module>utilities/roboconf-dm-rest-client</module>
 	</modules>
 

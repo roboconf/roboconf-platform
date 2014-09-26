@@ -21,7 +21,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
-import net.roboconf.agent.IAgent;
 import net.roboconf.agent.internal.misc.AgentConstants;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
@@ -43,7 +42,7 @@ import net.roboconf.plugin.api.PluginInterface;
  *
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractAgent implements IAgent {
+public abstract class AbstractAgent {
 
 	// Component properties (ipojo)
 	protected String messageServerIp, messageServerUsername, messageServerPassword;
@@ -69,10 +68,12 @@ public abstract class AbstractAgent implements IAgent {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.agent.IAgent#start()
+	/**
+	 * Starts listening and processing messages.
+	 * <p>
+	 * If the agent was already started, this method does nothing.
+	 * </p>
 	 */
-	@Override
 	public void start() {
 
 		// Do nothing if it is already running
@@ -91,10 +92,17 @@ public abstract class AbstractAgent implements IAgent {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.agent.IAgent#stop()
+	/**
+	 * Stops listening and processing messages.
+	 * <p>
+	 * This method does not interrupt the current message processing.
+	 * But it will not process any further message, unless the start method
+	 * is called after.
+	 * </p>
+	 * <p>
+	 * If the agent is already stopped, this method does nothing.
+	 * </p>
 	 */
-	@Override
 	public void stop() {
 
 		this.logger.fine( "Agent " + getAgentId() + " is being stopped." );

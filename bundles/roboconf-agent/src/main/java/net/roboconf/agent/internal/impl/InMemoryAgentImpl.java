@@ -16,13 +16,12 @@
 
 package net.roboconf.agent.internal.impl;
 
-import net.roboconf.agent.IAgent;
 import net.roboconf.agent.internal.AbstractAgent;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryAgentImpl extends AbstractAgent implements IAgent {
+public class InMemoryAgentImpl extends AbstractAgent {
 
 	// nothing for the moment
 }

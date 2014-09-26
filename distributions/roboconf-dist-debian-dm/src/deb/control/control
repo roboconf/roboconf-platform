@@ -1,0 +1,9 @@
+Package: roboconf-agent
+Version: [[version]]
+Section: contrib/java
+Priority: optional
+Architecture: all
+Depends: java2-runtime, curl, base-files
+Maintainer: Vincent ZURCZAK <vincent.zurczak@linagora.com>
+Description: Roboconf Agent
+Distribution: development

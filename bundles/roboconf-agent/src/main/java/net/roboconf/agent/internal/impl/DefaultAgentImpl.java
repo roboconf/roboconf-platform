@@ -16,7 +16,6 @@
 
 package net.roboconf.agent.internal.impl;
 
-import net.roboconf.agent.IAgent;
 import net.roboconf.agent.internal.AbstractAgent;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.model.runtime.Instance;
@@ -25,7 +24,7 @@ import net.roboconf.plugin.api.PluginInterface;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DefaultAgentImpl extends AbstractAgent implements IAgent {
+public class DefaultAgentImpl extends AbstractAgent {
 
 	// Fields that should be injected (ipojo)
 	protected PluginInterface[] plugins;
