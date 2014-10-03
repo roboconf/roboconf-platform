@@ -35,9 +35,21 @@
 	<packaging>pom</packaging>
 
 	<modules>
+		<!-- Core Modules -->
 		<module>bundles/roboconf-core</module>
 		<module>bundles/roboconf-messaging</module>
 		<module>bundles/roboconf-iaas-api</module>
+		<module>bundles/roboconf-plugin-api</module>
+		
+		<module>bundles/roboconf-agent</module>
+		
+		<module>bundles/roboconf-dm</module>
+		<module>bundles/roboconf-dm-web-administration</module>
+		<module>bundles/roboconf-dm-rest-commons</module>
+		<module>bundles/roboconf-dm-rest-services</module>
+		<module>bundles/roboconf-dm-rest-client</module>
+		
+		<!-- IaaS extensions -->
 		<module>bundles/roboconf-iaas-in-memory</module>
 		<module>bundles/roboconf-iaas-embedded</module>
 		<module>bundles/roboconf-iaas-azure</module>
@@ -45,19 +57,13 @@
 		<module>bundles/roboconf-iaas-openstack</module>
 		<module>bundles/roboconf-iaas-vmware</module>
 		<module>bundles/roboconf-iaas-docker</module>
-		<module>bundles/roboconf-dm-rest-api</module>
-		<module>bundles/roboconf-dm</module>
-		<module>roboconf-dm-web-administration</module>
-		<!--
-			Useless for the moment 
-		<module>bundles/roboconf-dm-webapp</module>
-		 -->
-		<module>bundles/roboconf-plugin-api</module>
+		
+		<!-- Agent extensions -->
 		<module>bundles/roboconf-plugin-bash</module>
 		<module>bundles/roboconf-plugin-puppet</module>
 		<module>bundles/roboconf-plugin-logger</module>
-		<module>bundles/roboconf-agent</module>
 		
+		<!-- Distributions -->
 		<module>karaf/roboconf-karaf-branding-agent</module>
 		<module>karaf/roboconf-karaf-branding-dm</module>
 		<module>karaf/roboconf-karaf-feature-agent</module>
@@ -67,7 +73,6 @@
 		
 		<module>distributions/roboconf-dist-debian-agent</module>
 		<module>distributions/roboconf-dist-debian-dm</module>
-		<module>utilities/roboconf-dm-rest-client</module>
 	</modules>
 
 

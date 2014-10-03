@@ -18,46 +18,162 @@ package net.roboconf.dm.management;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.io.RuntimeModelIo;
 import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.management.ManagedApplication;
+import net.roboconf.messaging.client.IDmClient;
+import net.roboconf.messaging.client.MessageServerClientFactory;
 
 /**
  * A class in charge of managing the configuration for the DM.
  * @author Vincent Zurczak - Linagora
  */
-public final class ManagerConfiguration {
+public class ManagerConfiguration {
 
-	private static final String ROBOCONF_DM_DIR = "ROBOCONF_DM_DIR";
-	private static final String PROP_MESSAGING_IP = "messaging.ip";
-	private static final String PROP_MESSAGING_USERNAME = "messaging.username";
-	private static final String PROP_MESSAGING_PASSWORD = "messaging.password";
-
+	// Constants
 	static final String APPLICATIONS = "applications";
 	static final String INSTANCES = "instances";
-	static final String CONF = "conf";
-	static final String CONF_PROPERTIES = "configuration.properties";
 
+	// Fields injected by OSGi Config Admin or by iPojo
+	private String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
+	private Manager manager;
+
+	// Inferred fields
+	IDmClient messagingClient;
+	private MessageServerClientFactory messgingFactory = new MessageServerClientFactory();
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String messageServerIp, messageServerUsername, messageServerPassword;
 	private File configurationDirectory;
+	private boolean validConfiguration = false;
 
 
 
 	/**
 	 * Constructor.
 	 */
-	private ManagerConfiguration() {
-		// nothing
+	public ManagerConfiguration() {
+		this( new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" ));
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param directory a directory
+	 */
+	public ManagerConfiguration( File directory ) {
+
+		this.messageServerIp = "localhost";
+		this.messageServerUsername = "guest";
+		this.messageServerPassword = "guest";
+		this.configurationDirectoryLocation = directory.getAbsolutePath();
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param messageServerIp
+	 * @param messageServerUsername
+	 * @param messageServerPassword
+	 * @param configurationDirectory
+	 */
+	public ManagerConfiguration(
+			String messageServerIp,
+			String messageServerUsername,
+			String messageServerPassword,
+			File configurationDirectory ) {
+		this( messageServerIp, messageServerUsername, messageServerPassword, configurationDirectory.getAbsolutePath());
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param messageServerIp
+	 * @param messageServerUsername
+	 * @param messageServerPassword
+	 * @param configurationDirectoryLocation
+	 */
+	public ManagerConfiguration(
+			String messageServerIp,
+			String messageServerUsername,
+			String messageServerPassword,
+			String configurationDirectoryLocation ) {
+
+		this.messageServerIp = messageServerIp;
+		this.messageServerUsername = messageServerUsername;
+		this.messageServerPassword = messageServerPassword;
+		this.configurationDirectoryLocation = configurationDirectoryLocation;
+	}
+
+
+	/**
+	 * @return true if and only if the configuration is valid
+	 */
+	public boolean isValidConfiguration() {
+		return this.validConfiguration;
+	}
+
+
+	/**
+	 * This method handles the manager's reconfiguration when a parameter changes.
+	 */
+	public void update() {
+
+		try {
+			// Deal with the directory
+			this.configurationDirectory = new File( this.configurationDirectoryLocation );
+			if( ! this.configurationDirectory.isDirectory()
+					&& ! this.configurationDirectory.mkdirs())
+				throw new IOException( "Could not create " + this.configurationDirectory );
+
+			File f = new File( this.configurationDirectory, APPLICATIONS );
+			if( ! f.isDirectory() && ! f.mkdirs())
+				throw new IOException( "Could not create " + f );
+
+			f = new File( this.configurationDirectory, INSTANCES );
+			if( ! f.isDirectory() && ! f.mkdirs())
+				throw new IOException( "Could not create " + f );
+
+			// Create a new messaging client
+			closeConnection();
+
+			this.messagingClient = this.messgingFactory.createDmClient();
+			this.messagingClient.setParameters( this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
+
+			// The manager should not be null at runtime (iPojo guarantees it).
+			// But this test is useful for unit testing.
+			if( this.manager != null )
+				this.manager.configurationChanged();
+
+			this.validConfiguration = true;
+
+		} catch( IOException e ) {
+			this.logger.warning( "An error occurred while reconfiguring the manager. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+			this.validConfiguration = false;
+		}
+	}
+
+
+	/**
+	 * Closes the manager's connection.
+	 */
+	public void closeConnection() {
+
+		try {
+			if( this.messagingClient != null
+					&& this.messagingClient.isConnected())
+				this.messagingClient.closeConnection();
+
+		} catch( IOException e ) {
+			this.logger.warning( "An error occurred while closing the manager's connection. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
 	}
 
 
@@ -118,7 +234,7 @@ public final class ManagerConfiguration {
 		File targetFile = new File( this.configurationDirectory, INSTANCES + "/" + applicationName + ".instances" );
 		if( targetFile.exists()
 				&& ! targetFile.delete())
-			targetFile.deleteOnExit();
+			this.logger.warning( "Instance file " + targetFile + " could not be deleted." );
 	}
 
 
@@ -172,156 +288,65 @@ public final class ManagerConfiguration {
 
 
 	/**
-	 * Finds the configuration directory.
-	 * @return a directory (that may not exist)
+	 * @param messgingFactory the messgingFactory to set
 	 */
-	public static File findConfigurationDirectory() {
-		return findConfigurationDirectory( new EnvResolver());
+	public void setMessgingFactory( MessageServerClientFactory messgingFactory ) {
+		this.messgingFactory = messgingFactory;
 	}
 
 
 	/**
-	 * Creates a configuration from given parameters.
-	 * <p>
-	 * The directory and its structure will be created if necessary.
-	 * </p>
-	 *
-	 * @param configurationDirectory an existing directory
-	 * @param messagingServerIp a non-null IP address
-	 * @param messageServerUsername the user name to connect to the messaging server
-	 * @param messageServerPassword the password to connect to the messaging server
-	 * @return a non-null configuration
-	 * @throws IOException if some directories could not be created
+	 * @param manager the manager to set
 	 */
-	public static ManagerConfiguration createConfiguration(
-			File configurationDirectory,
-			String messagingServerIp,
-			String messageServerUsername,
-			String messageServerPassword )
-	throws IOException {
-
-		// Create the structure
-		if( ! configurationDirectory.exists()
-				&& ! configurationDirectory.mkdirs())
-			throw new IOException( "Could not create " + configurationDirectory );
-
-		File f = new File( configurationDirectory, APPLICATIONS );
-		if( ! f.exists() && ! f.mkdirs())
-			throw new IOException( "Could not create " + f );
-
-		f = new File( configurationDirectory, INSTANCES );
-		if( ! f.exists() && ! f.mkdirs())
-			throw new IOException( "Could not create " + f );
-
-		f = new File( configurationDirectory, CONF );
-		if( ! f.exists() && ! f.mkdirs())
-			throw new IOException( "Could not create " + f );
-
-		// Save the configuration
-		Properties props = new Properties();
-		props.setProperty( PROP_MESSAGING_IP, messagingServerIp );
-		props.setProperty( PROP_MESSAGING_USERNAME, messageServerUsername );
-		props.setProperty( PROP_MESSAGING_PASSWORD, messageServerPassword );
-		f = new File( f, CONF_PROPERTIES  );
-
-		FileOutputStream os = null;
-		try {
-			os = new FileOutputStream( f );
-			props.store( os, "Temporary configuration" );
-
-		} finally {
-			Utils.closeQuietly( os );
-		}
-
-		// Create the configuration
-		ManagerConfiguration conf = new ManagerConfiguration();
-		conf.messageServerIp = messagingServerIp;
-		conf.messageServerPassword = messageServerPassword;
-		conf.messageServerUsername = messageServerUsername;
-		conf.configurationDirectory = configurationDirectory;
-
-
-		return conf;
+	public void setManager( Manager manager ) {
+		this.manager = manager;
 	}
 
 
 	/**
-	 * Creates a temporary configuration from given parameters.
-	 * <p>
-	 * Equivalent to <code>createTemporaryConfiguration( configurationDirectory, "localhost" );</code>
-	 * </p>
-	 * <p>
-	 * The directory and its structure will be created if necessary.
-	 * </p>
-	 *
-	 * @param configurationDirectory an existing directory
-	 * @return a non-null configuration
-	 * @throws IOException if some directories could not be created
+	 * @return the manager
 	 */
-	public static ManagerConfiguration createConfiguration( File configurationDirectory ) throws IOException {
-		return createConfiguration( configurationDirectory, "localhost", "guest", "guest" );
+	public Manager getManager() {
+		return this.manager;
 	}
 
 
 	/**
-	 * Loads a configuration from the given directory.
-	 * <p>
-	 * The directory structure should already exist.
-	 * </p>
-	 *
-	 * @param configurationDirectory an existing directory
-	 * @return a non-null configuration
-	 * @throws IOException if the properties could not be loaded
+	 * @return the configurationDirectoryLocation
 	 */
-	public static ManagerConfiguration loadConfiguration( File configurationDirectory ) throws IOException {
-
-		Properties props = new Properties();
-		File propertiesFile = new File( configurationDirectory, CONF + "/" + CONF_PROPERTIES );
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream( propertiesFile );
-			props.load( in );
-
-		} finally {
-			Utils.closeQuietly( in );
-		}
-
-		ManagerConfiguration conf = new ManagerConfiguration();
-		conf.configurationDirectory = configurationDirectory;
-		conf.messageServerIp = props.getProperty( PROP_MESSAGING_IP );
-		conf.messageServerUsername = props.getProperty( PROP_MESSAGING_USERNAME );
-		conf.messageServerPassword = props.getProperty( PROP_MESSAGING_PASSWORD );
-
-		return conf;
+	public String getConfigurationDirectoryLocation() {
+		return this.configurationDirectoryLocation;
 	}
 
 
 	/**
-	 * Finds the configuration directory (for test and mocking purpose).
-	 * @return a directory (that may not exist)
+	 * @param configurationDirectoryLocation the configurationDirectoryLocation to set
 	 */
-	static File findConfigurationDirectory( EnvResolver envResolver ) {
-
-		String loc = envResolver.findEnvironmentVariable( ROBOCONF_DM_DIR );
-		File result = loc != null ? new File( loc ) : new File( System.getProperty( "user.home" ), "roboconf_dm" );
-
-		return result;
+	public void setConfigurationDirectoryLocation( String configurationDirectoryLocation ) {
+		this.configurationDirectoryLocation = configurationDirectoryLocation;
 	}
 
 
 	/**
-	 * A class to mock access to environment variables.
-	 * @author Vincent Zurczak - Linagora
+	 * @param messageServerIp the messageServerIp to set
 	 */
-	static class EnvResolver {
+	public void setMessageServerIp( String messageServerIp ) {
+		this.messageServerIp = messageServerIp;
+	}
 
-		/**
-		 * Finds the value of an environment variable.
-		 * @param name the variable name
-		 * @return its value
-		 */
-		String findEnvironmentVariable( String name ) {
-			return System.getenv( name );
-		}
+
+	/**
+	 * @param messageServerUsername the messageServerUsername to set
+	 */
+	public void setMessageServerUsername( String messageServerUsername ) {
+		this.messageServerUsername = messageServerUsername;
+	}
+
+
+	/**
+	 * @param messageServerPassword the messageServerPassword to set
+	 */
+	public void setMessageServerPassword( String messageServerPassword ) {
+		this.messageServerPassword = messageServerPassword;
 	}
 }

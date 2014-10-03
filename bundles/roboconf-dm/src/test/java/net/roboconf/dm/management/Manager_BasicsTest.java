@@ -18,6 +18,7 @@ package net.roboconf.dm.management;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,13 +33,16 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.TestIaasResolver;
-import net.roboconf.dm.internal.TestMessageServerClient;
-import net.roboconf.dm.internal.TestMessageServerClient.DmMessageServerClientFactory;
+import net.roboconf.dm.internal.management.ManagedApplication;
+import net.roboconf.dm.internal.management.ManagementHelpers;
+import net.roboconf.dm.internal.test.TestIaasResolver;
+import net.roboconf.dm.internal.test.TestMessageServerClient;
+import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -56,30 +60,33 @@ public class Manager_BasicsTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
-
+	private Manager manager;
 
 
 	@Before
 	public void resetManager() throws Exception {
 
-		// Shutdown used with a temporary folder will cause "IO Exceptions" (failed to save instances)
-		Manager.INSTANCE.shutdown();
-		Manager.INSTANCE.setIaasResolver( new TestIaasResolver());
-		Manager.INSTANCE.setMessagingClientFactory( new DmMessageServerClientFactory());
+		File directory = this.folder.newFolder();
 
-		File dir = this.folder.newFolder();
-		ManagerConfiguration conf = ManagerConfiguration.createConfiguration( dir );
-		Manager.INSTANCE.initialize( conf );
+		this.manager = ManagementHelpers.createConfiguredManager();
+		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory());
+		this.manager.getConfiguration().setConfigurationDirectoryLocation( directory.getAbsolutePath());
+		this.manager.setIaasResolver( new TestIaasResolver());
+		this.manager.getConfiguration().update();
+
+		// Disable the messages timer for predictability
+		this.manager.timer.cancel();
 	}
 
 
 	@Test
 	public void testSaveConfiguration_nullConfiguration() {
 
-		Manager.INSTANCE.shutdown();
-		Assert.assertNull( Manager.INSTANCE.configuration );
-		Manager.INSTANCE.saveConfiguration( null );
-		Manager.INSTANCE.saveConfiguration( new ManagedApplication( new TestApplication(), null ));
+		this.manager = new Manager();
+		Assert.assertNull( this.manager.getConfiguration());
+
+		this.manager.saveConfiguration( null );
+		this.manager.saveConfiguration( new ManagedApplication( new TestApplication(), null ));
 	}
 
 
@@ -88,12 +95,12 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		File instancesFile = new File(
-				Manager.INSTANCE.configuration.getConfigurationDirectory(),
+				this.manager.getConfiguration().getConfigurationDirectory(),
 				ManagerConfiguration.INSTANCES + "/" + app.getName() + ".instances" );
 
 		Assert.assertFalse( instancesFile.exists());
-		Assert.assertNotNull( Manager.INSTANCE.configuration );
-		Manager.INSTANCE.saveConfiguration( new ManagedApplication( app, null ));
+		Assert.assertTrue( this.manager.hasValidConfiguration());
+		this.manager.saveConfiguration( new ManagedApplication( app, null ));
 		Assert.assertTrue( instancesFile.exists());
 	}
 
@@ -101,56 +108,36 @@ public class Manager_BasicsTest {
 	@Test
 	public void testShutdown() throws Exception {
 
-		Assert.assertNotNull( Manager.INSTANCE.messagingClient );
-		Manager.INSTANCE.shutdown();
-		Assert.assertNull( Manager.INSTANCE.messagingClient );
+		Assert.assertNotNull( this.manager.timer );
+		this.manager.shutdown();
+		Assert.assertNull( this.manager.timer );
 
-		// Test the idempotence of the shutdown() method
-		Manager.INSTANCE.shutdown();
-		Assert.assertNull( Manager.INSTANCE.messagingClient );
+		this.manager.shutdown();
+		Assert.assertNull( this.manager.timer );
 	}
 
 
 	@Test
-	public void testShutdown_notConnected() throws Exception {
+	public void testShutdown_invalidConfiguration() throws Exception {
 
-		Assert.assertNotNull( Manager.INSTANCE.messagingClient );
-		Manager.INSTANCE.messagingClient.closeConnection();
-		Manager.INSTANCE.shutdown();
-		Assert.assertNull( Manager.INSTANCE.messagingClient );
-	}
+		this.manager = new Manager();
 
-
-	@Test
-	public void testShutdown_withErrorOnCloseConnection() throws Exception {
-
-		Manager.INSTANCE.messagingClient = new TestMessageServerClient() {
-			@Override
-			public void closeConnection() throws IOException {
-				throw new IOException();
-			}
-
-			@Override
-			public boolean isConnected() {
-				return true;
-			}
-		};
-
-		Manager.INSTANCE.shutdown();
-		Assert.assertNull( Manager.INSTANCE.messagingClient );
+		Assert.assertNull( this.manager.timer );
+		this.manager.shutdown();
+		Assert.assertNull( this.manager.timer );
 	}
 
 
 	@Test
 	public void testListApplications() throws Exception {
 
-		Assert.assertEquals( 0, Manager.INSTANCE.getAppNameToManagedApplication().size());
+		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
 		TestApplication app = new TestApplication();
 		File f = File.createTempFile( "roboconf_", ".folder" );
 
 		try {
-			Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, f ));
-			List<Application> applications = Manager.INSTANCE.listApplications();
+			this.manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, f ));
+			List<Application> applications = this.manager.listApplications();
 			Assert.assertEquals( 1, applications.size());
 			Assert.assertEquals( app, applications.get( 0 ));
 
@@ -166,11 +153,11 @@ public class Manager_BasicsTest {
 		TestApplication app = new TestApplication();
 		File f = this.folder.newFolder();
 
-		Assert.assertEquals( 0, Manager.INSTANCE.getAppNameToManagedApplication().size());
-		Assert.assertNull( Manager.INSTANCE.findApplicationByName( app.getName()));
+		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
+		Assert.assertNull( this.manager.findApplicationByName( app.getName()));
 
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, f ));
-		Assert.assertEquals( app, Manager.INSTANCE.findApplicationByName( app.getName()));
+		this.manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, f ));
+		Assert.assertEquals( app, this.manager.findApplicationByName( app.getName()));
 	}
 
 
@@ -181,9 +168,9 @@ public class Manager_BasicsTest {
 		File f = this.folder.newFolder();
 		ManagedApplication ma = new ManagedApplication( app, f );
 
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		Manager.INSTANCE.deleteApplication( ma );
+		this.manager.deleteApplication( ma );
 	}
 
 
@@ -194,26 +181,24 @@ public class Manager_BasicsTest {
 		File f = this.folder.newFolder();
 		ManagedApplication ma = new ManagedApplication( app, f );
 
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-		Manager.INSTANCE.deleteApplication( ma );
-		Assert.assertEquals( 0, Manager.INSTANCE.getAppNameToManagedApplication().size());
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.deleteApplication( ma );
+		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
 	}
 
 
-	@Test
-	public void testShutdownApplication() throws Exception {
+	@Test( expected = IOException.class )
+	public void testDeleteApplication_invalidConfiguration() throws Exception {
+
+		this.manager = new Manager();
 
 		TestApplication app = new TestApplication();
 		File f = this.folder.newFolder();
-
 		ManagedApplication ma = new ManagedApplication( app, f );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
-		Assert.assertFalse( client.connectionClosed.get());
-
-		Manager.INSTANCE.shutdown();
-		Assert.assertTrue( client.connectionClosed.get());
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.deleteApplication( ma );
+		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
 	}
 
 
@@ -224,10 +209,10 @@ public class Manager_BasicsTest {
 		File f = this.folder.newFolder();
 
 		ManagedApplication ma = new ManagedApplication( app, f );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		String existingInstanceName = app.getMySqlVm().getName();
-		Manager.INSTANCE.addInstance( ma, null, new Instance( existingInstanceName ));
+		this.manager.addInstance( ma, null, new Instance( existingInstanceName ));
 	}
 
 
@@ -238,10 +223,10 @@ public class Manager_BasicsTest {
 		File f = this.folder.newFolder();
 
 		ManagedApplication ma = new ManagedApplication( app, f );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		String existingInstanceName = app.getMySql().getName();
-		Manager.INSTANCE.addInstance( ma, app.getMySqlVm(), new Instance( existingInstanceName ));
+		this.manager.addInstance( ma, app.getMySqlVm(), new Instance( existingInstanceName ));
 	}
 
 
@@ -252,14 +237,30 @@ public class Manager_BasicsTest {
 		File f = this.folder.newFolder();
 
 		ManagedApplication ma = new ManagedApplication( app, f );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Instance newInstance = new Instance( "mail-vm" ).component( app.getMySqlVm().getComponent());
 
-		Manager.INSTANCE.addInstance( ma, null, newInstance );
+		this.manager.addInstance( ma, null, newInstance );
 		Assert.assertEquals( 3, app.getRootInstances().size());
 		Assert.assertTrue( app.getRootInstances().contains( newInstance ));
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testAddInstance_invalidConfiguration() throws Exception {
+
+		TestApplication app = new TestApplication();
+		File f = this.folder.newFolder();
+
+		ManagedApplication ma = new ManagedApplication( app, f );
+		Assert.assertEquals( 2, app.getRootInstances().size());
+		Instance newInstance = new Instance( "mail-vm" ).component( app.getMySqlVm().getComponent());
+
+		this.manager = new Manager();
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.addInstance( ma, null, newInstance );
 	}
 
 
@@ -270,13 +271,13 @@ public class Manager_BasicsTest {
 		File f = this.folder.newFolder();
 
 		ManagedApplication ma = new ManagedApplication( app, f );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		// Insert a MySQL instance under the Tomcat VM
 		Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
 		Instance newInstance = new Instance( app.getMySql().getName()).component( app.getMySql().getComponent());
 
-		Manager.INSTANCE.addInstance( ma, app.getTomcatVm(), newInstance );
+		this.manager.addInstance( ma, app.getTomcatVm(), newInstance );
 		Assert.assertEquals( 2, app.getTomcatVm().getChildren().size());
 		Assert.assertTrue( app.getTomcatVm().getChildren().contains( newInstance ));
 	}
@@ -287,10 +288,10 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		Manager.INSTANCE.removeInstance( ma, app.getMySqlVm());
+		this.manager.removeInstance( ma, app.getMySqlVm());
 	}
 
 
@@ -299,18 +300,18 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
-		Manager.INSTANCE.removeInstance( ma, app.getTomcatVm());
+		this.manager.removeInstance( ma, app.getTomcatVm());
 
 		Assert.assertEquals( 1, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
-		Assert.assertEquals( 1, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
 
-		List<Message> messages = ma.rootInstanceToAwaitingMessages.get( app.getTomcatVm());
+		List<Message> messages = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 0 ).getClass());
 		Assert.assertEquals(
@@ -324,14 +325,14 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), ma );
-		TestMessageServerClient msgclient = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		TestMessageServerClient msgclient = (TestMessageServerClient) this.manager.getMessagingClient();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
-		Manager.INSTANCE.removeInstance( ma, app.getTomcat());
+		this.manager.removeInstance( ma, app.getTomcat());
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
@@ -343,12 +344,28 @@ public class Manager_BasicsTest {
 	}
 
 
+	@Test( expected = IOException.class )
+	public void testRemoveInstance_invalidConfiguration() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( 2, app.getRootInstances().size());
+		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+
+		this.manager = new Manager();
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.removeInstance( ma, app.getTomcat());
+	}
+
+
 	@Test
 	public void testLoadNewApplication_success() throws Exception {
 
 		File directory = TestUtils.findTestFile( "/lamp" );
 		Assert.assertTrue( directory.exists());
-		ManagedApplication ma = Manager.INSTANCE.loadNewApplication( directory );
+		ManagedApplication ma = this.manager.loadNewApplication( directory );
 
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( ma.getApplicationFilesDirectory().getName(), ma.getName());
@@ -356,7 +373,7 @@ public class Manager_BasicsTest {
 		Assert.assertEquals( "Legacy LAMP", ma.getApplication().getName());
 
 		File expected = new File(
-				Manager.INSTANCE.configuration.getConfigurationDirectory(),
+				this.manager.getConfiguration().getConfigurationDirectory(),
 				ManagerConfiguration.APPLICATIONS );
 
 		Assert.assertEquals( expected, ma.getApplicationFilesDirectory().getParentFile());
@@ -367,11 +384,11 @@ public class Manager_BasicsTest {
 	public void testLoadNewApplication_conflict() throws Exception {
 
 		Application app = new Application( "Legacy LAMP" );
-		Manager.INSTANCE.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+		this.manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
 
 		File directory = TestUtils.findTestFile( "/lamp" );
 		Assert.assertTrue( directory.exists());
-		Manager.INSTANCE.loadNewApplication( directory );
+		this.manager.loadNewApplication( directory );
 	}
 
 
@@ -382,12 +399,23 @@ public class Manager_BasicsTest {
 		Assert.assertTrue( source.exists());
 
 		File apps = new File(
-				Manager.INSTANCE.configuration.getConfigurationDirectory(),
+				this.manager.getConfiguration().getConfigurationDirectory(),
 				ManagerConfiguration.APPLICATIONS );
 
 		File target = new File( apps, "Legacy LAMP/sub/dir" );
 		Utils.copyDirectory( source, target );
-		Manager.INSTANCE.loadNewApplication( target );
+		this.manager.loadNewApplication( target );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testLoadNewApplication_invalidConfiguration() throws Exception {
+
+		File directory = TestUtils.findTestFile( "/lamp" );
+		Assert.assertTrue( directory.exists());
+
+		this.manager = new Manager();
+		this.manager.loadNewApplication( directory );
 	}
 
 
@@ -398,84 +426,110 @@ public class Manager_BasicsTest {
 		Assert.assertTrue( source.exists());
 
 		File apps = new File(
-				Manager.INSTANCE.configuration.getConfigurationDirectory(),
+				this.manager.getConfiguration().getConfigurationDirectory(),
 				ManagerConfiguration.APPLICATIONS );
 
 		File target = new File( apps, "Legacy LAMP" );
 		Utils.copyDirectory( source, target );
-		ManagedApplication app = Manager.INSTANCE.loadNewApplication( target );
+		ManagedApplication app = this.manager.loadNewApplication( target );
 		Assert.assertNotNull( app );
 	}
 
 
 	@Test( expected = InvalidApplicationException.class )
 	public void testLoadNewApplication_invalidApplication() throws Exception {
-		Manager.INSTANCE.loadNewApplication( this.folder.newFolder());
+		this.manager.loadNewApplication( this.folder.newFolder());
 	}
 
 
 	@Test( expected = IOException.class )
-	public void testInitialize_alreadyInitialized() throws Exception {
+	public void testCheckConfiguration_noConfiguration() throws Exception {
 
-		ManagerConfiguration conf = Manager.INSTANCE.configuration;
-		Manager.INSTANCE.initialize( conf );
+		this.manager = new Manager();
+		this.manager.checkConfiguration();
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCheckConfiguration_invalidConfiguration() throws Exception {
+
+		this.manager = ManagementHelpers.createConfiguredManager();
+		this.manager.checkConfiguration();
 	}
 
 
 	@Test
-	public void testInitialize_withApps_noInstance() throws Exception {
+	public void testCheckConfiguration() throws Exception {
+
+		Assert.assertNotNull( this.manager.getConfiguration());
+		this.manager.checkConfiguration();
+		Assert.assertTrue( this.manager.hasValidConfiguration());
+	}
+
+
+	@Test
+	public void testConfigurationChanged_withApps_noInstance() throws Exception {
 
 		// Copy an application in the configuration
+		Assert.assertTrue( this.manager.hasValidConfiguration());
 		File source = TestUtils.findTestFile( "/lamp" );
 		Assert.assertTrue( source.exists());
 
 		File apps = new File(
-				Manager.INSTANCE.configuration.getConfigurationDirectory(),
+				this.manager.getConfiguration().getConfigurationDirectory(),
 				ManagerConfiguration.APPLICATIONS );
 
 		File target = new File( apps, "Legacy LAMP" );
 		Utils.copyDirectory( source, target );
 
-		// Reset the manager
-		ManagerConfiguration conf = Manager.INSTANCE.configuration;
-		Manager.INSTANCE.shutdown();
-		Manager.INSTANCE.initialize( conf );
+		// Reset the manager's configuration (simply reload it)
+		this.manager.getConfiguration().update();
+		Assert.assertTrue( this.manager.hasValidConfiguration());
 
 		// Check there is an application
-		Assert.assertEquals( 1, Manager.INSTANCE.getAppNameToManagedApplication().size());
-		ManagedApplication ma = Manager.INSTANCE.getAppNameToManagedApplication().get( "Legacy LAMP" );
+		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+		ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( "Legacy LAMP" );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
 		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
 
 		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication()))
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, inst.getStatus());
+
+		// Change the configuration's directory => no more application in the manager
+		File newDirectory = this.folder.newFolder();
+		this.manager.getConfiguration().setConfigurationDirectoryLocation( newDirectory.getAbsolutePath());
+		this.manager.getConfiguration().update();
+
+		Assert.assertTrue( this.manager.hasValidConfiguration());
+		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
 	}
 
 
 	@Test
-	public void testInitialize_withApps_withInstances() throws Exception {
+	public void testConfigurationChanged_andShutdown_withApps_withInstances() throws Exception {
 
 		// Copy an application in the configuration
 		File source = TestUtils.findTestFile( "/lamp" );
-		ManagedApplication ma = Manager.INSTANCE.loadNewApplication( source );
+		ManagedApplication ma = this.manager.loadNewApplication( source );
 		Instance apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
 		Assert.assertNotNull( apache );
 
+		// Update the instances
 		apache.getData().put( Instance.IP_ADDRESS, "192.168.1.23" );
 		apache.getData().put( Instance.MACHINE_ID, "my id" );
 		apache.getData().put( "whatever", "something" );
 		apache.setStatus( InstanceStatus.PROBLEM );
 
-		// Reset the manager
-		ManagerConfiguration conf = Manager.INSTANCE.configuration;
-		Manager.INSTANCE.shutdown();
-		Assert.assertEquals( 0, Manager.INSTANCE.getAppNameToManagedApplication().size());
-		Manager.INSTANCE.initialize( conf );
+		// Save the manager's state
+		this.manager.shutdown();
 
-		// Check there is an application
-		Assert.assertEquals( 1, Manager.INSTANCE.getAppNameToManagedApplication().size());
-		ma = Manager.INSTANCE.getAppNameToManagedApplication().get( "Legacy LAMP" );
+		// Reset the manager (reload the configuration)
+		this.manager.getConfiguration().update();
+
+		// Check there is the right application
+		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+		ma = this.manager.getAppNameToManagedApplication().get( "Legacy LAMP" );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
 		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
@@ -499,7 +553,7 @@ public class Manager_BasicsTest {
 	public void testCheckErrors_withCriticalError() throws Exception {
 
 		RoboconfError error = new ModelError( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, 2 );
-		Manager.INSTANCE.checkErrors( Arrays.asList( error ));
+		this.manager.checkErrors( Arrays.asList( error ));
 	}
 
 
@@ -507,7 +561,13 @@ public class Manager_BasicsTest {
 	public void testCheckErrors_withWarningOnly() throws Exception {
 
 		RoboconfError error = new ModelError( ErrorCode.CO_NOT_OVERRIDING, 2 );
-		Manager.INSTANCE.checkErrors( Arrays.asList( error ));
+		this.manager.checkErrors( Arrays.asList( error ));
+	}
+
+
+	@Test
+	public void testCheckErrors_withnoErrorOrWarning() throws Exception {
+		this.manager.checkErrors( new ArrayList<RoboconfError> ());
 	}
 
 
@@ -515,17 +575,56 @@ public class Manager_BasicsTest {
 	public void testSendWhenNoConnection() throws Exception {
 
 		ManagedApplication ma = new ManagedApplication( new TestApplication(), null );
-		TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
+		TestMessageServerClient client = (TestMessageServerClient) this.manager.getMessagingClient();
 
-		Manager.INSTANCE.messagingClient.closeConnection();
-		Manager.INSTANCE.send( ma, new MsgCmdSendInstances(), new Instance());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		this.manager.getMessagingClient().closeConnection();
+		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
+		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, client.sentMessages.size());
 
-		Manager.INSTANCE.shutdown();
-		Manager.INSTANCE.send( ma, new MsgCmdSendInstances(), new Instance());
-		Assert.assertEquals( 0, ma.rootInstanceToAwaitingMessages.size());
+		this.manager.shutdown();
+		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
+		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, client.sentMessages.size());
+	}
+
+
+	@Test
+	public void testSendWhenInvalidConfiguration() throws Exception {
+
+		ManagedApplication ma = new ManagedApplication( new TestApplication(), null );
+		this.manager = new Manager();
+		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
+	}
+
+
+	@Test
+	public void testSendWhenRabbitIsDown() throws Exception {
+
+		TestApplication app = new TestApplication();
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		ManagedApplication ma = new ManagedApplication( app, null );
+		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory() {
+			@Override
+			public IDmClient createDmClient() {
+				return new TestMessageServerClient() {
+					@Override
+					public boolean isConnected() {
+						return true;
+					}
+
+					@Override
+					public void sendMessageToAgent( Application application, Instance instance, Message message )
+					throws IOException {
+						throw new IOException( "For test purpose." );
+					}
+				};
+			}
+		});
+
+		this.manager.getConfiguration().update();
+		this.manager.send( ma, new MsgCmdSendInstances(), app.getMySqlVm());
 	}
 
 
@@ -534,20 +633,20 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
-		TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
+		TestMessageServerClient client = (TestMessageServerClient) this.manager.getMessagingClient();
 
-		Manager.INSTANCE.resynchronizeAgents( ma );
+		this.manager.resynchronizeAgents( ma );
 		Assert.assertEquals( 0, client.sentMessages.size());
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
-		Manager.INSTANCE.resynchronizeAgents( ma );
+		this.manager.resynchronizeAgents( ma );
 		Assert.assertEquals( 1, client.sentMessages.size());
 		Assert.assertEquals( MsgCmdResynchronize.class, client.sentMessages.get( 0 ).getClass());
 
 		client.sentMessages.clear();
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		Manager.INSTANCE.resynchronizeAgents( ma );
+		this.manager.resynchronizeAgents( ma );
 		Assert.assertEquals( 2, client.sentMessages.size());
 		Assert.assertEquals( MsgCmdResynchronize.class, client.sentMessages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdResynchronize.class, client.sentMessages.get( 1 ).getClass());
@@ -559,13 +658,26 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
-		TestMessageServerClient client = (TestMessageServerClient) Manager.INSTANCE.messagingClient;
+		TestMessageServerClient client = (TestMessageServerClient) this.manager.getMessagingClient();
 
-		Manager.INSTANCE.messagingClient.closeConnection();
+		this.manager.getMessagingClient().closeConnection();
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		Manager.INSTANCE.resynchronizeAgents( ma );
+		this.manager.resynchronizeAgents( ma );
 		Assert.assertEquals( 0, client.sentMessages.size());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testResynchronizeAgents_invalidConfiguration() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		this.manager = new Manager();
+		this.manager.resynchronizeAgents( ma );
 	}
 }

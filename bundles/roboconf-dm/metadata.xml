@@ -4,14 +4,25 @@
 		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
 		xmlns="org.apache.felix.ipojo">
 
+	<!-- A component for the DM -->
 	<component classname="net.roboconf.dm.management.Manager" immediate="true" name="roboconf-dm" public="false">
 		<requires field="iaas" optional="true" />
-		<properties updated="updateConfiguration">
-		
-			<!-- Due to a limitation in iPojo 1.x, we must use the setter method and not the field name -->
-			<property name="message-server-ip" method="setMessageServerIp" />
-			<property name="message-server-username" method="setMessageServerUsername" />
-			<property name="message-server-password" method="setMessageServerPassword" />
+		<requires field="configuration" optional="true" />
+		<callback transition="invalidate" method="shutdown"/>
+	</component>
+	
+	<!-- A component for its configuration -->
+	<component classname="net.roboconf.dm.management.ManagerConfiguration" immediate="true" name="roboconf-dm-configuration" public="false">
+		<requires field="manager" />
+		<properties updated="update">
+			<property name="message-server-ip" field="messageServerIp" />
+			<property name="message-server-username" field="messageServerUsername" />
+			<property name="message-server-password" field="messageServerPassword" />
+			<property name="configuration-directory-location" field="configurationDirectoryLocation" />
 		</properties>
 	</component>
+	
+	<!-- And the instances... -->
+	<instance component="roboconf-dm" name="Roboconf DM" />
+	<instance component="roboconf-dm-configuration" name="Roboconf DM's configuration" />
 </ipojo>
