@@ -5,41 +5,49 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<!-- Default component -->
-	<component classname="net.roboconf.agent.internal.impl.DefaultAgentImpl" immediate="true" name="roboconf-agent-default" public="false">
-		<requires field="plugins" optional="true" />
-		<properties updated="updateConfiguration">
+	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-default" public="false">
+		<callback transition="validate" method="start"/>
+		<callback transition="invalidate" method="stop"/>
 		
-			<!-- Due to a limitation in iPojo 1.x, we must use the setter method and not the field name -->
-			<property name="message-server-ip" method="setMessageServerIp" />
-			<property name="message-server-username" method="setMessageServerUsername" />
-			<property name="message-server-password" method="setMessageServerPassword" />
-			<property name="application-name" method="setApplicationName" />
-			<property name="root-instance-name" method="setRootInstanceName" />
-			<property name="ip-address-of-the-agent" method="setIpAddress" />
-			<property name="iaas-type" method="setIaasType" />
-			<property name="override-properties-with-user-data" type="boolean" method="setOverrideProperties" />
+		<requires field="plugins" optional="true">
+			<callback type="bind" method="pluginAppears"/>
+			<callback type="unbind" method="pluginDisappears"/>
+			<callback type="modified" method="pluginWasModified"/>
+		</requires>
+		
+		<properties updated="updateConfiguration">
+			<property name="message-server-ip" field="messageServerIp" />
+			<property name="message-server-username" field="messageServerUsername" />
+			<property name="message-server-password" field="messageServerPassword" />
+			<property name="application-name" field="applicationName" />
+			<property name="root-instance-name" field="rootInstanceName" />
+			<property name="ip-address-of-the-agent" field="ipAddress" />
+			<property name="iaas-type" field="iaasType" />
+			<property name="override-properties-with-user-data" type="boolean" field="overrideProperties" />
+			<property name="simulate-plugins" type="boolean" field="simulatePlugins" value="false" />
 		</properties>
 	</component>
 	
 	<!-- Since its component's factory is not public, it is a singleton instance. -->
-	<instance component="roboconf-agent-default" name="Default Agent Instance" />
+	<instance component="roboconf-agent-default" name="Roboconf - Default Agent" />
 	
 	<!-- In-memory component -->
-	<component classname="net.roboconf.agent.internal.impl.InMemoryAgentImpl" immediate="true" name="roboconf-agent-in-memory">
+	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-in-memory">
+		<callback transition="validate" method="start"/>
+		<callback transition="invalidate" method="stop"/>
 		<properties updated="updateConfiguration">
 		
-			<!-- Due to a limitation in iPojo 1.x, we must use the setter method and not the field name -->
 			<!-- Values that will be set by the IaaS in memory -->
-			<property name="message-server-ip" method="setMessageServerIp" />
-			<property name="message-server-username" method="setMessageServerUsername" />
-			<property name="message-server-password" method="setMessageServerPassword" />
-			<property name="application-name" method="setApplicationName" />
-			<property name="root-instance-name" method="setRootInstanceName" />
+			<property name="message-server-ip" field="messageServerIp" />
+			<property name="message-server-username" field="messageServerUsername" />
+			<property name="message-server-password" field="messageServerPassword" />
+			<property name="application-name" field="applicationName" />
+			<property name="root-instance-name" field="rootInstanceName" />
 			
 			<!-- Predefined Values -->
-			<property name="ip-address-of-the-agent" method="setIpAddress" value="localhost" />
-			<property name="iaas-type" method="setIaasType" value="in-memory" />
-			<property name="override-properties-with-user-data" type="boolean" method="setOverrideProperties" value="false" />
+			<property name="ip-address-of-the-agent" field="ipAddress" value="localhost" />
+			<property name="iaas-type" field="iaasType" value="in-memory" />
+			<property name="override-properties-with-user-data" type="boolean" field="overrideProperties" value="false" />
 		</properties>
 	</component>
 </ipojo>

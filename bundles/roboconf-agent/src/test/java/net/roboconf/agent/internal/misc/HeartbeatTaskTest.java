@@ -19,7 +19,6 @@ package net.roboconf.agent.internal.misc;
 import java.io.IOException;
 
 import junit.framework.Assert;
-import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
@@ -32,9 +31,15 @@ import org.junit.Test;
 public class HeartbeatTaskTest {
 
 	@Test
-	public void testHeartbeat() {
+	public void testHeartbeat_connected() {
 
-		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient();
+		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient() {
+			@Override
+			public boolean isConnected() {
+				return true;
+			}
+		};
+
 		HeartbeatTask task = new HeartbeatTask( "app", "root", messagingClient );
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 
@@ -43,6 +48,18 @@ public class HeartbeatTaskTest {
 		Assert.assertEquals( MsgNotifHeartbeat.class, messagingClient.messagesForTheDm.get( 0 ).getClass());
 		Assert.assertEquals( "app", ((MsgNotifHeartbeat) messagingClient.messagesForTheDm.get( 0 )).getApplicationName());
 		Assert.assertEquals( "root", ((MsgNotifHeartbeat) messagingClient.messagesForTheDm.get( 0 )).getRootInstanceName());
+	}
+
+
+	@Test
+	public void testHeartbeat_notConnected() {
+
+		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient();
+		HeartbeatTask task = new HeartbeatTask( "app", "root", messagingClient );
+		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
+
+		task.run();
+		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 	}
 
 

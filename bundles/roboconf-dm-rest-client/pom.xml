@@ -33,8 +33,15 @@
 	<artifactId>roboconf-dm-rest-client</artifactId>
 	<name>Roboconf :: Deployment Manager :: REST Client</name>
 	<packaging>bundle</packaging>
+
+	<properties>
+		<exam.version>3.4.0</exam.version>
+		<url.version>1.6.0</url.version>
+	</properties>
 	
 	<dependencies>
+	
+		<!-- Runtime dependencies -->
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
@@ -69,27 +76,7 @@
 			<version>${jackson.stack.version}</version>
 		</dependency>
 	
-		<dependency>
-			<groupId>com.sun.jersey.jersey-test-framework</groupId>
-			<artifactId>jersey-test-framework-grizzly2</artifactId>
-			<version>${jersey.stack.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-servlet</artifactId>
-			<version>${jersey.stack.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>com.sun.jersey.jersey-test-framework</groupId>
-			<artifactId>jersey-test-framework-core</artifactId>
-			<version>${jersey.stack.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
+		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -108,43 +95,39 @@
 			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-dm</artifactId>
   			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-dm-rest-services</artifactId>
-  			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.ipojo</artifactId>
-			<version>${ipojo.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-dm</artifactId>
-  			<version>${project.version}</version>
   			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
 		
+		<!-- PAX dependencies -->
 		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-messaging</artifactId>
-  			<version>${project.version}</version>
-  			<scope>test</scope>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-container-karaf</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
 		</dependency>
-		
 		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-iaas-api</artifactId>
-  			<version>${project.version}</version>
-  			<scope>test</scope>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-junit4</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.url</groupId>
+			<artifactId>pax-url-aether</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.inject</groupId>
+			<artifactId>javax.inject</artifactId>
+			<version>1</version>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	
@@ -155,8 +138,6 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Import-Package>net.roboconf.core.*</Import-Package>
-						<Export-Package>net.roboconf.dm.internal.rest.commons.*</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>

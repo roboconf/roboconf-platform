@@ -17,7 +17,6 @@
 package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
-import net.roboconf.agent.internal.impl.InMemoryAgentImpl;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -39,7 +38,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testSetMessagingClient() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		processor.newMessagingClient = new TestAgentMessagingClient();
 
@@ -141,7 +140,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithUnknownInstance() {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		processor.newMessagingClient = new TestAgentMessagingClient();
 
@@ -160,7 +159,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithUnknownPlugin() {
 
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return null;
@@ -188,7 +187,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithTransitiveState() {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestApplication app = new TestApplication();
 
@@ -212,7 +211,7 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {
@@ -256,7 +255,7 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {
@@ -300,7 +299,7 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {
@@ -347,7 +346,7 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {

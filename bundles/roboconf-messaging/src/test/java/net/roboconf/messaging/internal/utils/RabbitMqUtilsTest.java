@@ -157,6 +157,19 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 
 
 	@Test
+	public void testConfigureFactory_nullIp() throws Exception {
+
+		ConnectionFactory factory = new ConnectionFactory();
+		String username = "toto";
+		String password= "123456789";
+
+		RabbitMqUtils.configureFactory( factory, null, username, password );
+		Assert.assertEquals( username, factory.getUsername());
+		Assert.assertEquals( password, factory.getPassword());
+	}
+
+
+	@Test
 	public void testCloseConnection_withNull() throws Exception {
 		RabbitMqUtils.closeConnection( null );
 	}

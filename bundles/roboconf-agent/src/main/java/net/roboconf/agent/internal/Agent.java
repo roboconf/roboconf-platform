@@ -17,6 +17,8 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
@@ -42,12 +44,15 @@ import net.roboconf.plugin.api.PluginInterface;
  *
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractAgent {
+public class Agent {
 
 	// Component properties (ipojo)
 	protected String messageServerIp, messageServerUsername, messageServerPassword;
 	protected String applicationName, rootInstanceName, ipAddress, iaasType;
-	protected boolean overrideProperties = false;
+	protected boolean overrideProperties = false, simulatePlugins = true;
+
+	// Fields that should be injected (ipojo)
+	protected PluginInterface[] plugins;
 
 	// Internal fields
 	protected final Logger logger;
@@ -62,7 +67,7 @@ public abstract class AbstractAgent {
 	/**
 	 * Constructor.
 	 */
-	public AbstractAgent() {
+	public Agent() {
 		this.logger = Logger.getLogger( getClass().getName());
 		this.messageProcessor = new AgentMessageProcessor( this );
 	}
@@ -81,7 +86,7 @@ public abstract class AbstractAgent {
 			return;
 
 		// Keep a trace of the launching
-		this.logger.fine( "Agent " + getAgentId() + " is being launched." );
+		this.logger.info( "Agent '" + getAgentId() + "' is being launched." );
 
 		// Get the configuration
 		updateConfiguration();
@@ -105,7 +110,7 @@ public abstract class AbstractAgent {
 	 */
 	public void stop() {
 
-		this.logger.fine( "Agent " + getAgentId() + " is being stopped." );
+		this.logger.info( "Agent '" + getAgentId() + "' is being stopped." );
 		if( this.heartBeatTimer != null )
 			this.heartBeatTimer.cancel();
 
@@ -138,20 +143,92 @@ public abstract class AbstractAgent {
 
 	/**
 	 * Finds the right plug-in for an instance.
-	 * <p>
-	 * If {@link #simulatePlugins} is true, this method returns an instance
-	 * of {@link PluginMock}, no matter what is the installer name.
-	 * </p>
-	 *
 	 * @param instance a non-null instance
 	 * @return the plug-in associated with the instance's installer name
 	 */
 	public PluginInterface findPlugin( Instance instance ) {
 
-		PluginInterface result = new PluginMock();
-		result.setNames( this.applicationName, this.rootInstanceName );
+		// Find a plug-in
+		PluginInterface result = null;
+		if( this.simulatePlugins ) {
+			result = new PluginMock();
+
+		} else {
+			String installerName = null;
+			if( instance.getComponent() != null )
+				installerName = instance.getComponent().getInstallerName();
+
+			// Run through available plug-ins
+			if( this.plugins != null ) {
+				for( PluginInterface pi : this.plugins ) {
+					if( pi.getPluginName().equalsIgnoreCase( installerName )) {
+						result = pi;
+						break;
+					}
+				}
+			}
+
+			if( result == null )
+				this.logger.severe( "No plugin was found for instance '" + instance.getName() + "' with installer '" + installerName + "'." );
+		}
+
+		// Initialize the result, if any
+		if( result != null )
+			result.setNames( this.applicationName, this.rootInstanceName );
 
 		return result;
+	}
+
+
+	/**
+	 * This method lists the available plug-ins and logs it.
+	 */
+	public void listPlugins() {
+
+		if( this.plugins == null || this.plugins.length == 0 ) {
+			this.logger.info( "No plug-in was found for Roboconf's agent." );
+
+		} else {
+			StringBuilder sb = new StringBuilder( "Available plug-ins in Roboconf's agent: " );
+			for( Iterator<PluginInterface> it = Arrays.asList( this.plugins).iterator(); it.hasNext(); ) {
+				sb.append( it.next().getPluginName());
+				if( it.hasNext())
+					sb.append( ", " );
+			}
+
+			sb.append( "." );
+			this.logger.info( sb.toString());
+		}
+	}
+
+
+	/**
+	 * This method is invoked by iPojo every time a new plug-in appears.
+	 * @param pi
+	 */
+	public void pluginAppears( PluginInterface pi ) {
+		this.logger.info( "Plugin " + pi.getPluginName() + " is now available in Roboconf's agent." );
+		listPlugins();
+	}
+
+
+	/**
+	 * This method is invoked by iPojo every time a new plug-in disappears.
+	 * @param pi
+	 */
+	public void pluginDisappears( PluginInterface pi ) {
+		this.logger.info( "Plugin " + pi.getPluginName() + " is not available anymore in Roboconf's agent." );
+		listPlugins();
+	}
+
+
+	/**
+	 * This method is invoked by iPojo every time a new plug-in is modified.
+	 * @param pi
+	 */
+	public void pluginWasModified( PluginInterface pi ) {
+		this.logger.info( "Plugin " + pi.getPluginName() + " was modified in Roboconf's agent." );
+		listPlugins();
 	}
 
 
@@ -217,24 +294,10 @@ public abstract class AbstractAgent {
 	}
 
 	/**
-	 * @param messageServerIp the messageServerIp to set
-	 */
-	public void setMessageServerIp( String messageServerIp ) {
-		this.messageServerIp = messageServerIp;
-	}
-
-	/**
 	 * @return the messageServerUsername
 	 */
 	public String getMessageServerUsername() {
 		return this.messageServerUsername;
-	}
-
-	/**
-	 * @param messageServerUsername the messageServerUsername to set
-	 */
-	public void setMessageServerUsername( String messageServerUsername ) {
-		this.messageServerUsername = messageServerUsername;
 	}
 
 	/**
@@ -245,24 +308,10 @@ public abstract class AbstractAgent {
 	}
 
 	/**
-	 * @param messageServerPassword the messageServerPassword to set
-	 */
-	public void setMessageServerPassword( String messageServerPassword ) {
-		this.messageServerPassword = messageServerPassword;
-	}
-
-	/**
 	 * @return the applicationName
 	 */
 	public String getApplicationName() {
 		return this.applicationName;
-	}
-
-	/**
-	 * @param applicationName the applicationName to set
-	 */
-	public void setApplicationName( String applicationName ) {
-		this.applicationName = applicationName;
 	}
 
 	/**
@@ -273,24 +322,10 @@ public abstract class AbstractAgent {
 	}
 
 	/**
-	 * @param rootInstanceName the rootInstanceName to set
-	 */
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
-	}
-
-	/**
 	 * @return the ipAddress
 	 */
 	public String getIpAddress() {
 		return this.ipAddress;
-	}
-
-	/**
-	 * @param ipAddress the ipAddress to set
-	 */
-	public void setIpAddress( String ipAddress ) {
-		this.ipAddress = ipAddress;
 	}
 
 	/**
@@ -301,13 +336,6 @@ public abstract class AbstractAgent {
 	}
 
 	/**
-	 * @param iaasType the iaasType to set
-	 */
-	public void setIaasType( String iaasType ) {
-		this.iaasType = iaasType;
-	}
-
-	/**
 	 * @return the overrideProperties
 	 */
 	public boolean isOverrideProperties() {
@@ -315,10 +343,66 @@ public abstract class AbstractAgent {
 	}
 
 	/**
+	 * @return the simulatePlugins
+	 */
+	public boolean isSimulatePlugins() {
+		return this.simulatePlugins;
+	}
+
+	/**
+	 * @param simulatePlugins the simulatePlugins to set
+	 */
+	public void setSimulatePlugins( boolean simulatePlugins ) {
+		this.simulatePlugins = simulatePlugins;
+	}
+
+	/**
+	 * @param messageServerIp the messageServerIp to set
+	 */
+	public void setMessageServerIp( String messageServerIp ) {
+		this.messageServerIp = messageServerIp;
+	}
+
+	/**
+	 * @param messageServerUsername the messageServerUsername to set
+	 */
+	public void setMessageServerUsername( String messageServerUsername ) {
+		this.messageServerUsername = messageServerUsername;
+	}
+
+	/**
+	 * @param messageServerPassword the messageServerPassword to set
+	 */
+	public void setMessageServerPassword( String messageServerPassword ) {
+		this.messageServerPassword = messageServerPassword;
+	}
+
+	/**
+	 * @param applicationName the applicationName to set
+	 */
+	public void setApplicationName( String applicationName ) {
+		this.applicationName = applicationName;
+	}
+
+	/**
+	 * @param iaasType the iaasType to set
+	 */
+	public void setIaasType( String iaasType ) {
+		this.iaasType = iaasType;
+	}
+
+	/**
 	 * @param overrideProperties the overrideProperties to set
 	 */
 	public void setOverrideProperties( boolean overrideProperties ) {
 		this.overrideProperties = overrideProperties;
+	}
+
+	/**
+	 * @param rootInstanceName the rootInstanceName to set
+	 */
+	public void setRootInstanceName( String rootInstanceName ) {
+		this.rootInstanceName = rootInstanceName;
 	}
 
 	/**
@@ -332,6 +416,19 @@ public abstract class AbstractAgent {
 	 * @return the agent's ID (a human-readable identifier)
 	 */
 	String getAgentId() {
-		return this.rootInstanceName + " @ " + this.applicationName;
+
+		StringBuilder sb = new StringBuilder();
+		sb.append( this.rootInstanceName == null ? "nobody" : this.rootInstanceName );
+		if( this.applicationName != null )
+			sb.append( " @ " + this.applicationName );
+
+		return sb.toString();
+	}
+
+	/**
+	 * @param plugins the plugins to set
+	 */
+	void setPlugins( PluginInterface[] plugins ) {
+		this.plugins = plugins;
 	}
 }

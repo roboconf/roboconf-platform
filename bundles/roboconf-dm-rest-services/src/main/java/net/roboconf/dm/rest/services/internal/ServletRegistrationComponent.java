@@ -91,6 +91,9 @@ public class ServletRegistrationComponent {
 	public void stopping() throws Exception {
 
 		this.logger.fine( "iPojo unregisters a servlet to serve REST resources for the DM." );
-		this.httpService.unregister( CONTEXT );
+		if( this.httpService != null )
+			this.httpService.unregister( CONTEXT );
+		else
+			this.logger.fine( "The HTTP service is gone. The servlet was already unregistered." );
 	}
 }

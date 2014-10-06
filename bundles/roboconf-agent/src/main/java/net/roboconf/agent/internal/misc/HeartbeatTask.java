@@ -51,7 +51,9 @@ public class HeartbeatTask extends TimerTask {
 	public void run() {
 		try {
 			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName );
-			this.messagingClient.sendMessageToTheDm( heartBeat );
+			if( this.messagingClient != null
+					&& this.messagingClient.isConnected())
+				this.messagingClient.sendMessageToTheDm( heartBeat );
 
 		} catch( IOException e ) {
 			this.logger.severe( e.getMessage());

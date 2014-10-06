@@ -19,7 +19,6 @@ package net.roboconf.agent.internal;
 import java.io.IOException;
 
 import junit.framework.Assert;
-import net.roboconf.agent.internal.impl.InMemoryAgentImpl;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -51,7 +50,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void testInitializePlugin() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestApplication app = new TestApplication();
 
@@ -66,7 +65,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test( expected = PluginException.class )
 	public void testInitializePlugin_noPlugin() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return null;
@@ -82,7 +81,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void testSetMessagingClient() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		Assert.assertNull( processor.messagingClient );
 		Assert.assertNull( processor.newMessagingClient );
@@ -134,7 +133,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void testConfigureToTheLimits() {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 
 		// No current and no new messaging client => no exception
@@ -185,7 +184,7 @@ public class AgentMessageProcessor_BasicTest {
 	public void testAddInstance() {
 
 		// Initialize all the stuff
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.setMessagingClient( client );
@@ -243,7 +242,7 @@ public class AgentMessageProcessor_BasicTest {
 	public void testSetRootInstance() {
 
 		// Initialize all the stuff
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.setMessagingClient( client );
@@ -292,7 +291,7 @@ public class AgentMessageProcessor_BasicTest {
 	public void testSendInstances() {
 
 		// Initialize all the stuff
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.setMessagingClient( client );
@@ -322,7 +321,7 @@ public class AgentMessageProcessor_BasicTest {
 	public void testResynchronize() {
 
 		// Initialize all the stuff
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.setMessagingClient( client );
@@ -364,7 +363,7 @@ public class AgentMessageProcessor_BasicTest {
 	public void testRemoveInstance() {
 
 		// Initialize all the stuff
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.setMessagingClient( client );
@@ -408,7 +407,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void testUnknownMessage() {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		processor.setMessagingClient( new TestAgentMessagingClient());
 
@@ -421,7 +420,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void checkIoExceptionsAreHandled() {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		processor.setMessagingClient( new TestAgentMessagingClient() {
 			@Override
@@ -433,5 +432,60 @@ public class AgentMessageProcessor_BasicTest {
 		processor.rootInstance = new TestApplication().getMySqlVm();
 		processor.processMessage( new MsgCmdSendInstances());
 		// The processor won't be able to send the model through the messaging.
+	}
+
+
+	@Test
+	public void testFindPlugin_simulation() {
+
+		Instance inst = new Instance( "my inst" );
+		Agent agent = new Agent();
+
+		// No component and no installer
+		Assert.assertEquals( PluginMock.class, agent.findPlugin( inst ).getClass());
+
+		// With an installer
+		inst.setComponent( new Component( "comp" ).installerName( "inst" ));
+		Assert.assertEquals( PluginMock.class, agent.findPlugin( inst ).getClass());
+	}
+
+
+	@Test
+	public void testFindPlugin_ipojo() {
+
+		Instance inst = new Instance( "my inst" );
+		Agent agent = new Agent();
+		agent.setSimulatePlugins( false );
+
+		// No component and no installer
+		Assert.assertNull( agent.findPlugin( inst ));
+
+		// With an installer
+		inst.setComponent( new Component( "comp" ).installerName( "inst" ));
+		Assert.assertNull( agent.findPlugin( inst ));
+
+		// With some plug-ins
+		PluginMock plugin = new PluginMock();
+		agent.setPlugins( new PluginInterface[]{ plugin });
+		Assert.assertNull( agent.findPlugin( inst ));
+
+		inst.getComponent().setInstallerName( plugin.getPluginName());
+		Assert.assertEquals( plugin, agent.findPlugin( inst ));
+	}
+
+
+	@Test
+	public void testExtensibilityNotifications() {
+
+		Agent agent = new Agent();
+		agent.pluginAppears( new PluginMock());
+		agent.pluginDisappears( new PluginMock());
+		agent.pluginWasModified( new PluginMock());
+
+		agent.setPlugins( new PluginInterface[ 0 ]);
+		agent.pluginWasModified( new PluginMock());
+
+		agent.setPlugins( new PluginInterface[] { new PluginMock(), new PluginMock()});
+		agent.pluginWasModified( new PluginMock());
 	}
 }

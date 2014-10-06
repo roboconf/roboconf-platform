@@ -30,25 +30,19 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AbstractAgentTest {
+public class AgentTest {
 
 	@Test
 	public void testBasicStartAndStop() {
 
 		final TestAgentMessagingClient client = new TestAgentMessagingClient();
-		AbstractAgent agent = new AbstractAgent() {};
+		Agent agent = new Agent();
 		agent.setFactory( new MessageServerClientFactory() {
 			@Override
 			public IAgentClient createAgentClient() {
 				return client;
 			}
 		});
-
-		// Basic properties
-		agent.setApplicationName( "my app" );
-		agent.setRootInstanceName( "root instance" );
-		Assert.assertTrue( agent.getAgentId().contains( agent.getApplicationName()));
-		Assert.assertTrue( agent.getAgentId().contains( agent.getRootInstanceName()));
 
 		// Stop when not running => no problem
 		Assert.assertFalse( client.isConnected());
@@ -103,7 +97,7 @@ public class AbstractAgentTest {
 			}
 		};
 
-		AbstractAgent agent = new AbstractAgent() {};
+		Agent agent = new Agent();
 		agent.setFactory( new MessageServerClientFactory() {
 			@Override
 			public IAgentClient createAgentClient() {
@@ -134,7 +128,7 @@ public class AbstractAgentTest {
 			}
 		};
 
-		AbstractAgent agent = new AbstractAgent() {};
+		Agent agent = new Agent();
 		agent.setFactory( new MessageServerClientFactory() {
 			@Override
 			public IAgentClient createAgentClient() {
@@ -158,7 +152,7 @@ public class AbstractAgentTest {
 	@Test
 	public void testUpdateConfiguration() {
 
-		AbstractAgent agent = new AbstractAgent() {};
+		Agent agent = new Agent();
 		agent.setFactory( new MessageServerClientFactory() {
 			@Override
 			public IAgentClient createAgentClient() {
@@ -178,5 +172,27 @@ public class AbstractAgentTest {
 		Assert.assertEquals( agent.messagingClient, agent.messageProcessor.messagingClient );
 		Assert.assertEquals( TestAgentMessagingClient.class, agent.messagingClient.getClass());
 		Assert.assertNotSame( agent.messagingClient, oldClient );
+	}
+
+
+	@Test
+	public void testGetAgentId() {
+
+		Agent agent = new Agent();
+		Assert.assertFalse( agent.getAgentId().contains( "null" ));
+
+		agent.setApplicationName( "my app" );
+		Assert.assertFalse( agent.getAgentId().contains( "null" ));
+		Assert.assertTrue( agent.getAgentId().contains( "my app" ));
+
+		agent.setRootInstanceName( "root instance" );
+		Assert.assertFalse( agent.getAgentId().contains( "null" ));
+		Assert.assertTrue( agent.getAgentId().contains( "my app" ));
+		Assert.assertTrue( agent.getAgentId().contains( "root instance" ));
+
+		agent.setApplicationName( null );
+		Assert.assertFalse( agent.getAgentId().contains( "null" ));
+		Assert.assertFalse( agent.getAgentId().contains( "my app" ));
+		Assert.assertTrue( agent.getAgentId().contains( "root instance" ));
 	}
 }

@@ -104,25 +104,25 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceStatet_inexistingApplication() throws Exception {
+	public void testChangeInstanceState_inexistingApplication() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( "inexisting", InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceStatet_inexistingInstance_null() throws Exception {
+	public void testChangeInstanceState_inexistingInstance_null() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceStatet_inexistingInstance() throws Exception {
+	public void testChangeInstanceState_inexistingInstance() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, "/bip/bip" );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceStatet_invalidState() throws Exception {
+	public void testChangeInstanceState_invalidState() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), null, null );
 	}
 

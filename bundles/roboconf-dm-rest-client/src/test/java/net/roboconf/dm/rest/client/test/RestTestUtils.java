@@ -18,7 +18,6 @@ package net.roboconf.dm.rest.client.test;
 
 import net.roboconf.dm.rest.client.WsClient;
 
-import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 import com.sun.jersey.test.framework.AppDescriptor;
 import com.sun.jersey.test.framework.WebAppDescriptor;
@@ -43,7 +42,8 @@ public class RestTestUtils {
 
 		return new WebAppDescriptor.Builder()
 			.servletClass( ServletContainer.class )
-			.initParam( PackagesResourceConfig.PROPERTY_PACKAGES, "net.roboconf.dm.rest.services.internal.resources;net.roboconf.dm.rest.commons.json" )
+			.initParam( "javax.ws.rs.core.Application", "net.roboconf.dm.rest.services.internal.RestApplication" )
+			//.initParam( PackagesResourceConfig.PROPERTY_PACKAGES, "net.roboconf.dm.rest.services.internal.resources;net.roboconf.dm.rest.commons.json" )
 			.initParam( "com.sun.jersey.api.json.POJOMappingFeature", "true" )
 			.initParam( "com.sun.jersey.spi.container.ContainerResponseFilters", "net.roboconf.dm.rest.services.internal.cors.ResponseCorsFilter" )
 			.initParam( "com.sun.jersey.config.feature.DisableWADL", "true" )

@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.agent.internal.impl.InMemoryAgentImpl;
 import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.runtime.Component;
@@ -46,7 +45,7 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testImportsRequest() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.newMessagingClient = client;
@@ -71,7 +70,7 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testImports() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.newMessagingClient = client;
@@ -141,7 +140,7 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testAddImport_noPlugin() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return null;
@@ -183,7 +182,7 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testRemoveImport_noPlugin() throws Exception {
 
-		AbstractAgent agent = new InMemoryAgentImpl() {
+		Agent agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return null;
@@ -218,7 +217,7 @@ public class AgentMessageProcessor_ImportsTest {
 	public void testSelfImport() throws Exception {
 
 		// A node depends on other nodes
-		AbstractAgent agent = new InMemoryAgentImpl();
+		Agent agent = new Agent();
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
 		processor.newMessagingClient = client;

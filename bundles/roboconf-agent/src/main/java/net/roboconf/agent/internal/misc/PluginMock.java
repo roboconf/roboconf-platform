@@ -30,6 +30,7 @@ import net.roboconf.plugin.api.PluginInterface;
 public class PluginMock implements PluginInterface {
 
 	public static final String INIT_PROPERTY = "initialized";
+	public static final String PLUGIN_NAME = "mock";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String agentId;
@@ -39,7 +40,7 @@ public class PluginMock implements PluginInterface {
 
 	@Override
 	public String getPluginName() {
-		return "mock";
+		return PLUGIN_NAME;
 	}
 
 

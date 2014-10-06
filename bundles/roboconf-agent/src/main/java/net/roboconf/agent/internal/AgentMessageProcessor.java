@@ -60,7 +60,7 @@ import net.roboconf.plugin.api.PluginInterface;
 public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final AbstractAgent agent;
+	private final Agent agent;
 
 	Instance rootInstance;
 	IAgentClient messagingClient, newMessagingClient;
@@ -69,7 +69,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	/**
 	 * Constructor.
 	 */
-	public AgentMessageProcessor( AbstractAgent agent ) {
+	public AgentMessageProcessor( Agent agent ) {
 		super();
 		this.agent = agent;
 	}

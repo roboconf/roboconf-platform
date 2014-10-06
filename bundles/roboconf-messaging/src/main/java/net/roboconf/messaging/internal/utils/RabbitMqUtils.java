@@ -95,7 +95,7 @@ public final class RabbitMqUtils {
 	/**
 	 * Configures the connection factory with the right settings.
 	 * @param factory the connection factory
-	 * @param messageServerIp the message server IP (can contain a port)
+	 * @param messageServerIp the message server IP (can contain a port and can but null too)
 	 * @param messageServerUsername the user name for the message server
 	 * @param messageServerPassword the password for the message server
 	 * @throws IOException if something went wrong
@@ -103,10 +103,12 @@ public final class RabbitMqUtils {
 	public static void configureFactory( ConnectionFactory factory, String messageServerIp, String messageServerUsername, String messageServerPassword )
 	throws IOException {
 
-		Map.Entry<String,Integer> entry = findUrlAndPort( messageServerIp );
-		factory.setHost( entry.getKey());
-		if( entry.getValue() > 0 )
-			factory.setPort( entry.getValue());
+		if( messageServerIp != null ) {
+			Map.Entry<String,Integer> entry = findUrlAndPort( messageServerIp );
+			factory.setHost( entry.getKey());
+			if( entry.getValue() > 0 )
+				factory.setPort( entry.getValue());
+		}
 
 		factory.setUsername( messageServerUsername );
 		factory.setPassword( messageServerPassword );
@@ -115,7 +117,7 @@ public final class RabbitMqUtils {
 
 	/**
 	 * Parses a raw URL and extracts the host and port.
-	 * @param messageServerIp a raw URL (here, the message server's IP)
+	 * @param messageServerIp a raw URL (here, the message server's IP, not null)
 	 * @return a non-null map entry (key = host URL without the port, value = the port, -1 if not specified)
 	 */
 	public static Map.Entry<String,Integer> findUrlAndPort( String messageServerIp ) {
