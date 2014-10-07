@@ -111,7 +111,12 @@ public class AgentClient implements IAgentClient {
 
 		// Store the message processor for later
 		this.messageProcessor = messageProcessor;
-		this.messageProcessor.start();
+
+		// After our move to OSgi, the message processor may have already
+		// been started with a previous configuration. And starting a thread twice
+		// will result in an error.
+		if( ! messageProcessor.isRunning())
+			this.messageProcessor.start();
 
 		// We start listening the queue here
 		// We declare both exchanges.

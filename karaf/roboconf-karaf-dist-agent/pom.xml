@@ -128,6 +128,7 @@
 						<configuration>
 							<target>
 								<copy file="${basedir}/src/main/resources/org.ops4j.pax.logging.cfg" todir="target/assembly/etc" overwrite="true" />
+								<copy file="${basedir}/src/main/resources/net.roboconf.agent.configuration.cfg" todir="target/assembly/etc" overwrite="true" />
 							</target>
 						</configuration>
 					</execution>

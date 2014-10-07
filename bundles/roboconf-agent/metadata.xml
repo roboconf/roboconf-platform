@@ -15,15 +15,15 @@
 			<callback type="modified" method="pluginWasModified"/>
 		</requires>
 		
-		<properties updated="updateConfiguration">
+		<properties updated="updateConfiguration" pid="net.roboconf.agent.configuration">
 			<property name="message-server-ip" field="messageServerIp" />
 			<property name="message-server-username" field="messageServerUsername" />
 			<property name="message-server-password" field="messageServerPassword" />
 			<property name="application-name" field="applicationName" />
 			<property name="root-instance-name" field="rootInstanceName" />
 			<property name="ip-address-of-the-agent" field="ipAddress" />
-			<property name="iaas-type" field="iaasType" />
-			<property name="override-properties-with-user-data" type="boolean" field="overrideProperties" />
+			<property name="iaas-type" field="iaasType" method="setIaasType" />
+			<property name="override-properties-with-user-data" type="boolean" field="overrideProperties" value="true" />
 			<property name="simulate-plugins" type="boolean" field="simulatePlugins" value="false" />
 		</properties>
 	</component>
@@ -35,7 +35,8 @@
 	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-in-memory">
 		<callback transition="validate" method="start"/>
 		<callback transition="invalidate" method="stop"/>
-		<properties updated="updateConfiguration">
+		
+		<properties updated="updateConfiguration" pid="net.roboconf.agent-in-memory.configuration">
 		
 			<!-- Values that will be set by the IaaS in memory -->
 			<property name="message-server-ip" field="messageServerIp" />
@@ -48,6 +49,7 @@
 			<property name="ip-address-of-the-agent" field="ipAddress" value="localhost" />
 			<property name="iaas-type" field="iaasType" value="in-memory" />
 			<property name="override-properties-with-user-data" type="boolean" field="overrideProperties" value="false" />
+			<property name="simulate-plugins" type="boolean" field="simulatePlugins" value="true" />
 		</properties>
 	</component>
 </ipojo>

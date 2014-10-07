@@ -63,7 +63,15 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Export-Package>!net.roboconf.messaging.internal.*, net.roboconf.messaging.*</Export-Package>
+						<Import-Package>
+							net.roboconf.core.*;version="${project.version}",
+							javax.net,
+							javax.net.ssl
+						</Import-Package>
+						<Export-Package>
+							!net.roboconf.messaging.internal.*,
+							net.roboconf.messaging.*
+						</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>

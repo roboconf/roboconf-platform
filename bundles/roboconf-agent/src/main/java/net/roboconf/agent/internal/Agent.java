@@ -283,6 +283,8 @@ public class Agent {
 		TimerTask timerTask = new HeartbeatTask( this.applicationName, this.rootInstanceName, this.messagingClient );
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
+
+		this.logger.info( "The configuration was updated..." );
 	}
 
 
@@ -418,8 +420,8 @@ public class Agent {
 	String getAgentId() {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( this.rootInstanceName == null ? "nobody" : this.rootInstanceName );
-		if( this.applicationName != null )
+		sb.append( Utils.isEmptyOrWhitespaces( this.rootInstanceName ) ? "?" : this.rootInstanceName );
+		if( ! Utils.isEmptyOrWhitespaces( this.applicationName ))
 			sb.append( " @ " + this.applicationName );
 
 		return sb.toString();
