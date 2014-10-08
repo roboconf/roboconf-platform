@@ -74,6 +74,9 @@
 		
 		<module>distributions/roboconf-dist-debian-agent</module> 
 		<module>distributions/roboconf-dist-debian-dm</module>
+		
+		<!-- Testing -->
+		<module>test-framework/roboconf-test-framework</module>
 	</modules>
 
 

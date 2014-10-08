@@ -213,7 +213,7 @@ public class Agent {
 
 
 	/**
-	 * This method is invoked by iPojo every time a new plug-in disappears.
+	 * This method is invoked by iPojo every time a plug-in disappears.
 	 * @param pi
 	 */
 	public void pluginDisappears( PluginInterface pi ) {

@@ -193,7 +193,7 @@ public class Manager {
 
 
 	/**
-	 * This method is invoked by iPojo every time a new IaaS disappears.
+	 * This method is invoked by iPojo every time a IaaS disappears.
 	 * @param iaas
 	 */
 	public void iaasDisappears( IaasInterface iaas ) {
