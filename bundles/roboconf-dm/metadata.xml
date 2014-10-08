@@ -5,16 +5,24 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<!-- A component for the DM -->
-	<component classname="net.roboconf.dm.management.Manager" immediate="true" name="roboconf-dm" public="false">
-		<requires field="iaas" optional="true" />
+	<component classname="net.roboconf.dm.management.Manager" name="roboconf-dm" public="false">
+		<requires field="iaas" optional="true">
+			<callback type="bind" method="iaasAppears"/>
+			<callback type="unbind" method="iaasDisappears"/>
+			<callback type="modified" method="iaasWasModified"/>
+		</requires>
+		
 		<requires field="configuration" optional="true" />
 		<callback transition="invalidate" method="shutdown"/>
+		<provides />
 	</component>
 	
 	<!-- A component for its configuration -->
-	<component classname="net.roboconf.dm.management.ManagerConfiguration" immediate="true" name="roboconf-dm-configuration" public="false">
+	<component classname="net.roboconf.dm.management.ManagerConfiguration" name="roboconf-dm-configuration" public="false">
 		<requires field="manager" />
-		<properties updated="update">
+		<provides />
+		
+		<properties updated="update" pid="net.roboconf.dm.configuration">
 			<property name="message-server-ip" field="messageServerIp" />
 			<property name="message-server-username" field="messageServerUsername" />
 			<property name="message-server-password" field="messageServerPassword" />

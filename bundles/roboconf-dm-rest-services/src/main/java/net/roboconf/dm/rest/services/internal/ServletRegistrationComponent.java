@@ -42,7 +42,7 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
 public class ServletRegistrationComponent {
 
 	// Constants
-	private static final String CONTEXT = "/roboconf-dm";
+	static final String CONTEXT = "/roboconf-dm";
 
 	// Injected by iPojo
 	private HttpService httpService;
@@ -54,6 +54,11 @@ public class ServletRegistrationComponent {
 
 	/**
 	 * The method to use when all the dependencies are resolved.
+	 * <p>
+	 * It means iPojo guarantees that both the manager and the HTTP
+	 * service are not null.
+	 * </p>
+	 *
 	 * @throws Exception
 	 */
 	public void starting() throws Exception {
@@ -67,18 +72,17 @@ public class ServletRegistrationComponent {
 
 		// Prepare the parameters for the servlet
 		Dictionary<String,String> initParams = new Hashtable<String,String> ();
+		initParams.put( "servlet-name", "Roboconf DM" );
 		initParams.put( "com.sun.jersey.api.json.POJOMappingFeature", "true" );
 		initParams.put( "com.sun.jersey.config.feature.DisableWADL", "true" );
 		initParams.put(
 				"com.sun.jersey.spi.container.ContainerResponseFilters",
 				"net.roboconf.dm.internal.rest.services.internal.cors.ResponseCorsFilter" );
 
-		// FIXME: not sure it will work... Our application does not scan.
 		initParams.put(
 				"com.sun.jersey.config.property.packages",
-				"com.fasterxml.jackson.jaxrs.json;net.roboconf.dm.internal.rest.commons.json" );
+				"com.fasterxml.jackson.jaxrs.json;net.roboconf.dm.rest.commons.json" );
 
-		// Register a servlet to serve these REST resources
 		ServletContainer jerseyServlet = new ServletContainer( app );
 		this.httpService.registerServlet( CONTEXT, jerseyServlet, initParams, null );
 	}
@@ -95,5 +99,13 @@ public class ServletRegistrationComponent {
 			this.httpService.unregister( CONTEXT );
 		else
 			this.logger.fine( "The HTTP service is gone. The servlet was already unregistered." );
+	}
+
+
+	/**
+	 * @param httpService the httpService to set
+	 */
+	void setHttpService( HttpService httpService ) {
+		this.httpService = httpService;
 	}
 }

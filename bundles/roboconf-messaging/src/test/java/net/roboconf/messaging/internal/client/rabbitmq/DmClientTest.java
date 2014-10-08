@@ -46,6 +46,9 @@ public class DmClientTest extends AbstractRabbitMqTest {
 		Assert.assertNotNull( dmClient.channel );
 		Assert.assertNotNull( dmClient.messageProcessor );
 		Assert.assertTrue( dmClient.messageProcessor instanceof StorageMessageProcessor );
+
+		// Wait for the thread to start
+		Thread.sleep( 500 );
 		Assert.assertTrue( dmClient.messageProcessor.isRunning());
 
 		Channel oldChannel = dmClient.channel;

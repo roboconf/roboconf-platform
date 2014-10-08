@@ -24,6 +24,7 @@ import java.util.logging.Logger;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;

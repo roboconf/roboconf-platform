@@ -18,6 +18,7 @@ package net.roboconf.dm.internal.management;
 
 import java.util.TimerTask;
 
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 
 /**

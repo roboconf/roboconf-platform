@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.management;
+package net.roboconf.dm.management;
 
 import java.io.File;
 import java.util.List;
@@ -24,7 +24,7 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.internal.management.ManagedApplication;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;

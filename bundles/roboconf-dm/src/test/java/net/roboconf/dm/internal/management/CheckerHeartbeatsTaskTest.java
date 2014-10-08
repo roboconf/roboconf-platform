@@ -19,6 +19,7 @@ package net.roboconf.dm.internal.management;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.dm.internal.test.TestIaasResolver;
 import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 
 import org.junit.Before;

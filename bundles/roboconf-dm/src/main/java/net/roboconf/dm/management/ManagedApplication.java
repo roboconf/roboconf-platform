@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.management;
+package net.roboconf.dm.management;
 
 import java.io.File;
 import java.util.ArrayList;

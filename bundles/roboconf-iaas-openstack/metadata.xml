@@ -7,4 +7,6 @@
 	<component classname="net.roboconf.iaas.openstack.internal.IaasOpenstack" name="roboconf-iaas-openstack">
 		<provides />
 	</component>
+	
+	<instance component="roboconf-iaas-openstack" name="Roboconf IaaS - Openstack" />
 </ipojo>

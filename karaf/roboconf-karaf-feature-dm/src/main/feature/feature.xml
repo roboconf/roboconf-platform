@@ -10,15 +10,15 @@
 
     <!-- The feature associated with the DM -->
     <feature name="roboconf-dm" version="${project.version}">
+    	<feature version="${ipojo.version}">ipojo-all</feature>
+    	<feature version="${jersey.stack.version}">jersey-1.x</feature>
+    
         <bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-messaging/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-dm-rest-commons/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-dm-rest-services/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
-        <!-- To add later, because this is a WAR and not a JAR -->
-        <!-- 
-        <bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}</bundle>
-         -->
+        <bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}/war</bundle>
         <bundle>mvn:net.roboconf/roboconf-iaas-api/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-iaas-azure/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-iaas-ec2/${project.version}</bundle>
@@ -26,5 +26,14 @@
         <bundle>mvn:net.roboconf/roboconf-iaas-docker/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-iaas-openstack/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-iaas-vmware/${project.version}</bundle>
+    </feature>
+    
+    <!-- The feature for Jersey 1.x -->
+    <feature name="jersey-1.x" version="${jersey.stack.version}">
+        <bundle>mvn:com.sun.jersey/jersey-core/${jersey.stack.version}</bundle>
+        <bundle>mvn:com.sun.jersey/jersey-server/${jersey.stack.version}</bundle>
+        <bundle>mvn:com.sun.jersey/jersey-servlet/${jersey.stack.version}</bundle>
+        <bundle>mvn:com.sun.jersey.contribs/jersey-multipart/${jersey.stack.version}</bundle>
+        <bundle>mvn:org.jvnet/mimepull/1.6</bundle>
     </feature>
 </features>

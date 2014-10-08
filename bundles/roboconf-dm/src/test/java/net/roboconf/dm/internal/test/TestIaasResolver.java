@@ -21,7 +21,7 @@ import java.util.Map;
 
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.internal.environment.iaas.IaasResolver;
-import net.roboconf.dm.internal.management.ManagedApplication;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 

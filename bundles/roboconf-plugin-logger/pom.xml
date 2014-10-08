@@ -64,8 +64,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.core.*;version="${project.version}",
-							net.roboconf.plugin.api;version="${project.version}"
+							net.roboconf.*;version="${project.version}",
 						</Import-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

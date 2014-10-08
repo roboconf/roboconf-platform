@@ -480,6 +480,7 @@ public class AgentMessageProcessor_BasicTest {
 		Agent agent = new Agent();
 		agent.pluginAppears( new PluginMock());
 		agent.pluginDisappears( new PluginMock());
+		agent.pluginDisappears( null );
 		agent.pluginWasModified( new PluginMock());
 
 		agent.setPlugins( new PluginInterface[ 0 ]);

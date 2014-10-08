@@ -19,7 +19,6 @@ package net.roboconf.dm.internal.environment.iaas;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
@@ -29,8 +28,8 @@ import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.environment.iaas.IaasResolver;
-import net.roboconf.dm.internal.management.ManagedApplication;
+import net.roboconf.dm.internal.test.IaasMock;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
 
@@ -75,8 +74,8 @@ public class IaasResolverTest {
 
 		// Create a virtual set of IaaS interfaces
 		IaasInterface[] iaas = new IaasInterface[ 2 ];
-		iaas[ 0 ] = new MyIaasInterface( "toto" );
-		iaas[ 1 ] = new MyIaasInterface( "test" );
+		iaas[ 0 ] = new IaasMock( "toto" );
+		iaas[ 1 ] = new IaasMock( "test" );
 
 		IaasResolver resolver = new IaasResolver();
 		IaasInterface itf = resolver.findIaasInterface( iaas, ma, rootInstance );
@@ -184,38 +183,5 @@ public class IaasResolverTest {
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "iaas" ));
 		IaasResolver resolver = new IaasResolver();
 		resolver.findIaasInterface( null, ma, rootInstance );
-	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	private static final class MyIaasInterface implements IaasInterface {
-		private final String installerName;
-
-		MyIaasInterface( String installerName ) {
-			this.installerName = installerName;
-		}
-
-		@Override
-		public void terminateVM( String machineId ) throws IaasException {
-			// nothing
-		}
-
-		@Override
-		public void setIaasProperties( Map<String,String> iaasProperties ) throws IaasException {
-			// nothing
-		}
-
-		@Override
-		public String getIaasType() {
-			return this.installerName;
-		}
-
-		@Override
-		public String createVM( String messagingIp, String messagingUsername, String messagingPassword, String rootInstanceName, String applicationName )
-		throws IaasException {
-			return "whatever";
-		}
 	}
 }

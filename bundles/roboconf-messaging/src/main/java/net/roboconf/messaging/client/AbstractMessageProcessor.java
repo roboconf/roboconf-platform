@@ -17,6 +17,7 @@
 package net.roboconf.messaging.client;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 import net.roboconf.messaging.messages.Message;
@@ -27,7 +28,7 @@ import net.roboconf.messaging.messages.Message;
 public abstract class AbstractMessageProcessor extends Thread {
 
 	private final LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<Message> ();
-	private boolean running = true;
+	private final AtomicBoolean running = new AtomicBoolean( false );
 
 
 	/**
@@ -71,6 +72,7 @@ public abstract class AbstractMessageProcessor extends Thread {
 	@Override
 	public final void run() {
 
+		this.running.set( true );
 		for( ;; ) {
 			try {
 				// Blocking call
@@ -83,7 +85,7 @@ public abstract class AbstractMessageProcessor extends Thread {
 			}
 		}
 
-		this.running = false;
+		this.running.set( false );
 	}
 
 
@@ -98,6 +100,6 @@ public abstract class AbstractMessageProcessor extends Thread {
 	 * @return the running
 	 */
 	public boolean isRunning() {
-		return this.running;
+		return this.running.get();
 	}
 }

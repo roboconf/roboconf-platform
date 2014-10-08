@@ -7,4 +7,6 @@
 	<component classname="net.roboconf.iaas.docker.internal.IaasDocker" name="roboconf-iaas-docker">
 		<provides />
 	</component>
+	
+	<instance component="roboconf-iaas-docker" name="Roboconf IaaS - Docker" />
 </ipojo>

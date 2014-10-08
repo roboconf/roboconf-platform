@@ -22,7 +22,7 @@
 			<property name="application-name" field="applicationName" />
 			<property name="root-instance-name" field="rootInstanceName" />
 			<property name="ip-address-of-the-agent" field="ipAddress" />
-			<property name="iaas-type" field="iaasType" method="setIaasType" />
+			<property name="iaas-type" field="iaasType" />
 			<property name="override-properties-with-user-data" type="boolean" field="overrideProperties" value="true" />
 			<property name="simulate-plugins" type="boolean" field="simulatePlugins" value="false" />
 		</properties>

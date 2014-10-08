@@ -128,7 +128,7 @@ public interface IApplicationResource {
 	 * @return a response
 	 */
 	@POST
-	@Path( "/" )
+	@Path( "/resynchronize" )
 	Response resynchronize( @PathParam("name") String applicationName );
 
 

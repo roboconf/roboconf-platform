@@ -28,7 +28,6 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.management.ManagedApplication;
 import net.roboconf.dm.internal.test.TestMessageServerClient;
 import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.messaging.client.IDmClient;

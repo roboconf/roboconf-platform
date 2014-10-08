@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 import net.roboconf.core.model.io.RuntimeModelIo;
 import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.management.ManagedApplication;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.client.MessageServerClientFactory;
 
@@ -157,6 +156,8 @@ public class ManagerConfiguration {
 			this.logger.finest( Utils.writeException( e ));
 			this.validConfiguration = false;
 		}
+
+		this.logger.info( "The DM configuration was updated..." );
 	}
 
 

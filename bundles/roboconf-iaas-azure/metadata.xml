@@ -7,4 +7,6 @@
 	<component classname="net.roboconf.iaas.azure.internal.IaasAzure" name="roboconf-iaas-azure">
 		<provides />
 	</component>
+	
+	<instance component="roboconf-iaas-azure" name="Roboconf IaaS - Azure" />
 </ipojo>

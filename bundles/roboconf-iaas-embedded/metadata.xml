@@ -7,4 +7,6 @@
 	<component classname="net.roboconf.iaas.embedded.internal.IaasEmbedded" name="roboconf-iaas-embedded">
 		<provides />
 	</component>
+	
+	<instance component="roboconf-iaas-embedded" name="Roboconf IaaS - Embedded" />
 </ipojo>

@@ -28,7 +28,7 @@ import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.management.ManagedApplication;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;

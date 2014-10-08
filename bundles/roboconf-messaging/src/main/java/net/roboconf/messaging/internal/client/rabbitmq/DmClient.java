@@ -129,7 +129,12 @@ public class DmClient implements IDmClient {
 
 		// Store the message processor for later
 		this.messageProcessor = messageProcessor;
-		this.messageProcessor.start();
+
+		// After our move to OSGi, the message processor may have already
+		// been started with a previous configuration. And starting a thread twice
+		// will result in an error.
+		if( ! messageProcessor.isRunning())
+			this.messageProcessor.start();
 	}
 
 

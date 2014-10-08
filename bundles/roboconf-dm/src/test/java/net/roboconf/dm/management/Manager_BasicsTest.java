@@ -33,8 +33,8 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.management.ManagedApplication;
 import net.roboconf.dm.internal.management.ManagementHelpers;
+import net.roboconf.dm.internal.test.IaasMock;
 import net.roboconf.dm.internal.test.TestIaasResolver;
 import net.roboconf.dm.internal.test.TestMessageServerClient;
 import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
@@ -42,6 +42,7 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.iaas.api.IaasInterface;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
@@ -679,5 +680,21 @@ public class Manager_BasicsTest {
 
 		this.manager = new Manager();
 		this.manager.resynchronizeAgents( ma );
+	}
+
+
+	@Test
+	public void testExtensibilityNotifications() {
+
+		this.manager.iaasAppears( new IaasMock( "hey" ));
+		this.manager.iaasDisappears( new IaasMock( "ho" ));
+		this.manager.iaasDisappears( null );
+		this.manager.iaasWasModified( new IaasMock( "oops" ));
+
+		this.manager.setIaas( new IaasInterface[ 0 ]);
+		this.manager.iaasWasModified( new IaasMock( "test" ));
+
+		this.manager.setIaas( new IaasInterface[] { new IaasMock( "1" ), new IaasMock( "1" )});
+		this.manager.iaasWasModified( new IaasMock( "2" ));
 	}
 }

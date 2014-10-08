@@ -7,4 +7,6 @@
 	<component classname="net.roboconf.iaas.vmware.internal.IaasVmware" name="roboconf-iaas-vmware">
 		<provides />
 	</component>
+	
+	<instance component="roboconf-iaas-vmware" name="Roboconf IaaS - VMWare" />
 </ipojo>

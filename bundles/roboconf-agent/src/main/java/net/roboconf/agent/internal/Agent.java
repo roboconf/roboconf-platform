@@ -207,7 +207,7 @@ public class Agent {
 	 * @param pi
 	 */
 	public void pluginAppears( PluginInterface pi ) {
-		this.logger.info( "Plugin " + pi.getPluginName() + " is now available in Roboconf's agent." );
+		this.logger.info( "Plugin '" + pi.getPluginName() + "' is now available in Roboconf's agent." );
 		listPlugins();
 	}
 
@@ -217,17 +217,24 @@ public class Agent {
 	 * @param pi
 	 */
 	public void pluginDisappears( PluginInterface pi ) {
-		this.logger.info( "Plugin " + pi.getPluginName() + " is not available anymore in Roboconf's agent." );
+
+		// May happen if a plug-in could not be instantiated
+		// (iPojo uses proxies). In this case, it results in a NPE here.
+		if( pi == null )
+			this.logger.info( "An invalid plugin is removed." );
+		else
+			this.logger.info( "Plugin '" + pi.getPluginName() + "' is not available anymore in Roboconf's agent." );
+
 		listPlugins();
 	}
 
 
 	/**
-	 * This method is invoked by iPojo every time a new plug-in is modified.
+	 * This method is invoked by iPojo every time a plug-in is modified.
 	 * @param pi
 	 */
 	public void pluginWasModified( PluginInterface pi ) {
-		this.logger.info( "Plugin " + pi.getPluginName() + " was modified in Roboconf's agent." );
+		this.logger.info( "Plugin '" + pi.getPluginName() + "' was modified in Roboconf's agent." );
 		listPlugins();
 	}
 
@@ -284,7 +291,7 @@ public class Agent {
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
 
-		this.logger.info( "The configuration was updated..." );
+		this.logger.info( "The agent configuration was updated..." );
 	}
 
 

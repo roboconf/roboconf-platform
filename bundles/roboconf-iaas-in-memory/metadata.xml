@@ -5,9 +5,9 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<component classname="net.roboconf.iaas.in_memory.internal.IaasInMemory" name="roboconf-iaas-in-memory">
-		<!-- Instances will be created on the fly, for every request. -->
-		<!-- All the interfaces will be "provided". Only IaasInterface matters. -->
-		<provides strategy="SERVICE" />
+		<provides />
 		<requires filter="(factory.name=roboconf-agent-in-memory)" field="agentFactory" />
 	</component>
+	
+	<instance component="roboconf-iaas-in-memory" name="Roboconf IaaS - In memory" />
 </ipojo>

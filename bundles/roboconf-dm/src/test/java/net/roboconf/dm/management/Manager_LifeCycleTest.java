@@ -23,7 +23,6 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.internal.management.ManagedApplication;
 import net.roboconf.dm.internal.management.ManagementHelpers;
 import net.roboconf.dm.internal.test.TestIaasResolver;
 import net.roboconf.dm.internal.test.TestMessageServerClient;

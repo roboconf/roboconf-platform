@@ -35,6 +35,14 @@
 	<packaging>bundle</packaging>
 	
 	<dependencies>
+		<!-- Unlike what the Maven dependency plug-in says, this dependency is required! -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.jaxrs</groupId>
+			<artifactId>jackson-jaxrs-json-provider</artifactId>
+			<version>${jackson.stack.version}</version>
+		</dependency>
+		<!-- This is the only dependency whose scope is not provided. -->
+	
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
@@ -80,6 +88,7 @@
 		<dependency>
 			<groupId>com.sun.jersey.contribs</groupId>
 			<artifactId>jersey-multipart</artifactId>
+			<version>${jersey.stack.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	
@@ -103,6 +112,19 @@
 			<version>2.5</version>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo</artifactId>
+			<version>${ipojo.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -113,15 +135,13 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.core.*;version="${project.version}",
-							org.osgi.service.http,
-							javax.ws.rs.*,
-							com.sun.jersey.api.core,
-							com.sun.jersey.spi.container.servlet,
-							javax.servlet,
-							javax.servlet.http,
-							javax.naming
+							net.roboconf.dm.rest.commons.json;version="${project.version}",
+							net.roboconf.*;version="${project.version}",
+							com.sun.jersey.*;version="${jersey.stack.version}",
+							*
 						</Import-Package>
+						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

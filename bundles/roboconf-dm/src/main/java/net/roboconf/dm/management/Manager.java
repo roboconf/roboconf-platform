@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -43,7 +44,6 @@ import net.roboconf.dm.internal.environment.iaas.IaasResolver;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.management.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.management.CheckerMessagesTask;
-import net.roboconf.dm.internal.management.ManagedApplication;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
@@ -171,6 +171,7 @@ public class Manager {
 	 */
 	public void shutdown() {
 
+		this.logger.info( "The DM is being shutdown." );
 		if( this.timer != null ) {
 			this.timer.cancel();
 			this.timer =  null;
@@ -182,9 +183,68 @@ public class Manager {
 
 
 	/**
+	 * This method is invoked by iPojo every time a new IaaS appears.
+	 * @param iaas
+	 */
+	public void iaasAppears( IaasInterface iaas ) {
+		this.logger.info( "IaaS '" + iaas.getIaasType() + "' is now available in Roboconf's DM." );
+		listIaas();
+	}
+
+
+	/**
+	 * This method is invoked by iPojo every time a new IaaS disappears.
+	 * @param iaas
+	 */
+	public void iaasDisappears( IaasInterface iaas ) {
+
+		// May happen if a IaaS could not be instantiated
+		// (iPojo uses proxies). In this case, it results in a NPE here.
+		if( iaas == null )
+			this.logger.info( "An invalid IaaS is removed." );
+		else
+			this.logger.info( "IaaS '" + iaas.getIaasType() + "' is not available anymore in Roboconf's DM." );
+
+		listIaas();
+	}
+
+
+	/**
+	 * This method is invoked by iPojo every time a IaaS is modified.
+	 * @param iaas
+	 */
+	public void iaasWasModified( IaasInterface iaas ) {
+		this.logger.info( "IaaS '" + iaas.getIaasType() + "' was modified in Roboconf's DM." );
+		listIaas();
+	}
+
+
+	/**
+	 * This method lists the available IaaS and logs it.
+	 */
+	public void listIaas() {
+
+		if( this.iaas == null || this.iaas.length == 0 ) {
+			this.logger.info( "No IaaS was found for Roboconf's DM." );
+
+		} else {
+			StringBuilder sb = new StringBuilder( "Available IaaS in Roboconf's DM: " );
+			for( Iterator<IaasInterface> it = Arrays.asList( this.iaas).iterator(); it.hasNext(); ) {
+				sb.append( it.next().getIaasType());
+				if( it.hasNext())
+					sb.append( ", " );
+			}
+
+			sb.append( "." );
+			this.logger.info( sb.toString());
+		}
+	}
+
+
+	/**
 	 * @param iaas the iaas to set
 	 */
-	public void setIaas( IaasInterface[] iaas ) {
+	void setIaas( IaasInterface[] iaas ) {
 		this.iaas = iaas;
 	}
 
@@ -194,14 +254,6 @@ public class Manager {
 	 */
 	public void setConfiguration( ManagerConfiguration configuration ) {
 		this.configuration = configuration;
-	}
-
-
-	/**
-	 * @return the iaas
-	 */
-	public IaasInterface[] getIaas() {
-		return this.iaas;
 	}
 
 

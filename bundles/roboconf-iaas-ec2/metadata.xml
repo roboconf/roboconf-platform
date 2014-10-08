@@ -7,4 +7,6 @@
 	<component classname="net.roboconf.iaas.ec2.internal.IaasEc2" name="roboconf-iaas-ec2">
 		<provides />
 	</component>
+	
+	<instance component="roboconf-iaas-ec2" name="Roboconf IaaS - EC2" />
 </ipojo>

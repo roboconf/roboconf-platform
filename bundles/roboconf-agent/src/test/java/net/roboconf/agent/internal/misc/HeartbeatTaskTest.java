@@ -64,12 +64,25 @@ public class HeartbeatTaskTest {
 
 
 	@Test
+	public void testHeartbeat_nullClient() {
+
+		HeartbeatTask task = new HeartbeatTask( "app", "root", null );
+		task.run();
+	}
+
+
+	@Test
 	public void testHeartbeat_exception() {
 
 		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient() {
 			@Override
 			public void sendMessageToTheDm( Message message ) throws IOException {
 				throw new IOException( "For test purpose" );
+			}
+
+			@Override
+			public boolean isConnected() {
+				return true;
 			}
 		};
 

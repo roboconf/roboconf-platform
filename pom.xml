@@ -40,16 +40,17 @@
 		<module>bundles/roboconf-messaging</module>
 		<module>bundles/roboconf-iaas-api</module>
 		<module>bundles/roboconf-plugin-api</module>
-		
 		<module>bundles/roboconf-agent</module>
 		
 		<module>bundles/roboconf-dm</module>
 		<module>bundles/roboconf-dm-web-administration</module>
 		<module>bundles/roboconf-dm-rest-commons</module>
 		<module>bundles/roboconf-dm-rest-services</module>
+		<!-- 
 		<module>bundles/roboconf-dm-rest-client</module>
+		 -->
 		
-		<!-- IaaS extensions -->
+		<!-- IaaS extensions  -->
 		<module>bundles/roboconf-iaas-in-memory</module>
 		<module>bundles/roboconf-iaas-embedded</module>
 		<module>bundles/roboconf-iaas-azure</module>
@@ -58,7 +59,7 @@
 		<module>bundles/roboconf-iaas-vmware</module>
 		<module>bundles/roboconf-iaas-docker</module>
 		
-		<!-- Agent extensions -->
+		<!-- Agent plug-ins -->
 		<module>bundles/roboconf-plugin-bash</module>
 		<module>bundles/roboconf-plugin-puppet</module>
 		<module>bundles/roboconf-plugin-logger</module>
@@ -71,14 +72,14 @@
 		<module>karaf/roboconf-karaf-dist-agent</module>
 		<module>karaf/roboconf-karaf-dist-dm</module>
 		
-		<module>distributions/roboconf-dist-debian-agent</module>
+		<module>distributions/roboconf-dist-debian-agent</module> 
 		<module>distributions/roboconf-dist-debian-dm</module>
 	</modules>
 
 
 	<!-- Properties and other things... -->
 	<properties>
-		<jersey.stack.version>1.18</jersey.stack.version>
+		<jersey.stack.version>1.18.1</jersey.stack.version>
 		<jackson.stack.version>2.3.1</jackson.stack.version>
 		<karaf.version>3.0.1</karaf.version>
 		<ipojo.version>1.12.0</ipojo.version>
