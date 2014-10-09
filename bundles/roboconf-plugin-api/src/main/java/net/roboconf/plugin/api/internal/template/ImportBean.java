@@ -34,18 +34,21 @@ public class ImportBean {
 	}
 
 	public List<Var> getExportedVars() {
-		List<Var> result = new ArrayList<ImportBean.Var>();
-		for(String name : this.imprt.getExportedVars().keySet()) {
+		List<Var> result = new ArrayList<ImportBean.Var> ();
+		for(String name : this.imprt.getExportedVars().keySet())
 			result.add(new Var(name, this.imprt.getExportedVars().get(name)));
-		}
 
 		return result;
 	}
 
-	static class Var {
-		String name, value;
 
-		public Var(String name, String value) {
+	/**
+	 * @author gcrosmarie - Linagora
+	 */
+	public static class Var {
+		private final String name, value;
+
+		Var( String name, String value ) {
 			this.name = name;
 			this.value = value;
 		}
@@ -54,8 +57,8 @@ public class ImportBean {
 			return this.value;
 		}
 
-		public void setValue( String value ) {
-			this.value = value;
+		public String getName() {
+			return this.name;
 		}
 	}
 }

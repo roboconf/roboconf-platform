@@ -16,6 +16,8 @@
 
 package net.roboconf.dm.internal.environment.messaging;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -26,11 +28,11 @@ import net.roboconf.dm.internal.test.TestIaasResolver;
 import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +51,10 @@ public class DmMessageProcessorTest {
 	@Before
 	public void resetManager() {
 
+		// This is a little bit strange because the message queue
+		// is normally maintained by the Manager. Anyway, it aims at testing the message processor.
+		LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<Message> ();
+
 		this.manager = ManagementHelpers.createConfiguredManager();
 		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory());
 
@@ -56,56 +62,13 @@ public class DmMessageProcessorTest {
 		this.manager.setIaasResolver( this.iaasResolver );
 
 		this.app = new TestApplication();
-		this.processor = new DmMessageProcessor( this.manager );
+		if( this.processor != null )
+			this.processor.stopProcessor();
+
+		this.processor = new DmMessageProcessor( messages, this.manager );
 
 		this.manager.getAppNameToManagedApplication().clear();
 		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
-	}
-
-
-	@Test
-	public void testProcessMsgNotifMachineUp_success() {
-
-		final String ip = "192.13.1.23";
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
-
-		MsgNotifMachineUp msg = new MsgNotifMachineUp( this.app.getName(), this.app.getMySqlVm().getName(), ip );
-		this.processor.processMessage( msg );
-
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
-		String value = this.app.getMySqlVm().getData().get( Instance.IP_ADDRESS );
-		Assert.assertNotNull( value );
-		Assert.assertEquals( ip, value );
-	}
-
-
-	@Test
-	public void testProcessMsgNotifMachineUp_invalidApplication() {
-
-		final String ip = "192.13.1.23";
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
-
-		MsgNotifMachineUp msg = new MsgNotifMachineUp( "app-32", this.app.getMySqlVm().getName(), ip );
-		this.processor.processMessage( msg );
-
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
-		String value = this.app.getMySqlVm().getData().get( Instance.IP_ADDRESS );
-		Assert.assertNull( value );
-	}
-
-
-	@Test
-	public void testProcessMsgNotifMachineUp_invalidInstance() {
-
-		final String ip = "192.13.1.23";
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
-
-		MsgNotifMachineUp msg = new MsgNotifMachineUp( this.app.getName(), "invalid-machine", ip );
-		this.processor.processMessage( msg );
-
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
-		String value = this.app.getMySqlVm().getData().get( Instance.IP_ADDRESS );
-		Assert.assertNull( value );
 	}
 
 
@@ -229,7 +192,7 @@ public class DmMessageProcessorTest {
 	public void testMsgNotifHeartbeat_success() {
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.PROBLEM );
-		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.app.getName(), this.app.getMySqlVm());
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.app.getName(), this.app.getMySqlVm(), "192.168.1.45" );
 
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
@@ -240,7 +203,7 @@ public class DmMessageProcessorTest {
 	public void testMsgNotifHeartbeat_invalidApplication() {
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.PROBLEM );
-		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( "app-98", this.app.getMySqlVm());
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( "app-98", this.app.getMySqlVm(), "192.168.1.45" );
 
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.PROBLEM, this.app.getMySqlVm().getStatus());
@@ -251,7 +214,7 @@ public class DmMessageProcessorTest {
 	public void testMsgNotifHeartbeat_invalidInstance() {
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.PROBLEM );
-		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.app.getName(), new Instance( "unknown" ));
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.app.getName(), new Instance( "unknown" ), "192.168.1.45" );
 
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.PROBLEM, this.app.getMySqlVm().getStatus());

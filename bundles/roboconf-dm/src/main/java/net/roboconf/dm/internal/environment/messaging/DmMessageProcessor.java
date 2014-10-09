@@ -16,6 +16,7 @@
 
 package net.roboconf.dm.internal.environment.messaging;
 
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.helpers.ImportHelpers;
@@ -31,7 +32,6 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 
 /**
  * This class is in charge of updating the model from messages / notifications.
@@ -49,24 +49,24 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 
 	/**
 	 * Constructor.
+	 * @param messages
 	 * @param manager
 	 */
-	public DmMessageProcessor( Manager manager ) {
+	public DmMessageProcessor( LinkedBlockingQueue<Message> messages, Manager manager ) {
+		super( messages );
 		this.manager = manager;
 	}
 
 
-	/**
-	 * Processes a message (dispatch method).
-	 * @param message (not null)
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.AbstractMessageProcessor
+	 * #processMessage(net.roboconf.messaging.messages.Message)
 	 */
 	@Override
-	public void processMessage( Message message ) {
+	public boolean processMessage( Message message ) {
 
-		if( message instanceof MsgNotifMachineUp )
-			processMsgNotifMachineUp((MsgNotifMachineUp) message );
-
-		else if( message instanceof MsgNotifMachineDown )
+		if( message instanceof MsgNotifMachineDown )
 			processMsgNotifMachineDown((MsgNotifMachineDown) message );
 
 		else if( message instanceof MsgNotifInstanceChanged )
@@ -80,36 +80,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
-	}
 
-
-	private void processMsgNotifMachineUp( MsgNotifMachineUp message ) {
-
-		String ipAddress = message.getIpAddress();
-		String rootInstanceName = message.getRootInstanceName();
-		ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( message.getApplicationName());
-		Application app = ma != null ? ma.getApplication() : null;
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, "/" + rootInstanceName );
-
-		// If 'app' is null, then 'instance' is also null.
-		if( rootInstance == null ) {
-			StringBuilder sb = new StringBuilder();
-			sb.append( "An 'UP' notification was received from an unknown machine: " );
-			sb.append( rootInstanceName );
-			sb.append( " @ " );
-			sb.append( ipAddress );
-			sb.append( " (app =  " );
-			sb.append( message.getApplicationName());
-			sb.append( ")." );
-			this.logger.warning( sb.toString());
-
-		} else {
-			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-			rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
-			this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
-			// The UP message has already been stored by the manager. It will be sent on the next timer tick.
-			this.manager.saveConfiguration( ma );
-		}
+		return true;
 	}
 
 
@@ -155,6 +127,13 @@ public class DmMessageProcessor extends AbstractMessageProcessor {
 			this.logger.warning( sb.toString());
 
 		} else {
+			String ipAddress = message.getIpAddress();
+			if( rootInstance.getData().get( Instance.IP_ADDRESS ) == null ) {
+				this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
+				rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
+				this.manager.saveConfiguration( ma );
+			}
+
 			ma.acknowledgeHeartBeat( rootInstance );
 			this.logger.finest( "A heart beat was acknowledged for " + rootInstance.getName() + " in the application " + app.getName() + "." );
 		}

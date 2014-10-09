@@ -45,10 +45,9 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testImportsRequest() throws Exception {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
 		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.newMessagingClient = client;
+		processor.setMessagingClient( client );
 
 		TestApplication app = new TestApplication();
 		processor.rootInstance = app.getTomcatVm();
@@ -70,10 +69,8 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testImports() throws Exception {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.newMessagingClient = client;
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		processor.rootInstance = app.getTomcatVm();
@@ -148,8 +145,7 @@ public class AgentMessageProcessor_ImportsTest {
 		};
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.newMessagingClient = client;
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		processor.rootInstance = app.getTomcatVm();
@@ -190,8 +186,7 @@ public class AgentMessageProcessor_ImportsTest {
 		};
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.newMessagingClient = client;
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		processor.rootInstance = app.getTomcatVm();
@@ -217,10 +212,8 @@ public class AgentMessageProcessor_ImportsTest {
 	public void testSelfImport() throws Exception {
 
 		// A node depends on other nodes
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.newMessagingClient = client;
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		Component clusterNodeComponent = new Component( "cluster" ).alias( "a cluster node" ).installerName( "whatever" );
 		clusterNodeComponent.getImportedVariables().put( "cluster.ip", Boolean.TRUE );

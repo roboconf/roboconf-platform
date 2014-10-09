@@ -139,10 +139,8 @@ public final class RabbitMqUtils {
 	public static void closeConnection( Channel channel ) throws IOException {
 
 		if( channel != null ) {
-			if( channel.isOpen()) {
-				// channel.basicCancel( consumerTag );
+			if( channel.isOpen())
 				channel.close();
-			}
 
 			if( channel.getConnection().isOpen())
 				channel.getConnection().close();

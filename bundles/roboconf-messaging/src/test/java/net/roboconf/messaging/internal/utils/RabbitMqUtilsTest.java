@@ -27,7 +27,7 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.internal.AbstractRabbitMqTest;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.internal.IgnoringMessageProcessor;
 
 import org.junit.Assume;
 import org.junit.Test;
@@ -201,12 +201,7 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 		// In these tests, Rabbit exceptions break the processing loop
 		Channel channel = createTestChannel();
 		Logger logger = Logger.getLogger( getClass().getName());
-		AbstractMessageProcessor messageProcessor = new AbstractMessageProcessor() {
-			@Override
-			protected void processMessage( Message message ) {
-				// nothing
-			}
-		};
+		AbstractMessageProcessor messageProcessor = new IgnoringMessageProcessor();
 
 		// Shutdown
 		QueueingConsumer consumer = new QueueingConsumer( channel ) {

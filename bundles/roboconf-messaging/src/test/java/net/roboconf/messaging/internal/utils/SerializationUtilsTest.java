@@ -33,7 +33,6 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
@@ -53,7 +52,10 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_heartbeat() throws Exception {
 
-		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( "app1", "instance1" );
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( "app1", "instance1", "127.0.0.1" );
+		checkBasics( msg, MsgNotifHeartbeat.class );
+
+		msg = new MsgNotifHeartbeat( "app1", new Instance( "instance2" ), "192.168.0.11" );
 		checkBasics( msg, MsgNotifHeartbeat.class );
 	}
 
@@ -63,17 +65,6 @@ public class SerializationUtilsTest {
 
 		MsgNotifMachineDown msg = new MsgNotifMachineDown( "app1", "instance1" );
 		checkBasics( msg, MsgNotifMachineDown.class );
-	}
-
-
-	@Test
-	public void testMessage_machineUp() throws Exception {
-
-		MsgNotifMachineUp msg = new MsgNotifMachineUp( "app1", "instance1", "127.0.0.1" );
-		checkBasics( msg, MsgNotifMachineUp.class );
-
-		msg = new MsgNotifMachineUp( "app1", new Instance( "instance2" ), "192.168.1.2" );
-		checkBasics( msg, MsgNotifMachineUp.class );
 	}
 
 

@@ -111,12 +111,7 @@ public class AgentClient implements IAgentClient {
 
 		// Store the message processor for later
 		this.messageProcessor = messageProcessor;
-
-		// After our move to OSGi, the message processor may have already
-		// been started with a previous configuration. And starting a thread twice
-		// will result in an error.
-		if( ! messageProcessor.isRunning())
-			this.messageProcessor.start();
+		this.messageProcessor.start();
 
 		// We start listening the queue here
 		// We declare both exchanges.
@@ -163,11 +158,13 @@ public class AgentClient implements IAgentClient {
 		// Stop processing messages
 		if( this.messageProcessor != null
 				&& this.messageProcessor.isRunning())
-			this.messageProcessor.interrupt();
+			this.messageProcessor.stopProcessor();
 
 		// Close the connection
 		this.consumerTag = null;
-		RabbitMqUtils.closeConnection( this.channel );
+		if( isConnected())
+			RabbitMqUtils.closeConnection( this.channel );
+
 		this.channel = null;
 	}
 

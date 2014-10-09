@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
@@ -88,6 +89,7 @@ public class Manager {
 	// Internal fields
 	private final Map<String,ManagedApplication> appNameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<Message> ();
 	IaasResolver iaasResolver = new IaasResolver();
 	Timer timer;
 
@@ -108,7 +110,7 @@ public class Manager {
 			this.timer.cancel();
 
 		// Update the messaging client
-		this.configuration.messagingClient.openConnection( new DmMessageProcessor( this ));
+		this.configuration.messagingClient.openConnection( new DmMessageProcessor( this.messages, this ));
 
 		// Reset and restore applications
 		this.appNameToManagedApplication.clear();

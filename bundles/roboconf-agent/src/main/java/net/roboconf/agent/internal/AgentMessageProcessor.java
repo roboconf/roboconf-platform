@@ -43,7 +43,6 @@ import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
@@ -55,6 +54,17 @@ import net.roboconf.plugin.api.PluginInterface;
 
 /**
  * The class (thread) in charge of processing messages received by the agent.
+ * <p>
+ * The key idea in this processor is that the method {@link #processMessage(Message)}
+ * CANNOT be interrupted when it is processing a message. The agent can indicate
+ * "Hey! I have a new configuration, I have to replace you."
+ * </p>
+ * <p>
+ * But in this case, the agent will not directly replace the processor.
+ * Instead, it will wait the current processing to complete. And only then, it will
+ * replace the messaging client and the processor.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 public class AgentMessageProcessor extends AbstractMessageProcessor {
@@ -62,89 +72,61 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Agent agent;
 
+	boolean doNotProcessNewMessages = false;
 	Instance rootInstance;
-	IAgentClient messagingClient, newMessagingClient;
+	IAgentClient messagingClient;
 
 
 	/**
 	 * Constructor.
+	 * @param agent
 	 */
 	public AgentMessageProcessor( Agent agent ) {
-		super();
+		super( agent.getMessages());
 		this.agent = agent;
+		this.messagingClient = agent.getMessagingClient();
 	}
 
 
 	/**
-	 * Sets the messaging client.
-	 * @param messagingClient the messaging client
+	 * Indicates to this processor this is the last message it processes.
+	 * <p>
+	 * This method is invoked when the agent configuration changed.
+	 * A new message processor will be created in consequence WHEN a new message has to be processed.
+	 * </p>
 	 */
-	public void setMessagingClient( IAgentClient messagingClient ) {
-
-		// The messaging client can be changed at any moment (dynamic environment).
-		// So, we can either put synchronized blocks everywhere...
-		// ... or we can just wait for the current message to be processed
-		// and change the client for the next one.
-		this.newMessagingClient = messagingClient;
-
-		// If there is no message to process, configure the new messaging client
-		if( hasNoMessage())
-			configure();
+	public void thisIsTheLastMessageYouProcess() {
+		this.doNotProcessNewMessages = true;
 	}
 
 
-	/**
-	 * Configures a new messaging client.
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.AbstractMessageProcessor
+	 * #checkStopCondition()
 	 */
-	public synchronized void configure() {
+	@Override
+	protected boolean doNotProcessNewMessages() {
 
-		if( this.newMessagingClient != null ) {
+		// Tell the agent it can create a new processor
+		if( this.doNotProcessNewMessages )
+			this.agent.switchMessageProcessor();
 
-			// If there was a client, release the connection
-			if( this.messagingClient != null
-					&& this.messagingClient.isConnected()) {
-
-				try {
-					this.messagingClient.closeConnection();
-
-				} catch( IOException e ) {
-					this.logger.severe( "An error occured while releasing a messaging client. " + e.getMessage());
-					this.logger.finest( Utils.writeException( e ));
-				}
-			}
-
-			try {
-				// Store and configure the new client
-				this.messagingClient = this.newMessagingClient;
-				this.messagingClient.openConnection( this );
-				this.messagingClient.listenToTheDm( ListenerCommand.START );
-
-				// Send an "UP" message
-				this.messagingClient.sendMessageToTheDm( new MsgNotifMachineUp(
-						this.agent.getApplicationName(),
-						this.agent.getRootInstanceName(),
-						this.agent.getIpAddress()));
-
-			} catch( IOException e ) {
-				this.logger.severe( "An error occured while initializing a new messaging client. " + e.getMessage());
-				this.logger.finest( Utils.writeException( e ));
-			}
-
-			// Reset the newMessagingClient variable
-			this.newMessagingClient = null;
-		}
+		return this.doNotProcessNewMessages;
 	}
 
 
-	/* (non-Javadoc)
+	/*
 	 * @see net.roboconf.messaging.client.AbstractMessageProcessor
 	 * #processMessage(net.roboconf.messaging.messages.Message)
 	 */
 	@Override
-	protected void processMessage( Message message ) {
+	protected boolean processMessage( Message message ) {
 
-		// Before processing a message, check if we need to update the messaging client
-		configure();
+		// Before processing a NEW message, check if the agent is waiting for switching the processor.
+		// The message will be processed by the next agent's message processor
+		if( doNotProcessNewMessages())
+			return false;
 
 		// Process the message
 		try {
@@ -186,6 +168,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
+
+		// The message was processed, we can remove it from the queue.
+		return true;
 	}
 
 
@@ -486,5 +471,12 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			plugin.initialize( instance );
 		}
+	}
+
+	/**
+	 * @param messagingClient the messagingClient to set
+	 */
+	void setMessagingClient( IAgentClient messagingClient ) {
+		this.messagingClient = messagingClient;
 	}
 }

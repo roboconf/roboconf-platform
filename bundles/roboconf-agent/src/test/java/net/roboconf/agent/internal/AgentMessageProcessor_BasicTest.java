@@ -17,6 +17,7 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
@@ -28,10 +29,8 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineUp;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -75,108 +74,6 @@ public class AgentMessageProcessor_BasicTest {
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
 		TestApplication app = new TestApplication();
 		processor.initializePluginForInstance( app.getMySql());
-	}
-
-
-	@Test
-	public void testSetMessagingClient() throws Exception {
-
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		Assert.assertNull( processor.messagingClient );
-		Assert.assertNull( processor.newMessagingClient );
-
-		// Client 1
-		TestAgentMessagingClient client1 = new TestAgentMessagingClient();
-		processor.setMessagingClient( client1 );
-
-		Assert.assertEquals( client1, processor.messagingClient );
-		Assert.assertNull( processor.newMessagingClient );
-		Assert.assertEquals( 1, client1.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifMachineUp.class, client1.messagesForTheDm.get( 0 ).getClass());
-
-		// Client 2
-		TestAgentMessagingClient client2 = new TestAgentMessagingClient();
-		processor.setMessagingClient( client2 );
-
-		Assert.assertEquals( client2, processor.messagingClient );
-		Assert.assertNull( processor.newMessagingClient );
-		Assert.assertEquals( 1, client2.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifMachineUp.class, client1.messagesForTheDm.get( 0 ).getClass());
-
-		// What happens if there is an awaiting message?
-		// The messaging client should not be changed.
-		processor.storeMessage( new MsgCmdRequestImport( "whatever" ));
-
-		TestAgentMessagingClient client3 = new TestAgentMessagingClient();
-		processor.setMessagingClient( client3 );
-
-		Assert.assertNotSame( client3, processor.messagingClient );
-		Assert.assertEquals( client2, processor.messagingClient );
-		Assert.assertEquals( client3, processor.newMessagingClient );
-		Assert.assertEquals( 0, client3.messagesForTheDm.size());
-
-		// Run the processor.
-		// The new message client should be picked up before processing the message.
-		processor.start();
-		Thread.sleep( 1000 );
-
-		Assert.assertEquals( client3, processor.messagingClient );
-		Assert.assertNull( processor.newMessagingClient );
-		Assert.assertEquals( 1, client3.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifMachineUp.class, client1.messagesForTheDm.get( 0 ).getClass());
-
-		processor.interrupt();
-	}
-
-
-	@Test
-	public void testConfigureToTheLimits() {
-
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-
-		// No current and no new messaging client => no exception
-		processor.configure();
-
-		// No current messaging client => no exception
-		processor.newMessagingClient = new TestAgentMessagingClient();
-		processor.configure();
-
-		// When the current client is not connected...
-		processor.messagingClient = new TestAgentMessagingClient() {
-			@Override
-			public boolean isConnected() {
-				return false;
-			}
-		};
-
-		// ... and when the new client cannot connect (two cases at once)
-		processor.newMessagingClient = new TestAgentMessagingClient() {
-			@Override
-			public void openConnection( AbstractMessageProcessor messageProcessor )
-			throws IOException {
-				throw new IOException( "For tests." );
-			}
-		};
-
-		processor.configure();
-
-		// Catch exceptions on connection management (2 cases at once)
-		processor.newMessagingClient = new TestAgentMessagingClient();
-		processor.messagingClient = new TestAgentMessagingClient() {
-			@Override
-			public void closeConnection() throws IOException {
-				throw new IOException( "For tests." );
-			}
-
-			@Override
-			public boolean isConnected() {
-				return true;
-			}
-		};
-
-		processor.configure();
 	}
 
 
@@ -297,11 +194,8 @@ public class AgentMessageProcessor_BasicTest {
 		processor.setMessagingClient( client );
 
 		// No root instance
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifMachineUp.class, client.messagesForTheDm.iterator().next().getClass());
-
 		processor.processMessage( new MsgCmdSendInstances());
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 0, client.messagesForTheDm.size());
 
 		// With a root instance
 		TestApplication app = new TestApplication();
@@ -309,10 +203,10 @@ public class AgentMessageProcessor_BasicTest {
 
 		processor.processMessage( new MsgCmdSendInstances());
 		Assert.assertEquals(
-				1 + InstanceHelpers.buildHierarchicalList( app.getTomcatVm()).size(),
+				InstanceHelpers.buildHierarchicalList( app.getTomcatVm()).size(),
 				client.messagesForTheDm.size());
 
-		for( int i=1; i<4; i++ )
+		for( int i=1; i<3; i++ )
 			Assert.assertEquals( "Index " + i, MsgNotifInstanceChanged.class, client.messagesForTheDm.get( i ).getClass());
 	}
 
@@ -327,11 +221,8 @@ public class AgentMessageProcessor_BasicTest {
 		processor.setMessagingClient( client );
 
 		// No root instance
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifMachineUp.class, client.messagesForTheDm.iterator().next().getClass());
-
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 0, client.messagesForTheDm.size());
 		Assert.assertEquals( 0, client.messagesForAgentsCount.get());
 
 		// With a root instance which has no variable.
@@ -342,19 +233,19 @@ public class AgentMessageProcessor_BasicTest {
 		processor.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 0, client.messagesForTheDm.size());
 		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
 
 		// With a child instance
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 0, client.messagesForTheDm.size());
 		Assert.assertEquals( 3, client.messagesForAgentsCount.get());
 
 		// With another started child
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( 0, client.messagesForTheDm.size());
 		Assert.assertEquals( 6, client.messagesForAgentsCount.get());
 	}
 
@@ -395,12 +286,11 @@ public class AgentMessageProcessor_BasicTest {
 		processor.processMessage( new MsgCmdRemoveInstance( app.getMySql()));
 		Assert.assertEquals( 1, InstanceHelpers.buildHierarchicalList( app.getMySqlVm()).size());
 
-		Assert.assertEquals( 2, client.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifMachineUp.class, client.messagesForTheDm.get( 0 ).getClass());
-		Assert.assertEquals( MsgNotifInstanceRemoved.class, client.messagesForTheDm.get( 1 ).getClass());
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( MsgNotifInstanceRemoved.class, client.messagesForTheDm.get( 0 ).getClass());
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getMySql()),
-				((MsgNotifInstanceRemoved) client.messagesForTheDm.get( 1 )).getInstancePath());
+				((MsgNotifInstanceRemoved) client.messagesForTheDm.get( 0 )).getInstancePath());
 	}
 
 
@@ -488,5 +378,53 @@ public class AgentMessageProcessor_BasicTest {
 
 		agent.setPlugins( new PluginInterface[] { new PluginMock(), new PluginMock()});
 		agent.pluginWasModified( new PluginMock());
+	}
+
+
+	@Test
+	public void testInterruption() throws Exception {
+
+		Agent agent = new Agent();
+		final AtomicBoolean processWasInvoked = new AtomicBoolean( false );
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
+			@Override
+			protected boolean processMessage( Message message ) {
+
+				// Pre-condition: processor.doNotProcessNewMessages = false
+
+				processWasInvoked.set( true );
+				try {
+					Thread.sleep( 5 * AbstractMessageProcessor.MESSAGE_POLLING_PERIOD );
+				} catch( InterruptedException e ) {
+					e.printStackTrace();
+				}
+
+				// Post-condition: processor.doNotProcessNewMessages = true
+
+				// Between the thread.sleep and the call to the super method,
+				// we will notify the processor it cannot process new messages.
+
+				return super.processMessage( message );
+			}
+		};
+
+		Assert.assertFalse( processor.isRunning());
+		Assert.assertFalse( processor.isAlive());
+		processor.start();
+
+		Thread.sleep( 200 );
+		Assert.assertTrue( processor.isRunning());
+		Assert.assertTrue( processor.isAlive());
+
+		// Add a message and wait for it to be in processing
+		agent.getMessages().add( new MsgCmdResynchronize());
+		Thread.sleep( AbstractMessageProcessor.MESSAGE_POLLING_PERIOD );
+
+		// That should be good
+		Assert.assertTrue( "The previous Thread.sleep() should wait a little more time.", processWasInvoked.get());
+		processor.thisIsTheLastMessageYouProcess();
+
+		// The processor should stop automatically
+		processor.join( 4 * AbstractMessageProcessor.MESSAGE_POLLING_PERIOD );
 	}
 }

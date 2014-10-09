@@ -40,7 +40,8 @@ public class RestApplicationTest {
 		List<Object> singleton = new ArrayList<Object>( app.getSingletons());
 
 		Assert.assertEquals( 2, singleton.size());
-		Assert.assertEquals( appRes, singleton.get( 0 ));
-		Assert.assertEquals( mngrRes, singleton.get( 1 ));
+		boolean assertion1 = appRes == singleton.get( 0 ) && mngrRes == singleton.get( 1 );
+		boolean assertion2 = appRes == singleton.get( 1 ) && mngrRes == singleton.get( 0 );
+		Assert.assertTrue( assertion1 || assertion2 );
 	}
 }

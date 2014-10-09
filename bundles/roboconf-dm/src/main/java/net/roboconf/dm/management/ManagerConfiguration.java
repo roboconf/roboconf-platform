@@ -55,6 +55,14 @@ public class ManagerConfiguration {
 
 	/**
 	 * Constructor.
+	 * <p>
+	 * This is for convenience.
+	 * The default directory is named <strong>roboconf-dm</strong> and
+	 * located under the system's temporary directory.
+	 * </p>
+	 * <p>
+	 * Example: /tmp/robconf-dm under Linux
+	 * </p>
 	 */
 	public ManagerConfiguration() {
 		this( new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" ));
@@ -125,6 +133,9 @@ public class ManagerConfiguration {
 
 		try {
 			// Deal with the directory
+			if( Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation ))
+				throw new IOException( "The configuration directory cannot be null or the empty string." );
+
 			this.configurationDirectory = new File( this.configurationDirectoryLocation );
 			if( ! this.configurationDirectory.isDirectory()
 					&& ! this.configurationDirectory.mkdirs())
@@ -150,14 +161,13 @@ public class ManagerConfiguration {
 				this.manager.configurationChanged();
 
 			this.validConfiguration = true;
+			this.logger.info( "The DM configuration was updated..." );
 
 		} catch( IOException e ) {
 			this.logger.warning( "An error occurred while reconfiguring the manager. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 			this.validConfiguration = false;
 		}
-
-		this.logger.info( "The DM configuration was updated..." );
 	}
 
 
@@ -167,8 +177,7 @@ public class ManagerConfiguration {
 	public void closeConnection() {
 
 		try {
-			if( this.messagingClient != null
-					&& this.messagingClient.isConnected())
+			if( this.messagingClient != null )
 				this.messagingClient.closeConnection();
 
 		} catch( IOException e ) {

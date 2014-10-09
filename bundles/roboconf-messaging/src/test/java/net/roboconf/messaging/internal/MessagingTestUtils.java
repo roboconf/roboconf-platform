@@ -18,6 +18,7 @@ package net.roboconf.messaging.internal;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
@@ -50,7 +51,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
  */
 public abstract class MessagingTestUtils {
 
-	private static final int DELAY = 700;
+	private static final long DELAY = AbstractMessageProcessor.MESSAGE_POLLING_PERIOD + 10;
 	private static final String URL = "localhost";
 	private static final String USER = "guest";
 	private static final String PWD = "guest";
@@ -96,7 +97,7 @@ public abstract class MessagingTestUtils {
 
 		// The agent sends a message to the DM
 		Assert.assertEquals( 0, dmProcessor.receivedMessages.size());
-		agentClient.sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance ));
+		agentClient.sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance, "192.168.1.45" ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 0, dmProcessor.receivedMessages.size());
 
@@ -128,7 +129,7 @@ public abstract class MessagingTestUtils {
 
 		// The DM stops listening the agent
 		dmClient.listenToAgentMessages( app, ListenerCommand.STOP );
-		agentClient.sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance ));
+		agentClient.sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance, "192.168.1.47" ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 1, dmProcessor.receivedMessages.size());
 		Thread.sleep( DELAY );
@@ -644,9 +645,14 @@ public abstract class MessagingTestUtils {
 	public static class StorageMessageProcessor extends AbstractMessageProcessor {
 		private final List<Message> receivedMessages = new ArrayList<Message> ();
 
+		public StorageMessageProcessor() {
+			super( new LinkedBlockingQueue<Message> ());
+		}
+
 		@Override
-		protected void processMessage( Message message ) {
+		protected boolean processMessage( Message message ) {
 			this.receivedMessages.add( message );
+			return true;
 		}
 	}
 }

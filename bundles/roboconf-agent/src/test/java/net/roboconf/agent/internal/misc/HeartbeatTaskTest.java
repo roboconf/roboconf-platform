@@ -40,7 +40,7 @@ public class HeartbeatTaskTest {
 			}
 		};
 
-		HeartbeatTask task = new HeartbeatTask( "app", "root", messagingClient );
+		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", messagingClient );
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 
 		task.run();
@@ -55,7 +55,7 @@ public class HeartbeatTaskTest {
 	public void testHeartbeat_notConnected() {
 
 		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient();
-		HeartbeatTask task = new HeartbeatTask( "app", "root", messagingClient );
+		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", messagingClient );
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 
 		task.run();
@@ -66,7 +66,7 @@ public class HeartbeatTaskTest {
 	@Test
 	public void testHeartbeat_nullClient() {
 
-		HeartbeatTask task = new HeartbeatTask( "app", "root", null );
+		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", null );
 		task.run();
 	}
 
@@ -86,7 +86,7 @@ public class HeartbeatTaskTest {
 			}
 		};
 
-		HeartbeatTask task = new HeartbeatTask( "app", "root", messagingClient );
+		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", messagingClient );
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 
 		task.run();

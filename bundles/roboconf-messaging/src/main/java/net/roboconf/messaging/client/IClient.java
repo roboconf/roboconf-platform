@@ -55,6 +55,10 @@ public interface IClient {
 
 	/**
 	 * Closes the connection with the message server.
+	 * <p>
+	 * There is no need to check {@link #isConnected()} before invoking this method.
+	 * It will also stop the processing thread if necessary.
+	 * </p>
 	 */
 	void closeConnection() throws IOException;
 }

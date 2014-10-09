@@ -30,7 +30,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 public class HeartbeatTask extends TimerTask {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final String applicationName, rootInstanceName;
+	private final String applicationName, rootInstanceName, ipAddress;
 	private final IAgentClient messagingClient;
 
 
@@ -38,19 +38,21 @@ public class HeartbeatTask extends TimerTask {
 	 * Constructor.
 	 * @param applicationName
 	 * @param rootInstanceName
+	 * @param ipAddress
 	 * @param messagingClient
 	 */
-	public HeartbeatTask( String applicationName, String rootInstanceName, IAgentClient messagingClient ) {
+	public HeartbeatTask( String applicationName, String rootInstanceName, String ipAddress, IAgentClient messagingClient ) {
 		this.applicationName = applicationName;
 		this.rootInstanceName = rootInstanceName;
 		this.messagingClient = messagingClient;
+		this.ipAddress = ipAddress;
 	}
 
 
 	@Override
 	public void run() {
 		try {
-			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName );
+			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName, this.ipAddress );
 			if( this.messagingClient != null
 					&& this.messagingClient.isConnected())
 				this.messagingClient.sendMessageToTheDm( heartBeat );

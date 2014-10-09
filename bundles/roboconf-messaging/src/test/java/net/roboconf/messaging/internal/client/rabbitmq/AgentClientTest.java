@@ -19,6 +19,7 @@ package net.roboconf.messaging.internal.client.rabbitmq;
 import junit.framework.Assert;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.internal.AbstractRabbitMqTest;
+import net.roboconf.messaging.internal.IgnoringMessageProcessor;
 import net.roboconf.messaging.internal.MessagingTestUtils.StorageMessageProcessor;
 
 import org.junit.Assume;
@@ -66,7 +67,8 @@ public class AgentClientTest extends AbstractRabbitMqTest {
 
 
 	@Test
-	public void testCloseConnectionOnNull() throws Exception {
+	public void testCloseConnection_nullProcessor() throws Exception {
+		Assume.assumeTrue( this.rabbitMqIsRunning );
 
 		AgentClient agentClient = new AgentClient();
 		agentClient.setParameters( "localhost", "guest", "guest" );
@@ -74,5 +76,49 @@ public class AgentClientTest extends AbstractRabbitMqTest {
 		Assert.assertNull( agentClient.channel );
 		Assert.assertNull( agentClient.messageProcessor );
 		agentClient.closeConnection();
+	}
+
+
+	@Test
+	public void testCloseConnection_nonRunningProcessor() throws Exception {
+		Assume.assumeTrue( this.rabbitMqIsRunning );
+
+		DmClient dmClient = new DmClient();
+		dmClient.setParameters( "localhost", "guest", "guest" );
+
+		AbstractMessageProcessor processor = new IgnoringMessageProcessor();
+		dmClient.openConnection( processor );
+		Thread.sleep( 200 );
+
+		Assert.assertTrue( dmClient.messageProcessor.isRunning());
+		Assert.assertTrue( dmClient.isConnected());
+		processor.stopProcessor();
+		Assert.assertFalse( dmClient.messageProcessor.isRunning());
+
+		dmClient.closeConnection();
+		Assert.assertFalse( dmClient.messageProcessor.isRunning());
+		Assert.assertFalse( dmClient.isConnected());
+	}
+
+
+	@Test
+	public void testCloseConnectionStopsTheProcessorThread() throws Exception {
+		Assume.assumeTrue( this.rabbitMqIsRunning );
+
+		AgentClient agentClient = new AgentClient();
+		agentClient.setParameters( "localhost", "guest", "guest" );
+		AbstractMessageProcessor processor = new IgnoringMessageProcessor();
+
+		Assert.assertFalse( processor.isRunning());
+		Assert.assertFalse( processor.isAlive());
+
+		agentClient.openConnection( processor );
+		Thread.sleep( 200 );
+		Assert.assertTrue( processor.isRunning());
+		Assert.assertTrue( processor.isAlive());
+
+		agentClient.closeConnection();
+		processor.join( 2000 );
+		Assert.assertFalse( processor.isRunning());
 	}
 }

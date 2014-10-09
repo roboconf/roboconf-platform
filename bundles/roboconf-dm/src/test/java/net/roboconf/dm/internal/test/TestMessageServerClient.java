@@ -39,18 +39,15 @@ public class TestMessageServerClient implements IDmClient {
 	public AtomicBoolean connected = new AtomicBoolean( false );
 
 
-
 	@Override
 	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
 		// Nothing, we don't care
 	}
 
-
 	@Override
 	public void closeConnection() throws IOException {
 		this.connected.set( false );
 	}
-
 
 	@Override
 	public void openConnection( AbstractMessageProcessor messageProcessor )
@@ -58,13 +55,11 @@ public class TestMessageServerClient implements IDmClient {
 		this.connected.set( true );
 	}
 
-
 	@Override
 	public void sendMessageToAgent( Application application, Instance instance, Message message )
 	throws IOException {
 		this.sentMessages.add( message );
 	}
-
 
 	@Override
 	public void listenToAgentMessages( Application application, ListenerCommand command )
@@ -72,13 +67,11 @@ public class TestMessageServerClient implements IDmClient {
 		// nothing, we do not care
 	}
 
-
 	@Override
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 		// nothing, we do not care
 	}
-
 
 	@Override
 	public boolean isConnected() {

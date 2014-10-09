@@ -23,18 +23,15 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.ReturnListener;
 
 /**
  * The RabbitMQ client for the DM.
@@ -96,45 +93,11 @@ public class DmClient implements IDmClient {
 		this.channel = factory.newConnection().createChannel();
 
 		// Be notified when a message does not arrive in a queue (i.e. nobody is listening)
-		this.channel.addReturnListener( new ReturnListener() {
-			@Override
-			public void handleReturn(
-					int replyCode,
-					String replyText,
-					String exchange,
-					String routingKey,
-					BasicProperties properties,
-					byte[] body )
-			throws IOException {
-
-				String messageType = "undetermined";
-				try {
-					Message msg = SerializationUtils.deserializeObject( body );
-					messageType = msg.getClass().getName();
-
-				} catch( ClassNotFoundException e ) {
-					DmClient.this.logger.severe( "Failed to deserialize a message object." );
-					DmClient.this.logger.finest( Utils.writeException( e ));
-				}
-
-				StringBuilder sb = new StringBuilder();
-				sb.append( "A message sent by the DM was not received by any agent queue." );
-				sb.append( "\nMessage type: " + messageType );
-				sb.append( "\nRouting key: " + routingKey );
-				sb.append( "\nReason: " + replyText );
-
-				DmClient.this.logger.warning( sb.toString());
-			}
-		});
+		this.channel.addReturnListener( new DmReturnListener());
 
 		// Store the message processor for later
 		this.messageProcessor = messageProcessor;
-
-		// After our move to OSGi, the message processor may have already
-		// been started with a previous configuration. And starting a thread twice
-		// will result in an error.
-		if( ! messageProcessor.isRunning())
-			this.messageProcessor.start();
+		this.messageProcessor.start();
 	}
 
 
@@ -148,9 +111,11 @@ public class DmClient implements IDmClient {
 
 		if( this.messageProcessor != null
 				&& this.messageProcessor.isRunning())
-			this.messageProcessor.interrupt();
+			this.messageProcessor.stopProcessor();
 
-		RabbitMqUtils.closeConnection( this.channel );
+		if( isConnected())
+			RabbitMqUtils.closeConnection( this.channel );
+
 		this.channel = null;
 	}
 

@@ -38,10 +38,8 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testSetMessagingClient() throws Exception {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.newMessagingClient = new TestAgentMessagingClient();
-
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
+		processor.setMessagingClient( new TestAgentMessagingClient());
 		TestApplication app = new TestApplication();
 
 		// Initialize the model
@@ -140,9 +138,8 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithUnknownInstance() {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.newMessagingClient = new TestAgentMessagingClient();
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		// No local model yet
 		Instance inst = new Instance( "inst" ).status( InstanceStatus.DEPLOYED_STOPPED ).component( new Component( "unknown" ));
@@ -167,7 +164,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		};
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.newMessagingClient = new TestAgentMessagingClient();
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		app.getMySql().getComponent().setInstallerName( "unknown installer" );
@@ -187,11 +184,9 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithTransitiveState() {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
+		processor.setMessagingClient( new TestAgentMessagingClient());
 		TestApplication app = new TestApplication();
-
-		processor.newMessagingClient = new TestAgentMessagingClient();
 		processor.rootInstance = app.getMySqlVm();
 
 		// Unstable (transitive) states => no state change
@@ -224,7 +219,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		};
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.newMessagingClient = new TestAgentMessagingClient();
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -268,7 +263,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		};
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.newMessagingClient = new TestAgentMessagingClient();
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -312,7 +307,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		};
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.newMessagingClient = new TestAgentMessagingClient();
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -359,7 +354,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		};
 
 		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.newMessagingClient = new TestAgentMessagingClient();
+		processor.setMessagingClient( new TestAgentMessagingClient());
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));

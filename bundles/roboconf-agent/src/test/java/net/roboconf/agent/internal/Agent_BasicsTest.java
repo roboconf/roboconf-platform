@@ -30,7 +30,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentTest {
+public class Agent_BasicsTest {
 
 	@Test
 	public void testBasicStartAndStop() {
@@ -150,32 +150,6 @@ public class AgentTest {
 
 
 	@Test
-	public void testUpdateConfiguration() {
-
-		Agent agent = new Agent();
-		agent.setFactory( new MessageServerClientFactory() {
-			@Override
-			public IAgentClient createAgentClient() {
-				return new TestAgentMessagingClient();
-			}
-		});
-
-		agent.start();
-		Assert.assertEquals( agent.messagingClient, agent.messageProcessor.messagingClient );
-		Assert.assertEquals( TestAgentMessagingClient.class, agent.messagingClient.getClass());
-
-		IAgentClient oldClient = agent.messagingClient;
-		agent.setOverrideProperties( true );
-		agent.setIaasType( "a iaas that does not rely on user data" );
-
-		agent.updateConfiguration();
-		Assert.assertEquals( agent.messagingClient, agent.messageProcessor.messagingClient );
-		Assert.assertEquals( TestAgentMessagingClient.class, agent.messagingClient.getClass());
-		Assert.assertNotSame( agent.messagingClient, oldClient );
-	}
-
-
-	@Test
 	public void testGetAgentId() {
 
 		Agent agent = new Agent();
@@ -194,5 +168,31 @@ public class AgentTest {
 		Assert.assertFalse( agent.getAgentId().contains( "null" ));
 		Assert.assertFalse( agent.getAgentId().contains( "my app" ));
 		Assert.assertTrue( agent.getAgentId().contains( "root instance" ));
+	}
+
+
+	@Test
+	public void testSwitchProcessor_IoException() {
+
+		Agent agent = new Agent();
+		agent.setFactory( new MessageServerClientFactory() {
+			@Override
+			public IAgentClient createAgentClient() {
+				return new TestAgentMessagingClient() {
+					@Override
+					public void closeConnection() throws IOException {
+						throw new IOException();
+					}
+				};
+			}
+		});
+
+		Assert.assertNull( agent.messagingClient );
+		agent.start();
+		Assert.assertNotNull( agent.messagingClient );
+
+		IAgentClient oldClient = agent.messagingClient;
+		agent.switchMessageProcessor();
+		Assert.assertNotSame( oldClient, agent.messagingClient );
 	}
 }

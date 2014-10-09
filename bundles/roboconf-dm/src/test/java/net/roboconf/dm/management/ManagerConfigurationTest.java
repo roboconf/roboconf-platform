@@ -136,6 +136,17 @@ public class ManagerConfigurationTest {
 
 
 	@Test
+	public void testUpdate_withError_nullDirectory() throws Exception {
+
+		// Most of all, there is no error thrown.
+		Assert.assertFalse( this.conf.isValidConfiguration());
+		this.conf.setConfigurationDirectoryLocation( null );
+		this.conf.update();
+		Assert.assertFalse( this.conf.isValidConfiguration());
+	}
+
+
+	@Test
 	public void testFindApplicationDirectories_inexistingDir() throws Exception {
 
 		this.conf.update();

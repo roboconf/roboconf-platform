@@ -36,25 +36,39 @@ public class InstanceBean {
 	}
 
 	public List<ImportListBean> getImportLists() {
+
 		List<ImportListBean> result = new ArrayList<InstanceBean.ImportListBean>();
 		for(String prefix : this.instance.getImports().keySet()) {
+
 			List<ImportBean> importbeans = new ArrayList<ImportBean>();
-			for(Import imprt : this.instance.getImports().get(prefix)) {
+			for(Import imprt : this.instance.getImports().get(prefix))
 				importbeans.add(new ImportBean(imprt));
-			}
+
 			result.add(new ImportListBean(prefix, importbeans));
 		}
+
 		return result;
 	}
 
-	static class ImportListBean {
-		String prefix;
-		Collection<ImportBean> imports;
 
-		public ImportListBean(String prefix, Collection<ImportBean> imports) {
-			super();
+	/**
+	 * @author gcrosmarie - Linagora
+	 */
+	static class ImportListBean {
+		private final String prefix;
+		private final Collection<ImportBean> imports;
+
+		ImportListBean(String prefix, Collection<ImportBean> imports) {
 			this.prefix = prefix;
 			this.imports = imports;
+		}
+
+		public String getPrefix() {
+			return this.prefix;
+		}
+
+		public Collection<ImportBean> getImports() {
+			return this.imports;
 		}
 	}
 }
