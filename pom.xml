@@ -16,10 +16,7 @@
    limitations under the License.
   -->
 
-<project 
-		xmlns="http://maven.apache.org/POM/4.0.0" 
-		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
@@ -30,7 +27,7 @@
 	
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-platform-parent</artifactId>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.1</version>
 	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
 
@@ -172,6 +169,7 @@
 		<connection>scm:git:git@github.com:roboconf/roboconf-platform.git</connection>
 		<developerConnection>scm:git:git@github.com:roboconf/roboconf-platform.git</developerConnection>
 		<url>http://github.com/roboconf/roboconf-platform</url>
-	</scm>
+	  <tag>roboconf-platform-parent-0.1</tag>
+  </scm>
 	
 </project>
