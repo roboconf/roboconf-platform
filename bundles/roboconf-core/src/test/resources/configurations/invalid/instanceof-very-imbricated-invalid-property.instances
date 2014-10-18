@@ -1,7 +1,7 @@
-instanceof wrapper {
-	instanceof vm {
+instance of wrapper {
+	instance of vm {
 		name: my-vm;
-		instanceof server {
+		instance of server {
 			name=
 		}
 	}

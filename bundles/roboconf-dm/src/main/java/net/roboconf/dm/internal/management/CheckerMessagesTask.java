@@ -35,15 +35,18 @@ import net.roboconf.messaging.messages.Message;
 public class CheckerMessagesTask extends TimerTask {
 
 	private final Logger logger;
+	private final IDmClient messagingClient;
 	private final Manager manager;
 
 
 	/**
 	 * Constructor.
+	 * @param manager
 	 * @param messagingClient
 	 */
-	public CheckerMessagesTask( Manager manager ) {
+	public CheckerMessagesTask( Manager manager, IDmClient messagingClient ) {
 		this.manager = manager;
+		this.messagingClient = messagingClient;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
@@ -65,15 +68,14 @@ public class CheckerMessagesTask extends TimerTask {
 					this.logger.fine( "Sending " + messages.size() + " awaiting message(s) for " + rootInstance.getName() + "." );
 
 				for( Message msg : messages ) {
-
-					// If the message could not be send, plan a retry
 					try {
-						IDmClient messagingClient = this.manager.getMessagingClient();
-						messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
+						this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
 
 					} catch( IOException e ) {
+
+						// If the message could not be send, plan a retry
 						ma.storeAwaitingMessage( rootInstance, msg );
-						this.logger.severe( "Error while sending a stored message. Retry planned. " + e.getMessage());
+						this.logger.severe( "Error while sending a stored message. A retry is planned. " + e.getMessage());
 						this.logger.finest( Utils.writeException( e ));
 					}
 				}

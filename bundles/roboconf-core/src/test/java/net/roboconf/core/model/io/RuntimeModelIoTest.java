@@ -368,6 +368,12 @@ public class RuntimeModelIoTest {
 			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), graphFile );
 
 			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+			Assert.assertEquals( ErrorCode.PM_PROPERTY_NOT_APPLIABLE, iterator.next().getErrorCode());
+
+			instanceContent = "instance of Toto {\n\tname: toto;\n}";
+			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), graphFile );
+
+			iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
 			Assert.assertEquals( ErrorCode.PROJ_NOT_A_GRAPH, iterator.next().getErrorCode());
 
 			instanceContent = "facet MyFacet {\n}\n\nA {\n\talias: A;\n\tinstaller: bash;\n}";
@@ -399,7 +405,7 @@ public class RuntimeModelIoTest {
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
 			Assert.assertEquals( ErrorCode.PROJ_NOT_AN_INSTANCE, iterator.next().getErrorCode());
 
-			instanceContent = "instanceof A {\n\tname: toto;\n}";
+			instanceContent = "instance of A {\n\tname: toto;\n}";
 			Utils.copyStream( new ByteArrayInputStream( instanceContent.getBytes( "UTF-8" )), instancesFile );
 			errors =  RuntimeModelIo.loadApplication( tempDirectory ).loadErrors;
 			Assert.assertEquals( 1, errors.size());

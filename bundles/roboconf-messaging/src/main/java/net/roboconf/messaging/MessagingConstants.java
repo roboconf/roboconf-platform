@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.client;
-
-import net.roboconf.messaging.internal.client.rabbitmq.AgentClient;
-import net.roboconf.messaging.internal.client.rabbitmq.DmClient;
+package net.roboconf.messaging;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class MessageServerClientFactory {
+public interface MessagingConstants {
 
 	/**
-	 * @return a new instance of message server client
+	 * The polling period used by a message processor when the message queue is empty.
 	 */
-	public IDmClient createDmClient() {
-		return new DmClient();
-	}
-
+	long MESSAGE_POLLING_PERIOD = 1000;
 
 	/**
-	 * @return a new instance of message server client
+	 * The factory's name for RabbitMQ clients.
 	 */
-	public IAgentClient createAgentClient() {
-		return new AgentClient();
-	}
+	String FACTORY_RABBIT_MQ = "factory.rabbit.mq";
+
+	/**
+	 * The factory's name for test clients.
+	 */
+	String FACTORY_TEST = "factory.test";
 }

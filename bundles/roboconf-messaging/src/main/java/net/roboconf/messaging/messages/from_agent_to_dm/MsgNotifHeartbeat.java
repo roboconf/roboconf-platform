@@ -26,9 +26,8 @@ public class MsgNotifHeartbeat extends Message {
 
 	private static final long serialVersionUID = -5112964737944073719L;
 
-	private final String rootInstanceName;
-	private final String applicationName;
-	private final String ipAddress;
+	private final String rootInstanceName, applicationName, ipAddress;
+	private boolean modelRequired = false;
 
 
 	/**
@@ -73,5 +72,19 @@ public class MsgNotifHeartbeat extends Message {
 	 */
 	public String getIpAddress() {
 		return this.ipAddress;
+	}
+
+	/**
+	 * @return the modelRequired
+	 */
+	public boolean isModelRequired() {
+		return this.modelRequired;
+	}
+
+	/**
+	 * @param modelRequired the modelRequired to set
+	 */
+	public void setModelRequired( boolean modelRequired ) {
+		this.modelRequired = modelRequired;
 	}
 }

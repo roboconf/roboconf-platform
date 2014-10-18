@@ -1,5 +1,5 @@
-instanceof server {
+instance of server {
 	name: server1;
-} instanceof toto {
+} instance of toto {
 
 }

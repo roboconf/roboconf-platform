@@ -19,17 +19,18 @@ package net.roboconf.messaging.internal.utils;
 import java.io.File;
 import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
-import net.roboconf.messaging.internal.AbstractRabbitMqTest;
-import net.roboconf.messaging.internal.IgnoringMessageProcessor;
+import net.roboconf.messaging.internal.RabbitMqTestUtils;
+import net.roboconf.messaging.messages.Message;
 
 import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.rabbitmq.client.Channel;
@@ -41,7 +42,14 @@ import com.rabbitmq.client.ShutdownSignalException;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
+public class RabbitMqUtilsTest {
+	private static boolean rabbitMqIsRunning = false;
+
+	@BeforeClass
+	public static void checkRabbitMqIsRunning() throws Exception {
+		rabbitMqIsRunning = RabbitMqTestUtils.checkRabbitMqIsRunning();
+	}
+
 
 	@Test
 	public void testBuildExchangeName_String() {
@@ -177,9 +185,9 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 
 	@Test
 	public void testCloseConnection() throws Exception {
-		Assume.assumeTrue( this.rabbitMqIsRunning );
+		Assume.assumeTrue( rabbitMqIsRunning );
 
-		Channel channel = createTestChannel();
+		Channel channel = RabbitMqTestUtils.createTestChannel();
 		Assert.assertTrue( channel.isOpen());
 		Assert.assertTrue( channel.getConnection().isOpen());
 
@@ -197,11 +205,12 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 
 	@Test( timeout = 2000 )
 	public void testListenToRabbitMq_rabbitExceptions() throws Exception {
+		Assume.assumeTrue( rabbitMqIsRunning );
 
 		// In these tests, Rabbit exceptions break the processing loop
-		Channel channel = createTestChannel();
+		Channel channel = RabbitMqTestUtils.createTestChannel();
 		Logger logger = Logger.getLogger( getClass().getName());
-		AbstractMessageProcessor messageProcessor = new IgnoringMessageProcessor();
+		LinkedBlockingQueue<Message> messgesQueue = new LinkedBlockingQueue<Message> ();
 
 		// Shutdown
 		QueueingConsumer consumer = new QueueingConsumer( channel ) {
@@ -212,7 +221,7 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 			}
 		};
 
-		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messageProcessor );
+		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messgesQueue );
 
 		// Interrupted
 		consumer = new QueueingConsumer( channel ) {
@@ -223,7 +232,7 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 			}
 		};
 
-		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messageProcessor );
+		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messgesQueue );
 
 		// Consumer
 		consumer = new QueueingConsumer( channel ) {
@@ -234,6 +243,6 @@ public class RabbitMqUtilsTest extends AbstractRabbitMqTest {
 			}
 		};
 
-		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messageProcessor );
+		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messgesQueue );
 	}
 }

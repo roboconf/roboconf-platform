@@ -17,10 +17,10 @@
 package net.roboconf.agent.internal.lifecycle;
 
 import junit.framework.Assert;
-import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.internal.client.test.TestClientAgent;
 
 import org.junit.Test;
 
@@ -32,7 +32,7 @@ public class AbstractLifeCycleManager_BasicTest {
 	@Test
 	public void testFactory() {
 
-		IAgentClient messagingClient = new TestAgentMessagingClient();
+		IAgentClient messagingClient = new TestClientAgent();
 		String appName = "my app";
 
 		Instance instance = new Instance( "inst" );

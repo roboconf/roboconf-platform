@@ -16,15 +16,16 @@
 
 package net.roboconf.messaging.internal.client.rabbitmq;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 import junit.framework.Assert;
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.internal.AbstractRabbitMqTest;
-import net.roboconf.messaging.internal.IgnoringMessageProcessor;
-import net.roboconf.messaging.internal.MessagingTestUtils.StorageMessageProcessor;
+import net.roboconf.messaging.internal.RabbitMqTestUtils;
+import net.roboconf.messaging.messages.Message;
 
 import org.junit.Assume;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.rabbitmq.client.Channel;
@@ -32,31 +33,34 @@ import com.rabbitmq.client.Channel;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmClientTest extends AbstractRabbitMqTest {
+public class DmClientTest {
+	private static boolean rabbitMqIsRunning = false;
+
+	@BeforeClass
+	public static void checkRabbitMqIsRunning() throws Exception {
+		rabbitMqIsRunning = RabbitMqTestUtils.checkRabbitMqIsRunning();
+	}
+
 
 	@Test
 	public void testExceptions() throws Exception {
-		Assume.assumeTrue( this.rabbitMqIsRunning );
+		Assume.assumeTrue( rabbitMqIsRunning );
 
-		DmClient dmClient = new DmClient();
+		RabbitMqClientDm dmClient = new RabbitMqClientDm();
 		dmClient.setParameters( "localhost", "guest", "guest" );
 
+		Assert.assertFalse( dmClient.isConnected());
 		Assert.assertNull( dmClient.channel );
-		Assert.assertNull( dmClient.messageProcessor );
-		dmClient.openConnection( new StorageMessageProcessor());
+
+		LinkedBlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<Message> ();
+		dmClient.setMessageQueue( messagesQueue );
+		dmClient.openConnection();
 		Assert.assertNotNull( dmClient.channel );
-		Assert.assertNotNull( dmClient.messageProcessor );
-		Assert.assertTrue( dmClient.messageProcessor instanceof StorageMessageProcessor );
 
-		// Wait for the thread to start
-		Thread.sleep( 500 );
-		Assert.assertTrue( dmClient.messageProcessor.isRunning());
-
+		// openConnection is idem-potent
 		Channel oldChannel = dmClient.channel;
-		AbstractMessageProcessor oldProcessor = dmClient.messageProcessor;
-		dmClient.openConnection( new StorageMessageProcessor());
+		dmClient.openConnection();
 		Assert.assertEquals( oldChannel, dmClient.channel );
-		Assert.assertEquals( oldProcessor, dmClient.messageProcessor );
 
 		Assert.assertEquals( 0, dmClient.applicationNameToConsumerTag.size());
 		dmClient.listenToAgentMessages( new Application( "app" ), ListenerCommand.START );
@@ -73,67 +77,14 @@ public class DmClientTest extends AbstractRabbitMqTest {
 		Assert.assertEquals( 0, dmClient.applicationNameToConsumerTag.size());
 
 		dmClient.deleteMessagingServerArtifacts( new Application( "app" ));
-
-		Assert.assertTrue( dmClient.messageProcessor.isRunning());
 		dmClient.closeConnection();
-		Assert.assertFalse( dmClient.messageProcessor.isRunning());
 		Assert.assertNull( dmClient.channel );
-	}
 
-
-	@Test
-	public void testCloseConnection_nullProcessor() throws Exception {
-		Assume.assumeTrue( this.rabbitMqIsRunning );
-
-		DmClient dmClient = new DmClient();
-		dmClient.setParameters( "localhost", "guest", "guest" );
-
+		// closeConnection is idem-potent
+		dmClient.closeConnection();
 		Assert.assertNull( dmClient.channel );
-		Assert.assertNull( dmClient.messageProcessor );
-		dmClient.closeConnection();
-	}
 
-
-	@Test
-	public void testCloseConnection_nonRunningProcessor() throws Exception {
-		Assume.assumeTrue( this.rabbitMqIsRunning );
-
-		DmClient dmClient = new DmClient();
-		dmClient.setParameters( "localhost", "guest", "guest" );
-
-		AbstractMessageProcessor processor = new IgnoringMessageProcessor();
-		dmClient.openConnection( processor );
-		Thread.sleep( 200 );
-
-		Assert.assertTrue( dmClient.messageProcessor.isRunning());
-		Assert.assertTrue( dmClient.isConnected());
-		processor.stopProcessor();
-		Assert.assertFalse( dmClient.messageProcessor.isRunning());
-
-		dmClient.closeConnection();
-		Assert.assertFalse( dmClient.messageProcessor.isRunning());
-		Assert.assertFalse( dmClient.isConnected());
-	}
-
-
-	@Test
-	public void testCloseConnectionStopsTheProcessorThread() throws Exception {
-		Assume.assumeTrue( this.rabbitMqIsRunning );
-
-		DmClient dmClient = new DmClient();
-		dmClient.setParameters( "localhost", "guest", "guest" );
-		AbstractMessageProcessor processor = new IgnoringMessageProcessor();
-
-		Assert.assertFalse( processor.isRunning());
-		Assert.assertFalse( processor.isAlive());
-
-		dmClient.openConnection( processor );
-		Thread.sleep( 200 );
-		Assert.assertTrue( processor.isRunning());
-		Assert.assertTrue( processor.isAlive());
-
-		dmClient.closeConnection();
-		processor.join( 2000 );
-		Assert.assertFalse( processor.isRunning());
+		consumerTag = dmClient.applicationNameToConsumerTag.get( "app" );
+		Assert.assertNull( consumerTag );
 	}
 }

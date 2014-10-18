@@ -19,7 +19,9 @@ package net.roboconf.agent.internal.misc;
 import java.io.IOException;
 
 import junit.framework.Assert;
-import net.roboconf.agent.tests.TestAgentMessagingClient;
+import net.roboconf.agent.internal.Agent;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 
@@ -33,29 +35,29 @@ public class HeartbeatTaskTest {
 	@Test
 	public void testHeartbeat_connected() {
 
-		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient() {
+		TestClientAgent messagingClient = new TestClientAgent() {
 			@Override
 			public boolean isConnected() {
 				return true;
 			}
 		};
 
-		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", messagingClient );
+		Agent agent = new MyAgent( messagingClient );
+		HeartbeatTask task = new HeartbeatTask( agent );
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 
 		task.run();
 		Assert.assertEquals( 1, messagingClient.messagesForTheDm.size());
 		Assert.assertEquals( MsgNotifHeartbeat.class, messagingClient.messagesForTheDm.get( 0 ).getClass());
-		Assert.assertEquals( "app", ((MsgNotifHeartbeat) messagingClient.messagesForTheDm.get( 0 )).getApplicationName());
-		Assert.assertEquals( "root", ((MsgNotifHeartbeat) messagingClient.messagesForTheDm.get( 0 )).getRootInstanceName());
 	}
 
 
 	@Test
 	public void testHeartbeat_notConnected() {
 
-		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient();
-		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", messagingClient );
+		TestClientAgent messagingClient = new TestClientAgent();
+		Agent agent = new MyAgent( messagingClient );
+		HeartbeatTask task = new HeartbeatTask( agent );
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 
 		task.run();
@@ -66,7 +68,8 @@ public class HeartbeatTaskTest {
 	@Test
 	public void testHeartbeat_nullClient() {
 
-		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", null );
+		Agent agent = new MyAgent( null );
+		HeartbeatTask task = new HeartbeatTask( agent );
 		task.run();
 	}
 
@@ -74,7 +77,7 @@ public class HeartbeatTaskTest {
 	@Test
 	public void testHeartbeat_exception() {
 
-		TestAgentMessagingClient messagingClient = new TestAgentMessagingClient() {
+		TestClientAgent messagingClient = new TestClientAgent() {
 			@Override
 			public void sendMessageToTheDm( Message message ) throws IOException {
 				throw new IOException( "For test purpose" );
@@ -86,10 +89,33 @@ public class HeartbeatTaskTest {
 			}
 		};
 
-		HeartbeatTask task = new HeartbeatTask( "app", "root", "127.0.0.1", messagingClient );
+		Agent agent = new MyAgent( messagingClient );
+		HeartbeatTask task = new HeartbeatTask( agent );
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
 
 		task.run();
 		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class MyAgent extends Agent {
+		private final IAgentClient client;
+
+		public MyAgent( IAgentClient client ) {
+			this.client = client;
+		}
+
+		@Override
+		public IAgentClient getMessagingClient() {
+			return this.client;
+		}
+
+		@Override
+		public boolean hasReceivedModel() {
+			return true;
+		}
 	}
 }

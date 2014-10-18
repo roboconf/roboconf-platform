@@ -16,18 +16,15 @@
 
 package net.roboconf.agent.internal;
 
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
-import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
@@ -49,8 +46,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void testInitializePlugin() throws Exception {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
 		TestApplication app = new TestApplication();
 
 		processor.initializePluginForInstance( app.getMySqlVm());
@@ -81,10 +77,13 @@ public class AgentMessageProcessor_BasicTest {
 	public void testAddInstance() {
 
 		// Initialize all the stuff
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.setMessagingClient( client );
+		final TestClientAgent client = new TestClientAgent();
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return client;
+			}
+		};
 
 		TestApplication app = new TestApplication();
 
@@ -139,10 +138,13 @@ public class AgentMessageProcessor_BasicTest {
 	public void testSetRootInstance() {
 
 		// Initialize all the stuff
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.setMessagingClient( client );
+		final TestClientAgent client = new TestClientAgent();
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return client;
+			}
+		};
 
 		TestApplication app = new TestApplication();
 
@@ -188,10 +190,13 @@ public class AgentMessageProcessor_BasicTest {
 	public void testSendInstances() {
 
 		// Initialize all the stuff
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.setMessagingClient( client );
+		final TestClientAgent client = new TestClientAgent();
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return client;
+			}
+		};
 
 		// No root instance
 		processor.processMessage( new MsgCmdSendInstances());
@@ -215,10 +220,13 @@ public class AgentMessageProcessor_BasicTest {
 	public void testResynchronize() {
 
 		// Initialize all the stuff
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.setMessagingClient( client );
+		final TestClientAgent client = new TestClientAgent();
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return client;
+			}
+		};
 
 		// No root instance
 		processor.processMessage( new MsgCmdResynchronize());
@@ -254,10 +262,13 @@ public class AgentMessageProcessor_BasicTest {
 	public void testRemoveInstance() {
 
 		// Initialize all the stuff
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		TestAgentMessagingClient client = new TestAgentMessagingClient();
-		processor.setMessagingClient( client );
+		final TestClientAgent client = new TestClientAgent();
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return client;
+			}
+		};
 
 		// Remove an instance when there is no model
 		TestApplication app = new TestApplication();
@@ -297,10 +308,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void testUnknownMessage() {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.setMessagingClient( new TestAgentMessagingClient());
-
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
 		processor.processMessage( new Message() {
 			private static final long serialVersionUID = -3312628850227527510L;
 		});
@@ -310,14 +318,14 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void checkIoExceptionsAreHandled() {
 
-		Agent agent = new Agent();
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.setMessagingClient( new TestAgentMessagingClient() {
+		final TestClientAgent client = new TestClientAgent();
+		client.failMessageSending.set( true );
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
 			@Override
-			public void sendMessageToTheDm( Message message ) throws IOException {
-				throw new IOException();
+			public IAgentClient getMessagingClient() {
+				return client;
 			}
-		});
+		};
 
 		processor.rootInstance = new TestApplication().getMySqlVm();
 		processor.processMessage( new MsgCmdSendInstances());
@@ -345,7 +353,7 @@ public class AgentMessageProcessor_BasicTest {
 
 		Instance inst = new Instance( "my inst" );
 		Agent agent = new Agent();
-		agent.setSimulatePlugins( false );
+		agent.simulatePlugins = false;
 
 		// No component and no installer
 		Assert.assertNull( agent.findPlugin( inst ));
@@ -378,53 +386,5 @@ public class AgentMessageProcessor_BasicTest {
 
 		agent.setPlugins( new PluginInterface[] { new PluginMock(), new PluginMock()});
 		agent.pluginWasModified( new PluginMock());
-	}
-
-
-	@Test
-	public void testInterruption() throws Exception {
-
-		Agent agent = new Agent();
-		final AtomicBoolean processWasInvoked = new AtomicBoolean( false );
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
-			@Override
-			protected boolean processMessage( Message message ) {
-
-				// Pre-condition: processor.doNotProcessNewMessages = false
-
-				processWasInvoked.set( true );
-				try {
-					Thread.sleep( 5 * AbstractMessageProcessor.MESSAGE_POLLING_PERIOD );
-				} catch( InterruptedException e ) {
-					e.printStackTrace();
-				}
-
-				// Post-condition: processor.doNotProcessNewMessages = true
-
-				// Between the thread.sleep and the call to the super method,
-				// we will notify the processor it cannot process new messages.
-
-				return super.processMessage( message );
-			}
-		};
-
-		Assert.assertFalse( processor.isRunning());
-		Assert.assertFalse( processor.isAlive());
-		processor.start();
-
-		Thread.sleep( 200 );
-		Assert.assertTrue( processor.isRunning());
-		Assert.assertTrue( processor.isAlive());
-
-		// Add a message and wait for it to be in processing
-		agent.getMessages().add( new MsgCmdResynchronize());
-		Thread.sleep( AbstractMessageProcessor.MESSAGE_POLLING_PERIOD );
-
-		// That should be good
-		Assert.assertTrue( "The previous Thread.sleep() should wait a little more time.", processWasInvoked.get());
-		processor.thisIsTheLastMessageYouProcess();
-
-		// The processor should stop automatically
-		processor.join( 4 * AbstractMessageProcessor.MESSAGE_POLLING_PERIOD );
 	}
 }

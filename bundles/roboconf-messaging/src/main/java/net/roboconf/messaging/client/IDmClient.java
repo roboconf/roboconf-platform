@@ -60,4 +60,16 @@ public interface IDmClient extends IClient {
 	 * @throws IOException if something went wrong
 	 */
 	void deleteMessagingServerArtifacts( Application application ) throws IOException;
+
+	/**
+	 * Propagates to all the agents the fact that a given agent is not here anymore.
+	 * <p>
+	 * Generally, when an agent undeploys something, it sends notifications to other
+	 * agents, which themselves invoke their "update" method. However, when the DM
+	 * terminates a virtual machine, the agent does not always send these notifications
+	 * to the other agents. Therefore, the DM has to do it. Since it has the application
+	 * model, it can do it.
+	 * </p>
+	 */
+	void propagateAgentTermination();
 }

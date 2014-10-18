@@ -28,9 +28,6 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.management.ManagementHelpers;
-import net.roboconf.dm.internal.test.TestIaasResolver;
-import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
@@ -77,11 +74,7 @@ public class ManagementWsDelegateTest extends JerseyTest {
 
 		File directory = this.folder.newFolder();
 
-		this.manager = ManagementHelpers.createConfiguredManager();
-		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory());
-		this.manager.getConfiguration().setConfigurationDirectoryLocation( directory.getAbsolutePath());
-		this.manager.setIaasResolver( new TestIaasResolver());
-		this.manager.getConfiguration().update();
+		// TODO: we do not need this!!!
 
 		this.client = RestTestUtils.buildWsClient();
 	}

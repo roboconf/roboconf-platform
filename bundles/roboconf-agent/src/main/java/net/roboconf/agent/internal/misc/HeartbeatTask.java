@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
+import net.roboconf.agent.internal.Agent;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
@@ -30,32 +31,31 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 public class HeartbeatTask extends TimerTask {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final String applicationName, rootInstanceName, ipAddress;
-	private final IAgentClient messagingClient;
+	private final Agent agent;
 
 
 	/**
 	 * Constructor.
-	 * @param applicationName
-	 * @param rootInstanceName
-	 * @param ipAddress
-	 * @param messagingClient
+	 * @param agent
 	 */
-	public HeartbeatTask( String applicationName, String rootInstanceName, String ipAddress, IAgentClient messagingClient ) {
-		this.applicationName = applicationName;
-		this.rootInstanceName = rootInstanceName;
-		this.messagingClient = messagingClient;
-		this.ipAddress = ipAddress;
+	public HeartbeatTask( Agent agent ) {
+		this.agent = agent;
 	}
 
 
 	@Override
 	public void run() {
 		try {
-			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName, this.ipAddress );
-			if( this.messagingClient != null
-					&& this.messagingClient.isConnected())
-				this.messagingClient.sendMessageToTheDm( heartBeat );
+			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat(
+					this.agent.getApplicationName(),
+					this.agent.getRootInstanceName(),
+					this.agent.getIpAddress());
+
+			heartBeat.setModelRequired( this.agent.hasReceivedModel());
+			IAgentClient messagingClient = this.agent.getMessagingClient();
+			if( messagingClient != null
+					&& messagingClient.isConnected())
+				messagingClient.sendMessageToTheDm( heartBeat );
 
 		} catch( IOException e ) {
 			this.logger.severe( e.getMessage());

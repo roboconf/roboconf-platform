@@ -18,11 +18,12 @@ package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
-import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 import net.roboconf.plugin.api.PluginException;
@@ -38,9 +39,13 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testSetMessagingClient() throws Exception {
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
-		processor.setMessagingClient( new TestAgentMessagingClient());
 		TestApplication app = new TestApplication();
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
 
 		// Initialize the model
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -138,8 +143,12 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithUnknownInstance() {
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
-		processor.setMessagingClient( new TestAgentMessagingClient());
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
 
 		// No local model yet
 		Instance inst = new Instance( "inst" ).status( InstanceStatus.DEPLOYED_STOPPED ).component( new Component( "unknown" ));
@@ -163,8 +172,12 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.setMessagingClient( new TestAgentMessagingClient());
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
 
 		TestApplication app = new TestApplication();
 		app.getMySql().getComponent().setInstallerName( "unknown installer" );
@@ -184,8 +197,13 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithTransitiveState() {
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
-		processor.setMessagingClient( new TestAgentMessagingClient());
+		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
+
 		TestApplication app = new TestApplication();
 		processor.rootInstance = app.getMySqlVm();
 
@@ -218,8 +236,12 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.setMessagingClient( new TestAgentMessagingClient());
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -262,8 +284,12 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.setMessagingClient( new TestAgentMessagingClient());
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -306,8 +332,12 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.setMessagingClient( new TestAgentMessagingClient());
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -353,8 +383,12 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent );
-		processor.setMessagingClient( new TestAgentMessagingClient());
+		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
+			@Override
+			public IAgentClient getMessagingClient() {
+				return new TestClientAgent();
+			}
+		};
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));

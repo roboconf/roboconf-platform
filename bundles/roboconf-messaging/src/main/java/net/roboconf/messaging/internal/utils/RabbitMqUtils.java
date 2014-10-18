@@ -19,6 +19,7 @@ package net.roboconf.messaging.internal.utils;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +28,6 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.messages.Message;
 
 import com.rabbitmq.client.Channel;
@@ -188,9 +188,9 @@ public final class RabbitMqUtils {
 	 * @param sourceName the source name (DM, agent name...)
 	 * @param logger the logger
 	 * @param consumer the RabbitMQ consumer
-	 * @param messageProcessor the message processor
+	 * @param messages the list where to store the received messages
 	 */
-	public static void listenToRabbitMq( String sourceName, Logger logger, QueueingConsumer consumer, AbstractMessageProcessor messageProcessor ) {
+	public static void listenToRabbitMq( String sourceName, Logger logger, QueueingConsumer consumer, LinkedBlockingQueue<Message> messages ) {
 
 		// We listen to messages until the consumer is cancelled
 		logger.fine( sourceName + " starts listening to new messages." );
@@ -209,7 +209,7 @@ public final class RabbitMqUtils {
 				sb.append( "'." );
 				logger.finer( sb.toString());
 
-				messageProcessor.storeMessage( message );
+				messages.add( message );
 
 			} catch( ShutdownSignalException e ) {
 				logger.warning( sourceName + ": the message server is shutting down." );

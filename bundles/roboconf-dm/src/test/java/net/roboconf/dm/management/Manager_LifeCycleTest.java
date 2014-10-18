@@ -23,12 +23,12 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.internal.management.ManagementHelpers;
 import net.roboconf.dm.internal.test.TestIaasResolver;
-import net.roboconf.dm.internal.test.TestMessageServerClient;
-import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
+import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.internal.AbstractMessagingTest;
+import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
@@ -48,13 +48,16 @@ public class Manager_LifeCycleTest {
 	@Before
 	public void resetManager() throws Exception {
 
-		this.manager = ManagementHelpers.createConfiguredManager();
-		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory());
+		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
 		this.manager.setIaasResolver( new TestIaasResolver());
-		this.manager.getConfiguration().update();
+		this.manager.update();
 
 		// Disable the messages timer for predictability
 		this.manager.timer.cancel();
+
+		// Wait for the client to be picked up by the processor
+		Thread.sleep( AbstractMessagingTest.DELAY );
+		((TestClientDm) this.manager.getMessagingClient()).sentMessages.clear();
 	}
 
 
@@ -66,10 +69,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 
 		// Switch a root instance only works if the state is DEPLOYED_STARTED...
@@ -126,11 +128,10 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// The DM only propagates requests for child instances
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
@@ -184,11 +185,10 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// The DM only propagates requests for child instances.
 		// But since the root is deploying, messages are stored.
@@ -259,10 +259,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// Nothing happens with children instances
 		this.manager.deployRoot( ma, app.getMySql());
@@ -293,10 +292,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		// A root instance is considered to be deployed if it has a machine ID.
@@ -358,10 +356,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// Nothing happens with children instances
 		this.manager.undeployRoot( ma, app.getMySql());
@@ -391,10 +388,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// Nothing happens with children instances
 		this.manager.undeployRoot( ma, app.getMySql());
@@ -422,10 +418,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		// Nothing happens with children instances
 		this.manager.undeployRoot( ma, app.getMySql());
@@ -508,10 +503,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		this.manager.deployAndStartAll( ma, null );
@@ -557,10 +551,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		this.manager.deployAndStartAll( ma, app.getTomcatVm());
@@ -595,10 +588,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -626,10 +618,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYING );
@@ -673,10 +664,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		this.manager.stopAll( ma, null );
@@ -707,10 +697,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		this.manager.stopAll( ma, app.getTomcatVm());
@@ -735,10 +724,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		this.manager.stopAll( ma, app.getTomcat());
@@ -775,10 +763,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().getData().put( Instance.MACHINE_ID, "some id..." );
@@ -801,10 +788,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().getData().put( Instance.MACHINE_ID, "some id..." );
@@ -825,10 +811,9 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		TestIaasResolver iaasResolver = (TestIaasResolver) this.manager.iaasResolver;
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 
 		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 
 		this.manager.undeployAll( ma, app.getTomcat());

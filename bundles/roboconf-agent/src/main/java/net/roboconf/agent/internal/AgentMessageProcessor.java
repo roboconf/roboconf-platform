@@ -34,13 +34,13 @@ import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
@@ -49,6 +49,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.processors.AbstractMessageProcessorAgent;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -67,14 +68,11 @@ import net.roboconf.plugin.api.PluginInterface;
  *
  * @author Vincent Zurczak - Linagora
  */
-public class AgentMessageProcessor extends AbstractMessageProcessor {
+public class AgentMessageProcessor extends AbstractMessageProcessorAgent {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Agent agent;
-
-	boolean doNotProcessNewMessages = false;
 	Instance rootInstance;
-	IAgentClient messagingClient;
 
 
 	/**
@@ -82,37 +80,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 * @param agent
 	 */
 	public AgentMessageProcessor( Agent agent ) {
-		super( agent.getMessages());
+		super( agent.getMessagingFactoryType());
 		this.agent = agent;
-		this.messagingClient = agent.getMessagingClient();
-	}
-
-
-	/**
-	 * Indicates to this processor this is the last message it processes.
-	 * <p>
-	 * This method is invoked when the agent configuration changed.
-	 * A new message processor will be created in consequence WHEN a new message has to be processed.
-	 * </p>
-	 */
-	public void thisIsTheLastMessageYouProcess() {
-		this.doNotProcessNewMessages = true;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.AbstractMessageProcessor
-	 * #checkStopCondition()
-	 */
-	@Override
-	protected boolean doNotProcessNewMessages() {
-
-		// Tell the agent it can create a new processor
-		if( this.doNotProcessNewMessages )
-			this.agent.switchMessageProcessor();
-
-		return this.doNotProcessNewMessages;
 	}
 
 
@@ -121,14 +90,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 	 * #processMessage(net.roboconf.messaging.messages.Message)
 	 */
 	@Override
-	protected boolean processMessage( Message message ) {
+	protected void processMessage( Message message ) {
 
-		// Before processing a NEW message, check if the agent is waiting for switching the processor.
-		// The message will be processed by the next agent's message processor
-		if( doNotProcessNewMessages())
-			return false;
-
-		// Process the message
 		try {
 			if( message instanceof MsgCmdSetRootInstance )
 				processMsgSetRootInstance((MsgCmdSetRootInstance) message );
@@ -168,9 +131,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
-
-		// The message was processed, we can remove it from the queue.
-		return true;
 	}
 
 
@@ -184,7 +144,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		if( this.rootInstance != null ) {
 			for( Instance i : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 				if( i.getStatus() == InstanceStatus.DEPLOYED_STARTED )
-					this.messagingClient.publishExports( i );
+					getMessagingClient().publishExports( i );
 			}
 		}
 	}
@@ -200,7 +160,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		String appName = this.agent.getApplicationName();
 		if( this.rootInstance != null ) {
 			for( Instance i : InstanceHelpers.buildHierarchicalList( this.rootInstance ))
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( appName, i ));
+				getMessagingClient().sendMessageToTheDm( new MsgNotifInstanceChanged( appName, i ));
 		}
 	}
 
@@ -236,7 +196,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 			if( this.rootInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
 				this.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.agent.getApplicationName(), newRootInstance ));
+				getMessagingClient().sendMessageToTheDm( new MsgNotifInstanceChanged( this.agent.getApplicationName(), newRootInstance ));
 			}
 		}
 
@@ -244,8 +204,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		for( Instance instanceToProcess : instancesToProcess ) {
 			initializePluginForInstance( instanceToProcess );
 			VariableHelpers.updateNetworkVariables( instanceToProcess.getExports(), this.agent.getIpAddress());
-			this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, instanceToProcess );
-			this.messagingClient.requestExportsFromOtherAgents( instanceToProcess );
+			getMessagingClient().listenToExportsFromOtherAgents( ListenerCommand.START, instanceToProcess );
+			getMessagingClient().requestExportsFromOtherAgents( instanceToProcess );
 		}
 	}
 
@@ -279,9 +239,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		// Configure the messaging
 		if( removed ) {
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceRemoved( this.agent.getApplicationName(), instance ));
+			getMessagingClient().sendMessageToTheDm( new MsgNotifInstanceRemoved( this.agent.getApplicationName(), instance ));
 			for( Instance instanceToProcess : InstanceHelpers.buildHierarchicalList( instance ))
-				this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.STOP, instanceToProcess );
+				getMessagingClient().listenToExportsFromOtherAgents( ListenerCommand.STOP, instanceToProcess );
 		}
 	}
 
@@ -319,8 +279,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				initializePluginForInstance( newInstance );
 
 				VariableHelpers.updateNetworkVariables( newInstance.getExports(), this.agent.getIpAddress());
-				this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, newInstance );
-				this.messagingClient.requestExportsFromOtherAgents( newInstance );
+				getMessagingClient().listenToExportsFromOtherAgents( ListenerCommand.START, newInstance );
+				getMessagingClient().requestExportsFromOtherAgents( newInstance );
 			}
 		}
 	}
@@ -348,7 +308,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		else
 			AbstractLifeCycleManager
-			.build( instance, this.agent.getApplicationName(), this.messagingClient )
+			.build( instance, this.agent.getApplicationName(), getMessagingClient())
 			.changeInstanceState( instance, plugin, msg.getNewState(), msg.getFileNameToFileContent());
 	}
 
@@ -362,7 +322,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
 			if( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED )
-				this.messagingClient.publishExports( instance, msg.getComponentOrFacetName());
+				getMessagingClient().publishExports( instance, msg.getComponentOrFacetName());
 		}
 	}
 
@@ -394,7 +354,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			this.logger.fine( "Removing import from " + InstanceHelpers.computeInstancePath( instance )
 					+ ". Removed exporting instance: " + msg.getRemovedInstancePath());
 
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( appName, instance ));
+			getMessagingClient().sendMessageToTheDm( new MsgNotifInstanceChanged( appName, instance ));
 
 			// Update the life cycle if necessary
 			PluginInterface plugin = this.agent.findPlugin( instance );
@@ -402,7 +362,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				throw new PluginException( "No plugin was found for " + InstanceHelpers.computeInstancePath( instance ));
 
 			AbstractLifeCycleManager
-			.build( instance, this.agent.getApplicationName(), this.messagingClient )
+			.build( instance, this.agent.getApplicationName(), getMessagingClient())
 			.updateStateFromImports( instance, plugin, toRemove, InstanceStatus.DEPLOYED_STOPPED );
 		}
 	}
@@ -442,7 +402,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 			// Add the import and publish an update to the DM
 			this.logger.fine( "Adding import to " + InstanceHelpers.computeInstancePath( instance ) + ". New import: " + imp );
 			ImportHelpers.addImport( instance, msg.getComponentOrFacetName(), imp );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( appName, instance ));
+			getMessagingClient().sendMessageToTheDm( new MsgNotifInstanceChanged( appName, instance ));
 
 			// Update the life cycle if necessary
 			PluginInterface plugin = this.agent.findPlugin( instance );
@@ -450,7 +410,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 				throw new PluginException( "No plugin was found for " + InstanceHelpers.computeInstancePath( instance ));
 
 			AbstractLifeCycleManager
-			.build( instance, this.agent.getApplicationName(), this.messagingClient )
+			.build( instance, this.agent.getApplicationName(), getMessagingClient())
 			.updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
 		}
 	}
@@ -473,10 +433,24 @@ public class AgentMessageProcessor extends AbstractMessageProcessor {
 		}
 	}
 
-	/**
-	 * @param messagingClient the messagingClient to set
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.processors.AbstractMessageProcessor
+	 * #openConnection(net.roboconf.messaging.client.IClient)
 	 */
-	void setMessagingClient( IAgentClient messagingClient ) {
-		this.messagingClient = messagingClient;
+	@Override
+	protected void openConnection( IAgentClient newMessagingClient )
+	throws IOException {
+
+		newMessagingClient.setApplicationName( this.agent.getApplicationName());
+		newMessagingClient.setRootInstanceName( this.agent.getRootInstanceName());
+		newMessagingClient.openConnection();
+
+		newMessagingClient.listenToTheDm( ListenerCommand.START );
+		newMessagingClient.sendMessageToTheDm( new MsgNotifHeartbeat(
+				this.agent.getApplicationName(),
+				this.agent.getRootInstanceName(),
+				this.agent.getIpAddress()));
 	}
 }

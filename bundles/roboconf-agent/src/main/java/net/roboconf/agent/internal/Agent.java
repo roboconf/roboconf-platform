@@ -21,7 +21,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.misc.AgentConstants;
@@ -31,11 +30,8 @@ import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.client.MessageServerClientFactory;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -51,55 +47,63 @@ import net.roboconf.plugin.api.PluginInterface;
 public class Agent {
 
 	// Component properties (ipojo)
-	private String messageServerIp, messageServerUsername, messageServerPassword;
-	private String applicationName, rootInstanceName, ipAddress, iaasType;
-	private boolean overrideProperties = false, simulatePlugins = true;
+	String messageServerIp, messageServerUsername, messageServerPassword;
+	String applicationName, rootInstanceName, ipAddress, iaasType;
+	boolean overrideProperties = false, simulatePlugins = true;
 
 	// Fields that should be injected (ipojo)
 	private PluginInterface[] plugins;
 
 	// Internal fields
+	private IAgentClient messagingClient;
 	private final Logger logger;
-	private MessageServerClientFactory factory = new MessageServerClientFactory();
-	private final LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<Message> ();
-
+	private final String messagingFactoryType;
 	AgentMessageProcessor messageProcessor;
-	IAgentClient messagingClient;
 	Timer heartBeatTimer;
-	boolean running = false;
 
 
 	/**
 	 * Constructor.
 	 */
 	public Agent() {
-		this.logger = Logger.getLogger( getClass().getName());
+		this( MessagingConstants.FACTORY_RABBIT_MQ );
 	}
 
 
 	/**
-	 * Starts listening and processing messages.
+	 * Constructor.
+	 * @param messagingFactoryType the messaging factory type
+	 * @see MessagingConstants
+	 */
+	public Agent( String messagingFactoryType ) {
+		this.logger = Logger.getLogger( getClass().getName());
+		this.messagingFactoryType = messagingFactoryType;
+	}
+
+
+	/**
+	 * Starts listening and processing messageQueue.
 	 * <p>
 	 * If the agent was already started, this method does nothing.
 	 * </p>
 	 */
 	public void start() {
 
-		// Do nothing if it is already running
-		if( this.running )
-			return;
+		TimerTask timerTask = new HeartbeatTask( this );
+		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
+		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
 
-		// Keep a trace of the launching
-		this.logger.info( "Agent '" + getAgentId() + "' is being launched." );
-
-		// Get the configuration
-		updateConfiguration();
-		this.running = true;
+		if( this.messageProcessor == null ) {
+			this.logger.info( "Agent '" + getAgentId() + "' is being launched." );
+			this.messageProcessor = new AgentMessageProcessor( this );
+			this.messageProcessor.start();
+			updateConfiguration();
+		}
 	}
 
 
 	/**
-	 * Stops listening and processing messages.
+	 * Stops listening and processing messageQueue.
 	 * <p>
 	 * This method does not interrupt the current message processing.
 	 * But it will not process any further message, unless the start method
@@ -111,37 +115,48 @@ public class Agent {
 	 */
 	public void stop() {
 
-		this.logger.info( "Agent '" + getAgentId() + "' is being stopped." );
-		if( this.heartBeatTimer != null )
+		if( this.heartBeatTimer != null ) {
 			this.heartBeatTimer.cancel();
+			this.heartBeatTimer = null;
+		}
 
+		if( this.messageProcessor == null )
+			return;
+
+		this.logger.info( "Agent '" + getAgentId() + "' is being stopped." );
 		try {
-			// Send a message to the DM.
-			// We cannot consider the agent to be stopped if this message is not sent.
-			if( this.messagingClient != null ) {
-
-				if( this.messagingClient.isConnected()) {
-					this.messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.rootInstanceName ));
+			IAgentClient messagingClient = this.messageProcessor.getMessagingClient();
+			if( messagingClient != null ) {
+				if( messagingClient.isConnected()) {
+					messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.rootInstanceName ));
 					this.logger.fine( "Agent " + getAgentId() + " notified the DM it was about to stop." );
 				}
-
-				// We can ignore errors when we disconnect the agent's client.
-				// We can thus consider it is stopped.
-				this.running = false;
-
-				this.messagingClient.closeConnection();
-				this.messagingClient = null;
-				this.messageProcessor = null;
-				this.logger.fine( "Agent " + getAgentId() + " was successfully stopped." );
-
-			} else {
-				this.running = false;
 			}
 
 		} catch( IOException e ) {
-			this.logger.severe( e.getMessage());
+			this.logger.warning( e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
+
+		this.messageProcessor.stopProcessor();
+		this.messageProcessor = null;
+		this.logger.fine( "Agent " + getAgentId() + " was successfully stopped." );
+	}
+
+
+	/**
+	 * @return true if this agent received its model, false otherwise
+	 */
+	public boolean hasReceivedModel() {
+		return this.messageProcessor.rootInstance != null;
+	}
+
+
+	/**
+	 * @return the most up-to-date client for the messaging server
+	 */
+	public IAgentClient getMessagingClient() {
+		return this.messagingClient;
 	}
 
 
@@ -278,198 +293,53 @@ public class Agent {
 			}
 		}
 
-		// Indicate to the message processor it will be replaced.
-		if( this.messageProcessor != null )
-			this.messageProcessor.thisIsTheLastMessageYouProcess();
+		// Update the messaging connection
+		try {
+			this.messagingClient = this.messageProcessor.switchMessagingClient(
+					this.messageServerIp,
+					this.messageServerUsername,
+					this.messageServerPassword );
 
-		// Otherwise, initialize the messaging client.
-		else
-			switchMessageProcessor();
+		} catch( IOException e ) {
+			this.logger.severe( "An error occured while reconfiguring the agent. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
 
 		this.logger.info( "The agent configuration was updated..." );
 	}
 
 
 	/**
-	 * Switches the message processor.
-	 */
-	public void switchMessageProcessor() {
-
-		// If there was a client, release the connection.
-		// This is supposed to stop the message processor too.
-		if( this.messagingClient != null ) {
-
-			try {
-				this.messagingClient.closeConnection();
-
-			} catch( IOException e ) {
-				this.logger.severe( "An error occured while releasing the messaging client. " + e.getMessage());
-				this.logger.finest( Utils.writeException( e ));
-			}
-		}
-
-		try {
-			// Store and configure a new client
-			this.messagingClient = this.factory.createAgentClient();
-			this.messagingClient.setParameters( this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
-			this.messagingClient.setApplicationName( this.applicationName );
-			this.messagingClient.setRootInstanceName( this.rootInstanceName );
-
-			// And switch the processor
-			this.messageProcessor = new AgentMessageProcessor( this );
-			this.messagingClient.openConnection( this.messageProcessor );
-			this.messagingClient.listenToTheDm( ListenerCommand.START );
-
-			// Send an "UP" message (heart beat)
-			this.messagingClient.sendMessageToTheDm( new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName, this.ipAddress ));
-
-			// Initialize a timer to regularly send a heart beat
-			if( this.heartBeatTimer != null )
-				this.heartBeatTimer.cancel();
-
-			TimerTask timerTask = new HeartbeatTask( this.applicationName, this.rootInstanceName, this.ipAddress, this.messagingClient );
-			this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
-			this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
-
-		} catch( IOException e ) {
-			this.logger.severe( "An error occured while initializing a new messaging client. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
-		}
-	}
-
-
-	/**
-	 * @return the messageServerIp
-	 */
-	public String getMessageServerIp() {
-		return this.messageServerIp;
-	}
-
-	/**
-	 * @return the messageServerUsername
-	 */
-	public String getMessageServerUsername() {
-		return this.messageServerUsername;
-	}
-
-	/**
-	 * @return the messageServerPassword
-	 */
-	public String getMessageServerPassword() {
-		return this.messageServerPassword;
-	}
-
-	/**
-	 * @return the applicationName
+	 * @return the application name
 	 */
 	public String getApplicationName() {
 		return this.applicationName;
 	}
 
+
 	/**
-	 * @return the rootInstanceName
+	 * @return the root instance name
 	 */
 	public String getRootInstanceName() {
 		return this.rootInstanceName;
 	}
 
+
 	/**
-	 * @return the ipAddress
+	 * @return the IP address
 	 */
 	public String getIpAddress() {
 		return this.ipAddress;
 	}
 
-	/**
-	 * @return the iaasType
-	 */
-	public String getIaasType() {
-		return this.iaasType;
-	}
 
 	/**
-	 * @return the overrideProperties
+	 * @return the messagingFactoryType
 	 */
-	public boolean isOverrideProperties() {
-		return this.overrideProperties;
+	public String getMessagingFactoryType() {
+		return this.messagingFactoryType;
 	}
 
-	/**
-	 * @return the simulatePlugins
-	 */
-	public boolean isSimulatePlugins() {
-		return this.simulatePlugins;
-	}
-
-	/**
-	 * @param simulatePlugins the simulatePlugins to set
-	 */
-	public void setSimulatePlugins( boolean simulatePlugins ) {
-		this.simulatePlugins = simulatePlugins;
-	}
-
-	/**
-	 * @param messageServerIp the messageServerIp to set
-	 */
-	public void setMessageServerIp( String messageServerIp ) {
-		this.messageServerIp = messageServerIp;
-	}
-
-	/**
-	 * @param messageServerUsername the messageServerUsername to set
-	 */
-	public void setMessageServerUsername( String messageServerUsername ) {
-		this.messageServerUsername = messageServerUsername;
-	}
-
-	/**
-	 * @param messageServerPassword the messageServerPassword to set
-	 */
-	public void setMessageServerPassword( String messageServerPassword ) {
-		this.messageServerPassword = messageServerPassword;
-	}
-
-	/**
-	 * @param applicationName the applicationName to set
-	 */
-	public void setApplicationName( String applicationName ) {
-		this.applicationName = applicationName;
-	}
-
-	/**
-	 * @param iaasType the iaasType to set
-	 */
-	public void setIaasType( String iaasType ) {
-		this.iaasType = iaasType;
-	}
-
-	/**
-	 * @param overrideProperties the overrideProperties to set
-	 */
-	public void setOverrideProperties( boolean overrideProperties ) {
-		this.overrideProperties = overrideProperties;
-	}
-
-	/**
-	 * @param rootInstanceName the rootInstanceName to set
-	 */
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
-	}
-
-	/**
-	 * @param factory the factory to set (for test)
-	 */
-	void setFactory( MessageServerClientFactory factory ) {
-		this.factory = factory;
-	}
-
-	/**
-	 * @return the messagingClient
-	 */
-	public IAgentClient getMessagingClient() {
-		return this.messagingClient;
-	}
 
 	/**
 	 * @return the agent's ID (a human-readable identifier)
@@ -489,12 +359,5 @@ public class Agent {
 	 */
 	void setPlugins( PluginInterface[] plugins ) {
 		this.plugins = plugins;
-	}
-
-	/**
-	 * @return the messages
-	 */
-	LinkedBlockingQueue<Message> getMessages() {
-		return this.messages;
 	}
 }

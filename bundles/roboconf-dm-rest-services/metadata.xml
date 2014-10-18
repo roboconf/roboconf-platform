@@ -4,12 +4,12 @@
 		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
 		xmlns="org.apache.felix.ipojo">
 
-	<component classname="net.roboconf.dm.rest.services.internal.ServletRegistrationComponent" name="roboconf-rest-component" immediate="true" public="false">
+	<component classname="net.roboconf.dm.rest.services.internal.ServletRegistrationComponent" name="roboconf-dm-rest-component" immediate="true" public="false">
 		<requires field="manager" />
 		<requires field="httpService" />
 		<callback transition="validate" method="starting" />
 		<callback transition="invalidate" method="stopping" />
 	</component>
 	
-	<instance component="roboconf-rest-component" name="Roboconf's REST singleton instance" />
+	<instance component="roboconf-dm-rest-component" name="Roboconf DM REST services" />
 </ipojo>

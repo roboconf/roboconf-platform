@@ -19,11 +19,7 @@ package net.roboconf.messaging.internal;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
 import net.roboconf.core.utils.Utils;
-
-import org.junit.Before;
-import org.junit.Test;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -31,10 +27,17 @@ import com.rabbitmq.client.ConnectionFactory;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AbstractRabbitMqTest {
+public abstract class RabbitMqTestUtils {
 
 	private static final String MESSAGE_SERVER_IP = "127.0.0.1";
-	protected boolean rabbitMqIsRunning = true;
+
+
+	/**
+	 * Empty constructor.
+	 */
+	private RabbitMqTestUtils() {
+		// nothing
+	}
 
 
 	/**
@@ -46,9 +49,9 @@ public class AbstractRabbitMqTest {
 	 * </code>
 	 * </p>
 	 */
-	@Before
-	public void checkRabbitMQIsRunning() throws Exception {
+	public static boolean checkRabbitMqIsRunning() throws Exception {
 
+		boolean rabbitMqIsRunning = true;
 		Channel channel = null;
 		try {
 			channel = createTestChannel();
@@ -56,18 +59,18 @@ public class AbstractRabbitMqTest {
 
 			String version = String.valueOf( o );
 			if( ! isVersionGOEThreeDotTwo( version )) {
-				Logger logger = Logger.getLogger( getClass().getName());
+				Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 				logger.warning( "Tests are skipped because RabbitMQ must be at least in version 3.2.x." );
 
-				this.rabbitMqIsRunning = false;
+				rabbitMqIsRunning = false;
 			}
 
 		} catch( Exception e ) {
-			Logger logger = Logger.getLogger( getClass().getName());
+			Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 			logger.warning( "Tests are skipped because RabbitMQ is not rabbitMqIsRunning." );
 			logger.finest( Utils.writeException( e ));
 
-			this.rabbitMqIsRunning = false;
+			rabbitMqIsRunning = false;
 
 		} finally {
 			if( channel != null ) {
@@ -75,6 +78,8 @@ public class AbstractRabbitMqTest {
 				channel.getConnection().close();
 			}
 		}
+
+		return rabbitMqIsRunning;
 	}
 
 
@@ -83,7 +88,7 @@ public class AbstractRabbitMqTest {
 	 * @param rabbitMqVersion the Rabbit MQ version
 	 * @return true if it is at least a version 3.2, false otherwise
 	 */
-	private boolean isVersionGOEThreeDotTwo( String rabbitMqVersion ) {
+	static boolean isVersionGOEThreeDotTwo( String rabbitMqVersion ) {
 
 		String[] digits = rabbitMqVersion.split( "\\." );
 		boolean result = false;
@@ -100,29 +105,12 @@ public class AbstractRabbitMqTest {
 	}
 
 
-	@Test
-	public void testIsVersionGreaterThanThreeDotTwo() {
-
-		Assert.assertTrue( isVersionGOEThreeDotTwo( "3.2" ));
-		Assert.assertTrue( isVersionGOEThreeDotTwo( "3.2.1" ));
-		Assert.assertTrue( isVersionGOEThreeDotTwo( "3.3" ));
-		Assert.assertTrue( isVersionGOEThreeDotTwo( "4.2" ));
-
-		Assert.assertFalse( isVersionGOEThreeDotTwo( "3.1" ));
-		Assert.assertFalse( isVersionGOEThreeDotTwo( "3.1.3" ));
-		Assert.assertFalse( isVersionGOEThreeDotTwo( "3.0" ));
-		Assert.assertFalse( isVersionGOEThreeDotTwo( "2.1" ));
-
-		Assert.assertFalse( isVersionGOEThreeDotTwo( "whatever" ));
-	}
-
-
 	/**
 	 * Creates a channel to interact with a RabbitMQ server for tests.
 	 * @return a non-null channel
 	 * @throws IOException if the creation failed
 	 */
-	protected Channel createTestChannel() throws IOException {
+	public static Channel createTestChannel() throws IOException {
 
 		ConnectionFactory factory = new ConnectionFactory();
 		factory.setHost( MESSAGE_SERVER_IP );

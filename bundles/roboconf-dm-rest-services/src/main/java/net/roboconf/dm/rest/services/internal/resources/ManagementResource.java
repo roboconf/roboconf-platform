@@ -19,6 +19,7 @@ package net.roboconf.dm.rest.services.internal.resources;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -154,7 +155,12 @@ public class ManagementResource implements IManagementResource {
 	@Override
 	public List<Application> listApplications() {
 		this.logger.fine( "Request: list all the applications." );
-		return this.manager.listApplications();
+
+		List<Application> result = new ArrayList<Application> ();
+		for( ManagedApplication ma : this.manager.getAppNameToManagedApplication().values())
+			result.add( ma.getApplication());
+
+		return result;
 	}
 
 

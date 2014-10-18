@@ -81,12 +81,11 @@
 					<bootFeatures>
 						<feature>standard</feature>
 						<feature>management</feature>
-					</bootFeatures>
-					<startupFeatures>
-						<feature>roboconf-agent</feature>
 						<feature>webconsole</feature>
+						<feature>ipojo-all</feature>
 						<feature>ipojo-webconsole</feature>
-					</startupFeatures>
+						<feature>roboconf-agent</feature>
+					</bootFeatures>
 				</configuration>
 			</plugin>
 			

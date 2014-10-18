@@ -24,13 +24,10 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.internal.test.TestIaasResolver;
-import net.roboconf.dm.internal.test.TestMessageServerClient;
-import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
+import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
@@ -48,18 +45,15 @@ public class CheckerMessagesTaskTest {
 
 	@Before
 	public void resetManager() {
-		this.manager = ManagementHelpers.createConfiguredManager();
-		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory());
-		this.manager.setIaasResolver( new TestIaasResolver());
-		this.manager.getConfiguration().update();
+		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
 	}
 
 
 	@Test
 	public void testRun_noApplication() {
 
-		TestMessageServerClient client = new TestMessageServerClient();
-		CheckerMessagesTask task = new CheckerMessagesTask( this.manager );
+		TestClientDm client = new TestClientDm();
+		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
 		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
 		Assert.assertEquals( 0, client.sentMessages.size());
@@ -71,22 +65,6 @@ public class CheckerMessagesTaskTest {
 	@Test
 	public void testRun_ioException() {
 
-		this.manager.getConfiguration().setMessgingFactory( new MessageServerClientFactory() {
-			@Override
-			public IDmClient createDmClient() {
-				return new TestMessageServerClient() {
-					@Override
-					public void sendMessageToAgent( Application application, Instance instance, Message message )
-					throws IOException {
-						throw new IOException( "This is for testing purpose..." );
-					}
-				};
-			}
-		});
-
-		this.manager.getConfiguration().update();
-		Assert.assertTrue( this.manager.getConfiguration().isValidConfiguration());
-
 		TestApplication app = new TestApplication();
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -94,7 +72,15 @@ public class CheckerMessagesTaskTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
-		CheckerMessagesTask task = new CheckerMessagesTask( this.manager );
+		TestClientDm client = new TestClientDm() {
+			@Override
+			public void sendMessageToAgent( Application application, Instance instance, Message message ) throws IOException {
+				throw new IOException( "For test purpose..." );
+			}
+		};
+
+		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
+
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdSendInstances());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
@@ -117,7 +103,9 @@ public class CheckerMessagesTaskTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
-		CheckerMessagesTask task = new CheckerMessagesTask( this.manager );
+
+		TestClientDm client = new TestClientDm();
+		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
@@ -138,7 +126,9 @@ public class CheckerMessagesTaskTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
-		CheckerMessagesTask task = new CheckerMessagesTask( this.manager );
+
+		TestClientDm client = new TestClientDm();
+		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
@@ -160,7 +150,9 @@ public class CheckerMessagesTaskTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app, null );
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
-		CheckerMessagesTask task = new CheckerMessagesTask( this.manager );
+
+		TestClientDm client = new TestClientDm();
+		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());

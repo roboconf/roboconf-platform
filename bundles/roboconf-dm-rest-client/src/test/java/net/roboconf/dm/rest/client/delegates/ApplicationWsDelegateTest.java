@@ -27,15 +27,13 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.internal.management.ManagementHelpers;
 import net.roboconf.dm.internal.test.TestIaasResolver;
-import net.roboconf.dm.internal.test.TestMessageServerClient;
-import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.client.test.RestTestUtils;
+import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 
@@ -70,11 +68,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 		// Reset and configure the fields
 		File directory = this.folder.newFolder();
 
-		this.manager = ManagementHelpers.createConfiguredManager();
-		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory());
-		this.manager.getConfiguration().setConfigurationDirectoryLocation( directory.getAbsolutePath());
-		this.manager.setIaasResolver( new TestIaasResolver());
-		this.manager.getConfiguration().update();
+		// TODO: we do not need this!!!
 
 		// Load an application
 		this.app = new TestApplication();
@@ -147,7 +141,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	@Test
 	public void testChangeInstanceState_deploy_success() throws Exception {
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -165,7 +159,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	@Test
 	public void testStopAll() throws Exception {
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -192,7 +186,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	@Test
 	public void testUndeployAll() throws Exception {
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -219,7 +213,7 @@ public class ApplicationWsDelegateTest extends JerseyTest {
 	@Test
 	public void testDeployAndStartAll() throws Exception {
 
-		TestMessageServerClient msgClient = (TestMessageServerClient) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 

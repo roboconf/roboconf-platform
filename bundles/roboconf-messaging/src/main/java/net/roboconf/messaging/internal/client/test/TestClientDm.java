@@ -14,34 +14,38 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.test;
+package net.roboconf.messaging.internal.client.test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
-import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.client.MessageServerClientFactory;
 import net.roboconf.messaging.messages.Message;
 
 /**
  * A class to mock the messaging server and the IaaS.
  * @author Vincent Zurczak - Linagora
  */
-public class TestMessageServerClient implements IDmClient {
+public class TestClientDm implements IDmClient {
 
 	public final List<Message> sentMessages = new ArrayList<Message> ();
 	public AtomicBoolean connected = new AtomicBoolean( false );
+	public AtomicBoolean failMessageSending = new AtomicBoolean( false );
+
+	private String messageServerIp, messageServerUsername, messageServerPassword;
+
 
 
 	@Override
 	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		// Nothing, we don't care
+		this.messageServerIp = messageServerIp;
+		this.messageServerPassword = messageServerPassword;
+		this.messageServerUsername = messageServerUsername;
 	}
 
 	@Override
@@ -50,14 +54,17 @@ public class TestMessageServerClient implements IDmClient {
 	}
 
 	@Override
-	public void openConnection( AbstractMessageProcessor messageProcessor )
-	throws IOException {
+	public void openConnection() throws IOException {
 		this.connected.set( true );
 	}
 
 	@Override
 	public void sendMessageToAgent( Application application, Instance instance, Message message )
 	throws IOException {
+
+		if( this.failMessageSending.get())
+			throw new IOException( "Message sending was configured to fail." );
+
 		this.sentMessages.add( message );
 	}
 
@@ -78,19 +85,34 @@ public class TestMessageServerClient implements IDmClient {
 		return this.connected.get();
 	}
 
+	@Override
+	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+		// nothing
+	}
+
+	@Override
+	public void propagateAgentTermination() {
+		// nothing
+	}
 
 	/**
-	 * @author Vincent Zurczak - Linagora
+	 * @return the messageServerIp
 	 */
-	public static class DmMessageServerClientFactory extends MessageServerClientFactory {
-		@Override
-		public IAgentClient createAgentClient() {
-			return null;
-		}
+	public String getMessageServerIp() {
+		return this.messageServerIp;
+	}
 
-		@Override
-		public IDmClient createDmClient() {
-			return new TestMessageServerClient();
-		}
+	/**
+	 * @return the messageServerUsername
+	 */
+	public String getMessageServerUsername() {
+		return this.messageServerUsername;
+	}
+
+	/**
+	 * @return the messageServerPassword
+	 */
+	public String getMessageServerPassword() {
+		return this.messageServerPassword;
 	}
 }

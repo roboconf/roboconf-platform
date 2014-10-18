@@ -1,9 +1,9 @@
 # Overridden exports
 
-instanceof VM {
+instance of VM {
 	name: VM1;
 	
-	instanceof Tomcat {
+	instance of Tomcat {
 		name: tomcat;
 		port: 9004;			# overridden export, the "tomcat" prefix is missing and should be resolved automatically
 		data: some-data;	# instance property that is not in the component (will result in a warning at parsing)

@@ -19,11 +19,11 @@ package net.roboconf.messaging.internal.client.rabbitmq;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
@@ -37,14 +37,14 @@ import com.rabbitmq.client.QueueingConsumer;
  * The RabbitMQ client for the DM.
  * @author Vincent Zurczak - Linagora
  */
-public class DmClient implements IDmClient {
+public class RabbitMqClientDm implements IDmClient {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String messageServerIp, username, password;
+	private String messageServerIp, messageServerUsername, messageServerPassword;
+	private LinkedBlockingQueue<Message> messageQueue;
 
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<String,String> ();
 	Channel channel;
-	AbstractMessageProcessor messageProcessor;
 
 
 
@@ -54,17 +54,27 @@ public class DmClient implements IDmClient {
 	 * #setParameters(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void setParameters( String messageServerIp, String username, String password ) {
+	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
 		this.messageServerIp = messageServerIp;
-		this.username = username;
-		this.password = password;
+		this.messageServerUsername = messageServerUsername;
+		this.messageServerPassword = messageServerPassword;
 	}
 
 
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IClient
-	 * #isConnected()
+	 * #setMessageQueue(java.util.concurrent.LinkedBlockingQueue)
+	 */
+	@Override
+	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+		this.messageQueue = messageQueue;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient#isConnected()
 	 */
 	@Override
 	public boolean isConnected() {
@@ -72,13 +82,12 @@ public class DmClient implements IDmClient {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient
-	 * #openConnection(net.roboconf.messaging.client.AbstractMessageProcessor)
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient#openConnection()
 	 */
 	@Override
-	public void openConnection( AbstractMessageProcessor messageProcessor )
-	throws IOException {
+	public void openConnection() throws IOException {
 
 		// Already connected? Do nothing
 		this.logger.fine( "The DM is opening a connection to RabbitMQ." );
@@ -89,15 +98,11 @@ public class DmClient implements IDmClient {
 
 		// Initialize the connection
 		ConnectionFactory factory = new ConnectionFactory();
-		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.username, this.password );
+		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
 		this.channel = factory.newConnection().createChannel();
 
 		// Be notified when a message does not arrive in a queue (i.e. nobody is listening)
 		this.channel.addReturnListener( new DmReturnListener());
-
-		// Store the message processor for later
-		this.messageProcessor = messageProcessor;
-		this.messageProcessor.start();
 	}
 
 
@@ -108,10 +113,6 @@ public class DmClient implements IDmClient {
 	@Override
 	public void closeConnection() throws IOException {
 		this.logger.fine( "The DM is closing its connection to RabbitMQ." );
-
-		if( this.messageProcessor != null
-				&& this.messageProcessor.isRunning())
-			this.messageProcessor.stopProcessor();
 
 		if( isConnected())
 			RabbitMqUtils.closeConnection( this.channel );
@@ -185,19 +186,17 @@ public class DmClient implements IDmClient {
 			String consumerTag = this.channel.basicConsume( queueName, true, consumer );
 			this.applicationNameToConsumerTag.put( application.getName(), consumerTag );
 
-			// In the DM, it is performed in a separate thread.
-			// So, basically, the DM has a listening thread for every application.
+			// The DM has a listening thread for every application.
 			// Each thread listens for new messages and stores them in the message processor.
 
-			// There is only ONE processor for all the threads. It stores messages
-			// and processes them sequentially. DM operations are expected to be short-rabbitMqIsRunning.
-			// The DM is just an intermediary between REST clients and agents.
+			// But there is only one message queue for the entire DM.
+			// And the DM should only have ONE message processor.
 			new Thread( "Roboconf - Queue listener for the DM" ) {
 				@Override
 				public void run() {
 					RabbitMqUtils.listenToRabbitMq(
-							"The DM", DmClient.this.logger,
-							consumer, DmClient.this.messageProcessor );
+							"The DM", RabbitMqClientDm.this.logger,
+							consumer, RabbitMqClientDm.this.messageQueue );
 				}
 
 			}.start();
@@ -217,5 +216,15 @@ public class DmClient implements IDmClient {
 		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeName( application, true ));
 		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeName( application, false ));
 		// Queues are deleted automatically by RabbitMQ
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IDmClient#propagateAgentTermination()
+	 */
+	@Override
+	public void propagateAgentTermination() {
+		// TODO Auto-generated method stub
 	}
 }

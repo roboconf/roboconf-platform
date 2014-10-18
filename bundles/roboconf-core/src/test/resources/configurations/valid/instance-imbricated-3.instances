@@ -1,31 +1,31 @@
 # Imbricated instances
 
-instanceof vm {
+instance of vm {
 	name: vm1;	# the VM name
 	
-	instanceof server {
+	instance of server {
 		name: server;
 		port: 9878;
 		
-		instanceof web-app1 {
+		instance of web-app1 {
 			name: web-app1-1;
 		}
 	}
 }
 
-instanceof vm {
+instance of vm {
 
 	name: vm-;	# the VM name
 	count: 7;
 	
-	instanceof server {
+	instance of server {
 		name: server4osgi;
 		port: 9878;
 		
-		instanceof osgi-container {
+		instance of osgi-container {
 			name: osgi-container-app;
 			
-			instanceof bundle {
+			instance of bundle {
 				# A bundle
 				name: my-bundle;
 			}

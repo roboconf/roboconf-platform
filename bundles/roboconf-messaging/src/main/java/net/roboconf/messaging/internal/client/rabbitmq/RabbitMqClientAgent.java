@@ -19,12 +19,12 @@ package net.roboconf.messaging.internal.client.rabbitmq;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.messaging.client.AbstractMessageProcessor;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
@@ -41,17 +41,17 @@ import com.rabbitmq.client.QueueingConsumer;
  * The RabbitMQ client for an agent.
  * @author Vincent Zurczak - Linagora
  */
-public class AgentClient implements IAgentClient {
+public class RabbitMqClientAgent implements IAgentClient {
 
 	private static final String THOSE_THAT_EXPORT = "those.that.export.";
 	private static final String THOSE_THAT_IMPORT = "those.that.import.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String applicationName, rootInstanceName, messageServerIp, messageServerUsername, messageServerPassword;
+	private LinkedBlockingQueue<Message> messageQueue;
 
 	String consumerTag;
 	Channel	channel;
-	AbstractMessageProcessor messageProcessor;
 
 
 	/*
@@ -70,7 +70,17 @@ public class AgentClient implements IAgentClient {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IClient
-	 * #isConnected()
+	 * #setMessageQueue(java.util.concurrent.LinkedBlockingQueue)
+	 */
+	@Override
+	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+		this.messageQueue = messageQueue;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient#isConnected()
 	 */
 	@Override
 	public boolean isConnected() {
@@ -80,8 +90,7 @@ public class AgentClient implements IAgentClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IAgentClient
-	 * #setRootInstanceName(java.lang.String)
+	 * @see net.roboconf.messaging.client.IAgentClient#setRootInstanceName(java.lang.String)
 	 */
 	@Override
 	public void setRootInstanceName( String rootInstanceName ) {
@@ -89,13 +98,12 @@ public class AgentClient implements IAgentClient {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient
-	 * #openConnection(net.roboconf.messaging.client.AbstractMessageProcessor)
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient#openConnection()
 	 */
 	@Override
-	public void openConnection( AbstractMessageProcessor messageProcessor )
-	throws IOException {
+	public void openConnection() throws IOException {
 
 		// Already connected? Do nothing
 		this.logger.fine( "Agent " + this.rootInstanceName + " is opening a connection to RabbitMQ." );
@@ -108,10 +116,6 @@ public class AgentClient implements IAgentClient {
 		ConnectionFactory factory = new ConnectionFactory();
 		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
 		this.channel = factory.newConnection().createChannel();
-
-		// Store the message processor for later
-		this.messageProcessor = messageProcessor;
-		this.messageProcessor.start();
 
 		// We start listening the queue here
 		// We declare both exchanges.
@@ -134,8 +138,8 @@ public class AgentClient implements IAgentClient {
 			@Override
 			public void run() {
 				RabbitMqUtils.listenToRabbitMq(
-						AgentClient.this.rootInstanceName, AgentClient.this.logger,
-						consumer, AgentClient.this.messageProcessor );
+						RabbitMqClientAgent.this.rootInstanceName, RabbitMqClientAgent.this.logger,
+						consumer, RabbitMqClientAgent.this.messageQueue );
 			}
 
 		}.start();
@@ -154,11 +158,6 @@ public class AgentClient implements IAgentClient {
 				&& this.channel.isOpen()
 				&& this.consumerTag != null )
 			this.channel.basicCancel( this.consumerTag );
-
-		// Stop processing messages
-		if( this.messageProcessor != null
-				&& this.messageProcessor.isRunning())
-			this.messageProcessor.stopProcessor();
 
 		// Close the connection
 		this.consumerTag = null;

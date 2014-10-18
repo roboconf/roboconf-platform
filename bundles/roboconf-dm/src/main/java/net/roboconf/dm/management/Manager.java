@@ -18,7 +18,6 @@ package net.roboconf.dm.management;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -26,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
@@ -45,12 +43,14 @@ import net.roboconf.dm.internal.environment.iaas.IaasResolver;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.management.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.management.CheckerMessagesTask;
+import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.iaas.api.IaasException;
 import net.roboconf.iaas.api.IaasInterface;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
@@ -82,79 +82,99 @@ public class Manager {
 	// Constants
 	private static final long TIMER_PERIOD = 6000;
 
-	// Injected by iPojo (both are optional)
-	private IaasInterface[] iaas;
-	private ManagerConfiguration configuration;
+	// Injected by iPojo or Admin Config
+	IaasInterface[] iaas;
+	String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
 
 	// Internal fields
 	private final Map<String,ManagedApplication> appNameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final LinkedBlockingQueue<Message> messages = new LinkedBlockingQueue<Message> ();
-	IaasResolver iaasResolver = new IaasResolver();
-	Timer timer;
+	private final String messagingFactoryType;
+	private IDmClient messagingClient;
 
+	DmMessageProcessor messageProcessor;
+	File configurationDirectory;
+	IaasResolver iaasResolver;
+	Timer timer;
+	boolean validConfiguration = false;
+
+
+	/**
+	 * Constructor.
+	 */
+	public Manager() {
+		this( MessagingConstants.FACTORY_RABBIT_MQ );
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param messagingFactoryType the messaging factory type
+	 * @see MessagingConstants
+	 */
+	public Manager( String messagingFactoryType ) {
+		this.messagingFactoryType = messagingFactoryType;
+		this.iaasResolver = new IaasResolver();
+	}
 
 
 	/**
 	 * This method reconfigures the manager when its configuration has changed.
-	 * <p>
-	 * This is a very important method.
-	 * </p>
-	 *
-	 * @throws IOException if something went wrong
 	 */
-	void configurationChanged() throws IOException {
+	public void update() {
+
+		// If we stopped the manager, create a new processor
+		if( this.messageProcessor == null ) {
+			this.messageProcessor = new DmMessageProcessor( this );
+			this.messageProcessor.start();
+		}
 
 		// Backup the current
 		if( this.timer != null )
 			this.timer.cancel();
 
-		// Update the messaging client
-		this.configuration.messagingClient.openConnection( new DmMessageProcessor( this.messages, this ));
+		// This is the real configuration
+		IDmClient newMessagingClient = null;
+		try {
+			// Update the configuration directory
+			File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
+			if( Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation )) {
+				this.logger.warning( "Invalid location for the configuration directory (empty or null). Switching to " + defaultConfigurationDirectory );
+				this.configurationDirectory = defaultConfigurationDirectory;
 
-		// Reset and restore applications
-		this.appNameToManagedApplication.clear();
-		for( File dir : this.configuration.findApplicationDirectories()) {
-			try {
-				loadNewApplication( dir );
+			} else {
+				this.configurationDirectory = new File( this.configurationDirectoryLocation );
+				if( ! this.configurationDirectory.isDirectory()
+						&& ! this.configurationDirectory.mkdirs()) {
 
-			} catch( AlreadyExistingException e ) {
-				this.logger.severe( "Cannot restore application in " + dir + " (already existing)." );
-				this.logger.finest( Utils.writeException( e ));
-
-			} catch( InvalidApplicationException e ) {
-				this.logger.severe( "Cannot restore application in " + dir + " (invalid application)." );
-				this.logger.finest( Utils.writeException( e ));
-			}
-		}
-
-		// Restore instances
-		for( ManagedApplication ma : this.appNameToManagedApplication.values()) {
-
-			// Instance definition
-			InstancesLoadResult ilr = this.configuration.restoreInstances( ma );
-			try {
-				checkErrors( ilr.getLoadErrors());
-				if( ilr.getRootInstances().isEmpty())
-					continue;
-
-				ma.getApplication().getRootInstances().clear();
-				ma.getApplication().getRootInstances().addAll( ilr.getRootInstances());
-
-			} catch( InvalidApplicationException e ) {
-				this.logger.severe( "Cannot restore instances for application " + ma.getName() + " (errors were found)." );
-				this.logger.finest( Utils.writeException( e ));
+					this.logger.warning( "Could not create " + this.configurationDirectory + ". Switching to " + defaultConfigurationDirectory );
+					this.configurationDirectory = defaultConfigurationDirectory;
+				}
 			}
 
-			// States
-			for( Instance rootInstance : ma.getApplication().getRootInstances())
-				getMessagingClient().sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
+			// Update the messaging client.
+			// The processor will start using this client on the next message it will have to process.
+			// This class will start using it right now for the actions it has to perform.
+			this.messagingClient = this.messageProcessor.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
+			this.validConfiguration = true;
+
+		} catch( IOException e ) {
+			this.validConfiguration = false;
+			this.logger.severe( "An error occured while reconfiguring the DM. " + e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
 		}
+
+		// Reset and restore applications.
+		// We ALWAYS do it, because we must also reconfigure the new client with respect
+		// to what we already deployed.
+		restoreApplications();
 
 		// Start the timers
 		this.timer = new Timer( "Roboconf's Management Timer", true );
-		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, newMessagingClient ), 0, TIMER_PERIOD );
 		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
+
+		this.logger.info( "The DM was reconfigured." );
 	}
 
 
@@ -163,8 +183,7 @@ public class Manager {
 	 * @param ma a non-null managed application
 	 */
 	public void saveConfiguration( ManagedApplication ma ) {
-		if( this.configuration != null )
-			this.configuration.saveInstances( ma );
+		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
 	}
 
 
@@ -177,6 +196,11 @@ public class Manager {
 		if( this.timer != null ) {
 			this.timer.cancel();
 			this.timer =  null;
+		}
+
+		if( this.messageProcessor != null ) {
+			this.messageProcessor.stopProcessor();
+			this.messageProcessor = null;
 		}
 
 		for( ManagedApplication ma : this.appNameToManagedApplication.values())
@@ -252,22 +276,6 @@ public class Manager {
 
 
 	/**
-	 * @param configuration the configuration to set
-	 */
-	public void setConfiguration( ManagerConfiguration configuration ) {
-		this.configuration = configuration;
-	}
-
-
-	/**
-	 * @return the configuration
-	 */
-	public ManagerConfiguration getConfiguration() {
-		return this.configuration;
-	}
-
-
-	/**
 	 * @param iaasResolver the iaasResolver to set
 	 */
 	public void setIaasResolver( IaasResolver iaasResolver ) {
@@ -276,31 +284,32 @@ public class Manager {
 
 
 	/**
-	 * @return the messaging client (may be null)
-	 */
-	public IDmClient getMessagingClient() {
-		return this.configuration != null ? this.configuration.messagingClient : null;
-	}
-
-
-	/**
-	 * @return true if and only if the manager's configuration is valid
-	 */
-	public boolean hasValidConfiguration() {
-		return this.configuration != null && this.configuration.isValidConfiguration();
-	}
-
-
-	/**
 	 * @throws IOException if the configuration is invalid
 	 */
 	public void checkConfiguration() throws IOException {
 
-		if( ! hasValidConfiguration()) {
+		if( ! this.validConfiguration ) {
 			String msg = "The manager's configuration is invalid. Please, review its settings.";
 			this.logger.warning( msg );
 			throw new IOException( msg );
 		}
+	}
+
+
+	/**
+	 * @return the messagingClient
+	 */
+	public IDmClient getMessagingClient() {
+		return this.messagingClient;
+	}
+
+
+	/**
+	 * @param configurationDirectoryLocation the configurationDirectoryLocation to set
+	 */
+	public void setConfigurationDirectoryLocation(
+			String configurationDirectoryLocation ) {
+		this.configurationDirectoryLocation = configurationDirectoryLocation;
 	}
 
 
@@ -313,15 +322,10 @@ public class Manager {
 
 
 	/**
-	 * @return a non-null list of applications
+	 * @return the messagingFactoryType
 	 */
-	public List<Application> listApplications() {
-
-		List<Application> result = new ArrayList<Application> ();
-		for( ManagedApplication ma : this.appNameToManagedApplication.values())
-			result.add( ma.getApplication());
-
-		return result;
+	public String getMessagingFactoryType() {
+		return this.messagingFactoryType;
 	}
 
 
@@ -361,7 +365,7 @@ public class Manager {
 		if( null != findApplicationByName( application.getName()))
 			throw new AlreadyExistingException( application.getName());
 
-		File targetDirectory = this.configuration.findApplicationdirectory( application.getName());
+		File targetDirectory = ConfigurationUtils.findApplicationdirectory( application.getName(), this.configurationDirectory );
 		if( ! applicationFilesDirectory.equals( targetDirectory )) {
 			if( Utils.isAncestorFile( targetDirectory, applicationFilesDirectory ))
 				throw new IOException( "Cannot move " + applicationFilesDirectory + " in Roboconf's work directory. Already a child directory." );
@@ -370,7 +374,7 @@ public class Manager {
 		}
 
 		ManagedApplication ma = new ManagedApplication( application, targetDirectory );
-		getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
+		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
 		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 
@@ -396,11 +400,11 @@ public class Manager {
 
 		// If yes, do it
 		this.logger.fine( "Deleting application " + applicationName + "..." );
-		getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
+		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
 		Utils.deleteFilesRecursively( ma.getApplicationFilesDirectory());
-		this.configuration.deleteInstancesFile( ma.getName());
+		ConfigurationUtils.deleteInstancesFile( ma.getName(), this.configurationDirectory );
 
-		getMessagingClient().deleteMessagingServerArtifacts( ma.getApplication());
+		this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
 		this.appNameToManagedApplication.remove( applicationName );
 		this.logger.fine( "Application " + applicationName + " was successfully deleted." );
 	}
@@ -620,9 +624,8 @@ public class Manager {
 
 		// We do NOT send directly a message!
 		// We either ignore or store it.
-		IDmClient messagingClient = getMessagingClient();
-		if( messagingClient == null
-				|| ! messagingClient.isConnected())
+		if( this.messagingClient == null
+				|| ! this.messagingClient.isConnected())
 			this.logger.severe( "The connection with the messaging server was badly initialized. Message dropped." );
 		else
 			ma.storeAwaitingMessage( instance, message );
@@ -640,7 +643,7 @@ public class Manager {
 
 			for( Message msg : messages ) {
 				try {
-					messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
 
 				} catch( IOException e ) {
 					this.logger.severe( "Error while sending a stored message. " + e.getMessage());
@@ -703,9 +706,7 @@ public class Manager {
 
 			IaasInterface iaasInterface = this.iaasResolver.findIaasInterface( this.iaas, ma, rootInstance );
 			machineId = iaasInterface.createVM(
-					this.configuration.getMessageServerIp(),
-					this.configuration.getMessageServerUsername(),
-					this.configuration.getMessageServerPassword(),
+					this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
 					rootInstance.getName(),
 					ma.getApplication().getName());
 
@@ -769,6 +770,62 @@ public class Manager {
 
 		} finally {
 			saveConfiguration( ma );
+		}
+	}
+
+
+	/**
+	 * Restores the applications.
+	 */
+	void restoreApplications() {
+
+		this.appNameToManagedApplication.clear();
+		for( File dir : ConfigurationUtils.findApplicationDirectories( this.configurationDirectory )) {
+			try {
+				loadNewApplication( dir );
+
+			} catch( AlreadyExistingException e ) {
+				this.logger.severe( "Cannot restore application in " + dir + " (already existing)." );
+				this.logger.finest( Utils.writeException( e ));
+
+			} catch( InvalidApplicationException e ) {
+				this.logger.severe( "Cannot restore application in " + dir + " (invalid application)." );
+				this.logger.finest( Utils.writeException( e ));
+
+			} catch( IOException e ) {
+				this.logger.severe( "Cannot restore application in " + dir + " (I/O exception)." );
+				this.logger.finest( Utils.writeException( e ));
+			}
+		}
+
+		// Restore instances
+		for( ManagedApplication ma : this.appNameToManagedApplication.values()) {
+
+			// Instance definition
+			InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, this.configurationDirectory );
+			try {
+				checkErrors( ilr.getLoadErrors());
+				if( ilr.getRootInstances().isEmpty())
+					continue;
+
+				ma.getApplication().getRootInstances().clear();
+				ma.getApplication().getRootInstances().addAll( ilr.getRootInstances());
+
+			} catch( InvalidApplicationException e ) {
+				this.logger.severe( "Cannot restore instances for application " + ma.getName() + " (errors were found)." );
+				this.logger.finest( Utils.writeException( e ));
+			}
+
+			// States
+			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
+				try {
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
+
+				} catch( IOException e ) {
+					this.logger.severe( "Could not request states for agent " + rootInstance.getName() + " (I/O exception)." );
+					this.logger.finest( Utils.writeException( e ));
+				}
+			}
 		}
 	}
 }

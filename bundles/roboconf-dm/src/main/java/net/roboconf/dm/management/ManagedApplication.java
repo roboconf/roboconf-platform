@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -38,14 +37,14 @@ import net.roboconf.messaging.messages.Message;
  */
 public class ManagedApplication {
 
-	static final int MISSED_HEARTBEATS_THRESHOLD = 2;
+	static final String MISSED_HEARTBEATS = "dm.missed.heartbeats";
+	static final int THRESHOLD = 2;
 
 	private final Application application;
 	private final File applicationFilesDirectory;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private final Map<Instance,List<Message>> rootInstanceToAwaitingMessages;
-	final Map<Instance,Integer> rootInstanceToMissedHeartBeatsCount;
 
 
 
@@ -55,9 +54,7 @@ public class ManagedApplication {
 	public ManagedApplication( Application application, File applicationFilesDirectory ) {
 		this.applicationFilesDirectory = applicationFilesDirectory;
 		this.application = application;
-
 		this.rootInstanceToAwaitingMessages = new HashMap<Instance,List<Message>> ();
-		this.rootInstanceToMissedHeartBeatsCount = new ConcurrentHashMap<Instance,Integer> ();
 	}
 
 
@@ -140,13 +137,13 @@ public class ManagedApplication {
 	 */
 	public void acknowledgeHeartBeat( Instance rootInstance ) {
 
-		Integer count = this.rootInstanceToMissedHeartBeatsCount.get( rootInstance );
+		String count = rootInstance.getData().get( MISSED_HEARTBEATS );
 		if( count != null
-				&& count > MISSED_HEARTBEATS_THRESHOLD )
+				&& Integer.parseInt( count ) > THRESHOLD )
 			this.logger.info( "Machine " + rootInstance.getName() + " is alive and reachable again." );
 
 		rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.rootInstanceToMissedHeartBeatsCount.remove( rootInstance );
+		rootInstance.getData().remove( MISSED_HEARTBEATS );
 	}
 
 
@@ -166,24 +163,21 @@ public class ManagedApplication {
 			if( rootInstance.getStatus() == InstanceStatus.NOT_DEPLOYED
 					|| rootInstance.getStatus() == InstanceStatus.DEPLOYING
 					|| rootInstance.getStatus() == InstanceStatus.UNDEPLOYING ) {
-				this.rootInstanceToMissedHeartBeatsCount.remove( rootInstance );
+				rootInstance.getData().remove( MISSED_HEARTBEATS );
 				continue;
 			}
 
 			// Otherwise
-			Integer count = this.rootInstanceToMissedHeartBeatsCount.get( rootInstance );
-			if( count == null ){
-				// We visited it once
-				count = 1;
-
-			} else if( ++ count > MISSED_HEARTBEATS_THRESHOLD ) {
+			String countAs = rootInstance.getData().get( MISSED_HEARTBEATS );
+			int count = countAs == null ? 0 : Integer.parseInt( countAs );
+			if( ++ count > THRESHOLD ) {
 				rootInstance.setStatus( InstanceStatus.PROBLEM );
 
-				if( count == MISSED_HEARTBEATS_THRESHOLD + 1 )
+				if( count == THRESHOLD + 1 )
 					this.logger.severe( "Machine " + rootInstance.getName() + " has not sent heartbeats for quite a long time. Status changed to PROBLEM." );
 			}
 
-			this.rootInstanceToMissedHeartBeatsCount.put( rootInstance, count );
+			rootInstance.getData().put( MISSED_HEARTBEATS, String.valueOf( count ));
 		}
 	}
 }

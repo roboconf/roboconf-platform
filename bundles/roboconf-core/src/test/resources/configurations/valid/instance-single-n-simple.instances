@@ -2,6 +2,6 @@
 # A simple instance
 ##
 
-instanceof vm {
+instance of vm {
 
 }

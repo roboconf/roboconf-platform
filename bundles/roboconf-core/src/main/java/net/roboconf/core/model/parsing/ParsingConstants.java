@@ -51,7 +51,7 @@ public interface ParsingConstants {
 	/**
 	 * Keyword to declare an instance.
 	 */
-	String KEYWORD_INSTANCE_OF = "instanceof";
+	String KEYWORD_INSTANCE_OF = "instance of";
 
 
 	/**

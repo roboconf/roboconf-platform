@@ -1,16 +1,16 @@
 # A VM with Karaf OSGi Framework and Joram
-instanceof VM_EC2 {
+instance of VM_EC2 {
 	name: vmec2karaf;
 	
-	instanceof Karaf {
+	instance of Karaf {
 		name: karafec21;
-		instanceof JNDI {
+		instance of JNDI {
 			name: jndiec2;
 		}
 	}
-	instanceof Karaf {
+	instance of Karaf {
 		name: karafec22;
-		instanceof Joram {
+		instance of Joram {
 			name: joramec2;
 		}
 	}	

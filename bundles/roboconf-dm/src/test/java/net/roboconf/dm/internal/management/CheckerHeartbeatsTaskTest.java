@@ -18,10 +18,11 @@ package net.roboconf.dm.internal.management;
 
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.dm.internal.test.TestIaasResolver;
-import net.roboconf.dm.internal.test.TestMessageServerClient.DmMessageServerClientFactory;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.messaging.MessagingConstants;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,10 +36,15 @@ public class CheckerHeartbeatsTaskTest {
 
 	@Before
 	public void resetManager() {
-		this.manager = ManagementHelpers.createConfiguredManager();
-		this.manager.getConfiguration().setMessgingFactory( new DmMessageServerClientFactory());
+		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
 		this.manager.setIaasResolver( new TestIaasResolver());
-		this.manager.getConfiguration().update();
+		this.manager.update();
+	}
+
+
+	@After
+	public void cleanManager() {
+		this.manager.shutdown();
 	}
 
 

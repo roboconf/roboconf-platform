@@ -1,6 +1,6 @@
-instanceof vm {
+instance of vm {
 	name: my-vm;
-	instanceof
+	instance of
 		name: server1;
 	}
 }

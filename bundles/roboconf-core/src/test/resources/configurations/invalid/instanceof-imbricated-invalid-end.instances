@@ -1,8 +1,8 @@
-instanceof vm {
+instance of vm {
 	name: my-vm;
-	instanceof server {
+	instance of server {
 		name: server1;
-	} instanceof toto {
+	} instance of toto {
 
 	}
 }

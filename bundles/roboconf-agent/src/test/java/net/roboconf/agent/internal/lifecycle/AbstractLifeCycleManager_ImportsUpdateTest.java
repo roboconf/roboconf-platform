@@ -21,12 +21,12 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
-import net.roboconf.agent.tests.TestAgentMessagingClient;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -56,7 +56,7 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		// The basis
 		PluginInterface plugin = new PluginMock();
-		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", new TestAgentMessagingClient()) {
+		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", new TestClientAgent()) {
 			@Override
 			public void changeInstanceState(
 					Instance instance, PluginInterface plugin,
@@ -113,7 +113,7 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		// The basis
 		PluginInterface plugin = new PluginMock();
-		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", new TestAgentMessagingClient()) {
+		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", new TestClientAgent()) {
 			@Override
 			public void changeInstanceState(
 					Instance instance, PluginInterface plugin,

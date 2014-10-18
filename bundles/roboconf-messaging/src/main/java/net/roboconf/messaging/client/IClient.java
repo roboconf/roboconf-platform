@@ -17,6 +17,9 @@
 package net.roboconf.messaging.client;
 
 import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -41,23 +44,25 @@ public interface IClient {
 	void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword );
 
 	/**
+	 * Sets the message queue where the client can store the messages to process.
+	 * @param messageQueue the message queue
+	 */
+	void setMessageQueue( LinkedBlockingQueue<Message> messageQueue );
+
+	/**
 	 * @return true if the client is connected, false otherwise
 	 */
 	boolean isConnected();
 
 	/**
 	 * Opens a connection with the message server.
-	 * <p>
-	 * The message processor will be used for any subsequent subscription.
-	 * </p>
 	 */
-	void openConnection( AbstractMessageProcessor messageProcessor ) throws IOException;
+	void openConnection() throws IOException;
 
 	/**
 	 * Closes the connection with the message server.
 	 * <p>
 	 * There is no need to check {@link #isConnected()} before invoking this method.
-	 * It will also stop the processing thread if necessary.
 	 * </p>
 	 */
 	void closeConnection() throws IOException;
