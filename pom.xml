@@ -33,33 +33,30 @@
 
 	<modules>
 		<!-- Core Modules -->
-		<module>bundles/roboconf-core</module>
-		<module>bundles/roboconf-messaging</module>
-		<module>bundles/roboconf-iaas-api</module>
-		<module>bundles/roboconf-plugin-api</module>
-		<module>bundles/roboconf-agent</module>
+		<module>core/roboconf-core</module>
+		<module>core/roboconf-messaging</module>
+		<module>core/roboconf-target-api</module>
+		<module>core/roboconf-plugin-api</module>
+		<module>core/roboconf-agent</module>
 		
-		<module>bundles/roboconf-dm</module>
-		<module>bundles/roboconf-dm-web-administration</module>
-		<module>bundles/roboconf-dm-rest-commons</module>
-		<module>bundles/roboconf-dm-rest-services</module>
-		<!-- 
-		<module>bundles/roboconf-dm-rest-client</module>
-		 -->
+		<module>core/roboconf-dm</module>
+		<module>core/roboconf-dm-web-administration</module>
+		<module>core/roboconf-dm-rest-commons</module>
+		<module>core/roboconf-dm-rest-services</module>
 		
-		<!-- IaaS extensions  -->
-		<module>bundles/roboconf-iaas-in-memory</module>
-		<module>bundles/roboconf-iaas-embedded</module>
-		<module>bundles/roboconf-iaas-azure</module>
-		<module>bundles/roboconf-iaas-ec2</module>
-		<module>bundles/roboconf-iaas-openstack</module>
-		<module>bundles/roboconf-iaas-vmware</module>
-		<module>bundles/roboconf-iaas-docker</module>
+		<!-- Target Handlers -->
+		<module>core/roboconf-target-in-memory</module>
+		<module>core/roboconf-target-docker</module>
+		<module>core/roboconf-target-embedded</module>
+		<module>core/roboconf-target-iaas-azure</module>
+		<module>core/roboconf-target-iaas-ec2</module>
+		<module>core/roboconf-target-iaas-openstack</module>
+		<module>core/roboconf-target-iaas-vmware</module>
 		
 		<!-- Agent plug-ins -->
-		<module>bundles/roboconf-plugin-bash</module>
-		<module>bundles/roboconf-plugin-puppet</module>
-		<module>bundles/roboconf-plugin-logger</module>
+		<module>core/roboconf-plugin-bash</module>
+		<module>core/roboconf-plugin-puppet</module>
+		<module>core/roboconf-plugin-logger</module>
 		
 		<!-- Distributions -->
 		<module>karaf/roboconf-karaf-branding-agent</module>
@@ -72,8 +69,10 @@
 		<module>distributions/roboconf-dist-debian-agent</module> 
 		<module>distributions/roboconf-dist-debian-dm</module>
 		
-		<!-- Testing -->
-		<module>test-framework/roboconf-test-framework</module>
+		<!-- Testing & Utilities -->
+		<module>miscellaneous/roboconf-dm-rest-client</module>
+		<module>miscellaneous/roboconf-pax-probe</module>
+		<module>miscellaneous/roboconf-integration-tests</module>
 	</modules>
 
 

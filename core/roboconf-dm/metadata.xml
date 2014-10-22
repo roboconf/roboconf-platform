@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<!-- A component for the DM -->
+	<component classname="net.roboconf.dm.management.Manager" name="roboconf-dm" public="false">
+		<requires aggregate="true">
+			<callback type="bind" method="targetAppears" />
+			<callback type="unbind" method="targetDisappears" />
+			<callback type="modified" method="targetWasModified" />
+		</requires>
+		
+		<callback transition="validate" method="update" />
+		<callback transition="invalidate" method="shutdown" />
+		<provides />
+		
+		<properties updated="update" pid="net.roboconf.dm.configuration">
+			<property name="message-server-ip" method="setMessageServerIp" />
+			<property name="message-server-username" method="setMessageServerUsername" />
+			<property name="message-server-password" method="setMessageServerPassword" />
+			<property name="configuration-directory-location" method="setConfigurationDirectoryLocation" />
+		</properties>
+	</component>
+	
+	<!-- And the instance... -->
+	<instance component="roboconf-dm" name="Roboconf DM" />
+</ipojo>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<!-- This class is not in an internal package, we need it in the test framework. -->
+	<component classname="net.roboconf.target.in_memory.InMemoryHandler" name="roboconf-target-in-memory">
+		<provides />
+		<requires filter="(factory.name=roboconf-agent-in-memory)" field="agentFactory" optional="false" />
+	</component>
+	
+	<instance component="roboconf-target-in-memory" name="Roboconf Target - In memory" />
+</ipojo>

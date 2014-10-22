@@ -19,13 +19,13 @@
         <bundle>mvn:net.roboconf/roboconf-dm-rest-services/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}/war</bundle>
-        <bundle>mvn:net.roboconf/roboconf-iaas-api/${project.version}</bundle>
-        <bundle>mvn:net.roboconf/roboconf-iaas-azure/${project.version}</bundle>
-        <bundle>mvn:net.roboconf/roboconf-iaas-ec2/${project.version}</bundle>
-        <bundle>mvn:net.roboconf/roboconf-iaas-embedded/${project.version}</bundle>
-        <bundle>mvn:net.roboconf/roboconf-iaas-docker/${project.version}</bundle>
-        <bundle>mvn:net.roboconf/roboconf-iaas-openstack/${project.version}</bundle>
-        <bundle>mvn:net.roboconf/roboconf-iaas-vmware/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-target-docker/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-target-embedded/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-target-iaas-azure/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-target-iaas-ec2/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-target-iaas-openstack/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-target-iaas-vmware/${project.version}</bundle>
     </feature>
     
     <!-- The feature for Jersey 1.x -->
