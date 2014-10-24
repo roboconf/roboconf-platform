@@ -35,13 +35,11 @@
 	<packaging>bundle</packaging>
 	
 	<dependencies>
-		<!-- Unlike what the Maven dependency plug-in says, this dependency is required! -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.jaxrs</groupId>
 			<artifactId>jackson-jaxrs-json-provider</artifactId>
 			<version>${jackson.stack.version}</version>
 		</dependency>
-		<!-- This is the only dependency whose scope is not provided. -->
 	
 		<dependency>
   			<groupId>net.roboconf</groupId>
@@ -125,6 +123,27 @@
 			<version>${ipojo.version}</version>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.sun.jersey.jersey-test-framework</groupId>
+			<artifactId>jersey-test-framework-grizzly2</artifactId>
+			<version>${jersey.stack.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.sun.jersey.jersey-test-framework</groupId>
+			<artifactId>jersey-test-framework-core</artifactId>
+			<version>${jersey.stack.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-messaging</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -135,7 +154,6 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.dm.rest.commons.json;version="${project.version}",
 							net.roboconf.*;version="${project.version}",
 							com.sun.jersey.*;version="${jersey.stack.version}",
 							*

@@ -212,12 +212,11 @@ public final class RabbitMqUtils {
 				messages.add( message );
 
 			} catch( ShutdownSignalException e ) {
-				logger.warning( sourceName + ": the message server is shutting down." );
-				logger.finest( Utils.writeException( e ));
+				logger.fine( sourceName + ": the message server is shutting down." );
 				break;
 
 			} catch( ConsumerCancelledException e ) {
-				logger.info( sourceName + " stops listening to new messages." );
+				logger.fine( sourceName + " stops listening to new messages." );
 				break;
 
 			} catch( InterruptedException e ) {
@@ -233,5 +232,7 @@ public final class RabbitMqUtils {
 				logger.finest( Utils.writeException( e ));
 			}
 		}
+
+		logger.fine( "A message listening thread is now stopped." );
 	}
 }

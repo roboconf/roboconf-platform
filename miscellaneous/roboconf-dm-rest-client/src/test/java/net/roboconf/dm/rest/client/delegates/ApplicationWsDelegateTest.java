@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.test;
+package net.roboconf.dm.rest.client.delegates;
 
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.ws.rs.core.UriBuilder;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -30,146 +31,122 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
+import net.roboconf.dm.rest.client.exceptions.ApplicationException;
+import net.roboconf.dm.rest.services.internal.RestApplication;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.rules.Timeout;
-import org.omg.CORBA.portable.ApplicationException;
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.OptionUtils;
-import org.ops4j.pax.exam.ProbeBuilder;
-import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerSuite;
+
+import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@ExamReactorStrategy( PerSuite.class )
-public class ApplicationWsDelegateTest extends DmWithAgentInMemoryTest {
+public class ApplicationWsDelegateTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
-
-	@Rule
-	public Timeout timeout = new Timeout( 20000 );
+	private static final String REST_URI = "http://localhost:8090";
 
 	private TestApplication app;
 	private WsClient client;
 	private ManagedApplication ma;
-
-
-
-	@ProbeBuilder
-	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
-
-		probe.addTest( DmWithAgentInMemoryTest.class );
-		probe.addTest( TestApplication.class );
-
-		return probe;
-	}
-
-
-	@Override
-	@Configuration
-	public Option[] config() {
-
-		return OptionUtils.combine(
-				super.config(),
-				mavenBundle()
-					.groupId( "net.roboconf" )
-					.artifactId( "roboconf-dm-rest-client" )
-					.version( CURRENT_DEV_VERSION )
-					.start());
-	}
-
-
-	@Before
-	public void resetManager() throws Exception {
-
-		// Update the manager
-		replaceIaasResolver();
-
-		// Load an application
-		this.app = new TestApplication();
-		this.ma = new ManagedApplication( this.app, null );
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), this.ma );
-		this.client = new WsClient( "http://localhost:8181/roboconf-dm" );
-	}
+	private Manager manager;
+	private HttpServer httpServer;
 
 
 	@After
-	public void destroyClient() {
+	public void after() {
+
+		if( this.httpServer != null )
+			this.httpServer.stop();
+
 		if( this.client != null )
 			this.client.destroy();
 	}
 
 
-	@Override
-	public void run() {
-		Assert.assertTrue( "Overridding the debug method to not block the tests.", true );
+	@Before
+	public void before() throws Exception {
+
+		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
+		this.manager.setTargetResolver( new TestTargetResolver());
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.update();
+
+		URI uri = UriBuilder.fromUri( REST_URI ).build();
+		RestApplication restApp = new RestApplication( this.manager );
+		this.httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );;
+
+		// Load an application
+		this.app = new TestApplication();
+		this.ma = new ManagedApplication( this.app, null );
+		this.manager.getAppNameToManagedApplication().put( this.app.getName(), this.ma );
+
+		this.client = new WsClient( REST_URI );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceState_inexistingApplication() throws Exception {
+	public void testChangeState_inexistingApplication() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( "inexisting", InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceState_inexistingInstance_null() throws Exception {
+	public void testChangeState_inexistingInstance_null() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceState_inexistingInstance() throws Exception {
+	public void testChangeState_inexistingInstance() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, "/bip/bip" );
 	}
 
 
 	@Test( expected = ApplicationException.class )
-	public void testChangeInstanceState_invalidState() throws Exception {
+	public void testChangeState_invalidAction() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), null, null );
 	}
 
 
 	@Test
-	public void testChangeInstanceState_deployRoot_success() throws Exception {
+	public void testChangeState_deployRoot_success() throws Exception {
 
-		TestTargetResolver targetResolver = new TestTargetResolver();
-		this.manager.setTargetResolver( targetResolver );
+		TestTargetResolver iaasResolver = new TestTargetResolver();
+		this.manager.setTargetResolver( iaasResolver );
 
-		Assert.assertEquals( 0, targetResolver.instanceToRunningStatus.size());
+		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
 		this.client.getApplicationDelegate().changeInstanceState(
 				this.app.getName(),
 				InstanceStatus.DEPLOYED_STARTED,
 				InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
 
-		Assert.assertEquals( 1, targetResolver.instanceToRunningStatus.size());
-		Assert.assertTrue( targetResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
+		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
+		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
 	}
 
 
 	@Test
-	public void testChangeInstanceState_deploy_success() throws Exception {
+	public void testChangeState_deploy_success() throws Exception {
 
 		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
-		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, instancePath );
+		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STOPPED, instancePath );
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
@@ -194,7 +171,6 @@ public class ApplicationWsDelegateTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) messages.get( 0 )).getNewState());
 	}
 
 
@@ -221,7 +197,6 @@ public class ApplicationWsDelegateTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) messages.get( 0 )).getNewState());
 	}
 
 

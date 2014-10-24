@@ -14,125 +14,77 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.test;
-
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+package net.roboconf.dm.rest.client.delegates;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
 
+import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
-import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
+import net.roboconf.dm.rest.services.internal.RestApplication;
+import net.roboconf.messaging.MessagingConstants;
 
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.OptionUtils;
-import org.ops4j.pax.exam.ProbeBuilder;
-import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerSuite;
 
-//import java.io.File;
-//import java.io.IOException;
-//import java.util.List;
-//import java.util.Map;
-//
-//import javax.ws.rs.core.Response.Status;
-//
-//import junit.framework.Assert;
-//import net.roboconf.core.internal.tests.TestApplication;
-//import net.roboconf.core.internal.tests.TestUtils;
-//import net.roboconf.core.model.runtime.Application;
-//import net.roboconf.core.utils.Utils;
-//import net.roboconf.dm.management.ManagedApplication;
-//import net.roboconf.dm.management.Manager;
-//import net.roboconf.integration.test.WsClient;
-//import net.roboconf.integration.test.exceptions.ManagementException;
-//import net.roboconf.integration.test.test.RestTestUtils;
-//
-//import org.junit.After;
-//import org.junit.Before;
-//import org.junit.Rule;
-//import org.junit.Test;
-//import org.junit.rules.TemporaryFolder;
-//
-//import com.sun.jersey.test.framework.AppDescriptor;
-//import com.sun.jersey.test.framework.JerseyTest;
-//import com.sun.jersey.test.framework.spi.container.TestContainerFactory;
-//import com.sun.jersey.test.framework.spi.container.grizzly2.web.GrizzlyWebTestContainerFactory;
+import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@ExamReactorStrategy( PerSuite.class )
-public class ManagementWsDelegateTest extends DmWithAgentInMemoryTest {
+public class ManagementWsDelegateTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+	private static final String REST_URI = "http://localhost:8090";
 
 	private WsClient client;
 	private Manager manager;
-
-
-
-	@ProbeBuilder
-	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
-
-		probe.addTest( DmWithAgentInMemoryTest.class );
-		probe.addTest( TestApplication.class );
-
-		return probe;
-	}
-
-
-	@Override
-	@Configuration
-	public Option[] config() {
-
-		return OptionUtils.combine(
-				super.config(),
-				mavenBundle()
-					.groupId( "net.roboconf" )
-					.artifactId( "roboconf-dm-rest-client" )
-					.version( CURRENT_DEV_VERSION )
-					.start());
-	}
-
-
-	@Before
-	public void resetManager() throws Exception {
-
-		this.client = new WsClient( "http://localhost:8181/roboconf-dm" );
-	}
+	private HttpServer httpServer;
 
 
 	@After
-	public void destroyClient() {
+	public void after() {
+
+		if( this.httpServer != null )
+			this.httpServer.stop();
+
 		if( this.client != null )
 			this.client.destroy();
 	}
 
 
-	@Override
-	public void run() {
-		Assert.assertTrue( "Overridding the debug method to not block the tests.", true );
+	@Before
+	public void before() throws Exception {
+
+		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
+		this.manager.setTargetResolver( new TestTargetResolver());
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.update();
+
+		URI uri = UriBuilder.fromUri( REST_URI ).build();
+		RestApplication restApp = new RestApplication( this.manager );
+		this.httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
+
+		this.client = new WsClient( REST_URI );
 	}
 
 

@@ -53,6 +53,12 @@
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-messaging</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-target-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>

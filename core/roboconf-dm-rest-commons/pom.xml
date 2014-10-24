@@ -76,6 +76,9 @@
 							net.roboconf.*;version="${project.version}",
 							javax.ws.rs.*
 						</Import-Package>
+						<Export-Package>
+							net.roboconf.dm.rest.commons.*
+						</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=com.fasterxml.jackson.core</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>

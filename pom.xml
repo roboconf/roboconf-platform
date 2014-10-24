@@ -66,9 +66,6 @@
 		<module>karaf/roboconf-karaf-dist-agent</module>
 		<module>karaf/roboconf-karaf-dist-dm</module>
 		
-		<module>distributions/roboconf-dist-debian-agent</module> 
-		<module>distributions/roboconf-dist-debian-dm</module>
-		
 		<!-- Testing & Utilities -->
 		<module>miscellaneous/roboconf-dm-rest-client</module>
 		<module>miscellaneous/roboconf-pax-probe</module>

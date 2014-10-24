@@ -26,6 +26,7 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -88,8 +89,8 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 	@Override
 	public void run() {
 
-		// Update the manager instance to use another IaaS resolver
-		replaceIaasResolver();
+		// Update the manager instance
+		configureManagerForInMemoryUsage();
 
 		// Run normally
 		super.run();
@@ -97,10 +98,11 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 
 
 	/**
-	 * Replaces the usual IaaS resolver by an in-memory one.
+	 * Updates the IaaS to use in-memory messaging and IaaS resolution.
 	 */
-	protected void replaceIaasResolver() {
+	protected void configureManagerForInMemoryUsage() {
 
+		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.setTargetResolver( new ITargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
@@ -108,5 +110,7 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 				return DmWithAgentInMemoryTest.this.inMemoryIaas;
 			}
 		});
+
+		this.manager.update();
 	}
 }

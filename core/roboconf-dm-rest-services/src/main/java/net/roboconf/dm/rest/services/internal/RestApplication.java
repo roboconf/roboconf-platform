@@ -19,15 +19,20 @@ package net.roboconf.dm.rest.services.internal;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.ws.rs.core.Application;
-
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.services.internal.cors.ResponseCorsFilter;
+import net.roboconf.dm.rest.services.internal.resources.ApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
+import net.roboconf.dm.rest.services.internal.resources.ManagementResource;
+
+import com.sun.jersey.api.core.DefaultResourceConfig;
+import com.sun.jersey.api.core.ResourceConfig;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RestApplication extends Application {
+public class RestApplication extends DefaultResourceConfig {
 
 	private final IApplicationResource applicationResource;
 	private final IManagementResource managementResource;
@@ -35,13 +40,28 @@ public class RestApplication extends Application {
 
 	/**
 	 * Constructor.
-	 * @param applicationResource
-	 * @param managementResource
+	 * @param manager
 	 */
-	public RestApplication( IApplicationResource applicationResource, IManagementResource managementResource ) {
+	public RestApplication( Manager manager ) {
 		super();
-		this.applicationResource = applicationResource;
-		this.managementResource = managementResource;
+		this.applicationResource = new ApplicationResource( manager );
+		this.managementResource = new ManagementResource( manager );
+
+		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
+		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
+
+		getProperties().put( ResourceConfig.PROPERTY_CONTAINER_RESPONSE_FILTERS, ResponseCorsFilter.class.getName());
+	}
+
+
+	@Override
+	public Set<Class<?>> getClasses() {
+
+		Set<Class<?>> result = new HashSet<Class<?>> ();
+		result.add( net.roboconf.dm.rest.commons.json.ObjectMapperProvider.class );
+		result.add( com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider.class );
+
+		return result;
 	}
 
 

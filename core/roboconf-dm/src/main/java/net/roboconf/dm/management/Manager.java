@@ -102,8 +102,8 @@ public class Manager {
 	private static final long TIMER_PERIOD = 6000;
 
 	// Injected by iPojo or Admin Config
-	List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
-	String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
+	private final List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
+	private String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
 
 	// Internal fields
 	private final Map<String,ManagedApplication> appNameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();

@@ -17,21 +17,21 @@
 package net.roboconf.pax.probe;
 
 import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
+import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 
 /**
@@ -43,11 +43,6 @@ public abstract class AbstractTest {
 	public static final String CURRENT_DEV_VERSION = "0.2-SNAPSHOT";
 	public static final long PLATFORM_TIMEOUT = 30000;
 
-	protected abstract String getArtifactId();
-	protected abstract String getDirectorySuffix();
-
-	private final Logger logger = Logger.getLogger( getClass().getName());
-
 
 	/**
 	 * @param debugPort a positive integer for debug
@@ -56,7 +51,7 @@ public abstract class AbstractTest {
 	public List<Option> getBaseOptions( int debugPort ) {
 
 		MavenArtifactUrlReference karafUrl = maven()
-				.groupId( "net.roboconf" )
+				.groupId( getGroupId())
 				.artifactId( getArtifactId())
 				.version( CURRENT_DEV_VERSION )
 				.type( "tar.gz" );
@@ -72,9 +67,18 @@ public abstract class AbstractTest {
 			appendDebugOption( options, debugPort );
 
 		options.add( systemTimeout( PLATFORM_TIMEOUT ));
-		// deployPaxProbeIfNecessary( options );
+		options.add( logLevel( LogLevel.INFO ));
 
 		return options;
+	}
+
+
+	protected abstract String getArtifactId();
+	protected abstract String getDirectorySuffix();
+
+
+	protected String getGroupId() {
+		return "net.roboconf";
 	}
 
 
@@ -94,23 +98,5 @@ public abstract class AbstractTest {
 
 	private void appendDebugOption( List<Option> options, int debugPort ) {
 		options.add( KarafDistributionOption.debugConfiguration( String.valueOf( debugPort ), true));
-	}
-
-
-	private void deployPaxProbeIfNecessary( List<Option> options ) {
-
-		// This is required for sub-classes that are located in another Maven project.
-		// By convention, we assume sub-classes are located in another package.
-		String package1 = getClass().getPackage().getName();
-		String package2 = AbstractTest.class.getPackage().getName();
-
-		if( ! package1.equals( package2 )) {
-			this.logger.info( "Adding the Roboconf PAX probe to the targetHandlers platform." );
-			options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-pax-probe" )
-				.version( CURRENT_DEV_VERSION )
-				.start());
-		}
 	}
 }

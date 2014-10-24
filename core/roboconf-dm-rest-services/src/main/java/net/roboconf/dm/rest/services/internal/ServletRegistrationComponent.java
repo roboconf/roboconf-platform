@@ -21,16 +21,9 @@ import java.util.Hashtable;
 import java.util.logging.Logger;
 
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.services.internal.cors.ResponseCorsFilter;
-import net.roboconf.dm.rest.services.internal.resources.ApplicationResource;
-import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
-import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
-import net.roboconf.dm.rest.services.internal.resources.ManagementResource;
 
 import org.osgi.service.http.HttpService;
 
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
@@ -69,22 +62,11 @@ public class ServletRegistrationComponent {
 		this.logger.fine( "iPojo registers a servlet to serve REST resources for the DM." );
 
 		// Create the REST application with its resources
-		IApplicationResource applicationResource = new ApplicationResource( this.manager );
-		IManagementResource managementResource = new ManagementResource( this.manager );
-		RestApplication app = new RestApplication( applicationResource, managementResource );
+		RestApplication app = new RestApplication( this.manager );
 
 		// Prepare the parameters for the servlet
 		Dictionary<String,String> initParams = new Hashtable<String,String> ();
 		initParams.put( "servlet-name", "Roboconf DM" );
-		initParams.put( "com.sun.jersey.api.json.POJOMappingFeature", "true" );
-		initParams.put( ResourceConfig.FEATURE_DISABLE_WADL, "true" );
-		initParams.put(
-				ResourceConfig.PROPERTY_CONTAINER_RESPONSE_FILTERS,
-				ResponseCorsFilter.class.getName());
-
-		initParams.put(
-				PackagesResourceConfig.PROPERTY_PACKAGES,
-				"com.fasterxml.jackson.jaxrs.json;net.roboconf.dm.rest.commons.json" );
 
 		ServletContainer jerseyServlet = new ServletContainer( app );
 		this.httpService.registerServlet( CONTEXT, jerseyServlet, initParams, null );
@@ -110,5 +92,13 @@ public class ServletRegistrationComponent {
 	 */
 	void setHttpService( HttpService httpService ) {
 		this.httpService = httpService;
+	}
+
+
+	/**
+	 * @param manager the manager to set
+	 */
+	public void setManager( Manager manager ) {
+		this.manager = manager;
 	}
 }

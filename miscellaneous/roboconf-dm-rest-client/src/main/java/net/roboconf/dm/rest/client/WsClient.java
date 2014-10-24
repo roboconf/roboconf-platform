@@ -20,6 +20,7 @@ import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
 import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
 import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -73,21 +74,15 @@ public class WsClient {
 	public WsClient( String rootUrl ) {
 
 		ClientConfig cc = new DefaultClientConfig();
-        cc.getClasses().add( ObjectMapperProvider.class );
+		cc.getClasses().add( JacksonJsonProvider.class );
+		cc.getClasses().add( ObjectMapperProvider.class );
 
 		this.client = Client.create( cc );
 		this.client.setFollowRedirects( true );
-		WebResource resource = this.client.resource( rootUrl );
 
+		WebResource resource = this.client.resource( rootUrl );
 		this.applicationDelegate = new ApplicationWsDelegate( resource );
 		this.managementDelegate = new ManagementWsDelegate( resource );
-
-		Runtime.getRuntime().addShutdownHook( new Thread() {
-			@Override
-			public void run() {
-				WsClient.this.client.destroy();
-			}
-		});
 	}
 
 

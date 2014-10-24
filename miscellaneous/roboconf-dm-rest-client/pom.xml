@@ -42,6 +42,12 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>com.fasterxml.jackson.jaxrs</groupId>
+			<artifactId>jackson-jaxrs-json-provider</artifactId>
+			<version>${jackson.stack.version}</version>
+		</dependency>
+		
+		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-dm-rest-commons</artifactId>
   			<version>${project.version}</version>
@@ -68,6 +74,71 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-target-api</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm</artifactId>
+  			<version>${project.version}</version>
+  			<type>test-jar</type>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm-rest-services</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-core</artifactId>
+  			<version>${project.version}</version>
+  			<type>test-jar</type>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo</artifactId>
+			<version>${ipojo.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.sun.jersey.jersey-test-framework</groupId>
+			<artifactId>jersey-test-framework-grizzly2</artifactId>
+			<version>${jersey.stack.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.sun.jersey.jersey-test-framework</groupId>
+			<artifactId>jersey-test-framework-core</artifactId>
+			<version>${jersey.stack.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-messaging</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	

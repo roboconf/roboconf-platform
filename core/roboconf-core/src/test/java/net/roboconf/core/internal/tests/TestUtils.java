@@ -71,8 +71,21 @@ public class TestUtils {
 	 * @throws URISyntaxException
 	 */
 	public static File findTestFile( String fileName ) throws IOException, URISyntaxException {
+		return findTestFile( fileName, ParsingModelIoTest.class );
+	}
 
-		URL url = ParsingModelIoTest.class.getResource( fileName );
+
+	/**
+	 * Finds a test file.
+	 * @param fileName must start with '/'
+	 * @param clazz a class to search the class path
+	 * @return an existing file (never null)
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
+	public static File findTestFile( String fileName, Class<?> clazz ) throws IOException, URISyntaxException {
+
+		URL url = clazz.getResource( fileName );
 		File file;
 		if( url == null
 				|| ! (file = new File( url.toURI())).exists())

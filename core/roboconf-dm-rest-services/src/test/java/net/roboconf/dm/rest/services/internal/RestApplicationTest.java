@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Assert;
-import net.roboconf.dm.rest.services.internal.resources.ApplicationResource;
-import net.roboconf.dm.rest.services.internal.resources.ManagementResource;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.messaging.MessagingConstants;
 
 import org.junit.Test;
 
@@ -33,12 +33,8 @@ public class RestApplicationTest {
 	@Test
 	public void testSingleton() {
 
-		ApplicationResource appRes = new ApplicationResource();
-		ManagementResource mngrRes = new ManagementResource();
-
-		RestApplication app = new RestApplication( appRes, mngrRes );
+		RestApplication app = new RestApplication( new Manager( MessagingConstants.FACTORY_TEST ));
 		List<Object> singleton = new ArrayList<Object>( app.getSingletons());
-
 		Assert.assertEquals( 2, singleton.size());
 	}
 }

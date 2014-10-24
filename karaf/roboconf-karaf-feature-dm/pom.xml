@@ -32,7 +32,7 @@
     <groupId>net.roboconf</groupId>
 	<artifactId>roboconf-karaf-feature-dm</artifactId>
 	<packaging>feature</packaging>
-	<name>Roboconf :: DM Feature for Karaf</name>
+	<name>Roboconf :: Karaf Feature for the DM</name>
 
 	<build>
 		<plugins>

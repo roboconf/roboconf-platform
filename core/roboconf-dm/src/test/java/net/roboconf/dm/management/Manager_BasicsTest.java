@@ -72,7 +72,7 @@ public class Manager_BasicsTest {
 		File directory = this.folder.newFolder();
 
 		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
-		this.manager.configurationDirectoryLocation = directory.getAbsolutePath();
+		this.manager.setConfigurationDirectoryLocation( directory.getAbsolutePath());
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.update();
 
@@ -479,7 +479,7 @@ public class Manager_BasicsTest {
 
 		// Change the configuration's directory => no more application in the manager
 		File newDirectory = this.folder.newFolder();
-		this.manager.configurationDirectoryLocation = newDirectory.getAbsolutePath();
+		this.manager.setConfigurationDirectoryLocation( newDirectory.getAbsolutePath());
 		this.manager.update();
 		Thread.sleep( AbstractMessagingTest.DELAY );
 
@@ -652,24 +652,24 @@ public class Manager_BasicsTest {
 	@Test
 	public void testExtensibilityNotifications() {
 
-		Assert.assertEquals( 0, this.manager.targetHandlers.size());
+		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
 		this.manager.targetAppears( new TargetHandlerMock( "hey" ));
-		Assert.assertEquals( 1, this.manager.targetHandlers.size());
+		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
 		this.manager.targetDisappears( new TargetHandlerMock( "hey" ));
-		Assert.assertEquals( 0, this.manager.targetHandlers.size());
+		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
 
 		this.manager.targetDisappears( new TargetHandlerMock( "ho" ));
-		Assert.assertEquals( 0, this.manager.targetHandlers.size());
+		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
 
 		this.manager.targetDisappears( null );
-		Assert.assertEquals( 0, this.manager.targetHandlers.size());
+		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
 
 		this.manager.targetAppears( new TargetHandlerMock( "oops" ));
-		Assert.assertEquals( 1, this.manager.targetHandlers.size());
+		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
 		this.manager.targetWasModified( new TargetHandlerMock( "oops" ));
-		Assert.assertEquals( 1, this.manager.targetHandlers.size());
+		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
 
 		this.manager.targetAppears( new TargetHandlerMock( "new_oops" ));
-		Assert.assertEquals( 2, this.manager.targetHandlers.size());
+		Assert.assertEquals( 2, this.manager.getTargetHandlers().size());
 	}
 }

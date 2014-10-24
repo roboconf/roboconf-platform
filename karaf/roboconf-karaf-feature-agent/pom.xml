@@ -32,7 +32,7 @@
     <groupId>net.roboconf</groupId>
 	<artifactId>roboconf-karaf-feature-agent</artifactId>
 	<packaging>feature</packaging>
-	<name>Roboconf :: Agent Feature for Karaf</name>
+	<name>Roboconf :: Karaf Feature for the Agent</name>
 
 	<build>
 		<plugins>
