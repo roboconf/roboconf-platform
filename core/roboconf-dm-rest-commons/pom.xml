@@ -51,11 +51,14 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
+			<groupId>com.fasterxml.jackson.jaxrs</groupId>
+			<artifactId>jackson-jaxrs-base</artifactId>
+			<version>${jackson.stack.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -74,13 +77,13 @@
 					<instructions>
 						<Import-Package>
 							net.roboconf.*;version="${project.version}",
-							javax.ws.rs.*
+							com.fasterxml.jackson.*;version="${jackson.stack.version}",
+							com.sun.jersey.*;version="${jersey.stack.version}",
+							*
 						</Import-Package>
 						<Export-Package>
 							net.roboconf.dm.rest.commons.*
 						</Export-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=com.fasterxml.jackson.core</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

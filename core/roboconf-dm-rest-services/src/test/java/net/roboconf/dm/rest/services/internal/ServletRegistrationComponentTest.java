@@ -16,8 +16,6 @@
 
 package net.roboconf.dm.rest.services.internal;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Dictionary;
@@ -30,8 +28,8 @@ import javax.ws.rs.core.UriBuilder;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
@@ -101,28 +99,19 @@ public class ServletRegistrationComponentTest {
 		URI uri = UriBuilder.fromUri( "http://localhost/" ).port( 8090 ).build();
 		RestApplication restApp = new RestApplication( manager );
 		HttpServer httpServer = null;
+		String received = null;
 
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
 			httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
 			Assert.assertTrue( httpServer.isStarted());
 			URI targetUri = UriBuilder.fromUri( uri ).path( UrlConstants.APPLICATIONS ).build();
-
-			InputStream in = null;
-			try {
-				in = targetUri.toURL().openStream();
-				Utils.copyStream( in, out );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
+			received = TestUtils.readUriContent( targetUri );
 
 		} finally {
 			if( httpServer != null )
 				httpServer.stop();
 		}
 
-		String received = out.toString();
 		String expected = JSonBindingUtils.createObjectMapper().writeValueAsString( Arrays.asList( app ));
 		Assert.assertEquals( expected, received );
 	}
@@ -144,8 +133,8 @@ public class ServletRegistrationComponentTest {
 		URI uri = UriBuilder.fromUri( "http://localhost/" ).port( 8090 ).build();
 		RestApplication restApp = new RestApplication( manager );
 		HttpServer httpServer = null;
+		String received = null;
 
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		try {
 			httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
 			Assert.assertTrue( httpServer.isStarted());
@@ -153,21 +142,13 @@ public class ServletRegistrationComponentTest {
 					.path( UrlConstants.APP ).path( app.getName()).path( "children" )
 					.queryParam( "instance-path", "/tomcat-vm" ).build();
 
-			InputStream in = null;
-			try {
-				in = targetUri.toURL().openStream();
-				Utils.copyStream( in, out );
-
-			} finally {
-				Utils.closeQuietly( in );
-			}
+			received = TestUtils.readUriContent( targetUri );
 
 		} finally {
 			if( httpServer != null )
 				httpServer.stop();
 		}
 
-		String received = out.toString();
 		String expected = JSonBindingUtils.createObjectMapper().writeValueAsString( Arrays.asList( app.getTomcat()));
 		Assert.assertEquals( expected, received );
 	}

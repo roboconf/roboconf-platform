@@ -18,6 +18,7 @@ package net.roboconf.pax.probe;
 
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 
+import java.io.IOException;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -30,6 +31,8 @@ import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.util.Filter;
@@ -38,6 +41,9 @@ import org.ops4j.pax.exam.util.Filter;
  * @author Vincent Zurczak - Linagora
  */
 public class DmWithAgentInMemoryTest extends AbstractTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 	@Inject
 	protected Manager manager;
@@ -87,7 +93,7 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 
 
 	@Override
-	public void run() {
+	public void run() throws Exception {
 
 		// Update the manager instance
 		configureManagerForInMemoryUsage();
@@ -100,17 +106,30 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 	/**
 	 * Updates the IaaS to use in-memory messaging and IaaS resolution.
 	 */
-	protected void configureManagerForInMemoryUsage() {
+	protected void configureManagerForInMemoryUsage() throws IOException {
 
 		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
-		this.manager.setTargetResolver( new ITargetResolver() {
-			@Override
-			public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
-			throws TargetException {
-				return DmWithAgentInMemoryTest.this.inMemoryIaas;
-			}
-		});
-
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.setTargetResolver( new InMemoryTargetResolver( this.inMemoryIaas ));
 		this.manager.update();
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static final class InMemoryTargetResolver implements ITargetResolver {
+		private final TargetHandler inMemoryIaas;
+
+
+		public InMemoryTargetResolver( TargetHandler inMemoryIaas ) {
+			this.inMemoryIaas = inMemoryIaas;
+		}
+
+		@Override
+		public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+		throws TargetException {
+			return this.inMemoryIaas;
+		}
 	}
 }

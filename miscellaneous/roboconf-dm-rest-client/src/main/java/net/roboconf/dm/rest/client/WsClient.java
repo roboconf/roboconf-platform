@@ -108,4 +108,12 @@ public class WsClient {
 	public ManagementWsDelegate getManagementDelegate() {
 		return this.managementDelegate;
 	}
+
+
+	/**
+	 * @return the Jersey client (useful to configure it)
+	 */
+	public Client getJerseyClient() {
+		return this.client;
+	}
 }

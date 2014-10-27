@@ -21,6 +21,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
@@ -92,6 +94,31 @@ public class TestUtils {
 			throw new IOException( "Could not find the resource file." );
 
 		return file;
+	}
+
+
+	/**
+	 * Gets the content of an URI.
+	 * @param uri an URI
+	 * @return the content available at this address
+	 * @throws IOException if something went wrong
+	 */
+	public static String readUriContent( URI uri ) throws IOException {
+
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		InputStream in = null;
+		try {
+			in = uri.toURL().openStream();
+			Utils.copyStream( in, out );
+
+		} catch( Exception e ) {
+			// nothing
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		return out.toString( "UTF-8" );
 	}
 
 

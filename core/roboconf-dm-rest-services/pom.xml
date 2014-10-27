@@ -39,6 +39,7 @@
 			<groupId>com.fasterxml.jackson.jaxrs</groupId>
 			<artifactId>jackson-jaxrs-json-provider</artifactId>
 			<version>${jackson.stack.version}</version>
+			<scope>provided</scope>
 		</dependency>
 	
 		<dependency>
@@ -140,6 +141,14 @@
 		
 		<dependency>
   			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-core</artifactId>
+  			<version>${project.version}</version>
+  			<type>test-jar</type>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-messaging</artifactId>
   			<version>${project.version}</version>
   			<scope>test</scope>
@@ -156,10 +165,11 @@
 						<Import-Package>
 							net.roboconf.*;version="${project.version}",
 							com.sun.jersey.*;version="${jersey.stack.version}",
+							javax.annotation,
+							javax.servlet,
+							javax.servlet.http,
 							*
 						</Import-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

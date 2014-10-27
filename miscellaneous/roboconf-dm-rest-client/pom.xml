@@ -39,18 +39,21 @@
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
   			<version>${project.version}</version>
+  			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
 			<groupId>com.fasterxml.jackson.jaxrs</groupId>
 			<artifactId>jackson-jaxrs-json-provider</artifactId>
 			<version>${jackson.stack.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-dm-rest-commons</artifactId>
   			<version>${project.version}</version>
+  			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
@@ -68,6 +71,7 @@
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-client</artifactId>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -151,11 +155,10 @@
 					<instructions>
 						<Import-Package>
 							net.roboconf.*;version="${project.version}",
+							com.sun.jersey.*;version="${jersey.stack.version}",
 							*
 						</Import-Package>
 						<Export-Package>net.roboconf.dm.rest.client.*</Export-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>

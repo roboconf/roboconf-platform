@@ -38,5 +38,11 @@
         <bundle>mvn:com.sun.jersey/jersey-servlet/${jersey.stack.version}</bundle>
         <bundle>mvn:com.sun.jersey.contribs/jersey-multipart/${jersey.stack.version}</bundle>
         <bundle>mvn:org.jvnet/mimepull/1.6</bundle>
+        
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-core/${jackson.stack.version}</bundle>
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.stack.version}</bundle>
+        <bundle>mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.stack.version}</bundle>
+        <bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-base/${jackson.stack.version}</bundle>
+        <bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider/${jackson.stack.version}</bundle>
     </feature>
 </features>

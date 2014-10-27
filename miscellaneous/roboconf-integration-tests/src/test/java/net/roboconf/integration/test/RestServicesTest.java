@@ -20,10 +20,12 @@ import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
+import java.net.URI;
 import java.util.List;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.utils.UriUtils;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
@@ -31,7 +33,6 @@ import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.ops4j.pax.exam.Configuration;
@@ -46,20 +47,26 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  * @author Vincent Zurczak - Linagora
  */
 @ExamReactorStrategy( PerSuite.class )
-public class TestDeploymentScenario extends DmWithAgentInMemoryTest {
+public class RestServicesTest extends DmWithAgentInMemoryTest {
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
 	private static final String APP_LOCATION = "my.app.location";
+	private static final String JERSEY_VERSION = "1.18.1";
+	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
+
 	private WsClient client;
+
 
 
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
 
+		// We need to specify the classes we need
+		// and that come from external modules.
 		probe.addTest( AbstractTest.class );
 		probe.addTest( DmWithAgentInMemoryTest.class );
+		probe.addTest( InMemoryTargetResolver.class );
 		probe.addTest( TestUtils.class );
+		probe.addTest( TemporaryFolder.class );
 
 		return probe;
 	}
@@ -82,6 +89,12 @@ public class TestDeploymentScenario extends DmWithAgentInMemoryTest {
 				super.config(),
 
 				mavenBundle()
+					.groupId( "com.sun.jersey" )
+					.artifactId( "jersey-client" )
+					.version( JERSEY_VERSION )
+					.start(),
+
+				mavenBundle()
 					.groupId( "net.roboconf" )
 					.artifactId( "roboconf-dm-rest-client" )
 					.version( CURRENT_DEV_VERSION )
@@ -94,7 +107,24 @@ public class TestDeploymentScenario extends DmWithAgentInMemoryTest {
 
 	@Before
 	public void resetManager() throws Exception {
-		this.client = new WsClient( "http://localhost:8181/roboconf-dm" );
+
+		// Configure the manager
+		configureManagerForInMemoryUsage();
+
+		// Initialize a new client
+		this.client = new WsClient( ROOT_URL );
+
+		// Wait for the REST services to be online.
+		// By default, these tests only wait for the manager to be available. We must in addition,
+		// be sure that the REST services are online. The most simple solution is to wait for the
+		// applications listing to work.
+		URI targetUri = UriUtils.urlToUri( ROOT_URL + "/applications" );
+		for( int i=0; i<10; i++ ) {
+			Thread.sleep( 1000 );
+			String s = TestUtils.readUriContent( targetUri );
+			if( "[]".equals( s ))
+				break;
+		}
 	}
 
 
@@ -118,14 +148,23 @@ public class TestDeploymentScenario extends DmWithAgentInMemoryTest {
 		Assert.assertNotNull( appLocation );
 		Assert.assertTrue( new File( appLocation ).exists());
 
+		// Load an application
 		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
 		this.client.getManagementDelegate().loadApplication( appLocation );
 
+		// Test the applications listing
 		List<Application> apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertEquals( 1, apps.size());
 
 		Application receivedApp = apps.get( 0 );
 		Assert.assertEquals( "Legacy LAMP", receivedApp.getName());
 		Assert.assertEquals( "sample", receivedApp.getQualifier());
+
+		// Check the JSon serialization
+		URI targetUri = URI.create( ROOT_URL + "/app/Legacy%20LAMP/children?instance-path=/Apache%20VM" );
+		String s = TestUtils.readUriContent( targetUri );
+		Assert.assertEquals(
+				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"alias\":\"Apache Load Balancer\",\"installer\":\"puppet\"}}]",
+				s );
 	}
 }

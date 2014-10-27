@@ -67,7 +67,7 @@ public abstract class AbstractTest {
 			appendDebugOption( options, debugPort );
 
 		options.add( systemTimeout( PLATFORM_TIMEOUT ));
-		options.add( logLevel( LogLevel.INFO ));
+		options.add( logLevel( LogLevel.WARN ));
 
 		return options;
 	}
@@ -83,7 +83,7 @@ public abstract class AbstractTest {
 
 
 	@Test
-	public void run() {
+	public void run() throws Exception {
 
 		for( ;; ) {
 			try {
