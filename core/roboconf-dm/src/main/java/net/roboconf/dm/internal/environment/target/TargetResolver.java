@@ -32,7 +32,7 @@ import net.roboconf.target.api.TargetHandler;
  */
 public class TargetResolver implements ITargetResolver {
 
-	public static final String TARGET_ID = "targetHandlers.id";
+	public static final String TARGET_ID = "target.id";
 
 
 	/*
@@ -41,7 +41,8 @@ public class TargetResolver implements ITargetResolver {
 	 * #findTargetHandler(java.util.List, net.roboconf.dm.management.ManagedApplication, net.roboconf.core.model.runtime.Instance)
 	 */
 	@Override
-	public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance ) throws TargetException {
+	public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+	throws TargetException {
 
 		TargetHandler targetHandler;
 		try {

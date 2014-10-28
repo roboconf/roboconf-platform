@@ -114,7 +114,7 @@ public class HeartbeatTaskTest {
 		}
 
 		@Override
-		public boolean hasReceivedModel() {
+		public boolean needsModel() {
 			return true;
 		}
 	}

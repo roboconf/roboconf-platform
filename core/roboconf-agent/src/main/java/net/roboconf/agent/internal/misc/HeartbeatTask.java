@@ -51,7 +51,9 @@ public class HeartbeatTask extends TimerTask {
 					this.agent.getRootInstanceName(),
 					this.agent.getIpAddress());
 
-			heartBeat.setModelRequired( this.agent.hasReceivedModel());
+			heartBeat.setModelRequired( this.agent.needsModel());
+			this.logger.finer( "Model is required by the agent: " + heartBeat.isModelRequired());
+
 			IAgentClient messagingClient = this.agent.getMessagingClient();
 			if( messagingClient != null
 					&& messagingClient.isConnected())

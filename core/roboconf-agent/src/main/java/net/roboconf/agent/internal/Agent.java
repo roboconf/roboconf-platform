@@ -146,10 +146,10 @@ public class Agent {
 
 
 	/**
-	 * @return true if this agent received its model, false otherwise
+	 * @return true if this agent needs the DM to send its model
 	 */
-	public boolean hasReceivedModel() {
-		return this.messageProcessor != null && this.messageProcessor.rootInstance != null;
+	public boolean needsModel() {
+		return this.messageProcessor == null || this.messageProcessor.rootInstance == null;
 	}
 
 
@@ -280,19 +280,27 @@ public class Agent {
 			return;
 
 		// Do we need to override properties with user data?
+		this.logger.fine( "User data are supposed to be used: " + this.overrideProperties );
 		if( this.overrideProperties ) {
+			this.logger.info( "User data are being retrieved..." );
 			AgentProperties props = null;
-			if( AgentConstants.PLATFORM_AZURE.equals( this.targetId ))
-				props = UserDataUtils.findParametersForAzure( this.logger );
+			if( Utils.isEmptyOrWhitespaces( this.targetId ))
+				this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
 
 			else if( AgentConstants.PLATFORM_EC2.equals( this.targetId )
 					|| AgentConstants.PLATFORM_OPENSTACK.equals( this.targetId ))
 				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
 
-			String s;
+			else if( AgentConstants.PLATFORM_AZURE.equals( this.targetId ))
+				props = UserDataUtils.findParametersForAzure( this.logger );
+
+			else
+				this.logger.warning( "Unknown target ID. No user data will be retrieved." );
+
 			if( props != null ) {
-				if(( s = props.validate()) != null )
-					this.logger.severe( "An error was found in user data. " + s );
+				String errorMessage = props.validate();
+				if( errorMessage != null )
+					this.logger.severe( "An error was found in user data. " + errorMessage );
 
 				this.applicationName = props.getApplicationName();
 				this.ipAddress = props.getIpAddress();

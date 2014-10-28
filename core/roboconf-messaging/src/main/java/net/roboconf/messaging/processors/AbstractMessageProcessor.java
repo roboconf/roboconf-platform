@@ -173,14 +173,19 @@ abstract class AbstractMessageProcessor<T extends IClient> extends Thread {
 	public T switchMessagingClient( String messageServerIp, String messageServerUser, String messageServerPwd )
 	throws IOException {
 
-		// If this method is called several times while in a loop cycle
-		// (not likely to happen, but we never know).
-		closeConnection( this.newMessagingClient, "A messaging client could not be terminated." );
+		// There may be a "new messaging client" that was not yet switched...
+		T oldMessagingClient;
+		synchronized( this.lock ) {
+			oldMessagingClient = this.newMessagingClient;
 
-		// Create a new client and start listening.
-		this.newMessagingClient = createNewMessagingClient( messageServerIp, messageServerUser, messageServerPwd );
-		this.newMessagingClient.setMessageQueue( this.messageQueue );
-		openConnection( this.newMessagingClient );
+			// Create a new client and start listening.
+			this.newMessagingClient = createNewMessagingClient( messageServerIp, messageServerUser, messageServerPwd );
+			this.newMessagingClient.setMessageQueue( this.messageQueue );
+			openConnection( this.newMessagingClient );
+		}
+
+		// Terminate the "old new" messaging client.
+		closeConnection( oldMessagingClient, "A messaging client could not be terminated." );
 
 		return this.newMessagingClient;
 	}

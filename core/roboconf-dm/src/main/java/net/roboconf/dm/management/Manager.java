@@ -177,23 +177,23 @@ public class Manager {
 			this.messagingClient = this.messageProcessor.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
 			this.validConfiguration = true;
 
+			// Reset and restore applications.
+			// We ALWAYS do it, because we must also reconfigure the new client with respect
+			// to what we already deployed.
+			restoreApplications();
+
+			// Start the timers
+			this.timer = new Timer( "Roboconf's Management Timer", true );
+			this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, newMessagingClient ), 0, TIMER_PERIOD );
+			this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
+
+			this.logger.info( "The DM was successfully reconfigured." );
+
 		} catch( IOException e ) {
 			this.validConfiguration = false;
 			this.logger.severe( "An error occured while reconfiguring the DM. " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 		}
-
-		// Reset and restore applications.
-		// We ALWAYS do it, because we must also reconfigure the new client with respect
-		// to what we already deployed.
-		restoreApplications();
-
-		// Start the timers
-		this.timer = new Timer( "Roboconf's Management Timer", true );
-		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, newMessagingClient ), 0, TIMER_PERIOD );
-		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
-
-		this.logger.info( "The DM was reconfigured." );
 	}
 
 
@@ -552,13 +552,18 @@ public class Manager {
 		checkConfiguration();
 
 		if( instance.getParent() == null ) {
-			if( ( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED || instance.getStatus() == InstanceStatus.DEPLOYING )
-					&& newStatus == InstanceStatus.NOT_DEPLOYED )
+			if( newStatus == InstanceStatus.NOT_DEPLOYED
+					&& ( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED
+						|| instance.getStatus() == InstanceStatus.DEPLOYING
+						|| instance.getStatus() == InstanceStatus.STARTING ))
 				undeployRoot( ma, instance );
 
 			else if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED
 					&& newStatus == InstanceStatus.DEPLOYED_STARTED )
 				deployRoot( ma, instance );
+
+			else
+				this.logger.warning( "Ignoring a request to update a root instance's state." );
 
 		} else {
 			Map<String,byte[]> instanceResources = null;
@@ -768,12 +773,15 @@ public class Manager {
 			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
-		} catch( TargetException e ) {
+		} catch( Exception e ) {
 			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 
 			rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
-			throw e;
+			if( e instanceof TargetException)
+				throw (TargetException) e;
+			else if( e instanceof IOException )
+				throw (IOException) e;
 
 		} finally {
 			saveConfiguration( ma );
@@ -816,12 +824,15 @@ public class Manager {
 			rootInstance.getData().clear();
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
-		} catch( TargetException e ) {
+		} catch( Exception e ) {
 			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 
 			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-			throw e;
+			if( e instanceof TargetException)
+				throw (TargetException) e;
+			else if( e instanceof IOException )
+				throw (IOException) e;
 
 		} finally {
 			saveConfiguration( ma );

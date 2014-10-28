@@ -140,8 +140,10 @@ public class RabbitMqClientAgent implements IAgentClient {
 			@Override
 			public void run() {
 				RabbitMqUtils.listenToRabbitMq(
-						RabbitMqClientAgent.this.rootInstanceName, RabbitMqClientAgent.this.logger,
-						consumer, RabbitMqClientAgent.this.messageQueue );
+						"Agent '" + getAgentId() + "'",
+						RabbitMqClientAgent.this.logger,
+						consumer,
+						RabbitMqClientAgent.this.messageQueue );
 			}
 
 		}.start();
