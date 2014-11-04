@@ -68,6 +68,7 @@ public class ApplicationWsDelegateTest {
 	@After
 	public void after() {
 
+		this.manager.stop();
 		if( this.httpServer != null )
 			this.httpServer.stop();
 
@@ -79,10 +80,11 @@ public class ApplicationWsDelegateTest {
 	@Before
 	public void before() throws Exception {
 
-		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
+		this.manager = new Manager();
+		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-		this.manager.update();
+		this.manager.start();
 
 		URI uri = UriBuilder.fromUri( REST_URI ).build();
 		RestApplication restApp = new RestApplication( this.manager );
@@ -141,7 +143,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testChangeState_deploy_success() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -159,7 +161,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testStopAll() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -185,7 +187,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testUndeployAll() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -211,7 +213,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testDeployAndStartAll() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient();
+		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 

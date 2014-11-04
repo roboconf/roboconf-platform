@@ -36,15 +36,16 @@ public class CheckerHeartbeatsTaskTest {
 
 	@Before
 	public void resetManager() {
-		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
+		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.update();
+		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.start();
 	}
 
 
 	@After
 	public void cleanManager() {
-		this.manager.shutdown();
+		this.manager.stop();
 	}
 
 

@@ -33,7 +33,6 @@ import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -41,12 +40,12 @@ import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerSuite;
+import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@ExamReactorStrategy( PerSuite.class )
+@ExamReactorStrategy( PerClass.class )
 public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
@@ -136,13 +135,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 
 	@Override
-	public void run() {
-		Assert.assertTrue( "Overridding the debug method to not block the tests.", true );
-	}
-
-
-	@Test
-	public void testListApplications() throws Exception {
+	public void run() throws Exception {
 
 		String appLocation = System.getProperty( APP_LOCATION );
 		Assert.assertNotNull( appLocation );

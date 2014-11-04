@@ -12,11 +12,11 @@
 			<callback type="modified" method="targetWasModified" />
 		</requires>
 		
-		<callback transition="validate" method="update" />
-		<callback transition="invalidate" method="shutdown" />
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		<provides />
 		
-		<properties updated="update" pid="net.roboconf.dm.configuration">
+		<properties updated="reconfigure" pid="net.roboconf.dm.configuration">
 			<property name="message-server-ip" method="setMessageServerIp" />
 			<property name="message-server-username" method="setMessageServerUsername" />
 			<property name="message-server-password" method="setMessageServerPassword" />

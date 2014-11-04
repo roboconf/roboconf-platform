@@ -16,12 +16,9 @@
 
 package net.roboconf.messaging.processors;
 
-import java.io.IOException;
-
 import junit.framework.Assert;
 import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 
@@ -34,21 +31,16 @@ import org.junit.Test;
  */
 public class AbstractMessageProcessorTest {
 
-	private AbstractMessageProcessorDm processor;
+	private AbstractMessageProcessor<TestClientDm> processor;
 
 
 	@Before
 	public void initializeProcessor() {
 
 		String name = MessagingConstants.FACTORY_TEST;
-		this.processor = new AbstractMessageProcessorDm( name ) {
+		this.processor = new AbstractMessageProcessor<TestClientDm>( name ) {
 			@Override
 			protected void processMessage( Message message ) {
-				// nothing
-			}
-
-			@Override
-			protected void openConnection( IDmClient newMessagingClient ) throws IOException {
 				// nothing
 			}
 		};
@@ -98,35 +90,9 @@ public class AbstractMessageProcessorTest {
 		// The message is processed...
 		this.processor.start();
 		this.processor.storeMessage( new MsgCmdResynchronize());
-		Thread.sleep( MessagingConstants.MESSAGE_POLLING_PERIOD );
+		Thread.sleep( 1000 );
 		this.processor.stopProcessor();
 
-		Assert.assertTrue( this.processor.hasNoMessage());
-	}
-
-
-	@Test
-	public void testCloseConnection() throws Exception {
-
-		TestClientAgent client = new TestClientAgent();
-		Assert.assertFalse( client.isConnected());
-		this.processor.closeConnection( client, "" );
-
-		client = new TestClientAgent();
-		client.openConnection();
-		Assert.assertTrue( client.isConnected());
-		this.processor.closeConnection( client, "" );
-		Assert.assertFalse( client.isConnected());
-
-		client = new TestClientAgent() {
-			@Override
-			public void closeConnection() throws IOException {
-				throw new IOException( "For test purpose" );
-			}
-		};
-
-		client.openConnection();
-		Assert.assertTrue( client.isConnected());
-		this.processor.closeConnection( client, "" );
+		Assert.assertEquals( 0, this.processor.getMessageQueue().size());
 	}
 }

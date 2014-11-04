@@ -32,8 +32,8 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
@@ -56,10 +56,9 @@ public class Agent {
 	final List<PluginInterface> plugins = new ArrayList<PluginInterface> ();
 
 	// Internal fields
-	private IAgentClient messagingClient;
 	private final Logger logger;
-	private final String messagingFactoryType;
-	AgentMessageProcessor messageProcessor;
+	private String messagingFactoryType;
+	private ReconfigurableClientAgent messagingClient;
 	Timer heartBeatTimer;
 
 
@@ -67,71 +66,59 @@ public class Agent {
 	 * Constructor.
 	 */
 	public Agent() {
-		this( MessagingConstants.FACTORY_RABBIT_MQ );
-	}
-
-
-	/**
-	 * Constructor.
-	 * @param messagingFactoryType the messaging factory type
-	 * @see MessagingConstants
-	 */
-	public Agent( String messagingFactoryType ) {
 		this.logger = Logger.getLogger( getClass().getName());
-		this.messagingFactoryType = messagingFactoryType;
+		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
 	}
 
 
 	/**
-	 * Starts listening and processing messageQueue.
+	 * Starts the agent.
 	 * <p>
-	 * If the agent was already started, this method does nothing.
+	 * It is invoked by iPojo when an instance becomes VALID.
 	 * </p>
 	 */
 	public void start() {
+
+		this.logger.info( "Agent '" + getAgentId() + "' is about to be launched." );
+
+		this.messagingClient = new ReconfigurableClientAgent();
+		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
+		this.messagingClient.associateMessageProcessor( messageProcessor );
 
 		TimerTask timerTask = new HeartbeatTask( this );
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
 
-		if( this.messageProcessor == null ) {
-			this.logger.info( "Agent '" + getAgentId() + "' is being launched." );
-			this.messageProcessor = new AgentMessageProcessor( this );
-			this.messageProcessor.start();
-			updateConfiguration();
-		}
+		reconfigure();
+		this.logger.info( "Agent '" + getAgentId() + "' was launched." );
 	}
 
 
 	/**
-	 * Stops listening and processing messageQueue.
+	 * Stops the agent.
 	 * <p>
-	 * This method does not interrupt the current message processing.
-	 * But it will not process any further message, unless the start method
-	 * is called after.
-	 * </p>
-	 * <p>
-	 * If the agent is already stopped, this method does nothing.
+	 * It is invoked by iPojo when an instance becomes INVALID.
 	 * </p>
 	 */
 	public void stop() {
 
+		this.logger.info( "Agent '" + getAgentId() + "' is about to be stopped." );
+
+		// Stop the timer
 		if( this.heartBeatTimer != null ) {
 			this.heartBeatTimer.cancel();
 			this.heartBeatTimer = null;
 		}
 
-		if( this.messageProcessor == null )
+		// Prevent NPE for successive calls to #stop()
+		if( this.messagingClient == null )
 			return;
 
-		this.logger.info( "Agent '" + getAgentId() + "' is being stopped." );
+		// Send a last message to the DM
 		try {
-			IAgentClient messagingClient = this.messageProcessor.getMessagingClient();
-			if( messagingClient != null ) {
-				if( messagingClient.isConnected()) {
-					messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.rootInstanceName ));
-					this.logger.fine( "Agent " + getAgentId() + " notified the DM it was about to stop." );
-				}
+			if( this.messagingClient.isConnected()) {
+				this.messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.rootInstanceName ));
+				this.logger.fine( "Agent " + getAgentId() + " notified the DM it was about to stop." );
 			}
 
 		} catch( IOException e ) {
@@ -139,9 +126,18 @@ public class Agent {
 			this.logger.finest( Utils.writeException( e ));
 		}
 
-		this.messageProcessor.stopProcessor();
-		this.messageProcessor = null;
-		this.logger.fine( "Agent " + getAgentId() + " was successfully stopped." );
+		// Close the connection
+		try {
+			this.messagingClient.getMessageProcessor().stopProcessor();
+			this.messagingClient.getMessageProcessor().interrupt();
+			this.messagingClient.closeConnection();
+
+		} catch( IOException e ) {
+			this.logger.warning( e.getMessage());
+			this.logger.finest( Utils.writeException( e ));
+		}
+
+		this.logger.info( "Agent '" + getAgentId() + "' was stopped." );
 	}
 
 
@@ -149,14 +145,19 @@ public class Agent {
 	 * @return true if this agent needs the DM to send its model
 	 */
 	public boolean needsModel() {
-		return this.messageProcessor == null || this.messageProcessor.rootInstance == null;
+
+		AgentMessageProcessor messageProcessor = null;
+		if( this.messagingClient != null )
+			messageProcessor = (AgentMessageProcessor) this.messagingClient.getMessageProcessor();
+
+		return messageProcessor == null || messageProcessor.rootInstance == null;
 	}
 
 
 	/**
-	 * @return the most up-to-date client for the messaging server
+	 * @return the client for the messaging server
 	 */
-	public IAgentClient getMessagingClient() {
+	public ReconfigurableClientAgent getMessagingClient() {
 		return this.messagingClient;
 	}
 
@@ -265,29 +266,25 @@ public class Agent {
 
 
 	/**
-	 * The method to invoke once one or several properties were changed.
+	 * This method reconfigures the agent.
 	 * <p>
-	 * This method creates a new messaging client and reconfigures the message processor.
-	 * It also creates a new heart beat timer.
+	 * It is invoked by iPojo when the configuration changes.
+	 * It may be invoked before the start() method is.
 	 * </p>
 	 */
-	public void updateConfiguration() {
-
-		// If the instance is not started (i.e. if the message processor
-		// is null), do nothing. This method will be invoked once the
-		// instance is started by iPojo.
-		if( this.messageProcessor == null )
-			return;
+	public void reconfigure() {
 
 		// Do we need to override properties with user data?
-		this.logger.fine( "User data are supposed to be used: " + this.overrideProperties );
-		if( this.overrideProperties ) {
-			this.logger.info( "User data are being retrieved..." );
-			AgentProperties props = null;
-			if( Utils.isEmptyOrWhitespaces( this.targetId ))
-				this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
+		if( Utils.isEmptyOrWhitespaces( this.targetId )) {
+			this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
 
-			else if( AgentConstants.PLATFORM_EC2.equals( this.targetId )
+		} else if( ! this.overrideProperties ) {
+			this.logger.fine( "User data are NOT supposed to be used." );
+
+		} else {
+			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
+			AgentProperties props = null;
+			if( AgentConstants.PLATFORM_EC2.equals( this.targetId )
 					|| AgentConstants.PLATFORM_OPENSTACK.equals( this.targetId ))
 				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
 
@@ -313,15 +310,11 @@ public class Agent {
 		}
 
 		// Update the messaging connection
-		try {
-			this.messagingClient = this.messageProcessor.switchMessagingClient(
-					this.messageServerIp,
-					this.messageServerUsername,
-					this.messageServerPassword );
-
-		} catch( IOException e ) {
-			this.logger.severe( "An error occured while reconfiguring the agent. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+		if( this.messagingClient != null ) {
+			this.messagingClient.setApplicationName( this.applicationName );
+			this.messagingClient.setRootInstanceName( this.rootInstanceName );
+			this.messagingClient.setIpAddress( this.ipAddress );
+			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
 		}
 
 		this.logger.info( "The agent configuration was updated..." );
@@ -429,6 +422,14 @@ public class Agent {
 	 */
 	public void setSimulatePlugins( boolean simulatePlugins ) {
 		this.simulatePlugins = simulatePlugins;
+	}
+
+
+	/**
+	 * @param messagingFactoryType the messagingFactoryType to set
+	 */
+	public void setMessagingFactoryType( String messagingFactoryType ) {
+		this.messagingFactoryType = messagingFactoryType;
 	}
 
 

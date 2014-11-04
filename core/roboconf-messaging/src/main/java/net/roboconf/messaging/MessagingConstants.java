@@ -22,11 +22,6 @@ package net.roboconf.messaging;
 public interface MessagingConstants {
 
 	/**
-	 * The polling period used by a message processor when the message queue is empty.
-	 */
-	long MESSAGE_POLLING_PERIOD = 1000;
-
-	/**
 	 * The factory's name for RabbitMQ clients.
 	 */
 	String FACTORY_RABBIT_MQ = "factory.rabbit.mq";
@@ -35,4 +30,9 @@ public interface MessagingConstants {
 	 * The factory's name for test clients.
 	 */
 	String FACTORY_TEST = "factory.test";
+
+	/**
+	 * The "dismissed" message.
+	 */
+	String DISMISSED_MESSAGE = "No messaging client is available. Action is dismissed. Review the messaging configuration.";
 }

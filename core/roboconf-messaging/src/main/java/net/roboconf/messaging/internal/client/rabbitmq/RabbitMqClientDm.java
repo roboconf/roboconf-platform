@@ -169,8 +169,10 @@ public class RabbitMqClientDm implements IDmClient {
 
 		} else {
 			// Already listening? Ignore...
-			if( this.applicationNameToConsumerTag.containsKey( application.getName()))
+			if( this.applicationNameToConsumerTag.containsKey( application.getName())) {
+				this.logger.finer( "Application " + application + " is already listened to by a messaging client." );
 				return;
+			}
 
 			this.logger.fine( "The DM starts listening agents messages for the '" + application.getName() + "' application." );
 

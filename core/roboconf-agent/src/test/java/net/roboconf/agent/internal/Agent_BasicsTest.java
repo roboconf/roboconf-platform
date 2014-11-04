@@ -17,11 +17,13 @@
 package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.AbstractMessagingTest;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -29,51 +31,61 @@ import org.junit.Test;
  */
 public class Agent_BasicsTest {
 
+	private Agent agent;
+
+
+	@Before
+	public void initializeAgent() throws Exception {
+		this.agent = new Agent();
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
+
+		Thread.sleep( 200 );
+		((TestClientAgent) this.agent.getMessagingClient().getInternalClient()).messagesForTheDm.clear();
+	}
+
+
+	@After
+	public void stopAgent() {
+		this.agent.stop();
+	}
+
+
 	@Test
 	public void testBasicStartAndStop() throws Exception {
 
-		Agent agent = new Agent( MessagingConstants.FACTORY_TEST );
-		agent.start();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-		TestClientAgent client = (TestClientAgent) agent.messageProcessor.getMessagingClient();
+		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 
 		// Stop when not running => no problem
 		Assert.assertTrue( client.isConnected());
-		agent.stop();
-		Thread.sleep( AbstractMessagingTest.DELAY );
+		this.agent.stop();
 		Assert.assertFalse( client.isConnected());
 
 		// Start
-		agent.start();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-		client = (TestClientAgent) agent.messageProcessor.getMessagingClient();
+		this.agent.start();
+		client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		Assert.assertTrue( client.isConnected());
 
 		// Start when already started => nothing
 		IAgentClient oldClient = client;
-		agent.start();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-		client = (TestClientAgent) agent.messageProcessor.getMessagingClient();
+		this.agent.start();
+		client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		Assert.assertTrue( client.isConnected());
-		Assert.assertEquals( oldClient, client );
+		Assert.assertNotSame( oldClient, client );
 
 		// Stop and start again
-		agent.stop();
-		Thread.sleep( AbstractMessagingTest.DELAY );
+		this.agent.stop();
 		Assert.assertFalse( client.isConnected());
 
-		agent.start();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-		client = (TestClientAgent) agent.messageProcessor.getMessagingClient();
+		this.agent.start();
+		client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		Assert.assertTrue( client.isConnected());
 
-		agent.stop();
-		Thread.sleep( AbstractMessagingTest.DELAY );
+		this.agent.stop();
 		Assert.assertFalse( client.isConnected());
 
 		// Stop called twice => nothing
-		agent.stop();
-		Thread.sleep( AbstractMessagingTest.DELAY );
+		this.agent.stop();
 		Assert.assertFalse( client.isConnected());
 	}
 
@@ -81,54 +93,24 @@ public class Agent_BasicsTest {
 	@Test
 	public void testStop_withException() throws Exception {
 
-		Agent agent = new Agent( MessagingConstants.FACTORY_TEST );
-		agent.start();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-
-		TestClientAgent client = (TestClientAgent) agent.messageProcessor.getMessagingClient();
+		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		client.failMessageSending.set( true );
+		Assert.assertTrue( client.isConnected());
 
-		AgentMessageProcessor oldProcessor = agent.messageProcessor;
-		Assert.assertNotNull( oldProcessor );
-		Assert.assertTrue( oldProcessor.getMessagingClient().isConnected());
-
-		agent.stop();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-		Assert.assertNull( agent.messageProcessor );
-		Assert.assertFalse( oldProcessor.getMessagingClient().isConnected());
+		this.agent.stop();
+		Assert.assertFalse( client.isConnected());
 	}
 
 
 	@Test
 	public void testStop_notConnected() throws Exception {
 
-		Agent agent = new Agent( MessagingConstants.FACTORY_TEST );
-		agent.start();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-
-		TestClientAgent client = (TestClientAgent) agent.messageProcessor.getMessagingClient();
-		AgentMessageProcessor oldProcessor = agent.messageProcessor;
-
-		Assert.assertTrue( oldProcessor.getMessagingClient().isConnected());
+		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		client.closeConnection();
-		Assert.assertFalse( oldProcessor.getMessagingClient().isConnected());
-		Assert.assertNotNull( oldProcessor );
+		Assert.assertFalse( client.isConnected());
 
-		agent.stop();
-		Thread.sleep( AbstractMessagingTest.DELAY );
-		Assert.assertNull( agent.messageProcessor );
-		Assert.assertFalse( oldProcessor.getMessagingClient().isConnected());
-	}
-
-
-	@Test
-	public void testStop_notStarted() throws Exception {
-
-		Agent agent = new Agent( MessagingConstants.FACTORY_TEST );
-		agent.stop();
-
-		Thread.sleep( AbstractMessagingTest.DELAY );
-		Assert.assertNull( agent.messageProcessor );
+		this.agent.stop();
+		Assert.assertFalse( client.isConnected());
 	}
 
 
@@ -151,5 +133,25 @@ public class Agent_BasicsTest {
 		Assert.assertFalse( agent.getAgentId().contains( "null" ));
 		Assert.assertFalse( agent.getAgentId().contains( "my app" ));
 		Assert.assertTrue( agent.getAgentId().contains( "root instance" ));
+	}
+
+
+	@Test
+	public void testNeedModel_startedButNothingReceived() {
+		Assert.assertTrue( this.agent.needsModel());
+	}
+
+
+	@Test
+	public void testNeedModel_notStarted() {
+		Agent agent = new Agent();
+		Assert.assertTrue( agent.needsModel());
+	}
+
+
+	@Test
+	public void testNeedModel_modelReceived() {
+		((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).rootInstance = new Instance( "root" );
+		Assert.assertFalse( this.agent.needsModel());
 	}
 }

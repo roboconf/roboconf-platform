@@ -16,6 +16,7 @@
 
 package net.roboconf.pax.probe;
 
+import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
@@ -30,7 +31,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
-import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 
@@ -45,10 +45,9 @@ public abstract class AbstractTest {
 
 
 	/**
-	 * @param debugPort a positive integer for debug
 	 * @return a non-null list of options to run Karaf from this test
 	 */
-	public List<Option> getBaseOptions( int debugPort ) {
+	public List<Option> getBaseOptions() {
 
 		MavenArtifactUrlReference karafUrl = maven()
 				.groupId( getGroupId())
@@ -62,12 +61,10 @@ public abstract class AbstractTest {
 				.unpackDirectory( new File( "target/exam-" + getDirectorySuffix()))
 				.useDeployFolder( false ));
 
+		options.add( cleanCaches( true ));
 		options.add( keepRuntimeFolder());
-		if( debugPort != -1 )
-			appendDebugOption( options, debugPort );
-
 		options.add( systemTimeout( PLATFORM_TIMEOUT ));
-		options.add( logLevel( LogLevel.WARN ));
+		options.add( logLevel( LogLevel.INFO ));
 
 		return options;
 	}
@@ -93,10 +90,5 @@ public abstract class AbstractTest {
 				e.printStackTrace();
 			}
 		}
-	}
-
-
-	private void appendDebugOption( List<Option> options, int debugPort ) {
-		options.add( KarafDistributionOption.debugConfiguration( String.valueOf( debugPort ), true));
 	}
 }

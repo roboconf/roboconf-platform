@@ -68,8 +68,7 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 	@Configuration
 	public Option[] config() {
 
-		int debugPort = -1;
-		List<Option> options = getBaseOptions( debugPort );
+		List<Option> options = getBaseOptions();
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-plugin-api" )
@@ -111,7 +110,7 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.setTargetResolver( new InMemoryTargetResolver( this.inMemoryIaas ));
-		this.manager.update();
+		this.manager.reconfigure();
 	}
 
 

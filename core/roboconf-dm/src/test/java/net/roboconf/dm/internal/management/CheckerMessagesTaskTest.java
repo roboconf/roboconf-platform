@@ -32,6 +32,7 @@ import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,7 +46,15 @@ public class CheckerMessagesTaskTest {
 
 	@Before
 	public void resetManager() {
-		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
+		this.manager = new Manager();
+		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.start();
+	}
+
+
+	@After
+	public void cleanManager() {
+		this.manager.stop();
 	}
 
 

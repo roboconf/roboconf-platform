@@ -16,15 +16,14 @@
 
 package net.roboconf.agent.internal.misc;
 
-import java.io.IOException;
-
 import junit.framework.Assert;
 import net.roboconf.agent.internal.Agent;
-import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -32,90 +31,80 @@ import org.junit.Test;
  */
 public class HeartbeatTaskTest {
 
-	@Test
-	public void testHeartbeat_connected() {
+	private Agent agent;
 
-		TestClientAgent messagingClient = new TestClientAgent() {
-			@Override
-			public boolean isConnected() {
-				return true;
-			}
-		};
 
-		Agent agent = new MyAgent( messagingClient );
-		HeartbeatTask task = new HeartbeatTask( agent );
-		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
+	@Before
+	public void initializeAgent() throws Exception {
+		this.agent = new Agent();
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
 
-		task.run();
-		Assert.assertEquals( 1, messagingClient.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifHeartbeat.class, messagingClient.messagesForTheDm.get( 0 ).getClass());
+		Thread.sleep( 200 );
+		((TestClientAgent) this.agent.getMessagingClient().getInternalClient()).messagesForTheDm.clear();
+	}
+
+
+	@After
+	public void stopAgent() {
+		this.agent.stop();
 	}
 
 
 	@Test
-	public void testHeartbeat_notConnected() {
+	public void testHeartbeat_connected() throws Exception {
 
-		TestClientAgent messagingClient = new TestClientAgent();
-		Agent agent = new MyAgent( messagingClient );
-		HeartbeatTask task = new HeartbeatTask( agent );
-		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
+		TestClientAgent internalClient = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		internalClient.openConnection();
+		Assert.assertTrue( this.agent.getMessagingClient().isConnected());
+
+		HeartbeatTask task = new HeartbeatTask( this.agent );
+		Assert.assertEquals( 0, internalClient.messagesForTheDm.size());
 
 		task.run();
-		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
+		Assert.assertEquals( 1, internalClient.messagesForTheDm.size());
+		Assert.assertEquals( MsgNotifHeartbeat.class, internalClient.messagesForTheDm.get( 0 ).getClass());
+	}
+
+
+	@Test
+	public void testHeartbeat_notConnected() throws Exception {
+
+		TestClientAgent internalClient = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		internalClient.closeConnection();
+		Assert.assertFalse( this.agent.getMessagingClient().isConnected());
+
+		HeartbeatTask task = new HeartbeatTask( this.agent );
+		Assert.assertEquals( 0, internalClient.messagesForTheDm.size());
+
+		task.run();
+		Assert.assertEquals( 0, internalClient.messagesForTheDm.size());
 	}
 
 
 	@Test
 	public void testHeartbeat_nullClient() {
 
-		Agent agent = new MyAgent( null );
+		Agent agent = new Agent();
+		Assert.assertNull( agent.getMessagingClient());
+
 		HeartbeatTask task = new HeartbeatTask( agent );
 		task.run();
 	}
 
 
 	@Test
-	public void testHeartbeat_exception() {
+	public void testHeartbeat_exception() throws Exception {
 
-		TestClientAgent messagingClient = new TestClientAgent() {
-			@Override
-			public void sendMessageToTheDm( Message message ) throws IOException {
-				throw new IOException( "For test purpose" );
-			}
+		TestClientAgent internalClient = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		internalClient.openConnection();
+		internalClient.failMessageSending.set( true );
+		Assert.assertTrue( this.agent.getMessagingClient().isConnected());
 
-			@Override
-			public boolean isConnected() {
-				return true;
-			}
-		};
-
-		Agent agent = new MyAgent( messagingClient );
-		HeartbeatTask task = new HeartbeatTask( agent );
-		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
+		HeartbeatTask task = new HeartbeatTask( this.agent );
+		Assert.assertEquals( 0, internalClient.messagesForTheDm.size());
 
 		task.run();
-		Assert.assertEquals( 0, messagingClient.messagesForTheDm.size());
-	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	private static class MyAgent extends Agent {
-		private final IAgentClient client;
-
-		public MyAgent( IAgentClient client ) {
-			this.client = client;
-		}
-
-		@Override
-		public IAgentClient getMessagingClient() {
-			return this.client;
-		}
-
-		@Override
-		public boolean needsModel() {
-			return true;
-		}
+		Assert.assertEquals( 0, internalClient.messagesForTheDm.size());
 	}
 }

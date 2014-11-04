@@ -5,17 +5,17 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<!-- Default component -->
-	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-default" public="false">
+	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-default">
 		<callback transition="validate" method="start"/>
 		<callback transition="invalidate" method="stop"/>
 		
-		<requires aggregate="true">
+		<requires aggregate="true" optional="true">
 			<callback type="bind" method="pluginAppears"/>
 			<callback type="unbind" method="pluginDisappears"/>
 			<callback type="modified" method="pluginWasModified"/>
 		</requires>
 		
-		<properties updated="updateConfiguration" pid="net.roboconf.agent.configuration">
+		<properties updated="reconfigure" pid="net.roboconf.agent.configuration">
 			<property name="message-server-ip" method="setMessageServerIp" />
 			<property name="message-server-username" method="setMessageServerUsername" />
 			<property name="message-server-password" method="setMessageServerPassword" />
@@ -28,15 +28,12 @@
 		</properties>
 	</component>
 	
-	<!-- Since its component's factory is not public, it is a singleton instance. -->
-	<instance component="roboconf-agent-default" name="Roboconf - Default Agent" />
-	
 	<!-- In-memory component -->
 	<component classname="net.roboconf.agent.internal.Agent" name="roboconf-agent-in-memory">
 		<callback transition="validate" method="start"/>
 		<callback transition="invalidate" method="stop"/>
 		
-		<properties updated="updateConfiguration" pid="net.roboconf.agent-in-memory.configuration">
+		<properties updated="reconfigure" pid="net.roboconf.agent-in-memory.configuration">
 		
 			<!-- Values that will be set by the IaaS in memory -->
 			<property name="message-server-ip" method="setMessageServerIp" />

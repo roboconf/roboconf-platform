@@ -64,6 +64,7 @@ public class ManagementWsDelegateTest {
 	@After
 	public void after() {
 
+		this.manager.stop();
 		if( this.httpServer != null )
 			this.httpServer.stop();
 
@@ -75,10 +76,11 @@ public class ManagementWsDelegateTest {
 	@Before
 	public void before() throws Exception {
 
-		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
+		this.manager = new Manager();
+		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-		this.manager.update();
+		this.manager.start();
 
 		URI uri = UriBuilder.fromUri( REST_URI ).build();
 		RestApplication restApp = new RestApplication( this.manager );

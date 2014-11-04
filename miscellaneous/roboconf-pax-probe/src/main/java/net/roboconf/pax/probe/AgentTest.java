@@ -38,8 +38,7 @@ public class AgentTest extends AbstractTest {
 
 	@Configuration
 	public Option[] config() {
-		int debugPort = -1;
-		List<Option> options = getBaseOptions( debugPort );
+		List<Option> options = getBaseOptions();
 		return options.toArray( new Option[ options.size()]);
 	}
 }

@@ -22,13 +22,15 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.runtime.Component;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -36,16 +38,31 @@ import org.junit.Test;
  */
 public class AgentMessageProcessor_StateChangeTest {
 
+	private Agent agent;
+
+
+	@Before
+	public void initializeAgent() throws Exception {
+		this.agent = new Agent();
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
+
+		Thread.sleep( 200 );
+		((TestClientAgent) this.agent.getMessagingClient().getInternalClient()).messagesForTheDm.clear();
+	}
+
+
+	@After
+	public void stopAgent() {
+		this.agent.stop();
+	}
+
+
 	@Test
 	public void testSetMessagingClient() throws Exception {
 
 		TestApplication app = new TestApplication();
-		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// Initialize the model
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -143,12 +160,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithUnknownInstance() {
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// No local model yet
 		Instance inst = new Instance( "inst" ).status( InstanceStatus.DEPLOYED_STOPPED ).component( new Component( "unknown" ));
@@ -165,19 +177,17 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithUnknownPlugin() {
 
-		Agent agent = new Agent() {
+		this.agent.stop();
+		this.agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return null;
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
 		app.getMySql().getComponent().setInstallerName( "unknown installer" );
@@ -197,13 +207,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testStateChangeWithTransitiveState() {
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent()) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
-
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplication app = new TestApplication();
 		processor.rootInstance = app.getMySqlVm();
 
@@ -224,7 +228,8 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		Agent agent = new Agent() {
+		this.agent.stop();
+		this.agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {
@@ -236,12 +241,9 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -272,7 +274,8 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		Agent agent = new Agent() {
+		this.agent.stop();
+		this.agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {
@@ -284,12 +287,9 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -320,7 +320,8 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		Agent agent = new Agent() {
+		this.agent.stop();
+		this.agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {
@@ -332,12 +333,9 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
@@ -371,7 +369,8 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		// Initialize all the stuff.
 		// The plug-in will fail on "start".
-		Agent agent = new Agent() {
+		this.agent.stop();
+		this.agent = new Agent() {
 			@Override
 			public PluginInterface findPlugin( Instance instance ) {
 				return new PluginMock() {
@@ -383,12 +382,9 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		AgentMessageProcessor processor = new AgentMessageProcessor( agent ) {
-			@Override
-			public IAgentClient getMessagingClient() {
-				return new TestClientAgent();
-			}
-		};
+		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.start();
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));

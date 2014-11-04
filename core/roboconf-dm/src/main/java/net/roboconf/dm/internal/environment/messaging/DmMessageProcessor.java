@@ -27,7 +27,6 @@ import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
@@ -35,7 +34,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
-import net.roboconf.messaging.processors.AbstractMessageProcessorDm;
+import net.roboconf.messaging.processors.AbstractMessageProcessor;
 
 /**
  * This class is in charge of updating the model from messages / notifications.
@@ -45,7 +44,7 @@ import net.roboconf.messaging.processors.AbstractMessageProcessorDm;
  *
  * @author Noël - LIG
  */
-public class DmMessageProcessor extends AbstractMessageProcessorDm {
+public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 	private final Manager manager;
@@ -56,7 +55,7 @@ public class DmMessageProcessor extends AbstractMessageProcessorDm {
 	 * @param manager
 	 */
 	public DmMessageProcessor( Manager manager ) {
-		super( manager.getMessagingFactoryType());
+		super( "Roboconf DM - Message Processor" );
 		this.manager = manager;
 	}
 
@@ -142,8 +141,8 @@ public class DmMessageProcessor extends AbstractMessageProcessorDm {
 			// A heart beat may also say whether the agent receive its model
 			try {
 				if( message.isModelRequired()) {
-					this.logger.info( "The DMis sending its model to agent " + rootInstanceName + "." );
-					getMessagingClient().sendMessageToAgent( app, rootInstance, new MsgCmdSetRootInstance( rootInstance ));
+					this.logger.info( "The DM is sending its model to agent " + rootInstanceName + "." );
+					this.messagingClient.sendMessageToAgent( app, rootInstance, new MsgCmdSetRootInstance( rootInstance ));
 				}
 
 			} catch( IOException e ) {
@@ -212,19 +211,5 @@ public class DmMessageProcessor extends AbstractMessageProcessorDm {
 
 			this.logger.info( "Instance " + instancePath + " was removed from the model." );
 		}
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.processors.AbstractMessageProcessor
-	 * #openConnection(net.roboconf.messaging.client.IClient)
-	 */
-	@Override
-	protected void openConnection( IDmClient newMessagingClient ) throws IOException {
-
-		newMessagingClient.openConnection();
-		for( ManagedApplication ma : this.manager.getAppNameToManagedApplication().values())
-			newMessagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 	}
 }

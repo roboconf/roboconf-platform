@@ -42,6 +42,7 @@ import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
+import net.roboconf.dm.internal.environment.messaging.RCDm;
 import net.roboconf.dm.internal.environment.target.TargetResolver;
 import net.roboconf.dm.internal.management.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.management.CheckerMessagesTask;
@@ -52,13 +53,13 @@ import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -85,11 +86,11 @@ import net.roboconf.target.api.TargetHandler;
  * manager.setMessageServerUsername( "guest" );
  * manager.setMessageServerPassword( "guest" );
  *
- * // Connect to the messaging server
- * manager.update();
- *
  * // Change the way we resolve handlers for deployment targets
  * manager.setTargetResolver( ... );
+ *
+ * // Connect to the messaging server
+ * manager.start();
  * </pre></code>
  *
  * @author Noël - LIG
@@ -109,91 +110,121 @@ public class Manager {
 	private final Map<String,ManagedApplication> appNameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String messagingFactoryType;
-	private IDmClient messagingClient;
+	private RCDm messagingClient;
 
-	DmMessageProcessor messageProcessor;
 	File configurationDirectory;
 	ITargetResolver targetResolver;
 	Timer timer;
-	boolean validConfiguration = false;
 
 
 	/**
 	 * Constructor.
 	 */
 	public Manager() {
-		this( MessagingConstants.FACTORY_RABBIT_MQ );
-	}
-
-
-	/**
-	 * Constructor.
-	 * @param messagingFactoryType the messaging factory type
-	 * @see MessagingConstants
-	 */
-	public Manager( String messagingFactoryType ) {
-		this.messagingFactoryType = messagingFactoryType;
+		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
 		this.targetResolver = new TargetResolver();
 	}
 
 
 	/**
-	 * This method reconfigures the manager when its configuration has changed.
+	 * Starts the manager.
+	 * <p>
+	 * It is invoked by iPojo when an instance becomes VALID.
+	 * </p>
 	 */
-	public void update() {
+	public void start() {
 
-		// If we stopped the manager, create a new processor
-		if( this.messageProcessor == null ) {
-			this.messageProcessor = new DmMessageProcessor( this );
-			this.messageProcessor.start();
+		this.logger.info( "The DM is about to be launched." );
+
+		this.messagingClient = new RCDm( this );
+		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
+		this.messagingClient.associateMessageProcessor( messageProcessor );
+
+		this.timer = new Timer( "Roboconf's Management Timer", true );
+		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, this.messagingClient ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
+
+		reconfigure();
+		this.logger.info( "The DM was launched." );
+	}
+
+
+	/**
+	 * Stops the manager.
+	 * <p>
+	 * It is invoked by iPojo when an instance becomes INVALID.
+	 * </p>
+	 */
+	public void stop() {
+
+		this.logger.info( "The DM is about to be stopped." );
+		if( this.timer != null ) {
+			this.timer.cancel();
+			this.timer =  null;
 		}
+
+		if( this.messagingClient != null ) {
+			this.messagingClient.getMessageProcessor().stopProcessor();
+			this.messagingClient.getMessageProcessor().interrupt();
+			try {
+				this.messagingClient.closeConnection();
+
+			} catch( IOException e ) {
+				this.logger.warning( "The messaging client could not be terminated correctly. " + e.getMessage());
+				this.logger.finest( Utils.writeException( e ));
+			}
+		}
+
+		for( ManagedApplication ma : this.appNameToManagedApplication.values())
+			saveConfiguration( ma );
+
+		this.logger.info( "The DM was stopped." );
+	}
+
+
+	/**
+	 * This method reconfigures the manager.
+	 * <p>
+	 * It is invoked by iPojo when the configuration changes.
+	 * It may be invoked before the start() method is.
+	 * </p>
+	 */
+	public void reconfigure() {
 
 		// Backup the current
 		if( this.timer != null )
 			this.timer.cancel();
 
-		// This is the real configuration
-		IDmClient newMessagingClient = null;
-		try {
-			// Update the configuration directory
-			File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
-			if( Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation )) {
-				this.logger.warning( "Invalid location for the configuration directory (empty or null). Switching to " + defaultConfigurationDirectory );
+		for( ManagedApplication ma : this.appNameToManagedApplication.values())
+			saveConfiguration( ma );
+
+		// Update the configuration directory
+		File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
+		if( Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation )) {
+			this.logger.warning( "Invalid location for the configuration directory (empty or null). Switching to " + defaultConfigurationDirectory );
+			this.configurationDirectory = defaultConfigurationDirectory;
+
+		} else {
+			this.configurationDirectory = new File( this.configurationDirectoryLocation );
+			if( ! this.configurationDirectory.isDirectory()
+					&& ! this.configurationDirectory.mkdirs()) {
+
+				this.logger.warning( "Could not create " + this.configurationDirectory + ". Switching to " + defaultConfigurationDirectory );
 				this.configurationDirectory = defaultConfigurationDirectory;
-
-			} else {
-				this.configurationDirectory = new File( this.configurationDirectoryLocation );
-				if( ! this.configurationDirectory.isDirectory()
-						&& ! this.configurationDirectory.mkdirs()) {
-
-					this.logger.warning( "Could not create " + this.configurationDirectory + ". Switching to " + defaultConfigurationDirectory );
-					this.configurationDirectory = defaultConfigurationDirectory;
-				}
 			}
-
-			// Update the messaging client.
-			// The processor will start using this client on the next message it will have to process.
-			// This class will start using it right now for the actions it has to perform.
-			this.messagingClient = this.messageProcessor.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
-			this.validConfiguration = true;
-
-			// Reset and restore applications.
-			// We ALWAYS do it, because we must also reconfigure the new client with respect
-			// to what we already deployed.
-			restoreApplications();
-
-			// Start the timers
-			this.timer = new Timer( "Roboconf's Management Timer", true );
-			this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, newMessagingClient ), 0, TIMER_PERIOD );
-			this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
-
-			this.logger.info( "The DM was successfully reconfigured." );
-
-		} catch( IOException e ) {
-			this.validConfiguration = false;
-			this.logger.severe( "An error occured while reconfiguring the DM. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
 		}
+
+		// Update the messaging client
+		if( this.messagingClient != null )
+			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
+
+		// Reset and restore applications.
+		// We ALWAYS do it, because we must also reconfigure the new client with respect
+		// to what we already deployed.
+		// FIXME: should we backup the current configuration first?
+		restoreApplications();
+
+		this.logger.info( "The DM was successfully reconfigured." );
 	}
 
 
@@ -203,27 +234,6 @@ public class Manager {
 	 */
 	public void saveConfiguration( ManagedApplication ma ) {
 		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
-	}
-
-
-	/**
-	 * Shutdowns the manager.
-	 */
-	public void shutdown() {
-
-		this.logger.info( "The DM is being shutdown." );
-		if( this.timer != null ) {
-			this.timer.cancel();
-			this.timer =  null;
-		}
-
-		if( this.messageProcessor != null ) {
-			this.messageProcessor.stopProcessor();
-			this.messageProcessor = null;
-		}
-
-		for( ManagedApplication ma : this.appNameToManagedApplication.values())
-			saveConfiguration( ma );
 	}
 
 
@@ -304,8 +314,13 @@ public class Manager {
 	 */
 	public void checkConfiguration() throws IOException {
 
-		if( ! this.validConfiguration ) {
-			String msg = "The manager's configuration is invalid. Please, review its settings.";
+		String msg = null;
+		if( this.messagingClient == null )
+			msg = "The DM was not started.";
+		else if( ! this.messagingClient.hasValidClient())
+			msg = "The DM's configuration is invalid. Please, review the messaging settings.";
+
+		if( msg != null ) {
 			this.logger.warning( msg );
 			throw new IOException( msg );
 		}
@@ -315,7 +330,7 @@ public class Manager {
 	/**
 	 * @return the messagingClient
 	 */
-	public IDmClient getMessagingClient() {
+	public ReconfigurableClientDm getMessagingClient() {
 		return this.messagingClient;
 	}
 
@@ -622,8 +637,7 @@ public class Manager {
 	 * @throws IOException if a problem occurred with the messaging
 	 * @throws TargetException if a problem occurred with a target handler
 	 */
-	public void stopAll( ManagedApplication ma, Instance instance )
-	throws IOException, TargetException {
+	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException, TargetException {
 
 		checkConfiguration();
 		Collection<Instance> initialInstances;

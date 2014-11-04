@@ -32,15 +32,18 @@
 	<packaging>pom</packaging>
 
 	<modules>
+		<!-- An independent module that can be built separately -->
+		<module>core/roboconf-dm-web-administration</module>
+	
 		<!-- Core Modules -->
 		<module>core/roboconf-core</module>
 		<module>core/roboconf-messaging</module>
 		<module>core/roboconf-target-api</module>
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-agent</module>
+		<module>core/roboconf-agent-default</module>
 		
 		<module>core/roboconf-dm</module>
-		<module>core/roboconf-dm-web-administration</module>
 		<module>core/roboconf-dm-rest-commons</module>
 		<module>core/roboconf-dm-rest-services</module>
 		

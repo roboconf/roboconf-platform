@@ -29,7 +29,6 @@ import javax.ws.rs.core.UriBuilder;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.runtime.Application;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
@@ -37,6 +36,8 @@ import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 import net.roboconf.messaging.MessagingConstants;
 
 import org.glassfish.grizzly.http.server.HttpServer;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -54,6 +55,26 @@ public class ServletRegistrationComponentTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+	private Manager manager;
+	private TestApplication app;
+
+
+	@Before
+	public void initializeManager() throws Exception {
+		this.manager = new Manager();
+		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.start();
+
+		this.app = new TestApplication();
+		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+	}
+
+
+	@After
+	public void stopManager() {
+		this.manager.stop();
+	}
 
 
 	@Test
@@ -90,14 +111,8 @@ public class ServletRegistrationComponentTest {
 		// our REST application uses the properties we define.
 		// And, in particular, the JSon serialization that we tailored.
 
-		Application app = new Application( "my-app" );
-		Manager manager = new Manager( MessagingConstants.FACTORY_TEST );
-		manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-		manager.update();
-		manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
-
 		URI uri = UriBuilder.fromUri( "http://localhost/" ).port( 8090 ).build();
-		RestApplication restApp = new RestApplication( manager );
+		RestApplication restApp = new RestApplication( this.manager );
 		HttpServer httpServer = null;
 		String received = null;
 
@@ -112,7 +127,7 @@ public class ServletRegistrationComponentTest {
 				httpServer.stop();
 		}
 
-		String expected = JSonBindingUtils.createObjectMapper().writeValueAsString( Arrays.asList( app ));
+		String expected = JSonBindingUtils.createObjectMapper().writeValueAsString( Arrays.asList( this.app ));
 		Assert.assertEquals( expected, received );
 	}
 
@@ -124,14 +139,8 @@ public class ServletRegistrationComponentTest {
 		// our REST application uses the properties we define.
 		// And, in particular, the JSon serialization that we tailored.
 
-		TestApplication app = new TestApplication();
-		Manager manager = new Manager( MessagingConstants.FACTORY_TEST );
-		manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-		manager.update();
-		manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
-
 		URI uri = UriBuilder.fromUri( "http://localhost/" ).port( 8090 ).build();
-		RestApplication restApp = new RestApplication( manager );
+		RestApplication restApp = new RestApplication( this.manager );
 		HttpServer httpServer = null;
 		String received = null;
 
@@ -139,7 +148,7 @@ public class ServletRegistrationComponentTest {
 			httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
 			Assert.assertTrue( httpServer.isStarted());
 			URI targetUri = UriBuilder.fromUri( uri )
-					.path( UrlConstants.APP ).path( app.getName()).path( "children" )
+					.path( UrlConstants.APP ).path( this.app.getName()).path( "children" )
 					.queryParam( "instance-path", "/tomcat-vm" ).build();
 
 			received = TestUtils.readUriContent( targetUri );
@@ -149,7 +158,7 @@ public class ServletRegistrationComponentTest {
 				httpServer.stop();
 		}
 
-		String expected = JSonBindingUtils.createObjectMapper().writeValueAsString( Arrays.asList( app.getTomcat()));
+		String expected = JSonBindingUtils.createObjectMapper().writeValueAsString( Arrays.asList( this.app.getTomcat()));
 		Assert.assertEquals( expected, received );
 	}
 

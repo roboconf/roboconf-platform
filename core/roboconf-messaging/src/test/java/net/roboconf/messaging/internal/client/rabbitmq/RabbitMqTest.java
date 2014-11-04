@@ -16,18 +16,18 @@
 
 package net.roboconf.messaging.internal.client.rabbitmq;
 
-import java.io.IOException;
 import java.util.List;
 
+import net.roboconf.core.model.runtime.Application;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.AbstractMessagingTest;
 import net.roboconf.messaging.internal.RabbitMqTestUtils;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.processors.AbstractMessageProcessorAgent;
-import net.roboconf.messaging.processors.AbstractMessageProcessorDm;
+import net.roboconf.messaging.processors.AbstractMessageProcessor;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,6 +41,19 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	@BeforeClass
 	public static void checkRabbitMqIsRunning() throws Exception {
 		rabbitMqIsRunning = RabbitMqTestUtils.checkRabbitMqIsRunning();
+	}
+
+
+	@After
+	public void cleanRabbitMq() throws Exception {
+
+		RabbitMqClientDm client = new RabbitMqClientDm();
+		client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
+		client.openConnection();
+		client.deleteMessagingServerArtifacts( new Application( "app" ));
+		client.deleteMessagingServerArtifacts( new Application( "app1" ));
+		client.deleteMessagingServerArtifacts( new Application( "app2" ));
+		client.closeConnection();
 	}
 
 
@@ -88,36 +101,47 @@ public class RabbitMqTest extends AbstractMessagingTest {
 
 
 	@Override
-	protected AbstractMessageProcessorDm createDmProcessor( final List<Message> dmMessages ) {
-		return new AbstractMessageProcessorDm( MessagingConstants.FACTORY_RABBIT_MQ ) {
+	protected AbstractMessageProcessor<IDmClient> createDmProcessor( final List<Message> dmMessages ) {
+		return new AbstractMessageProcessor<IDmClient>( "DM Processor - Test" ) {
 			@Override
 			protected void processMessage( Message message ) {
 				dmMessages.add( message );
-			}
-
-			@Override
-			protected void openConnection( IDmClient newMessagingClient ) throws IOException {
-				newMessagingClient.openConnection();
 			}
 		};
 	}
 
 
 	@Override
-	protected AbstractMessageProcessorAgent createAgentProcessor( final List<Message> agentMessages, final String appName, final String rootName ) {
-		return new AbstractMessageProcessorAgent( MessagingConstants.FACTORY_RABBIT_MQ ) {
+	protected AbstractMessageProcessor<IAgentClient> createAgentProcessor( final List<Message> agentMessages ) {
+		return new AbstractMessageProcessor<IAgentClient>( "Agent Processor - Test" ) {
 			@Override
 			protected void processMessage( Message message ) {
 				agentMessages.add( message );
 			}
-
-			@Override
-			protected void openConnection( IAgentClient newMessagingClient ) throws IOException {
-				newMessagingClient.setApplicationName( appName );
-				newMessagingClient.setRootInstanceName( rootName );
-				newMessagingClient.openConnection();
-			}
-
 		};
+	}
+
+
+	@Override
+	protected String getMessagingIp() {
+		return "localhost";
+	}
+
+
+	@Override
+	protected String getMessagingUsername() {
+		return "guest";
+	}
+
+
+	@Override
+	protected String getMessagingPassword() {
+		return "guest";
+	}
+
+
+	@Override
+	protected String getMessagingFactoryName() {
+		return MessagingConstants.FACTORY_RABBIT_MQ;
 	}
 }

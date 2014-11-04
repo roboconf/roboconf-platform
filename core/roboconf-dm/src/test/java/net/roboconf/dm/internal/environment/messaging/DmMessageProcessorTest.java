@@ -25,14 +25,13 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,25 +42,30 @@ public class DmMessageProcessorTest {
 
 	private TestApplication app;
 	private DmMessageProcessor processor;
-	private TestTargetResolver targetResolver;
 	private Manager manager;
 
 
 	@Before
 	public void resetManager() {
 
-		this.manager = new Manager( MessagingConstants.FACTORY_TEST );
-		this.targetResolver = new TestTargetResolver();
-		this.manager.setTargetResolver( this.targetResolver );
+		this.manager = new Manager();
+		this.manager.setTargetResolver( new TestTargetResolver());
+		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.start();
 
 		this.app = new TestApplication();
 		if( this.processor != null )
 			this.processor.stopProcessor();
 
-		this.processor = new DmMessageProcessor( this.manager );
-
+		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
 		this.manager.getAppNameToManagedApplication().clear();
 		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+	}
+
+
+	@After
+	public void stopManager() {
+		this.manager.stop();
 	}
 
 
@@ -211,35 +215,6 @@ public class DmMessageProcessorTest {
 
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.PROBLEM, this.app.getMySqlVm().getStatus());
-	}
-
-
-	@Test
-	public void testMsgNotifHeartbeat_modelIsRequired() throws Exception {
-
-		this.processor.switchMessagingClient( "", "", "" );
-		this.processor.start();
-		Thread.sleep( 200 );
-
-		TestClientDm client = (TestClientDm) this.processor.getMessagingClient();
-		client.sentMessages.clear();
-
-		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.app.getName(), this.app.getMySqlVm(), "192.168.1.45" );
-
-		// The model is not required => nothing
-		msg.setModelRequired( false );
-		this.processor.processMessage( msg );
-		Assert.assertEquals( 0, client.sentMessages.size());
-
-
-		// The model is required => we send it
-		msg.setModelRequired( true );
-		this.processor.processMessage( msg );
-		Assert.assertEquals( 1, client.sentMessages.size());
-
-		Message sentMessage = client.sentMessages.get( 0 );
-		Assert.assertEquals( MsgCmdSetRootInstance.class, sentMessage.getClass());
-		Assert.assertEquals( this.app.getMySqlVm(), ((MsgCmdSetRootInstance) sentMessage).getRootInstance());
 	}
 
 
