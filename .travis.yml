@@ -3,7 +3,6 @@ language: java
 # Test several JDK
 jdk:
   - oraclejdk7
-  - openjdk6
   - openjdk7
 
 # Make sure there is a RabbitMq server
