@@ -224,7 +224,7 @@ public class Manager {
 		// FIXME: should we backup the current configuration first?
 		restoreApplications();
 
-		this.logger.info( "The DM was successfully reconfigured." );
+		this.logger.info( "The DM was successfully (re)configured." );
 	}
 
 
@@ -773,6 +773,7 @@ public class Manager {
 		}
 
 		checkConfiguration();
+		InstanceStatus initialStatus = rootInstance.getStatus();
 		try {
 			rootInstance.setStatus( InstanceStatus.DEPLOYING );
 			MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( rootInstance );
@@ -791,7 +792,7 @@ public class Manager {
 			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 
-			rootInstance.setStatus( InstanceStatus.NOT_DEPLOYED );
+			rootInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
 				throw (TargetException) e;
 			else if( e instanceof IOException )
@@ -819,6 +820,7 @@ public class Manager {
 		}
 
 		checkConfiguration();
+		InstanceStatus initialStatus = rootInstance.getStatus();
 		try {
 			// Terminate the machine
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
@@ -842,7 +844,7 @@ public class Manager {
 			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
 			this.logger.finest( Utils.writeException( e ));
 
-			rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+			rootInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
 				throw (TargetException) e;
 			else if( e instanceof IOException )

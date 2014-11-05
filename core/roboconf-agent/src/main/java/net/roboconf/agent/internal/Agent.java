@@ -84,12 +84,12 @@ public class Agent {
 		this.messagingClient = new ReconfigurableClientAgent();
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
+		reconfigure();
 
 		TimerTask timerTask = new HeartbeatTask( this );
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
-		this.heartBeatTimer.scheduleAtFixedRate( timerTask, 0, Constants.HEARTBEAT_PERIOD );
+		this.heartBeatTimer.scheduleAtFixedRate( timerTask, Constants.HEARTBEAT_PERIOD, Constants.HEARTBEAT_PERIOD );
 
-		reconfigure();
 		this.logger.info( "Agent '" + getAgentId() + "' was launched." );
 	}
 
@@ -284,11 +284,11 @@ public class Agent {
 		} else {
 			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
 			AgentProperties props = null;
-			if( AgentConstants.PLATFORM_EC2.equals( this.targetId )
-					|| AgentConstants.PLATFORM_OPENSTACK.equals( this.targetId ))
+			if( AgentConstants.PLATFORM_EC2.equalsIgnoreCase( this.targetId )
+					|| AgentConstants.PLATFORM_OPENSTACK.equalsIgnoreCase( this.targetId ))
 				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
 
-			else if( AgentConstants.PLATFORM_AZURE.equals( this.targetId ))
+			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.targetId ))
 				props = UserDataUtils.findParametersForAzure( this.logger );
 
 			else
@@ -314,10 +314,11 @@ public class Agent {
 			this.messagingClient.setApplicationName( this.applicationName );
 			this.messagingClient.setRootInstanceName( this.rootInstanceName );
 			this.messagingClient.setIpAddress( this.ipAddress );
+			this.messagingClient.setNeedsModel( needsModel());
 			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
 		}
 
-		this.logger.info( "The agent configuration was updated..." );
+		this.logger.info( "The agent was successfully (re)configured." );
 	}
 
 

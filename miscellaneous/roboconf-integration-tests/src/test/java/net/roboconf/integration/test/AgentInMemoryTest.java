@@ -28,12 +28,14 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.integration.test.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.rules.TemporaryFolder;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -56,6 +58,7 @@ import org.ops4j.pax.exam.util.Filter;
  */
 @ExamReactorStrategy( PerClass.class )
 public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
+
 	private static final String APP_LOCATION = "my.app.location";
 
 	@Inject
@@ -73,6 +76,8 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		probe.addTest( InMemoryTargetResolver.class );
 		probe.addTest( TestUtils.class );
 		probe.addTest( TemporaryFolder.class );
+		probe.addTest( IntegrationTestsUtils.class );
+		probe.addTest( MyMessageProcessor.class );
 
 		return probe;
 	}
@@ -99,6 +104,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 	@Override
 	public void run() throws Exception {
+		Assume.assumeTrue( IntegrationTestsUtils.rabbitMqIsRunning());
 
 		// Prepare everything
 		configureManagerForInMemoryUsage();
@@ -107,6 +113,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		// Load the application
 		ManagedApplication ma = this.manager.loadNewApplication( new File( appLocation ));
 		Assert.assertNotNull( ma );
+		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
 
 		// There is no agent yet (no root instance was deployed)
 		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
@@ -117,11 +124,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
-
-//		for( ;; )
-//			Thread.sleep( 10000 );
-
-		Thread.sleep( 10000 );
+		Thread.sleep( 3000 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
 		// A new agent must have been created

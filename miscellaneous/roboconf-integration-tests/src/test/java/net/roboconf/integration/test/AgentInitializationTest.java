@@ -28,6 +28,7 @@ import javax.inject.Inject;
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
+import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
@@ -35,12 +36,7 @@ import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.integration.test.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmTest;
 import net.roboconf.plugin.api.PluginException;
@@ -49,6 +45,7 @@ import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.ops4j.pax.exam.Configuration;
@@ -94,17 +91,16 @@ public class AgentInitializationTest extends DmTest {
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
+		probe.addTest( IntegrationTestsUtils.class );
+		probe.addTest( MyMessageProcessor.class );
+
+		// Classes from the agent
 		probe.addTest( Agent.class );
 		probe.addTest( PluginInterface.class );
 		probe.addTest( PluginException.class );
+		probe.addTest( PluginMock.class );
 		probe.addTest( HeartbeatTask.class );
 		probe.addTest( AgentMessageProcessor.class );
-		probe.addTest( MsgCmdSetRootInstance.class );
-		probe.addTest( MsgCmdRemoveInstance.class );
-		probe.addTest( MsgCmdAddInstance.class );
-		probe.addTest( MsgCmdChangeInstanceState.class );
-		probe.addTest( MsgCmdAddImport.class );
-		probe.addTest( MsgCmdRemoveImport.class );
 
 		return probe;
 	}
@@ -131,6 +127,7 @@ public class AgentInitializationTest extends DmTest {
 
 	@Override
 	public void run() throws Exception {
+		Assume.assumeTrue( IntegrationTestsUtils.rabbitMqIsRunning());
 
 		// Update the manager
 		MyTargetResolver myResolver = new MyTargetResolver();
@@ -139,17 +136,11 @@ public class AgentInitializationTest extends DmTest {
 		this.manager.setTargetResolver( myResolver );
 		this.manager.reconfigure();
 
-		// Wait for the manager to be configured.
-		// TODO: the manager should be updated to prevent this kind of workarounds.
-		for( int i=0; i<3; i++ ) {
-			if( this.manager.getMessagingClient() == null )
-				Thread.sleep( 2000 );
-		}
-
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
 		ManagedApplication ma = this.manager.loadNewApplication( new File( appLocation ));
 		Assert.assertNotNull( ma );
+		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
 
 		// There is no agent yet (no root instance was deployed)
 		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
@@ -160,13 +151,13 @@ public class AgentInitializationTest extends DmTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
-		Thread.sleep( 500 );
+		Thread.sleep( 1000 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
 		// A new agent must have been created
 		Assert.assertEquals( 1, myResolver.handler.agentIdToAgent.size());
 		Agent agent = myResolver.handler.agentIdToAgent.values().iterator().next();
-		Thread.sleep( 5000 );
+		Thread.sleep( 1000 );
 		Assert.assertFalse( agent.needsModel());
 
 		// Undeploy

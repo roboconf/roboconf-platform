@@ -33,6 +33,7 @@ import net.roboconf.messaging.processors.AbstractMessageProcessor;
 public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient> implements IAgentClient {
 
 	private String applicationName, rootInstanceName, ipAddress;
+	private boolean needsModel = false;
 
 
 	// Methods inherited from ReconfigurableClient
@@ -62,7 +63,10 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		newMessagingClient.openConnection();
 
 		newMessagingClient.listenToTheDm( ListenerCommand.START );
-		newMessagingClient.sendMessageToTheDm( new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName, this.ipAddress ));
+
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName, this.ipAddress );
+		msg.setModelRequired( this.needsModel );
+		newMessagingClient.sendMessageToTheDm( msg );
 	}
 
 
@@ -162,10 +166,6 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 	// Setter methods
 
-	public void setIpAddress( String ipAddress ) {
-		this.ipAddress = ipAddress;
-	}
-
 	@Override
 	public void setApplicationName( String applicationName ) {
 		this.applicationName = applicationName;
@@ -175,5 +175,15 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 	@Override
 	public void setRootInstanceName( String rootInstanceName ) {
 		this.rootInstanceName = rootInstanceName;
+	}
+
+
+	public void setIpAddress( String ipAddress ) {
+		this.ipAddress = ipAddress;
+	}
+
+
+	public void setNeedsModel( boolean needsModel ) {
+		this.needsModel = needsModel;
 	}
 }

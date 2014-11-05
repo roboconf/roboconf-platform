@@ -100,7 +100,7 @@ public class RabbitMqClientDm implements IDmClient {
 		ConnectionFactory factory = new ConnectionFactory();
 		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
 		this.channel = factory.newConnection().createChannel();
-		this.logger.info( "The DM established a new connection with RabbitMQ. Channel: " + this.channel );
+		this.logger.info( "The DM established a new connection with RabbitMQ. Channel # " + this.channel.getChannelNumber());
 
 		// Be notified when a message does not arrive in a queue (i.e. nobody is listening)
 		this.channel.addReturnListener( new DmReturnListener());
@@ -116,7 +116,7 @@ public class RabbitMqClientDm implements IDmClient {
 
 		StringBuilder sb = new StringBuilder( "The DM is closing its connection to RabbitMQ." );
 		if( this.channel != null )
-			sb.append( " Channel: " + this.channel );
+			sb.append( " Channel # " + this.channel.getChannelNumber());
 
 		this.logger.info( sb.toString());
 		if( isConnected())

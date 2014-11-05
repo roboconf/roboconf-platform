@@ -117,7 +117,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 		ConnectionFactory factory = new ConnectionFactory();
 		RabbitMqUtils.configureFactory( factory, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
 		this.channel = factory.newConnection().createChannel();
-		this.logger.info( "Agent '" + getAgentId() + "' established a new connection with RabbitMQ. Channel: " + this.channel );
+		this.logger.info( "Agent '" + getAgentId() + "' established a new connection with RabbitMQ. Channel # " + this.channel.getChannelNumber());
 
 		// We start listening the queue here
 		// We declare both exchanges.
@@ -159,7 +159,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 		StringBuilder sb = new StringBuilder( "Agent '" + getAgentId());
 		sb.append( "' is closing its connection to RabbitMQ.");
 		if( this.channel != null )
-			sb.append( " Channel: " + this.channel );
+			sb.append( " Channel # " + this.channel.getChannelNumber());
 
 		this.logger.info( sb.toString());
 

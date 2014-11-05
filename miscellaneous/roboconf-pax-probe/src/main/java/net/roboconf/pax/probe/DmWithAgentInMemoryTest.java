@@ -27,7 +27,6 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -107,7 +106,6 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 	 */
 	protected void configureManagerForInMemoryUsage() throws IOException {
 
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.setTargetResolver( new InMemoryTargetResolver( this.inMemoryIaas ));
 		this.manager.reconfigure();
