@@ -1,5 +1,14 @@
 /**
- * Copyright 2014 Linagora, Université Joseph Fourier
+ * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ *
+ * The present code is developed in the scope of their joint LINAGORA -
+ * Université Joseph Fourier - Floralis research program and is designated
+ * as a "Result" pursuant to the terms and conditions of the LINAGORA
+ * - Université Joseph Fourier - Floralis research program. Each copyright
+ * holder of Results enumerated here above fully & independently holds complete
+ * ownership of the complete Intellectual Property rights applicable to the whole
+ * of said Results, and may freely exploit it in any manner which does not infringe
+ * the moral rights of the other copyright holders.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +43,25 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class CheckerMessagesTaskTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 	private Manager manager;
 
 
 	@Before
-	public void resetManager() {
+	public void resetManager() throws Exception {
 		this.manager = new Manager();
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.start();
 	}
