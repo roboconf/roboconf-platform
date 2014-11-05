@@ -141,7 +141,7 @@ public class AgentUtilsTest {
 		fileNameToFileContent.put( "dir1/dir2/f3.txt", "I am file 3".getBytes( "UTF-8" ));
 
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat(), pluginName );
-		Assert.assertTrue( dir.mkdir());
+		Assert.assertTrue( dir.mkdirs());
 		Assert.assertTrue( new File( dir, "dir1" ).createNewFile());
 
 		// Save our resources
