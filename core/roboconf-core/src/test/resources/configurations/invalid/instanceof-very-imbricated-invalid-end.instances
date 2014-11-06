@@ -1,0 +1,10 @@
+instance of wrapper {
+	instance of vm {
+		name: my-vm;
+		instance of server {
+			name: server1;
+		} instance of toto {
+	
+		}
+	}
+	}

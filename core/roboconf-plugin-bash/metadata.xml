@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<component classname="net.roboconf.plugin.bash.internal.PluginBash" name="roboconf-plugin-bash">
+		<provides />
+	</component>
+	
+	<instance component="roboconf-plugin-bash" name="Roboconf Plugin - Bash" />
+</ipojo>

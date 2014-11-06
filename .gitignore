@@ -13,6 +13,9 @@
 /maven-eclipse.xml
 /.settings
 
+# Linux
+*~
+
 #idea
 *.iml
 .idea/

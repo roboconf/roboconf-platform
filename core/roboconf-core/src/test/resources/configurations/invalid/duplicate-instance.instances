@@ -1,0 +1,13 @@
+# Overridden exports
+
+instance of VM {
+	name: VM1;
+	
+	instance of Tomcat {
+		name: tomcat;
+	}
+	
+	instance of Tomcat {
+		name: tomcat;
+	}
+}

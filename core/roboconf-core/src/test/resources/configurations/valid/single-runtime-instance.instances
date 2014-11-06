@@ -1,0 +1,9 @@
+##
+# A single instance, with properties set at runtime.
+##
+
+instance of vm {
+	name: vm 1;	# the VM name
+	instance-data: ip = 127.0.0.1, machine-id = mach-ID, whatever = something different;
+	instance-state: DEPLOYED_STARTED;
+}

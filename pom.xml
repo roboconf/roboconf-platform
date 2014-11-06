@@ -31,35 +31,58 @@
 	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
 
-	<properties>
-		<jersey.stack.version>1.18</jersey.stack.version>
-		<jackson.stack.version>2.3.1</jackson.stack.version>
-	</properties>
-	
 	<modules>
-		<module>roboconf-core</module>
-		<module>roboconf-messaging</module>
+		<!-- An independent module that can be built separately -->
+		<module>core/roboconf-dm-web-administration</module>
+	
+		<!-- Core Modules -->
+		<module>core/roboconf-core</module>
+		<module>core/roboconf-messaging</module>
+		<module>core/roboconf-target-api</module>
+		<module>core/roboconf-plugin-api</module>
+		<module>core/roboconf-agent</module>
+		<module>core/roboconf-agent-default</module>
 		
-		<module>roboconf-iaas-api</module>
-		<module>roboconf-iaas-in-memory</module>
-		<module>roboconf-iaas-embedded</module>
-		<module>roboconf-iaas-azure</module>
-		<module>roboconf-iaas-docker</module>
-		<module>roboconf-iaas-ec2</module>
-		<module>roboconf-iaas-openstack</module>
-		<module>roboconf-iaas-vmware</module>
+		<module>core/roboconf-dm</module>
+		<module>core/roboconf-dm-rest-commons</module>
+		<module>core/roboconf-dm-rest-services</module>
 		
-		<module>roboconf-dm-rest-api</module>
-		<module>roboconf-dm-rest-client</module>
-		<module>roboconf-dm</module>
-		<module>roboconf-dm-webapp</module>
+		<!-- Target Handlers -->
+		<module>core/roboconf-target-in-memory</module>
+		<module>core/roboconf-target-docker</module>
+		<module>core/roboconf-target-embedded</module>
+		<module>core/roboconf-target-iaas-azure</module>
+		<module>core/roboconf-target-iaas-ec2</module>
+		<module>core/roboconf-target-iaas-openstack</module>
+		<module>core/roboconf-target-iaas-vmware</module>
 		
-		<module>roboconf-plugin-api</module>
-		<module>roboconf-plugin-bash</module>
-		<module>roboconf-plugin-puppet</module>
-		<module>roboconf-plugin-logger</module>
-		<module>roboconf-agent</module>
+		<!-- Agent plug-ins -->
+		<module>core/roboconf-plugin-bash</module>
+		<module>core/roboconf-plugin-puppet</module>
+		<module>core/roboconf-plugin-logger</module>
+		
+		<!-- Distributions -->
+		<module>karaf/roboconf-karaf-branding-agent</module>
+		<module>karaf/roboconf-karaf-branding-dm</module>
+		<module>karaf/roboconf-karaf-feature-agent</module>
+		<module>karaf/roboconf-karaf-feature-dm</module>
+		<module>karaf/roboconf-karaf-dist-agent</module>
+		<module>karaf/roboconf-karaf-dist-dm</module>
+		
+		<!-- Testing & Utilities -->
+		<module>miscellaneous/roboconf-dm-rest-client</module>
+		<module>miscellaneous/roboconf-pax-probe</module>
+		<module>miscellaneous/roboconf-integration-tests</module>
 	</modules>
+
+
+	<!-- Properties and other things... -->
+	<properties>
+		<jersey.stack.version>1.18.1</jersey.stack.version>
+		<jackson.stack.version>2.3.1</jackson.stack.version>
+		<karaf.version>3.0.2</karaf.version>
+		<ipojo.version>1.12.0</ipojo.version>
+	</properties>
 	
 	<dependencyManagement>
 		<dependencies>
@@ -105,9 +128,47 @@
 		<pluginManagement>
 			<plugins>
 				<plugin>
+					<groupId>org.apache.karaf.tooling</groupId>
+					<artifactId>karaf-maven-plugin</artifactId>
+					<version>${karaf.version}</version>
+					<extensions>true</extensions>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-antrun-plugin</artifactId>
+					<version>1.7</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.karaf.tooling</groupId>
+					<artifactId>features-maven-plugin</artifactId>
+					<version>2.3.5</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.felix</groupId>
+					<artifactId>maven-ipojo-plugin</artifactId>
+					<version>${ipojo.version}</version>
+				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>2.6</version>	
+				</plugin>
+				
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>build-helper-maven-plugin</artifactId>
+					<version>1.9</version>	
+				</plugin>
+			
+				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-bundle-plugin</artifactId>
 					<version>2.4.0</version>
+					<extensions>true</extensions>
 				</plugin>
 			
 				<!-- Required for Coveralls! -->

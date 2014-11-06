@@ -1,0 +1,10 @@
+VM {
+    alias: VM;
+    installer: target;
+    children: A, B, C;
+}
+
+A {
+    alias: A;
+    installer: puppet;
+}

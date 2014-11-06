@@ -1,0 +1,8 @@
+instance of wrapper {
+	instance of vm {
+		name: my-vm;
+		instance of server { failed comment
+			name: server1;
+		}
+	}
+}

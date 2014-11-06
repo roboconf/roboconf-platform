@@ -1,0 +1,19 @@
+# Imbricated instances
+
+instance of vm {
+	name: vm1;	# the VM name
+	
+	instance of server {
+		name: server;
+		port: 9878;
+	}
+}
+
+instance of vm {
+	name: vm2;	# the VM name
+	
+	instance of server {
+		name: server;
+		port: 9878;
+	}
+}

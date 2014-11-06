@@ -1,0 +1,33 @@
+# 1st set of instances
+instance of VM {
+	name: i-vm-1;
+
+	instance of Tomcat {
+		name: i-tomcat;
+		Tomcat.port: 9004;
+
+		instance of WAR {
+			name: i-war;
+		}
+	}
+}
+
+# 2nd set of instances
+instance of VM {
+	name: i-vm-2;
+}
+
+# 3rd set of instances
+instance of VM {
+	name: i-vm-;
+
+	instance of Tomcat {
+		name: i-tomcat-;
+		Tomcat.port: 9004;
+		count: 1020;	# useless, but this is for tests
+
+		instance of WAR {
+			name: i-war;
+		}
+	}
+}

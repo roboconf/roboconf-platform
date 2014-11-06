@@ -1,0 +1,13 @@
+##
+# A single instance, with several properties
+##
+
+instance of vm {
+	name: vm1;	# the VM name
+	
+	# It should not have any overridden property, but hey, it's a test!
+	ip: 38.195.27.3;
+	
+	# Let's give it a channel
+	channel: demo;
+}

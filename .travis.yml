@@ -3,16 +3,16 @@ language: java
 # Test several JDK
 jdk:
   - oraclejdk7
-  - openjdk6
   - openjdk7
 
 # Make sure there is a RabbitMq server
 services:
   - rabbitmq
 
-# Install Puppet to test the Puppet plugin
-# Travis uses Ubuntu 12.04 LTS, which has some problems with Puppet.
+# Install Puppet to test the Puppet plugin.
+# Do not use "sudo gem install", it alters the system path.
 before_script:
+  - sudo apt-get update -y
   - sudo apt-get install rubygems
   - gem install puppet
 

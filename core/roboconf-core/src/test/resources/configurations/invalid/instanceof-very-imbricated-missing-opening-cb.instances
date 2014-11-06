@@ -1,0 +1,9 @@
+instance of wrapper {
+	instance of vm {
+		name: my-vm;
+		
+		instance of
+			name: server1;
+		}
+	}
+}

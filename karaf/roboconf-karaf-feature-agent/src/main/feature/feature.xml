@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features 
+		name="roboconf-agent-karaf-${project.version}"
+		xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
+
+	<!-- Specify where to find the iPojo feature -->
+	<repository>mvn:org.apache.felix/org.apache.felix.ipojo.features/${ipojo.version}/xml</repository>
+
+	<!-- The feature associated with the agent -->
+    <feature name="roboconf-agent" version="${project.version}" description="The Karaf feature for Roboconf's agent">
+    	<feature>ipojo-all</feature>
+    	
+        <bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-messaging/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-agent/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-agent-default/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-api/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-bash/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-logger/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-puppet/${project.version}</bundle>
+    </feature>
+</features>
