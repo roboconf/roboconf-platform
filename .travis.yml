@@ -12,6 +12,7 @@ services:
 # Install Puppet to test the Puppet plugin.
 # Do not use "sudo gem install", it alters the system path.
 before_script:
+  - sudo apt-get update -y
   - sudo apt-get install rubygems
   - gem install puppet
 
