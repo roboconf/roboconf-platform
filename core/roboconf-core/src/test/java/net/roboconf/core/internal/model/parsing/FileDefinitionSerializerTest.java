@@ -1,7 +1,7 @@
 /**
  * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
  *
- * The present code is developed in the scope of their joint LINAGORA -
+ * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
  * as a "Result" pursuant to the terms and conditions of the LINAGORA
  * - Université Joseph Fourier - Floralis research program. Each copyright
