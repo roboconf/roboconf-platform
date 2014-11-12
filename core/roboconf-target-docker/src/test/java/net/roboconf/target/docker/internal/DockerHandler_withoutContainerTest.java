@@ -47,6 +47,6 @@ public class DockerHandler_withoutContainerTest {
 	public void testInvalidConfiguration() throws Exception {
 
 		DockerHandler target = new DockerHandler();
-		target.setTargetProperties( new HashMap<String,String> ());
+		target.createDockerClient( new HashMap<String,String> ());
 	}
 }

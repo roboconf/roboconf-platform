@@ -40,21 +40,12 @@ public interface TargetHandler {
 
 
 	/**
-	 * Sets all the properties that will be used when instantiating machines.
-	 * <p>
-	 * Examples: access key, secret key, ami, ssh key, etc.
-	 * </p>
-	 * @param targetProperties the target properties (not null)
-	 */
-	void setTargetProperties( Map<String,String> targetProperties ) throws TargetException;
-
-
-	/**
 	 * Creates or configures a machine.
 	 * <p>
 	 * The machine must have a Roboconf agent installed on it.
 	 * </p>
 	 *
+	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
 	 * @param messagingIp the IP of the messaging server
 	 * @param messagingUsername the user name to connect to the messaging server
 	 * @param messagingPassword the password to connect to the messaging server
@@ -64,18 +55,20 @@ public interface TargetHandler {
 	 * @throws TargetException
 	 */
 	String createOrConfigureMachine(
+			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
 			String rootInstanceName,
-			String applicationName)
+			String applicationName )
 	throws TargetException;
 
 
 	/**
 	 * Asks for the termination of the machine identified by its id.
-	 * @param machineId the machine ID
+	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param machineId the ID machine of the machine to terminate
 	 * @throws TargetException
 	 */
-	void terminateMachine( String machineId ) throws TargetException;
+	void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException;
 }

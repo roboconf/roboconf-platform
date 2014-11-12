@@ -41,16 +41,13 @@ public class EmbeddedHandlerTest {
 
 		EmbeddedHandler target = new EmbeddedHandler();
 		Assert.assertEquals( EmbeddedHandler.TARGET_ID, target.getTargetId());
-		target.terminateMachine( null );
-		target.terminateMachine( "anything" );
+		target.terminateMachine( null, null );
+		target.terminateMachine( new HashMap<String,String>(), "anything" );
 
-		Assert.assertNotNull( target.createOrConfigureMachine( "ip", "user", "pwd", "nothing", "app" ));
-		Assert.assertNotNull( target.createOrConfigureMachine( null, null, null, null, null ));
+		Assert.assertNotNull( target.createOrConfigureMachine( null, "ip", "user", "pwd", "nothing", "app" ));
+		Assert.assertNotNull( target.createOrConfigureMachine( new HashMap<String,String>(), null, null, null, null, null ));
 
-		target.setTargetProperties( null );
-		target.setTargetProperties( new HashMap<String,String>( 0 ));
-
-		target.terminateMachine( null );
-		target.terminateMachine( "anything" );
+		target.terminateMachine( new HashMap<String,String>(), null );
+		target.terminateMachine( null, "anything" );
 	}
 }

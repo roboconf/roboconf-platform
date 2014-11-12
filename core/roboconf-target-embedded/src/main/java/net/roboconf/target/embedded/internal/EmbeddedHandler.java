@@ -51,21 +51,13 @@ public class EmbeddedHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#setTargetProperties(java.util.Map)
-	 */
-	@Override
-	public void setTargetProperties( Map<String,String> targetProperties ) {
-		// nothing
-	}
-
-
-	/*
-	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createOrConfigureMachine(java.util.Map, java.lang.String, java.lang.String,
+	 * java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createOrConfigureMachine(
+		Map<String, String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
@@ -80,10 +72,10 @@ public class EmbeddedHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.lang.String)
+	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( String instanceId ) throws TargetException {
+	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
 		// TBD shutdown script ?
 	}
 }

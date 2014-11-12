@@ -26,6 +26,7 @@
 package net.roboconf.target.vmware.internal;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -58,13 +59,7 @@ import com.vmware.vim25.mo.VirtualMachine;
 public class VmwareIaasHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "iaas-vmware";
-
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private ServiceInstance vmwareServiceInstance;
-	private ComputeResource vmwareComputeResource;
-	private String vmwareDataCenter;
-	private String machineImageId;
-	private  Map<String, String> targetProperties;
 
 
 	/*
@@ -79,39 +74,13 @@ public class VmwareIaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#setTargetProperties(java.util.Map)
-	 */
-	@Override
-	public void setTargetProperties(Map<String, String> targetProperties) throws TargetException {
-
-		this.targetProperties = targetProperties;
-		this.machineImageId = targetProperties.get("vmware.template");
-		this.vmwareDataCenter = targetProperties.get("vmware.datacenter");
-
-		try {
-			this.vmwareServiceInstance = new ServiceInstance(
-					new URL(targetProperties.get("vmware.url")),
-					targetProperties.get("vmware.user"),
-					targetProperties.get("vmware.password"),
-					Boolean.parseBoolean(targetProperties.get("vmware.ignorecert")));
-
-			this.vmwareComputeResource = (ComputeResource)(
-					new InventoryNavigator( this.vmwareServiceInstance.getRootFolder())
-					.searchManagedEntity("ComputeResource", targetProperties.get("vmware.cluster")));
-
-		} catch(Exception e) {
-			throw new TargetException(e);
-		}
-	}
-
-
-	/*
-	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createOrConfigureMachine(java.util.Map, java.lang.String, java.lang.String,
+	 * java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createOrConfigureMachine(
+			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
@@ -120,16 +89,27 @@ public class VmwareIaasHandler implements TargetHandler {
 	throws TargetException {
 
 		try {
+			final String machineImageId = targetProperties.get("vmware.template");
+			final ServiceInstance vmwareServiceInstance = new ServiceInstance(
+					new URL(targetProperties.get("vmware.url")),
+					targetProperties.get("vmware.user"),
+					targetProperties.get("vmware.password"),
+					Boolean.parseBoolean(targetProperties.get("vmware.ignorecert")));
+
+			final ComputeResource vmwareComputeResource = (ComputeResource)(
+					new InventoryNavigator( vmwareServiceInstance.getRootFolder())
+					.searchManagedEntity("ComputeResource", targetProperties.get("vmware.cluster")));
+
 			// Generate the user data first, so that nothing has been done on the IaaS if it fails
 			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineImageId );
+			String vmwareDataCenter = targetProperties.get("vmware.datacenter");
+			Folder vmFolder =
+					((Datacenter)(new InventoryNavigator( vmwareServiceInstance.getRootFolder())
+					.searchManagedEntity("Datacenter", vmwareDataCenter)))
+					.getVmFolder();
 
-			//String instanceId = null;
-			VirtualMachine vm = getVirtualMachine(this.machineImageId);
-			//Folder vmFolder = this.vmwareServiceInstance.getRootFolder();
-			Folder vmFolder = ((Datacenter)(new InventoryNavigator(this.vmwareServiceInstance.getRootFolder())
-				.searchManagedEntity("Datacenter", this.vmwareDataCenter))).getVmFolder();
-
-			this.logger.fine("machineImageId=" + this.machineImageId);
+			this.logger.fine("machineImageId=" + machineImageId);
 			if (vm == null || vmFolder == null)
 				throw new TargetException("VirtualMachine (= " + vm + " ) or Datacenter path (= " + vmFolder + " ) is NOT correct. Pls double check.");
 
@@ -140,20 +120,18 @@ public class VmwareIaasHandler implements TargetHandler {
 
 			VirtualMachineConfigSpec vmSpec = new VirtualMachineConfigSpec();
 			vmSpec.setAnnotation( userData );
-
 			cloneSpec.setConfig(vmSpec);
 
 			Task task = vm.cloneVM_Task( vmFolder, rootInstanceName, cloneSpec );
-			this.logger.fine("Cloning the template: "+this.machineImageId+" ...");
+			this.logger.fine("Cloning the template: "+ machineImageId +" ...");
 			String status = task.waitForTask();
 			if (!status.equals(Task.SUCCESS))
 				throw new TargetException("Failure: Virtual Machine cannot be cloned");
 
-			VirtualMachine vm2 = getVirtualMachine( rootInstanceName );
+			VirtualMachine vm2 = getVirtualMachine( vmwareServiceInstance, rootInstanceName );
 			this.logger.fine("Transforming the clone template to Virtual machine ...");
-			vm2.markAsVirtualMachine(this.vmwareComputeResource.getResourcePool(), null);
+			vm2.markAsVirtualMachine( vmwareComputeResource.getResourcePool(), null);
 
-			// host=null means IaaS-managed choice
 			DynamicProperty dprop = new DynamicProperty();
 			dprop.setName("guestinfo.userdata");
 			dprop.setVal(userData);
@@ -166,13 +144,13 @@ public class VmwareIaasHandler implements TargetHandler {
 				throw new TargetException("Failure -: Virtual Machine cannot be started");
 
 			// VMWare tools not yet started (!)
+			// FIXME (VZ): how great!
 			Thread.sleep( 20000 );
 
-			GuestOperationsManager gom = this.vmwareServiceInstance.getGuestOperationsManager();
-			//GuestAuthManager gam = gom.getAuthManager(vm2);
+			GuestOperationsManager gom = vmwareServiceInstance.getGuestOperationsManager();
 		    NamePasswordAuthentication npa = new NamePasswordAuthentication();
-		    npa.username = this.targetProperties.get("vmware.vmuser");
-		    npa.password = this.targetProperties.get("vmware.vmpassword");
+		    npa.username = targetProperties.get("vmware.vmuser");
+		    npa.password = targetProperties.get("vmware.vmpassword");
 		    GuestProgramSpec spec = new GuestProgramSpec();
 
 		    spec.programPath = "/bin/echo";
@@ -184,7 +162,6 @@ public class VmwareIaasHandler implements TargetHandler {
 		    this.logger.fine("pid: " + pid);
 
 			return vm2.getName();
-			//return instanceId;
 
 		} catch(RemoteException e) {
 			throw new TargetException(e);
@@ -201,41 +178,51 @@ public class VmwareIaasHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.lang.String)
+	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( String instanceId ) throws TargetException {
+	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
+
 		try {
-			VirtualMachine vm = getVirtualMachine(instanceId);
-			if (vm == null) {
+			final ServiceInstance vmwareServiceInstance = new ServiceInstance(
+					new URL(targetProperties.get("vmware.url")),
+					targetProperties.get("vmware.user"),
+					targetProperties.get("vmware.password"),
+					Boolean.parseBoolean(targetProperties.get("vmware.ignorecert")));
+
+			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, instanceId );
+			if (vm == null)
 				throw new TargetException("error vm: "+instanceId+" not found");
-			}
 
 			Task task = vm.powerOffVM_Task();
 			try {
-				if(!(task.waitForTask()).equals(Task.SUCCESS)) {
+				if(!(task.waitForTask()).equals(Task.SUCCESS))
 					throw new TargetException("error when trying to stop vm: "+instanceId);
-				}
+
 			} catch (InterruptedException ignore) { /*ignore*/ }
 
 			task = vm.destroy_Task();
 			try {
-				if(!(task.waitForTask()).equals(Task.SUCCESS)) {
+				if(!(task.waitForTask()).equals(Task.SUCCESS))
 					throw new TargetException("error when trying to remove vm: "+instanceId);
-				}
+
 			} catch (InterruptedException ignore) { /*ignore*/ }
 
-		} catch(RemoteException e) {
+		} catch( RemoteException e ) {
+			throw new TargetException(e);
+
+		} catch( MalformedURLException e ) {
 			throw new TargetException(e);
 		}
 	}
 
 
-	private VirtualMachine getVirtualMachine(String virtualmachineName) throws RemoteException {
+	private VirtualMachine getVirtualMachine( ServiceInstance vmwareServiceInstance , String virtualmachineName )
+	throws RemoteException {
 
 		VirtualMachine result = null;
 		if( ! Utils.isEmptyOrWhitespaces( virtualmachineName )) {
-			Folder rootFolder = this.vmwareServiceInstance.getRootFolder();
+			Folder rootFolder = vmwareServiceInstance.getRootFolder();
 			result = (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine", virtualmachineName);
 		}
 

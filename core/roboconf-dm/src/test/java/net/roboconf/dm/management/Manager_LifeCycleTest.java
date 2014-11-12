@@ -319,7 +319,7 @@ public class Manager_LifeCycleTest {
 
 		TestTargetResolver newResolver = new TestTargetResolver() {
 			@Override
-			public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+			public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
 			throws TargetException {
 				throw new TargetException( "For test purpose!" );
 			}
@@ -456,7 +456,7 @@ public class Manager_LifeCycleTest {
 
 		TestTargetResolver newResolver = new TestTargetResolver() {
 			@Override
-			public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+			public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
 			throws TargetException {
 				throw new TargetException( "For test purpose!" );
 			}

@@ -45,7 +45,7 @@
 	
 	<properties>
 		<!-- Use version 3.2.2-SNAPSHOT for network configuration -->
-		<openstack.version>3.2.1</openstack.version>
+		<openstack.version>3.2.2-SNAPSHOT</openstack.version>
 	</properties>
 	
 	<dependencies>
@@ -115,6 +115,9 @@
 					<instructions>
 						<Import-Package>
 							net.roboconf.*;version="${project.version}",
+							javax.*,
+							org.xml.*,
+							org.w3c.*
 						</Import-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

@@ -25,10 +25,7 @@
 
 package net.roboconf.target.openstack.internal;
 
-import java.util.HashMap;
-
 import junit.framework.Assert;
-import net.roboconf.target.api.TargetException;
 
 import org.junit.Test;
 
@@ -37,23 +34,23 @@ import org.junit.Test;
  */
 public class OpenstackIaasHandlerTest {
 
-	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_1() throws Exception {
-
-		OpenstackIaasHandler target = new OpenstackIaasHandler();
-		target.setTargetProperties( new HashMap<String, String>());
-	}
-
-
-	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_2() throws Exception {
-
-		OpenstackIaasHandler target = new OpenstackIaasHandler();
-		HashMap<String, String> targetProperties = new HashMap<String, String>();
-		targetProperties.put("ipMessagingServer", "127.0.0.1" );
-
-		target.setTargetProperties( targetProperties );
-	}
+//	@Test( expected = TargetException.class )
+//	public void testInvalidConfiguration_1() throws Exception {
+//
+//		OpenstackIaasHandler target = new OpenstackIaasHandler();
+//		target.setTargetProperties( new HashMap<String, String>());
+//	}
+//
+//
+//	@Test( expected = TargetException.class )
+//	public void testInvalidConfiguration_2() throws Exception {
+//
+//		OpenstackIaasHandler target = new OpenstackIaasHandler();
+//		HashMap<String, String> targetProperties = new HashMap<String, String>();
+//		targetProperties.put("ipMessagingServer", "127.0.0.1" );
+//
+//		target.setTargetProperties( targetProperties );
+//	}
 
 
 	@Test

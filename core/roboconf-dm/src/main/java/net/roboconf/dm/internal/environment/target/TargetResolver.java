@@ -50,28 +50,27 @@ public class TargetResolver implements ITargetResolver {
 	 * #findTargetHandler(java.util.List, net.roboconf.dm.management.ManagedApplication, net.roboconf.core.model.runtime.Instance)
 	 */
 	@Override
-	public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
 	throws TargetException {
 
 		TargetHandler targetHandler;
+		Map<String,String> targetProperties;
 		try {
 			String installerName = instance.getComponent().getInstallerName();
 			if( ! Constants.TARGET_INSTALLER.equalsIgnoreCase( installerName ))
 				throw new TargetException( "Unsupported installer name: " + installerName );
 
-			Map<String,String> props = TargetHelpers.loadTargetProperties( ma.getApplicationFilesDirectory(), instance );
-			String targetId = props.get( TARGET_ID );
+			targetProperties = TargetHelpers.loadTargetProperties( ma.getApplicationFilesDirectory(), instance );
+			String targetId = targetProperties.get( TARGET_ID );
 			targetHandler = findTargetHandler( target, targetId );
 			if( targetHandler == null )
 				throw new TargetException( "No deployment handler was found for " + instance.getName() + "." );
-
-			targetHandler.setTargetProperties( props );
 
 		} catch( IOException e ) {
 			throw new TargetException( e );
 		}
 
-		return targetHandler;
+		return new Target( targetHandler, targetProperties );
 	}
 
 
