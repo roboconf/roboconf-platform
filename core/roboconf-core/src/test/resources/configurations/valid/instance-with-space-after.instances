@@ -1,0 +1,11 @@
+instance of VM {
+    name: VM ;
+    count: 2;
+
+	# Add spaces here and there.
+	# Component names are trimmed.
+    instance of     A    {
+    	# The instance name is preserved, no matter what.
+        name: A ;
+    }   
+}

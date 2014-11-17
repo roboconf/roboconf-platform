@@ -171,6 +171,37 @@ public class FromInstanceDefinitionTest {
 
 
 	@Test
+	public void testComponentResolutionWhenSurroundingSpaces() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).alias( "a VM" ).installerName( "target" );
+		Component aComponent = new Component( "A" ).alias( "App Server" ).installerName( "whatever" );
+
+		ComponentHelpers.insertChild( vmComponent, aComponent );
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		File f = TestUtils.findTestFile( "/configurations/valid/instance-with-space-after.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+
+		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Assert.assertFalse( iterator.hasNext());
+
+		Assert.assertEquals( 2, rootInstances.size());
+		for( Instance rootInstance : rootInstances ) {
+			Assert.assertEquals( 1, rootInstance.getChildren().size());
+			Instance instance = rootInstance.getChildren().iterator().next();
+
+			Assert.assertEquals( "A", instance.getComponent().getName());
+			Assert.assertEquals( "A ", instance.getName());
+		}
+	}
+
+
+	@Test
 	public void testComplexInstances() throws Exception {
 
 		// The graph
