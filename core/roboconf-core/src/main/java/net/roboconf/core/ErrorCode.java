@@ -114,6 +114,7 @@ public enum ErrorCode {
 	RM_EMPTY_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component's installer name is mandatory." ),
 	RM_INVALID_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid installer name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_COMPONENT_IMPORTS_EXPORTS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component imports a variable it exports (the import should be marked as optional)." ),
+	RM_ROOT_INSTALLER_MUST_BE_TARGET( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The installer name for root components must be called 'target'." ),
 
 	RM_INVALID_EXPORT_PREFIX( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An exported variable must be prefixed by the component name or by a facet name." ),
 	RM_INVALID_EXPORT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An exported variable cannot be empty." ),
