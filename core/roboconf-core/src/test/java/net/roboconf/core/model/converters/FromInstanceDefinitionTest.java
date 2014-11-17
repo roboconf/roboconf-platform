@@ -146,6 +146,31 @@ public class FromInstanceDefinitionTest {
 
 
 	@Test
+	public void testInexistingComponent() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).alias( "a VM" ).installerName( "target" );
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "App Server" ).installerName( "puppet" );
+		tomcatComponent.getExportedVariables().put( "tomcat.ip", null );
+		tomcatComponent.getExportedVariables().put( "tomcat.port", "8080" );
+
+		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/inexisting-component.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		fromDef.buildInstances( graphs );
+
+		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_COMPONENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
 	public void testComplexInstances() throws Exception {
 
 		// The graph
