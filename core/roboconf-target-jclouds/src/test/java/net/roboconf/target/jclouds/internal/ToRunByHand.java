@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.openstack.internal;
+package net.roboconf.target.jclouds.internal;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,7 +39,7 @@ import net.roboconf.core.utils.Utils;
  */
 public class ToRunByHand {
 
-	private static final String PROPS_LOCATION = "/home/vzurczak/Bureau/target.properties";
+	private static final String PROPS_LOCATION = "/home/vzurczak/Bureau/jclouds.properties";
 	private static final String MSG_IP = "whatever";
 	private static final String MSG_USER = "roboconf";
 	private static final String MSG_PWD = "roboconf";
@@ -69,7 +69,7 @@ public class ToRunByHand {
 		for( Map.Entry<Object,Object> entry : p.entrySet())
 			conf.put( entry.getKey().toString(), entry.getValue().toString());
 
-		OpenstackIaasHandler target = new OpenstackIaasHandler();
+		JCloudsHandler target = new JCloudsHandler();
 		String serverId = null;
 		try {
 			serverId = target.createOrConfigureMachine( conf, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );

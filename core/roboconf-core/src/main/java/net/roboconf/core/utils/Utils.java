@@ -25,6 +25,7 @@
 
 package net.roboconf.core.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -224,6 +225,19 @@ public final class Utils {
 		InputStream is = new FileInputStream( inputFile );
 		copyStream( is, os );
 		is.close();
+	}
+
+
+	/**
+	 * Writes a string into a file.
+	 *
+	 * @param s the string to write
+	 * @param outputFile the file to write into
+	 * @throws IOException if something went wrong
+	 */
+	public static void writeStringInto( String s, File outputFile ) throws IOException {
+		InputStream in = new ByteArrayInputStream( s.getBytes( "UTF-8" ));
+		copyStream( in, outputFile );
 	}
 
 

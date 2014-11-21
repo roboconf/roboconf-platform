@@ -25,7 +25,12 @@
 
 package net.roboconf.target.openstack.internal;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import junit.framework.Assert;
+import net.roboconf.target.api.TargetException;
 
 import org.junit.Test;
 
@@ -34,27 +39,70 @@ import org.junit.Test;
  */
 public class OpenstackIaasHandlerTest {
 
-//	@Test( expected = TargetException.class )
-//	public void testInvalidConfiguration_1() throws Exception {
-//
-//		OpenstackIaasHandler target = new OpenstackIaasHandler();
-//		target.setTargetProperties( new HashMap<String, String>());
-//	}
-//
-//
-//	@Test( expected = TargetException.class )
-//	public void testInvalidConfiguration_2() throws Exception {
-//
-//		OpenstackIaasHandler target = new OpenstackIaasHandler();
-//		HashMap<String, String> targetProperties = new HashMap<String, String>();
-//		targetProperties.put("ipMessagingServer", "127.0.0.1" );
-//
-//		target.setTargetProperties( targetProperties );
-//	}
-
-
 	@Test
 	public void testGetTargetId() {
 		Assert.assertEquals( OpenstackIaasHandler.TARGET_ID, new OpenstackIaasHandler().getTargetId());
+	}
+
+
+	@Test
+	public void testValidate() throws Exception {
+
+		Map<String,String> targetProperties = new HashMap<String,String> ();
+		targetProperties.put( OpenstackIaasHandler.FLAVOR_NAME, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.TENANT_NAME, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.IMAGE_NAME, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.SECURITY_GROUP, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.USER, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.PASSWORD, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.KEY_PAIR, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.NOVA_URL, UUID.randomUUID().toString());
+		OpenstackIaasHandler.validate( targetProperties );
+
+		targetProperties.put( OpenstackIaasHandler.FLOATING_IP_POOL, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.NETWORK_ID, UUID.randomUUID().toString());
+		OpenstackIaasHandler.validate( targetProperties );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testValidate_error1() throws Exception {
+
+		// Tenant name is missing
+		Map<String,String> targetProperties = new HashMap<String,String> ();
+		targetProperties.put( OpenstackIaasHandler.FLAVOR_NAME, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.IMAGE_NAME, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.SECURITY_GROUP, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.USER, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.PASSWORD, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.KEY_PAIR, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.NOVA_URL, UUID.randomUUID().toString());
+		OpenstackIaasHandler.validate( targetProperties );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testValidate_error2() throws Exception {
+
+		OpenstackIaasHandler.validate( new HashMap<String,String>( 0 ));
+	}
+
+
+	@Test
+	public void testIdentity() {
+
+		Map<String,String> targetProperties = new HashMap<String,String> ();
+		targetProperties.put( OpenstackIaasHandler.TENANT_NAME, "tenant" );
+		targetProperties.put( OpenstackIaasHandler.USER, "me" );
+		Assert.assertEquals( "tenant:me", OpenstackIaasHandler.identity( targetProperties ));
+
+		targetProperties.remove( OpenstackIaasHandler.USER );
+		Assert.assertEquals( "tenant:null", OpenstackIaasHandler.identity( targetProperties ));
+
+		targetProperties.remove( OpenstackIaasHandler.TENANT_NAME );
+		Assert.assertEquals( "null:null", OpenstackIaasHandler.identity( targetProperties ));
+
+		targetProperties.put( OpenstackIaasHandler.USER, "me" );
+		Assert.assertEquals( "null:me", OpenstackIaasHandler.identity( targetProperties ));
 	}
 }

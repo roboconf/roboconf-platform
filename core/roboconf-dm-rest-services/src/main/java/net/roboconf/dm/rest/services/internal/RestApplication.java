@@ -31,7 +31,9 @@ import java.util.Set;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.cors.ResponseCorsFilter;
 import net.roboconf.dm.rest.services.internal.resources.ApplicationResource;
+import net.roboconf.dm.rest.services.internal.resources.DebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
+import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.dm.rest.services.internal.resources.ManagementResource;
 
@@ -45,6 +47,7 @@ public class RestApplication extends DefaultResourceConfig {
 
 	private final IApplicationResource applicationResource;
 	private final IManagementResource managementResource;
+	private final IDebugResource debugResource;
 
 
 	/**
@@ -55,6 +58,7 @@ public class RestApplication extends DefaultResourceConfig {
 		super();
 		this.applicationResource = new ApplicationResource( manager );
 		this.managementResource = new ManagementResource( manager );
+		this.debugResource = new DebugResource( manager );
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
@@ -80,6 +84,7 @@ public class RestApplication extends DefaultResourceConfig {
 		HashSet<Object> set = new HashSet<Object> ();
 		set.add( this.applicationResource );
 		set.add( this.managementResource );
+		set.add( this.debugResource );
 
 		return set;
 	}

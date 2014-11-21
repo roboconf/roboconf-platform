@@ -53,16 +53,9 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 @Path( IManagementResource.PATH )
 public class ManagementResource implements IManagementResource {
 
-	private final Logger logger = Logger.getLogger( ManagementResource.class.getName());
-	private Manager manager;
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Manager manager;
 
-
-	/**
-	 * Constructor.
-	 */
-	public ManagementResource() {
-		// nothing
-	}
 
 
 	/**
@@ -70,14 +63,6 @@ public class ManagementResource implements IManagementResource {
 	 * @param manager
 	 */
 	public ManagementResource( Manager manager ) {
-		this.manager = manager;
-	}
-
-
-	/**
-	 * @param manager the manager to set
-	 */
-	public void setManager( Manager manager ) {
 		this.manager = manager;
 	}
 

@@ -23,14 +23,45 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.core.model;
+
+import java.io.File;
+import java.util.UUID;
+
+import junit.framework.Assert;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public class ApplicationDescriptorTest {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
+
+	@Test
+	public void testSaveAndLoad() throws Exception {
+
+		File f = this.folder.newFile();
+
+		ApplicationDescriptor desc1 = new ApplicationDescriptor();
+		desc1.setDescription( UUID.randomUUID().toString());
+		desc1.setName( UUID.randomUUID().toString());
+		desc1.setQualifier( UUID.randomUUID().toString());
+		desc1.setGraphEntryPoint( UUID.randomUUID().toString());
+		desc1.setInstanceEntryPoint( UUID.randomUUID().toString());
+
+		ApplicationDescriptor.save( f, desc1 );
+		ApplicationDescriptor desc2 = ApplicationDescriptor.load( f );
+
+		Assert.assertEquals( desc1.getDescription(), desc2.getDescription());
+		Assert.assertEquals( desc1.getName(), desc2.getName());
+		Assert.assertEquals( desc1.getQualifier(), desc2.getQualifier());
+		Assert.assertEquals( desc1.getGraphEntryPoint(), desc2.getGraphEntryPoint());
+		Assert.assertEquals( desc1.getInstanceEntryPoint(), desc2.getInstanceEntryPoint());
+	}
 }

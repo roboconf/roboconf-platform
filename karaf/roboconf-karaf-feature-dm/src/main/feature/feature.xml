@@ -24,6 +24,7 @@
         
         <!-- Optional bundles, to start depending on our needs -->
         <bundle start="false">mvn:net.roboconf/roboconf-target-docker/${project.version}</bundle>
+        <bundle start="false">mvn:net.roboconf/roboconf-target-jclouds/${project.version}</bundle>
         <bundle start="false">mvn:net.roboconf/roboconf-target-embedded/${project.version}</bundle>
         <bundle start="false">mvn:net.roboconf/roboconf-target-iaas-azure/${project.version}</bundle>
         <bundle start="false">mvn:net.roboconf/roboconf-target-iaas-ec2/${project.version}</bundle>

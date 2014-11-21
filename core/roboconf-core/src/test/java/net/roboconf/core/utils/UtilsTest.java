@@ -175,6 +175,17 @@ public class UtilsTest {
 
 
 	@Test
+	public void testWriteStringInto() throws Exception {
+
+		File f = this.folder.newFile();
+		String content = "whatever\n\thop   ";
+		Utils.writeStringInto( content, f );
+
+		Assert.assertEquals( content, TestUtils.readFileContent( f ));
+	}
+
+
+	@Test
 	public void testIsEmptyOrWhitespaces() {
 
 		Assert.assertTrue( Utils.isEmptyOrWhitespaces( null ));

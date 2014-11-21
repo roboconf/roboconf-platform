@@ -27,6 +27,7 @@ package net.roboconf.core.model;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -158,5 +159,31 @@ public class ApplicationDescriptor {
 			throw new IOException( "This is for test purpose..." );
 
 		return load( properties );
+	}
+
+
+	/**
+	 * Saves an application descriptor.
+	 * @param f the file where the properties will be saved
+	 * @param descriptor an application descriptor (not null)
+	 * @throws IOException if the file could not be written
+	 */
+	public static void save( File f, ApplicationDescriptor descriptor ) throws IOException {
+
+		Properties properties = new Properties();
+		properties.setProperty( APPLICATION_NAME, descriptor.name );
+		properties.setProperty( APPLICATION_DESCRIPTION, descriptor.description );
+		properties.setProperty( APPLICATION_QUALIFIER, descriptor.qualifier );
+		properties.setProperty( APPLICATION_GRAPH_EP, descriptor.graphEntryPoint );
+		properties.setProperty( APPLICATION_INSTANCES_EP, descriptor.instanceEntryPoint );
+
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream( f );
+			properties.store( fos, null );
+
+		} finally {
+			Utils.closeQuietly( fos );
+		}
 	}
 }

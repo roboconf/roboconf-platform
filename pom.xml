@@ -51,6 +51,7 @@
 		<module>core/roboconf-target-in-memory</module>
 		<module>core/roboconf-target-docker</module>
 		<module>core/roboconf-target-embedded</module>
+		<module>core/roboconf-target-jclouds</module>
 		<module>core/roboconf-target-iaas-azure</module>
 		<module>core/roboconf-target-iaas-ec2</module>
 		<module>core/roboconf-target-iaas-openstack</module>
@@ -82,6 +83,7 @@
 		<jackson.stack.version>2.3.1</jackson.stack.version>
 		<karaf.version>3.0.2</karaf.version>
 		<ipojo.version>1.12.0</ipojo.version>
+		<jclouds.version>1.8.1</jclouds.version>
 	</properties>
 	
 	<dependencyManagement>

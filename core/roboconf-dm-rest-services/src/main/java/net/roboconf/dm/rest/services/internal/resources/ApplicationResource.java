@@ -55,16 +55,8 @@ import net.roboconf.target.api.TargetException;
 @Path( IApplicationResource.PATH )
 public class ApplicationResource implements IApplicationResource {
 
-	private final Logger logger = Logger.getLogger( ApplicationResource.class.getName());
-	private Manager manager;
-
-
-	/**
-	 * Constructor.
-	 */
-	public ApplicationResource() {
-		// nothing
-	}
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Manager manager;
 
 
 	/**
@@ -72,14 +64,6 @@ public class ApplicationResource implements IApplicationResource {
 	 * @param manager
 	 */
 	public ApplicationResource( Manager manager ) {
-		this.manager = manager;
-	}
-
-
-	/**
-	 * @param manager the manager to set
-	 */
-	public void setManager( Manager manager ) {
 		this.manager = manager;
 	}
 
