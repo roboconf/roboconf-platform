@@ -142,6 +142,18 @@
 					</execution>
 				</executions>
 			</plugin>
+			
+			<!-- 
+				Temporary workaround for #138.
+				This will prevent post-build hook from failing.
+			 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>
