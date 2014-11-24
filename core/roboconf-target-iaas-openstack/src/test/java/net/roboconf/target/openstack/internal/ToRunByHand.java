@@ -39,7 +39,7 @@ import net.roboconf.core.utils.Utils;
  */
 public class ToRunByHand {
 
-	private static final String PROPS_LOCATION = "/home/vzurczak/Bureau/target.properties";
+	private static final String PROPS_LOCATION = "/data1/targets/openstack.ow2.properties";
 	private static final String MSG_IP = "whatever";
 	private static final String MSG_USER = "roboconf";
 	private static final String MSG_PWD = "roboconf";
@@ -70,6 +70,7 @@ public class ToRunByHand {
 			conf.put( entry.getKey().toString(), entry.getValue().toString());
 
 		OpenstackIaasHandler target = new OpenstackIaasHandler();
+		target.start();
 		String serverId = null;
 		try {
 			serverId = target.createOrConfigureMachine( conf, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
@@ -80,6 +81,8 @@ public class ToRunByHand {
 		} finally {
 			if( serverId != null )
 				target.terminateMachine( conf, serverId );
+			
+			target.stop();
 		}
 	}
 }

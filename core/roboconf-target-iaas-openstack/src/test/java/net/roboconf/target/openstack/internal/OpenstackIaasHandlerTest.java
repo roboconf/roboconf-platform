@@ -56,7 +56,7 @@ public class OpenstackIaasHandlerTest {
 		targetProperties.put( OpenstackIaasHandler.USER, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.PASSWORD, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.KEY_PAIR, UUID.randomUUID().toString());
-		targetProperties.put( OpenstackIaasHandler.NOVA_URL, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.API_URL, UUID.randomUUID().toString());
 		OpenstackIaasHandler.validate( targetProperties );
 
 		targetProperties.put( OpenstackIaasHandler.FLOATING_IP_POOL, UUID.randomUUID().toString());
@@ -76,7 +76,7 @@ public class OpenstackIaasHandlerTest {
 		targetProperties.put( OpenstackIaasHandler.USER, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.PASSWORD, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.KEY_PAIR, UUID.randomUUID().toString());
-		targetProperties.put( OpenstackIaasHandler.NOVA_URL, UUID.randomUUID().toString());
+		targetProperties.put( OpenstackIaasHandler.API_URL, UUID.randomUUID().toString());
 		OpenstackIaasHandler.validate( targetProperties );
 	}
 

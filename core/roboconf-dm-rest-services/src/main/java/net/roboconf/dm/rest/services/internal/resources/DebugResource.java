@@ -182,6 +182,17 @@ public class DebugResource implements IDebugResource {
 	}
 
 
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IDebugResource
+	 * #diagnosticApplication(java.lang.String)
+	 */
+	@Override
+	public Response diagnosticApplication( String applicationName ) {
+		return Response.status( Status.SERVICE_UNAVAILABLE ).entity( "Not yet implemented." ).build();
+	}
+
+
 	/**
 	 *
 	 * @param appDirectory

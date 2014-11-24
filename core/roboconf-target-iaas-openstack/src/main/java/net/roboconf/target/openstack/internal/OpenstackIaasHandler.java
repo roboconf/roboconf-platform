@@ -26,22 +26,22 @@
 package net.roboconf.target.openstack.internal;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.openstack.internal.MachineLauncher.State;
 
 import org.jclouds.ContextBuilder;
+import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
-import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
-import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
-import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
-import org.jclouds.openstack.v2_0.domain.Resource;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -49,14 +49,16 @@ import org.jclouds.openstack.v2_0.domain.Resource;
 public class OpenstackIaasHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "iaas-openstack";
-	private static String PROVIDER_ID = "openstack-nova";
+	private static String PROVIDER_NOVA = "openstack-nova";
+	private static String PROVIDER_NEUTRON = "openstack-neutron";
+	private static final int CHECK_DELAY = 20;
 
 	static String IMAGE_NAME = "openstack.image-name";
 	static String TENANT_NAME = "openstack.tenant-name";
 	static String KEY_PAIR = "openstack.key-pair";
 	static String FLAVOR_NAME = "openstack.flavor-name";
 	static String SECURITY_GROUP = "openstack.security-group";
-	static String NOVA_URL = "openstack.nova-url";
+	static String API_URL = "openstack.nova-url";
 	static String USER = "openstack.user";
 	static String PASSWORD = "openstack.password";
 
@@ -67,6 +69,36 @@ public class OpenstackIaasHandler implements TargetHandler {
 	// static String VOLUME_SIZE_GB = "openstack.volumeSizeGb";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor( 1 );
+	private final Map<String,MachineLauncher> serverIdToLaunchers = new ConcurrentHashMap<String,MachineLauncher> ();
+
+
+
+
+	/**
+	 * Starts a thread to periodically check machines under creation process.
+	 * <p>
+	 * Invoked by iPojo when necessary.
+	 * </p>
+	 */
+	public void start() {
+		this.timer.scheduleAtFixedRate(
+				new CheckingRunnable( this.serverIdToLaunchers ),
+				CHECK_DELAY,
+				CHECK_DELAY,
+				TimeUnit.SECONDS );
+	}
+
+
+	/**
+	 * Stops the background thread.
+	 * <p>
+	 * Invoked by iPojo when necessary.
+	 * </p>
+	 */
+	public void stop() {
+		this.timer.shutdownNow();
+	}
 
 
 	/*
@@ -96,90 +128,26 @@ public class OpenstackIaasHandler implements TargetHandler {
 	throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
-		NovaApi novaApi = novaApi( targetProperties );
-		String anyZoneName = novaApi.getConfiguredZones().iterator().next();
 
-		String machineId = null;
+		// Create a handler...
+		MachineLauncher handler = new MachineLauncher();
+		handler.setApplicationName( applicationName );
+		handler.setRootInstanceName( rootInstanceName );
+		handler.setMessagingIp( messagingIp );
+		handler.setMessagingPassword( messagingPassword );
+		handler.setMessagingUsername( messagingUsername );
+		handler.setTargetProperties( targetProperties );
+
+		// ... and start it.
 		try {
-			// Find flavor and image IDs
-			String flavorId = null;
-			String flavorName = targetProperties.get( FLAVOR_NAME );
-			for( Resource res : novaApi.getFlavorApiForZone( anyZoneName ).list().concat()) {
-				if( res.getName().equalsIgnoreCase( flavorName )) {
-					flavorId = res.getId();
-					break;
-				}
-			}
-
-			if( flavorId == null )
-				throw new TargetException( "No flavor named '" + flavorName + "' was found." );
-
-			String imageId = null;
-			String imageName = targetProperties.get( IMAGE_NAME );
-			for( Resource res : novaApi.getImageApiForZone( anyZoneName ).list().concat()) {
-				if( res.getName().equalsIgnoreCase( imageName )) {
-					imageId = res.getId();
-					break;
-				}
-			}
-
-			if( imageId == null )
-				throw new TargetException( "No image named '" + imageName + "' was found." );
-
-			// Prepare the server creation
-			Map<String,String> metadata = new HashMap<String,String>( 3 );
-			metadata.put( "Application Name", applicationName );
-			metadata.put( "Root Instance Name", rootInstanceName );
-			metadata.put( "Created by", "Roboconf" );
-
-			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
-			CreateServerOptions options = CreateServerOptions.Builder
-			                 .keyPairName( targetProperties.get( KEY_PAIR ))
-			                 .securityGroupNames( targetProperties.get( SECURITY_GROUP ))
-			                 .userData( userData.getBytes( "UTF-8" ))
-			                 .metadata( metadata );
-
-			String networkId = targetProperties.get( NETWORK_ID );
-			if( ! Utils.isEmptyOrWhitespaces( networkId ))
-				options = options.networks( networkId );
-
-			String vmName = applicationName + "." + rootInstanceName;
-			ServerCreated server = novaApi.getServerApiForZone( anyZoneName ).create( vmName, imageId, flavorId, options);
-			machineId = server.getId();
-
-			// Floating IPs
-			String floatingIpPool = targetProperties.get( FLOATING_IP_POOL );
-			if( ! Utils.isEmptyOrWhitespaces( floatingIpPool )) {
-				FloatingIPApi floatingIPApi = novaApi.getFloatingIPExtensionForZone( anyZoneName ).get();
-				FloatingIP floatingIp = floatingIPApi.allocateFromPool( floatingIpPool );
-				if( floatingIp == null )
-					throw new TargetException( "No floating IP could be associated to Openstack machine '" + machineId + "'." );
-
-				floatingIPApi.addToServer( floatingIp.getIp(), server.getId());
-			}
-
-			// Neutron support
-//			String networkId = targetProperties.get( NETWORK_ID );
-//			if( ! Utils.isEmptyOrWhitespaces( networkId )) {
-//				NeutronApi neutron = computeService.getContext().unwrapApi( NeutronApi.class );
-//				String anyRegionName = neutron.getConfiguredRegions().iterator().next();
-//				Network network = neutron.getNetworkApi( anyRegionName ).get( networkId );
-//				network.
-//			}
+			handler.createVm();
 
 		} catch( IOException e ) {
-			throw new TargetException( "An error occurred while creating a new Openstack server.", e );
-
-		} finally {
-			try {
-				novaApi.close();
-
-			} catch( IOException e ) {
-				throw new TargetException( "An error occurred while creating a new Openstack server.", e );
-			}
+			throw new TargetException( e );
 		}
 
-		return machineId;
+		this.serverIdToLaunchers.put( handler.getServerId(), handler );
+		return handler.getServerId();
 	}
 
 
@@ -191,8 +159,9 @@ public class OpenstackIaasHandler implements TargetHandler {
 	@Override
 	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
 
-		this.logger.fine( "Terminating machine " + machineId );
 		try {
+			this.logger.info( "Terminating Openstack machine. Machine ID: " + machineId );
+
 			NovaApi novaApi = novaApi( targetProperties );
 			String anyZoneName = novaApi.getConfiguredZones().iterator().next();
 			novaApi.getServerApiForZone( anyZoneName ).delete( machineId );
@@ -205,19 +174,36 @@ public class OpenstackIaasHandler implements TargetHandler {
 
 
 	/**
-	 * Creates a JCloud context.
+	 * Creates a JCloud context for Nova.
 	 * @param targetProperties the target properties
 	 * @return a non-null object
 	 * @throws TargetException if the target properties are invalid
 	 */
-	NovaApi novaApi( Map<String,String> targetProperties ) throws TargetException {
+	static NovaApi novaApi( Map<String,String> targetProperties ) throws TargetException {
 
 		validate( targetProperties );
 		return ContextBuilder
-				.newBuilder( PROVIDER_ID )
-				.endpoint( targetProperties.get( NOVA_URL ))
+				.newBuilder( PROVIDER_NOVA )
+				.endpoint( targetProperties.get( API_URL ))
 			    .credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
 			    .buildApi( NovaApi.class );
+	}
+
+
+	/**
+	 * Creates a JCloud context for Neutron.
+	 * @param targetProperties the target properties
+	 * @return a non-null object
+	 * @throws TargetException if the target properties are invalid
+	 */
+	static NeutronApi neutronApi( Map<String,String> targetProperties ) throws TargetException {
+
+		validate( targetProperties );
+		return ContextBuilder
+				.newBuilder( PROVIDER_NEUTRON )
+				.endpoint( targetProperties.get( API_URL ))
+			    .credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
+			    .buildApi( NeutronApi.class );
 	}
 
 
@@ -228,7 +214,7 @@ public class OpenstackIaasHandler implements TargetHandler {
 	 */
 	static void validate( Map<String,String> targetProperties ) throws TargetException {
 
-		checkProperty( NOVA_URL, targetProperties );
+		checkProperty( API_URL, targetProperties );
 		checkProperty( IMAGE_NAME, targetProperties );
 		checkProperty( TENANT_NAME, targetProperties );
 		checkProperty( FLAVOR_NAME, targetProperties );
@@ -256,5 +242,57 @@ public class OpenstackIaasHandler implements TargetHandler {
 
 		if( Utils.isEmptyOrWhitespaces( targetProperties.get( propertyName )))
 			throw new TargetException( "Property '" + propertyName + "' must have a value." );
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class CheckingRunnable implements Runnable {
+		private final Map<String,MachineLauncher> serverIdToLaunchers;
+		private final Logger logger = Logger.getLogger( getClass().getName());
+
+
+		/**
+		 * Constructor.
+		 * @param serverIdToLaunchers
+		 */
+		public CheckingRunnable( Map<String,MachineLauncher> serverIdToLaunchers ) {
+			super();
+			this.serverIdToLaunchers = serverIdToLaunchers;
+		}
+
+
+		@Override
+		public void run() {
+
+			// Check the state of all the launchers
+			Set<String> keysToRemove = new HashSet<String> ();
+			for( Map.Entry<String,MachineLauncher> entry : this.serverIdToLaunchers.entrySet()) {
+
+				MachineLauncher handler = entry.getValue();
+				if( handler.getState() == State.COMPLETE ) {
+					keysToRemove.add( entry.getKey());
+					continue;
+				}
+
+				State lastState = null;
+				try {
+					for( State currentState = handler.getState(); currentState != lastState; ) {
+						handler.resume();
+						lastState = currentState;
+					}
+
+				} catch( TargetException e ) {
+					this.logger.severe( "An error occurred while configuring VM '" + handler.getVmName() + "'. " + e.getMessage());
+					Utils.logException( this.logger, e );
+					keysToRemove.add( entry.getKey());
+				}
+			}
+
+			// Remove old keys
+			for( String key : keysToRemove )
+				this.serverIdToLaunchers.remove( key );
+		}
 	}
 }

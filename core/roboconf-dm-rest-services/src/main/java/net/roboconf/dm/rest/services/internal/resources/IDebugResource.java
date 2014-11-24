@@ -96,6 +96,19 @@ public interface IDebugResource {
 	 * @return a response
 	 */
 	@GET
-	@Path("/diagnostic")
+	@Path("/diagnostic-instance")
 	Response diagnosticInstance( @QueryParam("instance-path") String instancePath );
+
+
+	/**
+	 * Runs a diagnostic for a given instance.
+	 * <p>
+	 * The diagnostic is based on the information hold by the DM, and not by the agent.
+	 * </p>
+	 *
+	 * @return a response
+	 */
+	@GET
+	@Path("/diagnostic-application")
+	Response diagnosticApplication( @QueryParam("application-name") String applicationName );
 }
