@@ -133,11 +133,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 		} catch( IOException e ) {
 			this.logger.severe( "A problem occurred with the messaging. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 
 		}  catch( PluginException e ) {
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 	}
 

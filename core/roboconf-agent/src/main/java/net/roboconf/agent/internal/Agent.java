@@ -132,7 +132,7 @@ public class Agent {
 
 		} catch( IOException e ) {
 			this.logger.warning( e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		// Close the connection
@@ -143,7 +143,7 @@ public class Agent {
 
 		} catch( IOException e ) {
 			this.logger.warning( e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		this.logger.info( "Agent '" + getAgentId() + "' was stopped." );

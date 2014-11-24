@@ -123,7 +123,7 @@ public final class ProgramUtils {
 			BufferedReader br = null;
 			try {
 				InputStream is = this.errorLevel ? this.process.getErrorStream() : this.process.getInputStream();
-				br = new BufferedReader( new InputStreamReader( is ));
+				br = new BufferedReader( new InputStreamReader( is, "UTF-8" ));
 
 				for( String line = br.readLine(); line != null; line = br.readLine())
 					this.logger.info( prefix + line );

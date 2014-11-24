@@ -69,7 +69,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 		} catch( IOException e ) {
 			this.logger.warning( "An error occured while creating a new messaging client. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		// Replace the current client
@@ -206,7 +206,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 			} catch( Exception e ) {
 				Logger logger = Logger.getLogger( ReconfigurableClient.class.getName());
 				logger.warning( errorMessage + " " + e.getMessage());
-				logger.finest( Utils.writeException( e ));
+				Utils.logException( logger, e );
 			}
 		}
 	}

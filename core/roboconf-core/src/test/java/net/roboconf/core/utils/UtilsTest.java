@@ -38,6 +38,10 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -591,5 +595,48 @@ public class UtilsTest {
 		Utils.copyDirectory( source, target );
 		Assert.assertTrue( target.exists());
 		Assert.assertEquals( 7, Utils.listAllFiles( target ).size());
+	}
+
+
+	@Test
+	public void testLogException() {
+
+		final StringBuffer sb = new StringBuffer();
+
+		// Prepare a logger
+		Logger logger = Logger.getLogger( getClass().getName());
+		logger.setLevel( Level.FINEST );
+		logger.addHandler( new Handler() {
+
+			@Override
+			public void close() throws SecurityException {
+				// nothing
+			}
+
+			@Override
+			public void flush() {
+				// nothing
+			}
+
+			@Override
+			public void publish( LogRecord record ) {
+				sb.append( record.getMessage());
+			}
+		});
+
+		// Run the first test
+		Assert.assertEquals( "", sb.toString());
+		Utils.logException( logger, Level.FINEST, new Exception( "boo!" ));
+		Assert.assertTrue( sb.toString().startsWith( "java.lang.Exception: boo!" ));
+
+		// Change the log level
+		logger.setLevel( Level.INFO );
+		sb.delete( 0, sb.length());
+		Assert.assertEquals( "", sb.toString());
+		Utils.logException( logger, Level.FINEST, new Exception( "boo!" ));
+		Assert.assertEquals( "", sb.toString());
+
+		Utils.logException( logger, Level.INFO, new Exception( "boo!" ));
+		Assert.assertTrue( sb.toString().startsWith( "java.lang.Exception: boo!" ));
 	}
 }

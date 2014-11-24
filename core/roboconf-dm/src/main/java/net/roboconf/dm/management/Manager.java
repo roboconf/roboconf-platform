@@ -181,7 +181,7 @@ public class Manager {
 
 			} catch( IOException e ) {
 				this.logger.warning( "The messaging client could not be terminated correctly. " + e.getMessage());
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 
@@ -731,7 +731,7 @@ public class Manager {
 
 				} catch( IOException e ) {
 					this.logger.severe( "Error while sending a stored message. " + e.getMessage());
-					this.logger.finest( Utils.writeException( e ));
+					Utils.logException( this.logger, e );
 				}
 			}
 		}
@@ -799,7 +799,7 @@ public class Manager {
 
 		} catch( Exception e ) {
 			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 
 			rootInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
@@ -851,7 +851,7 @@ public class Manager {
 
 		} catch( Exception e ) {
 			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 
 			rootInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
@@ -877,15 +877,15 @@ public class Manager {
 
 			} catch( AlreadyExistingException e ) {
 				this.logger.severe( "Cannot restore application in " + dir + " (already existing)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 
 			} catch( InvalidApplicationException e ) {
 				this.logger.severe( "Cannot restore application in " + dir + " (invalid application)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 
 			} catch( IOException e ) {
 				this.logger.severe( "Cannot restore application in " + dir + " (I/O exception)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 
@@ -904,7 +904,7 @@ public class Manager {
 
 			} catch( InvalidApplicationException e ) {
 				this.logger.severe( "Cannot restore instances for application " + ma.getName() + " (errors were found)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 
 			// States
@@ -914,7 +914,7 @@ public class Manager {
 
 				} catch( IOException e ) {
 					this.logger.severe( "Could not request states for agent " + rootInstance.getName() + " (I/O exception)." );
-					this.logger.finest( Utils.writeException( e ));
+					Utils.logException( this.logger, e );
 				}
 			}
 		}

@@ -93,7 +93,7 @@ public class DockerHandler_withContainerTest {
 
 		} catch( Exception e ) {
 			this.logger.warning( "Tests are skipped because Docker is not installed or misconfigured." );
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 
 			this.dockerIsInstalled = false;
 			Assume.assumeNoException( e );

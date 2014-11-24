@@ -102,7 +102,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		} catch( Exception e ) {
 			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( e.getMessage()).build();
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		return response;

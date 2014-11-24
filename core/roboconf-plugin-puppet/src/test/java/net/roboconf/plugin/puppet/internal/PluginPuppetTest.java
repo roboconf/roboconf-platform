@@ -85,7 +85,7 @@ public class PluginPuppetTest {
 		} catch( Exception e ) {
 			Logger logger = Logger.getLogger( getClass().getName());
 			logger.warning( "Tests are skipped because Puppet is not installed." );
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 			this.running = false;
 			Assume.assumeNoException( e );

@@ -131,7 +131,7 @@ public class DebugResource implements IDebugResource {
 
 		} catch( Exception e ) {
 			this.logger.warning( e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 
 		} finally {
@@ -140,7 +140,7 @@ public class DebugResource implements IDebugResource {
 
 			} catch( IOException e ) {
 				this.logger.warning( "A temporary directory could not be deleted." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 

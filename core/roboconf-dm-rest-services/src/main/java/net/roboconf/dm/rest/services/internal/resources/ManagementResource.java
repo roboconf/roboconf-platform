@@ -104,7 +104,7 @@ public class ManagementResource implements IManagementResource {
 					tempZipFile.deleteOnExit();
 
 			} catch( IOException e ) {
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 

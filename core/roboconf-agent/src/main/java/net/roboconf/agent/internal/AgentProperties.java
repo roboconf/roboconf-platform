@@ -174,7 +174,7 @@ public class AgentProperties {
 
 		} catch( IOException e ) {
 			logger.severe( "The agent data could not be read. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 		}
 
 		return readIaasProperties( props );
