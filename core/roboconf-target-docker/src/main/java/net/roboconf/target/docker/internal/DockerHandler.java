@@ -44,6 +44,13 @@ import com.github.dockerjava.jaxrs.DockerClientBuilder;
 public class DockerHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "docker";
+
+	static String IMAGE_ID = "docker.image";
+	static String ENDPOINT = "docker.endpoint";
+	static String USER = "docker.user";
+	static String PASSWORD = "docker.password";
+	static String EMAIL = "docker.email";
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
@@ -76,18 +83,16 @@ public class DockerHandler implements TargetHandler {
 		this.logger.fine( "Creating a new machine." );
 		DockerClient dockerClient = createDockerClient( targetProperties );
 		CreateContainerResponse container = dockerClient
-			.createContainerCmd( targetProperties.get( DockerConstants.IMAGE_ID ))
-			.withCmd("/etc/rc.local",
-					applicationName,
-					rootInstanceName,
-					messagingIp,
-					messagingUsername,
-					messagingPassword)
+			.createContainerCmd( targetProperties.get( IMAGE_ID ))
+			.withCmd("/usr/local/roboconf-agent/start.sh",
+						"application-name=" + applicationName,
+						"root-instance-name=" + rootInstanceName,
+						"message-server-ip=" + messagingIp,
+						"message-server-username=" + messagingUsername,
+						"message-server-password=" + messagingPassword)
 			.exec();
 
 		dockerClient.startContainerCmd(container.getId()).exec();
-		//this.docker.waitContainerCmd(container.getId()).exec();
-
 		return container.getId();
 	}
 
@@ -115,18 +120,18 @@ public class DockerHandler implements TargetHandler {
 	DockerClient createDockerClient( Map<String, String> targetProperties ) throws TargetException {
 
 		this.logger.fine( "Setting the target properties." );
-		if( Utils.isEmptyOrWhitespaces( targetProperties.get( DockerConstants.IMAGE_ID )))
-			throw new TargetException( DockerConstants.IMAGE_ID + " is missing." );
+		if( Utils.isEmptyOrWhitespaces( targetProperties.get( IMAGE_ID )))
+			throw new TargetException( IMAGE_ID + " is missing." );
 
-		String endpoint = targetProperties.get(DockerConstants.ENDPOINT);
+		String endpoint = targetProperties.get( ENDPOINT );
 		DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
 		if(endpoint != null)
 			config.withUri(endpoint);
 
-		String username = targetProperties.get(DockerConstants.USER);
+		String username = targetProperties.get( USER );
 		if(username != null) {
-			String password = targetProperties.get(DockerConstants.PASSWORD);
-			String email = targetProperties.get(DockerConstants.EMAIL);
+			String password = targetProperties.get( PASSWORD );
+			String email = targetProperties.get( EMAIL );
 			if(password == null)
 				password = "";
 			if(email == null)

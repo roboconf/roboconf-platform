@@ -41,6 +41,7 @@
     <groupId>net.roboconf</groupId>
 	<artifactId>roboconf-tooling-core</artifactId>
 	<name>Roboconf :: Tooling Core</name>
+	<packaging>bundle</packaging>
 
 	<dependencies>
 		<dependency>

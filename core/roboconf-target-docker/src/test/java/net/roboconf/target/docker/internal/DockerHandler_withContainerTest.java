@@ -243,7 +243,7 @@ public class DockerHandler_withContainerTest {
 			targetProperties.put( entry.getKey().toString(), entry.getValue().toString());
 
 		if( this.dockerImageId != null )
-			targetProperties.put( DockerConstants.IMAGE_ID, this.dockerImageId );
+			targetProperties.put( DockerHandler.IMAGE_ID, this.dockerImageId );
 
 		return targetProperties;
 	}

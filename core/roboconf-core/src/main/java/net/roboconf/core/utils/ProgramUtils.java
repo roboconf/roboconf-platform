@@ -69,8 +69,14 @@ public final class ProgramUtils {
 
 		ProcessBuilder pb = new ProcessBuilder( command );
 		Map<String,String> env = pb.environment();
-		if( environmentVars != null )
-			env.putAll( environmentVars );
+		if(environmentVars != null && env != null) {
+			// No putAll() here: null key or value would cause NPE
+			// (see ProcessBuilder.environment() javadoc).
+			for(String key : environmentVars.keySet()) {
+				if(key != null && environmentVars.get(key) != null)
+					env.put(key, environmentVars.get(key));
+			}
+		}
 
 		Process process = pb.start();
 		new Thread( new OutputRunnable( process, true, logger )).start();
