@@ -1,0 +1,14 @@
+##############################################
+# Main file for the graph(s) definition(s)
+##############################################
+
+vm {
+	alias: some component;
+	installer: target;
+	children: server;
+}
+
+server {
+	alias: some server;
+	installer: bash;
+}
