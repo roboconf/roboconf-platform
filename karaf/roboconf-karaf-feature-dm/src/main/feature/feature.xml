@@ -13,7 +13,6 @@
 	<feature name="roboconf-dm" version="${project.version}">
 		<feature version="${ipojo.version}">ipojo-all</feature>
 		<feature version="${jersey.stack.version}">jersey-1.x</feature>
-		<feature version="${jclouds.version}">jclouds-api-openstack-nova</feature>
 	
 		<!-- Core bundles -->
 		<bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
@@ -47,5 +46,36 @@
 		<bundle>mvn:com.fasterxml.jackson.core/jackson-annotations/${jackson.stack.version}</bundle>
 		<bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-base/${jackson.stack.version}</bundle>
 		<bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider/${jackson.stack.version}</bundle>
+	</feature>
+	
+	<!-- 
+		A JClouds-based feature for Roboconf.
+		We cannot reuse JClouds' Karaf features because they embed a conflicting Jersey version.
+	 -->
+	<feature name="jclouds-for-roboconf" version="${project.version}">
+		
+		<!-- JClouds-guice -->
+		<bundle dependency='true'>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.javax-inject/1_1</bundle>
+        <bundle dependency='true'>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_5</bundle>
+        <bundle>mvn:com.google.inject/guice/3.0</bundle>
+        <bundle>mvn:com.google.inject.extensions/guice-assistedinject/3.0</bundle>
+        <bundle>mvn:com.google.inject.extensions/guice-multibindings/3.0</bundle>
+        <bundle>mvn:org.99soft.guice/rocoto/6.2</bundle>
+        
+        <!-- JClouds -->
+        <bundle dependency='true'>mvn:com.google.guava/guava/17.0</bundle>
+        <bundle dependency='true'>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.oauth-commons/20100527_1</bundle>
+        <bundle dependency='true'>mvn:com.google.code.gson/gson/2.2.2</bundle>
+        <bundle>mvn:org.apache.jclouds/jclouds-core/${jclouds.version}</bundle>
+        
+        <!-- JClouds compute -->
+        <bundle dependency='true'>mvn:org.apache.jclouds.driver/jclouds-log4j/${jclouds.version}</bundle>
+        <bundle dependency='true'>mvn:org.apache.jclouds/jclouds-scriptbuilder/${jclouds.version}</bundle>
+        <bundle>mvn:org.apache.jclouds/jclouds-compute/${jclouds.version}</bundle>
+        
+        <!-- JClouds Openstack -->
+        <bundle dependency='true'>mvn:org.apache.jclouds.common/openstack-common/${jclouds.version}</bundle>
+        <bundle>mvn:org.apache.jclouds.api/openstack-nova/${jclouds.version}</bundle>
+        <bundle>mvn:org.apache.jclouds.api/openstack-keystone/${jclouds.version}</bundle>
 	</feature>
 </features>

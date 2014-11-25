@@ -96,6 +96,7 @@
 						<feature>ipojo-webconsole</feature>
 						<feature>jersey-1.x</feature>
 						<feature>roboconf-dm</feature>
+						<feature>jclouds-for-roboconf</feature>
 					</bootFeatures>
 				</configuration>
 			</plugin>
