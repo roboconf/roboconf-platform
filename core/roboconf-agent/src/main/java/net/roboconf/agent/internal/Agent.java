@@ -26,6 +26,8 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -77,6 +79,16 @@ public class Agent {
 	public Agent() {
 		this.logger = Logger.getLogger( getClass().getName());
 		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
+		
+		// Set default value for IP address
+		// Will be overridden in many cases (eg. on IaaS with user-data).
+		try {
+			this.ipAddress = InetAddress.getLocalHost().getHostAddress();
+		} catch(UnknownHostException e) {
+			this.ipAddress = "127.0.0.1";
+			logger.warning("The IP address could not be found. " + e.getMessage());
+			logger.finest(Utils.writeException(e));
+		}
 	}
 
 

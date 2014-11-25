@@ -11,7 +11,7 @@ instance of vm {
 
 instance of vm {
 	name: tomcat-vm;
-	instance-state: DEPLOYED_STARTED;
+	instance-state: NOT_DEPLOYED;
 
 	instance of tomcat {
 		name: tomcat-server;
