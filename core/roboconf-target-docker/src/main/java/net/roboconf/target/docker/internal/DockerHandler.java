@@ -118,12 +118,12 @@ public class DockerHandler implements TargetHandler {
 		this.logger.fine( "Creating a new machine." );
 		CreateContainerResponse container = this.docker
 			.createContainerCmd(this.machineImageId)
-			.withCmd("/etc/rc.local",
-					applicationName,
-					rootInstanceName,
-					messagingIp,
-					messagingUsername,
-					messagingPassword)
+			.withCmd("/usr/local/roboconf-agent/start.sh",
+					"application-name=" + applicationName,
+					"root-instance-name=" + rootInstanceName,
+					"message-server-ip=" + messagingIp,
+					"message-server-username=" + messagingUsername,
+					"message-server-password=" + messagingPassword)
 			.exec();
 
 		this.docker.startContainerCmd(container.getId()).exec();
