@@ -92,7 +92,7 @@ public class DebugResource implements IDebugResource {
 			// Copy the file content
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			Utils.copyStream( uploadedInputStream, os );
-			fileContent = os.toString();
+			fileContent = os.toString( "UTF-8" );
 
 			// Create a new application and load it
 			if( ma == null ) {

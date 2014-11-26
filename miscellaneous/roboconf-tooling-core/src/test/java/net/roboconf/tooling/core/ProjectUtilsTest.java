@@ -39,6 +39,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
+ * FIXME: add a unit test with a custom POM
  * @author Vincent Zurczak - Linagora
  */
 public class ProjectUtilsTest {
@@ -93,7 +94,7 @@ public class ProjectUtilsTest {
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
 
 		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
-		Assert.assertEquals( "${project.name}", alr.getApplication().getName());
+		Assert.assertEquals( "${project.artifact.artifactId}", alr.getApplication().getName());
 		Assert.assertEquals( "${project.version}", alr.getApplication().getQualifier());
 	}
 

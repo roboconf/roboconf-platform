@@ -143,7 +143,7 @@ public final class ProjectUtils {
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Utils.copyStream( in, out );
-		String tpl = out.toString()
+		String tpl = out.toString( "UTF-8" )
 				.replace( TPL_POM_NAME, creationBean.getGroupId() + " :: " + creationBean.getProjectName())
 				.replace( TPL_POM_GROUP, creationBean.getGroupId())
 				.replace( TPL_POM_PLUGIN_VERSION, creationBean.getPluginVersion())
@@ -157,7 +157,7 @@ public final class ProjectUtils {
 		// Create the descriptor
 		ApplicationDescriptor descriptor = new ApplicationDescriptor();
 		descriptor.setDescription( "${project.description}" );
-		descriptor.setName( "${project.name}" );
+		descriptor.setName( "${project.artifact.artifactId}" );
 		descriptor.setQualifier( "${project.version}" );
 		descriptor.setGraphEntryPoint( GRAPH_EP );
 		descriptor.setInstanceEntryPoint( INSTANCES_EP );
