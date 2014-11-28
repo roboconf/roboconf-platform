@@ -158,7 +158,7 @@ public final class ProjectUtils {
 		ApplicationDescriptor descriptor = new ApplicationDescriptor();
 		descriptor.setDescription( "${project.description}" );
 		descriptor.setName( "${project.artifact.artifactId}" );
-		descriptor.setQualifier( "${project.version}" );
+		descriptor.setQualifier( "${project.version}--${timestamp}" );
 		descriptor.setGraphEntryPoint( GRAPH_EP );
 		descriptor.setInstanceEntryPoint( INSTANCES_EP );
 
