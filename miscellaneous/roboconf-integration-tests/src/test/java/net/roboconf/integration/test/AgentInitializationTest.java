@@ -188,9 +188,9 @@ public class AgentInitializationTest extends DmTest {
 		}
 
 		@Override
-		public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+		public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
 		throws TargetException {
-			return this.handler;
+			return new Target( this.handler, null );
 		}
 	}
 
@@ -208,12 +208,8 @@ public class AgentInitializationTest extends DmTest {
 		}
 
 		@Override
-		public void setTargetProperties( Map<String,String> targetProperties ) throws TargetException {
-			// nothing
-		}
-
-		@Override
 		public String createOrConfigureMachine(
+				Map<String,String> targetProperties,
 				String messagingIp,
 				String messagingUsername,
 				String messagingPassword,
@@ -239,7 +235,7 @@ public class AgentInitializationTest extends DmTest {
 		}
 
 		@Override
-		public void terminateMachine( String machineId ) throws TargetException {
+		public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
 
 			Agent agent = this.agentIdToAgent.remove( machineId );
 			if( agent != null )

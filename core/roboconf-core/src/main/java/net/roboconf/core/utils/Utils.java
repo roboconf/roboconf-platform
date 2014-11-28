@@ -25,6 +25,7 @@
 
 package net.roboconf.core.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,6 +43,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -224,6 +227,19 @@ public final class Utils {
 		InputStream is = new FileInputStream( inputFile );
 		copyStream( is, os );
 		is.close();
+	}
+
+
+	/**
+	 * Writes a string into a file.
+	 *
+	 * @param s the string to write
+	 * @param outputFile the file to write into
+	 * @throws IOException if something went wrong
+	 */
+	public static void writeStringInto( String s, File outputFile ) throws IOException {
+		InputStream in = new ByteArrayInputStream( s.getBytes( "UTF-8" ));
+		copyStream( in, outputFile );
 	}
 
 
@@ -430,15 +446,50 @@ public final class Utils {
 
 	/**
 	 * Writes an exception's stack trace into a string.
+	 * <p>
+	 * This method used to be public.<br />
+	 * Its visibility was reduced to promote {@link #logException(Logger, Exception)},
+	 * which has better performances.
+	 * </p>
+	 *
 	 * @param e an exception (not null)
 	 * @return a string
 	 */
-	public static String writeException( Exception e ) {
+	static String writeException( Exception e ) {
 
 		StringWriter sw = new StringWriter();
-		e.printStackTrace(new PrintWriter( sw ));
+		e.printStackTrace( new PrintWriter( sw ));
 
 		return sw.toString();
+	}
+
+
+	/**
+	 * Logs an exception with the given logger and the given level.
+	 * <p>
+	 * Writing a stack trace may be time-consuming in some environments.
+	 * To prevent useless computing, this method checks the current log level
+	 * before trying to log anything.
+	 * </p>
+	 *
+	 * @param logger the logger
+	 * @param e an exception
+	 * @param logLevel the log level (see {@link Level})
+	 */
+	public static void logException( Logger logger, Level logLevel, Exception e ) {
+
+		if( logger.isLoggable( logLevel ))
+			logger.log( logLevel, writeException( e ));
+	}
+
+
+	/**
+	 * Logs an exception with the given logger and the FINEST level.
+	 * @param logger the logger
+	 * @param e an exception
+	 */
+	public static void logException( Logger logger, Exception e ) {
+		logException( logger, Level.FINEST, e );
 	}
 
 

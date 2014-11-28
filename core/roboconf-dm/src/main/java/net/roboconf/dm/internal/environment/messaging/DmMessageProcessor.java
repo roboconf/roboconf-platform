@@ -156,7 +156,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 			} catch( IOException e ) {
 				this.logger.warning( "Agent " + rootInstanceName + " requested its model but an error occurred. " + e.getMessage());
-				this.logger.severe( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 	}

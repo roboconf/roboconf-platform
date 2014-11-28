@@ -1,0 +1,11 @@
+########################
+# Component Instances
+########################
+
+instance of vm {
+	name: my vm;
+	
+	instance of server {
+		name: my server;
+	}
+}

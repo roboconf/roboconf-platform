@@ -197,7 +197,7 @@ public abstract class AbstractLifeCycleManager {
 
 			} catch( Exception e ) {
 				this.logger.severe( "An error occured while deploying " + instancePath );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 
 				instance.setStatus( InstanceStatus.NOT_DEPLOYED );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
@@ -251,7 +251,7 @@ public abstract class AbstractLifeCycleManager {
 
 		} catch( PluginException e ) {
 			this.logger.severe( "An error occured while undeploying " + InstanceHelpers.computeInstancePath( instance ));
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 			newStatus = InstanceStatus.DEPLOYED_STOPPED;
 		}
 
@@ -303,7 +303,7 @@ public abstract class AbstractLifeCycleManager {
 			} catch( PluginException e ) {
 				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
 				this.logger.severe( "An error occured while starting " + InstanceHelpers.computeInstancePath( instance ));
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 	}
@@ -375,7 +375,7 @@ public abstract class AbstractLifeCycleManager {
 
 		} catch( PluginException e ) {
 			this.logger.severe( "An error occured while stopping/updating " + InstanceHelpers.computeInstancePath( instance ));
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		// In the case where the instances were stopped because of a change in "imports",

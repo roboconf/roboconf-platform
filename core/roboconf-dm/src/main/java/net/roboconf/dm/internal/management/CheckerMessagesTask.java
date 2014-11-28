@@ -85,7 +85,7 @@ public class CheckerMessagesTask extends TimerTask {
 						// If the message could not be send, plan a retry
 						ma.storeAwaitingMessage( rootInstance, msg );
 						this.logger.severe( "Error while sending a stored message. A retry is planned. " + e.getMessage());
-						this.logger.finest( Utils.writeException( e ));
+						Utils.logException( this.logger, e );
 					}
 				}
 			}

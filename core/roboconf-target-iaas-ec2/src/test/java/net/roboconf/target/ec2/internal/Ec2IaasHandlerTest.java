@@ -42,7 +42,7 @@ public class Ec2IaasHandlerTest {
 	public void testInvalidConfiguration() throws Exception {
 
 		Ec2IaasHandler target = new Ec2IaasHandler();
-		target.setTargetProperties( new HashMap<String,String> ());
+		target.parseProperties( new HashMap<String,String> ());
 	}
 
 
@@ -60,7 +60,7 @@ public class Ec2IaasHandlerTest {
 		targetProperties.put( Ec2Constants.SSH_KEY_NAME, "secret_key" );
 		targetProperties.put( Ec2Constants.SECURITY_GROUP_NAME, "WorldWideVisible" );
 
-		target.setTargetProperties( targetProperties );
+		target.parseProperties( targetProperties );
 	}
 
 

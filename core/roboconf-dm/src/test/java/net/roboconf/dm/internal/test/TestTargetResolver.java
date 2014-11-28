@@ -44,10 +44,10 @@ public class TestTargetResolver extends TargetResolver {
 
 
 	@Override
-	public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, final Instance instance )
+	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, final Instance instance )
 	throws TargetException {
 
-		return new TargetHandler() {
+		TargetHandler handler = new TargetHandler() {
 
 			@Override
 			public String getTargetId() {
@@ -55,13 +55,13 @@ public class TestTargetResolver extends TargetResolver {
 			}
 
 			@Override
-			public void setTargetProperties( Map<String, String> targetProperties )
-			throws TargetException {
-				// nothing
-			}
-
-			@Override
-			public String createOrConfigureMachine( String messagingIp, String messagingUsername, String messagingPassword, String rootInstanceName, String applicationName )
+			public String createOrConfigureMachine(
+					Map<String,String> targetProperties,
+					String messagingIp,
+					String messagingUsername,
+					String messagingPassword,
+					String rootInstanceName,
+					String applicationName )
 			throws TargetException {
 
 				TestTargetResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );
@@ -69,11 +69,13 @@ public class TestTargetResolver extends TargetResolver {
 			}
 
 			@Override
-			public void terminateMachine( String machineId )
+			public void terminateMachine( Map<String,String> targetProperties, String machineId )
 			throws TargetException {
 
 				TestTargetResolver.this.instanceToRunningStatus.put( instance, Boolean.FALSE );
 			}
 		};
+
+		return new Target( handler, new HashMap<String,String>( 0 ));
 	}
 }

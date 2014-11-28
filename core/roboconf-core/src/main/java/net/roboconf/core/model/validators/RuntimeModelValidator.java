@@ -88,6 +88,9 @@ public final class RuntimeModelValidator {
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER ));
 		else if( ! component.getInstallerName().matches( ParsingConstants.PATTERN_FLEX_ID ))
 			errors.add( new RoboconfError( ErrorCode.RM_INVALID_COMPONENT_INSTALLER ));
+		else if( component.getAncestors().isEmpty()
+				&& ! Constants.TARGET_INSTALLER.equals( component.getInstallerName()))
+			errors.add( new RoboconfError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET ));
 
 		// Facet names
 		for( String facetName : component.getFacetNames()) {

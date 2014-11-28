@@ -72,9 +72,9 @@ public final class ProgramUtils {
 		if(environmentVars != null && env != null) {
 			// No putAll() here: null key or value would cause NPE
 			// (see ProcessBuilder.environment() javadoc).
-			for(String key : environmentVars.keySet()) {
-				if(key != null && environmentVars.get(key) != null)
-					env.put(key, environmentVars.get(key));
+			for( Map.Entry<String,String> entry : environmentVars.entrySet()) {
+				if( entry.getKey() != null && entry.getValue() != null )
+					env.put( entry.getKey(), entry.getValue());
 			}
 		}
 
@@ -129,7 +129,7 @@ public final class ProgramUtils {
 			BufferedReader br = null;
 			try {
 				InputStream is = this.errorLevel ? this.process.getErrorStream() : this.process.getInputStream();
-				br = new BufferedReader( new InputStreamReader( is ));
+				br = new BufferedReader( new InputStreamReader( is, "UTF-8" ));
 
 				for( String line = br.readLine(); line != null; line = br.readLine())
 					this.logger.info( prefix + line );

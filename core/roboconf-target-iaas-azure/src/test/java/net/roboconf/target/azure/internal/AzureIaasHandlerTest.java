@@ -40,17 +40,14 @@ public class AzureIaasHandlerTest {
 
 	@Test( expected = TargetException.class )
 	public void testInvalidConfiguration() throws Exception {
-
-		AzureIaasHandler target = new AzureIaasHandler();
-		target.setTargetProperties( new HashMap<String,String> ());
+		AzureIaasHandler.buildProperties( new HashMap<String,String> ());
 	}
 
 
 	@Test
 	public void testValidConfiguration() throws Exception {
 
-		Map<String, String> targetProperties = new HashMap<String,String> ();
-		AzureIaasHandler target = new AzureIaasHandler();
+		Map<String,String> targetProperties = new HashMap<String,String> ();
 
 		targetProperties.put( AzureConstants.AZURE_SUBSCRIPTION_ID, "my subscription id" );
 		targetProperties.put( AzureConstants.AZURE_KEY_STORE_FILE, "path to key store file" );
@@ -61,7 +58,7 @@ public class AzureIaasHandlerTest {
 		targetProperties.put( AzureConstants.AZURE_VM_SIZE, "azure VM size" );
 		targetProperties.put( AzureConstants.AZURE_VM_TEMPLATE, "azure VM template" );
 
-		target.setTargetProperties( targetProperties );
+		AzureIaasHandler.buildProperties( targetProperties );
 	}
 
 

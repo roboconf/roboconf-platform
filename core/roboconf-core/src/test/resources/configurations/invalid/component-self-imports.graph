@@ -1,6 +1,6 @@
 A {
 	alias: A component called A;
-	installer: bash;
+	installer: target;
 	exports: port, ip;
 	imports: A.port, A.ip; 
 }

@@ -5,6 +5,8 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<component classname="net.roboconf.target.openstack.internal.OpenstackIaasHandler" name="roboconf-target-iaas-openstack">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		<provides />
 	</component>
 	

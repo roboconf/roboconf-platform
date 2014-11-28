@@ -56,6 +56,7 @@ import net.roboconf.dm.internal.environment.target.TargetResolver;
 import net.roboconf.dm.internal.management.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.management.CheckerMessagesTask;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.management.ITargetResolver.Target;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
@@ -180,7 +181,7 @@ public class Manager {
 
 			} catch( IOException e ) {
 				this.logger.warning( "The messaging client could not be terminated correctly. " + e.getMessage());
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 
@@ -730,7 +731,7 @@ public class Manager {
 
 				} catch( IOException e ) {
 					this.logger.severe( "Error while sending a stored message. " + e.getMessage());
-					this.logger.finest( Utils.writeException( e ));
+					Utils.logException( this.logger, e );
 				}
 			}
 		}
@@ -788,18 +789,17 @@ public class Manager {
 			MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( rootInstance );
 			send( ma, msg, rootInstance );
 
-			TargetHandler targetHandler = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
-			machineId = targetHandler.createOrConfigureMachine(
-					this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
-					rootInstance.getName(),
-					ma.getApplication().getName());
+			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
+			machineId = target.getHandler().createOrConfigureMachine(
+					target.getProperties(), this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
+					rootInstance.getName(), ma.getApplication().getName());
 
 			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
 		} catch( Exception e ) {
 			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 
 			rootInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
@@ -833,10 +833,10 @@ public class Manager {
 		try {
 			// Terminate the machine
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
-			TargetHandler targetHandler = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
+			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
 			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
 			if( machineId != null )
-				targetHandler.terminateMachine( machineId );
+				target.getHandler().terminateMachine( target.getProperties(), machineId );
 
 			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
 			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
@@ -851,7 +851,7 @@ public class Manager {
 
 		} catch( Exception e ) {
 			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 
 			rootInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
@@ -877,15 +877,15 @@ public class Manager {
 
 			} catch( AlreadyExistingException e ) {
 				this.logger.severe( "Cannot restore application in " + dir + " (already existing)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 
 			} catch( InvalidApplicationException e ) {
 				this.logger.severe( "Cannot restore application in " + dir + " (invalid application)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 
 			} catch( IOException e ) {
 				this.logger.severe( "Cannot restore application in " + dir + " (I/O exception)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 		}
 
@@ -904,7 +904,7 @@ public class Manager {
 
 			} catch( InvalidApplicationException e ) {
 				this.logger.severe( "Cannot restore instances for application " + ma.getName() + " (errors were found)." );
-				this.logger.finest( Utils.writeException( e ));
+				Utils.logException( this.logger, e );
 			}
 
 			// States
@@ -914,7 +914,7 @@ public class Manager {
 
 				} catch( IOException e ) {
 					this.logger.severe( "Could not request states for agent " + rootInstance.getName() + " (I/O exception)." );
-					this.logger.finest( Utils.writeException( e ));
+					Utils.logException( this.logger, e );
 				}
 			}
 		}

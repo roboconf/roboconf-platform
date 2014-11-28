@@ -25,10 +25,7 @@
 
 package net.roboconf.target.vmware.internal;
 
-import java.util.HashMap;
-
 import junit.framework.Assert;
-import net.roboconf.target.api.TargetException;
 
 import org.junit.Test;
 
@@ -36,41 +33,6 @@ import org.junit.Test;
  * @author Pierre-Yves Gibello - Linagora
  */
 public class VmwareIaasHandlerTest {
-
-	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_1() throws Exception {
-
-		VmwareIaasHandler target = new VmwareIaasHandler();
-		target.setTargetProperties( new HashMap<String,String> ());
-	}
-
-
-	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_2() throws Exception {
-
-		VmwareIaasHandler target = new VmwareIaasHandler();
-		HashMap<String, String> targetProperties = new HashMap<String,String> ();
-		targetProperties.put("ipMessagingServer", "127.0.0.1" );
-
-		target.setTargetProperties( targetProperties );
-	}
-
-
-//	@Test
-//	public void testValidConfiguration() throws Exception {
-//
-//		Map<String, String> targetProperties = new HashMap<String,String> ();
-//		VmwareIaasHandler target = new VmwareIaasHandler();
-//
-//		targetProperties.put( "vmware.url", "https://localhost:8890/sdk" );
-//		targetProperties.put( "vmware.user", "roboconf" );
-//		targetProperties.put( "vmware.password", "password" );
-//		targetProperties.put( "vmware.ignorecert", "true" );
-//		targetProperties.put( "vmware.cluster", "MYCLUSTER" );
-//
-//		target.setIaasProperties( targetProperties );
-//	}
-
 
 	@Test
 	public void testGetTargetId() {

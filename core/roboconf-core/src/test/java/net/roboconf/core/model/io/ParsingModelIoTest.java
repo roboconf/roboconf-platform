@@ -107,8 +107,10 @@ public class ParsingModelIoTest {
 	public void testLoadingAndWritingOfValidFile() throws Exception {
 
 		List<File> validFiles = TestUtils.findTestFiles( PATH );
-		for( File f : validFiles )
-			testLoadingAndWritingOfValidFile( f );
+		for( File f : validFiles ) {
+			if( ! "instance-with-space-after.instances".equals( f.getName()))
+				testLoadingAndWritingOfValidFile( f );
+		}
 	}
 
 

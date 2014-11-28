@@ -48,12 +48,7 @@ public class TargetHandlerMock implements TargetHandler {
 	}
 
 	@Override
-	public void terminateMachine( String machineId ) throws TargetException {
-		// nothing
-	}
-
-	@Override
-	public void setTargetProperties( Map<String,String> targetProperties ) throws TargetException {
+	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
 		// nothing
 	}
 
@@ -63,7 +58,13 @@ public class TargetHandlerMock implements TargetHandler {
 	}
 
 	@Override
-	public String createOrConfigureMachine( String messagingIp, String messagingUsername, String messagingPassword, String rootInstanceName, String applicationName )
+	public String createOrConfigureMachine(
+			Map<String,String> targetProperties,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
 	throws TargetException {
 		return "whatever";
 	}

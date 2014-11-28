@@ -70,7 +70,7 @@ public class HeartbeatTask extends TimerTask {
 
 		} catch( IOException e ) {
 			this.logger.severe( e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 	}
 }

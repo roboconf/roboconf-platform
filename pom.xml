@@ -51,6 +51,7 @@
 		<module>core/roboconf-target-in-memory</module>
 		<module>core/roboconf-target-docker</module>
 		<module>core/roboconf-target-embedded</module>
+		<module>core/roboconf-target-jclouds</module>
 		<module>core/roboconf-target-iaas-azure</module>
 		<module>core/roboconf-target-iaas-ec2</module>
 		<module>core/roboconf-target-iaas-openstack</module>
@@ -73,15 +74,17 @@
 		<module>miscellaneous/roboconf-dm-rest-client</module>
 		<module>miscellaneous/roboconf-pax-probe</module>
 		<module>miscellaneous/roboconf-integration-tests</module>
+		<module>miscellaneous/roboconf-tooling-core</module>
 	</modules>
 
 
 	<!-- Properties and other things... -->
 	<properties>
-		<jersey.stack.version>1.18.1</jersey.stack.version>
+		<jersey.stack.version>1.18.2</jersey.stack.version>
 		<jackson.stack.version>2.3.1</jackson.stack.version>
 		<karaf.version>3.0.2</karaf.version>
 		<ipojo.version>1.12.0</ipojo.version>
+		<jclouds.version>1.8.1</jclouds.version>
 	</properties>
 	
 	<dependencyManagement>
@@ -138,12 +141,6 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-antrun-plugin</artifactId>
 					<version>1.7</version>
-				</plugin>
-				
-				<plugin>
-					<groupId>org.apache.karaf.tooling</groupId>
-					<artifactId>features-maven-plugin</artifactId>
-					<version>2.3.5</version>
 				</plugin>
 				
 				<plugin>
@@ -230,7 +227,7 @@
 		<connection>scm:git:git@github.com:roboconf/roboconf-platform.git</connection>
 		<developerConnection>scm:git:git@github.com:roboconf/roboconf-platform.git</developerConnection>
 		<url>http://github.com/roboconf/roboconf-platform</url>
-	  <tag>HEAD</tag>
+		<tag>HEAD</tag>
   </scm>
 	
 </project>

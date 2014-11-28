@@ -79,15 +79,16 @@ public class Agent {
 	public Agent() {
 		this.logger = Logger.getLogger( getClass().getName());
 		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
-		
+
 		// Set default value for IP address
-		// Will be overridden in many cases (eg. on IaaS with user-data).
+		// Will be overridden in many cases (e.g. on IaaS with user-data).
 		try {
 			this.ipAddress = InetAddress.getLocalHost().getHostAddress();
-		} catch(UnknownHostException e) {
+
+		} catch( UnknownHostException e ) {
 			this.ipAddress = "127.0.0.1";
-			logger.warning("The IP address could not be found. " + e.getMessage());
-			logger.finest(Utils.writeException(e));
+			this.logger.warning( "The IP address could not be found. " + e.getMessage());
+			Utils.logException( this.logger, e );
 		}
 	}
 
@@ -144,7 +145,7 @@ public class Agent {
 
 		} catch( IOException e ) {
 			this.logger.warning( e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		// Close the connection
@@ -155,7 +156,7 @@ public class Agent {
 
 		} catch( IOException e ) {
 			this.logger.warning( e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		this.logger.info( "Agent '" + getAgentId() + "' was stopped." );

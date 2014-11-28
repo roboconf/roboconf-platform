@@ -43,11 +43,6 @@
 	<name>Roboconf :: Target :: OpenStack IaaS</name>
 	<packaging>bundle</packaging>
 	
-	<properties>
-		<!-- Use version 3.2.2-SNAPSHOT for network configuration -->
-		<openstack.version>3.2.1</openstack.version>
-	</properties>
-	
 	<dependencies>
 		<dependency>
 			<groupId>net.roboconf</groupId>
@@ -64,39 +59,27 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>com.woorea</groupId>
-			<artifactId>nova-client</artifactId>
-			<version>${openstack.version}</version>
+			<groupId>org.apache.jclouds</groupId>
+			<artifactId>jclouds-core</artifactId>
+			<version>${jclouds.version}</version>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.woorea</groupId>
-			<artifactId>keystone-client</artifactId>
-			<version>${openstack.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.woorea</groupId>
-			<artifactId>jersey-connector</artifactId>
-			<version>${openstack.version}</version>
+			<groupId>org.apache.jclouds</groupId>
+			<artifactId>jclouds-compute</artifactId>
+			<version>${jclouds.version}</version>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.woorea</groupId>
-			<artifactId>nova-model</artifactId>
-			<version>${openstack.version}</version>
+			<groupId>org.apache.jclouds.api</groupId>
+			<artifactId>openstack-nova</artifactId>
+			<version>${jclouds.version}</version>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.woorea</groupId>
-			<artifactId>keystone-model</artifactId>
-			<version>${openstack.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>commons-codec</groupId>
-			<artifactId>commons-codec</artifactId>
-			<version>20041127.091804</version>
+			<groupId>org.apache.jclouds.labs</groupId>
+			<artifactId>openstack-neutron</artifactId>
+			<version>${jclouds.version}</version>
 		</dependency>
 		
 		<dependency>
@@ -115,8 +98,14 @@
 					<instructions>
 						<Import-Package>
 							net.roboconf.*;version="${project.version}",
+							*
 						</Import-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						
+						<!-- 
+							Neutron's support is not packaged as a bundle. 
+							So, we must embed it.
+						-->
+						<Embed-Dependency>*;scope=compile|runtime;inline=true;artifactId=openstack-neutron</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>

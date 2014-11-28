@@ -146,6 +146,62 @@ public class FromInstanceDefinitionTest {
 
 
 	@Test
+	public void testInexistingComponent() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).alias( "a VM" ).installerName( "target" );
+		Component tomcatComponent = new Component( "Tomcat" ).alias( "App Server" ).installerName( "puppet" );
+		tomcatComponent.getExportedVariables().put( "tomcat.ip", null );
+		tomcatComponent.getExportedVariables().put( "tomcat.port", "8080" );
+
+		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/inexisting-component.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		fromDef.buildInstances( graphs );
+
+		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_COMPONENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
+	public void testComponentResolutionWhenSurroundingSpaces() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).alias( "a VM" ).installerName( "target" );
+		Component aComponent = new Component( "A" ).alias( "App Server" ).installerName( "whatever" );
+
+		ComponentHelpers.insertChild( vmComponent, aComponent );
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		File f = TestUtils.findTestFile( "/configurations/valid/instance-with-space-after.instances" );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
+		Assert.assertEquals( 0, def.getParsingErrors().size());
+
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( def );
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs );
+
+		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Assert.assertFalse( iterator.hasNext());
+
+		Assert.assertEquals( 2, rootInstances.size());
+		for( Instance rootInstance : rootInstances ) {
+			Assert.assertEquals( 1, rootInstance.getChildren().size());
+			Instance instance = rootInstance.getChildren().iterator().next();
+
+			Assert.assertEquals( "A", instance.getComponent().getName());
+			Assert.assertEquals( "A ", instance.getName());
+		}
+	}
+
+
+	@Test
 	public void testComplexInstances() throws Exception {
 
 		// The graph

@@ -77,7 +77,7 @@ public abstract class RabbitMqTestUtils {
 		} catch( Exception e ) {
 			Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 			logger.warning( "Tests are skipped because RabbitMQ is not rabbitMqIsRunning." );
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 			rabbitMqIsRunning = false;
 

@@ -72,17 +72,7 @@ import org.xml.sax.SAXException;
 public class AzureIaasHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "iaas-azure";
-
-	private final Logger logger;
-	private AzureProperties azureProperties;
-
-
-	/**
-	 * Constructor.
-	 */
-	public AzureIaasHandler() {
-		this.logger = Logger.getLogger( getClass().getName());
-	}
+	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
 	/*
@@ -97,64 +87,13 @@ public class AzureIaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#setTargetProperties(java.util.Map)
-	 */
-	@Override
-	public void setTargetProperties(Map<String, String> targetProperties) throws TargetException {
-
-		// Quick check
-		String[] properties = {
-				AzureConstants.AZURE_SUBSCRIPTION_ID,
-				AzureConstants.AZURE_KEY_STORE_FILE,
-				AzureConstants.AZURE_KEY_STORE_PASSWORD,
-				AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE,
-				AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE,
-				AzureConstants.AZURE_LOCATION,
-				AzureConstants.AZURE_VM_SIZE,
-				AzureConstants.AZURE_VM_TEMPLATE
-		};
-
-		for( String property : properties ) {
-			if( Utils.isEmptyOrWhitespaces( targetProperties.get( property )))
-				throw new TargetException( "The value for " + property + " cannot be null or empty." );
-		}
-
-		// Create a bean
-		this.azureProperties = new AzureProperties();
-
-		String s = targetProperties.get( AzureConstants.AZURE_SUBSCRIPTION_ID );
-		this.azureProperties.setSubscriptionId( s.trim());
-
-		s = targetProperties.get( AzureConstants.AZURE_KEY_STORE_FILE );
-		this.azureProperties.setKeyStoreFile( s.trim());
-
-		s = targetProperties.get( AzureConstants.AZURE_KEY_STORE_PASSWORD );
-		this.azureProperties.setKeyStoreFile( s.trim());
-
-		s = targetProperties.get( AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE );
-		this.azureProperties.setKeyStoreFile( s.trim());
-
-		s = targetProperties.get( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE );
-		this.azureProperties.setKeyStoreFile( s.trim());
-
-		s = targetProperties.get( AzureConstants.AZURE_LOCATION );
-		this.azureProperties.setKeyStoreFile( s.trim());
-
-		s = targetProperties.get( AzureConstants.AZURE_VM_SIZE );
-		this.azureProperties.setKeyStoreFile( s.trim());
-
-		s = targetProperties.get( AzureConstants.AZURE_VM_TEMPLATE );
-		this.azureProperties.setKeyStoreFile( s.trim());
-	}
-
-
-	/*
-	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createOrConfigureMachine(java.util.Map, java.lang.String,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createOrConfigureMachine(
+			Map<String, String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
@@ -164,6 +103,8 @@ public class AzureIaasHandler implements TargetHandler {
 
 		String instanceId = null;
 		try {
+			final AzureProperties azureProperties = buildProperties( targetProperties );
+
 			// The following part enables to transmit data to the VM.
 			// When the VM is up, it will be able to read this data.
 			// TODO: Azure does not allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
@@ -171,20 +112,20 @@ public class AzureIaasHandler implements TargetHandler {
 			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
 			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
 
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateCloudServiceTemplate(), "ServiceName", rootInstanceName );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateCloudServiceTemplate(), "Location", this.azureProperties.getLocation());
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "CustomData", encodedUserData );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "Name", rootInstanceName );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "HostName", rootInstanceName );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "RoleName", rootInstanceName );
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "RoleSize", this.azureProperties.getVMSize());
-			replaceValueOfTagInXMLFile(this.azureProperties.getCreateDeploymentTemplate(), "SourceImageName", this.azureProperties.getVMTemplate());
+			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "ServiceName", rootInstanceName );
+			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "Location", azureProperties.getLocation());
+			replaceValueOfTagInXMLFile(azureProperties.getCreateDeploymentTemplate(), "CustomData", encodedUserData );
+			replaceValueOfTagInXMLFile(azureProperties.getCreateDeploymentTemplate(), "Name", rootInstanceName );
+			replaceValueOfTagInXMLFile(azureProperties.getCreateDeploymentTemplate(), "HostName", rootInstanceName );
+			replaceValueOfTagInXMLFile(azureProperties.getCreateDeploymentTemplate(), "RoleName", rootInstanceName );
+			replaceValueOfTagInXMLFile(azureProperties.getCreateDeploymentTemplate(), "RoleSize", azureProperties.getVMSize());
+			replaceValueOfTagInXMLFile(azureProperties.getCreateDeploymentTemplate(), "SourceImageName", azureProperties.getVMTemplate());
 
 			// Let send the request to Azure API to create a Cloud Service and a Deployment (a PersistentVMRole)
-			String baseURL = String.format("https://management.core.windows.net/%s/services", this.azureProperties.getSubscriptionId());
+			String baseURL = String.format("https://management.core.windows.net/%s/services", azureProperties.getSubscriptionId());
 			String requestHeaderContentType = "application/xml";
-			byte[] requestBodyCreateCloudService = convertFileToByte(this.azureProperties.getCreateCloudServiceTemplate());
-			byte[] requestBodyCreateDeployment = convertFileToByte(this.azureProperties.getCreateDeploymentTemplate());
+			byte[] requestBodyCreateCloudService = convertFileToByte(azureProperties.getCreateCloudServiceTemplate());
+			byte[] requestBodyCreateDeployment = convertFileToByte(azureProperties.getCreateDeploymentTemplate());
 			String checkCloudServiceURL = baseURL+"/hostedservices/operations/isavailable/"+rootInstanceName;
 			String createCloudServiceURL = baseURL+"/hostedservices";
 			String createDeploymentURL = baseURL+"/hostedservices/"+rootInstanceName+"/deployments";
@@ -192,8 +133,8 @@ public class AzureIaasHandler implements TargetHandler {
 			// Check if Cloud Service exist
 			String responseCheckCloudService = processGetRequest(
 					new URL(checkCloudServiceURL),
-					this.azureProperties.getKeyStoreFile(),
-					this.azureProperties.getKeyStorePassword());
+					azureProperties.getKeyStoreFile(),
+					azureProperties.getKeyStorePassword());
 
 			boolean checkResult = getExistResutlFromXML(responseCheckCloudService, "Result");
 			// true means the name is still available
@@ -206,8 +147,8 @@ public class AzureIaasHandler implements TargetHandler {
 						new URL(createCloudServiceURL),
 						requestBodyCreateCloudService,
 						requestHeaderContentType,
-						this.azureProperties.getKeyStoreFile(),
-						this.azureProperties.getKeyStorePassword());	// rescode shoud be 201
+						azureProperties.getKeyStoreFile(),
+						azureProperties.getKeyStorePassword());	// rescode shoud be 201
 			}
 
 			this.logger.info( "Create Cloud Service: Response Code: " + rescodeCreateCloudService);
@@ -217,13 +158,14 @@ public class AzureIaasHandler implements TargetHandler {
 						new URL(createDeploymentURL),
 						requestBodyCreateDeployment,
 						requestHeaderContentType,
-						this.azureProperties.getKeyStoreFile(),
-						this.azureProperties.getKeyStorePassword());	// rescode shoud be 202
+						azureProperties.getKeyStoreFile(),
+						azureProperties.getKeyStorePassword());	// rescode shoud be 202
 
 				this.logger.info( "Create VM: Response Code: " + rescodeCreateDeployment);
 			}
 
-			instanceId = rootInstanceName;	// instanceID in this context should be rootInstanceName
+			instanceId = rootInstanceName;
+			// instanceID in this context should be rootInstanceName
 
 		} catch( UnsupportedEncodingException e ) {
 			throw new TargetException( e );
@@ -248,21 +190,22 @@ public class AzureIaasHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.lang.String)
+	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( String instanceId ) throws TargetException {
+	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
 
 		// instanceID is CloudServiceName
 		try {
-			String baseURL = String.format("https://management.core.windows.net/%s/services", this.azureProperties.getSubscriptionId());
+			final AzureProperties azureProperties = buildProperties( targetProperties );
+			String baseURL = String.format("https://management.core.windows.net/%s/services", azureProperties.getSubscriptionId());
 			String deleteCloudServiceURL = baseURL+"/hostedservices/"+instanceId+"?comp=media";
 
 			// Delete Cloud Service, and also delete all the related things
 			int rescodeDeleteCloudService = processDeleteRequest(
 					new URL(deleteCloudServiceURL),
-					this.azureProperties.getKeyStoreFile(),
-					this.azureProperties.getKeyStorePassword());		// rescode shoud be 202
+					azureProperties.getKeyStoreFile(),
+					azureProperties.getKeyStorePassword());		// rescode shoud be 202
 
 			this.logger.info("Response Code: Delete VM: " + rescodeDeleteCloudService);
 
@@ -275,6 +218,61 @@ public class AzureIaasHandler implements TargetHandler {
 		} catch( IOException e ) {
 			throw new TargetException( e );
 		}
+	}
+
+
+	/**
+	 * Validates the received properties and builds a Java bean from them.
+	 * @param targetProperties the target properties
+	 * @return a non-null bean
+	 * @throws TargetException if properties are invalid
+	 */
+	static AzureProperties buildProperties( Map<String,String> targetProperties ) throws TargetException {
+
+		String[] properties = {
+				AzureConstants.AZURE_SUBSCRIPTION_ID,
+				AzureConstants.AZURE_KEY_STORE_FILE,
+				AzureConstants.AZURE_KEY_STORE_PASSWORD,
+				AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE,
+				AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE,
+				AzureConstants.AZURE_LOCATION,
+				AzureConstants.AZURE_VM_SIZE,
+				AzureConstants.AZURE_VM_TEMPLATE
+		};
+
+		for( String property : properties ) {
+			if( Utils.isEmptyOrWhitespaces( targetProperties.get( property )))
+				throw new TargetException( "The value for " + property + " cannot be null or empty." );
+		}
+
+		// Create a bean
+		AzureProperties azureProperties = new AzureProperties();
+
+		String s = targetProperties.get( AzureConstants.AZURE_SUBSCRIPTION_ID );
+		azureProperties.setSubscriptionId( s.trim());
+
+		s = targetProperties.get( AzureConstants.AZURE_KEY_STORE_FILE );
+		azureProperties.setKeyStoreFile( s.trim());
+
+		s = targetProperties.get( AzureConstants.AZURE_KEY_STORE_PASSWORD );
+		azureProperties.setKeyStoreFile( s.trim());
+
+		s = targetProperties.get( AzureConstants.AZURE_CREATE_CLOUD_SERVICE_TEMPLATE );
+		azureProperties.setKeyStoreFile( s.trim());
+
+		s = targetProperties.get( AzureConstants.AZURE_CREATE_DEPLOYMENT_TEMPLATE );
+		azureProperties.setKeyStoreFile( s.trim());
+
+		s = targetProperties.get( AzureConstants.AZURE_LOCATION );
+		azureProperties.setKeyStoreFile( s.trim());
+
+		s = targetProperties.get( AzureConstants.AZURE_VM_SIZE );
+		azureProperties.setKeyStoreFile( s.trim());
+
+		s = targetProperties.get( AzureConstants.AZURE_VM_TEMPLATE );
+		azureProperties.setKeyStoreFile( s.trim());
+
+		return azureProperties;
 	}
 
 

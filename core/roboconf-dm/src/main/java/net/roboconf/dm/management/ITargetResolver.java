@@ -26,6 +26,7 @@
 package net.roboconf.dm.management;
 
 import java.util.List;
+import java.util.Map;
 
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.target.api.TargetException;
@@ -38,13 +39,35 @@ import net.roboconf.target.api.TargetHandler;
 public interface ITargetResolver {
 
 	/**
-	 * Finds the right targetHandlers handler for a given instance.
+	 * Finds the right target handler for a given instance.
+	 * @param targetHandlers the list of available target handlers (can be null)
 	 * @param ma the managed application
-	 * @param targetHandlers the list of available targetHandlers handlers (can be null)
-	 * @param instance the (root) instance associated with a deployment targetHandlers
-	 * @return a handler for a deployment targetHandlers
+	 * @param instance the (root) instance associated with a deployment target
+	 * @return a handler for a deployment target
 	 * @throws TargetException if no handler was found
 	 */
-	TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+	Target findTargetHandler( List<TargetHandler> targetHandlers, ManagedApplication ma, Instance instance )
 	throws TargetException;
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class Target {
+		private final TargetHandler targetHandler;
+		private final Map<String,String> targetProperties;
+
+		public Target( TargetHandler targetHandler, Map<String,String> targetProperties ) {
+			this.targetHandler = targetHandler;
+			this.targetProperties = targetProperties;
+		}
+
+		public TargetHandler getHandler() {
+			return targetHandler;
+		}
+
+		public Map<String,String> getProperties() {
+			return targetProperties;
+		}
+	}
 }
