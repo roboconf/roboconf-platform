@@ -95,7 +95,7 @@ public class ProjectUtilsTest {
 
 		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
 		Assert.assertEquals( "${project.artifact.artifactId}", alr.getApplication().getName());
-		Assert.assertEquals( "${project.version}", alr.getApplication().getQualifier());
+		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplication().getQualifier());
 	}
 
 
