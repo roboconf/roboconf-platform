@@ -31,7 +31,7 @@ public class AgentMonitoringScheduler {
 			sched.startProcessing((ReconfigurableClientAgent)agentInterface.getMessagingClient());
 		} catch(Exception e) {
 			logger.warning(e.getMessage());
-			logger.finest(Utils.writeException(e));
+			Utils.logException(logger, e);
 		}
 	}
 
