@@ -40,6 +40,7 @@ import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
+import net.roboconf.dm.management.ITargetResolver.Target;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -84,13 +85,13 @@ public class TargetResolverTest {
 		}
 
 		// Create a virtual set of target handlers
-		List<TargetHandler> target = new ArrayList<TargetHandler> ();
-		target.add( new TargetHandlerMock( "toto" ));
-		target.add( new TargetHandlerMock( "test" ));
+		List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
+		targetHandlers.add( new TargetHandlerMock( "toto" ));
+		targetHandlers.add( new TargetHandlerMock( "test" ));
 
 		TargetResolver resolver = new TargetResolver();
-		TargetHandler itf = resolver.findTargetHandler( target, ma, rootInstance );
-		Assert.assertNotNull( itf );
+		Target target = resolver.findTargetHandler( targetHandlers, ma, rootInstance );
+		Assert.assertNotNull( target );
 	}
 
 

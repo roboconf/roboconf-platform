@@ -95,8 +95,13 @@ public class Manager_BasicsTest {
 
 
 	@After
-	public void stopManager() {
+	public void stopManager() throws Exception {
 		this.manager.stop();
+
+		// Some tests create a new manager, which save instances
+		// at the current project's root when it is stopped.
+		File dir = new File( "./instances" );
+		Utils.deleteFilesRecursively( dir );
 	}
 
 

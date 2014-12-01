@@ -42,13 +42,13 @@ public class InMemoryHandler_withoutIPojoTest {
 		InMemoryHandler target = new InMemoryHandler();
 		Assert.assertEquals( InMemoryHandler.TARGET_ID, target.getTargetId());
 
-		target.terminateMachine( "whatever" );
+		target.terminateMachine( null, "whatever" );
 	}
 
 
 	@Test( expected = TargetException.class )
 	public void testCreateVm() throws Exception {
 
-		new InMemoryHandler().createOrConfigureMachine( "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+		new InMemoryHandler().createOrConfigureMachine( null, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
 	}
 }

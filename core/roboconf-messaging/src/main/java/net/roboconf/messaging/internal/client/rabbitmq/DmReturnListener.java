@@ -64,7 +64,7 @@ public class DmReturnListener implements ReturnListener {
 
 		} catch( ClassNotFoundException e ) {
 			this.logger.severe( "Failed to deserialize a message object." );
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 		}
 
 		StringBuilder sb = new StringBuilder();

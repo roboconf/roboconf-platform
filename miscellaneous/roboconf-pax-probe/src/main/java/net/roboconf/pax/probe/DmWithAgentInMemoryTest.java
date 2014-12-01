@@ -133,9 +133,9 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 		}
 
 		@Override
-		public TargetHandler findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+		public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
 		throws TargetException {
-			return this.inMemoryIaas;
+			return new Target( this.inMemoryIaas, null );
 		}
 	}
 }

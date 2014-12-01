@@ -158,6 +158,14 @@
 		
 		<dependency>
   			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm</artifactId>
+  			<version>${project.version}</version>
+  			<type>test-jar</type>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-messaging</artifactId>
   			<version>${project.version}</version>
   			<scope>test</scope>

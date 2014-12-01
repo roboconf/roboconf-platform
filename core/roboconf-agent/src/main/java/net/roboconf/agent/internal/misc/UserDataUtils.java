@@ -80,7 +80,7 @@ public final class UserDataUtils {
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 		} finally {
 			Utils.closeQuietly( in );
@@ -116,7 +116,7 @@ public final class UserDataUtils {
 
 		} catch( IOException e ) {
 			logger.severe( "The network properties could not be read. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 		} finally {
 			Utils.closeQuietly( in );
@@ -141,15 +141,15 @@ public final class UserDataUtils {
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 		} catch( ParserConfigurationException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 		} catch( SAXException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 		}
 
 		// Parse them
@@ -163,15 +163,15 @@ public final class UserDataUtils {
 
 		} catch( ParserConfigurationException e ) {
 			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 		} catch( SAXException e ) {
 			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 
 		} catch( IOException e ) {
 			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 		}
 
 		return result;

@@ -26,33 +26,22 @@
 package net.roboconf.target.openstack.internal;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.openstack.internal.MachineLauncher.State;
 
-import org.apache.commons.codec.binary.Base64;
-
-import com.woorea.openstack.keystone.Keystone;
-import com.woorea.openstack.keystone.api.TokensResource.Authenticate;
-import com.woorea.openstack.keystone.model.Access;
-import com.woorea.openstack.keystone.model.authentication.UsernamePassword;
-import com.woorea.openstack.nova.Nova;
-import com.woorea.openstack.nova.model.Flavor;
-import com.woorea.openstack.nova.model.Flavors;
-import com.woorea.openstack.nova.model.FloatingIp;
-import com.woorea.openstack.nova.model.FloatingIps;
-import com.woorea.openstack.nova.model.Server;
-import com.woorea.openstack.nova.model.ServerForCreate;
-import com.woorea.openstack.nova.model.Volume;
-import com.woorea.openstack.nova.model.VolumeForCreate;
-import com.woorea.openstack.nova.model.Volumes;
+import org.jclouds.ContextBuilder;
+import org.jclouds.openstack.neutron.v2.NeutronApi;
+import org.jclouds.openstack.nova.v2_0.NovaApi;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -60,27 +49,55 @@ import com.woorea.openstack.nova.model.Volumes;
 public class OpenstackIaasHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "iaas-openstack";
+	private static String PROVIDER_NOVA = "openstack-nova";
+	private static String PROVIDER_NEUTRON = "openstack-neutron";
+	private static final int CHECK_DELAY = 20;
 
-	private final Logger logger;
-	private String machineImageId;
-	private  Map<String, String> targetProperties;
+	static String IMAGE_NAME = "openstack.image-name";
+	static String TENANT_NAME = "openstack.tenant-name";
+	static String KEY_PAIR = "openstack.key-pair";
+	static String FLAVOR_NAME = "openstack.flavor-name";
+	static String SECURITY_GROUP = "openstack.security-group";
+	static String API_URL = "openstack.nova-url";
+	static String USER = "openstack.user";
+	static String PASSWORD = "openstack.password";
 
-	private String tenantId;
-	private String keypair;
-	private String flavor = "m1.tiny";
-	private String securityGroup = "default";
-	private String floatingIpPool;
-	private String token;
-	private Nova novaClient;
-	private String identityUrl;
-	private String computeUrl;
+	static String FLOATING_IP_POOL = "openstack.floating-ip-pool";
+	static String NETWORK_ID = "openstack.network-id";
+	// static String VOLUME_ID = "openstack.volumeId";
+	// static String VOLUME_MOUNT_POINT = "openstack.volumeMountPoint";
+	// static String VOLUME_SIZE_GB = "openstack.volumeSizeGb";
+
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor( 1 );
+	private final Map<String,MachineLauncher> serverIdToLaunchers = new ConcurrentHashMap<String,MachineLauncher> ();
+
+
 
 
 	/**
-	 * Constructor.
+	 * Starts a thread to periodically check machines under creation process.
+	 * <p>
+	 * Invoked by iPojo when necessary.
+	 * </p>
 	 */
-	public OpenstackIaasHandler() {
-		this.logger = Logger.getLogger( getClass().getName());
+	public void start() {
+		this.timer.scheduleAtFixedRate(
+				new CheckingRunnable( this.serverIdToLaunchers ),
+				CHECK_DELAY,
+				CHECK_DELAY,
+				TimeUnit.SECONDS );
+	}
+
+
+	/**
+	 * Stops the background thread.
+	 * <p>
+	 * Invoked by iPojo when necessary.
+	 * </p>
+	 */
+	public void stop() {
+		this.timer.shutdownNow();
 	}
 
 
@@ -96,60 +113,13 @@ public class OpenstackIaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#setTargetProperties(java.util.Map)
-	 */
-	@Override
-	public void setTargetProperties(Map<String, String> targetProperties) throws TargetException {
-
-		this.targetProperties = targetProperties;
-
-		this.machineImageId = targetProperties.get(OpenstackConstants.IMAGE);
-		this.tenantId = targetProperties.get(OpenstackConstants.TENANT_ID);
-		this.keypair = targetProperties.get(OpenstackConstants.KEYPAIR);
-		this.floatingIpPool = targetProperties.get(OpenstackConstants.FLOATING_IP_POOL);
-		this.flavor = targetProperties.get(OpenstackConstants.FLAVOR);
-		this.securityGroup = targetProperties.get(OpenstackConstants.SECURITY_GROUP);
-		this.identityUrl = targetProperties.get(OpenstackConstants.IDENTITY_URL);
-		this.computeUrl = targetProperties.get(OpenstackConstants.COMPUTE_URL);
-
-		try {
-			Keystone keystone = new Keystone(this.identityUrl);
-			//Keystone keystone = new Keystone("http://localhost:8888/v2.0");
-
-			Authenticate auth = keystone.tokens().authenticate( new UsernamePassword(
-							targetProperties.get(OpenstackConstants.USER),
-							targetProperties.get(OpenstackConstants.PASSWORD)));
-
-			if(this.tenantId != null)
-				auth = auth.withTenantId(this.tenantId);
-
-			Access access = auth.execute();
-			this.token = access.getToken().getId();
-			keystone.token(this.token);
-
-			String url = this.computeUrl;
-			if( ! url.endsWith( "/" ))
-				url += "/";
-
-			if( this.tenantId != null )
-				url += this.tenantId;
-
-			this.novaClient = new Nova( url );
-			this.novaClient.token( this.token );
-
-		} catch(Exception e) {
-			throw new TargetException(e);
-		}
-	}
-
-
-	/*
-	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * #createOrConfigureMachine(java.util.Map, java.lang.String, java.lang.String,
+	 * java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public String createOrConfigureMachine(
+			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
@@ -157,215 +127,172 @@ public class OpenstackIaasHandler implements TargetHandler {
 			String applicationName )
 	throws TargetException {
 
-		// Normally we use flavor names in the configuration, not IDs
-		// But lets's assume it can be an ID...
-		String flavorId = this.flavor;
-		Flavors flavors = this.novaClient.flavors().list(true).execute();
-		for(Flavor f : flavors) {
-			if(f.getName().equals(this.flavor))
-				flavorId = f.getId();
-		}
+		this.logger.fine( "Creating a new machine." );
 
-		ServerForCreate serverForCreate = new ServerForCreate();
-		serverForCreate.setName( applicationName + "." + rootInstanceName );
-		serverForCreate.setFlavorRef(flavorId);
-		serverForCreate.setImageRef(this.machineImageId);
-		if(this.keypair != null)
-			serverForCreate.setKeyName(this.keypair);
+		// Create a handler...
+		MachineLauncher handler = new MachineLauncher();
+		handler.setApplicationName( applicationName );
+		handler.setRootInstanceName( rootInstanceName );
+		handler.setMessagingIp( messagingIp );
+		handler.setMessagingPassword( messagingPassword );
+		handler.setMessagingUsername( messagingUsername );
+		handler.setTargetProperties( targetProperties );
 
-		serverForCreate.getSecurityGroups().add( new ServerForCreate.SecurityGroup(this.securityGroup));
-
-		// User data will be retrieved (like on Amazon WS) on guest OS as
-		// http://169.254.169.254/latest/user-data
+		// ... and start it.
 		try {
-			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
-			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
-			serverForCreate.setUserData( encodedUserData );
+			handler.createVm();
 
 		} catch( IOException e ) {
-			this.logger.severe( "Failed to create user data. " + e.getMessage());
-			this.logger.finest( Utils.writeException( e ));
 			throw new TargetException( e );
 		}
 
-		// Is there any volume (ID or name) to attach ?
-		String volumeIdToAttach = this.targetProperties.get(OpenstackConstants.VOLUME_ID);
-		if(volumeIdToAttach != null) {
-
-			boolean volumeFound = false;
-			try {
-				// Volume not found may return a 404... that in turn throws a RuntimeException !
-				volumeFound = (this.novaClient.volumes().show(volumeIdToAttach).execute() != null);
-			} catch(Throwable t) {
-				volumeFound = false;
-			}
-
-			if(! volumeFound) {
-				// Volume not found: assume volume ID is in fact a volume name.
-				String volumeName = volumeIdToAttach;
-				volumeIdToAttach = null;
-				Volumes volumes = this.novaClient.volumes().list(false).execute();
-				for(Volume volume : volumes) {
-					if(volume.getName().equals(volumeName)) {
-						volumeIdToAttach = volume.getId();
-						break;
-					}
-				}
-
-				// Volume not found by name ? Create one if requested (= size specified)
-				String size = this.targetProperties.get(OpenstackConstants.VOLUME_SIZE_GB);
-				if(volumeIdToAttach == null && size != null) {
-					VolumeForCreate volumeForCreate = new VolumeForCreate();
-					volumeForCreate.setName(volumeName);
-					volumeForCreate.setDescription("Created by Roboconf");
-					volumeForCreate.setSize( Integer.valueOf( size ));
-
-					volumeIdToAttach = this.novaClient.volumes().create(volumeForCreate).execute().getId();
-					/*
-				SnapshotForCreate snapshotForCreate = new SnapshotForCreate();
-				snapshotForCreate.setName(volumeName);
-				snapshotForCreate.setVolumeId(volume.getId());
-				snapshotForCreate.setDescription("Created by Roboconf");
-
-				this.novaClient.snapshots().create(snapshotForCreate).execute();
-
-				for(Snapshot snapshot : snapshots) {
-					if(snapshot.getName().equals(volumeName)) {
-						toAttach = snapshot;
-						break;
-					}
-				}
-					 */
-				}
-			}
-		}
-
-		// If a network ID is specified (neutron network), use it
-		String networkId = this.targetProperties.get(OpenstackConstants.NETWORK_ID);
-		if(networkId != null) {
-			String fixedIp = this.targetProperties.get(OpenstackConstants.FIXED_IP);
-			// fixedIp may be null (DHCP).
-
-			// TODO: uncomment the next line if you want Neutron support
-			// (think about updating the openstack-java-sdk version in the POM).
-			// serverForCreate.addNetworks(networkId, fixedIp);
-		}
-
-		final Server server = this.novaClient.servers().boot(serverForCreate).execute();
-		//System.out.println(server);
-
-		// Wait for server to be in ACTIVE state, before associating floating IP and/or attaching volumes
-		try {
-			final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor(1);
-			timer.scheduleAtFixedRate(new Runnable() {
-
-				@Override
-				public void run() {
-					Server checked = OpenstackIaasHandler.this.novaClient.servers().show(server.getId()).execute();
-					if("ACTIVE".equals(checked.getStatus())) {
-						timer.shutdown();
-					}
-				}
-			}, 10, 5, TimeUnit.SECONDS);
-			timer.awaitTermination(120, TimeUnit.SECONDS);
-
-		} catch (Exception ignore) {
-			// nothing
-		}
-
-		// Attach volume if required
-		if(volumeIdToAttach != null) {
-			String mountPoint = this.targetProperties.get(OpenstackConstants.VOLUME_MOUNT_POINT);
-			if(mountPoint == null)
-				mountPoint = "/dev/vdb";
-
-			this.novaClient.servers().attachVolume(server.getId(), volumeIdToAttach, mountPoint).execute();
-		}
-
-		// Associate floating IP (nova network) if specified
-		if(this.floatingIpPool != null) {
-			FloatingIp ip = requestFloatingIp(this.novaClient, server.getId());
-
-			/*FloatingIps ips = this.novaClient.floatingIps().list().execute();
-
-			FloatingIp ip = null;
-			for(FloatingIp ip2 : ips) {
-				// Look for an IP that is not yet associated to a VM
-				if(ip2.getInstanceId() == null) ip = ip2;
-			}*/
-
-			if( ip != null ) {
-				this.novaClient.servers().associateFloatingIp( server.getId(), ip.getIp()).execute();
-			}
-		}
-
-		return server.getId();
+		this.serverIdToLaunchers.put( handler.getServerId(), handler );
+		return handler.getServerId();
 	}
 
 
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #terminateMachine(java.lang.String)
+	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine(String instanceId) throws TargetException {
+	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
+
 		try {
-			this.novaClient.servers().delete(instanceId).execute();
-			synchronized(ipAssociations) {
-				for(Map.Entry<String, String> entry : ipAssociations.entrySet()) {
-					if(instanceId.equals(entry.getValue())) {
-						ipAssociations.remove(entry.getKey());
-						break;
+			this.logger.info( "Terminating Openstack machine. Machine ID: " + machineId );
+
+			NovaApi novaApi = novaApi( targetProperties );
+			String anyZoneName = novaApi.getConfiguredZones().iterator().next();
+			novaApi.getServerApiForZone( anyZoneName ).delete( machineId );
+			novaApi.close();
+
+		} catch( IOException e ) {
+			throw new TargetException( e );
+		}
+	}
+
+
+	/**
+	 * Creates a JCloud context for Nova.
+	 * @param targetProperties the target properties
+	 * @return a non-null object
+	 * @throws TargetException if the target properties are invalid
+	 */
+	static NovaApi novaApi( Map<String,String> targetProperties ) throws TargetException {
+
+		validate( targetProperties );
+		return ContextBuilder
+				.newBuilder( PROVIDER_NOVA )
+				.endpoint( targetProperties.get( API_URL ))
+			    .credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
+			    .buildApi( NovaApi.class );
+	}
+
+
+	/**
+	 * Creates a JCloud context for Neutron.
+	 * @param targetProperties the target properties
+	 * @return a non-null object
+	 * @throws TargetException if the target properties are invalid
+	 */
+	static NeutronApi neutronApi( Map<String,String> targetProperties ) throws TargetException {
+
+		validate( targetProperties );
+		return ContextBuilder
+				.newBuilder( PROVIDER_NEUTRON )
+				.endpoint( targetProperties.get( API_URL ))
+			    .credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
+			    .buildApi( NeutronApi.class );
+	}
+
+
+	/**
+	 * Validates the target properties
+	 * @param targetProperties the properties
+	 * @throws TargetException if an error occurred during the validation
+	 */
+	static void validate( Map<String,String> targetProperties ) throws TargetException {
+
+		checkProperty( API_URL, targetProperties );
+		checkProperty( IMAGE_NAME, targetProperties );
+		checkProperty( TENANT_NAME, targetProperties );
+		checkProperty( FLAVOR_NAME, targetProperties );
+		checkProperty( SECURITY_GROUP, targetProperties );
+		checkProperty( KEY_PAIR, targetProperties );
+		checkProperty( USER, targetProperties );
+		checkProperty( PASSWORD, targetProperties );
+	}
+
+
+	/**
+	 * @param targetProperties the target properties (assumed to be valid)
+	 * @return the identity
+	 */
+	static String identity( Map<String,String> targetProperties ) {
+		return targetProperties.get( TENANT_NAME ) + ":" + targetProperties.get( USER );
+	}
+
+
+	private static void checkProperty( String propertyName, Map<String,String> targetProperties )
+	throws TargetException {
+
+		if( ! targetProperties.containsKey( propertyName ))
+			throw new TargetException( "Property '" + propertyName + "' is missing." );
+
+		if( Utils.isEmptyOrWhitespaces( targetProperties.get( propertyName )))
+			throw new TargetException( "Property '" + propertyName + "' must have a value." );
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class CheckingRunnable implements Runnable {
+		private final Map<String,MachineLauncher> serverIdToLaunchers;
+		private final Logger logger = Logger.getLogger( getClass().getName());
+
+
+		/**
+		 * Constructor.
+		 * @param serverIdToLaunchers
+		 */
+		public CheckingRunnable( Map<String,MachineLauncher> serverIdToLaunchers ) {
+			super();
+			this.serverIdToLaunchers = serverIdToLaunchers;
+		}
+
+
+		@Override
+		public void run() {
+
+			// Check the state of all the launchers
+			Set<String> keysToRemove = new HashSet<String> ();
+			for( Map.Entry<String,MachineLauncher> entry : this.serverIdToLaunchers.entrySet()) {
+
+				MachineLauncher handler = entry.getValue();
+				if( handler.getState() == State.COMPLETE ) {
+					keysToRemove.add( entry.getKey());
+					continue;
+				}
+
+				State lastState = null;
+				try {
+					for( State currentState = handler.getState(); currentState != lastState; ) {
+						handler.resume();
+						lastState = currentState;
 					}
+
+				} catch( TargetException e ) {
+					this.logger.severe( "An error occurred while configuring VM '" + handler.getVmName() + "'. " + e.getMessage());
+					Utils.logException( this.logger, e );
+					keysToRemove.add( entry.getKey());
 				}
 			}
 
-		} catch(Exception e) {
-			throw new TargetException(e);
+			// Remove old keys
+			for( String key : keysToRemove )
+				this.serverIdToLaunchers.remove( key );
 		}
 	}
-
-
-	private static HashMap<String, String> ipAssociations = new HashMap<String, String>();
-	private static synchronized FloatingIp requestFloatingIp(Nova novaClient, String serverId) {
-		FloatingIps ips = novaClient.floatingIps().list().execute();
-
-		FloatingIp ip = null;
-		for(FloatingIp ip2 : ips) {
-			// Look for an IP that is not yet associated to a VM
-			if(ip2.getInstanceId() == null && ipAssociations.get(ip2.getId()) == null) {
-				ip = ip2;
-				ipAssociations.put(ip2.getId(), serverId);
-				break;
-			}
-		}
-		return ip;
-	}
-
-
-//	public static void main(String args[]) throws Exception {
-//
-//		Map<String, String> conf = new HashMap<String, String>();
-//
-//		java.util.Properties p = new java.util.Properties();
-//		p.load(new java.io.FileReader(args[0]));
-//
-//		for( Map.Entry<Object,Object> entry : p.entrySet()) {
-//			conf.put( entry.getKey().toString(), entry.getValue().toString());
-//		}
-//		// conf.put(OpenstackConstants.COMPUTE_URL, "http://localhost:8888/v2");
-//
-//		OpenstackIaasHandler target = new OpenstackIaasHandler();
-//		target.setIaasProperties(conf);
-//
-//		String channelName = "test";
-//		String applicationName = "roboconf";
-//		String ipMessagingServer = "localhost";
-//		String user = "guest";
-//		String pwd = "guest";
-//		String serverId = target.createVM( ipMessagingServer, user, pwd, channelName, applicationName);
-//		/*Thread.sleep(25000);
-//		target.terminateVM(serverId);*/
-//	}
 }

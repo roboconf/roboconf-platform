@@ -229,16 +229,16 @@ public final class RabbitMqUtils {
 				break;
 
 			} catch( InterruptedException e ) {
-				logger.finest( Utils.writeException( e ));
+				Utils.logException( logger, e );
 				break;
 
 			} catch( ClassNotFoundException e ) {
 				logger.severe( sourceName + ": a message could not be deserialized. Class cast exception." );
-				logger.finest( Utils.writeException( e ));
+				Utils.logException( logger, e );
 
 			}  catch( IOException e ) {
 				logger.severe( sourceName + ": a message could not be deserialized. I/O exception." );
-				logger.finest( Utils.writeException( e ));
+				Utils.logException( logger, e );
 			}
 		}
 

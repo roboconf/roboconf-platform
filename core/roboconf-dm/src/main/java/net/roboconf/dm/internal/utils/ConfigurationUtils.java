@@ -106,7 +106,7 @@ public class ConfigurationUtils {
 
 		} catch( IOException e ) {
 			logger.severe( "Failed to save instances. " + e.getMessage());
-			logger.finest( Utils.writeException( e ));
+			Utils.logException( logger, e );
 		}
 	}
 

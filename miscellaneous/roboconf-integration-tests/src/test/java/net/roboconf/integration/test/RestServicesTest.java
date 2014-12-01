@@ -58,7 +58,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
-	private static final String JERSEY_VERSION = "1.18.1";
+	private static final String JERSEY_VERSION = "1.18.2";
 	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
 
 	private WsClient client;

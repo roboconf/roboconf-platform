@@ -93,7 +93,7 @@ public class DockerHandler_withContainerTest {
 
 		} catch( Exception e ) {
 			this.logger.warning( "Tests are skipped because Docker is not installed or misconfigured." );
-			this.logger.finest( Utils.writeException( e ));
+			Utils.logException( this.logger, e );
 
 			this.dockerIsInstalled = false;
 			Assume.assumeNoException( e );
@@ -124,7 +124,7 @@ public class DockerHandler_withContainerTest {
 		Assume.assumeTrue( this.dockerIsInstalled );
 		Map<String, String> targetProperties = loadTargetProperties();
 		DockerHandler target = new DockerHandler();
-		target.setTargetProperties( targetProperties );
+		target.createDockerClient( targetProperties );
 	}
 
 
@@ -133,7 +133,7 @@ public class DockerHandler_withContainerTest {
 
 		Assume.assumeTrue( this.dockerIsInstalled );
 		DockerHandler target = new DockerHandler();
-		target.setTargetProperties( loadTargetProperties());
+		Map<String,String> targetProperties = loadTargetProperties();
 
 		String rootInstanceName = "test";
 		String applicationName = "roboconf";
@@ -156,9 +156,9 @@ public class DockerHandler_withContainerTest {
 		String pwd = "roboconf";
 		String containerId = null;
 
-		containerId = target.createOrConfigureMachine( ipMessagingServer, user, pwd, rootInstanceName, applicationName );
+		containerId = target.createOrConfigureMachine( targetProperties, ipMessagingServer, user, pwd, rootInstanceName, applicationName );
 		Assert.assertNotNull( containerId );
-		target.terminateMachine( containerId );
+		target.terminateMachine( targetProperties, containerId );
 	}
 
 
@@ -184,7 +184,7 @@ public class DockerHandler_withContainerTest {
 		BufferedReader reader = null;
 		boolean ok = false;
 		try {
-			reader = new BufferedReader( new FileReader(dockerConf));
+			reader = new BufferedReader( new FileReader( dockerConf ));
 			String line;
 			while( ! ok && (line = reader.readLine()) != null) {
 				if( line.indexOf("#") < 0
@@ -243,7 +243,7 @@ public class DockerHandler_withContainerTest {
 			targetProperties.put( entry.getKey().toString(), entry.getValue().toString());
 
 		if( this.dockerImageId != null )
-			targetProperties.put( DockerConstants.IMAGE_ID, this.dockerImageId );
+			targetProperties.put( DockerHandler.IMAGE_ID, this.dockerImageId );
 
 		return targetProperties;
 	}

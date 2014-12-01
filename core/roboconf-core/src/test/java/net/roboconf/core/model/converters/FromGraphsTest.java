@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.io.ParsingModelIo;
@@ -57,7 +58,7 @@ public class FromGraphsTest {
 	public void testFromGraphs_noFacet() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
 
 		cA.getExportedVariables().put( "A.port", "9000" );
@@ -65,7 +66,7 @@ public class FromGraphsTest {
 		cA.getImportedVariables().put( "B.port", Boolean.FALSE );
 		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
 
-		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
+		Component cB = new Component( "B" ).alias( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
 
 		cB.getExportedVariables().put( "B.port", "9000" );
@@ -79,7 +80,7 @@ public class FromGraphsTest {
 	public void testFromGraphs_oneFacet() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
 		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
 
@@ -88,7 +89,7 @@ public class FromGraphsTest {
 		cA.getImportedVariables().put( "B.port", Boolean.TRUE );
 		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
 
-		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
+		Component cB = new Component( "B" ).alias( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
 
 		cB.getFacetNames().add( "facetF" );
@@ -104,7 +105,7 @@ public class FromGraphsTest {
 	public void testFromGraphs_threeFacets() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
 
 		cA.getFacetNames().add( "my-facet-1" );
@@ -117,7 +118,7 @@ public class FromGraphsTest {
 		cA.getImportedVariables().put( "B.ip", Boolean.TRUE );
 		cA.getImportedVariables().put( "facetF.props", Boolean.FALSE );
 
-		Component cB = new Component( "B" ).alias( "B" ).installerName( "installer B" );
+		Component cB = new Component( "B" ).alias( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
 
 		cB.getFacetNames().add( "facetF" );
@@ -136,7 +137,7 @@ public class FromGraphsTest {
 	public void testFromGraphs_withComments() throws Exception {
 		Graphs graphs = new Graphs();
 
-		Component cA = new Component( "A" ).alias( "A" ).installerName( "installer A" ).iconLocation( "some-location.jpg" );
+		Component cA = new Component( "A" ).alias( "A" ).installerName( Constants.TARGET_INSTALLER ).iconLocation( "some-location.jpg" );
 		graphs.getRootComponents().add( cA );
 
 		cA.getFacetNames().add( "my-facet-1" );

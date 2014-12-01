@@ -69,8 +69,14 @@ public final class ProgramUtils {
 
 		ProcessBuilder pb = new ProcessBuilder( command );
 		Map<String,String> env = pb.environment();
-		if( environmentVars != null )
-			env.putAll( environmentVars );
+		if(environmentVars != null && env != null) {
+			// No putAll() here: null key or value would cause NPE
+			// (see ProcessBuilder.environment() javadoc).
+			for( Map.Entry<String,String> entry : environmentVars.entrySet()) {
+				if( entry.getKey() != null && entry.getValue() != null )
+					env.put( entry.getKey(), entry.getValue());
+			}
+		}
 
 		Process process = pb.start();
 		new Thread( new OutputRunnable( process, true, logger )).start();
@@ -123,7 +129,7 @@ public final class ProgramUtils {
 			BufferedReader br = null;
 			try {
 				InputStream is = this.errorLevel ? this.process.getErrorStream() : this.process.getInputStream();
-				br = new BufferedReader( new InputStreamReader( is ));
+				br = new BufferedReader( new InputStreamReader( is, "UTF-8" ));
 
 				for( String line = br.readLine(); line != null; line = br.readLine())
 					this.logger.info( prefix + line );

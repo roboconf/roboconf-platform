@@ -85,7 +85,6 @@
 			<plugin>
 				<groupId>org.apache.karaf.tooling</groupId>
 				<artifactId>karaf-maven-plugin</artifactId>
-				<extensions>true</extensions>
 				<configuration>
 					<bootFeatures>
 						<feature>standard</feature>
@@ -96,6 +95,7 @@
 						<feature>ipojo-webconsole</feature>
 						<feature>jersey-1.x</feature>
 						<feature>roboconf-dm</feature>
+						<feature>jclouds-for-roboconf</feature>
 					</bootFeatures>
 				</configuration>
 			</plugin>
@@ -143,6 +143,18 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			
+			<!-- 
+				Temporary workaround for #138.
+				This will prevent post-build hook from failing.
+			 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

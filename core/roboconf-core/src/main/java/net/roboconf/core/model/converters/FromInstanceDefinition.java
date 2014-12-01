@@ -248,7 +248,13 @@ public class FromInstanceDefinition {
 			Instance instance = entry.getValue();
 			instance.setName( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_NAME ));
 			instance.setChannel( ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_CHANNEL ));
+
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
+			if( instance.getComponent() == null ) {
+				ModelError error = new ModelError( ErrorCode.CO_INEXISTING_COMPONENT, -1 );
+				error.setDetails( "Component name: " + currentBlock.getName());
+				this.errors.add( error );
+			}
 
 			// Runtime data
 			String state = ModelUtils.getPropertyValue( currentBlock, Constants.PROPERTY_INSTANCE_STATE );

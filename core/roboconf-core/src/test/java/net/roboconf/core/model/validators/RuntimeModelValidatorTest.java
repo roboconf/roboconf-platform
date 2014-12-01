@@ -102,6 +102,12 @@ public class RuntimeModelValidatorTest {
 		Assert.assertFalse( iterator.hasNext());
 
 		comp.setInstallerName( "my installer" );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertEquals( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		comp.setInstallerName( Constants.TARGET_INSTALLER );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
 
 		comp.getFacetNames().add( "" );
@@ -149,10 +155,10 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_NO_ROOT_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		Component comp1 = new Component( "comp1" ).alias( "component 1" ).installerName( "installer-1" );
+		Component comp1 = new Component( "comp1" ).alias( "component 1" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( comp1 );
 
-		Component duplicateComp1 = new Component( "comp1" ).alias( "component 1" ).installerName( "installer-1" );
+		Component duplicateComp1 = new Component( "comp1" ).alias( "component 1" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( duplicateComp1 );
 
 		// The validator checks something that cannot happen for the moment.
@@ -260,7 +266,7 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_NO_ROOT_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		Component comp = new Component( "root" ).alias( "a root component" ).installerName( "_my_installer" );
+		Component comp = new Component( "root" ).alias( "a root component" ).installerName( Constants.TARGET_INSTALLER );
 		app.getGraphs().getRootComponents().add( comp );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
 	}
@@ -316,7 +322,7 @@ public class RuntimeModelValidatorTest {
 	@Test
 	public void testExportedVariableNames() throws Exception {
 
-		Component component = new Component( "my-component" ).alias( "a component" ).installerName( "an-installer" );
+		Component component = new Component( "my-component" ).alias( "a component" ).installerName( Constants.TARGET_INSTALLER );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
 
 		component.getExportedVariables().put( "ip", null );
