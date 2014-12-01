@@ -26,6 +26,8 @@
 			<property name="override-properties-with-user-data" method="setOverrideProperties" value="true" />
 			<property name="simulate-plugins" method="setSimulatePlugins" value="false" />
 		</properties>
+		
+		<provides />
 	</component>
 	
 	<!-- In-memory component -->
