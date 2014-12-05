@@ -1,4 +1,4 @@
 # A simple component
 apache {
-	alias: Apache;
+	# nothing
 }

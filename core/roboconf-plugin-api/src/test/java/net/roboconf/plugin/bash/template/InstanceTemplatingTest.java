@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ImportHelpers;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.plugin.api.internal.template.ImportBean;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 

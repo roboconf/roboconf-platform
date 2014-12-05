@@ -1,0 +1,6 @@
+
+import it-does-not-exist.graph;
+
+VM {
+	installer: target;
+}

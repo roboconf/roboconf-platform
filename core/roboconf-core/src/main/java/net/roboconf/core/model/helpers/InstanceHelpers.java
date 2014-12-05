@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.validators.RuntimeModelValidator;
+import net.roboconf.core.model.RuntimeModelValidator;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -328,10 +328,11 @@ public final class InstanceHelpers {
 					&& parentInstance.getComponent().getChildren().contains( childInstance.getComponent())) {
 
 				InstanceHelpers.insertChild( parentInstance, childInstance );
-				Collection<RoboconfError> errors = RuntimeModelValidator.validate( application.getRootInstances());
+				Collection<Instance> allInstances = InstanceHelpers.getAllInstances( application );
+				Collection<RoboconfError> errors = RuntimeModelValidator.validate( allInstances );
 				if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
-					childInstance.setParent( null );
 					parentInstance.getChildren().remove( childInstance );
+					childInstance.setParent( null );
 
 				} else {
 					success = true;
@@ -389,7 +390,7 @@ public final class InstanceHelpers {
 			Instance copy = new Instance();
 			copy.name( current.getName());
 			copy.component( current.getComponent());
-			copy.channel( current.getChannel());
+			copy.getChannels().addAll( current.getChannels());
 			copy.getOverriddenExports().putAll( current.getOverriddenExports());
 			instanceToDuplicate.put( current, copy );
 

@@ -34,8 +34,8 @@ import java.util.Properties;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 
@@ -68,13 +68,12 @@ public class TargetHelpersTest {
 	@Test
 	public void testLoadTargetProperties_success() throws Exception {
 
-		final String componentName = "my-vm";
-
+		final Component component = new Component( "my-vm" );
 		File applicationDirectory = this.folder.newFolder( "roboconf_test" );
 		if( applicationDirectory.exists())
 			Utils.deleteFilesRecursively( applicationDirectory );
 
-		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, componentName );
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, component );
 		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
 
 		OutputStream fos = null;
@@ -91,7 +90,7 @@ public class TargetHelpersTest {
 			Utils.closeQuietly( fos );
 		}
 
-		Instance instance = new Instance( "my-vm-instance" ).component( new Component( componentName ));
+		Instance instance = new Instance( "my-vm-instance" ).component( component );
 		Map<String, String> loadedProperties = TargetHelpers.loadTargetProperties( applicationDirectory, instance );
 		Assert.assertNotNull( loadedProperties );
 		Assert.assertEquals( "my value", loadedProperties.get("my-key"));

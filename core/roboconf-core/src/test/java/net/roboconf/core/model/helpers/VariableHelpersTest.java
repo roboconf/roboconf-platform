@@ -30,8 +30,8 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
 

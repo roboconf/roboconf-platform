@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.plugin.puppet.internal.PluginPuppet.PuppetState;
 
 import org.junit.Rule;

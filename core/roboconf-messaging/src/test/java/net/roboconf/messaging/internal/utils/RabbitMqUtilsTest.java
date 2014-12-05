@@ -32,9 +32,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.internal.RabbitMqTestUtils;
 import net.roboconf.messaging.messages.Message;
 

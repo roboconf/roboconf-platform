@@ -31,7 +31,8 @@ import java.util.Collections;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -74,20 +75,32 @@ public final class ResourceUtils {
 	 * @return a non-null file (that may not exist)
 	 */
 	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, Instance instance ) {
-		return findInstanceResourcesDirectory( applicationFilesDirectory, instance.getComponent().getName());
+		return findInstanceResourcesDirectory( applicationFilesDirectory, instance.getComponent());
 	}
 
 
 	/**
 	 * Finds the resource directory for an instance.
+	 * <p>
+	 * The resource directory may be the one of another component.
+	 * This is the case when a component extends another component.
+	 * </p>
+	 * <p>
+	 * An extending component can override the resource directory.
+	 * </p>
+	 *
 	 * @param applicationFilesDirectory the application's directory
 	 * @param componentName the component name
 	 * @return a non-null file (that may not exist)
 	 */
-	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, String componentName ) {
+	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, Component component ) {
 
-		File result = new File( applicationFilesDirectory, Constants.PROJECT_DIR_GRAPH );
-		result = new File( result, componentName);
+		File root = new File( applicationFilesDirectory, Constants.PROJECT_DIR_GRAPH );
+		File result = null;
+		for( Component c = component; c != null; c = c.getMetadata().getExtendedComponent()) {
+			if(( result = new File( root, c.getName())).exists())
+				break;
+		}
 
 		return result;
 	}

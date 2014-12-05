@@ -28,10 +28,10 @@ package net.roboconf.messaging.messages.from_agent_to_dm;
 import java.util.Collection;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.messages.Message;
 
 /**

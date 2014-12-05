@@ -30,8 +30,8 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
 
 /**
  * A set of helpers for instance imports.

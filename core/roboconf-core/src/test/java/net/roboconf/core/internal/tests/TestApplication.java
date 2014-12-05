@@ -25,12 +25,12 @@
 
 package net.roboconf.core.internal.tests;
 
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.Instance;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -50,20 +50,20 @@ public class TestApplication extends Application {
 		setQualifier( "test" );
 
 		// Root instances
-		Component vmComponent = new Component( "vm" ).installerName( "target" ).alias( "A virtual machine" );
+		Component vmComponent = new Component( "vm" ).installerName( "target" );
 		this.tomcatVm = new Instance( "tomcat-vm" ).component( vmComponent );
 		this.mySqlVm = new Instance( "mysql-vm" ).component( vmComponent );
 
 		// Children instances
-		Component tomcatComponent = new Component( "tomcat" ).installerName( "puppet" ).alias( "An application server" );
+		Component tomcatComponent = new Component( "tomcat" ).installerName( "puppet" );
 		this.tomcat = new Instance( "tomcat-server" ).component( tomcatComponent );
 
-		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" ).alias( "A database" );
+		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" );
 		mySqlComponent.getExportedVariables().put( "mysql.port", "3306" );
 		mySqlComponent.getExportedVariables().put( "mysql.ip", null );
 		this.mySql = new Instance( "mysql-server" ).component( mySqlComponent );
 
-		Component warComponent = new Component( "war" ).installerName( "bash" ).alias( "A WAR application" );
+		Component warComponent = new Component( "war" ).installerName( "bash" );
 		warComponent.getExportedVariables().put( "war.port", "8080" );
 		warComponent.getExportedVariables().put( "war.ip", null );
 		warComponent.getImportedVariables().put( "mysql.port", false );

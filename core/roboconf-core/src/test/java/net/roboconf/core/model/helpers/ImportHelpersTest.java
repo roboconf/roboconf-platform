@@ -35,10 +35,10 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 
 import org.junit.Test;
 
@@ -50,7 +50,7 @@ public class ImportHelpersTest {
 	@Test
 	public void testHasAllRequiredImports_optional() throws Exception {
 
-		Component clusterNodeComponent = new Component( "cluster" ).alias( "a cluster node" ).installerName( "whatever" );
+		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
 		clusterNodeComponent.getImportedVariables().put( "cluster.ip", Boolean.TRUE );
 		clusterNodeComponent.getImportedVariables().put( "cluster.port", Boolean.TRUE );
 		clusterNodeComponent.getExportedVariables().put( "cluster.ip", null );
@@ -82,12 +82,12 @@ public class ImportHelpersTest {
 	@Test
 	public void testHasAllRequiredImports_required() throws Exception {
 
-		Component dbComponent = new Component( "database" ).alias( "a database" ).installerName( "whatever" );
+		Component dbComponent = new Component( "database" ).installerName( "whatever" );
 		dbComponent.getExportedVariables().put( "database.ip", null );
 		dbComponent.getExportedVariables().put( "database.port", "3009" );
 		dbComponent.getExportedVariables().put( "database.collection", "whatever" );
 
-		Component appServerComponent = new Component( "app-server" ).alias( "an application server" ).installerName( "whatever" );
+		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
 		appServerComponent.getExportedVariables().put( "app-server.ip", null );
 		appServerComponent.getExportedVariables().put( "app-server.port", "8009" );
 		appServerComponent.getImportedVariables().put( "database.ip", Boolean.FALSE );

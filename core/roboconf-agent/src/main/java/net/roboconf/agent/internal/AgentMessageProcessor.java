@@ -33,15 +33,15 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.lifecycle.AbstractLifeCycleManager;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
@@ -271,7 +271,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.logger.severe( "The component " + msg.getComponentName() + " was not found in the local graph." );
 
 		} else {
-			Instance newInstance = new Instance( msg.getInstanceName()).channel( msg.getChannel()).component( instanceComponent );
+			Instance newInstance = new Instance( msg.getInstanceName()).component( instanceComponent );
+			newInstance.getChannels().addAll( msg.getChannels());
 			if( msg.getData() != null )
 				newInstance.getData().putAll( msg.getData());
 

@@ -27,9 +27,9 @@ package net.roboconf.core.model.helpers;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
 
 import org.junit.Test;
 

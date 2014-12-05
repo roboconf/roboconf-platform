@@ -26,7 +26,7 @@
 package net.roboconf.plugin.logger.internal;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
 

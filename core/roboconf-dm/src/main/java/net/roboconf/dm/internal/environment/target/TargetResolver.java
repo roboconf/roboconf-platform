@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.target.api.TargetException;
@@ -47,7 +47,7 @@ public class TargetResolver implements ITargetResolver {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.management.ITargetResolver
-	 * #findTargetHandler(java.util.List, net.roboconf.dm.management.ManagedApplication, net.roboconf.core.model.runtime.Instance)
+	 * #findTargetHandler(java.util.List, net.roboconf.dm.management.ManagedApplication, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )

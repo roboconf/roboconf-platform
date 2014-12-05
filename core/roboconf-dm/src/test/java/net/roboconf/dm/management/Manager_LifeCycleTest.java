@@ -29,9 +29,9 @@ import java.io.IOException;
 import java.util.List;
 
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientDm;

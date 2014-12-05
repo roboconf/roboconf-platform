@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.roboconf.core.model.parsing.ParsingConstants;
+import net.roboconf.core.dsl.ParsingConstants;
 
 /**
  * All the error codes that can be encountered with a Roboconf model.
@@ -54,29 +54,27 @@ public enum ErrorCode {
 
 	// Parsing Model Errors
 	PM_INVALID_BLOCK_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Validation failed. Unknown block type." ),
-	PM_UNKNOWN_PROPERTY_NAME( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "Unknown property name for a facet or a component." ),
+	PM_UNKNOWN_PROPERTY_NAME( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "Unknown property name." ),
 	PM_FORBIDDEN_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This name is not allowed for a facet or a component." ),
 	PM_EMPTY_PROPERTY_VALUE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The property value is missing." ),
 	PM_EMPTY_IMPORT_LOCATION( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The import location must be specified." ),
 	PM_EMPTY_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The facet name is missing." ),
-	PM_EMPTY_REFERENCED_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "A facet name is missing." ),
+	PM_EMPTY_REFERENCED_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "A name is missing in the list." ),
 	PM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The component name is missing." ),
 	PM_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "A variable name is missing." ),
 
 	PM_INVALID_CHILD_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid child name. As a reminder, children names must be separated by a comma." ),
-	PM_INVALID_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid facet name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
+	PM_INVALID_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An invalid name was found. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	PM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid component name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	PM_INVALID_EXPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Exported variable names must be separated by a comma." ),
 	PM_INVALID_IMPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Imported variable names must be separated by a comma." ),
 	PM_INVALID_INSTALLER_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid installer name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
-	PM_INVALID_ICON_LOCATION( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The icon location must end with an image extension (gif, jpg, jpeg, png)." ),
 	PM_INVALID_INSTANCE_ELEMENT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An instance can only contain properties, other instances, blank lines or comments." ),
 	PM_INVALID_INSTANCE_COUNT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The 'count' property for instances must be a positive integer." ),
 	PM_USELESS_INSTANCE_COUNT( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "The 'count' property is useless here, the default value is already 1." ),
 
 	PM_PROPERTY_NOT_APPLIABLE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property does not apply to this element." ),
 	PM_DUPLICATE_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "This property was already set for this element." ),
-	PM_MISSING_ALIAS_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The 'alias' property is missing." ),
 	PM_MISSING_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The 'name' property is missing." ),
 	PM_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid instance name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 
@@ -87,21 +85,25 @@ public enum ErrorCode {
 
 	// Conversion Errors
 	CO_NOT_A_GRAPH( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A graph file imports a file which is not a graph file." ),
+	CO_NOT_INSTANCES( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A instance definition file imports a file which is not an instance definition." ),
 	CO_UNREACHABLE_FILE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A configuration file could not be read." ),
 	CO_UNRESOLVED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "The facet could not be resolved. It was not declared anywhere." ),
 	CO_CYCLE_IN_FACETS( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A cycle was found in facet definitions." ),
 	CO_ALREADY_DEFINED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This facet was defined more than once." ),
 	CO_ALREADY_DEFINED_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This component was defined more than once." ),
+	CO_CYCLE_IN_COMPONENTS_INHERITANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A component directly or indirectly extends itself. Such a cycle is forbidden." ),
 	CO_ALREADY_DEFINED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This instance was defined more than once." ),
 	CO_CONFLICTING_INFERRED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "An inferred instance (count = ...) is in conflict with another instance. They both have the same name and path." ),
 	CO_NOT_OVERRIDING( ErrorLevel.WARNING, ErrorCategory.CONVERSION, "A variable is exported in the instance but was not defined in its component." ),
 	CO_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A variable is exported in the instance but could not be resolved in its component." ),
-	CO_AMBIGUOUS_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A component does not specify its installer but inherits several ones from its facets." ),
 	CO_INEXISTING_CHILD( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "No child matching this name (component or facet) was found." ),
 	CO_INEXISTING_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "No component with this name was found." ),
+	CO_GRAPH_COULD_NOT_BE_BUILT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "The graph(s) could not be built." ),
 
 	// Runtime Model Errors
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
+	RM_MISSING_APPLICATION_NAMESPACE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application namespace is missing." ),
+	RM_MISSING_APPLICATION_DSL_ID( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The DSL identifier to read model files is missing. The default parser will be used." ),
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
 	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must have a graph definition." ),
@@ -111,7 +113,6 @@ public enum ErrorCode {
 	RM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid component name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_EMPTY_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "This component references a facet whose name is null or empty." ),
 	RM_INVALID_FACET_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid facet name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
-	RM_EMPTY_COMPONENT_ALIAS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component alias is mandatory." ),
 	RM_EMPTY_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component's installer name is mandatory." ),
 	RM_INVALID_COMPONENT_INSTALLER( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid installer name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_COMPONENT_IMPORTS_EXPORTS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component imports a variable it exports (the import should be marked as optional)." ),
@@ -123,7 +124,8 @@ public enum ErrorCode {
 	RM_INVALID_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid variable name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 
 	RM_DUPLICATE_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),
-	RM_CYCLE_IN_COMPONENTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This component was already defined." ),
+	RM_CYCLE_IN_COMPONENTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A cycle was detected in the graph(s)." ),
+	RM_CYCLE_IN_COMPONENTS_INHERITANCE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component directly or indirectly extends itself. Such a cycle is forbidden." ),
 	RM_NO_ROOT_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "No root component was found in the graph." ),
 	RM_UNRESOLVABLE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is imported but no component exports it." ),
 
@@ -140,13 +142,11 @@ public enum ErrorCode {
 	PROJ_NO_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor was not found (application.properties)." ),
 	PROJ_MISSING_GRAPH_EP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The entry-point for the graph(s) was not found." ),
 	PROJ_MISSING_INSTANCE_EP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The entry-point for the instance(s) was not found." ),
-	PROJ_NOT_A_GRAPH( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A graph(s) file was expected." ),
-	PROJ_NOT_AN_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "An instance(s) file was expected." ),
 	PROJ_EXTRACT_TEMP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Roboconf failed to extract the ZIP archive (temporary directory)." ),
 	PROJ_EXTRACT_ZIP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Roboconf failed to extract the ZIP archive (ZIP reading)." ),
 	PROJ_DELETE_TEMP( ErrorLevel.WARNING, ErrorCategory.PROJECT, "Roboconf failed to delete a temporary directory." ),
 	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
-	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource directory." ),
+	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource (recipe) directory." ),
 	PROJ_NO_TARGET_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A root component does not have a target.properties file in its resources." ),
 
 

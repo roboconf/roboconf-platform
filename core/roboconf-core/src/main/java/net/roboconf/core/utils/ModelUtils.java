@@ -29,11 +29,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.Constants;
+import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
+import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.parsing.AbstractBlockHolder;
-import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.ParsingConstants;
 
 /**
  * Internal utilities related to model parsing and conversion.
@@ -80,7 +79,7 @@ public final class ModelUtils {
 	 */
 	public static Map<String,String> getData( AbstractBlockHolder holder ) {
 
-		BlockProperty p = holder.findPropertyBlockByName( Constants.PROPERTY_INSTANCE_DATA );
+		BlockProperty p = holder.findPropertyBlockByName( ParsingConstants.PROPERTY_INSTANCE_DATA );
 		Map<String,String> result = new HashMap<String,String> ();
 
 		String propertyValue = p == null ? null : p.getValue();
@@ -100,7 +99,7 @@ public final class ModelUtils {
 	 */
 	public static Map<String,String> getExportedVariables( AbstractBlockHolder holder ) {
 
-		BlockProperty p = holder.findPropertyBlockByName( Constants.PROPERTY_GRAPH_EXPORTS );
+		BlockProperty p = holder.findPropertyBlockByName( ParsingConstants.PROPERTY_GRAPH_EXPORTS );
 		Map<String,String> result = new HashMap<String,String> ();
 
 		String propertyValue = p == null ? null : p.getValue();

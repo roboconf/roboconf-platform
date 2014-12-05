@@ -26,10 +26,10 @@
 package net.roboconf.core.utils;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import junit.framework.Assert;
-import net.roboconf.core.utils.UriUtils;
 
 import org.junit.Test;
 
@@ -41,14 +41,14 @@ public class UriUtilsTest {
 	@Test
 	public void testUrlToUri_1() throws Exception {
 		URL url = new URL( "http://roboconf.net" );
-		Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ) );
+		Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ));
 	}
 
 
 	@Test
 	public void testUrlToUri_2() throws Exception {
 		URL url = new URL( "http://url.com/some%20folder" );
-		Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ) );
+		Assert.assertEquals( url.toURI(), UriUtils.urlToUri( url ));
 	}
 
 
@@ -57,21 +57,21 @@ public class UriUtilsTest {
 		URL url = new URL( "http://url.com/some folder" );
 		Assert.assertEquals(
 				new URI( "http://url.com/some%20folder" ),
-				UriUtils.urlToUri( url ) );
+				UriUtils.urlToUri( url ));
 	}
 
 
 	@Test
 	public void testUrlToUri_4() throws Exception {
 		String url = "http://roboconf.net";
-		Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ) );
+		Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ));
 	}
 
 
 	@Test
 	public void testUrlToUri_5() throws Exception {
 		String url = "http://url.com/some%20folder";
-		Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ) );
+		Assert.assertEquals( new URI( url ), UriUtils.urlToUri( url ));
 	}
 
 
@@ -80,7 +80,14 @@ public class UriUtilsTest {
 		String url = "http://url.com/some folder";
 		Assert.assertEquals(
 				new URI( "http://url.com/some%20folder" ),
-				UriUtils.urlToUri( url ) );
+				UriUtils.urlToUri( url ));
+	}
+
+
+	@Test( expected = URISyntaxException.class )
+	public void testUrlToUri_exception() throws Exception {
+		String url = "http://url with spaces.com";
+		UriUtils.urlToUri( url );
 	}
 
 

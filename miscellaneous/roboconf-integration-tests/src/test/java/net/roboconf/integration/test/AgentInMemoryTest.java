@@ -33,9 +33,9 @@ import java.util.List;
 import javax.inject.Inject;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.test.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.pax.probe.AbstractTest;

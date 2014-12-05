@@ -25,10 +25,11 @@
 
 package net.roboconf.messaging.messages.from_dm_to_agent;
 
+import java.util.Collection;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**
@@ -44,9 +45,10 @@ public class MsgCmdAddInstance extends Message {
 
 	private static final long serialVersionUID = 2695002034974872770L;
 
-	private final String parentInstancePath, instanceName, componentName, channel;
+	private final String parentInstancePath, instanceName, componentName;
 	private Map<String,String> data;
 	private Map<String,String> overridenExports;
+	private final Collection<String> channels;
 
 
 	/**
@@ -58,7 +60,7 @@ public class MsgCmdAddInstance extends Message {
 		this.parentInstancePath = instance.getParent() == null ? null : InstanceHelpers.computeInstancePath( instance.getParent());
 		this.instanceName = instance.getName();
 		this.componentName = instance.getComponent() != null ? instance.getComponent().getName() : null;
-		this.channel = instance.getChannel();
+		this.channels = instance.getChannels();
 
 		this.data = instance.getData();
 		this.overridenExports = instance.getOverriddenExports();
@@ -86,10 +88,10 @@ public class MsgCmdAddInstance extends Message {
 	}
 
 	/**
-	 * @return the channel
+	 * @return the channels
 	 */
-	public String getChannel() {
-		return this.channel;
+	public Collection<String> getChannels() {
+		return this.channels;
 	}
 
 	/**

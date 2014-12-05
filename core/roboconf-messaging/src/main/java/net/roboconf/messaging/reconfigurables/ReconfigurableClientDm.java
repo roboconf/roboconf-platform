@@ -28,8 +28,8 @@ package net.roboconf.messaging.reconfigurables;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.client.MessageServerClientFactory;
 import net.roboconf.messaging.internal.client.dismiss.DismissClientDm;

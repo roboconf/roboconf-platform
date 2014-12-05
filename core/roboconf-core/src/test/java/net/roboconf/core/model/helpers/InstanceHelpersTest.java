@@ -33,13 +33,13 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
 
@@ -241,8 +241,8 @@ public class InstanceHelpersTest {
 	public void testFindInstancesByComponentName() {
 
 		Application app = new Application();
-		Component tomcat = new Component( "tomcat" ).alias( "Tomcat server" ).installerName( "puppet" );
-		Component other = new Component( "other" ).alias( "Another component" ).installerName( "chef" );
+		Component tomcat = new Component( "tomcat" ).installerName( "puppet" );
+		Component other = new Component( "other" ).installerName( "chef" );
 
 		Instance i1 = new Instance( "i1" ).component( tomcat );
 		Instance i2 = new Instance( "i2" ).component( tomcat );
@@ -300,7 +300,7 @@ public class InstanceHelpersTest {
 	@Test
 	public void testTryToInsertChildInstance() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-2" );
+		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-with-only-components" );
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.getApplication());
@@ -316,6 +316,7 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( 1, InstanceHelpers.getAllInstances( app ).size());
 
 		Instance tomcatInstance_1 = new Instance( "tomcat-1" ).component( ComponentHelpers.findComponent( app.getGraphs(), "Tomcat" ));
+		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, null, tomcatInstance_1 ));
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, tomcatInstance_1 ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, tomcatInstance_1 ));
 		Assert.assertEquals( 2, InstanceHelpers.getAllInstances( app ).size());
@@ -328,9 +329,18 @@ public class InstanceHelpersTest {
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, mySqlInstance_1 ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 
+		// Invalid application => no insertion
 		Instance instanceWithNoComponent = new Instance( "MySQL-2" );
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instanceWithNoComponent ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
+
+		Instance instWithInvalidName = new Instance( "inst!!!" ).component( ComponentHelpers.findComponent( app.getGraphs(), "MySQL" ));
+		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instWithInvalidName ));
+		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
+
+		instWithInvalidName.setName( "whatever" );
+		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instWithInvalidName ));
+		Assert.assertEquals( 4, InstanceHelpers.getAllInstances( app ).size());
 	}
 
 
@@ -345,7 +355,7 @@ public class InstanceHelpersTest {
 
 		Instance copy = InstanceHelpers.duplicateInstance( original );
 		Assert.assertEquals( original.getName(), copy.getName());
-		Assert.assertEquals( original.getChannel(), copy.getChannel());
+		Assert.assertEquals( original.getChannels(), copy.getChannels());
 		Assert.assertEquals( original.getOverriddenExports().size(), copy.getOverriddenExports().size());
 		Assert.assertEquals( "test", copy.getOverriddenExports().get( "test" ));
 		Assert.assertEquals( "8012", copy.getOverriddenExports().get( "A.port" ));
@@ -377,7 +387,7 @@ public class InstanceHelpersTest {
 		// Perform a copy of the root
 		Instance copy = InstanceHelpers.duplicateInstance( original_1 );
 		Assert.assertEquals( original_1.getName(), copy.getName());
-		Assert.assertEquals( original_1.getChannel(), copy.getChannel());
+		Assert.assertEquals( original_1.getChannels(), copy.getChannels());
 		Assert.assertEquals( original_1.getOverriddenExports().size(), copy.getOverriddenExports().size());
 		Assert.assertEquals( "test", copy.getOverriddenExports().get( "test" ));
 		Assert.assertEquals( "8012", copy.getOverriddenExports().get( "A.port" ));
@@ -387,7 +397,7 @@ public class InstanceHelpersTest {
 
 		Instance[] children = copy.getChildren().toArray( new Instance[ 0 ]);
 		Assert.assertEquals( original_2.getName(), children[ 0 ].getName());
-		Assert.assertEquals( original_2.getChannel(), children[ 0 ].getChannel());
+		Assert.assertEquals( original_2.getChannels(), children[ 0 ].getChannels());
 		Assert.assertEquals( original_2.getOverriddenExports().size(), children[ 0 ].getOverriddenExports().size());
 		Assert.assertEquals( "8012", children[ 0 ].getOverriddenExports().get( "port" ));
 		Assert.assertEquals( original_2.getComponent(), children[ 0 ].getComponent());
@@ -395,7 +405,7 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( copy, children[ 0 ].getParent());
 
 		Assert.assertEquals( original_22.getName(), children[ 1 ].getName());
-		Assert.assertEquals( original_22.getChannel(), children[ 1 ].getChannel());
+		Assert.assertEquals( original_22.getChannels(), children[ 1 ].getChannels());
 		Assert.assertEquals( 0, children[ 1 ].getOverriddenExports().size());
 		Assert.assertEquals( original_22.getComponent(), children[ 1 ].getComponent());
 		Assert.assertEquals( 0, children[ 1 ].getChildren().size());
@@ -403,7 +413,7 @@ public class InstanceHelpersTest {
 
 		Instance lastChild = children[ 0 ].getChildren().iterator().next();
 		Assert.assertEquals( original_3.getName(), lastChild.getName());
-		Assert.assertEquals( original_3.getChannel(), lastChild.getChannel());
+		Assert.assertEquals( original_3.getChannels(), lastChild.getChannels());
 		Assert.assertEquals( original_3.getOverriddenExports().size(), lastChild.getOverriddenExports().size());
 		Assert.assertEquals( "localhost", lastChild.getOverriddenExports().get( "ip" ));
 		Assert.assertEquals( original_3.getComponent(), lastChild.getComponent());
@@ -413,7 +423,7 @@ public class InstanceHelpersTest {
 		// Perform a copy of the first child (the one which has a child)
 		copy = InstanceHelpers.duplicateInstance( original_2 );
 		Assert.assertEquals( original_2.getName(), copy.getName());
-		Assert.assertEquals( original_2.getChannel(), copy.getChannel());
+		Assert.assertEquals( original_2.getChannels(), copy.getChannels());
 		Assert.assertEquals( original_2.getOverriddenExports().size(), copy.getOverriddenExports().size());
 		Assert.assertEquals( "8012", copy.getOverriddenExports().get( "port" ));
 		Assert.assertEquals( original_2.getComponent(), copy.getComponent());
@@ -423,7 +433,7 @@ public class InstanceHelpersTest {
 
 		lastChild = copy.getChildren().iterator().next();
 		Assert.assertEquals( original_3.getName(), lastChild.getName());
-		Assert.assertEquals( original_3.getChannel(), lastChild.getChannel());
+		Assert.assertEquals( original_3.getChannels(), lastChild.getChannels());
 		Assert.assertEquals( original_3.getOverriddenExports().size(), lastChild.getOverriddenExports().size());
 		Assert.assertEquals( "localhost", lastChild.getOverriddenExports().get( "ip" ));
 		Assert.assertEquals( original_3.getComponent(), lastChild.getComponent());

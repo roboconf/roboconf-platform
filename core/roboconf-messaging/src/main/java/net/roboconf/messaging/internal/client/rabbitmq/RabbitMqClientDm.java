@@ -31,8 +31,8 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
@@ -138,7 +138,7 @@ public class RabbitMqClientDm implements IDmClient {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IDmClient
-	 * #publishMessageToAgent(net.roboconf.core.model.runtime.Application, net.roboconf.core.model.runtime.Instance, net.roboconf.messaging.messages.Message)
+	 * #publishMessageToAgent(net.roboconf.core.model.beans.Application, net.roboconf.core.model.beans.Instance, net.roboconf.messaging.messages.Message)
 	 */
 	@Override
 	public void sendMessageToAgent( Application application, Instance instance, Message message )
@@ -162,7 +162,7 @@ public class RabbitMqClientDm implements IDmClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IDmClient
-	 * #listenToAgentMessages(net.roboconf.core.model.runtime.Application, net.roboconf.messaging.client.IClient.ListenerCommand)
+	 * #listenToAgentMessages(net.roboconf.core.model.beans.Application, net.roboconf.messaging.client.IClient.ListenerCommand)
 	 */
 	@Override
 	public void listenToAgentMessages( Application application, ListenerCommand command )
@@ -222,7 +222,7 @@ public class RabbitMqClientDm implements IDmClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IDmClient
-	 * #deleteMessagingServerArtifacts(net.roboconf.core.model.runtime.Application)
+	 * #deleteMessagingServerArtifacts(net.roboconf.core.model.beans.Application)
 	 */
 	@Override
 	public void deleteMessagingServerArtifacts( Application application )

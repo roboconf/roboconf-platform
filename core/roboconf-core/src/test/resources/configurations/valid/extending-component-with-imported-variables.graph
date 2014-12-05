@@ -1,0 +1,18 @@
+
+VM {
+	installer: target;
+	children: db, server;
+}
+
+db {
+	exports: ip, port;
+}
+
+server {
+	imports: db.ip (optional), db.port (optional);
+}
+
+my-server {
+	extends: server;
+	imports: db.ip;	# IP is not optional anymore
+}

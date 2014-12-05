@@ -26,7 +26,7 @@
 package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;

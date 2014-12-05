@@ -9,13 +9,11 @@
 
 # The VM
 VM {
-	alias: Virtual Machine;
 	facets: VM;
 }
 
 # MySQL database
 MySQL {
-	alias: MySQL;
 	facets: deployable;
 	exports: ip, port = 3306;
 	installer: puppet;
@@ -23,17 +21,14 @@ MySQL {
 
 # Tomcat
 Tomcat {
-	alias: Tomcat;
 	exports: ip, port = 8080;
 	children: war;
-	icon: tomcat.png;
 	installer: puppet;
 	facets: deployable;
 }
 
 # Apache Load Balancer
 Apache {
-	alias: Apache Load Balancer;
 	imports: Tomcat.port, Tomcat.ip;
 	exports: ip, port = 80;
 	installer: puppet;
@@ -42,13 +37,11 @@ Apache {
 
 # WAR applications
 ecom {
-	alias: an e-trade application;
 	imports: MySQL.port, MySQL.ip;	# This application uses a database.
 	facets: war-archive;
 }
 
 hello-world {
-	alias: Hello World!;
 	facets: war-archive;
 }
 
@@ -59,9 +52,7 @@ hello-world {
 
 # The VM facet
 facet VM {
-	icon: vm.jpg;
 	children: deployable;
-	installer: target;
 }
 
 # The deployable facet
@@ -71,7 +62,5 @@ facet deployable {
 
 # WAR  archives
 facet war-archive {
-	icon: war.png;
-	installer: bash;
 	exports: full-url, url-path;
 }

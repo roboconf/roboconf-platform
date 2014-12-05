@@ -40,7 +40,7 @@ import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;

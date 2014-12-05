@@ -39,15 +39,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.dsl.ParsingModelIo;
+import net.roboconf.core.dsl.converters.FromGraphs;
+import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.model.ApplicationDescriptor;
-import net.roboconf.core.model.converters.FromGraphs;
-import net.roboconf.core.model.io.ParsingModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -206,7 +206,7 @@ public class DebugResource implements IDebugResource {
 		if( ! graphDir.mkdirs())
 			throw new IOException( "Failed to create directory " + graphDir );
 
-		Component rootComponent = new Component( ROOT_COMPONENT_NAME ).alias( "Machine" ).installerName( Constants.TARGET_INSTALLER );
+		Component rootComponent = new Component( ROOT_COMPONENT_NAME ).installerName( Constants.TARGET_INSTALLER );
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( rootComponent );
 
@@ -239,6 +239,7 @@ public class DebugResource implements IDebugResource {
 		descriptor.setDescription( "An application to test a deployment target (debug purpose)." );
 		descriptor.setGraphEntryPoint( "whole.graph" );
 		descriptor.setInstanceEntryPoint( "model.instances" );
+		descriptor.setNamespace( "net.roboconf" );
 		descriptor.setQualifier( "DEBUG" );
 
 		ApplicationDescriptor.save( new File( metaDir, Constants.PROJECT_FILE_DESCRIPTOR ), descriptor );

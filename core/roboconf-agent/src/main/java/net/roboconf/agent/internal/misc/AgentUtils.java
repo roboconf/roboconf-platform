@@ -30,8 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
 
 /**

@@ -30,8 +30,8 @@ import java.util.Collection;
 import junit.framework.Assert;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.validators.RuntimeModelValidator;
+import net.roboconf.core.model.RuntimeModelValidator;
+import net.roboconf.core.model.beans.Application;
 
 import org.junit.Test;
 

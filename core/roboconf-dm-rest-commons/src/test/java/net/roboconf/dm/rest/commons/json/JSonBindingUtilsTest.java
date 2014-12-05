@@ -28,12 +28,11 @@ package net.roboconf.dm.rest.commons.json;
 import java.io.StringWriter;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
-import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 
 import org.junit.Test;
 
@@ -67,10 +66,10 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationBinding_2() throws Exception {
 
-		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\"}";
+		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\",\"namespace\":\"net.roboconf\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Application app = new Application( "my application" ).qualifier( "v1-17.snapshot" );
+		Application app = new Application( "my application" ).qualifier( "v1-17.snapshot" ).namespace( "net.roboconf" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
@@ -81,6 +80,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getNamespace(), readApp.getNamespace());
 	}
 
 
@@ -103,10 +103,10 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testComponentBinding_1() throws Exception {
 
-		final String result = "{\"name\":\"component 1\",\"alias\":\"A component\",\"installer\":\"target\"}";
+		final String result = "{\"name\":\"component 1\",\"installer\":\"target\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Component comp = new Component( "component 1" ).alias( "A component" ).installerName( "target" );
+		Component comp = new Component( "component 1" ).installerName( "target" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, comp );
 		String s = writer.toString();
@@ -115,7 +115,6 @@ public class JSonBindingUtilsTest {
 		Component readComp = mapper.readValue( result, Component.class );
 		Assert.assertEquals( comp, readComp );
 		Assert.assertEquals( comp.getName(), readComp.getName());
-		Assert.assertEquals( comp.getAlias(), readComp.getAlias());
 		Assert.assertEquals( comp.getInstallerName(), readComp.getInstallerName());
 	}
 
@@ -123,10 +122,10 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testComponentBinding_2() throws Exception {
 
-		final String result = "{\"alias\":\"A 'special' component\"}";
+		final String result = "{}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Component comp = new Component().alias( "A \"special\" component" );
+		Component comp = new Component();
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, comp );
 		String s = writer.toString();
@@ -135,7 +134,6 @@ public class JSonBindingUtilsTest {
 		Component readComp = mapper.readValue( result, Component.class );
 		Assert.assertEquals( comp, readComp );
 		Assert.assertEquals( comp.getName(), readComp.getName());
-		Assert.assertEquals( comp.getAlias().replace( '"', '\'' ), readComp.getAlias());
 		Assert.assertEquals( comp.getInstallerName(), readComp.getInstallerName());
 	}
 
@@ -162,10 +160,10 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_2() throws Exception {
 
-		final String result = "{\"name\":\"server\",\"path\":\"/server\",\"status\":\"STARTING\",\"channel\":\"channel4\"}";
+		final String result = "{\"name\":\"server\",\"path\":\"/server\",\"status\":\"STARTING\",\"channels\":[\"channel4\",\"hop\"]}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Instance inst = new Instance( "server" ).channel( "channel4" ).status( InstanceStatus.STARTING );
+		Instance inst = new Instance( "server" ).channel( "channel4" ).channel( "hop" ).status( InstanceStatus.STARTING );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, inst );
 		String s = writer.toString();
@@ -175,7 +173,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst, readInst );
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
-		Assert.assertEquals( inst.getChannel(), readInst.getChannel());
+		Assert.assertEquals( inst.getChannels(), readInst.getChannels());
 	}
 
 
@@ -197,7 +195,7 @@ public class JSonBindingUtilsTest {
 		Instance readInst = mapper.readValue( result, Instance.class );
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
-		Assert.assertEquals( inst.getChannel(), readInst.getChannel());
+		Assert.assertEquals( inst.getChannels(), readInst.getChannels());
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
 	}
 
@@ -205,10 +203,10 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testInstanceBinding_4() throws Exception {
 
-		final String result = "{\"name\":\"server\",\"path\":\"/server\",\"status\":\"STOPPING\",\"component\":{\"name\":\"server-component\",\"alias\":\"this is a server!\"}}";
+		final String result = "{\"name\":\"server\",\"path\":\"/server\",\"status\":\"STOPPING\",\"component\":{\"name\":\"server-component\"}}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Component comp = new Component( "server-component" ).alias( "this is a server!" );
+		Component comp = new Component( "server-component" );
 		Instance inst = new Instance( "server" ).status( InstanceStatus.STOPPING ).component( comp );
 
 		StringWriter writer = new StringWriter();
@@ -220,9 +218,8 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst, readInst );
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
-		Assert.assertEquals( inst.getChannel(), readInst.getChannel());
+		Assert.assertEquals( inst.getChannels(), readInst.getChannels());
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
-		Assert.assertEquals( inst.getComponent().getAlias(), readInst.getComponent().getAlias());
 	}
 
 

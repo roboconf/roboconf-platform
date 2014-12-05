@@ -28,7 +28,7 @@ package net.roboconf.dm.management;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 

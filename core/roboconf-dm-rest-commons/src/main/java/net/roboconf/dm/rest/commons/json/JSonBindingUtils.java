@@ -28,11 +28,11 @@ package net.roboconf.dm.rest.commons.json;
 import java.io.IOException;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -56,16 +56,16 @@ public final class JSonBindingUtils {
 	private static final String APP_NAME = "name";
 	private static final String APP_DESC = "desc";
 	private static final String APP_QUALIFIER = "qualifier";
+	private static final String APP_NAMESPACE = "namespace";
 
 	private static final String INST_NAME = "name";
 	private static final String INST_PATH = "path";
-	private static final String INST_CHANNEL = "channel";
+	private static final String INST_CHANNELS = "channels";
 	private static final String INST_COMPONENT = "component";
 	private static final String INST_STATUS = "status";
 	private static final String INST_DATA = "data";
 
 	private static final String COMP_NAME = "name";
-	private static final String COMP_ALIAS = "alias";
 	private static final String COMP_INSTALLER = "installer";
 
 
@@ -125,6 +125,9 @@ public final class JSonBindingUtils {
 			if( app.getQualifier() != null )
 				generator.writeStringField( APP_QUALIFIER, app.getQualifier());
 
+			if( app.getNamespace() != null )
+				generator.writeStringField( APP_NAMESPACE, app.getNamespace());
+
 			generator.writeEndObject();
 		}
 	}
@@ -153,6 +156,9 @@ public final class JSonBindingUtils {
 	        if(( n = node.get( APP_QUALIFIER )) != null )
 	        	application.setQualifier( n.textValue());
 
+	        if(( n = node.get( APP_NAMESPACE )) != null )
+	        	application.setNamespace( n.textValue());
+
 			return application;
 		}
 	}
@@ -180,11 +186,16 @@ public final class JSonBindingUtils {
 			if( instance.getStatus() != null )
 				generator.writeStringField( INST_STATUS, String.valueOf( instance.getStatus()));
 
-			if( instance.getChannel() != null )
-				generator.writeStringField( INST_CHANNEL, instance.getChannel());
-
 			if( instance.getComponent() != null )
 				generator.writeObjectField( INST_COMPONENT, instance.getComponent());
+
+			if( ! instance.getChannels().isEmpty()) {
+				generator.writeArrayFieldStart( INST_CHANNELS );
+				for( String channel : instance.getChannels())
+					generator.writeString( channel );
+
+				generator.writeEndArray();
+			}
 
 			// Write some meta-data (useful for web clients).
 			// De-serializing this information is useless for the moment.
@@ -223,8 +234,10 @@ public final class JSonBindingUtils {
 	        if(( n = node.get( INST_STATUS )) != null )
 	        	instance.setStatus( InstanceStatus.wichStatus( n.textValue()));
 
-	        if(( n = node.get( INST_CHANNEL )) != null )
-	        	instance.setChannel( n.textValue());
+	        if(( n = node.get( INST_CHANNELS )) != null ) {
+	        	for( JsonNode arrayNodeItem : n )
+	        		instance.getChannels().add( arrayNodeItem.textValue());
+	        }
 
 	        if(( n = node.get( INST_COMPONENT )) != null ) {
 	        	ObjectMapper mapper = createObjectMapper();
@@ -258,10 +271,6 @@ public final class JSonBindingUtils {
 			if( component.getName() != null )
 				generator.writeStringField( COMP_NAME, component.getName());
 
-			// A component alias may contain quotes...
-			if( component.getAlias() != null )
-				generator.writeStringField( COMP_ALIAS, component.getAlias().replace( '"', '\'' ));
-
 			if( component.getInstallerName() != null )
 				generator.writeStringField( COMP_INSTALLER, component.getInstallerName());
 
@@ -286,9 +295,6 @@ public final class JSonBindingUtils {
 	        JsonNode n;
 	        if(( n = node.get( COMP_NAME )) != null )
 	        	component.setName( n.textValue());
-
-	        if(( n = node.get( COMP_ALIAS )) != null )
-	        	component.setAlias( n.textValue());
 
 	        if(( n = node.get( COMP_INSTALLER )) != null )
 	        	component.setInstallerName( n.textValue());

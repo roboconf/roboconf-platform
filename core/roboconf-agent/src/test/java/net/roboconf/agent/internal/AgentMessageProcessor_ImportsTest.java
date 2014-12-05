@@ -34,10 +34,10 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
@@ -247,7 +247,7 @@ public class AgentMessageProcessor_ImportsTest {
 		// A node depends on other nodes
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		Component clusterNodeComponent = new Component( "cluster" ).alias( "a cluster node" ).installerName( "whatever" );
+		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
 		clusterNodeComponent.getImportedVariables().put( "cluster.ip", Boolean.TRUE );
 		clusterNodeComponent.getImportedVariables().put( "cluster.port", Boolean.TRUE );
 		clusterNodeComponent.getExportedVariables().put( "cluster.ip", null );

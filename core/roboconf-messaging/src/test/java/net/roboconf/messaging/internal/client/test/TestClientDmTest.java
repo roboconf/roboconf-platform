@@ -28,8 +28,8 @@ package net.roboconf.messaging.internal.client.test;
 import java.io.IOException;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 

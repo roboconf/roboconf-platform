@@ -9,29 +9,19 @@ facet deployable {
 
 # Tomcat
 facet tomcat {
-	imports: port, db.ip;
 	exports: ip, port = 8080;	# port has a default value
 	children: war;
-	icon: tomcat.png;
-	installer: puppet;
 	extends: deployable;
 }	# end
 
 # Apache
 facet apache {
-	imports: tomcat.port, tomcat.ip;
 	exports: ip, port = 80;
-	installer: puppet;
 	extends: deployable;
 }
 
 # Database
 facet db {
 	exports: ip, port = 8080;
-	
-	# There is no import here.
-	
-	icon: db.gif;
-	installer: puppet;
 	extends: deployable;
 }

@@ -1,0 +1,5 @@
+
+VM {
+	facets: VM;
+	installer: target;
+}

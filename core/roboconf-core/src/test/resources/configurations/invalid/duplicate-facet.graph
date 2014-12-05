@@ -1,11 +1,9 @@
 component A {
-	alias: A;
 	installer: whatever;
 	facets: fA;
 }
 
 component B {
-	alias: B;
 	installer: B;
 	facets: fB;
 }
@@ -19,7 +17,7 @@ facet fB {
 }
 
 facet fA {
-	installer: whatever;
+	exports: ip;
 }
 
 facet fA {

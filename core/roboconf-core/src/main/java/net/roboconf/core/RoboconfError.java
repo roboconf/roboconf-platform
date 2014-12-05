@@ -25,7 +25,6 @@
 
 package net.roboconf.core;
 
-
 /**
  * An error instantiates an {@link ErrorCode}.
  * @author Vincent Zurczak - Linagora
@@ -42,6 +41,16 @@ public class RoboconfError {
 	 */
 	public RoboconfError( ErrorCode errorCode ) {
 		this.errorCode = errorCode;
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param errorCode an error code
+	 */
+	public RoboconfError( ErrorCode errorCode, String details ) {
+		this.errorCode = errorCode;
+		this.details = details;
 	}
 
 	/**

@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.internal.environment.target.TargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.target.api.TargetException;
