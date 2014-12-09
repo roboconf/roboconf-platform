@@ -1,5 +1,5 @@
 A {
 	installer: target;
-	exports: port, ip;
+	exports: port = 8081, ip;
 	imports: A.port, A.ip; 
 }

@@ -98,9 +98,9 @@ public class FromInstances {
 				currentBlock.getInnerBlocks().add( p );
 			}
 
-			if( ! instance.getChannels().isEmpty()) {
+			if( ! instance.channels.isEmpty()) {
 				StringBuilder sb = new StringBuilder();
-				for( Iterator<String> it = instance.getChannels().iterator(); it.hasNext(); ) {
+				for( Iterator<String> it = instance.channels.iterator(); it.hasNext(); ) {
 					sb.append( it.next());
 					if( it.hasNext())
 						sb.append( ", " );
@@ -110,7 +110,7 @@ public class FromInstances {
 				currentBlock.getInnerBlocks().add( p );
 			}
 
-			for( Map.Entry<String,String> export : instance.getOverriddenExports().entrySet()) {
+			for( Map.Entry<String,String> export : instance.overridenExports.entrySet()) {
 				p = new BlockProperty( file, export.getKey(), export.getValue());
 				currentBlock.getInnerBlocks().add( p );
 			}
@@ -121,7 +121,7 @@ public class FromInstances {
 				currentBlock.getInnerBlocks().add( p );
 
 				StringBuilder sb = new StringBuilder();
-				for( Iterator<Map.Entry<String,String>> it = instance.getData().entrySet().iterator(); it.hasNext(); ) {
+				for( Iterator<Map.Entry<String,String>> it = instance.data.entrySet().iterator(); it.hasNext(); ) {
 					Map.Entry<String,String> entry = it.next();
 					sb.append( entry.getKey());
 					sb.append( " = " );

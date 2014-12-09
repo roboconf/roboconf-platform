@@ -96,13 +96,13 @@ public class FromInstancesTest {
 		Instance tomcat = new Instance( "i-tomcat" ).component( tomcatComponent );
 		Instance war = new Instance( "i-war" ).component( warComponent );
 
-		tomcat.getOverriddenExports().put( "Tomcat.port", "9004" );
+		tomcat.overridenExports.put( "Tomcat.port", "9004" );
 		InstanceHelpers.insertChild( vm, tomcat );
 		InstanceHelpers.insertChild( tomcat, war );
 
 		vm.channel( "channel1" ).channel( "channel2" );
-		war.getData().put( "prop1", "value1" );
-		war.getData().put( "prop2", "value2" );
+		war.data.put( "prop1", "value1" );
+		war.data.put( "prop2", "value2" );
 
 		compareInstances( graphs, Arrays.asList( vm ), false, true );
 	}
@@ -127,7 +127,7 @@ public class FromInstancesTest {
 		Instance tomcat = new Instance( "i-tomcat" ).component( tomcatComponent );
 		Instance war = new Instance( "i-war" ).component( warComponent );
 
-		tomcat.getOverriddenExports().put( "Tomcat.port", "9004" );
+		tomcat.overridenExports.put( "Tomcat.port", "9004" );
 		InstanceHelpers.insertChild( vm, tomcat );
 		InstanceHelpers.insertChild( tomcat, war );
 
@@ -140,7 +140,7 @@ public class FromInstancesTest {
 		Instance tomcat3 = new Instance( "i-tomcat-2" ).component( tomcatComponent );
 		Instance war2 = new Instance( "i-war" ).component( warComponent );
 
-		tomcat3.getOverriddenExports().put( "Tomcat.port", "9081" );
+		tomcat3.overridenExports.put( "Tomcat.port", "9081" );
 		InstanceHelpers.insertChild( vm3, tomcat2 );
 		InstanceHelpers.insertChild( vm3, tomcat3 );
 		InstanceHelpers.insertChild( tomcat3, war2 );
@@ -168,12 +168,12 @@ public class FromInstancesTest {
 		graphs.getRootComponents().add( vmComponent );
 
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+		vmComponent.addChild( tomcatComponent );
 
 		Component warComponent = new Component( "WAR" ).installerName( "bash" );
-		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+		tomcatComponent.addChild( warComponent );
 
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( graphs ).size());
 		return graphs;
@@ -239,16 +239,16 @@ public class FromInstancesTest {
 				Instance instance = InstanceHelpers.findInstanceByPath( rootInstance, newPath );
 				Assert.assertNotNull( instance );
 
-				Assert.assertEquals( instance.getChannels(), newInstance.getChannels());
+				Assert.assertEquals( instance.channels, newInstance.channels );
 				Assert.assertEquals( instance.getComponent(), newInstance.getComponent());
 				Assert.assertEquals( instance.getStatus(), newInstance.getStatus());
 				Assert.assertEquals( instance.getChildren().size(), newInstance.getChildren().size());
-				Assert.assertEquals( instance.getData(), newInstance.getData());
-				Assert.assertEquals( instance.getOverriddenExports().size(), newInstance.getOverriddenExports().size());
+				Assert.assertEquals( instance.data, newInstance.data);
+				Assert.assertEquals( instance.overridenExports.size(), newInstance.overridenExports.size());
 
-				for( Map.Entry<String,String> entry : instance.getOverriddenExports().entrySet()) {
-					Assert.assertTrue( instance.getName(), newInstance.getOverriddenExports().containsKey( entry.getKey()));
-					String value = newInstance.getOverriddenExports().get( entry.getKey());
+				for( Map.Entry<String,String> entry : instance.overridenExports.entrySet()) {
+					Assert.assertTrue( instance.getName(), newInstance.overridenExports.containsKey( entry.getKey()));
+					String value = newInstance.overridenExports.get( entry.getKey());
 					Assert.assertEquals( instance.getName(), entry.getValue(), value );
 				}
 			}

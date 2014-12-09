@@ -103,7 +103,7 @@ public class ModelUtilsTest {
 		holder.getInnerBlocks().add( prop );
 
 		// One variable
-		String varName1 = holderName + ".var1";
+		String varName1 = "var1";
 
 		prop.setValue( "var1" );
 		Map<String,String> map = ModelUtils.getExportedVariables( holder );
@@ -127,7 +127,7 @@ public class ModelUtilsTest {
 		Assert.assertEquals( "5895", map.get( varName1 ));
 
 		// Two variables
-		String varName2 = holderName + ".var2";
+		String varName2 = "var2";
 
 		prop.setValue( "var1, var2" );
 		map = ModelUtils.getExportedVariables( holder );

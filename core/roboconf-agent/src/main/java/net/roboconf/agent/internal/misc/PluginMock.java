@@ -67,7 +67,7 @@ public class PluginMock implements PluginInterface {
 		// This class is mainly used for test and dev' purpose.
 		// So, we can store the information in the instance without any major impact.
 		if( instance != null )
-			instance.getData().put( INIT_PROPERTY, "true" );
+			instance.data.put( INIT_PROPERTY, "true" );
 	}
 
 

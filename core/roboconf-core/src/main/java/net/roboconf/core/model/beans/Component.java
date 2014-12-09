@@ -27,27 +27,29 @@ package net.roboconf.core.model.beans;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
-import net.roboconf.core.utils.Utils;
 
 /**
  * A component represents a Software item (hardware, software, whatever).
  * @author Vincent Zurczak - Linagora
  */
-public class Component implements Serializable {
+public class Component extends AbstractType implements Serializable {
 
 	private static final long serialVersionUID = 5163458185512982868L;
 
-	private String name, installerName;
-	private final transient ComponentMeta metadata = new ComponentMeta();
-	private final Map<String,String> exportedVariables = new HashMap<String,String> ();
-	private final Map<String,Boolean> importedVariables = new HashMap<String,Boolean> ();
+	/**
+	 * Key = imported variable name.
+	 * Value = true if the import is optional, false if it is required
+	 */
+	public final Map<String,Boolean> importedVariables = new HashMap<String,Boolean>( 0 );
 
-	private final Collection<Component> children = new HashSet<Component> ();
-	private final Collection<Component> ancestors = new HashSet<Component> ();
+	private String installerName;
+	private Component extendedComponent;
+	private final Collection<Component> extendingComponents = new HashSet<Component>( 0 );
+	private final Collection<Facet> facets = new HashSet<Facet>( 0 );
 
 
 	/**
@@ -66,20 +68,6 @@ public class Component implements Serializable {
 	}
 
 	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName( String name ) {
-		this.name = name;
-	}
-
-	/**
 	 * @return the installerName
 	 */
 	public String getInstallerName() {
@@ -94,58 +82,24 @@ public class Component implements Serializable {
 	}
 
 	/**
-	 * @return the importedVariables
-	 * <p>
-	 * Key = imported variable name.
-	 * Value = true if the import is optional, false if it is required
-	 * </p>
+	 * @return the extendedComponent
 	 */
-	public Map<String,Boolean> getImportedVariables() {
-		return this.importedVariables;
+	public Component getExtendedComponent() {
+		return this.extendedComponent;
 	}
 
 	/**
-	 * @return the exportedVariables
+	 * @return the extending components (not null and not modifiable)
 	 */
-	public Map<String, String> getExportedVariables() {
-		return this.exportedVariables;
+	public Collection<Component> getExtendingComponents() {
+		return Collections.unmodifiableCollection( this.extendingComponents );
 	}
 
 	/**
-	 * @return the component's meta data
+	 * @return the facets (not null and not modifiable)
 	 */
-	public ComponentMeta getMetadata() {
-		return this.metadata;
-	}
-
-	/**
-	 * @return the children
-	 */
-	public Collection<Component> getChildren() {
-		return this.children;
-	}
-
-	/**
-	 * @return the ancestors
-	 */
-	public Collection<Component> getAncestors() {
-		return this.ancestors;
-	}
-
-	@Override
-	public boolean equals( Object obj ) {
-		return obj instanceof Component
-				&& Utils.areEqual( this.name, ((Component) obj ).getName());
-	}
-
-	@Override
-	public int hashCode() {
-		return this.name == null ? 17 : this.name.hashCode();
-	}
-
-	@Override
-	public String toString() {
-		return this.name;
+	public Collection<Facet> getFacets() {
+		return Collections.unmodifiableCollection( this.facets );
 	}
 
 	/**
@@ -162,5 +116,36 @@ public class Component implements Serializable {
 	public Component installerName( String installerName ) {
 		this.installerName = installerName;
 		return this;
+	}
+
+	/**
+	 * Creates a bi-directional relation between this component and an extended one.
+	 * @param component a component
+	 */
+	public void extendComponent( Component component ) {
+
+		if( this.extendedComponent != null )
+			this.extendedComponent.extendingComponents.remove( this );
+
+		component.extendingComponents.add( this );
+		this.extendedComponent = component;
+	}
+
+	/**
+	 * Creates a bi-directional relation between this component and a facet.
+	 * @param facet a facet
+	 */
+	public void associateFacet( Facet facet ) {
+		this.facets.add( facet );
+		facet.associatedComponents.add( this );
+	}
+
+	/**
+	 * Deletes a bi-directional relation between this component and a facet.
+	 * @param facet a facet
+	 */
+	public void disassociateFacet( Facet facet ) {
+		this.facets.remove( facet );
+		facet.associatedComponents.remove( this );
 	}
 }

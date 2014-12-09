@@ -263,7 +263,7 @@ public final class RuntimeModelIo {
 		}
 
 		for( Instance rootInstance : result.rootInstances )
-			rootInstance.getData().put( Instance.APPLICATION_NAME, applicationName );
+			rootInstance.data.put( Instance.APPLICATION_NAME, applicationName );
 
 		return result;
 	}

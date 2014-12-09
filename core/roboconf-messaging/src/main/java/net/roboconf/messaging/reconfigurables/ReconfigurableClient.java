@@ -183,16 +183,6 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 
 	/**
-	 * A method that must be used only in tests.
-	 * @return the messaging client
-	 */
-	@Deprecated
-	public T getInternalClient() {
-		return this.messagingClient;
-	}
-
-
-	/**
 	 * Closes the connection of a messaging client.
 	 * @param client the client (may be null)
 	 * @param errorMessage the error message to log in case of problem

@@ -221,7 +221,8 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 		// Find the variables to export.
 		Map<String,String> toPublish = new HashMap<String,String> ();
-		for( Map.Entry<String,String> entry : instance.getExports().entrySet()) {
+		Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
+		for( Map.Entry<String,String> entry : exports.entrySet()) {
 			if( entry.getKey().startsWith( facetOrComponentName + "." ))
 				toPublish.put( entry.getKey(), entry.getValue());
 		}

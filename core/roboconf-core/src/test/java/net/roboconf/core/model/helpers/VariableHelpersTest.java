@@ -31,6 +31,7 @@ import java.util.Set;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
@@ -86,14 +87,21 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForExportedVariables_withComponentVariables() {
 
 		Component component = new Component( "comp" );
-		component.getExportedVariables().put( "comp.ip", "" );
-		component.getExportedVariables().put( "comp.split.property", "" );
-		component.getExportedVariables().put( "comp.port", "8000" );
-		component.getExportedVariables().put( "facet.desc", "some description" );
+		component.exportedVariables.put( "comp.ip", "" );
+		component.exportedVariables.put( "comp.split.property", "" );
+		component.exportedVariables.put( "comp.port", "8000" );
 
 		Instance instance = new Instance( "inst" ).component( component );
 
 		Set<String> prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
+		Assert.assertEquals( 1, prefixes.size());
+		Assert.assertTrue( prefixes.contains( "comp" ));
+
+		Facet facet = new Facet( "facet" );
+		facet.exportedVariables.put( "something", "value" );
+		component.associateFacet( facet );
+
+		prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
 		Assert.assertEquals( 2, prefixes.size());
 		Assert.assertTrue( prefixes.contains( "comp" ));
 		Assert.assertTrue( prefixes.contains( "facet" ));
@@ -113,10 +121,10 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForExportedVariables_withInstanceVariablesOnly() {
 
 		Instance instance = new Instance( "inst" ).component( new Component( "comp" ));
-		instance.getOverriddenExports().put( "comp.ip", "" );
-		instance.getOverriddenExports().put( "comp.split.property", "" );
-		instance.getOverriddenExports().put( "comp.port", "8000" );
-		instance.getOverriddenExports().put( "facet.desc", "some description" );
+		instance.overridenExports.put( "comp.ip", "" );
+		instance.overridenExports.put( "comp.split.property", "" );
+		instance.overridenExports.put( "comp.port", "8000" );
+		instance.overridenExports.put( "facet.desc", "some description" );
 
 		Set<String> prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
 		Assert.assertEquals( 2, prefixes.size());
@@ -129,10 +137,10 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForImportedVariables() {
 
 		Component component = new Component( "comp" );
-		component.getImportedVariables().put( "comp.ip", Boolean.FALSE );
-		component.getImportedVariables().put( "comp.split.property", Boolean.FALSE );
-		component.getImportedVariables().put( "comp.port", Boolean.FALSE );
-		component.getImportedVariables().put( "facet.desc", Boolean.FALSE );
+		component.importedVariables.put( "comp.ip", Boolean.FALSE );
+		component.importedVariables.put( "comp.split.property", Boolean.FALSE );
+		component.importedVariables.put( "comp.port", Boolean.FALSE );
+		component.importedVariables.put( "facet.desc", Boolean.FALSE );
 
 		Instance instance = new Instance( "inst" ).component( component );
 
@@ -141,7 +149,7 @@ public class VariableHelpersTest {
 		Assert.assertTrue( prefixes.contains( "comp" ));
 		Assert.assertTrue( prefixes.contains( "facet" ));
 
-		component.getImportedVariables().clear();
+		component.importedVariables.clear();
 		prefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
 		Assert.assertEquals( 0, prefixes.size());
 	}
@@ -151,12 +159,12 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForMandatoryImportedVariables() {
 
 		Component component = new Component( "comp" );
-		component.getImportedVariables().put( "comp.ip", Boolean.FALSE );
-		component.getImportedVariables().put( "comp.split.property", Boolean.FALSE );
-		component.getImportedVariables().put( "comp.port", Boolean.FALSE );
-		component.getImportedVariables().put( "facet.desc", Boolean.TRUE );
-		component.getImportedVariables().put( "facet-n.prop1", Boolean.TRUE );
-		component.getImportedVariables().put( "facet-n.prop2", Boolean.FALSE );
+		component.importedVariables.put( "comp.ip", Boolean.FALSE );
+		component.importedVariables.put( "comp.split.property", Boolean.FALSE );
+		component.importedVariables.put( "comp.port", Boolean.FALSE );
+		component.importedVariables.put( "facet.desc", Boolean.TRUE );
+		component.importedVariables.put( "facet-n.prop1", Boolean.TRUE );
+		component.importedVariables.put( "facet-n.prop2", Boolean.FALSE );
 
 		Instance instance = new Instance( "inst" ).component( component );
 
@@ -165,7 +173,7 @@ public class VariableHelpersTest {
 		Assert.assertTrue( prefixes.contains( "comp" ));
 		Assert.assertTrue( prefixes.contains( "facet-n" ));
 
-		component.getImportedVariables().clear();
+		component.importedVariables.clear();
 		prefixes = VariableHelpers.findPrefixesForMandatoryImportedVariables( instance );
 		Assert.assertEquals( 0, prefixes.size());
 	}

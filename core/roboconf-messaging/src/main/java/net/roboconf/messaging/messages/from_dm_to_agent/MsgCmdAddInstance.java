@@ -60,10 +60,10 @@ public class MsgCmdAddInstance extends Message {
 		this.parentInstancePath = instance.getParent() == null ? null : InstanceHelpers.computeInstancePath( instance.getParent());
 		this.instanceName = instance.getName();
 		this.componentName = instance.getComponent() != null ? instance.getComponent().getName() : null;
-		this.channels = instance.getChannels();
 
-		this.data = instance.getData();
-		this.overridenExports = instance.getOverriddenExports();
+		this.channels = instance.channels;
+		this.data = instance.data;
+		this.overridenExports = instance.overridenExports;
 	}
 
 	/**

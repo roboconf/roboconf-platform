@@ -66,4 +66,10 @@ public interface Constants {
 	 * The <strong>application.properties</strong> file name.
 	 */
 	String PROJECT_FILE_DESCRIPTOR = "application.properties";
+
+
+	/**
+	 * A specific variable whose value is set at runtime.
+	 */
+	String SPECIFIC_VARIABLE_IP = "ip";
 }

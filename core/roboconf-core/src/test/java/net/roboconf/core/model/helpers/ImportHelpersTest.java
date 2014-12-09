@@ -51,17 +51,17 @@ public class ImportHelpersTest {
 	public void testHasAllRequiredImports_optional() throws Exception {
 
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
-		clusterNodeComponent.getImportedVariables().put( "cluster.ip", Boolean.TRUE );
-		clusterNodeComponent.getImportedVariables().put( "cluster.port", Boolean.TRUE );
-		clusterNodeComponent.getExportedVariables().put( "cluster.ip", null );
-		clusterNodeComponent.getExportedVariables().put( "cluster.port", "9007" );
+		clusterNodeComponent.importedVariables.put( "cluster.ip", Boolean.TRUE );
+		clusterNodeComponent.importedVariables.put( "cluster.port", Boolean.TRUE );
+		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
+		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
-		i1.getExports().put( "cluster.ip", "192.168.1.15" );
+		i1.overridenExports.put( "cluster.ip", "192.168.1.15" );
 		i1.setStatus( InstanceStatus.STARTING );
 
 		Instance i2 = new Instance( "inst 2" ).component( clusterNodeComponent );
-		i2.getExports().put( "cluster.ip", "192.168.1.28" );
+		i2.overridenExports.put( "cluster.ip", "192.168.1.28" );
 
 		// The cluster node does not know about the other node
 		Assert.assertTrue( ImportHelpers.hasAllRequiredImports( i1, null ));
@@ -83,23 +83,23 @@ public class ImportHelpersTest {
 	public void testHasAllRequiredImports_required() throws Exception {
 
 		Component dbComponent = new Component( "database" ).installerName( "whatever" );
-		dbComponent.getExportedVariables().put( "database.ip", null );
-		dbComponent.getExportedVariables().put( "database.port", "3009" );
-		dbComponent.getExportedVariables().put( "database.collection", "whatever" );
+		dbComponent.exportedVariables.put( "database.ip", null );
+		dbComponent.exportedVariables.put( "database.port", "3009" );
+		dbComponent.exportedVariables.put( "database.collection", "whatever" );
 
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
-		appServerComponent.getExportedVariables().put( "app-server.ip", null );
-		appServerComponent.getExportedVariables().put( "app-server.port", "8009" );
-		appServerComponent.getImportedVariables().put( "database.ip", Boolean.FALSE );
-		appServerComponent.getImportedVariables().put( "database.port", Boolean.FALSE );
-		appServerComponent.getImportedVariables().put( "database.collection", Boolean.TRUE );
+		appServerComponent.exportedVariables.put( "app-server.ip", null );
+		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
+		appServerComponent.importedVariables.put( "database.ip", Boolean.FALSE );
+		appServerComponent.importedVariables.put( "database.port", Boolean.FALSE );
+		appServerComponent.importedVariables.put( "database.collection", Boolean.TRUE );
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
-		appServer.getExports().put( "app-server.ip", "192.168.1.15" );
+		appServer.overridenExports.put( "app-server.ip", "192.168.1.15" );
 		appServer.setStatus( InstanceStatus.STARTING );
 
 		Instance database = new Instance( "database" ).component( dbComponent );
-		database.getExports().put( "database.ip", "192.168.1.28" );
+		database.overridenExports.put( "database.ip", "192.168.1.28" );
 
 		// The application server does not know about the database
 		Assert.assertFalse( ImportHelpers.hasAllRequiredImports( appServer, Logger.getAnonymousLogger()));
@@ -180,9 +180,9 @@ public class ImportHelpersTest {
 
 		String instancePath = "/whatever/this/is/a-test";
 		Component comp = new Component( "comp" );
-		comp.getImportedVariables().put( "comp1.port", Boolean.FALSE );
-		comp.getImportedVariables().put( "comp1.ip", Boolean.FALSE );
-		comp.getImportedVariables().put( "comp2.option", Boolean.TRUE );
+		comp.importedVariables.put( "comp1.port", Boolean.FALSE );
+		comp.importedVariables.put( "comp1.ip", Boolean.FALSE );
+		comp.importedVariables.put( "comp2.option", Boolean.TRUE );
 
 		Instance inst = new Instance( "inst" ).component( comp );
 

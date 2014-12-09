@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 
 /**
@@ -37,10 +38,6 @@ import net.roboconf.core.model.beans.Instance;
  * @author Vincent Zurczak - Linagora
  */
 public final class VariableHelpers {
-
-	private static final String IP = "ip";
-
-
 
 	/**
 	 * Private empty constructor.
@@ -107,7 +104,7 @@ public final class VariableHelpers {
 	public static Set<String> findPrefixesForExportedVariables( Instance instance ) {
 
 		Set<String> result = new HashSet<String> ();
-		for( String exportedVariableName : instance.getExports().keySet())
+		for( String exportedVariableName : InstanceHelpers.findAllExportedVariables( instance ).keySet())
 			result.add( VariableHelpers.parseVariableName( exportedVariableName ).getKey());
 
 		return result;
@@ -122,9 +119,8 @@ public final class VariableHelpers {
 	public static Set<String> findPrefixesForImportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
-		for( String variableName : instance.getComponent().getImportedVariables().keySet()) {
+		for( String variableName : ComponentHelpers.findAllImportedVariables( instance.getComponent()).keySet())
 			result.add( VariableHelpers.parseVariableName( variableName ).getKey());
-		}
 
 		return result;
 	}
@@ -142,7 +138,7 @@ public final class VariableHelpers {
 	public static Set<String> findPrefixesForMandatoryImportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
-		for( Map.Entry<String,Boolean> entry : instance.getComponent().getImportedVariables().entrySet()) {
+		for( Map.Entry<String,Boolean> entry : ComponentHelpers.findAllImportedVariables( instance.getComponent()).entrySet()) {
 			String variableName = entry.getKey();
 			if( ! entry.getValue())
 				result.add( VariableHelpers.parseVariableName( variableName ).getKey());
@@ -161,13 +157,13 @@ public final class VariableHelpers {
 	 * @param instanceExports a non-null map of instance exports
 	 * @param ipAddress the IP address to set
 	 */
-	public static void updateNetworkVariables( Map<String,String> instanceExports, String ipAddress ) {
+	static void updateNetworkVariables( Map<String,String> instanceExports, String ipAddress ) {
 
 		// Find the keys to update ( xxx.ip )
 		Set<String> keysToUpdate = new HashSet<String> ();
 		for( Map.Entry<String,String> entry : instanceExports.entrySet()) {
 			String suffix = parseVariableName( entry.getKey()).getValue();
-			if( IP.equalsIgnoreCase( suffix ))
+			if( Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( suffix ))
 				keysToUpdate.add( entry.getKey());
 		}
 

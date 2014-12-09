@@ -707,14 +707,27 @@ public class FileDefinitionParserTest {
 		Component dbComponent = ComponentHelpers.findComponent( graph, "db" );
 		Component serverComponent = ComponentHelpers.findComponent( graph, "server" );
 		Component myServerComponent = ComponentHelpers.findComponent( graph, "my-server" );
-		Assert.assertTrue( vmComponent.getChildren().contains( dbComponent ));
-		Assert.assertTrue( vmComponent.getChildren().contains( serverComponent ));
-		Assert.assertTrue( vmComponent.getChildren().contains( myServerComponent ));
 
-		Assert.assertEquals( Boolean.TRUE, serverComponent.getImportedVariables().get( "db.ip" ));
-		Assert.assertEquals( Boolean.TRUE, serverComponent.getImportedVariables().get( "db.port" ));
+		Collection<Component> children = ComponentHelpers.findAllChildren( vmComponent );
+		Assert.assertEquals( 3, children.size());
+		Assert.assertTrue( children.contains( dbComponent ));
+		Assert.assertTrue( children.contains( serverComponent ));
+		Assert.assertTrue( children.contains( myServerComponent ));
 
-		Assert.assertEquals( Boolean.FALSE, myServerComponent.getImportedVariables().get( "db.ip" ));
-		Assert.assertEquals( Boolean.TRUE, myServerComponent.getImportedVariables().get( "db.port" ));
+		Assert.assertEquals( Boolean.TRUE, serverComponent.importedVariables.get( "db.ip" ));
+		Assert.assertEquals( Boolean.TRUE, serverComponent.importedVariables.get( "db.port" ));
+
+		Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( serverComponent );
+		Assert.assertEquals( 2, imports.size());
+		Assert.assertEquals( Boolean.TRUE, imports.get( "db.ip" ));
+		Assert.assertEquals( Boolean.TRUE, imports.get( "db.port" ));
+
+		Assert.assertEquals( Boolean.FALSE, myServerComponent.importedVariables.get( "db.ip" ));
+		Assert.assertNull( myServerComponent.importedVariables.get( "db.port" ));
+
+		imports = ComponentHelpers.findAllImportedVariables( myServerComponent );
+		Assert.assertEquals( 2, imports.size());
+		Assert.assertEquals( Boolean.FALSE, imports.get( "db.ip" ));
+		Assert.assertEquals( Boolean.TRUE, imports.get( "db.port" ));
 	}
 }

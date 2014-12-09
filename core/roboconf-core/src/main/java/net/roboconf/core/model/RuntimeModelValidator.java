@@ -31,9 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
@@ -42,6 +40,7 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -66,13 +65,18 @@ public final class RuntimeModelValidator {
 
 	/**
 	 * Validates a component.
+	 * <p>
+	 * Associated facets, extended components, children and ancestors,
+	 * are not validated by this method.
+	 * </p>
+	 *
 	 * @param component a component
 	 * @return a non-null list of errors
 	 */
 	public static Collection<RoboconfError> validate( Component component ) {
 		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
 
-		// Basic checks
+		// Check the name
 		if( Utils.isEmptyOrWhitespaces( component.getName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_NAME, "Component name: " + component ));
 		else if( ! component.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
@@ -80,97 +84,106 @@ public final class RuntimeModelValidator {
 		else if( component.getName().contains( "." ))
 			errors.add( new RoboconfError( ErrorCode.RM_DOT_IS_NOT_ALLOWED, "Component name: " + component ));
 
-		if( Utils.isEmptyOrWhitespaces( component.getInstallerName()))
+		// Check the installer
+		String installerName = ComponentHelpers.findComponentInstaller( component );
+		if( Utils.isEmptyOrWhitespaces( installerName ))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, "Component name: " + component ));
-		else if( ! component.getInstallerName().matches( ParsingConstants.PATTERN_FLEX_ID ))
+		else if( ! installerName.matches( ParsingConstants.PATTERN_FLEX_ID ))
 			errors.add( new RoboconfError( ErrorCode.RM_INVALID_COMPONENT_INSTALLER, "Component name: " + component ));
 
-		else if( component.getAncestors().isEmpty()
-				&& ! Constants.TARGET_INSTALLER.equals( component.getInstallerName()))
+		else if( ComponentHelpers.findAllAncestors( component ).isEmpty()
+				&& ! Constants.TARGET_INSTALLER.equals( installerName ))
 			errors.add( new RoboconfError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET, "Component name: " + component ));
 
-		// Facet names
-		for( String facetName : component.getMetadata().getFacetNames()) {
-			if( Utils.isEmptyOrWhitespaces( facetName )) {
-				errors.add( new RoboconfError( ErrorCode.RM_EMPTY_FACET_NAME ));
+		// Check the name of exported variables
+		for( Map.Entry<String,String> entry : component.exportedVariables.entrySet()) {
+			String exportedVarName = entry.getKey();
 
-			} else if( ! facetName.matches( ParsingConstants.PATTERN_FLEX_ID )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_FACET_NAME );
-				error.setDetails( "Facet name: " + facetName );
-				errors.add( error );
-			}
+			if( Utils.isEmptyOrWhitespaces( exportedVarName ))
+				errors.add( new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME, "Variable name: " + exportedVarName ));
+			else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID ))
+				errors.add( new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME, "Variable name: " + exportedVarName ));
+
+			else if( Utils.isEmptyOrWhitespaces( entry.getValue())
+					&& ! Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( exportedVarName )
+					&& ! exportedVarName.toLowerCase().endsWith( "." + Constants.SPECIFIC_VARIABLE_IP ))
+				errors.add( new RoboconfError( ErrorCode.RM_MISSING_VARIABLE_VALUE, "Variable name: " + exportedVarName ));
 		}
 
 		// A component cannot import variables it exports unless these imports are optional.
 		// This covers cluster uses cases (where an element may want to know where are the similar nodes).
-		for( Map.Entry<String,Boolean> entry : component.getImportedVariables().entrySet()) {
+		Map<String,String> allExportedVariables = ComponentHelpers.findAllExportedVariables( component );
+		for( Map.Entry<String,Boolean> entry : component.importedVariables.entrySet()) {
 			String var = entry.getKey();
 
-			if( Utils.isEmptyOrWhitespaces( var )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME );
-				error.setDetails( "Variable name: " + var );
-				errors.add( error );
+			if( Utils.isEmptyOrWhitespaces( var ))
+				errors.add( new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME, "Variable name: " + var ));
+			else if( ! var.matches( ParsingConstants.PATTERN_ID ))
+				errors.add( new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME, "Variable name: " + var ));
 
-			} else if( ! var.matches( ParsingConstants.PATTERN_ID )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME );
-				error.setDetails( "Variable name: " + var );
-				errors.add( error );
-			}
-
+			// If the import is optional...
 			if( entry.getValue())
 				continue;
 
-			if( component.getExportedVariables().containsKey( var )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS );
-				error.setDetails( "Variable name: " + var );
-				errors.add( error );
-			}
+			if( allExportedVariables.containsKey( var ))
+				errors.add( new RoboconfError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, "Variable name: " + var ));
 		}
 
 		// No cycle in inheritance
-		Set<Component> components = new HashSet<Component> ();
-		for( Component c = component; c != null; c = c.getMetadata().getExtendedComponent()) {
-			if( components.contains( c )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE );
-				error.setDetails( c + " -> ... -> " + c );
-				errors.add( error );
-				break;
+		String errorMsg = ComponentHelpers.searchForInheritanceCycle( component );
+		if( errorMsg != null )
+			errors.add( new RoboconfError( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE, errorMsg ));
 
-			} else {
-				components.add( c );
-			}
-		}
-
-		// Exported variables must either start with the component name or a facet name
-		for( String exportedVarName : component.getExportedVariables().keySet()) {
-			List<String> prefixes = new ArrayList<String>( component.getMetadata().getFacetNames());
-			for( Component c = component; c != null && ! prefixes.contains( c.getName()); c = c.getMetadata().getExtendedComponent())
-				prefixes.add( c.getName());
-
-			Entry<String,String> varParts = VariableHelpers.parseVariableName( exportedVarName );
-			if( Utils.isEmptyOrWhitespaces( exportedVarName )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME );
-				error.setDetails( "Variable name: " + exportedVarName );
-				errors.add( error );
-
-			} else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME );
-				error.setDetails( "Variable name: " + exportedVarName );
-				errors.add( error );
-
-			} else if( ! prefixes.contains( varParts.getKey())) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_EXPORT_PREFIX );
-				error.setDetails( "Variable name: " + exportedVarName );
-				errors.add( error );
-
-			} else if( Utils.isEmptyOrWhitespaces( varParts.getValue())) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_INVALID_EXPORT_NAME );
-				error.setDetails( "Variable name: " + exportedVarName );
-				errors.add( error );
-			}
-		}
+		// Containment Cycles?
+		errorMsg = ComponentHelpers.searchForLoop( component );
+		if( errorMsg != null && errorMsg.startsWith( component.getName()))
+			errors.add( new RoboconfError( ErrorCode.RM_CYCLE_IN_COMPONENTS, errorMsg ));
 
 		return errors;
+	}
+
+
+	/**
+	 * Validates a facet.
+	 * <p>
+	 * Extended facets, associated components, children and ancestors,
+	 * are not validated by this method.
+	 * </p>
+	 *
+	 * @param facet a facet
+	 * @return a non-null list of errors
+	 */
+	public static Collection<RoboconfError> validate( Facet facet ) {
+
+		// Check the name
+		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
+		if( Utils.isEmptyOrWhitespaces( facet.getName()))
+			result.add( new RoboconfError( ErrorCode.RM_EMPTY_FACET_NAME, "Facet name: " + facet ));
+		else if( ! facet.getName().matches( ParsingConstants.PATTERN_FLEX_ID ))
+			result.add( new RoboconfError( ErrorCode.RM_INVALID_FACET_NAME, "Facet name: " + facet ));
+		else if( facet.getName().contains( "." ))
+			result.add( new RoboconfError( ErrorCode.RM_DOT_IS_NOT_ALLOWED, "Facet name: " + facet ));
+
+		// Check the name of exported variables
+		for( Map.Entry<String,String> entry : facet.exportedVariables.entrySet()) {
+			String exportedVarName = entry.getKey();
+
+			if( Utils.isEmptyOrWhitespaces( exportedVarName ))
+				result.add( new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME, "Variable name: " + exportedVarName ));
+			else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID ))
+				result.add( new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME, "Variable name: " + exportedVarName ));
+
+			else if( Utils.isEmptyOrWhitespaces( entry.getValue())
+					&& ! exportedVarName.toLowerCase().endsWith( Constants.SPECIFIC_VARIABLE_IP ))
+				result.add( new RoboconfError( ErrorCode.RM_MISSING_VARIABLE_VALUE, "Variable name: " + exportedVarName ));
+		}
+
+		// Look for cycles in inheritance
+		String errorMsg = ComponentHelpers.searchForInheritanceCycle( facet );
+		if( errorMsg != null )
+			result.add( new RoboconfError( ErrorCode.RM_CYCLE_IN_FACETS_INHERITANCE, errorMsg ));
+
+		return result;
 	}
 
 
@@ -215,64 +228,36 @@ public final class RuntimeModelValidator {
 		if( graphs.getRootComponents().isEmpty())
 			errors.add( new RoboconfError( ErrorCode.RM_NO_ROOT_COMPONENT ));
 
+		for( Component rootComponent : graphs.getRootComponents()) {
+			if( ! ComponentHelpers.findAllAncestors( rootComponent ).isEmpty())
+				errors.add( new RoboconfError( ErrorCode.RM_NOT_A_ROOT_COMPONENT, "Component name: " + rootComponent ));
+		}
+
 		// Validate all the components
 		// Prepare the verification of variable matching
-		Map<String,Component> alreadyChecked = new HashMap<String,Component> ();
-		Set<Component> toProcess = new HashSet<Component> ();
 		Map<String,Boolean> importedVariableNameToExported = new HashMap<String,Boolean> ();
+		for( Component component : ComponentHelpers.findAllComponents( graphs )) {
 
-		toProcess.addAll( graphs.getRootComponents());
-		while( ! toProcess.isEmpty()) {
-			Component c = toProcess.iterator().next();
-			toProcess.remove( c );
+			// Basic checks
+			errors.addAll( validate( component ));
+			for( Facet facet : ComponentHelpers.findAllFacets( component ))
+				errors.addAll( validate( facet ));
 
-			// Duplicate component?
-			Component associatedComponent = alreadyChecked.get( c.getName());
-			if( associatedComponent != null ) {
-				// FIXME: add a unit test to check this (BTW, equals would not work)
-				if( associatedComponent != c ) {
-					RoboconfError error = new RoboconfError( ErrorCode.RM_DUPLICATE_COMPONENT );
-					error.setDetails( "Component name: " + c.getName());
-					errors.add( error );
-				}
-
-				continue;
-			}
-
-			// Validate the component
-			errors.addAll( validate( c ));
-			alreadyChecked.put( c.getName(), c );
-			toProcess.addAll( c.getChildren());
-
-			// Process its variables
-			for( String importedVariableName : c.getImportedVariables().keySet()) {
+			// Process the variables
+			for( String importedVariableName : ComponentHelpers.findAllImportedVariables( component ).keySet()) {
 				if( ! importedVariableNameToExported.containsKey( importedVariableName ))
 					importedVariableNameToExported.put( importedVariableName, Boolean.FALSE );
 			}
 
-			for( String exportedVariableName : c.getExportedVariables().keySet()) {
+			for( String exportedVariableName : ComponentHelpers.findAllExportedVariables( component ).keySet()) {
 				importedVariableNameToExported.put( exportedVariableName, Boolean.TRUE );
 			}
 		}
 
 		// Are all the imports and exports resolvable?
 		for( Map.Entry<String,Boolean> entry : importedVariableNameToExported.entrySet()) {
-			if( entry.getValue())
-				continue;
-
-			RoboconfError error = new RoboconfError( ErrorCode.RM_UNRESOLVABLE_VARIABLE );
-			error.setDetails( "Variable name: " + entry.getKey());
-			errors.add( error );
-		}
-
-		// Containment Cycles?
-		for( Component c : graphs.getRootComponents()) {
-			String s = ComponentHelpers.searchForLoop( c );
-			if( s != null ) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_CYCLE_IN_COMPONENTS );
-				error.setDetails( s );
-				errors.add( error );
-			}
+			if( ! entry.getValue())
+				errors.add( new RoboconfError( ErrorCode.RM_UNRESOLVABLE_VARIABLE, "Variable name: " + entry.getKey()));
 		}
 
 		return errors;
@@ -286,6 +271,7 @@ public final class RuntimeModelValidator {
 	 */
 	public static Collection<RoboconfError> validate( Instance instance ) {
 
+		// Check the name
 		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
 		if( Utils.isEmptyOrWhitespaces( instance.getName()))
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_NAME ));
@@ -296,38 +282,72 @@ public final class RuntimeModelValidator {
 		if( instance.getComponent() == null )
 			errors.add( new RoboconfError( ErrorCode.RM_EMPTY_INSTANCE_COMPONENT ));
 
-		else for( String s : instance.getOverriddenExports().keySet()) {
-			if( ! instance.getComponent().getExportedVariables().containsKey( s )) {
-				RoboconfError error = new RoboconfError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE );
-				error.setDetails( "Variable name: " + s );
-				errors.add( error );
-			}
-		}
-
 		// Check that it has a valid parent with respect to the graph
 		if( instance.getComponent() != null ) {
 			ErrorCode errorCode = null;
+			Collection<Component> ancestors = ComponentHelpers.findAllAncestors( instance.getComponent());
+
 			if( instance.getParent() == null
-					&& ! instance.getComponent().getAncestors().isEmpty())
+					&& ! ancestors.isEmpty())
 				errorCode = ErrorCode.RM_MISSING_INSTANCE_PARENT;
 
 			else if( instance.getParent() != null ) {
-				if( ! instance.getComponent().getAncestors().contains( instance.getParent().getComponent())
-						|| ! instance.getParent().getComponent().getChildren().contains( instance.getComponent()))
+				if( ! ancestors.contains( instance.getParent().getComponent())
+						|| ! ComponentHelpers.findAllChildren( instance.getParent().getComponent()).contains( instance.getComponent()))
 					errorCode = ErrorCode.RM_INVALID_INSTANCE_PARENT;
 			}
 
 			if( errorCode != null ) {
 				StringBuilder sb = new StringBuilder( "One of the following parent was expected: " );
-				for( Iterator<Component> it = instance.getComponent().getAncestors().iterator(); it.hasNext(); ) {
+				for( Iterator<Component> it = ancestors.iterator(); it.hasNext(); ) {
 					sb.append( it.next().getName());
 					if( it.hasNext())
 						sb.append( ", " );
 				}
 
-				RoboconfError error = new RoboconfError( errorCode );
-				error.setDetails( sb.toString());
-				errors.add( error );
+				errors.add( new RoboconfError( errorCode, sb.toString()));
+			}
+		}
+
+		// Check overridden exports
+		// Overridden variables may not contain the facet or component prefix.
+		// To remain as flexible as possible, we will try to resolve them as component or facet variables.
+		Map<String,Set<String>> localNameToFullNames = new HashMap<String,Set<String>> ();
+		Set<String> inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
+		for( String inheritedVarName : inheritedVarNames ) {
+			String localName = VariableHelpers.parseVariableName( inheritedVarName ).getValue();
+			Set<String> fullNames = localNameToFullNames.get( localName );
+			if( fullNames == null )
+				fullNames = new HashSet<String> ();
+
+			fullNames.add( inheritedVarName );
+			localNameToFullNames.put( localName, fullNames );
+		}
+
+		for( Map.Entry<String,String> entry : instance.overridenExports.entrySet()) {
+
+			// The overridden export is complete: Tomcat.port = ...
+			if( inheritedVarNames.contains( entry.getKey()))
+					continue;
+
+			// The export is incomplete or does not override anything...
+			Set<String> fullNames = localNameToFullNames.get( entry.getKey());
+			if( fullNames == null ) {
+				errors.add( new RoboconfError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, "Variable name: " + entry.getKey()));
+
+			} else if( fullNames.size() > 1 ) {
+				StringBuilder sb = new StringBuilder();
+				sb.append( "Variable '" );
+				sb.append( entry.getKey());
+				sb.append( "' could mean " );
+
+				for( Iterator<String> it = fullNames.iterator(); it.hasNext(); ) {
+					sb.append( it.next());
+					if( it.hasNext())
+						sb.append( ", " );
+				}
+
+				errors.add( new RoboconfError( ErrorCode.RM_AMBIGUOUS_OVERRIDING, sb.toString()));
 			}
 		}
 

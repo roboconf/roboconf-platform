@@ -138,9 +138,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 		} else {
 			// Update the data
 			String ipAddress = message.getIpAddress();
-			if( rootInstance.getData().get( Instance.IP_ADDRESS ) == null ) {
+			if( rootInstance.data.get( Instance.IP_ADDRESS ) == null ) {
 				this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
-				rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
+				rootInstance.data.put( Instance.IP_ADDRESS, ipAddress );
 				this.manager.saveConfiguration( ma );
 			}
 

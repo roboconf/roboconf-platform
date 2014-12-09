@@ -237,13 +237,14 @@ public class PluginBash implements PluginInterface {
     }
 
 
-    private Map<String, String> formatExportedVars(Instance instance) {
+    private Map<String, String> formatExportedVars( Instance instance ) {
 
     	// The map we will return
-        Map<String, String> exportedVars = new HashMap<String, String>();
-        for(Entry<String, String> entry : instance.getExports().entrySet()) {
-            String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
-            exportedVars.put(vname, entry.getValue());
+        Map<String, String> exportedVars = new HashMap<String,String>();
+        Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
+        for(Entry<String, String> entry : exports.entrySet()) {
+            String vname = VariableHelpers.parseVariableName( entry.getKey()).getValue();
+            exportedVars.put( vname, entry.getValue());
         }
 
         return exportedVars;

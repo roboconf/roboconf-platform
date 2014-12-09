@@ -51,17 +51,17 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		// The model
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
-		clusterNodeComponent.getImportedVariables().put( "cluster.ip", Boolean.TRUE );
-		clusterNodeComponent.getImportedVariables().put( "cluster.port", Boolean.TRUE );
-		clusterNodeComponent.getExportedVariables().put( "cluster.ip", null );
-		clusterNodeComponent.getExportedVariables().put( "cluster.port", "9007" );
+		clusterNodeComponent.importedVariables.put( "cluster.ip", Boolean.TRUE );
+		clusterNodeComponent.importedVariables.put( "cluster.port", Boolean.TRUE );
+		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
+		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
-		i1.getExports().put( "cluster.ip", "192.168.1.15" );
+		i1.overridenExports.put( "cluster.ip", "192.168.1.15" );
 		i1.setStatus( InstanceStatus.STARTING );
 
 		Instance i2 = new Instance( "inst 2" ).component( clusterNodeComponent );
-		i2.getExports().put( "cluster.ip", "192.168.1.28" );
+		i2.overridenExports.put( "cluster.ip", "192.168.1.28" );
 
 		// The basis
 		PluginInterface plugin = new PluginMock();
@@ -104,21 +104,21 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		// The model
 		Component dbComponent = new Component( "database" ).installerName( "whatever" );
-		dbComponent.getExportedVariables().put( "database.ip", null );
-		dbComponent.getExportedVariables().put( "database.port", "3009" );
+		dbComponent.exportedVariables.put( "database.ip", null );
+		dbComponent.exportedVariables.put( "database.port", "3009" );
 
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
-		appServerComponent.getExportedVariables().put( "app-server.ip", null );
-		appServerComponent.getExportedVariables().put( "app-server.port", "8009" );
-		appServerComponent.getImportedVariables().put( "database.ip", Boolean.FALSE );
-		appServerComponent.getImportedVariables().put( "database.port", Boolean.FALSE );
+		appServerComponent.exportedVariables.put( "app-server.ip", null );
+		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
+		appServerComponent.importedVariables.put( "database.ip", Boolean.FALSE );
+		appServerComponent.importedVariables.put( "database.port", Boolean.FALSE );
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
-		appServer.getExports().put( "app-server.ip", "192.168.1.15" );
+		appServer.overridenExports.put( "app-server.ip", "192.168.1.15" );
 		appServer.setStatus( InstanceStatus.STARTING );
 
 		Instance database = new Instance( "database" ).component( dbComponent );
-		database.getExports().put( "database.ip", "192.168.1.28" );
+		database.overridenExports.put( "database.ip", "192.168.1.28" );
 
 		// The basis
 		PluginInterface plugin = new PluginMock();

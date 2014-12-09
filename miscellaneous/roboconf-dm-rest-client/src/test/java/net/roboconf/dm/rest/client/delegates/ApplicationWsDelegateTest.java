@@ -33,6 +33,7 @@ import javax.ws.rs.core.UriBuilder;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -152,7 +153,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testChangeState_deploy_success() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
+		TestClientDm msgClient = getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -170,7 +171,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testStopAll() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
+		TestClientDm msgClient = getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -196,7 +197,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testUndeployAll() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
+		TestClientDm msgClient = getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -222,7 +223,7 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testDeployAndStartAll() throws Exception {
 
-		TestClientDm msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
+		TestClientDm msgClient = getInternalClient();
 		Assert.assertEquals( 0, msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
@@ -418,5 +419,10 @@ public class ApplicationWsDelegateTest {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
 		this.client.getApplicationDelegate().addInstance( "inexisting", "/bip/bip", newMysql );
+	}
+
+
+	private TestClientDm getInternalClient() throws IllegalAccessException {
+		return TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
 	}
 }

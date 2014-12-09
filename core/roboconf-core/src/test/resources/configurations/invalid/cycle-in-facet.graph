@@ -1,10 +1,10 @@
 A {
 	facets: F1;
-	installer: f1;
+	installer: target;
 }
 
 B {
-	installer: bash;
+	installer: target;
 }
 
 # Cycle: f1 -> f2 -> f3 -> f1

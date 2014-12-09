@@ -158,38 +158,38 @@ public class ManagedApplicationTest {
 	@Test
 	public void testAcknowledgeHeartBeat() {
 
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.PROBLEM );
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.PROBLEM );
-		this.app.getMySqlVm().getData().put( ManagedApplication.MISSED_HEARTBEATS, "5" );
+		this.app.getMySqlVm().data.put( ManagedApplication.MISSED_HEARTBEATS, "5" );
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 	}
 
 
 	@Test
 	public void testCheckStates() {
 
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.ma.checkStates();
-		Assert.assertEquals( "1", this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertEquals( "1", this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
 		for( int i=0; i<=ManagedApplication.THRESHOLD; i++ ) {
@@ -197,20 +197,20 @@ public class ManagedApplicationTest {
 			Assert.assertEquals(
 					String.valueOf( i ),
 					String.valueOf( i+1 ),
-					this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+					this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 		}
 
 		Assert.assertEquals( InstanceStatus.PROBLEM, this.app.getMySqlVm().getStatus());
 		this.app.getMySqlVm().setStatus( InstanceStatus.UNDEPLOYING );
 		this.ma.checkStates();
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 		this.ma.checkStates();
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
 		this.ma.checkStates();
-		Assert.assertNull( this.app.getMySqlVm().getData().get( ManagedApplication.MISSED_HEARTBEATS ));
+		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 	}
 }

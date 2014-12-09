@@ -26,6 +26,7 @@
 package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
@@ -50,7 +51,7 @@ public class Agent_BasicsTest {
 		this.agent.start();
 
 		Thread.sleep( 200 );
-		((TestClientAgent) this.agent.getMessagingClient().getInternalClient()).messagesForTheDm.clear();
+		getInternalClient().messagesForTheDm.clear();
 	}
 
 
@@ -63,7 +64,7 @@ public class Agent_BasicsTest {
 	@Test
 	public void testBasicStartAndStop() throws Exception {
 
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		TestClientAgent client = getInternalClient();
 
 		// Stop when not running => no problem
 		Assert.assertTrue( client.isConnected());
@@ -72,13 +73,13 @@ public class Agent_BasicsTest {
 
 		// Start
 		this.agent.start();
-		client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		client = getInternalClient();
 		Assert.assertTrue( client.isConnected());
 
 		// Start when already started => nothing
 		IAgentClient oldClient = client;
 		this.agent.start();
-		client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		client = getInternalClient();
 		Assert.assertTrue( client.isConnected());
 		Assert.assertNotSame( oldClient, client );
 
@@ -87,7 +88,7 @@ public class Agent_BasicsTest {
 		Assert.assertFalse( client.isConnected());
 
 		this.agent.start();
-		client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		client = getInternalClient();
 		Assert.assertTrue( client.isConnected());
 
 		this.agent.stop();
@@ -102,7 +103,7 @@ public class Agent_BasicsTest {
 	@Test
 	public void testStop_withException() throws Exception {
 
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		TestClientAgent client = getInternalClient();
 		client.failMessageSending.set( true );
 		Assert.assertTrue( client.isConnected());
 
@@ -114,7 +115,7 @@ public class Agent_BasicsTest {
 	@Test
 	public void testStop_notConnected() throws Exception {
 
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		TestClientAgent client = getInternalClient();
 		client.closeConnection();
 		Assert.assertFalse( client.isConnected());
 
@@ -162,5 +163,11 @@ public class Agent_BasicsTest {
 	public void testNeedModel_modelReceived() {
 		((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).rootInstance = new Instance( "root" );
 		Assert.assertFalse( this.agent.needsModel());
+	}
+
+
+
+	private TestClientAgent getInternalClient() throws IllegalAccessException {
+		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class );
 	}
 }

@@ -105,8 +105,7 @@ public final class ModelUtils {
 		String propertyValue = p == null ? null : p.getValue();
 		for( String s : Utils.splitNicely( propertyValue, ParsingConstants.PROPERTY_SEPARATOR )) {
 			Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
-			// Prefix with the facet or component name.
-			result.put( holder.getName() + "." + entry.getKey(), entry.getValue());
+			result.put( entry.getKey(), entry.getValue());
 		}
 
 		return result;

@@ -39,10 +39,53 @@ public class ComponentTest {
 
 		Component c = new Component( "c" );
 		Component comp = new Component().name( "ins" ).installerName( "my-installer" );
-		comp.getMetadata().setExtendedComponent( c );
+		comp.extendComponent( c );
 
 		Assert.assertEquals( "ins", comp.getName());
 		Assert.assertEquals( "my-installer", comp.getInstallerName());
-		Assert.assertEquals( c, comp.getMetadata().getExtendedComponent());
+		Assert.assertEquals( c, comp.getExtendedComponent());
+	}
+
+
+	@Test
+	public void testInsertChild() {
+
+		Component component_1 = new Component( "comp 1" );
+		Component component_1_1 = new Component( "comp 11" );
+
+		Assert.assertEquals( 0, component_1.getAncestors().size());
+		Assert.assertEquals( 0, component_1.getChildren().size());
+
+		Assert.assertEquals( 0, component_1_1.getAncestors().size());
+		Assert.assertEquals( 0, component_1_1.getChildren().size());
+
+		component_1.addChild( component_1_1 );
+		Assert.assertEquals( 0, component_1.getAncestors().size());
+		Assert.assertEquals( 1, component_1.getChildren().size());
+
+		Assert.assertEquals( 1, component_1_1.getAncestors().size());
+		Assert.assertEquals( 0, component_1_1.getChildren().size());
+
+		Assert.assertEquals( component_1_1, component_1.getChildren().iterator().next());
+		Assert.assertEquals( component_1, component_1_1.getAncestors().iterator().next());
+		Assert.assertNotSame( component_1, component_1_1 );
+	}
+
+
+	@Test
+	public void testAssociateFacet() {
+
+		Component component = new Component( "comp" );
+		Facet facet = new Facet( "facet" );
+
+		Assert.assertEquals( 0, component.getFacets().size());
+		Assert.assertEquals( 0, facet.getAssociatedComponents().size());
+
+		component.associateFacet( facet );
+		Assert.assertEquals( 1, component.getFacets().size());
+		Assert.assertEquals( 1, facet.getAssociatedComponents().size());
+
+		Assert.assertEquals( facet, component.getFacets().iterator().next());
+		Assert.assertEquals( component, facet.getAssociatedComponents().iterator().next());
 	}
 }

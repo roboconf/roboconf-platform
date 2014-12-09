@@ -1,5 +1,5 @@
 
 VM {
-	facets: VM;
+	facets: Virtual_Machine;
 	installer: target;
 }

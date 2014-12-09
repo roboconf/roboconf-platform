@@ -378,7 +378,8 @@ public class PluginPuppet implements PluginInterface {
 		sb.append( puppetState.toString().toLowerCase());
 
 		// Prepare the injection of variables into the Puppet receipt
-		String args = formatExportedVariables( instance.getExports());
+		Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
+		String args = formatExportedVariables( exports );
 		String importedTypes = formatInstanceImports( instance );
 
 		if( ! Utils.isEmptyOrWhitespaces( args ))

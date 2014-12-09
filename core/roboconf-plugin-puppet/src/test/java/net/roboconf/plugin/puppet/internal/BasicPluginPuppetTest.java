@@ -79,7 +79,7 @@ public class BasicPluginPuppetTest {
 	public void testFormatInstanceImports_noImport() {
 
 		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
+		component.importedVariables.put( "MySQL.port", false );
 		Instance instance = new Instance( "test" ).component( component );
 
 		Assert.assertEquals( "mysql => undef", this.plugin.formatInstanceImports( instance ));
@@ -94,7 +94,7 @@ public class BasicPluginPuppetTest {
 		exports.put( "MySQL.port", "3306" );
 
 		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
+		component.importedVariables.put( "MySQL.port", false );
 
 		Instance instance = new Instance( "test" ).component( component );
 		instance.getImports().put( "MySQL", new ArrayList<Import>( 0 ));
@@ -112,7 +112,7 @@ public class BasicPluginPuppetTest {
 		Import imp = new Import( "/toto", "component1", exports );
 
 		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
+		component.importedVariables.put( "MySQL.port", false );
 
 		Instance instance = new Instance( "test" ).component( component );
 		instance.getImports().put( "MySQL", Arrays.asList( imp ));
@@ -132,8 +132,8 @@ public class BasicPluginPuppetTest {
 		Import imp = new Import( "/toto", "component1", exports );
 
 		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
-		component.getImportedVariables().put( "MySQL.ip", false );
+		component.importedVariables.put( "MySQL.port", false );
+		component.importedVariables.put( "MySQL.ip", false );
 
 		Instance instance = new Instance( "test" ).component( component );
 		instance.getImports().put( "MySQL", Arrays.asList( imp ));
@@ -161,9 +161,9 @@ public class BasicPluginPuppetTest {
 		somethingImports.add( new Import( "/oops", "component2", exports ));
 
 		Component component = new Component( "test-component" );
-		component.getImportedVariables().put( "MySQL.port", false );
-		component.getImportedVariables().put( "MySQL.ip", false );
-		component.getImportedVariables().put( "Something.test", false );
+		component.importedVariables.put( "MySQL.port", false );
+		component.importedVariables.put( "MySQL.ip", false );
+		component.importedVariables.put( "Something.test", false );
 
 		Instance instance = new Instance( "test" ).component( component );
 		instance.getImports().put( "MySQL", mySqlImports );

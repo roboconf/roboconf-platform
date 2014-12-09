@@ -66,12 +66,11 @@ public class Instance implements Serializable {
 	private Component component;
 	private Instance parent;
 	private final Collection<Instance> children = new LinkedHashSet<Instance> ();
-	private final Collection<String> channels = new HashSet<String> ();
-
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
-	private final Map<String,String> data = new LinkedHashMap<String,String>( 0 );
-	private final Map<String,String> overridenExports = new HashMap<String,String> ();
-	private final Map<String,String> exports = new HashMap<String,String> ();
+
+	public final Collection<String> channels = new HashSet<String> ();
+	public final Map<String,String> data = new LinkedHashMap<String,String>( 0 );
+	public final Map<String,String> overridenExports = new HashMap<String,String> ();
 
 	// At runtime, imported variables are grouped by prefix.
 	// The prefix is a component or a facet name.
@@ -154,38 +153,6 @@ public class Instance implements Serializable {
 	 */
 	public Collection<Instance> getChildren() {
 		return this.children;
-	}
-
-	/**
-	 * @return the channels
-	 */
-	public Collection<String> getChannels() {
-		return this.channels;
-	}
-
-	/**
-	 * @return the data
-	 */
-	public Map<String, String> getData() {
-		return this.data;
-	}
-
-	/**
-	 * @return the overridenExports
-	 */
-	public Map<String,String> getOverriddenExports() {
-		return this.overridenExports;
-	}
-
-	/**
-	 * @return the real exports
-	 */
-	public Map<String,String> getExports() {
-
-		if( this.exports.isEmpty())
-			this.exports.putAll( InstanceHelpers.getExportedVariables( this ));
-
-		return this.exports;
 	}
 
 	@Override
@@ -288,7 +255,7 @@ public class Instance implements Serializable {
 		 * @param s a string (can be null)
 		 * @return the associated runtime status, or {@link InstanceStatus#NOT_DEPLOYED} otherwise
 		 */
-		public static InstanceStatus wichStatus( String s ) {
+		public static InstanceStatus whichStatus( String s ) {
 
 			InstanceStatus result = InstanceStatus.NOT_DEPLOYED;
 			for( InstanceStatus status : InstanceStatus.values()) {

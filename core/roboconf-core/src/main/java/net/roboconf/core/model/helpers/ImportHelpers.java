@@ -99,7 +99,7 @@ public final class ImportHelpers {
 
 		Import imp = new Import( exportingInstancePath, exportingInstanceComponent );
 		if( exportedVariables != null && ! exportedVariables.isEmpty()) {
-			for( String importedVariable : instanceThatUseTheImport.getComponent().getImportedVariables().keySet()) {
+			for( String importedVariable : instanceThatUseTheImport.getComponent().importedVariables.keySet()) {
 				if( exportedVariables.containsKey( importedVariable ))
 					imp.getExportedVars().put( importedVariable, exportedVariables.get( importedVariable ));
 			}

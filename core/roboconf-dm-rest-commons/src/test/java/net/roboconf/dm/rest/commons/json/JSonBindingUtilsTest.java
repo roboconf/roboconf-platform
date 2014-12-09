@@ -173,7 +173,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst, readInst );
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
-		Assert.assertEquals( inst.getChannels(), readInst.getChannels());
+		Assert.assertEquals( inst.channels, readInst.channels );
 	}
 
 
@@ -195,7 +195,7 @@ public class JSonBindingUtilsTest {
 		Instance readInst = mapper.readValue( result, Instance.class );
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
-		Assert.assertEquals( inst.getChannels(), readInst.getChannels());
+		Assert.assertEquals( inst.channels, readInst.channels );
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
 	}
 
@@ -218,7 +218,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst, readInst );
 		Assert.assertEquals( inst.getName(), readInst.getName());
 		Assert.assertEquals( inst.getStatus(), readInst.getStatus());
-		Assert.assertEquals( inst.getChannels(), readInst.getChannels());
+		Assert.assertEquals( inst.channels, readInst.channels );
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
 	}
 
@@ -230,8 +230,8 @@ public class JSonBindingUtilsTest {
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Instance inst = new Instance( "instance" );
-		inst.getData().put( "ip", "127.0.0.1" );
-		inst.getData().put( "any field", "some value" );
+		inst.data.put( "ip", "127.0.0.1" );
+		inst.data.put( "any field", "some value" );
 
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, inst );

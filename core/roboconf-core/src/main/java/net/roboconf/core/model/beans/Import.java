@@ -27,8 +27,8 @@ package net.roboconf.core.model.beans;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
@@ -59,8 +59,8 @@ public class Import implements Serializable {
 	public Import( Instance instance ) {
 		this(
 				InstanceHelpers.computeInstancePath( instance ),
-				(instance.getComponent() == null ? null : instance.getComponent().getName()),
-				instance.getExports());
+				instance.getComponent() == null ? null : instance.getComponent().getName(),
+				InstanceHelpers.findAllExportedVariables( instance ));
 	}
 
 
@@ -131,8 +131,14 @@ public class Import implements Serializable {
 		sb.append( this.instancePath );
 		sb.append( " exports [ " );
 
-		for( Entry<String,String> entry : this.exportedVars.entrySet())
-			sb.append(entry.getKey() + "=" + entry.getValue() + ", ");
+		for( Iterator<Map.Entry<String,String>> it = this.exportedVars.entrySet().iterator(); it.hasNext(); ) {
+			Map.Entry<String,String> entry = it.next();
+			sb.append( entry.getKey());
+			sb.append( "=" );
+			sb.append( entry.getValue());
+			if( it.hasNext())
+				sb.append( ", " );
+		}
 
 		sb.append(" ] ");
 		return sb.toString();

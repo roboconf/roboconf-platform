@@ -28,8 +28,10 @@ package net.roboconf.core.model;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
@@ -38,13 +40,14 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
+import net.roboconf.core.dsl.converters.FromInstanceDefinition;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
 import org.junit.Rule;
@@ -100,39 +103,67 @@ public class RuntimeModelValidatorTest {
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
 
-		comp.getMetadata().getFacetNames().add( "" );
-		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		comp.associateFacet( new Facet( "" ));
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
+
+		iterator = RuntimeModelValidator.validate( comp.getFacets().iterator().next()).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_FACET_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		comp.getMetadata().getFacetNames().clear();
-		comp.getMetadata().getFacetNames().add( "!nvalid-facet-n@me" );
-		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		comp.disassociateFacet( comp.getFacets().iterator().next());
+		comp.associateFacet( new Facet( "!nvalid-facet-n@me" ));
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
+
+		iterator = RuntimeModelValidator.validate( comp.getFacets().iterator().next()).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_FACET_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		comp.getMetadata().getFacetNames().clear();
+		comp.disassociateFacet( comp.getFacets().iterator().next());
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
 
-		comp.getExportedVariables().put( "comp.ip", null );
-		comp.getExportedVariables().put( "comp.port", "9000" );
-		comp.getImportedVariables().put( "comp.ip", Boolean.FALSE );
+		comp.exportedVariables.put( "comp.ip", null );
+		comp.exportedVariables.put( "comp.port", "9000" );
+		comp.importedVariables.put( "comp.ip", Boolean.FALSE );
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		comp.getImportedVariables().put( "comp.ip", Boolean.TRUE );
+		comp.importedVariables.put( "comp.ip", Boolean.TRUE );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
 
-		comp.getImportedVariables().put( "", Boolean.FALSE );
+		comp.importedVariables.put( "", Boolean.FALSE );
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
-		comp.getImportedVariables().remove( "" );
+		comp.importedVariables.remove( "" );
 
-		comp.getImportedVariables().put( "comp.inva!id", Boolean.FALSE );
+		comp.importedVariables.put( "comp.inva!id", Boolean.FALSE );
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
+	public void testFacet() {
+
+		Facet facet = new Facet();
+		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Assert.assertEquals( ErrorCode.RM_EMPTY_FACET_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		facet.setName( "my # facet" );
+		iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_FACET_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		facet.setName( "my.facet" );
+		iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Assert.assertEquals( ErrorCode.RM_DOT_IS_NOT_ALLOWED, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		facet.setName( "facet" );
+		iterator = RuntimeModelValidator.validate( facet ).iterator();
 		Assert.assertFalse( iterator.hasNext());
 	}
 
@@ -145,16 +176,16 @@ public class RuntimeModelValidatorTest {
 		Component c3 = new Component( "c3" ).installerName( Constants.TARGET_INSTALLER );
 		Component c4 = new Component( "c4" ).installerName( Constants.TARGET_INSTALLER );
 
-		c1.getMetadata().setExtendedComponent( c2 );
-		c2.getMetadata().setExtendedComponent( c3 );
-		c3.getMetadata().setExtendedComponent( c4 );
+		c1.extendComponent( c2 );
+		c2.extendComponent( c3 );
+		c3.extendComponent( c4 );
 
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( c1 ).size());
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( c2 ).size());
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( c3 ).size());
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( c4 ).size());
 
-		c4.getMetadata().setExtendedComponent( c1 );
+		c4.extendComponent( c1 );
 		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( c1 ).iterator();
 		Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -171,10 +202,7 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		c1.getMetadata().setExtendedComponent( null );
-		Assert.assertEquals( 0, RuntimeModelValidator.validate( c1 ).size());
-
-		c1.getMetadata().setExtendedComponent( c1 );
+		c1.extendComponent( c1 );
 		iterator = RuntimeModelValidator.validate( c1 ).iterator();
 		Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -199,32 +227,35 @@ public class RuntimeModelValidatorTest {
 		// But we must keep it to prevent regressions.
 		iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		if( iterator.hasNext()) {
-			Assert.assertEquals( ErrorCode.RM_DUPLICATE_COMPONENT, iterator.next().getErrorCode());
+			//Assert.assertEquals( ErrorCode.RM_DUPLICATE_COMPONENT, iterator.next().getErrorCode());
 			Assert.assertFalse( iterator.hasNext());
 		}
 
 		// Unresolvable variable
 		graphs.getRootComponents().clear();
 		graphs.getRootComponents().add( comp1 );
-		comp1.getImportedVariables().put( "tomcat.port", Boolean.FALSE );
+		comp1.importedVariables.put( "tomcat.port", Boolean.FALSE );
 		iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		comp1.getImportedVariables().put( "tomcat.port", Boolean.TRUE );
+		comp1.importedVariables.put( "tomcat.port", Boolean.TRUE );
 		iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
-		comp1.getImportedVariables().clear();
+		comp1.importedVariables.clear();
 
-		// Test for loops
+		// Test for loops: comp2 -> comp3 -> comp2
 		Component comp2 = new Component( "comp2" ).installerName( "installer-2" );
-		ComponentHelpers.insertChild( comp1, comp2 );
-		ComponentHelpers.insertChild( comp2, comp1 );
+		Component comp3 = new Component( "comp3" ).installerName( "installer-3" );
+		comp1.addChild( comp2 );
+		comp2.addChild( comp3 );
+		comp3.addChild( comp2 );
 
-		iterator = RuntimeModelValidator.validate( graphs ).iterator();
-		Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS, iterator.next().getErrorCode());
-		Assert.assertFalse( iterator.hasNext());
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Assert.assertEquals( 2, errors.size());
+		for( RoboconfError error: errors )
+			Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS, error.getErrorCode());
 	}
 
 
@@ -254,7 +285,7 @@ public class RuntimeModelValidatorTest {
 		inst.setName( "my instance" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( inst ).size());
 
-		inst.getOverriddenExports().put( "inst.value", "whatever" );
+		inst.overridenExports.put( "inst.value", "whatever" );
 		iterator = RuntimeModelValidator.validate( inst ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -376,44 +407,43 @@ public class RuntimeModelValidatorTest {
 		Component component = new Component( "my-component" ).installerName( Constants.TARGET_INSTALLER );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
 
-		component.getExportedVariables().put( "ip", null );
+		component.exportedVariables.put( "ip", null );
 		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( component ).iterator();
-		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
+		//Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		component.getExportedVariables().clear();
-		component.getExportedVariables().put( "my-component.ip", null );
+		component.exportedVariables.clear();
+		component.exportedVariables.put( "my-component.ip", null );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
 
-		component.getExportedVariables().put( "ip", null );
+		component.exportedVariables.put( "ip", null );
 		iterator = RuntimeModelValidator.validate( component ).iterator();
-		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
+		//Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		component.getExportedVariables().clear();
-		component.getExportedVariables().put( "my-component.ip", null );
-		component.getExportedVariables().put( "my-facet.ip", null );
+		component.exportedVariables.clear();
+		component.exportedVariables.put( "my-component.ip", null );
+		component.exportedVariables.put( "another-prefix.ip", null );
 		iterator = RuntimeModelValidator.validate( component ).iterator();
-		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		component.getMetadata().getFacetNames().add( "my-facet" );
+		component.associateFacet( new Facet( "my-facet" ));
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
 
-		component.getExportedVariables().clear();
-		component.getExportedVariables().put( "my-component.", null );
-		iterator = RuntimeModelValidator.validate( component ).iterator();
-		Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_NAME, iterator.next().getErrorCode());
-		Assert.assertFalse( iterator.hasNext());
-
-		component.getExportedVariables().clear();
-		component.getExportedVariables().put( "my-component.inva!id", null );
+		component.exportedVariables.clear();
+		component.exportedVariables.put( "my-component.@", "yo" );
 		iterator = RuntimeModelValidator.validate( component ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		component.getExportedVariables().clear();
-		component.getExportedVariables().put( "", null );
+		component.exportedVariables.clear();
+		component.exportedVariables.put( "my-component.inva!id", null );
+		iterator = RuntimeModelValidator.validate( component ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		component.exportedVariables.clear();
+		component.exportedVariables.put( "", null );
 		iterator = RuntimeModelValidator.validate( component ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -426,8 +456,8 @@ public class RuntimeModelValidatorTest {
 		Component vmComponent1 = new Component( "VM_type1" ).installerName( Constants.TARGET_INSTALLER );
 		Component vmComponent2 = new Component( "VM_type2" ).installerName( Constants.TARGET_INSTALLER );
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		ComponentHelpers.insertChild( vmComponent1, tomcatComponent );
-		ComponentHelpers.insertChild( vmComponent2, tomcatComponent );
+		vmComponent1.addChild( tomcatComponent );
+		vmComponent2.addChild( tomcatComponent );
 
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( vmComponent1 );
@@ -508,5 +538,101 @@ public class RuntimeModelValidatorTest {
 		Assert.assertTrue( targetPropertiesFile.createNewFile());
 		errors = RuntimeModelValidator.validate( graphs, appDir );
 		Assert.assertEquals( 0, errors.size());
+	}
+
+
+	@Test
+	public void testAnalyzeOverriddenExport() {
+
+		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+
+		Instance tomcatInstance = new Instance( "tomcat" ).component( tomcatComponent );
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 0, errors.size());
+
+		tomcatInstance.overridenExports.put( "Tomcat.port", "whatever" );
+		errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 0, errors.size());
+
+		tomcatInstance.overridenExports.put( "oops", "whatever" );
+		errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, errors.iterator().next().getErrorCode());
+
+		tomcatInstance.overridenExports.remove( "oops" );
+		tomcatInstance.overridenExports.put( "port", "whatever" );
+		errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 0, errors.size());
+
+		tomcatInstance.overridenExports.remove( "Tomcat.port" );
+		errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 0, errors.size());
+
+		Facet facet = new Facet( "facet" );
+		facet.exportedVariables.put( "ip", null );
+		tomcatComponent.associateFacet( facet );
+
+		errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 0, errors.size());
+
+		tomcatInstance.overridenExports.put( "ip", "localhost" );
+		errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.RM_AMBIGUOUS_OVERRIDING, errors.iterator().next().getErrorCode());
+
+		tomcatInstance.overridenExports.remove( "ip" );
+		tomcatInstance.overridenExports.put( "facet.ip", "localhost" );
+		errors = RuntimeModelValidator.validate( tomcatInstance );
+		Assert.assertEquals( 0, errors.size());
+	}
+
+
+	@Test
+	public void testOverriddenExports() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).installerName( "target" );
+		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+
+		vmComponent.addChild( tomcatComponent );
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		File f = TestUtils.findTestFile( "/configurations/valid/instance-overridden-exports.instances" );
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs, f );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		Assert.assertEquals( 1, rootInstances.size());
+		Instance rootInstance = rootInstances.iterator().next();
+		Collection<Instance> instances = InstanceHelpers.buildHierarchicalList( rootInstance );
+		Assert.assertEquals( 2, instances.size());
+
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( instances );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, errors.iterator().next().getErrorCode());
+	}
+
+
+	@Test
+	public void testCycleInFacet() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/cycle-in-facet.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Assert.assertEquals( 3, errors.size());
+		Set<String> messages = new HashSet<String> ();
+		for( RoboconfError error : errors ) {
+			Assert.assertEquals( ErrorCode.RM_CYCLE_IN_FACETS_INHERITANCE, error.getErrorCode());
+			messages.add( error.getDetails());
+		}
+
+		Assert.assertEquals( 3, messages.size());
 	}
 }

@@ -189,9 +189,9 @@ public final class JSonBindingUtils {
 			if( instance.getComponent() != null )
 				generator.writeObjectField( INST_COMPONENT, instance.getComponent());
 
-			if( ! instance.getChannels().isEmpty()) {
+			if( ! instance.channels.isEmpty()) {
 				generator.writeArrayFieldStart( INST_CHANNELS );
-				for( String channel : instance.getChannels())
+				for( String channel : instance.channels )
 					generator.writeString( channel );
 
 				generator.writeEndArray();
@@ -199,11 +199,11 @@ public final class JSonBindingUtils {
 
 			// Write some meta-data (useful for web clients).
 			// De-serializing this information is useless for the moment.
-			if( ! instance.getData().isEmpty()) {
+			if( ! instance.data.isEmpty()) {
 
 				generator.writeFieldName( INST_DATA );
 				generator.writeStartObject();
-				for( Map.Entry<String,String> entry : instance.getData().entrySet())
+				for( Map.Entry<String,String> entry : instance.data.entrySet())
 					generator.writeObjectField( entry.getKey(), entry.getValue());
 
 				generator.writeEndObject();
@@ -232,11 +232,11 @@ public final class JSonBindingUtils {
 	        	instance.setName( n.textValue());
 
 	        if(( n = node.get( INST_STATUS )) != null )
-	        	instance.setStatus( InstanceStatus.wichStatus( n.textValue()));
+	        	instance.setStatus( InstanceStatus.whichStatus( n.textValue()));
 
 	        if(( n = node.get( INST_CHANNELS )) != null ) {
 	        	for( JsonNode arrayNodeItem : n )
-	        		instance.getChannels().add( arrayNodeItem.textValue());
+	        		instance.channels.add( arrayNodeItem.textValue());
 	        }
 
 	        if(( n = node.get( INST_COMPONENT )) != null ) {

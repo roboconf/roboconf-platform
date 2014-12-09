@@ -211,7 +211,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		// Configure the messaging
 		for( Instance instanceToProcess : instancesToProcess ) {
 			initializePluginForInstance( instanceToProcess );
-			VariableHelpers.updateNetworkVariables( instanceToProcess.getExports(), this.agent.getIpAddress());
 			this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, instanceToProcess );
 			this.messagingClient.requestExportsFromOtherAgents( instanceToProcess );
 		}
@@ -267,17 +266,17 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		if( parentInstance == null ) {
 			this.logger.severe( "The parent instance for " + msg.getParentInstancePath() + " was not found. The request to add a new instance is dropped." );
 
-		} else if(( instanceComponent = ComponentHelpers.findSubComponent( parentInstance.getComponent(), msg.getComponentName())) == null ) {
+		} else if(( instanceComponent = ComponentHelpers.findComponentFrom( parentInstance.getComponent(), msg.getComponentName())) == null ) {
 			this.logger.severe( "The component " + msg.getComponentName() + " was not found in the local graph." );
 
 		} else {
 			Instance newInstance = new Instance( msg.getInstanceName()).component( instanceComponent );
-			newInstance.getChannels().addAll( msg.getChannels());
+			newInstance.channels.addAll( msg.getChannels());
 			if( msg.getData() != null )
-				newInstance.getData().putAll( msg.getData());
+				newInstance.data.putAll( msg.getData());
 
 			if( msg.getOverridenExports() != null )
-				newInstance.getOverriddenExports().putAll( msg.getOverridenExports());
+				newInstance.overridenExports.putAll( msg.getOverridenExports());
 
 			Application tempApp = new Application( "temp app" );
 			tempApp.getRootInstances().add( parentInstance );
@@ -286,8 +285,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			} else {
 				initializePluginForInstance( newInstance );
-
-				VariableHelpers.updateNetworkVariables( newInstance.getExports(), this.agent.getIpAddress());
 				this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, newInstance );
 				this.messagingClient.requestExportsFromOtherAgents( newInstance );
 			}

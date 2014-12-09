@@ -202,6 +202,14 @@ public class Application implements Serializable {
 	}
 
 	/**
+	 * Sets the DSL ID in a chain approach.
+	 */
+	public Application dslId( String dslId ) {
+		this.dslId = dslId;
+		return this;
+	}
+
+	/**
 	 * Sets the graphs in a chain approach.
 	 */
 	public Application graphs( Graphs graphs ) {

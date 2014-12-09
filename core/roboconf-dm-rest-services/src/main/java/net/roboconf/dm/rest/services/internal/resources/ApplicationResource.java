@@ -378,7 +378,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		List<Component> result = new ArrayList<Component> ();
 		if( instance != null )
-			result.addAll( instance.getComponent().getChildren());
+			result.addAll( ComponentHelpers.findAllChildren( instance.getComponent()));
 
 		else if( app != null
 				&& instancePath == null )
@@ -404,7 +404,7 @@ public class ApplicationResource implements IApplicationResource {
 		// See if their component can support a child "of type componentName".
 		if( app != null ) {
 			for( Instance instance : InstanceHelpers.getAllInstances( app )) {
-				for( Component c : instance.getComponent().getChildren()) {
+				for( Component c : ComponentHelpers.findAllChildren( instance.getComponent())) {
 					if( componentName.equals( c.getName())) {
 						String instancePath = InstanceHelpers.computeInstancePath( instance );
 						result.add( instancePath );

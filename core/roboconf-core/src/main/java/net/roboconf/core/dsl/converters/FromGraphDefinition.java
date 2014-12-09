@@ -33,7 +33,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
@@ -46,11 +45,14 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.dsl.parsing.FileDefinitionParser;
 import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.ModelUtils;
+import net.roboconf.core.utils.Utils;
 
 /**
  * To build a {@link Graphs} from a {@link FileDefinition}.
@@ -61,11 +63,8 @@ public class FromGraphDefinition {
 	private final File rootDirectory;
 	private final Collection<ModelError> errors = new ArrayList<ModelError> ();
 
-	private Map<String,List<BlockFacet>> facetNameToRelationFacets;
-	private Map<String,List<BlockComponent>> componentNameToRelationComponents;
-	private Map<String,Component> componentNameToComponent;
-	private Map<String,Collection<String>> componentNameToComponentChildrenNames;
-	private Map<String,String> componentNameToExtendedComponentName;
+	private Map<String,ComponentData> componentNameToComponentData;
+	private Map<String,FacetData> facetNameToFacetData;
 
 	private Set<File> importsToProcess, processedImports;
 
@@ -98,11 +97,8 @@ public class FromGraphDefinition {
 	public Graphs buildGraphs( File file ) {
 
 		// Initialize collections
-		this.facetNameToRelationFacets = new HashMap<String,List<BlockFacet>> ();
-		this.componentNameToRelationComponents = new HashMap<String,List<BlockComponent>> ();
-		this.componentNameToComponent = new HashMap<String,Component> ();
-		this.componentNameToComponentChildrenNames = new HashMap<String,Collection<String>> ();
-		this.componentNameToExtendedComponentName = new HashMap<String,String> ();
+		this.componentNameToComponentData = new HashMap<String,ComponentData> ();
+		this.facetNameToFacetData = new HashMap<String,FacetData> ();
 
 		this.importsToProcess = new HashSet<File> ();
 		this.processedImports = new HashSet<File> ();
@@ -144,24 +140,20 @@ public class FromGraphDefinition {
 				processInstructions( currentDefinition );
 		}
 
-		// Check names uniqueness
+		// Check names collisions
 		if( this.errors.isEmpty())
-			checkUnicity( this.componentNameToRelationComponents, ErrorCode.CO_ALREADY_DEFINED_COMPONENT );
+			checkNameCollisions();
+
+		// Check uniqueness
+		if( this.errors.isEmpty())
+			checkUnicity();
+
+		// Resolve all
+		if( this.errors.isEmpty())
+			resolveComponents();
 
 		if( this.errors.isEmpty())
-			checkUnicity( this.facetNameToRelationFacets, ErrorCode.CO_ALREADY_DEFINED_FACET );
-
-		// Apply facets to components
-		if( this.errors.isEmpty())
-			updateComponentsFromFacets();
-
-		// Only then, search for children - ancestor definition
-		if( this.errors.isEmpty())
-			updateComponentsDependencies();
-
-		// Eventually, deal with inheritance
-		if( this.errors.isEmpty())
-			updateComponentsWithInheritance();
+			resolveFacets();
 
 		// Build the result
 		return buildFinalGraphs();
@@ -203,287 +195,199 @@ public class FromGraphDefinition {
 
 	private void processFacet( BlockFacet block ) {
 
-		List<BlockFacet> facets = this.facetNameToRelationFacets.get( block.getName());
-		if( facets == null )
-			facets = new ArrayList<BlockFacet> ();
+		FacetData data = this.facetNameToFacetData.get( block.getName());
+		if( data != null ) {
+			data.blocks.add( block );
 
-		facets.add( block );
-		this.facetNameToRelationFacets.put( block.getName(), facets );
+		} else {
+			data = new FacetData();
+			data.object = new Facet( block.getName());
+			data.object.exportedVariables.putAll( ModelUtils.getExportedVariables( block ));
+			data.childrenNames.addAll( ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_GRAPH_CHILDREN ));
+			data.extendedFacetNames.addAll( ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_GRAPH_EXTENDS ));
+			data.blocks.add( block );
+
+			this.facetNameToFacetData.put( block.getName(), data );
+		}
 	}
 
 
 	private void processComponent( BlockComponent block ) {
 
-		Component component = new Component();
-		component.setName( block.getName());
-		component.setInstallerName( ModelUtils.getPropertyValue( block, ParsingConstants.PROPERTY_COMPONENT_INSTALLER ));
-		component.getMetadata().getFacetNames().addAll( ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_COMPONENT_FACETS ));
+		ComponentData data = this.componentNameToComponentData.get( block.getName());
+		if( data != null ) {
+			data.blocks.add( block );
 
-		for( String s : ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_COMPONENT_IMPORTS )) {
-			Boolean optional = s.toLowerCase().endsWith( ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT );
-			if( optional )
-				s = s.substring( 0, s.length() - ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length()).trim();
+		} else {
+			data = new ComponentData();
+			data.object = new Component( block.getName());
+			data.object.exportedVariables.putAll( ModelUtils.getExportedVariables( block ));
+			data.object.setInstallerName( ModelUtils.getPropertyValue( block, ParsingConstants.PROPERTY_COMPONENT_INSTALLER ));
 
-			component.getImportedVariables().put( s, optional );
+			for( String s : ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_COMPONENT_IMPORTS )) {
+				Boolean optional = s.toLowerCase().endsWith( ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT );
+				if( optional )
+					s = s.substring( 0, s.length() - ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length()).trim();
+
+				data.object.importedVariables.put( s, optional );
+			}
+
+			data.extendedComponentName = ModelUtils.getPropertyValue( block, ParsingConstants.PROPERTY_GRAPH_EXTENDS );
+			data.childrenNames.addAll( ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_GRAPH_CHILDREN ));
+			data.facetNames.addAll( ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_COMPONENT_FACETS ));
+			data.blocks.add( block );
+
+			this.componentNameToComponentData.put( block.getName(), data );
 		}
-
-		component.getExportedVariables().putAll( ModelUtils.getExportedVariables( block ));
-		String extendedComponent = ModelUtils.getPropertyValue( block, ParsingConstants.PROPERTY_GRAPH_EXTENDS );
-		if( extendedComponent != null )
-			this.componentNameToExtendedComponentName.put( component.getName(), extendedComponent );
-
-		// Children and ancestors will be resolved once all the components have been read, imports included
-		this.componentNameToComponent.put( component.getName(), component );
-		this.componentNameToComponentChildrenNames.put(
-				component.getName(),
-				ModelUtils.getPropertyValues( block, ParsingConstants.PROPERTY_GRAPH_CHILDREN ));
-
-		List<BlockComponent> components = this.componentNameToRelationComponents.get( block.getName());
-		if( components == null )
-			components = new ArrayList<BlockComponent> ();
-
-		components.add( block );
-		this.componentNameToRelationComponents.put( component.getName(), components );
 	}
 
 
-	private <T extends AbstractBlockHolder> void checkUnicity( Map<String,List<T>> map, ErrorCode code ) {
+	private void checkNameCollisions() {
 
-		for( Map.Entry<String,List<T>> entry : map.entrySet()) {
-			if( entry.getValue().size() == 1 )
-				continue;
+		Collection<String> names = new HashSet<String> ();
+		names.addAll( this.componentNameToComponentData.keySet());
+		names.retainAll( this.facetNameToFacetData.keySet());
 
-			StringBuilder sb = new StringBuilder();
-			sb.append( entry.getKey());
-			sb.append( " is defined in:\n" );
-			for( AbstractBlockHolder holder : entry.getValue()) {
-				sb.append( " - " );
+		for( String name : names ) {
+			ComponentData cd = this.componentNameToComponentData.get( name );
+			this.errors.addAll( cd.error( ErrorCode.CO_CONFLICTING_NAME, "Name: " + name ));
 
-				FileDefinition file = holder.getDeclaringFile();
-				sb.append( file.getEditedFile().getName());
-
-				sb.append( " - line " );
-				sb.append( holder.getLine());
-				sb.append( "\n" );
-			}
-
-			for( AbstractBlockHolder holder : entry.getValue()) {
-				ModelError error = new ModelError( code, holder.getLine());
-				error.setDetails( sb.toString());
-				this.errors.add( error );
-			}
+			FacetData fd = this.facetNameToFacetData.get( name );
+			this.errors.addAll( fd.error( ErrorCode.CO_CONFLICTING_NAME, "Name: " + name ));
 		}
-
-		// The map is useless now
-		map = null;
 	}
 
 
-	private void updateComponentsFromFacets() {
+	private void checkUnicity() {
 
-		for( Component c : this.componentNameToComponent.values()) {
-
-			// Find all the facets this component inherits from
-			Set<String> additionalComponentFacets = new HashSet<String> ();
-			for( String facetName : c.getMetadata().getFacetNames()) {
-
-				// Find the facet
-				List<BlockFacet> facets = this.facetNameToRelationFacets.get( facetName );
-				if( facets == null ) {
-					ModelError error = new ModelError( ErrorCode.CO_UNRESOLVED_FACET, 0 );
-					error.setDetails( "Facet name: " + facetName );
-					this.errors.add( error );
-					continue;
-				}
-
-				// No need to check whether this facet was defined several times,
-				// it is done in #checkUnicity().
-
-				// Find all the extended facets
-				Set<String> allFacets = new HashSet<String> ();
-				Set<String> alreadyProcessedFacets = new HashSet<String> ();
-				allFacets.add( facetName );
-				while( ! allFacets.isEmpty()) {
-					String currentFacet = allFacets.iterator().next();
-					allFacets.remove( currentFacet );
-
-					if( alreadyProcessedFacets.contains( currentFacet )) {
-						ModelError error = new ModelError( ErrorCode.CO_CYCLE_IN_FACETS, 0 );
-						error.setDetails( currentFacet + " -> ... -> " + currentFacet );
-						this.errors.add( error );
-						break;
-					}
-
-					alreadyProcessedFacets.add( currentFacet );
-					List<BlockFacet> extendedFacets = this.facetNameToRelationFacets.get( currentFacet );
-					if( extendedFacets == null ) {
-						ModelError error = new ModelError( ErrorCode.CO_UNRESOLVED_FACET, 0 );
-						error.setDetails( "Facet name: " + currentFacet );
-						this.errors.add( error );
-						break;
-					}
-
-					for( String extendedFacetName : ModelUtils.getPropertyValues( extendedFacets.get( 0 ), ParsingConstants.PROPERTY_GRAPH_EXTENDS ))
-						allFacets.add( extendedFacetName );
-				}
-
-				additionalComponentFacets.addAll( alreadyProcessedFacets );
-			}
-
-			// Update the component with the inherited properties
-			c.getMetadata().getFacetNames().addAll( additionalComponentFacets );
-			for( String facetName : c.getMetadata().getFacetNames()) {
-				List<BlockFacet> facets = this.facetNameToRelationFacets.get( facetName );
-				if( facets == null
-						|| facets.isEmpty())
-					continue;
-
-				BlockFacet facet = facets.get( 0 );
-				c.getExportedVariables().putAll( ModelUtils.getExportedVariables( facet ));
-
-				Collection<String> children = this.componentNameToComponentChildrenNames.get( c.getName());
-				children.addAll( ModelUtils.getPropertyValues( facet, ParsingConstants.PROPERTY_GRAPH_CHILDREN ));
-				this.componentNameToComponentChildrenNames.put( c.getName(), children );
-			}
+		// Components
+		for( Data<?> data : this.componentNameToComponentData.values()) {
+			if( data.blocks.size() > 1 )
+				this.errors.addAll( data.error( ErrorCode.CO_ALREADY_DEFINED_COMPONENT, "Component name: " + data.object.getName()));
 		}
 
-		// This map is useless now
-		this.facetNameToRelationFacets = null;
+		// Facets
+		for( Data<?> data : this.facetNameToFacetData.values()) {
+			if( data.blocks.size() > 1 )
+				this.errors.addAll( data.error( ErrorCode.CO_ALREADY_DEFINED_FACET, "Facet name: " + data.object.getName()));
+		}
 	}
 
 
-	private void updateComponentsDependencies() {
+	private void resolveComponents() {
 
-		for( Map.Entry<String,Collection<String>> entry : this.componentNameToComponentChildrenNames.entrySet()) {
-			Component component = this.componentNameToComponent.get( entry.getKey());
-			for( String childName : entry.getValue()) {
+		for( ComponentData data : this.componentNameToComponentData.values()) {
 
-				// Children can be determined by component name or by facet name
-				int insertionCount = 0;
-				for( Component c : this.componentNameToComponent.values()) {
-					if( childName.equals( c.getName())
-							|| c.getMetadata().getFacetNames().contains( childName )) {
-						ComponentHelpers.insertChild( component, c );
-						insertionCount ++;
-					}
-				}
+			// The extended component name
+			if( ! Utils.isEmptyOrWhitespaces( data.extendedComponentName )) {
+				ComponentData extendedComponentData = this.componentNameToComponentData.get( data.extendedComponentName );
+				if( extendedComponentData != null )
+					data.object.extendComponent( extendedComponentData.object );
+				else
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_COMPONENT, "Component name: " + data.extendedComponentName ));
+			}
 
-				if( insertionCount == 0 ) {
-					ModelError error = new ModelError( ErrorCode.CO_INEXISTING_CHILD, 0 );
-					error.setDetails( "Child name: " + childName );
-					this.errors.add( error );
-				}
+			// The facets
+			for( String s : data.facetNames ) {
+				FacetData facetData = this.facetNameToFacetData.get( s );
+				if( facetData != null )
+					data.object.associateFacet( facetData.object );
+				else
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_FACET, "Facet name: " + s ));
+			}
+
+			// The children
+			for( String s : data.childrenNames ) {
+				ComponentData componentData = this.componentNameToComponentData.get( s );
+				FacetData facetData = this.facetNameToFacetData.get( s );
+				if( componentData != null )
+					data.object.addChild( componentData.object );
+				else if( facetData != null )
+					data.object.addChild( facetData.object );
+				else
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_CHILD, "Name: " + s ));
 			}
 		}
-
-		// This map is useless now
-		this.componentNameToComponentChildrenNames = null;
 	}
 
 
-	private void updateComponentsWithInheritance() {
+	private void resolveFacets() {
 
-		// Resolve extended components
-		for( Component c : this.componentNameToComponent.values()) {
-			String ecn = this.componentNameToExtendedComponentName.get( c.getName());
-			if( ecn == null )
-				continue;
+		for( FacetData data : this.facetNameToFacetData.values()) {
 
-			Component ec = this.componentNameToComponent.get( ecn );
-			if( ec != null ) {
-				c.getMetadata().setExtendedComponent( ec );
+			// The extended facets
+			for( String s : data.extendedFacetNames ) {
+				FacetData facetData = this.facetNameToFacetData.get( s );
+				if( facetData != null )
+					data.object.extendFacet( facetData.object );
+				else
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_FACET, "Facet name: " + s ));
+			}
 
-			} else {
-				ModelError error = new ModelError( ErrorCode.CO_INEXISTING_COMPONENT, 0 );
-				error.setDetails( "Component name: " + ecn );
-				this.errors.add( error );
+			// The children
+			for( String s : data.childrenNames ) {
+				ComponentData componentData = this.componentNameToComponentData.get( s );
+				FacetData facetData = this.facetNameToFacetData.get( s );
+				if( componentData != null )
+					data.object.addChild( componentData.object );
+				else if( facetData != null )
+					data.object.addChild( facetData.object );
+				else
+					this.errors.addAll( data.error( ErrorCode.CO_INEXISTING_CHILD, "Name: " + s ));
 			}
 		}
-
-		// Now, we want to process components in the right order.
-		// An extended component must be processed BEFORE the component that extends it.
-		Map<Integer,Set<Component>> levelToComponents = new TreeMap<Integer,Set<Component>> ();
-		for( Component c : this.componentNameToComponent.values()) {
-			int level = countParents( c );
-			Set<Component> components = levelToComponents.get( level );
-			if( components == null )
-				components = new HashSet<Component> ();
-
-			components.add( c );
-			levelToComponents.put( level, components );
-		}
-
-		// Level -1 indicates an error
-		levelToComponents.remove( -1 );
-
-		// Process by levels.
-		// Fact: a component CANNOT extend a component from the same level.
-		// So, processing by level guarantees all the extended components will be complete.
-		for( Set<Component> components : levelToComponents.values()) {
-			for( Component c : components ) {
-
-				// Inexisting components were already identified. So, no new error here.
-				Component ec = c.getMetadata().getExtendedComponent();
-				if( ec == null )
-					continue;
-
-				if( c.getInstallerName() == null )
-					c.setInstallerName( ec.getInstallerName());
-
-				c.getExportedVariables().putAll( ec.getExportedVariables());
-				c.getMetadata().getFacetNames().addAll( ec.getMetadata().getFacetNames());
-				c.getChildren().addAll( ec.getChildren());
-				c.getAncestors().addAll( ec.getAncestors());
-
-				for( Component ancestor : ec.getAncestors())
-					ancestor.getChildren().add( c );
-
-				// A component MAY decide to change the requirement about an import.
-				// It means an optional import may be come mandatory. Why not...
-				for( Map.Entry<String,Boolean> entry : ec.getImportedVariables().entrySet()) {
-					if( ! c.getImportedVariables().containsKey( entry.getKey()))
-						c.getImportedVariables().put( entry.getKey(), entry.getValue());
-				}
-			}
-		}
-
-		// This map is useless now
-		this.componentNameToExtendedComponentName = null;
 	}
 
 
 	private Graphs buildFinalGraphs() {
+
 		Graphs result = new Graphs();
-		for( Component c : this.componentNameToComponent.values()) {
-			if( c.getAncestors().isEmpty())
-				result.getRootComponents().add( c );
+		for( ComponentData cd : this.componentNameToComponentData.values()) {
+			if( ComponentHelpers.findAllAncestors( cd.object ).isEmpty())
+				result.getRootComponents().add( cd.object );
 		}
 
 		return result;
 	}
 
 
-	int countParents( Component component ) {
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 * @param <T>
+	 */
+	private static class Data<T extends AbstractType> {
 
-		Set<String> alreadySeen = new HashSet<String> ();
-		int count = 0;
-		Component c = component;
-		while(( c = c.getMetadata().getExtendedComponent()) != null ) {
+		T object;
+		Collection<String> childrenNames = new HashSet<String> ();
+		List<AbstractBlockHolder> blocks = new ArrayList<AbstractBlockHolder> ();
 
-			if( alreadySeen.contains( c.getName())) {
-				ModelError error = new ModelError( ErrorCode.CO_CYCLE_IN_COMPONENTS_INHERITANCE, 0 );
-				error.setDetails( c.getName() + " -> ... -> " + c.getName());
-				this.errors.add( error );
+		List<ModelError> error( ErrorCode code, String cause ) {
 
-				count = -1;
-				break;
-
-			} else {
-				count ++;
-				alreadySeen.add( c.getName());
+			List<ModelError> errors = new ArrayList<ModelError> ();
+			for( AbstractBlockHolder block : this.blocks ) {
+				ModelError error = new ModelError( code, block.getLine());
+				error.setDetails( cause );
+				errors.add( error );
 			}
-		}
 
-		return count;
+			return errors;
+		}
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class ComponentData extends Data<Component> {
+		String extendedComponentName;
+		Collection<String> facetNames = new HashSet<String> ();
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class FacetData extends Data<Facet> {
+		Collection<String> extendedFacetNames = new HashSet<String> ();
 	}
 }

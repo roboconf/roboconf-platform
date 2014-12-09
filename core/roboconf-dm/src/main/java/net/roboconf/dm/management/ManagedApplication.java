@@ -146,13 +146,13 @@ public class ManagedApplication {
 	 */
 	public void acknowledgeHeartBeat( Instance rootInstance ) {
 
-		String count = rootInstance.getData().get( MISSED_HEARTBEATS );
+		String count = rootInstance.data.get( MISSED_HEARTBEATS );
 		if( count != null
 				&& Integer.parseInt( count ) > THRESHOLD )
 			this.logger.info( "Machine " + rootInstance.getName() + " is alive and reachable again." );
 
 		rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-		rootInstance.getData().remove( MISSED_HEARTBEATS );
+		rootInstance.data.remove( MISSED_HEARTBEATS );
 	}
 
 
@@ -172,12 +172,12 @@ public class ManagedApplication {
 			if( rootInstance.getStatus() == InstanceStatus.NOT_DEPLOYED
 					|| rootInstance.getStatus() == InstanceStatus.DEPLOYING
 					|| rootInstance.getStatus() == InstanceStatus.UNDEPLOYING ) {
-				rootInstance.getData().remove( MISSED_HEARTBEATS );
+				rootInstance.data.remove( MISSED_HEARTBEATS );
 				continue;
 			}
 
 			// Otherwise
-			String countAs = rootInstance.getData().get( MISSED_HEARTBEATS );
+			String countAs = rootInstance.data.get( MISSED_HEARTBEATS );
 			int count = countAs == null ? 0 : Integer.parseInt( countAs );
 			if( ++ count > THRESHOLD ) {
 				rootInstance.setStatus( InstanceStatus.PROBLEM );
@@ -186,7 +186,7 @@ public class ManagedApplication {
 					this.logger.severe( "Machine " + rootInstance.getName() + " has not sent heartbeats for quite a long time. Status changed to PROBLEM." );
 			}
 
-			rootInstance.getData().put( MISSED_HEARTBEATS, String.valueOf( count ));
+			rootInstance.data.put( MISSED_HEARTBEATS, String.valueOf( count ));
 		}
 	}
 }

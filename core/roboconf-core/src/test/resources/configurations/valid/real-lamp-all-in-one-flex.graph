@@ -10,7 +10,7 @@
 
 # The VM
 VM {
-	facets: VM;
+	facets: Virtual Machine;
 }
 
 # MySQL database
@@ -52,7 +52,7 @@ hello world {
 ###################################
 
 # The VM facet
-facet VM {
+facet Virtual Machine {
 	children: deployable;
 }
 

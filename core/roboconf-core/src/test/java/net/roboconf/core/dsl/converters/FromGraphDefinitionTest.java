@@ -27,12 +27,14 @@ package net.roboconf.core.dsl.converters;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 
@@ -102,7 +104,7 @@ public class FromGraphDefinitionTest {
 		fromDef.buildGraphs( f );
 
 		Assert.assertEquals( 1, fromDef.getErrors().size());
-		Assert.assertEquals( ErrorCode.CO_UNRESOLVED_FACET, fromDef.getErrors().iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_FACET, fromDef.getErrors().iterator().next().getErrorCode());
 	}
 
 
@@ -114,19 +116,7 @@ public class FromGraphDefinitionTest {
 		fromDef.buildGraphs( f );
 
 		Assert.assertEquals( 1, fromDef.getErrors().size());
-		Assert.assertEquals( ErrorCode.CO_UNRESOLVED_FACET, fromDef.getErrors().iterator().next().getErrorCode());
-	}
-
-
-	@Test
-	public void testCycleInFacet() throws Exception {
-
-		File f = TestUtils.findTestFile( "/configurations/invalid/cycle-in-facet.graph" );
-		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
-		fromDef.buildGraphs( f );
-
-		Assert.assertEquals( 1, fromDef.getErrors().size());
-		Assert.assertEquals( ErrorCode.CO_CYCLE_IN_FACETS, fromDef.getErrors().iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_FACET, fromDef.getErrors().iterator().next().getErrorCode());
 	}
 
 
@@ -138,7 +128,7 @@ public class FromGraphDefinitionTest {
 		fromDef.buildGraphs( f );
 
 		Assert.assertEquals( 1, fromDef.getErrors().size());
-		Assert.assertEquals( ErrorCode.CO_UNRESOLVED_FACET, fromDef.getErrors().iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_FACET, fromDef.getErrors().iterator().next().getErrorCode());
 	}
 
 
@@ -152,14 +142,18 @@ public class FromGraphDefinitionTest {
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
 		Component componentA = ComponentHelpers.findComponent( graphs, "A" );
-		Assert.assertTrue( componentA.getExportedVariables().containsKey( "A.port" ));
-		Assert.assertTrue( componentA.getExportedVariables().containsKey( "A.ip" ));
+		Assert.assertTrue( componentA.exportedVariables.containsKey( "port" ));
+		Assert.assertTrue( componentA.exportedVariables.containsKey( "ip" ));
 
-		Assert.assertTrue( componentA.getImportedVariables().containsKey( "A.port" ));
-		Assert.assertTrue( componentA.getImportedVariables().containsKey( "A.ip" ));
+		Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( componentA );
+		Assert.assertTrue( exportedVariables.containsKey( "A.port" ));
+		Assert.assertTrue( exportedVariables.containsKey( "A.ip" ));
 
-		Assert.assertTrue( componentA.getImportedVariables().get( "A.port" ));
-		Assert.assertTrue( componentA.getImportedVariables().get( "A.ip" ));
+		Assert.assertTrue( componentA.importedVariables.containsKey( "A.port" ));
+		Assert.assertTrue( componentA.importedVariables.containsKey( "A.ip" ));
+
+		Assert.assertTrue( componentA.importedVariables.get( "A.port" ));
+		Assert.assertTrue( componentA.importedVariables.get( "A.ip" ));
 	}
 
 
@@ -174,11 +168,11 @@ public class FromGraphDefinitionTest {
 
 		Component component = ComponentHelpers.findComponent( graphs, "hello world" );
 		Assert.assertNotNull( component );
-		Assert.assertTrue( component.getMetadata().getFacetNames().contains( "war archive" ));
+		Assert.assertTrue( component.getFacets().contains( new Facet( "war archive" )));
 
 		component = ComponentHelpers.findComponent( graphs, "ecom" );
 		Assert.assertNotNull( component );
-		Assert.assertTrue( component.getMetadata().getFacetNames().contains( "war archive" ));
+		Assert.assertTrue( component.getFacets().contains( new Facet( "war archive" )));
 	}
 
 
@@ -208,7 +202,7 @@ public class FromGraphDefinitionTest {
 
 		ModelError[] errors = fromDef.getErrors().toArray( new ModelError[ 1 ]);
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 0 ].getErrorCode());
-		Assert.assertTrue( errors[ 0 ].getDetails().contains( "Fa2" ));
+		Assert.assertTrue( errors[ 0 ].getDetails().contains( "Fa3" ));
 	}
 
 
@@ -223,27 +217,5 @@ public class FromGraphDefinitionTest {
 
 		ModelError[] errors = fromDef.getErrors().toArray( new ModelError[ 1 ]);
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_COMPONENT, errors[ 0 ].getErrorCode());
-	}
-
-
-	@Test
-	public void testCountParents() {
-		FromGraphDefinition fromDef = new FromGraphDefinition( null );
-
-		Component c1 = new Component( "c1" );
-		Assert.assertEquals( 0, fromDef.countParents( c1 ));
-
-		Component c2 = new Component( "c2" );
-		Component c3 = new Component( "c3" );
-
-		c2.getMetadata().setExtendedComponent( c3 );
-		Assert.assertEquals( 1, fromDef.countParents( c2 ));
-
-		c1.getMetadata().setExtendedComponent( c2 );
-		Assert.assertEquals( 2, fromDef.countParents( c1 ));
-
-		c3.getMetadata().setExtendedComponent( c1 );
-		Assert.assertEquals( -1, fromDef.countParents( c1 ));
-		Assert.assertEquals( -1, fromDef.countParents( c2 ));
 	}
 }

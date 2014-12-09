@@ -37,9 +37,9 @@ public class InstanceTest {
 
 	@Test
 	public void testWichStatus() {
-		Assert.assertEquals( InstanceStatus.STARTING, InstanceStatus.wichStatus( "starting" ));
-		Assert.assertEquals( InstanceStatus.STARTING, InstanceStatus.wichStatus( "startiNG" ));
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, InstanceStatus.wichStatus( "start" ));
+		Assert.assertEquals( InstanceStatus.STARTING, InstanceStatus.whichStatus( "starting" ));
+		Assert.assertEquals( InstanceStatus.STARTING, InstanceStatus.whichStatus( "startiNG" ));
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, InstanceStatus.whichStatus( "start" ));
 	}
 
 
@@ -47,14 +47,14 @@ public class InstanceTest {
 	public void testChain() {
 
 		Instance inst = new Instance().name( "ins" ).status( InstanceStatus.DEPLOYING ).component( null ).parent( null );
-		Assert.assertEquals( 0, inst.getChannels().size());
+		Assert.assertEquals( 0, inst.channels.size());
 		Assert.assertEquals( "ins", inst.getName());
 		Assert.assertEquals( InstanceStatus.DEPLOYING, inst.getStatus());
 		Assert.assertNull( inst.getComponent());
 		Assert.assertNull( inst.getParent());
 
-		Assert.assertEquals( 1, inst.channel( "woo" ).getChannels().size());
-		Assert.assertEquals( 2, inst.channel( "yeah" ).getChannels().size());
-		Assert.assertEquals( 2, inst.channel( "woo" ).getChannels().size());
+		Assert.assertEquals( 1, inst.channel( "woo" ).channels.size());
+		Assert.assertEquals( 2, inst.channel( "yeah" ).channels.size());
+		Assert.assertEquals( 2, inst.channel( "woo" ).channels.size());
 	}
 }

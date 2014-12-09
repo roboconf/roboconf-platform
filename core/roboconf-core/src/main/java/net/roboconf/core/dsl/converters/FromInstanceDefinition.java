@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +53,6 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
-import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.ModelUtils;
 
 /**
@@ -162,7 +160,7 @@ public class FromInstanceDefinition {
 			// What we have to do, is to duplicate those whose "count" is higher than 1.
 			List<Instance> newRootInstances = new ArrayList<Instance> ();
 			for( Instance rootInstance : rootInstances )
-				newRootInstances.addAll( duplicateInstancesFrom( rootInstance ));
+				newRootInstances.addAll( replicateInstancesFrom( rootInstance ));
 
 			// At this level, there may be new naming conflicts...
 			List<Instance> tempNewRootInstances = new ArrayList<Instance>( newRootInstances );
@@ -236,7 +234,7 @@ public class FromInstanceDefinition {
 			// Process the instance
 			Instance instance = entry.getValue();
 			instance.setName( ModelUtils.getPropertyValue( currentBlock, ParsingConstants.PROPERTY_INSTANCE_NAME ));
-			instance.getChannels().addAll( ModelUtils.getPropertyValues( currentBlock, ParsingConstants.PROPERTY_INSTANCE_CHANNELS ));
+			instance.channels.addAll( ModelUtils.getPropertyValues( currentBlock, ParsingConstants.PROPERTY_INSTANCE_CHANNELS ));
 
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
 			if( instance.getComponent() == null ) {
@@ -249,15 +247,15 @@ public class FromInstanceDefinition {
 			// Runtime data
 			String state = ModelUtils.getPropertyValue( currentBlock, ParsingConstants.PROPERTY_INSTANCE_STATE );
 			if( state != null )
-				instance.setStatus( InstanceStatus.wichStatus( state ));
+				instance.setStatus( InstanceStatus.whichStatus( state ));
 
 			for( Map.Entry<String,String> dataEntry : ModelUtils.getData( currentBlock ).entrySet()) {
-				instance.getData().put( dataEntry.getKey(), dataEntry.getValue());
+				instance.data.put( dataEntry.getKey(), dataEntry.getValue());
 			}
 
 			// Since instance hash changes when we update their parent, we cannot rely on hash map
 			// to store the count for a given instance. So, we will temporarily use instance#getData().
-			instance.getData().put( INST_COUNT, countAsString );
+			instance.data.put( INST_COUNT, countAsString );
 
 			for( AbstractBlock innerBlock : currentBlock.getInnerBlocks()) {
 
@@ -272,7 +270,7 @@ public class FromInstanceDefinition {
 						continue;
 
 					String pValue = ((BlockProperty) innerBlock).getValue();
-					this.errors.addAll( analyzeOverriddenExport( innerBlock.getLine(), instance, pName, pValue ));
+					instance.overridenExports.put( pName, pValue );
 					continue;
 				}
 
@@ -302,7 +300,7 @@ public class FromInstanceDefinition {
 	}
 
 
-	private Collection<Instance> duplicateInstancesFrom( Instance rootInstance ) {
+	private Collection<Instance> replicateInstancesFrom( Instance rootInstance ) {
 		Collection<Instance> newRootInstances = new ArrayList<Instance> ();
 
 		// Begin with the duplicates of the deepest instances.
@@ -310,7 +308,7 @@ public class FromInstanceDefinition {
 		Collections.reverse( orderedInstances );
 
 		for( Instance instance : orderedInstances ) {
-			String countAsString = instance.getData().remove( INST_COUNT );
+			String countAsString = instance.data.remove( INST_COUNT );
 			Integer count = 1;
 			try {
 				count = Integer.parseInt( countAsString );
@@ -323,7 +321,7 @@ public class FromInstanceDefinition {
 
 			String format = "%0" + String.valueOf( count ).length() + "d";
 			for( int i=2; i<=count; i++ ) {
-				Instance copy = InstanceHelpers.duplicateInstance( instance );
+				Instance copy = InstanceHelpers.replicateInstance( instance );
 				copy.name( copy.getName() + String.format( format, i ));
 
 				if( instance.getParent() != null )
@@ -382,65 +380,5 @@ public class FromInstanceDefinition {
 				this.errors.add( error );
 			}
 		}
-	}
-
-
-	/**
-	 * Analyzes an overridden export (i.e. an export defined in an instance).
-	 * @param holderLine the line where this property was declared
-	 * @param instance the instance
-	 * @param varName the variable / property name
-	 * @param varValue the variable value
-	 * @return non-null list of errors
-	 */
-	static List<ModelError> analyzeOverriddenExport( int holderLine, Instance instance, String varName, String varValue ) {
-		List<ModelError> result = new ArrayList<ModelError> ();
-
-		// Component variables are prefixed by a component or a facet name.
-		// Instance variables may not be prefixed (user-friendly).
-		// This is an initial processing
-		Set<String> ambiguousNames = new HashSet<String> ();
-		for( String componentVarName : instance.getComponent().getExportedVariables().keySet()) {
-
-			// If variables have the same name (by ignoring the prefixing component or facet name)...
-			// ... then we have an ambiguity.
-			if( varName.equals( VariableHelpers.parseVariableName( componentVarName ).getValue()))
-				ambiguousNames.add( componentVarName );
-		}
-
-		// If the variable name is prefixed correctly
-		if( instance.getComponent().getExportedVariables().containsKey( varName ))
-			instance.getOverriddenExports().put( varName, varValue );
-
-		// No name? Show a warning and it
-		else if( ambiguousNames.isEmpty()) {
-			ModelError error = new ModelError( ErrorCode.CO_NOT_OVERRIDING, holderLine );
-			error.setDetails( "Variable name: " + varName );
-			result.add( error );
-		}
-
-		// A single name: mark it as resolved
-		else if( ambiguousNames.size() == 1 )
-			instance.getOverriddenExports().put( ambiguousNames.iterator().next(), varValue );
-
-		// Several names? Mark an ambiguity we cannot solve.
-		else {
-			StringBuilder sb = new StringBuilder();
-			sb.append( "Variable " );
-			sb.append( varName );
-			sb.append( " could mean " );
-
-			for( Iterator<String> it = ambiguousNames.iterator(); it.hasNext(); ) {
-				sb.append( it.next());
-				if( it.hasNext())
-					sb.append( ", " );
-			}
-
-			ModelError error = new ModelError( ErrorCode.CO_AMBIGUOUS_OVERRIDING, holderLine );
-			error.setDetails( sb.toString());
-			result.add( error );
-		}
-
-		return result;
 	}
 }

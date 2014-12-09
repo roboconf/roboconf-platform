@@ -63,7 +63,7 @@ public class ResourceUtilsTest {
 				expectedFile,
 				ResourceUtils.findInstanceResourcesDirectory( appDir, c2 ));
 
-		c2.getMetadata().setExtendedComponent( c1 );
+		c2.extendComponent( c1 );
 		Assert.assertEquals(
 				expectedFile,
 				ResourceUtils.findInstanceResourcesDirectory( appDir, c2 ));

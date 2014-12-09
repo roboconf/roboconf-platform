@@ -34,10 +34,12 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
@@ -64,7 +66,7 @@ public class AgentMessageProcessor_ImportsTest {
 		this.agent.start();
 
 		Thread.sleep( 200 );
-		((TestClientAgent) this.agent.getMessagingClient().getInternalClient()).messagesForTheDm.clear();
+		getInternalClient().messagesForTheDm.clear();
 	}
 
 
@@ -77,7 +79,7 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testImportsRequest() throws Exception {
 
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
+		TestClientAgent client = getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
@@ -248,18 +250,18 @@ public class AgentMessageProcessor_ImportsTest {
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
-		clusterNodeComponent.getImportedVariables().put( "cluster.ip", Boolean.TRUE );
-		clusterNodeComponent.getImportedVariables().put( "cluster.port", Boolean.TRUE );
-		clusterNodeComponent.getExportedVariables().put( "cluster.ip", null );
-		clusterNodeComponent.getExportedVariables().put( "cluster.port", "9007" );
+		clusterNodeComponent.importedVariables.put( "cluster.ip", Boolean.TRUE );
+		clusterNodeComponent.importedVariables.put( "cluster.port", Boolean.TRUE );
+		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
+		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
-		i1.getExports().put( "cluster.ip", "192.168.1.15" );
+		i1.overridenExports.put( "cluster.ip", "192.168.1.15" );
 		processor.rootInstance = i1;
 
 		// Adding itself does not work
 		Assert.assertEquals( 0, i1.getImports().size());
-		processor.processMessage( new MsgCmdAddImport( "cluster", "/inst 1", i1.getExports()));
+		processor.processMessage( new MsgCmdAddImport( "cluster", "/inst 1", InstanceHelpers.findAllExportedVariables( i1 )));
 		Assert.assertEquals( 0, i1.getImports().size());
 
 		// Adding another node works
@@ -274,5 +276,10 @@ public class AgentMessageProcessor_ImportsTest {
 		Import imp = imports.iterator().next();
 		Assert.assertEquals( 1, imp.getExportedVars().size());
 		Assert.assertEquals( "192.168.0.45", imp.getExportedVars().get( "cluster.ip" ));
+	}
+
+
+	private TestClientAgent getInternalClient() throws IllegalAccessException {
+		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class );
 	}
 }

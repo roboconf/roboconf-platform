@@ -1,5 +1,5 @@
 
-facet VM {
+facet Virtual_Machine {
 	children: deployable;
 	exports: ip;
 }

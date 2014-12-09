@@ -776,7 +776,7 @@ public class Manager {
 
 		// If the VM creation was already requested, then its machine ID has already been set.
 		// It does not mean the VM is already created, it may take some time.
-		String machineId = rootInstance.getData().get( Instance.MACHINE_ID );
+		String machineId = rootInstance.data.get( Instance.MACHINE_ID );
 		if( machineId != null ) {
 			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
 			return;
@@ -794,7 +794,7 @@ public class Manager {
 					target.getProperties(), this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
 					rootInstance.getName(), ma.getApplication().getName());
 
-			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
+			rootInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
 		} catch( Exception e ) {
@@ -834,7 +834,7 @@ public class Manager {
 			// Terminate the machine
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
 			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
-			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
+			String machineId = rootInstance.data.remove( Instance.MACHINE_ID );
 			if( machineId != null )
 				target.getHandler().terminateMachine( target.getProperties(), machineId );
 
@@ -846,7 +846,7 @@ public class Manager {
 			}
 
 			// Remove useless data for the configuration backup
-			rootInstance.getData().clear();
+			rootInstance.data.clear();
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( Exception e ) {

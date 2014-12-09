@@ -28,7 +28,6 @@ package net.roboconf.core.dsl.converters;
 import java.io.File;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
@@ -40,7 +39,6 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
 import org.junit.Test;
@@ -51,71 +49,14 @@ import org.junit.Test;
 public class FromInstanceDefinitionTest {
 
 	@Test
-	public void testAnalyzeOverriddenExport() {
-
-		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "tomcat.port", "8080" );
-
-		Instance tomcatInstance = new Instance( "tomcat" ).component( tomcatComponent );
-		List<ModelError> errors = FromInstanceDefinition.analyzeOverriddenExport( 0, tomcatInstance, "unknown", "whatever" );
-		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.CO_NOT_OVERRIDING, errors.get( 0 ).getErrorCode());
-
-		errors = FromInstanceDefinition.analyzeOverriddenExport( 0, tomcatInstance, "tomcat.port", "whatever" );
-		Assert.assertEquals( 0, errors.size());
-
-		errors = FromInstanceDefinition.analyzeOverriddenExport( 0, tomcatInstance, "port", "whatever" );
-		Assert.assertEquals( 0, errors.size());
-
-		tomcatComponent.getExportedVariables().put( "some-facet.port", "8081" );
-		errors = FromInstanceDefinition.analyzeOverriddenExport( 0, tomcatInstance, "port", "whatever" );
-		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.CO_AMBIGUOUS_OVERRIDING, errors.get( 0 ).getErrorCode());
-
-		errors = FromInstanceDefinition.analyzeOverriddenExport( 0, tomcatInstance, "tomcat.port", "whatever" );
-		Assert.assertEquals( 0, errors.size());
-
-		errors = FromInstanceDefinition.analyzeOverriddenExport( 0, tomcatInstance, "some-facet.port", "whatever" );
-		Assert.assertEquals( 0, errors.size());
-	}
-
-
-	@Test
-	public void testOverriddenExports() throws Exception {
-
-		Component vmComponent = new Component( "VM" ).installerName( "target" );
-		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "tomcat.port", "8080" );
-
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
-		Graphs graphs = new Graphs();
-		graphs.getRootComponents().add( vmComponent );
-
-		File f = TestUtils.findTestFile( "/configurations/valid/instance-overridden-exports.instances" );
-		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
-		Collection<Instance> rootInstances = fromDef.buildInstances( graphs, f );
-
-		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
-		Assert.assertEquals( ErrorCode.CO_NOT_OVERRIDING, iterator.next().getErrorCode());
-		Assert.assertFalse( iterator.hasNext());
-
-		Assert.assertEquals( 1, rootInstances.size());
-		Instance rootInstance = rootInstances.iterator().next();
-		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( rootInstance ).size());
-	}
-
-
-	@Test
 	public void testDuplicateInstance() throws Exception {
 
 		Component vmComponent = new Component( "VM" ).installerName( "target" );
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "tomcat.port", "8080" );
+		tomcatComponent.exportedVariables.put( "tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "tomcat.port", "8080" );
 
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		vmComponent.addChild( tomcatComponent );
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( vmComponent );
 
@@ -135,10 +76,10 @@ public class FromInstanceDefinitionTest {
 
 		Component vmComponent = new Component( "VM" ).installerName( "target" );
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "tomcat.port", "8080" );
+		tomcatComponent.exportedVariables.put( "tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "tomcat.port", "8080" );
 
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		vmComponent.addChild( tomcatComponent );
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( vmComponent );
 
@@ -158,7 +99,7 @@ public class FromInstanceDefinitionTest {
 		Component vmComponent = new Component( "VM" ).installerName( "target" );
 		Component aComponent = new Component( "A" ).installerName( "whatever" );
 
-		ComponentHelpers.insertChild( vmComponent, aComponent );
+		vmComponent.addChild( aComponent );
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( vmComponent );
 
@@ -205,12 +146,12 @@ public class FromInstanceDefinitionTest {
 		graphs.getRootComponents().add( vmComponent );
 
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+		vmComponent.addChild( tomcatComponent );
 
 		Component warComponent = new Component( "WAR" ).installerName( "bash" );
-		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+		tomcatComponent.addChild( warComponent );
 
 		// The file to read
 		File f = TestUtils.findTestFile( "/configurations/valid/complex-instances.instances" );
@@ -246,12 +187,12 @@ public class FromInstanceDefinitionTest {
 		graphs.getRootComponents().add( vmComponent );
 
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+		vmComponent.addChild( tomcatComponent );
 
 		Component warComponent = new Component( "WAR" ).installerName( "bash" );
-		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+		tomcatComponent.addChild( warComponent );
 
 		// The file to read
 		File f = TestUtils.findTestFile( "/configurations/valid/n-instances.instances" );
@@ -300,12 +241,12 @@ public class FromInstanceDefinitionTest {
 		graphs.getRootComponents().add( vmComponent );
 
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+		vmComponent.addChild( tomcatComponent );
 
 		Component warComponent = new Component( "WAR" ).installerName( "bash" );
-		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+		tomcatComponent.addChild( warComponent );
 
 		// The file to read
 		File f = TestUtils.findTestFile( "/configurations/valid/n-medium-instances.instances" );
@@ -347,12 +288,12 @@ public class FromInstanceDefinitionTest {
 		graphs.getRootComponents().add( vmComponent );
 
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.getExportedVariables().put( "Tomcat.ip", null );
-		tomcatComponent.getExportedVariables().put( "Tomcat.port", "8080" );
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+		vmComponent.addChild( tomcatComponent );
 
 		Component warComponent = new Component( "WAR" ).installerName( "bash" );
-		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+		tomcatComponent.addChild( warComponent );
 
 		// The file to read
 		File f = TestUtils.findTestFile( "/configurations/invalid/instanceof-name-conflict-with-count.instances" );
@@ -392,9 +333,9 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( "vm 1", instance.getName());
 		Assert.assertEquals( vmComponent, instance.getComponent());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, instance.getStatus());
-		Assert.assertEquals( 3, instance.getData().size());
-		Assert.assertEquals( "127.0.0.1", instance.getData().get( "ip" ));
-		Assert.assertEquals( "mach-ID", instance.getData().get( "machine-id" ));
-		Assert.assertEquals( "something different", instance.getData().get( "whatever" ));
+		Assert.assertEquals( 3, instance.data.size());
+		Assert.assertEquals( "127.0.0.1", instance.data.get( "ip" ));
+		Assert.assertEquals( "mach-ID", instance.data.get( "machine-id" ));
+		Assert.assertEquals( "something different", instance.data.get( "whatever" ));
 	}
 }

@@ -1,6 +1,6 @@
 VM {
     installer: target;
-    children: A, Fa1, Fa2;
+    children: A, Fa1, Fa3;
 }
 
 A {

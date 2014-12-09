@@ -28,7 +28,9 @@ package net.roboconf.core.utils;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Component;
@@ -90,14 +92,20 @@ public final class ResourceUtils {
 	 * </p>
 	 *
 	 * @param applicationFilesDirectory the application's directory
-	 * @param componentName the component name
+	 * @param componentName the component name (may be null)
 	 * @return a non-null file (that may not exist)
 	 */
 	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, Component component ) {
 
 		File root = new File( applicationFilesDirectory, Constants.PROJECT_DIR_GRAPH );
-		File result = null;
-		for( Component c = component; c != null; c = c.getMetadata().getExtendedComponent()) {
+		File result = new File( "No recipe directory." );
+		Set<Component> alreadyChecked = new HashSet<Component> ();
+		for( Component c = component; c != null; c = c.getExtendedComponent()) {
+			// Prevent infinite loops for exotic cases
+			if( alreadyChecked.contains( c ))
+				break;
+
+			alreadyChecked.add( c );
 			if(( result = new File( root, c.getName())).exists())
 				break;
 		}
