@@ -25,16 +25,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.utils.RabbitMqUtils;
-import net.roboconf.messaging.internal.utils.SerializationUtils;
+import net.roboconf.agent.AgentMessagingInterface;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
-
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
 
 /**
  * Scheduler for periodic monitoring checks (polling).
@@ -42,67 +38,27 @@ import com.rabbitmq.client.ConnectionFactory;
  */
 public class MonitoringScheduler extends TimerTask {
 
+	private Logger logger = Logger.getLogger(getClass().getName());
 	private Timer timer = new Timer();
 	List<MonitoringTaskHandler> handlerList = new LinkedList<MonitoringTaskHandler>();
-	private String applicationName;
-	private String messageServerIp;
+	//private String applicationName;
+	/*private String messageServerIp;
 	private String messageServerUsername;
-	private String messageServerPassword;
-	private ReconfigurableClientAgent messagingClient;
-	private String vmInstanceName;
+	private String messageServerPassword;*/
+	//private ReconfigurableClientAgent messagingClient;
+	//private String vmInstanceName;
+	private AgentMessagingInterface agentInterface;
 	
-	public MonitoringScheduler(String applicationName, String vmInstanceName, File conf) throws FileNotFoundException, IOException {
-		this.applicationName = applicationName;
-		this.vmInstanceName = vmInstanceName;
-		
-		BufferedReader reader = new BufferedReader(new FileReader(conf));
-		String line;
-		String eventName = null;
-		String eventInfo[] = null;
-
-		try {
-			while((line = reader.readLine()) != null) {
-
-				if(line.startsWith("[EVENT")) { // Found event declaration, extract name
-					eventName = line.substring(6).trim();
-					if(eventName.endsWith("]")) eventName = eventName.substring(0, eventName.length()-1).trim();
-					eventInfo = (new NagiosEventParser()).parse(reader);
-
-					handlerList.add(new NagiosTaskHandler(eventName,
-							applicationName, vmInstanceName,
-							eventInfo));
-				}
-			}
-		} finally {
-			try { reader.close(); } catch(Exception e) { /* ignore */ }
-		} 
+	public MonitoringScheduler(AgentMessagingInterface agentInterface) throws FileNotFoundException, IOException {
+		this.agentInterface = agentInterface;
 	}
-	
-	/**
-     * Start the task processing.
-	 * @throws IOException 
-     */
-    public void startProcessing(String messageServerIp, String messageServerUsername, String messageServerPassword) throws IOException {
-    	this.messageServerIp = messageServerIp;
-    	this.messageServerUsername = messageServerUsername;
-    	this.messageServerPassword = messageServerPassword;
-    	
-    	ReconfigurableClientAgent c = new ReconfigurableClientAgent();
-    	c.setApplicationName(this.applicationName);
-    	c.setRootInstanceName(this.vmInstanceName);
-    	c.switchMessagingClient(messageServerIp, messageServerUsername, messageServerPassword, MessagingConstants.FACTORY_RABBIT_MQ);
 
-    	startProcessing(c);
-    }
-    
     /**
      * Start the task processing.
      */
-    public void startProcessing(ReconfigurableClientAgent messagingClient) {
-
-    	this.messagingClient = messagingClient;
-    	
+    public void startProcessing() {
     	//TODO make period configurable ?
+    	this.logger.fine("Autonomic monitoring scheduler started");
     	timer.schedule(this, 0, 10000);
     }
 
@@ -110,11 +66,83 @@ public class MonitoringScheduler extends TimerTask {
      * Stop the task processing.
      */
     public void stopProcessing() {
+    	this.logger.fine("Autonomic monitoring scheduler stopped");
         timer.cancel();
     }
 
 	@Override
 	public void run() {
+		
+		this.logger.fine("MonitoringScheduler looking for autonomic rules...");
+
+		// Root Instance may not yet have been injected: skip !
+		if(this.agentInterface.getRootInstance() == null) {
+			this.logger.fine("agentInterface.getRootInstance() is null... RootInstance not yet injected, skipping monitoring scheduling !");
+			return;
+		}
+		
+		for (Instance inst : InstanceHelpers.buildHierarchicalList(this.agentInterface.getRootInstance())) {
+
+			File dir = InstanceHelpers.findInstanceDirectoryOnAgent(inst, inst.getComponent().getInstallerName());
+
+			File conf = null;
+			for(File f : dir.listFiles()) {
+				if(f.getName().endsWith(".measures")) conf = f;
+			}
+			
+			//File conf = new File(Thread.currentThread().getContextClassLoader()
+					//.getResource("nagiosevents.conf").getFile());
+			
+			this.logger.fine("Monitoring instance " + inst.getName() + ", measures config =" + conf);
+			
+			if(conf != null) {
+				BufferedReader reader = null;
+				String line;
+				String eventName = null;
+				String eventInfo[] = null;
+
+				try {
+					reader = new BufferedReader(new FileReader(conf));
+					while((line = reader.readLine()) != null) {
+
+						if(line.startsWith("[EVENT")) { // Found event declaration, extract name
+							eventName = line.substring(6).trim();
+							if(eventName.endsWith("]")) eventName = eventName.substring(0, eventName.length()-1).trim();
+							
+							String tokens[] = eventName.split("\\s+");
+
+							//FIXME check number of tokens...
+							String parserName = tokens[0];
+							eventName = tokens[1];
+
+							if("nagios".equalsIgnoreCase(parserName)) {
+								this.logger.fine("Found nagios rule");
+								eventInfo = (new NagiosEventParser()).parse(reader);
+
+								handlerList.add(new NagiosTaskHandler(eventName,
+										this.agentInterface.getApplicationName(), this.agentInterface.getRootInstance().getName(),
+									eventInfo));
+								
+							} else if("file".equalsIgnoreCase(parserName)) {
+								this.logger.fine("Found file rule");
+								eventInfo = (new FileEventParser()).parse(reader);
+								handlerList.add(new FileTaskHandler(eventName,
+										this.agentInterface.getApplicationName(), this.agentInterface.getRootInstance().getName(),
+										eventInfo));
+							}
+						}
+					}
+				} catch (FileNotFoundException e) {
+					// ignore
+					this.logger.finest("FileNotFoundException: " + e.getMessage());
+				} catch (IOException e) {
+					this.logger.finest("IOException: " + e.getMessage());
+					try { if(reader != null) reader.close(); } catch(Exception ioe) { /* ignore */ }
+				} finally {
+					try { if(reader != null) reader.close(); } catch(Exception e) { /* ignore */ }
+				}
+			}
+		}
 		
 		for(MonitoringTaskHandler handler : handlerList) {
 			Message msg = handler.process();
@@ -151,7 +179,7 @@ public class MonitoringScheduler extends TimerTask {
 						SerializationUtils.serializeObject(msg));
 				*/
 
-				messagingClient.sendMessageToTheDm(msg);
+				this.agentInterface.getMessagingClient().sendMessageToTheDm(msg);
 
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -162,10 +190,11 @@ public class MonitoringScheduler extends TimerTask {
 		}
 	}
 	
+	/*
 	public static void main(String args[]) throws Exception {
 		File conf = new File(Thread.currentThread().getContextClassLoader()
 				.getResource("nagiosevents.conf").getFile());
 		MonitoringScheduler sched = new MonitoringScheduler("appName", "VM1", conf);
 		sched.startProcessing("localhost", "roboconf", "roboconf");
-	}
+	}*/
 }

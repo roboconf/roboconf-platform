@@ -34,10 +34,12 @@ import net.roboconf.core.model.runtime.Application;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
@@ -88,6 +90,10 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 		else if( message instanceof MsgNotifHeartbeat )
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
+		
+		else if(message instanceof MsgNotifAutonomic) {
+			processMsgMonitoringEvent((MsgNotifAutonomic)message);
+		}
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
@@ -219,6 +225,16 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 				instance.getParent().getChildren().remove( instance );
 
 			this.logger.info( "Instance " + instancePath + " was removed from the model." );
+		}
+	}
+	
+	private void processMsgMonitoringEvent(MsgNotifAutonomic message) {
+		this.logger.info("Autonomic monitoring listener: EVENT " + message.getEventName());
+		try {
+			RuleBasedEventHandler handler = new RuleBasedEventHandler(manager, manager.getManagedApplication(message.getApplicationName()), message);
+			handler.handleEvent(message);
+		} catch (Exception e) {
+			this.logger.warning("Can\'t process rule-based event: " + e.getMessage());
 		}
 	}
 }

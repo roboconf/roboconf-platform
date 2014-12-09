@@ -72,7 +72,7 @@ public class Agent implements AgentMessagingInterface {
 	private String messagingFactoryType;
 	private ReconfigurableClientAgent messagingClient;
 	Timer heartBeatTimer;
-
+	private Instance rootInstance;
 
 	/**
 	 * Constructor.
@@ -469,4 +469,15 @@ public class Agent implements AgentMessagingInterface {
 
 		return sb.toString();
 	}
+
+
+	public Instance getRootInstance() {
+		return rootInstance;
+	}
+
+
+	public void setRootInstance(Instance rootInstance) {
+		this.rootInstance = rootInstance;
+	}
+	
 }

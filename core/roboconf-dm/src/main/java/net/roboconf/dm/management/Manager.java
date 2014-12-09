@@ -384,6 +384,15 @@ public class Manager {
 		return this.appNameToManagedApplication;
 	}
 
+	/**
+	 * Get the ManagedApplication that corresponds to a given application name.
+	 * @param applicationName The application name
+	 * @return The corresponding ManagedApplication
+	 */
+	public ManagedApplication getManagedApplication(String applicationName) {
+		if(this.appNameToManagedApplication == null) return null;
+		else return this.appNameToManagedApplication.get(applicationName);
+	}
 
 	/**
 	 * @return the messagingFactoryType

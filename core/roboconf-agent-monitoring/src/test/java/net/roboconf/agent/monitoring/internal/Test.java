@@ -5,6 +5,7 @@ import org.junit.Before;
 
 import junit.framework.Assert;
 import net.roboconf.agent.AgentMessagingInterface;
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.client.MessageServerClientFactory;
@@ -55,6 +56,16 @@ public class Test {
 		@Override
 		public IAgentClient getMessagingClient() {
 			return client;
+		}
+
+		@Override
+		public String getApplicationName() {
+			return "testApp";
+		}
+
+		@Override
+		public Instance getRootInstance() {
+			return new Instance("VM1");
 		}
 	}
 }

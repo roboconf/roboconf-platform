@@ -22,6 +22,7 @@ import java.util.logging.Logger;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 
@@ -103,8 +104,8 @@ class MonitoringMessageProcessor extends AbstractMessageProcessor {
 	 */
 	@Override
 	public void processMessage(Message message) {
-		if(message instanceof MsgMonitoringEvent) {
-			processMsgMonitoringEvent((MsgMonitoringEvent)message);
+		if(message instanceof MsgNotifAutonomic) {
+			processMsgMonitoringEvent((MsgNotifAutonomic)message);
 		}
 		else if(message instanceof MsgNotifMachineDown )
 			processMsgNotifMachineDown((MsgNotifMachineDown)message);
@@ -114,7 +115,7 @@ class MonitoringMessageProcessor extends AbstractMessageProcessor {
 			this.logger.warning("Monitoring listener: got a message of class " + message.getClass().getName());
 	}
 
-	private void processMsgMonitoringEvent(MsgMonitoringEvent message) {
+	private void processMsgMonitoringEvent(MsgNotifAutonomic message) {
 		this.logger.info("Monitoring listener: EVENT !");
 		this.logger.info(message.toString());
 	}

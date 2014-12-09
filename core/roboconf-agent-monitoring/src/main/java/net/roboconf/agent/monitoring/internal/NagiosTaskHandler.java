@@ -20,22 +20,18 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
  
 /**
  * Periodic task to check for monitoring events on Nagios (polling).
  * @author Pierre-Yves Gibello - Linagora
  */
-public class NagiosTaskHandler implements MonitoringTaskHandler {
+public class NagiosTaskHandler extends MonitoringTaskHandler {
 
-	private String eventName;
-	private String applicationName;
-	private String vmInstanceName;
 	private String query[];
 
 	public NagiosTaskHandler(String eventName, String applicationName, String vmInstanceName, String query[]) {
-		this.eventName = eventName;
-		this.applicationName = applicationName;
-		this.vmInstanceName = vmInstanceName;
+		super(eventName, applicationName, vmInstanceName);
 		this.query = query;
 	}
 
@@ -46,7 +42,7 @@ public class NagiosTaskHandler implements MonitoringTaskHandler {
 		LivestatusClient client = new LivestatusClient("localhost", 50000);
 		
 		try {
-			MsgMonitoringEvent message = new MsgMonitoringEvent(eventName,
+			MsgNotifAutonomic message = new MsgNotifAutonomic(eventName,
 					applicationName, vmInstanceName, client.queryLivestatus(query));
 		
 			return message;

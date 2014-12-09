@@ -9,4 +9,6 @@
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />
 	</component>
+	
+	<instance name="Roboconf - Agent Monitoring" component="roboconf-agent-monitoring" />
 </ipojo>

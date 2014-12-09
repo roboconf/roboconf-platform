@@ -3,12 +3,10 @@
  */
 package net.roboconf.agent.monitoring.internal;
 
-import java.io.File;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
 
 /**
  * @author gibello
@@ -21,14 +19,13 @@ public class AgentMonitoringScheduler {
 	
 	Logger logger = Logger.getLogger(getClass().getName());
 	MonitoringScheduler sched;
-	
+
 	// TODO: pass the messaging client of the agent to the thread...
 	public void start() {
-		File conf = new File(Thread.currentThread().getContextClassLoader()
-				.getResource("nagiosevents.conf").getFile());
+		logger.fine("AgentMonitoringScheduler start called");
 		try {
-			sched = new MonitoringScheduler("appName", "VM1", conf);
-			sched.startProcessing((ReconfigurableClientAgent)agentInterface.getMessagingClient());
+			sched = new MonitoringScheduler(agentInterface);
+			sched.startProcessing();
 		} catch(Exception e) {
 			logger.warning(e.getMessage());
 			Utils.logException(logger, e);
@@ -36,6 +33,7 @@ public class AgentMonitoringScheduler {
 	}
 
 	public void stop() {
+		logger.fine("AgentMonitoringScheduler stop called");
 		if(sched != null) sched.stopProcessing();
 	}
 	

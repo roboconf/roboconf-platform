@@ -22,8 +22,17 @@ import net.roboconf.messaging.messages.Message;
  * Schedulable monitoring check task interface.
  * @author Pierre-Yves Gibello - Linagora
  */
-public interface MonitoringTaskHandler {
+public abstract class MonitoringTaskHandler {
 
-	Message process();
+	String eventName;
+	String applicationName;
+	String vmInstanceName;
 
+	public MonitoringTaskHandler(String eventName, String applicationName, String vmInstanceName) {
+		this.eventName = eventName;
+		this.applicationName = applicationName;
+		this.vmInstanceName = vmInstanceName;
+	}
+
+	public abstract Message process();
 }

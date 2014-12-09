@@ -25,6 +25,7 @@
 
 package net.roboconf.agent;
 
+import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.client.IAgentClient;
 
 /**
@@ -36,4 +37,6 @@ public interface AgentMessagingInterface {
 	 * @return the client for the messaging server
 	 */
 	IAgentClient getMessagingClient();
+	String getApplicationName();
+	Instance getRootInstance();
 }

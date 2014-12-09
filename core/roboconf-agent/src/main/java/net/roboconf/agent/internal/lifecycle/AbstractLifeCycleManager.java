@@ -158,6 +158,7 @@ public abstract class AbstractLifeCycleManager {
 
 
 	/**
+	 * FIXME: why do we need the plugin name? It is the installer name!!!
 	 * Deploys an instance (prerequisite: NOT_DEPLOYED).
 	 * @param instance the instance
 	 * @param plugin the associated plug-in

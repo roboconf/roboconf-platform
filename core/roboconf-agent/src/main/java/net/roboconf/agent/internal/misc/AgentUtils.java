@@ -80,6 +80,7 @@ public final class AgentUtils {
 
 
 	/**
+	 * FIXME: why do we need the plugin name? It is the installer name!!!
 	 * Copies the resources of an instance on the disk.
 	 * @param instance an instance
 	 * @param pluginName the plug-in's name
@@ -93,7 +94,7 @@ public final class AgentUtils {
 		if( ! dir.isDirectory()
 				&& ! dir.mkdirs())
 			throw new IOException( "The directory " + dir.getAbsolutePath() + " could not be created." );
-
+		
 		if( fileNameToFileContent != null ) {
 			for( Map.Entry<String,byte[]> entry : fileNameToFileContent.entrySet()) {
 
