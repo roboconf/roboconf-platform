@@ -47,8 +47,8 @@ public class AgentMonitoring {
 	 */
 	public void start() {
 		this.logger.fine( "Agent Monitoring is being started." );
-		this.timer = new Timer();
-		this.timer.schedule( new MonitoringTask( this.agentInterface ), 0, 10000 );
+		this.timer = new Timer( "Monitoring Timer @ Agent", true );
+		this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface ), 0, 10000 );
 	}
 
 
