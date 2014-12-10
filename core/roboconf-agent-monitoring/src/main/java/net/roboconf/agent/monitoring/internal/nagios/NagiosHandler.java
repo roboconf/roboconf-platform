@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.monitoring.internal.MonitoringHandler;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
@@ -41,7 +40,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
  */
 public class NagiosHandler extends MonitoringHandler {
 
-	private static final String NAGIOS_CONFIG = "nagios configuration at";
+	static final String NAGIOS_CONFIG = "nagios configuration at";
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private String nagiosInstructions, host;
@@ -50,7 +49,7 @@ public class NagiosHandler extends MonitoringHandler {
 
 	/**
 	 * Constructor.
-	 * @param eventName
+	 * @param eventId
 	 * @param applicationName
 	 * @param vmInstanceName
 	 * @param fileContent
@@ -60,9 +59,15 @@ public class NagiosHandler extends MonitoringHandler {
 
 		this.nagiosInstructions = fileContent.trim();
 		if( this.nagiosInstructions.toLowerCase().startsWith( NAGIOS_CONFIG )) {
-			int pos = this.nagiosInstructions.indexOf( '\n' );
-			String nagiosConfig = this.nagiosInstructions.substring( 0, pos ).trim();
-			this.nagiosInstructions = this.nagiosInstructions.substring( pos ).trim();
+
+			String nagiosConfig = this.nagiosInstructions.substring( NAGIOS_CONFIG.length());
+			this.nagiosInstructions = "";
+			int pos = nagiosConfig.indexOf( '\n' );
+
+			if( pos > 0 ) {
+				this.nagiosInstructions = nagiosConfig.substring( pos ).trim();
+				nagiosConfig = nagiosConfig.substring( 0, pos ).trim();
+			}
 
 			Map.Entry<String,Integer> entry = Utils.findUrlAndPort( nagiosConfig );
 			this.host = entry.getKey();
@@ -77,14 +82,14 @@ public class NagiosHandler extends MonitoringHandler {
 	 * #process()
 	 */
 	@Override
-	public Message process() {
+	public MsgNotifAutonomic process() {
 
-		LivestatusClient client = new LivestatusClient( this.host, this.port );
-		Message result = null;
+		LiveStatusClient client = new LiveStatusClient( this.host, this.port );
+		MsgNotifAutonomic result = null;
 		try {
 			String liveStatusResponse = client.queryLivestatus( this.nagiosInstructions );
 			result = new MsgNotifAutonomic(
-					this.eventName,
+					this.eventId,
 					this.applicationName,
 					this.vmInstanceName,
 					liveStatusResponse );
@@ -101,4 +106,39 @@ public class NagiosHandler extends MonitoringHandler {
 		return result;
 	}
 
+
+	/**
+	 * @return the nagiosInstructions
+	 */
+	public String getNagiosInstructions() {
+		return this.nagiosInstructions;
+	}
+
+	/**
+	 * @return the host
+	 */
+	public String getHost() {
+		return this.host;
+	}
+
+	/**
+	 * @return the port
+	 */
+	public int getPort() {
+		return this.port;
+	}
+
+	/**
+	 * @param host the host to set
+	 */
+	void setHost( String host ) {
+		this.host = host;
+	}
+
+	/**
+	 * @param port the port to set
+	 */
+	void setPort( int port ) {
+		this.port = port;
+	}
 }

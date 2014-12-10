@@ -46,9 +46,12 @@ public class AgentMonitoring {
 	 * Starts the POJO (invoked by iPojo).
 	 */
 	public void start() {
-		this.logger.fine( "Agent Monitoring is being started." );
-		this.timer = new Timer( "Monitoring Timer @ Agent", true );
-		this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface ), 0, 10000 );
+
+		if( this.timer == null ) {
+			this.logger.fine( "Agent Monitoring is being started." );
+			this.timer = new Timer( "Monitoring Timer @ Agent", true );
+			this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface ), 0, 10000 );
+		}
 	}
 
 
@@ -56,9 +59,12 @@ public class AgentMonitoring {
 	 * Stops the POJO (invoked by iPojo).
 	 */
 	public void stop() {
+
 		this.logger.fine( "Agent Monitoring is being stopped." );
-		if( this.timer != null )
+		if( this.timer != null ) {
 			this.timer.cancel();
+			this.timer = null;
+		}
 	}
 
 

@@ -31,7 +31,6 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.monitoring.internal.MonitoringHandler;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
@@ -40,16 +39,18 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
  */
 public class FileHandler extends MonitoringHandler {
 
-	private static final String DELETE_IF_EXISTS = "delete if exists";
+	static final String DELETE_IF_EXISTS = "delete if exists";
+	static final String NOTIFY_IF_NOT_EXISTS = "notify if not exists";
+	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private String fileLocation;
 	private boolean deleteIfExists = false;
-	private final Logger logger = Logger.getLogger( getClass().getName());
+	private boolean notifyIfNotExists = false;
 
 
 	/**
 	 * Constructor.
-	 * @param eventName
+	 * @param eventId
 	 * @param applicationName
 	 * @param vmInstanceName
 	 * @param fileContent
@@ -67,34 +68,74 @@ public class FileHandler extends MonitoringHandler {
 			if( this.fileLocation.toLowerCase().startsWith( DELETE_IF_EXISTS )) {
 				this.deleteIfExists = true;
 				this.fileLocation = this.fileLocation.substring( DELETE_IF_EXISTS.length()).trim();
+
+			} else if( this.fileLocation.toLowerCase().startsWith( NOTIFY_IF_NOT_EXISTS )) {
+				this.notifyIfNotExists = true;
+				this.fileLocation = this.fileLocation.substring( NOTIFY_IF_NOT_EXISTS.length()).trim();
+
 			}
 		}
 	}
 
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.agent.monitoring.internal.MonitoringHandler
+	 * #process()
+	 */
 	@Override
-	public Message process() {
+	public MsgNotifAutonomic process() {
 
-		Message result = null;
-		File f;
-		if( this.fileLocation != null
-				&& ( f = new File( this.fileLocation )).exists()) {
+		MsgNotifAutonomic result = null;
+		try {
+			if( this.fileLocation != null ) {
+				File f = new File( this.fileLocation );
+				String cause = null;
 
-			try {
-				if( this.deleteIfExists )
-					Utils.deleteFilesRecursively( f );
+				// Check conditions
+				if( ! f.exists() && this.notifyIfNotExists ) {
+					cause = this.fileLocation + " does not exist.";
 
-				result = new MsgNotifAutonomic(
-						this.eventName,
-						this.applicationName,
-						this.vmInstanceName,
-						"File " + this.fileLocation + " was deleted." );
+				} else if( f.exists()) {
+					if( this.deleteIfExists )
+						Utils.deleteFilesRecursively( f );
 
-			} catch( IOException e ) {
-				this.logger.severe( "Cannot delete file " + this.fileLocation + ". Monitoring notification is discarded." );
-				Utils.logException( this.logger, e );
+					// FIXME: does it make sense to NOT delete the file?
+					cause = this.fileLocation + " was " + (this.deleteIfExists ? "deleted" : "checked") + ".";
+				}
+
+				// Create a message if necessary
+				if( cause != null )
+					result = new MsgNotifAutonomic( this.eventId, this.applicationName, this.vmInstanceName, cause );
 			}
+
+		} catch( IOException e ) {
+			this.logger.severe( "Cannot delete file " + this.fileLocation + ". Monitoring notification is discarded." );
+			Utils.logException( this.logger, e );
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * @return the fileLocation
+	 */
+	public String getFileLocation() {
+		return this.fileLocation;
+	}
+
+	/**
+	 * @return the deleteIfExists
+	 */
+	public boolean isDeleteIfExists() {
+		return this.deleteIfExists;
+	}
+
+	/**
+	 * @return the notifyIfNotExists
+	 */
+	public boolean isNotifyIfNotExists() {
+		return this.notifyIfNotExists;
 	}
 }

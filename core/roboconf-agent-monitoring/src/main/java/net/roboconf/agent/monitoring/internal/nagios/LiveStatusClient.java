@@ -33,6 +33,7 @@ import java.io.Writer;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
 
@@ -40,14 +41,15 @@ import net.roboconf.core.utils.Utils;
  * Live status client.
  * @author Pierre-Yves Gibello - Linagora
  */
-public class LivestatusClient {
+public class LiveStatusClient {
 
-	private static final String DEFAULT_HOST = "localhost";
-	private static final int DEFAULT_PORT = 50000;
 	private static final String NAGIOS_COLUMNS = "columns:";
+	static final String DEFAULT_HOST = "localhost";
+	static final int DEFAULT_PORT = 50000;
 
-	private final String host;
-	private final int port;
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	final String host;
+	final int port;
 
 
 	/**
@@ -55,50 +57,47 @@ public class LivestatusClient {
 	 * @param host
 	 * @param port
 	 */
-	public LivestatusClient( String host, int port ) {
+	public LiveStatusClient( String host, int port ) {
 		this.host = Utils.isEmptyOrWhitespaces( host ) ? DEFAULT_HOST : host;
-		this.port = port == -1 ? DEFAULT_PORT : port;
+		this.port = port < 1 ? DEFAULT_PORT : port;
 	}
 
 
 	/**
 	 * Queries a live status server.
-	 * @param nagiosQuery the query to pass through a socket
+	 * @param nagiosQuery the query to pass through a socket (not null)
 	 * @return the response
 	 * @throws UnknownHostException
 	 * @throws IOException
 	 */
 	public String queryLivestatus( String nagiosQuery ) throws UnknownHostException, IOException {
 
-		Socket livestatus = null;
-		String result = null;
+		Socket liveStatusSocket = null;
 		try {
-			livestatus = new Socket( this.host, this.port );
-			Writer osw = new OutputStreamWriter( livestatus.getOutputStream(), StandardCharsets.UTF_8 );
+			this.logger.fine( "About to open a connection through Live Status..." );
+			liveStatusSocket = new Socket( this.host, this.port );
+			this.logger.fine( "A connection was established through Live Status." );
+
+			Writer osw = new OutputStreamWriter( liveStatusSocket.getOutputStream(), StandardCharsets.UTF_8 );
 			PrintWriter printer = new PrintWriter( osw, false );
 
 			printer.print( nagiosQuery );
 			printer.flush();
-			livestatus.shutdownOutput();
+			liveStatusSocket.shutdownOutput();
 
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( livestatus.getInputStream(), os );
-			result = os.toString( "UTF-8" );
+			Utils.copyStream( liveStatusSocket.getInputStream(), os );
+
+			String result = os.toString( "UTF-8" );
+			result = format( nagiosQuery, result );
+			return result;
 
 		} finally {
-			try {
-				if( livestatus != null )
-					livestatus.close();
+			if( liveStatusSocket != null )
+				liveStatusSocket.close();
 
-			} catch( Exception e ) {
-				// nothing
-			}
+			this.logger.fine( "The Live Status connection was closed." );
 		}
-
-		if( result != null )
-			result = format( nagiosQuery, result );
-
-		return result;
 	}
 
 
@@ -125,7 +124,7 @@ public class LivestatusClient {
 		String result = liveStatusResponse;
 		if( columnsDecl != null ) {
 			columnsDecl = columnsDecl.replaceAll( "\\s+", ";" );
-			result = columnsDecl + result;
+			result = columnsDecl + "\n" + result;
 		}
 
 		return result;

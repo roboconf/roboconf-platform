@@ -25,28 +25,23 @@
 
 package net.roboconf.agent.monitoring.internal;
 
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.agent.monitoring.internal.tests.MyAgentInterface;
+
+import org.junit.Test;
 
 /**
- * Handler invoked to deal with a monitoring solution.
- * @author Pierre-Yves Gibello - Linagora
+ * @author Vincent Zurczak - Linagora
  */
-public abstract class MonitoringHandler {
+public class AgentMonitoringTest {
 
-	protected String eventId;
-	protected String applicationName;
-	protected String vmInstanceName;
+	@Test
+	public void testStartAndStop() {
 
-
-	public MonitoringHandler( String eventName, String applicationName, String vmInstanceName ) {
-		this.eventId = eventName;
-		this.applicationName = applicationName;
-		this.vmInstanceName = vmInstanceName;
+		AgentMonitoring am = new AgentMonitoring();
+		am.setAgentInterface( new MyAgentInterface( null ));
+		am.stop();
+		am.start();
+		am.start();
+		am.stop();
 	}
-
-	public String getEventId() {
-		return this.eventId;
-	}
-
-	public abstract MsgNotifAutonomic process();
 }

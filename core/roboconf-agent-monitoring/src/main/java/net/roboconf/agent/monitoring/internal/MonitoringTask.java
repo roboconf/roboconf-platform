@@ -53,7 +53,8 @@ public class MonitoringTask extends TimerTask {
 	private static final String PARSER_NAGIOS = "nagios";
 
 	private static final String COMMENT_DELIMITER = "#";
-	private static final String EVENT_PATTERN = "\\[EVENT\\s+(\\w)\\s+(\\w)";
+	static final String RULE_BEGINNING = "[event";
+	static final String EVENT_PATTERN = "\\" + RULE_BEGINNING + "\\s+(\\S+)\\s+(\\S+)\\s*\\]";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final AgentMessagingInterface agentInterface;
@@ -66,7 +67,7 @@ public class MonitoringTask extends TimerTask {
 	 */
 	public MonitoringTask( AgentMessagingInterface agentInterface ) {
 		this.agentInterface = agentInterface;
-		this.eventPattern = Pattern.compile( EVENT_PATTERN );
+		this.eventPattern = Pattern.compile( EVENT_PATTERN, Pattern.CASE_INSENSITIVE );
 	}
 
 
@@ -125,37 +126,41 @@ public class MonitoringTask extends TimerTask {
 	 */
 	List<MonitoringHandler> extractRuleSections( File file, String fileContent ) {
 
-		// Find rules
-		List<MonitoringHandler> result = new ArrayList<MonitoringHandler> ();
+		// Find rules sections
 		StringBuilder sb = new StringBuilder();
-		String parserId = null, eventId = null;
+		List<String> sections = new ArrayList<String>();
 		for( String s : Arrays.asList( fileContent.trim().split( "\n" ))) {
-
 			s = s.trim();
-			if( s.startsWith( COMMENT_DELIMITER ))
+			if( s.length() == 0
+					|| s.startsWith( COMMENT_DELIMITER ))
+				continue;
+
+			if( s.toLowerCase().startsWith( RULE_BEGINNING )) {
+				sections.add( sb.toString());
+				sb.setLength( 0 );
+			}
+
+			sb.append( s + "\n" );
+		}
+
+		sections.add( sb.toString());
+
+		// Now, create handlers
+		List<MonitoringHandler> result = new ArrayList<MonitoringHandler> ();
+		for( String s : sections ) {
+			if( s.length() == 0 )
 				continue;
 
 			Matcher m = this.eventPattern.matcher( s );
-			if( m.find()) {
+			if( ! m.find())
+				continue;
 
-				// We have something to create rules
-				if( parserId != null ) {
-					MonitoringHandler handler = createHandler( parserId, eventId, sb.toString());
-					if( handler != null )
-						result.add( handler );
-					else
-						this.logger.warning( "No monitoring handler matched parser ID '" + m.group( 1 ) + "' in " + file + "." );
-				}
-
-				// Store the new section's properties
-				sb.setLength( 0 );
-				parserId = m.group( 1 );
-				eventId = m.group( 2 );
-			}
-
-			// Otherwise, append non-empty lines for their upcoming parsing
-			else if( s.length() > 0 )
-				sb.append( s + "\n" );
+			s = s.substring( m.end()).trim();
+			MonitoringHandler handler = createHandler( m.group( 1 ), m.group( 2 ), s );
+			if( handler != null )
+				result.add( handler );
+			else
+				this.logger.warning( "No monitoring handler matched parser ID '" + m.group( 1 ) + "' in " + file + "." );
 		}
 
 		return result;

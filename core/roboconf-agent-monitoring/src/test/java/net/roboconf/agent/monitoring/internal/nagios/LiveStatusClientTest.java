@@ -23,30 +23,45 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.monitoring.internal;
+package net.roboconf.agent.monitoring.internal.nagios;
 
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import java.io.IOException;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
- * Handler invoked to deal with a monitoring solution.
- * @author Pierre-Yves Gibello - Linagora
+ * A part of the tests for {@link LiveStatusClient} is in {@link NagiosHandlerTest}.
+ * @author Vincent Zurczak - Linagora
  */
-public abstract class MonitoringHandler {
+public class LiveStatusClientTest {
 
-	protected String eventId;
-	protected String applicationName;
-	protected String vmInstanceName;
+	@Test
+	public void testConstructor() {
 
+		LiveStatusClient client = new LiveStatusClient( null, -45 );
+		Assert.assertEquals( LiveStatusClient.DEFAULT_HOST, client.host );
+		Assert.assertEquals( LiveStatusClient.DEFAULT_PORT, client.port );
 
-	public MonitoringHandler( String eventName, String applicationName, String vmInstanceName ) {
-		this.eventId = eventName;
-		this.applicationName = applicationName;
-		this.vmInstanceName = vmInstanceName;
+		client = new LiveStatusClient( null, 45 );
+		Assert.assertEquals( LiveStatusClient.DEFAULT_HOST, client.host );
+		Assert.assertEquals( 45, client.port );
+
+		client = new LiveStatusClient( "toto", -45 );
+		Assert.assertEquals( "toto", client.host );
+		Assert.assertEquals( LiveStatusClient.DEFAULT_PORT, client.port );
+
+		client = new LiveStatusClient( "titi", 1245 );
+		Assert.assertEquals( "titi", client.host );
+		Assert.assertEquals( 1245, client.port );
 	}
 
-	public String getEventId() {
-		return this.eventId;
-	}
 
-	public abstract MsgNotifAutonomic process();
+	@Test( expected = IOException.class )
+	public void testFailedConnection() throws Exception {
+
+		LiveStatusClient client = new LiveStatusClient( null, -45 );
+		client.queryLivestatus( "whatever" );
+	}
 }

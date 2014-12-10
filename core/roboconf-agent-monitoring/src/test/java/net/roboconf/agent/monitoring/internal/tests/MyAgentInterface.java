@@ -23,30 +23,46 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.monitoring.internal;
+package net.roboconf.agent.monitoring.internal.tests;
 
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.agent.AgentMessagingInterface;
+import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.internal.client.test.TestClientAgent;
 
 /**
- * Handler invoked to deal with a monitoring solution.
- * @author Pierre-Yves Gibello - Linagora
+ * @author Vincent Zurczak - Linagora
  */
-public abstract class MonitoringHandler {
+public class MyAgentInterface implements AgentMessagingInterface {
 
-	protected String eventId;
-	protected String applicationName;
-	protected String vmInstanceName;
+	private final TestClientAgent messagingClient;
+	private Instance rootInstance;
 
 
-	public MonitoringHandler( String eventName, String applicationName, String vmInstanceName ) {
-		this.eventId = eventName;
-		this.applicationName = applicationName;
-		this.vmInstanceName = vmInstanceName;
+	/**
+	 * Constructor.
+	 * @param messagingClient
+	 */
+	public MyAgentInterface( TestClientAgent messagingClient ) {
+		this.messagingClient = messagingClient;
 	}
 
-	public String getEventId() {
-		return this.eventId;
+	@Override
+	public IAgentClient getMessagingClient() {
+		return this.messagingClient;
 	}
 
-	public abstract MsgNotifAutonomic process();
+	@Override
+	public String getApplicationName() {
+		return "app";
+	}
+
+	@Override
+	public Instance getRootInstance() {
+		return this.rootInstance;
+	}
+
+	public void setRootInstance( Instance rootInstance ) {
+		this.rootInstance = rootInstance;
+	}
 }
