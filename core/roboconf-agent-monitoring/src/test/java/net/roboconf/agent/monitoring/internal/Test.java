@@ -15,7 +15,7 @@ public class Test {
 	
 	TestClientAgent client;
 	AgentMessagingMock mock;
-	AgentMonitoringScheduler scheduler;
+	AgentMonitoring scheduler;
 
 	@Before
 	public void setupClient() {
@@ -24,7 +24,7 @@ public class Test {
 		client = (TestClientAgent) factory.createAgentClient(MessagingConstants.FACTORY_TEST);
 		mock = new AgentMessagingMock(client);
 
-		scheduler = new AgentMonitoringScheduler();
+		scheduler = new AgentMonitoring();
 		scheduler.setAgentInterface(mock); // Inject by hand (no iPojo in unit tests...)
 		scheduler.start();
 	}

@@ -35,6 +35,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -185,7 +186,7 @@ public class UtilsTest {
 		String content = "whatever\n\thop   ";
 		Utils.writeStringInto( content, f );
 
-		Assert.assertEquals( content, TestUtils.readFileContent( f ));
+		Assert.assertEquals( content, Utils.readFileContent( f ));
 	}
 
 
@@ -638,5 +639,35 @@ public class UtilsTest {
 
 		Utils.logException( logger, Level.INFO, new Exception( "boo!" ));
 		Assert.assertTrue( sb.toString().startsWith( "java.lang.Exception: boo!" ));
+	}
+
+
+	@Test
+	public void testFindUrlAndPort() throws Exception {
+
+		Map.Entry<String,Integer> entry = Utils.findUrlAndPort( "http://localhost" );
+		Assert.assertEquals( "http://localhost", entry.getKey());
+		Assert.assertEquals( -1, entry.getValue().intValue());
+
+		entry = Utils.findUrlAndPort( "http://localhost:9989" );
+		Assert.assertEquals( "http://localhost", entry.getKey());
+		Assert.assertEquals( 9989, entry.getValue().intValue());
+
+		entry = Utils.findUrlAndPort( "http://roboconf.net/some/arbitrary/path" );
+		Assert.assertEquals( "http://roboconf.net/some/arbitrary/path", entry.getKey());
+		Assert.assertEquals( -1, entry.getValue().intValue());
+
+		entry = Utils.findUrlAndPort( "http://roboconf.net:2727/some/arbitrary/path" );
+		Assert.assertEquals( "http://roboconf.net/some/arbitrary/path", entry.getKey());
+		Assert.assertEquals( 2727, entry.getValue().intValue());
+
+		File f = new File( System.getProperty( "java.io.tmpdir" ));
+		entry = Utils.findUrlAndPort( f.toURI().toString());
+		Assert.assertEquals( f.toURI(), new URI( entry.getKey()));
+		Assert.assertEquals( -1, entry.getValue().intValue());
+
+		entry = Utils.findUrlAndPort( "ftp://some.host.com:4811/path" );
+		Assert.assertEquals( "ftp://some.host.com/path", entry.getKey());
+		Assert.assertEquals( 4811, entry.getValue().intValue());
 	}
 }

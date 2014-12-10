@@ -26,12 +26,9 @@
 package net.roboconf.messaging.internal.utils;
 
 import java.io.IOException;
-import java.util.AbstractMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Application;
@@ -113,7 +110,7 @@ public final class RabbitMqUtils {
 	throws IOException {
 
 		if( messageServerIp != null ) {
-			Map.Entry<String,Integer> entry = findUrlAndPort( messageServerIp );
+			Map.Entry<String,Integer> entry = Utils.findUrlAndPort( messageServerIp );
 			factory.setHost( entry.getKey());
 			if( entry.getValue() > 0 )
 				factory.setPort( entry.getValue());
@@ -121,22 +118,6 @@ public final class RabbitMqUtils {
 
 		factory.setUsername( messageServerUsername );
 		factory.setPassword( messageServerPassword );
-	}
-
-
-	/**
-	 * Parses a raw URL and extracts the host and port.
-	 * @param messageServerIp a raw URL (here, the message server's IP, not null)
-	 * @return a non-null map entry (key = host URL without the port, value = the port, -1 if not specified)
-	 */
-	public static Map.Entry<String,Integer> findUrlAndPort( String messageServerIp ) {
-
-		Matcher m = Pattern.compile( ".*(:\\d+).*" ).matcher( messageServerIp );
-		String portAsString = m.find() ? m.group( 1 ).substring( 1 ) : null;
-		Integer port = portAsString == null ? - 1 : Integer.parseInt( portAsString );
-		String address = portAsString == null ? messageServerIp : messageServerIp.replace( m.group( 1 ), "" );
-
-		return new AbstractMap.SimpleEntry<String,Integer>( address, port );
 	}
 
 

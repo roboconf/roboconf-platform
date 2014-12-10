@@ -4,7 +4,7 @@
 		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
 		xmlns="org.apache.felix.ipojo">
 
-	<component classname="net.roboconf.agent.monitoring.internal.AgentMonitoringScheduler" name="roboconf-agent-monitoring">
+	<component classname="net.roboconf.agent.monitoring.internal.AgentMonitoring" name="roboconf-agent-monitoring">
 		<requires field="agentInterface" optional="false" />
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />
