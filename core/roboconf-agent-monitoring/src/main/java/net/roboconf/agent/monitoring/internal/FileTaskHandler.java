@@ -13,7 +13,7 @@ public class FileTaskHandler extends MonitoringTaskHandler {
 	public FileTaskHandler(String eventName, String applicationName, String vmInstanceName, String query[]) {
 		super(eventName, applicationName, vmInstanceName);
 		
-		if(query.length > 1) {
+		if(query.length >= 1) {
 			String tokens[] = query[0].split("\\s+");
 			
 			if(tokens.length > 1) {

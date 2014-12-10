@@ -39,7 +39,6 @@ import net.roboconf.messaging.messages.Message;
 public class MonitoringScheduler extends TimerTask {
 
 	private Logger logger = Logger.getLogger(getClass().getName());
-	private Timer timer = new Timer();
 	List<MonitoringTaskHandler> handlerList = new LinkedList<MonitoringTaskHandler>();
 	//private String applicationName;
 	/*private String messageServerIp;
@@ -53,23 +52,6 @@ public class MonitoringScheduler extends TimerTask {
 		this.agentInterface = agentInterface;
 	}
 
-    /**
-     * Start the task processing.
-     */
-    public void startProcessing() {
-    	//TODO make period configurable ?
-    	this.logger.fine("Autonomic monitoring scheduler started");
-    	timer.schedule(this, 0, 10000);
-    }
-
-	/**
-     * Stop the task processing.
-     */
-    public void stopProcessing() {
-    	this.logger.fine("Autonomic monitoring scheduler stopped");
-        timer.cancel();
-    }
-
 	@Override
 	public void run() {
 		
@@ -78,68 +60,70 @@ public class MonitoringScheduler extends TimerTask {
 		// Root Instance may not yet have been injected: skip !
 		if(this.agentInterface.getRootInstance() == null) {
 			this.logger.fine("agentInterface.getRootInstance() is null... RootInstance not yet injected, skipping monitoring scheduling !");
-			return;
-		}
-		
-		for (Instance inst : InstanceHelpers.buildHierarchicalList(this.agentInterface.getRootInstance())) {
+		} else {
 
-			File dir = InstanceHelpers.findInstanceDirectoryOnAgent(inst, inst.getComponent().getInstallerName());
+			this.logger.fine("rootInstance=" + this.agentInterface.getRootInstance());
+			for (Instance inst : InstanceHelpers.buildHierarchicalList(this.agentInterface.getRootInstance())) {
+				File dir = InstanceHelpers.findInstanceDirectoryOnAgent(inst, inst.getComponent().getInstallerName());
 
-			File conf = null;
-			for(File f : dir.listFiles()) {
-				if(f.getName().endsWith(".measures")) conf = f;
-			}
-			
-			//File conf = new File(Thread.currentThread().getContextClassLoader()
-					//.getResource("nagiosevents.conf").getFile());
-			
-			this.logger.fine("Monitoring instance " + inst.getName() + ", measures config =" + conf);
-			
-			if(conf != null) {
-				BufferedReader reader = null;
-				String line;
-				String eventName = null;
-				String eventInfo[] = null;
+				File conf = null;
+				if(dir.exists() && dir.isDirectory()) {
+					for(File f : dir.listFiles()) {
+						if(f.getName().endsWith(".measures")) conf = f;
+					}
+				}
 
-				try {
-					reader = new BufferedReader(new FileReader(conf));
-					while((line = reader.readLine()) != null) {
+				//File conf = new File(Thread.currentThread().getContextClassLoader()
+				//.getResource("nagiosevents.conf").getFile());
 
-						if(line.startsWith("[EVENT")) { // Found event declaration, extract name
-							eventName = line.substring(6).trim();
-							if(eventName.endsWith("]")) eventName = eventName.substring(0, eventName.length()-1).trim();
-							
-							String tokens[] = eventName.split("\\s+");
+				this.logger.fine("Monitoring instance " + inst.getName() + ", measures config =" + conf);
 
-							//FIXME check number of tokens...
-							String parserName = tokens[0];
-							eventName = tokens[1];
+				if(conf != null) {
+					BufferedReader reader = null;
+					String line;
+					String eventName = null;
+					String eventInfo[] = null;
 
-							if("nagios".equalsIgnoreCase(parserName)) {
-								this.logger.fine("Found nagios rule");
-								eventInfo = (new NagiosEventParser()).parse(reader);
+					try {
+						reader = new BufferedReader(new FileReader(conf));
+						while((line = reader.readLine()) != null) {
 
-								handlerList.add(new NagiosTaskHandler(eventName,
-										this.agentInterface.getApplicationName(), this.agentInterface.getRootInstance().getName(),
-									eventInfo));
-								
-							} else if("file".equalsIgnoreCase(parserName)) {
-								this.logger.fine("Found file rule");
-								eventInfo = (new FileEventParser()).parse(reader);
-								handlerList.add(new FileTaskHandler(eventName,
-										this.agentInterface.getApplicationName(), this.agentInterface.getRootInstance().getName(),
-										eventInfo));
+							if(line.startsWith("[EVENT")) { // Found event declaration, extract name
+								eventName = line.substring(6).trim();
+								if(eventName.endsWith("]")) eventName = eventName.substring(0, eventName.length()-1).trim();
+
+								String tokens[] = eventName.split("\\s+");
+
+								//FIXME check number of tokens...
+								String parserName = tokens[0];
+								eventName = tokens[1];
+
+								if("nagios".equalsIgnoreCase(parserName)) {
+									this.logger.fine("Found nagios rule");
+									eventInfo = (new NagiosEventParser()).parse(reader);
+
+									handlerList.add(new NagiosTaskHandler(eventName,
+											this.agentInterface.getApplicationName(), this.agentInterface.getRootInstance().getName(),
+											eventInfo));
+
+								} else if("file".equalsIgnoreCase(parserName)) {
+									this.logger.fine("Found file rule");
+									eventInfo = (new FileEventParser()).parse(reader);
+									handlerList.add(new FileTaskHandler(eventName,
+											this.agentInterface.getApplicationName(), this.agentInterface.getRootInstance().getName(),
+											eventInfo));
+								}
 							}
 						}
+					} catch (FileNotFoundException e) {
+						// ignore
+						this.logger.finest("FileNotFoundException: " + e.getMessage());
+					} catch (IOException e) {
+						this.logger.finest("IOException: " + e.getMessage());
+						try { if(reader != null) reader.close(); } catch(Exception ioe) { /* ignore */ }
+					} finally {
+						try { if(reader != null) reader.close(); } catch(Exception e) { /* ignore */ }
 					}
-				} catch (FileNotFoundException e) {
-					// ignore
-					this.logger.finest("FileNotFoundException: " + e.getMessage());
-				} catch (IOException e) {
-					this.logger.finest("IOException: " + e.getMessage());
-					try { if(reader != null) reader.close(); } catch(Exception ioe) { /* ignore */ }
-				} finally {
-					try { if(reader != null) reader.close(); } catch(Exception e) { /* ignore */ }
 				}
 			}
 		}
