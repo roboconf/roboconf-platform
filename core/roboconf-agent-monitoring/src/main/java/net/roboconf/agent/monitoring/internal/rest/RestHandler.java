@@ -1,0 +1,286 @@
+/**
+ * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ *
+ * The present code is developed in the scope of the joint LINAGORA -
+ * Université Joseph Fourier - Floralis research program and is designated
+ * as a "Result" pursuant to the terms and conditions of the LINAGORA
+ * - Université Joseph Fourier - Floralis research program. Each copyright
+ * holder of Results enumerated here above fully & independently holds complete
+ * ownership of the complete Intellectual Property rights applicable to the whole
+ * of said Results, and may freely exploit it in any manner which does not infringe
+ * the moral rights of the other copyright holders.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.roboconf.agent.monitoring.internal.rest;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.logging.Logger;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import net.roboconf.agent.monitoring.internal.MonitoringHandler;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+
+/**
+ * Handler to check the value returned by a REST call on a URL
+ * @author Pierre-Yves Gibello - Linagora
+ */
+public class RestHandler extends MonitoringHandler {
+
+	private final String USER_AGENT = "Mozilla/34.0";
+	private final Logger logger = Logger.getLogger(getClass().getName());
+
+	private String url;
+	private String condition;
+
+	/**
+	 * Constructor.
+	 * @param eventId
+	 * @param applicationName
+	 * @param vmInstanceName
+	 * @param fileContent
+	 */
+	public RestHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
+		super( eventName, applicationName, vmInstanceName );
+
+		if(fileContent == null) return;
+		fileContent = fileContent.trim();
+		if(fileContent.length() < 1) return;
+		
+		String lines[] = fileContent.split("\\n");
+		
+		for(String statement : lines) {
+			if(statement.toLowerCase().startsWith("url")) { // url: URL
+				this.url = getValue(statement);
+			} else if(statement.toLowerCase().startsWith("filter")) { // filter: condition
+				this.condition = getValue(statement);
+			}
+		}
+	}
+	
+	private String getValue(String statement) {
+		int pos = statement.indexOf(":");
+		if(pos > 0 && pos < statement.length() -1) return statement.substring(pos+1).trim();
+		else return null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.agent.monitoring.internal.MonitoringHandler
+	 * #process()
+	 */
+	@Override
+	public MsgNotifAutonomic process() {
+
+		MsgNotifAutonomic result = null;
+		
+		String response = (url.startsWith("https:") ? httpsQuery(url) : httpQuery(url));
+		if(response == null) return null;
+
+		String rsp = response.replace('{', ' ').replace('}', ' ').trim();
+		String keyValuePairs[] = rsp.split("\\n");
+		HashMap<String, Double> valueMap = null;
+
+		if(keyValuePairs.length > 0) {
+			valueMap = new HashMap<String, Double>();
+			try {
+				for(String pair : keyValuePairs) {
+					String kv[] = pair.split(":");
+					if(kv.length == 2) {
+						valueMap.put(kv[0].replace("\"", " ").trim(),
+								Double.parseDouble(getValue(pair)));
+					}
+				}
+			} catch(Exception e) {
+				this.logger.severe("Can\'t parse REST request result: " + response);
+				return null;
+			}
+			
+			if(evalCondition(valueMap)) {
+				result = new MsgNotifAutonomic(
+						this.eventId,
+						this.applicationName,
+						this.vmInstanceName,
+						response.toString());
+			}
+		}
+
+		this.logger.finest("Condition: " + condition + ", values: " + rsp);
+		return result;
+	}
+
+	/**
+	 * Evaluate condition (eg. "lag>=100") using data in keypair value map (eg. <"lag", 50>).
+	 * @param valueMap The values (keypair) on which to evaluate the condition.
+	 * @return true if the condition is met, false otherwise.
+	 */
+	private boolean evalCondition(HashMap<String, Double> valueMap) {
+		if(valueMap == null || valueMap.isEmpty()) return false;
+		
+		String rawCondition = condition.replaceAll("\\s+","");
+
+		// TODO just "lag" is handled, with one comparison operand...
+		if(rawCondition.startsWith("lag") && rawCondition.length() >= 5) {
+			Double lag = valueMap.get("lag");
+			if(lag == null) return false;
+
+			String val = rawCondition.substring(4);
+			String operand = rawCondition.substring(3, 4);
+			if(rawCondition.length() >= 6 && ! Character.isDigit(val.charAt(0))) {
+				val = rawCondition.substring(5);
+				operand = rawCondition.substring(3, 5);
+			}
+			Double v = null;
+			try {
+				v = Double.parseDouble(val);
+			} catch(Exception e) {
+				return false;
+			}
+			if(">".equals(operand)) {
+				return(lag.doubleValue() > v.doubleValue());
+			} else if(">=".equals(operand)) {
+				return(lag.doubleValue() >= v.doubleValue());
+			} else if("=".equals(operand)) {
+				return(lag.doubleValue() == v.doubleValue());
+			} else if("<=".equals(operand)) {
+				return(lag.doubleValue() <= v.doubleValue());
+			} else if("<".equals(operand)) {
+				return(lag.doubleValue() < v.doubleValue());
+			}
+		}
+		
+		return false;
+	}
+
+	/**
+	 * Query a https URL, ignoring certificates.
+	 * @param url The https URL to query
+	 * @return The query response
+	 */
+	private String httpsQuery(String url) {
+		HttpsURLConnection conn = null;
+		BufferedReader in = null;
+		StringBuffer response = null;
+		try {
+			
+			// Create a trust manager that does not validate certificate chains
+	        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+	            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+	                return null;
+	            }
+	            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+	            }
+	            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+	            }
+	        } };
+	        // Install the all-trusting trust manager
+	        final SSLContext sc = SSLContext.getInstance("SSL");
+	        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+	        // Create all-trusting host name verifier
+	        @SuppressWarnings("unused")
+			HostnameVerifier allHostsValid = new HostnameVerifier() {
+				@Override
+				public boolean verify(String hostname, SSLSession session) {
+					// Never verify
+					return false;
+				}
+	        };
+			
+			URL restUrl = new URL(this.url);
+			conn = (HttpsURLConnection)restUrl.openConnection();
+			conn.setRequestMethod("GET");
+
+			//add request header
+			conn.setRequestProperty("User-Agent", USER_AGENT);
+
+			int responseCode = conn.getResponseCode();
+
+			in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			String inputLine;
+			response = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+		} catch(Exception e) {
+			this.logger.severe("Can\'t issue GET on URL " + this.url + ". Monitoring notification is discarded.");
+			Utils.logException(this.logger, e);
+			return null;
+		} finally {
+			if(in != null) try { in.close(); } catch(Exception e) { /*ignore*/ }
+			if(conn != null) conn.disconnect();
+		}
+		
+		return response.toString();
+	}
+
+	/**
+	 * Query a http URL.
+	 * @param url The http URL to query
+	 * @return The query response
+	 */
+	private String httpQuery(String url) {
+		HttpURLConnection conn = null;
+		BufferedReader in = null;
+		StringBuffer response = null;
+		try {
+			URL restUrl = new URL(this.url);
+			conn = (HttpURLConnection)restUrl.openConnection();
+			conn.setRequestMethod("GET");
+
+			//add request header
+			conn.setRequestProperty("User-Agent", USER_AGENT);
+
+			int responseCode = conn.getResponseCode();
+
+			in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+			String inputLine;
+			response = new StringBuffer();
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+		} catch(IOException e) {
+			this.logger.severe("Can\'t issue GET on URL " + this.url + ". Monitoring notification is discarded.");
+			e.printStackTrace();
+			Utils.logException(this.logger, e);
+			return null;
+		} finally {
+			if(in != null) try { in.close(); } catch(Exception e) { /*ignore*/ }
+			if(conn != null) conn.disconnect();
+		}
+		
+		return response.toString();
+	}
+
+	public static void main(String args[]) throws Exception {
+		RestHandler handler = new RestHandler("testEvent", "app1", "instance1",
+				"url:https://dev.open-paas.org/api/monitoring\nfilter:lag=0");
+		System.out.println(handler.process());
+	}
+}
