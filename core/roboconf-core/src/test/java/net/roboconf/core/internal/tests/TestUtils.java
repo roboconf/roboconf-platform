@@ -132,28 +132,6 @@ public class TestUtils {
 
 
 	/**
-	 * Reads a text file content and returns it as a string.
-	 * <p>
-	 * The file is tried to be read with UTF-8 encoding.
-	 * If it fails, the default system encoding is used.
-	 * </p>
-	 *
-	 * @param file the file whose content must be loaded
-	 * @return the file content
-	 * @throws IOException if the file content could not be read
-	 */
-	public static String readFileContent( File file ) throws IOException {
-
-		String result = null;
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		Utils.copyStream( file, os );
-		result = os.toString( "UTF-8" );
-
-		return result;
-	}
-
-
-	/**
 	 * @return a non-null map associated a ZIP entry name with its text content
 	 */
 	public static Map<String,String> buildZipContent() {
@@ -243,7 +221,7 @@ public class TestUtils {
 			}
 
 			Assert.assertTrue( entry.getKey() + " was supposed to be a file.", extractedFile.isFile());
-			String fileContent = TestUtils.readFileContent( extractedFile );
+			String fileContent = Utils.readFileContent( extractedFile );
 			Assert.assertEquals( entry.getValue(), fileContent );
 		}
 	}

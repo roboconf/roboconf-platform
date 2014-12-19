@@ -63,7 +63,8 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		try {
 			newMessagingClient = createNewMessagingClient( messageServerIp, messageServerUser, messageServerPwd, factoryName );
 			if( newMessagingClient != null ) {
-				newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
+				// messageProcessor may be null (eg. sender only)
+				if(this.messageProcessor != null) newMessagingClient.setMessageQueue(this.messageProcessor.getMessageQueue());
 				openConnection( newMessagingClient );
 			}
 

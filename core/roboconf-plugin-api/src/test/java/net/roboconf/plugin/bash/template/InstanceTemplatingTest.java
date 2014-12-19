@@ -37,6 +37,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.runtime.Import;
 import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.internal.template.ImportBean;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
@@ -110,6 +111,6 @@ public class InstanceTemplatingTest {
 	    File generated = File.createTempFile(instance.getName(), ".pipo");
         InstanceTemplateHelper.injectInstanceImports(instance, templateFile, generated);
         Assert.assertTrue(generated.exists() && generated.isFile());
-        Assert.assertEquals( TestUtils.readFileContent( generated ), writtenString);
+        Assert.assertEquals( Utils.readFileContent( generated ), writtenString);
 	}
 }

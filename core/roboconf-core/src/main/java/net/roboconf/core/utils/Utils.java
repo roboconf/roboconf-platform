@@ -37,6 +37,7 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -240,6 +242,28 @@ public final class Utils {
 	public static void writeStringInto( String s, File outputFile ) throws IOException {
 		InputStream in = new ByteArrayInputStream( s.getBytes( "UTF-8" ));
 		copyStream( in, outputFile );
+	}
+
+
+	/**
+	 * Reads a text file content and returns it as a string.
+	 * <p>
+	 * The file is tried to be read with UTF-8 encoding.
+	 * If it fails, the default system encoding is used.
+	 * </p>
+	 *
+	 * @param file the file whose content must be loaded
+	 * @return the file content
+	 * @throws IOException if the file content could not be read
+	 */
+	public static String readFileContent( File file ) throws IOException {
+
+		String result = null;
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		Utils.copyStream( file, os );
+		result = os.toString( "UTF-8" );
+
+		return result;
 	}
 
 
@@ -546,5 +570,21 @@ public final class Utils {
 
 			copyStream( sourceFile, targetFile );
 		}
+	}
+
+
+	/**
+	 * Parses a raw URL and extracts the host and port.
+	 * @param url a raw URL (not null)
+	 * @return a non-null map entry (key = host URL without the port, value = the port, -1 if not specified)
+	 */
+	public static Map.Entry<String,Integer> findUrlAndPort( String url ) {
+
+		Matcher m = Pattern.compile( ".*(:\\d+).*" ).matcher( url );
+		String portAsString = m.find() ? m.group( 1 ).substring( 1 ) : null;
+		Integer port = portAsString == null ? - 1 : Integer.parseInt( portAsString );
+		String address = portAsString == null ? url : url.replace( m.group( 1 ), "" );
+
+		return new AbstractMap.SimpleEntry<String,Integer>( address, port );
 	}
 }

@@ -25,9 +25,11 @@
 
 package net.roboconf.core.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
@@ -55,13 +57,19 @@ public final class ResourceUtils {
 	 */
 	public static Map<String,byte[]> storeInstanceResources( File applicationFilesDirectory, Instance instance ) throws IOException {
 
-		Map<String,byte[]> result;
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
 		File instanceResourcesDirectory = findInstanceResourcesDirectory( applicationFilesDirectory, instance );
 		if( instanceResourcesDirectory.exists()
 				&& instanceResourcesDirectory.isDirectory())
-			result = Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory );
-		else
-			result = Collections.emptyMap();
+			result.putAll( Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory ));
+		
+		// FIXME: can we make better?
+		File autonomicMesureFile = new File( applicationFilesDirectory, "autonomic/" + instance.getComponent().getName() + ".measures" );
+		if( autonomicMesureFile.exists()) {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStream( autonomicMesureFile, os );
+			result.put( autonomicMesureFile.getName(), os.toByteArray());
+		}
 
 		return result;
 	}

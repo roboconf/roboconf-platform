@@ -97,6 +97,7 @@
 							net.roboconf.*;version="${project.version}",
 							*
 						</Import-Package>
+						<Export-Package>net.roboconf.agent</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>

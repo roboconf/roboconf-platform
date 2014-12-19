@@ -38,6 +38,7 @@ import net.roboconf.core.model.parsing.AbstractBlock;
 import net.roboconf.core.model.parsing.BlockInstanceOf;
 import net.roboconf.core.model.parsing.FileDefinition;
 import net.roboconf.core.model.parsing.ParsingConstants;
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Test;
 
@@ -140,7 +141,7 @@ public class ParsingModelIoTest {
 		FileDefinition rel = ParsingModelIo.readConfigurationFile( f, false );
 		Assert.assertTrue(  f.getName() + ": parsing errors were found.", rel.getParsingErrors().isEmpty());
 
-		String fileContent = TestUtils.readFileContent( f );
+		String fileContent = Utils.readFileContent( f );
 		fileContent = fileContent.replaceAll( "\r?\n", System.getProperty( "line.separator" ));
 
 		String s = ParsingModelIo.writeConfigurationFile( rel, true, null );

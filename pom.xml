@@ -42,6 +42,7 @@
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-agent</module>
 		<module>core/roboconf-agent-default</module>
+		<module>core/roboconf-agent-monitoring</module>
 		
 		<module>core/roboconf-dm</module>
 		<module>core/roboconf-dm-rest-commons</module>

@@ -35,6 +35,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
+import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.internal.misc.AgentConstants;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
@@ -56,7 +57,7 @@ import net.roboconf.plugin.api.PluginInterface;
  *
  * @author Vincent Zurczak - Linagora
  */
-public class Agent {
+public class Agent implements AgentMessagingInterface {
 
 	// Component properties (ipojo)
 	String messageServerIp, messageServerUsername, messageServerPassword;
@@ -71,7 +72,7 @@ public class Agent {
 	private String messagingFactoryType;
 	private ReconfigurableClientAgent messagingClient;
 	Timer heartBeatTimer;
-
+	private Instance rootInstance;
 
 	/**
 	 * Constructor.
@@ -468,4 +469,15 @@ public class Agent {
 
 		return sb.toString();
 	}
+
+
+	public Instance getRootInstance() {
+		return rootInstance;
+	}
+
+
+	public void setRootInstance(Instance rootInstance) {
+		this.rootInstance = rootInstance;
+	}
+	
 }

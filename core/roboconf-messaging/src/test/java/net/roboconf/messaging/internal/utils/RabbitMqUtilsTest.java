@@ -25,9 +25,6 @@
 
 package net.roboconf.messaging.internal.utils;
 
-import java.io.File;
-import java.net.URI;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
@@ -120,36 +117,6 @@ public class RabbitMqUtilsTest {
 		Assert.assertEquals(
 				RabbitMqUtils.buildRoutingKeyForAgent( childInstance ),
 				RabbitMqUtils.buildRoutingKeyForAgent( inst ));
-	}
-
-
-	@Test
-	public void testFindUrlAndPort() throws Exception {
-
-		Map.Entry<String,Integer> entry = RabbitMqUtils.findUrlAndPort( "http://localhost" );
-		Assert.assertEquals( "http://localhost", entry.getKey());
-		Assert.assertEquals( -1, entry.getValue().intValue());
-
-		entry = RabbitMqUtils.findUrlAndPort( "http://localhost:9989" );
-		Assert.assertEquals( "http://localhost", entry.getKey());
-		Assert.assertEquals( 9989, entry.getValue().intValue());
-
-		entry = RabbitMqUtils.findUrlAndPort( "http://roboconf.net/some/arbitrary/path" );
-		Assert.assertEquals( "http://roboconf.net/some/arbitrary/path", entry.getKey());
-		Assert.assertEquals( -1, entry.getValue().intValue());
-
-		entry = RabbitMqUtils.findUrlAndPort( "http://roboconf.net:2727/some/arbitrary/path" );
-		Assert.assertEquals( "http://roboconf.net/some/arbitrary/path", entry.getKey());
-		Assert.assertEquals( 2727, entry.getValue().intValue());
-
-		File f = new File( System.getProperty( "java.io.tmpdir" ));
-		entry = RabbitMqUtils.findUrlAndPort( f.toURI().toString());
-		Assert.assertEquals( f.toURI(), new URI( entry.getKey()));
-		Assert.assertEquals( -1, entry.getValue().intValue());
-
-		entry = RabbitMqUtils.findUrlAndPort( "ftp://some.host.com:4811/path" );
-		Assert.assertEquals( "ftp://some.host.com/path", entry.getKey());
-		Assert.assertEquals( 4811, entry.getValue().intValue());
 	}
 
 
