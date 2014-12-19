@@ -37,16 +37,29 @@ public abstract class MonitoringHandler {
 	protected String applicationName;
 	protected String vmInstanceName;
 
-
+	/**
+	 * Create a new monitoring handler.
+	 * @param eventName The event ID
+	 * @param applicationName The application name
+	 * @param vmInstanceName The instance name
+	 */
 	public MonitoringHandler( String eventName, String applicationName, String vmInstanceName ) {
 		this.eventId = eventName;
 		this.applicationName = applicationName;
 		this.vmInstanceName = vmInstanceName;
 	}
 
+	/**
+	 * Get the event ID.
+	 * @return The event ID
+	 */
 	public String getEventId() {
 		return this.eventId;
 	}
 
+	/**
+	 * Process and fire event if needed.
+	 * @return A notification to be sent to the manager, or null if nothing to send.
+	 */
 	public abstract MsgNotifAutonomic process();
 }

@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
 import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
+import net.roboconf.agent.monitoring.internal.rest.RestHandler;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
@@ -51,6 +52,7 @@ public class MonitoringTask extends TimerTask {
 
 	private static final String PARSER_FILE = "file";
 	private static final String PARSER_NAGIOS = "nagios";
+	private static final String PARSER_REST = "rest";
 
 	private static final String COMMENT_DELIMITER = "#";
 	static final String RULE_BEGINNING = "[event";
@@ -184,6 +186,8 @@ public class MonitoringTask extends TimerTask {
 			result = new FileHandler( eventId, appName, rootInstanceName, ruleContent );
 		else if( PARSER_NAGIOS.equalsIgnoreCase( parserId ))
 			result = new NagiosHandler( eventId, appName, rootInstanceName, ruleContent );
+		else if(PARSER_REST.equalsIgnoreCase( parserId ))
+			result = new RestHandler( eventId, appName, rootInstanceName, ruleContent );
 
 		return result;
 	}

@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import net.roboconf.agent.AgentMessagingInterface;
 
 /**
+ * The agent monitoring service.
  * @author Pierre-Yves Gibello - Linagora
  */
 public class AgentMonitoring {

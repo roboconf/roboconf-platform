@@ -1,3 +1,28 @@
+/**
+ * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ *
+ * The present code is developed in the scope of the joint LINAGORA -
+ * Université Joseph Fourier - Floralis research program and is designated
+ * as a "Result" pursuant to the terms and conditions of the LINAGORA
+ * - Université Joseph Fourier - Floralis research program. Each copyright
+ * holder of Results enumerated here above fully & independently holds complete
+ * ownership of the complete Intellectual Property rights applicable to the whole
+ * of said Results, and may freely exploit it in any manner which does not infringe
+ * the moral rights of the other copyright holders.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package net.roboconf.dm.internal.autonomic;
 
 import java.io.IOException;
@@ -17,6 +42,11 @@ import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.target.api.TargetException;
 
+/**
+ * An event handler to evaluate rules.
+ * @author Pierre-Yves Gibello - Linagora
+ *
+ */
 public class RuleBasedEventHandler {
 
 	private Manager manager;
@@ -26,7 +56,13 @@ public class RuleBasedEventHandler {
 	
 	private Map<String, List<Instance>> vmsForTemplate = new HashMap<String, List<Instance>>();
 	
-	public RuleBasedEventHandler(Manager manager, ManagedApplication ma, MsgNotifAutonomic event) throws IOException {
+	/**
+	 * Create a new rule-based event handler.
+	 * @param manager The application manager
+	 * @param ma The managed application rules apply to
+	 * @throws IOException
+	 */
+	public RuleBasedEventHandler(Manager manager, ManagedApplication ma) throws IOException {
 		this.rules = RulesParser.parseRules(ma.getApplicationFilesDirectory());
 		this.manager = manager;
 		this.ma = ma;
@@ -82,8 +118,6 @@ public class RuleBasedEventHandler {
 			String instanceName;
 			if( previousInstance == null ) {
 				// All the root instances must have a different name
-				//String rootName = 
-				//ma.getApplication().getRootInstances()
 				// TODO generate unique name ??
 				instanceName = compToInstantiate.getName() + "_" + System.currentTimeMillis();
 			} else {

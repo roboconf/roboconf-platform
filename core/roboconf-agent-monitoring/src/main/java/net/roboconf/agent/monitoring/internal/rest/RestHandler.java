@@ -27,13 +27,8 @@ package net.roboconf.agent.monitoring.internal.rest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -86,10 +81,18 @@ public class RestHandler extends MonitoringHandler {
 		}
 	}
 	
+	/**
+	 * Get the REST URL.
+	 * @return The REST url
+	 */
 	public String getUrl() {
 		return url;
 	}
 
+	/**
+	 * Get the condition to evaluate.
+	 * @return The condition to evaluate
+	 */
 	public String getCondition() {
 		return condition;
 	}
@@ -263,48 +266,6 @@ public class RestHandler extends MonitoringHandler {
 		}
 		
 		return response.toString();
-	}
-
-	public static void main(String args[]) throws Exception {
-		
-		Thread thread = new Thread() {
-			@Override
-			public void run() {
-
-				ServerSocket socketServer = null;
-				try {
-					try {
-						System.out.println("The socket server is about to start." );
-						socketServer = new ServerSocket( 1234 );
-						System.out.println("The socket server was started." );
-						Socket socket = socketServer.accept();
-						System.out.println("The socket server received a connection." );
-
-						PrintWriter writer = new PrintWriter( new OutputStreamWriter( socket.getOutputStream(), StandardCharsets.UTF_8 ), false );
-						writer.print("HTTP/1.1 200 OK\n\n{\"lag\":0}");
-						writer.flush();
-						socket.shutdownOutput();
-						socket.close();
-
-					} finally {
-						if( socketServer != null )
-							socketServer.close();
-					}
-
-				} catch( Exception e ) {
-					// nothing
-				}
-			}
-		};
-
-		// Start our server
-		thread.start();
-		Thread.sleep( 1500 );
-		
-		RestHandler handler = new RestHandler("testEvent", "app1", "instance1",
-				"url:http://localhost:1234\nfilter:lag=0");
-				//"url:https://dev.open-paas.org/api/monitoring\nfilter:lag=0");
-		System.out.println(handler.process());
 	}
 	
 	private static class LocalX509TrustManager implements X509TrustManager {

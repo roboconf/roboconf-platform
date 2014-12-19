@@ -231,7 +231,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgMonitoringEvent(MsgNotifAutonomic message) {
 		this.logger.info("Autonomic monitoring listener: EVENT " + message.getEventName());
 		try {
-			RuleBasedEventHandler handler = new RuleBasedEventHandler(manager, manager.getManagedApplication(message.getApplicationName()), message);
+			RuleBasedEventHandler handler = new RuleBasedEventHandler(manager, manager.getManagedApplication(message.getApplicationName()));
 			handler.handleEvent(message);
 		} catch (Exception e) {
 			this.logger.warning("Can\'t process rule-based event: " + e.getMessage());
