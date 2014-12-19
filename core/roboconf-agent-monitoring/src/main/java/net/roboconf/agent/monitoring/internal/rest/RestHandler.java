@@ -25,11 +25,15 @@
 
 package net.roboconf.agent.monitoring.internal.rest;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -82,6 +86,14 @@ public class RestHandler extends MonitoringHandler {
 		}
 	}
 	
+	public String getUrl() {
+		return url;
+	}
+
+	public String getCondition() {
+		return condition;
+	}
+
 	private String getValue(String statement) {
 		int pos = statement.indexOf(":");
 		if(pos > 0 && pos < statement.length() -1) return statement.substring(pos+1).trim();
@@ -119,7 +131,7 @@ public class RestHandler extends MonitoringHandler {
 				this.logger.severe("Can\'t parse REST request result: " + response);
 				return null;
 			}
-			
+
 			if(evalCondition(valueMap)) {
 				result = new MsgNotifAutonomic(
 						this.eventId,
@@ -138,7 +150,7 @@ public class RestHandler extends MonitoringHandler {
 	 * @param valueMap The values (keypair) on which to evaluate the condition.
 	 * @return true if the condition is met, false otherwise.
 	 */
-	private boolean evalCondition(HashMap<String, Double> valueMap) {
+	boolean evalCondition(HashMap<String, Double> valueMap) {
 		if(valueMap == null || valueMap.isEmpty()) return false;
 		
 		String rawCondition = condition.replaceAll("\\s+","");
@@ -182,61 +194,42 @@ public class RestHandler extends MonitoringHandler {
 	 * @return The query response
 	 */
 	private String httpsQuery(String url) {
-		HttpsURLConnection conn = null;
-		BufferedReader in = null;
-		StringBuffer response = null;
+
+		InputStream in = null;
+		String response = null;
 		try {
 			
 			// Create a trust manager that does not validate certificate chains
-	        TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-	            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-	                return null;
-	            }
-	            public void checkClientTrusted(X509Certificate[] certs, String authType) {
-	            }
-	            public void checkServerTrusted(X509Certificate[] certs, String authType) {
-	            }
-	        } };
+	        TrustManager[] trustAllCerts = new TrustManager[] { new LocalX509TrustManager() };
 	        // Install the all-trusting trust manager
 	        final SSLContext sc = SSLContext.getInstance("SSL");
 	        sc.init(null, trustAllCerts, new java.security.SecureRandom());
 	        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 	        // Create all-trusting host name verifier
 	        @SuppressWarnings("unused")
-			HostnameVerifier allHostsValid = new HostnameVerifier() {
-				@Override
-				public boolean verify(String hostname, SSLSession session) {
-					// Never verify
-					return false;
-				}
-	        };
+			HostnameVerifier allHostsValid = new LocalHostnameVerifier();
 			
 			URL restUrl = new URL(this.url);
-			conn = (HttpsURLConnection)restUrl.openConnection();
+			HttpsURLConnection conn = (HttpsURLConnection)restUrl.openConnection();
 			conn.setRequestMethod("GET");
 
 			//add request header
 			conn.setRequestProperty("User-Agent", USER_AGENT);
 
-			int responseCode = conn.getResponseCode();
-
-			in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String inputLine;
-			response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			in = conn.getInputStream();
+			Utils.copyStream( in, os );
+			response = os.toString("UTF-8");
+			
 		} catch(Exception e) {
-			this.logger.severe("Can\'t issue GET on URL " + this.url + ". Monitoring notification is discarded.");
+			this.logger.severe("Can't issue GET on URL " + this.url + ". Monitoring notification is discarded.");
 			Utils.logException(this.logger, e);
-			return null;
+			
 		} finally {
-			if(in != null) try { in.close(); } catch(Exception e) { /*ignore*/ }
-			if(conn != null) conn.disconnect();
+			Utils.closeQuietly(in);
 		}
 		
-		return response.toString();
+		return response;
 	}
 
 	/**
@@ -245,42 +238,90 @@ public class RestHandler extends MonitoringHandler {
 	 * @return The query response
 	 */
 	private String httpQuery(String url) {
-		HttpURLConnection conn = null;
-		BufferedReader in = null;
-		StringBuffer response = null;
+		
+		InputStream in = null;
+		String response = null;
 		try {
 			URL restUrl = new URL(this.url);
-			conn = (HttpURLConnection)restUrl.openConnection();
+			HttpURLConnection conn = (HttpURLConnection)restUrl.openConnection();
 			conn.setRequestMethod("GET");
 
 			//add request header
 			conn.setRequestProperty("User-Agent", USER_AGENT);
 
-			int responseCode = conn.getResponseCode();
-
-			in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-			String inputLine;
-			response = new StringBuffer();
-
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-		} catch(IOException e) {
-			this.logger.severe("Can\'t issue GET on URL " + this.url + ". Monitoring notification is discarded.");
-			e.printStackTrace();
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			in = conn.getInputStream();
+			Utils.copyStream( in, os );
+			response = os.toString("UTF-8");
+			
+		} catch( Exception e ) {
+			this.logger.severe("Can't issue GET on URL " + this.url + ". Monitoring notification is discarded.");
 			Utils.logException(this.logger, e);
-			return null;
+			
 		} finally {
-			if(in != null) try { in.close(); } catch(Exception e) { /*ignore*/ }
-			if(conn != null) conn.disconnect();
+			Utils.closeQuietly(in);
 		}
 		
 		return response.toString();
 	}
 
 	public static void main(String args[]) throws Exception {
+		
+		Thread thread = new Thread() {
+			@Override
+			public void run() {
+
+				ServerSocket socketServer = null;
+				try {
+					try {
+						System.out.println("The socket server is about to start." );
+						socketServer = new ServerSocket( 1234 );
+						System.out.println("The socket server was started." );
+						Socket socket = socketServer.accept();
+						System.out.println("The socket server received a connection." );
+
+						PrintWriter writer = new PrintWriter( new OutputStreamWriter( socket.getOutputStream(), StandardCharsets.UTF_8 ), false );
+						writer.print("HTTP/1.1 200 OK\n\n{\"lag\":0}");
+						writer.flush();
+						socket.shutdownOutput();
+						socket.close();
+
+					} finally {
+						if( socketServer != null )
+							socketServer.close();
+					}
+
+				} catch( Exception e ) {
+					// nothing
+				}
+			}
+		};
+
+		// Start our server
+		thread.start();
+		Thread.sleep( 1500 );
+		
 		RestHandler handler = new RestHandler("testEvent", "app1", "instance1",
-				"url:https://dev.open-paas.org/api/monitoring\nfilter:lag=0");
+				"url:http://localhost:1234\nfilter:lag=0");
+				//"url:https://dev.open-paas.org/api/monitoring\nfilter:lag=0");
 		System.out.println(handler.process());
+	}
+	
+	private static class LocalX509TrustManager implements X509TrustManager {
+        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
+        public void checkClientTrusted(X509Certificate[] certs, String authType) {
+        }
+        public void checkServerTrusted(X509Certificate[] certs, String authType) {
+        }
+    }
+	
+	private static class LocalHostnameVerifier implements HostnameVerifier {
+		@Override
+		public boolean verify(String hostname, SSLSession session) {
+			// Never verify
+			return false;
+		}
 	}
 }
