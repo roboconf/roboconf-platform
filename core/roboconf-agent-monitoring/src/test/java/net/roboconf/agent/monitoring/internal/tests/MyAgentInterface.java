@@ -65,4 +65,9 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	public void setRootInstance( Instance rootInstance ) {
 		this.rootInstance = rootInstance;
 	}
+
+	@Override
+	public String getIpAddress() {
+		return "127.0.0.1";
+	}
 }

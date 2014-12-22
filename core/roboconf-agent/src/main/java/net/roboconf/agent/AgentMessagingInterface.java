@@ -39,4 +39,5 @@ public interface AgentMessagingInterface {
 	IAgentClient getMessagingClient();
 	String getApplicationName();
 	Instance getRootInstance();
+	String getIpAddress();
 }

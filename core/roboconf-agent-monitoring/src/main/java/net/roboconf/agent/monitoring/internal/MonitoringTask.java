@@ -180,14 +180,15 @@ public class MonitoringTask extends TimerTask {
 
 		String appName = this.agentInterface.getApplicationName();
 		String rootInstanceName = this.agentInterface.getRootInstance().getName();
-
+		String ipAddress = this.agentInterface.getIpAddress();
+		
 		MonitoringHandler result = null;
 		if( PARSER_FILE.equalsIgnoreCase( parserId ))
-			result = new FileHandler( eventId, appName, rootInstanceName, ruleContent );
+			result = new FileHandler( eventId, appName, rootInstanceName, ipAddress, ruleContent );
 		else if( PARSER_NAGIOS.equalsIgnoreCase( parserId ))
-			result = new NagiosHandler( eventId, appName, rootInstanceName, ruleContent );
+			result = new NagiosHandler( eventId, appName, rootInstanceName, ipAddress, ruleContent );
 		else if(PARSER_REST.equalsIgnoreCase( parserId ))
-			result = new RestHandler( eventId, appName, rootInstanceName, ruleContent );
+			result = new RestHandler( eventId, appName, rootInstanceName, ipAddress, ruleContent );
 
 		return result;
 	}

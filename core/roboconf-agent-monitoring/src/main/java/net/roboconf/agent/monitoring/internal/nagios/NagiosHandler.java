@@ -54,8 +54,8 @@ public class NagiosHandler extends MonitoringHandler {
 	 * @param vmInstanceName
 	 * @param fileContent
 	 */
-	public NagiosHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName );
+	public NagiosHandler( String eventName, String applicationName, String vmInstanceName, String ipAddress, String fileContent ) {
+		super( eventName, applicationName, vmInstanceName, ipAddress );
 
 		this.nagiosInstructions = fileContent.trim();
 		if( this.nagiosInstructions.toLowerCase().startsWith( NAGIOS_CONFIG )) {
@@ -92,6 +92,7 @@ public class NagiosHandler extends MonitoringHandler {
 					this.eventId,
 					this.applicationName,
 					this.vmInstanceName,
+					this.ipAddress,
 					liveStatusResponse );
 
 		} catch( UnknownHostException e ) {

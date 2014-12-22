@@ -61,7 +61,7 @@ public class RestHandlerTest {
 		final String filter = "lag=0";
 		final String query = "url:" + url + "\nfilter:" + filter;
 
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, query);
+		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, query);
 
 		Assert.assertEquals(url, handler.getUrl());
 		Assert.assertEquals(filter, handler.getCondition());
@@ -72,29 +72,29 @@ public class RestHandlerTest {
 	@Test
 	public void testEvalCondition() throws Exception {
 
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, "url:nothing\nfilter:lag=0");
+		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, "url:nothing\nfilter:lag=0");
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>())); // Empty map, always false
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("undefined", 1.0); } })); // Always false
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 1.0); } }));
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", -1.0); } }));
 		Assert.assertTrue(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 0.0); } }));
 		
-		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, "url:nothing\nfilter:lag>=0");
+		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, "url:nothing\nfilter:lag>=0");
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", -1.0); } }));
 		Assert.assertTrue(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 1.0); } }));
 		Assert.assertTrue(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 0.0); } }));
 		
-		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, "url:nothing\nfilter:lag>0");
+		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, "url:nothing\nfilter:lag>0");
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", -1.0); } }));
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 0.0); } }));
 		Assert.assertTrue(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 1.0); } }));
 		
-		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, "url:nothing\nfilter:lag<=0");
+		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, "url:nothing\nfilter:lag<=0");
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 1.0); } }));
 		Assert.assertTrue(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 0.0); } }));
 		Assert.assertTrue(handler.evalCondition(new HashMap<String, Double>() { { put("lag", -1.0); } }));
 		
-		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, "url:nothing\nfilter:lag<0");
+		handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, "url:nothing\nfilter:lag<0");
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 1.0); } }));
 		Assert.assertFalse(handler.evalCondition(new HashMap<String, Double>() { { put("lag", 0.0); } }));
 		Assert.assertTrue(handler.evalCondition(new HashMap<String, Double>() { { put("lag", -1.0); } }));
@@ -130,7 +130,7 @@ public class RestHandlerTest {
 		Thread.sleep(500);
 
 		// Then, prepare our client.
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, query);
+		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, query);
 		MsgNotifAutonomic msg = handler.process();
 
 		// Wait for the server to die.
