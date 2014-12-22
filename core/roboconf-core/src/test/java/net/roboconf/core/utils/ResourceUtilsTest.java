@@ -76,6 +76,27 @@ public class ResourceUtilsTest {
 
 
 	@Test
+	public void testFindInstanceResourcesDirectory_withCycle() throws Exception {
+
+		final File appDir = this.folder.newFolder();
+		final Component c1 = new Component( "c1" );
+		final Component c2 = new Component( "c2" );
+		final Component c3 = new Component( "c3" );
+
+		c1.extendComponent( c2 );
+		c2.extendComponent( c3 );
+		c3.extendComponent( c1 );
+
+		Assert.assertFalse( ResourceUtils.findInstanceResourcesDirectory( appDir, c1 ).exists());
+		Assert.assertFalse( ResourceUtils.findInstanceResourcesDirectory( appDir, c2 ).exists());
+		Assert.assertFalse( ResourceUtils.findInstanceResourcesDirectory( appDir, c3 ).exists());
+
+		Map<?,?> map = ResourceUtils.storeInstanceResources( appDir, new Instance( "i" ).component( c3 ));
+		Assert.assertEquals( 0, map.size());
+	}
+
+
+	@Test
 	public void testStoreInstanceResources_inexistingDirectory() throws Exception {
 
 		Instance instance = new Instance( "whatever" ).component( new Component( "comp" ));
@@ -114,5 +135,20 @@ public class ResourceUtilsTest {
 		Instance instance = new Instance( "whatever" ).component( new Component( componentName ));
 		Map<?,?> map = ResourceUtils.storeInstanceResources( appDir, instance );
 		Assert.assertEquals( 0, map.size());
+
+		File recipeFile = new File( componentDirectory, "recipe.txt" );
+		Assert.assertTrue( recipeFile.createNewFile());
+
+		map = ResourceUtils.storeInstanceResources( appDir, instance );
+		Assert.assertEquals( 1, map.size());
+
+		File autonomicDir = new File( appDir, Constants.PROJECT_DIR_AUTONOMIC );
+		Assert.assertTrue( autonomicDir.mkdir());
+
+		File measuresFile = new File( autonomicDir, componentName + Constants.FILE_EXT_MEASURES );
+		Assert.assertTrue( measuresFile.createNewFile());
+
+		map = ResourceUtils.storeInstanceResources( appDir, instance );
+		Assert.assertEquals( 2, map.size());
 	}
 }

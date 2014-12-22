@@ -56,8 +56,11 @@ public class PluginPuppetTest {
 
 	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-puppet" );
 
-	private final Instance inst = new Instance( "sample" ).component( new Component( "some-component" ));
-	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst, PluginPuppet.PLUGIN_NAME );
+	private final Instance inst = new Instance( "sample" )
+			.component( new Component( "some-component" )
+			.installerName( PluginPuppet.PLUGIN_NAME ));
+
+	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst );
 	private PluginPuppet plugin;
 
 	private boolean running = true;

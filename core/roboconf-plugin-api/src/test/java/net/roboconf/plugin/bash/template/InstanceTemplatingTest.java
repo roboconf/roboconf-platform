@@ -37,6 +37,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ImportHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.internal.template.ImportBean;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
@@ -93,7 +94,7 @@ public class InstanceTemplatingTest {
 		Instance instance = new Instance("testInstance");
 		ImportHelpers.updateImports( instance, importsByPrefix );
 
-		//First test templating into a String
+		// First test templating into a String
 		File templateFile = TestUtils.findTestFile( "/instanceTemplate.mustache" );
 		StringWriter writer = new StringWriter();
 		InstanceTemplateHelper.injectInstanceImports(instance, templateFile, writer);
@@ -106,10 +107,10 @@ public class InstanceTemplatingTest {
 	    	Assert.assertTrue("Var was not displayed correctly", writtenString.contains(name+" -> "+vars.get(name)));
 	    }
 
-	    //Test templating into a new file
+	    // Test templating into a new file
 	    File generated = File.createTempFile(instance.getName(), ".pipo");
         InstanceTemplateHelper.injectInstanceImports(instance, templateFile, generated);
         Assert.assertTrue(generated.exists() && generated.isFile());
-        Assert.assertEquals( TestUtils.readFileContent( generated ), writtenString);
+        Assert.assertEquals( Utils.readFileContent( generated ), writtenString);
 	}
 }

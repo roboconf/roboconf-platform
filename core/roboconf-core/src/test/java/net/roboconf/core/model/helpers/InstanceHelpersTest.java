@@ -246,9 +246,8 @@ public class InstanceHelpersTest {
 	@Test
 	public void testFindInstanceDirectoryOnAgent() {
 
-		File f = InstanceHelpers.findInstanceDirectoryOnAgent(
-				new Instance( "inst" ),
-				"my-plugin" );
+		File f = InstanceHelpers.findInstanceDirectoryOnAgent( new Instance( "inst" )
+				.component( new Component( "c" ).installerName( "my-plugin" )));
 
 		File tempDir = new File( System.getProperty( "java.io.tmpdir" ));
 		Assert.assertTrue( f.getAbsolutePath().startsWith( tempDir.getAbsolutePath()));

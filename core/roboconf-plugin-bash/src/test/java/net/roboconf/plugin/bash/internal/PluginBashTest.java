@@ -54,8 +54,11 @@ public class PluginBashTest {
 
 	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-bash" );
 
-	private final Instance inst = new Instance( "sample" ).component( new Component( "some-component" ));
-	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst, PluginBash.PLUGIN_NAME );
+	private final Instance inst = new Instance( "sample" )
+			.component( new Component( "some-component" )
+			.installerName( PluginBash.PLUGIN_NAME ));
+
+	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst );
 	private PluginBash plugin;
 
 

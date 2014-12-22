@@ -200,6 +200,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		} else if( this.rootInstance == null ) {
 			this.logger.fine( "Setting the root instance." );
 			this.rootInstance = newRootInstance;
+			this.agent.setRootInstance(newRootInstance); // Inject root instance in agent
 			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.rootInstance ));
 
 			if( this.rootInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {

@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 
+import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
@@ -105,6 +106,7 @@ public class AgentInitializationTest extends DmTest {
 
 		// Classes from the agent
 		probe.addTest( Agent.class );
+		probe.addTest( AgentMessagingInterface.class );
 		probe.addTest( PluginInterface.class );
 		probe.addTest( PluginException.class );
 		probe.addTest( PluginMock.class );

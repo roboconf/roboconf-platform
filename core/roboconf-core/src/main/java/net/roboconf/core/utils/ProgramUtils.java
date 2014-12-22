@@ -38,8 +38,6 @@ import java.util.logging.Logger;
  * @author Noël - LIG
  * @author Pierre-Yves Gibello - Linagora
  * @author Vincent Zurczak - Linagora
- * FIXME: this class is still messy. Waiting for the execution result should be done in another thread.
- * Use a Future or a call-back mechanism.
  */
 public final class ProgramUtils {
 

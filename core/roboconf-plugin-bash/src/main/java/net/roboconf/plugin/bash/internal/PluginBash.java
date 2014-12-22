@@ -164,7 +164,7 @@ public class PluginBash implements PluginInterface {
     throws IOException, InterruptedException {
 
         this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance );
-        File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+        File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 
         File scriptsFolder = new File(instanceDirectory, SCRIPTS_FOLDER_NAME);
         File templatesFolder = new File(instanceDirectory, TEMPLATES_FOLDER_NAME);

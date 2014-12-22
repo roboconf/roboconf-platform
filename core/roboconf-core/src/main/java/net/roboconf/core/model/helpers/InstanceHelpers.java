@@ -380,10 +380,13 @@ public final class InstanceHelpers {
 	 * @param instance an instance (not null)
 	 * @return a file (not null, but may not exist)
 	 */
-	public static File findInstanceDirectoryOnAgent( Instance instance, String pluginName ) {
+	public static File findInstanceDirectoryOnAgent( Instance instance ) {
+
 		String path = InstanceHelpers.computeInstancePath( instance );
 		path = path.substring( 1 ).replace( '/', '_' ).replace( ' ', '_' );
-		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + pluginName + "/" + path );
+		String installerName = ComponentHelpers.findComponentInstaller( instance.getComponent());
+
+		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + installerName + "/" + path );
 	}
 
 

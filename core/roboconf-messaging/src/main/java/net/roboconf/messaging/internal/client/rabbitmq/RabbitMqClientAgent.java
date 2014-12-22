@@ -145,17 +145,9 @@ public class RabbitMqClientAgent implements IAgentClient {
 		final QueueingConsumer consumer = new QueueingConsumer( this.channel );
 		this.consumerTag = this.channel.basicConsume( queueName, true, consumer );
 
-		new Thread( "Roboconf - Queue listener for Agent " + this.rootInstanceName ) {
-			@Override
-			public void run() {
-				RabbitMqUtils.listenToRabbitMq(
-						"Agent '" + getAgentId() + "'",
-						RabbitMqClientAgent.this.logger,
-						consumer,
-						RabbitMqClientAgent.this.messageQueue );
-			}
-
-		}.start();
+		String threadName = "Roboconf - Queue listener for Agent " + this.rootInstanceName;
+		String id = "Agent '" + getAgentId() + "'";
+		new ListeningThread( threadName, this.logger, consumer, this.messageQueue, id ).start();
 	}
 
 

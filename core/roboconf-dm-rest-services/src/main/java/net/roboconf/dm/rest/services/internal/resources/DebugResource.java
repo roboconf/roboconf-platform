@@ -97,9 +97,7 @@ public class DebugResource implements IDebugResource {
 			// Create a new application and load it
 			if( ma == null ) {
 				tmpDir = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString());
-				if( ! tmpDir.mkdirs())
-					throw new IOException( "Failed to create directory " + tmpDir );
-
+				createDirectory( tmpDir );
 				createApplication( tmpDir, fileContent );
 				this.manager.loadNewApplication( tmpDir );
 			}
@@ -203,8 +201,7 @@ public class DebugResource implements IDebugResource {
 
 		// Write the graph
 		File graphDir = new File( appDirectory, Constants.PROJECT_DIR_GRAPH );
-		if( ! graphDir.mkdirs())
-			throw new IOException( "Failed to create directory " + graphDir );
+		createDirectory( graphDir );
 
 		Component rootComponent = new Component( ROOT_COMPONENT_NAME ).installerName( Constants.TARGET_INSTALLER );
 		Graphs graphs = new Graphs();
@@ -215,24 +212,21 @@ public class DebugResource implements IDebugResource {
 
 		// Write the target.properties file
 		File rootComponentDir = new File( graphDir, ROOT_COMPONENT_NAME );
-		if( ! rootComponentDir.mkdirs())
-			throw new IOException( "Failed to create directory " + rootComponentDir );
+		createDirectory( rootComponentDir );
 
 		InputStream in = new ByteArrayInputStream( targetPropertiesContent.getBytes( "UTF-8" ));
 		Utils.copyStream( in, new File( rootComponentDir, Constants.TARGET_PROPERTIES_FILE_NAME ));
 
 		// Write instances
 		File instDir = new File( appDirectory, Constants.PROJECT_DIR_INSTANCES );
-		if( ! instDir.mkdirs())
-			throw new IOException( "Failed to create directory " + instDir );
+		createDirectory( instDir );
 
 		Instance rootInstance = new Instance( "root" ).component( rootComponent );
 		RuntimeModelIo.writeInstances( new File( instDir, "model.instances" ), Arrays.asList( rootInstance ));
 
 		// Create the meta-data
 		File metaDir = new File( appDirectory, Constants.PROJECT_DIR_DESC );
-		if( ! metaDir.mkdirs())
-			throw new IOException( "Failed to create directory " + metaDir );
+		createDirectory( metaDir );
 
 		ApplicationDescriptor descriptor = new ApplicationDescriptor();
 		descriptor.setName( FAKE_APP_NAME );
@@ -243,5 +237,11 @@ public class DebugResource implements IDebugResource {
 		descriptor.setQualifier( "DEBUG" );
 
 		ApplicationDescriptor.save( new File( metaDir, Constants.PROJECT_FILE_DESCRIPTOR ), descriptor );
+	}
+
+
+	private void createDirectory( File dir ) throws IOException {
+		if( ! dir.mkdirs())
+			throw new IOException( "Failed to create directory " + dir );
 	}
 }

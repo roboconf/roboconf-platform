@@ -36,12 +36,12 @@ import javax.ws.rs.core.Response.Status;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.target.TargetHelpers;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
@@ -99,7 +99,7 @@ public class DebuResourceTest {
 		File f = new File( dir, Constants.PROJECT_DIR_GRAPH + "/" + DebugResource.ROOT_COMPONENT_NAME + "/" + Constants.TARGET_PROPERTIES_FILE_NAME );
 		Assert.assertTrue( f.exists());
 
-		String readContent = TestUtils.readFileContent( f );
+		String readContent = Utils.readFileContent( f );
 		Assert.assertEquals( fileContent, readContent );
 	}
 

@@ -207,15 +207,9 @@ public class RabbitMqClientDm implements IDmClient {
 
 			// But there is only one message queue for the entire DM.
 			// And the DM should only have ONE message processor.
-			new Thread( "Roboconf - Queue listener for the DM" ) {
-				@Override
-				public void run() {
-					RabbitMqUtils.listenToRabbitMq(
-							"The DM", RabbitMqClientDm.this.logger,
-							consumer, RabbitMqClientDm.this.messageQueue );
-				}
-
-			}.start();
+			String threadName = "Roboconf - Queue listener for the DM";
+			String id = "The DM";
+			new ListeningThread( threadName, this.logger, consumer, this.messageQueue, id ).start();
 		}
 	}
 

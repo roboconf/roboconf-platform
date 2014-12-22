@@ -63,9 +63,24 @@ public interface Constants {
 	String PROJECT_DIR_INSTANCES = "instances";
 
 	/**
+	 * The <strong>autonomic</strong> directory.
+	 */
+	String PROJECT_DIR_AUTONOMIC = "autonomic";
+
+	/**
 	 * The <strong>application.properties</strong> file name.
 	 */
 	String PROJECT_FILE_DESCRIPTOR = "application.properties";
+
+	/**
+	 * The <strong>measures</strong> file extension.
+	 */
+	String FILE_EXT_MEASURES = ".measures";
+
+	/**
+	 * The <strong>rules</strong> file extension.
+	 */
+	String FILE_EXT_RULES = ".rules";
 
 
 	/**

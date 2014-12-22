@@ -62,7 +62,7 @@ public class DmReturnListener implements ReturnListener {
 			Message msg = SerializationUtils.deserializeObject( body );
 			messageType = msg.getClass().getName();
 
-		} catch( ClassNotFoundException e ) {
+		} catch( Exception e ) {
 			this.logger.severe( "Failed to deserialize a message object." );
 			Utils.logException( this.logger, e );
 		}

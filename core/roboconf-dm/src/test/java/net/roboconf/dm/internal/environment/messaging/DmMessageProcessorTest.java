@@ -42,12 +42,17 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class DmMessageProcessorTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 	private TestApplication app;
 	private DmMessageProcessor processor;
@@ -55,11 +60,12 @@ public class DmMessageProcessorTest {
 
 
 	@Before
-	public void resetManager() {
+	public void resetManager() throws Exception {
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
 
 		this.app = new TestApplication();

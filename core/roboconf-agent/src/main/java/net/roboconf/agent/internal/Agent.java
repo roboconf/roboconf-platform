@@ -35,12 +35,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
+import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.internal.misc.AgentConstants;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
@@ -56,7 +58,7 @@ import net.roboconf.plugin.api.PluginInterface;
  *
  * @author Vincent Zurczak - Linagora
  */
-public class Agent {
+public class Agent implements AgentMessagingInterface {
 
 	// Component properties (ipojo)
 	String messageServerIp, messageServerUsername, messageServerPassword;
@@ -71,7 +73,7 @@ public class Agent {
 	private String messagingFactoryType;
 	private ReconfigurableClientAgent messagingClient;
 	Timer heartBeatTimer;
-
+	private Instance rootInstance;
 
 	/**
 	 * Constructor.
@@ -179,6 +181,7 @@ public class Agent {
 	/**
 	 * @return the client for the messaging server
 	 */
+	@Override
 	public ReconfigurableClientAgent getMessagingClient() {
 		return this.messagingClient;
 	}
@@ -199,7 +202,7 @@ public class Agent {
 		} else {
 			String installerName = null;
 			if( instance.getComponent() != null )
-				installerName = instance.getComponent().getInstallerName();
+				installerName = ComponentHelpers.findComponentInstaller( instance.getComponent());
 
 			// Run through available plug-ins
 			if( this.plugins != null ) {
@@ -347,6 +350,7 @@ public class Agent {
 	/**
 	 * @return the application name
 	 */
+	@Override
 	public String getApplicationName() {
 		return this.applicationName;
 	}
@@ -468,4 +472,16 @@ public class Agent {
 
 		return sb.toString();
 	}
+
+
+	@Override
+	public Instance getRootInstance() {
+		return this.rootInstance;
+	}
+
+
+	public void setRootInstance(Instance rootInstance) {
+		this.rootInstance = rootInstance;
+	}
+
 }

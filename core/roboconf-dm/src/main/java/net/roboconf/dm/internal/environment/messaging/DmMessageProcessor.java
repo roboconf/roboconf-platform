@@ -34,10 +34,12 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
@@ -57,6 +59,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 	private final Manager manager;
+	private final RuleBasedEventHandler ruleBasedHandler;
 
 
 	/**
@@ -66,6 +69,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	public DmMessageProcessor( Manager manager ) {
 		super( "Roboconf DM - Message Processor" );
 		this.manager = manager;
+		this.ruleBasedHandler = new RuleBasedEventHandler( this.manager );
 	}
 
 
@@ -88,6 +92,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 		else if( message instanceof MsgNotifHeartbeat )
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
+
+		else if(message instanceof MsgNotifAutonomic)
+			processMsgMonitoringEvent((MsgNotifAutonomic) message );
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
@@ -219,6 +226,28 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 				instance.getParent().getChildren().remove( instance );
 
 			this.logger.info( "Instance " + instancePath + " was removed from the model." );
+		}
+	}
+
+
+	private void processMsgMonitoringEvent( MsgNotifAutonomic message ) {
+
+		Application app = this.manager.findApplicationByName( message.getApplicationName());
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, message.getRootInstanceName());
+
+		// If 'app' is null, then 'instance' is also null.
+		if( rootInstance == null ) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A notification associated with autonomic management was received for an unknown instance: " );
+			sb.append( message.getRootInstanceName());
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
+			this.logger.warning( sb.toString());
+
+		} else {
+			ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( app.getName());
+			this.ruleBasedHandler.handleEvent( ma, message );
 		}
 	}
 }
