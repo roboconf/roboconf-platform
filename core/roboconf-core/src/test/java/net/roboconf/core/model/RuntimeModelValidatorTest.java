@@ -135,12 +135,24 @@ public class RuntimeModelValidatorTest {
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
-		comp.importedVariables.remove( "" );
+		comp.importedVariables.clear();
 
 		comp.importedVariables.put( "comp.inva!id", Boolean.FALSE );
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
+		comp.importedVariables.clear();
+
+		comp.exportedVariables.put( "toto", "" );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_VARIABLE_VALUE, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+		comp.exportedVariables.clear();
+
+		comp.exportedVariables.put( "toto.ip", "" );
+		iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Assert.assertFalse( iterator.hasNext());
+		comp.exportedVariables.clear();
 	}
 
 
@@ -165,6 +177,29 @@ public class RuntimeModelValidatorTest {
 		facet.setName( "facet" );
 		iterator = RuntimeModelValidator.validate( facet ).iterator();
 		Assert.assertFalse( iterator.hasNext());
+
+		facet.exportedVariables.put( "", "value" );
+		iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+		facet.exportedVariables.clear();
+
+		facet.exportedVariables.put( "facet.inva!id", "value" );
+		iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+		facet.exportedVariables.clear();
+
+		facet.exportedVariables.put( "toto", "" );
+		iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_VARIABLE_VALUE, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+		facet.exportedVariables.clear();
+
+		facet.exportedVariables.put( "toto.ip", "" );
+		iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Assert.assertFalse( iterator.hasNext());
+		facet.exportedVariables.clear();
 	}
 
 
@@ -256,6 +291,21 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( 2, errors.size());
 		for( RoboconfError error: errors )
 			Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS, error.getErrorCode());
+	}
+
+
+	@Test
+	public void testGraphs_notRoot() {
+
+		Component comp1 = new Component( "comp1" ).installerName( Constants.TARGET_INSTALLER );
+		Component comp2 = new Component( "comp2" ).installerName( Constants.TARGET_INSTALLER );
+		comp1.addChild( comp2 );
+
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( comp2 );
+		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
+		Assert.assertEquals( ErrorCode.RM_NOT_A_ROOT_COMPONENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
 	}
 
 

@@ -587,7 +587,7 @@ public final class ComponentHelpers {
 					result.addAll( findAllExtendingComponents( cType ));
 				}
 
-				else if( type instanceof Facet ) {
+				else {
 					Facet fType = (Facet) type;
 
 					// Find all the "super" facets

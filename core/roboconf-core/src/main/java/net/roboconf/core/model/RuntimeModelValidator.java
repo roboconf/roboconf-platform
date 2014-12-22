@@ -174,6 +174,7 @@ public final class RuntimeModelValidator {
 				result.add( new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME, "Variable name: " + exportedVarName ));
 
 			else if( Utils.isEmptyOrWhitespaces( entry.getValue())
+					&& ! Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( exportedVarName )
 					&& ! exportedVarName.toLowerCase().endsWith( Constants.SPECIFIC_VARIABLE_IP ))
 				result.add( new RoboconfError( ErrorCode.RM_MISSING_VARIABLE_VALUE, "Variable name: " + exportedVarName ));
 		}

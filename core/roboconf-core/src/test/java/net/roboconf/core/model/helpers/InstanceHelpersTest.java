@@ -37,6 +37,7 @@ import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
@@ -169,6 +170,65 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( 2, map.size());
 		Assert.assertEquals( "another value", map.get( "comp 1.var1" ));
 		Assert.assertEquals( "value2", map.get( "comp 1.var2" ));
+	}
+
+
+	@Test
+	public void testFindAllExportedVariables_withFacets() {
+
+		Component component = new Component( "comp 1" );
+		component.exportedVariables.put( "var1", "another value" );
+		component.exportedVariables.put( "var2", "var 2 value" );
+		component.exportedVariables.put( "ip", null );
+
+		Facet f1 = new Facet( "f1" );
+		f1.exportedVariables.put( "param1", "value1" );
+		component.associateFacet( f1 );
+
+		Facet f2 = new Facet( "f2" );
+		f2.exportedVariables.put( "param2", "value2" );
+		component.associateFacet( f2 );
+
+		Facet f3 = new Facet( "f3" );
+		f3.exportedVariables.put( "param3", "value3" );
+		component.associateFacet( f3 );
+		component.exportedVariables.put( "f3.param3", "component overrides facet" );
+
+		Facet f4 = new Facet( "f4" );
+		f4.exportedVariables.put( "param4-1", "value4" );
+		f4.exportedVariables.put( "param4-2", "value4" );
+		f2.extendFacet( f4 );
+		f2.exportedVariables.put( "f4.param4-1", "facet overrides facet" );
+
+		Instance instance = new Instance( "inst 1" );
+		instance.setComponent( component );
+		instance.overridenExports.put( "var1", "some value" );
+		instance.overridenExports.put( "toto.ip", null );
+		instance.overridenExports.put( "f1.param1", "my-value" );
+		instance.data.put( Instance.IP_ADDRESS, "192.168.1.18" );
+
+		Component extendedComponent = new Component( "extended" );
+		extendedComponent.exportedVariables.put( "v", "hop" );
+		component.extendComponent( extendedComponent );
+		component.exportedVariables.put( "extended.v", "nop" );
+
+		Map<String,String> map = InstanceHelpers.findAllExportedVariables( instance );
+		Assert.assertEquals( 10, map.size());
+
+		Assert.assertEquals( "some value", map.get( "comp 1.var1" ));
+		Assert.assertEquals( "var 2 value", map.get( "comp 1.var2" ));
+		Assert.assertEquals( "192.168.1.18", map.get( "comp 1.ip" ));
+
+		Assert.assertEquals( "192.168.1.18", map.get( "toto.ip" ));
+
+		Assert.assertEquals( "nop", map.get( "extended.v" ));
+
+		Assert.assertEquals( "my-value", map.get( "f1.param1" ));
+		Assert.assertEquals( "value2", map.get( "f2.param2" ));
+		Assert.assertEquals( "component overrides facet", map.get( "f3.param3" ));
+
+		Assert.assertEquals( "facet overrides facet", map.get( "f4.param4-1" ));
+		Assert.assertEquals( "value4", map.get( "f4.param4-2" ));
 	}
 
 

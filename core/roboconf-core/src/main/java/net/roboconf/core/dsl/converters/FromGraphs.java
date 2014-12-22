@@ -28,7 +28,6 @@ package net.roboconf.core.dsl.converters;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -54,9 +53,6 @@ import net.roboconf.core.utils.Utils;
  * @author Vincent Zurczak - Linagora
  */
 public class FromGraphs {
-
-	private final Map<String,BlockFacet> facets = new HashMap<String,BlockFacet> ();
-
 
 	/**
 	 * Builds a file definition from a graph.
@@ -94,13 +90,6 @@ public class FromGraphs {
 			}
 		}
 
-		// Write the facets
-		for( BlockFacet facet : this.facets.values()) {
-			result.getBlocks().add( new BlockComment( result, "# Facets" ));
-			result.getBlocks().add( facet );
-			result.getBlocks().add( new BlockBlank( result, "\n" ));
-		}
-
 		return result;
 	}
 
@@ -135,20 +124,14 @@ public class FromGraphs {
 		}
 
 		// Facets
-		StringBuilder sb = new StringBuilder();
-		for( Iterator<Facet> it = component.getFacets().iterator(); it.hasNext(); ) {
-			sb.append( it.next().getName());
-			if( it.hasNext())
-				sb.append( ", " );
-		}
-
-		if( sb.length() > 0 ) {
-			p = new BlockProperty( file, ParsingConstants.PROPERTY_COMPONENT_FACETS, sb.toString());
+		String s = writeCollection( component.getFacets());
+		if( ! Utils.isEmptyOrWhitespaces( s )) {
+			p = new BlockProperty( file, ParsingConstants.PROPERTY_COMPONENT_FACETS, s );
 			blockComponent.getInnerBlocks().add( p );
 		}
 
 		// Imported Variables
-		sb = new StringBuilder();
+		StringBuilder sb = new StringBuilder();
 		for( Iterator<Map.Entry<String,Boolean>> it=component.importedVariables.entrySet().iterator(); it.hasNext(); ) {
 
 			Map.Entry<String,Boolean> entry = it.next();
@@ -168,14 +151,14 @@ public class FromGraphs {
 		}
 
 		// Exported variables
-		String s = writeExportedVariables( component );
+		s = writeExportedVariables( component );
 		if( ! Utils.isEmptyOrWhitespaces( s )) {
 			p = new BlockProperty( file, ParsingConstants.PROPERTY_GRAPH_EXPORTS, s );
 			blockComponent.getInnerBlocks().add( p );
 		}
 
 		// Children
-		s = writeChildren( component );
+		s = writeCollection( component.getChildren());
 		if( ! Utils.isEmptyOrWhitespaces( s )) {
 			p = new BlockProperty( file, ParsingConstants.PROPERTY_GRAPH_CHILDREN, s );
 			blockComponent.getInnerBlocks().add( p );
@@ -205,27 +188,21 @@ public class FromGraphs {
 
 		// Extended facets
 		BlockProperty p;
-		StringBuilder sb = new StringBuilder();
-		for( Iterator<Facet> it = facet.getExtendedFacets().iterator(); it.hasNext(); ) {
-			sb.append( it.next().getName());
-			if( it.hasNext())
-				sb.append( ", " );
-		}
-
-		if( sb.length() > 0 ) {
-			p = new BlockProperty( file, ParsingConstants.PROPERTY_COMPONENT_FACETS, sb.toString());
+		String s = writeCollection( facet.getExtendedFacets());
+		if( ! Utils.isEmptyOrWhitespaces( s )) {
+			p = new BlockProperty( file, ParsingConstants.PROPERTY_GRAPH_EXTENDS, s );
 			blockFacet.getInnerBlocks().add( p );
 		}
 
 		// Exported variables
-		String s = writeExportedVariables( facet );
+		s = writeExportedVariables( facet );
 		if( ! Utils.isEmptyOrWhitespaces( s )) {
 			p = new BlockProperty( file, ParsingConstants.PROPERTY_GRAPH_EXPORTS, s );
 			blockFacet.getInnerBlocks().add( p );
 		}
 
 		// Children
-		s = writeChildren( facet );
+		s = writeCollection( facet.getChildren());
 		if( ! Utils.isEmptyOrWhitespaces( s )) {
 			p = new BlockProperty( file, ParsingConstants.PROPERTY_GRAPH_CHILDREN, s );
 			blockFacet.getInnerBlocks().add( p );
@@ -255,10 +232,10 @@ public class FromGraphs {
 	}
 
 
-	private String writeChildren( AbstractType type ) {
+	private String writeCollection( Collection<? extends AbstractType> types ) {
 
 		StringBuilder sb = new StringBuilder();
-		for( Iterator<AbstractType> it=type.getChildren().iterator(); it.hasNext(); ) {
+		for( Iterator<? extends AbstractType> it=types.iterator(); it.hasNext(); ) {
 			sb.append( it.next().getName());
 			if( it.hasNext())
 				sb.append( ", " );

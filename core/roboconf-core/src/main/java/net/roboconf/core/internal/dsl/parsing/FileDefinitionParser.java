@@ -102,10 +102,7 @@ public class FileDefinitionParser {
 			mergeContiguousRegions( this.definitionFile.getBlocks());
 
 		} catch( IOException e ) {
-			ModelError error = new ModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber );
-			if( e.getMessage() != null )
-				error.setDetails( e.getMessage());
-
+			ModelError error = new ModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber, e.getMessage());
 			this.definitionFile.getParsingErrors().add( error );
 		}
 

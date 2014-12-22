@@ -26,6 +26,7 @@
 package net.roboconf.core.dsl.converters;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -54,6 +56,52 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 		Assert.assertEquals( "my-own-installer", graphs.getRootComponents().iterator().next().getInstallerName());
+	}
+
+
+	@Test
+	public void test_conflictingNames() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/conflicting-names.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Iterator<ModelError> it = fromDef.getErrors().iterator();
+		Assert.assertEquals( ErrorCode.CO_CONFLICTING_NAME, it.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_CONFLICTING_NAME, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+
+		Assert.assertEquals( "type", graphs.getRootComponents().iterator().next().getName());
+	}
+
+
+	@Test
+	public void test_inexistingChildInComponent() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/inexisting-child-in-component.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Iterator<ModelError> it = fromDef.getErrors().iterator();
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+
+		Assert.assertEquals( "root", graphs.getRootComponents().iterator().next().getName());
+	}
+
+
+	@Test
+	public void test_inexistingChildInFacet() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/inexisting-child-in-facet.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Iterator<ModelError> it = fromDef.getErrors().iterator();
+		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, it.next().getErrorCode());
+		Assert.assertFalse( it.hasNext());
+
+		Assert.assertEquals( 0, graphs.getRootComponents().size());
 	}
 
 
@@ -154,6 +202,40 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertTrue( componentA.importedVariables.get( "A.port" ));
 		Assert.assertTrue( componentA.importedVariables.get( "A.ip" ));
+	}
+
+
+	@Test
+	public void testComplexHierarchy() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/complex-hierarchy.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( graphs ).size());
+
+		Component root = ComponentHelpers.findComponent( graphs, "root" );
+		Assert.assertNotNull( root );
+
+		Collection<Component> ancestors = ComponentHelpers.findAllAncestors( root );
+		Assert.assertEquals( 0, ancestors.size());
+
+		Collection<Component> children = ComponentHelpers.findAllChildren( root );
+		Assert.assertEquals( 1, children.size());
+
+		Component tomcat = children.iterator().next();
+		Assert.assertEquals( "Tomcat", tomcat.getName());
+
+		ancestors = ComponentHelpers.findAllAncestors( tomcat );
+		Assert.assertEquals( 1, ancestors.size());
+		Assert.assertEquals( root, ancestors.iterator().next());
+
+		children = ComponentHelpers.findAllChildren( tomcat );
+		Assert.assertEquals( 1, children.size());
+
+		Component app = children.iterator().next();
+		Assert.assertEquals( "App", app.getName());
 	}
 
 

@@ -185,11 +185,7 @@ public final class InstanceHelpers {
 		}
 
 		// Update some values
-		String ip = null;
-		Instance rootInstance = findRootInstance( instance );
-		if( rootInstance != null )
-			ip = rootInstance.data.get( Instance.IP_ADDRESS );
-
+		String ip = findRootInstance( instance ).data.get( Instance.IP_ADDRESS );
 		if( ip != null )
 			VariableHelpers.updateNetworkVariables( result, ip );
 

@@ -35,8 +35,10 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.internal.tests.ComplexApplicationFactory1;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -137,6 +139,14 @@ public class FromGraphsTest {
 		cB.exportedVariables.put( "B.ip", null );
 
 		compareGraphs( graphs, false );
+	}
+
+
+	@Test
+	public void testFromGraphs_complexApplication() throws Exception {
+
+		Application app = ComplexApplicationFactory1.newApplication();
+		compareGraphs( app.getGraphs(), false );
 	}
 
 
