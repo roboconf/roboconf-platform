@@ -63,7 +63,7 @@ public class MsgCmdAddInstance extends Message {
 
 		this.channels = instance.channels;
 		this.data = instance.data;
-		this.overridenExports = instance.overridenExports;
+		this.overridenExports = instance.overriddenExports;
 	}
 
 	/**
@@ -102,7 +102,7 @@ public class MsgCmdAddInstance extends Message {
 	}
 
 	/**
-	 * @return the overridenExports
+	 * @return the overriddenExports
 	 */
 	public Map<String,String> getOverridenExports() {
 		return this.overridenExports;
@@ -116,7 +116,7 @@ public class MsgCmdAddInstance extends Message {
 	}
 
 	/**
-	 * @param overridenExports the overridenExports to set
+	 * @param overriddenExports the overriddenExports to set
 	 */
 	public void setOverridenExports( Map<String,String> overridenExports ) {
 		this.overridenExports = overridenExports;

@@ -300,18 +300,18 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( tomcat1.channels, tomcat3.channels );
 
 		Assert.assertEquals( 0, tomcat1.getChildren().size());
-		Assert.assertEquals( 1, tomcat1.overridenExports.size());
-		Assert.assertEquals( "9021", tomcat1.overridenExports.get( "portAJP" ));
+		Assert.assertEquals( 1, tomcat1.overriddenExports.size());
+		Assert.assertEquals( "9021", tomcat1.overriddenExports.get( "portAJP" ));
 		Assert.assertEquals( "9021", InstanceHelpers.findAllExportedVariables( tomcat1 ).get( "Tomcat.portAJP" ));
 
 		Assert.assertEquals( 0, tomcat2.getChildren().size());
-		Assert.assertEquals( 1, tomcat2.overridenExports.size());
-		Assert.assertEquals( "9021", tomcat2.overridenExports.get( "portAJP" ));
+		Assert.assertEquals( 1, tomcat2.overriddenExports.size());
+		Assert.assertEquals( "9021", tomcat2.overriddenExports.get( "portAJP" ));
 		Assert.assertEquals( "9021", InstanceHelpers.findAllExportedVariables( tomcat2 ).get( "Tomcat.portAJP" ));
 
 		Assert.assertEquals( 0, tomcat3.getChildren().size());
-		Assert.assertEquals( 1, tomcat3.overridenExports.size());
-		Assert.assertEquals( "9021", tomcat3.overridenExports.get( "portAJP" ));
+		Assert.assertEquals( 1, tomcat3.overriddenExports.size());
+		Assert.assertEquals( "9021", tomcat3.overriddenExports.get( "portAJP" ));
 		Assert.assertEquals( "9021", InstanceHelpers.findAllExportedVariables( tomcat3 ).get( "Tomcat.portAJP" ));
 	}
 
@@ -500,7 +500,7 @@ public class RuntimeModelIoTest {
 
 		Component component = new Component( "comp" );
 		Instance instance = new Instance( "inst" ).component( component ).status( InstanceStatus.DEPLOYING ).channel( "c" );
-		instance.overridenExports.put( "check", "true" );
+		instance.overriddenExports.put( "check", "true" );
 		instance.data.put( "something", "else" );
 
 		File targetFile = this.folder.newFile();

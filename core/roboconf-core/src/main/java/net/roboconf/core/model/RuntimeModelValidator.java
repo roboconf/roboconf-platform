@@ -325,7 +325,7 @@ public final class RuntimeModelValidator {
 			localNameToFullNames.put( localName, fullNames );
 		}
 
-		for( Map.Entry<String,String> entry : instance.overridenExports.entrySet()) {
+		for( Map.Entry<String,String> entry : instance.overriddenExports.entrySet()) {
 
 			// The overridden export is complete: Tomcat.port = ...
 			if( inheritedVarNames.contains( entry.getKey()))

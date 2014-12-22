@@ -256,7 +256,7 @@ public class AgentMessageProcessor_ImportsTest {
 		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
-		i1.overridenExports.put( "cluster.ip", "192.168.1.15" );
+		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );
 		processor.rootInstance = i1;
 
 		// Adding itself does not work

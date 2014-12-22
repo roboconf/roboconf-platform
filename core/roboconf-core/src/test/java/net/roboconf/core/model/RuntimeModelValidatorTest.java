@@ -335,7 +335,7 @@ public class RuntimeModelValidatorTest {
 		inst.setName( "my instance" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( inst ).size());
 
-		inst.overridenExports.put( "inst.value", "whatever" );
+		inst.overriddenExports.put( "inst.value", "whatever" );
 		iterator = RuntimeModelValidator.validate( inst ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -602,21 +602,21 @@ public class RuntimeModelValidatorTest {
 		Collection<RoboconfError> errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 0, errors.size());
 
-		tomcatInstance.overridenExports.put( "Tomcat.port", "whatever" );
+		tomcatInstance.overriddenExports.put( "Tomcat.port", "whatever" );
 		errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 0, errors.size());
 
-		tomcatInstance.overridenExports.put( "oops", "whatever" );
+		tomcatInstance.overriddenExports.put( "oops", "whatever" );
 		errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, errors.iterator().next().getErrorCode());
 
-		tomcatInstance.overridenExports.remove( "oops" );
-		tomcatInstance.overridenExports.put( "port", "whatever" );
+		tomcatInstance.overriddenExports.remove( "oops" );
+		tomcatInstance.overriddenExports.put( "port", "whatever" );
 		errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 0, errors.size());
 
-		tomcatInstance.overridenExports.remove( "Tomcat.port" );
+		tomcatInstance.overriddenExports.remove( "Tomcat.port" );
 		errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 0, errors.size());
 
@@ -627,13 +627,13 @@ public class RuntimeModelValidatorTest {
 		errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 0, errors.size());
 
-		tomcatInstance.overridenExports.put( "ip", "localhost" );
+		tomcatInstance.overriddenExports.put( "ip", "localhost" );
 		errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.RM_AMBIGUOUS_OVERRIDING, errors.iterator().next().getErrorCode());
 
-		tomcatInstance.overridenExports.remove( "ip" );
-		tomcatInstance.overridenExports.put( "facet.ip", "localhost" );
+		tomcatInstance.overriddenExports.remove( "ip" );
+		tomcatInstance.overriddenExports.put( "facet.ip", "localhost" );
 		errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 0, errors.size());
 	}

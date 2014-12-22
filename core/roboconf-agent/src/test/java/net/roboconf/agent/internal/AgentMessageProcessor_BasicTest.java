@@ -128,15 +128,15 @@ public class AgentMessageProcessor_BasicTest {
 		Instance newMySqlVm = new Instance( app.getMySqlVm().getName()).component( app.getMySqlVm().getComponent());
 		processor.rootInstance = newMySqlVm;
 
-		app.getMySql().overridenExports.put( "some-value", "loop" );
+		app.getMySql().overriddenExports.put( "some-value", "loop" );
 		Assert.assertEquals( 0, newMySqlVm.getChildren().size());
 		processor.processMessage( new MsgCmdAddInstance( app.getMySql()));
 		Assert.assertEquals( 1, newMySqlVm.getChildren().size());
 
 		Instance newChild = newMySqlVm.getChildren().iterator().next();
 		Assert.assertEquals( app.getMySql(), newChild );
-		Assert.assertEquals( 1, newChild.overridenExports.size());
-		Assert.assertEquals( "loop", newChild.overridenExports.get( "some-value" ));
+		Assert.assertEquals( 1, newChild.overriddenExports.size());
+		Assert.assertEquals( "loop", newChild.overriddenExports.get( "some-value" ));
 		Assert.assertEquals( "true", newChild.data.get( PluginMock.INIT_PROPERTY ));
 
 		// Inserting an existing child fails

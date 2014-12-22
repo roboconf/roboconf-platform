@@ -137,8 +137,9 @@
 						</goals>
 						<configuration>
 							<target>
-								<copy file="${basedir}/karaf-resources/org.ops4j.pax.logging.cfg" todir="target/assembly/etc" overwrite="true" />
-								<copy file="${basedir}/karaf-resources/net.roboconf.dm.configuration.cfg" todir="target/assembly/etc" overwrite="true" />
+								<copy todir="target/assembly/etc" overwrite="true">
+									<fileset dir="${basedir}/karaf-resources" includes="**/*.cfg" />
+								</copy>
 							</target>
 						</configuration>
 					</execution>

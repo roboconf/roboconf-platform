@@ -57,11 +57,11 @@ public class ImportHelpersTest {
 		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
-		i1.overridenExports.put( "cluster.ip", "192.168.1.15" );
+		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );
 		i1.setStatus( InstanceStatus.STARTING );
 
 		Instance i2 = new Instance( "inst 2" ).component( clusterNodeComponent );
-		i2.overridenExports.put( "cluster.ip", "192.168.1.28" );
+		i2.overriddenExports.put( "cluster.ip", "192.168.1.28" );
 
 		// The cluster node does not know about the other node
 		Assert.assertTrue( ImportHelpers.hasAllRequiredImports( i1, null ));
@@ -95,11 +95,11 @@ public class ImportHelpersTest {
 		appServerComponent.importedVariables.put( "database.collection", Boolean.TRUE );
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
-		appServer.overridenExports.put( "app-server.ip", "192.168.1.15" );
+		appServer.overriddenExports.put( "app-server.ip", "192.168.1.15" );
 		appServer.setStatus( InstanceStatus.STARTING );
 
 		Instance database = new Instance( "database" ).component( dbComponent );
-		database.overridenExports.put( "database.ip", "192.168.1.28" );
+		database.overriddenExports.put( "database.ip", "192.168.1.28" );
 
 		// The application server does not know about the database
 		Assert.assertFalse( ImportHelpers.hasAllRequiredImports( appServer, Logger.getAnonymousLogger()));

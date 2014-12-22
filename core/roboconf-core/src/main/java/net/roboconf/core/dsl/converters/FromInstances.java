@@ -110,7 +110,7 @@ public class FromInstances {
 				currentBlock.getInnerBlocks().add( p );
 			}
 
-			for( Map.Entry<String,String> export : instance.overridenExports.entrySet()) {
+			for( Map.Entry<String,String> export : instance.overriddenExports.entrySet()) {
 				p = new BlockProperty( file, export.getKey(), export.getValue());
 				currentBlock.getInnerBlocks().add( p );
 			}

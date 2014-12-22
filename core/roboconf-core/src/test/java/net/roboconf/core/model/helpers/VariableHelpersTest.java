@@ -121,10 +121,10 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForExportedVariables_withInstanceVariablesOnly() {
 
 		Instance instance = new Instance( "inst" ).component( new Component( "comp" ));
-		instance.overridenExports.put( "comp.ip", "" );
-		instance.overridenExports.put( "comp.split.property", "" );
-		instance.overridenExports.put( "comp.port", "8000" );
-		instance.overridenExports.put( "facet.desc", "some description" );
+		instance.overriddenExports.put( "comp.ip", "" );
+		instance.overriddenExports.put( "comp.split.property", "" );
+		instance.overriddenExports.put( "comp.port", "8000" );
+		instance.overriddenExports.put( "facet.desc", "some description" );
 
 		Set<String> prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );
 		Assert.assertEquals( 2, prefixes.size());

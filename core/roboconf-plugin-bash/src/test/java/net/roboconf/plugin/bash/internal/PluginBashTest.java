@@ -70,9 +70,9 @@ public class PluginBashTest {
 		this.plugin.setNames( "app", "test" );
 
 		// Useful to watch real bash content on debug (and for code coverage)
-		this.inst.overridenExports.put( "facet.prop1", "value1" );
-		this.inst.overridenExports.put( "some-component.prop2", "value2" );
-		this.inst.overridenExports.put( "prop3", "value3" );
+		this.inst.overriddenExports.put( "facet.prop1", "value1" );
+		this.inst.overriddenExports.put( "some-component.prop2", "value2" );
+		this.inst.overriddenExports.put( "prop3", "value3" );
 
 		Map<String,String> exportedVariables1 = new HashMap<String,String> ();
 		exportedVariables1.put( "ip", "http://192.168.1.15" );

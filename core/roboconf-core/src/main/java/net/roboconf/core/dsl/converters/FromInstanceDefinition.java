@@ -270,7 +270,7 @@ public class FromInstanceDefinition {
 						continue;
 
 					String pValue = ((BlockProperty) innerBlock).getValue();
-					instance.overridenExports.put( pName, pValue );
+					instance.overriddenExports.put( pName, pValue );
 					continue;
 				}
 

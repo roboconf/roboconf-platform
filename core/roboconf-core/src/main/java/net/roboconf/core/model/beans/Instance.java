@@ -70,7 +70,7 @@ public class Instance implements Serializable {
 
 	public final Collection<String> channels = new HashSet<String> ();
 	public final Map<String,String> data = new LinkedHashMap<String,String>( 0 );
-	public final Map<String,String> overridenExports = new HashMap<String,String> ();
+	public final Map<String,String> overriddenExports = new HashMap<String,String> ();
 
 	// At runtime, imported variables are grouped by prefix.
 	// The prefix is a component or a facet name.

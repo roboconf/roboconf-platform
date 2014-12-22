@@ -96,7 +96,7 @@ public class FromInstancesTest {
 		Instance tomcat = new Instance( "i-tomcat" ).component( tomcatComponent );
 		Instance war = new Instance( "i-war" ).component( warComponent );
 
-		tomcat.overridenExports.put( "Tomcat.port", "9004" );
+		tomcat.overriddenExports.put( "Tomcat.port", "9004" );
 		InstanceHelpers.insertChild( vm, tomcat );
 		InstanceHelpers.insertChild( tomcat, war );
 
@@ -127,7 +127,7 @@ public class FromInstancesTest {
 		Instance tomcat = new Instance( "i-tomcat" ).component( tomcatComponent );
 		Instance war = new Instance( "i-war" ).component( warComponent );
 
-		tomcat.overridenExports.put( "Tomcat.port", "9004" );
+		tomcat.overriddenExports.put( "Tomcat.port", "9004" );
 		InstanceHelpers.insertChild( vm, tomcat );
 		InstanceHelpers.insertChild( tomcat, war );
 
@@ -140,7 +140,7 @@ public class FromInstancesTest {
 		Instance tomcat3 = new Instance( "i-tomcat-2" ).component( tomcatComponent );
 		Instance war2 = new Instance( "i-war" ).component( warComponent );
 
-		tomcat3.overridenExports.put( "Tomcat.port", "9081" );
+		tomcat3.overriddenExports.put( "Tomcat.port", "9081" );
 		InstanceHelpers.insertChild( vm3, tomcat2 );
 		InstanceHelpers.insertChild( vm3, tomcat3 );
 		InstanceHelpers.insertChild( tomcat3, war2 );
@@ -244,11 +244,11 @@ public class FromInstancesTest {
 				Assert.assertEquals( instance.getStatus(), newInstance.getStatus());
 				Assert.assertEquals( instance.getChildren().size(), newInstance.getChildren().size());
 				Assert.assertEquals( instance.data, newInstance.data);
-				Assert.assertEquals( instance.overridenExports.size(), newInstance.overridenExports.size());
+				Assert.assertEquals( instance.overriddenExports.size(), newInstance.overriddenExports.size());
 
-				for( Map.Entry<String,String> entry : instance.overridenExports.entrySet()) {
-					Assert.assertTrue( instance.getName(), newInstance.overridenExports.containsKey( entry.getKey()));
-					String value = newInstance.overridenExports.get( entry.getKey());
+				for( Map.Entry<String,String> entry : instance.overriddenExports.entrySet()) {
+					Assert.assertTrue( instance.getName(), newInstance.overriddenExports.containsKey( entry.getKey()));
+					String value = newInstance.overriddenExports.get( entry.getKey());
 					Assert.assertEquals( instance.getName(), entry.getValue(), value );
 				}
 			}

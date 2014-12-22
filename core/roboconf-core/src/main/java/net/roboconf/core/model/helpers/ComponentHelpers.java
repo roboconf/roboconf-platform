@@ -570,7 +570,7 @@ public final class ComponentHelpers {
 		for( Component c : findAllExtendedComponents( component )) {
 
 			// A component may have zero child or ancestor.
-			// Bit its facets may define ones.
+			// But its facets may define ones.
 			Collection<AbstractType> list = new HashSet<AbstractType> ();
 			list.addAll( children ? c.getChildren() : c.getAncestors());
 			for( Facet facet : findAllFacets( c ))

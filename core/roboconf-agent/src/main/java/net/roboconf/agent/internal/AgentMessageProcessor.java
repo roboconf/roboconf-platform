@@ -277,7 +277,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 				newInstance.data.putAll( msg.getData());
 
 			if( msg.getOverridenExports() != null )
-				newInstance.overridenExports.putAll( msg.getOverridenExports());
+				newInstance.overriddenExports.putAll( msg.getOverridenExports());
 
 			Application tempApp = new Application( "temp app" );
 			tempApp.getRootInstances().add( parentInstance );

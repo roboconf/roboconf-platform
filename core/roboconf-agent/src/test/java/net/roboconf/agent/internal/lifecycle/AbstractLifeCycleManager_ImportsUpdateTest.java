@@ -57,11 +57,11 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
-		i1.overridenExports.put( "cluster.ip", "192.168.1.15" );
+		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );
 		i1.setStatus( InstanceStatus.STARTING );
 
 		Instance i2 = new Instance( "inst 2" ).component( clusterNodeComponent );
-		i2.overridenExports.put( "cluster.ip", "192.168.1.28" );
+		i2.overriddenExports.put( "cluster.ip", "192.168.1.28" );
 
 		// The basis
 		PluginInterface plugin = new PluginMock();
@@ -114,11 +114,11 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 		appServerComponent.importedVariables.put( "database.port", Boolean.FALSE );
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
-		appServer.overridenExports.put( "app-server.ip", "192.168.1.15" );
+		appServer.overriddenExports.put( "app-server.ip", "192.168.1.15" );
 		appServer.setStatus( InstanceStatus.STARTING );
 
 		Instance database = new Instance( "database" ).component( dbComponent );
-		database.overridenExports.put( "database.ip", "192.168.1.28" );
+		database.overriddenExports.put( "database.ip", "192.168.1.28" );
 
 		// The basis
 		PluginInterface plugin = new PluginMock();

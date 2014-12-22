@@ -128,7 +128,7 @@ public class ConfigurationUtilsTest {
 			Assert.assertEquals( inst.channels, restoredInst.channels );
 			Assert.assertEquals( inst.getStatus(), restoredInst.getStatus());
 			Assert.assertEquals( inst.getComponent(), restoredInst.getComponent());
-			Assert.assertEquals( inst.overridenExports.size(), restoredInst.overridenExports.size());
+			Assert.assertEquals( inst.overriddenExports.size(), restoredInst.overriddenExports.size());
 			Assert.assertEquals( inst.data.size(), restoredInst.data.size());
 
 			for( Map.Entry<String,String> entry : restoredInst.data.entrySet()) {

@@ -173,7 +173,7 @@ public final class InstanceHelpers {
 			localNameToFullNames.put( localName, fullNames );
 		}
 
-		for( Map.Entry<String,String> entry : instance.overridenExports.entrySet()) {
+		for( Map.Entry<String,String> entry : instance.overriddenExports.entrySet()) {
 			Set<String> fullNames = localNameToFullNames.get( entry.getKey());
 
 			// No inherited variable or too many inherited ones? => Put it in raw mode.
@@ -425,7 +425,7 @@ public final class InstanceHelpers {
 			copy.name( current.getName());
 			copy.component( current.getComponent());
 			copy.channels.addAll( current.channels );
-			copy.overridenExports.putAll( current.overridenExports );
+			copy.overriddenExports.putAll( current.overriddenExports );
 			instanceToDuplicate.put( current, copy );
 
 			Instance parent = instanceToDuplicate.get( current.getParent());
