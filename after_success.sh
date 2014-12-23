@@ -21,7 +21,7 @@ VER=`java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q'`
 
 if [[ $VER == "17" ]] && [[ $WHOLE_VER == *OpenJDK* ]]; then
 	wget http://roboconf.net/resources/build/settings.xml
-	mvn clean cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura deploy -q --settings settings.xml -P jdoc-and-sources
+	mvn clean cobertura:cobertura coveralls:report deploy -q --settings settings.xml -P jdoc-and-sources
 else
 	echo "No action to undertake (not a OpenJDK 7)."
 fi
