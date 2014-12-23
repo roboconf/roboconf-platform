@@ -35,12 +35,20 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
+import org.junit.After;
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class AgentUtilsTest {
+
+	@After
+	public void clearAgentDirectories() throws Exception {
+		File f = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" );
+		Utils.deleteFilesRecursively( f );
+	}
+
 
 	@Test
 	public void testIsValidIP() {
