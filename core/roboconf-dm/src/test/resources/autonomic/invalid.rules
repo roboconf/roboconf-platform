@@ -1,0 +1,10 @@
+# This is a comment ;)
+# This files gathers all the reactions for a given application.
+
+# This is not a rule
+[reaction event-3]
+admin@company.com
+
+# This is not a rule
+[reaction event-4 Log something in a file]
+log.txt

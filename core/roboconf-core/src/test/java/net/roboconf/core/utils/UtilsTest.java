@@ -627,14 +627,16 @@ public class UtilsTest {
 
 		// Run the first test
 		Assert.assertEquals( "", sb.toString());
-		Utils.logException( logger, Level.FINEST, new Exception( "boo!" ));
+		Utils.logException( logger, new Exception( "boo!" ));
 		Assert.assertTrue( sb.toString().startsWith( "java.lang.Exception: boo!" ));
 
 		// Change the log level
 		logger.setLevel( Level.INFO );
+		Assert.assertFalse( logger.isLoggable( Level.FINEST ));
+
 		sb.delete( 0, sb.length());
 		Assert.assertEquals( "", sb.toString());
-		Utils.logException( logger, Level.FINEST, new Exception( "boo!" ));
+		Utils.logException( logger, new Exception( "boo!" ));
 		Assert.assertEquals( "", sb.toString());
 
 		Utils.logException( logger, Level.INFO, new Exception( "boo!" ));

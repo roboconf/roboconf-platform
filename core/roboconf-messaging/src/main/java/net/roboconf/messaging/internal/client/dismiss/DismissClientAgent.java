@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.messages.Message;

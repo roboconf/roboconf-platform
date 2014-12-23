@@ -37,10 +37,10 @@ import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
 import net.roboconf.dm.internal.test.TestTargetResolver;
@@ -86,7 +86,7 @@ public class Manager_BasicsTest {
 		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.start();
 
-		this.msgClient = (TestClientDm) this.manager.getMessagingClient().getInternalClient();
+		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
 		this.msgClient.sentMessages.clear();
 
 		// Disable the messages timer for predictability
@@ -498,9 +498,9 @@ public class Manager_BasicsTest {
 		Assert.assertNotNull( apache );
 
 		// Update the instances
-		apache.getData().put( Instance.IP_ADDRESS, "192.168.1.23" );
-		apache.getData().put( Instance.MACHINE_ID, "my id" );
-		apache.getData().put( "whatever", "something" );
+		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
+		apache.data.put( Instance.MACHINE_ID, "my id" );
+		apache.data.put( "whatever", "something" );
 		apache.setStatus( InstanceStatus.PROBLEM );
 
 		// Save the manager's state
@@ -523,10 +523,10 @@ public class Manager_BasicsTest {
 
 		apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
 		Assert.assertEquals( InstanceStatus.PROBLEM, apache.getStatus());
-		Assert.assertEquals( "192.168.1.23", apache.getData().get( Instance.IP_ADDRESS ));
-		Assert.assertEquals( "my id", apache.getData().get( Instance.MACHINE_ID ));
-		Assert.assertEquals( "something", apache.getData().get( "whatever" ));
-		Assert.assertEquals( ma.getName(), apache.getData().get( Instance.APPLICATION_NAME ));
+		Assert.assertEquals( "192.168.1.23", apache.data.get( Instance.IP_ADDRESS ));
+		Assert.assertEquals( "my id", apache.data.get( Instance.MACHINE_ID ));
+		Assert.assertEquals( "something", apache.data.get( "whatever" ));
+		Assert.assertEquals( ma.getName(), apache.data.get( Instance.APPLICATION_NAME ));
 	}
 
 
@@ -541,7 +541,7 @@ public class Manager_BasicsTest {
 	@Test
 	public void testCheckErrors_withWarningOnly() throws Exception {
 
-		RoboconfError error = new ModelError( ErrorCode.CO_NOT_OVERRIDING, 2 );
+		RoboconfError error = new ModelError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, 2 );
 		this.manager.checkErrors( Arrays.asList( error ));
 	}
 

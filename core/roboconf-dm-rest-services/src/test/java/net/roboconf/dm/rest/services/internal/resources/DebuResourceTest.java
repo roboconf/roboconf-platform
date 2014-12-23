@@ -36,11 +36,11 @@ import javax.ws.rs.core.Response.Status;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.target.TargetHelpers;
 import net.roboconf.dm.internal.test.TestTargetResolver;

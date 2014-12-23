@@ -1,0 +1,42 @@
+###################################
+##             LAMP              ##
+###################################
+
+
+import facets.graph;
+import aggregator.graph;
+import reusables/commons.graph;
+
+
+# VM
+VM_EC2 {
+	extends: VM;
+}
+
+VM_Openstack {
+	extends: VM;
+	exports: something = else;
+}
+
+
+# MySQL database
+MySQL {
+	facets: deployable;
+	installer: puppet;
+	exports: ip, port = 3306;
+}
+
+# Tomcat
+Tomcat {
+	facets: deployable;
+	installer: puppet;
+	exports: ip, portAJP = 8009;
+	imports: MySQL.ip, MySQL.port;
+}
+
+# Apache Load Balancer
+Apache {
+	facets: deployable;
+	installer: puppet;
+	imports: Tomcat.portAJP, Tomcat.ip;
+}

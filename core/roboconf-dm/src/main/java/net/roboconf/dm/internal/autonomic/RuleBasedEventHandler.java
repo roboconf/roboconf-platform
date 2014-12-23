@@ -26,137 +26,177 @@
 package net.roboconf.dm.internal.autonomic;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
-import net.roboconf.target.api.TargetException;
 
 /**
  * An event handler to evaluate rules.
- * @author Pierre-Yves Gibello - Linagora
+ * <p>
+ * This handler can create new instances, including virtual machines.
+ * It can also delete instances it has created.
+ * </p>
  *
+ * @author Pierre-Yves Gibello - Linagora
  */
 public class RuleBasedEventHandler {
 
-	private Manager manager;
-	private ManagedApplication ma;
-	Map<String, AutonomicRule> rules;
-	Logger logger = Logger.getLogger(getClass().getName());
-	
-	private Map<String, List<Instance>> vmsForTemplate = new HashMap<String, List<Instance>>();
-	
+	static final String DELETE_SERVICE = "delete-service";
+	static final String REPLICATE_SERVICE = "replicate-service";
+	static final String MAIL = "mail";
+
+	private final Manager manager;
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	final Map<String,List<Instance>> componentNameToCreatedRootInstances;
+
+
 	/**
 	 * Create a new rule-based event handler.
-	 * @param manager The application manager
-	 * @param ma The managed application rules apply to
-	 * @throws IOException
+	 * @param manager the application manager
 	 */
-	public RuleBasedEventHandler(Manager manager, ManagedApplication ma) throws IOException {
-		this.rules = RulesParser.parseRules(ma.getApplicationFilesDirectory());
+	public RuleBasedEventHandler( Manager manager ) {
+		this.componentNameToCreatedRootInstances = new HashMap<String,List<Instance>> ();
 		this.manager = manager;
-		this.ma = ma;
 	}
+
 
 	/**
 	 * React upon autonomic monitoring message (aka "autonomic event").
 	 * @param event The autonomic event message
 	 * @throws Exception
 	 */
-	public void handleEvent(MsgNotifAutonomic event) throws Exception {
-		if(rules != null) {
-			AutonomicRule rule = rules.get(event.getEventName());
+	public void handleEvent( ManagedApplication ma, MsgNotifAutonomic event ) {
 
-			if("ReplicateService".equalsIgnoreCase(rule.getReactionId())) { // EVENT_ID ReplicateService ComponentTemplate
-				createInstances(rule.getReactionInfo());
-			} else if("StopService".equalsIgnoreCase(rule.getReactionId())) { // EVENT_ID StopService ComponentTemplate
-				undeployInstances(rule.getReactionInfo());
-			} else if("Mail".equalsIgnoreCase(rule.getReactionId())) { // EVENT_ID Mail DestinationEmail
-				//TODO
-			} else if("Log".equalsIgnoreCase(rule.getReactionId())) { // EVENT_ID Log LogMessage
-				logger.info("AUTONOMIC Monitoring event of type \"Log\": " + rule.getReactionInfo());
-			}
+		try {
+			Map<String,AutonomicRule> rules = RulesParser.parseRules( ma );
+			AutonomicRule rule = rules.get( event.getEventId());
+
+			if( rule == null )
+				this.logger.fine( "No rule was found to handle events with the '" + event.getEventId() + "' ID." );
+
+			// EVENT_ID ReplicateService ComponentTemplate
+			else if( REPLICATE_SERVICE.equalsIgnoreCase( rule.getReactionId()))
+				createInstances( ma, rule.getReactionInfo());
+
+			// EVENT_ID StopService ComponentName
+			else if( DELETE_SERVICE.equalsIgnoreCase(rule.getReactionId()))
+				deleteInstances( ma, rule.getReactionInfo());
+
+			// EVENT_ID Mail DestinationEmail
+			// TODO: implement it
+			else if( MAIL.equalsIgnoreCase(rule.getReactionId()))
+				this.logger.info( "We should send an e-mail..." );
+
+			// EVENT_ID Log LogMessage
+			// And default behavior...
+			else
+				this.logger.info( "AUTONOMIC Monitoring event. Info = " + rule.getReactionInfo());
+
+		} catch( IOException e ) {
+			this.logger.warning( "An autonomic event could not be handled. " + e.getMessage());
+			Utils.logException( this.logger, e );
 		}
 	}
+
 
 	/**
 	 * Instantiate a new VM with instances on it.
-	 * @param componentTemplates The component names, separated by "/" (eg. VM_name/Software_container_name/App_artifact_name)
-	 * @throws IOException
-	 * @throws ImpossibleInsertionException
-	 * @throws TargetException
+	 * @param ma the managed application
+	 * @param componentTemplates the component names, separated by "/"
+	 * <p>
+	 * (e.g. VM_name/Software_container_name/App_artifact_name)
+	 * </p>
 	 */
-	public void createInstances(String componentTemplates) throws IOException, ImpossibleInsertionException, TargetException {
+	void createInstances( ManagedApplication ma, String componentTemplates ) {
 
-		String templates[] = componentTemplates.split("/");
-		
-		// First check that all component to instantiate are valid and found...
-		// Necessary, not to create a VM then try to instantiate a fake component there !
-		for( String s : templates) {
-			Component compToInstantiate = ComponentHelpers.findComponent(ma.getApplication().getGraphs(), s);
-			if( compToInstantiate == null )
-				throw new IOException("Component " + s + " not found in application " + ma.getApplication().getName()
-						+ ": can\'t instanciate new VM !");
-		}
+		try {
+			if( componentTemplates.startsWith( "/" ))
+				componentTemplates = componentTemplates.substring( 1 );
 
-		// We register new instances in the model
-		Instance previousInstance = null;
-		for( String s : templates) {
-			Component compToInstantiate = ComponentHelpers.findComponent(ma.getApplication().getGraphs(), s);
-			// compToInstantiate should never be null (check done above).
-			
-			String instanceName;
-			if( previousInstance == null ) {
-				// All the root instances must have a different name
-				// TODO generate unique name ??
-				instanceName = compToInstantiate.getName() + "_" + System.currentTimeMillis();
-			} else {
-				instanceName = compToInstantiate.getName() + " instance";
+			String templates[] = componentTemplates.split( "/" );
+
+			// First check that all component to instantiate are valid and found...
+			// Necessary, not to create a VM then try to instantiate a fake component there!
+			for( String s : templates) {
+				Component compToInstantiate = ComponentHelpers.findComponent( ma.getApplication().getGraphs(), s);
+				if( compToInstantiate == null )
+					throw new IOException( "Component " + s + " was not found in application " + ma.getApplication().getName());
 			}
-			
-			Instance currentInstance = new Instance( instanceName ).component(compToInstantiate);
-			manager.addInstance(ma, previousInstance, currentInstance);
-			previousInstance = currentInstance;
-		}
-		
-		// Now, deploy and start all
-		Instance rootInstance = InstanceHelpers.findRootInstance(previousInstance);
-		
-		manager.deployAndStartAll(ma, rootInstance);
 
-		List<Instance> vmList = vmsForTemplate.get(componentTemplates);
-		if(vmList == null) vmList = new LinkedList<Instance>();
-		vmList.add(rootInstance);
-		vmsForTemplate.put(componentTemplates, vmList);
+			// We register new instances in the model
+			Instance previousInstance = null;
+			for( String s : templates) {
+				Component compToInstantiate = ComponentHelpers.findComponent( ma.getApplication().getGraphs(), s);
+				// compToInstantiate should never be null (check done above).
+
+				// All the root instances must have a different name. Others do not matter.
+				String instanceName;
+				if( previousInstance == null )
+					instanceName = compToInstantiate.getName() + "_" + System.currentTimeMillis();
+				else
+					instanceName = compToInstantiate.getName().toLowerCase();
+
+				Instance currentInstance = new Instance( instanceName ).component(compToInstantiate);
+				this.manager.addInstance( ma, previousInstance, currentInstance );
+				previousInstance = currentInstance;
+			}
+
+			// Now, deploy and start all
+			Instance rootInstance = InstanceHelpers.findRootInstance( previousInstance );
+			this.manager.deployAndStartAll( ma, rootInstance );
+
+			// Remember the VM this class has created
+			String componentName = previousInstance.getName();
+			List<Instance> vmList = this.componentNameToCreatedRootInstances.get( componentName );
+			if(vmList == null)
+				vmList = new ArrayList<Instance>();
+
+			vmList.add( rootInstance );
+			this.componentNameToCreatedRootInstances.put( componentName, vmList );
+
+		} catch( Exception e ) {
+			this.logger.warning( "The creation of instances (autonomic context) failed. " + e.getMessage());
+			Utils.logException( this.logger, e );
+		}
 	}
-	
+
+
 	/**
-	 * Undeploy VM (eventually with instances on it).
-	 * @param componentTemplates The component template used to create the undeployed VM (if multiple VMs were created using the same
-	 * template, a FIFO strategy is used).
-	 * @return
-	 * @throws TargetException 
-	 * @throws IOException 
+	 * Deletes an instance and the VM that hosts it.
+	 * <p>
+	 * Only instances that were created by this class can be undeployed and removed from the model.
+	 * </p>
+	 *
+	 * @param ma the managed application
+	 * @param componentName the component name of an instance to delete
 	 */
-	public boolean undeployInstances(String componentTemplates) throws IOException, TargetException {
-		
-		List<Instance> vmList = vmsForTemplate.get(componentTemplates);
-		if(vmList == null) return false;
-		
-		if(vmList.size() <= 1) vmsForTemplate.remove(componentTemplates);
-		Instance vmInstance = (vmList.size() > 0 ? vmList.remove(0) : null); // FIFO
-		
-		if(vmInstance != null) manager.undeployAll(ma, vmInstance);
-		return true;
+	void deleteInstances( ManagedApplication ma, String componentName ) {
+
+		try {
+			List<Instance> vmList = this.componentNameToCreatedRootInstances.get( componentName );
+			if( vmList != null ) {
+				if( vmList.size() <= 1 )
+					this.componentNameToCreatedRootInstances.remove( componentName );
+
+				Instance vmInstance = vmList.remove( 0 );
+				this.manager.undeployAll( ma, vmInstance );
+				this.manager.removeInstance( ma, vmInstance );
+			}
+
+		} catch( Exception e ) {
+			this.logger.warning( "The deletion of an instance (autonomic context) failed. " + e.getMessage());
+			Utils.logException( this.logger, e );
+		}
 	}
 }

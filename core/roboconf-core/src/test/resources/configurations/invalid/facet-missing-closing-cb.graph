@@ -1,2 +1,2 @@
-facet {
-	installer: bash;
+facet f {
+	exports: ip;

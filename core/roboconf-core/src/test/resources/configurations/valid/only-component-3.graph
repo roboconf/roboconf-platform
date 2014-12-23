@@ -3,7 +3,6 @@ tomcat {
 	imports: port, db.ip;
 	exports: ip, port = 8080;
 	children: war;
-	icon: tomcat.png;
 	installer: puppet;
 }
 

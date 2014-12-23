@@ -1,0 +1,3 @@
+
+# Just a file that redirect to another imported file
+import reusables/commons.graph;

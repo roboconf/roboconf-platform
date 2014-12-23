@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 

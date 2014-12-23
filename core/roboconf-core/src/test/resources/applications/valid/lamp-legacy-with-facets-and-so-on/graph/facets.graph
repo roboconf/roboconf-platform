@@ -1,0 +1,10 @@
+
+facet Virtual_Machine {
+	children: deployable;
+	exports: ip;
+}
+
+# The deployable facet
+facet deployable {
+	# nothing
+}

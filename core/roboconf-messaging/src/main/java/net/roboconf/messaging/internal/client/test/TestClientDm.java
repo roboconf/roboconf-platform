@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 

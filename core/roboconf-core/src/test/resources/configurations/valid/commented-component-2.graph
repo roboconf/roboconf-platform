@@ -6,7 +6,7 @@
 
 apache {
 
-	alias: Apache;	# in-line comment
+	exports: ip;	# in-line comment
 	
 }
 

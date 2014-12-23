@@ -31,12 +31,13 @@ import java.util.List;
 import junit.framework.Assert;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
 import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
+import net.roboconf.agent.monitoring.internal.rest.RestHandler;
 import net.roboconf.agent.monitoring.internal.tests.MyAgentInterface;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.MessageServerClientFactory;
@@ -129,6 +130,27 @@ public class MonitoringTaskTest {
 
 
 	@Test
+	public void testExtractRuleSections_rest() throws Exception {
+
+		File f = TestUtils.findTestFile( "/rest-events.conf" );
+		String fileContent = Utils.readFileContent( f );
+		MonitoringTask task = new MonitoringTask( this.agentInterface );
+		this.agentInterface.setRootInstance( new Instance( "root" ));
+
+		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent );
+		Assert.assertEquals( 1, handlers.size());
+
+		MonitoringHandler handler = handlers.get( 0 );
+		Assert.assertEquals( RestHandler.class, handler.getClass());
+		Assert.assertEquals( "myRuleName-1", handler.getEventId());
+		Assert.assertEquals( "http://google.fr", ((RestHandler) handler).getUrl());
+		Assert.assertEquals( "value", ((RestHandler) handler).getConditionParameter());
+		Assert.assertEquals( ">", ((RestHandler) handler).getConditionOperator());
+		Assert.assertEquals( "0", ((RestHandler) handler).getConditionThreshold());
+	}
+
+
+	@Test
 	public void testExtractRuleSections_mixed() throws Exception {
 
 		File f = TestUtils.findTestFile( "/mixed-events.conf" );
@@ -200,7 +222,7 @@ public class MonitoringTaskTest {
 
 		MsgNotifAutonomic msg = (MsgNotifAutonomic) this.messagingClient.messagesForTheDm.get( 0 );
 		Assert.assertEquals( this.agentInterface.getApplicationName(), msg.getApplicationName());
-		Assert.assertEquals( "myRuleName", msg.getEventName());
+		Assert.assertEquals( "myRuleName", msg.getEventId());
 		Assert.assertEquals( this.agentInterface.getRootInstance().getName(), msg.getRootInstanceName());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "does not exist" ));
 	}
@@ -234,7 +256,7 @@ public class MonitoringTaskTest {
 		this.agentInterface.setRootInstance( rootInstance );
 
 		// Create the resources
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( childInstance, childInstance.getComponent().getInstallerName());
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( childInstance );
 		Utils.deleteFilesRecursively( dir );
 		Assert.assertTrue( dir.mkdirs());
 

@@ -33,11 +33,12 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.dsl.ParsingModelIo;
+import net.roboconf.core.dsl.parsing.AbstractBlock;
+import net.roboconf.core.dsl.parsing.BlockInstanceOf;
+import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.parsing.AbstractBlock;
-import net.roboconf.core.model.parsing.BlockInstanceOf;
-import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.parsing.ParsingConstants;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.Test;
@@ -81,7 +82,7 @@ public class ParsingModelIoTest {
 	public void testComplexInstances() throws Exception {
 
 		File f = TestUtils.findTestFile( "/configurations/valid/complex-instances.instances" );
-		FileDefinition def = ParsingModelIo.readConfigurationFile( f.toURI(), true );
+		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
 		Assert.assertEquals( 0, def.getParsingErrors().size());
 
 		List<AbstractBlock> toProcess = new ArrayList<AbstractBlock> ();
@@ -127,7 +128,7 @@ public class ParsingModelIoTest {
 	public void testReadConfigurationFileFromString() throws Exception {
 
 		File f = TestUtils.findTestFile( PATH + "/only-component-3.graph" );
-		FileDefinition rel = ParsingModelIo.readConfigurationFile( f.toURI().toString(), false );
+		FileDefinition rel = ParsingModelIo.readConfigurationFile( f, false );
 		Assert.assertTrue(  f.getName() + ": parsing errors were found.", rel.getParsingErrors().isEmpty());
 	}
 

@@ -28,8 +28,8 @@ package net.roboconf.agent.internal.lifecycle;
 import java.io.IOException;
 import java.util.Map;
 
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;

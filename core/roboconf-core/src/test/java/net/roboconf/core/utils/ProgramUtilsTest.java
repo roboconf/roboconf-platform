@@ -28,6 +28,7 @@ package net.roboconf.core.utils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
@@ -48,7 +49,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
-				new HashMap<String,String> ());
+				new HashMap<String,String>( 0 ));
 	}
 
 
@@ -64,7 +65,46 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
-				new HashMap<String,String> ());
+				new HashMap<String,String>( 0 ));
+	}
+
+
+	@Test
+	public void testNonEmptyMap_Windows() throws Exception {
+
+		boolean isWin = System.getProperty( "os.name" ).toLowerCase().contains( "win" );
+		Assume.assumeTrue( isWin );
+
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( null, "null key" );
+		map.put( "null value", null );
+		map.put( "key", "value" );
+
+		ProgramUtils.executeCommand(
+				Logger.getLogger( getClass().getName()),
+				Arrays.asList( "cmd", "/C", "dir" ),
+				map );
+	}
+
+
+	@Test
+	public void testNonEmptyMap_UnixFamily() throws Exception {
+
+		String osName = System.getProperty( "os.name" ).toLowerCase();
+		boolean isUnix = osName.contains( "linux" )
+				|| osName.contains( "unix" )
+				|| osName.contains( "freebsd" );
+
+		Assume.assumeTrue( isUnix );
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( null, "null key" );
+		map.put( "null value", null );
+		map.put( "key", "value" );
+
+		ProgramUtils.executeCommand(
+				Logger.getLogger( getClass().getName()),
+				Arrays.asList( "/bin/sh", "-c", "pwd" ),
+				map );
 	}
 
 
@@ -122,7 +162,7 @@ public class ProgramUtilsTest {
 		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "apt-get-update" ),
-				new HashMap<String,String> ());
+				new HashMap<String,String>( 0 ));
 
 		Assert.assertNotSame( 0, exitCode );
 		// Either it requires root privileges, or it is not installed.

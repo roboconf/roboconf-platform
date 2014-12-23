@@ -32,11 +32,11 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.misc.AgentUtils;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
@@ -137,7 +137,6 @@ public abstract class AbstractLifeCycleManager {
 				this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.START, impactedInstance );
 
 			} else if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
-				// FIXME: there should be a way to determine whether an update is necessary
 				plugin.update( impactedInstance, importChanged, statusChanged );
 
 			} else {
@@ -158,7 +157,6 @@ public abstract class AbstractLifeCycleManager {
 
 
 	/**
-	 * FIXME: why do we need the plugin name? It is the installer name!!!
 	 * Deploys an instance (prerequisite: NOT_DEPLOYED).
 	 * @param instance the instance
 	 * @param plugin the associated plug-in
@@ -185,10 +183,10 @@ public abstract class AbstractLifeCycleManager {
 			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 
 			// Clean up the potential remains of a previous installation
-			AgentUtils.deleteInstanceResources( instance, plugin.getPluginName());
+			AgentUtils.deleteInstanceResources( instance );
 
 			// Copy the resources
-			AgentUtils.copyInstanceResources( instance, plugin.getPluginName(), fileNameToFileContent );
+			AgentUtils.copyInstanceResources( instance, fileNameToFileContent );
 
 			// Invoke the plug-in
 			try {
@@ -245,10 +243,8 @@ public abstract class AbstractLifeCycleManager {
 			plugin.undeploy( instance );
 
 			// Delete files for undeployed instances
-			for( Instance i : instancesToUndeploy ) {
-				String pluginName = i.getComponent().getInstallerName();
-				AgentUtils.deleteInstanceResources( i, pluginName );
-			}
+			for( Instance i : instancesToUndeploy )
+				AgentUtils.deleteInstanceResources( i );
 
 		} catch( PluginException e ) {
 			this.logger.severe( "An error occured while undeploying " + InstanceHelpers.computeInstancePath( instance ));

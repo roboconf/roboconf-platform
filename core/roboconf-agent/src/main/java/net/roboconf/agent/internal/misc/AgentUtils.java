@@ -30,8 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -80,21 +80,19 @@ public final class AgentUtils {
 
 
 	/**
-	 * FIXME: why do we need the plugin name? It is the installer name!!!
 	 * Copies the resources of an instance on the disk.
 	 * @param instance an instance
-	 * @param pluginName the plug-in's name
 	 * @param fileNameToFileContent the files to write down (key = relative file location, value = file's content)
 	 * @throws IOException if the copy encountered a problem
 	 */
-	public static void copyInstanceResources( Instance instance, String pluginName, Map<String,byte[]> fileNameToFileContent )
+	public static void copyInstanceResources( Instance instance, Map<String,byte[]> fileNameToFileContent )
 	throws IOException {
 
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, pluginName );
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		if( ! dir.isDirectory()
 				&& ! dir.mkdirs())
 			throw new IOException( "The directory " + dir.getAbsolutePath() + " could not be created." );
-		
+
 		if( fileNameToFileContent != null ) {
 			for( Map.Entry<String,byte[]> entry : fileNameToFileContent.entrySet()) {
 
@@ -113,12 +111,10 @@ public final class AgentUtils {
 	/**
 	 * Deletes the resources for a given instance.
 	 * @param instance an instance
-	 * @param pluginName the plug-in's name
 	 * @throws IOException if resources could not be deleted
 	 */
-	public static void deleteInstanceResources( Instance instance, String pluginName )
-	throws IOException {
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance, pluginName );
+	public static void deleteInstanceResources( Instance instance )	throws IOException {
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		Utils.deleteFilesRecursively( dir );
 	}
 }

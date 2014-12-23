@@ -40,14 +40,14 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
@@ -384,15 +384,6 @@ public class Manager {
 		return this.appNameToManagedApplication;
 	}
 
-	/**
-	 * Get the ManagedApplication that corresponds to a given application name.
-	 * @param applicationName The application name
-	 * @return The corresponding ManagedApplication
-	 */
-	public ManagedApplication getManagedApplication(String applicationName) {
-		if(this.appNameToManagedApplication == null) return null;
-		else return this.appNameToManagedApplication.get(applicationName);
-	}
 
 	/**
 	 * @return the messagingFactoryType
@@ -785,7 +776,7 @@ public class Manager {
 
 		// If the VM creation was already requested, then its machine ID has already been set.
 		// It does not mean the VM is already created, it may take some time.
-		String machineId = rootInstance.getData().get( Instance.MACHINE_ID );
+		String machineId = rootInstance.data.get( Instance.MACHINE_ID );
 		if( machineId != null ) {
 			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
 			return;
@@ -803,7 +794,7 @@ public class Manager {
 					target.getProperties(), this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
 					rootInstance.getName(), ma.getApplication().getName());
 
-			rootInstance.getData().put( Instance.MACHINE_ID, machineId );
+			rootInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
 		} catch( Exception e ) {
@@ -843,7 +834,7 @@ public class Manager {
 			// Terminate the machine
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
 			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
-			String machineId = rootInstance.getData().remove( Instance.MACHINE_ID );
+			String machineId = rootInstance.data.remove( Instance.MACHINE_ID );
 			if( machineId != null )
 				target.getHandler().terminateMachine( target.getProperties(), machineId );
 
@@ -855,7 +846,7 @@ public class Manager {
 			}
 
 			// Remove useless data for the configuration backup
-			rootInstance.getData().clear();
+			rootInstance.data.clear();
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( Exception e ) {

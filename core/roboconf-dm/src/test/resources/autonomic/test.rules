@@ -1,0 +1,17 @@
+# This is a comment ;)
+# This files gathers all the reactions for a given application.
+
+
+[reaction loaded Replicate-Service]
+/vm/tomcat/war
+
+
+[reaction peaceful Delete-Service]
+war
+
+
+[reaction up Mail]
+admin@company.com
+
+
+[reaction log Log]

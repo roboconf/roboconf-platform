@@ -30,8 +30,8 @@ import java.io.File;
 import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.tooling.core.ProjectUtils.CreationBean;
 
 import org.junit.Rule;
@@ -54,7 +54,7 @@ public class ProjectUtilsTest {
 		File dir = this.folder.newFolder();
 		CreationBean bean = new CreationBean()
 							.projectDescription( "some desc" ).projectName( "my-project" )
-							.projectVersion( "1.0-SNAPSHOT" ).mavenProject( false );
+							.projectNamespace( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" ).mavenProject( false );
 
 		Assert.assertEquals( 0, dir.listFiles().length );
 		ProjectUtils.createProjectSkeleton( dir, bean );
@@ -77,7 +77,8 @@ public class ProjectUtilsTest {
 		File dir = this.folder.newFolder();
 		CreationBean bean = new CreationBean()
 							.projectDescription( "some desc" ).projectName( "my-project" )
-							.projectVersion( "1.0-SNAPSHOT" ).pluginVersion( "1.0.0" ).groupId( "net.roboconf" );
+							.projectNamespace( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" )
+							.pluginVersion( "1.0.0" ).groupId( "net.roboconf" );
 
 		Assert.assertEquals( 0, dir.listFiles().length );
 		ProjectUtils.createProjectSkeleton( dir, bean );
@@ -96,6 +97,7 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
 		Assert.assertEquals( "${project.artifact.artifactId}", alr.getApplication().getName());
 		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplication().getQualifier());
+		Assert.assertEquals( "${project.artifact.groupId}", alr.getApplication().getNamespace());
 	}
 
 

@@ -1,0 +1,13 @@
+Tomcat {
+	installer: puppet;
+	exports: ip, portAJP = 8009;
+	children: WebApp;
+}
+
+facet WebApp {
+	exports: url;
+}
+
+App {
+	facets: WebApp;
+}

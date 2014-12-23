@@ -1,14 +1,11 @@
 component A {
-	alias: A;
 	installer: whatever;
 }
 
 component B {
-	alias: B;
 	installer: B;
 }
 
 component A {
-	alias: AA;
 	installer: whatever;
 }

@@ -1,26 +1,24 @@
 A {
-	alias: A component called A;
 	facets: F1;
-	installer: f1;
+	installer: target;
 }
 
 B {
-	alias: B component called B;
-	installer: bash;
+	installer: target;
 }
 
 # Cycle: f1 -> f2 -> f3 -> f1
 facet F1 {
-	installer: f1;
+	exports: ip;
 	extends: F2;
 }
 
 facet F2 {
-	installer: f2;
+	exports: ip;
 	extends: F3;
 }
 
 facet F3 {
-	installer: f3;
+	exports: ip;
 	extends: F1;
 }

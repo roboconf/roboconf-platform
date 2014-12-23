@@ -31,9 +31,9 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
@@ -145,17 +145,9 @@ public class RabbitMqClientAgent implements IAgentClient {
 		final QueueingConsumer consumer = new QueueingConsumer( this.channel );
 		this.consumerTag = this.channel.basicConsume( queueName, true, consumer );
 
-		new Thread( "Roboconf - Queue listener for Agent " + this.rootInstanceName ) {
-			@Override
-			public void run() {
-				RabbitMqUtils.listenToRabbitMq(
-						"Agent '" + getAgentId() + "'",
-						RabbitMqClientAgent.this.logger,
-						consumer,
-						RabbitMqClientAgent.this.messageQueue );
-			}
-
-		}.start();
+		String threadName = "Roboconf - Queue listener for Agent " + this.rootInstanceName;
+		String id = "Agent '" + getAgentId() + "'";
+		new ListeningThread( threadName, this.logger, consumer, this.messageQueue, id ).start();
 	}
 
 
@@ -198,7 +190,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IAgentClient
-	 * #publishExports(net.roboconf.core.model.runtime.Instance)
+	 * #publishExports(net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void publishExports( Instance instance ) throws IOException {
@@ -213,7 +205,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IAgentClient
-	 * #publishExports(net.roboconf.core.model.runtime.Instance)
+	 * #publishExports(net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void publishExports( Instance instance, String facetOrComponentName ) throws IOException {
@@ -221,7 +213,8 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 		// Find the variables to export.
 		Map<String,String> toPublish = new HashMap<String,String> ();
-		for( Map.Entry<String,String> entry : instance.getExports().entrySet()) {
+		Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
+		for( Map.Entry<String,String> entry : exports.entrySet()) {
 			if( entry.getKey().startsWith( facetOrComponentName + "." ))
 				toPublish.put( entry.getKey(), entry.getValue());
 		}
@@ -244,7 +237,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IAgentClient
-	 * #unpublishExports(net.roboconf.core.model.runtime.Instance)
+	 * #unpublishExports(net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void unpublishExports( Instance instance ) throws IOException {
@@ -270,7 +263,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IAgentClient
-	 * #listenToRequestsFromOtherAgents(net.roboconf.messaging.client.IClient.ListenerCommand, net.roboconf.core.model.runtime.Instance)
+	 * #listenToRequestsFromOtherAgents(net.roboconf.messaging.client.IClient.ListenerCommand, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void listenToRequestsFromOtherAgents( ListenerCommand command, Instance instance )
@@ -299,7 +292,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IAgentClient
-	 * #requestExportsFromOtherAgents(net.roboconf.core.model.runtime.Instance)
+	 * #requestExportsFromOtherAgents(net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void requestExportsFromOtherAgents( Instance instance ) throws IOException {
@@ -323,7 +316,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IAgentClient
-	 * #listenToExportsFromOtherAgents(net.roboconf.messaging.client.IClient.ListenerCommand, net.roboconf.core.model.runtime.Instance)
+	 * #listenToExportsFromOtherAgents(net.roboconf.messaging.client.IClient.ListenerCommand, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void listenToExportsFromOtherAgents( ListenerCommand command, Instance instance ) throws IOException {

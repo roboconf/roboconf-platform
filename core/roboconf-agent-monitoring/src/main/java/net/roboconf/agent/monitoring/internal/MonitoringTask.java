@@ -39,8 +39,8 @@ import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
 import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.messages.Message;
 
@@ -85,7 +85,7 @@ public class MonitoringTask extends TimerTask {
 
 		// Otherwise, check all the instances
 		for( Instance inst : InstanceHelpers.buildHierarchicalList( this.agentInterface.getRootInstance())) {
-			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( inst, inst.getComponent().getInstallerName());
+			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( inst );
 			File measureFile = new File( dir, inst.getComponent().getName() + ".measures" );
 			if( ! measureFile.exists()) {
 				this.logger.finer( "No file with measure rules was found for instance '" + inst + "'." );
@@ -186,7 +186,7 @@ public class MonitoringTask extends TimerTask {
 			result = new FileHandler( eventId, appName, rootInstanceName, ruleContent );
 		else if( PARSER_NAGIOS.equalsIgnoreCase( parserId ))
 			result = new NagiosHandler( eventId, appName, rootInstanceName, ruleContent );
-		else if(PARSER_REST.equalsIgnoreCase( parserId ))
+		else if( PARSER_REST.equalsIgnoreCase( parserId ))
 			result = new RestHandler( eventId, appName, rootInstanceName, ruleContent );
 
 		return result;

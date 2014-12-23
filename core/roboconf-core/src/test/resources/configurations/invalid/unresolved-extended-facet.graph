@@ -1,8 +1,7 @@
 A {
-	alias: A component called A;
 	facets: F1, F2;
 }
 
 facet F1 {
-	installer: f1;
+	exports: ip;
 }

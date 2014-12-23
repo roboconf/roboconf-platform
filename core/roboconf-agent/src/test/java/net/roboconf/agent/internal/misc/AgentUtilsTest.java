@@ -35,12 +35,20 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
+import org.junit.After;
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class AgentUtilsTest {
+
+	@After
+	public void clearAgentDirectories() throws Exception {
+		File f = new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent" );
+		Utils.deleteFilesRecursively( f );
+	}
+
 
 	@Test
 	public void testIsValidIP() {
@@ -67,23 +75,22 @@ public class AgentUtilsTest {
 
 		// Prepare our resources
 		TestApplication app = new TestApplication();
-		String pluginName = "whatever";
 		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
 		fileNameToFileContent.put( "f1.txt", "I am file 1".getBytes( "UTF-8" ));
 		fileNameToFileContent.put( "f2.txt", "I am file 2".getBytes( "UTF-8" ));
 		fileNameToFileContent.put( "dir1/dir2/f3.txt", "I am file 3".getBytes( "UTF-8" ));
 
 		// Save our resources
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat(), pluginName );
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
 		Assert.assertFalse( dir.exists());
-		AgentUtils.copyInstanceResources( app.getTomcat(), pluginName, fileNameToFileContent );
+		AgentUtils.copyInstanceResources( app.getTomcat(), fileNameToFileContent );
 		Assert.assertTrue( dir.exists());
 		Assert.assertTrue( new File( dir, "f1.txt" ).exists());
 		Assert.assertTrue( new File( dir, "f2.txt" ).exists());
 		Assert.assertTrue( new File( dir, "dir1/dir2/f3.txt" ).exists());
 
 		// Delete them
-		AgentUtils.deleteInstanceResources( app.getTomcat(), pluginName );
+		AgentUtils.deleteInstanceResources( app.getTomcat());
 		Assert.assertFalse( dir.exists());
 	}
 
@@ -93,17 +100,16 @@ public class AgentUtilsTest {
 
 		// Prepare our resources
 		TestApplication app = new TestApplication();
-		String pluginName = "whatever";
 
 		// Save our resources
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat(), pluginName );
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
 		Assert.assertFalse( dir.exists());
-		AgentUtils.copyInstanceResources( app.getTomcat(), pluginName, null );
+		AgentUtils.copyInstanceResources( app.getTomcat(), null );
 		Assert.assertTrue( dir.exists());
 		Assert.assertEquals( 0, dir.listFiles().length );
 
 		// Delete them
-		AgentUtils.deleteInstanceResources( app.getTomcat(), pluginName );
+		AgentUtils.deleteInstanceResources( app.getTomcat());
 		Assert.assertFalse( dir.exists());
 	}
 
@@ -114,15 +120,13 @@ public class AgentUtilsTest {
 		// The directory where we should write is an existing file.
 		// Prepare our resources
 		TestApplication app = new TestApplication();
-		String pluginName = "whatever";
-
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat(), pluginName );
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
 		Assert.assertTrue( dir.createNewFile());
 		Assert.assertTrue( dir.exists());
 
 		// Save our resources
 		try {
-			AgentUtils.copyInstanceResources( app.getTomcat(), pluginName, null );
+			AgentUtils.copyInstanceResources( app.getTomcat(), null );
 
 		} finally {
 			Utils.deleteFilesRecursively( dir );
@@ -136,17 +140,16 @@ public class AgentUtilsTest {
 		// The directory where we should write contains a conflicting file.
 		// Prepare our resources
 		TestApplication app = new TestApplication();
-		String pluginName = "whatever";
 		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
 		fileNameToFileContent.put( "dir1/dir2/f3.txt", "I am file 3".getBytes( "UTF-8" ));
 
-		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat(), pluginName );
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
 		Assert.assertTrue( dir.mkdirs());
 		Assert.assertTrue( new File( dir, "dir1" ).createNewFile());
 
 		// Save our resources
 		try {
-			AgentUtils.copyInstanceResources( app.getTomcat(), pluginName, fileNameToFileContent );
+			AgentUtils.copyInstanceResources( app.getTomcat(), fileNameToFileContent );
 
 		} finally {
 			Utils.deleteFilesRecursively( dir );

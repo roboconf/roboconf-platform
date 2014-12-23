@@ -32,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.messages.Message;
 

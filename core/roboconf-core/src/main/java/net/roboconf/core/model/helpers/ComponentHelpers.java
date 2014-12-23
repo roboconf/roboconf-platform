@@ -26,13 +26,20 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
+import net.roboconf.core.model.beans.AbstractType;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Facet;
+import net.roboconf.core.model.beans.Graphs;
 
 /**
  * Helpers related to components.
@@ -57,18 +64,10 @@ public final class ComponentHelpers {
 	public static Component findComponent( Graphs graphs, String name ) {
 
 		Component result = null;
-		List<Component> components = new ArrayList<Component> ();
-		if( graphs != null )
-			components.addAll( graphs.getRootComponents());
-
-		while( result == null
-				&& ! components.isEmpty()) {
-
-			Component current = components.remove( 0 );
-			if( name.equals( current.getName()))
-				result = current;
-			else
-				components.addAll( current.getChildren());
+		for( Iterator<Component> it = findAllComponents( graphs ).iterator(); it.hasNext() && result == null; ) {
+			Component c = it.next();
+			if( name.equals( c.getName()))
+					result = c;
 		}
 
 		return result;
@@ -76,12 +75,12 @@ public final class ComponentHelpers {
 
 
 	/**
-	 * Finds a sub-component by name.
+	 * Finds a component by name from another component.
 	 * @param component the component used to build a partial graph (should not be null)
 	 * @param componentName the component name (not null)
 	 * @return a component (can be null)
 	 */
-	public static Component findSubComponent( Component component, String componentName ) {
+	public static Component findComponentFrom( Component component, String componentName ) {
 
 		Graphs partialGraph = new Graphs();
 		if( component != null )
@@ -92,40 +91,84 @@ public final class ComponentHelpers {
 
 
 	/**
-	 * Inserts (if necessary) a child component.
-	 * @param child a child component (not null)
-	 * @param ancestor an ancestor component (not null)
+	 * Finds all the possible children of a component.
+	 * @param component a non-null component
+	 * @return a non-null list of components
 	 */
-	public static void insertChild( Component ancestor, Component child ) {
-		if( ! child.getAncestors().contains( ancestor ))
-			child.getAncestors().add( ancestor );
-
-		if( ! ancestor.getChildren().contains( child ))
-			ancestor.getChildren().add( child );
+	public static Collection<Component> findAllChildren( Component component ) {
+		return findAncestorsOrChildren( component, true );
 	}
 
 
 	/**
-	 * Finds all the components of a graph.
-	 * @param graphs a set of graphs
+	 * Finds all the possible ancestors of a component.
+	 * @param component a non-null component
 	 * @return a non-null list of components
 	 */
-	public static List<Component> findAllComponents( Graphs graphs ) {
+	public static Collection<Component> findAllAncestors( Component component ) {
+		return findAncestorsOrChildren( component, false );
+	}
 
-		List<Component> result = new ArrayList<Component> ();
-		Set<Component> alreadyVisisted = new HashSet<Component> ();
-		List<Component> toProcess = new ArrayList<Component> ();
 
-		toProcess.addAll( graphs.getRootComponents());
-		while( ! toProcess.isEmpty()) {
+	/**
+	 * Finds the installer name for a given component.
+	 * @param component a component
+	 * @return the installer name (potentially retrieved from an extended component)
+	 */
+	public static String findComponentInstaller( Component component ) {
 
-			Component current = toProcess.remove( 0 );
-			if( alreadyVisisted.contains( current ))
-				continue;
+		String installer = null;
+		for( Component c : findAllExtendedComponents( component )) {
+			installer = c.getInstallerName();
+			if( installer != null )
+				break;
+		}
 
-			alreadyVisisted.add( current );
-			result.add( current );
-			toProcess.addAll( current.getChildren());
+		return installer;
+	}
+
+
+	/**
+	 * Finds all the exported variables for a given component.
+	 * <p>
+	 * This method also fixes the name of the exported variables (set the right prefixes, if required).
+	 * </p>
+	 * <p>
+	 * A component can override variables values of the components its extends.
+	 * It can also override variable values from inherited and associated facets.
+	 * </p>
+	 * <p>
+	 * To solve conflicts between facets and inherited components, facets variables are
+	 * resolved first. Then, component values are injected and may thus override facet
+	 * values.
+	 * </p>
+	 *
+	 * @param component a non-null component
+	 * @return a non-null map of exported variables (key = variable name, value = variable value).
+	 */
+	public static Map<String,String> findAllExportedVariables( Component component ) {
+
+		// Go through all the super types
+		Map<String,String> result = new HashMap<String,String> ();
+		List<Component> extendedComponents = findAllExtendedComponents( component );
+		Collections.reverse( extendedComponents );
+
+		// Process all the facets first
+		for( Component c : extendedComponents ) {
+			for( Facet f : c.getFacets())
+				result.putAll( findAllExportedVariables( f ));
+		}
+
+		// Process the components then
+		for( Component c : extendedComponents ) {
+			// If a variable name already exists from the inherited one, we can directly override it.
+			// Otherwise, we may have to update the variable prefix.
+			for( Map.Entry<String,String> var : c.exportedVariables.entrySet()) {
+				if( result.containsKey( var.getKey()))
+					result.put( var.getKey(), var.getValue());
+				else
+					result.put( fixVariableName( c, var.getKey()), var.getValue());
+			}
 		}
 
 		return result;
@@ -133,7 +176,261 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds all the exported variables of a facet.
+	 * <p>
+	 * This method also fixes the name of the exported variables (set the right prefixes, if required).
+	 * </p>
+	 * <p>
+	 * A facet can also override variable values from the facets its extends.
+	 * </p>
+	 *
+	 * @param facet a facet
+	 * @return a non-null map (key = variable name, value = variable value).
+	 */
+	public static Map<String,String> findAllExportedVariables( Facet facet ) {
+
+		Map<Facet,Boolean> facetToResolved = new HashMap<Facet,Boolean> ();
+		Map<Facet,Map<String,String>> facetToResolvedExports = new HashMap<Facet,Map<String,String>> ();
+
+		Collection<Facet> facets = new HashSet<Facet>( findAllExtendedFacets( facet ));
+		facets.add( facet );
+		for( Facet f : facets ) {
+			facetToResolvedExports.put( f, new HashMap<String,String> ());
+			facetToResolved.put( f, Boolean.FALSE );
+		}
+
+		// The implementation prevents cycles from blocking the resolution.
+		while( facetToResolved.containsValue( Boolean.FALSE )) {
+			entries: for( Facet f : facetToResolvedExports.keySet()) {
+
+				// A facet can be processed only if all the facets it extends were already processed.
+				if( facetToResolved.get( f ))
+					continue entries;
+
+				// In case of cycle... A extends B which extends A...
+				if( searchForInheritanceCycle( f ) != null ) {
+					facetToResolved.put( f, Boolean.TRUE );
+					continue;
+				}
+
+				// Get the resolved variables from all the extended facets.
+				Map<String,String> localExportedVariables = new HashMap<String,String> ();
+				for( Facet ff : f.getExtendedFacets()) {
+					if( ! facetToResolved.get( ff ))
+						continue entries;
+
+					localExportedVariables.putAll( facetToResolvedExports.get( ff ));
+				}
+
+				// If a variable name already exists from the inherited one, we can directly override it.
+				// Otherwise, we may have to update the variable prefix.
+				for( Map.Entry<String,String> var : f.exportedVariables.entrySet()) {
+					if( localExportedVariables.containsKey( var.getKey()))
+						localExportedVariables.put( var.getKey(), var.getValue());
+					else
+						localExportedVariables.put( fixVariableName( f, var.getKey()), var.getValue());
+				}
+
+				facetToResolvedExports.put( f, localExportedVariables );
+				facetToResolved.put( f, Boolean.TRUE );
+			}
+		}
+
+		// Now, the result is easy to get.
+		return facetToResolvedExports.get( facet );
+	}
+
+
+	/**
+	 * Finds all the imported variables for a given component.
+	 * @param component a non-null component
+	 * @return a non-null map of imported variables (key = variable name, value = true if optional, false if required).
+	 */
+	public static Map<String,Boolean> findAllImportedVariables( Component component ) {
+
+		// Process components from the ancestors to the children... => override
+		Map<String,Boolean> result = new HashMap<String,Boolean> ();
+		List<Component> extendedComponents = findAllExtendedComponents( component );
+		Collections.reverse( extendedComponents );
+
+		for( Component c : extendedComponents )
+			result.putAll( c.importedVariables );
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the facets of a component.
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
+	 * @param component a non-null component
+	 * @return a non-null list of facets
+	 */
+	public static Collection<Facet> findAllFacets( Component component ) {
+
+		Set<Facet> result = new HashSet<Facet> ();
+		List<Facet> toProcess = new ArrayList<Facet> ();
+		for( Component c : findAllExtendedComponents( component ))
+			toProcess.addAll( c.getFacets());
+
+		while( ! toProcess.isEmpty()) {
+			Facet f = toProcess.remove( 0 );
+			result.add( f );
+			toProcess.addAll( f.getExtendedFacets());
+
+			// Prevent loops
+			toProcess.removeAll( result );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the components that this component inherits from.
+	 * <p>
+	 * For commodity reasons, the result always contains the current component.
+	 * </p>
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
+	 * @param component a non-null component
+	 * @return a non-null list (it always contains the <code>component</code> parameter)
+	 */
+	public static List<Component> findAllExtendedComponents( Component component ) {
+
+		List<Component> result = new ArrayList<Component> ();
+		for( Component c = component; c != null; c = c.getExtendedComponent()) {
+			if( result.contains( c ))
+				break;
+
+			result.add( c );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the facets that this facet inherits from.
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
+	 * @param facet a non-null facet
+	 * @return a non-null collection
+	 */
+	public static Collection<Facet> findAllExtendedFacets( Facet facet ) {
+
+		Set<Facet> result = new HashSet<Facet> ();
+		Set<Facet> toProcess = new HashSet<Facet>( facet.getExtendedFacets());
+		while( ! toProcess.isEmpty()) {
+
+			Facet f = toProcess.iterator().next();
+			result.add( f );
+			toProcess.addAll( f.getExtendedFacets());
+			toProcess.removeAll( result );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the facets that extend this facet.
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
+	 * @param facet a non-null facet
+	 * @return a non-null collection
+	 */
+	public static Collection<Facet> findAllExtendingFacets( Facet facet ) {
+
+		Set<Facet> result = new HashSet<Facet> ();
+		Set<Facet> toProcess = new HashSet<Facet>( facet.getExtendingFacets());
+		while( ! toProcess.isEmpty()) {
+
+			Facet f = toProcess.iterator().next();
+			result.add( f );
+			toProcess.addAll( f.getExtendingFacets());
+			toProcess.removeAll( result );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the components that extend a given component.
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
+	 * @param component a component
+	 * @return a non-null collection
+	 */
+	public static Collection<Component> findAllExtendingComponents( Component component ) {
+
+		Collection<Component> result = new HashSet<Component> ();
+		Set<Component> toProcess = new HashSet<Component>( component.getExtendingComponents());
+		while( ! toProcess.isEmpty()) {
+
+			Component c = toProcess.iterator().next();
+			result.add( c );
+			toProcess.addAll( c.getExtendingComponents());
+			toProcess.removeAll( result );
+		}
+
+		// In case of circular dependencies...
+		result.remove( component );
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the components of a graph.
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
+	 * @param graphs a set of graphs
+	 * @return a non-null list of components
+	 */
+	public static List<Component> findAllComponents( Graphs graphs ) {
+
+		Set<Component> result = new HashSet<Component> ();
+		Set<Component> toProcess = new HashSet<Component> ();
+
+		toProcess.addAll( graphs.getRootComponents());
+		while( ! toProcess.isEmpty()) {
+			Component current = toProcess.iterator().next();
+			result.add( current );
+
+			toProcess.addAll( findAllExtendedComponents( current ));
+			toProcess.addAll( findAllExtendingComponents( current ));
+			toProcess.addAll( findAllChildren( current ));
+			toProcess.addAll( findAllAncestors( current ));
+
+			// Prevent loops
+			toProcess.removeAll( result );
+		}
+
+		return new ArrayList<Component>( result );
+	}
+
+
+	/**
 	 * Finds all the components of an application.
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
 	 * @param app an application (not null)
 	 * @return a non-null list of components
 	 */
@@ -159,6 +456,12 @@ public final class ComponentHelpers {
 
 	/**
 	 * Searches for a loop in the graph starting from rootComponent.
+	 * <p>
+	 * We keep a list of all the ancestors. We then go through all the children.
+	 * If a child appears to be also in the ancestors, then we have a cycle in
+	 * the container-contained perspective.
+	 * </p>
+	 *
 	 * @param component the component from which we introspect (not null)
 	 * @param ancestors the list of ancestor components (not null)
 	 * @return null if no cycle was found, a string describing the cycle otherwise
@@ -179,7 +482,7 @@ public final class ComponentHelpers {
 
 		} else {
 			ancestors.add( component );
-			for( Component childComponent : component.getChildren()) {
+			for( Component childComponent : findAllChildren( component )) {
 
 				List<Component> updatedAncestors = new ArrayList<Component>( ancestors );
 				String s = searchForLoop( childComponent, updatedAncestors );
@@ -187,6 +490,118 @@ public final class ComponentHelpers {
 				if( s != null ) {
 					result = s;
 					break;
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Searches for a cycle in the facets inheritance.
+	 * @param facet the facet from which we introspect (not null)
+	 * @return null if no cycle was found, a string describing the cycle otherwise
+	 */
+	public static String searchForInheritanceCycle( Facet facet ) {
+
+		String result = null;
+		if( findAllExtendedFacets( facet ).contains( facet ))
+			result = facet + " -> ... -> " + facet;
+
+		return result;
+	}
+
+
+	/**
+	 * Searches for a cycle in the facets inheritance.
+	 * @param component the component from which we introspect (not null)
+	 * @return null if no cycle was found, a string describing the cycle otherwise
+	 */
+	public static String searchForInheritanceCycle( Component component ) {
+
+		String result = null;
+		for( Component c = component.getExtendedComponent(); c != null && result == null; c = c.getExtendedComponent()) {
+			if( c.equals( component ))
+				result = component + " -> ... -> " + component;
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Fixes the name of an exported variable name.
+	 * <p>
+	 * An exported variable must ALWAYS be prefixed with the name of the "type"
+	 * that exports it.
+	 * </p>
+	 *
+	 * @param type a facet or a component
+	 * @param exportedVariableName the name of an exported variable
+	 * @return a non-null string
+	 */
+	static String fixVariableName( AbstractType type, String exportedVariableName ) {
+
+		String prefix = type.getName() + ".";
+		String result = exportedVariableName;
+		if( ! result.startsWith( prefix ))
+			result = prefix + exportedVariableName;
+
+		return result;
+	}
+
+
+	/**
+	 * Finds the ancestors or the children of a given component.
+	 * <p>
+	 * The algorithm to find them is the same. The only difference
+	 * lies in the list we go through.
+	 * </p>
+	 *
+	 * @param component the component (not null)
+	 * @param children true to search children, false for ancestors
+	 * @return a non-null list
+	 */
+	private static Collection<Component> findAncestorsOrChildren( final Component component, final boolean children ) {
+
+		// The algorithm of death...
+		Set<Component> result = new HashSet<Component> ();
+		for( Component c : findAllExtendedComponents( component )) {
+
+			// A component may have zero child or ancestor.
+			// But its facets may define ones.
+			Collection<AbstractType> list = new HashSet<AbstractType> ();
+			list.addAll( children ? c.getChildren() : c.getAncestors());
+			for( Facet facet : findAllFacets( c ))
+				list.addAll( children ? facet.getChildren() : facet.getAncestors());
+
+			// Now, take a look at the list's content.
+			for( AbstractType type : list ) {
+
+				if( type instanceof Component ) {
+					Component cType = (Component) type;
+
+					// Add the component but also those that extend it!
+					result.add( cType );
+					result.addAll( findAllExtendingComponents( cType ));
+				}
+
+				else {
+					Facet fType = (Facet) type;
+
+					// Find all the "super" facets
+					Collection<Facet> allFacets = findAllExtendingFacets( fType );
+					allFacets.add( fType );
+					for( Facet facet : allFacets ) {
+
+						// Add all the components associated with the facet.
+						// Add their extending components too!
+						for( Component cc : facet.getAssociatedComponents()) {
+							result.add( cc );
+							result.addAll( findAllExtendingComponents( cc ));
+						}
+					}
 				}
 			}
 		}

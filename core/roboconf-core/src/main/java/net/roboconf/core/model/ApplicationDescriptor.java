@@ -42,10 +42,12 @@ public class ApplicationDescriptor {
 	public static final String APPLICATION_NAME = "application-name";
 	public static final String APPLICATION_QUALIFIER = "application-qualifier";
 	public static final String APPLICATION_DESCRIPTION = "application-description";
+	public static final String APPLICATION_NAMESPACE = "application-namespace";
+	public static final String APPLICATION_DSL_ID = "application-dsl-id";
 	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
 	public static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
 
-	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint;
+	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId, namespace;
 
 
 	/**
@@ -120,6 +122,34 @@ public class ApplicationDescriptor {
 
 
 	/**
+	 * @return the dslId
+	 */
+	public String getDslId() {
+		return this.dslId;
+	}
+
+	/**
+	 * @param dslId the dslId to set
+	 */
+	public void setDslId( String dslId ) {
+		this.dslId = dslId;
+	}
+
+	/**
+	 * @return the namespace
+	 */
+	public String getNamespace() {
+		return this.namespace;
+	}
+
+	/**
+	 * @param namespace the namespace to set
+	 */
+	public void setNamespace( String namespace ) {
+		this.namespace = namespace;
+	}
+
+	/**
 	 * Loads an application descriptor.
 	 * @param properties a properties object
 	 * @return an application descriptor (not null)
@@ -132,6 +162,8 @@ public class ApplicationDescriptor {
 		result.qualifier = properties.getProperty( APPLICATION_QUALIFIER, null );
 		result.graphEntryPoint = properties.getProperty( APPLICATION_GRAPH_EP, null );
 		result.instanceEntryPoint = properties.getProperty( APPLICATION_INSTANCES_EP, null );
+		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
+		result.namespace = properties.getProperty( APPLICATION_NAMESPACE, null );
 
 		return result;
 	}
@@ -171,11 +203,26 @@ public class ApplicationDescriptor {
 	public static void save( File f, ApplicationDescriptor descriptor ) throws IOException {
 
 		Properties properties = new Properties();
-		properties.setProperty( APPLICATION_NAME, descriptor.name );
-		properties.setProperty( APPLICATION_DESCRIPTION, descriptor.description );
-		properties.setProperty( APPLICATION_QUALIFIER, descriptor.qualifier );
-		properties.setProperty( APPLICATION_GRAPH_EP, descriptor.graphEntryPoint );
-		properties.setProperty( APPLICATION_INSTANCES_EP, descriptor.instanceEntryPoint );
+		if( descriptor.name != null )
+			properties.setProperty( APPLICATION_NAME, descriptor.name );
+
+		if( descriptor.namespace != null )
+			properties.setProperty( APPLICATION_NAMESPACE, descriptor.namespace );
+
+		if( descriptor.qualifier != null )
+			properties.setProperty( APPLICATION_QUALIFIER, descriptor.qualifier );
+
+		if( descriptor.dslId != null )
+			properties.setProperty( APPLICATION_DSL_ID, descriptor.dslId );
+
+		if( descriptor.description != null )
+			properties.setProperty( APPLICATION_DESCRIPTION, descriptor.description );
+
+		if( descriptor.graphEntryPoint != null )
+			properties.setProperty( APPLICATION_GRAPH_EP, descriptor.graphEntryPoint );
+
+		if( descriptor.instanceEntryPoint != null )
+			properties.setProperty( APPLICATION_INSTANCES_EP, descriptor.instanceEntryPoint );
 
 		FileOutputStream fos = null;
 		try {

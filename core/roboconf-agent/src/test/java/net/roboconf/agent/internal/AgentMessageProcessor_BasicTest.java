@@ -28,10 +28,11 @@ package net.roboconf.agent.internal;
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.Message;
@@ -55,6 +56,7 @@ import org.junit.Test;
 public class AgentMessageProcessor_BasicTest {
 
 	private Agent agent;
+	private TestClientAgent client;
 
 
 	@Before
@@ -64,7 +66,8 @@ public class AgentMessageProcessor_BasicTest {
 		this.agent.start();
 
 		Thread.sleep( 200 );
-		((TestClientAgent) this.agent.getMessagingClient().getInternalClient()).messagesForTheDm.clear();
+		this.client = TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class );
+		this.client.messagesForTheDm.clear();
 	}
 
 
@@ -81,10 +84,10 @@ public class AgentMessageProcessor_BasicTest {
 		TestApplication app = new TestApplication();
 
 		processor.initializePluginForInstance( app.getMySqlVm());
-		Assert.assertNull( app.getMySqlVm().getData().get( PluginMock.INIT_PROPERTY ));
+		Assert.assertNull( app.getMySqlVm().data.get( PluginMock.INIT_PROPERTY ));
 
 		processor.initializePluginForInstance( app.getMySql());
-		Assert.assertEquals( "true", app.getMySql().getData().get( PluginMock.INIT_PROPERTY ));
+		Assert.assertEquals( "true", app.getMySql().data.get( PluginMock.INIT_PROPERTY ));
 	}
 
 
@@ -125,16 +128,16 @@ public class AgentMessageProcessor_BasicTest {
 		Instance newMySqlVm = new Instance( app.getMySqlVm().getName()).component( app.getMySqlVm().getComponent());
 		processor.rootInstance = newMySqlVm;
 
-		app.getMySql().getOverriddenExports().put( "some-value", "loop" );
+		app.getMySql().overriddenExports.put( "some-value", "loop" );
 		Assert.assertEquals( 0, newMySqlVm.getChildren().size());
 		processor.processMessage( new MsgCmdAddInstance( app.getMySql()));
 		Assert.assertEquals( 1, newMySqlVm.getChildren().size());
 
 		Instance newChild = newMySqlVm.getChildren().iterator().next();
 		Assert.assertEquals( app.getMySql(), newChild );
-		Assert.assertEquals( 1, newChild.getOverriddenExports().size());
-		Assert.assertEquals( "loop", newChild.getOverriddenExports().get( "some-value" ));
-		Assert.assertEquals( "true", newChild.getData().get( PluginMock.INIT_PROPERTY ));
+		Assert.assertEquals( 1, newChild.overriddenExports.size());
+		Assert.assertEquals( "loop", newChild.overriddenExports.get( "some-value" ));
+		Assert.assertEquals( "true", newChild.data.get( PluginMock.INIT_PROPERTY ));
 
 		// Inserting an existing child fails
 		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( newMySqlVm ).size());
@@ -163,7 +166,6 @@ public class AgentMessageProcessor_BasicTest {
 	public void testSetRootInstance() {
 
 		// Initialize all the stuff
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplication app = new TestApplication();
 
@@ -171,13 +173,13 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertNull( processor.rootInstance );
 		processor.processMessage( new MsgCmdSetRootInstance( app.getMySql()));
 		Assert.assertNull( processor.rootInstance );
-		Assert.assertEquals( 0, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForAgentsCount.get());
 
 		// Insert a root
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
-		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, client.messagesForAgentsCount.get());
+		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
 
 		// We cannot change the root
 		processor.processMessage( new MsgCmdSetRootInstance( app.getMySqlVm()));
@@ -188,19 +190,19 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Make sure the final state of the root instance is always "deployed and started"
 		processor.rootInstance = null;
-		client.messagesForAgentsCount.set( 0 );
+		this.client.messagesForAgentsCount.set( 0 );
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
-		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, client.messagesForAgentsCount.get());
+		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
 
 		// All the instances must have been initialized (their plug-in in fact).
 		// All, except the root instance.
 		for( Instance inst : InstanceHelpers.buildHierarchicalList( processor.rootInstance )) {
 			if( inst.getParent() != null )
-				Assert.assertEquals( inst.getName(), "true", inst.getData().get( PluginMock.INIT_PROPERTY ));
+				Assert.assertEquals( inst.getName(), "true", inst.data.get( PluginMock.INIT_PROPERTY ));
 		}
 	}
 
@@ -209,12 +211,11 @@ public class AgentMessageProcessor_BasicTest {
 	public void testSendInstances() {
 
 		// Initialize all the stuff
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// No root instance
 		processor.processMessage( new MsgCmdSendInstances());
-		Assert.assertEquals( 0, client.messagesForTheDm.size());
+		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
 
 		// With a root instance
 		TestApplication app = new TestApplication();
@@ -223,10 +224,10 @@ public class AgentMessageProcessor_BasicTest {
 		processor.processMessage( new MsgCmdSendInstances());
 		Assert.assertEquals(
 				InstanceHelpers.buildHierarchicalList( app.getTomcatVm()).size(),
-				client.messagesForTheDm.size());
+				this.client.messagesForTheDm.size());
 
 		for( int i=1; i<3; i++ )
-			Assert.assertEquals( "Index " + i, MsgNotifInstanceChanged.class, client.messagesForTheDm.get( i ).getClass());
+			Assert.assertEquals( "Index " + i, MsgNotifInstanceChanged.class, this.client.messagesForTheDm.get( i ).getClass());
 	}
 
 
@@ -234,13 +235,12 @@ public class AgentMessageProcessor_BasicTest {
 	public void testResynchronize() {
 
 		// Initialize all the stuff
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// No root instance
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 0, client.messagesForTheDm.size());
-		Assert.assertEquals( 0, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
+		Assert.assertEquals( 0, this.client.messagesForAgentsCount.get());
 
 		// With a root instance which has no variable.
 		// Unlike with a real messaging client, we do not check variables in our test client.
@@ -250,20 +250,20 @@ public class AgentMessageProcessor_BasicTest {
 		processor.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 0, client.messagesForTheDm.size());
-		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
+		Assert.assertEquals( 1, this.client.messagesForAgentsCount.get());
 
 		// With a child instance
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 0, client.messagesForTheDm.size());
-		Assert.assertEquals( 3, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
+		Assert.assertEquals( 3, this.client.messagesForAgentsCount.get());
 
 		// With another started child
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		processor.processMessage( new MsgCmdResynchronize());
-		Assert.assertEquals( 0, client.messagesForTheDm.size());
-		Assert.assertEquals( 6, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
+		Assert.assertEquals( 6, this.client.messagesForAgentsCount.get());
 	}
 
 
@@ -271,7 +271,6 @@ public class AgentMessageProcessor_BasicTest {
 	public void testRemoveInstance() {
 
 		// Initialize all the stuff
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// Remove an instance when there is no model
@@ -301,11 +300,11 @@ public class AgentMessageProcessor_BasicTest {
 		processor.processMessage( new MsgCmdRemoveInstance( app.getMySql()));
 		Assert.assertEquals( 1, InstanceHelpers.buildHierarchicalList( app.getMySqlVm()).size());
 
-		Assert.assertEquals( 1, client.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifInstanceRemoved.class, client.messagesForTheDm.get( 0 ).getClass());
+		Assert.assertEquals( 1, this.client.messagesForTheDm.size());
+		Assert.assertEquals( MsgNotifInstanceRemoved.class, this.client.messagesForTheDm.get( 0 ).getClass());
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getMySql()),
-				((MsgNotifInstanceRemoved) client.messagesForTheDm.get( 0 )).getInstancePath());
+				((MsgNotifInstanceRemoved) this.client.messagesForTheDm.get( 0 )).getInstancePath());
 	}
 
 
@@ -322,8 +321,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void checkIoExceptionsAreHandled() {
 
-		TestClientAgent client = (TestClientAgent) this.agent.getMessagingClient().getInternalClient();
-		client.failMessageSending.set( true );
+		this.client.failMessageSending.set( true );
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		processor.rootInstance = new TestApplication().getMySqlVm();

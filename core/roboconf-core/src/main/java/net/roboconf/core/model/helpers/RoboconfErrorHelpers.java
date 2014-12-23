@@ -49,7 +49,7 @@ public final class RoboconfErrorHelpers {
 	 * @param errors a non-null collection of errors
 	 * @return true if at least one critical error, false otherwise
 	 */
-	public static boolean containsCriticalErrors( Collection<RoboconfError> errors ) {
+	public static boolean containsCriticalErrors( Collection<? extends RoboconfError> errors ) {
 
 		boolean result = false;
 		for( RoboconfError error : errors ) {
@@ -66,7 +66,7 @@ public final class RoboconfErrorHelpers {
 	 * @param errors a non-null collection of errors
 	 * @return a non-null collection of warnings
 	 */
-	public static Collection<RoboconfError> findWarnings( Collection<RoboconfError> errors ) {
+	public static Collection<RoboconfError> findWarnings( Collection<? extends RoboconfError> errors ) {
 
 		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
 		for( RoboconfError error : errors ) {

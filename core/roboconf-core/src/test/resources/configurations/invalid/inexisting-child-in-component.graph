@@ -1,0 +1,5 @@
+
+root {
+	installer: target;
+	children: server;
+}

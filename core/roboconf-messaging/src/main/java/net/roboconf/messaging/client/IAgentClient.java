@@ -27,7 +27,7 @@ package net.roboconf.messaging.client;
 
 import java.io.IOException;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**

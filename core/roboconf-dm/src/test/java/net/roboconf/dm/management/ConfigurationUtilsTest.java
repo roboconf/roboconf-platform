@@ -30,11 +30,11 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 
 import org.junit.Before;
@@ -100,12 +100,12 @@ public class ConfigurationUtilsTest {
 		// Save...
 		TestApplication app = new TestApplication();
 		app.getMySqlVm().status( InstanceStatus.DEPLOYED_STARTED );
-		app.getMySqlVm().getData().put( Instance.IP_ADDRESS, "192.168.1.12" );
-		app.getMySqlVm().getData().put( Instance.MACHINE_ID, "xx45s5s645" );
+		app.getMySqlVm().data.put( Instance.IP_ADDRESS, "192.168.1.12" );
+		app.getMySqlVm().data.put( Instance.MACHINE_ID, "xx45s5s645" );
 		app.getMySql().status( InstanceStatus.DEPLOYED_STOPPED );
 
-		app.getMySqlVm().getData().put( Instance.APPLICATION_NAME, app.getName());
-		app.getTomcatVm().getData().put( Instance.APPLICATION_NAME, app.getName());
+		app.getMySqlVm().data.put( Instance.APPLICATION_NAME, app.getName());
+		app.getTomcatVm().data.put( Instance.APPLICATION_NAME, app.getName());
 
 		ManagedApplication ma = new ManagedApplication( app, ConfigurationUtils.findApplicationdirectory( app.getName(), this.dir ));
 		ConfigurationUtils.saveInstances( ma, this.dir );
@@ -125,15 +125,15 @@ public class ConfigurationUtilsTest {
 			Instance inst = InstanceHelpers.findInstanceByPath( app, InstanceHelpers.computeInstancePath( restoredInst ));
 			Assert.assertNotNull( inst );
 			Assert.assertEquals( inst.getName(), restoredInst.getName());
-			Assert.assertEquals( inst.getChannel(), restoredInst.getChannel());
+			Assert.assertEquals( inst.channels, restoredInst.channels );
 			Assert.assertEquals( inst.getStatus(), restoredInst.getStatus());
 			Assert.assertEquals( inst.getComponent(), restoredInst.getComponent());
-			Assert.assertEquals( inst.getOverriddenExports().size(), restoredInst.getOverriddenExports().size());
-			Assert.assertEquals( inst.getData().size(), restoredInst.getData().size());
+			Assert.assertEquals( inst.overriddenExports.size(), restoredInst.overriddenExports.size());
+			Assert.assertEquals( inst.data.size(), restoredInst.data.size());
 
-			for( Map.Entry<String,String> entry : restoredInst.getData().entrySet()) {
-				Assert.assertTrue( inst.getData().containsKey( entry.getKey()));
-				Assert.assertEquals( inst.getData().get( entry.getKey()), entry.getValue());
+			for( Map.Entry<String,String> entry : restoredInst.data.entrySet()) {
+				Assert.assertTrue( inst.data.containsKey( entry.getKey()));
+				Assert.assertEquals( inst.data.get( entry.getKey()), entry.getValue());
 			}
 		}
 	}

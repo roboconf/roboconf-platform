@@ -1,0 +1,25 @@
+# This is a comment ;)
+# This files gathers all the reactions for a given application.
+
+# When "event-1" is triggered, replicate a service.
+# The service is instantiated given the path on the next line.
+# Each path segment designates a component name. Here, it means we will create...
+# ... a new VM, with a new Tomcat, with a new instance of War 1.
+[reaction event-1 Replicate-Service]
+/vm/tomcat/war1
+
+# FIXME: we should be able to specify several instances here.
+
+# When "event-2" is triggered, delete a service.
+# The service to delete is associated with the component described on the next line (war1).
+# The entire VM will be deleted. Only VM that were created with "Replicate-Service" can be
+# deleted by "Delete-Service".
+[reaction event-2 Delete-Service]
+war1
+
+# When "event-3" is triggered, send an e-mail.
+[reaction event-3 Mail]
+admin@company.com
+
+# When "event-4" is triggered, log an entry.
+[reaction event-4 Log]

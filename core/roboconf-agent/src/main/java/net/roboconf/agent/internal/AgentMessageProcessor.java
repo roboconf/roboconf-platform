@@ -33,15 +33,15 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.lifecycle.AbstractLifeCycleManager;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
@@ -212,7 +212,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		// Configure the messaging
 		for( Instance instanceToProcess : instancesToProcess ) {
 			initializePluginForInstance( instanceToProcess );
-			VariableHelpers.updateNetworkVariables( instanceToProcess.getExports(), this.agent.getIpAddress());
 			this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, instanceToProcess );
 			this.messagingClient.requestExportsFromOtherAgents( instanceToProcess );
 		}
@@ -268,16 +267,17 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		if( parentInstance == null ) {
 			this.logger.severe( "The parent instance for " + msg.getParentInstancePath() + " was not found. The request to add a new instance is dropped." );
 
-		} else if(( instanceComponent = ComponentHelpers.findSubComponent( parentInstance.getComponent(), msg.getComponentName())) == null ) {
+		} else if(( instanceComponent = ComponentHelpers.findComponentFrom( parentInstance.getComponent(), msg.getComponentName())) == null ) {
 			this.logger.severe( "The component " + msg.getComponentName() + " was not found in the local graph." );
 
 		} else {
-			Instance newInstance = new Instance( msg.getInstanceName()).channel( msg.getChannel()).component( instanceComponent );
+			Instance newInstance = new Instance( msg.getInstanceName()).component( instanceComponent );
+			newInstance.channels.addAll( msg.getChannels());
 			if( msg.getData() != null )
-				newInstance.getData().putAll( msg.getData());
+				newInstance.data.putAll( msg.getData());
 
 			if( msg.getOverridenExports() != null )
-				newInstance.getOverriddenExports().putAll( msg.getOverridenExports());
+				newInstance.overriddenExports.putAll( msg.getOverridenExports());
 
 			Application tempApp = new Application( "temp app" );
 			tempApp.getRootInstances().add( parentInstance );
@@ -286,8 +286,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			} else {
 				initializePluginForInstance( newInstance );
-
-				VariableHelpers.updateNetworkVariables( newInstance.getExports(), this.agent.getIpAddress());
 				this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, newInstance );
 				this.messagingClient.requestExportsFromOtherAgents( newInstance );
 			}

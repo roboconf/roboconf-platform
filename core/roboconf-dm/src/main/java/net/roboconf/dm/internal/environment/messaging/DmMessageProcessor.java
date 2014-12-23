@@ -28,11 +28,11 @@ package net.roboconf.dm.internal.environment.messaging;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
 import net.roboconf.dm.management.ManagedApplication;
@@ -59,6 +59,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 	private final Manager manager;
+	private final RuleBasedEventHandler ruleBasedHandler;
 
 
 	/**
@@ -68,6 +69,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	public DmMessageProcessor( Manager manager ) {
 		super( "Roboconf DM - Message Processor" );
 		this.manager = manager;
+		this.ruleBasedHandler = new RuleBasedEventHandler( this.manager );
 	}
 
 
@@ -90,10 +92,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 		else if( message instanceof MsgNotifHeartbeat )
 			processMsgNotifHeartbeat((MsgNotifHeartbeat) message );
-		
-		else if(message instanceof MsgNotifAutonomic) {
-			processMsgMonitoringEvent((MsgNotifAutonomic)message);
-		}
+
+		else if(message instanceof MsgNotifAutonomic)
+			processMsgMonitoringEvent((MsgNotifAutonomic) message );
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
@@ -144,9 +145,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 		} else {
 			// Update the data
 			String ipAddress = message.getIpAddress();
-			if( rootInstance.getData().get( Instance.IP_ADDRESS ) == null ) {
+			if( rootInstance.data.get( Instance.IP_ADDRESS ) == null ) {
 				this.logger.fine( rootInstanceName + " @ " + ipAddress + " is up and running." );
-				rootInstance.getData().put( Instance.IP_ADDRESS, ipAddress );
+				rootInstance.data.put( Instance.IP_ADDRESS, ipAddress );
 				this.manager.saveConfiguration( ma );
 			}
 
@@ -182,6 +183,16 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( " (app =  " );
 			sb.append( app );
 			sb.append( ")." );
+			this.logger.warning( sb.toString());
+
+		} else if( InstanceHelpers.findRootInstance( instance ).getStatus() == InstanceStatus.NOT_DEPLOYED ) {
+			// See roboconf-platform #107
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A 'CHANGED' notification was received from a instance: " );
+			sb.append( instancePath );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ") but the rioot instance is not deployed. Status update is dismissed." );
 			this.logger.warning( sb.toString());
 
 		} else {
@@ -227,14 +238,26 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			this.logger.info( "Instance " + instancePath + " was removed from the model." );
 		}
 	}
-	
-	private void processMsgMonitoringEvent(MsgNotifAutonomic message) {
-		this.logger.info("Autonomic monitoring listener: EVENT " + message.getEventName());
-		try {
-			RuleBasedEventHandler handler = new RuleBasedEventHandler(manager, manager.getManagedApplication(message.getApplicationName()));
-			handler.handleEvent(message);
-		} catch (Exception e) {
-			this.logger.warning("Can\'t process rule-based event: " + e.getMessage());
+
+
+	private void processMsgMonitoringEvent( MsgNotifAutonomic message ) {
+
+		Application app = this.manager.findApplicationByName( message.getApplicationName());
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( app, message.getRootInstanceName());
+
+		// If 'app' is null, then 'instance' is also null.
+		if( rootInstance == null ) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A notification associated with autonomic management was received for an unknown instance: " );
+			sb.append( message.getRootInstanceName());
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ")." );
+			this.logger.warning( sb.toString());
+
+		} else {
+			ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( app.getName());
+			this.ruleBasedHandler.handleEvent( ma, message );
 		}
 	}
 }

@@ -32,7 +32,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;

@@ -1,0 +1,23 @@
+####################################
+# We start with a simple deployment
+####################################
+
+# A VM with Apache only
+instance of VM {
+	name: Apache VM;
+	
+	instance of Apache {
+		name: Apache;
+	}
+}
+
+# A VM with MySQL only
+instance of VM {
+	name: MySQL VM;
+	
+	instance of MySQL {
+		name: MySQL;
+	}
+}
+
+import others.instances;

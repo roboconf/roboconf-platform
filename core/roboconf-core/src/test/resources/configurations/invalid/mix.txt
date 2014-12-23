@@ -1,0 +1,9 @@
+# We mix graph and instance definitions => error
+
+Toto {
+	installer: target;
+}
+
+instance of Toto {
+	name: toto;
+}

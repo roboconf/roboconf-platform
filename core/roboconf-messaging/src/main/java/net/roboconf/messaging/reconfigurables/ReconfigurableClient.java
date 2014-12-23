@@ -63,8 +63,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		try {
 			newMessagingClient = createNewMessagingClient( messageServerIp, messageServerUser, messageServerPwd, factoryName );
 			if( newMessagingClient != null ) {
-				// messageProcessor may be null (eg. sender only)
-				if(this.messageProcessor != null) newMessagingClient.setMessageQueue(this.messageProcessor.getMessageQueue());
+				newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
 				openConnection( newMessagingClient );
 			}
 
@@ -180,16 +179,6 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 */
 	protected synchronized void resetInternalClient() {
 		this.messagingClient = null;
-	}
-
-
-	/**
-	 * A method that must be used only in tests.
-	 * @return the messaging client
-	 */
-	@Deprecated
-	public T getInternalClient() {
-		return this.messagingClient;
 	}
 
 

@@ -30,14 +30,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
@@ -66,6 +67,14 @@ public class SerializationUtilsTest {
 
 		msg = new MsgNotifHeartbeat( "app1", new Instance( "instance2" ), "192.168.0.11" );
 		checkBasics( msg, MsgNotifHeartbeat.class );
+	}
+
+
+	@Test
+	public void testMessage_autonomic() throws Exception {
+
+		MsgNotifAutonomic msg = new MsgNotifAutonomic( "app1", "instance1", "too high", "oops" );
+		checkBasics( msg, MsgNotifAutonomic.class );
 	}
 
 
@@ -154,13 +163,13 @@ public class SerializationUtilsTest {
 	public void testMessage_addInstance() throws Exception {
 
 		Instance child = new Instance( "child" ).channel( "channel 4" ).status( InstanceStatus.DEPLOYED_STOPPED );
-		child.component( new Component( "comp_child" ).alias( "component" ).installerName( "whatever" ));
+		child.component( new Component( "comp_child" ).installerName( "whatever" ));
 
 		MsgCmdAddInstance msg = new MsgCmdAddInstance( child );
 		checkBasics( msg, MsgCmdAddInstance.class );
 
-		Instance root = new Instance( "root" ).status( InstanceStatus.DEPLOYED_STARTED );
-		root.component( new Component( "comp_root" ).alias( "component" ).installerName( "whatever" ));
+		Instance root = new Instance( "root" ).status( InstanceStatus.DEPLOYED_STARTED ).channel( "channel1" ).channel( "channel2" );
+		root.component( new Component( "comp_root" ).installerName( "whatever" ));
 		InstanceHelpers.insertChild( root, child );
 
 		msg = new MsgCmdAddInstance( child );

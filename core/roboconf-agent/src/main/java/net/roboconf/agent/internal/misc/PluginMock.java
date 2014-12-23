@@ -27,9 +27,9 @@ package net.roboconf.agent.internal.misc;
 
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -67,7 +67,7 @@ public class PluginMock implements PluginInterface {
 		// This class is mainly used for test and dev' purpose.
 		// So, we can store the information in the instance without any major impact.
 		if( instance != null )
-			instance.getData().put( INIT_PROPERTY, "true" );
+			instance.data.put( INIT_PROPERTY, "true" );
 	}
 
 

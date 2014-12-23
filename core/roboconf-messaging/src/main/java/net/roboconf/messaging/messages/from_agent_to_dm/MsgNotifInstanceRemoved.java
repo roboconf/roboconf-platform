@@ -25,8 +25,8 @@
 
 package net.roboconf.messaging.messages.from_agent_to_dm;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
 import net.roboconf.messaging.messages.Message;
 
 /**

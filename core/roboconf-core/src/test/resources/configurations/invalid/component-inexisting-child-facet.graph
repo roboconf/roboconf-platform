@@ -1,16 +1,13 @@
 VM {
-    alias: VM;
     installer: target;
-    children: A, Fa1, Fa2;
+    children: A, Fa1, Fa3;
 }
 
 A {
-    alias: A;
     installer: puppet;
 }
 
 B {
-	alias: B;
 	installer: whatever;
 	facets: Fa1;
 }

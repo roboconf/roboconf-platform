@@ -25,12 +25,12 @@
 
 package net.roboconf.core.internal.tests;
 
-import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.Instance;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -50,24 +50,24 @@ public class TestApplication extends Application {
 		setQualifier( "test" );
 
 		// Root instances
-		Component vmComponent = new Component( "vm" ).installerName( "target" ).alias( "A virtual machine" );
+		Component vmComponent = new Component( "vm" ).installerName( Constants.TARGET_INSTALLER );
 		this.tomcatVm = new Instance( "tomcat-vm" ).component( vmComponent );
 		this.mySqlVm = new Instance( "mysql-vm" ).component( vmComponent );
 
 		// Children instances
-		Component tomcatComponent = new Component( "tomcat" ).installerName( "puppet" ).alias( "An application server" );
+		Component tomcatComponent = new Component( "tomcat" ).installerName( "puppet" );
 		this.tomcat = new Instance( "tomcat-server" ).component( tomcatComponent );
 
-		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" ).alias( "A database" );
-		mySqlComponent.getExportedVariables().put( "mysql.port", "3306" );
-		mySqlComponent.getExportedVariables().put( "mysql.ip", null );
+		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" );
+		mySqlComponent.exportedVariables.put( "mysql.port", "3306" );
+		mySqlComponent.exportedVariables.put( "mysql.ip", null );
 		this.mySql = new Instance( "mysql-server" ).component( mySqlComponent );
 
-		Component warComponent = new Component( "war" ).installerName( "bash" ).alias( "A WAR application" );
-		warComponent.getExportedVariables().put( "war.port", "8080" );
-		warComponent.getExportedVariables().put( "war.ip", null );
-		warComponent.getImportedVariables().put( "mysql.port", false );
-		warComponent.getImportedVariables().put( "mysql.ip", false );
+		Component warComponent = new Component( "war" ).installerName( "bash" );
+		warComponent.exportedVariables.put( "war.port", "8080" );
+		warComponent.exportedVariables.put( "war.ip", null );
+		warComponent.importedVariables.put( "mysql.port", false );
+		warComponent.importedVariables.put( "mysql.ip", false );
 		this.war = new Instance( "hello-world" ).component( warComponent );
 
 		// Make the glue
@@ -75,9 +75,9 @@ public class TestApplication extends Application {
 		InstanceHelpers.insertChild( this.tomcat, this.war );
 		InstanceHelpers.insertChild( this.mySqlVm, this.mySql );
 
-		ComponentHelpers.insertChild( vmComponent, mySqlComponent );
-		ComponentHelpers.insertChild( vmComponent, tomcatComponent );
-		ComponentHelpers.insertChild( tomcatComponent, warComponent );
+		vmComponent.addChild( mySqlComponent );
+		vmComponent.addChild( tomcatComponent );
+		tomcatComponent.addChild( warComponent );
 
 		setGraphs( new Graphs());
 		getGraphs().getRootComponents().add( vmComponent );

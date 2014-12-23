@@ -32,9 +32,9 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 

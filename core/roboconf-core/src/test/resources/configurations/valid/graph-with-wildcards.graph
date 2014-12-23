@@ -1,0 +1,34 @@
+
+vm {
+	installer: target;
+	children: database, app, messaging;
+}
+
+database {
+	installer: puppet;
+	exports: ip, port = 3306;
+}
+
+messaging {
+	installer: chef;
+	facets: f-messaging-1, f-messaging-2;
+}
+
+app {
+	installer: bash;
+	exports: ip, port = toto;
+	
+	# At runtime, all the variables will be sent to "app" instances.
+	# database.* => database.ip and database.port.
+	# f-messaging-2 => f-messaging-2.port.
+	imports: database.*, f-messaging-2.*;
+}
+
+# Facets are not really useful, except for test purpose
+facet f-messaging-1 {
+	exports: queue = default;
+}
+
+facet f-messaging-2 {
+	exports: port = 9090;
+}

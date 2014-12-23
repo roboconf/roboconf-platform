@@ -34,11 +34,11 @@ import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
 
@@ -54,8 +54,11 @@ public class PluginBashTest {
 
 	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-bash" );
 
-	private final Instance inst = new Instance( "sample" ).component( new Component( "some-component" ));
-	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst, PluginBash.PLUGIN_NAME );
+	private final Instance inst = new Instance( "sample" )
+			.component( new Component( "some-component" )
+			.installerName( PluginBash.PLUGIN_NAME ));
+
+	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst );
 	private PluginBash plugin;
 
 
@@ -67,9 +70,9 @@ public class PluginBashTest {
 		this.plugin.setNames( "app", "test" );
 
 		// Useful to watch real bash content on debug (and for code coverage)
-		this.inst.getExports().put( "facet.prop1", "value1" );
-		this.inst.getExports().put( "some-component.prop2", "value2" );
-		this.inst.getExports().put( "prop3", "value3" );
+		this.inst.overriddenExports.put( "facet.prop1", "value1" );
+		this.inst.overriddenExports.put( "some-component.prop2", "value2" );
+		this.inst.overriddenExports.put( "prop3", "value3" );
 
 		Map<String,String> exportedVariables1 = new HashMap<String,String> ();
 		exportedVariables1.put( "ip", "http://192.168.1.15" );

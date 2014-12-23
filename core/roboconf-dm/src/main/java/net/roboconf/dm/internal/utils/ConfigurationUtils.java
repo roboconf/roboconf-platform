@@ -33,8 +33,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo.InstancesLoadResult;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 
@@ -134,10 +134,11 @@ public class ConfigurationUtils {
 	 */
 	public static InstancesLoadResult restoreInstances( ManagedApplication ma, File configurationDirectory ) {
 
-		File sourceFile = new File( configurationDirectory, INSTANCES + "/" + ma.getName() + ".instances" );
+		File instDirectory = new File( configurationDirectory, INSTANCES );
+		File sourceFile = new File( instDirectory, ma.getName() + ".instances" );
 		InstancesLoadResult result;
 		if( sourceFile.exists())
-			result = RuntimeModelIo.loadInstances( sourceFile, ma.getApplication().getGraphs(), ma.getApplication().getName());
+			result = RuntimeModelIo.loadInstances( sourceFile, instDirectory, ma.getApplication().getGraphs(), ma.getApplication().getName());
 		else
 			result = new InstancesLoadResult();
 

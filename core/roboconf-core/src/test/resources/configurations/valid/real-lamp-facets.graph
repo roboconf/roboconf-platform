@@ -5,9 +5,7 @@
 
 # The VM facet
 facet VM {
-	icon: vm.jpg;
 	children: deployable;
-	installer: target;
 }
 
 # The deployable facet
@@ -17,7 +15,5 @@ facet deployable {
 
 # WAR  archives
 facet war-archive {
-	icon: war.png;
-	installer: bash;
 	exports: full-url, url-path;
 }

@@ -32,6 +32,11 @@ package net.roboconf.core;
 public interface Constants {
 
 	/**
+	 * The wild card symbol (can be used in a component to reference any variable for a given group).
+	 */
+	String WILDCARD = "*";
+
+	/**
 	 * The name of the target installer (which is somehow specific).
 	 */
 	String TARGET_INSTALLER = "target";
@@ -45,79 +50,6 @@ public interface Constants {
 	 * The heart beat period (in milliseconds).
 	 */
 	long HEARTBEAT_PERIOD = 60000;
-
-	/**
-	 * Keyword for facet property.
-	 */
-	String PROPERTY_FACET_EXTENDS = "extends";
-
-
-	/**
-	 * Keyword for component property.
-	 */
-	String PROPERTY_COMPONENT_ALIAS = "alias";
-
-	/**
-	 * Keyword for component property.
-	 */
-	String PROPERTY_COMPONENT_FACETS = "facets";
-
-	/**
-	 * Keyword for component property.
-	 */
-	String PROPERTY_COMPONENT_IMPORTS = "imports";
-
-	/**
-	 * Keyword for component property.
-	 */
-	String PROPERTY_COMPONENT_OPTIONAL_IMPORT = "(optional)";
-
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_EXPORTS = "exports";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_CHILDREN = "children";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_ICON_LOCATION = "icon";
-
-	/**
-	 * Keyword for a facet or a component property.
-	 */
-	String PROPERTY_GRAPH_INSTALLER = "installer";
-
-
-	/**
-	 * Keyword for an instance property.
-	 */
-	String PROPERTY_INSTANCE_NAME = "name";
-
-	/**
-	 * Keyword for an instance property (runtime, not meant to be set manually).
-	 */
-	String PROPERTY_INSTANCE_DATA = "instance-data";
-
-	/**
-	 * Keyword for an instance property (runtime, not meant to be set manually).
-	 */
-	String PROPERTY_INSTANCE_STATE = "instance-state";
-
-	/**
-	 * Keyword for an instance property.
-	 */
-	String PROPERTY_INSTANCE_CHANNEL = "channel";
-
-	/**
-	 * Keyword to create several instances at once.
-	 */
-	String PROPERTY_INSTANCE_COUNT = "count";
 
 
 	/**
@@ -136,7 +68,28 @@ public interface Constants {
 	String PROJECT_DIR_INSTANCES = "instances";
 
 	/**
+	 * The <strong>autonomic</strong> directory.
+	 */
+	String PROJECT_DIR_AUTONOMIC = "autonomic";
+
+	/**
 	 * The <strong>application.properties</strong> file name.
 	 */
 	String PROJECT_FILE_DESCRIPTOR = "application.properties";
+
+	/**
+	 * The <strong>measures</strong> file extension.
+	 */
+	String FILE_EXT_MEASURES = ".measures";
+
+	/**
+	 * The <strong>rules</strong> file extension.
+	 */
+	String FILE_EXT_RULES = ".rules";
+
+
+	/**
+	 * A specific variable whose value is set at runtime.
+	 */
+	String SPECIFIC_VARIABLE_IP = "ip";
 }
