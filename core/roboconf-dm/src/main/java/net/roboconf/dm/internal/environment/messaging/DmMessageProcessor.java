@@ -185,6 +185,16 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
+		} else if( InstanceHelpers.findRootInstance( instance ).getStatus() == InstanceStatus.NOT_DEPLOYED ) {
+			// See roboconf-platform #107
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A 'CHANGED' notification was received from a instance: " );
+			sb.append( instancePath );
+			sb.append( " (app =  " );
+			sb.append( app );
+			sb.append( ") but the rioot instance is not deployed. Status update is dismissed." );
+			this.logger.warning( sb.toString());
+
 		} else {
 			InstanceStatus oldStatus = instance.getStatus();
 			instance.setStatus( message.getNewStatus());

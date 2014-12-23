@@ -153,9 +153,25 @@ public class DmMessageProcessorTest {
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), new Instance( "invalid instance" ));
 		msg.setNewStatus( InstanceStatus.STOPPING );
 
-		// The application name is invalid, no update should have been performed
+		// The instance name is invalid, no update should have been performed
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
+	}
+
+
+	@Test
+	public void testProcessMsgNotifInstanceChanged_rootIsNotDeployed() {
+
+		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
+
+		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), this.app.getMySql());
+		msg.setNewStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// The root is not deployed, the change should be dismissed
+		this.processor.processMessage( msg );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 	}
 
 
