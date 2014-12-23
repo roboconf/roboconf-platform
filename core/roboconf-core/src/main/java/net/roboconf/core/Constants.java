@@ -32,6 +32,11 @@ package net.roboconf.core;
 public interface Constants {
 
 	/**
+	 * The wild card symbol (can be used in a component to reference any variable for a given group).
+	 */
+	String WILDCARD = "*";
+
+	/**
 	 * The name of the target installer (which is somehow specific).
 	 */
 	String TARGET_INSTALLER = "target";

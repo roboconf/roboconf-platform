@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Assert;
@@ -48,6 +49,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
 import org.junit.Rule;
@@ -684,5 +686,48 @@ public class RuntimeModelValidatorTest {
 		}
 
 		Assert.assertEquals( 3, messages.size());
+	}
+
+
+	@Test
+	public void testWildcardImports() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/graph-with-wildcards.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Assert.assertEquals( 0, errors.size());
+
+		Component component = ComponentHelpers.findComponent( graphs, "app" );
+		Assert.assertNotNull( component );
+
+		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( component );
+		Assert.assertEquals( 2, exports.size());
+		Assert.assertNull( exports.get( "app.ip" ));
+		Assert.assertEquals( "toto", exports.get( "app.port" ));
+
+		Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( component );
+		Assert.assertEquals( 2, imports.size());
+		Assert.assertEquals( Boolean.FALSE, imports.get( "database.*" ));
+		Assert.assertEquals( Boolean.FALSE, imports.get( "f-messaging-2.*" ));
+	}
+
+
+	@Test
+	public void testWildcardImports_withErrors() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/graph-with-wildcards-and-errors.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Assert.assertEquals( 1, errors.size());
+
+		RoboconfError error = errors.iterator().next();
+		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, error.getErrorCode());
+		Assert.assertTrue( error.getDetails().contains( "messaging.*" ));
 	}
 }

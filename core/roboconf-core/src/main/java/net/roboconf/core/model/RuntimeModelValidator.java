@@ -113,12 +113,15 @@ public final class RuntimeModelValidator {
 		// A component cannot import variables it exports unless these imports are optional.
 		// This covers cluster uses cases (where an element may want to know where are the similar nodes).
 		Map<String,String> allExportedVariables = ComponentHelpers.findAllExportedVariables( component );
-		for( Map.Entry<String,Boolean> entry : component.importedVariables.entrySet()) {
+		for( Map.Entry<String,Boolean> entry : ComponentHelpers.findAllImportedVariables( component ).entrySet()) {
+
 			String var = entry.getKey();
+			String patternForImports = ParsingConstants.PATTERN_ID;
+			patternForImports += "(\\.\\*)?";
 
 			if( Utils.isEmptyOrWhitespaces( var ))
 				errors.add( new RoboconfError( ErrorCode.RM_EMPTY_VARIABLE_NAME, "Variable name: " + var ));
-			else if( ! var.matches( ParsingConstants.PATTERN_ID ))
+			else if( ! var.matches( patternForImports ))
 				errors.add( new RoboconfError( ErrorCode.RM_INVALID_VARIABLE_NAME, "Variable name: " + var ));
 
 			// If the import is optional...
@@ -252,6 +255,10 @@ public final class RuntimeModelValidator {
 
 			for( String exportedVariableName : ComponentHelpers.findAllExportedVariables( component ).keySet()) {
 				importedVariableNameToExported.put( exportedVariableName, Boolean.TRUE );
+
+				// Also add "prefix.*" in the map (for wild cards...)
+				String prefix = VariableHelpers.parseVariableName( exportedVariableName ).getKey();
+				importedVariableNameToExported.put( prefix + "." + Constants.WILDCARD, Boolean.TRUE );
 			}
 		}
 

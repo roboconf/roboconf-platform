@@ -234,14 +234,17 @@ public final class ParsingModelValidator {
 				if( s.toLowerCase().endsWith( ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT ))
 					s = s.substring( 0, s.length() - ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length());
 
+				String patternForImports = ParsingConstants.PATTERN_ID;
+				patternForImports += "(\\.\\*)?";
+
 				s = s.trim();
 				if( Utils.isEmptyOrWhitespaces( s ))
 					result.add( new ModelError( ErrorCode.PM_EMPTY_VARIABLE_NAME, line ));
-				else if( ! s.matches( ParsingConstants.PATTERN_ID ))
-					result.add( new ModelError( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, line ));
+				else if( ! s.matches( patternForImports ))
+					result.add( new ModelError( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, line, s ));
 				else if( ! s.contains( "." )
 						|| s.indexOf( '.' ) == s.length() -1 )
-					result.add( new ModelError( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, line ));
+					result.add( new ModelError( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, line, s ));
 			}
 
 		} else if( ParsingConstants.PROPERTY_GRAPH_EXPORTS.equals( name )) {
@@ -250,13 +253,13 @@ public final class ParsingModelValidator {
 				if( Utils.isEmptyOrWhitespaces( entry.getKey()))
 					result.add( new ModelError( ErrorCode.PM_EMPTY_VARIABLE_NAME, line ));
 				else if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
-					result.add( new ModelError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, line ));
+					result.add( new ModelError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, line, s ));
 			}
 
 
 		} else if( ParsingConstants.PROPERTY_COMPONENT_INSTALLER.equals( name )) {
 			if( ! value.matches( ParsingConstants.PATTERN_FLEX_ID ))
-				result.add( new ModelError( ErrorCode.PM_INVALID_INSTALLER_NAME, line ));
+				result.add( new ModelError( ErrorCode.PM_INVALID_INSTALLER_NAME, line, value ));
 
 		} else if( ParsingConstants.PROPERTY_INSTANCE_NAME.equals( name )) {
 			// nothing

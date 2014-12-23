@@ -114,6 +114,40 @@ public class ImportHelpersTest {
 
 
 	@Test
+	public void testHasAllRequiredImports_withWildcard() throws Exception {
+
+		// Same test than "testHasAllRequiredImports_required"
+		// but here, variable imports use a wild card.
+		Component dbComponent = new Component( "database" ).installerName( "whatever" );
+		dbComponent.exportedVariables.put( "database.ip", null );
+		dbComponent.exportedVariables.put( "database.port", "3009" );
+		dbComponent.exportedVariables.put( "database.collection", "whatever" );
+
+		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
+		appServerComponent.exportedVariables.put( "app-server.ip", null );
+		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
+		appServerComponent.importedVariables.put( "database.*", Boolean.FALSE );
+
+		Instance appServer = new Instance( "app server" ).component( appServerComponent );
+		appServer.overriddenExports.put( "app-server.ip", "192.168.1.15" );
+		appServer.setStatus( InstanceStatus.STARTING );
+
+		Instance database = new Instance( "database" ).component( dbComponent );
+		database.overriddenExports.put( "database.ip", "192.168.1.28" );
+
+		// The application server does not know about the database
+		Assert.assertFalse( ImportHelpers.hasAllRequiredImports( appServer, Logger.getAnonymousLogger()));
+
+		// The application server is now aware of the database
+		ImportHelpers.addImport( appServer, "database", new Import( database ));
+		Assert.assertTrue( ImportHelpers.hasAllRequiredImports( appServer, null ));
+
+		appServer.getImports().clear();
+		Assert.assertFalse( ImportHelpers.hasAllRequiredImports( appServer, null ));
+	}
+
+
+	@Test
 	public void testUpdateImports() {
 
 		Map<String,Collection<Import>> prefixToImports = new HashMap<String,Collection<Import>> ();
@@ -206,7 +240,43 @@ public class ImportHelpersTest {
 		imp = ImportHelpers.buildTailoredImport( inst, instancePath, "comp", map );
 		Assert.assertEquals( instancePath, imp.getInstancePath());
 		Assert.assertEquals( 2, imp.getExportedVars().size());
-		Assert.assertEquals("comp", imp.getComponentName());
+		Assert.assertEquals( "comp", imp.getComponentName());
+		Assert.assertEquals( "127.0.0.1", imp.getExportedVars().get( "comp1.ip" ));
+		Assert.assertEquals( "ciao!", imp.getExportedVars().get( "comp2.option" ));
+	}
+
+
+	@Test
+	public void testBuildTailoredImport_withWildcard() {
+
+		String instancePath = "/whatever/this/is/a-test";
+		Component comp = new Component( "comp" );
+		comp.importedVariables.put( "comp1.*", Boolean.FALSE );
+		comp.importedVariables.put( "comp2.option", Boolean.TRUE );
+
+		Instance inst = new Instance( "inst" ).component( comp );
+
+		// Null map
+		Import imp = ImportHelpers.buildTailoredImport( inst, instancePath, "comp", null );
+		Assert.assertEquals( instancePath, imp.getInstancePath());
+		Assert.assertEquals( 0, imp.getExportedVars().size());
+
+		// Empty map
+		imp = ImportHelpers.buildTailoredImport( inst, instancePath, "comp", new HashMap<String,String> ());
+		Assert.assertEquals( 0, imp.getExportedVars().size());
+
+		// Map with various variable
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( "comp1.ip", "127.0.0.1" );
+		map.put( "comp2.option", "ciao!" );
+		map.put( "not.a.valid.variable", "yeah" );
+		map.put( null, "null" );
+		map.put( "", "hop" );
+
+		imp = ImportHelpers.buildTailoredImport( inst, instancePath, "comp", map );
+		Assert.assertEquals( instancePath, imp.getInstancePath());
+		Assert.assertEquals( 2, imp.getExportedVars().size());
+		Assert.assertEquals( "comp", imp.getComponentName());
 		Assert.assertEquals( "127.0.0.1", imp.getExportedVars().get( "comp1.ip" ));
 		Assert.assertEquals( "ciao!", imp.getExportedVars().get( "comp2.option" ));
 	}
