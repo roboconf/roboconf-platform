@@ -55,8 +55,8 @@ public class FileHandler extends MonitoringHandler {
 	 * @param vmInstanceName
 	 * @param fileContent
 	 */
-	public FileHandler( String eventName, String applicationName, String vmInstanceName, String ipAddress, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName, ipAddress );
+	public FileHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
+		super( eventName, applicationName, vmInstanceName );
 
 		// We expect a single line / file, and that's it for now...
 		fileContent = fileContent.trim();
@@ -106,11 +106,7 @@ public class FileHandler extends MonitoringHandler {
 
 				// Create a message if necessary
 				if( cause != null )
-					result = new MsgNotifAutonomic(this.eventId,
-								this.applicationName,
-								this.vmInstanceName,
-								this.ipAddress,
-								cause );
+					result = new MsgNotifAutonomic( this.eventId, this.applicationName, this.vmInstanceName, cause );
 			}
 
 		} catch( IOException e ) {

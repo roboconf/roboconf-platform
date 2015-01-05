@@ -36,20 +36,17 @@ public abstract class MonitoringHandler {
 	protected String eventId;
 	protected String applicationName;
 	protected String vmInstanceName;
-	protected String ipAddress;
 
 	/**
 	 * Create a new monitoring handler.
 	 * @param eventName The event ID
 	 * @param applicationName The application name
 	 * @param vmInstanceName The instance name
-	 * @param ipAddress 
 	 */
-	public MonitoringHandler( String eventName, String applicationName, String vmInstanceName, String ipAddress ) {
+	public MonitoringHandler( String eventName, String applicationName, String vmInstanceName ) {
 		this.eventId = eventName;
 		this.applicationName = applicationName;
 		this.vmInstanceName = vmInstanceName;
-		this.ipAddress = ipAddress;
 	}
 
 	/**

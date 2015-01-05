@@ -63,8 +63,8 @@ public class RestHandler extends MonitoringHandler {
 	 * @param vmInstanceName
 	 * @param fileContent
 	 */
-	public RestHandler( String eventName, String applicationName, String vmInstanceName, String ipAddress, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName, ipAddress );
+	public RestHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
+		super( eventName, applicationName, vmInstanceName );
 
 		if(fileContent == null) return;
 		fileContent = fileContent.trim();
@@ -140,7 +140,6 @@ public class RestHandler extends MonitoringHandler {
 						this.eventId,
 						this.applicationName,
 						this.vmInstanceName,
-						this.ipAddress,
 						response.toString());
 			}
 		}

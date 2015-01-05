@@ -59,14 +59,14 @@ public class NagiosHandlerTest {
 
 		final String query = "ok\nok";
 		final String url = "http://192.168.1.18";
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, query );
+		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, query );
 
 		Assert.assertEquals( query, handler.getNagiosInstructions());
 		Assert.assertNull( handler.getHost());
 		Assert.assertEquals( -1, handler.getPort());
 
 		handler = new NagiosHandler(
-				EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null,
+				EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME,
 				NagiosHandler.NAGIOS_CONFIG + " " + url + "\n" + query );
 
 		Assert.assertEquals( query, handler.getNagiosInstructions());
@@ -74,7 +74,7 @@ public class NagiosHandlerTest {
 		Assert.assertEquals( -1, handler.getPort());
 
 		handler = new NagiosHandler(
-				EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null,
+				EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME,
 				NagiosHandler.NAGIOS_CONFIG + " " + url + ":1717\n" + query );
 
 		Assert.assertEquals( query, handler.getNagiosInstructions());
@@ -82,7 +82,7 @@ public class NagiosHandlerTest {
 		Assert.assertEquals( 1717, handler.getPort());
 
 		handler = new NagiosHandler(
-				EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null,
+				EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME,
 				NagiosHandler.NAGIOS_CONFIG );
 
 		Assert.assertEquals( "", handler.getNagiosInstructions());
@@ -94,7 +94,7 @@ public class NagiosHandlerTest {
 	@Test
 	public void testProcess_noConnection() throws Exception {
 
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, "" );
+		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, "" );
 		Assert.assertNull( handler.process());
 	}
 
@@ -102,7 +102,7 @@ public class NagiosHandlerTest {
 	@Test
 	public void testProcess_invalidHost() throws Exception {
 
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, "" );
+		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, "" );
 		handler.setHost( "my-unknown-host-for-tests" );
 		Assert.assertNull( handler.process());
 	}
@@ -187,7 +187,7 @@ public class NagiosHandlerTest {
 		Thread.sleep( 500 );
 
 		// Then, prepare our client.
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, null, nagiosQuery );
+		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, nagiosQuery );
 		handler.setPort( port );
 		MsgNotifAutonomic msg = handler.process();
 

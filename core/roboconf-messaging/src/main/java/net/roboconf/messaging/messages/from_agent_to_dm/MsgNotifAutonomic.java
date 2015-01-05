@@ -55,25 +55,32 @@ public class MsgNotifAutonomic extends Message {
 	 * @param eventName the event name
 	 * @param eventInfo info about the event (eg. result of Nagios Livestatus query)
 	 */
-	public MsgNotifAutonomic(String eventName, String applicationName, String rootInstanceName, String ipAddress, String eventInfo) {
+	public MsgNotifAutonomic(String eventName, String applicationName, String rootInstanceName, String eventInfo) {
 		super();
 		this.rootInstanceName = rootInstanceName;
 		this.applicationName = applicationName;
 		this.setEventName(eventName);
 		this.setEventInfo(eventInfo);
 		
-		if(ipAddress != null) {
-			this.ipAddress = ipAddress;
-		} else {
-			try {
-				this.ipAddress = InetAddress.getLocalHost().getHostAddress();
-				this.hostname = InetAddress.getLocalHost().getCanonicalHostName();
-			} catch (UnknownHostException e) {
-				// Try best effort...
-				this.ipAddress = "127.0.0.1";
-				this.hostname = "localhost";
-			}
+		// TODO add ipAddress to constructor ??
+		try {
+			this.ipAddress = InetAddress.getLocalHost().getHostAddress();
+			this.hostname = InetAddress.getLocalHost().getCanonicalHostName();
+		} catch (UnknownHostException e) {
+			this.ipAddress = null;
+			this.hostname = null;
 		}
+	}
+
+	/**
+	 * Constructor.
+	 * @param applicationName the application name
+	 * @param rootInstance the root instance
+	 * @param eventName the event name
+	 * @param eventInfo info about the event (eg. result of Nagios Livestatus query)
+	 */
+	public MsgNotifAutonomic(String applicationName, Instance rootInstance, String eventName, String eventInfo) {
+		this(applicationName, InstanceHelpers.findRootInstance( rootInstance ).getName(), eventName, eventInfo);
 	}
 
 	/**
