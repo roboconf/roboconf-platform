@@ -64,11 +64,17 @@ public final class ResourceUtils {
 			result.putAll( Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory ));
 		
 		// FIXME: can we make better?
-		File autonomicMesureFile = new File( applicationFilesDirectory, "autonomic/" + instance.getComponent().getName() + ".measures" );
-		if( autonomicMesureFile.exists()) {
+		File autonomicMeasureFile = new File( applicationFilesDirectory, "autonomic/" + instance.getComponent().getName() + ".measures" );
+		if( autonomicMeasureFile.exists()) {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( autonomicMesureFile, os );
-			result.put( autonomicMesureFile.getName(), os.toByteArray());
+			Utils.copyStream( autonomicMeasureFile, os );
+			result.put( autonomicMeasureFile.getName(), os.toByteArray());
+		}
+		autonomicMeasureFile = new File( applicationFilesDirectory, "autonomic/" + instance.getComponent().getName() + ".measures.properties" );
+		if( autonomicMeasureFile.exists()) {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStream( autonomicMeasureFile, os );
+			result.put( autonomicMeasureFile.getName(), os.toByteArray());
 		}
 
 		return result;
