@@ -85,7 +85,7 @@ public interface Constants {
 	/**
 	 * The <strong>rules</strong> file extension.
 	 */
-	String FILE_EXT_RULES = ".rules";
+	String FILE_RULES = "rules.cfg";
 
 
 	/**
