@@ -33,7 +33,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.internal.template.InstanceBean;
 

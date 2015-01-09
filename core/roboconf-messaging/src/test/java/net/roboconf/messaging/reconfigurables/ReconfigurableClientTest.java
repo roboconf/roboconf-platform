@@ -26,9 +26,12 @@
 package net.roboconf.messaging.reconfigurables;
 
 import java.io.IOException;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.client.test.TestClientDm;
+import net.roboconf.messaging.messages.Message;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -65,12 +68,56 @@ public class ReconfigurableClientTest {
 
 
 	@Test
-	public void testInvalidFactory() throws Exception {
+	public void testInvalidFactory_dm() throws Exception {
 
 		// The internal client will be null.
 		// But still, there will be no NPE or other exception.
 		ReconfigurableClientDm client = new ReconfigurableClientDm();
 		client.switchMessagingClient( null, null, null, null );
 		client.openConnection();
+	}
+
+
+	@Test
+	public void testInvalidFactory_agent() throws Exception {
+
+		// The internal client will be null.
+		// But still, there will be no NPE or other exception.
+		ReconfigurableClientAgent client = new ReconfigurableClientAgent();
+		client.switchMessagingClient( null, null, null, null );
+		client.openConnection();
+	}
+
+
+	@Test
+	public void testDm() throws Exception {
+
+		// The messaging client is never null
+		ReconfigurableClientDm client = new ReconfigurableClientDm();
+		Assert.assertNotNull( client.getMessagingClient());
+
+		// Invoke other method, no matter in which order
+		client.setParameters( "localhost", "guest", "guest" );
+		client.setMessageQueue( new LinkedBlockingQueue<Message> ());
+		Assert.assertFalse( client.hasValidClient());
+		Assert.assertFalse( client.isConnected());
+
+		client.deleteMessagingServerArtifacts( new Application( "app" ));
+		client.propagateAgentTermination();
+	}
+
+
+	@Test
+	public void testAgent() throws Exception {
+
+		// The messaging client is never null
+		ReconfigurableClientAgent client = new ReconfigurableClientAgent();
+		Assert.assertNotNull( client.getMessagingClient());
+
+		// Invoke other method, no matter in which order
+		client.setParameters( "localhost", "guest", "guest" );
+		client.setMessageQueue( new LinkedBlockingQueue<Message> ());
+		Assert.assertFalse( client.hasValidClient());
+		Assert.assertFalse( client.isConnected());
 	}
 }

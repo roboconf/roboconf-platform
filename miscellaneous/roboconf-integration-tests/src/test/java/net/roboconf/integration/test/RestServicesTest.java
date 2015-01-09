@@ -33,7 +33,7 @@ import java.net.URI;
 import java.util.List;
 
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.pax.probe.AbstractTest;
@@ -166,7 +166,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		URI targetUri = URI.create( ROOT_URL + "/app/Legacy%20LAMP/children?instance-path=/Apache%20VM" );
 		String s = TestUtils.readUriContent( targetUri );
 		Assert.assertEquals(
-				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"alias\":\"Apache Load Balancer\",\"installer\":\"puppet\"}}]",
+				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
 				s );
 	}
 }

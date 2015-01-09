@@ -86,4 +86,15 @@ public class ErrorCodeTest {
 			Assert.assertEquals( code + " should be in upper case.", code.toString(), code.toString().toUpperCase());
 		}
 	}
+
+
+	@Test
+	public void testToString() {
+
+		for( ErrorCode code : ErrorCode.values()) {
+			RoboconfError re = new RoboconfError( code );
+			Assert.assertEquals( code, re.getErrorCode());
+			Assert.assertNotNull( re.toString());
+		}
+	}
 }

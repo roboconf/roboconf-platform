@@ -1,0 +1,23 @@
+facet VM {
+	children: Tomcat;
+}
+
+root {
+	facets: VM;
+	installer: target;
+}
+
+Tomcat {
+	installer: puppet;
+	exports: ip, portAJP = 8009;
+	children: WebApp;
+}
+
+facet WebApp {
+	exports: suffix = path;
+}
+
+App {
+	facets: WebApp;
+	installer: whatever;
+}

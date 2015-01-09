@@ -28,7 +28,7 @@ package net.roboconf.messaging.reconfigurables;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.client.MessageServerClientFactory;
 import net.roboconf.messaging.internal.client.dismiss.DismissClientAgent;

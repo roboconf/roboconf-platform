@@ -2,4 +2,4 @@ facet a {
 
 	# a comment
 
-	installer: bash;
+	exports: ip;

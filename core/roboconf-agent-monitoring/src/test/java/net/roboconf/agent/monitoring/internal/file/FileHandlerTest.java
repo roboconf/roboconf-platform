@@ -77,7 +77,7 @@ public class FileHandlerTest {
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventName());
+		Assert.assertEquals( EVENT_NAME, msg.getEventId());
 		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "checked" ));
 
@@ -100,7 +100,7 @@ public class FileHandlerTest {
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventName());
+		Assert.assertEquals( EVENT_NAME, msg.getEventId());
 		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "deleted" ));
 
@@ -123,7 +123,7 @@ public class FileHandlerTest {
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventName());
+		Assert.assertEquals( EVENT_NAME, msg.getEventId());
 		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "deleted" ));
 
@@ -159,7 +159,7 @@ public class FileHandlerTest {
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventName());
+		Assert.assertEquals( EVENT_NAME, msg.getEventId());
 		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "does not exist" ));
 

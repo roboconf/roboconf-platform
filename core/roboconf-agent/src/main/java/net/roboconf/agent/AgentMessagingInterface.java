@@ -25,7 +25,7 @@
 
 package net.roboconf.agent;
 
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IAgentClient;
 
 /**
@@ -37,6 +37,14 @@ public interface AgentMessagingInterface {
 	 * @return the client for the messaging server
 	 */
 	IAgentClient getMessagingClient();
+
+	/**
+	 * @return the application name
+	 */
 	String getApplicationName();
+
+	/**
+	 * @return the root instance's name
+	 */
 	Instance getRootInstance();
 }

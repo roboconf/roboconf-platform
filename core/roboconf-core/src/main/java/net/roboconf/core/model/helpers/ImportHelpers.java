@@ -30,8 +30,10 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
 
 /**
  * A set of helpers for instance imports.
@@ -84,6 +86,9 @@ public final class ImportHelpers {
 	 * Toto exports var1, var2 and var3, then the component only needs to see
 	 * var1 and var2 in its imports. No need to keep var3.
 	 * </p>
+	 * <p>
+	 * This method also deals with wild card imports.
+	 * </p>
 	 *
 	 * @param instanceThatUseTheImport the instance that will use the import
 	 * @param exportingInstancePath the path of the instance that exports variables
@@ -99,8 +104,25 @@ public final class ImportHelpers {
 
 		Import imp = new Import( exportingInstancePath, exportingInstanceComponent );
 		if( exportedVariables != null && ! exportedVariables.isEmpty()) {
-			for( String importedVariable : instanceThatUseTheImport.getComponent().getImportedVariables().keySet()) {
-				if( exportedVariables.containsKey( importedVariable ))
+			Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( instanceThatUseTheImport.getComponent());
+			for( String importedVariable : imports.keySet()) {
+
+				// Deal with imports
+				if( importedVariable.endsWith( "." + Constants.WILDCARD )) {
+					String prefix = VariableHelpers.parseVariableName( importedVariable ).getKey();
+					for( Map.Entry<String,String> entry : exportedVariables.entrySet()) {
+						String exportedVariable = entry.getKey();
+						if( Utils.isEmptyOrWhitespaces( exportedVariable ))
+							continue;
+
+						String exportedVarPrefix = VariableHelpers.parseVariableName( exportedVariable ).getKey();
+						if( prefix.equals( exportedVarPrefix ))
+							imp.getExportedVars().put( entry.getKey(), entry.getValue());
+					}
+				}
+
+				// Deal with the usual (and most simple!) case
+				else if( exportedVariables.containsKey( importedVariable ))
 					imp.getExportedVars().put( importedVariable, exportedVariables.get( importedVariable ));
 			}
 		}

@@ -28,9 +28,10 @@ package net.roboconf.agent.internal;
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
@@ -57,7 +58,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent.start();
 
 		Thread.sleep( 200 );
-		((TestClientAgent) this.agent.getMessagingClient().getInternalClient()).messagesForTheDm.clear();
+		TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class ).messagesForTheDm.clear();
 	}
 
 

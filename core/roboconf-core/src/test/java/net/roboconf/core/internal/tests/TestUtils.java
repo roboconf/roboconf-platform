@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -44,7 +45,7 @@ import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.io.ParsingModelIoTest;
+import net.roboconf.core.dsl.ParsingModelIoTest;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -224,5 +225,41 @@ public class TestUtils {
 			String fileContent = Utils.readFileContent( extractedFile );
 			Assert.assertEquals( entry.getValue(), fileContent );
 		}
+	}
+
+
+	/**
+	 * Gets the value of an internal field.
+	 * <p>
+	 * It is sometimes useful during tests to access a field that should remain
+	 * private in a normal execution. This method requires permissions to access
+	 * private fields.
+	 * </p>
+	 * <p>
+	 * Super class are searched too.
+	 * </p>
+	 *
+	 * @param o the object from which the field must be retrieved
+	 * @param fieldName the field name
+	 * @param clazz the class of the internal field
+	 * @return the internal field's value or null if this field was not found
+	 * @throws IllegalAccessException if the field could not be read
+	 */
+	public static <T> T getInternalField( Object o, String fieldName, Class<T> clazz )
+	throws IllegalAccessException {
+
+		Object fieldValue = null;
+		for( Class<?> c = o.getClass(); c != null && fieldValue == null; c = c.getSuperclass()) {
+			try {
+				Field field = c.getDeclaredField( fieldName );
+				field.setAccessible( true );
+				fieldValue = field.get( o );
+
+			} catch( NoSuchFieldException e ) {
+				// nothing
+			}
+		}
+
+		return clazz.cast( fieldValue );
 	}
 }

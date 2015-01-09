@@ -39,15 +39,15 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.dsl.ParsingModelIo;
+import net.roboconf.core.dsl.converters.FromGraphs;
+import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.model.ApplicationDescriptor;
-import net.roboconf.core.model.converters.FromGraphs;
-import net.roboconf.core.model.io.ParsingModelIo;
-import net.roboconf.core.model.io.RuntimeModelIo;
-import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Graphs;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -97,9 +97,7 @@ public class DebugResource implements IDebugResource {
 			// Create a new application and load it
 			if( ma == null ) {
 				tmpDir = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString());
-				if( ! tmpDir.mkdirs())
-					throw new IOException( "Failed to create directory " + tmpDir );
-
+				createDirectory( tmpDir );
 				createApplication( tmpDir, fileContent );
 				this.manager.loadNewApplication( tmpDir );
 			}
@@ -203,10 +201,9 @@ public class DebugResource implements IDebugResource {
 
 		// Write the graph
 		File graphDir = new File( appDirectory, Constants.PROJECT_DIR_GRAPH );
-		if( ! graphDir.mkdirs())
-			throw new IOException( "Failed to create directory " + graphDir );
+		createDirectory( graphDir );
 
-		Component rootComponent = new Component( ROOT_COMPONENT_NAME ).alias( "Machine" ).installerName( Constants.TARGET_INSTALLER );
+		Component rootComponent = new Component( ROOT_COMPONENT_NAME ).installerName( Constants.TARGET_INSTALLER );
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( rootComponent );
 
@@ -215,32 +212,36 @@ public class DebugResource implements IDebugResource {
 
 		// Write the target.properties file
 		File rootComponentDir = new File( graphDir, ROOT_COMPONENT_NAME );
-		if( ! rootComponentDir.mkdirs())
-			throw new IOException( "Failed to create directory " + rootComponentDir );
+		createDirectory( rootComponentDir );
 
 		InputStream in = new ByteArrayInputStream( targetPropertiesContent.getBytes( "UTF-8" ));
 		Utils.copyStream( in, new File( rootComponentDir, Constants.TARGET_PROPERTIES_FILE_NAME ));
 
 		// Write instances
 		File instDir = new File( appDirectory, Constants.PROJECT_DIR_INSTANCES );
-		if( ! instDir.mkdirs())
-			throw new IOException( "Failed to create directory " + instDir );
+		createDirectory( instDir );
 
 		Instance rootInstance = new Instance( "root" ).component( rootComponent );
 		RuntimeModelIo.writeInstances( new File( instDir, "model.instances" ), Arrays.asList( rootInstance ));
 
 		// Create the meta-data
 		File metaDir = new File( appDirectory, Constants.PROJECT_DIR_DESC );
-		if( ! metaDir.mkdirs())
-			throw new IOException( "Failed to create directory " + metaDir );
+		createDirectory( metaDir );
 
 		ApplicationDescriptor descriptor = new ApplicationDescriptor();
 		descriptor.setName( FAKE_APP_NAME );
 		descriptor.setDescription( "An application to test a deployment target (debug purpose)." );
 		descriptor.setGraphEntryPoint( "whole.graph" );
 		descriptor.setInstanceEntryPoint( "model.instances" );
+		descriptor.setNamespace( "net.roboconf" );
 		descriptor.setQualifier( "DEBUG" );
 
 		ApplicationDescriptor.save( new File( metaDir, Constants.PROJECT_FILE_DESCRIPTOR ), descriptor );
+	}
+
+
+	private void createDirectory( File dir ) throws IOException {
+		if( ! dir.mkdirs())
+			throw new IOException( "Failed to create directory " + dir );
 	}
 }

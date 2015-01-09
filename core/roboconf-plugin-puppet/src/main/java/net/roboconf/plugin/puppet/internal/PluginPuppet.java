@@ -39,11 +39,11 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
@@ -125,7 +125,7 @@ public class PluginPuppet implements PluginInterface {
 	public void deploy( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentId + " is deploying instance " + instance.getName());
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		try {
 			callPuppetScript( instance, "deploy", PuppetState.STOPPED, null, false, instanceDirectory );
 
@@ -139,7 +139,7 @@ public class PluginPuppet implements PluginInterface {
 	public void start( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentId + " is starting instance " + instance.getName());
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		try {
 			callPuppetScript( instance, "start", PuppetState.RUNNING, null, false, instanceDirectory );
 
@@ -153,7 +153,7 @@ public class PluginPuppet implements PluginInterface {
 	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
 
 		this.logger.fine( this.agentId + " is updating instance " + instance.getName());
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		try {
 			callPuppetScript(
 					instance, "update",
@@ -172,7 +172,7 @@ public class PluginPuppet implements PluginInterface {
 	public void stop( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentId + " is stopping instance " + instance.getName());
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		try {
 			callPuppetScript( instance, "stop", PuppetState.STOPPED, null, false, instanceDirectory );
 
@@ -186,7 +186,7 @@ public class PluginPuppet implements PluginInterface {
 	public void undeploy( Instance instance ) throws PluginException {
 
 		this.logger.fine( this.agentId + " is undeploying instance " + instance.getName());
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		try {
 			callPuppetScript( instance, "undeploy", PuppetState.UNDEF, null, false, instanceDirectory );
 
@@ -207,7 +207,7 @@ public class PluginPuppet implements PluginInterface {
 	throws IOException, InterruptedException {
 
 		// Load the modules names
-		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent(instance, getPluginName());
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		File modulesFile = new File( instanceDirectory, "modules.properties" );
 		if( ! modulesFile.exists())
 			return;
@@ -378,7 +378,8 @@ public class PluginPuppet implements PluginInterface {
 		sb.append( puppetState.toString().toLowerCase());
 
 		// Prepare the injection of variables into the Puppet receipt
-		String args = formatExportedVariables( instance.getExports());
+		Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
+		String args = formatExportedVariables( exports );
 		String importedTypes = formatInstanceImports( instance );
 
 		if( ! Utils.isEmptyOrWhitespaces( args ))

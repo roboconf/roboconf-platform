@@ -41,7 +41,8 @@ import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
@@ -180,6 +181,7 @@ public class Agent implements AgentMessagingInterface {
 	/**
 	 * @return the client for the messaging server
 	 */
+	@Override
 	public ReconfigurableClientAgent getMessagingClient() {
 		return this.messagingClient;
 	}
@@ -200,7 +202,7 @@ public class Agent implements AgentMessagingInterface {
 		} else {
 			String installerName = null;
 			if( instance.getComponent() != null )
-				installerName = instance.getComponent().getInstallerName();
+				installerName = ComponentHelpers.findComponentInstaller( instance.getComponent());
 
 			// Run through available plug-ins
 			if( this.plugins != null ) {
@@ -348,6 +350,7 @@ public class Agent implements AgentMessagingInterface {
 	/**
 	 * @return the application name
 	 */
+	@Override
 	public String getApplicationName() {
 		return this.applicationName;
 	}
@@ -471,13 +474,14 @@ public class Agent implements AgentMessagingInterface {
 	}
 
 
+	@Override
 	public Instance getRootInstance() {
-		return rootInstance;
+		return this.rootInstance;
 	}
 
 
 	public void setRootInstance(Instance rootInstance) {
 		this.rootInstance = rootInstance;
 	}
-	
+
 }

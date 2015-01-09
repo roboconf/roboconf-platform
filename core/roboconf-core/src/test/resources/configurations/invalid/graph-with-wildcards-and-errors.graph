@@ -1,0 +1,28 @@
+
+vm {
+	installer: target;
+	children: database, app, messaging;
+}
+
+database {
+	installer: puppet;
+	exports: ip, port = 3306;
+}
+
+messaging {
+	installer: chef;
+	facets: f-messaging;
+}
+
+app {
+	installer: bash;
+	exports: ip, port = toto;
+	
+	# Nobody exports variables that starts with "messaging."
+	imports: database.*, messaging.*;
+}
+
+# Facets are not really useful, except for test purpose
+facet f-messaging {
+	exports: queue = default;
+}

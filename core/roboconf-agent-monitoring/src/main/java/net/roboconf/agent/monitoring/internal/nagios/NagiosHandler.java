@@ -89,9 +89,9 @@ public class NagiosHandler extends MonitoringHandler {
 		try {
 			String liveStatusResponse = client.queryLivestatus( this.nagiosInstructions );
 			result = new MsgNotifAutonomic(
-					this.eventId,
 					this.applicationName,
 					this.vmInstanceName,
+					this.eventId,
 					liveStatusResponse );
 
 		} catch( UnknownHostException e ) {

@@ -30,9 +30,9 @@ import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.MessagingConstants;

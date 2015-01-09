@@ -3,12 +3,10 @@
 ##############################################
 
 vm {
-	alias: some component;
 	installer: target;
 	children: server;
 }
 
 server {
-	alias: some server;
 	installer: bash;
 }

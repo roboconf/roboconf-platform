@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
 
 /**
  * Bean used to inject an data into a {@link Instance} template.

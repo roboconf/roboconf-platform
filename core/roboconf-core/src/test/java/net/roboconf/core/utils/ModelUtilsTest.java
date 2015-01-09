@@ -25,17 +25,15 @@
 
 package net.roboconf.core.utils;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.Constants;
-import net.roboconf.core.model.parsing.AbstractBlockHolder;
-import net.roboconf.core.model.parsing.BlockFacet;
-import net.roboconf.core.model.parsing.BlockProperty;
-import net.roboconf.core.model.parsing.FileDefinition;
-import net.roboconf.core.utils.ModelUtils;
+import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
+import net.roboconf.core.dsl.parsing.BlockFacet;
+import net.roboconf.core.dsl.parsing.BlockProperty;
+import net.roboconf.core.dsl.parsing.FileDefinition;
 
 import org.junit.Test;
 
@@ -47,7 +45,7 @@ public class ModelUtilsTest {
 	@Test
 	public void testGetPropertyValue() {
 
-		FileDefinition def = new FileDefinition((URI) null);
+		FileDefinition def = new FileDefinition( null );
 		AbstractBlockHolder holder = new BlockFacet( def );
 		holder.getInnerBlocks().add( new BlockProperty( def, "name", "value" ));
 		holder.getInnerBlocks().add( new BlockProperty( def, "address", null ));
@@ -65,7 +63,7 @@ public class ModelUtilsTest {
 	@Test
 	public void testGetPropertyValues() {
 
-		FileDefinition def = new FileDefinition((URI) null);
+		FileDefinition def = new FileDefinition( null );
 		AbstractBlockHolder holder = new BlockFacet( def );
 		holder.getInnerBlocks().add( new BlockProperty( def, "names", "value1, value2 , value3, value 4  " ));
 		holder.getInnerBlocks().add( new BlockProperty( def, "address", null ));
@@ -98,14 +96,14 @@ public class ModelUtilsTest {
 	public void testGetExportedVariables() {
 
 		String holderName = "facet-name";
-		FileDefinition def = new FileDefinition((URI) null);
+		FileDefinition def = new FileDefinition( null );
 		AbstractBlockHolder holder = new BlockFacet( def );
 		holder.setName( holderName );
-		BlockProperty prop = new BlockProperty( def, Constants.PROPERTY_GRAPH_EXPORTS, "" );
+		BlockProperty prop = new BlockProperty( def, ParsingConstants.PROPERTY_GRAPH_EXPORTS, "" );
 		holder.getInnerBlocks().add( prop );
 
 		// One variable
-		String varName1 = holderName + ".var1";
+		String varName1 = "var1";
 
 		prop.setValue( "var1" );
 		Map<String,String> map = ModelUtils.getExportedVariables( holder );
@@ -129,7 +127,7 @@ public class ModelUtilsTest {
 		Assert.assertEquals( "5895", map.get( varName1 ));
 
 		// Two variables
-		String varName2 = holderName + ".var2";
+		String varName2 = "var2";
 
 		prop.setValue( "var1, var2" );
 		map = ModelUtils.getExportedVariables( holder );

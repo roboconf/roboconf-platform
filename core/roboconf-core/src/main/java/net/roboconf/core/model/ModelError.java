@@ -47,6 +47,17 @@ public class ModelError extends RoboconfError {
 	}
 
 	/**
+	 * Constructor.
+	 * @param errorCode an error code
+	 * @param line a line number
+	 * @param details the error details
+	 */
+	public ModelError( ErrorCode errorCode, int line, String details ) {
+		super( errorCode, details );
+		this.line = line;
+	}
+
+	/**
 	 * @return the line
 	 */
 	public int getLine() {

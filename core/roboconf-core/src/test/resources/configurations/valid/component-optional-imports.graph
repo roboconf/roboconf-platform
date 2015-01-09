@@ -1,5 +1,4 @@
 A {
-	alias: A component called A;
 	installer: bash;
 	exports: port, ip;
 	imports: A.port (optional), A.ip (optional);

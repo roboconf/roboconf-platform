@@ -30,13 +30,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.validators.RuntimeModelValidator;
+import net.roboconf.core.model.RuntimeModelValidator;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -151,13 +153,42 @@ public final class InstanceHelpers {
 	 * @param instance an instance (not null)
 	 * @return a non-null map (key = variable name, value = default variable value - can be null).
 	 */
-	public static Map<String,String> getExportedVariables( Instance instance ) {
+	public static Map<String,String> findAllExportedVariables( Instance instance ) {
 
+		// Find the variables
 		Map<String,String> result = new HashMap<String,String> ();
 		if( instance.getComponent() != null )
-			result.putAll( instance.getComponent().getExportedVariables());
+			result.putAll( ComponentHelpers.findAllExportedVariables( instance.getComponent()));
 
-		result.putAll( instance.getOverriddenExports());
+		// Overridden variables may not contain the facet or component prefix.
+		// To remain as flexible as possible, we will try to resolve them as component or facet variables.
+		Map<String,Set<String>> localNameToFullNames = new HashMap<String,Set<String>> ();
+		for( String inheritedVarName : result.keySet()) {
+			String localName = VariableHelpers.parseVariableName( inheritedVarName ).getValue();
+			Set<String> fullNames = localNameToFullNames.get( localName );
+			if( fullNames == null )
+				fullNames = new HashSet<String> ();
+
+			fullNames.add( inheritedVarName );
+			localNameToFullNames.put( localName, fullNames );
+		}
+
+		for( Map.Entry<String,String> entry : instance.overriddenExports.entrySet()) {
+			Set<String> fullNames = localNameToFullNames.get( entry.getKey());
+
+			// No inherited variable or too many inherited ones? => Put it in raw mode.
+			if( fullNames == null || fullNames.size() > 1 )
+				result.put( entry.getKey(), entry.getValue());
+			// Otherwise, override the inherited variable
+			else
+				result.put( fullNames.iterator().next(), entry.getValue());
+		}
+
+		// Update some values
+		String ip = findRootInstance( instance ).data.get( Instance.IP_ADDRESS );
+		if( ip != null )
+			VariableHelpers.updateNetworkVariables( result, ip );
+
 		return result;
 	}
 
@@ -314,7 +345,7 @@ public final class InstanceHelpers {
 		// We insert a "root instance"
 		if( parentInstance == null ) {
 			if( ! hasAlreadyAChildWithThisName
-					&& childInstance.getComponent().getAncestors().isEmpty()) {
+					&& ComponentHelpers.findAllAncestors( childInstance.getComponent()).isEmpty()) {
 
 				application.getRootInstances().add( childInstance );
 				success = true;
@@ -325,13 +356,14 @@ public final class InstanceHelpers {
 		// We insert a child instance
 		else {
 			if( ! hasAlreadyAChildWithThisName
-					&& parentInstance.getComponent().getChildren().contains( childInstance.getComponent())) {
+					&& ComponentHelpers.findAllChildren( parentInstance.getComponent()).contains( childInstance.getComponent())) {
 
 				InstanceHelpers.insertChild( parentInstance, childInstance );
-				Collection<RoboconfError> errors = RuntimeModelValidator.validate( application.getRootInstances());
+				Collection<Instance> allInstances = InstanceHelpers.getAllInstances( application );
+				Collection<RoboconfError> errors = RuntimeModelValidator.validate( allInstances );
 				if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
-					childInstance.setParent( null );
 					parentInstance.getChildren().remove( childInstance );
+					childInstance.setParent( null );
 
 				} else {
 					success = true;
@@ -348,10 +380,13 @@ public final class InstanceHelpers {
 	 * @param instance an instance (not null)
 	 * @return a file (not null, but may not exist)
 	 */
-	public static File findInstanceDirectoryOnAgent( Instance instance, String pluginName ) {
+	public static File findInstanceDirectoryOnAgent( Instance instance ) {
+
 		String path = InstanceHelpers.computeInstancePath( instance );
 		path = path.substring( 1 ).replace( '/', '_' ).replace( ' ', '_' );
-		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + pluginName + "/" + path );
+		String installerName = ComponentHelpers.findComponentInstaller( instance.getComponent());
+
+		return new File( System.getProperty( "java.io.tmpdir" ), "roboconf_agent/" + installerName + "/" + path );
 	}
 
 
@@ -366,18 +401,18 @@ public final class InstanceHelpers {
 
 
 	/**
-	 * Duplicates an instance and its children.
+	 * Replicates an instance and its children.
 	 * <p>
 	 * The result does not have any parent. It does not have any
 	 * data, nor imports or real exports. In fact, only the name,
 	 * the component association, the channel and the overridden exports
-	 * are copied. The children are not "copied" but duplicated.
+	 * are copied. The children are not "referenced" but replicated.
 	 * </p>
 	 *
-	 * @param instance a non-null instance to duplicate
+	 * @param instance a non-null instance to replicate
 	 * @return a non-null instance
 	 */
-	public static Instance duplicateInstance( Instance instance ) {
+	public static Instance replicateInstance( Instance instance ) {
 
 		Map<Instance,Instance> instanceToDuplicate = new HashMap<Instance,Instance> ();
 		List<Instance> toProcess = new ArrayList<Instance> ();
@@ -389,8 +424,8 @@ public final class InstanceHelpers {
 			Instance copy = new Instance();
 			copy.name( current.getName());
 			copy.component( current.getComponent());
-			copy.channel( current.getChannel());
-			copy.getOverriddenExports().putAll( current.getOverriddenExports());
+			copy.channels.addAll( current.channels );
+			copy.overriddenExports.putAll( current.overriddenExports );
 			instanceToDuplicate.put( current, copy );
 
 			Instance parent = instanceToDuplicate.get( current.getParent());

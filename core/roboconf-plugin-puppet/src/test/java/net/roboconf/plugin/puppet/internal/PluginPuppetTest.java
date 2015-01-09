@@ -35,11 +35,11 @@ import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
@@ -56,8 +56,11 @@ public class PluginPuppetTest {
 
 	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-puppet" );
 
-	private final Instance inst = new Instance( "sample" ).component( new Component( "some-component" ));
-	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst, PluginPuppet.PLUGIN_NAME );
+	private final Instance inst = new Instance( "sample" )
+			.component( new Component( "some-component" )
+			.installerName( PluginPuppet.PLUGIN_NAME ));
+
+	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst );
 	private PluginPuppet plugin;
 
 	private boolean running = true;

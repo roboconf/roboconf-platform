@@ -28,7 +28,7 @@ package net.roboconf.plugin.api.internal.template;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.roboconf.core.model.runtime.Import;
+import net.roboconf.core.model.beans.Import;
 
 /**
  * Bean used to inject an data into a {@link Import} template.

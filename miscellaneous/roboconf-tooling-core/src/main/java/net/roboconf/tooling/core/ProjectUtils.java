@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.utils.Utils;
 
@@ -111,6 +112,8 @@ public final class ProjectUtils {
 		descriptor.setDescription( creationBean.getProjectDescription());
 		descriptor.setName( creationBean.getProjectName());
 		descriptor.setQualifier( creationBean.getProjectVersion());
+		descriptor.setNamespace( creationBean.getProjectNamespace());
+		descriptor.setDslId( ParsingConstants.DSL_VERSION );
 		descriptor.setGraphEntryPoint( GRAPH_EP );
 		descriptor.setInstanceEntryPoint( INSTANCES_EP );
 
@@ -159,6 +162,8 @@ public final class ProjectUtils {
 		descriptor.setDescription( "${project.description}" );
 		descriptor.setName( "${project.artifact.artifactId}" );
 		descriptor.setQualifier( "${project.version}--${timestamp}" );
+		descriptor.setDslId( ParsingConstants.DSL_VERSION );
+		descriptor.setNamespace( "${project.artifact.groupId}" );
 		descriptor.setGraphEntryPoint( GRAPH_EP );
 		descriptor.setInstanceEntryPoint( INSTANCES_EP );
 
@@ -194,7 +199,7 @@ public final class ProjectUtils {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class CreationBean {
-		private String projectName, projectDescription, projectVersion;
+		private String projectName, projectDescription, projectVersion, projectNamespace;
 		private String groupId, pluginVersion;
 		private String customPomLocation;
 		private boolean mavenProject = true;
@@ -239,6 +244,15 @@ public final class ProjectUtils {
 
 		public CreationBean projectVersion( String projectVersion ) {
 			this.projectVersion = projectVersion;
+			return this;
+		}
+
+		public String getProjectNamespace() {
+			return this.projectNamespace;
+		}
+
+		public CreationBean projectNamespace( String projectNamespace ) {
+			this.projectNamespace = projectNamespace;
 			return this;
 		}
 

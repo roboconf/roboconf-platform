@@ -1,0 +1,9 @@
+
+type {
+	installer: target;
+	facets: type;
+}
+
+facet type {
+	# nothing
+}

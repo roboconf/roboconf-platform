@@ -1,0 +1,6 @@
+
+instance of VM {
+	name: toto;
+}
+
+import it-does-not-exist;

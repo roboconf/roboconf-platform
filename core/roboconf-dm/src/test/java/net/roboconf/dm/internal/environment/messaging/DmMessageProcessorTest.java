@@ -27,9 +27,9 @@ package net.roboconf.dm.internal.environment.messaging;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -42,12 +42,17 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class DmMessageProcessorTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 	private TestApplication app;
 	private DmMessageProcessor processor;
@@ -55,11 +60,12 @@ public class DmMessageProcessorTest {
 
 
 	@Before
-	public void resetManager() {
+	public void resetManager() throws Exception {
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
 
 		this.app = new TestApplication();
@@ -147,9 +153,25 @@ public class DmMessageProcessorTest {
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), new Instance( "invalid instance" ));
 		msg.setNewStatus( InstanceStatus.STOPPING );
 
-		// The application name is invalid, no update should have been performed
+		// The instance name is invalid, no update should have been performed
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
+	}
+
+
+	@Test
+	public void testProcessMsgNotifInstanceChanged_rootIsNotDeployed() {
+
+		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
+
+		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), this.app.getMySql());
+		msg.setNewStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// The root is not deployed, the change should be dismissed
+		this.processor.processMessage( msg );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySql().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 	}
 
 

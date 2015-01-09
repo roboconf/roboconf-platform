@@ -114,7 +114,7 @@ public class NagiosHandlerTest {
 		MsgNotifAutonomic msg = queryMockedNagios( "whatever" );
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventName());
+		Assert.assertEquals( EVENT_NAME, msg.getEventId());
 		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
 		Assert.assertEquals( RESULT, msg.getEventInfo());
 	}
@@ -126,7 +126,7 @@ public class NagiosHandlerTest {
 		MsgNotifAutonomic msg = queryMockedNagios( "Columns: host_name" );
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventName());
+		Assert.assertEquals( EVENT_NAME, msg.getEventId());
 		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
 		Assert.assertEquals( "host_name\n" + RESULT, msg.getEventInfo());
 	}
@@ -138,7 +138,7 @@ public class NagiosHandlerTest {
 		MsgNotifAutonomic msg = queryMockedNagios( "Columns: host_name acknowledged" );
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventName());
+		Assert.assertEquals( EVENT_NAME, msg.getEventId());
 		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
 		Assert.assertEquals( "host_name;acknowledged\n" + RESULT, msg.getEventInfo());
 	}

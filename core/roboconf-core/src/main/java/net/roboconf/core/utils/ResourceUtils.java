@@ -28,12 +28,14 @@ package net.roboconf.core.utils;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -57,20 +59,23 @@ public final class ResourceUtils {
 	 */
 	public static Map<String,byte[]> storeInstanceResources( File applicationFilesDirectory, Instance instance ) throws IOException {
 
+		// Recipes
 		Map<String,byte[]> result = new HashMap<String,byte[]> ();
 		File instanceResourcesDirectory = findInstanceResourcesDirectory( applicationFilesDirectory, instance );
 		if( instanceResourcesDirectory.exists()
 				&& instanceResourcesDirectory.isDirectory())
 			result.putAll( Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory ));
-		
-		// FIXME: can we make better?
-		File autonomicMeasureFile = new File( applicationFilesDirectory, "autonomic/" + instance.getComponent().getName() + ".measures" );
+
+		// Measure files (are not located with recipes, so no trouble with component inheritance)
+		String fileName = instance.getComponent().getName() + Constants.FILE_EXT_MEASURES;
+		File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/" + fileName );
 		if( autonomicMeasureFile.exists()) {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			Utils.copyStream( autonomicMeasureFile, os );
 			result.put( autonomicMeasureFile.getName(), os.toByteArray());
 		}
-		autonomicMeasureFile = new File( applicationFilesDirectory, "autonomic/" + instance.getComponent().getName() + ".measures.properties" );
+		autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/"
+				+ instance.getComponent().getName() + Constants.FILE_EXT_MEASURES + ".properties");
 		if( autonomicMeasureFile.exists()) {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			Utils.copyStream( autonomicMeasureFile, os );
@@ -80,7 +85,6 @@ public final class ResourceUtils {
 		return result;
 	}
 
-
 	/**
 	 * Finds the resource directory for an instance.
 	 * @param applicationFilesDirectory the application's directory
@@ -88,20 +92,38 @@ public final class ResourceUtils {
 	 * @return a non-null file (that may not exist)
 	 */
 	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, Instance instance ) {
-		return findInstanceResourcesDirectory( applicationFilesDirectory, instance.getComponent().getName());
+		return findInstanceResourcesDirectory( applicationFilesDirectory, instance.getComponent());
 	}
 
 
 	/**
 	 * Finds the resource directory for an instance.
+	 * <p>
+	 * The resource directory may be the one of another component.
+	 * This is the case when a component extends another component.
+	 * </p>
+	 * <p>
+	 * An extending component can override the resource directory.
+	 * </p>
+	 *
 	 * @param applicationFilesDirectory the application's directory
-	 * @param componentName the component name
+	 * @param componentName the component name (may be null)
 	 * @return a non-null file (that may not exist)
 	 */
-	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, String componentName ) {
+	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, Component component ) {
 
-		File result = new File( applicationFilesDirectory, Constants.PROJECT_DIR_GRAPH );
-		result = new File( result, componentName);
+		File root = new File( applicationFilesDirectory, Constants.PROJECT_DIR_GRAPH );
+		File result = new File( "No recipe directory." );
+		Set<Component> alreadyChecked = new HashSet<Component> ();
+		for( Component c = component; c != null; c = c.getExtendedComponent()) {
+			// Prevent infinite loops for exotic cases
+			if( alreadyChecked.contains( c ))
+				break;
+
+			alreadyChecked.add( c );
+			if(( result = new File( root, c.getName())).exists())
+				break;
+		}
 
 		return result;
 	}

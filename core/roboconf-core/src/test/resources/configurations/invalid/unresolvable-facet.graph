@@ -1,0 +1,11 @@
+A {
+	facets: F1, F2;
+}
+
+facet F1 {
+	exports: ip;
+}
+
+facet F2 {
+	extends: F5;
+}

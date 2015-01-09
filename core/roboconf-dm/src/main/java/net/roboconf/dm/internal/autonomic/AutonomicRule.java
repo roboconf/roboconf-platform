@@ -32,16 +32,15 @@ package net.roboconf.dm.internal.autonomic;
 public class AutonomicRule {
 	String reactionId;
 	String reactionInfo;
-	
+
 	/**
 	 * Create a new autonomic rule.
-	 * @param reactionId The reaction ID for this rule
-	 * @param componentTemplate The component template (eg. "VM_Openstack/Tomcat")
+	 * @param reactionId the reaction ID for this rule
+	 * @param reactionInfo the reaction data
 	 */
-	public AutonomicRule(String reactionId, String componentTemplate) {
-		super();
+	public AutonomicRule( String reactionId, String reactionInfo ) {
 		this.reactionId = reactionId;
-		this.reactionInfo = componentTemplate;
+		this.reactionInfo = reactionInfo;
 	}
 
 	/**
@@ -49,9 +48,9 @@ public class AutonomicRule {
 	 * @return The reaction ID
 	 */
 	public String getReactionId() {
-		return reactionId;
+		return this.reactionId;
 	}
-	
+
 	/**
 	 * Set the reaction ID for this rule.
 	 * @param reactionId The reaction ID
@@ -59,15 +58,15 @@ public class AutonomicRule {
 	public void setReactionId(String reactionId) {
 		this.reactionId = reactionId;
 	}
-	
+
 	/**
 	 * Get the reaction info for this rule.
 	 * @return The reaction info
 	 */
 	public String getReactionInfo() {
-		return reactionInfo;
+		return this.reactionInfo;
 	}
-	
+
 	/**
 	 * Set the reaction info for this rule.
 	 * @param reactionId The reaction info

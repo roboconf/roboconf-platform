@@ -35,13 +35,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import net.roboconf.core.model.comparators.InstanceComparator;
+import net.roboconf.core.model.InstanceComparator;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.runtime.Application;
-import net.roboconf.core.model.runtime.Component;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -241,7 +241,7 @@ public class ApplicationResource implements IApplicationResource {
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.dm.internal.rest.client.exceptions.server.IInstanceWs
-	 * #addInstance(java.lang.String, java.lang.String, net.roboconf.core.model.runtime.Instance)
+	 * #addInstance(java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public Response addInstance( String applicationName, String parentInstancePath, Instance instance ) {
@@ -258,9 +258,16 @@ public class ApplicationResource implements IApplicationResource {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			} else {
-				Instance parentInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), parentInstancePath );
-				this.manager.addInstance( ma, parentInstance, instance );
-				response = Response.ok().build();
+				Component realComponent = ComponentHelpers.findComponent( ma.getApplication().getGraphs(), instance.getComponent().getName());
+				if( realComponent == null ) {
+					response = Response.status( Status.NOT_FOUND ).entity( "Component " + instance.getComponent().getName() + " does not exist." ).build();
+
+				} else {
+					instance.setComponent( realComponent );
+					Instance parentInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), parentInstancePath );
+					this.manager.addInstance( ma, parentInstance, instance );
+					response = Response.ok().build();
+				}
 			}
 
 		} catch( ImpossibleInsertionException e ) {
@@ -371,7 +378,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		List<Component> result = new ArrayList<Component> ();
 		if( instance != null )
-			result.addAll( instance.getComponent().getChildren());
+			result.addAll( ComponentHelpers.findAllChildren( instance.getComponent()));
 
 		else if( app != null
 				&& instancePath == null )
@@ -397,7 +404,7 @@ public class ApplicationResource implements IApplicationResource {
 		// See if their component can support a child "of type componentName".
 		if( app != null ) {
 			for( Instance instance : InstanceHelpers.getAllInstances( app )) {
-				for( Component c : instance.getComponent().getChildren()) {
+				for( Component c : ComponentHelpers.findAllChildren( instance.getComponent())) {
 					if( componentName.equals( c.getName())) {
 						String instancePath = InstanceHelpers.computeInstancePath( instance );
 						result.add( instancePath );

@@ -1,0 +1,14 @@
+
+# A VM with Tomcat only
+instance of VM {
+	name: Tomcat VM ;	# Keep the space at the end (nicer for display when count > 1)
+	count: 3;	# Create 3 such VM
+	
+	instance of Tomcat {
+		name: Tomcat;
+		portAJP: 9021;
+	}
+}
+
+# Self import will not result in any error
+import others.instances;

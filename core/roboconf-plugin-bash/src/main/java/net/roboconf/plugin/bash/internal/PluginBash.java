@@ -33,11 +33,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.core.model.runtime.Import;
-import net.roboconf.core.model.runtime.Instance;
-import net.roboconf.core.model.runtime.Instance.InstanceStatus;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
@@ -164,7 +164,7 @@ public class PluginBash implements PluginInterface {
     throws IOException, InterruptedException {
 
         this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance );
-        File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance, getPluginName());
+        File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 
         File scriptsFolder = new File(instanceDirectory, SCRIPTS_FOLDER_NAME);
         File templatesFolder = new File(instanceDirectory, TEMPLATES_FOLDER_NAME);
@@ -237,13 +237,14 @@ public class PluginBash implements PluginInterface {
     }
 
 
-    private Map<String, String> formatExportedVars(Instance instance) {
+    private Map<String, String> formatExportedVars( Instance instance ) {
 
     	// The map we will return
-        Map<String, String> exportedVars = new HashMap<String, String>();
-        for(Entry<String, String> entry : instance.getExports().entrySet()) {
-            String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
-            exportedVars.put(vname, entry.getValue());
+        Map<String, String> exportedVars = new HashMap<String,String>();
+        Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
+        for(Entry<String, String> entry : exports.entrySet()) {
+            String vname = VariableHelpers.parseVariableName( entry.getKey()).getValue();
+            exportedVars.put( vname, entry.getValue());
         }
 
         return exportedVars;

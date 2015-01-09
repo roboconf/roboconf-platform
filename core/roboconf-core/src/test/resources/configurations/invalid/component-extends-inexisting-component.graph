@@ -1,0 +1,4 @@
+
+VM_EC2 {
+	extends: VM;
+}

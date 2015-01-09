@@ -28,7 +28,7 @@ package net.roboconf.messaging.internal.client.test;
 import java.io.IOException;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.runtime.Instance;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 

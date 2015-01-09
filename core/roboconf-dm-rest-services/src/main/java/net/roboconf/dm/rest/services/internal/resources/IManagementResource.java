@@ -39,7 +39,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;

@@ -37,7 +37,7 @@ import javax.ws.rs.core.UriBuilder;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.runtime.Application;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
