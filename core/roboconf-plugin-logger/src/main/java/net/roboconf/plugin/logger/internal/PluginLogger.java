@@ -57,42 +57,36 @@ public class PluginLogger implements PluginInterface {
 
 	@Override
 	public void initialize( Instance instance ) throws PluginException {
-		String name = instance != null ? instance.getName() : null;
-		this.logger.fine( this.agentId + " is initializing the plug-in for " + name + "." );
+		this.logger.fine( this.agentId + " is initializing the plug-in for " + instance + "." );
 	}
 
 
 	@Override
 	public void deploy( Instance instance ) throws PluginException {
-		String name = instance != null ? instance.getName() : null;
-		this.logger.info( this.agentId + " is deploying instance " + name + "." );
+		this.logger.info( this.agentId + " is deploying instance " + instance + "." );
 	}
 
 
 	@Override
 	public void start( Instance instance ) throws PluginException {
-		String name = instance != null ? instance.getName() : null;
-		this.logger.info( this.agentId + " is starting instance " + name + "." );
+		this.logger.info( this.agentId + " is starting instance " + instance + "." );
 	}
 
 
 	@Override
 	public void update( Instance instance, Import importChanged, InstanceStatus statusChanged ) throws PluginException {
-		String name = instance != null ? instance.getName() : null;
-		this.logger.info( this.agentId + " is updating instance " + name + "." );
+		this.logger.info( this.agentId + " is updating instance " + instance + "." );
 	}
 
 
 	@Override
 	public void stop( Instance instance ) throws PluginException {
-		String name = instance != null ? instance.getName() : null;
-		this.logger.info( this.agentId + " is stopping instance " + name + "." );
+		this.logger.info( this.agentId + " is stopping instance " + instance + "." );
 	}
 
 
 	@Override
 	public void undeploy( Instance instance ) throws PluginException {
-		String name = instance != null ? instance.getName() : null;
-		this.logger.info( this.agentId + " is undeploying instance " + name + "." );
+		this.logger.info( this.agentId + " is undeploying instance " + instance + "." );
 	}
 }
