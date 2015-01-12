@@ -103,7 +103,9 @@ public class AgentUtilsTest {
 
 		// Save our resources
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
+		Utils.deleteFilesRecursively( dir );
 		Assert.assertFalse( dir.exists());
+
 		AgentUtils.copyInstanceResources( app.getTomcat(), null );
 		Assert.assertTrue( dir.exists());
 		Assert.assertEquals( 0, dir.listFiles().length );
