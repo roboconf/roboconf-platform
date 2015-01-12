@@ -102,8 +102,8 @@ public class DmMessageProcessorForAutonomicTest {
 		File dir = new File( ma.getApplicationFilesDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
 		Assert.assertTrue( dir.mkdirs());
 
-		File targetFile = new File( dir, this.app.getName() + Constants.FILE_EXT_RULES );
-		File sourceFile = TestUtils.findTestFile( "/autonomic/test.rules" );
+		File targetFile = new File( dir, Constants.FILE_RULES );
+		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
 		Utils.copyStream( sourceFile, targetFile );
 		Assert.assertTrue( targetFile.exists());
 
