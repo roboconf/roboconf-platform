@@ -26,7 +26,9 @@
 package net.roboconf.agent.monitoring.internal;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
+import java.util.Properties;
 
 import junit.framework.Assert;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
@@ -63,6 +65,19 @@ public class MonitoringTaskTest {
 		this.agentInterface = new MyAgentInterface( this.messagingClient );
 	}
 
+	@Test
+	public void testExpandString() {
+		Properties params = new Properties();
+		params.setProperty("firstname", "James");
+		params.setProperty("lastname", "Bond");
+		String tmpl = "My name is {{lastname}}, {{ firstname }} {{ lastname }}!";
+		Assert.assertEquals(
+				"My name is Bond, James Bond!",
+				(new MonitoringTask(null)).expandString(tmpl, params));
+
+		tmpl = "This is an {{ unknown }} parameter";
+		Assert.assertEquals(tmpl, (new MonitoringTask(null)).expandString(tmpl, params));
+	}
 
 	@Test
 	public void testExtractRuleSections_file() throws Exception {
@@ -72,7 +87,7 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent );
+		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 3, handlers.size());
 
 		MonitoringHandler handler = handlers.get( 0 );
@@ -106,7 +121,7 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent );
+		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 3, handlers.size());
 
 		MonitoringHandler handler = handlers.get( 0 );
@@ -137,7 +152,7 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent );
+		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 1, handlers.size());
 
 		MonitoringHandler handler = handlers.get( 0 );
@@ -158,7 +173,7 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent );
+		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 2, handlers.size());
 
 		MonitoringHandler handler = handlers.get( 0 );
@@ -175,6 +190,32 @@ public class MonitoringTaskTest {
 		Assert.assertEquals( true, ((FileHandler) handler).isNotifyIfNotExists());
 	}
 
+	@Test
+	public void testExtractRuleSections_mixedTemplating() throws Exception {
+
+		File f = TestUtils.findTestFile( "/mixed-events-templating.conf" );
+		String fileContent = Utils.readFileContent( f );
+		MonitoringTask task = new MonitoringTask( this.agentInterface );
+		this.agentInterface.setRootInstance( new Instance( "root" ));
+
+		Properties params = new Properties();
+		params.load(new FileInputStream(TestUtils.findTestFile( "/mixed-events-templating.properties")));
+		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, params );
+		Assert.assertEquals( 2, handlers.size());
+
+		MonitoringHandler handler = handlers.get( 0 );
+		Assert.assertEquals( NagiosHandler.class, handler.getClass());
+		// Test template expansion of "= {{ accept_passive_checks }}"
+		// with "accept_passive_checks" property set to 1
+		Assert.assertEquals(true,
+			((NagiosHandler) handler).getNagiosInstructions().endsWith("= 1"));
+
+		handler = handlers.get( 1 );
+		Assert.assertEquals( FileHandler.class, handler.getClass());
+		// Test template expansion of "/tmp/{{ a-directory-to-not-delete }}"
+		// with "a-directory-to-not-delete" property set to "roboconf"
+		Assert.assertEquals( "/tmp/roboconf", ((FileHandler) handler).getFileLocation());
+	}
 
 	@Test
 	public void testExtractRuleSections_incompleteRule() throws Exception {
@@ -183,7 +224,7 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent );
+		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
 	}
 
@@ -195,7 +236,7 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent );
+		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
 	}
 
@@ -207,7 +248,7 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent );
+		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
 	}
 

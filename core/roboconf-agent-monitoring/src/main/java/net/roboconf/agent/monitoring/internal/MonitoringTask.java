@@ -26,10 +26,12 @@
 package net.roboconf.agent.monitoring.internal;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -103,9 +105,24 @@ public class MonitoringTask extends TimerTask {
 				Utils.logException( this.logger, e );
 				continue;
 			}
+			
+			Properties params = null;
+			File paramFile = new File( dir, inst.getComponent().getName() + ".measures.properties" );
+			if(paramFile.exists()) {
+				this.logger.fine( "A file with measure parameters (properties) was found for instance '" + inst + "'." );
+				FileInputStream in = null;
+				try {
+					params = new Properties();
+					params.load((in = new FileInputStream(paramFile)));
+				} catch(IOException e) {
+					params = null;
+				} finally {
+					Utils.closeQuietly(in);
+				}
+			}
 
 			// Find the right handlers to process the rules
-			for( MonitoringHandler handler : extractRuleSections( measureFile, fileContent )) {
+			for( MonitoringHandler handler : extractRuleSections( measureFile, fileContent, params )) {
 				try {
 					Message msg = handler.process();
 					if( msg != null )
@@ -126,7 +143,7 @@ public class MonitoringTask extends TimerTask {
 	 * @param fileContent
 	 * @return a non-null list of handlers (may be empty)
 	 */
-	List<MonitoringHandler> extractRuleSections( File file, String fileContent ) {
+	List<MonitoringHandler> extractRuleSections( File file, String fileContent, Properties params ) {
 
 		// Find rules sections
 		StringBuilder sb = new StringBuilder();
@@ -138,14 +155,14 @@ public class MonitoringTask extends TimerTask {
 				continue;
 
 			if( s.toLowerCase().startsWith( RULE_BEGINNING )) {
-				sections.add( sb.toString());
+				addSectionIfNotEmpty(sections, sb.toString());
 				sb.setLength( 0 );
 			}
 
-			sb.append( s + "\n" );
+			sb.append( expandString(s, params) + "\n" );
 		}
 
-		sections.add( sb.toString());
+		addSectionIfNotEmpty(sections, sb.toString());
 
 		// Now, create handlers
 		List<MonitoringHandler> result = new ArrayList<MonitoringHandler> ();
@@ -167,7 +184,37 @@ public class MonitoringTask extends TimerTask {
 
 		return result;
 	}
+	
+	private void addSectionIfNotEmpty(List<String> sections, String section) {
+		if(section.trim().length() > 0) sections.add(section);
+	}
 
+	/**
+	 * Expand a template, replacing each {{ param }} by the corresponding value.
+	 * Eg. "My name is {{ name }}" will result in "My name is Bond", provided that "params" contains "name=Bond". 
+	 * @param s The template to expand
+	 * @param params The parameters to be expanded in the template
+	 * @return The expanded template.
+	 */
+	public String expandString(String s, Properties params) {
+		if(params == null || params.size() < 1) return s;
+		
+		Pattern pattern = Pattern.compile( "\\{\\{\\s*\\S+\\s*\\}\\}" );
+		Matcher m = pattern.matcher(s);
+		
+		StringBuffer sb = new StringBuffer();
+		 while (m.find()) {
+			 String raw = m.group();
+			 String varName = m.group().replace('{', ' ').replace('}', ' ').trim();
+			 String val = params.getProperty(varName);
+			 val = (val == null ? raw : val.trim());
+			 
+		     m.appendReplacement(sb, val);
+		 }
+		 m.appendTail(sb);
+
+		 return sb.toString();
+	}
 
 	/**
 	 * Creates a handler.

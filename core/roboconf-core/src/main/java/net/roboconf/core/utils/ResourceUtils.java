@@ -68,16 +68,22 @@ public final class ResourceUtils {
 
 		// Measure files (are not located with recipes, so no trouble with component inheritance)
 		String fileName = instance.getComponent().getName() + Constants.FILE_EXT_MEASURES;
-		File autonomicMesureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/" + fileName );
-		if( autonomicMesureFile.exists()) {
+		File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/" + fileName );
+		if( autonomicMeasureFile.exists()) {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( autonomicMesureFile, os );
-			result.put( autonomicMesureFile.getName(), os.toByteArray());
+			Utils.copyStream( autonomicMeasureFile, os );
+			result.put( autonomicMeasureFile.getName(), os.toByteArray());
+		}
+		autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/"
+				+ instance.getComponent().getName() + Constants.FILE_EXT_MEASURES + ".properties");
+		if( autonomicMeasureFile.exists()) {
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			Utils.copyStream( autonomicMeasureFile, os );
+			result.put( autonomicMeasureFile.getName(), os.toByteArray());
 		}
 
 		return result;
 	}
-
 
 	/**
 	 * Finds the resource directory for an instance.
