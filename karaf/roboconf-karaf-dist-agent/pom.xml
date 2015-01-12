@@ -154,6 +154,15 @@
 					<skip>true</skip>
 				</configuration>
 			</plugin>
+			
+			<!-- Disable Coveralls for the Karaf distributions -->
+			<plugin>
+				<groupId>org.eluder.coveralls</groupId>
+				<artifactId>coveralls-maven-plugin</artifactId>
+				<configuration>
+					<coveralls.skip>true</coveralls.skip>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 </project>
