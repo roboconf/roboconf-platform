@@ -66,7 +66,6 @@ public interface IApplicationResource {
 	 */
 	@POST
 	@Path( "/change-state" )
-	@Consumes( MediaType.APPLICATION_JSON )
 	Response changeInstanceState( @PathParam("name") String applicationName, @QueryParam("new-state") String newState, @QueryParam("instance-path") String instancePath );
 
 
@@ -78,7 +77,6 @@ public interface IApplicationResource {
 	 */
 	@POST
 	@Path( "/deploy-all" )
-	@Consumes( MediaType.APPLICATION_JSON )
 	Response deployAndStartAll( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
@@ -90,7 +88,6 @@ public interface IApplicationResource {
 	 */
 	@POST
 	@Path( "/stop-all" )
-	@Consumes( MediaType.APPLICATION_JSON )
 	Response stopAll( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
@@ -102,7 +99,6 @@ public interface IApplicationResource {
 	 */
 	@POST
 	@Path( "/undeploy-all" )
-	@Consumes( MediaType.APPLICATION_JSON )
 	Response undeployAll( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
@@ -127,7 +123,6 @@ public interface IApplicationResource {
 	 */
 	@DELETE
 	@Path( "/instances" )
-	@Consumes( MediaType.APPLICATION_JSON )
 	Response removeInstance( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
 
 
@@ -198,15 +193,4 @@ public interface IApplicationResource {
 	@Path("/component/{componentName}")
 	@Produces( MediaType.APPLICATION_JSON )
 	List<String> findPossibleParentInstances( @PathParam("name") String applicationName, @PathParam("componentName") String componentName );
-
-
-	/**
-	 * Creates an instance from a component name.
-	 * @param applicationName the application name
-	 * @return a response
-	 */
-	@GET
-	@Path("/component/{componentName}/new")
-	@Produces( MediaType.APPLICATION_JSON )
-	Instance createInstanceFromComponent( @PathParam("name") String applicationName, @PathParam("componentName") String componentName );
 }

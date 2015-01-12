@@ -39,7 +39,6 @@ import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.ClientResponse.Status;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 
@@ -299,40 +298,5 @@ public class ApplicationWsDelegate {
 			this.logger.finer( "No possible parent was found for " + componentName + "." );
 
 		return result != null ? result : new ArrayList<String> ();
-	}
-
-
-	/**
-	 * Creates an instance from a component name.
-	 * <p>
-	 * The instance is not added into the application.<br />
-	 * This method is like a factory.
-	 * </p>
-	 *
-	 * @param applicationName the application name
-	 * @param componentName a component name
-	 * @return a new instance
-	 * @throws ApplicationException if a problem occurred with the creation of an instance
-	 */
-	public Instance createInstanceFromComponent( String applicationName, String componentName ) throws ApplicationException {
-		this.logger.finer( "Creating a new instance of component: " + componentName + "..." );
-
-		ClientResponse response = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( "component" ).path( componentName ).path( "new" )
-				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
-				.get( ClientResponse.class );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		Instance result = null;
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
-		if( Status.OK.getStatusCode() == response.getStatusInfo().getStatusCode())
-			result = response.getEntity( Instance.class );
-
-		return result;
 	}
 }

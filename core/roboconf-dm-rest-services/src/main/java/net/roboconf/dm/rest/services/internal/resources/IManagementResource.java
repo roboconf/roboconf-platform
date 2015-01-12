@@ -104,7 +104,7 @@ public interface IManagementResource {
 	/**
 	 * Shutdowns an application.
 	 * <p>
-	 * Shutdowns means removing everything Roboconf deployed or created.
+	 * Shutdown means removing everything Roboconf deployed or created.
 	 * This operation does not delete the application from the model. It only destroys
 	 * runtime resources.
 	 * </p>

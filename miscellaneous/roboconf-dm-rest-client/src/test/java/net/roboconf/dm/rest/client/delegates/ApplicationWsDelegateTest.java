@@ -318,19 +318,6 @@ public class ApplicationWsDelegateTest {
 
 
 	@Test
-	public void testCreateInstanceFromComponent() throws Exception {
-
-		Instance newInstance = this.client.getApplicationDelegate().createInstanceFromComponent( "inexisting", "my-comp" );
-		Assert.assertNull( newInstance );
-
-		String componentName = this.app.getMySqlVm().getComponent().getName();
-		newInstance = this.client.getApplicationDelegate().createInstanceFromComponent( this.app.getName(), componentName );
-		Assert.assertNotNull( newInstance );
-		Assert.assertEquals( componentName, newInstance.getComponent().getName());
-	}
-
-
-	@Test
 	public void testAddInstance_root_success() throws Exception {
 
 		Assert.assertEquals( 2, this.app.getRootInstances().size());
