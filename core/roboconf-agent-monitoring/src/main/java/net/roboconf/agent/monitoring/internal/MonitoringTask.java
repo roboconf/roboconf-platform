@@ -117,7 +117,7 @@ public class MonitoringTask extends TimerTask {
 				} catch(IOException e) {
 					params = null;
 				} finally {
-					if(in != null) try { in.close(); } catch(Exception e) { /*ignore*/ }
+					Utils.closeQuietly(in);
 				}
 			}
 
@@ -155,14 +155,14 @@ public class MonitoringTask extends TimerTask {
 				continue;
 
 			if( s.toLowerCase().startsWith( RULE_BEGINNING )) {
-				if(sb.length() > 0) sections.add( sb.toString());
+				addSectionIfNotEmpty(sections, sb.toString());
 				sb.setLength( 0 );
 			}
 
 			sb.append( expandString(s, params) + "\n" );
 		}
 
-		if(sb.length() > 0) sections.add( sb.toString());
+		addSectionIfNotEmpty(sections, sb.toString());
 
 		// Now, create handlers
 		List<MonitoringHandler> result = new ArrayList<MonitoringHandler> ();
@@ -183,6 +183,10 @@ public class MonitoringTask extends TimerTask {
 		}
 
 		return result;
+	}
+	
+	private void addSectionIfNotEmpty(List<String> sections, String section) {
+		if(section.trim().length() > 0) sections.add(section);
 	}
 
 	/**
