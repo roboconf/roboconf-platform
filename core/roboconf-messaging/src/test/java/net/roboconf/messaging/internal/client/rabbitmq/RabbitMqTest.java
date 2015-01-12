@@ -56,13 +56,15 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	@After
 	public void cleanRabbitMq() throws Exception {
 
-		RabbitMqClientDm client = new RabbitMqClientDm();
-		client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
-		client.openConnection();
-		client.deleteMessagingServerArtifacts( new Application( "app" ));
-		client.deleteMessagingServerArtifacts( new Application( "app1" ));
-		client.deleteMessagingServerArtifacts( new Application( "app2" ));
-		client.closeConnection();
+		if( rabbitMqIsRunning ) {
+			RabbitMqClientDm client = new RabbitMqClientDm();
+			client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
+			client.openConnection();
+			client.deleteMessagingServerArtifacts( new Application( "app" ));
+			client.deleteMessagingServerArtifacts( new Application( "app1" ));
+			client.deleteMessagingServerArtifacts( new Application( "app2" ));
+			client.closeConnection();
+		}
 	}
 
 
