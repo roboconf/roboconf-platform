@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -60,7 +60,7 @@ public abstract class RabbitMqTestUtils {
 	 */
 	public static boolean checkRabbitMqIsRunning() throws Exception {
 
-		boolean rabbitMqIsRunning = true;
+		boolean rabbitMqIsRunning = false;
 		Channel channel = null;
 		try {
 			channel = createTestChannel();
@@ -71,15 +71,14 @@ public abstract class RabbitMqTestUtils {
 				Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 				logger.warning( "Tests are skipped because RabbitMQ must be at least in version 3.2.x." );
 
-				rabbitMqIsRunning = false;
+			} else {
+				rabbitMqIsRunning = true;
 			}
 
 		} catch( Exception e ) {
 			Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 			logger.warning( "Tests are skipped because RabbitMQ is not rabbitMqIsRunning." );
 			Utils.logException( logger, e );
-
-			rabbitMqIsRunning = false;
 
 		} finally {
 			if( channel != null ) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -411,33 +411,6 @@ public class ApplicationResource implements IApplicationResource {
 					}
 				}
 			}
-		}
-
-		return result;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.dm.internal.rest.client.exceptions.server.IGraphWs
-	 * #createInstanceFromComponent(java.lang.String, java.lang.String)
-	 */
-	@Override
-	public Instance createInstanceFromComponent( String applicationName, String componentName ) {
-
-		this.logger.fine( "Request: create a new instance for component " + componentName + " in " + applicationName + "." );
-		Instance result = null;
-		Component comp = null;
-
-		Application app = this.manager.findApplicationByName( applicationName );
-		if( app != null )
-			comp = ComponentHelpers.findComponent( app.getGraphs(), componentName );
-
-		// TODO: In the real implementation, properties should be set in the exports.
-		// The interest of this operation is to display default export values
-		// in a web console (as an example) and thus allow to override them if necessary.
-		if( comp != null ) {
-			result = new Instance( "new-instance" ).component( comp );
 		}
 
 		return result;

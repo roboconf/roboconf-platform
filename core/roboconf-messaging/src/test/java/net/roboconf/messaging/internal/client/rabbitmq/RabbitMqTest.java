@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -56,13 +56,15 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	@After
 	public void cleanRabbitMq() throws Exception {
 
-		RabbitMqClientDm client = new RabbitMqClientDm();
-		client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
-		client.openConnection();
-		client.deleteMessagingServerArtifacts( new Application( "app" ));
-		client.deleteMessagingServerArtifacts( new Application( "app1" ));
-		client.deleteMessagingServerArtifacts( new Application( "app2" ));
-		client.closeConnection();
+		if( rabbitMqIsRunning ) {
+			RabbitMqClientDm client = new RabbitMqClientDm();
+			client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
+			client.openConnection();
+			client.deleteMessagingServerArtifacts( new Application( "app" ));
+			client.deleteMessagingServerArtifacts( new Application( "app1" ));
+			client.deleteMessagingServerArtifacts( new Application( "app2" ));
+			client.closeConnection();
+		}
 	}
 
 

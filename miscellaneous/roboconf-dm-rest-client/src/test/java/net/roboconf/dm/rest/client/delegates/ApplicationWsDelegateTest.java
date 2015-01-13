@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -314,19 +314,6 @@ public class ApplicationWsDelegateTest {
 		Assert.assertEquals( 2, instancePaths.size());
 		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( this.app.getMySqlVm())));
 		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( this.app.getTomcatVm())));
-	}
-
-
-	@Test
-	public void testCreateInstanceFromComponent() throws Exception {
-
-		Instance newInstance = this.client.getApplicationDelegate().createInstanceFromComponent( "inexisting", "my-comp" );
-		Assert.assertNull( newInstance );
-
-		String componentName = this.app.getMySqlVm().getComponent().getName();
-		newInstance = this.client.getApplicationDelegate().createInstanceFromComponent( this.app.getName(), componentName );
-		Assert.assertNotNull( newInstance );
-		Assert.assertEquals( componentName, newInstance.getComponent().getName());
 	}
 
 
