@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+   Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
    
    The present code is developed in the scope of the joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
@@ -95,7 +95,6 @@
 						<feature>ipojo-webconsole</feature>
 						<feature>jersey-1.x</feature>
 						<feature>roboconf-dm</feature>
-						<feature>jclouds-for-roboconf</feature>
 					</bootFeatures>
 				</configuration>
 			</plugin>
@@ -155,6 +154,15 @@
 				<artifactId>maven-deploy-plugin</artifactId>
 				<configuration>
 					<skip>true</skip>
+				</configuration>
+			</plugin>
+			
+			<!-- Disable Coveralls for the Karaf distributions -->
+			<plugin>
+				<groupId>org.eluder.coveralls</groupId>
+				<artifactId>coveralls-maven-plugin</artifactId>
+				<configuration>
+					<coveralls.skip>true</coveralls.skip>
 				</configuration>
 			</plugin>
 		</plugins>

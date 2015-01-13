@@ -7,7 +7,6 @@
 
 	<!-- Specify repositories for external features -->
 	<repository>mvn:org.apache.felix/org.apache.felix.ipojo.features/${ipojo.version}/xml</repository>
-	<repository>mvn:org.apache.jclouds.karaf/jclouds-karaf/${jclouds.version}/xml/features</repository>
 
 	<!-- The feature associated with the DM -->
 	<feature name="roboconf-dm" version="${project.version}">
@@ -24,13 +23,7 @@
 		<bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
 		
 		<!-- Optional bundles, to start depending on our needs -->
-		<bundle start="false">mvn:net.roboconf/roboconf-target-docker/${project.version}</bundle>
-		<bundle start="false">mvn:net.roboconf/roboconf-target-jclouds/${project.version}</bundle>
-		<bundle start="false">mvn:net.roboconf/roboconf-target-embedded/${project.version}</bundle>
-		<bundle start="false">mvn:net.roboconf/roboconf-target-iaas-azure/${project.version}</bundle>
-		<bundle start="false">mvn:net.roboconf/roboconf-target-iaas-ec2/${project.version}</bundle>
-		<bundle start="false">mvn:net.roboconf/roboconf-target-iaas-openstack/${project.version}</bundle>
-		<bundle start="false">mvn:net.roboconf/roboconf-target-iaas-vmware/${project.version}</bundle>
+		<!-- Deployment targets handlers could go here. -->
 	</feature>
 	
 	<!-- The feature for Jersey 1.x -->

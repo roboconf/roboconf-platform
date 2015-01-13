@@ -19,6 +19,7 @@
         <bundle>mvn:net.roboconf/roboconf-agent-monitoring/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-api/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-bash/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-plugin-file/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-logger/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-puppet/${project.version}</bundle>
     </feature>

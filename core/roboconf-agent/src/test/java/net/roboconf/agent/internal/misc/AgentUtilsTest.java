@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -103,7 +103,9 @@ public class AgentUtilsTest {
 
 		// Save our resources
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
+		Utils.deleteFilesRecursively( dir );
 		Assert.assertFalse( dir.exists());
+
 		AgentUtils.copyInstanceResources( app.getTomcat(), null );
 		Assert.assertTrue( dir.exists());
 		Assert.assertEquals( 0, dir.listFiles().length );

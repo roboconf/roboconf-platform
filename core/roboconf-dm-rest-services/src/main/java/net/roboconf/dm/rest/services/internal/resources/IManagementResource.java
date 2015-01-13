@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -104,7 +104,7 @@ public interface IManagementResource {
 	/**
 	 * Shutdowns an application.
 	 * <p>
-	 * Shutdowns means removing everything Roboconf deployed or created.
+	 * Shutdown means removing everything Roboconf deployed or created.
 	 * This operation does not delete the application from the model. It only destroys
 	 * runtime resources.
 	 * </p>

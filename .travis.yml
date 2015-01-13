@@ -20,10 +20,9 @@ before_script:
 #  - puppet --version
 
 # Build with Maven.
-# Use -q option to only display Maven errors and warnings.
 script:
-  - mvn clean install -q
+  - ./travis-build.sh
 
-# Actions to perform after the build (only for Java 6).
+# Actions to perform after the build.
 after_success:
-  - ./after_success.sh
+  - ./travis-after-success.sh
