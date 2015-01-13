@@ -30,7 +30,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
+
+import javax.mail.*;
+import javax.mail.internet.*;
+import javax.activation.*;
 
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
@@ -95,13 +100,15 @@ public class RuleBasedEventHandler {
 
 			// EVENT_ID Mail DestinationEmail
 			// TODO: implement it
-			else if( MAIL.equalsIgnoreCase(rule.getReactionId()))
+			else if( MAIL.equalsIgnoreCase(rule.getReactionId())) {
 				this.logger.info( "We should send an e-mail..." );
+				sendEmail(rule.getReactionInfo());
 
 			// EVENT_ID Log LogMessage
 			// And default behavior...
-			else
+			} else {
 				this.logger.info( "AUTONOMIC Monitoring event. Info = " + rule.getReactionInfo());
+			}
 
 		} catch( IOException e ) {
 			this.logger.warning( "An autonomic event could not be handled. " + e.getMessage());
@@ -109,6 +116,44 @@ public class RuleBasedEventHandler {
 		}
 	}
 
+	void sendEmail(String emailData) {
+
+	      // TODO email config properties ?
+	      String from = "dm@roboconf.net";
+	      String to = "abcd@gmail.com";
+	      String smtpServer = "localhost";
+
+	      // Setup mail server
+	      Properties properties = System.getProperties();
+	      properties.setProperty("mail.smtp.host", smtpServer);
+
+	      // Get the default Session object.
+	      Session session = Session.getDefaultInstance(properties);
+
+	      try {
+	         // Create a default MimeMessage object.
+	         MimeMessage message = new MimeMessage(session);
+
+	         // Set From: header field of the header.
+	         message.setFrom(new InternetAddress(from));
+
+	         message.addRecipient(Message.RecipientType.TO,
+                     new InternetAddress(to));
+
+	         // Set Subject: header field
+	         message.setSubject("This is the Subject Line!");
+
+	         // Now set the actual message
+	         message.setText("This is actual message");
+
+	         // Send message
+	         Transport.send(message);
+
+	      } catch (MessagingException e) {
+	    	  this.logger.warning( "Failed sending email: " + e.getMessage());
+	    	  Utils.logException(this.logger, e);
+	      }
+	}
 
 	/**
 	 * Instantiate a new VM with instances on it.
