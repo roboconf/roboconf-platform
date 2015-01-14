@@ -37,7 +37,8 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.integration.test.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.test.internal.IntegrationTestsUtils;
+import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 

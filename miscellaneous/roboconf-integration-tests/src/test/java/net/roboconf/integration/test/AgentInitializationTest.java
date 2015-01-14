@@ -46,7 +46,8 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.integration.test.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.test.internal.IntegrationTestsUtils;
+import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmTest;
 import net.roboconf.plugin.api.PluginException;
@@ -162,7 +163,7 @@ public class AgentInitializationTest extends DmTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
-		Thread.sleep( 1000 );
+		Thread.sleep( 800 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
 		// A new agent must have been created
@@ -170,9 +171,32 @@ public class AgentInitializationTest extends DmTest {
 		Agent agent = myResolver.handler.agentIdToAgent.values().iterator().next();
 		Thread.sleep( 1000 );
 		Assert.assertFalse( agent.needsModel());
+		Assert.assertNotNull( agent.getRootInstance());
+		Assert.assertEquals( "MySQL VM", agent.getRootInstanceName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( agent.getRootInstance()).size());
 
-		// Undeploy
+		// Try to instantiate another VM
+		Instance anotherRootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Tomcat VM 1" );
+		Assert.assertNotNull( anotherRootInstance );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, anotherRootInstance.getStatus());
+
+		this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 800 );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherRootInstance.getStatus());
+
+		Assert.assertEquals( 2, myResolver.handler.agentIdToAgent.size());
+		Agent anotherAgent = myResolver.handler.agentIdToAgent.get( "Tomcat VM 1 @ Legacy LAMP" );
+		Assert.assertNotNull( anotherAgent );
+
+		Thread.sleep( 1000 );
+		Assert.assertFalse( anotherAgent.needsModel());
+		Assert.assertNotNull( anotherAgent.getRootInstance());
+		Assert.assertEquals( "Tomcat VM 1", anotherAgent.getRootInstanceName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( anotherAgent.getRootInstance()).size());
+
+		// Undeploy them all
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
+		this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.NOT_DEPLOYED );
 		Thread.sleep( 300 );
 		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
 	}
