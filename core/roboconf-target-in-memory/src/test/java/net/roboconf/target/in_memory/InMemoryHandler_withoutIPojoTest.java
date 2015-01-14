@@ -23,11 +23,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.in_memory.internal;
+package net.roboconf.target.in_memory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.target.api.TargetException;
-import net.roboconf.target.in_memory.InMemoryHandler;
 
 import org.junit.Test;
 
@@ -50,5 +52,31 @@ public class InMemoryHandler_withoutIPojoTest {
 	public void testCreateVm() throws Exception {
 
 		new InMemoryHandler().createOrConfigureMachine( null, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testCreateVm_withDelay() throws Exception {
+
+		InMemoryHandler handler = new InMemoryHandler();
+		handler.setDefaultDelay( 100L );
+		Assert.assertEquals( 100L, handler.getDefaultDelay());
+
+		Map<String,String> targetProperties = new HashMap<String,String>( 1 );
+		targetProperties.put( InMemoryHandler.DELAY, "20L" );
+
+		handler.createOrConfigureMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testCreateVm_withDefaultDelay() throws Exception {
+
+		InMemoryHandler handler = new InMemoryHandler();
+		handler.setDefaultDelay( 10L );
+		Assert.assertEquals( 10L, handler.getDefaultDelay());
+
+		Map<String,String> targetProperties = new HashMap<String,String>( 0 );
+		handler.createOrConfigureMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
 	}
 }
