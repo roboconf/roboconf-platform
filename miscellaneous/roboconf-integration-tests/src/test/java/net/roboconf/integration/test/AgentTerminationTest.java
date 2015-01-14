@@ -31,11 +31,6 @@ import java.io.File;
 
 import javax.inject.Inject;
 
-import net.roboconf.agent.AgentMessagingInterface;
-import net.roboconf.agent.internal.Agent;
-import net.roboconf.agent.internal.AgentMessageProcessor;
-import net.roboconf.agent.internal.misc.HeartbeatTask;
-import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -47,9 +42,7 @@ import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessagePro
 import net.roboconf.integration.test.internal.MyHandler;
 import net.roboconf.integration.test.internal.MyTargetResolver;
 import net.roboconf.pax.probe.AbstractTest;
-import net.roboconf.pax.probe.DmTest;
-import net.roboconf.plugin.api.PluginException;
-import net.roboconf.plugin.api.PluginInterface;
+import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 
 import org.junit.Assert;
 import org.junit.Assume;
@@ -64,18 +57,17 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 /**
- * A set of tests for the agent's initialization.
+ * Test agent termination.
  * <p>
- * We launch a Karaf installation with an agent in-memory. We load
- * an application and instantiates a root instance. The new agent
- * must send an initial message to the DM to indicate it is alive.
- * It must then receive its model from the DM.
+ * Start two in-memory agents, one (1) depending on the other (2).
+ * We kill the VM of (2). The DM should notify (1) that (2) was killed.
+ * (1)'s state should be impacted and switch to the "starting" state.
  * </p>
  *
  * @author Vincent Zurczak - Linagora
  */
 @ExamReactorStrategy( PerClass.class )
-public class AgentInitializationTest extends DmTest {
+public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
 
@@ -92,7 +84,7 @@ public class AgentInitializationTest extends DmTest {
 		// We need to specify the classes we need
 		// and that come from external modules.
 		probe.addTest( AbstractTest.class );
-		probe.addTest( DmTest.class );
+		probe.addTest( DmWithAgentInMemoryTest.class );
 		probe.addTest( TestUtils.class );
 		probe.addTest( TemporaryFolder.class );
 
@@ -100,15 +92,6 @@ public class AgentInitializationTest extends DmTest {
 		probe.addTest( MyTargetResolver.class );
 		probe.addTest( IntegrationTestsUtils.class );
 		probe.addTest( MyMessageProcessor.class );
-
-		// Classes from the agent
-		probe.addTest( Agent.class );
-		probe.addTest( AgentMessagingInterface.class );
-		probe.addTest( PluginInterface.class );
-		probe.addTest( PluginException.class );
-		probe.addTest( PluginMock.class );
-		probe.addTest( HeartbeatTask.class );
-		probe.addTest( AgentMessageProcessor.class );
 
 		return probe;
 	}
@@ -120,7 +103,7 @@ public class AgentInitializationTest extends DmTest {
 
 		String appLocation = null;
 		try {
-			File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
+			File resourcesDirectory = TestUtils.findTestFile( "/simple", getClass());
 			appLocation = resourcesDirectory.getAbsolutePath();
 
 		} catch( Exception e ) {
@@ -138,10 +121,7 @@ public class AgentInitializationTest extends DmTest {
 		Assume.assumeTrue( IntegrationTestsUtils.rabbitMqIsRunning());
 
 		// Update the manager
-		MyTargetResolver myResolver = new MyTargetResolver();
-
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-		this.manager.setTargetResolver( myResolver );
 		this.manager.reconfigure();
 
 		// Load the application
@@ -150,50 +130,36 @@ public class AgentInitializationTest extends DmTest {
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
 
-		// There is no agent yet (no root instance was deployed)
-		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
+		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
+		Instance app = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/App VM/App" );
+		Assert.assertNotNull( mysql );
+		Assert.assertNotNull( app );
 
-		// Instantiate a new root instance
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
-		Assert.assertNotNull( rootInstance );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
-
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
+		this.manager.changeInstanceState( ma, app.getParent(), InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 800 );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
-		// A new agent must have been created
-		Assert.assertEquals( 1, myResolver.handler.agentIdToAgent.size());
-		Agent agent = myResolver.handler.agentIdToAgent.values().iterator().next();
-		Thread.sleep( 1000 );
-		Assert.assertFalse( agent.needsModel());
-		Assert.assertNotNull( agent.getRootInstance());
-		Assert.assertEquals( "MySQL VM", agent.getRootInstanceName());
-		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( agent.getRootInstance()).size());
+		this.manager.changeInstanceState( ma, mysql, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.changeInstanceState( ma, app, InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 300 );
 
-		// Try to instantiate another VM
-		Instance anotherRootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Tomcat VM 1" );
-		Assert.assertNotNull( anotherRootInstance );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, anotherRootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getStatus());
 
-		this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.DEPLOYED_STARTED );
-		Thread.sleep( 800 );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherRootInstance.getStatus());
-
-		Assert.assertEquals( 2, myResolver.handler.agentIdToAgent.size());
-		Agent anotherAgent = myResolver.handler.agentIdToAgent.get( "Tomcat VM 1 @ Legacy LAMP" );
-		Assert.assertNotNull( anotherAgent );
-
-		Thread.sleep( 1000 );
-		Assert.assertFalse( anotherAgent.needsModel());
-		Assert.assertNotNull( anotherAgent.getRootInstance());
-		Assert.assertEquals( "Tomcat VM 1", anotherAgent.getRootInstanceName());
-		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( anotherAgent.getRootInstance()).size());
+		// Kill the VM of MySQL. The App should be "starting" because one of its dependencies is missing.
+		this.manager.changeInstanceState( ma, mysql.getParent(), InstanceStatus.NOT_DEPLOYED );
+		Thread.sleep( 300 );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.STARTING, app.getStatus());
 
 		// Undeploy them all
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
-		this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.NOT_DEPLOYED );
+		this.manager.undeployAll( ma, null );
 		Thread.sleep( 300 );
-		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
+		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication()))
+			Assert.assertEquals( inst.getName(), InstanceStatus.NOT_DEPLOYED, inst.getStatus());
 	}
 }

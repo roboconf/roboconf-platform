@@ -1,0 +1,17 @@
+# The VM
+VM {
+	installer: target;
+	children: MySQL, App;
+}
+
+# MySQL database
+MySQL {
+	installer: puppet;
+	exports: ip, port = 3306;
+}
+
+# Application
+App {
+	installer: puppet;
+	imports: MySQL.*;
+}

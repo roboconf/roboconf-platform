@@ -186,6 +186,34 @@ public class TargetResolverTest {
 
 
 	@Test( expected = TargetException.class )
+	public void testFindTargetHandler_noTargetIdInProperties() throws Exception {
+
+		File appDir = this.folder.newFolder( "roboconf_test" );
+		Application app = new Application( "my app" );
+		ManagedApplication ma = new ManagedApplication( app, appDir );
+
+		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
+		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
+		if( ! propsDir.mkdirs())
+			throw new IOException( "Failed to create sub-directories." );
+
+		File propsFile = new File( propsDir, Constants.TARGET_PROPERTIES_FILE_NAME );
+		Properties props = new Properties();
+		FileOutputStream os = null;
+		try {
+			os = new FileOutputStream( propsFile );
+			props.store( os, null );
+
+		} finally {
+			Utils.closeQuietly( os );
+		}
+
+		TargetResolver resolver = new TargetResolver();
+		resolver.findTargetHandler( null, ma, rootInstance );
+	}
+
+
+	@Test( expected = TargetException.class )
 	public void testFindTargetHandler_noTargetProperties() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );

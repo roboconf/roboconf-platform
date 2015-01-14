@@ -150,7 +150,7 @@ public class Manager {
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
-		this.timer = new Timer( "Roboconf's Management Timer", true );
+		this.timer = new Timer( "Roboconf's Management Timer", false );
 		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, this.messagingClient ), 0, TIMER_PERIOD );
 		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
 

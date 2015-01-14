@@ -83,7 +83,7 @@ public class TargetResolver implements ITargetResolver {
 	protected TargetHandler findTargetHandler( List<TargetHandler> target, String targetId ) {
 
 		TargetHandler result = null;
-		if( target != null ) {
+		if( target != null && targetId != null ) {
 			for( TargetHandler itf : target ) {
 				if( targetId.equalsIgnoreCase( itf.getTargetId())) {
 					result = itf;
