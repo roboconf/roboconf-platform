@@ -26,17 +26,22 @@
 package net.roboconf.messaging.internal.client.rabbitmq;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -231,10 +236,37 @@ public class RabbitMqClientDm implements IDmClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IDmClient#propagateAgentTermination()
+	 * @see net.roboconf.messaging.client.IDmClient
+	 * #propagateAgentTermination(net.roboconf.core.model.beans.Application, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void propagateAgentTermination() {
-		// TODO Auto-generated method stub
+	public void propagateAgentTermination( Application application, Instance rootInstance )
+	throws IOException {
+
+		this.logger.fine( "The DM is propagating the termination of agent '" + rootInstance + "'." );
+
+		// The messages will go through JUST like if they were coming from other agents.
+		String exchangeName = RabbitMqUtils.buildExchangeName( application, false );
+
+		// Start with the deepest instances
+		List<Instance> instances = InstanceHelpers.buildHierarchicalList( rootInstance );
+		Collections.reverse( instances );
+
+		// Roughly, we unpublish all the variables for all the instances that were on the agent's machine.
+		// This code is VERY similar to ...ClientAgent#unpublishExports
+		for( Instance instance : instances ) {
+			for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
+
+				MsgCmdRemoveImport message = new MsgCmdRemoveImport(
+						facetOrComponentName,
+						InstanceHelpers.computeInstancePath( instance ));
+
+				this.channel.basicPublish(
+						exchangeName,
+						RabbitMqClientAgent.THOSE_THAT_IMPORT + facetOrComponentName,
+						null,
+						SerializationUtils.serializeObject( message ));
+			}
+		}
 	}
 }

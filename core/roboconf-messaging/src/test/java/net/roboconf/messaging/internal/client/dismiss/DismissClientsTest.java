@@ -44,7 +44,7 @@ public class DismissClientsTest {
 		Assert.assertFalse( client.isConnected());
 		client.listenToAgentMessages( null, ListenerCommand.START );;
 		client.openConnection();
-		client.propagateAgentTermination();
+		client.propagateAgentTermination( null, null );
 		client.sendMessageToAgent( null, null, null );
 		client.setMessageQueue( null );
 		client.setParameters( null, null, null );

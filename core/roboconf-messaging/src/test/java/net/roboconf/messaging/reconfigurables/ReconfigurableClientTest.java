@@ -32,6 +32,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.processors.AbstractMessageProcessorTest.EmptyTestDmMessageProcessor;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -103,7 +104,7 @@ public class ReconfigurableClientTest {
 		Assert.assertFalse( client.isConnected());
 
 		client.deleteMessagingServerArtifacts( new Application( "app" ));
-		client.propagateAgentTermination();
+		client.propagateAgentTermination( null, null );
 	}
 
 
@@ -119,5 +120,23 @@ public class ReconfigurableClientTest {
 		client.setMessageQueue( new LinkedBlockingQueue<Message> ());
 		Assert.assertFalse( client.hasValidClient());
 		Assert.assertFalse( client.isConnected());
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testAssociateMessageProcessor_exception() {
+
+		ReconfigurableClientDm client = new ReconfigurableClientDm();
+		Assert.assertFalse( client.hasValidClient());
+
+		EmptyTestDmMessageProcessor processor = new EmptyTestDmMessageProcessor();
+		try {
+			client.associateMessageProcessor( processor );
+
+		} catch( Throwable t ) {
+			Assert.fail( "No exception was expected here" );
+		}
+
+		client.associateMessageProcessor( processor );
 	}
 }

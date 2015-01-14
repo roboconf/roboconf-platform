@@ -831,12 +831,15 @@ public class Manager {
 		checkConfiguration();
 		InstanceStatus initialStatus = rootInstance.getStatus();
 		try {
-			// Terminate the machine
+			// Terminate the machine...
+			// ...  and notify other agents this agent was killed.
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
 			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
 			String machineId = rootInstance.data.remove( Instance.MACHINE_ID );
-			if( machineId != null )
+			if( machineId != null ) {
 				target.getHandler().terminateMachine( target.getProperties(), machineId );
+				this.messagingClient.propagateAgentTermination( ma.getApplication(), rootInstance );
+			}
 
 			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
 			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {

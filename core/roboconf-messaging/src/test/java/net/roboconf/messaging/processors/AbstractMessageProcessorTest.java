@@ -27,7 +27,7 @@ package net.roboconf.messaging.processors;
 
 import junit.framework.Assert;
 import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.test.TestClientDm;
+import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 
@@ -40,19 +40,12 @@ import org.junit.Test;
  */
 public class AbstractMessageProcessorTest {
 
-	private AbstractMessageProcessor<TestClientDm> processor;
+	private AbstractMessageProcessor<IDmClient> processor;
 
 
 	@Before
 	public void initializeProcessor() {
-
-		String name = MessagingConstants.FACTORY_TEST;
-		this.processor = new AbstractMessageProcessor<TestClientDm>( name ) {
-			@Override
-			protected void processMessage( Message message ) {
-				// nothing
-			}
-		};
+		this.processor = new EmptyTestDmMessageProcessor();
 	}
 
 
@@ -103,5 +96,24 @@ public class AbstractMessageProcessorTest {
 		this.processor.stopProcessor();
 
 		Assert.assertEquals( 0, this.processor.getMessageQueue().size());
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class EmptyTestDmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
+
+		/**
+		 * Constructor.
+		 */
+		public EmptyTestDmMessageProcessor() {
+			super( MessagingConstants.FACTORY_TEST );
+		}
+
+		@Override
+		protected void processMessage( Message message ) {
+			// nothing
+		}
 	}
 }

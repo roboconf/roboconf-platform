@@ -108,6 +108,14 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	}
 
 
+	@Override
+	@Test
+	public void testPropagateAgentTermination() throws Exception {
+		Assume.assumeTrue( rabbitMqIsRunning );
+		super.testPropagateAgentTermination();
+	}
+
+
 
 
 

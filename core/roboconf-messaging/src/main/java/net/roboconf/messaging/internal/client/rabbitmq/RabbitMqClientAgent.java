@@ -54,7 +54,7 @@ import com.rabbitmq.client.QueueingConsumer;
 public class RabbitMqClientAgent implements IAgentClient {
 
 	private static final String THOSE_THAT_EXPORT = "those.that.export.";
-	private static final String THOSE_THAT_IMPORT = "those.that.import.";
+	public static final String THOSE_THAT_IMPORT = "those.that.import.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String applicationName, rootInstanceName, messageServerIp, messageServerUsername, messageServerPassword;
