@@ -30,8 +30,10 @@ import java.io.File;
 import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.tooling.core.ProjectUtils.CreationBean;
 
 import org.junit.Rule;
@@ -102,7 +104,58 @@ public class ProjectUtilsTest {
 
 
 	@Test
+	public void testMavenProjectWithCustomPom() throws Exception {
+
+		File dir = this.folder.newFolder();
+		CreationBean bean = new CreationBean()
+							.projectDescription( "some desc" ).projectName( "my-project" )
+							.projectVersion( "1.0-SNAPSHOT" ).pluginVersion( "1.0.0" ).groupId( "net.roboconf" );
+
+		File pomSkeleton = TestUtils.findTestFile( "/test-pom-skeleton.xml" );
+		Assert.assertTrue( pomSkeleton.exists());
+		bean.customPomLocation( pomSkeleton.getAbsolutePath());
+
+		Assert.assertEquals( 0, dir.listFiles().length );
+		ProjectUtils.createProjectSkeleton( dir, bean );
+		Assert.assertEquals( 2, dir.listFiles().length );
+
+		File pomFile = new File( dir, "pom.xml" );
+		File expectedPom = TestUtils.findTestFile( "/expected-pom.xml" );
+		Assert.assertTrue( expectedPom.exists());
+		Assert.assertTrue( pomFile.exists());
+
+		String actual = Utils.readFileContent( pomFile );
+		String expected = Utils.readFileContent( expectedPom );
+		Assert.assertEquals( expected, actual );
+
+		File modelDir = new File( dir, "src/main/model" );
+		Assert.assertTrue( modelDir.exists());
+		Assert.assertEquals( 3, modelDir.listFiles().length );
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( modelDir );
+		Assert.assertEquals( 2, alr.getLoadErrors().size());
+		for( RoboconfError roboconfError : alr.getLoadErrors())
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
+
+		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
+		Assert.assertEquals( "${project.artifact.artifactId}", alr.getApplication().getName());
+		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplication().getQualifier());
+		Assert.assertEquals( "${project.artifact.groupId}", alr.getApplication().getNamespace());
+	}
+
+
+	@Test
 	public void testListPluginVersions() {
 		Assert.assertNotNull( ProjectUtils.listMavenPluginVersions());
+	}
+
+
+	@Test
+	public void testGetNonNullString() {
+
+		Assert.assertEquals( "", CreationBean.getNonNullString( null ));
+		Assert.assertEquals( "", CreationBean.getNonNullString( "" ));
+		Assert.assertEquals( "", CreationBean.getNonNullString( "  " ));
+		Assert.assertEquals( "toto", CreationBean.getNonNullString( " toto " ));
 	}
 }

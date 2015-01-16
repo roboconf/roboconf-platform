@@ -147,7 +147,7 @@ public final class ProjectUtils {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Utils.copyStream( in, out );
 		String tpl = out.toString( "UTF-8" )
-				.replace( TPL_POM_NAME, creationBean.getGroupId() + " :: " + creationBean.getProjectName())
+				.replace( TPL_POM_NAME, creationBean.getProjectName())
 				.replace( TPL_POM_GROUP, creationBean.getGroupId())
 				.replace( TPL_POM_PLUGIN_VERSION, creationBean.getPluginVersion())
 				.replace( TPL_POM_VERSION, creationBean.getProjectVersion())
@@ -283,7 +283,7 @@ public final class ProjectUtils {
 			return this;
 		}
 
-		private String getNonNullString( String s ) {
+		static String getNonNullString( String s ) {
 			return Utils.isEmptyOrWhitespaces( s ) ? "" : s.trim();
 		}
 	}
