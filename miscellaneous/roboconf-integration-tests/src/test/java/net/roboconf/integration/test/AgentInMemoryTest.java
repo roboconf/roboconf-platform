@@ -39,14 +39,15 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.test.internal.IntegrationTestsUtils;
 import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.test.internal.RoboconfPaxRunner;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
@@ -66,6 +67,7 @@ import org.ops4j.pax.exam.util.Filter;
  *
  * @author Vincent Zurczak - Linagora
  */
+@RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerClass.class )
 public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
@@ -114,7 +116,6 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 	@Override
 	public void run() throws Exception {
-		Assume.assumeTrue( IntegrationTestsUtils.rabbitMqIsRunning());
 
 		// Prepare everything
 		configureManagerForInMemoryUsage();

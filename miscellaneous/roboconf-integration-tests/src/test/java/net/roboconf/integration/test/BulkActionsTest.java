@@ -41,13 +41,14 @@ import net.roboconf.integration.test.internal.IntegrationTestsUtils;
 import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.test.internal.MyHandler;
 import net.roboconf.integration.test.internal.MyTargetResolver;
+import net.roboconf.integration.test.internal.RoboconfPaxRunner;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
@@ -65,6 +66,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
  *
  * @author Vincent Zurczak - Linagora
  */
+@RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerClass.class )
 public class BulkActionsTest extends DmWithAgentInMemoryTest {
 
@@ -117,7 +119,6 @@ public class BulkActionsTest extends DmWithAgentInMemoryTest {
 
 	@Override
 	public void run() throws Exception {
-		Assume.assumeTrue( IntegrationTestsUtils.rabbitMqIsRunning());
 
 		// Update the manager
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());

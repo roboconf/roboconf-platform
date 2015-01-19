@@ -36,6 +36,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.dm.rest.client.WsClient;
+import net.roboconf.integration.test.internal.RoboconfPaxRunner;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 
@@ -43,6 +44,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
@@ -54,6 +56,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 /**
  * @author Vincent Zurczak - Linagora
  */
+@RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerClass.class )
 public class RestServicesTest extends DmWithAgentInMemoryTest {
 
