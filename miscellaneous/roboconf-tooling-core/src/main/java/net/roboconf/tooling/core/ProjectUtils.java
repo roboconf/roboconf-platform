@@ -35,8 +35,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.dsl.ParsingConstants;
-import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -47,11 +45,12 @@ public final class ProjectUtils {
 	static final String GRAPH_EP = "main.graph";
 	static final String INSTANCES_EP = "model.instances";
 
-	private static final String TPL_POM_NAME = "${NAME}";
-	private static final String TPL_POM_DESCRIPTION = "${DESCRIPTION}";
+	private static final String TPL_NAME = "${NAME}";
+	private static final String TPL_NAMESPACE = "${NAMESPACE}";
+	private static final String TPL_DESCRIPTION = "${DESCRIPTION}";
+	private static final String TPL_VERSION = "${VERSION}";
 	private static final String TPL_POM_GROUP = "${GROUPD_ID}";
 	private static final String TPL_POM_ARTIFACT = "${ARTIFACT_ID}";
-	private static final String TPL_POM_VERSION = "${VERSION}";
 	private static final String TPL_POM_PLUGIN_VERSION = "${PLUGIN_VERSION}";
 
 	private static String[] DIRECTORIES = {
@@ -108,16 +107,17 @@ public final class ProjectUtils {
 		}
 
 		// Create the descriptor
-		ApplicationDescriptor descriptor = new ApplicationDescriptor();
-		descriptor.setDescription( creationBean.getProjectDescription());
-		descriptor.setName( creationBean.getProjectName());
-		descriptor.setQualifier( creationBean.getProjectVersion());
-		descriptor.setNamespace( creationBean.getProjectNamespace());
-		descriptor.setDslId( ParsingConstants.DSL_VERSION );
-		descriptor.setGraphEntryPoint( GRAPH_EP );
-		descriptor.setInstanceEntryPoint( INSTANCES_EP );
+		InputStream in = ProjectUtils.class.getResourceAsStream( "/application-skeleton.props" );
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		Utils.copyStream( in, out );
+		String tpl = out.toString( "UTF-8" )
+				.replace( TPL_NAME, creationBean.getProjectName())
+				.replace( TPL_NAMESPACE, creationBean.getProjectNamespace())
+				.replace( TPL_VERSION, creationBean.getProjectVersion())
+				.replace( TPL_DESCRIPTION, creationBean.getProjectDescription());
 
-		completeProjectCreation( targetDirectory, descriptor );
+		// Create the rest of the project
+		completeProjectCreation( targetDirectory, tpl );
 	}
 
 
@@ -147,41 +147,42 @@ public final class ProjectUtils {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		Utils.copyStream( in, out );
 		String tpl = out.toString( "UTF-8" )
-				.replace( TPL_POM_NAME, creationBean.getProjectName())
-				.replace( TPL_POM_GROUP, creationBean.getGroupId())
+				.replace( TPL_NAME, creationBean.getProjectName())
+				.replace( TPL_POM_GROUP, creationBean.getProjectNamespace())
 				.replace( TPL_POM_PLUGIN_VERSION, creationBean.getPluginVersion())
-				.replace( TPL_POM_VERSION, creationBean.getProjectVersion())
-				.replace( TPL_POM_ARTIFACT, creationBean.getProjectName())
-				.replace( TPL_POM_DESCRIPTION, creationBean.getProjectDescription());
+				.replace( TPL_VERSION, creationBean.getProjectVersion())
+				.replace( TPL_POM_ARTIFACT, creationBean.getArtifactId())
+				.replace( TPL_DESCRIPTION, creationBean.getProjectDescription());
 
 		File pomFile = new File( targetDirectory, "pom.xml" );
 		Utils.copyStream( new ByteArrayInputStream( tpl.getBytes( "UTF-8" )), pomFile );
 
 		// Create the descriptor
-		ApplicationDescriptor descriptor = new ApplicationDescriptor();
-		descriptor.setDescription( "${project.description}" );
-		descriptor.setName( "${project.artifact.artifactId}" );
-		descriptor.setQualifier( "${project.version}--${timestamp}" );
-		descriptor.setDslId( ParsingConstants.DSL_VERSION );
-		descriptor.setNamespace( "${project.artifact.groupId}" );
-		descriptor.setGraphEntryPoint( GRAPH_EP );
-		descriptor.setInstanceEntryPoint( INSTANCES_EP );
+		in = ProjectUtils.class.getResourceAsStream( "/application-skeleton.props" );
+		out = new ByteArrayOutputStream();
+		Utils.copyStream( in, out );
+		tpl = out.toString( "UTF-8" )
+				.replace( TPL_NAME, creationBean.getProjectName())
+				.replace( TPL_NAMESPACE, "${project.artifact.groupId}" )
+				.replace( TPL_VERSION, "${project.version}--${timestamp}" )
+				.replace( TPL_DESCRIPTION, "${project.description}" );
 
-		completeProjectCreation( rootDir, descriptor );
+		// Create the rest of the project
+		completeProjectCreation( rootDir, tpl );
 	}
 
 
 	/**
 	 * Completes the creation of a Roboconf project.
 	 * @param targetDirectory the directory into which the Roboconf files must be copied
-	 * @param descriptor the application descriptor
+	 * @param descriptorContent the descriptor's content
 	 * @throws IOException if something went wrong
 	 */
-	private static void completeProjectCreation( File targetDirectory, ApplicationDescriptor descriptor ) throws IOException {
+	private static void completeProjectCreation( File targetDirectory, String descriptorContent ) throws IOException {
 
 		// Write the descriptor
 		File f = new File( targetDirectory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
-		ApplicationDescriptor.save( f, descriptor );
+		Utils.writeStringInto( descriptorContent, f );
 
 		// Create a sample graph file
 		f = new File( targetDirectory, Constants.PROJECT_DIR_GRAPH + "/" + GRAPH_EP );
@@ -200,7 +201,7 @@ public final class ProjectUtils {
 	 */
 	public static class CreationBean {
 		private String projectName, projectDescription, projectVersion, projectNamespace;
-		private String groupId, pluginVersion;
+		private String artifactId, pluginVersion;
 		private String customPomLocation;
 		private boolean mavenProject = true;
 
@@ -209,9 +210,6 @@ public final class ProjectUtils {
 			return getNonNullString( this.projectName );
 		}
 
-		/**
-		 * @param projectName the project name (will be used as the Maven artifact ID too)
-		 */
 		public CreationBean projectName( String projectName ) {
 			this.projectName = projectName;
 			return this;
@@ -221,9 +219,6 @@ public final class ProjectUtils {
 			return getNonNullString( this.projectDescription );
 		}
 
-		/**
-		 * @param projectDescription the project description
-		 */
 		public CreationBean projectDescription( String projectDescription ) {
 			this.projectDescription = projectDescription;
 			return this;
@@ -256,12 +251,12 @@ public final class ProjectUtils {
 			return this;
 		}
 
-		public String getGroupId() {
-			return getNonNullString( this.groupId );
+		public String getArtifactId() {
+			return getNonNullString( this.artifactId );
 		}
 
-		public CreationBean groupId( String groupId ) {
-			this.groupId = groupId;
+		public CreationBean artifactId( String artifactId ) {
+			this.artifactId = artifactId;
 			return this;
 		}
 

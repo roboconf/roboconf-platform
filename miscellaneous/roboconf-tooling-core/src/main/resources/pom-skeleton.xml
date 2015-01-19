@@ -31,7 +31,6 @@
 				<artifactId>roboconf-maven-plugin</artifactId>
 				<version>${PLUGIN_VERSION}</version>
 				<extensions>true</extensions>
-				<configuration></configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -10,11 +10,11 @@
 	</prerequisites>
 	
 	<groupId>com.linagora</groupId>
-	<artifactId>my-project</artifactId>
+	<artifactId>roboconf-sample</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>roboconf-app</packaging>
 	
-	<name>my-project</name>
+	<name>my project</name>
 	<description>some desc</description>
 	
 	<properties>
