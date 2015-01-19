@@ -58,7 +58,7 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
 		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );
-		i1.setStatus( InstanceStatus.STARTING );
+		i1.setStatus( InstanceStatus.UNRESOLVED );
 
 		Instance i2 = new Instance( "inst 2" ).component( clusterNodeComponent );
 		i2.overriddenExports.put( "cluster.ip", "192.168.1.28" );
@@ -76,13 +76,13 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 		};
 
 		// The cluster node does not know about another node
-		Assert.assertEquals( InstanceStatus.STARTING, i1.getStatus());
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, i1.getStatus());
 		lfm.updateStateFromImports( i1, plugin, null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
 
 		// The node is now aware of another node
 		ImportHelpers.addImport( i1, "cluster", new Import( i2 ));
-		i1.setStatus( InstanceStatus.STARTING );
+		i1.setStatus( InstanceStatus.UNRESOLVED );
 		lfm.updateStateFromImports( i1, plugin, null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, i1.getStatus());
 		lfm.updateStateFromImports( i1, plugin, null, InstanceStatus.DEPLOYED_STARTED );
@@ -115,7 +115,7 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
 		appServer.overriddenExports.put( "app-server.ip", "192.168.1.15" );
-		appServer.setStatus( InstanceStatus.STARTING );
+		appServer.setStatus( InstanceStatus.UNRESOLVED );
 
 		Instance database = new Instance( "database" ).component( dbComponent );
 		database.overriddenExports.put( "database.ip", "192.168.1.28" );
@@ -133,13 +133,13 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 		};
 
 		// The application server does not know about the database
-		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, appServer.getStatus());
 		lfm.updateStateFromImports( appServer, plugin, null, InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, appServer.getStatus());
 
 		// The application server is now aware of the database
 		ImportHelpers.addImport( appServer, "database", new Import( database ));
-		appServer.setStatus( InstanceStatus.STARTING );
+		appServer.setStatus( InstanceStatus.UNRESOLVED );
 		lfm.updateStateFromImports( appServer, plugin, null, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, appServer.getStatus());
 		lfm.updateStateFromImports( appServer, plugin, null, InstanceStatus.DEPLOYED_STARTED );
@@ -147,6 +147,6 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		appServer.getImports().clear();
 		lfm.updateStateFromImports( appServer, plugin, null, InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( InstanceStatus.STARTING, appServer.getStatus());
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, appServer.getStatus());
 	}
 }

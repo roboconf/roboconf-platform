@@ -63,7 +63,7 @@ public final class UserDataUtils {
 	/**
 	 * Configures the agent from a IaaS registry.
 	 * @param logger a logger
-	 * @return the agent's data
+	 * @return the agent's data, or null if they could not be parsed
 	 */
 	public static AgentProperties findParametersForAmazonOrOpenStack( Logger logger ) {
 
@@ -86,12 +86,13 @@ public final class UserDataUtils {
 			Utils.closeQuietly( in );
 		}
 
-		// Parse them
-		AgentProperties result = AgentProperties.readIaasProperties( userData, logger );
-
-		// We need to ask our IP address because we may have several network interfaces.
+		AgentProperties result = null;
 		in = null;
 		try {
+			// Parse the user data
+			result = AgentProperties.readIaasProperties( userData, logger );
+
+			// We need to ask our IP address because we may have several network interfaces.
 			URL userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/public-ipv4" );
 			in = userDataUrl.openStream();
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -129,7 +130,7 @@ public final class UserDataUtils {
 	/**
 	 * Configures the agent from Azure.
 	 * @param logger a logger
-	 * @return the agent's data
+	 * @return the agent's data, or null if they could not be parsed
 	 */
 	public static AgentProperties findParametersForAzure( Logger logger ) {
 
@@ -152,12 +153,11 @@ public final class UserDataUtils {
 			Utils.logException( logger, e );
 		}
 
-		// Parse them
-		AgentProperties result = AgentProperties.readIaasProperties( userData, logger );
-
 		// Get the public IP Address from /var/lib/waagent/SharedConfig.xml
+		AgentProperties result = null;
 		String publicIPAddress;
 		try {
+			result = AgentProperties.readIaasProperties( userData, logger );
 			publicIPAddress = getSpecificAttributeOfTagInXMLFile( "/var/lib/waagent/SharedConfig.xml", "Endpoint", "loadBalancedPublicAddress" );
 			result.setIpAddress( publicIPAddress );
 
@@ -170,7 +170,7 @@ public final class UserDataUtils {
 			Utils.logException( logger, e );
 
 		} catch( IOException e ) {
-			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
+			logger.severe( "The agent could not retrieve its configuration. " + e.getMessage());
 			Utils.logException( logger, e );
 		}
 
@@ -179,7 +179,7 @@ public final class UserDataUtils {
 
 
 	// FIXME: there must be a shorter way with XPath...
-	private static String getValueOfTagInXMLFile(String filePath, String tagName)
+	private static String getValueOfTagInXMLFile( String filePath, String tagName )
 	throws ParserConfigurationException, SAXException, IOException {
 
 		File fXmlFile = new File(filePath);

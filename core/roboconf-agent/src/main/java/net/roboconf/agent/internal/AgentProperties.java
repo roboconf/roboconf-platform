@@ -164,18 +164,13 @@ public class AgentProperties {
 	 * @param rawProperties a non-null string
 	 * @param logger a logger (not null)
 	 * @return a non-null bean
+	 * @throws IOException
 	 */
-	public static AgentProperties readIaasProperties( String rawProperties, Logger logger ) {
+	public static AgentProperties readIaasProperties( String rawProperties, Logger logger ) throws IOException {
 
 		Properties props = new Properties();
-		try {
-			if( rawProperties != null )
-				props = DataHelpers.readUserData( rawProperties );
-
-		} catch( IOException e ) {
-			logger.severe( "The agent data could not be read. " + e.getMessage());
-			Utils.logException( logger, e );
-		}
+		if( rawProperties != null )
+			props = DataHelpers.readUserData( rawProperties );
 
 		return readIaasProperties( props );
 	}

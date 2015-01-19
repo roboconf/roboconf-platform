@@ -25,53 +25,39 @@
 
 package net.roboconf.agent.internal.lifecycle;
 
-import junit.framework.Assert;
+import java.io.IOException;
+import java.util.Map;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
-
-import org.junit.Test;
+import net.roboconf.plugin.api.PluginException;
+import net.roboconf.plugin.api.PluginInterface;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AbstractLifeCycleManager_BasicTest {
+class Unresolved extends AbstractLifeCycleManager {
 
-	@Test
-	public void testFactory() {
+	/**
+	 * Constructor.
+	 * @param appName
+	 * @param messagingClient
+	 */
+	public Unresolved( String appName, IAgentClient messagingClient ) {
+		super( appName, messagingClient );
+	}
 
-		IAgentClient messagingClient = new TestClientAgent();
-		String appName = "my app";
 
-		Instance instance = new Instance( "inst" );
-		Assert.assertEquals(
-				NotDeployed.class,
-				AbstractLifeCycleManager.build( instance, appName, messagingClient ).getClass());
+	@Override
+	public void changeInstanceState(
+			Instance instance,
+			PluginInterface plugin,
+			InstanceStatus newStatus,
+			Map<String,byte[]> fileNameToFileContent )
+	throws IOException, PluginException {
 
-		instance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals(
-				DeployedStarted.class,
-				AbstractLifeCycleManager.build( instance, appName, messagingClient ).getClass());
-
-		instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
-		Assert.assertEquals(
-				DeployedStopped.class,
-				AbstractLifeCycleManager.build( instance, appName, messagingClient ).getClass());
-
-		instance.setStatus( InstanceStatus.UNRESOLVED );
-		Assert.assertEquals(
-				Unresolved.class,
-				AbstractLifeCycleManager.build( instance, appName, messagingClient ).getClass());
-
-		for( InstanceStatus status : InstanceStatus.values()) {
-			if( status.isStable())
-				continue;
-
-			instance.setStatus( status );
-			Assert.assertEquals(
-					TransitiveStates.class,
-					AbstractLifeCycleManager.build( instance, appName, messagingClient ).getClass());
-		}
+		if( newStatus == InstanceStatus.NOT_DEPLOYED )
+			undeploy( instance, plugin );
 	}
 }

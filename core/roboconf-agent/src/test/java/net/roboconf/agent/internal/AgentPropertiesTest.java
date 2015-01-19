@@ -28,7 +28,6 @@ package net.roboconf.agent.internal;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
-import net.roboconf.agent.internal.AgentProperties;
 import net.roboconf.core.agents.DataHelpers;
 
 import org.junit.Test;
@@ -39,7 +38,7 @@ import org.junit.Test;
 public class AgentPropertiesTest {
 
 	@Test
-	public void testReadIaasProperties_null() {
+	public void testReadIaasProperties_null() throws Exception {
 
 		AgentProperties ad = AgentProperties.readIaasProperties( null, Logger.getAnonymousLogger());
 		Assert.assertNull( ad.getApplicationName());

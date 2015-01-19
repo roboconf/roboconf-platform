@@ -149,13 +149,13 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getStatus());
 
-		// Kill the VM of MySQL. The App should be "starting" because one of its dependencies is missing.
+		// Kill the VM of MySQL. The App should be "unresolved" because one of its dependencies is missing.
 		this.manager.changeInstanceState( ma, mysql.getParent(), InstanceStatus.NOT_DEPLOYED );
 		Thread.sleep( 300 );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getParent().getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
-		Assert.assertEquals( InstanceStatus.STARTING, app.getStatus());
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getStatus());
 
 		// Undeploy them all
 		this.manager.undeployAll( ma, null );

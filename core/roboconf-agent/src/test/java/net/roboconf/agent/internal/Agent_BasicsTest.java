@@ -26,6 +26,7 @@
 package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
+import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.MessagingConstants;
@@ -163,6 +164,17 @@ public class Agent_BasicsTest {
 	public void testNeedModel_modelReceived() {
 		((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).rootInstance = new Instance( "root" );
 		Assert.assertFalse( this.agent.needsModel());
+	}
+
+
+	@Test
+	public void testMiscPlugins() {
+
+		Agent agent = new Agent();
+		agent.pluginAppears( null );
+		agent.pluginAppears( new PluginMock());
+		agent.pluginAppears( new PluginMock());
+		agent.listPlugins();
 	}
 
 
