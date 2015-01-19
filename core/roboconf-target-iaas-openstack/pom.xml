@@ -40,7 +40,7 @@
 	
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-target-iaas-openstack</artifactId>
-	<name>Roboconf :: Target :: OpenStack IaaS</name>
+	<name>Roboconf :: Target :: Openstack IaaS</name>
 	<packaging>bundle</packaging>
 	
 	<dependencies>

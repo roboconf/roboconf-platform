@@ -41,7 +41,7 @@ import net.roboconf.dm.management.ManagedApplication;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ConfigurationUtils {
+public final class ConfigurationUtils {
 
 	public static final String APPLICATIONS = "applications";
 	public static final String INSTANCES = "instances";
