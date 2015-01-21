@@ -141,7 +141,7 @@ public abstract class AbstractLifeCycleManager {
 		// Maybe we have something to start
 		if( haveAllImports ) {
 			if( impactedInstance.getStatus() == InstanceStatus.UNRESOLVED
-					|| impactedInstance.data.get( FORCE ) != null ) {
+					|| impactedInstance.data.remove( FORCE ) != null ) {
 
 				InstanceStatus oldState = impactedInstance.getStatus();
 				impactedInstance.setStatus( InstanceStatus.STARTING );
