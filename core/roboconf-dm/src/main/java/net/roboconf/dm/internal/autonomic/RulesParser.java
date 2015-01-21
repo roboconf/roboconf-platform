@@ -43,7 +43,7 @@ import net.roboconf.dm.management.ManagedApplication;
  * A parser for rules.
  * @author Pierre-Yves Gibello - Linagora
  */
-public class RulesParser {
+public final class RulesParser {
 
 	private static final String COMMENT_DELIMITER = "#";
 	static final String RULE_BEGINNING = "[reaction";

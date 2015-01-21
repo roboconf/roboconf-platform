@@ -96,7 +96,7 @@ public class TestClientDmTest {
 	public void forCodeCoverageOnly() throws Exception {
 
 		TestClientDm client = new TestClientDm();
-		client.propagateAgentTermination();
+		client.propagateAgentTermination( new Application(), new Instance());
 		client.deleteMessagingServerArtifacts( new Application( "whatever" ));
 
 		client.listenToAgentMessages( new Application( "app" ), ListenerCommand.START );

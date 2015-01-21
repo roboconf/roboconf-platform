@@ -147,7 +147,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getTomcat().getStatus());
 		// The WAR needs a MySQL
-		Assert.assertEquals( InstanceStatus.STARTING, app.getWar().getStatus());
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getWar().getStatus());
 
 		// What happens now if we stop Tomcat? The WAR should be stopped too.
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STOPPED ));
@@ -164,6 +164,18 @@ public class AgentMessageProcessor_StateChangeTest {
 		// Can we undeploy a root instance? No, we should not.
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcatVm(), InstanceStatus.NOT_DEPLOYED ));
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getTomcatVm().getStatus());
+
+		// Undeploy an instance in the "unresolved" state
+		app.getTomcat().setStatus( InstanceStatus.UNRESOLVED );
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getTomcat().getStatus());
+
+		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STARTED ));
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getTomcat().getStatus());
+
+		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.NOT_DEPLOYED ));
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 	}
 
 

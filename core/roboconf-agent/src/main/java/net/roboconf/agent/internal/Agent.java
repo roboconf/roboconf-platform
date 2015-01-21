@@ -205,12 +205,10 @@ public class Agent implements AgentMessagingInterface {
 				installerName = ComponentHelpers.findComponentInstaller( instance.getComponent());
 
 			// Run through available plug-ins
-			if( this.plugins != null ) {
-				for( PluginInterface pi : this.plugins ) {
-					if( pi.getPluginName().equalsIgnoreCase( installerName )) {
-						result = pi;
-						break;
-					}
+			for( PluginInterface pi : this.plugins ) {
+				if( pi.getPluginName().equalsIgnoreCase( installerName )) {
+					result = pi;
+					break;
 				}
 			}
 
@@ -335,13 +333,11 @@ public class Agent implements AgentMessagingInterface {
 		}
 
 		// Update the messaging connection
-		if( this.messagingClient != null ) {
-			this.messagingClient.setApplicationName( this.applicationName );
-			this.messagingClient.setRootInstanceName( this.rootInstanceName );
-			this.messagingClient.setIpAddress( this.ipAddress );
-			this.messagingClient.setNeedsModel( needsModel());
-			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
-		}
+		this.messagingClient.setApplicationName( this.applicationName );
+		this.messagingClient.setRootInstanceName( this.rootInstanceName );
+		this.messagingClient.setIpAddress( this.ipAddress );
+		this.messagingClient.setNeedsModel( needsModel());
+		this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
 
 		this.logger.info( "The agent was successfully (re)configured." );
 	}

@@ -67,6 +67,7 @@ public class CheckerMessagesTask extends TimerTask {
 	@Override
 	public void run() {
 
+		this.logger.finer( "The messager checker task runs." );
 		for( ManagedApplication ma : this.manager.getAppNameToManagedApplication().values()) {
 			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 				if( rootInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED )

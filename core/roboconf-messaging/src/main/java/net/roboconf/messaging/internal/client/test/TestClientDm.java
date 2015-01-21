@@ -100,7 +100,8 @@ public class TestClientDm implements IDmClient {
 	}
 
 	@Override
-	public void propagateAgentTermination() {
+	public void propagateAgentTermination( Application application, Instance rootInstance )
+	throws IOException {
 		// nothing
 	}
 

@@ -82,7 +82,9 @@ public class AgentUtilsTest {
 
 		// Save our resources
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
+		Utils.deleteFilesRecursively( dir );
 		Assert.assertFalse( dir.exists());
+
 		AgentUtils.copyInstanceResources( app.getTomcat(), fileNameToFileContent );
 		Assert.assertTrue( dir.exists());
 		Assert.assertTrue( new File( dir, "f1.txt" ).exists());
@@ -123,6 +125,8 @@ public class AgentUtilsTest {
 		// Prepare our resources
 		TestApplication app = new TestApplication();
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
+		Utils.deleteFilesRecursively( dir );
+		Assert.assertFalse( dir.exists());
 		Assert.assertTrue( dir.createNewFile());
 		Assert.assertTrue( dir.exists());
 
@@ -146,6 +150,8 @@ public class AgentUtilsTest {
 		fileNameToFileContent.put( "dir1/dir2/f3.txt", "I am file 3".getBytes( "UTF-8" ));
 
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
+		Utils.deleteFilesRecursively( dir );
+		Assert.assertFalse( dir.exists());
 		Assert.assertTrue( dir.mkdirs());
 		Assert.assertTrue( new File( dir, "dir1" ).createNewFile());
 

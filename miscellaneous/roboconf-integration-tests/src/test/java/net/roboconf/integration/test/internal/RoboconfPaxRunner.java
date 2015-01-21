@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,48 +23,42 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.ec2.internal;
+package net.roboconf.integration.test.internal;
+
+import org.junit.runner.Description;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.model.InitializationError;
+import org.ops4j.pax.exam.junit.PaxExam;
 
 /**
- * The constants defining properties for the EC2 IaaS.
  * @author Vincent Zurczak - Linagora
  */
-public interface Ec2Constants {
+public class RoboconfPaxRunner extends PaxExam {
+
+	private final Class<?> testClass;
+
 
 	/**
-	 * Where to access EC2 API to manipulate its resources.
+	 * Constructor.
+	 * @param klass
+	 * @throws InitializationError
 	 */
-	String EC2_ENDPOINT = "ec2.endpoint";
+	public RoboconfPaxRunner( Class<?> klass ) throws InitializationError {
+		super( klass );
+		this.testClass = klass;
+	}
 
-	/**
-	 * The access key for EC2 API.
-	 */
-	String EC2_ACCESS_KEY = "ec2.access.key";
 
-	/**
-	 * The secret key for EC2 API.
-	 */
-	String EC2_SECRET_KEY = "ec2.secret.key";
+	@Override
+	public void run( RunNotifier notifier ) {
 
-	/**
-	 * The ID of the image to instantiate for new VMs.
-	 */
-	String AMI_VM_NODE = "ec2.ami";
+		if( ! IntegrationTestsUtils.rabbitMqIsRunning()) {
+			Description description = Description.createSuiteDescription( this.testClass );
+			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running." )));
 
-	/**
-	 * The kind of instance to create (<i>flavour</i>).
-	 */
-	String VM_INSTANCE_TYPE = "ec2.instance.type";
-
-	/**
-	 * The SSH key name.
-	 */
-	String SSH_KEY_NAME = "ec2.ssh.key";
-
-	/**
-	 * The name of the security group for new VMs.
-	 */
-	String SECURITY_GROUP_NAME = "ec2.security.group";
-
-	String VOLUME_SNAPSHOT_ID = "ec2.volume.snapshot.id";
+		} else {
+			super.run( notifier );
+		}
+	}
 }

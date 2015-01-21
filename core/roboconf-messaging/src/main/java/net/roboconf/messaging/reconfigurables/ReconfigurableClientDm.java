@@ -131,7 +131,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 
 	@Override
-	public void propagateAgentTermination() {
-		getMessagingClient().propagateAgentTermination();
+	public void propagateAgentTermination( Application application, Instance rootInstance ) throws IOException {
+		getMessagingClient().propagateAgentTermination( application, rootInstance );
 	}
 }

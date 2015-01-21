@@ -1,0 +1,17 @@
+# A VM with MySQL only
+instance of VM {
+	name: MySQL VM;
+	
+	instance of MySQL {
+		name: MySQL;
+	}
+}
+
+# A VM with the application
+instance of VM {
+	name: App VM;
+	
+	instance of App {
+		name: App;
+	}
+}

@@ -26,6 +26,7 @@
 package net.roboconf.agent.internal.lifecycle;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,9 +46,17 @@ import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
+ * The super class which deal with the life cycle of instances.
+ * <p>
+ * This class must make sure no instance remains in a transitive state
+ * (starting, deploying, etc).
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 public abstract class AbstractLifeCycleManager {
+
+	private static final String FORCE = "force";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String appName;
@@ -87,6 +96,10 @@ public abstract class AbstractLifeCycleManager {
 			result = new NotDeployed( appName, messagingClient );
 			break;
 
+		case UNRESOLVED:
+			result = new Unresolved( appName, messagingClient );
+			break;
+
 		default:
 			result = new TransitiveStates( appName, messagingClient );
 			break;
@@ -115,7 +128,7 @@ public abstract class AbstractLifeCycleManager {
 	 * Updates the status of an instance based on the imports.
 	 * @param impactedInstance the instance whose imports may have changed
 	 * @param plugin the plug-in to use to apply a concrete modification
-	 * @param statusChanged The changed status of the instance that changed (eg. that provided new imports)
+	 * @param statusChanged The changed status of the instance that changed (e.g. that provided new imports)
 	 * @param importChanged The individual imports that changed
 	 */
 	public void updateStateFromImports( Instance impactedInstance, PluginInterface plugin, Import importChanged, InstanceStatus statusChanged )
@@ -127,14 +140,25 @@ public abstract class AbstractLifeCycleManager {
 		// Update the life cycle of this instance if necessary
 		// Maybe we have something to start
 		if( haveAllImports ) {
-			if( impactedInstance.getStatus() == InstanceStatus.STARTING ) {
+			if( impactedInstance.getStatus() == InstanceStatus.UNRESOLVED
+					|| impactedInstance.data.get( FORCE ) != null ) {
 
-				// Start this instance
-				plugin.start( impactedInstance );
-				impactedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, impactedInstance ));
-				this.messagingClient.publishExports( impactedInstance );
-				this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.START, impactedInstance );
+				InstanceStatus oldState = impactedInstance.getStatus();
+				impactedInstance.setStatus( InstanceStatus.STARTING );
+				try {
+					this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, impactedInstance ));
+					plugin.start( impactedInstance );
+					impactedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+					this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, impactedInstance ));
+					this.messagingClient.publishExports( impactedInstance );
+					this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.START, impactedInstance );
+
+				} catch( Exception e ) {
+					this.logger.severe( "An error occured while starting " + InstanceHelpers.computeInstancePath( impactedInstance ));
+					Utils.logException( this.logger, e );
+					impactedInstance.setStatus( oldState );
+				}
 
 			} else if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 				plugin.update( impactedInstance, importChanged, statusChanged );
@@ -180,16 +204,16 @@ public abstract class AbstractLifeCycleManager {
 
 			// User reporting => deploying...
 			instance.setStatus( InstanceStatus.DEPLOYING );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
-
-			// Clean up the potential remains of a previous installation
-			AgentUtils.deleteInstanceResources( instance );
-
-			// Copy the resources
-			AgentUtils.copyInstanceResources( instance, fileNameToFileContent );
-
-			// Invoke the plug-in
 			try {
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
+
+				// Clean up the potential remains of a previous installation
+				AgentUtils.deleteInstanceResources( instance );
+
+				// Copy the resources
+				AgentUtils.copyInstanceResources( instance, fileNameToFileContent );
+
+				// Invoke the plug-in
 				plugin.deploy( instance );
 				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
@@ -216,8 +240,9 @@ public abstract class AbstractLifeCycleManager {
 
 		// Preliminary check
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED ) {
-			this.logger.fine( instancePath + " cannot be undeployed. Prerequisite status: DEPLOYED_STOPPED (but was " + instance.getStatus() + ")." );
+		if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED
+				&& instance.getStatus() != InstanceStatus.UNRESOLVED ) {
+			this.logger.fine( instancePath + " cannot be undeployed. Prerequisite status: DEPLOYED_STOPPED or UNRESOLVED (but was " + instance.getStatus() + ")." );
 			return;
 		}
 
@@ -227,39 +252,46 @@ public abstract class AbstractLifeCycleManager {
 		List<Instance> instancesToUndeploy = InstanceHelpers.buildHierarchicalList( instance );
 		Collections.reverse( instancesToUndeploy );
 
-		// Update the statuses if necessary
-		for( Instance i : instancesToUndeploy ) {
-			if( i.getStatus() == InstanceStatus.NOT_DEPLOYED )
-				continue;
-
-			i.setStatus( InstanceStatus.UNDEPLOYING );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
-			this.messagingClient.unpublishExports( i );
-		}
-
-		// Hypothesis: undeploying an instance undeploys its children too.
 		InstanceStatus newStatus = InstanceStatus.NOT_DEPLOYED;
 		try {
-			plugin.undeploy( instance );
+			// Update the statuses if necessary
+			for( Instance i : instancesToUndeploy ) {
+				if( i.getStatus() == InstanceStatus.NOT_DEPLOYED )
+					continue;
 
-			// Delete files for undeployed instances
-			for( Instance i : instancesToUndeploy )
-				AgentUtils.deleteInstanceResources( i );
+				i.setStatus( InstanceStatus.UNDEPLOYING );
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+				this.messagingClient.unpublishExports( i );
+			}
 
-		} catch( PluginException e ) {
-			this.logger.severe( "An error occured while undeploying " + InstanceHelpers.computeInstancePath( instance ));
-			Utils.logException( this.logger, e );
+			// Hypothesis: undeploying an instance undeploys its children too.
+			try {
+				plugin.undeploy( instance );
+
+				// Delete files for undeployed instances
+				for( Instance i : instancesToUndeploy )
+					AgentUtils.deleteInstanceResources( i );
+
+			} catch( PluginException e ) {
+				this.logger.severe( "An error occured while undeploying " + InstanceHelpers.computeInstancePath( instance ));
+				Utils.logException( this.logger, e );
+				newStatus = InstanceStatus.DEPLOYED_STOPPED;
+			}
+
+		} catch( Exception e ) {
 			newStatus = InstanceStatus.DEPLOYED_STOPPED;
-		}
 
-		// Update the status of all the instances
-		for( Instance i : instancesToUndeploy ) {
-			// Prevent old imports from being resent later on
-			i.getImports().clear();
+		} finally {
+			// Update the status of all the instances
+			for( Instance i : instancesToUndeploy ) {
+				// Prevent old imports from being resent later on
+				i.getImports().clear();
+				i.setStatus( newStatus );
+			}
 
 			// Propagate the changes
-			i.setStatus( newStatus );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+			for( Instance i : instancesToUndeploy )
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 		}
 	}
 
@@ -273,7 +305,6 @@ public abstract class AbstractLifeCycleManager {
 	void start( Instance instance, PluginInterface plugin )
 	throws IOException {
 
-		// Preliminary check
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
 		if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED ) {
 			this.logger.fine( instancePath + " cannot be started. Prerequisite status: DEPLOYED_STOPPED (but was " + instance.getStatus() + ")." );
@@ -283,24 +314,27 @@ public abstract class AbstractLifeCycleManager {
 			this.logger.fine( instancePath + " cannot be started because its parent is not started. Parent status: " + instance.getParent().getStatus() + "." );
 
 		} else {
-			// Perform the "start" operation
 			try {
-				instance.setStatus( InstanceStatus.STARTING );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 				if( ImportHelpers.hasAllRequiredImports( instance, this.logger )) {
-					updateStateFromImports( instance, plugin, null, InstanceStatus.STARTING );
+					instance.data.put( FORCE, "whatever" );
+					updateStateFromImports( instance, plugin, null, null );
 
 				} else {
 					this.logger.fine(
 							"Instance " + InstanceHelpers.computeInstancePath( instance )
 							+ " cannot be started, dependencies are missing. Requesting exports from other agents." );
+
+					instance.setStatus( InstanceStatus.UNRESOLVED );
+					this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 					this.messagingClient.requestExportsFromOtherAgents( instance );
 				}
 
 			} catch( PluginException e ) {
-				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
 				this.logger.severe( "An error occured while starting " + InstanceHelpers.computeInstancePath( instance ));
 				Utils.logException( this.logger, e );
+
+				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, instance ));
 			}
 		}
 	}
@@ -314,15 +348,11 @@ public abstract class AbstractLifeCycleManager {
 	 */
 	void stop( Instance instance, PluginInterface plugin ) throws IOException {
 
-		// Preliminary check
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		if( instance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+		if( instance.getStatus() != InstanceStatus.DEPLOYED_STARTED )
 			this.logger.fine( instancePath + " cannot be stopped. Prerequisite status: DEPLOYED_STARTED (but was " + instance.getStatus() + ")." );
-			return;
-		}
-
-		// Perform the "stop" operation
-		stopInstance( instance, plugin, false );
+		else
+			stopInstance( instance, plugin, false );
 	}
 
 
@@ -348,43 +378,47 @@ public abstract class AbstractLifeCycleManager {
 		List<Instance> instancesToStop = InstanceHelpers.buildHierarchicalList( instance );
 		Collections.reverse( instancesToStop );
 
-		// Update the statuses if necessary
-		for( Instance i : instancesToStop ) {
-			if( i.getStatus() != InstanceStatus.DEPLOYED_STARTED
-					&& i.getStatus() != InstanceStatus.STARTING )
-				continue;
+		InstanceStatus newStatus = isDueToImportsChange ? InstanceStatus.UNRESOLVED : InstanceStatus.DEPLOYED_STOPPED;
+		try {
+			// Update the statuses if necessary
+			for( Instance i : instancesToStop ) {
+				if( i.getStatus() != InstanceStatus.DEPLOYED_STARTED )
+					continue;
 
-			if( i.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 				i.setStatus( InstanceStatus.STOPPING );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+				this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.STOP, i );
+				this.messagingClient.unpublishExports( i );
 			}
 
-			this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.STOP, i );
-			this.messagingClient.unpublishExports( i );
-		}
+			// Stop the initial instance.
+			// Even if the plugin invocation fails, we cannot consider these instances
+			// to be reliable anymore. So, we keep on as if the operation went well.
+			try {
+				plugin.stop( instance );
 
-		// Stop the initial instance.
-		// Even if the plugin invocation fails, we cannot consider these instances
-		// to be reliable anymore. So, we keep on as if the operation went well.
-		InstanceStatus newStatus = isDueToImportsChange ? InstanceStatus.STARTING : InstanceStatus.DEPLOYED_STOPPED;
-		try {
-			plugin.stop( instance );
+			} catch( PluginException e ) {
+				this.logger.severe( "An error occured while stopping " + InstanceHelpers.computeInstancePath( instance ));
+				Utils.logException( this.logger, e );
+			}
 
-		} catch( PluginException e ) {
-			this.logger.severe( "An error occured while stopping/updating " + InstanceHelpers.computeInstancePath( instance ));
-			Utils.logException( this.logger, e );
-		}
+		} finally {
+			// In the case where the instances were stopped because of a change in "imports",
+			// we remain in the starting phase, so that we can start automatically when the required
+			// imports arrive.
+			List<Instance> forNotifications = new ArrayList<Instance> ();
+			for( Instance i : instancesToStop ) {
+				if( i.getStatus() != InstanceStatus.STOPPING
+						&& i.getStatus() != InstanceStatus.UNRESOLVED )
+					continue;
 
-		// In the case where the instances were stopped because of a change in "imports",
-		// we remain in the starting phase, so that we can start automatically when the required
-		// imports arrive.
-		for( Instance i : instancesToStop ) {
-			if( i.getStatus() != InstanceStatus.STOPPING
-					&& i.getStatus() != InstanceStatus.STARTING )
-				continue;
+				i.setStatus( newStatus );
+				forNotifications.add( i );
+			}
 
-			i.setStatus( newStatus );
-			this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+			// Notify at the end
+			for( Instance i : forNotifications )
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
 		}
 	}
 }

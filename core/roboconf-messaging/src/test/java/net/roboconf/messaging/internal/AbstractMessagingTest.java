@@ -34,6 +34,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.client.IDmClient;
@@ -641,6 +642,111 @@ public abstract class AbstractMessagingTest {
 		Assert.assertNotSame( facet1, facet2 );
 		Assert.assertTrue( facet1.equals( "Component" ) || facet1.equals( "facet" ));
 		Assert.assertTrue( facet2.equals( "Component" ) || facet2.equals( "facet" ));
+	}
+
+
+	/**
+	 * Checks that agents termination results in messages to the right agents.
+	 * @throws Exception
+	 */
+	public void testPropagateAgentTermination() throws Exception {
+
+		// 3 agents (tomcat, mysql, apache) for application app1 and 1 agent (root) for app2.
+		// This last one should not receive anything!
+		Application app1 = new Application( "app1" );
+		Application app2 = new Application( "app2" );
+
+		Component tomcatComponent = new Component( "Tomcat" );
+		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );
+		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+		tomcatComponent.importedVariables.put( "MySQL.port", Boolean.FALSE );
+		tomcatComponent.importedVariables.put( "MySQL.ip", Boolean.FALSE );
+		Instance tomcat = new Instance( "tomcat" ).component( tomcatComponent );
+
+		Component mysqlComponent = new Component( "MySQL" );
+		mysqlComponent.exportedVariables.put( "MySQL.port", "3306" );
+		mysqlComponent.exportedVariables.put( "MySQL.ip", "192.168.1.15" );
+		Instance mysql = new Instance( "mysql" ).component( mysqlComponent );
+
+		Component apacheComponent = new Component( "Apache" );
+		apacheComponent.exportedVariables.put( "Apache.ip", "apache.roboconf.net" );
+		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
+		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
+		Instance apache = new Instance( "apache" ).component( apacheComponent );
+
+		// This one is a good candidate to receive something when others publish something.
+		// Except it is not in the same application.
+		List<Message> dmMessages = new ArrayList<Message> ();
+		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
+		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
+		dmClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		this.clients.add( dmClient );
+
+		Component otherComponent = new Component( "other" );
+		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
+		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
+		apacheComponent.importedVariables.put( "Mongo.ip", Boolean.FALSE );
+		mysqlComponent.exportedVariables.put( "MySQL.port", "3306" );
+		mysqlComponent.exportedVariables.put( "MySQL.ip", "192.168.1.15" );
+		Instance other = new Instance( "other" ).component( otherComponent );
+
+		// Initialize the messaging
+		List<Message> tomcatMessages = new ArrayList<Message> ();
+		ReconfigurableClientAgent tomcatClient = new ReconfigurableClientAgent();
+		tomcatClient.associateMessageProcessor( createAgentProcessor( tomcatMessages ));
+		tomcatClient.setApplicationName( app1.getName());
+		tomcatClient.setRootInstanceName( tomcat.getName());
+		tomcatClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		tomcatClient.listenToTheDm( ListenerCommand.START );
+		tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, tomcat );
+		this.clients.add( tomcatClient );
+
+		List<Message> apacheMessages = new ArrayList<Message> ();
+		ReconfigurableClientAgent apacheClient = new ReconfigurableClientAgent();
+		apacheClient.associateMessageProcessor( createAgentProcessor( apacheMessages ));
+		apacheClient.setApplicationName( app1.getName());
+		apacheClient.setRootInstanceName( apache.getName());
+		apacheClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		apacheClient.listenToTheDm( ListenerCommand.START );
+		apacheClient.listenToExportsFromOtherAgents( ListenerCommand.START, apache );
+		this.clients.add( apacheClient );
+
+		List<Message> mySqlMessages = new ArrayList<Message> ();
+		ReconfigurableClientAgent mySqlClient = new ReconfigurableClientAgent();
+		mySqlClient.associateMessageProcessor( createAgentProcessor( mySqlMessages ));
+		mySqlClient.setApplicationName( app1.getName());
+		mySqlClient.setRootInstanceName( mysql.getName());
+		mySqlClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		mySqlClient.listenToTheDm( ListenerCommand.START );
+		mySqlClient.listenToExportsFromOtherAgents( ListenerCommand.START, mysql );
+		this.clients.add( mySqlClient );
+
+		List<Message> otherMessages = new ArrayList<Message> ();
+		ReconfigurableClientAgent otherClient = new ReconfigurableClientAgent();
+		otherClient.associateMessageProcessor( createAgentProcessor( otherMessages ));
+		otherClient.setApplicationName( app2.getName());
+		otherClient.setRootInstanceName( other.getName());
+		otherClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		otherClient.listenToTheDm( ListenerCommand.START );
+		otherClient.listenToExportsFromOtherAgents( ListenerCommand.START, other );
+		this.clients.add( otherClient );
+
+		// Propagate the termination of MySQL should only notify the Tomcat agent.
+		// Terminate the other component should notify no other instance.
+		dmClient.propagateAgentTermination( app1, mysql );
+		dmClient.propagateAgentTermination( app2, other );
+
+		Thread.sleep( DELAY );
+
+		Assert.assertEquals( 0, apacheMessages.size());
+		Assert.assertEquals( 0, mySqlMessages.size());
+		Assert.assertEquals( 0, otherMessages.size());
+		Assert.assertEquals( 1, tomcatMessages.size());
+		Assert.assertEquals( MsgCmdRemoveImport.class, tomcatMessages.get( 0 ).getClass());
+
+		MsgCmdRemoveImport msg = (MsgCmdRemoveImport) tomcatMessages.get( 0 );
+		Assert.assertEquals( "MySQL", msg.getComponentOrFacetName());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( mysql ), msg.getRemovedInstancePath());
 	}
 
 
