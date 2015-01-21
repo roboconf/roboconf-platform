@@ -23,32 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.in_memory.internal;
+package net.roboconf.integration.test.internal;
 
-import junit.framework.Assert;
+import java.util.List;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.dm.management.ITargetResolver;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.target.api.TargetException;
-import net.roboconf.target.in_memory.InMemoryHandler;
-
-import org.junit.Test;
+import net.roboconf.target.api.TargetHandler;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryHandler_withoutIPojoTest {
+public class MyTargetResolver implements ITargetResolver {
 
-	@Test
-	public void checkBasics() throws Exception {
+	public final MyHandler handler;
 
-		InMemoryHandler target = new InMemoryHandler();
-		Assert.assertEquals( InMemoryHandler.TARGET_ID, target.getTargetId());
 
-		target.terminateMachine( null, "whatever" );
+	/**
+	 * Constructor.
+	 */
+	public MyTargetResolver() {
+		this.handler = new MyHandler();
 	}
 
-
-	@Test( expected = TargetException.class )
-	public void testCreateVm() throws Exception {
-
-		new InMemoryHandler().createOrConfigureMachine( null, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+	@Override
+	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+	throws TargetException {
+		return new Target( this.handler, null );
 	}
 }

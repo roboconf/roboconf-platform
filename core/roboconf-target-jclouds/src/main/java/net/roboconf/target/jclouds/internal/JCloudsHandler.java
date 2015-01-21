@@ -192,7 +192,7 @@ public class JCloudsHandler implements TargetHandler {
 
 
 	/**
-	 * Validates the target properties
+	 * Validates the target properties.
 	 * @param targetProperties the properties
 	 * @throws TargetException if an error occurred during the validation
 	 */

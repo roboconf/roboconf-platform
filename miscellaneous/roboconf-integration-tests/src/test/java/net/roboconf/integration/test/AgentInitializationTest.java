@@ -28,9 +28,6 @@ package net.roboconf.integration.test;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 
@@ -43,21 +40,22 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.integration.test.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.test.internal.IntegrationTestsUtils;
+import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.test.internal.MyHandler;
+import net.roboconf.integration.test.internal.MyTargetResolver;
+import net.roboconf.integration.test.internal.RoboconfPaxRunner;
 import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmTest;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
-import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
 
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
@@ -77,6 +75,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
  *
  * @author Vincent Zurczak - Linagora
  */
+@RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerClass.class )
 public class AgentInitializationTest extends DmTest {
 
@@ -138,7 +137,6 @@ public class AgentInitializationTest extends DmTest {
 
 	@Override
 	public void run() throws Exception {
-		Assume.assumeTrue( IntegrationTestsUtils.rabbitMqIsRunning());
 
 		// Update the manager
 		MyTargetResolver myResolver = new MyTargetResolver();
@@ -162,7 +160,7 @@ public class AgentInitializationTest extends DmTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
-		Thread.sleep( 1000 );
+		Thread.sleep( 800 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
 		// A new agent must have been created
@@ -170,78 +168,33 @@ public class AgentInitializationTest extends DmTest {
 		Agent agent = myResolver.handler.agentIdToAgent.values().iterator().next();
 		Thread.sleep( 1000 );
 		Assert.assertFalse( agent.needsModel());
+		Assert.assertNotNull( agent.getRootInstance());
+		Assert.assertEquals( "MySQL VM", agent.getRootInstanceName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( agent.getRootInstance()).size());
 
-		// Undeploy
+		// Try to instantiate another VM
+		Instance anotherRootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Tomcat VM 1" );
+		Assert.assertNotNull( anotherRootInstance );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, anotherRootInstance.getStatus());
+
+		this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 800 );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherRootInstance.getStatus());
+
+		Assert.assertEquals( 2, myResolver.handler.agentIdToAgent.size());
+		Agent anotherAgent = myResolver.handler.agentIdToAgent.get( "Tomcat VM 1 @ Legacy LAMP" );
+		Assert.assertNotNull( anotherAgent );
+
+		Thread.sleep( 1000 );
+		Assert.assertFalse( anotherAgent.needsModel());
+		Assert.assertNotNull( anotherAgent.getRootInstance());
+		Assert.assertEquals( "Tomcat VM 1", anotherAgent.getRootInstanceName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( anotherAgent.getRootInstance()).size());
+
+		// Undeploy them all
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
+		this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.NOT_DEPLOYED );
 		Thread.sleep( 300 );
 		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
-	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public static final class MyTargetResolver implements ITargetResolver {
-		final MyHandler handler;
-
-
-		public MyTargetResolver() {
-			this.handler = new MyHandler();
-		}
-
-		@Override
-		public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
-		throws TargetException {
-			return new Target( this.handler, null );
-		}
-	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public static class MyHandler implements TargetHandler {
-		final Map<String,Agent> agentIdToAgent = new ConcurrentHashMap<String,Agent> ();
-
-
-		@Override
-		public String getTargetId() {
-			return "for test";
-		}
-
-		@Override
-		public String createOrConfigureMachine(
-				Map<String,String> targetProperties,
-				String messagingIp,
-				String messagingUsername,
-				String messagingPassword,
-				String rootInstanceName,
-				String applicationName )
-		throws TargetException {
-
-			Agent agent = new Agent();
-			agent.setApplicationName( applicationName );
-			agent.setRootInstanceName( rootInstanceName );
-			agent.setTargetId( "in-memory" );
-			agent.setSimulatePlugins( true );
-			agent.setIpAddress( "127.0.0.1" );
-			agent.setMessageServerIp( messagingIp );
-			agent.setMessageServerUsername( messagingUsername );
-			agent.setMessageServerPassword( messagingPassword );
-			agent.start();
-
-			String key = rootInstanceName + " @ " + applicationName;
-			this.agentIdToAgent.put( key, agent );
-
-			return key;
-		}
-
-		@Override
-		public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
-
-			Agent agent = this.agentIdToAgent.remove( machineId );
-			if( agent != null )
-				agent.stop();
-		}
 	}
 }

@@ -159,10 +159,11 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 
 	/**
-	 * @return true if the internal client exists, false otherwise
+	 * @return true if the internal client exists and is connected, false otherwise
 	 */
 	public boolean hasValidClient() {
-		return this.messagingClient != null;
+		return this.messagingClient != null
+				&& this.messagingClient.isConnected();
 	}
 
 

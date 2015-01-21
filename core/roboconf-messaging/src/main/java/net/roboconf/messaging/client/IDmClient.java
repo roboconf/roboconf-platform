@@ -79,6 +79,15 @@ public interface IDmClient extends IClient {
 	 * to the other agents. Therefore, the DM has to do it. Since it has the application
 	 * model, it can do it.
 	 * </p>
+	 * <p>
+	 * The DM should notify all the potential agents that may be concerned. Roughly, it is
+	 * equivalent to unpublishing all the exports of all the instances that were available on
+	 * the terminated machine.
+	 * </p>
+	 *
+	 * @param application the application the agent is associated with
+	 * @param rootInstance the root instance associated with the agent
+	 * @throws IOException if something went wrong
 	 */
-	void propagateAgentTermination();
+	void propagateAgentTermination( Application application, Instance rootInstance ) throws IOException;
 }

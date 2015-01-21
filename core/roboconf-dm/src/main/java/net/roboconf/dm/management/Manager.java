@@ -150,7 +150,7 @@ public class Manager {
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
-		this.timer = new Timer( "Roboconf's Management Timer", true );
+		this.timer = new Timer( "Roboconf's Management Timer", false );
 		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, this.messagingClient ), 0, TIMER_PERIOD );
 		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
 
@@ -831,12 +831,15 @@ public class Manager {
 		checkConfiguration();
 		InstanceStatus initialStatus = rootInstance.getStatus();
 		try {
-			// Terminate the machine
+			// Terminate the machine...
+			// ...  and notify other agents this agent was killed.
 			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
 			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
 			String machineId = rootInstance.data.remove( Instance.MACHINE_ID );
-			if( machineId != null )
+			if( machineId != null ) {
 				target.getHandler().terminateMachine( target.getProperties(), machineId );
+				this.messagingClient.propagateAgentTermination( ma.getApplication(), rootInstance );
+			}
 
 			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
 			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {

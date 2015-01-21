@@ -60,6 +60,18 @@ public class FromGraphDefinitionTest {
 
 
 	@Test
+	public void test_duplicateInstaller() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/component-duplicate-property.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 1, fromDef.getErrors().size());
+		Assert.assertEquals( ErrorCode.PM_DUPLICATE_PROPERTY, fromDef.getErrors().iterator().next().getErrorCode());
+	}
+
+
+	@Test
 	public void test_conflictingNames() throws Exception {
 
 		File f = TestUtils.findTestFile( "/configurations/invalid/conflicting-names.graph" );

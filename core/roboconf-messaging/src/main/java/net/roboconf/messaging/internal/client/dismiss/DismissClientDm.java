@@ -75,25 +75,28 @@ public class DismissClientDm implements IDmClient {
 
 
 	@Override
-	public void sendMessageToAgent( Application application, Instance instance, Message message ) throws IOException {
+	public void sendMessageToAgent( Application application, Instance instance, Message message )
+	throws IOException {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
-	public void listenToAgentMessages( Application application, ListenerCommand command ) throws IOException {
+	public void listenToAgentMessages( Application application, ListenerCommand command )
+	throws IOException {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
-	public void deleteMessagingServerArtifacts( Application application ) throws IOException {
+	public void deleteMessagingServerArtifacts( Application application )
+	throws IOException {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
-	public void propagateAgentTermination() {
+	public void propagateAgentTermination( Application application, Instance rootInstance ) throws IOException {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
 	}
 }
