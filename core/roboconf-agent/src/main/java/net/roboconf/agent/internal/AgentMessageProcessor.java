@@ -211,7 +211,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 		// Configure the messaging
 		for( Instance instanceToProcess : instancesToProcess ) {
-			initializePluginForInstance( instanceToProcess );
 			this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, instanceToProcess );
 			this.messagingClient.requestExportsFromOtherAgents( instanceToProcess );
 		}
@@ -285,7 +284,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 				this.logger.severe( "The new '" + msg.getInstanceName() + "' instance could not be inserted into the local model." );
 
 			} else {
-				initializePluginForInstance( newInstance );
 				this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, newInstance );
 				this.messagingClient.requestExportsFromOtherAgents( newInstance );
 			}
@@ -419,24 +417,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			AbstractLifeCycleManager
 			.build( instance, this.agent.getApplicationName(), this.messagingClient)
 			.updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
-		}
-	}
-
-
-	/**
-	 * Initializes the plug-in for a given instance.
-	 * @param instance an instance
-	 * @throws PluginException
-	 */
-	void initializePluginForInstance( Instance instance ) throws PluginException {
-
-		// Do not initialize root instances, they do not have any plug-in on the agent.
-		if( instance.getParent() != null ) {
-			PluginInterface plugin = this.agent.findPlugin( instance );
-			if( plugin == null )
-				throw new PluginException( "No plugin was found for " + InstanceHelpers.computeInstancePath( instance ));
-
-			plugin.initialize( instance );
 		}
 	}
 }

@@ -141,7 +141,7 @@ public abstract class AbstractLifeCycleManager {
 		// Maybe we have something to start
 		if( haveAllImports ) {
 			if( impactedInstance.getStatus() == InstanceStatus.UNRESOLVED
-					|| impactedInstance.data.get( FORCE ) != null ) {
+					|| impactedInstance.data.remove( FORCE ) != null ) {
 
 				InstanceStatus oldState = impactedInstance.getStatus();
 				impactedInstance.setStatus( InstanceStatus.STARTING );
@@ -212,6 +212,9 @@ public abstract class AbstractLifeCycleManager {
 
 				// Copy the resources
 				AgentUtils.copyInstanceResources( instance, fileNameToFileContent );
+
+				// Initialize the plugin
+				plugin.initialize( instance );
 
 				// Invoke the plug-in
 				plugin.deploy( instance );

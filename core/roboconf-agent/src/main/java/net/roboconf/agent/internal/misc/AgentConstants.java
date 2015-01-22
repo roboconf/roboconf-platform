@@ -30,7 +30,7 @@ package net.roboconf.agent.internal.misc;
  */
 public interface AgentConstants {
 
-	String PLATFORM_EC2 = "ec2";
-	String PLATFORM_OPENSTACK = "openstack";
-	String PLATFORM_AZURE = "azure";
+	String PLATFORM_EC2 = "iaas-ec2";
+	String PLATFORM_OPENSTACK = "iaas-openstack";
+	String PLATFORM_AZURE = "iaas-azure";
 }
