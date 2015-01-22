@@ -213,6 +213,9 @@ public abstract class AbstractLifeCycleManager {
 				// Copy the resources
 				AgentUtils.copyInstanceResources( instance, fileNameToFileContent );
 
+				// Initialize the plugin
+				plugin.initialize( instance );
+
 				// Invoke the plug-in
 				plugin.deploy( instance );
 				instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );

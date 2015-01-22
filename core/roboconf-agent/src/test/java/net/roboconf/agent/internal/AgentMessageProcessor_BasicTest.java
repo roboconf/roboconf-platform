@@ -43,8 +43,6 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
-import net.roboconf.plugin.api.PluginException;
-import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.After;
 import org.junit.Before;
@@ -78,37 +76,6 @@ public class AgentMessageProcessor_BasicTest {
 
 
 	@Test
-	public void testInitializePlugin() throws Exception {
-
-		AgentMessageProcessor processor = new AgentMessageProcessor( new Agent());
-		TestApplication app = new TestApplication();
-
-		processor.initializePluginForInstance( app.getMySqlVm());
-		Assert.assertNull( app.getMySqlVm().data.get( PluginMock.INIT_PROPERTY ));
-
-		processor.initializePluginForInstance( app.getMySql());
-		Assert.assertEquals( "true", app.getMySql().data.get( PluginMock.INIT_PROPERTY ));
-	}
-
-
-	@Test( expected = PluginException.class )
-	public void testInitializePlugin_noPlugin() throws Exception {
-
-		this.agent.stop();
-		this.agent = new Agent() {
-			@Override
-			public PluginInterface findPlugin( Instance instance ) {
-				return null;
-			}
-		};
-
-		AgentMessageProcessor processor = new AgentMessageProcessor( this.agent );
-		TestApplication app = new TestApplication();
-		processor.initializePluginForInstance( app.getMySql());
-	}
-
-
-	@Test
 	public void testAddInstance() {
 
 		// Initialize all the stuff
@@ -137,7 +104,6 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( app.getMySql(), newChild );
 		Assert.assertEquals( 1, newChild.overriddenExports.size());
 		Assert.assertEquals( "loop", newChild.overriddenExports.get( "some-value" ));
-		Assert.assertEquals( "true", newChild.data.get( PluginMock.INIT_PROPERTY ));
 
 		// Inserting an existing child fails
 		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( newMySqlVm ).size());
@@ -197,13 +163,6 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
-
-		// All the instances must have been initialized (their plug-in in fact).
-		// All, except the root instance.
-		for( Instance inst : InstanceHelpers.buildHierarchicalList( processor.rootInstance )) {
-			if( inst.getParent() != null )
-				Assert.assertEquals( inst.getName(), "true", inst.data.get( PluginMock.INIT_PROPERTY ));
-		}
 	}
 
 
