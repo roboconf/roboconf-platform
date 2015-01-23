@@ -28,6 +28,7 @@ package net.roboconf.plugin.puppet.internal;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +127,7 @@ public class BasicPluginPuppetTest {
 	@Test
 	public void testFormatInstanceImports_oneImportTwoVariables() {
 
-		Map<String,String> exports = new LinkedHashMap<String,String> ();
+		Map<String,String> exports = new HashMap<String,String> ();
 		exports.put( "MySQL.port", "3306" );
 		exports.put( "MySQL.ip", "172.16.20.12" );
 		Import imp = new Import( "/toto", "component1", exports );
@@ -138,9 +139,11 @@ public class BasicPluginPuppetTest {
 		Instance instance = new Instance( "test" ).component( component );
 		instance.getImports().put( "MySQL", Arrays.asList( imp ));
 
-		Assert.assertEquals(
-				"mysql => { '/toto' => { port => '3306', ip => '172.16.20.12' }}",
-				this.plugin.formatInstanceImports( instance ));
+		String expected1 = "mysql => { '/toto' => { port => '3306', ip => '172.16.20.12' }}";
+		String expected2 = "mysql => { '/toto' => { ip => '172.16.20.12', port => '3306' }}";
+		String result = this.plugin.formatInstanceImports( instance );
+
+		Assert.assertTrue( expected1.equals( result ) || expected2.equals( result ));
 	}
 
 
@@ -169,11 +172,16 @@ public class BasicPluginPuppetTest {
 		instance.getImports().put( "MySQL", mySqlImports );
 		instance.getImports().put( "Something", somethingImports );
 
-		String expected =
+		String expected1 =
 				"mysql => { '/toto-0' => { port => '3306', ip => '172.16.20.12' }, '/toto-1' => { port => '3307', ip => '172.16.20.13' }},"
 				+ " something => { '/oops' => { test => 'true' }}";
 
-		Assert.assertEquals( expected, this.plugin.formatInstanceImports( instance ));
+		String expected2 =
+				"mysql => { '/toto-0' => { ip => '172.16.20.12', port => '3306' }, '/toto-1' => { ip => '172.16.20.13', port => '3307' }},"
+				+ " something => { '/oops' => { test => 'true' }}";
+
+		String result = this.plugin.formatInstanceImports( instance );
+		Assert.assertTrue( expected1.equals( result ) || expected2.equals( result ));
 	}
 
 
