@@ -269,9 +269,9 @@ public class PluginPuppet implements PluginInterface {
 			File instanceDirectory )
 	throws IOException, InterruptedException {
 
+		logger.finer( "Instance directory for " + instance + " is " + instanceDirectory );
 		if( instance == null
 				|| instanceDirectory == null
-				|| ! instanceDirectory.exists()
 				|| ! instanceDirectory.isDirectory()) {
 			this.logger.fine( "Ignoring null or invalid instance directory" );
 			return;
@@ -282,7 +282,8 @@ public class PluginPuppet implements PluginInterface {
 		this.logger.info("Preparing the invocation of the script for " + action + " and instance " + instance.getName() + ".");
 		File moduleDirectory = null;
 		for( File f : instanceDirectory.listFiles()) {
-			if(f.isDirectory() && f.getName().startsWith( "roboconf_" )) {
+			if( f.isDirectory() 
+					&& f.getName().toLowerCase().startsWith( "roboconf_" )) {
 				moduleDirectory = f;
 				break;
 			}
