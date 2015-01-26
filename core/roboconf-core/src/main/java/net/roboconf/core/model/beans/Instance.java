@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.TreeMap;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -74,7 +75,7 @@ public class Instance implements Serializable {
 
 	// At runtime, imported variables are grouped by prefix.
 	// The prefix is a component or a facet name.
-	private final Map<String,Collection<Import>> variablePrefixToImports = new HashMap<String,Collection<Import>> ();
+	private final Map<String,Collection<Import>> variablePrefixToImports = new TreeMap<String,Collection<Import>> ();
 
 
 	/**

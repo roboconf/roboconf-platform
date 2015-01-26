@@ -26,7 +26,6 @@
 package net.roboconf.core.utils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -111,11 +110,9 @@ public class ResourceUtilsTest {
 		final File appDir = this.folder.newFolder();
 		final String componentName = "my-component";
 		final File componentDirectory = new File( appDir, Constants.PROJECT_DIR_GRAPH + File.separator + componentName );
-		if( ! componentDirectory.getParentFile().mkdirs())
-			throw new IOException( "Could not create the parent directory." );
 
-		if( ! componentDirectory.createNewFile())
-			throw new IOException( "Could not create " + componentDirectory );
+		Assert.assertTrue( componentDirectory.getParentFile().mkdirs());
+		Assert.assertTrue( componentDirectory.createNewFile());
 
 		Instance instance = new Instance( "whatever" ).component( new Component( componentName ));
 		Map<?,?> map = ResourceUtils.storeInstanceResources( appDir, instance );
@@ -129,24 +126,41 @@ public class ResourceUtilsTest {
 		final File appDir = this.folder.newFolder();
 		final String componentName = "my-component";
 		final File componentDirectory = new File( appDir, Constants.PROJECT_DIR_GRAPH + File.separator + componentName );
-		if( ! componentDirectory.mkdirs())
-			throw new IOException( "Could not create " + componentDirectory );
 
+		Assert.assertTrue( componentDirectory.mkdirs());
+
+		// No resource
 		Instance instance = new Instance( "whatever" ).component( new Component( componentName ));
 		Map<?,?> map = ResourceUtils.storeInstanceResources( appDir, instance );
 		Assert.assertEquals( 0, map.size());
 
+		// With a single recipe
 		File recipeFile = new File( componentDirectory, "recipe.txt" );
 		Assert.assertTrue( recipeFile.createNewFile());
 
 		map = ResourceUtils.storeInstanceResources( appDir, instance );
 		Assert.assertEquals( 1, map.size());
 
+		// With a properties file for measures
 		File autonomicDir = new File( appDir, Constants.PROJECT_DIR_AUTONOMIC );
 		Assert.assertTrue( autonomicDir.mkdir());
 
+		File propertiesFile = new File( autonomicDir, componentName + Constants.FILE_EXT_MEASURES + ".properties" );
+		Assert.assertTrue( propertiesFile.createNewFile());
+
+		// No measures file => the properties are not sent!
+		map = ResourceUtils.storeInstanceResources( appDir, instance );
+		Assert.assertEquals( 1, map.size());
+
+		// With a measures file
 		File measuresFile = new File( autonomicDir, componentName + Constants.FILE_EXT_MEASURES );
 		Assert.assertTrue( measuresFile.createNewFile());
+
+		map = ResourceUtils.storeInstanceResources( appDir, instance );
+		Assert.assertEquals( 3, map.size());
+
+		// And check without the properties file
+		Utils.deleteFilesRecursively( propertiesFile );
 
 		map = ResourceUtils.storeInstanceResources( appDir, instance );
 		Assert.assertEquals( 2, map.size());

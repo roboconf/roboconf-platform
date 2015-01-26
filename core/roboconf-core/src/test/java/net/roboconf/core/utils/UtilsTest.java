@@ -313,6 +313,27 @@ public class UtilsTest {
 
 
 	@Test
+	public void testCreateDirectory() throws Exception {
+
+		File dir = this.folder.newFolder();
+		File target = new File( dir, "toto/pom" );
+		Utils.createDirectory( target );
+		Assert.assertTrue( target.exists());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateDirectory_error() throws Exception {
+
+		File dir = this.folder.newFolder();
+		File target = new File( dir, "toto/pom" );
+		Assert.assertTrue( target.getParentFile().createNewFile());
+
+		Utils.createDirectory( target );
+	}
+
+
+	@Test
 	public void testCloseQuietly() throws Exception {
 
 		InputStream in = null;

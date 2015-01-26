@@ -26,7 +26,6 @@
 package net.roboconf.agent.monitoring.internal;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.List;
 import java.util.Properties;
 
@@ -198,8 +197,9 @@ public class MonitoringTaskTest {
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
 		this.agentInterface.setRootInstance( new Instance( "root" ));
 
-		Properties params = new Properties();
-		params.load(new FileInputStream(TestUtils.findTestFile( "/mixed-events-templating.properties")));
+		File propertiesFile = TestUtils.findTestFile( "/mixed-events-templating.properties" );
+		Assert.assertTrue( propertiesFile.exists());
+		Properties params = Utils.readPropertiesFile( propertiesFile );
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, params );
 		Assert.assertEquals( 2, handlers.size());
 

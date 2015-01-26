@@ -74,12 +74,25 @@ public final class ResourceUtils {
 			Utils.copyStream( autonomicMeasureFile, os );
 			result.put( autonomicMeasureFile.getName(), os.toByteArray());
 		}
-		autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/"
-				+ instance.getComponent().getName() + Constants.FILE_EXT_MEASURES + ".properties");
+
+		// Deal with autonomic files.
+		// There can be the ".measure" file.
+		// There can also be a properties file to inject values.
+		autonomicMeasureFile = new File(
+				applicationFilesDirectory,
+				Constants.PROJECT_DIR_AUTONOMIC + "/" + instance.getComponent().getName() + Constants.FILE_EXT_MEASURES );
+
 		if( autonomicMeasureFile.exists()) {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			Utils.copyStream( autonomicMeasureFile, os );
 			result.put( autonomicMeasureFile.getName(), os.toByteArray());
+
+			File autonomicPropertiesFile = new File( autonomicMeasureFile.getAbsolutePath() + ".properties" );
+			if( autonomicPropertiesFile.exists()) {
+				os = new ByteArrayOutputStream();
+				Utils.copyStream( autonomicPropertiesFile, os );
+				result.put( autonomicPropertiesFile.getName(), os.toByteArray());
+			}
 		}
 
 		return result;

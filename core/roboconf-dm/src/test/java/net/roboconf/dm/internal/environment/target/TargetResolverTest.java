@@ -27,7 +27,6 @@ package net.roboconf.dm.internal.environment.target;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -68,8 +67,7 @@ public class TargetResolverTest {
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
-		if( ! propsDir.mkdirs())
-			throw new IOException( "Failed to create sub-directories." );
+		Assert.assertTrue( propsDir.mkdirs());
 
 		File propsFile = new File( propsDir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
@@ -104,8 +102,7 @@ public class TargetResolverTest {
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
-		if( ! propsDir.mkdirs())
-			throw new IOException( "Failed to create sub-directories." );
+		Assert.assertTrue( propsDir.mkdirs());
 
 		File propsFile = new File( propsDir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
@@ -134,8 +131,7 @@ public class TargetResolverTest {
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
-		if( ! propsDir.mkdirs())
-			throw new IOException( "Failed to create sub-directories." );
+		Assert.assertTrue( propsDir.mkdirs());
 
 		File propsFile = new File( propsDir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
@@ -164,8 +160,7 @@ public class TargetResolverTest {
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
-		if( ! propsDir.mkdirs())
-			throw new IOException( "Failed to create sub-directories." );
+		Assert.assertTrue( propsDir.mkdirs());
 
 		File propsFile = new File( propsDir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();
@@ -194,8 +189,7 @@ public class TargetResolverTest {
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
-		if( ! propsDir.mkdirs())
-			throw new IOException( "Failed to create sub-directories." );
+		Assert.assertTrue( propsDir.mkdirs());
 
 		File propsFile = new File( propsDir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Properties props = new Properties();

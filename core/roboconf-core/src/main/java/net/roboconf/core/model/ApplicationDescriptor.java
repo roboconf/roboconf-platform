@@ -26,7 +26,6 @@
 package net.roboconf.core.model;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
@@ -177,16 +176,7 @@ public class ApplicationDescriptor {
 	 */
 	public static ApplicationDescriptor load( File f ) throws IOException {
 
-		Properties properties = new Properties();
-		FileInputStream in = null;
-		try {
-			in = new FileInputStream( f );
-			properties.load( in );
-
-		} finally {
-			Utils.closeQuietly( in );
-		}
-
+		Properties properties = Utils.readPropertiesFile( f );
 		if( properties.get( "fail.read" ) != null )
 			throw new IOException( "This is for test purpose..." );
 

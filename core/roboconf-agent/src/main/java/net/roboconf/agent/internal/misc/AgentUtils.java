@@ -89,17 +89,13 @@ public final class AgentUtils {
 	throws IOException {
 
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
-		if( ! dir.isDirectory()
-				&& ! dir.mkdirs())
-			throw new IOException( "The directory " + dir.getAbsolutePath() + " could not be created." );
+		Utils.createDirectory( dir );
 
 		if( fileNameToFileContent != null ) {
 			for( Map.Entry<String,byte[]> entry : fileNameToFileContent.entrySet()) {
 
 				File f = new File( dir, entry.getKey());
-				if( ! f.getParentFile().isDirectory()
-						&& ! f.getParentFile().mkdirs())
-					throw new IOException( "The directory " + f.getParentFile() + " could not be created." );
+				Utils.createDirectory( f.getParentFile());
 
 				ByteArrayInputStream in = new ByteArrayInputStream( entry.getValue());
 				Utils.copyStream( in, f );

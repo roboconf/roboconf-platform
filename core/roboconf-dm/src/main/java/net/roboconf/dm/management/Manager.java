@@ -216,9 +216,10 @@ public class Manager {
 
 		} else {
 			this.configurationDirectory = new File( this.configurationDirectoryLocation );
-			if( ! this.configurationDirectory.isDirectory()
-					&& ! this.configurationDirectory.mkdirs()) {
+			try {
+				Utils.createDirectory( this.configurationDirectory );
 
+			} catch( IOException e ) {
 				this.logger.warning( "Could not create " + this.configurationDirectory + ". Switching to " + defaultConfigurationDirectory );
 				this.configurationDirectory = defaultConfigurationDirectory;
 			}

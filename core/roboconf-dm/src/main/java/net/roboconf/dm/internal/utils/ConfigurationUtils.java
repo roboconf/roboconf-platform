@@ -98,11 +98,8 @@ public final class ConfigurationUtils {
 		Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
 		File targetFile = new File( configurationDirectory, INSTANCES + "/" + ma.getName() + ".instances" );
 		try {
-			if( ! targetFile.getParentFile().exists()
-					&& ! targetFile.getParentFile().mkdirs())
-				logger.severe( targetFile + " could not be saved." );
-			else
-				RuntimeModelIo.writeInstances( targetFile, ma.getApplication().getRootInstances());
+			Utils.createDirectory( targetFile.getParentFile());
+			RuntimeModelIo.writeInstances( targetFile, ma.getApplication().getRootInstances());
 
 		} catch( IOException e ) {
 			logger.severe( "Failed to save instances. " + e.getMessage());

@@ -26,7 +26,6 @@
 package net.roboconf.plugin.puppet.internal;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -100,10 +99,7 @@ public class PluginPuppetTest {
 	public void resetPlugin() throws Exception {
 		this.plugin = new PluginPuppet();
 		this.plugin.setNames( "app", "test" );
-
-		if( ! OUTPUT_DIR.exists()
-				&& ! OUTPUT_DIR.mkdirs())
-			throw new IOException( "The output directory could not be created." );
+		Utils.createDirectory( OUTPUT_DIR );
 	}
 
 

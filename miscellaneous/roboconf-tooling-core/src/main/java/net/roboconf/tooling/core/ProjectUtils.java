@@ -102,8 +102,7 @@ public final class ProjectUtils {
 		// Create the directory structure
 		for( String s : DIRECTORIES ) {
 			File dir = new File( targetDirectory, s );
-			if( ! dir.exists() && ! dir.mkdirs())
-				throw new IOException( "The '" + s + "' directory could not be created." );
+			Utils.createDirectory( dir );
 		}
 
 		// Create the descriptor
@@ -133,8 +132,7 @@ public final class ProjectUtils {
 		File rootDir = new File( targetDirectory, "src/main/model" );
 		for( String s : DIRECTORIES ) {
 			File dir = new File( rootDir, s );
-			if( ! dir.exists() && ! dir.mkdirs())
-				throw new IOException( "The '" + s + "' directory could not be created." );
+			Utils.createDirectory( dir );
 		}
 
 		// Create a POM?

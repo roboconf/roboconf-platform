@@ -44,6 +44,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -264,6 +265,41 @@ public final class Utils {
 		result = os.toString( "UTF-8" );
 
 		return result;
+	}
+
+
+	/**
+	 * Reads properties from a file.
+	 * @param file a properties file
+	 * @return a {@link Properties} instance
+	 * @throws IOException if reading failed
+	 */
+	public static Properties readPropertiesFile( File file ) throws IOException {
+
+		Properties result = new Properties();
+		InputStream in = null;
+		try {
+			in = new FileInputStream( file );
+			result.load( in );
+
+		} finally {
+			closeQuietly( in );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Creates a directory if it does not exist.
+	 * @param directory the directory to create
+	 * @throws IOException if it did not exist and that it could not be created
+	 */
+	public static void createDirectory( File directory ) throws IOException {
+
+		if( ! directory.exists()
+				&& ! directory.mkdirs())
+			throw new IOException( "The directory " + directory + " could not be created." );
 	}
 
 

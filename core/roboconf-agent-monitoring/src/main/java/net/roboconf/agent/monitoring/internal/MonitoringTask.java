@@ -26,7 +26,6 @@
 package net.roboconf.agent.monitoring.internal;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,20 +104,16 @@ public class MonitoringTask extends TimerTask {
 				Utils.logException( this.logger, e );
 				continue;
 			}
-			
-			Properties params = null;
-			File paramFile = new File( dir, inst.getComponent().getName() + ".measures.properties" );
-			if(paramFile.exists()) {
+
+			File paramFile;
+			Properties params;
+			try {
+				paramFile = new File( dir, inst.getComponent().getName() + ".measures.properties" );
+				params = Utils.readPropertiesFile( paramFile );
 				this.logger.fine( "A file with measure parameters (properties) was found for instance '" + inst + "'." );
-				FileInputStream in = null;
-				try {
-					params = new Properties();
-					params.load((in = new FileInputStream(paramFile)));
-				} catch(IOException e) {
-					params = null;
-				} finally {
-					Utils.closeQuietly(in);
-				}
+
+			} catch( IOException e1 ) {
+				params = null;
 			}
 
 			// Find the right handlers to process the rules
@@ -184,31 +179,31 @@ public class MonitoringTask extends TimerTask {
 
 		return result;
 	}
-	
+
 	private void addSectionIfNotEmpty(List<String> sections, String section) {
 		if(section.trim().length() > 0) sections.add(section);
 	}
 
 	/**
 	 * Expand a template, replacing each {{ param }} by the corresponding value.
-	 * Eg. "My name is {{ name }}" will result in "My name is Bond", provided that "params" contains "name=Bond". 
+	 * Eg. "My name is {{ name }}" will result in "My name is Bond", provided that "params" contains "name=Bond".
 	 * @param s The template to expand
 	 * @param params The parameters to be expanded in the template
 	 * @return The expanded template.
 	 */
 	public String expandString(String s, Properties params) {
 		if(params == null || params.size() < 1) return s;
-		
+
 		Pattern pattern = Pattern.compile( "\\{\\{\\s*\\S+\\s*\\}\\}" );
 		Matcher m = pattern.matcher(s);
-		
+
 		StringBuffer sb = new StringBuffer();
 		 while (m.find()) {
 			 String raw = m.group();
 			 String varName = m.group().replace('{', ' ').replace('}', ' ').trim();
 			 String val = params.getProperty(varName);
 			 val = (val == null ? raw : val.trim());
-			 
+
 		     m.appendReplacement(sb, val);
 		 }
 		 m.appendTail(sb);

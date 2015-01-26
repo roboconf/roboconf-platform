@@ -26,13 +26,18 @@
 package net.roboconf.dm.internal.autonomic;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Properties;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -170,5 +175,105 @@ public class RuleBasedEventHandlerTest {
 		// Delete again => nothing
 		this.handler.deleteInstances( this.ma, this.app.getWar().getComponent().getName());
 		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testEmail_noProperties() throws Exception {
+
+		this.handler.sendEmail( this.ma, "hello world!" );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testEmail_missingMailTo() throws Exception {
+
+		File propFile = new File(
+				this.ma.getApplicationFilesDirectory(),
+				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
+
+		Assert.assertTrue( propFile.getParentFile().mkdirs());
+		Assert.assertTrue( propFile.createNewFile());
+
+		this.handler.sendEmail( this.ma, "hello world!" );
+	}
+
+
+	@Test
+	public void testEmail_withMailTo() throws Exception {
+
+		File propFile = new File(
+				this.ma.getApplicationFilesDirectory(),
+				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
+
+		Assert.assertTrue( propFile.getParentFile().mkdirs());
+		Properties props = new Properties();
+		props.setProperty( "mail.to", "me@roboconf.net" );
+		props.setProperty( "mail.from", "me-again@roboconf.net" );
+
+		FileOutputStream out = null;
+		try {
+			out = new FileOutputStream( propFile );
+			props.store( out, null );
+
+		} finally {
+			Utils.closeQuietly( out );
+		}
+
+		// No mail server is configured, there will be error logs
+		this.handler.sendEmail( this.ma, "hello world!" );
+	}
+
+
+	@Test
+	public void testEmail_withMailTo_andCustomSubject() throws Exception {
+
+		File propFile = new File(
+				this.ma.getApplicationFilesDirectory(),
+				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
+
+		Assert.assertTrue( propFile.getParentFile().mkdirs());
+		Properties props = new Properties();
+		props.setProperty( "mail.to", "me@roboconf.net" );
+		props.setProperty( "mail.from", "me-again@roboconf.net" );
+
+		FileOutputStream out = null;
+		try {
+			out = new FileOutputStream( propFile );
+			props.store( out, null );
+
+		} finally {
+			Utils.closeQuietly( out );
+		}
+
+		// No mail server is configured, there will be error logs
+		this.handler.sendEmail( this.ma, "Subject: yo\nhello world!" );
+	}
+
+
+	@Test
+	public void testEmail_withMailTo_andSubjectOnly() throws Exception {
+
+		File propFile = new File(
+				this.ma.getApplicationFilesDirectory(),
+				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
+
+		Assert.assertTrue( propFile.getParentFile().mkdirs());
+		Properties props = new Properties();
+		props.setProperty( "mail.to", "me@roboconf.net" );
+		props.setProperty( "mail.smtp.auth", "True" );
+		props.setProperty( "mail.from", "me-again@roboconf.net" );
+
+		FileOutputStream out = null;
+		try {
+			out = new FileOutputStream( propFile );
+			props.store( out, null );
+
+		} finally {
+			Utils.closeQuietly( out );
+		}
+
+		// No mail server is configured, there will be error logs
+		this.handler.sendEmail( this.ma, "Subject: yo" );
 	}
 }

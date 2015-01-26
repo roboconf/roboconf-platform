@@ -78,8 +78,7 @@ public class TargetHelpersTest {
 
 		OutputStream fos = null;
 		try {
-			if( ! f.getParentFile().mkdirs())
-				throw new IOException( "Failed to create the temporary properties." );
+			Assert.assertTrue( f.getParentFile().mkdirs());
 
 			fos = new FileOutputStream( f );
 			Properties props = new Properties();
