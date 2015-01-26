@@ -26,9 +26,7 @@
 package net.roboconf.plugin.puppet.internal;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -212,16 +210,7 @@ public class PluginPuppet implements PluginInterface {
 		if( ! modulesFile.exists())
 			return;
 
-		Properties props = new Properties();
-		InputStream in = null;
-		try {
-			in = new FileInputStream( modulesFile );
-			props.load( in );
-
-		} finally {
-			Utils.closeQuietly( in );
-		}
-
+		Properties props = Utils.readPropertiesFile( modulesFile );
 		for( Map.Entry<Object,Object> entry : props.entrySet()) {
 
 			List<String> commands = new ArrayList<String> ();
@@ -269,7 +258,7 @@ public class PluginPuppet implements PluginInterface {
 			File instanceDirectory )
 	throws IOException, InterruptedException {
 
-		logger.finer( "Instance directory for " + instance + " is " + instanceDirectory );
+		this.logger.finer( "Instance directory for " + instance + " is " + instanceDirectory );
 		if( instance == null
 				|| instanceDirectory == null
 				|| ! instanceDirectory.isDirectory()) {
@@ -282,7 +271,7 @@ public class PluginPuppet implements PluginInterface {
 		this.logger.info("Preparing the invocation of the script for " + action + " and instance " + instance.getName() + ".");
 		File moduleDirectory = null;
 		for( File f : instanceDirectory.listFiles()) {
-			if( f.isDirectory() 
+			if( f.isDirectory()
 					&& f.getName().toLowerCase().startsWith( "roboconf_" )) {
 				moduleDirectory = f;
 				break;

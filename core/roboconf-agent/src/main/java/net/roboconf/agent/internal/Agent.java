@@ -480,4 +480,9 @@ public class Agent implements AgentMessagingInterface {
 		this.rootInstance = rootInstance;
 	}
 
+
+	public List<PluginInterface> getPlugins() {
+		return this.plugins;
+	}
+
 }
