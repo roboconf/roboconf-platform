@@ -267,7 +267,7 @@ public class RestHandler extends MonitoringHandler {
 			Utils.closeQuietly( in );
 		}
 
-		return response == null ? null : response.toString();
+		return response.toString();
 	}
 
 

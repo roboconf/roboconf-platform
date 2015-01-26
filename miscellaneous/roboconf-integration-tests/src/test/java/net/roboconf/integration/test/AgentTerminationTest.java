@@ -29,14 +29,11 @@ import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
 
-import javax.inject.Inject;
-
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.test.internal.IntegrationTestsUtils;
 import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.test.internal.MyHandler;
@@ -46,7 +43,6 @@ import net.roboconf.pax.probe.AbstractTest;
 import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
 
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -72,13 +68,6 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
-
-	@Inject
-	protected Manager manager;
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
 
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {

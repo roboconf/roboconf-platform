@@ -89,7 +89,7 @@ public class InMemoryHandler implements TargetHandler {
 			if( targetProperties != null )
 				delayAsString = targetProperties.get( DELAY );
 
-			long delay = delayAsString != null ? Long.valueOf( delayAsString ) : this.defaultDelay.get();
+			long delay = delayAsString != null ? Long.parseLong( delayAsString ) : this.defaultDelay.get();
 			if( delay > 0 )
 				Thread.sleep( delay );
 

@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
@@ -178,7 +179,7 @@ public class PluginFile implements PluginInterface {
 			if( ! m.matches())
 				continue;
 
-			int position = Integer.valueOf( m.group( 1 ));
+			int position = Integer.parseInt( m.group( 1 ));
 			ActionType actionType = ActionType.which( m.group( 2 ));
 			String parameter = String.valueOf( entry.getValue());
 			result.add( new Action( position, actionType, parameter ));
@@ -295,7 +296,9 @@ public class PluginFile implements PluginInterface {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	private static class ActionComparator implements Comparator<Action> {
+	private static class ActionComparator implements Serializable, Comparator<Action> {
+		private static final long serialVersionUID = 6157709801342723302L;
+
 		@Override
 		public int compare( Action a1, Action a2 ) {
 			return a1.position - a2.position;

@@ -42,19 +42,12 @@ import net.roboconf.plugin.file.internal.PluginFile.Action;
 import net.roboconf.plugin.file.internal.PluginFile.ActionType;
 
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class PluginFileTest {
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
-
 
 	@Test
 	public void testPlugin() throws Exception {
