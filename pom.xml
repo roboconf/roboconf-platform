@@ -87,6 +87,9 @@
 		<karaf.version>3.0.2</karaf.version>
 		<ipojo.version>1.12.0</ipojo.version>
 		<jclouds.version>1.8.1</jclouds.version>
+		
+		<!-- Set to false because of a bug with the Karaf Maven plugin. See #138 -->
+		<deploy.karaf>false</deploy.karaf>
 	</properties>
 	
 	<dependencyManagement>
