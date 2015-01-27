@@ -874,21 +874,22 @@ public class Manager {
 	 */
 	void restoreApplications() {
 
+		// Restore applications
 		this.appNameToManagedApplication.clear();
 		for( File dir : ConfigurationUtils.findApplicationDirectories( this.configurationDirectory )) {
 			try {
 				loadNewApplication( dir );
 
 			} catch( AlreadyExistingException e ) {
-				this.logger.severe( "Cannot restore application in " + dir + " (already existing)." );
+				this.logger.warning( "Cannot restore application in " + dir + " (already existing)." );
 				Utils.logException( this.logger, e );
 
 			} catch( InvalidApplicationException e ) {
-				this.logger.severe( "Cannot restore application in " + dir + " (invalid application)." );
+				this.logger.warning( "Cannot restore application in " + dir + " (invalid application)." );
 				Utils.logException( this.logger, e );
 
 			} catch( IOException e ) {
-				this.logger.severe( "Cannot restore application in " + dir + " (I/O exception)." );
+				this.logger.warning( "Cannot restore application in " + dir + " (I/O exception). Please, review the messaging configuration." );
 				Utils.logException( this.logger, e );
 			}
 		}
