@@ -290,7 +290,8 @@ public class PluginPuppet implements PluginInterface {
 			scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/init.pp");
 		}
 
-		if(scriptFile.exists()) { // Found either action-specific or default manifest
+		// Found either action-specific or default manifest
+		if( scriptFile.exists()) {
 
 			// Prepare the command and execute it
 			List<String> commands = new ArrayList<String> ();
@@ -336,7 +337,8 @@ public class PluginPuppet implements PluginInterface {
 			default:
 				throw new IOException( "Puppet script execution failed (exit code " + exitCode + ")." );
 			}
-		} else { // No script found for current action
+
+		} else {
 			this.logger.warning("Ignoring action " + action + ": no manifest provided, neither specific nor default init.pp.");
 		}
 	}

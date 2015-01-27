@@ -376,12 +376,13 @@ public class PluginPuppetTest {
 	}
 
 
-	@Test( expected = PluginException.class )
+	@Test
 	public void testNoScriptToExecute() throws Exception {
 
 		Assume.assumeTrue( isLinuxSystem());
 		Assert.assertTrue( new File( this.instanceDirectory, "roboconf_empty_puppet_module" ).mkdirs());
 		this.plugin.undeploy( this.inst );
+		// No error, the execution is skipped
 	}
 
 
