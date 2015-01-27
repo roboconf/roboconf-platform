@@ -258,7 +258,7 @@ public class PluginPuppet implements PluginInterface {
 			File instanceDirectory )
 	throws IOException, InterruptedException {
 
-		this.logger.finer( "Instance directory for " + instance + " is " + instanceDirectory );
+		//this.logger.finer( "Instance directory for " + instance + " is " + instanceDirectory );
 		if( instance == null
 				|| instanceDirectory == null
 				|| ! instanceDirectory.isDirectory()) {
@@ -281,60 +281,63 @@ public class PluginPuppet implements PluginInterface {
 		if( moduleDirectory == null )
 			throw new IOException( "The module directory could not be found. The module to execute must begin with 'roboconf_'." );
 
+		// Look for action-specific manifest
 		String clazz = moduleDirectory.getName() + "::" + action;
 		File scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/" + action + ".pp");
 
-		if( ! scriptFile.exists()) {
+		if( ! scriptFile.exists()) { // No action-specific manifest, try default init.pp
 			clazz = moduleDirectory.getName();
 			scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/init.pp");
 		}
 
-		if( ! scriptFile.exists())
-			throw new IOException( "The module directory could not be found. The module to execute must begin with 'roboconf_'." );
+		if(scriptFile.exists()) { // Found either action-specific or default manifest
 
-		// Prepare the command and execute it
-		List<String> commands = new ArrayList<String> ();
-		commands.add( "puppet" );
-		commands.add( "apply" );
-		commands.add( "--verbose" );
-		commands.add("--detailed-exitcodes");
+			// Prepare the command and execute it
+			List<String> commands = new ArrayList<String> ();
+			commands.add( "puppet" );
+			commands.add( "apply" );
+			commands.add( "--verbose" );
+			commands.add("--detailed-exitcodes");
 
-		String modpath = System.getenv("MODULEPATH");
-		if( modpath != null )
-			modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
-		else
-			modpath = "";
+			String modpath = System.getenv("MODULEPATH");
+			if( modpath != null )
+				modpath += (modpath.endsWith(File.pathSeparator) ? "" : File.pathSeparator);
+			else
+				modpath = "";
 
-		modpath += instanceDirectory.getAbsolutePath();
-		commands.add( "--modulepath" );
-		commands.add(modpath);
+			modpath += instanceDirectory.getAbsolutePath();
+			commands.add( "--modulepath" );
+			commands.add(modpath);
 
-		commands.add( "--execute" );
-		commands.add( generateCodeToExecute(clazz, instance, puppetState, importChanged, importAdded));
+			commands.add( "--execute" );
+			commands.add( generateCodeToExecute(clazz, instance, puppetState, importChanged, importAdded));
 
-		String[] params = commands.toArray( new String[ 0 ]);
-		this.logger.fine( "Module installation: " + Arrays.toString( params ));
+			String[] params = commands.toArray( new String[ 0 ]);
+			this.logger.fine( "Module installation: " + Arrays.toString( params ));
 
-		// Execute Puppet.
-		// Puppet normalized exit codes to provide feedback about the execution.
-		// 0 or 2 => correct execution.
-		// 4 => errors during execution.
-		// 6 => changes were applied, but errors occurred too.
-		int exitCode = ProgramUtils.executeCommand( this.logger, commands, null );
-		switch( exitCode ) {
-		case 0:
-		case 2:
-			this.logger.fine( "Puppet script properly completed with exit code " + exitCode + " (success codes are 2 and 0)." );
-			break;
+			// Execute Puppet.
+			// Puppet normalized exit codes to provide feedback about the execution.
+			// 0 or 2 => correct execution.
+			// 4 => errors during execution.
+			// 6 => changes were applied, but errors occurred too.
+			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null );
+			switch( exitCode ) {
+			case 0:
+			case 2:
+				this.logger.fine( "Puppet script properly completed with exit code " + exitCode + " (success codes are 2 and 0)." );
+				break;
 
-		case 6:
-			// FIXME: should we throw an exception?
-			this.logger.warning( "Puppet script completed with changes and errors (exit code 6)." );
-			break;
+			case 6:
+				// FIXME: should we throw an exception?
+				this.logger.warning( "Puppet script completed with changes and errors (exit code 6)." );
+				break;
 
-		case 4:
-		default:
-			throw new IOException( "Puppet script execution failed (exit code " + exitCode + ")." );
+			case 4:
+			default:
+				throw new IOException( "Puppet script execution failed (exit code " + exitCode + ")." );
+			}
+		} else { // No script found for current action
+			this.logger.warning("Ignoring action " + action + ": no manifest provided, neither specific nor default init.pp.");
 		}
 	}
 

@@ -183,7 +183,7 @@ public class PluginBash implements PluginInterface {
             Utils.deleteFilesRecursively( generated );
 
         } else {
-            this.logger.fine("Can not find a script or a template for action " + action);
+            this.logger.warning("Can not find a script or a template for action " + action);
         }
     }
 
