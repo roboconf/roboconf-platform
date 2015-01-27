@@ -138,7 +138,6 @@ public class RuleBasedEventHandler {
 		 * mail.to: someone@domain.com
 		 * mail.user: me
 		 * mail.password: mypassword
-		 * mail.smtp.starttls.enable: true
 		 * mail.smtp.host: my.mail.server
 		 * mail.smtp.port: 1234
 		 *

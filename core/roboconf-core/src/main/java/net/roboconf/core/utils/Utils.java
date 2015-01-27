@@ -200,8 +200,11 @@ public final class Utils {
 	 */
 	public static void copyStream( InputStream in, File outputFile ) throws IOException {
 		OutputStream os = new FileOutputStream( outputFile );
-		copyStream( in, os );
-		os.close ();
+		try {
+			copyStream( in, os );
+		} finally {
+			os.close ();
+		}
 	}
 
 
@@ -214,8 +217,11 @@ public final class Utils {
 	 */
 	public static void copyStream( File inputFile, File outputFile ) throws IOException {
 		InputStream is = new FileInputStream( inputFile );
-		copyStream( is, outputFile );
-		is.close();
+		try {
+			copyStream( is, outputFile );
+		} finally {
+			is.close();
+		}
 	}
 
 
@@ -228,8 +234,11 @@ public final class Utils {
 	 */
 	public static void copyStream( File inputFile, OutputStream os ) throws IOException {
 		InputStream is = new FileInputStream( inputFile );
-		copyStream( is, os );
-		is.close();
+		try {
+			copyStream( is, os );
+		} finally {
+			is.close();
+		}
 	}
 
 
