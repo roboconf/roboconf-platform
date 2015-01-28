@@ -26,9 +26,7 @@
 package net.roboconf.dm.internal.environment.target;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -66,18 +64,10 @@ public final class TargetHelpers {
 		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, realRootInstance );
 		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
 
-		Map<String, String> result = new HashMap<String, String>();
-		InputStream in = null;
-		try {
-			Properties p = new Properties();
-			in = new FileInputStream(f);
-			p.load( in );
-			for( Map.Entry<Object,Object> entry : p.entrySet()) {
-				result.put( entry.getKey().toString(), entry.getValue().toString());
-			}
-
-		} finally {
-			Utils.closeQuietly( in );
+		Map<String, String> result = new HashMap<String,String>();
+		Properties p = Utils.readPropertiesFile( f );
+		for( Map.Entry<Object,Object> entry : p.entrySet()) {
+			result.put( entry.getKey().toString(), entry.getValue().toString());
 		}
 
 		return result;

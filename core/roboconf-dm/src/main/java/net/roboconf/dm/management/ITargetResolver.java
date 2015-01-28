@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.management;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,11 +56,12 @@ public interface ITargetResolver {
 	 */
 	public static class Target {
 		private final TargetHandler targetHandler;
-		private final Map<String,String> targetProperties;
+		private final Map<String,String> targetProperties = new HashMap<String,String>( 0 );
 
 		public Target( TargetHandler targetHandler, Map<String,String> targetProperties ) {
 			this.targetHandler = targetHandler;
-			this.targetProperties = targetProperties;
+			if( targetProperties != null )
+				this.targetProperties.putAll( targetProperties );
 		}
 
 		public TargetHandler getHandler() {

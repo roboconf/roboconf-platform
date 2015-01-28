@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,56 +23,20 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.ec2.internal;
+package net.roboconf.dm.management;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
- * The constants defining properties for the EC2 IaaS.
  * @author Vincent Zurczak - Linagora
  */
-public interface Ec2Constants {
+public class TargetTest {
 
-	/**
-	 * Where to access EC2 API to manipulate its resources.
-	 */
-	String EC2_ENDPOINT = "ec2.endpoint";
-
-	/**
-	 * The access key for EC2 API.
-	 */
-	String EC2_ACCESS_KEY = "ec2.access.key";
-
-	/**
-	 * The secret key for EC2 API.
-	 */
-	String EC2_SECRET_KEY = "ec2.secret.key";
-
-	/**
-	 * The ID of the image to instantiate for new VMs.
-	 */
-	String AMI_VM_NODE = "ec2.ami";
-
-	/**
-	 * The kind of instance to create (<i>flavour</i>).
-	 */
-	String VM_INSTANCE_TYPE = "ec2.instance.type";
-
-	/**
-	 * The SSH key name.
-	 */
-	String SSH_KEY_NAME = "ec2.ssh.key";
-
-	/**
-	 * The name of the security group for new VMs.
-	 */
-	String SECURITY_GROUP_NAME = "ec2.security.group";
-
-	/**
-	 * The snapshot ID.
-	 */
-	String VOLUME_SNAPSHOT_ID = "ec2.volume.snapshot.id";
-
-	/**
-	 * An elastic IP to associate with a VM.
-	 */
-	String ELASTIC_IP = "ec2.elastic.ip";
+	@Test
+	public void testPropertiesAreNeverNull() {
+		ITargetResolver.Target t = new ITargetResolver.Target( null, null );
+		Assert.assertNotNull( t.getProperties());
+	}
 }

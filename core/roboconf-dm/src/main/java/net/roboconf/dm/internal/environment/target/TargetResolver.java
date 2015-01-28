@@ -50,7 +50,7 @@ public class TargetResolver implements ITargetResolver {
 	 * #findTargetHandler(java.util.List, net.roboconf.dm.management.ManagedApplication, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+	public Target findTargetHandler( List<TargetHandler> targets, ManagedApplication ma, Instance instance )
 	throws TargetException {
 
 		TargetHandler targetHandler;
@@ -62,7 +62,7 @@ public class TargetResolver implements ITargetResolver {
 
 			targetProperties = TargetHelpers.loadTargetProperties( ma.getApplicationFilesDirectory(), instance );
 			String targetId = targetProperties.get( TARGET_ID );
-			targetHandler = findTargetHandler( target, targetId );
+			targetHandler = findTargetHandler( targets, targetId );
 			if( targetHandler == null )
 				throw new TargetException( "No deployment handler was found for " + instance.getName() + "." );
 

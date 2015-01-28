@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -791,8 +792,11 @@ public class Manager {
 			send( ma, msg, rootInstance );
 
 			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
+			Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
+			targetProperties.putAll( rootInstance.data );
+
 			machineId = target.getHandler().createOrConfigureMachine(
-					target.getProperties(), this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
+					targetProperties, this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
 					rootInstance.getName(), ma.getApplication().getName());
 
 			rootInstance.data.put( Instance.MACHINE_ID, machineId );
@@ -838,7 +842,10 @@ public class Manager {
 			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
 			String machineId = rootInstance.data.remove( Instance.MACHINE_ID );
 			if( machineId != null ) {
-				target.getHandler().terminateMachine( target.getProperties(), machineId );
+				Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
+				targetProperties.putAll( rootInstance.data );
+
+				target.getHandler().terminateMachine( targetProperties, machineId );
 				this.messagingClient.propagateAgentTermination( ma.getApplication(), rootInstance );
 			}
 

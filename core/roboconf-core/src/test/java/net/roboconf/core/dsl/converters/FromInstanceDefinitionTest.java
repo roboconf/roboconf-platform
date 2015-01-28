@@ -94,6 +94,33 @@ public class FromInstanceDefinitionTest {
 
 
 	@Test
+	public void testInstanceWithExtraData() throws Exception {
+
+		Component vmComponent = new Component( "VM" ).installerName( "target" );
+		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.exportedVariables.put( "tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "tomcat.port", "8080" );
+
+		vmComponent.addChild( tomcatComponent );
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		File f = TestUtils.findTestFile( "/configurations/valid/instance-with-extra-data.instances" );
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs, f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 1, rootInstances.size());
+
+		Instance vmInstance = rootInstances.iterator().next();
+		Assert.assertEquals( 1, vmInstance.getChildren().size());
+		Assert.assertEquals( "VM1", vmInstance.getName());
+		Assert.assertEquals( 1, vmInstance.data.size());
+		Assert.assertEquals( "192.168.1.10", vmInstance.data.get( "ec2.elastic.ip" ));
+	}
+
+
+	@Test
 	public void testComponentResolutionWhenSurroundingSpaces() throws Exception {
 
 		Component vmComponent = new Component( "VM" ).installerName( "target" );

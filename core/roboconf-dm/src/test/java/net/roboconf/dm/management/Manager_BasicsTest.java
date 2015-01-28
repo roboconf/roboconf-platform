@@ -646,6 +646,8 @@ public class Manager_BasicsTest {
 	public void testExtensibilityNotifications() {
 
 		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
+		this.manager.targetAppears( null );
+		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
 		this.manager.targetAppears( new TargetHandlerMock( "hey" ));
 		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
 		this.manager.targetDisappears( new TargetHandlerMock( "hey" ));

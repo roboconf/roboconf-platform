@@ -1,0 +1,9 @@
+
+instance of VM {
+	name: VM1;
+	data.ec2.elastic.ip: 192.168.1.10;
+	
+	instance of Tomcat {
+		name: Tomcat;
+	}
+}

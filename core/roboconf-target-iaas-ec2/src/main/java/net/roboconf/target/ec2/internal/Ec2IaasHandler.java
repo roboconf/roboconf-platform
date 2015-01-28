@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -46,6 +47,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.AssociateAddressRequest;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.CreateVolumeRequest;
@@ -86,7 +88,7 @@ public class Ec2IaasHandler implements TargetHandler {
 	 */
 	@Override
 	public String createOrConfigureMachine(
-			Map<String, String> targetProperties,
+			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
@@ -125,6 +127,7 @@ public class Ec2IaasHandler implements TargetHandler {
 						}
 					}
 				}
+
 				CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
 					.withAvailabilityZone("eu-west-1c")
 					.withSnapshotId(snapshotIdToAttach);
@@ -166,6 +169,13 @@ public class Ec2IaasHandler implements TargetHandler {
 			ctr.setTags(tags);
 			ctr.withResources(instanceId);
 			ec2.createTags(ctr);
+
+			// Associate an elastic IP?
+			String elasticIp = targetProperties.get( Ec2Constants.ELASTIC_IP );
+			if( ! Utils.isEmptyOrWhitespaces( elasticIp )) {
+				AssociateAddressRequest associateAddressRequest = new AssociateAddressRequest( instanceId, elasticIp );
+				ec2.associateAddress( associateAddressRequest );
+			}
 
 		} catch( AmazonServiceException e ) {
 			this.logger.severe( "An error occurred on Amazon while instantiating a machine. " + e.getMessage());
@@ -272,18 +282,21 @@ public class Ec2IaasHandler implements TargetHandler {
 
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
 		String flavor = targetProperties.get(Ec2Constants.VM_INSTANCE_TYPE);
-		if(StringUtils.isBlank(flavor)) flavor = "t1.micro";
+		if( Utils.isEmptyOrWhitespaces( flavor ))
+			flavor = "t1.micro";
+
 		runInstancesRequest.setInstanceType( targetProperties.get(Ec2Constants.VM_INSTANCE_TYPE));
 		runInstancesRequest.setImageId( targetProperties.get( Ec2Constants.AMI_VM_NODE ));
 
-		// TBD provide kernel ID (eg. "aki-62695816")?
-		// runInstancesRequest.setKernelId(this.targetProperties.get(Ec2Constants.KERNEL_ID);
 		runInstancesRequest.setMinCount( 1 );
 		runInstancesRequest.setMaxCount( 1 );
 		runInstancesRequest.setKeyName( targetProperties.get(Ec2Constants.SSH_KEY_NAME));
+
 		String secGroup = targetProperties.get(Ec2Constants.SECURITY_GROUP_NAME);
-		if(StringUtils.isBlank(secGroup)) secGroup = "default";
-		runInstancesRequest.setSecurityGroups(Arrays.asList(secGroup));
+		if( Utils.isEmptyOrWhitespaces(secGroup))
+			secGroup = "default";
+
+		runInstancesRequest.setSecurityGroups( Arrays.asList( secGroup ));
 
 /*
 		// Create the block device mapping to describe the root partition.
