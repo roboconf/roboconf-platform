@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -98,6 +97,7 @@ public class Ec2IaasHandler implements TargetHandler {
 
 		String instanceId = null;
 		try {
+			// Create the VM
 			AmazonEC2 ec2 = createEc2Client( targetProperties );
 			String userData = DataHelpers.writeUserDataAsString(
 					messagingIp, messagingUsername, messagingPassword,
@@ -107,41 +107,37 @@ public class Ec2IaasHandler implements TargetHandler {
 			RunInstancesResult runInstanceResult = ec2.runInstances( runInstancesRequest );
 			instanceId = runInstanceResult.getReservation().getInstances().get( 0 ).getInstanceId();
 
+			// Set name the instance's tag (human-readable in AWS webapp)
+			Tag tag = new Tag( "Name", applicationName + "." + rootInstanceName );
+			CreateTagsRequest ctr = new CreateTagsRequest( Arrays.asList( instanceId ), Arrays.asList( tag ));
+			ec2.createTags( ctr );
+
+			// Do we need to wait for the VM?
+			String snapshotIdToAttach = targetProperties.get( Ec2Constants.VOLUME_SNAPSHOT_ID );
+			String elasticIp = targetProperties.get( Ec2Constants.ELASTIC_IP );
+			boolean needsElasticIp = ! Utils.isEmptyOrWhitespaces( elasticIp );
+			boolean needsSnapshot = ! Utils.isEmptyOrWhitespaces( snapshotIdToAttach );
+
+			if( needsElasticIp || needsSnapshot )
+				waitForVmToBeOnline( ec2, instanceId );
+
 			// Is there any volume (ID or name) to attach ?
-			String snapshotIdToAttach = targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
-			if(snapshotIdToAttach != null) {
-				boolean running = false;
-				while(! running) {
-					DescribeInstancesRequest dis = new DescribeInstancesRequest();
-					ArrayList<String> instanceIds = new ArrayList<String>();
-					instanceIds.add(instanceId);
-					dis.setInstanceIds(instanceIds);
-					DescribeInstancesResult disresult = ec2.describeInstances(dis);
-					running = "running".equals(disresult.getReservations().get(0).getInstances().get(0).getState().getName());
-					if(! running) {
-						try {
-							Thread.sleep(5000);
-
-						} catch (InterruptedException e) {
-							// nothing
-						}
-					}
-				}
-
+			if( needsSnapshot ) {
+				// FIXME: we should not hard-code the zone
 				CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
 					.withAvailabilityZone("eu-west-1c")
 					.withSnapshotId(snapshotIdToAttach);
 					//.withSize(2); // The size of the volume, in gigabytes.
 
 				CreateVolumeResult createVolumeResult = ec2.createVolume(createVolumeRequest);
-				running = false;
-				while(! running) {
+				boolean running = false;
+				while( ! running) {
 					DescribeVolumesRequest dvs = new DescribeVolumesRequest();
 					ArrayList<String> volumeIds = new ArrayList<String>();
 					volumeIds.add(createVolumeResult.getVolume().getVolumeId());
 					DescribeVolumesResult dvsresult = ec2.describeVolumes(dvs);
 					running = "available".equals(dvsresult.getVolumes().get(0).getState());
-					if(! running) {
+					if( ! running) {
 						try {
 							Thread.sleep(5000);
 
@@ -159,20 +155,9 @@ public class Ec2IaasHandler implements TargetHandler {
 				ec2.attachVolume( attachRequest );
 			}
 
-			// Set name tag for instance (human-readable in AWS webapp)
-			List<Tag> tags = new ArrayList<Tag>();
-			Tag t = new Tag();
-			t.setKey("Name");
-			t.setValue(applicationName + "." + rootInstanceName);
-			tags.add(t);
-			CreateTagsRequest ctr = new CreateTagsRequest();
-			ctr.setTags(tags);
-			ctr.withResources(instanceId);
-			ec2.createTags(ctr);
-
 			// Associate an elastic IP?
-			String elasticIp = targetProperties.get( Ec2Constants.ELASTIC_IP );
-			if( ! Utils.isEmptyOrWhitespaces( elasticIp )) {
+			if( needsElasticIp ) {
+				this.logger.fine( "Associating an elastic IP with the instance. IP = " + elasticIp );
 				AssociateAddressRequest associateAddressRequest = new AssociateAddressRequest( instanceId, elasticIp );
 				ec2.associateAddress( associateAddressRequest );
 			}
@@ -267,6 +252,32 @@ public class Ec2IaasHandler implements TargetHandler {
 		ec2.setEndpoint( targetProperties.get(Ec2Constants.EC2_ENDPOINT ));
 
 		return ec2;
+	}
+
+
+	/**
+	 * Waits for the VM to be online.
+	 * @param ec2 the EC2 client
+	 * @param instanceId the instance's ID
+	 */
+	private void waitForVmToBeOnline( AmazonEC2 ec2, String instanceId ) {
+
+		boolean running = false;
+		while( ! running) {
+			DescribeInstancesRequest dis = new DescribeInstancesRequest();
+			dis.setInstanceIds( Arrays.asList( instanceId ));
+
+			DescribeInstancesResult disresult = ec2.describeInstances(dis);
+			running = "running".equals( disresult.getReservations().get(0).getInstances().get(0).getState().getName());
+			if( ! running) {
+				try {
+					Thread.sleep( 5000 );
+
+				} catch( InterruptedException e ) {
+					// nothing
+				}
+			}
+		}
 	}
 
 
