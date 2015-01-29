@@ -74,7 +74,6 @@
 		
 		<!-- Testing & Utilities -->
 		<module>miscellaneous/roboconf-dm-rest-client</module>
-		<module>miscellaneous/roboconf-pax-probe</module>
 		<module>miscellaneous/roboconf-integration-tests</module>
 		<module>miscellaneous/roboconf-tooling-core</module>
 	</modules>

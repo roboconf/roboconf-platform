@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.test;
+package net.roboconf.integration.tests;
 
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
@@ -42,13 +42,13 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.integration.test.internal.IntegrationTestsUtils;
-import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
-import net.roboconf.integration.test.internal.MyHandler;
-import net.roboconf.integration.test.internal.MyTargetResolver;
-import net.roboconf.integration.test.internal.RoboconfPaxRunner;
-import net.roboconf.pax.probe.AbstractTest;
-import net.roboconf.pax.probe.DmTest;
+import net.roboconf.integration.probes.AbstractTest;
+import net.roboconf.integration.probes.DmTest;
+import net.roboconf.integration.tests.internal.IntegrationTestsUtils;
+import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.tests.internal.MyHandler;
+import net.roboconf.integration.tests.internal.MyTargetResolver;
+import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 

@@ -23,34 +23,59 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.test.internal;
+package net.roboconf.integration.tests.internal;
 
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.dm.management.ITargetResolver;
-import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.agent.internal.Agent;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class MyTargetResolver implements ITargetResolver {
+public class MyHandler implements TargetHandler {
+	public final Map<String,Agent> agentIdToAgent = new ConcurrentHashMap<String,Agent> ();
 
-	public final MyHandler handler;
 
-
-	/**
-	 * Constructor.
-	 */
-	public MyTargetResolver() {
-		this.handler = new MyHandler();
+	@Override
+	public String getTargetId() {
+		return "for test";
 	}
 
 	@Override
-	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+	public String createOrConfigureMachine(
+			Map<String,String> targetProperties,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
 	throws TargetException {
-		return new Target( this.handler, null );
+
+		Agent agent = new Agent();
+		agent.setApplicationName( applicationName );
+		agent.setRootInstanceName( rootInstanceName );
+		agent.setTargetId( "in-memory" );
+		agent.setSimulatePlugins( true );
+		agent.setIpAddress( "127.0.0.1" );
+		agent.setMessageServerIp( messagingIp );
+		agent.setMessageServerUsername( messagingUsername );
+		agent.setMessageServerPassword( messagingPassword );
+		agent.start();
+
+		String key = rootInstanceName + " @ " + applicationName;
+		this.agentIdToAgent.put( key, agent );
+
+		return key;
+	}
+
+	@Override
+	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
+
+		Agent agent = this.agentIdToAgent.remove( machineId );
+		if( agent != null )
+			agent.stop();
 	}
 }

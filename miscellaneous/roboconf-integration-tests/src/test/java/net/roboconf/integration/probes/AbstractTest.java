@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.pax.probe;
+package net.roboconf.integration.probes;
 
 import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
 import static org.ops4j.pax.exam.CoreOptions.maven;
@@ -38,6 +38,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
@@ -49,7 +50,6 @@ import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 @RunWith( PaxExam.class )
 public abstract class AbstractTest {
 
-	public static final String CURRENT_DEV_VERSION = "0.2-SNAPSHOT";
 	public static final long PLATFORM_TIMEOUT = 30000;
 
 
@@ -61,7 +61,7 @@ public abstract class AbstractTest {
 		MavenArtifactUrlReference karafUrl = maven()
 				.groupId( getGroupId())
 				.artifactId( getArtifactId())
-				.version( CURRENT_DEV_VERSION )
+				.version( getRoboconfVersion())
 				.type( "tar.gz" );
 
 		List<Option> options = new ArrayList<Option> ();
@@ -85,6 +85,11 @@ public abstract class AbstractTest {
 
 	protected String getGroupId() {
 		return "net.roboconf";
+	}
+
+
+	protected final String getRoboconfVersion() {
+		return MavenUtils.getArtifactVersion( "net.roboconf", "roboconf-core" );
 	}
 
 

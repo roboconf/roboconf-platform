@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.test;
+package net.roboconf.integration.tests;
 
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
@@ -34,13 +34,13 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.integration.test.internal.IntegrationTestsUtils;
-import net.roboconf.integration.test.internal.IntegrationTestsUtils.MyMessageProcessor;
-import net.roboconf.integration.test.internal.MyHandler;
-import net.roboconf.integration.test.internal.MyTargetResolver;
-import net.roboconf.integration.test.internal.RoboconfPaxRunner;
-import net.roboconf.pax.probe.AbstractTest;
-import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
+import net.roboconf.integration.probes.AbstractTest;
+import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
+import net.roboconf.integration.tests.internal.IntegrationTestsUtils;
+import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.tests.internal.MyHandler;
+import net.roboconf.integration.tests.internal.MyTargetResolver;
+import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
@@ -54,17 +54,18 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 /**
- * Test bulk actions.
+ * Test agent termination.
  * <p>
- * Deploy and start all instances, etc.
- * On two agents.
+ * Start two in-memory agents, one (1) depending on the other (2).
+ * We kill the VM of (2). The DM should notify (1) that (2) was killed.
+ * (1)'s state should be impacted and switch to the "starting" state.
  * </p>
  *
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerClass.class )
-public class BulkActionsTest extends DmWithAgentInMemoryTest {
+public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
 
@@ -124,25 +125,26 @@ public class BulkActionsTest extends DmWithAgentInMemoryTest {
 		Assert.assertNotNull( mysql );
 		Assert.assertNotNull( app );
 
-		this.manager.deployAndStartAll( ma, null );
-
-		// The deploy and start messages for 'app' and 'MySQL' were stored in the DM.
-		// Wait for them to be picked up by the message checker thread.
-		// 7s = 6s (Manager#TIMER_PERIOD) + 1s for security
-		Thread.sleep( 7000 );
-
 		this.manager.changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
 		this.manager.changeInstanceState( ma, app.getParent(), InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 800 );
+
 		this.manager.changeInstanceState( ma, mysql, InstanceStatus.DEPLOYED_STARTED );
 		this.manager.changeInstanceState( ma, app, InstanceStatus.DEPLOYED_STARTED );
-
-		this.manager.stopAll( ma, null );
 		Thread.sleep( 300 );
 
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, mysql.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getStatus());
+
+		// Kill the VM of MySQL. The App should be "unresolved" because one of its dependencies is missing.
+		this.manager.changeInstanceState( ma, mysql.getParent(), InstanceStatus.NOT_DEPLOYED );
+		Thread.sleep( 300 );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getStatus());
 
 		// Undeploy them all
 		this.manager.undeployAll( ma, null );

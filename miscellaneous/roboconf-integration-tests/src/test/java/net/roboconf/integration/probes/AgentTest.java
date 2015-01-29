@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.pax.probe;
+package net.roboconf.integration.probes;
 
 import java.util.List;
 

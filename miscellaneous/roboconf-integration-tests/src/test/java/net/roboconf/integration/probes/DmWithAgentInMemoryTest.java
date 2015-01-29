@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.pax.probe;
+package net.roboconf.integration.probes;
 
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 
@@ -80,19 +80,19 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-plugin-api" )
-				.version( CURRENT_DEV_VERSION )
+				.version( getRoboconfVersion())
 				.start());
 
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-agent" )
-				.version( CURRENT_DEV_VERSION )
+				.version( getRoboconfVersion())
 				.start());
 
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-target-in-memory" )
-				.version( CURRENT_DEV_VERSION )
+				.version( getRoboconfVersion())
 				.start());
 
 		return options.toArray( new Option[ options.size()]);

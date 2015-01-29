@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,31 +23,42 @@
  * limitations under the License.
  */
 
-package net.roboconf.pax.probe;
+package net.roboconf.integration.tests.internal;
 
-import java.util.List;
-
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
+import org.junit.runner.Description;
+import org.junit.runner.notification.Failure;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.model.InitializationError;
+import org.ops4j.pax.exam.junit.PaxExam;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmTest extends AbstractTest {
+public class RoboconfPaxRunner extends PaxExam {
 
-	@Override
-	protected String getArtifactId() {
-		return "roboconf-karaf-dist-dm";
+	private final Class<?> testClass;
+
+
+	/**
+	 * Constructor.
+	 * @param klass
+	 * @throws InitializationError
+	 */
+	public RoboconfPaxRunner( Class<?> klass ) throws InitializationError {
+		super( klass );
+		this.testClass = klass;
 	}
 
-	@Override
-	protected String getDirectorySuffix() {
-		return "dm";
-	}
 
-	@Configuration
-	public Option[] config() {
-		List<Option> options = getBaseOptions();
-		return options.toArray( new Option[ options.size()]);
+	@Override
+	public void run( RunNotifier notifier ) {
+
+		if( ! IntegrationTestsUtils.rabbitMqIsRunning()) {
+			Description description = Description.createSuiteDescription( this.testClass );
+			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running." )));
+
+		} else {
+			super.run( notifier );
+		}
 	}
 }

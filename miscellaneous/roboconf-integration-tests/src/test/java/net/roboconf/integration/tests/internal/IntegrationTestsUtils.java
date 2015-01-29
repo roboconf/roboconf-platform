@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.test.internal;
+package net.roboconf.integration.tests.internal;
 
 import java.io.IOException;
 

@@ -23,26 +23,29 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.test;
+package net.roboconf.integration.tests;
 
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
-import java.net.URI;
 import java.util.List;
 
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.utils.UriUtils;
-import net.roboconf.dm.rest.client.WsClient;
-import net.roboconf.integration.test.internal.RoboconfPaxRunner;
-import net.roboconf.pax.probe.AbstractTest;
-import net.roboconf.pax.probe.DmWithAgentInMemoryTest;
+import javax.inject.Inject;
 
-import org.junit.After;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.integration.probes.AbstractTest;
+import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
+import net.roboconf.integration.tests.internal.IntegrationTestsUtils;
+import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
+import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
+
+import org.apache.felix.ipojo.ComponentInstance;
+import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -52,20 +55,27 @@ import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
+import org.ops4j.pax.exam.util.Filter;
 
 /**
+ * A set of tests for the "in-memory" target.
+ * <p>
+ * We launch a Karaf installation with an agent in-memory. We load
+ * an application and instantiates a root instance. An iPojo component
+ * is created (and associated with an in-memory agent).
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerClass.class )
-public class RestServicesTest extends DmWithAgentInMemoryTest {
+public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
-	private static final String JERSEY_VERSION = "1.18.2";
-	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
 
-	private WsClient client;
-
+	@Inject
+	@Filter( "(factory.name=roboconf-agent-in-memory)" )
+	private Factory agentFactory;
 
 
 	@ProbeBuilder
@@ -78,6 +88,8 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		probe.addTest( InMemoryTargetResolver.class );
 		probe.addTest( TestUtils.class );
 		probe.addTest( TemporaryFolder.class );
+		probe.addTest( IntegrationTestsUtils.class );
+		probe.addTest( MyMessageProcessor.class );
 
 		return probe;
 	}
@@ -98,78 +110,45 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 		return OptionUtils.combine(
 				super.config(),
-
-				mavenBundle()
-					.groupId( "com.sun.jersey" )
-					.artifactId( "jersey-client" )
-					.version( JERSEY_VERSION )
-					.start(),
-
-				mavenBundle()
-					.groupId( "net.roboconf" )
-					.artifactId( "roboconf-dm-rest-client" )
-					.version( CURRENT_DEV_VERSION )
-					.start(),
-
-				systemProperty( APP_LOCATION )
-					.value( appLocation ));
-	}
-
-
-	@Before
-	public void resetManager() throws Exception {
-
-		// Configure the manager
-		configureManagerForInMemoryUsage();
-
-		// Initialize a new client
-		this.client = new WsClient( ROOT_URL );
-
-		// Wait for the REST services to be online.
-		// By default, these tests only wait for the manager to be available. We must in addition,
-		// be sure that the REST services are online. The most simple solution is to wait for the
-		// applications listing to work.
-		URI targetUri = UriUtils.urlToUri( ROOT_URL + "/applications" );
-		for( int i=0; i<10; i++ ) {
-			Thread.sleep( 1000 );
-			String s = TestUtils.readUriContent( targetUri );
-			if( "[]".equals( s ))
-				break;
-		}
-	}
-
-
-	@After
-	public void destroyClient() {
-		if( this.client != null )
-			this.client.destroy();
+				systemProperty( APP_LOCATION ).value( appLocation ));
 	}
 
 
 	@Override
 	public void run() throws Exception {
 
+		// Prepare everything
+		configureManagerForInMemoryUsage();
 		String appLocation = System.getProperty( APP_LOCATION );
-		Assert.assertNotNull( appLocation );
-		Assert.assertTrue( new File( appLocation ).exists());
 
-		// Load an application
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		this.client.getManagementDelegate().loadApplication( appLocation );
+		// Load the application
+		ManagedApplication ma = this.manager.loadNewApplication( new File( appLocation ));
+		Assert.assertNotNull( ma );
+		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
 
-		// Test the applications listing
-		List<Application> apps = this.client.getManagementDelegate().listApplications();
-		Assert.assertEquals( 1, apps.size());
+		// There is no agent yet (no root instance was deployed)
+		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
 
-		Application receivedApp = apps.get( 0 );
-		Assert.assertEquals( "Legacy LAMP", receivedApp.getName());
-		Assert.assertEquals( "sample", receivedApp.getQualifier());
+		// Instantiate a new root instance
+		Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
+		Assert.assertNotNull( rootInstance );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
-		// Check the JSon serialization
-		URI targetUri = URI.create( ROOT_URL + "/app/Legacy%20LAMP/children?instance-path=/Apache%20VM" );
-		String s = TestUtils.readUriContent( targetUri );
-		Assert.assertEquals(
-				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
-				s );
+		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 3000 );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
+
+		// A new agent must have been created
+		List<ComponentInstance> instances = this.agentFactory.getInstances();
+		Assert.assertEquals( 1, instances.size());
+
+		ComponentInstance instance = instances.get( 0 );
+		Assert.assertEquals( "MySQL VM @ Legacy LAMP", instance.getInstanceName());
+		Assert.assertEquals( ComponentInstance.VALID, instance.getState());
+		Assert.assertTrue( instance.isStarted());
+
+		// Undeploy
+		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
+		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
 	}
 }
