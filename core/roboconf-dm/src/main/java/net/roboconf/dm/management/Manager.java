@@ -203,9 +203,6 @@ public class Manager {
 	public void reconfigure() {
 
 		// Backup the current
-		if( this.timer != null )
-			this.timer.cancel();
-
 		for( ManagedApplication ma : this.appNameToManagedApplication.values())
 			saveConfiguration( ma );
 
@@ -627,12 +624,8 @@ public class Manager {
 			initialInstances = ma.getApplication().getRootInstances();
 
 		for( Instance initialInstance : initialInstances ) {
-			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance )) {
-				if( i.getParent() == null )
-					deployRoot( ma, i );
-				else
-					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STARTED );
-			}
+			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance ))
+				changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STARTED );
 		}
 	}
 
@@ -857,7 +850,7 @@ public class Manager {
 			}
 
 			// Remove useless data for the configuration backup
-			rootInstance.data.clear();
+			rootInstance.data.remove( Instance.IP_ADDRESS );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( Exception e ) {
