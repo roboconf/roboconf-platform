@@ -142,4 +142,9 @@ public interface ParsingConstants {
 	 * Keyword to create several instances at once.
 	 */
 	String PROPERTY_INSTANCE_COUNT = "count";
+
+	/**
+	 * Prefix to register private data in instances.
+	 */
+	String PROPERTY_INSTANCE_DATA_PREFIX = "data.";
 }

@@ -165,6 +165,18 @@ public class AgentMessageProcessor_StateChangeTest {
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcatVm(), InstanceStatus.NOT_DEPLOYED ));
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getTomcatVm().getStatus());
 
+		// Stop an instance in the "unresolved" state
+		app.getTomcat().setStatus( InstanceStatus.UNRESOLVED );
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getTomcat().getStatus());
+
+		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STARTED ));
+		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getTomcat().getStatus());
+
+		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STOPPED ));
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getTomcat().getStatus());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
+
 		// Undeploy an instance in the "unresolved" state
 		app.getTomcat().setStatus( InstanceStatus.UNRESOLVED );
 		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getTomcat().getStatus());

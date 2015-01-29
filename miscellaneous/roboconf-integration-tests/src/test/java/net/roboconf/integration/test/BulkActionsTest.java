@@ -136,15 +136,13 @@ public class BulkActionsTest extends DmWithAgentInMemoryTest {
 		this.manager.changeInstanceState( ma, mysql, InstanceStatus.DEPLOYED_STARTED );
 		this.manager.changeInstanceState( ma, app, InstanceStatus.DEPLOYED_STARTED );
 
-		// FIXME: uncomment the next lines #173 is reolved.
-		// Sometimes, "mysql" is stopped first and thus, "app" is in the "starting" status. => "stop" is impossible.
-//		this.manager.stopAll( ma, null );
-//		Thread.sleep( 300 );
-//
-//		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
-//		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, mysql.getStatus());
-//		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
-//		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getStatus());
+		this.manager.stopAll( ma, null );
+		Thread.sleep( 300 );
+
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, mysql.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getStatus());
 
 		// Undeploy them all
 		this.manager.undeployAll( ma, null );

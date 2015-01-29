@@ -57,7 +57,12 @@ class Unresolved extends AbstractLifeCycleManager {
 			Map<String,byte[]> fileNameToFileContent )
 	throws IOException, PluginException {
 
+		// We can undeploy
 		if( newStatus == InstanceStatus.NOT_DEPLOYED )
 			undeploy( instance, plugin );
+
+		// Stop is only a status change, no script or notification run
+		else if( newStatus == InstanceStatus.DEPLOYED_STOPPED )
+			instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
 	}
 }

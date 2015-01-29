@@ -102,6 +102,7 @@ public class ManagedApplication {
 	public void storeAwaitingMessage( Instance instance, Message msg ) {
 
 		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
+		this.logger.finer( "Storing message " + msg.getClass().getSimpleName() + " for instance " + rootInstance );
 
 		// We need synchronized access to the map.
 		// ConcurrentHashMap does not suit. We need atomic insertion in the lists (which are map values).

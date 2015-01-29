@@ -36,6 +36,7 @@ import junit.framework.Assert;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Application;
@@ -161,6 +162,37 @@ public class FromInstancesTest {
 	}
 
 
+	@Test
+	public void testExtraData() throws Exception {
+
+		// Parse
+		Component vmComponent = new Component( "VM" ).installerName( "target" );
+		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
+		tomcatComponent.exportedVariables.put( "tomcat.ip", null );
+		tomcatComponent.exportedVariables.put( "tomcat.port", "8080" );
+
+		vmComponent.addChild( tomcatComponent );
+		Graphs graphs = new Graphs();
+		graphs.getRootComponents().add( vmComponent );
+
+		File f = TestUtils.findTestFile( "/configurations/valid/instance-with-extra-data.instances" );
+		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
+		Collection<Instance> rootInstances = fromDef.buildInstances( graphs, f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 1, rootInstances.size());
+
+		Instance vmInstance = rootInstances.iterator().next();
+		Assert.assertEquals( 1, vmInstance.getChildren().size());
+		Assert.assertEquals( "VM1", vmInstance.getName());
+		Assert.assertEquals( 1, vmInstance.data.size());
+		Assert.assertEquals( "192.168.1.10", vmInstance.data.get( "ec2.elastic.ip" ));
+
+		// Write
+		compareInstances( graphs, Arrays.asList( vmInstance ), true, true );
+	}
+
+
 	private Graphs buildGraphs() {
 		Graphs graphs = new Graphs();
 
@@ -243,7 +275,7 @@ public class FromInstancesTest {
 				Assert.assertEquals( instance.getComponent(), newInstance.getComponent());
 				Assert.assertEquals( instance.getStatus(), newInstance.getStatus());
 				Assert.assertEquals( instance.getChildren().size(), newInstance.getChildren().size());
-				Assert.assertEquals( instance.data, newInstance.data);
+				Assert.assertEquals( instance.data, newInstance.data );
 				Assert.assertEquals( instance.overriddenExports.size(), newInstance.overriddenExports.size());
 
 				for( Map.Entry<String,String> entry : instance.overriddenExports.entrySet()) {
