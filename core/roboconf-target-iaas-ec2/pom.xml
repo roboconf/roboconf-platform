@@ -93,7 +93,8 @@
 						<Import-Package>
 							net.roboconf.*;version="${project.version}",
 							javax.*,
-							org.xml.*
+							org.xml.*,
+							org.w3c.*
 						</Import-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
