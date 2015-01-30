@@ -247,6 +247,21 @@ public class RuntimeModelValidatorTest {
 
 
 	@Test
+	public void testGraphs_withCaseErrorInImports() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/graph-with-invalid-case-imports.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs g = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Collection<RoboconfError> errors = RuntimeModelValidator.validate( g );
+
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, errors.iterator().next().getErrorCode());
+	}
+
+
+	@Test
 	public void testGraphs() {
 
 		Graphs graphs = new Graphs();

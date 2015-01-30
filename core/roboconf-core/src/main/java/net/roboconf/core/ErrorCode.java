@@ -122,12 +122,12 @@ public enum ErrorCode {
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but was not defined in its component." ),
 	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but could not be resolved in its component." ),
 
-	RM_CYCLE_IN_COMPONENTS( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A cycle was detected in the graph(s)." ),
+	RM_CYCLE_IN_COMPONENTS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A cycle was detected in the graph(s)." ),
 	RM_CYCLE_IN_COMPONENTS_INHERITANCE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component directly or indirectly extends itself. Such a cycle is forbidden." ),
 	RM_CYCLE_IN_FACETS_INHERITANCE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A facet directly or indirectly extends itself. Such a cycle is forbidden." ),
-	RM_NO_ROOT_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "No root component was found in the graph." ),
-	RM_NOT_A_ROOT_COMPONENT( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The graph(s) references a component as a root component while this component has ancestors." ),
-	RM_UNRESOLVABLE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is imported but no component exports it." ),
+	RM_NO_ROOT_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "No root component was found in the graph." ),
+	RM_NOT_A_ROOT_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The graph(s) references a component as a root component while this component has ancestors." ),
+	RM_UNRESOLVABLE_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is imported but no component exports it." ),
 
 	RM_EMPTY_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance name cannot be empty." ),
 	RM_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid instance name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),

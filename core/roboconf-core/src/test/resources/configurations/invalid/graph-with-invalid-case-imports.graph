@@ -1,0 +1,14 @@
+VM {
+	installer: target;
+	children: toto, MySql;
+}
+
+toto {
+      installer: whatever;
+      imports: MYSQL.*;
+}
+
+MySql {
+       installer: whatever;
+       exports: ip, port = 3306;
+}
