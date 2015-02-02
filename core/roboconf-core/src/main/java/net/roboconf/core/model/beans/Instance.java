@@ -27,12 +27,12 @@ package net.roboconf.core.model.beans;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -70,8 +70,13 @@ public class Instance implements Serializable {
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
 
 	public final Collection<String> channels = new HashSet<String> ();
-	public final Map<String,String> data = new ConcurrentHashMap<String,String>( 0 );
 	public final Map<String,String> overriddenExports = new HashMap<String,String> ();
+
+	// Data can be accessed through several threads and for various reasons.
+	// ConcurrentHashMap does not accept null values. We could wrap such a map
+	// in a method or in a sub-class to prevent these NPE, but a synchronized map
+	// should be enough and should prevent unpredictable reactions.
+	public final Map<String,String> data = Collections.synchronizedMap( new HashMap<String,String>( 0 ));
 
 	// At runtime, imported variables are grouped by prefix.
 	// The prefix is a component or a facet name.
