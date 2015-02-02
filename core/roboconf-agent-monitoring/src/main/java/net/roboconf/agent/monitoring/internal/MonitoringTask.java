@@ -88,10 +88,8 @@ public class MonitoringTask extends TimerTask {
 		for( Instance inst : InstanceHelpers.buildHierarchicalList( this.agentInterface.getRootInstance())) {
 			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( inst );
 			File measureFile = new File( dir, inst.getComponent().getName() + ".measures" );
-			if( ! measureFile.exists()) {
-				this.logger.finer( "No file with measure rules was found for instance '" + inst + "'." );
+			if( ! measureFile.exists())
 				continue;
-			}
 
 			// Read the file content
 			this.logger.fine( "A file with measure rules was found for instance '" + inst + "'." );
