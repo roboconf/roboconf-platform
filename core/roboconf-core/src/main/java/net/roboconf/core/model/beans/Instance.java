@@ -29,10 +29,10 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -70,7 +70,7 @@ public class Instance implements Serializable {
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
 
 	public final Collection<String> channels = new HashSet<String> ();
-	public final Map<String,String> data = new LinkedHashMap<String,String>( 0 );
+	public final Map<String,String> data = new ConcurrentHashMap<String,String>( 0 );
 	public final Map<String,String> overriddenExports = new HashMap<String,String> ();
 
 	// At runtime, imported variables are grouped by prefix.
