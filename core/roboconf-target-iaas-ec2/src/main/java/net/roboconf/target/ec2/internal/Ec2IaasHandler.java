@@ -106,6 +106,7 @@ public class Ec2IaasHandler implements TargetHandler {
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode( targetProperties, userData );
 			RunInstancesResult runInstanceResult = ec2.runInstances( runInstancesRequest );
 			instanceId = runInstanceResult.getReservation().getInstances().get( 0 ).getInstanceId();
+			waitForInstanceIdToBeKnown( ec2, instanceId );
 
 			// Set name the instance's tag (human-readable in AWS webapp)
 			Tag tag = new Tag( "Name", applicationName + "." + rootInstanceName );
@@ -137,14 +138,8 @@ public class Ec2IaasHandler implements TargetHandler {
 					volumeIds.add(createVolumeResult.getVolume().getVolumeId());
 					DescribeVolumesResult dvsresult = ec2.describeVolumes(dvs);
 					running = "available".equals(dvsresult.getVolumes().get(0).getState());
-					if( ! running) {
-						try {
-							Thread.sleep(5000);
-
-						} catch( InterruptedException e ) {
-							// nothing
-						}
-					}
+					if( ! running)
+						sleep( 5000 );
 				}
 
 				AttachVolumeRequest attachRequest = new AttachVolumeRequest()
@@ -260,6 +255,41 @@ public class Ec2IaasHandler implements TargetHandler {
 	 * @param ec2 the EC2 client
 	 * @param instanceId the instance's ID
 	 */
+	private void waitForInstanceIdToBeKnown( AmazonEC2 ec2, String instanceId ) {
+
+		// Most of the time, we will go through only one loop iteration.
+		// But sometimes, when EC2 is under a charge pick, the instance ID may
+		// not be propagated everywhere in EC2.
+
+		// In this case, it is better to wait a little bit.
+		// See #197 (Invalid instance ID in Amazon).
+
+		// To prevent an infinite loop, we will poll 21 times and that's it.
+		final int maxLoop = 20;
+		boolean running = false;
+		int cpt = 0;
+		while( ! running && cpt > maxLoop ) {
+			DescribeInstancesRequest dis = new DescribeInstancesRequest();
+			dis.setInstanceIds( Arrays.asList( instanceId ));
+
+			DescribeInstancesResult disresult = ec2.describeInstances( dis );
+			running = disresult.getReservations().size() > 0
+					&& disresult.getReservations().get( 0 ).getInstances().size() > 0;
+
+			if( ! running)
+				sleep( 2000 );
+		}
+
+		if( cpt > maxLoop )
+			this.logger.warning( "Could not verify that the instance " + instanceId  + " was correctly propagated in EC2's infrastructure.");
+	}
+
+
+	/**
+	 * Waits for the VM to be online.
+	 * @param ec2 the EC2 client
+	 * @param instanceId the instance's ID
+	 */
 	private void waitForVmToBeOnline( AmazonEC2 ec2, String instanceId ) {
 
 		boolean running = false;
@@ -269,14 +299,8 @@ public class Ec2IaasHandler implements TargetHandler {
 
 			DescribeInstancesResult disresult = ec2.describeInstances(dis);
 			running = "running".equals( disresult.getReservations().get(0).getInstances().get(0).getState().getName());
-			if( ! running) {
-				try {
-					Thread.sleep( 5000 );
-
-				} catch( InterruptedException e ) {
-					// nothing
-				}
-			}
+			if( ! running)
+				sleep( 5000 );
 		}
 	}
 
@@ -336,5 +360,20 @@ public class Ec2IaasHandler implements TargetHandler {
 		runInstancesRequest.setUserData( encodedUserData );
 
 		return runInstancesRequest;
+	}
+
+
+	/**
+	 * Sleeps.
+	 * @param delay a delay
+	 */
+	private void sleep( long delay ) {
+
+		try {
+			Thread.sleep( delay );
+
+		} catch( InterruptedException e ) {
+			// nothing
+		}
 	}
 }
