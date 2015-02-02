@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeMap;
@@ -76,7 +77,7 @@ public class Instance implements Serializable {
 	// ConcurrentHashMap does not accept null values. We could wrap such a map
 	// in a method or in a sub-class to prevent these NPE, but a synchronized map
 	// should be enough and should prevent unpredictable reactions.
-	public final Map<String,String> data = Collections.synchronizedMap( new HashMap<String,String>( 0 ));
+	public final Map<String,String> data = Collections.synchronizedMap( new LinkedHashMap<String,String>( 0 ));
 
 	// At runtime, imported variables are grouped by prefix.
 	// The prefix is a component or a facet name.
