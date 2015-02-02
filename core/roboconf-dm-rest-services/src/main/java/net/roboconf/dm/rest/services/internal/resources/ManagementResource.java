@@ -43,7 +43,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.target.api.TargetException;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -202,10 +201,7 @@ public class ManagementResource implements IManagementResource {
 			else
 				this.manager.undeployAll( ma, null );
 
-		} catch( IOException e ) {
-			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
-
-		} catch( TargetException e ) {
+		} catch( Exception e ) {
 			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 

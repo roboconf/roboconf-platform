@@ -611,10 +611,9 @@ public class Manager {
 	 * If null, then all the application instances are considered.
 	 * </p>
 	 *
-	 * @throws TargetException if a problem occurred with the target handler
 	 * @throws IOException if a problem occurred with the messaging
 	 */
-	public void deployAndStartAll( ManagedApplication ma, Instance instance ) throws TargetException, IOException {
+	public void deployAndStartAll( ManagedApplication ma, Instance instance ) throws IOException {
 
 		checkConfiguration();
 		Collection<Instance> initialInstances;
@@ -623,9 +622,21 @@ public class Manager {
 		else
 			initialInstances = ma.getApplication().getRootInstances();
 
+		boolean gotExceptions = false;
 		for( Instance initialInstance : initialInstances ) {
-			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance ))
-				changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STARTED );
+			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance )) {
+				try {
+					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STARTED );
+
+				} catch( Exception e ) {
+					gotExceptions = true;
+				}
+			}
+		}
+
+		if( gotExceptions ) {
+			this.logger.info( "One or several errors occurred while deploying and starting instances." );
+			throw new IOException( "One or several errors occurred while deploying and starting instances." );
 		}
 	}
 
@@ -640,9 +651,8 @@ public class Manager {
 	 * </p>
 	 *
 	 * @throws IOException if a problem occurred with the messaging
-	 * @throws TargetException if a problem occurred with a target handler
 	 */
-	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException, TargetException {
+	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException {
 
 		checkConfiguration();
 		Collection<Instance> initialInstances;
@@ -652,11 +662,22 @@ public class Manager {
 			initialInstances = ma.getApplication().getRootInstances();
 
 		// We do not need to stop all the instances, just the first children
+		boolean gotExceptions = false;
 		for( Instance initialInstance : initialInstances ) {
-			if( initialInstance.getParent() != null )
-				changeInstanceState( ma, initialInstance, InstanceStatus.DEPLOYED_STOPPED );
-			else for( Instance i : initialInstance.getChildren())
-				changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STOPPED );
+			try {
+				if( initialInstance.getParent() != null )
+					changeInstanceState( ma, initialInstance, InstanceStatus.DEPLOYED_STOPPED );
+				else for( Instance i : initialInstance.getChildren())
+					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STOPPED );
+
+			} catch( Exception e ) {
+				gotExceptions = true;
+			}
+		}
+
+		if( gotExceptions ) {
+			this.logger.info( "One or several errors occurred while stopping instances." );
+			throw new IOException( "One or several errors occurred while stopping instances." );
 		}
 	}
 
@@ -671,9 +692,8 @@ public class Manager {
 	 * </p>
 	 *
 	 * @throws IOException if a problem occurred with the messaging
-	 * @throws TargetException if a problem occurred with the target handler
 	 */
-	public void undeployAll( ManagedApplication ma, Instance instance ) throws IOException, TargetException {
+	public void undeployAll( ManagedApplication ma, Instance instance ) throws IOException {
 
 		checkConfiguration();
 		Collection<Instance> initialInstances;
@@ -683,11 +703,22 @@ public class Manager {
 			initialInstances = ma.getApplication().getRootInstances();
 
 		// We do not need to undeploy all the instances, just the first instance
+		boolean gotExceptions = false;
 		for( Instance initialInstance : initialInstances ) {
-			if( initialInstance.getParent() != null )
-				changeInstanceState( ma, initialInstance, InstanceStatus.NOT_DEPLOYED );
-			else
-				undeployRoot( ma, initialInstance );
+			try {
+				if( initialInstance.getParent() != null )
+					changeInstanceState( ma, initialInstance, InstanceStatus.NOT_DEPLOYED );
+				else
+					undeployRoot( ma, initialInstance );
+
+			} catch( Exception e ) {
+				gotExceptions = true;
+			}
+		}
+
+		if( gotExceptions ) {
+			this.logger.info( "One or several errors occurred while undeploying instances." );
+			throw new IOException( "One or several errors occurred while undeploying instances." );
 		}
 	}
 

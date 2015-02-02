@@ -128,10 +128,7 @@ public class ApplicationResource implements IApplicationResource {
 				response = Response.ok().build();
 			}
 
-		} catch( TargetException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
-
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
@@ -185,10 +182,7 @@ public class ApplicationResource implements IApplicationResource {
 				response = Response.ok().build();
 			}
 
-		} catch( TargetException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
-
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
 		}
 
