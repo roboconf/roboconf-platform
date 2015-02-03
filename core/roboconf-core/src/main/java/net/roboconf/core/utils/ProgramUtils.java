@@ -82,7 +82,7 @@ public final class ProgramUtils {
 
 		int exitValue = process.waitFor();
 		if( exitValue != 0 )
-			logger.severe( "Command execution returned a failure code. Code:" + exitValue );
+			logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
 
 		return exitValue;
 	}
