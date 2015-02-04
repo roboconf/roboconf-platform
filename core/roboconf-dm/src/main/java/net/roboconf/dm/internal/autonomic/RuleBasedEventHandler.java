@@ -27,8 +27,6 @@ package net.roboconf.dm.internal.autonomic;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -69,9 +67,10 @@ public class RuleBasedEventHandler {
 	static final String REPLICATE_SERVICE = "replicate-service";
 	static final String MAIL = "mail";
 
+	static final String AUTONOMIC_MARKER = "autonomic";
+
 	private final Manager manager;
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	final Map<String,List<Instance>> componentNameToCreatedRootInstances;
 
 
 	/**
@@ -79,7 +78,6 @@ public class RuleBasedEventHandler {
 	 * @param manager the application manager
 	 */
 	public RuleBasedEventHandler( Manager manager ) {
-		this.componentNameToCreatedRootInstances = new HashMap<String,List<Instance>> ();
 		this.manager = manager;
 	}
 
@@ -94,6 +92,7 @@ public class RuleBasedEventHandler {
 		try {
 			Map<String,AutonomicRule> rules = RulesParser.parseRules( ma );
 			AutonomicRule rule = rules.get( event.getEventId());
+			this.logger.fine( "Autonomic management event. Event ID = " + event.getEventId());
 
 			if( rule == null )
 				this.logger.fine( "No rule was found to handle events with the '" + event.getEventId() + "' ID." );
@@ -103,18 +102,17 @@ public class RuleBasedEventHandler {
 				createInstances( ma, rule.getReactionInfo());
 
 			// EVENT_ID StopService ComponentName
-			else if( DELETE_SERVICE.equalsIgnoreCase(rule.getReactionId()))
+			else if( DELETE_SERVICE.equalsIgnoreCase( rule.getReactionId()))
 				deleteInstances( ma, rule.getReactionInfo());
 
 			// EVENT_ID Mail DestinationEmail
-			else if( MAIL.equalsIgnoreCase(rule.getReactionId())) {
+			else if( MAIL.equalsIgnoreCase( rule.getReactionId()))
 				sendEmail(ma, rule.getReactionInfo());
 
 			// EVENT_ID Log LogMessage
 			// And default behavior...
-			} else {
-				this.logger.info( "AUTONOMIC Monitoring event. Info = " + rule.getReactionInfo());
-			}
+			else
+				this.logger.fine( "AUTONOMIC Monitoring event. Info = " + rule.getReactionInfo());
 
 		} catch( IOException e ) {
 			this.logger.warning( "An autonomic event could not be handled. " + e.getMessage());
@@ -131,6 +129,8 @@ public class RuleBasedEventHandler {
 	 * @throws IOException if the mail properties could not be read
 	 */
 	void sendEmail( ManagedApplication ma, String emailData ) throws IOException {
+
+		this.logger.fine( "Autonomic management: about to send an e-mail." );
 
 		/*
 		 * Sample properties:
@@ -207,6 +207,7 @@ public class RuleBasedEventHandler {
 	 */
 	void createInstances( ManagedApplication ma, String componentTemplates ) {
 
+		this.logger.fine( "Autonomic management: about to create a new instance based on '" + componentTemplates + "'." );
 		try {
 			if( componentTemplates.startsWith( "/" ))
 				componentTemplates = componentTemplates.substring( 1 );
@@ -241,16 +242,8 @@ public class RuleBasedEventHandler {
 
 			// Now, deploy and start all
 			Instance rootInstance = InstanceHelpers.findRootInstance( previousInstance );
+			rootInstance.data.put( AUTONOMIC_MARKER, "true" );
 			this.manager.deployAndStartAll( ma, rootInstance );
-
-			// Remember the VM this class has created
-			String componentName = previousInstance.getName();
-			List<Instance> vmList = this.componentNameToCreatedRootInstances.get( componentName );
-			if(vmList == null)
-				vmList = new ArrayList<Instance>();
-
-			vmList.add( rootInstance );
-			this.componentNameToCreatedRootInstances.put( componentName, vmList );
 
 		} catch( Exception e ) {
 			this.logger.warning( "The creation of instances (autonomic context) failed. " + e.getMessage());
@@ -270,15 +263,27 @@ public class RuleBasedEventHandler {
 	 */
 	void deleteInstances( ManagedApplication ma, String componentName ) {
 
+		this.logger.fine( "Autonomic management: about to delete an instance of '" + componentName + "'." );
 		try {
-			List<Instance> vmList = this.componentNameToCreatedRootInstances.get( componentName );
-			if( vmList != null ) {
-				if( vmList.size() <= 1 )
-					this.componentNameToCreatedRootInstances.remove( componentName );
+			// Find an instance which was created by the autonomic.
+			// Its root instance is annotated with the "autonomic" marker.
+			List<Instance> instances = InstanceHelpers.findInstancesByComponentName( ma.getApplication(), componentName );
+			Instance instanceToRemove = null;
 
-				Instance vmInstance = vmList.remove( 0 );
-				this.manager.undeployAll( ma, vmInstance );
-				this.manager.removeInstance( ma, vmInstance );
+			for( Instance instance : instances ) {
+				Instance rootInstance = InstanceHelpers.findRootInstance( instance );
+				String something = rootInstance.data.remove( AUTONOMIC_MARKER );
+
+				if( something != null ) {
+					instanceToRemove = rootInstance;
+					break;
+				}
+			}
+
+			// If there is one, delete it
+			if( instanceToRemove != null ) {
+				this.manager.undeployAll( ma, instanceToRemove );
+				this.manager.removeInstance( ma, instanceToRemove );
 			}
 
 		} catch( Exception e ) {
