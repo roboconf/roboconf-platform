@@ -28,6 +28,8 @@ package net.roboconf.integration.probes;
 import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureConsole;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
@@ -56,7 +58,7 @@ public abstract class AbstractTest {
 	/**
 	 * @return a non-null list of options to run Karaf from this test
 	 */
-	public List<Option> getBaseOptions() {
+	public final List<Option> getBaseOptions() {
 
 		MavenArtifactUrlReference karafUrl = maven()
 				.groupId( getGroupId())
@@ -64,6 +66,7 @@ public abstract class AbstractTest {
 				.version( getRoboconfVersion())
 				.type( "tar.gz" );
 
+		// Configure the platform
 		List<Option> options = new ArrayList<Option> ();
 		options.add( karafDistributionConfiguration()
 				.frameworkUrl( karafUrl )
@@ -73,7 +76,16 @@ public abstract class AbstractTest {
 		options.add( cleanCaches( true ));
 		options.add( keepRuntimeFolder());
 		options.add( systemTimeout( PLATFORM_TIMEOUT ));
-		options.add( logLevel( LogLevel.INFO ));
+
+		// Override the log configuration in Karaf
+		options.add( logLevel( LogLevel.ERROR ));
+		options.add( editConfigurationFilePut(
+				  "etc/org.ops4j.pax.logging.cfg",
+				  "log4j.logger.net.roboconf",
+				  "ERROR, roboconf" ));
+
+		// Do not show the Karaf console in the logs
+		options.add( configureConsole().ignoreLocalConsole());
 
 		return options;
 	}
