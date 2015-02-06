@@ -142,18 +142,6 @@
 				</executions>
 			</plugin>
 			
-			<!-- 
-				Temporary workaround for #138.
-				This will prevent post-build hook from failing.
-			 -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<configuration>
-					<skip>${deploy.karaf}</skip>
-				</configuration>
-			</plugin>
-			
 			<!-- Disable Coveralls for the Karaf distributions -->
 			<plugin>
 				<groupId>org.eluder.coveralls</groupId>
