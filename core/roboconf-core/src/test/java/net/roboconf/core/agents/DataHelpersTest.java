@@ -86,5 +86,13 @@ public class DataHelpersTest {
 		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+
+		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24:9120", "user", "pwd", "app", null );
+		props = DataHelpers.readUserData( rawProperties );
+		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
+		Assert.assertEquals( null, props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( "192.168.1.24:9120", props.getProperty( DataHelpers.MESSAGING_IP ));
+		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
+		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
 	}
 }
