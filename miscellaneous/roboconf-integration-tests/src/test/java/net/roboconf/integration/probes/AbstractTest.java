@@ -35,8 +35,12 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRunti
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,6 +57,17 @@ import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 public abstract class AbstractTest {
 
 	public static final long PLATFORM_TIMEOUT = 30000;
+
+
+	/**
+	 * @return a new temporary directory under the "target" directory
+	 * @throws IOException
+	 */
+	protected File newFolder() throws IOException {
+		File dir = new File( "roboconf-dm-it", UUID.randomUUID().toString());
+		Utils.createDirectory( dir );
+		return dir;
+	}
 
 
 	/**
