@@ -35,8 +35,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
@@ -70,6 +72,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -107,6 +110,7 @@ import net.roboconf.target.api.TargetHandler;
  * @author Noël - LIG
  * @author Pierre-Yves Gibello - Linagora
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class Manager {
 
@@ -127,6 +131,9 @@ public class Manager {
 	ITargetResolver targetResolver;
 	Timer timer;
 
+	// The list of Echo messages received from the debug queue.
+	// Don't forget to remove messages after use.
+	private final List<MsgEcho> echoMessages = new ArrayList<MsgEcho>();
 
 	/**
 	 * Constructor.
@@ -156,6 +163,14 @@ public class Manager {
 		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
 
 		reconfigure();
+
+		// Starts listening to the debug queue.
+		try {
+			this.messagingClient.listenToDebugMessages( ListenerCommand.START );
+		} catch ( IOException e ) {
+			this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
+		}
+
 		this.logger.info( "The DM was launched." );
 	}
 
@@ -175,6 +190,14 @@ public class Manager {
 		}
 
 		if( this.messagingClient != null ) {
+
+			// Stops listening to the debug queue.
+			try {
+				this.messagingClient.listenToDebugMessages( ListenerCommand.STOP );
+			} catch ( IOException e ) {
+				this.logger.log( Level.WARNING, "Cannot stop to listen to the debug queue", e );
+			}
+
 			this.messagingClient.getMessageProcessor().stopProcessor();
 			this.messagingClient.getMessageProcessor().interrupt();
 			try {
@@ -953,6 +976,138 @@ public class Manager {
 					Utils.logException( this.logger, e );
 				}
 			}
+		}
+	}
+
+	/**
+	 * Ping the message queue with an {@link net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho Echo message}.
+	 *
+	 * @param message the content of the Echo message to send.
+	 * @param timeout the timeout in milliseconds (ms) to wait before considering the Echo message is lost.
+	 * @return {@code true} if the sent Echo message has been received before the {@code timeout}, {@code false}
+	 * otherwise.
+	 * @throws java.lang.InterruptedException if interrupted while waiting for the Echo message.
+	 * @throws java.io.IOException if something bad happened.
+	 */
+	public boolean pingMessageQueue( String message, long timeout ) throws InterruptedException, IOException {
+
+		// Step 1. Send the Echo message.
+		try {
+			this.messagingClient.sendMessageToDebug( new MsgEcho( message ), timeout );
+		} catch ( IOException e ) {
+			logger.log( Level.SEVERE, "Cannot send Echo message on debug queue", e );
+			throw e;
+		}
+		logger.fine( "Sent Echo message on debug queue. Message=" + message + ", timeout=" + timeout + "ms" );
+
+		// Step 2. Wait for the Echo message to be received.
+		boolean hasFound = false;
+		long deadline = System.currentTimeMillis() + timeout;
+		while (true) {
+			synchronized ( this.echoMessages ) {
+				// Check all the Echo messages to find ours.
+				for (Iterator<MsgEcho> i = echoMessages.iterator(); i.hasNext(); ) {
+					final MsgEcho m = i.next();
+					if ( m.getContent().equals( message ) ) {
+						hasFound = true;
+						i.remove();
+						break;
+					}
+				}
+				long now = System.currentTimeMillis();
+				if ( hasFound || now >= deadline ) {
+					break;
+				}
+
+				// Wait for an Echo message notification!
+				this.echoMessages.wait( deadline - now );
+			}
+		}
+
+		return hasFound;
+	}
+
+
+	/**
+	 * Ping the agent with the specified {@code rootInstanceName} with an
+	 * {@link net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho Echo message}.
+	 *
+	 *
+	 * @param applicationName  the name of the application holding the targeted agent.
+	 * @param rootInstanceName the instance name of the agent to ping.
+	 * @param message          the content of the Echo message to send.
+	 * @param timeout          the timeout in milliseconds (ms) to wait before considering the Echo message is lost.
+	 * @return {@code true} if the sent Echo message has been received before the {@code timeout}, {@code false}
+	 * otherwise.
+	 * @throws java.lang.InterruptedException if interrupted while waiting for the ping.
+	 * @throws java.io.IOException            if something bad happened.
+	 */
+	public boolean pingAgent( String applicationName, String rootInstanceName, String message, long timeout )
+			throws InterruptedException, IOException {
+
+		// Stop 0. Get the application & instance objects.
+		final ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
+		if (ma == null) {
+			throw new NoSuchElementException( "No application with name: " + applicationName );
+		}
+		final Application app = ma.getApplication();
+		// TODO find the utility method to find the root instance from its name.
+		Instance instance = null;
+		for (Instance i : app.getRootInstances()) {
+			if (i.getName().equals( rootInstanceName )) {
+				instance = i;
+				break;
+			}
+		}
+		if (instance == null) {
+			throw new NoSuchElementException( "No root instance with name " + rootInstanceName + " in application "
+					+ applicationName);
+		}
+
+		// Step 1. Send the PING request message.
+		MsgEcho ping = new MsgEcho( "PING:" + message );
+		this.messagingClient.sendMessageToAgent( app, instance, ping );
+		logger.fine( "Sent PING request message=" + message + "timeout=" + timeout + "ms to application="
+				+ applicationName + ", agent=" + rootInstanceName );
+
+		// Step 2. Wait for the PONG response from the agent.
+		boolean hasFound = false;
+		final long deadline = System.currentTimeMillis() + timeout;
+		final String expectedMessage = "PONG:" + message;
+		while (true) {
+			synchronized ( this.echoMessages ) {
+				// Check all the Echo messages to find our response.
+				for (Iterator<MsgEcho> i = echoMessages.iterator(); i.hasNext(); ) {
+					final MsgEcho m = i.next();
+					if ( m.getContent().equals( expectedMessage ) ) {
+						hasFound = true;
+						i.remove();
+						break;
+					}
+				}
+				long now = System.currentTimeMillis();
+				if ( hasFound || now >= deadline ) {
+					break;
+				}
+
+				// Wait for an Echo message notification!
+				this.echoMessages.wait( deadline - now );
+			}
+		}
+
+		return hasFound;
+	}
+
+
+	/**
+	 * Notify the DM that an Echo message has been received.
+	 *
+	 * @param message the received message.
+	 */
+	public void notifyMsgEchoReceived( MsgEcho message ) {
+		synchronized ( this.echoMessages ) {
+			this.echoMessages.add( message );
+			this.echoMessages.notifyAll();
 		}
 	}
 }

@@ -45,6 +45,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
 
 /**
@@ -54,6 +55,7 @@ import net.roboconf.messaging.processors.AbstractMessageProcessor;
  * </p>
  *
  * @author Noël - LIG
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
@@ -95,6 +97,11 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 		else if(message instanceof MsgNotifAutonomic)
 			processMsgMonitoringEvent((MsgNotifAutonomic) message );
+
+		else if ( message instanceof MsgEcho ) {
+			// Directly send to the DM.
+			this.manager.notifyMsgEchoReceived( (MsgEcho) message );
+		}
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());

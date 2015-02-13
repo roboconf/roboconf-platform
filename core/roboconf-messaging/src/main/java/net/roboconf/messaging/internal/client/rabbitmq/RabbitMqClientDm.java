@@ -42,7 +42,9 @@ import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
@@ -50,9 +52,11 @@ import com.rabbitmq.client.QueueingConsumer;
 /**
  * The RabbitMQ client for the DM.
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class RabbitMqClientDm implements IDmClient {
 
+	private static final String DEBUG_QUEUE_NAME = "dm.debug";
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String messageServerIp, messageServerUsername, messageServerPassword;
 	private LinkedBlockingQueue<Message> messageQueue;
@@ -60,6 +64,9 @@ public class RabbitMqClientDm implements IDmClient {
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<String,String> ();
 	Channel channel;
 
+	// The consumer tag for the debug queue consumer.
+	// Also used as a fleg to check if debug message listener is started or not.
+	private String debugConsumerTag;
 
 
 	/*
@@ -118,6 +125,9 @@ public class RabbitMqClientDm implements IDmClient {
 
 		// Be notified when a message does not arrive in a queue (i.e. nobody is listening)
 		this.channel.addReturnListener( new DmReturnListener());
+
+		// Declare the DM debug-dedicated queue.
+		this.channel.queueDeclare( DEBUG_QUEUE_NAME, true, false, true, null );
 	}
 
 
@@ -215,6 +225,76 @@ public class RabbitMqClientDm implements IDmClient {
 			String threadName = "Roboconf - Queue listener for the DM";
 			String id = "The DM";
 			new ListeningThread( threadName, this.logger, consumer, this.messageQueue, id ).start();
+		}
+	}
+
+
+	@Override
+	public void sendMessageToDebug( MsgEcho echo, long ttl ) throws IOException {
+		this.logger.fine( "The DM sends a debug message to " + DEBUG_QUEUE_NAME + ". Message: " + echo.getContent() );
+
+		this.channel.basicPublish(
+				"",                                             // no exchange
+				DEBUG_QUEUE_NAME,                               // the queue
+				new BasicProperties.Builder()                   // Message properties (ttl)
+						.expiration( Long.toString( ttl ) )
+						.build(),
+				SerializationUtils.serializeObject( echo ) );    // Message content
+
+		this.logger.fine( "The DM sent a debug message to " + DEBUG_QUEUE_NAME + ". Message: " + echo.getContent() );
+	}
+
+
+	@Override
+	public void listenToDebugMessages( ListenerCommand command ) throws IOException {
+		switch (command) {
+			case START:
+				// Check we're not already listening!
+				if ( this.debugConsumerTag != null ) {
+					this.logger.finer( "The DM is already listening to its debug queue." );
+					return;
+				}
+				if ( this.channel != null && this.channel.isOpen() ) {
+					// Create the debug message consumer and start consuming.
+					// No auto-ACK. Messages must be acknowledged manually by the consumer.
+					QueueingConsumer debugConsumer = new QueueingConsumer( this.channel );
+					debugConsumerTag = this.channel.basicConsume(
+							DEBUG_QUEUE_NAME,       // queue
+							false,                  // no auto ACK
+							DEBUG_QUEUE_NAME,       // consumer tag set to the queue name
+							false,                  // get local messages (ESSENTIAL!)
+							false,                  // consumer is not exclusive
+							null,                   // no parameters
+							debugConsumer );        // the consumer
+					this.logger.fine( "The DM starts listening to its debug queue" );
+					// Starts the listening thread!
+					new ListeningThread(
+							"Roboconf - Debug queue listener",
+							this.logger,
+							debugConsumer,
+							this.messageQueue,
+							"The DM (debug)" ).start();
+				}
+				else {
+					this.logger.warning( "Cannot start listening to debug queue: channel closed" );
+				}
+				break;
+			case STOP:
+				// Check we are listening!
+				if ( this.debugConsumerTag == null ) {
+					this.logger.finer( "The DM is not listening to its debug queue." );
+					return;
+				}
+				if ( this.channel != null && this.channel.isOpen() ) {
+					// Cancel the consumer.
+					this.channel.basicCancel( this.debugConsumerTag );
+					this.debugConsumerTag = null;
+					this.logger.fine( "The DM stops listening to its debug queue" );
+				}
+				else {
+					this.logger.warning( "Cannot stop listening to debug queue: channel closed" );
+				}
+				break;
 		}
 	}
 

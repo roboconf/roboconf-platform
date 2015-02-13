@@ -34,10 +34,12 @@ import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.client.MessageServerClientFactory;
 import net.roboconf.messaging.internal.client.dismiss.DismissClientDm;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> implements IDmClient {
 
@@ -121,6 +123,18 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 	@Override
 	public void listenToAgentMessages( Application application, ListenerCommand command ) throws IOException {
 		getMessagingClient().listenToAgentMessages( application, command );
+	}
+
+
+	@Override
+	public void sendMessageToDebug( MsgEcho echo, long ttl ) throws IOException {
+		getMessagingClient().sendMessageToDebug( echo, ttl );
+	}
+
+
+	@Override
+	public void listenToDebugMessages( ListenerCommand command ) throws IOException {
+		getMessagingClient().listenToDebugMessages( command );
 	}
 
 

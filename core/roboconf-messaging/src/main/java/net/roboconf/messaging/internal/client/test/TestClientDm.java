@@ -35,10 +35,12 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
 /**
  * A class to mock the messaging server and the IaaS.
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class TestClientDm implements IDmClient {
 
@@ -80,6 +82,21 @@ public class TestClientDm implements IDmClient {
 	@Override
 	public void listenToAgentMessages( Application application, ListenerCommand command )
 	throws IOException {
+		// nothing, we do not care
+	}
+
+	@Override
+	public void sendMessageToDebug( MsgEcho echo, long ttl ) throws IOException {
+
+		if ( this.failMessageSending.get() )
+			throw new IOException( "Message sending was configured to fail." );
+
+		this.sentMessages.add( echo );
+
+	}
+
+	@Override
+	public void listenToDebugMessages( ListenerCommand command ) throws IOException {
 		// nothing, we do not care
 	}
 

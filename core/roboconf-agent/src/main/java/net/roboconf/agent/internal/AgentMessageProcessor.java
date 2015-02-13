@@ -57,6 +57,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
@@ -128,6 +129,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			else if( message instanceof MsgCmdResynchronize )
 				processMsgResynchronize((MsgCmdResynchronize) message );
 
+			else if (message instanceof MsgEcho )
+				processMsgEcho((MsgEcho) message );
+
 			else
 				this.logger.warning( getName() + " got an undetermined message to process. " + message.getClass().getName());
 
@@ -139,6 +143,18 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
+	}
+
+
+	/**
+	 * Respond to an Echo 'PING' message sent by the DM.
+	 * @param message the Echo 'PING' message sent by the DM.
+	 */
+	void processMsgEcho( MsgEcho message ) throws IOException {
+		final String content = message.getContent();
+		MsgEcho response = new MsgEcho( content.replaceFirst( "^PING:", "PONG:" ) );
+		this.logger.fine( "Responding to DM Echo message " + content + "with response " + response.getContent());
+		this.messagingClient.sendMessageToTheDm( response );
 	}
 
 
