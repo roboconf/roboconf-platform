@@ -183,13 +183,30 @@ public class AgentProperties {
 	 */
 	public static AgentProperties readIaasProperties( Properties props ) {
 
+		// Given #213, we have to replace some characters escaped by AWS (and probably Openstack too).
 		AgentProperties result = new AgentProperties();
-		result.setApplicationName( props.getProperty( DataHelpers.APPLICATION_NAME ));
-		result.setRootInstanceName( props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
-		result.setMessageServerIp( props.getProperty( DataHelpers.MESSAGING_IP ));
-		result.setMessageServerUsername( props.getProperty( DataHelpers.MESSAGING_USERNAME ));
-		result.setMessageServerPassword( props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
+		result.setApplicationName( updatedField( props, DataHelpers.APPLICATION_NAME ));
+		result.setRootInstanceName( updatedField( props, DataHelpers.ROOT_INSTANCE_NAME ));
+		result.setMessageServerIp( updatedField( props, DataHelpers.MESSAGING_IP ));
+		result.setMessageServerUsername( updatedField( props, DataHelpers.MESSAGING_USERNAME ));
+		result.setMessageServerPassword( updatedField( props, DataHelpers.MESSAGING_PASSWORD ));
 
 		return result;
+	}
+
+
+	/**
+	 * Gets a property and updates it to prevent escaped characters.
+	 * @param props
+	 * @param fieldName
+	 * @return an updated string
+	 */
+	private static String updatedField( Properties props, String fieldName ) {
+
+		String property = props.getProperty( fieldName );
+		if( property != null )
+			property = property.replace( "\\:", ":" );
+
+		return property;
 	}
 }

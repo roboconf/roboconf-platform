@@ -76,8 +76,7 @@ public final class UserDataUtils {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 
 			Utils.copyStream( in, os );
-			byte[] bytes = Base64.decodeBase64( os.toByteArray());
-			userData = new String( bytes, "UTF-8" );
+			userData = os.toString( "UTF-8" );
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
