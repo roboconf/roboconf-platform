@@ -297,6 +297,13 @@ public class Agent implements AgentMessagingInterface {
 	 */
 	public void reconfigure() {
 
+		// This method is invoked when properties change.
+		// It is not related to life cycle (start/stop).
+		if( this.messagingClient == null ) {
+			this.logger.info( "The agent has not yet been started. Configuration is dropped." );
+			return;
+		}
+
 		// Do we need to override properties with user data?
 		if( Utils.isEmptyOrWhitespaces( this.targetId )) {
 			this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );

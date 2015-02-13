@@ -46,7 +46,6 @@ import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -87,7 +86,6 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		probe.addTest( DmWithAgentInMemoryTest.class );
 		probe.addTest( InMemoryTargetResolver.class );
 		probe.addTest( TestUtils.class );
-		probe.addTest( TemporaryFolder.class );
 		probe.addTest( IntegrationTestsUtils.class );
 		probe.addTest( MyMessageProcessor.class );
 

@@ -43,7 +43,6 @@ import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -77,7 +76,6 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		probe.addTest( DmWithAgentInMemoryTest.class );
 		probe.addTest( InMemoryTargetResolver.class );
 		probe.addTest( TestUtils.class );
-		probe.addTest( TemporaryFolder.class );
 
 		return probe;
 	}

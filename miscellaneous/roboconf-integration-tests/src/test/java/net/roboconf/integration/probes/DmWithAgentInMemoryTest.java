@@ -39,8 +39,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.util.Filter;
@@ -49,9 +47,6 @@ import org.ops4j.pax.exam.util.Filter;
  * @author Vincent Zurczak - Linagora
  */
 public class DmWithAgentInMemoryTest extends AbstractTest {
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
 
 	@Inject
 	protected Manager manager;
@@ -115,7 +110,7 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 	 */
 	protected void configureManagerForInMemoryUsage() throws IOException {
 
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
 		this.manager.setTargetResolver( new InMemoryTargetResolver( this.inMemoryIaas ));
 		this.manager.reconfigure();
 	}

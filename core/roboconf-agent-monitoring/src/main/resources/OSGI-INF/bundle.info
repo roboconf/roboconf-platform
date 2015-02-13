@@ -1,0 +1,11 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    The agent's monitoring module is in charge of verifying assertions on the machine it runs on.
+    These assertions can be checked by polling a LiveStatus server (like a Nagios or Shinken agent),
+    by polling a REST service or a HTTP(s) resources, or by checking the file system.
+    
+    These assertions are sent to the agent by the DM.
+    When one is verified, this bundle sends a message to the DM that may take (or not, depending
+    on its configuration) an automatic and pre-configured action.

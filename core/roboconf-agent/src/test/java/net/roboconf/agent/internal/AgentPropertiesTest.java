@@ -81,6 +81,21 @@ public class AgentPropertiesTest {
 
 
 	@Test
+	public void testReadIaasProperties_withSpecialCharacters() throws Exception {
+
+		String s = DataHelpers.writeUserDataAsString( "ip\\:port", "user", "pwd:with:two;dots\\:", "my app", "root name" );
+
+		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
+		Assert.assertEquals( "my app", ad.getApplicationName());
+		Assert.assertNull( ad.getIpAddress());
+		Assert.assertEquals( "ip:port", ad.getMessageServerIp());
+		Assert.assertEquals( "pwd:with:two;dots:", ad.getMessageServerPassword());
+		Assert.assertEquals( "user", ad.getMessageServerUsername());
+		Assert.assertEquals( "root name", ad.getRootInstanceName());
+	}
+
+
+	@Test
 	public void testValidate() {
 
 		AgentProperties ad = new AgentProperties();

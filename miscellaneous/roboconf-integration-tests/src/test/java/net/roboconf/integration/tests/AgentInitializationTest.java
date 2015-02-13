@@ -53,8 +53,6 @@ import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -84,9 +82,6 @@ public class AgentInitializationTest extends DmTest {
 	@Inject
 	protected Manager manager;
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
 
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
@@ -96,7 +91,6 @@ public class AgentInitializationTest extends DmTest {
 		probe.addTest( AbstractTest.class );
 		probe.addTest( DmTest.class );
 		probe.addTest( TestUtils.class );
-		probe.addTest( TemporaryFolder.class );
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
@@ -141,7 +135,7 @@ public class AgentInitializationTest extends DmTest {
 		// Update the manager
 		MyTargetResolver myResolver = new MyTargetResolver();
 
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
 		this.manager.setTargetResolver( myResolver );
 		this.manager.reconfigure();
 

@@ -170,6 +170,15 @@ public class Agent_BasicsTest {
 	@Test
 	public void testMiscPlugins() {
 
+		// No error expected.
+		Agent agent = new Agent();
+		agent.reconfigure();
+	}
+
+
+	@Test
+	public void testReconfigureWhenAgentIsNotStarted() {
+
 		Agent agent = new Agent();
 		agent.pluginAppears( null );
 		agent.pluginAppears( new PluginMock());

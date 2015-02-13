@@ -43,7 +43,6 @@ import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
 import org.junit.Assert;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -77,7 +76,6 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 		probe.addTest( AbstractTest.class );
 		probe.addTest( DmWithAgentInMemoryTest.class );
 		probe.addTest( TestUtils.class );
-		probe.addTest( TemporaryFolder.class );
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
@@ -111,7 +109,7 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 	public void run() throws Exception {
 
 		// Update the manager
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
 		this.manager.reconfigure();
 
 		// Load the application

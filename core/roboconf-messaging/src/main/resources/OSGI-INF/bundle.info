@@ -1,0 +1,6 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    This bundle is in charge of abstracting the messaging business of Roboconf.
+    It also embeds some implementations for this API (including one based on RabbitMQ).

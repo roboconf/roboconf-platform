@@ -99,7 +99,7 @@ public final class UserDataUtils {
 
 			Utils.copyStream( in, os );
 			String ip = os.toString( "UTF-8" );
-			if(! AgentUtils.isValidIP(ip)) {
+			if(! AgentUtils.isValidIP( ip )) {
 				// Failed retrieving public IP: try private one instead
 				Utils.closeQuietly( in );
 				userDataUrl = new URL( "http://169.254.169.254/latest/meta-data/local-ipv4" );
@@ -110,7 +110,7 @@ public final class UserDataUtils {
 				ip = os.toString( "UTF-8" );
 			}
 
-			if(! AgentUtils.isValidIP(ip))
+			if( ! AgentUtils.isValidIP( ip ))
 				throw new IOException("No IP address could be retrieved (either public-ipv4 or local-ipv4)");
 
 			result.setIpAddress( os.toString( "UTF-8" ));

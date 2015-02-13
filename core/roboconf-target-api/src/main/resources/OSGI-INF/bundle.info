@@ -1,0 +1,6 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    This bundle provides the API to define a new deployment target handler.
+    These handlers are in charge of creating or terminating machines on which Roboconf can deploy Software.
