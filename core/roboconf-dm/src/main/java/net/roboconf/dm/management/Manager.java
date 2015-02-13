@@ -147,8 +147,8 @@ public class Manager {
 
 		this.logger.info( "The DM is about to be launched." );
 
-		this.messagingClient = new RCDm( this );
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
+		this.messagingClient = new RCDm( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
 		this.timer = new Timer( "Roboconf's Management Timer", false );
