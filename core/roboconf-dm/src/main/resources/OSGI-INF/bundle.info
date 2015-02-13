@@ -1,0 +1,8 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    The DM (Deployment Manager) is the administration part of Roboconf.
+    It can talk with infrastructure handlers (virtualized infrastructures, cloud managers, etc)
+    and transmit instructions to Roboconf agents. It is also in charge of the validation and
+    state maintenance of all the applications deployed with Roboconf.

@@ -1,0 +1,6 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    This bundle embeds common classes for the DM's REST API and the Java REST client.
+    It contains in particular the mapping between Java objects and JSon structures.

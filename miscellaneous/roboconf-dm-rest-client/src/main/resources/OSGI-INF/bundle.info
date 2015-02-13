@@ -1,0 +1,6 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    The DM's REST client provides a Java REST client which is compliant with
+    the REST API exposed by Roboconf's DM.
