@@ -45,13 +45,17 @@ import net.roboconf.target.api.TargetHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class Manager_LifeCycleTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 	private Manager manager;
 	private TestClientDm msgClient;
 	private TestTargetResolver targetResolver;
@@ -62,6 +66,7 @@ public class Manager_LifeCycleTest {
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
+		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
 		this.manager.start();
 
@@ -256,6 +261,7 @@ public class Manager_LifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 
 		this.manager = new Manager();
+		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 		this.manager.changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
 	}
@@ -347,6 +353,7 @@ public class Manager_LifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 
 		this.manager = new Manager();
+		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 		this.manager.deployRoot( ma, app.getMySqlVm());
 	}
@@ -485,6 +492,7 @@ public class Manager_LifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 
 		this.manager = new Manager();
+		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 		this.manager.undeployRoot( ma, app.getMySqlVm());
 	}
@@ -634,6 +642,7 @@ public class Manager_LifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 
 		this.manager = new Manager();
+		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 		this.manager.deployAndStartAll( ma, app.getMySqlVm());
 	}
@@ -724,6 +733,7 @@ public class Manager_LifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 
 		this.manager = new Manager();
+		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 		this.manager.stopAll( ma, app.getMySqlVm());
 	}
@@ -802,6 +812,7 @@ public class Manager_LifeCycleTest {
 		ManagedApplication ma = new ManagedApplication( app, null );
 
 		this.manager = new Manager();
+		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 		this.manager.undeployAll( ma, app.getMySqlVm());
 	}
