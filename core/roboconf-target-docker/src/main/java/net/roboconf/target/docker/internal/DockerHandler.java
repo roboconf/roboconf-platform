@@ -25,6 +25,10 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -34,6 +38,7 @@ import net.roboconf.target.api.TargetHandler;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.SearchItem;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.jaxrs.DockerClientBuilder;
@@ -82,8 +87,34 @@ public class DockerHandler implements TargetHandler {
 
 		this.logger.fine( "Creating a new machine." );
 		DockerClient dockerClient = createDockerClient( targetProperties );
+
+		String imageId = targetProperties.get(IMAGE_ID);
+		List<SearchItem> dockerSearch = dockerClient.searchImagesCmd(targetProperties.get(IMAGE_ID)).exec();
+		if(dockerSearch == null || dockerSearch.isEmpty()) {
+			//TODO define constant...
+			String pack = targetProperties.get("roboconf.agent.package");
+			if(pack == null) throw new TargetException("Docker image " + imageId + " not found");
+			
+			// Generate docker image
+			InputStream response = null;
+			try {
+				response = dockerClient.buildImageCmd(new File(pack)).exec();
+				// Check response (last line = "Successfully built <imageId>") ...
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				Utils.copyStream(response, out);
+				String s = out.toString("UTF-8").trim();
+				imageId = s.substring(s.lastIndexOf(' ') + 1).substring(0, 12);
+				// Tag new image with specified ID (so it gets reused next time)
+				dockerClient.tagImageCmd(imageId, targetProperties.get(IMAGE_ID), targetProperties.get(IMAGE_ID)).exec();
+			} catch (Exception e) {
+				throw new TargetException(e);
+			} finally {
+				Utils.closeQuietly(response);
+			}
+		}
+		
 		CreateContainerResponse container = dockerClient
-			.createContainerCmd( targetProperties.get( IMAGE_ID ))
+			.createContainerCmd(imageId)
 			.withCmd("/usr/local/roboconf-agent/start.sh",
 						"application-name=" + applicationName,
 						"root-instance-name=" + rootInstanceName,
