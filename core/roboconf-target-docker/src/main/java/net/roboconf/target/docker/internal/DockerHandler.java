@@ -55,6 +55,8 @@ public class DockerHandler implements TargetHandler {
 	static String USER = "docker.user";
 	static String PASSWORD = "docker.password";
 	static String EMAIL = "docker.email";
+	static String AGENT_PACKAGE = "docker.agent.package";
+	static String AGENT_JDK_AND_PACKAGES = "docker.agent.jdk-packages";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
@@ -91,14 +93,15 @@ public class DockerHandler implements TargetHandler {
 		String imageId = targetProperties.get(IMAGE_ID);
 		List<SearchItem> dockerSearch = dockerClient.searchImagesCmd(targetProperties.get(IMAGE_ID)).exec();
 		if(dockerSearch == null || dockerSearch.isEmpty()) {
-			//TODO define constant...
-			String pack = targetProperties.get("roboconf.agent.package");
+			String pack = targetProperties.get(AGENT_PACKAGE);
 			if(pack == null) throw new TargetException("Docker image " + imageId + " not found");
 			
 			// Generate docker image
 			InputStream response = null;
+			File dockerfile = null;
 			try {
-				response = dockerClient.buildImageCmd(new File(pack)).exec();
+				dockerfile = (new DockerfileGenerator(pack, targetProperties.get(AGENT_JDK_AND_PACKAGES))).generateDockerfile();
+				response = dockerClient.buildImageCmd(dockerfile).exec();
 				// Check response (last line = "Successfully built <imageId>") ...
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				Utils.copyStream(response, out);
@@ -110,9 +113,12 @@ public class DockerHandler implements TargetHandler {
 				throw new TargetException(e);
 			} finally {
 				Utils.closeQuietly(response);
+				if(dockerfile != null) dockerfile.delete();
 			}
+		} else if(dockerSearch.size() > 1) { // Multiple images found for key: maybe due to searching public online docker registries...
+			throw new TargetException("Ambiguous docker image name " + imageId + ": multiple images found ! Maybe your registry is not just local ?");
 		}
-		
+
 		CreateContainerResponse container = dockerClient
 			.createContainerCmd(imageId)
 			.withCmd("/usr/local/roboconf-agent/start.sh",
