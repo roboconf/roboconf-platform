@@ -56,7 +56,7 @@ public class DockerHandler implements TargetHandler {
 	static String PASSWORD = "docker.password";
 	static String EMAIL = "docker.email";
 	static String AGENT_PACKAGE = "docker.agent.package";
-	static String AGENT_JDK_AND_PACKAGES = "docker.agent.jdk-packages";
+	static String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
@@ -100,7 +100,7 @@ public class DockerHandler implements TargetHandler {
 			InputStream response = null;
 			File dockerfile = null;
 			try {
-				dockerfile = (new DockerfileGenerator(pack, targetProperties.get(AGENT_JDK_AND_PACKAGES))).generateDockerfile();
+				dockerfile = (new DockerfileGenerator(pack, targetProperties.get(AGENT_JRE_AND_PACKAGES))).generateDockerfile();
 				response = dockerClient.buildImageCmd(dockerfile).exec();
 				// Check response (last line = "Successfully built <imageId>") ...
 				ByteArrayOutputStream out = new ByteArrayOutputStream();

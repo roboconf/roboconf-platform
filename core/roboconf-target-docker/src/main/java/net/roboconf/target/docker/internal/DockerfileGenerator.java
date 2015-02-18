@@ -33,12 +33,23 @@ import java.nio.file.Path;
 
 import net.roboconf.core.utils.Utils;
 
+/**
+ * Generate a Dockerfile directory with all necessary stuff to setup.
+ * a docker image with a roboconf agent.
+ * @author Pierre-Yves Gibello - Linagora
+ *
+ */
 public class DockerfileGenerator {
 
 	private File agentPack;
 	private String packages = "openjdk-7-jre-headless";
 	private boolean isTar = true;
 
+	/**
+	 * Constructor for docker file generator.
+	 * @param agentPack path to the agent tarball or zip
+	 * @param packages packages to be installed using apt-get (including JRE)
+	 */
 	public DockerfileGenerator(String agentPack, String packages) {
 		this.agentPack = new File(agentPack);
 		if(packages != null) this.packages = packages;
@@ -47,6 +58,11 @@ public class DockerfileGenerator {
 		}
 	}
 	
+	/**
+	 * Generate docker file.
+	 * @return path to a full-fledged temporary Dockerfile directory
+	 * @throws IOException
+	 */
 	public File generateDockerfile() throws IOException {
 		// Create temporary dockerfile directory
 		Path dockerfile = Files.createTempDirectory("roboconf_");
