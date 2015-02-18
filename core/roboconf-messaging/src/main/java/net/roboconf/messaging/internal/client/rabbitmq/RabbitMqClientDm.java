@@ -65,7 +65,7 @@ public class RabbitMqClientDm implements IDmClient {
 	Channel channel;
 
 	// The consumer tag for the debug queue consumer.
-	// Also used as a fleg to check if debug message listener is started or not.
+	// Also used as a flag to check if debug message listener is started or not.
 	private String debugConsumerTag;
 
 

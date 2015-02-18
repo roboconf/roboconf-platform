@@ -183,12 +183,12 @@ public class DebugResource implements IDebugResource {
 		} catch ( IOException e ) {
 			// Something bad has happened!
 			final String eMessage = "Unable to send Echo message " + message;
-			logger.log( Level.SEVERE, eMessage, e );
+			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
 			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
 		} catch ( InterruptedException e ) {
 			// Something unexpected has happened!
 			final String eMessage = "Interrupted while waiting for Echo message " + message;
-			logger.log( Level.WARNING, eMessage, e );
+			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
 			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
 		}
 
@@ -236,13 +236,13 @@ public class DebugResource implements IDebugResource {
 		} catch ( IOException e ) {
 			// Something bad has happened!
 			final String eMessage = "Unable to ping agent " + rootInstanceName + " with message " + message;
-			logger.log( Level.SEVERE, eMessage, e );
+			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
 			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
 		} catch ( InterruptedException e ) {
 			// Something unexpected has happened!
 			final String eMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName
 					+ " message " + message;
-			logger.log( Level.WARNING, eMessage, e );
+			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
 			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
 		}
 
@@ -268,21 +268,25 @@ public class DebugResource implements IDebugResource {
 	 */
 	@Override
 	public Response diagnoseInstance( String applicationName, String instancePath ) {
+		final Response response;
 		final Application application = this.manager.findApplicationByName( applicationName );
-		if (application == null) {
-			return Response
+		if (application != null) {
+			final Instance instance = InstanceHelpers.findInstanceByPath( application, instancePath );
+			if (instance != null) {
+				response = Response.status( Status.OK ).entity( instance ).build();
+			} else {
+				response = Response
+						.status( Status.BAD_REQUEST )
+						.entity( "No instance with path " + instancePath + " in application " + applicationName )
+						.build();
+			}
+		} else {
+			response = Response
 					.status( Status.BAD_REQUEST )
 					.entity( "No application with name " + applicationName )
 					.build();
 		}
-		final Instance instance = InstanceHelpers.findInstanceByPath( application, instancePath );
-		if (instance == null) {
-			return Response
-					.status( Status.BAD_REQUEST )
-					.entity( "No instance with path " + instancePath + " in application " + applicationName )
-					.build();
-		}
-		return Response.status( Status.OK ).entity( instance ).build();
+		return response;
 	}
 
 
@@ -293,14 +297,17 @@ public class DebugResource implements IDebugResource {
 	 */
 	@Override
 	public Response diagnoseApplication( String applicationName ) {
+		final Response response;
 		final Application application = this.manager.findApplicationByName( applicationName );
-		if (application == null) {
+		if (application != null) {
+			response = Response.status( Status.OK ).entity( application ).build();
+		} else {
 			return Response
 					.status( Status.BAD_REQUEST )
 					.entity( "No application with name " + applicationName )
 					.build();
 		}
-		return Response.status( Status.OK ).entity( application ).build();
+		return response;
 	}
 
 

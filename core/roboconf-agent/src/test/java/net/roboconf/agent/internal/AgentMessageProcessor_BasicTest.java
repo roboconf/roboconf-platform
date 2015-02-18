@@ -87,11 +87,11 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Check the agent has sent a 'PONG' response to the DM.
 		List<Message> messages = this.client.messagesForTheDm;
-		Assert.assertTrue( messages.size() == 1 );
+		Assert.assertEquals( 1, messages.size() );
 		Message message = messages.get(0);
 		Assert.assertTrue( message instanceof MsgEcho );
 		MsgEcho echo = (MsgEcho) message;
-		Assert.assertTrue( echo.getContent().equals( "PONG:TEST" ) );
+		Assert.assertEquals( "PONG:TEST", echo.getContent() );
 	}
 
 
