@@ -111,11 +111,11 @@ public class Manager_BasicsTest {
 	public void testSendPingMessageQueue() throws IOException, InterruptedException {
 		this.manager.pingMessageQueue( "TEST", 0L ); // false because there is no MQ
 		List<Message> sentMessages = this.msgClient.sentMessages;
-		Assert.assertTrue( sentMessages.size() == 1 );
+		Assert.assertEquals( 1, sentMessages.size());
 		Message message = sentMessages.get( 0 );
 		Assert.assertTrue( message instanceof MsgEcho );
 		MsgEcho echo = (MsgEcho) message;
-		Assert.assertTrue( echo.getContent().equals( "TEST" ) );
+		Assert.assertEquals( "TEST", echo.getContent() );
 	}
 
 
@@ -138,7 +138,7 @@ public class Manager_BasicsTest {
 			Message message = sentMessages.get( index++ );
 			Assert.assertTrue( message instanceof MsgEcho );
 			MsgEcho echo = (MsgEcho) message;
-			Assert.assertTrue( echo.getContent().equals( "PING:TEST " + i.getName()) );
+			Assert.assertEquals( "PING:TEST " + i.getName(), echo.getContent() );
 		}
 	}
 
