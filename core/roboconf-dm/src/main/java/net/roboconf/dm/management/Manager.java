@@ -164,13 +164,6 @@ public class Manager {
 
 		reconfigure();
 
-		// Starts listening to the debug queue.
-		try {
-			this.messagingClient.listenToDebugMessages( ListenerCommand.START );
-		} catch ( IOException e ) {
-			this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
-		}
-
 		this.logger.info( "The DM was launched." );
 	}
 
@@ -249,6 +242,13 @@ public class Manager {
 		// Update the messaging client
 		if( this.messagingClient != null )
 			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
+
+		// Starts listening to the debug queue.
+		try {
+			this.messagingClient.listenToDebugMessages( ListenerCommand.START );
+		} catch ( IOException e ) {
+			this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
+		}
 
 		// Reset and restore applications.
 		// We ALWAYS do it, because we must also reconfigure the new client with respect
