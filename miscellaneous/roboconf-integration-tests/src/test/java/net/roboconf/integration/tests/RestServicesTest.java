@@ -175,7 +175,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 10000L ));
 
 		Assert.assertEquals( "Has received ping response TEST from agent Apache VM",
-				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "Legacy LAMP", "/Apache VM", "TEST", 10000L ));
+				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "Legacy LAMP", "Apache VM", "TEST", 10000L ));
 
 
 	}
