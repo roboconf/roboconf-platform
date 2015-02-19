@@ -91,7 +91,7 @@ public interface IDebugResource {
 	 * </ol>
 	 * </p>
 	 *
-	 * @param message a customized message content. If {@code null}, an UUID is generated.
+	 * @param message a customized message content.
 	 * @param timeout the timeout in milliseconds (ms) to wait before considering the message is lost.
 	 * @return the response to the messaging server connection check.
 	 */
@@ -123,7 +123,7 @@ public interface IDebugResource {
 	 *
 	 * @param applicationName  the name of the application holding the targeted agent.
 	 * @param rootInstanceName the identifier of the targeted agent.
-	 * @param message          a customized message content. If {@code null}, an UUID is generated.
+	 * @param message          a customized message content.
 	 * @param timeout          the timeout in milliseconds (ms) to wait before considering the message is lost.
 	 * @return the response to the agent connection check.
 	 */
