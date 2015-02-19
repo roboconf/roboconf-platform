@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Timer;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -240,15 +241,16 @@ public class Manager {
 		}
 
 		// Update the messaging client
-		if( this.messagingClient != null )
+		if( this.messagingClient != null ) {
 			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
-
-		// Starts listening to the debug queue.
-		try {
-			this.messagingClient.listenToDebugMessages( ListenerCommand.START );
-		} catch ( IOException e ) {
-			this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
+			// Starts listening to the debug queue.
+			try {
+				this.messagingClient.listenToDebugMessages( ListenerCommand.START );
+			} catch ( IOException e ) {
+				this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
+			}
 		}
+
 
 		// Reset and restore applications.
 		// We ALWAYS do it, because we must also reconfigure the new client with respect
@@ -992,39 +994,19 @@ public class Manager {
 	public boolean pingMessageQueue( String message, long timeout ) throws InterruptedException, IOException {
 
 		// Step 1. Send the Echo message.
+		final long deadline = System.currentTimeMillis() + timeout;
+		final MsgEcho sentMessage = new MsgEcho( message, deadline );
 		try {
-			this.messagingClient.sendMessageToDebug( new MsgEcho( message ), timeout );
+			this.messagingClient.sendMessageToDebug( sentMessage, timeout );
 		} catch ( IOException e ) {
 			logger.log( Level.SEVERE, "Cannot send Echo message on debug queue", e );
 			throw e;
 		}
-		logger.fine( "Sent Echo message on debug queue. Message=" + message + ", timeout=" + timeout + "ms" );
+		logger.fine( "Sent Echo message on debug queue. Message=" + message + ", timeout=" + timeout + "ms, UUID="
+				+ sentMessage.getUuid());
 
 		// Step 2. Wait for the Echo message to be received.
-		boolean hasFound = false;
-		long deadline = System.currentTimeMillis() + timeout;
-		while (true) {
-			synchronized ( this.echoMessages ) {
-				// Check all the Echo messages to find ours.
-				for (Iterator<MsgEcho> i = echoMessages.iterator(); i.hasNext(); ) {
-					final MsgEcho m = i.next();
-					if ( m.getContent().equals( message ) ) {
-						hasFound = true;
-						i.remove();
-						break;
-					}
-				}
-				long now = System.currentTimeMillis();
-				if ( hasFound || now >= deadline ) {
-					break;
-				}
-
-				// Wait for an Echo message notification!
-				this.echoMessages.wait( deadline - now );
-			}
-		}
-
-		return hasFound;
+		return waitForEchoMessage( sentMessage.getUuid(), deadline ) != null;
 	}
 
 
@@ -1065,37 +1047,14 @@ public class Manager {
 		}
 
 		// Step 1. Send the PING request message.
-		MsgEcho ping = new MsgEcho( "PING:" + message );
+		final long deadline = System.currentTimeMillis() + timeout;
+		MsgEcho ping = new MsgEcho( "PING:" + message, deadline );
 		this.messagingClient.sendMessageToAgent( app, instance, ping );
 		logger.fine( "Sent PING request message=" + message + "timeout=" + timeout + "ms to application="
 				+ applicationName + ", agent=" + rootInstanceName );
 
 		// Step 2. Wait for the PONG response from the agent.
-		boolean hasFound = false;
-		final long deadline = System.currentTimeMillis() + timeout;
-		final String expectedMessage = "PONG:" + message;
-		while (true) {
-			synchronized ( this.echoMessages ) {
-				// Check all the Echo messages to find our response.
-				for (Iterator<MsgEcho> i = echoMessages.iterator(); i.hasNext(); ) {
-					final MsgEcho m = i.next();
-					if ( m.getContent().equals( expectedMessage ) ) {
-						hasFound = true;
-						i.remove();
-						break;
-					}
-				}
-				long now = System.currentTimeMillis();
-				if ( hasFound || now >= deadline ) {
-					break;
-				}
-
-				// Wait for an Echo message notification!
-				this.echoMessages.wait( deadline - now );
-			}
-		}
-
-		return hasFound;
+		return waitForEchoMessage( ping.getUuid(), deadline ) != null;
 	}
 
 
@@ -1110,4 +1069,53 @@ public class Manager {
 			this.echoMessages.notifyAll();
 		}
 	}
+
+
+	/**
+	 * Wait for an Echo message with the specified UUID to be received.
+	 * <p>
+	 * This method also removes echo messages that have expired (i.e whose expiration time is lower than
+	 * {@code System.currentTimeMillis()}. This cleaning has low priority, and is interrupted as soon as the expected
+	 * message is received, or the given deadline is passed.
+	 * </p>
+	 *
+	 * @param uuid     the UUID of the expected Echo message to wait for.
+	 * @param deadline the expiration time, after which this method returns {@code null}.
+	 * @return the received message, if it has the expected UUID <em>and</em> has been received <em>before</em> the
+	 * expiration of the given deadline, {@code null} otherwise.
+	 * @throws java.lang.InterruptedException if interrupted while waiting for the expected message.
+	 */
+	private MsgEcho waitForEchoMessage( final UUID uuid, final long deadline ) throws InterruptedException {
+		MsgEcho foundMessage = null;
+		while (true) {
+			synchronized ( this.echoMessages ) {
+				// Check all the Echo messages to find ours.
+				for (Iterator<MsgEcho> i = echoMessages.iterator(); i.hasNext(); ) {
+					final MsgEcho m = i.next();
+					final long now = System.currentTimeMillis();
+					if (now > deadline) {
+						// Too late!
+						break;
+					} else if ( m.getExpirationTime() <= now ) {
+						// Message has expired => remove it from the list.
+						i.remove();
+					} else if (uuid.equals( m.getUuid() ) ) {
+						// This is the message we are waiting for!
+						foundMessage = m;
+						i.remove();
+						break;
+					}
+				}
+				final long timeout = deadline - System.currentTimeMillis();
+				if ( foundMessage != null || timeout <= 0 ) {
+					// Message found, or deadline reached => exit the loop
+					break;
+				}
+				// Wait for an Echo message notification!
+				this.echoMessages.wait( timeout );
+			}
+		}
+		return foundMessage;
+	}
+
 }

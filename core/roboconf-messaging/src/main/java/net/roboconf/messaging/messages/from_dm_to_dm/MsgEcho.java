@@ -37,27 +37,66 @@ import java.util.UUID;
  */
 public class MsgEcho extends Message {
 
-	private static final long serialVersionUID = 3568910235669142257L;
+	private static final long serialVersionUID = 3568910235669142258L;
 
 	// The content of the message
 	private final String content;
+
+	// The expiration time of this message.
+	private final long expirationTime;
+
+	// The message UUID. May be manually set to identity a message session (e.g. ping response)
+	private final UUID uuid;
 
 	/**
 	 * Constructs an Echo message with the given content.
 	 *
 	 * @param content the content of the Echo message.
-	 * @throws java.lang.NullPointerException id {@code content} is {@code null}.
+	 * @param expirationTime the expiration time of the message, e.g. {@code System.currentTimeMillis() + timeout}.
+	 * @throws java.lang.NullPointerException if {@code content} is {@code null}.
 	 */
-	public MsgEcho( String content ) {
+	public MsgEcho( String content, long expirationTime ) {
 		Objects.requireNonNull( content, "content is null" );
 		this.content = content;
+		this.expirationTime = expirationTime;
+		this.uuid = UUID.randomUUID();
+	}
+
+	/**
+	 * Constructs an Echo message with the given content.
+	 *
+	 * @param content the content of the Echo message.
+	 * @param expirationTime the expiration time of the message, e.g. {@code System.currentTimeMillis() + timeout}.
+	 * @param uuid the manually fixed UUID.
+	 * @throws java.lang.NullPointerException if {@code content} or {@code uuid} is {@code null}.
+	 */
+	public MsgEcho( String content, long expirationTime, UUID uuid ) {
+		Objects.requireNonNull( content, "content is null" );
+		Objects.requireNonNull( uuid, "uuid is null" );
+		this.content = content;
+		this.expirationTime = expirationTime;
+		this.uuid = uuid;
 	}
 
 	/**
 	 * @return the content of this message.
 	 */
-	public String getContent() {
+	public final String getContent() {
 		return content;
+	}
+
+	/**
+	 * @return the expiration time of this message.
+	 */
+	public final long getExpirationTime() {
+		return expirationTime;
+	}
+
+	/**
+	 * @return the content of this message.
+	 */
+	public final UUID getUuid() {
+		return uuid;
 	}
 
 }

@@ -97,7 +97,7 @@ public interface IDebugResource {
 	 */
 	@GET
 	@Path("/check-dm")
-	Response checkMessagingConnectionForTheDm( @QueryParam("message") String message,
+	Response checkMessagingConnectionForTheDm( @QueryParam("message") @DefaultValue("") String message,
 	                                           @QueryParam("timeout") @DefaultValue("1000") long timeout );
 
 
@@ -131,7 +131,7 @@ public interface IDebugResource {
 	@Path("/check-agent")
 	Response checkMessagingConnectionWithAgent( @QueryParam("application-name") String applicationName,
 	                                            @QueryParam("root-instance-name") String rootInstanceName,
-	                                            @QueryParam("message") String message,
+	                                            @QueryParam("message") @DefaultValue("") String message,
 	                                            @QueryParam("timeout") @DefaultValue("1000") long timeout );
 
 

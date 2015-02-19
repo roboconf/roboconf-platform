@@ -81,7 +81,7 @@ public class AgentMessageProcessor_BasicTest {
 	@Test
 	public void testDmPingResponse() throws IllegalAccessException {
 		// Simulate a ping message from the DM.
-		MsgEcho ping = new MsgEcho( "PING:TEST" );
+		MsgEcho ping = new MsgEcho( "PING:TEST", 1234L );
 		AgentMessageProcessor processor = (AgentMessageProcessor) agent.getMessagingClient().getMessageProcessor();
 		processor.processMessage( ping );
 
@@ -92,6 +92,7 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertTrue( message instanceof MsgEcho );
 		MsgEcho echo = (MsgEcho) message;
 		Assert.assertEquals( "PONG:TEST", echo.getContent() );
+		Assert.assertEquals( 1234L, echo.getExpirationTime() );
 	}
 
 

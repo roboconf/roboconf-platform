@@ -152,7 +152,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 */
 	void processMsgEcho( MsgEcho message ) throws IOException {
 		final String content = message.getContent();
-		MsgEcho response = new MsgEcho( content.replaceFirst( "^PING:", "PONG:" ) );
+		// IMPORTANT: the ping UUID *must* be kept in the pong response!
+		MsgEcho response = new MsgEcho( content.replaceFirst( "^PING:", "PONG:" ), message.getExpirationTime(),
+				message.getUuid() );
 		this.logger.fine( "Responding to DM Echo message " + content + " with response " + response.getContent());
 		this.messagingClient.sendMessageToTheDm( response );
 	}

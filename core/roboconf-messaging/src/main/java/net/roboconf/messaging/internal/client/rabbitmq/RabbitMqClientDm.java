@@ -260,7 +260,7 @@ public class RabbitMqClientDm implements IDmClient {
 					QueueingConsumer debugConsumer = new QueueingConsumer( this.channel );
 					debugConsumerTag = this.channel.basicConsume(
 							DEBUG_QUEUE_NAME,       // queue
-							false,                  // no auto ACK
+							true,                   // auto ACK
 							DEBUG_QUEUE_NAME,       // consumer tag set to the queue name
 							false,                  // get local messages (ESSENTIAL!)
 							false,                  // consumer is not exclusive
