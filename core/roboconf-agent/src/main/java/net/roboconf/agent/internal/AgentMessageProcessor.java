@@ -153,7 +153,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	void processMsgEcho( MsgEcho message ) throws IOException {
 		final String content = message.getContent();
 		MsgEcho response = new MsgEcho( content.replaceFirst( "^PING:", "PONG:" ) );
-		this.logger.fine( "Responding to DM Echo message " + content + "with response " + response.getContent());
+		this.logger.fine( "Responding to DM Echo message " + content + " with response " + response.getContent());
 		this.messagingClient.sendMessageToTheDm( response );
 	}
 

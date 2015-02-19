@@ -175,35 +175,36 @@ public class DebugResource implements IDebugResource {
 		this.logger.fine( "Checking connection to the message queue. message=" + message
 				+ ", timeout=" + timeout + "ms" );
 
-		boolean hasReceived;
+		Response response;
+		String responseMessage;
 		try {
 			// Send the Echo request!
-			hasReceived = this.manager.pingMessageQueue( message, timeout );
+			if ( this.manager.pingMessageQueue( message, timeout ) ) {
+				responseMessage = "Has received Echo message " + message;
+				logger.fine( responseMessage );
+				response = Response.status( Status.OK ).entity( responseMessage ).build();
+			} else {
+				responseMessage = "Did not receive Echo message " + message + " before timeout ("
+						+ timeout + "ms)";
+				logger.warning( responseMessage );
+				response = Response.status( 408 ).entity( responseMessage ).build();
+			}
 
 		} catch ( IOException e ) {
 			// Something bad has happened!
-			final String eMessage = "Unable to send Echo message " + message;
-			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
-			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
+			responseMessage = "Unable to send Echo message " + message;
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, Level.FINEST, e);
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
 		} catch ( InterruptedException e ) {
 			// Something unexpected has happened!
-			final String eMessage = "Interrupted while waiting for Echo message " + message;
-			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
-			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
+			responseMessage = "Interrupted while waiting for Echo message " + message;
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, Level.FINEST, e);
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
 		}
 
-		// Return result.
-		if ( hasReceived ) {
-			final String rMessage = "Has received Echo message " + message;
-			logger.fine( rMessage );
-			return Response.status( Status.OK ).entity( rMessage ).build();
-		}
-		else {
-			final String rMessage = "Did not receive Echo message " + message + " before timeout ("
-					+ timeout + "ms)";
-			logger.warning( rMessage );
-			return Response.status( 408 ).entity( rMessage ).build();
-		}
+		return response;
 	}
 
 
@@ -228,37 +229,37 @@ public class DebugResource implements IDebugResource {
 			timeout = MAXIMUM_TIMEOUT;
 		}
 
-		boolean hasReceived;
+		Response response;
+		String responseMessage;
 		try {
 			// Ping the agent!
-			hasReceived = this.manager.pingAgent( applicationName, rootInstanceName, message, timeout );
+			if ( this.manager.pingAgent( applicationName, rootInstanceName, message, timeout ) ) {
+				responseMessage = "Has received ping response " + message + " from agent " + rootInstanceName;
+				logger.fine( responseMessage );
+				response = Response.status( Status.OK ).entity( responseMessage ).build();
+			} else {
+				responseMessage = "Did not receive ping response " + message + " from agent " + rootInstanceName
+						+ " before timeout (" + timeout + "ms)";
+				logger.warning( responseMessage );
+				response = Response.status( 408 ).entity( responseMessage ).build();
+			}
 
 		} catch ( IOException e ) {
 			// Something bad has happened!
-			final String eMessage = "Unable to ping agent " + rootInstanceName + " with message " + message;
-			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
-			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
+			responseMessage = "Unable to ping agent " + rootInstanceName + " with message " + message;
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, Level.FINEST, e);
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
 		} catch ( InterruptedException e ) {
 			// Something unexpected has happened!
-			final String eMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName
+			responseMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName
 					+ " message " + message;
-			Utils.logException( this.logger, Level.SEVERE, new RuntimeException( eMessage, e ) );
-			return Response.status( Status.INTERNAL_SERVER_ERROR ).entity( eMessage ).build();
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, Level.FINEST, e);
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
 		}
 
-		// Return result.
-		if ( hasReceived ) {
-			final String rMessage = "Has received ping response " + message + " from agent " + rootInstanceName;
-			logger.fine( rMessage );
-			return Response.status( Status.OK ).entity( rMessage ).build();
-		}
-		else {
-			final String rMessage = "Did not receive ping response " + message + " from agent " + rootInstanceName
-					+ " before timeout (" + timeout + "ms)";
-			logger.warning( rMessage );
-			return Response.status( 408 ).entity( rMessage ).build();
-		}
-
+		return response;
 	}
 
 
@@ -302,7 +303,7 @@ public class DebugResource implements IDebugResource {
 		if (application != null) {
 			response = Response.status( Status.OK ).entity( application ).build();
 		} else {
-			return Response
+			response = Response
 					.status( Status.BAD_REQUEST )
 					.entity( "No application with name " + applicationName )
 					.build();
