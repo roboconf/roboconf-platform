@@ -171,13 +171,12 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 				s );
 
 		// Test the debug resources.
-		Assert.assertEquals(
-				"Has received Echo message ECHO TEST",
-				TestUtils.readUriContent(
-						URI.create( ROOT_URL + "/debug/check-dm?message=TEST&timeout=10000")));
-		Assert.assertEquals(
-				"Has received ping response TEST from agent Apache VM",
-				TestUtils.readUriContent(
-						URI.create( ROOT_URL + "/debug/check-agent?message=TEST&timeout=10000&application-name=&Legacy%20LAMP&Apache%20VM")));
+		Assert.assertEquals( "Has received Echo message TEST",
+				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 10000L ));
+
+		Assert.assertEquals( "Has received ping response TEST from agent Apache VM",
+				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "Legacy LAMP", "/Apache VM", "TEST", 10000L ));
+
+
 	}
 }
