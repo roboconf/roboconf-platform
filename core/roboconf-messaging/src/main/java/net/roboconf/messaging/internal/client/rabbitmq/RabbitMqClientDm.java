@@ -233,6 +233,9 @@ public class RabbitMqClientDm implements IDmClient {
 	public void sendMessageToDebug( MsgEcho echo, long ttl ) throws IOException {
 		this.logger.fine( "The DM sends a debug message to " + DEBUG_QUEUE_NAME + ". Message: " + echo.getContent() );
 
+		// Queue declaration is idem-potent
+		this.channel.queueDeclare( DEBUG_QUEUE_NAME, true, false, true, null );
+
 		this.channel.basicPublish(
 				"",                                             // no exchange
 				DEBUG_QUEUE_NAME,                               // the queue
@@ -255,6 +258,10 @@ public class RabbitMqClientDm implements IDmClient {
 					return;
 				}
 				if ( this.channel != null && this.channel.isOpen() ) {
+
+					// Queue declaration is idem-potent
+					this.channel.queueDeclare( DEBUG_QUEUE_NAME, true, false, true, null );
+
 					// Create the debug message consumer and start consuming.
 					// No auto-ACK. Messages must be acknowledged manually by the consumer.
 					QueueingConsumer debugConsumer = new QueueingConsumer( this.channel );
