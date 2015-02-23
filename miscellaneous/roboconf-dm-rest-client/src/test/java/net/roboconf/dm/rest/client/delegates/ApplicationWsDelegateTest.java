@@ -31,6 +31,7 @@ import java.util.List;
 
 import javax.ws.rs.core.UriBuilder;
 
+import com.sun.jersey.api.client.UniformInterfaceException;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -406,6 +407,61 @@ public class ApplicationWsDelegateTest {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
 		this.client.getApplicationDelegate().addInstance( "inexisting", "/bip/bip", newMysql );
+	}
+
+
+	@Test
+	public void testRemoveInstance_success() {
+		// Delete the Tomcat instance.
+		final Instance tomcat = this.app.getTomcat();
+		final String tomcatPath = InstanceHelpers.computeInstancePath( this.app.getTomcat() );
+		this.client.getApplicationDelegate().removeInstance( this.app.getName(), tomcatPath );
+
+		// Check it is gone.
+		List<Instance> children = this.client.getApplicationDelegate().listChildrenInstances( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm() ), true );
+		Assert.assertFalse(children.contains( tomcat ));
+	}
+
+
+	@Test
+	public void testRemoveInstance_nonExistingInstance() {
+		try {
+			this.client.getApplicationDelegate().removeInstance( this.app.getName(), "/I-do-not-exist" );
+			Assert.fail( "Expecting exception" );
+		} catch ( UniformInterfaceException e ) {
+			// Not found!
+			Assert.assertEquals( 404, e.getResponse().getStatus() );
+		}
+	}
+
+
+	@Test
+	public void testRemoveInstance_nonExistingApplication() {
+		try {
+			this.client.getApplicationDelegate().removeInstance( "I-am-not-an-app", InstanceHelpers.computeInstancePath( this.app.getTomcat() ) );
+			Assert.fail( "Expecting exception" );
+		} catch ( UniformInterfaceException e ) {
+			// Not found!
+			Assert.assertEquals( 404, e.getResponse().getStatus() );
+		}
+	}
+
+
+	@Test
+	public void testResynchronize_success() {
+		this.client.getApplicationDelegate().resynchronize( this.app.getName() );
+	}
+
+
+	@Test
+	public void testResynchronize_nonExistingApplication() {
+		try {
+			this.client.getApplicationDelegate().resynchronize( "I-am-not-an-app" );
+			Assert.fail( "Expecting exception" );
+		} catch ( UniformInterfaceException e ) {
+			// Not found!
+			Assert.assertEquals( 404, e.getResponse().getStatus() );
+		}
 	}
 
 
