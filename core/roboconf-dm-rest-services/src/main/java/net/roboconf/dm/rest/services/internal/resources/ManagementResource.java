@@ -43,6 +43,7 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -91,7 +92,7 @@ public class ManagementResource implements IManagementResource {
 			response = loadApplication( dir.getAbsolutePath());
 
 		} catch( IOException e ) {
-			response = Response.status( Status.NOT_ACCEPTABLE ).entity( "A ZIP file was expected. " + e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "A new application could not be loaded.", e ).build();
 
 		} finally {
 			Utils.closeQuietly( uploadedInputStream );
@@ -103,6 +104,7 @@ public class ManagementResource implements IManagementResource {
 					tempZipFile.deleteOnExit();
 
 			} catch( IOException e ) {
+				this.logger.warning( "A temporary directory could not be deleted." );
 				Utils.logException( this.logger, e );
 			}
 		}
@@ -128,13 +130,13 @@ public class ManagementResource implements IManagementResource {
 			response = Response.ok().build();
 
 		} catch( AlreadyExistingException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "A new application could not be loaded.", e ).build();
 
 		} catch( InvalidApplicationException e ) {
-			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, "A new application could not be loaded.", e ).build();
 
 		} catch( IOException e ) {
-			response = Response.status( Status.UNAUTHORIZED ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.UNAUTHORIZED, "A new application could not be loaded.", e ).build();
 		}
 
 		return response;
@@ -174,10 +176,10 @@ public class ManagementResource implements IManagementResource {
 				this.manager.deleteApplication( ma );
 
 		} catch( UnauthorizedActionException e ) {
-			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be deleted.", e ).build();
 
 		} catch( IOException e ) {
-			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be deleted.", e ).build();
 		}
 
 		return result;
@@ -202,7 +204,7 @@ public class ManagementResource implements IManagementResource {
 				this.manager.undeployAll( ma, null );
 
 		} catch( Exception e ) {
-			result = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be shutdown.", e ).build();
 		}
 
 		return result;

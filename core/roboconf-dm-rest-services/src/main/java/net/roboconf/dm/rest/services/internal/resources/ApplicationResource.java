@@ -42,11 +42,11 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.target.api.TargetException;
 
 /**
@@ -95,14 +95,13 @@ public class ApplicationResource implements IApplicationResource {
 				this.manager.changeInstanceState( ma, instance, newStatus );
 
 		} catch( IOException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 
 		} catch( TargetException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 
 		} catch( Exception e ) {
-			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( e.getMessage()).build();
-			Utils.logException( this.logger, e );
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
 		}
 
 		return response;
@@ -129,7 +128,7 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( Exception e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 		}
 
 		return response;
@@ -156,7 +155,7 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( Exception e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 		}
 
 		return response;
@@ -183,7 +182,7 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( Exception e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 		}
 
 		return response;
@@ -265,10 +264,10 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 		} catch( ImpossibleInsertionException e ) {
-			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, null, e ).build();
 
 		} catch( IOException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 		}
 
 		return response;
@@ -298,10 +297,10 @@ public class ApplicationResource implements IApplicationResource {
 				this.manager.removeInstance( ma, instance );
 
 		} catch( UnauthorizedActionException e ) {
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 
 		} catch( IOException e ) {
-			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, null, e ).build();
 		}
 
 		return response;
@@ -326,7 +325,7 @@ public class ApplicationResource implements IApplicationResource {
 				this.manager.resynchronizeAgents( ma );
 
 		} catch( IOException e ) {
-			response = Response.status( Status.NOT_ACCEPTABLE ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, null, e ).build();
 		}
 
 		return response;

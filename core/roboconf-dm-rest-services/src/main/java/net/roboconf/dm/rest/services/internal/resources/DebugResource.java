@@ -53,6 +53,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -131,9 +132,7 @@ public class DebugResource implements IDebugResource {
 			}
 
 		} catch( Exception e ) {
-			this.logger.warning( e.getMessage());
-			Utils.logException( this.logger, e );
-			response = Response.status( Status.FORBIDDEN ).entity( e.getMessage()).build();
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 
 		} finally {
 			try {
@@ -179,15 +178,11 @@ public class DebugResource implements IDebugResource {
 
 		} catch ( IOException e ) {
 			responseMessage = "Unable to send Echo message " + message;
-			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, e);
-			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
 
 		} catch ( InterruptedException e ) {
 			responseMessage = "Interrupted while waiting for Echo message " + message;
-			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, e);
-			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
 		}
 
 		return response;
@@ -229,15 +224,11 @@ public class DebugResource implements IDebugResource {
 
 		} catch ( IOException e ) {
 			responseMessage = "Unable to ping agent " + rootInstanceName + " with message " + message;
-			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, e );
-			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
 
 		} catch ( InterruptedException e ) {
 			responseMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName + " message " + message;
-			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, e );
-			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
 		}
 
 		return response;
