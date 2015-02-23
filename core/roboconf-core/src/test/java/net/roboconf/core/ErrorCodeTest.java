@@ -68,6 +68,7 @@ public class ErrorCodeTest {
 		categoryToPrefix.put( ErrorCategory.RUNTIME_MODEL, "RM_" );
 		categoryToPrefix.put( ErrorCategory.EXECUTION, "EXEC_" );
 		categoryToPrefix.put( ErrorCategory.PROJECT, "PROJ_" );
+		categoryToPrefix.put( ErrorCategory.RECIPES, "REC_" );
 
 		for( ErrorCode code : ErrorCode.values()) {
 			String prefix = categoryToPrefix.get( code.getCategory());
