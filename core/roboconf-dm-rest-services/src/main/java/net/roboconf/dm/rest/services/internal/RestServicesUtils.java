@@ -36,7 +36,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RestServicesUtils {
+public final class RestServicesUtils {
 
 	/**
 	 * Private constructor.

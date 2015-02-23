@@ -64,6 +64,7 @@ public class RabbitMqClientDm implements IDmClient {
 	String neutralConsumerTag;
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<String,String> ();
 	Channel channel;
+	QueueingConsumer consumer;
 
 
 	/*
@@ -125,6 +126,12 @@ public class RabbitMqClientDm implements IDmClient {
 
 		// Declare the DM debug-dedicated queue.
 		this.channel.queueDeclare( DM_NEUTRAL_QUEUE_NAME, true, false, true, null );
+
+		// Start listening to messages.
+		this.consumer = new QueueingConsumer( this.channel );
+		String threadName = "Roboconf - Queue listener for the DM";
+		String id = "The DM";
+		new ListeningThread( threadName, this.logger, this.consumer, this.messageQueue, id ).start();
 	}
 
 
@@ -210,18 +217,8 @@ public class RabbitMqClientDm implements IDmClient {
 			this.channel.queueBind( queueName, exchangeName, "" );
 
 			// Start to listen to the queue
-			final QueueingConsumer consumer = new QueueingConsumer( this.channel );
-			String consumerTag = this.channel.basicConsume( queueName, true, consumer );
+			String consumerTag = this.channel.basicConsume( queueName, true, this.consumer );
 			this.applicationNameToConsumerTag.put( application.getName(), consumerTag );
-
-			// The DM has a listening thread for every application.
-			// Each thread listens for new messages and stores them in the message processor.
-
-			// But there is only one message queue for the entire DM.
-			// And the DM should only have ONE message processor.
-			String threadName = "Roboconf - Queue listener for the DM";
-			String id = "The DM";
-			new ListeningThread( threadName, this.logger, consumer, this.messageQueue, id ).start();
 		}
 	}
 
@@ -270,23 +267,14 @@ public class RabbitMqClientDm implements IDmClient {
 
 			// Create the debug message consumer and start consuming.
 			// No auto-ACK. Messages must be acknowledged manually by the consumer.
-			QueueingConsumer debugConsumer = new QueueingConsumer( this.channel );
 			this.neutralConsumerTag = this.channel.basicConsume(
-					DM_NEUTRAL_QUEUE_NAME,       // queue
+					DM_NEUTRAL_QUEUE_NAME,  // queue
 					true,                   // auto ACK
-					DM_NEUTRAL_QUEUE_NAME,       // consumer tag set to the queue name
+					DM_NEUTRAL_QUEUE_NAME,  // consumer tag set to the queue name
 					false,                  // get local messages (ESSENTIAL!)
 					false,                  // consumer is not exclusive
 					null,                   // no parameters
-					debugConsumer );        // the consumer
-
-			this.logger.fine( "The DM starts listening to the neutral queue." );
-			new ListeningThread(
-					"Roboconf - Neutral queue listener",
-					this.logger,
-					debugConsumer,
-					this.messageQueue,
-					"The DM (neutral)" ).start();
+					this.consumer );        		// the consumer
 
 		} else {
 			this.logger.fine( "The DM stops listening to the neutral queue." );
