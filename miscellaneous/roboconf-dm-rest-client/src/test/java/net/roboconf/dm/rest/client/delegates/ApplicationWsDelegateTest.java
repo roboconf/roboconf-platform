@@ -423,14 +423,15 @@ public class ApplicationWsDelegateTest {
 
 	@Test
 	public void testRemoveInstance_success() {
-		// Delete the Tomcat instance.
-		final Instance tomcat = this.app.getTomcat();
+		// Check the Tomcat instance is here.
 		final String tomcatPath = InstanceHelpers.computeInstancePath( this.app.getTomcat() );
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, tomcatPath ) );
+
+		// Delete the Tomcat instance.
 		this.client.getApplicationDelegate().removeInstance( this.app.getName(), tomcatPath );
 
 		// Check it is gone.
-		List<Instance> children = this.client.getApplicationDelegate().listChildrenInstances( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm() ), true );
-		Assert.assertFalse(children.contains( tomcat ));
+		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, tomcatPath ) );
 	}
 
 
