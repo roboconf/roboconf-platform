@@ -27,7 +27,10 @@ package net.roboconf.dm.rest.client.delegates;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
 
 import javax.ws.rs.core.UriBuilder;
 
@@ -51,6 +54,7 @@ import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import org.junit.Before;
@@ -74,6 +78,7 @@ public class ApplicationWsDelegateTest {
 	private ManagedApplication ma;
 	private Manager manager;
 	private HttpServer httpServer;
+	private TestClientDm msgClient;
 
 
 	@After
@@ -96,6 +101,12 @@ public class ApplicationWsDelegateTest {
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
+
+		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		this.msgClient.sentMessages.clear();
+
+		// Disable the messages timer for predictability
+		TestUtils.getInternalField( this.manager, "timer", Timer.class).cancel();
 
 		URI uri = UriBuilder.fromUri( REST_URI ).build();
 		RestApplication restApp = new RestApplication( this.manager );
@@ -448,8 +459,22 @@ public class ApplicationWsDelegateTest {
 
 
 	@Test
-	public void testResynchronize_success() {
+	public void testResynchronize_success() throws ApplicationException {
+		final Collection<Instance> rootInstances = this.app.getRootInstances();
+
+		// Deploy & start everything.
+		for(Instance i : rootInstances)
+			i.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// Request an application resynchronization.
 		this.client.getApplicationDelegate().resynchronize( this.app.getName() );
+
+		// Check a MsgCmdResynchronize has been sent to each agent.
+		final List<Message> sentMessages = this.msgClient.sentMessages;
+		Assert.assertEquals( rootInstances.size(), sentMessages.size() );
+		for (Iterator<Message> i = sentMessages.iterator(); i.hasNext();)
+			Assert.assertTrue( i.next() instanceof MsgCmdResynchronize );
+
 	}
 
 
