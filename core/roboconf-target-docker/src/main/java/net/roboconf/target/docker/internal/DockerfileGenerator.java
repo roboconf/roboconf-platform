@@ -139,4 +139,20 @@ public class DockerfileGenerator {
 		
 		return dockerfile.toFile();
 	}
+
+	/**
+	 * Retrieve packages list (for apt-get).
+	 * @return The packages list
+	 */
+	public String getPackages() {
+		return packages;
+	}
+
+	/**
+	 * Determine if the agent package is a tarball (tar/tgz) file.
+	 * @return true for a tarball, false otherwise
+	 */
+	public boolean isTar() {
+		return isTar;
+	}
 }
