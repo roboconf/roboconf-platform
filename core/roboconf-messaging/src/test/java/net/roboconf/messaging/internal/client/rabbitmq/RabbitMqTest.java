@@ -116,6 +116,14 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	}
 
 
+	@Override
+	@Test
+	public void testDmDebug() throws Exception {
+		Assume.assumeTrue( rabbitMqIsRunning );
+		super.testDmDebug();
+	}
+
+
 
 
 

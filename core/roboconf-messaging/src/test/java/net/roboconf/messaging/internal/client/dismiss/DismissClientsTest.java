@@ -46,6 +46,8 @@ public class DismissClientsTest {
 		client.openConnection();
 		client.propagateAgentTermination( null, null );
 		client.sendMessageToAgent( null, null, null );
+		client.sendMessageToTheDm( null );
+		client.listenToTheDm( ListenerCommand.START );
 		client.setMessageQueue( null );
 		client.setParameters( null, null, null );
 	}

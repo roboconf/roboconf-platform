@@ -34,6 +34,7 @@ import java.util.List;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.integration.probes.AbstractTest;
@@ -169,5 +170,28 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals(
 				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
 				s );
+
+		// Test the debug resources.
+
+		// Check the connection between the DM and the MQ.
+		Assert.assertEquals( "Has received Echo message TEST",
+				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 10000L ));
+
+		// Deploy and start the "Apache VM" root instance.
+		this.client.getApplicationDelegate().deployAndStartAll( "Legacy LAMP", "/Apache VM" );
+		Thread.sleep( 300L );
+
+		// Ping the "Apache VM" root instance.
+		Assert.assertEquals( "Has received ping response TEST from agent Apache VM",
+				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "Legacy LAMP", "Apache VM", "TEST", 10000L ));
+
+		// Diagnose the "Legacy LAMP" application.
+		Application diagnosedApplication = this.client.getDebugDelegate().diagnoseApplication( "Legacy LAMP" );
+		Assert.assertEquals( "Legacy LAMP", diagnosedApplication.getName());
+
+		// Diagnose the "Apache VM" instance.
+		Instance diagnosedInstance = this.client.getDebugDelegate().diagnoseInstance( "Legacy LAMP", "Apache VM" );
+		Assert.assertEquals( "Apache VM", diagnosedInstance.getName());
+
 	}
 }

@@ -44,9 +44,12 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -72,6 +75,24 @@ public class AgentMessageProcessor_BasicTest {
 	@After
 	public void stopAgent() {
 		this.agent.stop();
+	}
+
+
+	@Test
+	public void testDmPingResponse() throws IllegalAccessException {
+		// Simulate a ping message from the DM.
+		MsgEcho ping = new MsgEcho( "PING:TEST", 1234L );
+		AgentMessageProcessor processor = (AgentMessageProcessor) agent.getMessagingClient().getMessageProcessor();
+		processor.processMessage( ping );
+
+		// Check the agent has sent a 'PONG' response to the DM.
+		List<Message> messages = this.client.messagesForTheDm;
+		Assert.assertEquals( 1, messages.size() );
+		Message message = messages.get(0);
+		Assert.assertTrue( message instanceof MsgEcho );
+		MsgEcho echo = (MsgEcho) message;
+		Assert.assertEquals( "PONG:TEST", echo.getContent() );
+		Assert.assertEquals( 1234L, echo.getExpirationTime() );
 	}
 
 

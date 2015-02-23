@@ -26,6 +26,7 @@
 package net.roboconf.dm.rest.client;
 
 import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
+import net.roboconf.dm.rest.client.delegates.DebugWsDelegate;
 import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
 import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
 
@@ -72,6 +73,7 @@ public class WsClient {
 
 	private final ApplicationWsDelegate applicationDelegate;
 	private final ManagementWsDelegate managementDelegate;
+	private final DebugWsDelegate debugDelegate;
 
 	private final Client client;
 
@@ -92,6 +94,7 @@ public class WsClient {
 		WebResource resource = this.client.resource( rootUrl );
 		this.applicationDelegate = new ApplicationWsDelegate( resource );
 		this.managementDelegate = new ManagementWsDelegate( resource );
+		this.debugDelegate = new DebugWsDelegate( resource );
 	}
 
 
@@ -116,6 +119,13 @@ public class WsClient {
 	 */
 	public ManagementWsDelegate getManagementDelegate() {
 		return this.managementDelegate;
+	}
+
+	/**
+	 * @return the debugDelegate
+	 */
+	public DebugWsDelegate getDebugDelegate() {
+		return this.debugDelegate;
 	}
 
 

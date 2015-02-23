@@ -38,6 +38,7 @@ import net.roboconf.messaging.messages.Message;
  * </p>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public interface IDmClient extends IClient {
 
@@ -53,7 +54,7 @@ public interface IDmClient extends IClient {
 	/**
 	 * Configures the listener for messages sent by agents.
 	 * @param application the application associated with the given agents
-	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
+	 * @param command {@link ListenerCommand#START} to start listening, {@link ListenerCommand#STOP} to stop listening
 	 * @throws IOException if something went wrong
 	 */
 	void listenToAgentMessages( Application application, ListenerCommand command ) throws IOException;

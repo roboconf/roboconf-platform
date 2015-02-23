@@ -47,6 +47,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
@@ -747,6 +748,36 @@ public abstract class AbstractMessagingTest {
 		MsgCmdRemoveImport msg = (MsgCmdRemoveImport) tomcatMessages.get( 0 );
 		Assert.assertEquals( "MySQL", msg.getComponentOrFacetName());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( mysql ), msg.getRemovedInstancePath());
+	}
+
+
+	public void testDmDebug() throws Exception {
+
+		List<Message> dmMessages = new ArrayList<Message> ();
+		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
+		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
+		dmClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		this.clients.add( dmClient );
+
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey 1", 4L ));
+		Thread.sleep( DELAY );
+		Assert.assertEquals( 0, dmMessages.size());
+
+		dmClient.listenToTheDm( ListenerCommand.START );
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey 2", 4L ));
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey 3", 4L ));
+		Thread.sleep( DELAY );
+
+		Assert.assertEquals( 2, dmMessages.size());
+		Assert.assertEquals( MsgEcho.class, dmMessages.get( 0 ).getClass());
+		Assert.assertEquals( "hey 2", ((MsgEcho) dmMessages.get( 0 )).getContent());
+		Assert.assertEquals( MsgEcho.class, dmMessages.get( 1 ).getClass());
+		Assert.assertEquals( "hey 3", ((MsgEcho) dmMessages.get( 1 )).getContent());
+
+		dmClient.listenToTheDm( ListenerCommand.STOP );
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey again", 4L ));
+		Thread.sleep( DELAY );
+		Assert.assertEquals( 2, dmMessages.size());
 	}
 
 

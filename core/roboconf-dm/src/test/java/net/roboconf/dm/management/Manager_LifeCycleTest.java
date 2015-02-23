@@ -56,6 +56,7 @@ public class Manager_LifeCycleTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+
 	private Manager manager;
 	private TestClientDm msgClient;
 	private TestTargetResolver targetResolver;

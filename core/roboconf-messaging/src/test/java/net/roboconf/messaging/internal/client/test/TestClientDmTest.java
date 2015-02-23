@@ -32,6 +32,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.Test;
 
@@ -93,6 +94,29 @@ public class TestClientDmTest {
 
 
 	@Test
+	public void testSendToDebug_noException() throws Exception {
+
+		TestClientDm client = new TestClientDm();
+		Assert.assertEquals( 0, client.sentMessages.size());
+
+		client.sendMessageToTheDm( new MsgEcho( "hello", 4L ));
+		Assert.assertEquals( 1, client.sentMessages.size());
+
+		client.sendMessageToTheDm( new MsgEcho( "hello 2", 1L ));
+		Assert.assertEquals( 2, client.sentMessages.size());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testSendToDebug_withException() throws Exception {
+
+		TestClientDm client = new TestClientDm();
+		client.failMessageSending.set( true );
+		client.sendMessageToTheDm( new MsgEcho( "hello", 4L ));
+	}
+
+
+	@Test
 	public void forCodeCoverageOnly() throws Exception {
 
 		TestClientDm client = new TestClientDm();
@@ -101,5 +125,8 @@ public class TestClientDmTest {
 
 		client.listenToAgentMessages( new Application( "app" ), ListenerCommand.START );
 		client.listenToAgentMessages( new Application( "app" ), ListenerCommand.STOP );
+
+		client.listenToTheDm( ListenerCommand.START );
+		client.listenToTheDm( ListenerCommand.STOP );
 	}
 }

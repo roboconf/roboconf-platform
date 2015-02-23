@@ -75,4 +75,18 @@ public interface IClient {
 	 * </p>
 	 */
 	void closeConnection() throws IOException;
+
+	/**
+	 * Sends a message to the DM.
+	 * @param message the message to send
+	 * @throws IOException if something went wrong
+	 */
+	void sendMessageToTheDm( Message message ) throws IOException;
+
+	/**
+	 * Configures the listener for messages from the DM.
+	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
+	 * @throws IOException if something went wrong
+	 */
+	void listenToTheDm( ListenerCommand command ) throws IOException;
 }

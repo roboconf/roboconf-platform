@@ -37,6 +37,7 @@ import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DismissClientDm implements IDmClient {
 
@@ -87,8 +88,19 @@ public class DismissClientDm implements IDmClient {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
+	@Override
+	public void sendMessageToTheDm( Message msg ) throws IOException {
+		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+	}
+
 
 	@Override
+	public void listenToTheDm( ListenerCommand command ) throws IOException {
+		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+	}
+
+
+    @Override
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );

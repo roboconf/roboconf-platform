@@ -43,6 +43,7 @@ import net.roboconf.messaging.internal.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
@@ -50,16 +51,19 @@ import com.rabbitmq.client.QueueingConsumer;
 /**
  * The RabbitMQ client for the DM.
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class RabbitMqClientDm implements IDmClient {
+
+	private static final String DM_NEUTRAL_QUEUE_NAME = "roboconf.dm.neutral";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String messageServerIp, messageServerUsername, messageServerPassword;
 	private LinkedBlockingQueue<Message> messageQueue;
 
+	String neutralConsumerTag;
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<String,String> ();
 	Channel channel;
-
 
 
 	/*
@@ -118,6 +122,9 @@ public class RabbitMqClientDm implements IDmClient {
 
 		// Be notified when a message does not arrive in a queue (i.e. nobody is listening)
 		this.channel.addReturnListener( new DmReturnListener());
+
+		// Declare the DM debug-dedicated queue.
+		this.channel.queueDeclare( DM_NEUTRAL_QUEUE_NAME, true, false, true, null );
 	}
 
 
@@ -215,6 +222,80 @@ public class RabbitMqClientDm implements IDmClient {
 			String threadName = "Roboconf - Queue listener for the DM";
 			String id = "The DM";
 			new ListeningThread( threadName, this.logger, consumer, this.messageQueue, id ).start();
+		}
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient
+	 * #sendMessageToTheDm(net.roboconf.messaging.messages.Message)
+	 */
+	@Override
+	public void sendMessageToTheDm( Message msg ) throws IOException {
+
+		// The DM can send messages to itself (e.g. for debug).
+		// This method could also be used to broadcast information to (potential) other DMs.
+		this.logger.fine( "The DM sends a message to the DM's neutral queue." );
+		this.channel.queueDeclare( DM_NEUTRAL_QUEUE_NAME, true, false, true, null );
+
+		// To prevent spamming and residual messages, messages sent by the DM
+		// (to itself or its siblings) have a life span of 500 ms. If there is no
+		// client connected during this period, the message will be dropped.
+		this.channel.basicPublish(
+				"", DM_NEUTRAL_QUEUE_NAME,
+				new BasicProperties.Builder().expiration( "500" ).build(),
+				SerializationUtils.serializeObject( msg ));
+
+		this.logger.fine( "The DM sent a message to the DM's neutral queue." );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient
+	 * #listenToTheDm(net.roboconf.messaging.client.IClient.ListenerCommand)
+	 */
+	@Override
+	public void listenToTheDm( ListenerCommand command )
+	throws IOException {
+
+		if( command == ListenerCommand.START ) {
+			if( this.neutralConsumerTag != null ) {
+				this.logger.finer( "The DM is already listening to the neutral queue." );
+				return;
+			}
+
+			this.channel.queueDeclare( DM_NEUTRAL_QUEUE_NAME, true, false, true, null );
+
+			// Create the debug message consumer and start consuming.
+			// No auto-ACK. Messages must be acknowledged manually by the consumer.
+			QueueingConsumer debugConsumer = new QueueingConsumer( this.channel );
+			this.neutralConsumerTag = this.channel.basicConsume(
+					DM_NEUTRAL_QUEUE_NAME,       // queue
+					true,                   // auto ACK
+					DM_NEUTRAL_QUEUE_NAME,       // consumer tag set to the queue name
+					false,                  // get local messages (ESSENTIAL!)
+					false,                  // consumer is not exclusive
+					null,                   // no parameters
+					debugConsumer );        // the consumer
+
+			this.logger.fine( "The DM starts listening to the neutral queue." );
+			new ListeningThread(
+					"Roboconf - Neutral queue listener",
+					this.logger,
+					debugConsumer,
+					this.messageQueue,
+					"The DM (neutral)" ).start();
+
+		} else {
+			this.logger.fine( "The DM stops listening to the neutral queue." );
+			if ( this.neutralConsumerTag != null
+					&& this.channel != null
+					&& this.channel.isOpen())
+				this.channel.basicCancel( this.neutralConsumerTag );
+
+			this.neutralConsumerTag = null;
 		}
 	}
 

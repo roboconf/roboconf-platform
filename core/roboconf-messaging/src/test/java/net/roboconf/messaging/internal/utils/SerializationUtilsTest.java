@@ -28,6 +28,7 @@ package net.roboconf.messaging.internal.utils;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Component;
@@ -49,6 +50,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.Test;
 
@@ -205,6 +207,17 @@ public class SerializationUtilsTest {
 
 		msg = new MsgCmdChangeInstanceState((Instance) null, InstanceStatus.NOT_DEPLOYED, fileNameToFileContent );
 		checkBasics( msg, MsgCmdChangeInstanceState.class );
+	}
+
+
+	@Test
+	public void testMessage_msgEcho() throws Exception {
+
+		MsgEcho msg = new MsgEcho( "coucou", 4L );
+		checkBasics( msg, MsgEcho.class );
+
+		msg = new MsgEcho( "hey!", 4L, UUID.randomUUID());
+		checkBasics( msg, MsgEcho.class );
 	}
 
 

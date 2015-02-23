@@ -28,7 +28,6 @@ package net.roboconf.messaging.client;
 import java.io.IOException;
 
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.messages.Message;
 
 /**
  * A client for the agents.
@@ -94,7 +93,7 @@ public interface IAgentClient extends IClient {
 	 * is required by THIS instance.
 	 * </p>
 	 *
-	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
+	 * @param command {@link ListenerCommand#START} to start listening, {@link ListenerCommand#STOP} to stop listening
 	 * @param instance the instance that need exports from other agents
 	 * @throws IOException if something went wrong
 	 */
@@ -117,26 +116,9 @@ public interface IAgentClient extends IClient {
 
 	/**
 	 * Configures the listener for the exports from other agents.
-	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
+	 * @param command {@link ListenerCommand#START} to start listening, {@link ListenerCommand#STOP} to stop listening
 	 * @param instance the instance that determine which exports must be listened to
 	 * @throws IOException if something went wrong
 	 */
 	void listenToExportsFromOtherAgents( ListenerCommand command, Instance instance ) throws IOException;
-
-
-	// Communication with the DM
-
-	/**
-	 * Sends a message to the DM.
-	 * @param message the message to send
-	 * @throws IOException if something went wrong
-	 */
-	void sendMessageToTheDm( Message message ) throws IOException;
-
-	/**
-	 * Configures the listener for messages from the DM.
-	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
-	 * @throws IOException if something went wrong
-	 */
-	void listenToTheDm( ListenerCommand command ) throws IOException;
 }

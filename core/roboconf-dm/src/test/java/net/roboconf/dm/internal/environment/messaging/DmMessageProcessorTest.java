@@ -39,6 +39,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.After;
 import org.junit.Before;
@@ -116,6 +117,19 @@ public class DmMessageProcessorTest {
 		// The application name is invalid, no update should have been performed
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
+	}
+
+
+	@Test
+	public void testEchoReception() {
+
+		Assert.assertEquals( 0, this.manager.getEchoMessages().size());
+
+		MsgEcho msg = new MsgEcho( "hey!", 4L );
+		this.processor.processMessage( msg );
+
+		Assert.assertEquals( 1, this.manager.getEchoMessages().size());
+		Assert.assertEquals( "hey!", this.manager.getEchoMessages().get( 0 ).getContent());
 	}
 
 

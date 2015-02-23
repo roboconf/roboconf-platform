@@ -38,6 +38,7 @@ import net.roboconf.messaging.processors.AbstractMessageProcessor;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> implements IDmClient {
 
@@ -121,6 +122,18 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 	@Override
 	public void listenToAgentMessages( Application application, ListenerCommand command ) throws IOException {
 		getMessagingClient().listenToAgentMessages( application, command );
+	}
+
+
+	@Override
+	public void sendMessageToTheDm( Message msg ) throws IOException {
+		getMessagingClient().sendMessageToTheDm( msg );
+	}
+
+
+	@Override
+	public void listenToTheDm( ListenerCommand command ) throws IOException {
+		getMessagingClient().listenToTheDm( command );
 	}
 
 

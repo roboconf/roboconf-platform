@@ -57,6 +57,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.After;
 import org.junit.Before;
@@ -66,6 +67,7 @@ import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class Manager_BasicsTest {
 
@@ -102,6 +104,46 @@ public class Manager_BasicsTest {
 		// at the current project's root when it is stopped.
 		File dir = new File( "./instances" );
 		Utils.deleteFilesRecursively( dir );
+	}
+
+
+	@Test
+	public void testSendPingMessageQueue() throws Exception {
+
+		this.manager.pingMessageQueue( "TEST", 0L ); // false because there is no MQ
+		List<Message> sentMessages = this.msgClient.sentMessages;
+		Assert.assertEquals( 1, sentMessages.size());
+
+		Message message = sentMessages.get( 0 );
+		Assert.assertTrue( message instanceof MsgEcho );
+
+		MsgEcho echo = (MsgEcho) message;
+		Assert.assertEquals( "TEST", echo.getContent() );
+	}
+
+
+	@Test
+	public void testSendPingAgent() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, this.folder.newFolder() );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+
+		// Ping all the root instances.
+		for (Instance i : app.getRootInstances()) {
+			this.manager.pingAgent( app, i, "TEST " + i.getName(), 0L ); // false because there is no MQ
+		}
+
+		List<Message> sentMessages = this.msgClient.sentMessages;
+		// Now check the DM has sent a ping every agent.
+		Assert.assertTrue( sentMessages.size() == app.getRootInstances().size() );
+		int index = 0;
+		for (Instance i : app.getRootInstances()) {
+			Message message = sentMessages.get( index++ );
+			Assert.assertTrue( message instanceof MsgEcho );
+			MsgEcho echo = (MsgEcho) message;
+			Assert.assertEquals( "PING:TEST " + i.getName(), echo.getContent() );
+		}
 	}
 
 

@@ -44,10 +44,12 @@ import net.roboconf.core.dsl.converters.FromGraphs;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -56,15 +58,16 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 @Path( IDebugResource.PATH )
 public class DebugResource implements IDebugResource {
 
 	final static String ROOT_COMPONENT_NAME = "Machine";
+	final static long MAXIMUM_TIMEOUT = 10000L;
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;
-
 
 	/**
 	 * Constructor.
@@ -155,8 +158,39 @@ public class DebugResource implements IDebugResource {
 	 * #checkMessagingConnectionForTheDm()
 	 */
 	@Override
-	public Response checkMessagingConnectionForTheDm() {
-		return Response.status( Status.SERVICE_UNAVAILABLE ).entity( "Not yet implemented." ).build();
+	public Response checkMessagingConnectionForTheDm( String message, long timeout ) {
+
+		if ( message == null )
+			message = "ECHO " + UUID.randomUUID();
+
+		if ( timeout > MAXIMUM_TIMEOUT ) {
+			this.logger.warning( "Timeout " + timeout + " ms is above maximum limit " + MAXIMUM_TIMEOUT + " ms. Normalizing" );
+			timeout = MAXIMUM_TIMEOUT;
+		}
+
+		this.logger.fine( "Checking connection to the message queue. message=" + message + ", timeout=" + timeout + "ms" );
+		Response response;
+		String responseMessage;
+		try {
+			if ( this.manager.pingMessageQueue( message, timeout ))
+				response = Response.status( Status.OK ).entity( "Has received Echo message " + message ).build();
+			else
+				response = Response.status( 408 ).entity( "Did not receive Echo message " + message + " before timeout (" + timeout + "ms)" ).build();
+
+		} catch ( IOException e ) {
+			responseMessage = "Unable to send Echo message " + message;
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, e);
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+
+		} catch ( InterruptedException e ) {
+			responseMessage = "Interrupted while waiting for Echo message " + message;
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, e);
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+		}
+
+		return response;
 	}
 
 
@@ -165,29 +199,89 @@ public class DebugResource implements IDebugResource {
 	 * #checkMessagingConnectionWithAgent(java.lang.String)
 	 */
 	@Override
-	public Response checkMessagingConnectionWithAgent( String rootInstanceName ) {
-		return Response.status( Status.SERVICE_UNAVAILABLE ).entity( "Not yet implemented." ).build();
+	public Response checkMessagingConnectionWithAgent(
+			String applicationName,
+			String rootInstanceName,
+			String message,
+			long timeout ) {
+
+		if ( message == null )
+			message = UUID.randomUUID().toString();
+
+		if ( timeout > MAXIMUM_TIMEOUT ) {
+			this.logger.warning( "Timeout " + timeout + "ms is above maximum limit " + MAXIMUM_TIMEOUT + "ms. Normalizing" );
+			timeout = MAXIMUM_TIMEOUT;
+		}
+
+		Response response;
+		String responseMessage;
+		try {
+			final Application application = this.manager.findApplicationByName( applicationName );
+			final Instance instance;
+			if( application == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
+			else if(( instance = InstanceHelpers.findInstanceByPath( application, "/" + rootInstanceName )) == null )
+				response = Response .status( Status.NOT_FOUND ).entity( "Instance " + rootInstanceName + " was not found in application " + applicationName ).build();
+			else if( this.manager.pingAgent( application, instance, message, timeout ))
+				response = Response.status( Status.OK ).entity( "Has received ping response " + message + " from agent " + rootInstanceName ).build();
+			else
+				response = Response.status( 408 ).entity( "Did not receive ping response " + message + " from agent " + rootInstanceName + " before timeout (" + timeout + "ms)" ).build();
+
+		} catch ( IOException e ) {
+			responseMessage = "Unable to ping agent " + rootInstanceName + " with message " + message;
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, e );
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+
+		} catch ( InterruptedException e ) {
+			responseMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName + " message " + message;
+			this.logger.severe( responseMessage );
+			Utils.logException( this.logger, e );
+			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+		}
+
+		return response;
 	}
 
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IDebugResource
-	 * #diagnosticInstance(java.lang.String)
+	 * #diagnoseInstance(java.lang.String)
 	 */
 	@Override
-	public Response diagnosticInstance( String instancePath ) {
-		return Response.status( Status.SERVICE_UNAVAILABLE ).entity( "Not yet implemented." ).build();
+	public Response diagnoseInstance( String applicationName, String instancePath ) {
+
+		final Application application = this.manager.findApplicationByName( applicationName );
+		final Instance instance;
+		final Response response;
+
+		if( application == null )
+			response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
+		else if(( instance = InstanceHelpers.findInstanceByPath( application, instancePath )) == null )
+			response = Response .status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found in application " + applicationName ).build();
+		else
+			response = Response.status( Status.OK ).entity( instance ).build();
+
+		return response;
 	}
 
 
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IDebugResource
-	 * #diagnosticApplication(java.lang.String)
+	 * #diagnoseApplication(java.lang.String)
 	 */
 	@Override
-	public Response diagnosticApplication( String applicationName ) {
-		return Response.status( Status.SERVICE_UNAVAILABLE ).entity( "Not yet implemented." ).build();
+	public Response diagnoseApplication( String applicationName ) {
+
+		final Response response;
+		final Application application = this.manager.findApplicationByName( applicationName );
+		if( application != null )
+			response = Response.status( Status.OK ).entity( application ).build();
+		else
+			response = Response.status( Status.BAD_REQUEST ).entity( "No application called " + applicationName + " was found." ).build();
+
+		return response;
 	}
 
 
