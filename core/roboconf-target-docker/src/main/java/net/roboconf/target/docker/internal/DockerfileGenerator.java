@@ -77,7 +77,7 @@ public class DockerfileGenerator {
 		try {
 			out = new PrintWriter(generated);
 			out.println("FROM ubuntu");
-			out.println("COPY " + this.agentPack.getAbsolutePath() + " /usr/local/");
+			out.println("COPY " + this.agentPack.getName() + " /usr/local/");
 			out.println("RUN apt-get update");
 			out.println("RUN apt-get -y install " + this.packages);
 			out.println("RUN cd /usr/local; " + (this.isTar ? "tar xvzf " : "unzip ")

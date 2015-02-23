@@ -27,6 +27,7 @@ package net.roboconf.target.docker.internal;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,7 @@ import net.roboconf.target.api.TargetHandler;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.SearchItem;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
@@ -91,12 +93,40 @@ public class DockerHandler implements TargetHandler {
 		DockerClient dockerClient = createDockerClient( targetProperties );
 
 		String imageId = targetProperties.get(IMAGE_ID);
-		List<SearchItem> dockerSearch = dockerClient.searchImagesCmd(targetProperties.get(IMAGE_ID)).exec();
-		if(dockerSearch == null || dockerSearch.isEmpty()) {
+		boolean imageFound = false;
+		
+		// Search image in local Docker repository
+		List<Image> imgSearch = dockerClient.listImagesCmd().exec();
+		if(imgSearch != null) {
+			// First search by image ID...
+			for(Image img : imgSearch) {
+				if(img.getId().equals(imageId)) {
+					this.logger.fine("Found docker image for id " + imageId);
+					imageFound = true;
+					break;
+				}
+			}
+			// ...then consider provided ID as a tag (and search again by tag)
+			if(! imageFound) {
+				for(Image img : imgSearch) {
+					for(String s : img.getRepoTags()) {
+						if(s.contains(imageId)) {
+							this.logger.fine("Found docker image for tag " + imageId);
+							imageFound = true;
+							imageId = img.getId(); // Found : pick real image ID !
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		if(! imageFound) {
 			String pack = targetProperties.get(AGENT_PACKAGE);
-			if(pack == null) throw new TargetException("Docker image " + imageId + " not found");
-			
+			if(pack == null) throw new TargetException("Docker image " + imageId + " not found, and no " + AGENT_PACKAGE + " specified");
+
 			// Generate docker image
+			this.logger.fine("Docker image not found: build one from generated Dockerfile");
 			InputStream response = null;
 			File dockerfile = null;
 			try {
@@ -113,10 +143,10 @@ public class DockerHandler implements TargetHandler {
 				throw new TargetException(e);
 			} finally {
 				Utils.closeQuietly(response);
-				if(dockerfile != null) dockerfile.delete();
+				if(dockerfile != null) {
+					try { Utils.deleteFilesRecursively(dockerfile); } catch(IOException e) { /* ignore */ }
+				}
 			}
-		} else if(dockerSearch.size() > 1) { // Multiple images found for key: maybe due to searching public online docker registries...
-			throw new TargetException("Ambiguous docker image name " + imageId + ": multiple images found ! Maybe your registry is not just local ?");
 		}
 
 		CreateContainerResponse container = dockerClient
@@ -136,7 +166,7 @@ public class DockerHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
+	 * @see net.roboconf.target.api.TargetHandir.delete();dler
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
@@ -181,4 +211,5 @@ public class DockerHandler implements TargetHandler {
 
 		return DockerClientBuilder.getInstance( config.build()).build();
 	}
+
 }
