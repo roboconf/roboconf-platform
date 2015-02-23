@@ -342,8 +342,9 @@ public class RabbitMqClientAgent implements IAgentClient {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IAgentClient
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.client.IClient
 	 * #sendMessageToTheDm(net.roboconf.messaging.messages.Message)
 	 */
 	@Override
@@ -359,7 +360,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IAgentClient
+	 * @see net.roboconf.messaging.client.IClient
 	 * #listenToTheDm(net.roboconf.messaging.client.IClient.ListenerCommand)
 	 */
 	@Override

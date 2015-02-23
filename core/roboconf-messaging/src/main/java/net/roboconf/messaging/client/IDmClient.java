@@ -30,7 +30,6 @@ import java.io.IOException;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
 /**
  * A client for the DM.
@@ -55,27 +54,10 @@ public interface IDmClient extends IClient {
 	/**
 	 * Configures the listener for messages sent by agents.
 	 * @param application the application associated with the given agents
-	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
+	 * @param command {@link ListenerCommand#START} to start listening, {@link ListenerCommand#STOP} to stop listening
 	 * @throws IOException if something went wrong
 	 */
 	void listenToAgentMessages( Application application, ListenerCommand command ) throws IOException;
-
-	/**
-	 * Sends a message to the DM debug-dedicated message queue.
-	 *
-	 * @param message the message to send
-	 * @param ttl     the Time-To-Live of the message, in milliseconds.
-	 * @throws IOException if something went wrong
-	 */
-	void sendMessageToDebug( MsgEcho message, long ttl ) throws IOException;
-
-	/**
-	 * Configures the listener for messages sent on the DM debug-dedicated message queue..
-	 *
-	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
-	 * @throws IOException if something went wrong
-	 */
-	void listenToDebugMessages( ListenerCommand command ) throws IOException;
 
 	/**
 	 * Deletes all the server artifacts related to this application.

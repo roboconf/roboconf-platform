@@ -85,6 +85,24 @@ public class DmClientTest {
 		dmClient.listenToAgentMessages( new Application( "app" ), ListenerCommand.STOP );
 		Assert.assertEquals( 0, dmClient.applicationNameToConsumerTag.size());
 
+		// Check the DM's neutral queue
+		Assert.assertNull( dmClient.neutralConsumerTag );
+		dmClient.listenToTheDm( ListenerCommand.START );
+		Assert.assertNotNull( dmClient.neutralConsumerTag );
+
+		String oldNeutralConsumer = dmClient.neutralConsumerTag;
+		dmClient.listenToTheDm( ListenerCommand.START );
+		Assert.assertNotNull( dmClient.neutralConsumerTag );
+		Assert.assertEquals( oldNeutralConsumer, dmClient.neutralConsumerTag );
+
+		dmClient.listenToTheDm( ListenerCommand.STOP );
+		Assert.assertNull( dmClient.neutralConsumerTag );
+
+		// Check the idem-potency
+		dmClient.listenToTheDm( ListenerCommand.STOP );
+		Assert.assertNull( dmClient.neutralConsumerTag );
+
+		// Close the connection
 		dmClient.deleteMessagingServerArtifacts( new Application( "app" ));
 		dmClient.closeConnection();
 		Assert.assertNull( dmClient.channel );

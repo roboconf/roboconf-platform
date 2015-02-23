@@ -25,14 +25,13 @@
 
 package net.roboconf.messaging.messages.from_dm_to_dm;
 
-import net.roboconf.messaging.messages.Message;
-
 import java.util.Objects;
 import java.util.UUID;
 
+import net.roboconf.messaging.messages.Message;
+
 /**
  * A message sent on the DM debug queue.
- *
  * @author Pierre bourret - Université Joseph Fourier
  */
 public class MsgEcho extends Message {
@@ -82,21 +81,25 @@ public class MsgEcho extends Message {
 	 * @return the content of this message.
 	 */
 	public final String getContent() {
-		return content;
+		return this.content;
 	}
 
 	/**
 	 * @return the expiration time of this message.
 	 */
 	public final long getExpirationTime() {
-		return expirationTime;
+		return this.expirationTime;
 	}
 
 	/**
 	 * @return the content of this message.
 	 */
 	public final UUID getUuid() {
-		return uuid;
+		return this.uuid;
 	}
 
+	@Override
+	public String toString() {
+		return this.content;
+	}
 }

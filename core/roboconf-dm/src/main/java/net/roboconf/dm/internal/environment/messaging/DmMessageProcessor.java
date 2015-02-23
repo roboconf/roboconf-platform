@@ -98,10 +98,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 		else if(message instanceof MsgNotifAutonomic)
 			processMsgMonitoringEvent((MsgNotifAutonomic) message );
 
-		else if ( message instanceof MsgEcho ) {
-			// Directly send to the DM.
-			this.manager.notifyMsgEchoReceived( (MsgEcho) message );
-		}
+		else if( message instanceof MsgEcho )
+			this.manager.notifyMsgEchoReceived((MsgEcho) message );
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());

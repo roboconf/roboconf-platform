@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -161,46 +160,33 @@ public class DebugResource implements IDebugResource {
 	@Override
 	public Response checkMessagingConnectionForTheDm( String message, long timeout ) {
 
-		if ( message == null ) {
-			// Generates an unique message.
+		if ( message == null )
 			message = "ECHO " + UUID.randomUUID();
-		}
 
-		// Max timeout
 		if ( timeout > MAXIMUM_TIMEOUT ) {
-			this.logger.warning( "Timeout " + timeout + "ms is above maximum limit " + MAXIMUM_TIMEOUT + "ms. Normalizing" );
+			this.logger.warning( "Timeout " + timeout + " ms is above maximum limit " + MAXIMUM_TIMEOUT + " ms. Normalizing" );
 			timeout = MAXIMUM_TIMEOUT;
 		}
 
-		this.logger.fine( "Checking connection to the message queue. message=" + message
-				+ ", timeout=" + timeout + "ms" );
-
+		this.logger.fine( "Checking connection to the message queue. message=" + message + ", timeout=" + timeout + "ms" );
 		Response response;
 		String responseMessage;
 		try {
-			// Send the Echo request!
-			if ( this.manager.pingMessageQueue( message, timeout ) ) {
-				responseMessage = "Has received Echo message " + message;
-				logger.fine( responseMessage );
-				response = Response.status( Status.OK ).entity( responseMessage ).build();
-			} else {
-				responseMessage = "Did not receive Echo message " + message + " before timeout ("
-						+ timeout + "ms)";
-				logger.warning( responseMessage );
-				response = Response.status( 408 ).entity( responseMessage ).build();
-			}
+			if ( this.manager.pingMessageQueue( message, timeout ))
+				response = Response.status( Status.OK ).entity( "Has received Echo message " + message ).build();
+			else
+				response = Response.status( 408 ).entity( "Did not receive Echo message " + message + " before timeout (" + timeout + "ms)" ).build();
 
 		} catch ( IOException e ) {
-			// Something bad has happened!
 			responseMessage = "Unable to send Echo message " + message;
 			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, Level.FINEST, e);
+			Utils.logException( this.logger, e);
 			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+
 		} catch ( InterruptedException e ) {
-			// Something unexpected has happened!
 			responseMessage = "Interrupted while waiting for Echo message " + message;
 			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, Level.FINEST, e);
+			Utils.logException( this.logger, e);
 			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
 		}
 
@@ -213,17 +199,15 @@ public class DebugResource implements IDebugResource {
 	 * #checkMessagingConnectionWithAgent(java.lang.String)
 	 */
 	@Override
-	public Response checkMessagingConnectionWithAgent( String applicationName,
-	                                                   String rootInstanceName,
-	                                                   String message,
-	                                                   long timeout ) {
+	public Response checkMessagingConnectionWithAgent(
+			String applicationName,
+			String rootInstanceName,
+			String message,
+			long timeout ) {
 
-		if ( message == null ) {
-			// Generates an unique message.
+		if ( message == null )
 			message = UUID.randomUUID().toString();
-		}
 
-		// Max timeout
 		if ( timeout > MAXIMUM_TIMEOUT ) {
 			this.logger.warning( "Timeout " + timeout + "ms is above maximum limit " + MAXIMUM_TIMEOUT + "ms. Normalizing" );
 			timeout = MAXIMUM_TIMEOUT;
@@ -232,30 +216,27 @@ public class DebugResource implements IDebugResource {
 		Response response;
 		String responseMessage;
 		try {
-			// Ping the agent!
-			if ( this.manager.pingAgent( applicationName, rootInstanceName, message, timeout ) ) {
-				responseMessage = "Has received ping response " + message + " from agent " + rootInstanceName;
-				logger.fine( responseMessage );
-				response = Response.status( Status.OK ).entity( responseMessage ).build();
-			} else {
-				responseMessage = "Did not receive ping response " + message + " from agent " + rootInstanceName
-						+ " before timeout (" + timeout + "ms)";
-				logger.warning( responseMessage );
-				response = Response.status( 408 ).entity( responseMessage ).build();
-			}
+			final Application application = this.manager.findApplicationByName( applicationName );
+			final Instance instance;
+			if( application == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
+			else if(( instance = InstanceHelpers.findInstanceByPath( application, "/" + rootInstanceName )) == null )
+				response = Response .status( Status.NOT_FOUND ).entity( "Instance " + rootInstanceName + " was not found in application " + applicationName ).build();
+			else if( this.manager.pingAgent( application, instance, message, timeout ))
+				response = Response.status( Status.OK ).entity( "Has received ping response " + message + " from agent " + rootInstanceName ).build();
+			else
+				response = Response.status( 408 ).entity( "Did not receive ping response " + message + " from agent " + rootInstanceName + " before timeout (" + timeout + "ms)" ).build();
 
 		} catch ( IOException e ) {
-			// Something bad has happened!
 			responseMessage = "Unable to ping agent " + rootInstanceName + " with message " + message;
 			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, Level.FINEST, e);
+			Utils.logException( this.logger, e );
 			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
+
 		} catch ( InterruptedException e ) {
-			// Something unexpected has happened!
-			responseMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName
-					+ " message " + message;
+			responseMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName + " message " + message;
 			this.logger.severe( responseMessage );
-			Utils.logException( this.logger, Level.FINEST, e);
+			Utils.logException( this.logger, e );
 			response = Response.status( Status.INTERNAL_SERVER_ERROR ).entity( responseMessage ).build();
 		}
 
@@ -269,24 +250,18 @@ public class DebugResource implements IDebugResource {
 	 */
 	@Override
 	public Response diagnoseInstance( String applicationName, String instancePath ) {
-		final Response response;
+
 		final Application application = this.manager.findApplicationByName( applicationName );
-		if (application != null) {
-			final Instance instance = InstanceHelpers.findInstanceByPath( application, instancePath );
-			if (instance != null) {
-				response = Response.status( Status.OK ).entity( instance ).build();
-			} else {
-				response = Response
-						.status( Status.BAD_REQUEST )
-						.entity( "No instance with path " + instancePath + " in application " + applicationName )
-						.build();
-			}
-		} else {
-			response = Response
-					.status( Status.BAD_REQUEST )
-					.entity( "No application with name " + applicationName )
-					.build();
-		}
+		final Instance instance;
+		final Response response;
+
+		if( application == null )
+			response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
+		else if(( instance = InstanceHelpers.findInstanceByPath( application, instancePath )) == null )
+			response = Response .status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found in application " + applicationName ).build();
+		else
+			response = Response.status( Status.OK ).entity( instance ).build();
+
 		return response;
 	}
 
@@ -298,16 +273,14 @@ public class DebugResource implements IDebugResource {
 	 */
 	@Override
 	public Response diagnoseApplication( String applicationName ) {
+
 		final Response response;
 		final Application application = this.manager.findApplicationByName( applicationName );
-		if (application != null) {
+		if( application != null )
 			response = Response.status( Status.OK ).entity( application ).build();
-		} else {
-			response = Response
-					.status( Status.BAD_REQUEST )
-					.entity( "No application with name " + applicationName )
-					.build();
-		}
+		else
+			response = Response.status( Status.BAD_REQUEST ).entity( "No application called " + applicationName + " was found." ).build();
+
 		return response;
 	}
 

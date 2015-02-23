@@ -63,6 +63,14 @@ public class Agent_BasicsTest {
 
 
 	@Test
+	public void tryToStopNotStartedAgent() {
+		stopAgent();
+		this.agent = new Agent();
+		stopAgent();
+	}
+
+
+	@Test
 	public void testBasicStartAndStop() throws Exception {
 
 		TestClientAgent client = getInternalClient();

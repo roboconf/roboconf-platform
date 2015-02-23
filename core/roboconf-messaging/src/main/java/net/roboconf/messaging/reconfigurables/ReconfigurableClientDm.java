@@ -34,7 +34,6 @@ import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.client.MessageServerClientFactory;
 import net.roboconf.messaging.internal.client.dismiss.DismissClientDm;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
 
 /**
@@ -127,14 +126,14 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 
 	@Override
-	public void sendMessageToDebug( MsgEcho echo, long ttl ) throws IOException {
-		getMessagingClient().sendMessageToDebug( echo, ttl );
+	public void sendMessageToTheDm( Message msg ) throws IOException {
+		getMessagingClient().sendMessageToTheDm( msg );
 	}
 
 
 	@Override
-	public void listenToDebugMessages( ListenerCommand command ) throws IOException {
-		getMessagingClient().listenToDebugMessages( command );
+	public void listenToTheDm( ListenerCommand command ) throws IOException {
+		getMessagingClient().listenToTheDm( command );
 	}
 
 
