@@ -11,8 +11,12 @@
 	<target name="target.clone" depends="target.check" unless="already.cloned" description="Cloning the web-administration repository...">
 		<exec dir="${project.build.directory}" executable="git" failonerror="true">
 			<arg value="clone" />
+            <!-- Do not copy full history, just the last tree -->
+            <arg value="--depth=1" />
 			<arg value="${web.client.git.url}" />
 		</exec>
+        <!-- Delete the ".git" directory -->
+        <delete dir="${project.build.directory}/roboconf-web-administration/.git"/>
 	</target>
 
 	<!-- Execute npm install -->
