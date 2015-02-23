@@ -91,8 +91,6 @@ public class DockerfileGenerator {
 			// The rc.local and start.sh files will be generated as well !
 			out.println("COPY rc.local /etc/");
 			out.println("COPY start.sh /usr/local/roboconf-agent/");
-		} catch(IOException e) {
-			throw e;
 		} finally {
 			Utils.closeQuietly(out);
 		}
@@ -112,8 +110,6 @@ public class DockerfileGenerator {
 			out.println("done");
 			out.println("cd bin");
 			out.println("./karaf");
-		} catch(IOException e) {
-			throw e;
 		} finally {
 			Utils.closeQuietly(out);
 		}
@@ -130,8 +126,6 @@ public class DockerfileGenerator {
 			out.println("cd /usr/local/roboconf-agent");
 			out.println("./start.sh");
 			out.println("exit 0");
-		} catch(IOException e) {
-			throw e;
 		} finally {
 			Utils.closeQuietly(out);
 		}

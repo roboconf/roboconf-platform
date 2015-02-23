@@ -40,7 +40,6 @@ import net.roboconf.target.api.TargetHandler;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Image;
-import com.github.dockerjava.api.model.SearchItem;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.jaxrs.DockerClientBuilder;
@@ -166,7 +165,7 @@ public class DockerHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandir.delete();dler
+	 * @see net.roboconf.target.api.TargetHandir.delete()
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
