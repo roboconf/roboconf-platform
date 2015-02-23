@@ -25,6 +25,11 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -34,6 +39,7 @@ import net.roboconf.target.api.TargetHandler;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.jaxrs.DockerClientBuilder;
@@ -50,6 +56,8 @@ public class DockerHandler implements TargetHandler {
 	static String USER = "docker.user";
 	static String PASSWORD = "docker.password";
 	static String EMAIL = "docker.email";
+	static String AGENT_PACKAGE = "docker.agent.package";
+	static String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
@@ -82,8 +90,66 @@ public class DockerHandler implements TargetHandler {
 
 		this.logger.fine( "Creating a new machine." );
 		DockerClient dockerClient = createDockerClient( targetProperties );
+
+		String imageId = targetProperties.get(IMAGE_ID);
+		boolean imageFound = false;
+		
+		// Search image in local Docker repository
+		List<Image> imgSearch = dockerClient.listImagesCmd().exec();
+		if(imgSearch != null) {
+			// First search by image ID...
+			for(Image img : imgSearch) {
+				if(img.getId().equals(imageId)) {
+					this.logger.fine("Found docker image for id " + imageId);
+					imageFound = true;
+					break;
+				}
+			}
+			// ...then consider provided ID as a tag (and search again by tag)
+			if(! imageFound) {
+				for(Image img : imgSearch) {
+					for(String s : img.getRepoTags()) {
+						if(s.contains(imageId)) {
+							this.logger.fine("Found docker image for tag " + imageId);
+							imageFound = true;
+							imageId = img.getId(); // Found : pick real image ID !
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		if(! imageFound) {
+			String pack = targetProperties.get(AGENT_PACKAGE);
+			if(pack == null) throw new TargetException("Docker image " + imageId + " not found, and no " + AGENT_PACKAGE + " specified");
+
+			// Generate docker image
+			this.logger.fine("Docker image not found: build one from generated Dockerfile");
+			InputStream response = null;
+			File dockerfile = null;
+			try {
+				dockerfile = (new DockerfileGenerator(pack, targetProperties.get(AGENT_JRE_AND_PACKAGES))).generateDockerfile();
+				response = dockerClient.buildImageCmd(dockerfile).exec();
+				// Check response (last line = "Successfully built <imageId>") ...
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				Utils.copyStream(response, out);
+				String s = out.toString("UTF-8").trim();
+				imageId = s.substring(s.lastIndexOf(' ') + 1).substring(0, 12);
+				// Tag new image with specified ID (so it gets reused next time)
+				dockerClient.tagImageCmd(imageId, targetProperties.get(IMAGE_ID), targetProperties.get(IMAGE_ID)).exec();
+			} catch (Exception e) {
+				throw new TargetException(e);
+			} finally {
+				Utils.closeQuietly(response);
+				if(dockerfile != null) {
+					try { Utils.deleteFilesRecursively(dockerfile); } catch(IOException e) { /* ignore */ }
+				}
+			}
+		}
+
 		CreateContainerResponse container = dockerClient
-			.createContainerCmd( targetProperties.get( IMAGE_ID ))
+			.createContainerCmd(imageId)
 			.withCmd("/usr/local/roboconf-agent/start.sh",
 						"application-name=" + applicationName,
 						"root-instance-name=" + rootInstanceName,
@@ -99,7 +165,7 @@ public class DockerHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
+	 * @see net.roboconf.target.api.TargetHandir.delete()
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
@@ -144,4 +210,5 @@ public class DockerHandler implements TargetHandler {
 
 		return DockerClientBuilder.getInstance( config.build()).build();
 	}
+
 }
