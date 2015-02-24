@@ -27,10 +27,14 @@ package net.roboconf.dm.rest.client.delegates;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
 
 import javax.ws.rs.core.UriBuilder;
 
+import com.sun.jersey.api.client.UniformInterfaceException;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -50,6 +54,7 @@ import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import org.junit.Before;
@@ -73,6 +78,7 @@ public class ApplicationWsDelegateTest {
 	private ManagedApplication ma;
 	private Manager manager;
 	private HttpServer httpServer;
+	private TestClientDm msgClient;
 
 
 	@After
@@ -95,6 +101,12 @@ public class ApplicationWsDelegateTest {
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
+
+		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		this.msgClient.sentMessages.clear();
+
+		// Disable the messages timer for predictability
+		TestUtils.getInternalField( this.manager, "timer", Timer.class).cancel();
 
 		URI uri = UriBuilder.fromUri( REST_URI ).build();
 		RestApplication restApp = new RestApplication( this.manager );
@@ -406,6 +418,76 @@ public class ApplicationWsDelegateTest {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
 		this.client.getApplicationDelegate().addInstance( "inexisting", "/bip/bip", newMysql );
+	}
+
+
+	@Test
+	public void testRemoveInstance_success() {
+		// Check the Tomcat instance is here.
+		final String tomcatPath = InstanceHelpers.computeInstancePath( this.app.getTomcat() );
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, tomcatPath ) );
+
+		// Delete the Tomcat instance.
+		this.client.getApplicationDelegate().removeInstance( this.app.getName(), tomcatPath );
+
+		// Check it is gone.
+		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, tomcatPath ) );
+	}
+
+
+	@Test
+	public void testRemoveInstance_nonExistingInstance() {
+		try {
+			this.client.getApplicationDelegate().removeInstance( this.app.getName(), "/I-do-not-exist" );
+			Assert.fail( "Expecting exception" );
+		} catch ( UniformInterfaceException e ) {
+			// Not found!
+			Assert.assertEquals( 404, e.getResponse().getStatus() );
+		}
+	}
+
+
+	@Test
+	public void testRemoveInstance_nonExistingApplication() {
+		try {
+			this.client.getApplicationDelegate().removeInstance( "I-am-not-an-app", InstanceHelpers.computeInstancePath( this.app.getTomcat() ) );
+			Assert.fail( "Expecting exception" );
+		} catch ( UniformInterfaceException e ) {
+			// Not found!
+			Assert.assertEquals( 404, e.getResponse().getStatus() );
+		}
+	}
+
+
+	@Test
+	public void testResynchronize_success() throws ApplicationException {
+		final Collection<Instance> rootInstances = this.app.getRootInstances();
+
+		// Deploy & start everything.
+		for(Instance i : rootInstances)
+			i.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// Request an application resynchronization.
+		this.client.getApplicationDelegate().resynchronize( this.app.getName() );
+
+		// Check a MsgCmdResynchronize has been sent to each agent.
+		final List<Message> sentMessages = this.msgClient.sentMessages;
+		Assert.assertEquals( rootInstances.size(), sentMessages.size() );
+		for (Iterator<Message> i = sentMessages.iterator(); i.hasNext();)
+			Assert.assertTrue( i.next() instanceof MsgCmdResynchronize );
+
+	}
+
+
+	@Test
+	public void testResynchronize_nonExistingApplication() {
+		try {
+			this.client.getApplicationDelegate().resynchronize( "I-am-not-an-app" );
+			Assert.fail( "Expecting exception" );
+		} catch ( UniformInterfaceException e ) {
+			// Not found!
+			Assert.assertEquals( 404, e.getResponse().getStatus() );
+		}
 	}
 
 
