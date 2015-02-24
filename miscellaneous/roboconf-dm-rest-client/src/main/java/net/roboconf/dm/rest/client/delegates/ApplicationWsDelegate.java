@@ -235,6 +235,46 @@ public class ApplicationWsDelegate {
 
 
 	/**
+	 * Removes an instance.
+	 *
+	 * @param applicationName the application name
+	 * @param instancePath    the path of the instance to remove
+	 */
+	public void removeInstance( String applicationName, String instancePath ) {
+		this.logger.finer( String.format( "Removing instance \"%s\" from application \"%s\"...",
+				instancePath, applicationName ) );
+
+		this.resource
+				.path( UrlConstants.APP )
+				.path( applicationName )
+				.path( "instances" )
+				.queryParam( "instance-path", instancePath )
+				.delete();
+
+		this.logger.finer( String.format( "Instance \"%s\" has been removed from application \"%s\"",
+				instancePath, applicationName ) );
+	}
+
+
+	/**
+	 * Resynchronizes all the instances / agents.
+	 *
+	 * @param applicationName the application name
+	 */
+	public void resynchronize( String applicationName ) {
+		this.logger.finer( String.format( "Resynchronizing application \"%s\"...", applicationName ) );
+
+		this.resource
+				.path( UrlConstants.APP )
+				.path( applicationName )
+				.path( "resynchronize" )
+				.post();
+
+		this.logger.finer( String.format( "Application \"%s\" has been resynchronized", applicationName ) );
+	}
+
+
+	/**
 	 * Lists all the components from a given application.
 	 * @param applicationName the application name
 	 * @return a non-null list of components

@@ -46,6 +46,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
@@ -61,7 +62,6 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
-	private static final String JERSEY_VERSION = "1.18.2";
 	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
 
 	private WsClient client;
@@ -95,13 +95,14 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 			// nothing
 		}
 
+		String jerseyVersion = MavenUtils.getArtifactVersion( "com.sun.jersey", "jersey-client" );
 		return OptionUtils.combine(
 				super.config(),
 
 				mavenBundle()
 					.groupId( "com.sun.jersey" )
 					.artifactId( "jersey-client" )
-					.version( JERSEY_VERSION )
+					.version( jerseyVersion )
 					.start(),
 
 				mavenBundle()

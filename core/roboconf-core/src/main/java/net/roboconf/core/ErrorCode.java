@@ -148,6 +148,17 @@ public enum ErrorCode {
 	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource (recipe) directory." ),
 	PROJ_NO_TARGET_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A root component does not have a target.properties file in its resources." ),
 
+	// Recipes Errors
+	REC_PUPPET_DISLIKES_WILDCARD_IMPORTS( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Puppet modules may encounter problems with Roboconf wildcard imports." ),
+	REC_PUPPET_HAS_NO_RBCF_MODULE( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "There must be a Puppet module whose name starts with 'roboconf_'." ),
+	REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "There must be only ONE Puppet module whose name starts with 'roboconf_'." ),
+	REC_PUPPET_MISSING_PARAM_IMPORT_ADDED( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts that handle updates must have an 'importAdded' parameter." ),
+	REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts that handle updates must have an 'importRemoved' parameter." ),
+	REC_PUPPET_MISSING_PARAM_IMPORT_COMP( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts that handle updates must have an 'importComponent' parameter." ),
+	REC_PUPPET_MISSING_PARAM_RUNNING_STATE( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts must have a 'runningState' parameter." ),
+	REC_PUPPET_MISSING_PARAM_FROM_IMPORT( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Component imports mean the Puppet module must have matching parameters." ),
+	REC_BASH_NO_SCRIPTS_DIR( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Bash scripts must be placed under a 'scripts' directory." ),
+	REC_BASH_NO_BASH_DIRECTIVE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Bash scripts should start with '#!/bin/bash'." ),
 
 	// Execution Errors
 	;
@@ -157,7 +168,7 @@ public enum ErrorCode {
 	 * RoboconfError categories.
 	 */
 	public enum ErrorCategory {
-		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, PROJECT, EXECUTION;
+		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, PROJECT, RECIPES, EXECUTION;
 	}
 
 	/**

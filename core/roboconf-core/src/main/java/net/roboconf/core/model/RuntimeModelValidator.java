@@ -214,6 +214,9 @@ public final class RuntimeModelValidator {
 					error.setDetails( "Component name: " + c.getName());
 					result.add( error );
 				}
+
+			} else {
+				result.addAll( RecipesValidator.validateComponentRecipes( projectDirectory, c ));
 			}
 		}
 
