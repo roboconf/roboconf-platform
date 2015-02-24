@@ -231,7 +231,7 @@ public class PluginBash implements PluginInterface {
     		}
     	}
 
-    	int exitCode = ProgramUtils.executeCommand( this.logger, command, environmentVars );
+    	int exitCode = ProgramUtils.executeCommand( this.logger, command, script.getParentFile(), environmentVars );
         if( exitCode != 0 )
         	throw new IOException( "Bash script execution failed. Exit code: " + exitCode );
     }

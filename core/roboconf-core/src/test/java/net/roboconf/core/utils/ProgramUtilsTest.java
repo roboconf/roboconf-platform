@@ -49,6 +49,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
+				null,
 				new HashMap<String,String>( 0 ));
 	}
 
@@ -65,6 +66,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
+				null,
 				new HashMap<String,String>( 0 ));
 	}
 
@@ -83,6 +85,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
+				null,
 				map );
 	}
 
@@ -98,12 +101,13 @@ public class ProgramUtilsTest {
 		Assume.assumeTrue( isUnix );
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( null, "null key" );
-		map.put( "null value", null );
+		map.put( "nufinal File workingDir,ll value", null );
 		map.put( "key", "value" );
 
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
+				null,
 				map );
 	}
 
@@ -116,6 +120,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
+				null,
 				null );
 	}
 
@@ -132,6 +137,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
+				null,
 				null );
 	}
 
@@ -144,6 +150,7 @@ public class ProgramUtilsTest {
 		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "help" ),
+				null,
 				null );
 
 		Assert.assertNotSame( 0, exitCode );
@@ -162,6 +169,7 @@ public class ProgramUtilsTest {
 		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "apt-get-update" ),
+				null,
 				new HashMap<String,String>( 0 ));
 
 		Assert.assertNotSame( 0, exitCode );
@@ -174,6 +182,6 @@ public class ProgramUtilsTest {
 
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
-				Arrays.asList( "whatever" ), null );
+				Arrays.asList( "whatever" ), null, null );
 	}
 }
