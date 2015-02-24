@@ -285,7 +285,8 @@ public class PluginPuppet implements PluginInterface {
 		String clazz = moduleDirectory.getName() + "::" + action;
 		File scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/" + action + ".pp");
 
-		if( ! scriptFile.exists()) { // No action-specific manifest, try default init.pp
+		// No action-specific manifest, try default init.pp
+		if( ! scriptFile.exists()) {
 			clazz = moduleDirectory.getName();
 			scriptFile = new File(moduleDirectory, MANIFESTS_FOLDER + "/init.pp");
 		}

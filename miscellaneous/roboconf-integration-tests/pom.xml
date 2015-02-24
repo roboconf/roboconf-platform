@@ -184,6 +184,14 @@
 			<version>1</version>
 			<scope>test</scope>
 		</dependency>
+		
+		<!-- Used to retrieve Jersey's version from the test -->
+		<dependency>
+			<groupId>com.sun.jersey</groupId>
+			<artifactId>jersey-client</artifactId>
+			<version>${jersey.stack.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
