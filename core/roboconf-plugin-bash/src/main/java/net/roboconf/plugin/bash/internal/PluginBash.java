@@ -206,7 +206,6 @@ public class PluginBash implements PluginInterface {
     protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir)
     throws IOException, InterruptedException {
 
-    	//String[] command = { "bash", script.getAbsolutePath() };
     	String[] command = { script.getAbsolutePath() };
     	if(! script.canExecute()) {
     		script.setExecutable(true);
