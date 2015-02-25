@@ -91,9 +91,10 @@ public class PluginBash implements PluginInterface {
 
 	@Override
 	public void initialize( Instance instance ) throws PluginException {
-		this.logger.fine( this.agentId + " has nothing to initialize in the plugin for " + instance );
+		this.logger.fine(this.agentId + ": initializing the plugin for " + instance);
+		// All scripts deployed should be made executable
+        if(instance != null) setScriptsExecutable(new File(InstanceHelpers.findInstanceDirectoryOnAgent(instance), SCRIPTS_FOLDER_NAME));
 	}
-
 
 	@Override
 	public void deploy( Instance instance ) throws PluginException {
@@ -205,7 +206,10 @@ public class PluginBash implements PluginInterface {
     protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir)
     throws IOException, InterruptedException {
 
-    	String[] command = { "bash", script.getAbsolutePath()};
+    	String[] command = { script.getAbsolutePath() };
+    	if(! script.canExecute()) {
+    		script.setExecutable(true);
+    	}
     	Map<String, String> environmentVars = new HashMap<String, String>();
     	Map<String, String> vars = formatExportedVars(instance);
     	environmentVars.putAll(vars);
@@ -231,7 +235,7 @@ public class PluginBash implements PluginInterface {
     		}
     	}
 
-    	int exitCode = ProgramUtils.executeCommand( this.logger, command, environmentVars );
+    	int exitCode = ProgramUtils.executeCommand( this.logger, command, script.getParentFile(), environmentVars );
         if( exitCode != 0 )
         	throw new IOException( "Bash script execution failed. Exit code: " + exitCode );
     }
@@ -306,4 +310,18 @@ public class PluginBash implements PluginInterface {
 
         return importedVars;
     }
+    
+    /**
+	 * Recursively set all files and directories executable, starting from a base directory.
+	 * @param dir The base directory
+	 */
+	private void setScriptsExecutable(File dir) {
+		if(dir.isDirectory()) {
+			dir.setExecutable(true);
+			for(File f : dir.listFiles()) {
+				if(f.isDirectory()) setScriptsExecutable(f); // Warning recursive call
+				else f.setExecutable(true);
+			}
+		}
+	}
 }

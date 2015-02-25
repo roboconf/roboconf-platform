@@ -231,7 +231,7 @@ public class PluginPuppet implements PluginInterface {
 			String[] params = commands.toArray( new String[ 0 ]);
 			this.logger.fine( "Module installation: " + Arrays.toString( params ));
 
-			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null );
+			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null, null );
 			if( exitCode != 0 )
 				throw new IOException( "Puppet modules could not be installed for " + instance + "." );
 		}
@@ -322,7 +322,7 @@ public class PluginPuppet implements PluginInterface {
 			// 0 or 2 => correct execution.
 			// 4 => errors during execution.
 			// 6 => changes were applied, but errors occurred too.
-			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null );
+			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null, null );
 			switch( exitCode ) {
 			case 0:
 			case 2:
