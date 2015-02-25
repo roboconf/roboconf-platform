@@ -113,7 +113,7 @@ public class PluginBashTest {
 	@Test
 	public void testInitialize() throws Exception {
 		this.plugin.initialize( null );
-		this.plugin.initialize( new Instance( "whatever" ));
+		this.plugin.initialize(new Instance("whatever").component(new Component("whatever").installerName(PluginBash.PLUGIN_NAME)));
 	}
 
 
