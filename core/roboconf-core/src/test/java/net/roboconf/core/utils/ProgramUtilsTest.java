@@ -101,7 +101,7 @@ public class ProgramUtilsTest {
 		Assume.assumeTrue( isUnix );
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( null, "null key" );
-		map.put( "nufinal File workingDir,ll value", null );
+		map.put( "null value", null );
 		map.put( "key", "value" );
 
 		ProgramUtils.executeCommand(
