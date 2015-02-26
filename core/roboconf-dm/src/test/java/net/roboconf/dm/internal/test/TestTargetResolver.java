@@ -41,6 +41,7 @@ import net.roboconf.target.api.TargetHandler;
 public class TestTargetResolver extends TargetResolver {
 
 	public final Map<Instance,Boolean> instanceToRunningStatus = new HashMap<Instance,Boolean> ();
+	public final Map<Instance,Integer> instanceToRequestsCount = new HashMap<Instance,Integer> ();
 
 
 	@Override
@@ -65,6 +66,11 @@ public class TestTargetResolver extends TargetResolver {
 			throws TargetException {
 
 				TestTargetResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );
+				Integer cpt = TestTargetResolver.this.instanceToRequestsCount.get( instance );
+				if( cpt == null )
+					cpt = 0;
+
+				TestTargetResolver.this.instanceToRequestsCount.put( instance, ++ cpt );
 				return "generated machine id for " + rootInstanceName;
 			}
 

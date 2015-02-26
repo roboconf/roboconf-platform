@@ -116,6 +116,7 @@ public class Manager {
 
 	// Constants
 	private static final long TIMER_PERIOD = 6000;
+	private static final Object LOCK = new Object();
 
 	// Injected by iPojo or Admin Config
 	private final List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
@@ -824,14 +825,26 @@ public class Manager {
 	 */
 	void deployRoot( ManagedApplication ma, Instance rootInstance ) throws TargetException, IOException {
 
+		// It only makes sense for root instances.
 		this.logger.fine( "Deploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
 		if( rootInstance.getParent() != null ) {
 			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;
 		}
 
-		// If the VM creation was already requested, then its machine ID has already been set.
-		// It does not mean the VM is already created, it may take some time.
+		// We must prevent the concurrent creation of several VMs for a same root instance.
+		// See #80.
+		synchronized( LOCK ) {
+			if( rootInstance.data.get( Instance.TARGET_ACQUIRED ) == null ) {
+				rootInstance.data.put( Instance.TARGET_ACQUIRED, "yes" );
+			} else {
+				this.logger.finer( "Root instance " + rootInstance + " is already under deployment. This redundant request is dropped." );
+				return;
+			}
+		}
+
+		// If the VM creation was already done, then its machine ID has already been set.
+		// It does not mean the VM is already configured, it may take some time.
 		String machineId = rootInstance.data.get( Instance.MACHINE_ID );
 		if( machineId != null ) {
 			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
@@ -919,6 +932,7 @@ public class Manager {
 
 			// Remove useless data for the configuration backup
 			rootInstance.data.remove( Instance.IP_ADDRESS );
+			rootInstance.data.remove( Instance.TARGET_ACQUIRED );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( Exception e ) {
@@ -987,6 +1001,7 @@ public class Manager {
 					String machineId = rootInstance.data.get( Instance.MACHINE_ID );
 					if( machineId == null ) {
 						rootInstance.data.remove( Instance.IP_ADDRESS );
+						rootInstance.data.remove( Instance.TARGET_ACQUIRED );
 						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
 							i.setStatus( InstanceStatus.NOT_DEPLOYED );
 
@@ -1001,6 +1016,7 @@ public class Manager {
 					if( ! target.getHandler().isMachineRunning( targetProperties, machineId )) {
 						rootInstance.data.remove( Instance.IP_ADDRESS );
 						rootInstance.data.remove( Instance.MACHINE_ID );
+						rootInstance.data.remove( Instance.TARGET_ACQUIRED );
 						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
 							i.setStatus( InstanceStatus.NOT_DEPLOYED );
 					}
