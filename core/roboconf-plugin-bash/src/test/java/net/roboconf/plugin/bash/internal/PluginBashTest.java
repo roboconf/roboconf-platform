@@ -45,13 +45,21 @@ import net.roboconf.plugin.api.PluginException;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
 public class PluginBashTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
+	// This is hard-coded path for Linux, but this is because the Bash plugin
+	// only makes sense for Linux systems. Tests that try to execute scripts
+	// first check that we are indeed on a Linux system. Otherwise, they are skipped.
 	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-bash" );
 
 	private final Instance inst = new Instance( "sample" )
@@ -96,6 +104,12 @@ public class PluginBashTest {
 
 
 	@Test
+	public void testPluginName() {
+		Assert.assertEquals( PluginBash.PLUGIN_NAME, new PluginBash().getPluginName());
+	}
+
+
+	@Test
 	public void testSetNames() {
 
 		Assert.assertNotNull( this.plugin.agentId );
@@ -112,8 +126,8 @@ public class PluginBashTest {
 
 	@Test
 	public void testInitialize() throws Exception {
-		this.plugin.initialize( null );
-		this.plugin.initialize(new Instance("whatever").component(new Component("whatever").installerName(PluginBash.PLUGIN_NAME)));
+		Instance inst = new Instance("whatever").component(new Component("whatever").installerName( PluginBash.PLUGIN_NAME ));
+		this.plugin.initialize( inst );
 	}
 
 
@@ -353,6 +367,17 @@ public class PluginBashTest {
 		Assert.assertFalse( OUTPUT_DIR.exists());
 		this.plugin.start( this.inst );
 		Assert.assertFalse( OUTPUT_DIR.exists());
+	}
+
+
+	@Test
+	public void testSetScriptsExecutableOnFile() throws Exception {
+
+		File f = this.folder.newFile();
+		Assert.assertFalse( f.canExecute());
+
+		this.plugin.setScriptsExecutable( f );
+		Assert.assertFalse( f.canExecute());
 	}
 
 
