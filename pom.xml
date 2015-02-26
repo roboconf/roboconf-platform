@@ -84,7 +84,7 @@
 		<jersey.stack.version>1.18.2</jersey.stack.version>
 		<jackson.stack.version>2.3.1</jackson.stack.version>
 		<karaf.version>3.0.3</karaf.version>
-		<ipojo.version>1.12.0</ipojo.version>
+		<ipojo.version>1.12.1</ipojo.version>
 		<jclouds.version>1.8.1</jclouds.version>
 	</properties>
 	

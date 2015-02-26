@@ -849,12 +849,19 @@ public class Manager {
 			Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
 			targetProperties.putAll( rootInstance.data );
 
-			machineId = target.getHandler().createOrConfigureMachine(
+			machineId = target.getHandler().createMachine(
 					targetProperties, this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
 					rootInstance.getName(), ma.getApplication().getName());
 
 			rootInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
+
+			target.getHandler().configureMachine(
+					targetProperties, machineId,
+					this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
+					rootInstance.getName(), ma.getApplication().getName());
+
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s configuration is on its way in " + ma.getName() + "." );
 
 		} catch( Exception e ) {
 			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
@@ -976,9 +983,35 @@ public class Manager {
 			// States
 			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 				try {
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
+					// Not associated with a VM? => Everything must be not deployed.
+					String machineId = rootInstance.data.get( Instance.MACHINE_ID );
+					if( machineId == null ) {
+						rootInstance.data.remove( Instance.IP_ADDRESS );
+						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
+							i.setStatus( InstanceStatus.NOT_DEPLOYED );
 
-				} catch( IOException e ) {
+						continue;
+					}
+
+					// Not a running VM? => Everything must be not deployed.
+					Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
+					Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
+					targetProperties.putAll( rootInstance.data );
+
+					if( ! target.getHandler().isMachineRunning( targetProperties, machineId )) {
+						rootInstance.data.remove( Instance.IP_ADDRESS );
+						rootInstance.data.remove( Instance.MACHINE_ID );
+						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
+							i.setStatus( InstanceStatus.NOT_DEPLOYED );
+					}
+
+					// Otherwise, ask the agent to resent the states
+					else {
+						rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+						this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
+					}
+
+				} catch( Exception e ) {
 					this.logger.severe( "Could not request states for agent " + rootInstance.getName() + " (I/O exception)." );
 					Utils.logException( this.logger, e );
 				}

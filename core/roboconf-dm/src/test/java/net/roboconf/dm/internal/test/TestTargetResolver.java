@@ -55,7 +55,7 @@ public class TestTargetResolver extends TargetResolver {
 			}
 
 			@Override
-			public String createOrConfigureMachine(
+			public String createMachine(
 					Map<String,String> targetProperties,
 					String messagingIp,
 					String messagingUsername,
@@ -66,6 +66,29 @@ public class TestTargetResolver extends TargetResolver {
 
 				TestTargetResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );
 				return "generated machine id for " + rootInstanceName;
+			}
+
+
+			@Override
+			public void configureMachine(
+					Map<String,String> targetProperties,
+					String machineId,
+					String messagingIp,
+					String messagingUsername,
+					String messagingPassword,
+					String rootInstanceName,
+					String applicationName)
+			throws TargetException {
+				// nothing
+			}
+
+
+			@Override
+			public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+			throws TargetException {
+
+				Boolean running = TestTargetResolver.this.instanceToRunningStatus.get( instance );
+				return running != null && running;
 			}
 
 			@Override

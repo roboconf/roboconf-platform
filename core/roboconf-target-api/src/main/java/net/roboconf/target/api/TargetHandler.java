@@ -40,9 +40,11 @@ public interface TargetHandler {
 
 
 	/**
-	 * Creates or configures a machine.
+	 * Creates a machine.
 	 * <p>
-	 * The machine must have a Roboconf agent installed on it.
+	 * The machine must have a Roboconf agent installed on it.<br />
+	 * This method only deals with the creation of a VM. Configuring the network,
+	 * storage and so on, should be done {@link #configureMachine(Map, String)}.
 	 * </p>
 	 *
 	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
@@ -54,8 +56,39 @@ public interface TargetHandler {
 	 * @return the (machine) ID of this machine (should be unique for the target manager)
 	 * @throws TargetException
 	 */
-	String createOrConfigureMachine(
+	String createMachine(
 			Map<String,String> targetProperties,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName )
+	throws TargetException;
+
+
+	/**
+	 * Configures a machine identified by its id.
+	 * <p>
+	 * Configuration can be adding storage, setting up the network settings, etc.
+	 * </p>
+	 * <p>
+	 * Messaging and other information are passed too. Most of the time, they will not
+	 * be necessary in the configuration, only in the machine creation. However, some systems
+	 * may use them at this level (in particular, those that do not support user data mechanisms).
+	 * </p>
+	 *
+	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param machineId the ID machine of the machine to configure
+	 * @param messagingIp the IP of the messaging server
+	 * @param messagingUsername the user name to connect to the messaging server
+	 * @param messagingPassword the password to connect to the messaging server
+	 * @param applicationName the application name
+	 * @param rootInstanceName the name of the root instance associated with this VM
+	 * @throws TargetException
+	 */
+	void configureMachine(
+			Map<String,String> targetProperties,
+			String machineId,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
@@ -71,4 +104,18 @@ public interface TargetHandler {
 	 * @throws TargetException
 	 */
 	void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException;
+
+
+	/**
+	 * Determines whether a machine is running or not.
+	 * <p>
+	 * This method is invoked by the DM when it is restarted, to retrieve the state
+	 * of the machines it used to know.
+	 * </p>
+	 *
+	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param machineId the ID machine of the machine to configure
+	 * @throws TargetException
+	 */
+	boolean isMachineRunning( Map<String,String> targetProperties, String machineId ) throws TargetException;
 }

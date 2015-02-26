@@ -45,7 +45,7 @@ public class MyHandler implements TargetHandler {
 	}
 
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -70,6 +70,28 @@ public class MyHandler implements TargetHandler {
 
 		return key;
 	}
+
+
+	@Override
+	public void configureMachine(
+			Map<String,String> targetProperties,
+			String machineId,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName)
+	throws TargetException {
+		// nothing
+	}
+
+
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+		return this.agentIdToAgent.containsKey( machineId );
+	}
+
 
 	@Override
 	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,38 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.test;
+package net.roboconf.target.api.internal;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TargetHandlerMock implements TargetHandler {
+public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHandler {
 
-	private final String installerName;
+	private final AtomicInteger cpt = new AtomicInteger();
+	private final boolean failConfiguration;
 
 
 	/**
 	 * Constructor.
-	 * @param installerName
+	 * @param failConfiguration
 	 */
-	public TargetHandlerMock( String installerName ) {
-		this.installerName = installerName;
+	public TestAbstractThreadedTargetHandler( boolean failConfiguration ) {
+		this.failConfiguration = failConfiguration;
 	}
 
-	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
-		// nothing
-	}
 
 	@Override
 	public String getTargetId() {
-		return this.installerName;
+		return "whatever";
 	}
 
 	@Override
@@ -66,35 +63,39 @@ public class TargetHandlerMock implements TargetHandler {
 			String rootInstanceName,
 			String applicationName )
 	throws TargetException {
-		return "whatever";
+		return "some-id";
 	}
 
+
 	@Override
-	public void configureMachine(
+	public void terminateMachine( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+		// nothing
+	}
+
+
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+		return false;
+	}
+
+
+	@Override
+	public MachineConfigurator machineConfigurator(
 			Map<String,String> targetProperties,
 			String machineId,
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
 			String rootInstanceName,
-			String applicationName)
-	throws TargetException {
-		// nothing
+			String applicationName ) {
+
+		return new TestMachineConfigurator( this.cpt, this.failConfiguration );
 	}
 
-	@Override
-	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId ) throws TargetException {
-		return false;
-	}
 
-	@Override
-	public boolean equals( Object obj ) {
-		return obj instanceof TargetHandlerMock
-				&& Utils.areEqual( this.installerName, ((TargetHandlerMock) obj ).installerName );
-	}
-
-	@Override
-	public int hashCode() {
-		return this.installerName == null ? 11 : this.installerName.hashCode();
+	public int getCpt() {
+		return this.cpt.get();
 	}
 }

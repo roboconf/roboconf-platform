@@ -40,9 +40,7 @@ public class Ec2IaasHandlerTest {
 
 	@Test( expected = TargetException.class )
 	public void testInvalidConfiguration() throws Exception {
-
-		Ec2IaasHandler target = new Ec2IaasHandler();
-		target.parseProperties( new HashMap<String,String> ());
+		 Ec2IaasHandler.parseProperties( new HashMap<String,String> ());
 	}
 
 
@@ -50,8 +48,6 @@ public class Ec2IaasHandlerTest {
 	public void testValidConfiguration() throws Exception {
 
 		Map<String, String> targetProperties = new HashMap<String,String> ();
-		Ec2IaasHandler target = new Ec2IaasHandler();
-
 		targetProperties.put( Ec2Constants.EC2_ENDPOINT, "127.0.0.1" );
 		targetProperties.put( Ec2Constants.EC2_ACCESS_KEY, "my access key" );
 		targetProperties.put( Ec2Constants.EC2_SECRET_KEY, "my secret key" );
@@ -60,7 +56,7 @@ public class Ec2IaasHandlerTest {
 		targetProperties.put( Ec2Constants.SSH_KEY_NAME, "secret_key" );
 		targetProperties.put( Ec2Constants.SECURITY_GROUP_NAME, "WorldWideVisible" );
 
-		target.parseProperties( targetProperties );
+		Ec2IaasHandler.parseProperties( targetProperties );
 	}
 
 

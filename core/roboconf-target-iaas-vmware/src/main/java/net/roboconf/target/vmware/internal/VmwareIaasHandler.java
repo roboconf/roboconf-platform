@@ -34,20 +34,16 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
 
 import com.vmware.vim25.DynamicProperty;
-import com.vmware.vim25.GuestProgramSpec;
-import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigSpec;
 import com.vmware.vim25.VirtualMachineRelocateSpec;
 import com.vmware.vim25.mo.ComputeResource;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Folder;
-import com.vmware.vim25.mo.GuestOperationsManager;
-import com.vmware.vim25.mo.GuestProcessManager;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
@@ -56,7 +52,7 @@ import com.vmware.vim25.mo.VirtualMachine;
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
-public class VmwareIaasHandler implements TargetHandler {
+public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "iaas-vmware";
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -74,12 +70,11 @@ public class VmwareIaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.util.Map, java.lang.String, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -90,11 +85,7 @@ public class VmwareIaasHandler implements TargetHandler {
 
 		try {
 			final String machineImageId = targetProperties.get("vmware.template");
-			final ServiceInstance vmwareServiceInstance = new ServiceInstance(
-					new URL(targetProperties.get("vmware.url")),
-					targetProperties.get("vmware.user"),
-					targetProperties.get("vmware.password"),
-					Boolean.parseBoolean(targetProperties.get("vmware.ignorecert")));
+			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
 
 			final ComputeResource vmwareComputeResource = (ComputeResource)(
 					new InventoryNavigator( vmwareServiceInstance.getRootFolder())
@@ -140,38 +131,65 @@ public class VmwareIaasHandler implements TargetHandler {
 			task = vm2.powerOnVM_Task(null);
 			this.logger.fine("Starting the virtual machine: "+ rootInstanceName +" ...");
 			status = task.waitForTask();
-			if (!status.equals(Task.SUCCESS))
+			if( ! status.equals( Task.SUCCESS ))
 				throw new TargetException("Failure -: Virtual Machine cannot be started");
-
-			// VMWare tools not yet started (!)
-			// FIXME (VZ): how great!
-			Thread.sleep( 20000 );
-
-			GuestOperationsManager gom = vmwareServiceInstance.getGuestOperationsManager();
-		    NamePasswordAuthentication npa = new NamePasswordAuthentication();
-		    npa.username = targetProperties.get("vmware.vmuser");
-		    npa.password = targetProperties.get("vmware.vmpassword");
-		    GuestProgramSpec spec = new GuestProgramSpec();
-
-		    spec.programPath = "/bin/echo";
-		    spec.arguments = "$\'" + userData + "\' > /tmp/roboconf.properties";
-		    this.logger.fine(spec.programPath + " " + spec.arguments);
-
-		    GuestProcessManager gpm = gom.getProcessManager(vm2);
-		    long pid = gpm.startProgramInGuest(npa, spec);
-		    this.logger.fine("pid: " + pid);
 
 			return vm2.getName();
 
-		} catch(RemoteException e) {
-			throw new TargetException(e);
+		} catch( Exception e ) {
+			throw new TargetException( e );
+		}
+	}
 
-		} catch (InterruptedException e) {
-			throw new TargetException(e);
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map, java.lang.String,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public MachineConfigurator machineConfigurator(
+			Map<String,String> targetProperties,
+			String machineId,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName ) {
+
+		String userData = "";
+		try {
+			userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
 
 		} catch( IOException e ) {
-			throw new TargetException(e);
+			this.logger.severe( "User data could not be generated." );
+			Utils.logException( this.logger, e );
 		}
+
+		return new VmWareMachineConfigurator( targetProperties, userData, rootInstanceName );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 */
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+
+		boolean result = false;
+		try {
+			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
+			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineId );
+			result = vm != null;
+
+		} catch( Exception e ) {
+			throw new TargetException( e );
+		}
+
+		return result;
 	}
 
 
@@ -184,12 +202,7 @@ public class VmwareIaasHandler implements TargetHandler {
 	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
 
 		try {
-			final ServiceInstance vmwareServiceInstance = new ServiceInstance(
-					new URL(targetProperties.get("vmware.url")),
-					targetProperties.get("vmware.user"),
-					targetProperties.get("vmware.password"),
-					Boolean.parseBoolean(targetProperties.get("vmware.ignorecert")));
-
+			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, instanceId );
 			if (vm == null)
 				throw new TargetException("error vm: "+instanceId+" not found");
@@ -217,7 +230,7 @@ public class VmwareIaasHandler implements TargetHandler {
 	}
 
 
-	private VirtualMachine getVirtualMachine( ServiceInstance vmwareServiceInstance , String virtualmachineName )
+	static VirtualMachine getVirtualMachine( ServiceInstance vmwareServiceInstance , String virtualmachineName )
 	throws RemoteException {
 
 		VirtualMachine result = null;
@@ -227,5 +240,16 @@ public class VmwareIaasHandler implements TargetHandler {
 		}
 
 		return result;
+	}
+
+
+	static ServiceInstance getServiceInstance( Map<String,String> targetProperties )
+	throws RemoteException, MalformedURLException {
+
+		return new ServiceInstance(
+				new URL(targetProperties.get("vmware.url")),
+				targetProperties.get("vmware.user"),
+				targetProperties.get("vmware.password"),
+				Boolean.parseBoolean(targetProperties.get("vmware.ignorecert")));
 	}
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,35 +23,40 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.embedded.internal;
+package net.roboconf.target.api.internal;
 
-import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class EmbeddedHandlerTest {
+public class TestMachineConfigurator implements MachineConfigurator {
 
-	@Test
-	public void testTargetEmbedded() throws Exception {
+	private final AtomicInteger cpt;
+	private final boolean failConfiguration;
 
-		EmbeddedHandler target = new EmbeddedHandler();
-		Assert.assertEquals( EmbeddedHandler.TARGET_ID, target.getTargetId());
-		target.terminateMachine( null, null );
-		target.terminateMachine( new HashMap<String,String>(), "anything" );
 
-		Assert.assertFalse( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
-		Assert.assertNotNull( target.createMachine( null, "ip", "user", "pwd", "nothing", "app" ));
-		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
+	/**
+	 * Constructor.
+	 * @param cpt
+	 * @param failConfiguration
+	 */
+	public TestMachineConfigurator( AtomicInteger cpt, boolean failConfiguration ) {
+		this.cpt = cpt;
+		this.failConfiguration = failConfiguration;
+	}
 
-		Assert.assertNotNull( target.createMachine( new HashMap<String,String>(), null, null, null, null, null ));
-		target.configureMachine( new HashMap<String,String>(), null, null, null, null, null, null );
+	@Override
+	public boolean configure() throws TargetException {
 
-		target.terminateMachine( new HashMap<String,String>(), null );
-		target.terminateMachine( null, "anything" );
+		if( this.failConfiguration
+				&& this.cpt.get() == 1 )
+			throw new TargetException( "This is for test purpose." );
+
+		// We consider it is configuration after 3 invocations.
+		return this.cpt.incrementAndGet() == 3;
 	}
 }

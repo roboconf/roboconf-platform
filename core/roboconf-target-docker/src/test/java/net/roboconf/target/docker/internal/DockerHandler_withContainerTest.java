@@ -26,16 +26,13 @@
 package net.roboconf.target.docker.internal;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +42,7 @@ import java.util.logging.Logger;
 import junit.framework.Assert;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -54,17 +52,11 @@ import org.junit.Test;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.CreateImageResponse;
+import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
-import com.github.dockerjava.jaxrs.DockerClientBuilder;
 
 /**
- * FIXME (VZ): tests do not run on my machine, and they will most likely not run on Travis CI.
- * <p>
- * I have a 404 error when I try to prepare the tests. I guess the image does not match
- * anything in my Docker install.
- * </p>
- *
  * @author Pierre-Yves Gibello - Linagora
  */
 public class DockerHandler_withContainerTest {
@@ -135,30 +127,25 @@ public class DockerHandler_withContainerTest {
 		DockerHandler target = new DockerHandler();
 		Map<String,String> targetProperties = loadTargetProperties();
 
-		String rootInstanceName = "test";
-		String applicationName = "roboconf";
-		String ipMessagingServer;
-		try {
-			ipMessagingServer = java.net.InetAddress.getLocalHost().getHostAddress();
-			NetworkInterface ni = NetworkInterface.getByName( "eth0" );
-			Enumeration<InetAddress> inetAddresses =  ni.getInetAddresses();
-			while( inetAddresses.hasMoreElements()) {
-				InetAddress ia = inetAddresses.nextElement();
-				if( ! ia.isLinkLocalAddress())
-					ipMessagingServer = ia.getHostAddress();
-			}
-
-		} catch( Exception e ) {
-			ipMessagingServer = "127.0.0.1";
-		}
-
-		String user = "roboconf";
-		String pwd = "roboconf";
-		String containerId = null;
-
-		containerId = target.createOrConfigureMachine( targetProperties, ipMessagingServer, user, pwd, rootInstanceName, applicationName );
+		String containerId = target.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "test", "roboconf" );
 		Assert.assertNotNull( containerId );
+		Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+
+		target.configureMachine( targetProperties, containerId, null, null, null, null, null );
 		target.terminateMachine( targetProperties, containerId );
+		Assert.assertFalse( target.isMachineRunning( targetProperties, containerId ));
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testCreateVM_missingParameters() throws Exception {
+
+		Assume.assumeTrue( this.dockerIsInstalled );
+		DockerHandler target = new DockerHandler();
+		Map<String,String> targetProperties = loadTargetProperties();
+		targetProperties.remove( DockerHandler.IMAGE_ID );
+
+		target.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "test", "roboconf" );
 	}
 
 
@@ -184,7 +171,7 @@ public class DockerHandler_withContainerTest {
 		BufferedReader reader = null;
 		boolean ok = false;
 		try {
-			reader = new BufferedReader( new FileReader( dockerConf ));
+			reader = new BufferedReader( new InputStreamReader( new FileInputStream( dockerConf ), "UTF-8" ));
 			String line;
 			while( ! ok && (line = reader.readLine()) != null) {
 				if( line.indexOf("#") < 0
@@ -206,9 +193,9 @@ public class DockerHandler_withContainerTest {
 				throw new IOException( "The Docker configuration is missing TCP configuration." );
 			}
 
-			BufferedWriter writer = null;
+			OutputStreamWriter writer = null;
 			try {
-				writer = new BufferedWriter( new FileWriter(dockerConf, true));
+				writer = new OutputStreamWriter( new FileOutputStream( dockerConf, true ),"UTF-8" );
 				writer.append("DOCKER_OPTS=\"-H tcp://localhost:" + DOCKER_TCP_PORT + " -H unix:///var/run/docker.sock\"\n");
 
 			} finally {
@@ -228,15 +215,7 @@ public class DockerHandler_withContainerTest {
 	private Map<String,String> loadTargetProperties() throws Exception {
 
 		File propertiesFile = new File( Thread.currentThread().getContextClassLoader().getResource("conf/docker.properties").getFile());
-		FileInputStream fis = null;
-		Properties p = new Properties();
-		try {
-			fis = new FileInputStream( propertiesFile );
-			p.load( fis );
-
-		} finally {
-			Utils.closeQuietly( fis );
-		}
+		Properties p = Utils.readPropertiesFile( propertiesFile );
 
 		HashMap<String,String> targetProperties = new HashMap<String,String> ();
 		for( Map.Entry<Object,Object> entry : p.entrySet())

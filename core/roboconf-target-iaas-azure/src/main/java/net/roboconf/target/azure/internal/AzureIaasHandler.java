@@ -32,8 +32,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
@@ -87,12 +85,11 @@ public class AzureIaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.util.Map, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 			Map<String, String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -167,23 +164,43 @@ public class AzureIaasHandler implements TargetHandler {
 			instanceId = rootInstanceName;
 			// instanceID in this context should be rootInstanceName
 
-		} catch( UnsupportedEncodingException e ) {
-			throw new TargetException( e );
-
-		} catch( ParserConfigurationException e ) {
-			throw new TargetException( e );
-
-		} catch( SAXException e ) {
-			throw new TargetException( e );
-
-		} catch( IOException e ) {
-			throw new TargetException( e );
-
-		} catch( GeneralSecurityException e ) {
+		} catch( Exception e ) {
 			throw new TargetException( e );
 		}
 
 		return instanceId;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public void configureMachine(
+		Map<String,String> targetProperties,
+		String machineId,
+		String messagingIp,
+		String messagingUsername,
+		String messagingPassword,
+		String rootInstanceName,
+		String applicationName )
+	throws TargetException {
+		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 */
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+		// TODO See #230
+		return false;
 	}
 
 
@@ -209,13 +226,7 @@ public class AzureIaasHandler implements TargetHandler {
 
 			this.logger.info("Response Code: Delete VM: " + rescodeDeleteCloudService);
 
-		} catch( GeneralSecurityException e ) {
-			throw new TargetException( e );
-
-		} catch( MalformedURLException e ) {
-			throw new TargetException( e );
-
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new TargetException( e );
 		}
 	}
@@ -288,6 +299,7 @@ public class AzureIaasHandler implements TargetHandler {
 
 		} catch (Exception e) {
 			this.logger.severe( e.getMessage());
+			Utils.logException( this.logger, e );
 
 		} finally {
 			Utils.closeQuietly( fis );
