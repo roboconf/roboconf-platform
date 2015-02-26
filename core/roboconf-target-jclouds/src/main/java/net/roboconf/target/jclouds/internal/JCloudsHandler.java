@@ -128,7 +128,7 @@ public class JCloudsHandler implements TargetHandler {
 			template.getOptions().userMetadata( "Root Instance Name", rootInstanceName );
 			template.getOptions().userMetadata( "Created by", "Roboconf" );
 
-			// Specify our own key pair if the current provider allows for this
+			// Specify our own key pair if the current provider supports it
 			String keyPairName = targetProperties.get( KEY_PAIR );
 		    try {
 		    	if( ! Utils.isEmptyOrWhitespaces( keyPairName )) {

@@ -136,6 +136,7 @@ public class InMemoryHandler implements TargetHandler {
 		String rootInstanceName,
 		String applicationName )
 	throws TargetException {
+
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
 	}
 
@@ -152,7 +153,7 @@ public class InMemoryHandler implements TargetHandler {
 		// No agent factory => no iPojo instance => not running
 		boolean result = false;
 		if( this.agentFactory != null )
-	    	result = this.agentFactory.getInstancesNames().contains( machineId );
+			result = this.agentFactory.getInstancesNames().contains( machineId );
 
 		return result;
 	}

@@ -91,7 +91,7 @@
 			
 			<!-- 
 				We have to repackage the JAR because the Docker library uses BouncyCasttle...
-				This project comes signature files that make the build fail.
+				This project comes with signature files that make the build fail.
 				The repackaging operation aims at removing these files.
 			 -->
 			<plugin>

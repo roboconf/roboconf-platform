@@ -140,10 +140,9 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		 return true;
 
 		// Protected section to prevent using a same IP for several machines.
-		String url = this.targetProperties.get( OpenstackIaasHandler.API_URL );
-
 		// An action is already in progress for this URL?
 		// Then return immediately, we will try in the next scheduled run.
+		String url = this.targetProperties.get( OpenstackIaasHandler.API_URL );
 		if( URL_TO_LOCK.putIfAbsent( url, new Object()) != null )
 			return false;
 

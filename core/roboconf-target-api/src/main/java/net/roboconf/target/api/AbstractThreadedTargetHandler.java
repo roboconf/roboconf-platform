@@ -71,6 +71,8 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 * </p>
 	 */
 	public void start() {
+
+		// FIXME: should we create a new timer on every start?
 		this.timer.scheduleAtFixedRate(
 				new CheckingRunnable( this.machineIdToConfigurators ),
 				0, this.delay, TimeUnit.MILLISECONDS );

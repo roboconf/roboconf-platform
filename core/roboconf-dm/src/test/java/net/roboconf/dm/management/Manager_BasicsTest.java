@@ -631,8 +631,8 @@ public class Manager_BasicsTest {
 		Assert.assertEquals( "something", apache.data.get( "whatever" ));
 		Assert.assertEquals( ma.getName(), apache.data.get( Instance.APPLICATION_NAME ));
 
-		// It is considered started because upon a reconfiguration, the IaaS is contacted
-		// to determine whether a VM runs or not.
+		// The VM was killed outside the DM. Upon restoration, the DM
+		// contacts the IaaS and sets the NOT_DEPLOYED status.
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, apache.getStatus());
 	}
 

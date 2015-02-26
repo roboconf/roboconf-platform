@@ -95,7 +95,7 @@ public class PluginBash implements PluginInterface {
 
 		// All scripts deployed should be made executable (the agent is supposed to run as root)
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
-        setScriptsExecutable( new File( instanceDirectory, SCRIPTS_FOLDER_NAME ));
+		setScriptsExecutable( new File( instanceDirectory, SCRIPTS_FOLDER_NAME ));
 	}
 
 

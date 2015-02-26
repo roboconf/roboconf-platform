@@ -91,7 +91,7 @@ public class AbstractThreadedTargetHandlerTest {
 		//
 		// 0-1000 => configure is invoked once.
 		// 1001-2000 => configure has been invoked twice.
-		// 2001-3000 => configure has been invoked three times.
+		// 2001-3000 => configure has been invoked three times and resulted in an exception.
 
 		try {
 			Assert.assertEquals( 0, configurators.size());
