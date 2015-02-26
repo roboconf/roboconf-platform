@@ -76,7 +76,7 @@ public class DockerHandler_withContainerTest {
 		Assume.assumeTrue( this.dockerIsInstalled );
 		try {
 			List<String> command = Arrays.asList( "docker", "version" );
-			int exitCode = ProgramUtils.executeCommand( this.logger, command, null );
+			int exitCode = ProgramUtils.executeCommand( this.logger, command, null, null );
 			if( exitCode != 0 )
 				throw new Exception( "Docker is not installed." );
 
@@ -203,7 +203,7 @@ public class DockerHandler_withContainerTest {
 			}
 
 			List<String> command = Arrays.asList( "docker", "restart" );
-			int exitCode = ProgramUtils.executeCommand( this.logger, command, null );
+			int exitCode = ProgramUtils.executeCommand( this.logger, command, null, null );
 			Assert.assertEquals( 0, exitCode );
 		}
 	}

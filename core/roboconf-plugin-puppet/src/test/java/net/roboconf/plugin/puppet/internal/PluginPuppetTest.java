@@ -82,7 +82,7 @@ public class PluginPuppetTest {
 			command.add( "--version" );
 
 			Logger logger = Logger.getLogger( getClass().getName());
-			ProgramUtils.executeCommand( logger, command, null );
+			ProgramUtils.executeCommand( logger, command, null, null );
 
 		} catch( Exception e ) {
 			Logger logger = Logger.getLogger( getClass().getName());

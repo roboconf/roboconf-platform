@@ -26,6 +26,7 @@
 package net.roboconf.core.utils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -60,12 +61,14 @@ public final class ProgramUtils {
 	public static int executeCommand(
 			final Logger logger,
 			final String[] command,
+			final File workingDir,
 			final Map<String,String> environmentVars )
 	throws IOException, InterruptedException {
 
 		logger.fine( "Executing command: " + Arrays.toString( command ));
 
 		ProcessBuilder pb = new ProcessBuilder( command );
+		if(workingDir != null) pb.directory(workingDir);
 		Map<String,String> env = pb.environment();
 		if( environmentVars != null && env != null ) {
 			// No putAll() here: null key or value would cause NPE
@@ -99,10 +102,11 @@ public final class ProgramUtils {
 	public static int executeCommand(
 			final Logger logger,
 			final List<String> command,
+			final File workingDir,
 			final Map<String,String> environmentVars )
 	throws IOException, InterruptedException {
 
-		return executeCommand( logger, command.toArray( new String[ 0 ]), environmentVars );
+		return executeCommand( logger, command.toArray( new String[ 0 ]), workingDir, environmentVars );
 	}
 
 
