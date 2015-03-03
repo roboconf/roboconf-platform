@@ -40,7 +40,7 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 
 import org.junit.Test;
 
@@ -60,7 +60,7 @@ public class ParsingModelValidatorTest {
 			}
 		};
 
-		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, errors.iterator().next().getErrorCode());
 	}
@@ -79,7 +79,7 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 		block.setUri( "" );
-		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_EMPTY_IMPORT_LOCATION, errors.iterator().next().getErrorCode());
 	}
@@ -99,7 +99,7 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 		block = new BlockBlank( file, "\nInvalid blank line\n" );
-		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_MALFORMED_BLANK, errors.iterator().next().getErrorCode());
 	}
@@ -119,7 +119,7 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 		block = new BlockComment( file, "# Comment 1\nOops, I forgot the sharp symbol\n# Another comment" );
-		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_MALFORMED_COMMENT, errors.iterator().next().getErrorCode());
 	}
@@ -133,7 +133,7 @@ public class ParsingModelValidatorTest {
 
 		// Installer
 		block.setNameAndValue( ParsingConstants.PROPERTY_COMPONENT_INSTALLER, "" );
-		Collection<ModelError> errors = ParsingModelValidator.validate((AbstractBlock) block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate((AbstractBlock) block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_EMPTY_PROPERTY_VALUE, errors.iterator().next().getErrorCode());
 
@@ -392,8 +392,8 @@ public class ParsingModelValidatorTest {
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXPORTS, "var#, var2;" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 2, errors.size());
-		for( ModelError modelError : errors )
-			Assert.assertEquals( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, modelError.getErrorCode());
+		for( ParsingError parsingError : errors )
+			Assert.assertEquals( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, parsingError.getErrorCode());
 
 
 		// Imported variables
@@ -435,8 +435,8 @@ public class ParsingModelValidatorTest {
 		block.setNameAndValue( ParsingConstants.PROPERTY_COMPONENT_IMPORTS, "var, var1" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 2, errors.size());
-		for( ModelError modelError : errors )
-			Assert.assertEquals( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, modelError.getErrorCode());
+		for( ParsingError parsingError : errors )
+			Assert.assertEquals( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, parsingError.getErrorCode());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_COMPONENT_IMPORTS, "var#" );
 		errors = ParsingModelValidator.validate( block );
@@ -461,8 +461,8 @@ public class ParsingModelValidatorTest {
 		block.setNameAndValue( ParsingConstants.PROPERTY_COMPONENT_IMPORTS, "-var, var!" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 2, errors.size());
-		for( ModelError modelError : errors )
-			Assert.assertEquals( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, modelError.getErrorCode());
+		for( ParsingError parsingError : errors )
+			Assert.assertEquals( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, parsingError.getErrorCode());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_COMPONENT_IMPORTS, ", comp.var1" );
 		errors = ParsingModelValidator.validate( block );
@@ -539,7 +539,7 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( 0, ParsingModelValidator.validate( block ).size());
 
 		block.setName( "facet#" );
-		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
@@ -587,7 +587,7 @@ public class ParsingModelValidatorTest {
 		BlockComponent block = new BlockComponent( file );
 
 		block.setName( "component" );
-		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 0, errors.size());
 
 		block.setName( "_component" );
@@ -646,7 +646,7 @@ public class ParsingModelValidatorTest {
 		BlockInstanceOf block = new BlockInstanceOf( file );
 
 		block.setName( "component" );
-		Collection<ModelError> errors = ParsingModelValidator.validate( block );
+		Collection<ParsingError> errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_MISSING_INSTANCE_NAME, errors.iterator().next().getErrorCode());
 
@@ -723,7 +723,7 @@ public class ParsingModelValidatorTest {
 		block.getInnerBlocks().add( childBlock );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 2, errors.size());
-		Iterator<ModelError> iterator = errors.iterator();
+		Iterator<ParsingError> iterator = errors.iterator();
 		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_ELEMENT, iterator.next().getErrorCode());
 	}

@@ -28,8 +28,8 @@ package net.roboconf.core.internal.dsl.parsing;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -50,7 +50,7 @@ import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -277,7 +277,7 @@ public class FileDefinitionParserTest {
 					AbstractBlock.IMPORT,
 					def.getBlocks().iterator().next().getInstructionType());
 
-			ModelError error = def.getParsingErrors().iterator().next();
+			ParsingError error = def.getParsingErrors().iterator().next();
 			Assert.assertEquals( "Expecting parsing error for '" + line + "'", entry.getValue().getCategory(), ErrorCategory.PARSING );
 			Assert.assertEquals( "Invalid error code for '" + line + "'", entry.getValue(), error.getErrorCode());
 		}
@@ -375,7 +375,7 @@ public class FileDefinitionParserTest {
 					AbstractBlock.PROPERTY,
 					holder.getInnerBlocks().iterator().next().getInstructionType());
 
-			ModelError error = def.getParsingErrors().iterator().next();
+			ParsingError error = def.getParsingErrors().iterator().next();
 			Assert.assertEquals( "Expecting parsing error for '" + line + "'", entry.getValue().getCategory(), ErrorCategory.PARSING );
 			Assert.assertEquals( "Invalid error code for '" + line + "'", entry.getValue(), error.getErrorCode());
 		}
@@ -454,13 +454,13 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeFacet() throws Exception {
 
-		Map<String,ModelError> resourceNameToErrorCode = new LinkedHashMap<String,ModelError> ();
-		resourceNameToErrorCode.put( "facet-invalid-property.graph", new ModelError( ErrorCode.P_INVALID_PROPERTY, 2 ));
-		resourceNameToErrorCode.put( "facet-invalid-end.graph", new ModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, 3 ));
-		resourceNameToErrorCode.put( "facet-missing-closing-cb.graph", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 3 ));
-		resourceNameToErrorCode.put( "facet-missing-opening-cb.graph", new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, 1 ));
-		resourceNameToErrorCode.put( "facet-extra-char.graph", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 1 ));
-		resourceNameToErrorCode.put( "facet-line-number.graph", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 6 ));
+		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<String,ParsingError> ();
+		resourceNameToErrorCode.put( "facet-invalid-property.graph", new ParsingError( ErrorCode.P_INVALID_PROPERTY, null, 2 ));
+		resourceNameToErrorCode.put( "facet-invalid-end.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
+		resourceNameToErrorCode.put( "facet-missing-closing-cb.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 3 ));
+		resourceNameToErrorCode.put( "facet-missing-opening-cb.graph", new ParsingError( ErrorCode.P_O_C_BRACKET_MISSING, null, 1 ));
+		resourceNameToErrorCode.put( "facet-extra-char.graph", new ParsingError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, null, 1 ));
+		resourceNameToErrorCode.put( "facet-line-number.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 6 ));
 
 		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractBlock.FACET );
 	}
@@ -469,13 +469,13 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeComponent() throws Exception {
 
-		Map<String,ModelError> resourceNameToErrorCode = new LinkedHashMap<String,ModelError> ();
-		resourceNameToErrorCode.put( "component-invalid-property.graph", new ModelError( ErrorCode.P_INVALID_PROPERTY, 2 ));
-		resourceNameToErrorCode.put( "component-invalid-end.graph", new ModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, 3 ));
-		resourceNameToErrorCode.put( "component-missing-closing-cb.graph", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 3 ));
-		resourceNameToErrorCode.put( "component-missing-opening-cb.graph", new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, 1 ));
-		resourceNameToErrorCode.put( "component-extra-char.graph", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 1 ));
-		resourceNameToErrorCode.put( "component-line-number.graph", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 6 ));
+		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<String,ParsingError> ();
+		resourceNameToErrorCode.put( "component-invalid-property.graph", new ParsingError( ErrorCode.P_INVALID_PROPERTY, null, 2 ));
+		resourceNameToErrorCode.put( "component-invalid-end.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
+		resourceNameToErrorCode.put( "component-missing-closing-cb.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 3 ));
+		resourceNameToErrorCode.put( "component-missing-opening-cb.graph", new ParsingError( ErrorCode.P_O_C_BRACKET_MISSING, null, 1 ));
+		resourceNameToErrorCode.put( "component-extra-char.graph", new ParsingError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, null, 1 ));
+		resourceNameToErrorCode.put( "component-line-number.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 6 ));
 
 		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractBlock.COMPONENT );
 	}
@@ -484,35 +484,35 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeInstanceOf() throws Exception {
 
-		Map<String,ModelError> resourceNameToErrorCode = new LinkedHashMap<String,ModelError> ();
-		resourceNameToErrorCode.put( "instanceof-invalid-property.instances", new ModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, 2 ));
-		resourceNameToErrorCode.put( "instanceof-invalid-end.instances", new ModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, 3 ));
-		resourceNameToErrorCode.put( "instanceof-missing-closing-cb.instances", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 3 ));
-		resourceNameToErrorCode.put( "instanceof-missing-opening-cb.instances", new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, 1 ));
-		resourceNameToErrorCode.put( "instanceof-extra-char.instances", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 1 ));
-		resourceNameToErrorCode.put( "instanceof-line-number.instances", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 6 ));
+		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<String,ParsingError> ();
+		resourceNameToErrorCode.put( "instanceof-invalid-property.instances", new ParsingError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, null, 2 ));
+		resourceNameToErrorCode.put( "instanceof-invalid-end.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
+		resourceNameToErrorCode.put( "instanceof-missing-closing-cb.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 3 ));
+		resourceNameToErrorCode.put( "instanceof-missing-opening-cb.instances", new ParsingError( ErrorCode.P_O_C_BRACKET_MISSING, null, 1 ));
+		resourceNameToErrorCode.put( "instanceof-extra-char.instances", new ParsingError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, null, 1 ));
+		resourceNameToErrorCode.put( "instanceof-line-number.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 6 ));
 
-		resourceNameToErrorCode.put( "instanceof-imbricated-invalid-property.instances", new ModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, 4 ));
-		resourceNameToErrorCode.put( "instanceof-imbricated-invalid-end.instances", new ModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, 5 ));
-		resourceNameToErrorCode.put( "instanceof-imbricated-missing-closing-cb.instances", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 7 ));
-		resourceNameToErrorCode.put( "instanceof-imbricated-missing-opening-cb.instances", new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, 3 ));
-		resourceNameToErrorCode.put( "instanceof-imbricated-extra-char.instances", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 3 ));
+		resourceNameToErrorCode.put( "instanceof-imbricated-invalid-property.instances", new ParsingError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, null, 4 ));
+		resourceNameToErrorCode.put( "instanceof-imbricated-invalid-end.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 5 ));
+		resourceNameToErrorCode.put( "instanceof-imbricated-missing-closing-cb.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 7 ));
+		resourceNameToErrorCode.put( "instanceof-imbricated-missing-opening-cb.instances", new ParsingError( ErrorCode.P_O_C_BRACKET_MISSING, null, 3 ));
+		resourceNameToErrorCode.put( "instanceof-imbricated-extra-char.instances", new ParsingError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
 
-		resourceNameToErrorCode.put( "instanceof-very-imbricated-invalid-property.instances", new ModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, 5 ));
-		resourceNameToErrorCode.put( "instanceof-very-imbricated-invalid-end.instances", new ModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, 6 ));
-		resourceNameToErrorCode.put( "instanceof-very-imbricated-missing-closing-cb.instances", new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, 8 ));
-		resourceNameToErrorCode.put( "instanceof-very-imbricated-missing-opening-cb.instances", new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, 5 ));
-		resourceNameToErrorCode.put( "instanceof-very-imbricated-extra-char.instances", new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, 4 ));
+		resourceNameToErrorCode.put( "instanceof-very-imbricated-invalid-property.instances", new ParsingError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, null, 5 ));
+		resourceNameToErrorCode.put( "instanceof-very-imbricated-invalid-end.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 6 ));
+		resourceNameToErrorCode.put( "instanceof-very-imbricated-missing-closing-cb.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 8 ));
+		resourceNameToErrorCode.put( "instanceof-very-imbricated-missing-opening-cb.instances", new ParsingError( ErrorCode.P_O_C_BRACKET_MISSING, null, 5 ));
+		resourceNameToErrorCode.put( "instanceof-very-imbricated-extra-char.instances", new ParsingError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, null, 4 ));
 
 		testRecognizePropertiesHolder( resourceNameToErrorCode, AbstractBlock.INSTANCEOF );
 	}
 
 
-	private void testRecognizePropertiesHolder( Map<String,ModelError> resourceNameToErrorCode, int blockType )
+	private void testRecognizePropertiesHolder( Map<String,ParsingError> resourceNameToErrorCode, int blockType )
 	throws Exception {
 
 		final String root = "/configurations/invalid/";
-		for( Map.Entry<String,ModelError> entry : resourceNameToErrorCode.entrySet()) {
+		for( Map.Entry<String,ParsingError> entry : resourceNameToErrorCode.entrySet()) {
 			BufferedReader br = null;
 			try {
 				File f = TestUtils.findTestFile( root + entry.getKey());
@@ -523,7 +523,12 @@ public class FileDefinitionParserTest {
 				String line = br.readLine();
 				Assert.assertNotNull( line );
 
-				FileDefinitionParser parser = new FileDefinitionParser( null, false );
+				// This test skips the #read() method.
+				// Therefore, the first line is considered as not being read.
+				// We have to counter-balance this by updating the current line number.
+				FileDefinitionParser parser = new FileDefinitionParser( f, false );
+				parser.currentLineNumber = 1;
+
 				if( blockType == AbstractBlock.FACET )
 					parser.recognizeFacet( line, br );
 				else if( blockType == AbstractBlock.COMPONENT )
@@ -534,19 +539,14 @@ public class FileDefinitionParserTest {
 					Assert.fail( "Invalid block type." );
 
 				Assert.assertEquals( "ONE pasing error was expected for '" + entry.getKey() + "'", 1, parser.getFileRelations().getParsingErrors().size());
-				ModelError error = parser.getFileRelations().getParsingErrors().iterator().next();
+				ParsingError error = parser.getFileRelations().getParsingErrors().iterator().next();
 				Assert.assertEquals( "Expected error code " + entry.getValue().getErrorCode() + " for '" + entry.getKey() + "'", entry.getValue().getErrorCode(), error.getErrorCode());
 				Assert.assertEquals( "Expected error line to be " + entry.getValue().getLine() + " for '" + entry.getKey() + "'", entry.getValue().getLine(), error.getLine());
 				Assert.assertEquals( "Expected a parsing error for '" + entry.getKey() + "'", ErrorCategory.PARSING, error.getErrorCode().getCategory());
+				Assert.assertEquals( f, error.getFile());
 
 			} finally {
-				if( br != null ) {
-					try {
-						br.close();
-					} catch( IOException e ) {
-						Assert.fail( e.getMessage());
-					}
-				}
+				Utils.closeQuietly( br );
 			}
 		}
 	}
@@ -729,5 +729,48 @@ public class FileDefinitionParserTest {
 		Assert.assertEquals( 2, imports.size());
 		Assert.assertEquals( Boolean.FALSE, imports.get( "db.ip" ));
 		Assert.assertEquals( Boolean.TRUE, imports.get( "db.port" ));
+	}
+
+
+	@Test
+	public void testNextLine() throws Exception {
+
+		FileDefinitionParser parser = new FileDefinitionParser( new File( "whatever" ), true );
+		Assert.assertEquals( 0, parser.currentLineNumber );
+
+		StringBuilder sb = new StringBuilder();
+		sb.append( "# this is a comment\n" );
+		sb.append( "\n" );
+		sb.append( "VM {\n" );
+		sb.append( "\tinstaller: target; # !!!\n" );
+		sb.append( "\n" );
+		sb.append( "}\n" );
+		sb.append( "\r\n" );
+		sb.append( "\n" );
+
+		BufferedReader br = new BufferedReader( new StringReader( sb.toString()));
+		Assert.assertEquals( "# this is a comment", parser.nextLine( br ));
+		Assert.assertEquals( 1, parser.currentLineNumber );
+
+		Assert.assertEquals( "", parser.nextLine( br ));
+		Assert.assertEquals( 2, parser.currentLineNumber );
+
+		Assert.assertEquals( "VM {", parser.nextLine( br ));
+		Assert.assertEquals( 3, parser.currentLineNumber );
+
+		Assert.assertEquals( "\tinstaller: target; # !!!", parser.nextLine( br ));
+		Assert.assertEquals( 4, parser.currentLineNumber );
+
+		Assert.assertEquals( "", parser.nextLine( br ));
+		Assert.assertEquals( 5, parser.currentLineNumber );
+
+		Assert.assertEquals( "}", parser.nextLine( br ));
+		Assert.assertEquals( 6, parser.currentLineNumber );
+
+		Assert.assertEquals( "", parser.nextLine( br ));
+		Assert.assertEquals( 7, parser.currentLineNumber );
+
+		Assert.assertEquals( "", parser.nextLine( br ));
+		Assert.assertEquals( 8, parser.currentLineNumber );
 	}
 }

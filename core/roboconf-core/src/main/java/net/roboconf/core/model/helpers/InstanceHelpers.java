@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
@@ -360,7 +360,7 @@ public final class InstanceHelpers {
 
 				InstanceHelpers.insertChild( parentInstance, childInstance );
 				Collection<Instance> allInstances = InstanceHelpers.getAllInstances( application );
-				Collection<RoboconfError> errors = RuntimeModelValidator.validate( allInstances );
+				Collection<ModelError> errors = RuntimeModelValidator.validate( allInstances );
 				if( RoboconfErrorHelpers.containsCriticalErrors( errors )) {
 					parentInstance.getChildren().remove( childInstance );
 					childInstance.setParent( null );

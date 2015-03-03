@@ -36,7 +36,7 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -640,7 +640,7 @@ public class Manager_BasicsTest {
 	@Test( expected = InvalidApplicationException.class )
 	public void testCheckErrors_withCriticalError() throws Exception {
 
-		RoboconfError error = new ModelError( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, 2 );
+		RoboconfError error = new ParsingError( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, null, 2 );
 		this.manager.checkErrors( Arrays.asList( error ));
 	}
 
@@ -648,7 +648,7 @@ public class Manager_BasicsTest {
 	@Test
 	public void testCheckErrors_withWarningOnly() throws Exception {
 
-		RoboconfError error = new ModelError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, 2 );
+		RoboconfError error = new ParsingError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, null, 2 );
 		this.manager.checkErrors( Arrays.asList( error ));
 	}
 

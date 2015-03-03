@@ -41,7 +41,6 @@ import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -84,9 +83,9 @@ public final class RecipesValidator {
 	 * @param component the component
 	 * @return a non-null list of errors
 	 */
-	public static List<RoboconfError> validateComponentRecipes( File applicationFilesDirectory, Component component ) {
+	public static List<ModelError> validateComponentRecipes( File applicationFilesDirectory, Component component ) {
 
-		List<RoboconfError> result;
+		List<ModelError> result;
 		if( "puppet".equalsIgnoreCase( component.getInstallerName()))
 			result = validatePuppetComponent( applicationFilesDirectory, component );
 		else if( "bash".equalsIgnoreCase( component.getInstallerName()))
@@ -104,32 +103,14 @@ public final class RecipesValidator {
 	 * @param component the component
 	 * @return a non-null list of errors
 	 */
-	private static List<RoboconfError> validateBashComponent( File applicationFilesDirectory, Component component ) {
-		List<RoboconfError> result = new ArrayList<RoboconfError> ();
+	private static List<ModelError> validateBashComponent( File applicationFilesDirectory, Component component ) {
+		List<ModelError> result = new ArrayList<ModelError> ();
 
 		// There must be a "scripts" directory
 		File directory = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, component );
 		File scriptsDir = new File( directory, SCRIPTS_DIR_NAME );
 		if( ! scriptsDir.exists())
-			result.add( new RoboconfError( ErrorCode.REC_BASH_NO_SCRIPTS_DIR, "Component: " + component ));
-
-		// Scripts should start with "#!/bin/bash"
-		File[] children = scriptsDir.listFiles();
-		children = children == null ? new File[ 0 ] : children;
-		for( File f : children ) {
-			try {
-				if( f.isFile() && f.getName().toLowerCase().endsWith( ".sh" )) {
-					String content = Utils.readFileContent( f );
-					if( ! content.startsWith( BASH_DIRECTIVE ))
-						result.add( new RoboconfError( ErrorCode.REC_BASH_NO_BASH_DIRECTIVE, "Component: " + component + ", File: " + f ));
-				}
-
-			} catch( IOException e ) {
-				Logger logger = Logger.getLogger( RecipesValidator.class.getName());
-				logger.warning( "The content of the Bash file '" + f + "' could not be read." );
-				Utils.logException( logger, e );
-			}
-		}
+			result.add( new ModelError( ErrorCode.REC_BASH_NO_SCRIPTS_DIR, component, "Component: " + component ));
 
 		return result;
 	}
@@ -141,13 +122,13 @@ public final class RecipesValidator {
 	 * @param component the component
 	 * @return a non-null list of errors
 	 */
-	private static List<RoboconfError> validatePuppetComponent( File applicationFilesDirectory, Component component ) {
-		List<RoboconfError> result = new ArrayList<RoboconfError> ();
+	private static List<ModelError> validatePuppetComponent( File applicationFilesDirectory, Component component ) {
+		List<ModelError> result = new ArrayList<ModelError> ();
 
 		// Check imports
 		for( Map.Entry<String,Boolean> entry : ComponentHelpers.findAllImportedVariables( component ).entrySet()) {
 			if( entry.getKey().endsWith( "." + Constants.WILDCARD )) {
-				result.add( new RoboconfError( ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, "Component: " + component ));
+				result.add( new ModelError( ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, component, "Component: " + component ));
 				break;
 			}
 		}
@@ -163,9 +144,9 @@ public final class RecipesValidator {
 		}
 
 		if( modules.isEmpty())
-			result.add( new RoboconfError( ErrorCode.REC_PUPPET_HAS_NO_RBCF_MODULE, "Component: " + component ));
+			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_NO_RBCF_MODULE, component, "Component: " + component ));
 		else if( modules.size() > 1 )
-			result.add( new RoboconfError( ErrorCode.REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES, "Component: " + component ));
+			result.add( new ModelError( ErrorCode.REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES, component, "Component: " + component ));
 
 		// Analyze the module parameters
 		if( modules.size() == 1 ) {
@@ -200,7 +181,7 @@ public final class RecipesValidator {
 	 * @param errors a non-null list of errors
 	 * @throws IOException if the file content could be read
 	 */
-	private static void checkPuppetFile( File pp, boolean withUpdateParams, Component component, Collection<RoboconfError> errors )
+	private static void checkPuppetFile( File pp, boolean withUpdateParams, Component component, Collection<ModelError> errors )
 	throws IOException {
 
 		// Extract the script parameters
@@ -220,11 +201,11 @@ public final class RecipesValidator {
 		// Check the update parameters
 		if( withUpdateParams ) {
 			if( ! params.remove( "$importAdded" ))
-				errors.add( new RoboconfError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, "Component: " + component + ", File: " + pp ));
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, component, "Component: " + component + ", File: " + pp ));
 			if( ! params.remove( "$importRemoved" ))
-				errors.add( new RoboconfError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, "Component: " + component + ", File: " + pp ));
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, component, "Component: " + component + ", File: " + pp ));
 			if( ! params.remove( "$importComponent" ))
-				errors.add( new RoboconfError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_COMP, "Component: " + component + ", File: " + pp ));
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_COMP, component, "Component: " + component + ", File: " + pp ));
 		}
 
 		// Prevent errors with start.pp, etc
@@ -234,14 +215,14 @@ public final class RecipesValidator {
 
 		// Check the other ones
 		if( ! params.remove( "$runningState" ))
-			errors.add( new RoboconfError( ErrorCode.REC_PUPPET_MISSING_PARAM_RUNNING_STATE, "Component: " + component + ", File: " + pp ));
+			errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_RUNNING_STATE, component, "Component: " + component + ", File: " + pp ));
 
 		// Imports imply some variables are expected
 		Instance fake = new Instance( "fake" ).component( component );
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( fake )) {
 			String details = "Component: " + component + ", File: " + pp + ", Parameter: " + facetOrComponentName.toLowerCase();
 			if( ! params.remove( "$" + facetOrComponentName.toLowerCase()))
-				errors.add( new RoboconfError( ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, details ));
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, component, details ));
 		}
 	}
 }

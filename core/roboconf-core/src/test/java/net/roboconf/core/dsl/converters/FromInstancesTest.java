@@ -37,7 +37,7 @@ import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
@@ -235,7 +235,7 @@ public class FromInstancesTest {
 		Assert.assertEquals( 0, def.getParsingErrors().size());
 		Assert.assertEquals( FileDefinition.INSTANCE, def.getFileType());
 
-		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+		Collection<ParsingError> validationErrors = ParsingModelValidator.validate( def );
 		Assert.assertEquals( 0, validationErrors.size());
 
 		FromInstanceDefinition fromDef = new FromInstanceDefinition( null );

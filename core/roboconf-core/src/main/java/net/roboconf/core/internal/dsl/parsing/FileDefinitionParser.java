@@ -50,7 +50,7 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -70,7 +70,7 @@ public class FileDefinitionParser {
 	private final FileDefinition definitionFile;
 	private boolean ignoreComments = true;
 	private boolean lastLineEndedWithLineBreak = false;
-	private int currentLineNumber;
+	int currentLineNumber;
 
 
 
@@ -81,7 +81,7 @@ public class FileDefinitionParser {
 	 */
 	public FileDefinitionParser( File relationsFile, boolean ignoreComments ) {
 		this.ignoreComments = ignoreComments;
-		this.currentLineNumber = 1;
+		this.currentLineNumber = 0;
 		this.definitionFile = new FileDefinition( relationsFile );
 	}
 
@@ -102,8 +102,7 @@ public class FileDefinitionParser {
 			mergeContiguousRegions( this.definitionFile.getBlocks());
 
 		} catch( IOException e ) {
-			ModelError error = new ModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber, e.getMessage());
-			this.definitionFile.getParsingErrors().add( error );
+			addModelError( ErrorCode.P_IO_ERROR, this.currentLineNumber, e.getMessage());
 		}
 
 		// Determine file type
@@ -123,7 +122,7 @@ public class FileDefinitionParser {
 			if( ! hasFacets && ! hasComponents )
 				this.definitionFile.setFileType( FileDefinition.INSTANCE );
 			else
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_FILE_TYPE, 1 ));
+				addModelError( ErrorCode.P_INVALID_FILE_TYPE, 1 );
 
 		} else if( hasFacets || hasComponents ) {
 			this.definitionFile.setFileType( FileDefinition.GRAPH );
@@ -132,7 +131,7 @@ public class FileDefinitionParser {
 			this.definitionFile.setFileType( FileDefinition.AGGREGATOR );
 
 		} else {
-			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_NO_FILE_TYPE, 1 ));
+			addModelError( ErrorCode.P_NO_FILE_TYPE, 1 );
 		}
 
 		return this.definitionFile;
@@ -258,9 +257,9 @@ public class FileDefinitionParser {
 
 			realLine = realLine.substring( m.end());
 			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
+				addModelError( ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
 			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_BLOCK_PER_LINE, this.currentLineNumber ));
+				addModelError( ErrorCode.P_ONE_BLOCK_PER_LINE );
 		}
 
 		return result;
@@ -289,9 +288,9 @@ public class FileDefinitionParser {
 
 			realLine = realLine.substring( m.end());
 			if( ! realLine.startsWith( String.valueOf( SEMI_COLON )))
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_IMPORT_ENDS_WITH_SEMI_COLON, this.currentLineNumber ));
+				addModelError( ErrorCode.P_IMPORT_ENDS_WITH_SEMI_COLON );
 			else if( realLine.indexOf( SEMI_COLON ) < realLine.length() - 1 )
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_ONE_BLOCK_PER_LINE, this.currentLineNumber ));
+				addModelError( ErrorCode.P_ONE_BLOCK_PER_LINE );
 		}
 
 		return result;
@@ -418,11 +417,11 @@ public class FileDefinitionParser {
 		}
 
 		if( foundExtraChars ) {
-			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS, this.currentLineNumber ));
+			addModelError( ErrorCode.P_O_C_BRACKET_EXTRA_CHARACTERS );
 			result = P_CODE_CANCEL;
 
 		} else if( ! endInstructionReached ) {
-			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_O_C_BRACKET_MISSING, this.currentLineNumber ));
+			addModelError( ErrorCode.P_O_C_BRACKET_MISSING );
 			result = P_CODE_CANCEL;
 
 		} else {
@@ -471,9 +470,9 @@ public class FileDefinitionParser {
 		if( errorInSubProperties ) {
 			if( result == P_CODE_YES ) {
 				if( holderInstance.getInstructionType() == AbstractBlock.INSTANCEOF )
-					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, this.currentLineNumber ));
+					addModelError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE );
 				else
-					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_INVALID_PROPERTY, this.currentLineNumber ));
+					addModelError( ErrorCode.P_INVALID_PROPERTY );
 			}
 
 			result = P_CODE_CANCEL;
@@ -487,7 +486,7 @@ public class FileDefinitionParser {
 			line = line.replaceFirst( "\\s*\\}", "" );
 			parts = splitFromInlineComment( line );
 			if( ! Utils.isEmptyOrWhitespaces( parts[ 0 ])) {
-				this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, this.currentLineNumber ));
+				addModelError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS );
 				result = P_CODE_CANCEL;
 			}
 
@@ -496,7 +495,7 @@ public class FileDefinitionParser {
 
 		// The closing bracket is missing
 		else if( result == P_CODE_YES ) {
-			this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_C_C_BRACKET_MISSING, this.currentLineNumber ));
+			addModelError( ErrorCode.P_C_C_BRACKET_MISSING );
 		}
 
 		return result;
@@ -508,7 +507,7 @@ public class FileDefinitionParser {
 	 * @return
 	 * @throws IOException
 	 */
-	private String nextLine( BufferedReader br ) throws IOException {
+	String nextLine( BufferedReader br ) throws IOException {
 
 		// {@link BufferedReader#readLine()} does not allow to detect when the last line is empty.
 		// We need this precision. So, we read character by character.
@@ -575,7 +574,7 @@ public class FileDefinitionParser {
 				if( code == P_CODE_CANCEL )
 					break;
 				else if( code == P_CODE_NO )
-					this.definitionFile.getParsingErrors().add( new ModelError( ErrorCode.P_UNRECOGNIZED_BLOCK, this.currentLineNumber ));
+					addModelError( ErrorCode.P_UNRECOGNIZED_BLOCK );
 			}
 
 			if( line == null
@@ -585,5 +584,35 @@ public class FileDefinitionParser {
 		} finally {
 			Utils.closeQuietly( br );
 		}
+	}
+
+
+	/**
+	 * @param errorCode
+	 */
+	private void addModelError( ErrorCode errorCode ) {
+		ParsingError me = new ParsingError( errorCode, this.definitionFile.getEditedFile(), this.currentLineNumber );
+		this.definitionFile.getParsingErrors().add( me );
+	}
+
+
+	/**
+	 * @param errorCode
+	 * @param line
+	 */
+	private void addModelError( ErrorCode errorCode, int line ) {
+		ParsingError me = new ParsingError( errorCode, this.definitionFile.getEditedFile(), line );
+		this.definitionFile.getParsingErrors().add( me );
+	}
+
+
+	/**
+	 * @param errorCode
+	 * @param line
+	 * @param details
+	 */
+	private void addModelError( ErrorCode errorCode, int line, String details ) {
+		ParsingError me = new ParsingError( errorCode, this.definitionFile.getEditedFile(), line, details );
+		this.definitionFile.getParsingErrors().add( me );
 	}
 }

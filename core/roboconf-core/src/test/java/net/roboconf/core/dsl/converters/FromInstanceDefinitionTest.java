@@ -33,7 +33,7 @@ import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
@@ -64,7 +64,7 @@ public class FromInstanceDefinitionTest {
 		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
 		fromDef.buildInstances( graphs, f );
 
-		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Iterator<ParsingError> iterator = fromDef.getErrors().iterator();
 		Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -87,7 +87,7 @@ public class FromInstanceDefinitionTest {
 		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
 		fromDef.buildInstances( graphs, f );
 
-		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Iterator<ParsingError> iterator = fromDef.getErrors().iterator();
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 	}
@@ -134,7 +134,7 @@ public class FromInstanceDefinitionTest {
 		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
 		Collection<Instance> rootInstances = fromDef.buildInstances( graphs, f );
 
-		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Iterator<ParsingError> iterator = fromDef.getErrors().iterator();
 		Assert.assertFalse( iterator.hasNext());
 
 		Assert.assertEquals( 2, rootInstances.size());
@@ -158,7 +158,7 @@ public class FromInstanceDefinitionTest {
 		FromInstanceDefinition fromDef = new FromInstanceDefinition( f.getParentFile());
 		fromDef.buildInstances( graphs, f );
 
-		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Iterator<ParsingError> iterator = fromDef.getErrors().iterator();
 		Assert.assertEquals( ErrorCode.CO_UNREACHABLE_FILE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 	}

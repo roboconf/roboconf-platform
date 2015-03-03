@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,42 +25,57 @@
 
 package net.roboconf.core.model;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import java.io.File;
 
 /**
- * A model error instantiates and localizes an {@link ErrorCode}.
+ * A class to find where a given model object was defined.
+ * <p>
+ * This class makes sense for parsing to determine where a runtime
+ * error is located in source files.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-public class ModelError extends RoboconfError {
+public class SourceReference {
+
 	private final Object modelObject;
+	private final File sourceFile;
+	private final int line;
 
 
 	/**
 	 * Constructor.
-	 * @param errorCode an error code
-	 * @param modelObject the model object that contain an error
+	 * @param modelObject
+	 * @param sourceFile
+	 * @param line
 	 */
-	public ModelError( ErrorCode errorCode, Object modelObject ) {
-		super( errorCode );
+	public SourceReference( Object modelObject, File sourceFile, int line ) {
 		this.modelObject = modelObject;
+		this.sourceFile = sourceFile;
+		this.line = line;
 	}
 
-	/**
-	 * Constructor.
-	 * @param errorCode an error code
-	 * @param modelObject the model object that contain an error
-	 * @param details the error details
-	 */
-	public ModelError( ErrorCode errorCode, Object modelObject, String details ) {
-		super( errorCode, details );
-		this.modelObject = modelObject;
-	}
 
 	/**
-	 * @return the model object
+	 * @return the modelObject
 	 */
 	public Object getModelObject() {
 		return this.modelObject;
+	}
+
+
+	/**
+	 * @return the sourceFile
+	 */
+	public File getSourceFile() {
+		return this.sourceFile;
+	}
+
+
+	/**
+	 * @return the line
+	 */
+	public int getLine() {
+		return this.line;
 	}
 }

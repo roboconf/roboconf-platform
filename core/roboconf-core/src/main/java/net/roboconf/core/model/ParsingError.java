@@ -25,42 +25,55 @@
 
 package net.roboconf.core.model;
 
+import java.io.File;
+
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 
 /**
- * A model error instantiates and localizes an {@link ErrorCode}.
+ * A parsing error instantiates and localizes an {@link ErrorCode}.
  * @author Vincent Zurczak - Linagora
  */
-public class ModelError extends RoboconfError {
-	private final Object modelObject;
+public class ParsingError extends RoboconfError {
+	private final int line;
+	private File file;
 
 
 	/**
 	 * Constructor.
 	 * @param errorCode an error code
-	 * @param modelObject the model object that contain an error
+	 * @param file the file that contains the error
+	 * @param line a line number
 	 */
-	public ModelError( ErrorCode errorCode, Object modelObject ) {
+	public ParsingError( ErrorCode errorCode, File file, int line ) {
 		super( errorCode );
-		this.modelObject = modelObject;
+		this.line = line;
+		this.file = file;
 	}
 
 	/**
 	 * Constructor.
 	 * @param errorCode an error code
-	 * @param modelObject the model object that contain an error
+	 * @param file the file that contains the error
+	 * @param line a line number
 	 * @param details the error details
 	 */
-	public ModelError( ErrorCode errorCode, Object modelObject, String details ) {
+	public ParsingError( ErrorCode errorCode, File file, int line, String details ) {
 		super( errorCode, details );
-		this.modelObject = modelObject;
+		this.line = line;
 	}
 
 	/**
-	 * @return the model object
+	 * @return the line
 	 */
-	public Object getModelObject() {
-		return this.modelObject;
+	public int getLine() {
+		return this.line;
+	}
+
+	/**
+	 * @return the file
+	 */
+	public File getFile() {
+		return this.file;
 	}
 }
