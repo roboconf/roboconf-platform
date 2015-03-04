@@ -36,7 +36,6 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
-import net.roboconf.integration.tests.internal.IntegrationTestsUtils;
 import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
@@ -50,7 +49,7 @@ import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerClass;
+import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * Test bulk actions.
@@ -62,7 +61,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
-@ExamReactorStrategy( PerClass.class )
+@ExamReactorStrategy( PerMethod.class )
 public class BulkActionsTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
@@ -78,7 +77,6 @@ public class BulkActionsTest extends DmWithAgentInMemoryTest {
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
-		probe.addTest( IntegrationTestsUtils.class );
 		probe.addTest( MyMessageProcessor.class );
 
 		return probe;

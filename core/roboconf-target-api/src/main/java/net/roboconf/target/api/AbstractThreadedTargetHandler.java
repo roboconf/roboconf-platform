@@ -96,7 +96,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void configureMachine(
+	public final void configureMachine(
 			Map<String,String> targetProperties,
 			String machineId,
 			String messagingIp,

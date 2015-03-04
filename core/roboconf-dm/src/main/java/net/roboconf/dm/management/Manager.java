@@ -241,9 +241,10 @@ public class Manager {
 		// Update the messaging client
 		if( this.messagingClient != null ) {
 			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
-			// Starts listening to the debug queue.
 			try {
-				this.messagingClient.listenToTheDm( ListenerCommand.START );
+				if( this.messagingClient.isConnected())
+					this.messagingClient.listenToTheDm( ListenerCommand.START );
+
 			} catch ( IOException e ) {
 				this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
 			}

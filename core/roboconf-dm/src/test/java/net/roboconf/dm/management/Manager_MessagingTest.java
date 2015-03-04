@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,51 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.monitoring.internal.tests;
+package net.roboconf.dm.management;
 
-import net.roboconf.agent.AgentMessagingInterface;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.MessagingConstants;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class MyAgentInterface implements AgentMessagingInterface {
+public class Manager_MessagingTest {
 
-	private final TestClientAgent messagingClient;
-	private Instance rootInstance;
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 
-	/**
-	 * Constructor.
-	 * @param messagingClient
-	 */
-	public MyAgentInterface( TestClientAgent messagingClient ) {
-		this.messagingClient = messagingClient;
-	}
+	@Test
+	public void test_dmWithWrongMessagingConnection_rabbitMq() throws Exception {
 
-	@Override
-	public IAgentClient getMessagingClient() {
-		return this.messagingClient;
-	}
+		Manager manager = new Manager();
+		try {
+			manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+			manager.setMessagingFactoryType( MessagingConstants.FACTORY_RABBIT_MQ );
+			manager.setMessageServerUsername( "invalid" );
+			manager.start();
 
-	@Override
-	public String getApplicationName() {
-		return "app";
-	}
-
-	@Override
-	public Instance getRootInstance() {
-		return this.rootInstance;
-	}
-
-	public void setRootInstance( Instance rootInstance ) {
-		this.rootInstance = rootInstance;
-	}
-
-	@Override
-	public void forceHeartbeatSending() {
-		// nothing
+		} finally {
+			manager.stop();
+		}
 	}
 }

@@ -47,4 +47,9 @@ public interface AgentMessagingInterface {
 	 * @return the root instance's name
 	 */
 	Instance getRootInstance();
+
+	/**
+	 * Forces the sending of a heart beat to the DM.
+	 */
+	void forceHeartbeatSending();
 }

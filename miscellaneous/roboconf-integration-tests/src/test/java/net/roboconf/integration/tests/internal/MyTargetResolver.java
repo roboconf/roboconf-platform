@@ -48,6 +48,14 @@ public class MyTargetResolver implements ITargetResolver {
 		this.handler = new MyHandler();
 	}
 
+	/**
+	 * Constructor.
+	 * @param handler
+	 */
+	public MyTargetResolver( MyHandler handler ) {
+		this.handler = handler;
+	}
+
 	@Override
 	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
 	throws TargetException {
