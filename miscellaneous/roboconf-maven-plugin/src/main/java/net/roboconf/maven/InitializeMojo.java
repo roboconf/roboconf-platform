@@ -54,7 +54,7 @@ public class InitializeMojo extends AbstractMojo {
 
 		File appDirectory = new File( this.project.getBasedir(), MavenPluginConstants.SOURCE_MODEL_DIRECTORY );
 		if( appDirectory.exists()) {
-			getLog().info( "Adding " + MavenPluginConstants.SOURCE_MODEL_DIRECTORY + " to the list of filtered resources." );
+			getLog().debug( "Adding " + MavenPluginConstants.SOURCE_MODEL_DIRECTORY + " to the list of filtered resources." );
 
 			// Resources that are filtered
 			Resource res = new Resource();
@@ -78,7 +78,7 @@ public class InitializeMojo extends AbstractMojo {
 		if( Utils.isEmptyOrWhitespaces( this.project.getBuild().getOutputDirectory())
 				|| this.project.getBuild().getOutputDirectory().toLowerCase().endsWith( "/target/classes" )) {
 
-			getLog().info( "Changing default output directory to " + MavenPluginConstants.TARGET_MODEL_DIRECTORY + "." );
+			getLog().debug( "Changing default output directory to " + MavenPluginConstants.TARGET_MODEL_DIRECTORY + "." );
 			File outputDirectory = new File( this.project.getBasedir(), MavenPluginConstants.TARGET_MODEL_DIRECTORY );
 			this.project.getBuild().setOutputDirectory( outputDirectory.getAbsolutePath());
 		}

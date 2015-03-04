@@ -27,9 +27,11 @@ package net.roboconf.maven;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import net.roboconf.core.ErrorCode.ErrorLevel;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
@@ -95,7 +97,9 @@ public class ValidateApplicationMojo extends AbstractMojo {
 
 		// Generate the report (file and console too)
 		StringBuilder globalSb = new StringBuilder();
-		for( RoboconfError error : alr.getLoadErrors()) {
+		List<RoboconfError> resolvedErrors = RoboconfErrorHelpers.resolveErrorsWithLocation( alr );
+
+		for( RoboconfError error : resolvedErrors ) {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "[ " );
 			sb.append( error.getErrorCode().getCategory().toString().toLowerCase());
@@ -103,6 +107,17 @@ public class ValidateApplicationMojo extends AbstractMojo {
 			sb.append( error.getErrorCode().getMsg());
 			if( ! Utils.isEmptyOrWhitespaces( error.getDetails()))
 				sb.append( " " + error.getDetails());
+
+			if( ! sb.toString().endsWith( "." ))
+				sb.append( "." );
+
+			if( error instanceof ParsingError ) {
+				sb.append( " See " );
+				sb.append(((ParsingError) error).getFile().getName());
+				sb.append( ", line " );
+				sb.append(((ParsingError) error).getLine());
+				sb.append( "." );
+			}
 
 			if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
 				getLog().warn( sb.toString());
@@ -112,8 +127,6 @@ public class ValidateApplicationMojo extends AbstractMojo {
 			globalSb.append( sb );
 			globalSb.append( "\n" );
 		}
-
-		// TODO: add line and source file name
 
 		// Write the report.
 		// Reporting only makes sense when there is an error or a warning.

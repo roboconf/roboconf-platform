@@ -27,9 +27,14 @@ package net.roboconf.core.model.helpers;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import net.roboconf.core.ErrorCode.ErrorLevel;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.SourceReference;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -72,6 +77,45 @@ public final class RoboconfErrorHelpers {
 		for( RoboconfError error : errors ) {
 			if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
 				result.add( error );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Resolves errors with their location when it is possible.
+	 * <p>
+	 * Parsing and conversion errors already have location information (file and line
+	 * number). This is not the case of runtime errors (validation of the runtime model).
+	 * However, these errors keep a reference to the object that contains the error.
+	 * </p>
+	 * <p>
+	 * When we load an application from a file, we keep an association between a runtime model
+	 * object and its location (file and line number). Therefore, we can resolve the location
+	 * of runtime errors too (provided the model was loaded from a file).
+	 * </p>
+	 * <p>
+	 * So, this method replaces (runtime) model errors by errors that contain location data.
+	 * </p>
+	 *
+	 * @param alr the result of an application load operation
+	 * @return a non-null list of errors
+	 */
+	public static List<RoboconfError> resolveErrorsWithLocation( ApplicationLoadResult alr ) {
+
+		List<RoboconfError> result = new ArrayList<RoboconfError> ();
+		for( RoboconfError error : alr.getLoadErrors()) {
+
+			RoboconfError errorToAdd = error;
+			if( error instanceof ModelError ) {
+				Object modelObject = ((ModelError) error).getModelObject();
+				SourceReference sr = alr.getObjectToSource().get( modelObject );
+				if( sr != null )
+					errorToAdd = new ParsingError( error.getErrorCode(), sr.getSourceFile(), sr.getLine(), error.getDetails());
+			}
+
+			result.add( errorToAdd );
 		}
 
 		return result;

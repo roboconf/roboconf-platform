@@ -36,7 +36,7 @@ import net.roboconf.core.RoboconfError;
  */
 public class ParsingError extends RoboconfError {
 	private final int line;
-	private File file;
+	private final File file;
 
 
 	/**
@@ -61,6 +61,7 @@ public class ParsingError extends RoboconfError {
 	public ParsingError( ErrorCode errorCode, File file, int line, String details ) {
 		super( errorCode, details );
 		this.line = line;
+		this.file = file;
 	}
 
 	/**
