@@ -485,8 +485,8 @@ public class Manager {
 		}
 
 		ManagedApplication ma = new ManagedApplication( application, targetDirectory );
-		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
+		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 
 		return ma;
@@ -604,7 +604,7 @@ public class Manager {
 	throws IOException, TargetException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.logger.fine( "Changing state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
+		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 		checkConfiguration();
 
 		if( instance.getParent() == null ) {
@@ -972,7 +972,7 @@ public class Manager {
 				Utils.logException( this.logger, e );
 
 			} catch( IOException e ) {
-				this.logger.warning( "Cannot restore application in " + dir + " (I/O exception). Please, review the messaging configuration." );
+				this.logger.warning( "Application restoration was incomplete from " + dir + " (I/O exception). The messaging configuration is probably invalid." );
 				Utils.logException( this.logger, e );
 			}
 		}
