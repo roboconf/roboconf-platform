@@ -60,7 +60,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static enum State {
-		UNKNOWN_VM, TAG_VM, ASSOCIATE_ELASTIC_IP, RUNNING_VM, ASSOCIATE_STORAGE, COMPLETE;
+		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, ASSOCIATE_STORAGE, COMPLETE;
 	}
 
 	private final String machineId, tagName;
@@ -97,14 +97,14 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 		if( this.state == State.TAG_VM )
 			if( tagVm())
-				this.state = State.ASSOCIATE_ELASTIC_IP;
-
-		if( this.state == State.ASSOCIATE_ELASTIC_IP )
-			if( associateElasticIp())
 				this.state = State.RUNNING_VM;
 
 		if( this.state == State.RUNNING_VM )
 			if( checkVmIsStarted())
+				this.state = State.ASSOCIATE_ELASTIC_IP;
+
+		if( this.state == State.ASSOCIATE_ELASTIC_IP )
+			if( associateElasticIp())
 				this.state = State.ASSOCIATE_STORAGE;
 
 		if( this.state == State.ASSOCIATE_STORAGE )
