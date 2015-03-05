@@ -52,6 +52,7 @@ import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -110,7 +111,7 @@ public class AgentInitializationTest extends DmTest {
 
 	@Override
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 
 		String appLocation = null;
 		try {
@@ -128,6 +129,7 @@ public class AgentInitializationTest extends DmTest {
 
 
 	@Override
+	@Test
 	public void run() throws Exception {
 
 		// Update the manager

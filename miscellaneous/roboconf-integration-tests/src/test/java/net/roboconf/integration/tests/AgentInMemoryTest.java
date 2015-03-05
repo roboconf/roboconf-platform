@@ -45,6 +45,7 @@ import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -93,17 +94,10 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 	@Override
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 
-		String appLocation = null;
-		try {
-			File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
-			appLocation = resourcesDirectory.getAbsolutePath();
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
+		File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
+		String appLocation = resourcesDirectory.getAbsolutePath();
 		return OptionUtils.combine(
 				super.config(),
 				systemProperty( APP_LOCATION ).value( appLocation ));
@@ -111,6 +105,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 
 	@Override
+	@Test
 	public void run() throws Exception {
 
 		// Prepare everything

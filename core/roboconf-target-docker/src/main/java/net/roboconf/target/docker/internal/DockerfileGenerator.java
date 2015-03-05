@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
 
@@ -39,9 +40,12 @@ import net.roboconf.core.utils.Utils;
  */
 public class DockerfileGenerator {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final File agentPack;
+
 	private String packages = "openjdk-7-jre-headless";
 	private boolean isTar = true;
+
 
 	/**
 	 * Constructor for docker file generator.
@@ -57,6 +61,7 @@ public class DockerfileGenerator {
 			this.isTar = false;
 	}
 
+
 	/**
 	 * Generate docker file.
 	 * @return path to a full-fledged temporary Dockerfile directory
@@ -71,6 +76,7 @@ public class DockerfileGenerator {
 		Utils.copyStream(this.agentPack, tmpPack);
 		tmpPack.setReadable(true);
 
+		this.logger.fine( "Generating a Dockerfile." );
 		File generated = new File(dockerfile.toFile(), "Dockerfile");
 		PrintWriter out = null;
 		try {
@@ -84,10 +90,14 @@ public class DockerfileGenerator {
 			// Remove extension from file name (generally .zip or .tar.gz, possibly .tgz or .tar)
 			String extractDir = this.agentPack.getName();
 			int pos;
-			if((pos = extractDir.lastIndexOf('.')) > 0) extractDir = extractDir.substring(0, pos);
-			if(extractDir.endsWith(".tar")) extractDir = extractDir.substring(0, extractDir.length() - 4);
+			if((pos = extractDir.lastIndexOf('.')) > 0)
+				extractDir = extractDir.substring(0, pos);
+
+			if(extractDir.endsWith(".tar"))
+				extractDir = extractDir.substring(0, extractDir.length() - 4);
+
 			out.println("RUN ln -s /usr/local/" + extractDir + " /usr/local/roboconf-agent");
-			// The rc.local and start.sh files will be generated as well !
+			// The rc.local and start.sh files will be generated as well!
 			out.println("COPY rc.local /etc/");
 			out.println("COPY start.sh /usr/local/roboconf-agent/");
 
@@ -96,6 +106,7 @@ public class DockerfileGenerator {
 		}
 
 		// Generate start.sh startup script for roboconf agent
+		this.logger.fine( "Generating the start script for the Roboconf agent." );
 		generated = new File(dockerfile.toFile(), "start.sh");
 		out = null;
 		try {
@@ -118,6 +129,7 @@ public class DockerfileGenerator {
 		generated.setExecutable(true, false);
 
 		// Generate rc.local script to launch roboconf agent at boot time
+		this.logger.fine( "Generating a rc.local file." );
 		generated = new File(dockerfile.toFile(), "rc.local");
 		out = null;
 		try {
@@ -137,6 +149,7 @@ public class DockerfileGenerator {
 		return dockerfile.toFile();
 	}
 
+
 	/**
 	 * Retrieve packages list (for apt-get).
 	 * @return The packages list
@@ -144,6 +157,7 @@ public class DockerfileGenerator {
 	public String getPackages() {
 		return this.packages;
 	}
+
 
 	/**
 	 * Determine if the agent package is a tarball (tar/tgz) file.

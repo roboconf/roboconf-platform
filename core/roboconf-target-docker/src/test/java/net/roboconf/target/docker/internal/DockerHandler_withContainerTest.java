@@ -25,22 +25,14 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
-import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
@@ -61,7 +53,6 @@ import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
  */
 public class DockerHandler_withContainerTest {
 
-	private static final String DOCKER_TCP_PORT = "4243";
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private boolean dockerIsInstalled = true;
@@ -75,12 +66,7 @@ public class DockerHandler_withContainerTest {
 
 		Assume.assumeTrue( this.dockerIsInstalled );
 		try {
-			List<String> command = Arrays.asList( "docker", "version" );
-			int exitCode = ProgramUtils.executeCommand( this.logger, command, null, null );
-			if( exitCode != 0 )
-				throw new Exception( "Docker is not installed." );
-
-			checkOrUpdateDockerTcpConfig();
+			DockerTestUtils.checkDockerIsInstalled();
 			prepareDockerTest();
 
 		} catch( Exception e ) {
@@ -97,9 +83,7 @@ public class DockerHandler_withContainerTest {
 	public void dockerCleanup() {
 
 		if( this.docker != null ) {
-			if( this.dockerImageId != null )
-				this.docker.removeImageCmd( this.dockerImageId ).exec();
-
+			DockerHandler.deleteImageIfItExists( this.dockerImageId, this.docker );
 			try {
 				this.docker.close();
 
@@ -150,66 +134,6 @@ public class DockerHandler_withContainerTest {
 
 
 	/**
-	 * Checks that Docker is configured to listen on the right TCP port.
-	 * <p>
-	 * If not, try to change Docker config and restart (may require root access).
-	 * </p>
-	 *
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	private void checkOrUpdateDockerTcpConfig() throws IOException, InterruptedException {
-
-		File dockerConf = new File( "/etc/default/docker" );
-		if( ! dockerConf.exists())
-			dockerConf = new File( "/etc/default/docker.io" );
-
-		if( ! dockerConf.exists() || ! dockerConf.canRead())
-			throw new IOException( "The docker configuration file could not be found or is not readable." );
-
-		// Look for the expected port in the configuration file
-		BufferedReader reader = null;
-		boolean ok = false;
-		try {
-			reader = new BufferedReader( new InputStreamReader( new FileInputStream( dockerConf ), "UTF-8" ));
-			String line;
-			while( ! ok && (line = reader.readLine()) != null) {
-				if( line.indexOf("#") < 0
-					&& line.indexOf("DOCKER_OPTS") >= 0
-					&& (line.indexOf("-H=tcp:") > 0 || line.indexOf("-H tcp:") > 0)
-					&& line.indexOf( ":" + DOCKER_TCP_PORT ) > 0)
-						ok = true;
-			}
-
-		} finally {
-			Utils.closeQuietly( reader );
-		}
-
-		// If not present, try to update the file
-		if( ! ok ) {
-			if( ! dockerConf.canWrite()) {
-				this.logger.severe( "There is no TCP configuration for port " + DOCKER_TCP_PORT + " in " + dockerConf );
-				this.logger.info( "Update the file " + dockerConf + " with DOCKER_OPTS=\"-H tcp://localhost:" + DOCKER_TCP_PORT + " -H unix:///var/run/docker.sock\"" );
-				throw new IOException( "The Docker configuration is missing TCP configuration." );
-			}
-
-			OutputStreamWriter writer = null;
-			try {
-				writer = new OutputStreamWriter( new FileOutputStream( dockerConf, true ),"UTF-8" );
-				writer.append("DOCKER_OPTS=\"-H tcp://localhost:" + DOCKER_TCP_PORT + " -H unix:///var/run/docker.sock\"\n");
-
-			} finally {
-				Utils.closeQuietly( writer );
-			}
-
-			List<String> command = Arrays.asList( "docker", "restart" );
-			int exitCode = ProgramUtils.executeCommand( this.logger, command, null, null );
-			Assert.assertEquals( 0, exitCode );
-		}
-	}
-
-
-	/**
 	 * Loads the target properties for the configuration of Docker.
 	 */
 	private Map<String,String> loadTargetProperties() throws Exception {
@@ -235,7 +159,7 @@ public class DockerHandler_withContainerTest {
 	private void prepareDockerTest() throws Exception {
 
 		DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
-		config.withUri( "http://localhost:" + DOCKER_TCP_PORT );
+		config.withUri( "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
 
 		this.docker = DockerClientBuilder.getInstance( config.build()).build();
 		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource("image").getFile());

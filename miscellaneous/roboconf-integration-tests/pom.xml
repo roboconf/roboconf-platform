@@ -115,6 +115,14 @@
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-target-docker</artifactId>
+  			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-agent</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>

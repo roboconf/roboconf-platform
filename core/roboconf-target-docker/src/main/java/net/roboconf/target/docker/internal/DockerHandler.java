@@ -39,11 +39,12 @@ import net.roboconf.target.api.TargetHandler;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
-import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
+import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -51,7 +52,7 @@ import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 public class DockerHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "docker";
-	private static final String DEFAULT_IMG_NAME = "Generated.by.Roboconf";
+	private static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
 
 	static String IMAGE_ID = "docker.image";
 	static String ENDPOINT = "docker.endpoint";
@@ -93,64 +94,53 @@ public class DockerHandler implements TargetHandler {
 		this.logger.fine( "Creating a new machine." );
 		DockerClient dockerClient = createDockerClient( targetProperties );
 
+		// Search an existing image in the local Docker repository
 		String imageId = targetProperties.get(IMAGE_ID);
-		boolean imageFound = false;
-
+		Image image = null;
 		if( ! Utils.isEmptyOrWhitespaces( imageId )) {
+			List<Image> images = dockerClient.listImagesCmd().exec();
+			images = images == null ? new ArrayList<Image>( 0 ) : images;
 
-			// Search image in local Docker repository
-			List<Image> imgSearch = dockerClient.listImagesCmd().exec();
-			imgSearch = imgSearch == null ? new ArrayList<Image>( 0 ) : imgSearch;
-
-			// First search by image ID...
-			for(Image img : imgSearch) {
-				if( img.getId().equals(imageId)) {
-					this.logger.fine("Found docker image for id " + imageId);
-					imageFound = true;
-					break;
-				}
-			}
-
-			// ...then consider provided ID as a tag (and search again by tag)
-			if( ! imageFound ) {
-				for(Image img : imgSearch) {
-					for(String s : img.getRepoTags()) {
-						if(s.contains(imageId)) {
-							this.logger.fine("Found docker image for tag " + imageId);
-							imageFound = true;
-							imageId = img.getId(); // Found : pick real image ID !
-							break;
-						}
-					}
-				}
-			}
+			image = findImageById( imageId, images );
+			if( image != null )
+				this.logger.fine( "Found a Docker image with ID " + imageId );
+			else if(( image = findImageByTag( imageId, images )) != null )
+				this.logger.fine( "Found a Docker image with tag " + imageId );
 		}
 
 		// Generate a Docker image, if possible
-		if( ! imageFound ) {
+		if( image == null ) {
+
 			String pack = targetProperties.get( AGENT_PACKAGE );
 			if( Utils.isEmptyOrWhitespaces( pack ))
-				throw new TargetException("Docker image " + imageId + " not found, and no " + AGENT_PACKAGE + " specified");
+				throw new TargetException("Docker image " + imageId + " not found, and no " + AGENT_PACKAGE + " specified.");
+
+			if( Utils.isEmptyOrWhitespaces( imageId ))
+				imageId = DEFAULT_IMG_NAME;
 
 			// Delete a potential image we created previously
-			dockerClient.removeImageCmd( DEFAULT_IMG_NAME );
+			deleteImageIfItExists( imageId, dockerClient );
 
 			// Generate docker image
-			this.logger.fine("Docker image not found: build one from generated Dockerfile");
+			this.logger.fine("Docker image not found: build one from generated Dockerfile.");
 			InputStream response = null;
 			File dockerfile = null;
 			try {
 				dockerfile = new DockerfileGenerator(pack, targetProperties.get(AGENT_JRE_AND_PACKAGES)).generateDockerfile();
-				response = dockerClient.buildImageCmd(dockerfile).exec();
+				this.logger.fine( "Creating an image from the generated Dockerfile." );
+				response = dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
 
 				// Check response (last line = "Successfully built <imageId>") ...
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				Utils.copyStream(response, out);
 				String s = out.toString("UTF-8").trim();
-				imageId = s.substring(s.lastIndexOf(' ') + 1).substring(0, 12);
+				this.logger.fine( "Docker's output: " + s );
 
-				// Tag new image with specified ID (so it gets reused next time)
-				dockerClient.tagImageCmd( imageId, DEFAULT_IMG_NAME, DEFAULT_IMG_NAME ).exec();
+				String realImageId = s.substring(s.lastIndexOf(' ') + 1).substring(0, 12);
+				this.logger.fine( "Generated image's ID: " + realImageId );
+
+				// Tag the new image with the specified ID (so that it gets reused next time)
+				dockerClient.tagImageCmd( realImageId, imageId, imageId ).exec();
 
 			} catch( Exception e ) {
 				throw new TargetException(e);
@@ -209,8 +199,9 @@ public class DockerHandler implements TargetHandler {
 		boolean result = false;
 		try {
 			DockerClient dockerClient = createDockerClient( targetProperties );
-			Info info = dockerClient.infoCmd().exec();
-			result = info != null && info.getContainers() > 0;
+			List<Container> containers = dockerClient.listContainersCmd().exec();
+			containers = containers == null ? new ArrayList<Container>( 0 ) : containers;
+			result = findContainerById( machineId, containers ) != null;
 
 		} catch( Exception e ) {
 			// nothing, we can consider it is not running
@@ -242,6 +233,7 @@ public class DockerHandler implements TargetHandler {
 
 	DockerClient createDockerClient( Map<String,String> targetProperties ) throws TargetException {
 
+		// Validate what needs to be validated.
 		this.logger.fine( "Setting the target properties." );
 		if( Utils.isEmptyOrWhitespaces( targetProperties.get( IMAGE_ID ))
 				&& Utils.isEmptyOrWhitespaces( targetProperties.get( AGENT_PACKAGE )))
@@ -250,6 +242,7 @@ public class DockerHandler implements TargetHandler {
 		if( Utils.isEmptyOrWhitespaces( targetProperties.get( ENDPOINT )))
 			throw new TargetException( ENDPOINT + " is missing in the configuration." );
 
+		// The configuration is straight-forward.
 		DockerClientConfigBuilder config =
 				DockerClientConfig.createDefaultConfigBuilder()
 				.withUri( targetProperties.get( ENDPOINT ))
@@ -258,6 +251,67 @@ public class DockerHandler implements TargetHandler {
 				.withEmail( targetProperties.get( EMAIL ))
 				.withVersion( targetProperties.get( VERSION ));
 
-		return DockerClientBuilder.getInstance( config.build()).build();
+		// We must force the factory because otherwise, its finding relies on services loaders.
+		// And this Java mechanism does not work in OSGi.
+		DockerClientBuilder clientBuilder = DockerClientBuilder
+				.getInstance( config.build())
+				.withDockerCmdExecFactory( new DockerCmdExecFactoryImpl());
+
+		return clientBuilder.build();
+	}
+
+
+	static Image findImageById( String imageId, List<Image> images ) {
+
+		Image result = null;
+		for( Image img : images ) {
+			if( img.getId().equals(imageId)) {
+				result = img;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+
+	static Container findContainerById( String containerId, List<Container> containers ) {
+
+		Container result = null;
+		for( Container container : containers ) {
+			if( container.getId().equals( containerId )) {
+				result = container;
+				break;
+			}
+		}
+
+		return result;
+	}
+
+
+	static Image findImageByTag( String imageId, List<Image> images ) {
+
+		Image result = null;
+		for( Image img : images ) {
+			for( String s : img.getRepoTags()) {
+				if( s.contains( imageId )) {
+					result = img;
+					break;
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	static void deleteImageIfItExists( String imageId, DockerClient dockerClient ) {
+
+		if( imageId != null ) {
+			List<Image> images = dockerClient.listImagesCmd().exec();
+			images = images == null ? new ArrayList<Image>( 0 ) : images;
+			if( DockerHandler.findImageById( imageId, images ) != null )
+				dockerClient.removeImageCmd( imageId ).exec();
+		}
 	}
 }

@@ -46,7 +46,7 @@ import org.ops4j.pax.exam.util.Filter;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmWithAgentInMemoryTest extends AbstractTest {
+public abstract class DmWithAgentInMemoryTest extends AbstractTest {
 
 	@Inject
 	protected Manager manager;
@@ -69,7 +69,7 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 
 
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 
 		List<Option> options = getBaseOptions();
 		options.add( mavenBundle()
@@ -91,17 +91,6 @@ public class DmWithAgentInMemoryTest extends AbstractTest {
 				.start());
 
 		return options.toArray( new Option[ options.size()]);
-	}
-
-
-	@Override
-	public void run() throws Exception {
-
-		// Update the manager instance
-		configureManagerForInMemoryUsage();
-
-		// Run normally
-		super.run();
 	}
 
 

@@ -42,6 +42,7 @@ import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
 import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -147,6 +148,7 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 
 
 	@Override
+	@Test
 	public void run() throws Exception {
 
 		// Update the manager.
