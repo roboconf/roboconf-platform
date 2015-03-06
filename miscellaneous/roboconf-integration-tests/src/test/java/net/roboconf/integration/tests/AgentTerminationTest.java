@@ -36,13 +36,13 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
-import net.roboconf.integration.tests.internal.IntegrationTestsUtils;
 import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
 import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -50,7 +50,7 @@ import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerClass;
+import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * Test agent termination.
@@ -63,7 +63,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
-@ExamReactorStrategy( PerClass.class )
+@ExamReactorStrategy( PerMethod.class )
 public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
@@ -79,7 +79,6 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
-		probe.addTest( IntegrationTestsUtils.class );
 		probe.addTest( MyMessageProcessor.class );
 
 		return probe;
@@ -88,17 +87,10 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 	@Override
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 
-		String appLocation = null;
-		try {
-			File resourcesDirectory = TestUtils.findTestFile( "/simple", getClass());
-			appLocation = resourcesDirectory.getAbsolutePath();
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
+		File resourcesDirectory = TestUtils.findTestFile( "/simple", getClass());
+		String appLocation = resourcesDirectory.getAbsolutePath();
 		return OptionUtils.combine(
 				super.config(),
 				systemProperty( APP_LOCATION ).value( appLocation ));
@@ -106,11 +98,11 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 
 	@Override
+	@Test
 	public void run() throws Exception {
 
 		// Update the manager
-		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
-		this.manager.reconfigure();
+		configureManagerForInMemoryUsage();
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );

@@ -51,7 +51,7 @@ public class InMemoryHandler_withoutIPojoTest {
 	@Test( expected = TargetException.class )
 	public void testCreateVm() throws Exception {
 
-		new InMemoryHandler().createOrConfigureMachine( null, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+		new InMemoryHandler().createMachine( null, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
 	}
 
 
@@ -65,7 +65,7 @@ public class InMemoryHandler_withoutIPojoTest {
 		Map<String,String> targetProperties = new HashMap<String,String>( 1 );
 		targetProperties.put( InMemoryHandler.DELAY, "20L" );
 
-		handler.createOrConfigureMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+		handler.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
 	}
 
 
@@ -77,6 +77,15 @@ public class InMemoryHandler_withoutIPojoTest {
 		Assert.assertEquals( 10L, handler.getDefaultDelay());
 
 		Map<String,String> targetProperties = new HashMap<String,String>( 0 );
-		handler.createOrConfigureMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+		handler.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+	}
+
+
+	@Test
+	public void testConfigureAndIsRunning() throws Exception {
+
+		InMemoryHandler handler = new InMemoryHandler();
+		handler.configureMachine( null, "my app", null, null, null, null, null );
+		Assert.assertFalse( handler.isMachineRunning( null, "whatever, there is no iPojo factory" ));
 	}
 }

@@ -56,6 +56,21 @@ public class Instance implements Serializable {
 	public static final String MACHINE_ID = "machine.id";
 
 	/**
+	 * A constant to store in {@link #getData()} and that indicates a root instance was "taken" by a target handler.
+	 * <p>Storing this information in a root instance is enough.</p>
+	 * <p>
+	 * When a root instance is still NOT_DEPLOYED but that this key is present
+	 * in {@link #data}, it means the creation of a machine was acknowledged by the
+	 * DM but that the processing has not yet started for this instance.
+	 * </p>
+	 * <p>
+	 * Such situations could occur when a user starts a lot of root instances
+	 * at once.
+	 * </p>
+	 */
+	public static final String TARGET_ACQUIRED = "target.acquired";
+
+	/**
 	 * A constant to store the application name in {@link #getData()}.
 	 * <p>Storing this information in a root instance is enough.</p>
 	 */

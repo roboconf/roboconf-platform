@@ -42,18 +42,14 @@ import java.util.UUID;
 
 import net.roboconf.core.utils.Utils;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@RunWith( PaxExam.class )
 public abstract class AbstractTest {
 
 	public static final long PLATFORM_TIMEOUT = 30000;
@@ -109,27 +105,18 @@ public abstract class AbstractTest {
 	protected abstract String getArtifactId();
 	protected abstract String getDirectorySuffix();
 
+	/**
+	 * The test run method.
+	 * @throws Exception
+	 */
+	protected abstract void run() throws Exception;
+
 
 	protected String getGroupId() {
 		return "net.roboconf";
 	}
 
-
 	protected final String getRoboconfVersion() {
 		return MavenUtils.getArtifactVersion( "net.roboconf", "roboconf-core" );
-	}
-
-
-	@Test
-	public void run() throws Exception {
-
-		for( ;; ) {
-			try {
-				Thread.sleep( 10000 );
-
-			} catch( InterruptedException e ) {
-				e.printStackTrace();
-			}
-		}
 	}
 }

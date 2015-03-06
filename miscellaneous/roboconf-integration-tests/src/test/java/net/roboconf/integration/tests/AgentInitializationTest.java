@@ -44,7 +44,6 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
-import net.roboconf.integration.tests.internal.IntegrationTestsUtils;
 import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
@@ -53,6 +52,7 @@ import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -60,7 +60,7 @@ import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerClass;
+import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * A set of tests for the agent's initialization.
@@ -74,7 +74,7 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
-@ExamReactorStrategy( PerClass.class )
+@ExamReactorStrategy( PerMethod.class )
 public class AgentInitializationTest extends DmTest {
 
 	private static final String APP_LOCATION = "my.app.location";
@@ -94,7 +94,6 @@ public class AgentInitializationTest extends DmTest {
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
-		probe.addTest( IntegrationTestsUtils.class );
 		probe.addTest( MyMessageProcessor.class );
 
 		// Classes from the agent
@@ -112,7 +111,7 @@ public class AgentInitializationTest extends DmTest {
 
 	@Override
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 
 		String appLocation = null;
 		try {
@@ -130,6 +129,7 @@ public class AgentInitializationTest extends DmTest {
 
 
 	@Override
+	@Test
 	public void run() throws Exception {
 
 		// Update the manager

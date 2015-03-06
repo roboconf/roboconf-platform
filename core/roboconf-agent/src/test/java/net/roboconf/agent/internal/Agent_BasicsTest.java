@@ -32,6 +32,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,6 +68,18 @@ public class Agent_BasicsTest {
 		stopAgent();
 		this.agent = new Agent();
 		stopAgent();
+	}
+
+
+	@Test
+	public void testForceHeartbeatSending() throws Exception {
+
+		TestClientAgent client = getInternalClient();
+		Assert.assertEquals( 0, client.messagesForTheDm.size());
+
+		this.agent.forceHeartbeatSending();
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+		Assert.assertEquals( MsgNotifHeartbeat.class, client.messagesForTheDm.get( 0 ).getClass());
 	}
 
 

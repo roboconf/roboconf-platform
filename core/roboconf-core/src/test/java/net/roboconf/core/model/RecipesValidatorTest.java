@@ -30,7 +30,6 @@ import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.utils.ResourceUtils;
@@ -75,21 +74,6 @@ public class RecipesValidatorTest {
 
 
 	@Test
-	public void testBashValidation_noBashDirective() throws Exception {
-		File appDir = this.folder.newFolder();
-
-		Component comp = new Component( "toto" ).installerName( "bash" );
-		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
-		Assert.assertTrue( new File( directory, RecipesValidator.SCRIPTS_DIR_NAME ).mkdirs());
-		Utils.writeStringInto( "test\n" + RecipesValidator.BASH_DIRECTIVE + "\n", new File( directory, RecipesValidator.SCRIPTS_DIR_NAME + "/test.sh" ));
-
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
-		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.REC_BASH_NO_BASH_DIRECTIVE, errors.get( 0 ).getErrorCode());
-	}
-
-
-	@Test
 	public void testBashValidation_noScriptsDirectory() throws Exception {
 
 		File appDir = this.folder.newFolder();
@@ -98,7 +82,7 @@ public class RecipesValidatorTest {
 		Assert.assertTrue( directory.mkdirs());
 		Utils.writeStringInto( RecipesValidator.BASH_DIRECTIVE + "\n", new File( directory, "test.sh" ));
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.REC_BASH_NO_SCRIPTS_DIR, errors.get( 0 ).getErrorCode());
 	}
@@ -112,7 +96,7 @@ public class RecipesValidatorTest {
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( directory.mkdirs());
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_HAS_NO_RBCF_MODULE, errors.get( 0 ).getErrorCode());
 	}
@@ -128,7 +112,7 @@ public class RecipesValidatorTest {
 		Assert.assertTrue( new File( directory, "roboconf_toto" ).mkdirs());
 		Assert.assertTrue( new File( directory, "roBoconf_titi" ).mkdirs());
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_HAS_TOO_MANY_RBCF_MODULES, errors.get( 0 ).getErrorCode());
 	}
@@ -144,7 +128,7 @@ public class RecipesValidatorTest {
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, "roboconf_toto" ).mkdirs());
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, errors.get( 0 ).getErrorCode());
 	}
@@ -162,7 +146,7 @@ public class RecipesValidatorTest {
 		File inputFile = TestUtils.findTestFile( "/recipes/invalid-update.pp" );
 		Utils.copyStream( inputFile, targetFile );
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 3, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, errors.get( 0 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, errors.get( 1 ).getErrorCode());
@@ -182,7 +166,7 @@ public class RecipesValidatorTest {
 		File inputFile = TestUtils.findTestFile( "/recipes/update.pp" );
 		Utils.copyStream( inputFile, targetFile );
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 0, errors.size());
 	}
 
@@ -199,7 +183,7 @@ public class RecipesValidatorTest {
 		File inputFile = TestUtils.findTestFile( "/recipes/invalid-update.pp" );
 		Utils.copyStream( inputFile, targetFile );
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 3, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, errors.get( 0 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, errors.get( 1 ).getErrorCode());
@@ -224,7 +208,7 @@ public class RecipesValidatorTest {
 
 		// The init.pp is not considered as being called during updates.
 		// So, no error about imports.
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 3, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, errors.get( 0 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, errors.get( 1 ).getErrorCode());
@@ -244,7 +228,7 @@ public class RecipesValidatorTest {
 		File inputFile = TestUtils.findTestFile( "/recipes/invalid-update.pp" );
 		Utils.copyStream( inputFile, targetFile );
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 0, errors.size());
 	}
 
@@ -261,7 +245,7 @@ public class RecipesValidatorTest {
 		File inputFile = TestUtils.findTestFile( "/recipes/missing-running-state.pp" );
 		Utils.copyStream( inputFile, targetFile );
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_RUNNING_STATE, errors.get( 0 ).getErrorCode());
 	}
@@ -283,7 +267,7 @@ public class RecipesValidatorTest {
 		File inputFile = TestUtils.findTestFile( "/recipes/update.pp" );
 		Utils.copyStream( inputFile, targetFile );
 
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 2, errors.size());
 		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_FROM_IMPORT, errors.get( 0 ).getErrorCode());
 		Assert.assertTrue( errors.get( 0 ).getDetails().contains( "Parameter: test" ));
@@ -308,7 +292,7 @@ public class RecipesValidatorTest {
 		Utils.writeStringInto( "Not a valid puppet class...", targetFile );
 
 		// We only parse what we know...
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 0, errors.size());
 	}
 
@@ -328,7 +312,7 @@ public class RecipesValidatorTest {
 		Utils.copyStream( inputFile, targetFile );
 
 		// We only parse what we know...
-		List<RoboconfError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 0, errors.size());
 	}
 }

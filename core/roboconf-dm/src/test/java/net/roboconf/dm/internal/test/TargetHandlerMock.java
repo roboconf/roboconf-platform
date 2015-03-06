@@ -58,7 +58,7 @@ public class TargetHandlerMock implements TargetHandler {
 	}
 
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -67,6 +67,24 @@ public class TargetHandlerMock implements TargetHandler {
 			String applicationName )
 	throws TargetException {
 		return "whatever";
+	}
+
+	@Override
+	public void configureMachine(
+			Map<String,String> targetProperties,
+			String machineId,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName)
+	throws TargetException {
+		// nothing
+	}
+
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId ) throws TargetException {
+		return false;
 	}
 
 	@Override

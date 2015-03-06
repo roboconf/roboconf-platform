@@ -44,6 +44,7 @@ import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.MavenUtils;
@@ -52,13 +53,13 @@ import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerClass;
+import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
-@ExamReactorStrategy( PerClass.class )
+@ExamReactorStrategy( PerMethod.class )
 public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
@@ -84,18 +85,12 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 	@Override
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 
-		String appLocation = null;
-		try {
-			File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
-			appLocation = resourcesDirectory.getAbsolutePath();
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
+		File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
+		String appLocation = resourcesDirectory.getAbsolutePath();
 		String jerseyVersion = MavenUtils.getArtifactVersion( "com.sun.jersey", "jersey-client" );
+
 		return OptionUtils.combine(
 				super.config(),
 
@@ -147,6 +142,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 
 	@Override
+	@Test
 	public void run() throws Exception {
 
 		String appLocation = System.getProperty( APP_LOCATION );
@@ -169,13 +165,14 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		URI targetUri = URI.create( ROOT_URL + "/app/Legacy%20LAMP/children?instance-path=/Apache%20VM" );
 		String s = TestUtils.readUriContent( targetUri );
 		Assert.assertEquals(
-				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
+				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"bash\"}}]",
 				s );
 
 		// Test the debug resources.
 
 		// Check the connection between the DM and the MQ.
-		Assert.assertEquals( "Has received Echo message TEST",
+		Assert.assertEquals(
+				"Has received Echo message TEST",
 				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 10000L ));
 
 		// Deploy and start the "Apache VM" root instance.

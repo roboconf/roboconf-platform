@@ -25,17 +25,14 @@
 
 package net.roboconf.target.ec2.internal;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -46,27 +43,18 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.AssociateAddressRequest;
-import com.amazonaws.services.ec2.model.AttachVolumeRequest;
-import com.amazonaws.services.ec2.model.CreateTagsRequest;
-import com.amazonaws.services.ec2.model.CreateVolumeRequest;
-import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
-import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
-import com.amazonaws.services.ec2.model.DescribeVolumesResult;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
-import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 
 /**
  * @author Noël - LIG
  */
-public class Ec2IaasHandler implements TargetHandler {
+public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "iaas-ec2";
-	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
 	/*
@@ -81,12 +69,11 @@ public class Ec2IaasHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.util.Map, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -95,9 +82,9 @@ public class Ec2IaasHandler implements TargetHandler {
 			String applicationName )
 	throws TargetException {
 
+		this.logger.fine( "Creating a new machine on AWS." );
 		String instanceId = null;
 		try {
-			// Create the VM
 			AmazonEC2 ec2 = createEc2Client( targetProperties );
 			String userData = DataHelpers.writeUserDataAsString(
 					messagingIp, messagingUsername, messagingPassword,
@@ -106,75 +93,63 @@ public class Ec2IaasHandler implements TargetHandler {
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode( targetProperties, userData );
 			RunInstancesResult runInstanceResult = ec2.runInstances( runInstancesRequest );
 			instanceId = runInstanceResult.getReservation().getInstances().get( 0 ).getInstanceId();
-			waitForInstanceIdToBeKnown( ec2, instanceId );
 
-			// Set name the instance's tag (human-readable in AWS webapp)
-			Tag tag = new Tag( "Name", applicationName + "." + rootInstanceName );
-			CreateTagsRequest ctr = new CreateTagsRequest( Arrays.asList( instanceId ), Arrays.asList( tag ));
-			ec2.createTags( ctr );
-
-			// Do we need to wait for the VM?
-			String snapshotIdToAttach = targetProperties.get( Ec2Constants.VOLUME_SNAPSHOT_ID );
-			String elasticIp = targetProperties.get( Ec2Constants.ELASTIC_IP );
-			boolean needsElasticIp = ! Utils.isEmptyOrWhitespaces( elasticIp );
-			boolean needsSnapshot = ! Utils.isEmptyOrWhitespaces( snapshotIdToAttach );
-
-			if( needsElasticIp || needsSnapshot )
-				waitForVmToBeOnline( ec2, instanceId );
-
-			// Is there any volume (ID or name) to attach ?
-			if( needsSnapshot ) {
-				// FIXME: we should not hard-code the zone
-				CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
-					.withAvailabilityZone("eu-west-1c")
-					.withSnapshotId(snapshotIdToAttach);
-					//.withSize(2); // The size of the volume, in gigabytes.
-
-				CreateVolumeResult createVolumeResult = ec2.createVolume(createVolumeRequest);
-				boolean running = false;
-				while( ! running) {
-					DescribeVolumesRequest dvs = new DescribeVolumesRequest();
-					ArrayList<String> volumeIds = new ArrayList<String>();
-					volumeIds.add(createVolumeResult.getVolume().getVolumeId());
-					DescribeVolumesResult dvsresult = ec2.describeVolumes(dvs);
-					running = "available".equals(dvsresult.getVolumes().get(0).getState());
-					if( ! running)
-						sleep( 5000 );
-				}
-
-				AttachVolumeRequest attachRequest = new AttachVolumeRequest()
-					.withInstanceId(instanceId)
-					.withDevice("/dev/sda2")
-					.withVolumeId(createVolumeResult.getVolume().getVolumeId());
-
-				ec2.attachVolume( attachRequest );
-			}
-
-			// Associate an elastic IP?
-			if( needsElasticIp ) {
-				this.logger.fine( "Associating an elastic IP with the instance. IP = " + elasticIp );
-				AssociateAddressRequest associateAddressRequest = new AssociateAddressRequest( instanceId, elasticIp );
-				ec2.associateAddress( associateAddressRequest );
-			}
-
-		} catch( AmazonServiceException e ) {
-			this.logger.severe( "An error occurred on Amazon while instantiating a machine. " + e.getMessage());
-			throw new TargetException( e );
-
-		} catch( AmazonClientException e ) {
-			this.logger.severe( "An error occurred while creating a machine on Amazon EC2. " + e.getMessage());
-			throw new TargetException( e );
-
-		} catch( UnsupportedEncodingException e ) {
-			this.logger.severe( "An error occurred while contacting Amazon EC2. " + e.getMessage());
-			throw new TargetException( e );
-
-		} catch( IOException e ) {
-			this.logger.severe( "An error occurred while preparing the user data. " + e.getMessage());
+		} catch( Exception e ) {
+			this.logger.severe( "An error occurred while creating a new machine on EC2. " + e.getMessage());
 			throw new TargetException( e );
 		}
 
 		return instanceId;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public MachineConfigurator machineConfigurator(
+			Map<String,String> targetProperties,
+			String machineId,
+			String messagingIp,
+			String messagingUsername,
+			String messagingPassword,
+			String rootInstanceName,
+			String applicationName ) {
+
+		String tagName = applicationName + "." + rootInstanceName;
+		return new Ec2MachineConfigurator( targetProperties, machineId, tagName );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 */
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+
+		boolean result = false;
+		try {
+			AmazonEC2 ec2 = createEc2Client( targetProperties );
+			DescribeInstancesRequest dis = new DescribeInstancesRequest();
+			dis.setInstanceIds( Arrays.asList( machineId ));
+
+			DescribeInstancesResult disresult = ec2.describeInstances( dis );
+			result = ! disresult.getReservations().isEmpty();
+
+		} catch( AmazonServiceException e ) {
+			// nothing, the instance does not exist
+
+		} catch( AmazonClientException e ) {
+			this.logger.severe( "An error occurred while creating a machine on Amazon EC2. " + e.getMessage());
+			throw new TargetException( e );
+		}
+
+		return result;
 	}
 
 
@@ -186,17 +161,14 @@ public class Ec2IaasHandler implements TargetHandler {
 	@Override
 	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
 
+		this.logger.fine( "Terminating machine '" + instanceId + "'." );
 		try {
 			AmazonEC2 ec2 = createEc2Client( targetProperties );
 			TerminateInstancesRequest terminateInstancesRequest = new TerminateInstancesRequest();
 			terminateInstancesRequest.withInstanceIds( instanceId );
 			ec2.terminateInstances( terminateInstancesRequest );
 
-		} catch( AmazonServiceException e ) {
-			this.logger.severe( "An error occurred on Amazon while terminating the machine. " + e.getMessage());
-			throw new TargetException( e );
-
-		} catch( AmazonClientException e ) {
+		} catch( Exception e ) {
 			this.logger.severe( "An error occurred while terminating a machine on Amazon EC2. " + e.getMessage());
 			throw new TargetException( e );
 		}
@@ -208,7 +180,7 @@ public class Ec2IaasHandler implements TargetHandler {
 	 * @param targetProperties the IaaS properties
 	 * @throws TargetException
 	 */
-	void parseProperties( Map<String, String> targetProperties ) throws TargetException {
+	static void parseProperties( Map<String, String> targetProperties ) throws TargetException {
 
 		// Quick check
 		String[] properties = {
@@ -234,7 +206,7 @@ public class Ec2IaasHandler implements TargetHandler {
 	 * @return a non-null client
 	 * @throws TargetException if properties are invalid
 	 */
-	private AmazonEC2 createEc2Client( Map<String,String> targetProperties ) throws TargetException {
+	public static AmazonEC2 createEc2Client( Map<String,String> targetProperties ) throws TargetException {
 
 		parseProperties( targetProperties );
 
@@ -247,61 +219,6 @@ public class Ec2IaasHandler implements TargetHandler {
 		ec2.setEndpoint( targetProperties.get(Ec2Constants.EC2_ENDPOINT ));
 
 		return ec2;
-	}
-
-
-	/**
-	 * Waits for the VM to be online.
-	 * @param ec2 the EC2 client
-	 * @param instanceId the instance's ID
-	 */
-	private void waitForInstanceIdToBeKnown( AmazonEC2 ec2, String instanceId ) {
-
-		// Most of the time, we will go through only one loop iteration.
-		// But sometimes, when EC2 is under a charge pick, the instance ID may
-		// not be propagated everywhere in EC2.
-
-		// In this case, it is better to wait a little bit.
-		// See #197 (Invalid instance ID in Amazon).
-
-		// To prevent an infinite loop, we will poll 21 times and that's it.
-		final int maxLoop = 20;
-		boolean running = false;
-		int cpt = 0;
-		while( ! running && cpt > maxLoop ) {
-			DescribeInstancesRequest dis = new DescribeInstancesRequest();
-			dis.setInstanceIds( Arrays.asList( instanceId ));
-
-			DescribeInstancesResult disresult = ec2.describeInstances( dis );
-			running = disresult.getReservations().size() > 0
-					&& disresult.getReservations().get( 0 ).getInstances().size() > 0;
-
-			if( ! running)
-				sleep( 2000 );
-		}
-
-		if( cpt > maxLoop )
-			this.logger.warning( "Could not verify that the instance " + instanceId  + " was correctly propagated in EC2's infrastructure.");
-	}
-
-
-	/**
-	 * Waits for the VM to be online.
-	 * @param ec2 the EC2 client
-	 * @param instanceId the instance's ID
-	 */
-	private void waitForVmToBeOnline( AmazonEC2 ec2, String instanceId ) {
-
-		boolean running = false;
-		while( ! running) {
-			DescribeInstancesRequest dis = new DescribeInstancesRequest();
-			dis.setInstanceIds( Arrays.asList( instanceId ));
-
-			DescribeInstancesResult disresult = ec2.describeInstances(dis);
-			running = "running".equals( disresult.getReservations().get(0).getInstances().get(0).getState().getName());
-			if( ! running)
-				sleep( 5000 );
-		}
 	}
 
 
@@ -333,47 +250,11 @@ public class Ec2IaasHandler implements TargetHandler {
 
 		runInstancesRequest.setSecurityGroups( Arrays.asList( secGroup ));
 
-/*
-		// Create the block device mapping to describe the root partition.
-		BlockDeviceMapping blockDeviceMapping = new BlockDeviceMapping();
-		blockDeviceMapping.setDeviceName("/dev/sda1");
-
-		// Set the delete on termination flag to false.
-		EbsBlockDevice ebs = new EbsBlockDevice();
-		ebs.setSnapshotId(snapshotId);
-		ebs.setDeleteOnTermination(Boolean.FALSE);
-
-		blockDeviceMapping.setEbs(ebs);
-
-		// Add the block device mapping to the block list.
-		ArrayList<BlockDeviceMapping> blockList = new ArrayList<BlockDeviceMapping>();
-		blockList.add(blockDeviceMapping);
-
-		// Set the block device mapping configuration in the launch specifications.
-		runInstancesRequest.setBlockDeviceMappings(blockList);
-*/
-
-
 		// The following part enables to transmit data to the VM.
 		// When the VM is up, it will be able to read this data.
 		String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
 		runInstancesRequest.setUserData( encodedUserData );
 
 		return runInstancesRequest;
-	}
-
-
-	/**
-	 * Sleeps.
-	 * @param delay a delay
-	 */
-	private void sleep( long delay ) {
-
-		try {
-			Thread.sleep( delay );
-
-		} catch( InterruptedException e ) {
-			// nothing
-		}
 	}
 }

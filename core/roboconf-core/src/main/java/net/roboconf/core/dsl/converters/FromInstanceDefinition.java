@@ -46,7 +46,8 @@ import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.dsl.parsing.FileDefinitionParser;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.model.SourceReference;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -65,7 +66,8 @@ public class FromInstanceDefinition {
 
 	private final File rootDirectory;
 	private Graphs graphs;
-	private final Collection<ModelError> errors = new ArrayList<ModelError> ();
+	private final Collection<ParsingError> errors = new ArrayList<ParsingError> ();
+	private final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
 
 	private Map<BlockInstanceOf,Instance> allBlocksToInstances;
 	private Set<File> importsToProcess, processedImports;
@@ -83,8 +85,16 @@ public class FromInstanceDefinition {
 	/**
 	 * @return the errors (never null)
 	 */
-	public Collection<ModelError> getErrors() {
+	public Collection<ParsingError> getErrors() {
 		return this.errors;
+	}
+
+
+	/**
+	 * @return the objectToSource
+	 */
+	public Map<Object,SourceReference> getObjectToSource() {
+		return this.objectToSource;
 	}
 
 
@@ -115,7 +125,7 @@ public class FromInstanceDefinition {
 			this.processedImports.add( importedFile );
 
 			if( ! importedFile.exists()) {
-				ModelError error = new ModelError( ErrorCode.CO_UNREACHABLE_FILE, 0 );
+				ParsingError error = new ParsingError( ErrorCode.CO_UNREACHABLE_FILE, file, 0 );
 				error.setDetails( "Import location: " + importedFile );
 				this.errors.add( error );
 				continue;
@@ -123,7 +133,7 @@ public class FromInstanceDefinition {
 
 			// Load the file
 			FileDefinition currentDefinition = new FileDefinitionParser( importedFile, true ).read();
-			Collection<ModelError> currentErrors = new ArrayList<ModelError> ();
+			Collection<ParsingError> currentErrors = new ArrayList<ParsingError> ();
 			currentErrors.addAll( currentDefinition.getParsingErrors());
 
 			for( AbstractBlock block : currentDefinition.getBlocks())
@@ -132,7 +142,7 @@ public class FromInstanceDefinition {
 			if( currentDefinition.getFileType() != FileDefinition.INSTANCE
 					&& currentDefinition.getFileType() != FileDefinition.AGGREGATOR ) {
 
-				ModelError error = new ModelError( ErrorCode.CO_NOT_INSTANCES, 0 );
+				ParsingError error = new ParsingError( ErrorCode.CO_NOT_INSTANCES, file, 0 );
 				error.setDetails( "Imported file  " + importedFile + " is of type " + FileDefinition.fileTypeAsString( currentDefinition.getFileType()) + "." );
 				currentErrors.add( error );
 			}
@@ -166,13 +176,17 @@ public class FromInstanceDefinition {
 			List<Instance> tempNewRootInstances = new ArrayList<Instance>( newRootInstances );
 			tempNewRootInstances.retainAll( rootInstances );
 			for( Instance instance : tempNewRootInstances ) {
-				ModelError error = new ModelError( ErrorCode.CO_CONFLICTING_INFERRED_INSTANCE, -1 );
+				ParsingError error = new ParsingError( ErrorCode.CO_CONFLICTING_INFERRED_INSTANCE, file, 1 );
 				error.setDetails( "Instance path: " + InstanceHelpers.computeInstancePath( instance ));
 				this.errors.add( error );
 			}
 
 			rootInstances.addAll( newRootInstances );
 		}
+
+		// No error? Backup source information for further validation.
+		if( this.errors.isEmpty())
+			backupSourceInformation();
 
 		return rootInstances;
 	}
@@ -238,7 +252,7 @@ public class FromInstanceDefinition {
 
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
 			if( instance.getComponent() == null ) {
-				ModelError error = new ModelError( ErrorCode.CO_INEXISTING_COMPONENT, -1 );
+				ParsingError error = new ParsingError( ErrorCode.CO_INEXISTING_COMPONENT, block.getDeclaringFile().getEditedFile(), 1 );
 				error.setDetails( "Component name: " + currentBlock.getName());
 				this.errors.add( error );
 				continue;
@@ -379,10 +393,22 @@ public class FromInstanceDefinition {
 			}
 
 			for( AbstractBlockHolder holder : entry.getValue()) {
-				ModelError error = new ModelError( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, holder.getLine());
-				error.setDetails( sb.toString());
-				this.errors.add( error );
+				this.errors.add( new ParsingError(
+						ErrorCode.CO_ALREADY_DEFINED_INSTANCE,
+						holder.getFile(),
+						holder.getLine(),
+						sb.toString()));
 			}
+		}
+	}
+
+
+	private void backupSourceInformation() {
+
+		for( Map.Entry<BlockInstanceOf,Instance> entry : this.allBlocksToInstances.entrySet()) {
+			AbstractBlockHolder holder = entry.getKey();
+			SourceReference sr = new SourceReference( entry.getValue(), holder.getFile(), holder.getLine());
+			this.objectToSource.put( sr.getModelObject(), sr );
 		}
 	}
 }

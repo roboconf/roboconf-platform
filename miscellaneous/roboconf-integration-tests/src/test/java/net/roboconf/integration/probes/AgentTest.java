@@ -33,7 +33,7 @@ import org.ops4j.pax.exam.Option;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentTest extends AbstractTest {
+public abstract class AgentTest extends AbstractTest {
 
 	@Override
 	protected String getArtifactId() {
@@ -46,7 +46,7 @@ public class AgentTest extends AbstractTest {
 	}
 
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 		List<Option> options = getBaseOptions();
 		return options.toArray( new Option[ options.size()]);
 	}

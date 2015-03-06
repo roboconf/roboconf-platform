@@ -14,19 +14,19 @@ VM {
 
 # MySQL database
 MySQL {
-	installer: puppet;
+	installer: bash;
 	exports: ip, port = 3306;
 }
 
 # Tomcat
 Tomcat {
-	installer: puppet;
+	installer: bash;
 	exports: ip, portAJP = 8009;
 	imports: MySQL.ip, MySQL.port;
 }
 
 # Apache Load Balancer
 Apache {
-	installer: puppet;
+	installer: bash;
 	imports: Tomcat.portAJP, Tomcat.ip;
 }

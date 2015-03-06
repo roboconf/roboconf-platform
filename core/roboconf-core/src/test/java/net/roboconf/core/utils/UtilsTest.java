@@ -508,6 +508,31 @@ public class UtilsTest {
 	}
 
 
+	@Test
+	public void testListAllFilesAndDirectories() throws Exception {
+
+		final File tempDir = this.folder.newFolder( "roboconf_test" );
+		String[] paths = new String[] { "dir1", "dir2", "dir1/dir3", "dir4" };
+		for( String path : paths ) {
+			if( ! new File( tempDir, path ).mkdir())
+				throw new IOException( "Failed to create " + path );
+		}
+
+		paths = new String[] { "dir1/toto.txt", "dir2/script.sh", "dir1/dir3/smart.png" };
+		for( String path : paths ) {
+			if( ! new File( tempDir, path ).createNewFile())
+				throw new IOException( "Failed to create " + path );
+		}
+
+		List<File> files = Utils.listAllFiles( tempDir, true );
+
+		// 7 files and directories, mentioned previously, plus the root directory.
+		Assert.assertEquals( 8, files.size());
+		for( String path : paths )
+			Assert.assertTrue( path, files.contains( new File( tempDir, path )));
+	}
+
+
 	@Test( expected = IllegalArgumentException.class )
 	public void testListAllFiles_inexistingFile() throws Exception {
 		Utils.listAllFiles( new File( "not/existing/file" ));

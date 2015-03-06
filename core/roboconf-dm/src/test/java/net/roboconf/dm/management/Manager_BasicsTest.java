@@ -36,7 +36,7 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -58,6 +58,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
+import net.roboconf.target.api.TargetHandler;
 
 import org.junit.After;
 import org.junit.Before;
@@ -539,6 +540,11 @@ public class Manager_BasicsTest {
 		Instance apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
 		Assert.assertNotNull( apache );
 
+		// Make sure the VM is considered as deployed in the pseudo-IaaS
+		TargetHandler th = this.manager.targetResolver.findTargetHandler( null, ma, apache ).getHandler();
+		Assert.assertNotNull( th );
+		th.createMachine( null, null, null, null, apache.getName(), ma.getName());
+
 		// Update the instances
 		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
 		apache.data.put( Instance.MACHINE_ID, "my id" );
@@ -564,18 +570,77 @@ public class Manager_BasicsTest {
 		}
 
 		apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
-		Assert.assertEquals( InstanceStatus.PROBLEM, apache.getStatus());
 		Assert.assertEquals( "192.168.1.23", apache.data.get( Instance.IP_ADDRESS ));
 		Assert.assertEquals( "my id", apache.data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( "something", apache.data.get( "whatever" ));
 		Assert.assertEquals( ma.getName(), apache.data.get( Instance.APPLICATION_NAME ));
+
+		// It is considered started because upon a reconfiguration, the IaaS is contacted
+		// to determine whether a VM runs or not.
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, apache.getStatus());
+	}
+
+
+	@Test
+	public void testConfigurationChanged_andShutdown_withApps_withInstances_vmWasKilled() throws Exception {
+
+		// Copy an application in the configuration
+		File source = TestUtils.findTestFile( "/lamp" );
+		ManagedApplication ma = this.manager.loadNewApplication( source );
+		Instance apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
+		Assert.assertNotNull( apache );
+
+		// Make sure the VM is considered as deployed in the pseudo-IaaS
+		TargetHandler th = this.manager.targetResolver.findTargetHandler( null, ma, apache ).getHandler();
+		Assert.assertNotNull( th );
+		String machineId = th.createMachine( null, null, null, null, apache.getName(), ma.getName());
+
+		// Update the instances
+		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
+		apache.data.put( Instance.MACHINE_ID, "my id" );
+		apache.data.put( "whatever", "something" );
+		apache.setStatus( InstanceStatus.PROBLEM );
+
+		// Save the manager's state
+		this.manager.stop();
+
+		//
+		// Here is the difference with #testConfigurationChanged_andShutdown_withApps_withInstances
+		// We simulate the fact that the VM was killed why the DM was stopped.
+		//
+		th.terminateMachine( null, machineId );
+
+		// Reset the manager (reload the configuration)
+		this.manager.reconfigure();
+
+		// Check there is the right application
+		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+		ma = this.manager.getAppNameToManagedApplication().get( "Legacy LAMP" );
+		Assert.assertNotNull( ma );
+		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
+		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
+
+		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication())) {
+			if( ! inst.equals( apache ))
+				Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, inst.getStatus());
+		}
+
+		apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
+		Assert.assertNull( apache.data.get( Instance.IP_ADDRESS ));
+		Assert.assertNull( apache.data.get( Instance.MACHINE_ID ));
+		Assert.assertEquals( "something", apache.data.get( "whatever" ));
+		Assert.assertEquals( ma.getName(), apache.data.get( Instance.APPLICATION_NAME ));
+
+		// The VM was killed outside the DM. Upon restoration, the DM
+		// contacts the IaaS and sets the NOT_DEPLOYED status.
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, apache.getStatus());
 	}
 
 
 	@Test( expected = InvalidApplicationException.class )
 	public void testCheckErrors_withCriticalError() throws Exception {
 
-		RoboconfError error = new ModelError( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, 2 );
+		RoboconfError error = new ParsingError( ErrorCode.CO_ALREADY_DEFINED_INSTANCE, null, 2 );
 		this.manager.checkErrors( Arrays.asList( error ));
 	}
 
@@ -583,7 +648,7 @@ public class Manager_BasicsTest {
 	@Test
 	public void testCheckErrors_withWarningOnly() throws Exception {
 
-		RoboconfError error = new ModelError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, 2 );
+		RoboconfError error = new ParsingError( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, null, 2 );
 		this.manager.checkErrors( Arrays.asList( error ));
 	}
 

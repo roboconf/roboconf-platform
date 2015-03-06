@@ -44,7 +44,7 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
 
@@ -64,11 +64,11 @@ public final class ParsingModelValidator {
 
 	/**
 	 * @param definitionFile a definition file
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( FileDefinition definitionFile ) {
+	public static Collection<ParsingError> validate( FileDefinition definitionFile ) {
 
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ParsingError> result = new ArrayList<ParsingError> ();
 		result.addAll( definitionFile.getParsingErrors());
 		for( AbstractBlock block : definitionFile.getBlocks())
 			result.addAll( validate( block ));
@@ -79,11 +79,11 @@ public final class ParsingModelValidator {
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( AbstractBlock block ) {
+	public static Collection<ParsingError> validate( AbstractBlock block ) {
 
-		Collection<ModelError> result;
+		Collection<ParsingError> result;
 		switch( block.getInstructionType()) {
 		case AbstractBlock.COMPONENT:
 			result = validate((BlockComponent) block);
@@ -114,8 +114,8 @@ public final class ParsingModelValidator {
 			break;
 
 		default:
-			result = new ArrayList<ModelError>( 1 );
-			ModelError error = new ModelError( ErrorCode.PM_INVALID_BLOCK_TYPE, block.getLine());
+			result = new ArrayList<ParsingError>( 1 );
+			ParsingError error = parsingError( ErrorCode.PM_INVALID_BLOCK_TYPE, block );
 			error.setDetails( "Instruction type: " + block.getInstructionType());
 			result.add( error );
 			break;
@@ -127,14 +127,14 @@ public final class ParsingModelValidator {
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( BlockImport block ) {
+	public static Collection<ParsingError> validate( BlockImport block ) {
 
 		String uri = block.getUri();
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ParsingError> result = new ArrayList<ParsingError> ();
 		if( Utils.isEmptyOrWhitespaces( uri ))
-			result.add( new ModelError( ErrorCode.PM_EMPTY_IMPORT_LOCATION, block.getLine()));
+			result.add( parsingError( ErrorCode.PM_EMPTY_IMPORT_LOCATION, block ));
 
 		return result;
 	}
@@ -142,27 +142,27 @@ public final class ParsingModelValidator {
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( BlockComponent block ) {
+	public static Collection<ParsingError> validate( BlockComponent block ) {
 		return validatePropertiesHolder( block, true );
 	}
 
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( BlockInstanceOf block ) {
+	public static Collection<ParsingError> validate( BlockInstanceOf block ) {
 
 		// Basic checks
-		Collection<ModelError> result = validatePropertiesHolder( block, false );
+		Collection<ParsingError> result = validatePropertiesHolder( block, false );
 		BlockProperty prop = block.findPropertyBlockByName( ParsingConstants.PROPERTY_INSTANCE_NAME );
 
 		if( prop == null )
-			result.add( new ModelError( ErrorCode.PM_MISSING_INSTANCE_NAME, block.getLine()));
+			result.add( parsingError( ErrorCode.PM_MISSING_INSTANCE_NAME, block ));
 		else if( ! prop.getValue().matches( ParsingConstants.PATTERN_FLEX_ID ))
-			result.add( new ModelError( ErrorCode.PM_INVALID_INSTANCE_NAME, block.getLine()));
+			result.add( parsingError( ErrorCode.PM_INVALID_INSTANCE_NAME, block ));
 
 		// Check internal regions are supported
 		for( AbstractBlock region : block.getInnerBlocks()) {
@@ -171,7 +171,7 @@ public final class ParsingModelValidator {
 					&& region.getInstructionType() != AbstractBlock.PROPERTY
 					&& region.getInstructionType() != AbstractBlock.INSTANCEOF ) {
 
-				ModelError error = new ModelError( ErrorCode.PM_INVALID_INSTANCE_ELEMENT, region.getLine());
+				ParsingError error = parsingError( ErrorCode.PM_INVALID_INSTANCE_ELEMENT, region );
 				error.setDetails( "Invalid type found: " + region.getClass().getSimpleName());
 				result.add( error );
 			}
@@ -183,33 +183,33 @@ public final class ParsingModelValidator {
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( BlockFacet block ) {
+	public static Collection<ParsingError> validate( BlockFacet block ) {
 		return validatePropertiesHolder( block, true );
 	}
 
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( BlockProperty block ) {
+	public static Collection<ParsingError> validate( BlockProperty block ) {
 
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ParsingError> result = new ArrayList<ParsingError> ();
 		String value = block.getValue();
 		String name = block.getName();
 		int line = block.getLine();
 
 		if( Utils.isEmptyOrWhitespaces( value )) {
-			result.add( new ModelError( ErrorCode.PM_EMPTY_PROPERTY_VALUE, line ));
+			result.add( new ParsingError( ErrorCode.PM_EMPTY_PROPERTY_VALUE, block.getFile(), line ));
 
 		} else if( ParsingConstants.PROPERTY_GRAPH_CHILDREN.equals( name )) {
 			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
 				if( s.matches( ParsingConstants.PATTERN_FLEX_ID ))
 					continue;
 
-				ModelError error = new ModelError( ErrorCode.PM_INVALID_CHILD_NAME, line );
+				ParsingError error = new ParsingError( ErrorCode.PM_INVALID_CHILD_NAME, block.getFile(), line );
 				error.setDetails( "Child name: " + s );
 				result.add( error );
 			}
@@ -219,10 +219,10 @@ public final class ParsingModelValidator {
 
 			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
 				if( Utils.isEmptyOrWhitespaces( s )) {
-					result.add( new ModelError( ErrorCode.PM_EMPTY_REFERENCED_NAME, line ));
+					result.add( new ParsingError( ErrorCode.PM_EMPTY_REFERENCED_NAME, block.getFile(), line ));
 
 				} else if( ! s.matches( ParsingConstants.PATTERN_FLEX_ID )) {
-					ModelError error = new ModelError( ErrorCode.PM_INVALID_NAME, line );
+					ParsingError error = new ParsingError( ErrorCode.PM_INVALID_NAME, block.getFile(), line );
 					error.setDetails( "Invalid name: " + s );
 					result.add( error );
 				}
@@ -239,27 +239,27 @@ public final class ParsingModelValidator {
 
 				s = s.trim();
 				if( Utils.isEmptyOrWhitespaces( s ))
-					result.add( new ModelError( ErrorCode.PM_EMPTY_VARIABLE_NAME, line ));
+					result.add( new ParsingError( ErrorCode.PM_EMPTY_VARIABLE_NAME, block.getFile(), line ));
 				else if( ! s.matches( patternForImports ))
-					result.add( new ModelError( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, line, s ));
+					result.add( new ParsingError( ErrorCode.PM_INVALID_IMPORTED_VAR_NAME, block.getFile(), line, s ));
 				else if( ! s.contains( "." )
 						|| s.indexOf( '.' ) == s.length() -1 )
-					result.add( new ModelError( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, line, s ));
+					result.add( new ParsingError( ErrorCode.PM_INCOMPLETE_IMPORTED_VAR_NAME, block.getFile(), line, s ));
 			}
 
 		} else if( ParsingConstants.PROPERTY_GRAPH_EXPORTS.equals( name )) {
 			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
 				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
 				if( Utils.isEmptyOrWhitespaces( entry.getKey()))
-					result.add( new ModelError( ErrorCode.PM_EMPTY_VARIABLE_NAME, line ));
+					result.add( new ParsingError( ErrorCode.PM_EMPTY_VARIABLE_NAME, block.getFile(), line ));
 				else if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
-					result.add( new ModelError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, line, s ));
+					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, s ));
 			}
 
 
 		} else if( ParsingConstants.PROPERTY_COMPONENT_INSTALLER.equals( name )) {
 			if( ! value.matches( ParsingConstants.PATTERN_FLEX_ID ))
-				result.add( new ModelError( ErrorCode.PM_INVALID_INSTALLER_NAME, line, value ));
+				result.add( new ParsingError( ErrorCode.PM_INVALID_INSTALLER_NAME, block.getFile(), line, value ));
 
 		} else if( ParsingConstants.PROPERTY_INSTANCE_NAME.equals( name )) {
 			// nothing
@@ -283,12 +283,12 @@ public final class ParsingModelValidator {
 			}
 
 			if( count < 1 )
-				result.add( new ModelError( ErrorCode.PM_INVALID_INSTANCE_COUNT, line ));
+				result.add( new ParsingError( ErrorCode.PM_INVALID_INSTANCE_COUNT, block.getFile(), line ));
 			else if( count == 1 )
-				result.add( new ModelError( ErrorCode.PM_USELESS_INSTANCE_COUNT, line ));
+				result.add( new ParsingError( ErrorCode.PM_USELESS_INSTANCE_COUNT, block.getFile(), line ));
 
 		} else {
-			ModelError error = new ModelError( ErrorCode.PM_UNKNOWN_PROPERTY_NAME, line );
+			ParsingError error = new ParsingError( ErrorCode.PM_UNKNOWN_PROPERTY_NAME, block.getFile(), line );
 			error.setDetails( "Property name: " + name );
 			result.add( error );
 		}
@@ -299,16 +299,16 @@ public final class ParsingModelValidator {
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( BlockComment block ) {
+	public static Collection<ParsingError> validate( BlockComment block ) {
 
 		// Only makes sense when a comment section was created programmatically.
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ParsingError> result = new ArrayList<ParsingError> ();
 		int cpt = 0;
 		for( String s : block.getContent().split( "\n" )) {
 			if( ! s.trim().startsWith( ParsingConstants.COMMENT_DELIMITER ))
-				result.add( new ModelError( ErrorCode.PM_MALFORMED_COMMENT, block.getLine() + cpt ));
+				result.add( new ParsingError( ErrorCode.PM_MALFORMED_COMMENT, block.getFile(), block.getLine() + cpt ));
 
 			cpt ++;
 		}
@@ -319,14 +319,14 @@ public final class ParsingModelValidator {
 
 	/**
 	 * @param block a block
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	public static Collection<ModelError> validate( BlockBlank block ) {
+	public static Collection<ParsingError> validate( BlockBlank block ) {
 
 		// Only makes sense when a BlockBlank section was created programmatically.
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ParsingError> result = new ArrayList<ParsingError> ();
 		if( ! Utils.isEmptyOrWhitespaces( block.getContent()))
-			result.add( new ModelError( ErrorCode.PM_MALFORMED_BLANK, block.getLine()));
+			result.add( parsingError( ErrorCode.PM_MALFORMED_BLANK, block ));
 
 		return result;
 	}
@@ -335,19 +335,19 @@ public final class ParsingModelValidator {
 	/**
 	 * @param holder
 	 * @param strict true if only supported properties are allowed, false otherwise
-	 * @return a non-null list of {@link ModelError}s
+	 * @return a non-null list of {@link ParsingError}s
 	 */
-	private static Collection<ModelError> validatePropertiesHolder( AbstractBlockHolder holder, boolean strict ) {
+	private static Collection<ParsingError> validatePropertiesHolder( AbstractBlockHolder holder, boolean strict ) {
 
 		// Check the name
-		Collection<ModelError> result = new ArrayList<ModelError> ();
+		Collection<ParsingError> result = new ArrayList<ParsingError> ();
 		String name = holder.getName();
 		if( Utils.isEmptyOrWhitespaces( name ))
-			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder.getLine()));
+			result.add( parsingError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder ));
 		else if( ! name.matches( ParsingConstants.PATTERN_FLEX_ID ))
-			result.add( new ModelError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_INVALID_NAME : ErrorCode.PM_INVALID_COMPONENT_NAME, holder.getLine()));
+			result.add( parsingError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_INVALID_NAME : ErrorCode.PM_INVALID_COMPONENT_NAME, holder ));
 		else if( name.contains( "." ))
-			result.add( new ModelError( ErrorCode.PM_DOT_IS_NOT_ALLOWED, holder.getLine()));
+			result.add( parsingError( ErrorCode.PM_DOT_IS_NOT_ALLOWED, holder ));
 
 		// Check all the properties have a value
 		List<String> supportedProperties = Arrays.asList( holder.getSupportedPropertyNames());
@@ -357,7 +357,7 @@ public final class ParsingModelValidator {
 			if( region.getInstructionType() == AbstractBlock.PROPERTY ) {
 				BlockProperty p = (BlockProperty) region;
 				if( foundProperties.contains( p.getName())) {
-					ModelError error = new ModelError( ErrorCode.PM_DUPLICATE_PROPERTY, p.getLine());
+					ParsingError error = parsingError( ErrorCode.PM_DUPLICATE_PROPERTY, p );
 					error.setDetails( "Property name: " + p.getName());
 					result.add( error );
 				}
@@ -367,7 +367,7 @@ public final class ParsingModelValidator {
 					result.addAll( validate( p ));
 
 				} else if( strict ) {
-					ModelError error = new ModelError( ErrorCode.PM_PROPERTY_NOT_APPLIABLE, p.getLine());
+					ParsingError error = parsingError( ErrorCode.PM_PROPERTY_NOT_APPLIABLE, p );
 					error.setDetails( "Property name: " + p.getName());
 					result.add( error );
 				}
@@ -378,5 +378,10 @@ public final class ParsingModelValidator {
 		}
 
 		return result;
+	}
+
+
+	private static ParsingError parsingError( ErrorCode errorCode, AbstractBlock block ) {
+		return new ParsingError( errorCode, block.getDeclaringFile().getEditedFile(), block.getLine());
 	}
 }

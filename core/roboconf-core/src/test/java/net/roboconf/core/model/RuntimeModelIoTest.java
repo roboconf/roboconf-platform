@@ -107,6 +107,11 @@ public class RuntimeModelIoTest {
 				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "MySQL.ip" ));
 				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "MySQL.port" ));
 
+				SourceReference sr = result.getObjectToSource().get( childComponent );
+				Assert.assertNotNull( sr );
+				Assert.assertEquals( new File( directory, "graph/lamp.graph" ), sr.getSourceFile());
+				Assert.assertEquals( 22, sr.getLine());
+
 			} else if( "MySQL".equals( childComponent.getName())) {
 				Assert.assertEquals( "puppet", childComponent.getInstallerName());
 				Assert.assertEquals( 0, children.size());
@@ -116,6 +121,11 @@ public class RuntimeModelIoTest {
 				Assert.assertEquals( "3306", exportedVariables.get( "MySQL.port" ));
 				Assert.assertEquals( 0, importedVariables.size());
 
+				SourceReference sr = result.getObjectToSource().get( childComponent );
+				Assert.assertNotNull( sr );
+				Assert.assertEquals( new File( directory, "graph/lamp.graph" ), sr.getSourceFile());
+				Assert.assertEquals( 16, sr.getLine());
+
 			} else if( "Apache".equals( childComponent.getName())) {
 				Assert.assertEquals( "puppet", childComponent.getInstallerName());
 				Assert.assertEquals( 0, children.size());
@@ -124,6 +134,11 @@ public class RuntimeModelIoTest {
 				Assert.assertEquals( 2, childComponent.importedVariables.size());
 				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "Tomcat.ip" ));
 				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "Tomcat.portAJP" ));
+
+				SourceReference sr = result.getObjectToSource().get( childComponent );
+				Assert.assertNotNull( sr );
+				Assert.assertEquals( new File( directory, "graph/lamp.graph" ), sr.getSourceFile());
+				Assert.assertEquals( 29, sr.getLine());
 
 			} else {
 				Assert.fail( "Unrecognized child." );
@@ -375,9 +390,14 @@ public class RuntimeModelIoTest {
 		props.setProperty( ApplicationDescriptor.APPLICATION_NAMESPACE, "net.roboconf" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
-		FileOutputStream fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
-		props.store( fos, null );
-		Utils.closeQuietly( fos );
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
+			props.store( fos, null );
+
+		} finally {
+			Utils.closeQuietly( fos );
+		}
 
 		// Graph
 		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
@@ -414,11 +434,14 @@ public class RuntimeModelIoTest {
 		Collection<RoboconfError> errors = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors;
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
+		try {
+			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
+			props.setProperty( ApplicationDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
+			props.store( fos, null );
 
-		fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
-		props.setProperty( ApplicationDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
-		props.store( fos, null );
-		Utils.closeQuietly( fos );
+		} finally {
+			Utils.closeQuietly( fos );
+		}
 
 		File instDir = new File( tempDirectory, Constants.PROJECT_DIR_INSTANCES );
 		if( ! instDir.mkdir())

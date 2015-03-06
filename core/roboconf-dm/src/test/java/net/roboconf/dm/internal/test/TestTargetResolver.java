@@ -41,6 +41,7 @@ import net.roboconf.target.api.TargetHandler;
 public class TestTargetResolver extends TargetResolver {
 
 	public final Map<Instance,Boolean> instanceToRunningStatus = new HashMap<Instance,Boolean> ();
+	public final Map<Instance,Integer> instanceToRequestsCount = new HashMap<Instance,Integer> ();
 
 
 	@Override
@@ -55,7 +56,7 @@ public class TestTargetResolver extends TargetResolver {
 			}
 
 			@Override
-			public String createOrConfigureMachine(
+			public String createMachine(
 					Map<String,String> targetProperties,
 					String messagingIp,
 					String messagingUsername,
@@ -65,7 +66,35 @@ public class TestTargetResolver extends TargetResolver {
 			throws TargetException {
 
 				TestTargetResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );
+				Integer cpt = TestTargetResolver.this.instanceToRequestsCount.get( instance );
+				if( cpt == null )
+					cpt = 0;
+
+				TestTargetResolver.this.instanceToRequestsCount.put( instance, ++ cpt );
 				return "generated machine id for " + rootInstanceName;
+			}
+
+
+			@Override
+			public void configureMachine(
+					Map<String,String> targetProperties,
+					String machineId,
+					String messagingIp,
+					String messagingUsername,
+					String messagingPassword,
+					String rootInstanceName,
+					String applicationName)
+			throws TargetException {
+				// nothing
+			}
+
+
+			@Override
+			public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+			throws TargetException {
+
+				Boolean running = TestTargetResolver.this.instanceToRunningStatus.get( instance );
+				return running != null && running;
 			}
 
 			@Override

@@ -26,6 +26,7 @@
 package net.roboconf.target.docker.internal;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.target.api.TargetException;
@@ -44,9 +45,44 @@ public class DockerHandler_withoutContainerTest {
 
 
 	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration() throws Exception {
+	public void testInvalidConfiguration_noImage() throws Exception {
 
 		DockerHandler target = new DockerHandler();
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( DockerHandler.ENDPOINT, "whatever" );
 		target.createDockerClient( new HashMap<String,String> ());
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testInvalidConfiguration_noEndpoint_noAgentPackage() throws Exception {
+
+		DockerHandler target = new DockerHandler();
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( DockerHandler.IMAGE_ID, "whatever" );
+		target.createDockerClient( map );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testInvalidConfiguration_noEndpoint_noImageId() throws Exception {
+
+		DockerHandler target = new DockerHandler();
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( DockerHandler.AGENT_PACKAGE, "whatever" );
+		target.createDockerClient( map );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testTerminate_noConnection() throws Exception {
+		new DockerHandler().terminateMachine( new HashMap<String,String> (), "whatever" );
+	}
+
+
+	@Test
+	public void testIsRunning_noConnection() throws Exception {
+		boolean running = new DockerHandler().isMachineRunning( new HashMap<String,String> (), "whatever" );
+		Assert.assertFalse( running );
 	}
 }

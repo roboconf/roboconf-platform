@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
@@ -102,7 +104,7 @@ public final class RuntimeModelIo {
 				app.setNamespace( appDescriptor.getNamespace());
 				app.setDslId( appDescriptor.getDslId());
 
-				Collection<RoboconfError> errors = RuntimeModelValidator.validate( appDescriptor );
+				Collection<ModelError> errors = RuntimeModelValidator.validate( appDescriptor );
 				result.loadErrors.addAll( errors );
 
 			} catch( IOException e ) {
@@ -143,12 +145,13 @@ public final class RuntimeModelIo {
 				break GRAPH;
 			}
 
-			Collection<RoboconfError> errors = RuntimeModelValidator.validate( graph );
+			Collection<ModelError> errors = RuntimeModelValidator.validate( graph );
 			result.loadErrors.addAll( errors );
 
 			errors = RuntimeModelValidator.validate( graph, projectDirectory );
 			result.loadErrors.addAll( errors );
 
+			result.objectToSource.putAll( fromDef.getObjectToSource());
 			app.setGraphs( graph );
 		}
 
@@ -167,6 +170,7 @@ public final class RuntimeModelIo {
 			File mainInstFile = new File( instDirectory, appDescriptor.getInstanceEntryPoint());
 			InstancesLoadResult ilr = loadInstances( mainInstFile, instDirectory, app.getGraphs(), app.getName());
 
+			result.objectToSource.putAll( ilr.getObjectToSource());
 			result.loadErrors.addAll( ilr.getLoadErrors());
 			app.getRootInstances().addAll( ilr.getRootInstances());
 		}
@@ -174,7 +178,7 @@ public final class RuntimeModelIo {
 
 		// Validate the entire application
 		if( ! RoboconfErrorHelpers.containsCriticalErrors( result.loadErrors )) {
-			Collection<RoboconfError> errors = RuntimeModelValidator.validate( app );
+			Collection<ModelError> errors = RuntimeModelValidator.validate( app );
 			result.loadErrors.addAll( errors );
 		}
 
@@ -187,10 +191,12 @@ public final class RuntimeModelIo {
 
 	/**
 	 * A bean that stores both the application and loading errors.
+	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class ApplicationLoadResult {
 		Application application;
 		final Collection<RoboconfError> loadErrors = new ArrayList<RoboconfError> ();
+		final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
 
 		/**
 		 * @return the application (can be null)
@@ -205,15 +211,24 @@ public final class RuntimeModelIo {
 		public Collection<RoboconfError> getLoadErrors() {
 			return this.loadErrors;
 		}
+
+		/**
+		 * @return the objectToSource
+		 */
+		public Map<Object,SourceReference> getObjectToSource() {
+			return this.objectToSource;
+		}
 	}
 
 
 	/**
 	 * A bean that stores both root instances and loading errors.
+	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class InstancesLoadResult {
 		Collection<Instance> rootInstances = new ArrayList<Instance> ();
 		final Collection<RoboconfError> loadErrors = new ArrayList<RoboconfError> ();
+		final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
 
 		/**
 		 * @return the root instances (never null)
@@ -227,6 +242,13 @@ public final class RuntimeModelIo {
 		 */
 		public Collection<RoboconfError> getLoadErrors() {
 			return this.loadErrors;
+		}
+
+		/**
+		 * @return the objectToSource
+		 */
+		public Map<Object,SourceReference> getObjectToSource() {
+			return this.objectToSource;
 		}
 	}
 
@@ -257,8 +279,9 @@ public final class RuntimeModelIo {
 				break INST;
 			}
 
-			Collection<RoboconfError> errors = RuntimeModelValidator.validate( instances );
+			Collection<ModelError> errors = RuntimeModelValidator.validate( instances );
 			result.loadErrors.addAll( errors );
+			result.objectToSource.putAll( fromDef.getObjectToSource());
 			result.getRootInstances().addAll( instances );
 		}
 

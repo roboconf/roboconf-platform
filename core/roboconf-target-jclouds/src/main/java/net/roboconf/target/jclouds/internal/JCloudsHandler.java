@@ -78,12 +78,11 @@ public class JCloudsHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.util.Map, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -129,7 +128,7 @@ public class JCloudsHandler implements TargetHandler {
 			template.getOptions().userMetadata( "Root Instance Name", rootInstanceName );
 			template.getOptions().userMetadata( "Created by", "Roboconf" );
 
-			// Specify your own key pair if the current provider allows for this
+			// Specify our own key pair if the current provider supports it
 			String keyPairName = targetProperties.get( KEY_PAIR );
 		    try {
 		    	if( ! Utils.isEmptyOrWhitespaces( keyPairName )) {
@@ -154,6 +153,39 @@ public class JCloudsHandler implements TargetHandler {
 		}
 
 		return machineId;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public void configureMachine(
+		Map<String,String> targetProperties,
+		String machineId,
+		String messagingIp,
+		String messagingUsername,
+		String messagingPassword,
+		String rootInstanceName,
+		String applicationName )
+	throws TargetException {
+		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 */
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+
+		ComputeService computeService = jcloudContext( targetProperties );
+		return computeService.getNodeMetadata( machineId ) != null;
 	}
 
 

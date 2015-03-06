@@ -28,8 +28,8 @@ package net.roboconf.dm;
 import java.util.Collection;
 
 import junit.framework.Assert;
-import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Application;
 
@@ -44,7 +44,7 @@ public class SetupTest {
 	public void testTestApplication() {
 
 		Application app = new TestApplication();
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( app );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( app );
 		Assert.assertEquals( 0, errors.size());
 	}
 }

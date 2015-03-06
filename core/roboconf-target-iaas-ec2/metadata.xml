@@ -5,6 +5,8 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<component classname="net.roboconf.target.ec2.internal.Ec2IaasHandler" name="roboconf-target-iaas-ec2">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		<provides />
 	</component>
 	

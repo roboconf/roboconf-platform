@@ -69,8 +69,8 @@ public class PluginBash implements PluginInterface {
 
 	public static final String PLUGIN_NAME = "bash";
 	private static final String SCRIPTS_FOLDER_NAME = "scripts";
-    private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
-    private static final String FILES_FOLDER_NAME = "files";
+	private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
+	private static final String FILES_FOLDER_NAME = "files";
 
     private final Logger logger = Logger.getLogger( getClass().getName());
     String agentId;
@@ -92,9 +92,12 @@ public class PluginBash implements PluginInterface {
 	@Override
 	public void initialize( Instance instance ) throws PluginException {
 		this.logger.fine(this.agentId + ": initializing the plugin for " + instance);
-		// All scripts deployed should be made executable
-        if(instance != null) setScriptsExecutable(new File(InstanceHelpers.findInstanceDirectoryOnAgent(instance), SCRIPTS_FOLDER_NAME));
+
+		// All scripts deployed should be made executable (the agent is supposed to run as root)
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
+		setScriptsExecutable( new File( instanceDirectory, SCRIPTS_FOLDER_NAME ));
 	}
+
 
 	@Override
 	public void deploy( Instance instance ) throws PluginException {
@@ -310,18 +313,16 @@ public class PluginBash implements PluginInterface {
 
         return importedVars;
     }
-    
+
     /**
-	 * Recursively set all files and directories executable, starting from a base directory.
-	 * @param dir The base directory
+	 * Recursively sets all files and directories executable, starting from a base directory.
+	 * @param dir the base directory
 	 */
-	private void setScriptsExecutable(File dir) {
-		if(dir.isDirectory()) {
-			dir.setExecutable(true);
-			for(File f : dir.listFiles()) {
-				if(f.isDirectory()) setScriptsExecutable(f); // Warning recursive call
-				else f.setExecutable(true);
-			}
+	void setScriptsExecutable( File dir ) {
+
+		if( dir.isDirectory()) {
+			for( File f : Utils.listAllFiles( dir, true ))
+				f.setExecutable( true );
 		}
 	}
 }

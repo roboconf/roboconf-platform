@@ -73,15 +73,25 @@ public class ToRunByHand {
 		target.start();
 		String serverId = null;
 		try {
-			serverId = target.createOrConfigureMachine( conf, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
+			serverId = target.createMachine( conf, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
+			target.configureMachine( conf, serverId, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
 
-			// 5 minutes
-			Thread.sleep( 60000 * 5 );
+			// 1 minute
+			Thread.sleep( 60000 );
+
+			System.out.print( "Check about machine " + serverId );
+			if( target.isMachineRunning( conf, serverId ))
+				System.out.println( ": it is running." );
+			else
+				System.out.println( ": it does NOT run." );
+
+			// 4 minutes
+			Thread.sleep( 60000 * 4 );
 
 		} finally {
 			if( serverId != null )
 				target.terminateMachine( conf, serverId );
-			
+
 			target.stop();
 		}
 	}
