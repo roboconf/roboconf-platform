@@ -50,6 +50,8 @@ import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
 /**
  * Checks delayed initialization.
@@ -70,6 +72,9 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 
 	@Inject
 	protected AgentMessagingInterface agentItf;
+
+	@Inject
+	public BundleContext ctx;
 
 
 	@ProbeBuilder
@@ -150,6 +155,11 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 	@Override
 	@Test
 	public void run() throws Exception {
+
+		// FIXME: keep it until we guarantee the build works.
+		// This information will help to debug build failures on Travis CI.
+		for( Bundle b : this.ctx.getBundles())
+			System.out.println( b.getSymbolicName());
 
 		// Update the manager.
 		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());

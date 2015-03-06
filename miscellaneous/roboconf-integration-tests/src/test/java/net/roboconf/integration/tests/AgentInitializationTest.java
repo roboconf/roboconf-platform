@@ -44,7 +44,6 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
-import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
@@ -94,7 +93,6 @@ public class AgentInitializationTest extends DmTest {
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
-		probe.addTest( MyMessageProcessor.class );
 
 		// Classes from the agent
 		probe.addTest( Agent.class );

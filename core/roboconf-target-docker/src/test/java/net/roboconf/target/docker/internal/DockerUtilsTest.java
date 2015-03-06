@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -26,32 +26,40 @@
 package net.roboconf.target.docker.internal;
 
 import java.util.HashMap;
+import java.util.Map;
 
-import junit.framework.Assert;
 import net.roboconf.target.api.TargetException;
 
 import org.junit.Test;
 
 /**
- * @author Pierre-Yves Gibello - Linagora
+ * @author Vincent Zurczak - Linagora
  */
-public class DockerHandler_withoutContainerTest {
+public class DockerUtilsTest {
 
-	@Test
-	public void testGetTargetId() {
-		Assert.assertEquals( DockerHandler.TARGET_ID, new DockerHandler().getTargetId());
+	@Test( expected = TargetException.class )
+	public void testInvalidConfiguration_noImage() throws Exception {
+
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( DockerHandler.ENDPOINT, "whatever" );
+		DockerUtils.createDockerClient( new HashMap<String,String> ());
 	}
 
 
 	@Test( expected = TargetException.class )
-	public void testTerminate_noConnection() throws Exception {
-		new DockerHandler().terminateMachine( new HashMap<String,String> (), "whatever" );
+	public void testInvalidConfiguration_noEndpoint_noAgentPackage() throws Exception {
+
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( DockerHandler.IMAGE_ID, "whatever" );
+		DockerUtils.createDockerClient( map );
 	}
 
 
-	@Test
-	public void testIsRunning_noConnection() throws Exception {
-		boolean running = new DockerHandler().isMachineRunning( new HashMap<String,String> (), "whatever" );
-		Assert.assertFalse( running );
+	@Test( expected = TargetException.class )
+	public void testInvalidConfiguration_noEndpoint_noImageId() throws Exception {
+
+		Map<String,String> map = new HashMap<String,String> ();
+		map.put( DockerHandler.AGENT_PACKAGE, "whatever" );
+		DockerUtils.createDockerClient( map );
 	}
 }

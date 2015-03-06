@@ -36,7 +36,6 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
-import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
@@ -79,7 +78,6 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
-		probe.addTest( MyMessageProcessor.class );
 
 		return probe;
 	}

@@ -39,7 +39,6 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
-import net.roboconf.integration.tests.internal.IntegrationTestsUtils.MyMessageProcessor;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
 import org.apache.felix.ipojo.ComponentInstance;
@@ -86,7 +85,6 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		probe.addTest( DmWithAgentInMemoryTest.class );
 		probe.addTest( InMemoryTargetResolver.class );
 		probe.addTest( TestUtils.class );
-		probe.addTest( MyMessageProcessor.class );
 
 		return probe;
 	}

@@ -83,7 +83,7 @@ public class DockerHandler_withContainerTest {
 	public void dockerCleanup() {
 
 		if( this.docker != null ) {
-			DockerHandler.deleteImageIfItExists( this.dockerImageId, this.docker );
+			DockerUtils.deleteImageIfItExists( this.dockerImageId, this.docker );
 			try {
 				this.docker.close();
 
@@ -99,8 +99,8 @@ public class DockerHandler_withContainerTest {
 
 		Assume.assumeTrue( this.dockerIsInstalled );
 		Map<String, String> targetProperties = loadTargetProperties();
-		DockerHandler target = new DockerHandler();
-		target.createDockerClient( targetProperties );
+		DockerClient client = DockerUtils.createDockerClient( targetProperties );
+		Assert.assertNotNull( client );
 	}
 
 
