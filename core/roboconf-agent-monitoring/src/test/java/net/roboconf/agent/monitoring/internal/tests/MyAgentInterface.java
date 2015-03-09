@@ -65,4 +65,9 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	public void setRootInstance( Instance rootInstance ) {
 		this.rootInstance = rootInstance;
 	}
+
+	@Override
+	public void forceHeartbeatSending() {
+		// nothing
+	}
 }

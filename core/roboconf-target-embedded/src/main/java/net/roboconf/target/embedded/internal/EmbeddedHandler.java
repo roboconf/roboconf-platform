@@ -25,6 +25,7 @@
 
 package net.roboconf.target.embedded.internal;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import net.roboconf.target.api.TargetException;
@@ -37,6 +38,7 @@ import net.roboconf.target.api.TargetHandler;
 public class EmbeddedHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "embedded";
+	private final Map<String,Boolean> machineIdToRunning = new HashMap<String,Boolean> ();
 
 
 	/*
@@ -52,11 +54,11 @@ public class EmbeddedHandler implements TargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.util.Map, java.lang.String, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String)
+	 * #createMachine(java.util.Map, java.lang.String, java.lang.String, java.lang.String,
+	 * java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 		Map<String, String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -65,7 +67,9 @@ public class EmbeddedHandler implements TargetHandler {
 			String applicationName )
 	throws TargetException {
 
-		return rootInstanceName + " (" + TARGET_ID + ")";
+		String machineId = rootInstanceName + " (" + TARGET_ID + ")";
+		this.machineIdToRunning.put( machineId, Boolean.TRUE );
+		return machineId;
 	}
 
 
@@ -75,7 +79,34 @@ public class EmbeddedHandler implements TargetHandler {
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
-		// TBD shutdown script ?
+	public void terminateMachine( Map<String, String> targetProperties, String machineId )
+	throws TargetException {
+		this.machineIdToRunning.remove( machineId );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public void configureMachine(
+		Map<String,String> targetProperties,
+		String machineId,
+		String messagingIp,
+		String messagingUsername,
+		String messagingPassword,
+		String rootInstanceName,
+		String applicationName )
+	throws TargetException {
+		// nothing
+	}
+
+
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+		return this.machineIdToRunning.containsKey( machineId );
 	}
 }

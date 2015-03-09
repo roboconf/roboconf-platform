@@ -33,41 +33,34 @@ import net.roboconf.core.RoboconfError;
  * @author Vincent Zurczak - Linagora
  */
 public class ModelError extends RoboconfError {
-	private int line;
+	private final Object modelObject;
 
 
 	/**
 	 * Constructor.
 	 * @param errorCode an error code
-	 * @param line a line number
+	 * @param modelObject the model object that contain an error
 	 */
-	public ModelError( ErrorCode errorCode, int line ) {
+	public ModelError( ErrorCode errorCode, Object modelObject ) {
 		super( errorCode );
-		this.line = line;
+		this.modelObject = modelObject;
 	}
 
 	/**
 	 * Constructor.
 	 * @param errorCode an error code
-	 * @param line a line number
+	 * @param modelObject the model object that contain an error
 	 * @param details the error details
 	 */
-	public ModelError( ErrorCode errorCode, int line, String details ) {
+	public ModelError( ErrorCode errorCode, Object modelObject, String details ) {
 		super( errorCode, details );
-		this.line = line;
+		this.modelObject = modelObject;
 	}
 
 	/**
-	 * @return the line
+	 * @return the model object
 	 */
-	public int getLine() {
-		return this.line;
-	}
-
-	/**
-	 * @param line the line to set
-	 */
-	public void setLine( int line ) {
-		this.line = line;
+	public Object getModelObject() {
+		return this.modelObject;
 	}
 }

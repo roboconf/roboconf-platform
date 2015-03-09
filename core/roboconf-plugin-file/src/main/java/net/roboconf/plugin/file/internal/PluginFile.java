@@ -26,7 +26,6 @@
 package net.roboconf.plugin.file.internal;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -135,31 +134,26 @@ public class PluginFile implements PluginInterface {
 	 * Reads the "instructions.properties" file.
 	 * @param instance the instance
 	 * @return a non-null properties object (potentially empty)
+	 * @throws PluginException
 	 */
-	Properties readProperties( Instance instance ) {
+	Properties readProperties( Instance instance ) throws PluginException {
 
-		Properties result = new Properties();
+		Properties result = null;
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		File file = new File( instanceDirectory, FILE_NAME );
 
-		boolean noFile = true;
-		if( file.isFile()) {
-			InputStream in = null;
-			try {
-				result.load(( in = new FileInputStream( file )));
-				noFile = false;
+		try {
+			if( file.exists()) {
+				result = Utils.readPropertiesFile( file );
 
-			} catch( IOException e ) {
-				this.logger.warning( e.getMessage());
-				Utils.logException( this.logger, e );
-
-			} finally {
-				Utils.closeQuietly( in );
+			} else {
+				this.logger.warning( file + " does not exist or is invalid. There is no instruction for the plugin." );
+				result = new Properties();
 			}
-		}
 
-		if( noFile )
-			this.logger.warning( file + " does not exist or is invalid. There is no instruction for the plugin." );
+		} catch( IOException e ) {
+			throw new PluginException( e );
+		}
 
 		return result;
 	}

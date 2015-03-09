@@ -25,6 +25,8 @@
 
 package net.roboconf.core.dsl.parsing;
 
+import java.io.File;
+
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -76,6 +78,13 @@ public abstract class AbstractBlock {
 	 */
 	public int getLine() {
 		return this.line;
+	}
+
+	/**
+	 * @return the file that holds this block
+	 */
+	public File getFile() {
+		return this.declaringFile.getEditedFile();
 	}
 
 	/**

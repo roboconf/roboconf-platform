@@ -29,7 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 
 /**
  * A bean that contains information about a configuration file.
@@ -44,7 +44,7 @@ public class FileDefinition {
 
 	private File editedFile;
 	private int fileType = UNDETERMINED;
-	private final List<ModelError> parsingErrors = new ArrayList<ModelError> ();
+	private final List<ParsingError> parsingErrors = new ArrayList<ParsingError> ();
 	private final List<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
 
 
@@ -73,7 +73,7 @@ public class FileDefinition {
 	/**
 	 * @return the parsingErrors
 	 */
-	public List<ModelError> getParsingErrors() {
+	public List<ParsingError> getParsingErrors() {
 		return this.parsingErrors;
 	}
 

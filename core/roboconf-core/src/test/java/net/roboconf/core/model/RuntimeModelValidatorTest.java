@@ -37,7 +37,6 @@ import java.util.Set;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
@@ -69,7 +68,7 @@ public class RuntimeModelValidatorTest {
 	public void testComponent() {
 
 		Component comp = new Component();
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( comp ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_EMPTY_COMPONENT_INSTALLER, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -162,7 +161,7 @@ public class RuntimeModelValidatorTest {
 	public void testFacet() {
 
 		Facet facet = new Facet();
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( facet ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( facet ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_FACET_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
@@ -223,7 +222,7 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( c4 ).size());
 
 		c4.extendComponent( c1 );
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( c1 ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( c1 ).iterator();
 		Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS_INHERITANCE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
@@ -254,7 +253,7 @@ public class RuntimeModelValidatorTest {
 		Graphs g = fromDef.buildGraphs( f );
 
 		Assert.assertEquals( 0, fromDef.getErrors().size());
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( g );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( g );
 
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, errors.iterator().next().getErrorCode());
@@ -265,7 +264,7 @@ public class RuntimeModelValidatorTest {
 	public void testGraphs() {
 
 		Graphs graphs = new Graphs();
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_NO_ROOT_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
@@ -304,9 +303,9 @@ public class RuntimeModelValidatorTest {
 		comp2.addChild( comp3 );
 		comp3.addChild( comp2 );
 
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( graphs );
 		Assert.assertEquals( 2, errors.size());
-		for( RoboconfError error: errors )
+		for( ModelError error: errors )
 			Assert.assertEquals( ErrorCode.RM_CYCLE_IN_COMPONENTS, error.getErrorCode());
 	}
 
@@ -320,7 +319,7 @@ public class RuntimeModelValidatorTest {
 
 		Graphs graphs = new Graphs();
 		graphs.getRootComponents().add( comp2 );
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_NOT_A_ROOT_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 	}
@@ -330,7 +329,7 @@ public class RuntimeModelValidatorTest {
 	public void testInstance() {
 
 		Instance inst = new Instance();
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( inst ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( inst ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_INSTANCE_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_EMPTY_INSTANCE_COMPONENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -376,7 +375,7 @@ public class RuntimeModelValidatorTest {
 	public void testApplication() {
 
 		Application app = new Application();
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( app ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, iterator.next().getErrorCode());
@@ -408,7 +407,7 @@ public class RuntimeModelValidatorTest {
 	public void testApplicationDescriptor() {
 
 		ApplicationDescriptor desc = new ApplicationDescriptor();
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAMESPACE, iterator.next().getErrorCode());
@@ -454,14 +453,14 @@ public class RuntimeModelValidatorTest {
 		FileDefinition def = ParsingModelIo.readConfigurationFile( f, true );
 		Assert.assertEquals( 0, def.getParsingErrors().size());
 
-		Collection<ModelError> validationErrors = ParsingModelValidator.validate( def );
+		Collection<ParsingError> validationErrors = ParsingModelValidator.validate( def );
 		Assert.assertEquals( 0, validationErrors.size());
 
 		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
 		Graphs graphs = fromDef.buildGraphs( f );
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -475,7 +474,7 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( component ).size());
 
 		component.exportedVariables.put( "ip", null );
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( component ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( component ).iterator();
 		//Assert.assertEquals( ErrorCode.RM_INVALID_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
@@ -538,7 +537,7 @@ public class RuntimeModelValidatorTest {
 		Application app = new Application( "app" ).qualifier( "snapshot" ).graphs( graphs );
 		app.getRootInstances().add( vmInstance1 );
 
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( app ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_INSTANCE_PARENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
@@ -577,7 +576,7 @@ public class RuntimeModelValidatorTest {
 		Application app = new Application( "app" ).qualifier( "snapshot" ).graphs( graphs );
 		app.getRootInstances().add( vmInstance );
 
-		Iterator<RoboconfError> iterator = RuntimeModelValidator.validate( app ).iterator();
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_INSTANCE_PARENT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 	}
@@ -590,7 +589,7 @@ public class RuntimeModelValidatorTest {
 		graphs.getRootComponents().add( new Component( "VM" ).installerName( "target" ));
 
 		File appDir = this.folder.newFolder();
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs, appDir );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( graphs, appDir );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
 
@@ -616,7 +615,7 @@ public class RuntimeModelValidatorTest {
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
 
 		Instance tomcatInstance = new Instance( "tomcat" ).component( tomcatComponent );
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( tomcatInstance );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( tomcatInstance );
 		Assert.assertEquals( 0, errors.size());
 
 		tomcatInstance.overriddenExports.put( "Tomcat.port", "whatever" );
@@ -678,7 +677,7 @@ public class RuntimeModelValidatorTest {
 		Collection<Instance> instances = InstanceHelpers.buildHierarchicalList( rootInstance );
 		Assert.assertEquals( 2, instances.size());
 
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( instances );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( instances );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, errors.iterator().next().getErrorCode());
 	}
@@ -692,10 +691,10 @@ public class RuntimeModelValidatorTest {
 		Graphs graphs = fromDef.buildGraphs( f );
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( graphs );
 		Assert.assertEquals( 3, errors.size());
 		Set<String> messages = new HashSet<String> ();
-		for( RoboconfError error : errors ) {
+		for( ModelError error : errors ) {
 			Assert.assertEquals( ErrorCode.RM_CYCLE_IN_FACETS_INHERITANCE, error.getErrorCode());
 			messages.add( error.getDetails());
 		}
@@ -712,7 +711,7 @@ public class RuntimeModelValidatorTest {
 		Graphs graphs = fromDef.buildGraphs( f );
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( graphs );
 		Assert.assertEquals( 0, errors.size());
 
 		Component component = ComponentHelpers.findComponent( graphs, "app" );
@@ -738,11 +737,12 @@ public class RuntimeModelValidatorTest {
 		Graphs graphs = fromDef.buildGraphs( f );
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
-		Collection<RoboconfError> errors = RuntimeModelValidator.validate( graphs );
+		Collection<ModelError> errors = RuntimeModelValidator.validate( graphs );
 		Assert.assertEquals( 1, errors.size());
 
-		RoboconfError error = errors.iterator().next();
+		ModelError error = errors.iterator().next();
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, error.getErrorCode());
+		Assert.assertEquals( new Component( "app" ), error.getModelObject());
 		Assert.assertTrue( error.getDetails().contains( "messaging.*" ));
 	}
 }

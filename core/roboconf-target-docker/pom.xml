@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java</artifactId>
-			<version>0.10.1</version>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
@@ -89,6 +89,35 @@
 				</configuration>
 			</plugin>
 			
+			<!-- 
+				We have to repackage the JAR because the Docker library uses BouncyCasttle...
+				This project comes with signature files that make the build fail.
+				The repackaging operation aims at removing these files.
+			 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<configuration>
+							<target>
+								<unzip src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.directory}/repack" />
+								<delete file="${project.build.directory}/${project.build.finalName}.jar" />
+								<delete file="${project.build.directory}/repack/META-INF/BCKEY.SF" />
+								<delete file="${project.build.directory}/repack/META-INF/BCKEY.DSA" />
+								<zip basedir="${project.build.directory}/repack" destfile="${project.build.directory}/${project.build.finalName}.jar" />
+								<delete dir="${project.build.directory}/repack" />
+							</target>	
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<!-- Run the iPojo stuff only after the repackaging was done. -->
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-ipojo-plugin</artifactId>
@@ -96,6 +125,18 @@
 					<execution>
 						<goals>
 							<goal>ipojo-bundle</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test-jar</goal>
 						</goals>
 					</execution>
 				</executions>

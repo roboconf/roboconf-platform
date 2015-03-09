@@ -339,6 +339,17 @@ public final class Utils {
 
 
 	/**
+	 * Equivalent to <code>listAllFiles( directory, false )</code>.
+	 * @param directory an existing directory
+	 * @param includeDirectories true to include directories, false to exclude them from the result
+	 * @return a non-null list of files
+	 */
+	public static List<File> listAllFiles( File directory ) {
+		return listAllFiles( directory, false );
+	}
+
+
+	/**
 	 * Finds all the files (direct and indirect) from a directory.
 	 * <p>
 	 * This method skips hidden files and files whose name starts
@@ -346,9 +357,10 @@ public final class Utils {
 	 * </p>
 	 *
 	 * @param directory an existing directory
+	 * @param includeDirectories true to include directories, false to exclude them from the result
 	 * @return a non-null list of files
 	 */
-	public static List<File> listAllFiles( File directory ) {
+	public static List<File> listAllFiles( File directory, boolean includeDirectories ) {
 
 		if( ! directory.exists()
 				|| ! directory.isDirectory())
@@ -359,12 +371,16 @@ public final class Utils {
 		directoriesToInspect.add( directory );
 
 		while( ! directoriesToInspect.isEmpty()) {
-			File[] subFiles = directoriesToInspect.remove( 0 ).listFiles();
+			File currentDirectory = directoriesToInspect.remove( 0 );
+			if( includeDirectories )
+				result.add( currentDirectory );
+
+			File[] subFiles = currentDirectory.listFiles();
 			if( subFiles == null )
 				continue;
 
 			for( File subFile : subFiles ) {
-				if(  subFile.isHidden()
+				if( subFile.isHidden()
 						|| subFile.getName().startsWith( "." ))
 					continue;
 
@@ -394,7 +410,7 @@ public final class Utils {
 			throw new IllegalArgumentException( "The resource directory is not a valid directory. " + directory.getAbsolutePath());
 
 		Map<String,byte[]> result = new HashMap<String,byte[]> ();
-		List<File> resourceFiles = listAllFiles( directory );
+		List<File> resourceFiles = listAllFiles( directory, false );
 		for( File file : resourceFiles ) {
 
 			String key = computeFileRelativeLocation( directory, file );
@@ -631,7 +647,7 @@ public final class Utils {
 				&& ! target.mkdirs())
 			throw new IOException( "The directory " + target + " could not be created." );
 
-		for( File sourceFile : listAllFiles( source )) {
+		for( File sourceFile : listAllFiles( source, false )) {
 			String path = computeFileRelativeLocation( source, sourceFile );
 			File targetFile = new File( target, path );
 

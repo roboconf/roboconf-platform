@@ -36,10 +36,7 @@ import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 import org.apache.felix.ipojo.ComponentInstance;
-import org.apache.felix.ipojo.ConfigurationException;
 import org.apache.felix.ipojo.Factory;
-import org.apache.felix.ipojo.MissingHandlerException;
-import org.apache.felix.ipojo.UnacceptableConfiguration;
 
 /**
  * A target that runs agents in memory.
@@ -68,12 +65,11 @@ public class InMemoryHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler
-	 * #createOrConfigureMachine(java.util.Map, java.lang.String, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String createOrConfigureMachine(
+	public String createMachine(
 			Map<String,String> targetProperties,
 			String messagingIp,
 			String messagingUsername,
@@ -117,17 +113,49 @@ public class InMemoryHandler implements TargetHandler {
 	    	ComponentInstance instance = this.agentFactory.createComponentInstance( configuration );
 	    	instance.start();
 
-		} catch( UnacceptableConfiguration e ) {
-			throw new TargetException( "An in-memory agent could not be launched. Root instance name: " + rootInstanceName, e );
-
-		} catch( MissingHandlerException e ) {
-			throw new TargetException( "An in-memory agent could not be launched. Root instance name: " + rootInstanceName, e );
-
-		} catch( ConfigurationException e ) {
+		} catch( Exception e ) {
 			throw new TargetException( "An in-memory agent could not be launched. Root instance name: " + rootInstanceName, e );
 		}
 
 		return machineId;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public void configureMachine(
+		Map<String,String> targetProperties,
+		String machineId,
+		String messagingIp,
+		String messagingUsername,
+		String messagingPassword,
+		String rootInstanceName,
+		String applicationName )
+	throws TargetException {
+
+		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #isMachineRunning(java.util.Map, java.lang.String)
+	 */
+	@Override
+	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
+
+		// No agent factory => no iPojo instance => not running
+		boolean result = false;
+		if( this.agentFactory != null )
+			result = this.agentFactory.getInstancesNames().contains( machineId );
+
+		return result;
 	}
 
 

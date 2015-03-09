@@ -44,7 +44,8 @@ import net.roboconf.core.dsl.parsing.BlockFacet;
 import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.dsl.parsing.FileDefinitionParser;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.model.SourceReference;
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
@@ -61,7 +62,8 @@ import net.roboconf.core.utils.Utils;
 public class FromGraphDefinition {
 
 	private final File rootDirectory;
-	private final Collection<ModelError> errors = new ArrayList<ModelError> ();
+	private final Collection<ParsingError> errors = new ArrayList<ParsingError> ();
+	private final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
 
 	private Map<String,ComponentData> componentNameToComponentData;
 	private Map<String,FacetData> facetNameToFacetData;
@@ -81,8 +83,16 @@ public class FromGraphDefinition {
 	/**
 	 * @return the errors (never null)
 	 */
-	public Collection<ModelError> getErrors() {
+	public Collection<ParsingError> getErrors() {
 		return this.errors;
+	}
+
+
+	/**
+	 * @return the objectToSource (never null)
+	 */
+	public Map<Object,SourceReference> getObjectToSource() {
+		return this.objectToSource;
 	}
 
 
@@ -112,7 +122,7 @@ public class FromGraphDefinition {
 			this.processedImports.add( importedFile );
 
 			if( ! importedFile.exists()) {
-				ModelError error = new ModelError( ErrorCode.CO_UNREACHABLE_FILE, 0 );
+				ParsingError error = new ParsingError( ErrorCode.CO_UNREACHABLE_FILE, file, 0 );
 				error.setDetails( "Import location: " + importedFile );
 				this.errors.add( error );
 				continue;
@@ -120,7 +130,7 @@ public class FromGraphDefinition {
 
 			// Load the file
 			FileDefinition currentDefinition = new FileDefinitionParser( importedFile, true ).read();
-			Collection<ModelError> currentErrors = new ArrayList<ModelError> ();
+			Collection<ParsingError> currentErrors = new ArrayList<ParsingError> ();
 			currentErrors.addAll( currentDefinition.getParsingErrors());
 
 			for( AbstractBlock block : currentDefinition.getBlocks())
@@ -129,7 +139,7 @@ public class FromGraphDefinition {
 			if( currentDefinition.getFileType() != FileDefinition.AGGREGATOR
 					&& currentDefinition.getFileType() != FileDefinition.GRAPH ) {
 
-				ModelError error = new ModelError( ErrorCode.CO_NOT_A_GRAPH, 0 );
+				ParsingError error = new ParsingError( ErrorCode.CO_NOT_A_GRAPH, file, 0 );
 				error.setDetails( "Imported file  " + importedFile + " is of type " + FileDefinition.fileTypeAsString( currentDefinition.getFileType()) + "." );
 				currentErrors.add( error );
 			}
@@ -278,6 +288,11 @@ public class FromGraphDefinition {
 
 		for( ComponentData data : this.componentNameToComponentData.values()) {
 
+			// Being here means we did not find conflicting names
+			AbstractBlockHolder holder = data.blocks.get( 0 );
+			SourceReference sr = new SourceReference( data.object, holder.getFile(), holder.getLine());
+			this.objectToSource.put( data.object, sr );
+
 			// The extended component name
 			if( ! Utils.isEmptyOrWhitespaces( data.extendedComponentName )) {
 				ComponentData extendedComponentData = this.componentNameToComponentData.get( data.extendedComponentName );
@@ -314,6 +329,11 @@ public class FromGraphDefinition {
 	private void resolveFacets() {
 
 		for( FacetData data : this.facetNameToFacetData.values()) {
+
+			// Being here means we did not find conflicting names
+			AbstractBlockHolder holder = data.blocks.get( 0 );
+			SourceReference sr = new SourceReference( data.object, holder.getFile(), holder.getLine());
+			this.objectToSource.put( data.object, sr );
 
 			// The extended facets
 			for( String s : data.extendedFacetNames ) {
@@ -361,11 +381,11 @@ public class FromGraphDefinition {
 		Collection<String> childrenNames = new HashSet<String> ();
 		List<AbstractBlockHolder> blocks = new ArrayList<AbstractBlockHolder> ();
 
-		List<ModelError> error( ErrorCode code, String cause ) {
+		List<ParsingError> error( ErrorCode code, String cause ) {
 
-			List<ModelError> errors = new ArrayList<ModelError> ();
+			List<ParsingError> errors = new ArrayList<ParsingError> ();
 			for( AbstractBlockHolder block : this.blocks ) {
-				ModelError error = new ModelError( code, block.getLine());
+				ParsingError error = new ParsingError( code, block.getDeclaringFile().getEditedFile(), block.getLine());
 				error.setDetails( cause );
 				errors.add( error );
 			}

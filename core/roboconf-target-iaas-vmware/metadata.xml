@@ -5,6 +5,8 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<component classname="net.roboconf.target.vmware.internal.VmwareIaasHandler" name="roboconf-target-iaas-vmware">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		<provides />
 	</component>
 	

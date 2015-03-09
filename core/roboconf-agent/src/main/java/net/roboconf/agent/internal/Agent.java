@@ -114,6 +114,7 @@ public class Agent implements AgentMessagingInterface {
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, Constants.HEARTBEAT_PERIOD, Constants.HEARTBEAT_PERIOD );
 
+
 		this.logger.info( "Agent '" + getAgentId() + "' was launched." );
 	}
 
@@ -162,6 +163,17 @@ public class Agent implements AgentMessagingInterface {
 		}
 
 		this.logger.info( "Agent '" + getAgentId() + "' was stopped." );
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.agent.AgentMessagingInterface
+	 * #forceHeartbeatSending()
+	 */
+	@Override
+	public void forceHeartbeatSending() {
+		new HeartbeatTask( this ).run();
 	}
 
 

@@ -302,6 +302,41 @@ public class Manager_LifeCycleTest {
 
 
 	@Test
+	public void testDeployRootMoreThanOnce() throws Exception {
+
+		// This is a unit test for #80.
+		// More than concurrent accesses, it tests the fact the DM can filter
+		// redundant requests about root instances deployment.
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+
+		Instance instance = app.getMySqlVm();
+
+		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
+		Assert.assertNull( this.targetResolver.instanceToRequestsCount.get( instance ));
+		Assert.assertNull( instance.data.get( Instance.TARGET_ACQUIRED ));
+
+		this.manager.deployRoot( ma, instance );
+		this.manager.deployRoot( ma, instance );
+		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
+		Assert.assertNotNull( instance.data.get( Instance.TARGET_ACQUIRED ));
+		Assert.assertTrue( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
+
+		// 2 requests to deploy a root instance, but one is filtered by the DM.
+		Assert.assertEquals((Integer) 1, this.targetResolver.instanceToRequestsCount.get( instance ));
+		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
+
+		List<Message> messages = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm());
+		Assert.assertEquals( 1, messages.size());
+
+		Message msg = messages.get( 0 );
+		Assert.assertEquals( MsgCmdSetRootInstance.class, msg.getClass());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetRootInstance) msg).getRootInstance());
+	}
+
+
+	@Test
 	public void testDeployRoot_alreadyDeployed() throws Exception {
 
 		TestApplication app = new TestApplication();

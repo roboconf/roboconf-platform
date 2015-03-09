@@ -158,7 +158,6 @@ public enum ErrorCode {
 	REC_PUPPET_MISSING_PARAM_RUNNING_STATE( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts must have a 'runningState' parameter." ),
 	REC_PUPPET_MISSING_PARAM_FROM_IMPORT( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Component imports mean the Puppet module must have matching parameters." ),
 	REC_BASH_NO_SCRIPTS_DIR( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Bash scripts must be placed under a 'scripts' directory." ),
-	REC_BASH_NO_BASH_DIRECTIVE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Bash scripts should start with '#!/bin/bash'." ),
 
 	// Execution Errors
 	;

@@ -44,8 +44,12 @@ public class EmbeddedHandlerTest {
 		target.terminateMachine( null, null );
 		target.terminateMachine( new HashMap<String,String>(), "anything" );
 
-		Assert.assertNotNull( target.createOrConfigureMachine( null, "ip", "user", "pwd", "nothing", "app" ));
-		Assert.assertNotNull( target.createOrConfigureMachine( new HashMap<String,String>(), null, null, null, null, null ));
+		Assert.assertFalse( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
+		Assert.assertNotNull( target.createMachine( null, "ip", "user", "pwd", "nothing", "app" ));
+		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
+
+		Assert.assertNotNull( target.createMachine( new HashMap<String,String>(), null, null, null, null, null ));
+		target.configureMachine( new HashMap<String,String>(), null, null, null, null, null, null );
 
 		target.terminateMachine( new HashMap<String,String>(), null );
 		target.terminateMachine( null, "anything" );

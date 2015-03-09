@@ -33,7 +33,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.ModelError;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
@@ -78,7 +78,7 @@ public class FromGraphDefinitionTest {
 		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
 		Graphs graphs = fromDef.buildGraphs( f );
 
-		Iterator<ModelError> it = fromDef.getErrors().iterator();
+		Iterator<ParsingError> it = fromDef.getErrors().iterator();
 		Assert.assertEquals( ErrorCode.CO_CONFLICTING_NAME, it.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.CO_CONFLICTING_NAME, it.next().getErrorCode());
 		Assert.assertFalse( it.hasNext());
@@ -94,7 +94,7 @@ public class FromGraphDefinitionTest {
 		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
 		Graphs graphs = fromDef.buildGraphs( f );
 
-		Iterator<ModelError> it = fromDef.getErrors().iterator();
+		Iterator<ParsingError> it = fromDef.getErrors().iterator();
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, it.next().getErrorCode());
 		Assert.assertFalse( it.hasNext());
 
@@ -109,7 +109,7 @@ public class FromGraphDefinitionTest {
 		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
 		Graphs graphs = fromDef.buildGraphs( f );
 
-		Iterator<ModelError> it = fromDef.getErrors().iterator();
+		Iterator<ParsingError> it = fromDef.getErrors().iterator();
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, it.next().getErrorCode());
 		Assert.assertFalse( it.hasNext());
 
@@ -124,7 +124,7 @@ public class FromGraphDefinitionTest {
 		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
 		fromDef.buildGraphs( f );
 
-		Iterator<ModelError> iterator = fromDef.getErrors().iterator();
+		Iterator<ParsingError> iterator = fromDef.getErrors().iterator();
 		Assert.assertEquals( ErrorCode.CO_UNREACHABLE_FILE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 	}
@@ -138,7 +138,7 @@ public class FromGraphDefinitionTest {
 		fromDef.buildGraphs( f );
 
 		Assert.assertEquals( 2, fromDef.getErrors().size());
-		for( ModelError error : fromDef.getErrors())
+		for( ParsingError error : fromDef.getErrors())
 			Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_COMPONENT, error.getErrorCode());
 	}
 
@@ -151,7 +151,7 @@ public class FromGraphDefinitionTest {
 		fromDef.buildGraphs( f );
 
 		Assert.assertEquals( 3, fromDef.getErrors().size());
-		for( ModelError error : fromDef.getErrors())
+		for( ParsingError error : fromDef.getErrors())
 			Assert.assertEquals( ErrorCode.CO_ALREADY_DEFINED_FACET, error.getErrorCode());
 	}
 
@@ -279,7 +279,7 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertEquals( 2, fromDef.getErrors().size());
 
-		ModelError[] errors = fromDef.getErrors().toArray( new ModelError[ 2 ]);
+		ParsingError[] errors = fromDef.getErrors().toArray( new ParsingError[ 2 ]);
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 0 ].getErrorCode());
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 1 ].getErrorCode());
 	}
@@ -294,7 +294,7 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertEquals( 1, fromDef.getErrors().size());
 
-		ModelError[] errors = fromDef.getErrors().toArray( new ModelError[ 1 ]);
+		ParsingError[] errors = fromDef.getErrors().toArray( new ParsingError[ 1 ]);
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_CHILD, errors[ 0 ].getErrorCode());
 		Assert.assertTrue( errors[ 0 ].getDetails().contains( "Fa3" ));
 	}
@@ -309,7 +309,7 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertEquals( 1, fromDef.getErrors().size());
 
-		ModelError[] errors = fromDef.getErrors().toArray( new ModelError[ 1 ]);
+		ParsingError[] errors = fromDef.getErrors().toArray( new ParsingError[ 1 ]);
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_COMPONENT, errors[ 0 ].getErrorCode());
 	}
 }

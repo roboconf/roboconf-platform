@@ -117,6 +117,7 @@ public class Manager {
 
 	// Constants
 	private static final long TIMER_PERIOD = 6000;
+	private static final Object LOCK = new Object();
 
 	// Injected by iPojo or Admin Config
 	private final List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
@@ -241,9 +242,10 @@ public class Manager {
 		// Update the messaging client
 		if( this.messagingClient != null ) {
 			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
-			// Starts listening to the debug queue.
 			try {
-				this.messagingClient.listenToTheDm( ListenerCommand.START );
+				if( this.messagingClient.isConnected())
+					this.messagingClient.listenToTheDm( ListenerCommand.START );
+
 			} catch ( IOException e ) {
 				this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
 			}
@@ -484,8 +486,8 @@ public class Manager {
 		}
 
 		ManagedApplication ma = new ManagedApplication( application, targetDirectory );
-		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
+		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 
 		return ma;
@@ -603,7 +605,7 @@ public class Manager {
 	throws IOException, TargetException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.logger.fine( "Changing state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
+		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 		checkConfiguration();
 
 		// TODO other targets than Docker eligible ??
@@ -828,6 +830,7 @@ public class Manager {
 	 */
 	void deployRoot( ManagedApplication ma, Instance rootInstance ) throws TargetException, IOException {
 
+		// It only makes sense for root instances.
 		this.logger.fine( "Deploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
 		// TODO Other targets than Docker eligible to be a "root" instance with parent(s) ??
 		if( rootInstance.getParent() != null && ! "target".equals(rootInstance.getComponent().getInstallerName())) {
@@ -835,8 +838,19 @@ public class Manager {
 			return;
 		}
 
-		// If the VM creation was already requested, then its machine ID has already been set.
-		// It does not mean the VM is already created, it may take some time.
+		// We must prevent the concurrent creation of several VMs for a same root instance.
+		// See #80.
+		synchronized( LOCK ) {
+			if( rootInstance.data.get( Instance.TARGET_ACQUIRED ) == null ) {
+				rootInstance.data.put( Instance.TARGET_ACQUIRED, "yes" );
+			} else {
+				this.logger.finer( "Root instance " + rootInstance + " is already under deployment. This redundant request is dropped." );
+				return;
+			}
+		}
+
+		// If the VM creation was already done, then its machine ID has already been set.
+		// It does not mean the VM is already configured, it may take some time.
 		String machineId = rootInstance.data.get( Instance.MACHINE_ID );
 		if( machineId != null ) {
 			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
@@ -869,12 +883,19 @@ public class Manager {
 				}
 			}
 
-			machineId = target.getHandler().createOrConfigureMachine(
+			machineId = target.getHandler().createMachine(
 					targetProperties, this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
 					rootInstance.getName(), ma.getApplication().getName());
 
 			rootInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
+
+			target.getHandler().configureMachine(
+					targetProperties, machineId,
+					this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
+					rootInstance.getName(), ma.getApplication().getName());
+
+			this.logger.fine( "Root instance " + rootInstance.getName() + "'s configuration is on its way in " + ma.getName() + "." );
 
 		} catch( Exception e ) {
 			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
@@ -932,6 +953,7 @@ public class Manager {
 
 			// Remove useless data for the configuration backup
 			rootInstance.data.remove( Instance.IP_ADDRESS );
+			rootInstance.data.remove( Instance.TARGET_ACQUIRED );
 			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( Exception e ) {
@@ -970,7 +992,7 @@ public class Manager {
 				Utils.logException( this.logger, e );
 
 			} catch( IOException e ) {
-				this.logger.warning( "Cannot restore application in " + dir + " (I/O exception). Please, review the messaging configuration." );
+				this.logger.warning( "Application restoration was incomplete from " + dir + " (I/O exception). The messaging configuration is probably invalid." );
 				Utils.logException( this.logger, e );
 			}
 		}
@@ -996,9 +1018,37 @@ public class Manager {
 			// States
 			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 				try {
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
+					// Not associated with a VM? => Everything must be not deployed.
+					String machineId = rootInstance.data.get( Instance.MACHINE_ID );
+					if( machineId == null ) {
+						rootInstance.data.remove( Instance.IP_ADDRESS );
+						rootInstance.data.remove( Instance.TARGET_ACQUIRED );
+						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
+							i.setStatus( InstanceStatus.NOT_DEPLOYED );
 
-				} catch( IOException e ) {
+						continue;
+					}
+
+					// Not a running VM? => Everything must be not deployed.
+					Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
+					Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
+					targetProperties.putAll( rootInstance.data );
+
+					if( ! target.getHandler().isMachineRunning( targetProperties, machineId )) {
+						rootInstance.data.remove( Instance.IP_ADDRESS );
+						rootInstance.data.remove( Instance.MACHINE_ID );
+						rootInstance.data.remove( Instance.TARGET_ACQUIRED );
+						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
+							i.setStatus( InstanceStatus.NOT_DEPLOYED );
+					}
+
+					// Otherwise, ask the agent to resent the states
+					else {
+						rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+						this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
+					}
+
+				} catch( Exception e ) {
 					this.logger.severe( "Could not request states for agent " + rootInstance.getName() + " (I/O exception)." );
 					Utils.logException( this.logger, e );
 				}
