@@ -52,6 +52,7 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 
 /**
  * Checks delayed initialization.
@@ -70,8 +71,8 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 	@Inject
 	protected Manager manager;
 
-	@Inject
-	protected AgentMessagingInterface agentItf;
+	//@Inject
+	//protected AgentMessagingInterface agentItf;
 
 	@Inject
 	public BundleContext ctx;
@@ -158,8 +159,9 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 
 		// FIXME: keep it until we guarantee the build works.
 		// This information will help to debug build failures on Travis CI.
-		for( Bundle b : this.ctx.getBundles())
+		for( Bundle b : this.ctx.getBundles()) {
 			System.out.println( b.getSymbolicName());
+		}
 
 		// Update the manager.
 		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
@@ -175,11 +177,17 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 		Assert.assertNotNull( this.manager.getMessagingClient());
 		Assert.assertFalse( this.manager.getMessagingClient().isConnected());
 
+		// FIXME: just for debug
+		ServiceReference sr = this.ctx.getServiceReference( AgentMessagingInterface.class );
+		Assert.assertNotNull( sr );
+		AgentMessagingInterface agentItf = (AgentMessagingInterface) this.ctx.getService( sr );
+		Assert.assertNotNull( "The previous assignation sometimes fail.", agentItf );
+
 		// Check the agent
-		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
-		Assert.assertNull( this.agentItf.getRootInstance());
-		Assert.assertNotNull( this.agentItf.getMessagingClient());
-		Assert.assertTrue( this.agentItf.getMessagingClient().isConnected());
+		Assert.assertEquals( app.getName(), agentItf.getApplicationName());
+		Assert.assertNull( agentItf.getRootInstance());
+		Assert.assertNotNull( agentItf.getMessagingClient());
+		Assert.assertTrue( agentItf.getMessagingClient().isConnected());
 
 		// Both cannot communicate.
 		// Let's wait a little bit and let's reconfigure the DM with the right credentials.
@@ -191,15 +199,15 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		// Force the agent to send a heart beat message.
-		this.agentItf.forceHeartbeatSending();
+		agentItf.forceHeartbeatSending();
 		Thread.sleep( 400 );
 
 		// The agent should now be configured.
-		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
-		Assert.assertNotNull( this.agentItf.getMessagingClient());
-		Assert.assertTrue( this.agentItf.getMessagingClient().isConnected());
-		Assert.assertNotNull( this.agentItf.getRootInstance());
-		Assert.assertEquals( app.getMySqlVm(), this.agentItf.getRootInstance());
+		Assert.assertEquals( app.getName(), agentItf.getApplicationName());
+		Assert.assertNotNull( agentItf.getMessagingClient());
+		Assert.assertTrue( agentItf.getMessagingClient().isConnected());
+		Assert.assertNotNull( agentItf.getRootInstance());
+		Assert.assertEquals( app.getMySqlVm(), agentItf.getRootInstance());
 
 		// And the DM should have considered the root instance as started.
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
