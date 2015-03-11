@@ -88,6 +88,8 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 		probe.addTest( DmTest.class );
 		probe.addTest( TestApplication.class );
 
+		probe.setHeader( "Import-Package", "net.roboconf.agent" );
+
 		return probe;
 	}
 
