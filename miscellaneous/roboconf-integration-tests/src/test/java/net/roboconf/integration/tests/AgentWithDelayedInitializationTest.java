@@ -25,6 +25,7 @@
 
 package net.roboconf.integration.tests;
 
+import static org.ops4j.pax.exam.CoreOptions.jarProbe;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
@@ -96,6 +97,13 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 	public Option[] config() {
 
 		List<Option> options = getBaseOptions();
+
+		// Create a custom probe to prevent class conflicts.
+		// Using a probe configuration is not enough, we do not want all the
+		// tests classes from this project to be part of the probe.
+		options.add( jarProbe().classes(
+				AgentWithDelayedInitializationTest.class
+		));
 
 		// Add a valid configuration for the agent
 		options.add( editConfigurationFilePut(

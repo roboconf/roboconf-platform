@@ -91,14 +91,6 @@
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-karaf-dist-dm</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-			<type>zip</type>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
   			<version>${project.version}</version>
 			<type>test-jar</type>
