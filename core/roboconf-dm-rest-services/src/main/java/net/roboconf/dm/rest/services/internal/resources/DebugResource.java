@@ -135,13 +135,7 @@ public class DebugResource implements IDebugResource {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 
 		} finally {
-			try {
-				Utils.deleteFilesRecursively( tmpDir );
-
-			} catch( IOException e ) {
-				this.logger.warning( "A temporary directory could not be deleted." );
-				Utils.logException( this.logger, e );
-			}
+			Utils.deleteFilesRecursivelyAndQuitely( tmpDir );
 		}
 
 		// Build the response for successful cases

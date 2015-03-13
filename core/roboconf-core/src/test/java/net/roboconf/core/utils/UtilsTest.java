@@ -123,6 +123,8 @@ public class UtilsTest {
 		} catch( IOException e ) {
 			Assert.fail( "Inexisting files must be supported" );
 		}
+
+		Utils.deleteFilesRecursivelyAndQuitely( new File( "another-inexisting-file" ));
 	}
 
 

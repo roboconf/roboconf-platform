@@ -65,8 +65,8 @@ public class InitializeMojoTest {
 
 		// Create the Maven project by hand (...)
 		final MavenProject mvnProject = new MavenProject() ;
-        mvnProject.setFile( pom ) ;
-        this.rule.setVariableValueToObject( mojo, "project", mvnProject );
+		mvnProject.setFile( pom ) ;
+		this.rule.setVariableValueToObject( mojo, "project", mvnProject );
 		Assert.assertNotNull( this.rule.getVariableValueFromObject( mojo, "project" ));
 
 		// Execute the mojo

@@ -530,6 +530,22 @@ public final class Utils {
 
 
 	/**
+	 * Deletes files recursively and remains quiet even if an exception is thrown.
+	 * @param files the files to delete
+	 */
+	public static void deleteFilesRecursivelyAndQuitely( File... files ) {
+
+		try {
+			deleteFilesRecursively( files );
+
+		} catch( IOException e ) {
+			Logger logger = Logger.getLogger( Utils.class.getName());
+			logException( logger, e );
+		}
+	}
+
+
+	/**
 	 * Writes an exception's stack trace into a string.
 	 * <p>
 	 * This method used to be public.<br />

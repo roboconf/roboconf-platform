@@ -25,6 +25,7 @@
 
 package net.roboconf.integration.tests;
 
+import static org.ops4j.pax.exam.CoreOptions.jarProbe;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
@@ -50,6 +51,7 @@ import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
+import org.osgi.framework.BundleContext;
 
 /**
  * Checks delayed initialization.
@@ -57,6 +59,22 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
  * Configure an agent correctly and the DM incorrectly.<br />
  * Wait a little bit and reconfigure the DM with the right messaging
  * credentials. Make sure the agent's model is initialized correctly.
+ * </p>
+ *
+ * <p>
+ * Note: this test has been a pain in the ***. It use to fail randomly.
+ * When it failed, it was because AgentMessagingInterface.class was exported
+ * by the probe while the implementation (*.internal.agent) came from the agent's
+ * bundle. When it happened, it threw an IllegalArgumentException (which in fact
+ * hides a ClassCastException - both classes are incompatible because they come from
+ * different class loaders).
+ * </p>
+ * <p>
+ * We (hopefully) solved this issue by configuring the probe, by customizing it too
+ * (we only embed the current test class and not the others from the same package),
+ * and we add an OSGi import-package declaration in the probe. I am not sure at all
+ * which element solves the problem. Just for history, this problem occurred with two
+ * versions of PAX-exam 4.x.
  * </p>
  *
  * @author Vincent Zurczak - Linagora
@@ -71,6 +89,9 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 	@Inject
 	protected AgentMessagingInterface agentItf;
 
+	@Inject
+	public BundleContext ctx;
+
 
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
@@ -81,6 +102,9 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 		probe.addTest( DmTest.class );
 		probe.addTest( TestApplication.class );
 
+		// Force the use of the AgentMessagingInterface from the agent's bundle.
+		probe.setHeader( "Import-Package", "net.roboconf.agent" );
+
 		return probe;
 	}
 
@@ -90,6 +114,13 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 	public Option[] config() {
 
 		List<Option> options = getBaseOptions();
+
+		// Create a custom probe to prevent class conflicts.
+		// Using a probe configuration is not enough, we do not want all the
+		// tests classes from this project to be part of the probe.
+		options.add( jarProbe().classes(
+				AgentWithDelayedInitializationTest.class
+		));
 
 		// Add a valid configuration for the agent
 		options.add( editConfigurationFilePut(
