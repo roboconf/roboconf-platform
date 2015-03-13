@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,42 +23,32 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model;
+package net.roboconf.core.model.comparators;
 
 import java.io.Serializable;
 import java.util.Comparator;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.beans.AbstractType;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InstanceComparator implements Serializable, Comparator<Instance> {
-	private static final long serialVersionUID = 3420271536889564843L;
-
+public class AbstractTypeComparator implements Serializable, Comparator<AbstractType> {
+	private static final long serialVersionUID = 3420271546889564843L;
 
 	@Override
-	public int compare( Instance o1, Instance o2 ) {
+	public int compare( AbstractType o1, AbstractType o2 ) {
 
-		// Find the instance paths...
-		String[] p1 = InstanceHelpers.computeInstancePath( o1 ).substring( 1 ).split( "/" );
-		String[] p2 = InstanceHelpers.computeInstancePath( o2 ).substring( 1 ).split( "/" );
-		int segmentsToCompare = Math.min( p1.length, p2.length );
+		int result;
+		if( o1 == o2 )
+			result = 0;
+		else if( o1 == null )
+			result = 1;
+		else if( o2 == null )
+			result = -1;
+		else
+			result = o1.getName().compareTo( o2.getName());
 
-		// ...  and compare their segments
-		String[] isBefore = null;
-		for( int i=0; i<segmentsToCompare && isBefore == null; i++ ) {
-			int comparison = p1[ i ].compareTo( p2[ i ]);
-			isBefore = comparison > 0 ? p1 : comparison < 0 ? p2 : null;
-		}
-
-		// If the compared segments are equal, compare the remains
-		if( isBefore == null ) {
-			isBefore = p1.length > p2.length ? p1 : p1.length < p2.length ? p2 : null;
-		}
-
-		// Return a result
-		return isBefore == null ? 0 : isBefore == p1 ? 1 : -1;
+		return result;
 	}
 }

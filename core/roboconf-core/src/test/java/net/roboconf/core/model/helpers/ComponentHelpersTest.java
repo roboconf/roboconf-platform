@@ -25,7 +25,9 @@
 
 package net.roboconf.core.model.helpers;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -145,7 +147,7 @@ public class ComponentHelpersTest {
 	public void testFindAllComponents_complex1() {
 
 		Application app = ComplexApplicationFactory1.newApplication();
-		Assert.assertEquals( 7, ComponentHelpers.findAllComponents( app ).size());
+		Assert.assertEquals( 10, ComponentHelpers.findAllComponents( app ).size());
 	}
 
 
@@ -218,8 +220,16 @@ public class ComponentHelpersTest {
 
 		c = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.TOMCAT_8 );
 		Assert.assertNotNull( c );
-		Assert.assertEquals( 0, c.getChildren().size());
-		Assert.assertEquals( 0, ComponentHelpers.findAllChildren( c ).size());
+		Assert.assertEquals( 1, c.getChildren().size());
+		Assert.assertEquals( ComplexApplicationFactory1.APP_3, c.getChildren().iterator().next().getName());
+
+		List<Component> lastChildren = new ArrayList<Component> ();
+		lastChildren.addAll( ComponentHelpers.findAllChildren( c ));
+		Assert.assertEquals( 3, lastChildren.size());
+
+		Assert.assertEquals( ComplexApplicationFactory1.APP_1, lastChildren.get( 0 ).getName());
+		Assert.assertEquals( ComplexApplicationFactory1.APP_2, lastChildren.get( 1 ).getName());
+		Assert.assertEquals( ComplexApplicationFactory1.APP_3, lastChildren.get( 2 ).getName());
 	}
 
 
@@ -619,6 +629,156 @@ public class ComponentHelpersTest {
 		Assert.assertEquals( "8080", exports.get( serverWithApp.getName() + ".port" ));
 		Assert.assertEquals( "another/path", exports.get( serverFacet.getName() + ".url-suffix" ));
 		Assert.assertEquals( "something", exports.get( serverWithAnotherApp.getName() + ".whatever" ));
+	}
+
+
+	@Test
+	public void testExtractNames() {
+
+		List<Component> components = new ArrayList<Component> ();
+		components.add( new Component( "c1" ));
+		components.add( new Component( "c2" ));
+
+		List<String> names = ComponentHelpers.extractNames( components );
+		Assert.assertEquals( 2, names.size());
+		Assert.assertEquals( "c1", names.get( 0 ));
+		Assert.assertEquals( "c2", names.get( 1 ));
+	}
+
+
+	@Test
+	public void testFindComponentDependenciesFor_namesOnly() {
+		Application app = ComplexApplicationFactory1.newApplication();
+
+		// Root with no dependency
+		Component comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
+		Assert.assertNotNull( comp );
+
+		Map<String,Boolean> map = ComponentHelpers.findComponentDependenciesFor( comp );
+		Assert.assertEquals( 0, map.size());
+
+		// Application with several dependencies
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.APP_1 );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentDependenciesFor( comp );
+		Assert.assertEquals( 1, map.size());
+
+		Assert.assertTrue( map.containsKey( ComplexApplicationFactory1.FACET_DATABASE ));
+		Assert.assertTrue( map.get( ComplexApplicationFactory1.FACET_DATABASE ));
+
+		// Another application
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.APP_2 );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentDependenciesFor( comp );
+		Assert.assertEquals( 2, map.size());
+
+		Assert.assertTrue( map.containsKey( ComplexApplicationFactory1.MYSQL ));
+		Assert.assertFalse( map.get( ComplexApplicationFactory1.MYSQL ));
+
+		Assert.assertTrue( map.containsKey( ComplexApplicationFactory1.MONGO_DB ));
+		Assert.assertTrue( map.get( ComplexApplicationFactory1.MONGO_DB ));
+
+		// And another one
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.APP_3 );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentDependenciesFor( comp );
+		Assert.assertEquals( 0, map.size());
+	}
+
+
+	@Test
+	public void testFindComponentDependenciesFor_resolvedComponents() {
+		Application app = ComplexApplicationFactory1.newApplication();
+
+		// Root with no dependency
+		Component comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
+		Assert.assertNotNull( comp );
+
+		Map<Component,Boolean> map = ComponentHelpers.findComponentDependenciesFor( comp, app );
+		Assert.assertEquals( 0, map.size());
+
+		// Application with several dependencies
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.APP_1 );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentDependenciesFor( comp, app );
+		Assert.assertEquals( 1, map.size());
+
+		// We look for a Database facet. And only one component has it: MySql.
+		Component key = new Component( ComplexApplicationFactory1.MYSQL );
+		Assert.assertTrue( map.containsKey( key ));
+		Assert.assertTrue( map.get( key ));
+
+		// Another application
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.APP_2 );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentDependenciesFor( comp, app );
+		Assert.assertEquals( 2, map.size());
+
+		key = new Component( ComplexApplicationFactory1.MYSQL );
+		Assert.assertTrue( map.containsKey( key ));
+		Assert.assertFalse( map.get( key ));
+
+		key = new Component( ComplexApplicationFactory1.MONGO_DB );
+		Assert.assertTrue( map.containsKey( key ));
+		Assert.assertTrue( map.get( key ));
+
+		// And another one
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.APP_3 );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentDependenciesFor( comp, app );
+		Assert.assertEquals( 0, map.size());
+	}
+
+
+	@Test
+	public void testFindComponentsThatDependOn() {
+		Application app = ComplexApplicationFactory1.newApplication();
+
+		// Root with no dependency
+		Component comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
+		Assert.assertNotNull( comp );
+
+		Map<Component,Boolean> map = ComponentHelpers.findComponentsThatDependOn( comp, app );
+		Assert.assertEquals( 0, map.size());
+
+		// Application with several dependencies
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.MYSQL );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentsThatDependOn( comp, app );
+		Assert.assertEquals( 2, map.size());
+
+		Component key = new Component( ComplexApplicationFactory1.APP_1 );
+		Assert.assertTrue( map.containsKey( key ));
+		Assert.assertTrue( map.get( key ));
+
+		key = new Component( ComplexApplicationFactory1.APP_2 );
+		Assert.assertTrue( map.containsKey( key ));
+		Assert.assertFalse( map.get( key ));
+
+		// And another one
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.MONGO_DB );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentsThatDependOn( comp, app );
+		Assert.assertEquals( 1, map.size());
+
+		key = new Component( ComplexApplicationFactory1.APP_2 );
+		Assert.assertTrue( map.containsKey( key ));
+		Assert.assertTrue( map.get( key ));
+
+		// And again, another one
+		comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.APP_3 );
+		Assert.assertNotNull( comp );
+
+		map = ComponentHelpers.findComponentsThatDependOn( comp, app );
+		Assert.assertEquals( 0, map.size());
 	}
 
 

@@ -35,11 +35,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import net.roboconf.core.model.InstanceComparator;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;

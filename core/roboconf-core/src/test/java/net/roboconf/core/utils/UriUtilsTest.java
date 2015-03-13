@@ -54,6 +54,7 @@ public class UriUtilsTest {
 
 	@Test
 	public void testUrlToUri_3() throws Exception {
+
 		URL url = new URL( "http://url.com/some folder" );
 		Assert.assertEquals(
 				new URI( "http://url.com/some%20folder" ),
@@ -77,6 +78,7 @@ public class UriUtilsTest {
 
 	@Test
 	public void testUrlToUri_6() throws Exception {
+
 		String url = "http://url.com/some folder";
 		Assert.assertEquals(
 				new URI( "http://url.com/some%20folder" ),
@@ -85,8 +87,15 @@ public class UriUtilsTest {
 
 
 	@Test( expected = URISyntaxException.class )
-	public void testUrlToUri_exception() throws Exception {
+	public void testUrlToUri_exception1() throws Exception {
 		String url = "http://url with spaces.com";
+		UriUtils.urlToUri( url );
+	}
+
+
+	@Test( expected = URISyntaxException.class )
+	public void testUrlToUri_exception2() throws Exception {
+		String url = "http://url with two:dots.com";
 		UriUtils.urlToUri( url );
 	}
 
@@ -100,6 +109,7 @@ public class UriUtilsTest {
 
 	@Test
 	public void testBuildNewURI_2() throws Exception {
+
 		String url = "http://absolute-url.fr/";
 		String suffix = "readme.txt";
 		Assert.assertEquals( new URI( url + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
@@ -108,6 +118,16 @@ public class UriUtilsTest {
 
 	@Test
 	public void testBuildNewURI_3() throws Exception {
+
+		String url = "http://absolute-url.fr";
+		String suffix = "/readme.txt";
+		Assert.assertEquals( new URI( url + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
+	}
+
+
+	@Test
+	public void testBuildNewURI_4() throws Exception {
+
 		String url = "http://absolute-url.fr";
 		String suffix = "readme.txt";
 		Assert.assertEquals( new URI( url + "/" + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
@@ -115,7 +135,8 @@ public class UriUtilsTest {
 
 
 	@Test
-	public void testBuildNewURI_4() throws Exception {
+	public void testBuildNewURI_5() throws Exception {
+
 		String url = "http://absolute-url.fr/folder";
 		String suffix = "readme.txt";
 		Assert.assertEquals( new URI( url + "/" + suffix ), UriUtils.buildNewURI( new URI( url ), suffix ));
@@ -123,7 +144,8 @@ public class UriUtilsTest {
 
 
 	@Test
-	public void testBuildNewURI_5() throws Exception {
+	public void testBuildNewURI_6() throws Exception {
+
 		String url = "http://absolute-url.fr/folder";
 		String suffix = "../readme.txt";
 		Assert.assertEquals(
@@ -133,7 +155,8 @@ public class UriUtilsTest {
 
 
 	@Test
-	public void testBuildNewURI_6() throws Exception {
+	public void testBuildNewURI_7() throws Exception {
+
 		String url = "http://absolute-url.fr/folder";
 		String suffix = "./readme.txt";
 		Assert.assertEquals(
@@ -143,7 +166,8 @@ public class UriUtilsTest {
 
 
 	@Test
-	public void testBuildNewURI_7() throws Exception {
+	public void testBuildNewURI_8() throws Exception {
+
 		String url = "http://absolute-url.fr/folder";
 		String suffix = "f1/f2/f3/readme.txt";
 		Assert.assertEquals(
@@ -153,7 +177,16 @@ public class UriUtilsTest {
 
 
 	@Test( expected = IllegalArgumentException.class )
-	public void testBuildNewURI_8() throws Exception {
+	public void testBuildNewURI_9() throws Exception {
 		UriUtils.buildNewURI( new URI( "http://absolute-url.fr/folder" ), null );
+	}
+
+
+	@Test( expected = URISyntaxException.class )
+	public void testBuildNewURI_10() throws Exception {
+
+		String url = "http://absolute-url.fr/folder";
+		String suffix = ":f1/readme.txt";
+		UriUtils.buildNewURI( new URI( url ), suffix );
 	}
 }

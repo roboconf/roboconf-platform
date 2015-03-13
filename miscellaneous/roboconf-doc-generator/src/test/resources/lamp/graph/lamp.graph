@@ -1,0 +1,82 @@
+###################################
+##             LAMP              ##
+###################################
+
+# Here, we only have components.
+# We do not use facets.
+# See lamp-legacy-2 for a version with facets.
+
+# The VM
+VM {
+	installer: target;
+	children: MySQL, Tomcat, Apache, Child;
+}
+
+# MySQL database
+MySQL {
+	installer: puppet;
+	exports: ip, port = 3306;
+}
+
+# Tomcat
+Tomcat {
+	installer: puppet;
+	exports: ip, portAJP = 8009;
+	children: App;
+}
+
+# Apache Load Balancer
+Apache {
+	installer: puppet;
+	imports: Tomcat.portAJP, Tomcat.ip;
+}
+
+# Applications
+facet App {
+	# nothing
+}
+
+App1 {
+	facets: App;
+	installer: file;
+	imports: MySQL.ip, MySQL.port;
+}
+
+App2 {
+	facets: App;
+	installer: file;
+	imports: MySQL.* (optional);
+}
+
+App3 {
+	extends: App1;
+}
+
+App4 {
+	facets: App;
+	installer: file;
+}
+
+# Add many use-less children to the VM
+facet Child {
+	# nothing
+}
+
+Child1 {
+	facets: Child;
+	installer: whatever;
+}
+
+Child2 {
+	facets: Child;
+	installer: whatever;
+}
+
+Child3 {
+	extends: Child2;
+}
+
+# and add single root instance
+all_alone {
+	installer: target;
+}

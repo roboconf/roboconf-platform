@@ -25,13 +25,14 @@
 
 package net.roboconf.integration.tests;
 
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
+import java.util.List;
 
 import javax.inject.Inject;
 
-import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
@@ -47,15 +48,12 @@ import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
-import net.roboconf.plugin.api.PluginException;
-import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
@@ -96,9 +94,6 @@ public class AgentInitializationTest extends DmTest {
 
 		// Classes from the agent
 		probe.addTest( Agent.class );
-		probe.addTest( AgentMessagingInterface.class );
-		probe.addTest( PluginInterface.class );
-		probe.addTest( PluginException.class );
 		probe.addTest( PluginMock.class );
 		probe.addTest( HeartbeatTask.class );
 		probe.addTest( AgentMessageProcessor.class );
@@ -110,7 +105,9 @@ public class AgentInitializationTest extends DmTest {
 	@Override
 	@Configuration
 	public Option[] config() throws Exception {
+		List<Option> options = getBaseOptions();
 
+		// Store the application's location
 		String appLocation = null;
 		try {
 			File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
@@ -120,9 +117,22 @@ public class AgentInitializationTest extends DmTest {
 			// nothing
 		}
 
-		return OptionUtils.combine(
-				super.config(),
-				systemProperty( APP_LOCATION ).value( appLocation ));
+		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
+
+		// Deploy the agent's bundles
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-plugin-api" )
+				.version( getRoboconfVersion())
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-agent" )
+				.version( getRoboconfVersion())
+				.start());
+
+		return options.toArray( new Option[ options.size()]);
 	}
 
 

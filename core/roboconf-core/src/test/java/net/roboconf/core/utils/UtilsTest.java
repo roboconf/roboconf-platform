@@ -681,6 +681,7 @@ public class UtilsTest {
 		// Change the log level
 		logger.setLevel( Level.INFO );
 		Assert.assertFalse( logger.isLoggable( Level.FINEST ));
+		Assert.assertTrue( logger.isLoggable( Level.INFO ));
 
 		sb.delete( 0, sb.length());
 		Assert.assertEquals( "", sb.toString());
@@ -719,5 +720,17 @@ public class UtilsTest {
 		entry = Utils.findUrlAndPort( "ftp://some.host.com:4811/path" );
 		Assert.assertEquals( "ftp://some.host.com/path", entry.getKey());
 		Assert.assertEquals( 4811, entry.getValue().intValue());
+	}
+
+
+	@Test
+	public void testCapitalize() {
+
+		Assert.assertEquals( "", Utils.capitalize( "" ));
+		Assert.assertNull( Utils.capitalize( null ));
+
+		Assert.assertEquals( "Toto", Utils.capitalize( "Toto" ));
+		Assert.assertEquals( "Toto", Utils.capitalize( "tOTo" ));
+		Assert.assertEquals( "Toto oops", Utils.capitalize( "tOTo oops" ));
 	}
 }
