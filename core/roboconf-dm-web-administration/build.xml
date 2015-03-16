@@ -6,17 +6,40 @@
 			<available file="${project.build.directory}/roboconf-web-administration" />
 		</condition>
 	</target>
+	
+	<!-- The clone operation depends on the project's version -->
+	<target name="target.is.snapshot" description="Checking if the platform is in snapshot version...">
+		<condition property="roboconf.snapshot">
+			<matches string="${project.version}" casesensitive="false" pattern=".*-SNAPSHOT$" />
+		</condition>
+	</target>
 
 	<!-- Clone the Git repository -->
-	<target name="target.clone" depends="target.check" unless="already.cloned" description="Cloning the web-administration repository...">
+	<target name="target.clone" depends="target.check, target.is.snapshot" unless="already.cloned" description="Selecting the web-administration version...">
+		<antcall target="target.clone.master" />
+		<antcall target="target.clone.tag" />
+	</target>
+
+	<!-- Only clone the master -->
+	<target name="target.clone.master" if="roboconf.snapshot" description="Cloning the web-administration repository (master branch)...">
 		<exec dir="${project.build.directory}" executable="git" failonerror="true">
 			<arg value="clone" />
-            <!-- Do not copy full history, just the last tree -->
-            <arg value="--depth=1" />
+			<arg value="--depth=1" />
 			<arg value="${web.client.git.url}" />
 		</exec>
-        <!-- Delete the ".git" directory -->
-        <delete dir="${project.build.directory}/roboconf-web-administration/.git"/>
+		<delete dir="${project.build.directory}/roboconf-web-administration/.git" />
+	</target>
+
+	<!-- Only clone the master -->
+	<target name="target.clone.tag" unless="roboconf.snapshot" description="Cloning the web-administration repository (tag)...">
+		<exec dir="${project.build.directory}" executable="git" failonerror="true">
+			<arg value="clone" />
+			<arg value="--branch" />
+			<arg value="roboconf-web-administration-${project.version}" />
+			<arg value="--depth=1" />
+			<arg value="${web.client.git.url}" />
+		</exec>
+		<delete dir="${project.build.directory}/roboconf-web-administration/.git" />
 	</target>
 
 	<!-- Execute npm install -->
