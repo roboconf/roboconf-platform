@@ -3,6 +3,9 @@
 [![Coverage Status](http://coveralls.io/repos/roboconf/roboconf-platform/badge.png)](http://coveralls.io/r/roboconf/roboconf-platform)
 [![License](https://pypip.in/license/apache-libcloud/badge.png)](http://www.apache.org/licenses/LICENSE-2.0)
 
+[![Issue Stats](http://issuestats.com/github/roboconf/roboconf-platform/badge/issue)](http://issuestats.com/github/roboconf/roboconf-platform)
+[![Issue Stats](http://issuestats.com/github/roboconf/roboconf-platform/badge/pr)](http://issuestats.com/github/roboconf/roboconf-platform)
+
 Website: [http://roboconf.net](http://roboconf.net)  
 Licensed under the terms of the **Apache License v2**.
 

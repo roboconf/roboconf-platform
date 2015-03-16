@@ -1,0 +1,31 @@
+####################################
+# We start with a simple deployment
+####################################
+
+# A VM with Apache only
+instance of VM {
+	name: Apache VM;
+	
+	instance of Apache {
+		name: Apache;
+		portAJP: 8010;
+	}
+}
+
+# A VM with MySQL only
+instance of VM {
+	name: MySQL VM;
+	
+	instance of MySQL {
+		name: MySQL;
+	}
+}
+
+# A VM with Tomcat only
+instance of VM {
+	name: Tomcat VM 1;
+	
+	instance of Tomcat {
+		name: Tomcat;
+	}
+}

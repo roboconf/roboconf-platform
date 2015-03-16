@@ -51,7 +51,6 @@ import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
-import org.osgi.framework.BundleContext;
 
 /**
  * Checks delayed initialization.
@@ -62,15 +61,15 @@ import org.osgi.framework.BundleContext;
  * </p>
  *
  * <p>
- * Note: this test has been a pain in the ***. It use to fail randomly.
+ * Note: this test raised a lot of problems as it used to fail randomly.
  * When it failed, it was because AgentMessagingInterface.class was exported
  * by the probe while the implementation (*.internal.agent) came from the agent's
  * bundle. When it happened, it threw an IllegalArgumentException (which in fact
- * hides a ClassCastException - both classes are incompatible because they come from
+ * hid a ClassCastException - both classes were incompatible because they came from
  * different class loaders).
  * </p>
  * <p>
- * We (hopefully) solved this issue by configuring the probe, by customizing it too
+ * We (hopefully) solved this issue by configuring the probe, and by customizing it too
  * (we only embed the current test class and not the others from the same package),
  * and we add an OSGi import-package declaration in the probe. I am not sure at all
  * which element solves the problem. Just for history, this problem occurred with two
@@ -81,16 +80,13 @@ import org.osgi.framework.BundleContext;
  */
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerMethod.class )
-public class AgentWithDelayedInitializationTest extends DmTest {
+public class DelayedAgentInitializationTest extends DmTest {
 
 	@Inject
 	protected Manager manager;
 
 	@Inject
 	protected AgentMessagingInterface agentItf;
-
-	@Inject
-	public BundleContext ctx;
 
 
 	@ProbeBuilder
@@ -119,7 +115,7 @@ public class AgentWithDelayedInitializationTest extends DmTest {
 		// Using a probe configuration is not enough, we do not want all the
 		// tests classes from this project to be part of the probe.
 		options.add( jarProbe().classes(
-				AgentWithDelayedInitializationTest.class
+				DelayedAgentInitializationTest.class
 		));
 
 		// Add a valid configuration for the agent
