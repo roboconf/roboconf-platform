@@ -30,7 +30,7 @@
 		<delete dir="${project.build.directory}/roboconf-web-administration/.git" />
 	</target>
 
-	<!-- Only clone the master -->
+	<!-- Clone a tag -->
 	<target name="target.clone.tag" unless="roboconf.snapshot" description="Cloning the web-administration repository (tag)...">
 		<exec dir="${project.build.directory}" executable="git" failonerror="true">
 			<arg value="clone" />
