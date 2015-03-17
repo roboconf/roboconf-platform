@@ -265,7 +265,7 @@ public class MarkdownRenderer extends AbstractStructuredRenderer {
 	 * #addTableHeader(java.util.List)
 	 */
 	@Override
-	protected String addTableHeader( List<String> headerEntries ) {
+	protected String addTableHeader( String... headerEntries ) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "<tr>\n" );
@@ -286,7 +286,7 @@ public class MarkdownRenderer extends AbstractStructuredRenderer {
 	 * #addTableLine(java.util.List)
 	 */
 	@Override
-	protected String addTableLine( List<String> lineEntries ) {
+	protected String addTableLine( String... lineEntries ) {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "<tr>\n" );

@@ -23,43 +23,57 @@
  * limitations under the License.
  */
 
-package net.roboconf.doc.generator;
+package net.roboconf.doc.generator.internal.nls;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.RuntimeModelIo;
-import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.doc.generator.RenderingManager.Renderer;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ToRunByHand {
+public final class Messages {
+
+	public static final String OOPS = "!oops!"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "net.roboconf.doc.generator.internal.nls.messages"; //$NON-NLS-1$
+
+	private final ResourceBundle bundle;
+
 
 	/**
-	 * @param args
+	 * Empty constructor (with the system's locale).
 	 */
-	public static void main( String[] args ) {
+	public Messages() {
+		this.bundle = ResourceBundle.getBundle( BUNDLE_NAME );
+	}
 
+
+	/**
+	 * Constructor.
+	 * @param locale the locale (e.g. en_US, fr_FR)
+	 */
+	public Messages( String locale ) {
+		String ietfLocale = locale.replace( '_', '-' );
+		Locale loc = Locale.forLanguageTag( ietfLocale );
+		this.bundle = ResourceBundle.getBundle( BUNDLE_NAME, loc );
+	}
+
+
+	/**
+	 * Finds an internationalized string by key.
+	 * @param key a non-null key
+	 * @return a string (never null)
+	 */
+	public String get( String key ) {
+
+		String result;
 		try {
-			File f = TestUtils.findTestFile( "/lamp" );
-			File outputDir = new File( System.getProperty( "user.home" ), "Bureau/html" );
-			Utils.deleteFilesRecursively( outputDir );
-			if( ! outputDir.mkdirs())
-				throw new IOException( "Could not create the output directory." );
+			result = this.bundle.getString( key );
 
-			ApplicationLoadResult alr = RuntimeModelIo.loadApplication( f );
-
-			Map<String,String> options = new HashMap<String,String> ();
-			new RenderingManager().render( outputDir, alr.getApplication(), f, Renderer.HTML, options );
-
-		} catch( Exception e ) {
-			e.printStackTrace();
+		} catch( MissingResourceException e ) {
+			result = OOPS + key + '!';
 		}
+
+		return result;
 	}
 }

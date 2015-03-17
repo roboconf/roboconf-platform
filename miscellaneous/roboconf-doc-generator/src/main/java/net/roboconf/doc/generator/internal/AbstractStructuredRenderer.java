@@ -27,8 +27,8 @@ package net.roboconf.doc.generator.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +47,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.DocConstants;
+import net.roboconf.doc.generator.internal.nls.Messages;
 import net.roboconf.doc.generator.internal.transformers.AbstractRoboconfTransformer;
 import net.roboconf.doc.generator.internal.transformers.HierarchicalTransformer;
 import net.roboconf.doc.generator.internal.transformers.InheritanceTransformer;
@@ -60,6 +61,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	protected Application application;
 	protected File applicationDirectory;
 	protected Map<String,String> options;
+	protected Messages messages;
 
 
 	/**
@@ -94,20 +96,27 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		this.options = options;
 		StringBuilder sb = new StringBuilder();
 
+		// Check the language
+		String locale = options.get( DocConstants.OPTION_LOCALE );
+		if( locale != null )
+			this.messages = new Messages( locale );
+		else
+			this.messages = new Messages();
+
 		// First pages
 		sb.append( renderDocumentTitle());
 		sb.append( renderPageBreak());
 
-		sb.append( renderParagraph( "This document lists the Software components..." ));
+		sb.append( renderParagraph( this.messages.get( "intro" ))); //$NON-NLS-1$
 		sb.append( renderPageBreak());
 
 		sb.append( renderDocumentIndex());
 		sb.append( renderPageBreak());
 
 		sb.append( startTable());
-		sb.append( addTableLine( Arrays.asList( "Application Name", this.application.getName())));
-		sb.append( addTableLine( Arrays.asList( "Application Namespace", this.application.getNamespace())));
-		sb.append( addTableLine( Arrays.asList( "Qualifier", this.application.getQualifier())));
+		sb.append( addTableLine( this.messages.get( "app.name" ), this.application.getName())); //$NON-NLS-1$
+		sb.append( addTableLine( this.messages.get( "app.ns" ), this.application.getNamespace())); //$NON-NLS-1$
+		sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.application.getQualifier())); //$NON-NLS-1$
 		sb.append( endTable());
 
 		sb.append( renderParagraph( this.application.getDescription()));
@@ -134,8 +143,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 	protected abstract String startTable();
 	protected abstract String endTable();
-	protected abstract String addTableHeader( List<String> headerEntries );
-	protected abstract String addTableLine( List<String> lineEntries );
+	protected abstract String addTableHeader( String... headerEntries );
+	protected abstract String addTableLine( String... lineEntries );
 
 	protected abstract String renderDocumentTitle();
 	protected abstract String renderDocumentIndex();
@@ -161,8 +170,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	private StringBuilder renderComponents() throws IOException {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( renderTitle1( "Components" ));
-		sb.append( renderParagraph( "This section lists all the Software components of the deployed application. It also..." ));
+		sb.append( renderTitle1( this.messages.get( "components" ))); //$NON-NLS-1$
+		sb.append( renderParagraph( this.messages.get( "components.intro" ))); //$NON-NLS-1$
 
 		List<String> sectionNames = new ArrayList<String> ();
 		List<Component> allComponents = ComponentHelpers.findAllComponents( this.application );
@@ -175,7 +184,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 			// Overview
 			section.append( renderTitle2( comp.getName()));
-			section.append( renderTitle3( "Overview" ));
+			section.append( renderTitle3( this.messages.get( "overview" ))); //$NON-NLS-1$
 
 			String customInfo = readCustomInformation( this.applicationDirectory, comp.getName(), DocConstants.COMP_SUMMARY );
 			if( ! Utils.isEmptyOrWhitespaces( customInfo ))
@@ -183,13 +192,16 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 			String installerName = Utils.capitalize( ComponentHelpers.findComponentInstaller( comp ));
 			installerName = applyBoldStyle( installerName, installerName );
-			section.append( renderParagraph( "This component's life cycle is managed by the Roboconf " +  installerName + " plugin." ));
+			String msg = MessageFormat.format( this.messages.get( "component.installer" ), installerName ); //$NON-NLS-1$
+			section.append( renderParagraph( msg ));
 
 			// Facets
 			Collection<Facet> facets = ComponentHelpers.findAllFacets( comp );
 			if( ! facets.isEmpty()) {
-				section.append( renderTitle3( "Facets" ));
-				section.append( renderParagraph( comp.getName() + " inherits from these facets: " ));
+				section.append( renderTitle3( this.messages.get( "facets" ))); //$NON-NLS-1$
+				msg = MessageFormat.format(this.messages.get( "component.inherits.facets" ), comp );
+
+				section.append( renderParagraph( msg ));
 				section.append( renderList( ComponentHelpers.extractNames( facets )));
 			}
 
@@ -200,34 +212,38 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			if( ! extendedComponents.isEmpty()
 					|| ! extendingComponents.isEmpty()) {
 
-				section.append( renderTitle3( "Inheritance" ));
+				section.append( renderTitle3( this.messages.get( "inheritance" ))); //$NON-NLS-1$
 				AbstractRoboconfTransformer transformer = new InheritanceTransformer( comp, comp.getExtendedComponent(), extendingComponents, 4 );
 				saveImage( comp, DiagramType.INHERITANCE, transformer, section );
 			}
 
 			if( ! extendedComponents.isEmpty()) {
-				section.append( renderParagraph( comp.getName() + " inherits properties from... " ));
+				msg = MessageFormat.format( this.messages.get( "component.inherits.properties" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 				section.append( renderListAsLinks( ComponentHelpers.extractNames( extendedComponents )));
 			}
 
 			if( ! extendingComponents.isEmpty()) {
-				section.append( renderParagraph( comp.getName() + " is extended by... " ));
+				msg = MessageFormat.format( this.messages.get( "component.is.extended.by" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 				section.append( renderListAsLinks( ComponentHelpers.extractNames( extendingComponents )));
 			}
 
 			// Exported variables
 			Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( comp );
-			section.append( renderTitle3( "Exported Variables" ));
+			section.append( renderTitle3( this.messages.get( "exports" ))); //$NON-NLS-1$
 			if( exportedVariables.isEmpty()) {
-				section.append( renderParagraph( comp.getName() + " does not export any variable." ));
+				msg = MessageFormat.format( this.messages.get( "component.no.export" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 
 			} else {
-				section.append( renderParagraph( comp.getName() + " exports... " ));
+				msg = MessageFormat.format( this.messages.get( "component.exports" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 				section.append( renderList( convertExports( exportedVariables )));
 			}
 
 			// Hierarchy
-			section.append( renderTitle3( "Hierarchy" ));
+			section.append( renderTitle3( this.messages.get( "hierarchy" ))); //$NON-NLS-1$
 			Collection<Component> ancestors = ComponentHelpers.findAllAncestors( comp );
 			Collection<Component> children = ComponentHelpers.findAllChildren( comp );
 			if( ! ancestors.isEmpty() || ! children.isEmpty()) {
@@ -236,29 +252,35 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			}
 
 			if( ancestors.isEmpty()) {
-				section.append( renderParagraph( comp.getName() + " is a root component. It designates a deployment target." ));
+				msg = MessageFormat.format( this.messages.get( "component.is.root" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 
 			} else {
-				section.append( renderParagraph( comp.getName() + " can be deployed over instances of... " ));
+				msg = MessageFormat.format( this.messages.get( "component.over" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 				section.append( renderListAsLinks( ComponentHelpers.extractNames( ancestors )));
 			}
 
 			if( ! children.isEmpty()) {
-				section.append( renderParagraph( "Instances of the following components can be deployed over " + comp.getName() + ": " ));
+				msg = MessageFormat.format( this.messages.get( "component.children" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 				section.append( renderListAsLinks( ComponentHelpers.extractNames( children )));
 			}
 
 			// Runtime
-			section.append( renderTitle3( "Runtime" ));
+			section.append( renderTitle3( this.messages.get( "runtime" ))); //$NON-NLS-1$
 			Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( comp );
 			if( imports.isEmpty()) {
-				section.append( renderParagraph( comp.getName() + " does not depend on anything." ));
+				msg = MessageFormat.format( this.messages.get( "component.no.dep" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 
 			} else {
-				section.append( renderParagraph( comp.getName() + " depends on... " ));
+				msg = MessageFormat.format( this.messages.get( "component.depends.on" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 				section.append( renderList( getImportComponents( comp )));
 
-				section.append( renderParagraph( comp.getName() + " requests the following variables from other components." ));
+				msg = MessageFormat.format( this.messages.get( "component.requires" ), comp ); //$NON-NLS-1$
+				section.append( renderParagraph( msg ));
 				section.append( renderList( convertImports( imports )));
 
 			}
@@ -266,7 +288,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			// Extra
 			String s = readCustomInformation( this.applicationDirectory, comp.getName(), DocConstants.COMP_EXTRA );
 			if( ! Utils.isEmptyOrWhitespaces( s )) {
-				section.append( renderTitle3( "Additional Information" ));
+				section.append( renderTitle3( this.messages.get( "extra" ))); //$NON-NLS-1$
 				section.append( renderParagraph( s ));
 			}
 
@@ -290,14 +312,14 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	private StringBuilder renderInstances() {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( renderTitle1( "Instances" ));
-		sb.append( renderParagraph( "This section lists the initial Software instances in the deployed application." ));
+		sb.append( renderTitle1( this.messages.get( "instances" ))); //$NON-NLS-1$
+		sb.append( renderParagraph( this.messages.get( "instances.intro" ))); //$NON-NLS-1$
 
 		if( this.application.getRootInstances().isEmpty()) {
-			sb.append( renderParagraph( "No initial instance was defined." ));
+			sb.append( renderParagraph( this.messages.get( "instances.none" ))); //$NON-NLS-1$
 
 		} else  {
-			sb.append( renderParagraph( "Instances are grouped according to their hierarchy." ));
+			sb.append( renderParagraph( this.messages.get( "instances.sorting" ))); //$NON-NLS-1$
 
 			// Split by root instance
 			List<String> sectionNames = new ArrayList<String> ();
@@ -312,12 +334,10 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 				// Instances overview
 				section.append( renderTitle2( inst.getName()));
 				section.append( startTable());
-
-				List<String> headerEntries = new ArrayList<String> ();
-				headerEntries.add( "Instance" );
-				headerEntries.add( "Associated Component" );
-				headerEntries.add( "Installer" );
-				section.append( addTableHeader( headerEntries ));
+				section.append( addTableHeader(
+						this.messages.get( "instances.instance" ),		//$NON-NLS-1$
+						this.messages.get( "instances.component" ),		//$NON-NLS-1$
+						this.messages.get( "instances.installer" )));	//$NON-NLS-1$
 
 				List<Instance> instances = new ArrayList<Instance> ();
 				instances.addAll( InstanceHelpers.buildHierarchicalList( inst ));
@@ -329,20 +349,18 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 					for( int j=1; j<InstanceHelpers.countInstances( instancePath ); j++ )
 						content.insert( 0, indent());
 
-					content.append( " " );
+					content.append( " " ); //$NON-NLS-1$
 					content.append( i.getName());
 					String componentName = i.getComponent().getName();
 					String link = componentName;
 					if( this.options.containsKey( DocConstants.OPTION_HTML_EXPLODED ))
-						link = "../" + DocConstants.SECTION_COMPONENTS + componentName;
-
-					List<String> lineEntries = new ArrayList<String> ();
-					lineEntries.add( content.toString());
-					lineEntries.add( applyLink( componentName, link ));
+						link = "../" + DocConstants.SECTION_COMPONENTS + componentName; //$NON-NLS-1$
 
 					String installer = ComponentHelpers.findComponentInstaller( i.getComponent());
-					lineEntries.add( installer );
-					section.append( addTableLine( lineEntries ));
+					section.append( addTableLine(
+							content.toString(),
+							applyLink( componentName, link ),
+							installer ));
 				}
 
 				section.append( endTable());
@@ -351,7 +369,9 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 				for( Instance i : instances ) {
 					if( ! i.overriddenExports.isEmpty()) {
 						String name = applyBoldStyle( i.getName(), i.getName());
-						section.append( renderParagraph( name + " defines additional variables." ));
+						String msg = MessageFormat.format( this.messages.get( "instances.additional" ), name ); //$NON-NLS-1$
+
+						section.append( renderParagraph( msg ));
 						section.append( renderList( convertExports( i.overriddenExports )));
 					}
 				}
@@ -380,8 +400,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	private void saveImage( final Component comp, DiagramType type, AbstractRoboconfTransformer transformer, StringBuilder sb )
 	throws IOException {
 
-		String baseName = comp.getName() + "_" + type;
-		File pngFile = new File( this.outputDirectory, "png/" + baseName + ".png" );
+		String baseName = comp.getName() + "_" + type; //$NON-NLS-1$
+		File pngFile = new File( this.outputDirectory, "png/" + baseName + ".png" ); //$NON-NLS-1$ //$NON-NLS-2$
 		Utils.createDirectory( pngFile.getParentFile());
 
 		GraphUtils.writeGraph(
@@ -407,8 +427,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	private String readCustomInformation( File applicationDirectory, String componentName, String suffix )
 	throws IOException {
 
-		String result = "";
-		File f = new File( applicationDirectory, DocConstants.DOC_DIR + "/" + componentName + suffix );
+		String result = ""; //$NON-NLS-1$
+		File f = new File( applicationDirectory, DocConstants.DOC_DIR + "/" + componentName + suffix ); //$NON-NLS-1$
 		if( f.exists())
 			result = Utils.readFileContent( f );
 
@@ -427,7 +447,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		for( Map.Entry<String,Boolean> entry : imports.entrySet()) {
 			String componentOrFacet = VariableHelpers.parseVariableName( entry.getKey()).getKey();
 			String s = applyLink( entry.getKey(), componentOrFacet );
-			result.add( s + " " + (entry.getValue() ? "(optional)" : "(required)"));
+			s += entry.getValue() ? this.messages.get( "optional" ) : this.messages.get( "required" ); //$NON-NLS-1$ //$NON-NLS-2$
+			result.add( s );
 		}
 
 		return result;
@@ -449,10 +470,10 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 					: applyLink( entry.getKey(), componentOrFacet );
 
 			if( ! Utils.isEmptyOrWhitespaces( entry.getValue()))
-				s += " (default = " + entry.getValue() + ")";
+				s += MessageFormat.format( this.messages.get( "default" ), entry.getValue()); //$NON-NLS-1$
 
-			if( entry.getKey().toLowerCase().endsWith( ".ip" ))
-				s += " (injected by Roboconf)";
+			if( entry.getKey().toLowerCase().endsWith( ".ip" )) //$NON-NLS-1$
+				s += this.messages.get( "injected" ); //$NON-NLS-1$
 
 			result.add( s );
 		}
@@ -472,7 +493,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		Map<String,Boolean> map = ComponentHelpers.findComponentDependenciesFor( component );
 		for( Map.Entry<String,Boolean> entry : map.entrySet()) {
 			String s = applyLink( entry.getKey(), entry.getKey());
-			result.add( s + " " + (entry.getValue() ? "(optional)" : "(required)"));
+			s += entry.getValue() ? this.messages.get( "optional" ) : this.messages.get( "required" ); //$NON-NLS-1$ //$NON-NLS-2$
+			result.add( s );
 		}
 
 		return result;

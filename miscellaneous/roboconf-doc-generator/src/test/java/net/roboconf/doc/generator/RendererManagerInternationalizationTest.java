@@ -38,60 +38,55 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RendererManagerMarkdownTest extends AbstractTestForRendererManager {
-
+public class RendererManagerInternationalizationTest extends AbstractTestForRendererManager {
 
 	@Test
-	public void testMarkdown_nullOptions() throws Exception {
+	public void testHtml_en_US() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, null );
+		Map<String,String> options = new HashMap<String,String> ();
+		options.put( DocConstants.OPTION_LOCALE, "en_US" );
 
-		verifyMarkdown();
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+		checkInternationalization( "Components" );
 	}
 
 
 	@Test
-	public void testMarkdown_emptyOptions() throws Exception {
+	public void testHtml_fr_FR() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
 		Map<String,String> options = new HashMap<String,String> ();
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, options );
+		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
-		verifyMarkdown();
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+		checkInternationalization( "Composants" );
 	}
 
 
 	@Test
-	public void testMarkdown_withoutInstances_customColorInOptions() throws Exception {
+	public void testHtml_unsupportedLocale() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.alr.getApplication().getRootInstances().clear();
-
 		Map<String,String> options = new HashMap<String,String> ();
-		options.put( DocConstants.OPTION_IMG_HIGHLIGHT_BG_COLOR, "#dddddd" );
-		options.put( DocConstants.OPTION_IMG_BACKGROUND_COLOR, "#4582ad" );
-		options.put( DocConstants.OPTION_IMG_FOREGROUND_COLOR, "#000000" );
-		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
+		options.put( DocConstants.OPTION_LOCALE, "oops" );
 
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, options );
-
-		verifyMarkdown();
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+		checkInternationalization( "Components" );
 	}
 
 
 	/**
-	 * Verifies assertions about markdown files.
+	 * Verifies assertions about the generated file.
+	 * @param textToSearch
 	 */
-	private void verifyMarkdown() throws Exception {
+	private void checkInternationalization( String textToSearch ) throws Exception {
 
-		File f = new File( this.outputDir, "png" );
-		Assert.assertTrue( f.isDirectory());
-
-		f = new File( this.outputDir, "roboconf.md" );
+		File f = new File( this.outputDir, "roboconf.html" );
 		Assert.assertTrue( f.exists());
 
-		String content = Utils.readFileContent( f );
-		verifyContent( content );
+		String s = Utils.readFileContent( f );
+		verifyContent( s );
+		Assert.assertTrue( s.contains( textToSearch ));
 	}
 }

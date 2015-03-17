@@ -110,6 +110,16 @@ public interface DocConstants {
 
 
 	/**
+	 * The option to specify the locale for output files.
+	 * <p>
+	 * Example: en_US, fr_FR.
+	 * </p>
+	 */
+	String OPTION_LOCALE = "option.locale";
+
+
+
+	/**
 	 * The default background color for generated images.
 	 */
 	String DEFAULT_BACKGROUND_COLOR = "#ffffff";
