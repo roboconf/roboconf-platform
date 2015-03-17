@@ -48,7 +48,7 @@ public class ToRunByHand {
 
 		try {
 			File f = TestUtils.findTestFile( "/lamp" );
-			File outputDir = new File( System.getProperty( "user.home" ), "Bureau/html" );
+			File outputDir = new File( System.getProperty( "user.home" ), "Bureau/md" );
 			Utils.deleteFilesRecursively( outputDir );
 			if( ! outputDir.mkdirs())
 				throw new IOException( "Could not create the output directory." );
@@ -56,7 +56,7 @@ public class ToRunByHand {
 			ApplicationLoadResult alr = RuntimeModelIo.loadApplication( f );
 
 			Map<String,String> options = new HashMap<String,String> ();
-			new RenderingManager().render( outputDir, alr.getApplication(), f, Renderer.HTML, options );
+			new RenderingManager().render( outputDir, alr.getApplication(), f, Renderer.MARKDOWN, options );
 
 		} catch( Exception e ) {
 			e.printStackTrace();
