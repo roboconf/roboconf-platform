@@ -27,6 +27,7 @@ package net.roboconf.maven;
 
 import java.io.File;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 
 import org.apache.maven.execution.MavenSession;
@@ -72,8 +73,104 @@ public class ValidateApplicationMojoTest extends ValidateProjectMojoTest {
 	}
 
 
+	@Test
+	public void testRecipe_nonOfficial_withWarnings_1() throws Exception {
+
+		// Find and execute the mojo
+		ValidateApplicationMojo mojo = retriveAndPrepareMojo( "recipe" );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		this.rule.setVariableValueToObject( mojo, "recipe", true );
+
+		mojo.execute();
+
+		// We should have a result file
+		File resultsFile = new File( project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
+		Assert.assertTrue( resultsFile.exists());
+	}
+
+
+	@Test
+	public void testRecipe_nonOfficial_withWarnings_2() throws Exception {
+
+		// Find and execute the mojo
+		ValidateApplicationMojo mojo = retriveAndPrepareMojo( "recipe-with-instances" );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		this.rule.setVariableValueToObject( mojo, "recipe", true );
+
+		mojo.execute();
+
+		// We should have a result file
+		File resultsFile = new File( project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
+		Assert.assertTrue( resultsFile.exists());
+	}
+
+
+	@Test
+	public void testRecipe_official() throws Exception {
+
+		// Find and execute the mojo
+		ValidateApplicationMojo mojo = retriveAndPrepareMojo( "recipe" );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		this.rule.setVariableValueToObject( mojo, "recipe", true );
+		this.rule.setVariableValueToObject( mojo, "official", true );
+
+		project.setGroupId( Constants.OFFICIAL_RECIPES_NAMESPACE );
+		project.setArtifactId( project.getName());
+		Assert.assertTrue( new File( project.getBasedir(), "readme" ).createNewFile());
+
+		mojo.execute();
+
+		// We should not have a result file
+		File resultsFile = new File( project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
+		Assert.assertFalse( resultsFile.exists());
+	}
+
+
+	@Test( expected = MojoFailureException.class )
+	public void testRecipe_official_fail_1() throws Exception {
+
+		ValidateApplicationMojo mojo = retriveAndPrepareMojo( "recipe" );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		this.rule.setVariableValueToObject( mojo, "recipe", true );
+		this.rule.setVariableValueToObject( mojo, "official", true );
+
+		project.setName( "ReCipe" );
+		mojo.execute();
+	}
+
+
+	@Test( expected = MojoFailureException.class )
+	public void testRecipe_official_fail_2() throws Exception {
+
+		ValidateApplicationMojo mojo = retriveAndPrepareMojo( "recipe-with-instances" );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		this.rule.setVariableValueToObject( mojo, "recipe", true );
+		this.rule.setVariableValueToObject( mojo, "official", true );
+
+		project.setName( "ReCipe" );
+		mojo.execute();
+	}
+
+
+
 	private void findAndExecuteMojo( String projectName, boolean expectTextFile ) throws Exception {
 
+		ValidateApplicationMojo mojo = retriveAndPrepareMojo( projectName );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+
+		// Execute the mojo
+		mojo.execute();
+
+		// Should we have a result file?
+		File resultsFile = new File( project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
+		Assert.assertEquals( expectTextFile, resultsFile.exists());
+	}
+
+
+
+	private ValidateApplicationMojo retriveAndPrepareMojo( String projectName ) throws Exception {
+
+		// Get the mojo
 		ValidateApplicationMojo mojo = (ValidateApplicationMojo) super.findMojo( projectName, "validate-application" );
 		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
 		Assert.assertNotNull( project );
@@ -86,11 +183,6 @@ public class ValidateApplicationMojoTest extends ValidateProjectMojoTest {
 				new File( project.getBasedir(), MavenPluginConstants.SOURCE_MODEL_DIRECTORY ),
 				new File( project.getBuild().getOutputDirectory()));
 
-		// Execute the mojo
-		mojo.execute();
-
-		// Should we have a result file?
-		File resultsFile = new File( project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
-		Assert.assertEquals( expectTextFile, resultsFile.exists());
+		return mojo;
 	}
 }
