@@ -34,10 +34,13 @@ import java.util.Properties;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.ManagedApplication;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -93,5 +96,22 @@ public class TargetHelpersTest {
 		Map<String, String> loadedProperties = TargetHelpers.loadTargetProperties( applicationDirectory, instance );
 		Assert.assertNotNull( loadedProperties );
 		Assert.assertEquals( "my value", loadedProperties.get("my-key"));
+	}
+
+
+	@Test
+	public void testVerifyTargets_targetException() throws Exception {
+
+		// Create an application
+		Component comp = new Component( "comp" ).installerName( Constants.TARGET_INSTALLER );
+		Graphs graph = new Graphs();
+		graph.getRootComponents().add( comp );
+
+		Application app = new Application( "test" ).graphs( graph );
+		app.getRootInstances().add( new Instance( "inst" ).component( comp ));
+
+		// Test the validation. A log entry is created.
+		ManagedApplication ma = new ManagedApplication( app, null );
+		TargetHelpers.verifyTargets( new TargetResolver(), ma, null );
 	}
 }

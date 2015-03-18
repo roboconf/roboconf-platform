@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Application;
@@ -436,5 +437,16 @@ public final class InstanceHelpers {
 		}
 
 		return instanceToDuplicate.get( instance );
+	}
+
+
+	/**
+	 * Determines whether an instances is associated with the "target" installer or not.
+	 * @param instance an instance (not null)
+	 * @return true if it is associated with the "target" installer, false otherwise
+	 */
+	public static boolean isTarget( Instance instance ) {
+		return instance.getComponent() != null
+				&& Constants.TARGET_INSTALLER.equalsIgnoreCase( instance.getComponent().getInstallerName());
 	}
 }

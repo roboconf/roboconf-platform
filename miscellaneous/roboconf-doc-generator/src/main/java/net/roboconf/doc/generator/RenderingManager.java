@@ -33,6 +33,7 @@ import java.util.Map;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.doc.generator.internal.IRenderer;
 import net.roboconf.doc.generator.internal.renderers.HtmlRenderer;
+import net.roboconf.doc.generator.internal.renderers.MarkdownRenderer;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -101,6 +102,10 @@ public class RenderingManager {
 		switch( renderer ) {
 		case HTML:
 			result = new HtmlRenderer( outputDirectory, application, applicationDirectory );
+			break;
+
+		case MARKDOWN:
+			result = new MarkdownRenderer( outputDirectory, application, applicationDirectory );
 			break;
 
 		default:

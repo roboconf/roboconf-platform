@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
@@ -498,5 +499,19 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( original_3.getComponent(), lastChild.getComponent());
 		Assert.assertEquals( 0, lastChild.getChildren().size());
 		Assert.assertEquals( copy, lastChild.getParent());
+	}
+
+
+	@Test
+	public void testIsTarget() {
+
+		Instance inst = new Instance( "i" );
+		Assert.assertFalse( InstanceHelpers.isTarget( inst ));
+
+		inst.setComponent( new Component( "comp" ).installerName( "whatever" ));
+		Assert.assertFalse( InstanceHelpers.isTarget( inst ));
+
+		inst.getComponent().setInstallerName( Constants.TARGET_INSTALLER );
+		Assert.assertTrue( InstanceHelpers.isTarget( inst ));
 	}
 }

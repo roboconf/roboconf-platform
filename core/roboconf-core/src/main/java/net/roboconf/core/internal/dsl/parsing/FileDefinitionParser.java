@@ -165,7 +165,7 @@ public class FileDefinitionParser {
 
 		int result = P_CODE_NO;
 		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_FACET )) {
-			String newLine = line.replaceFirst( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_FACET ), "" );
+			String newLine = line.replaceFirst( "(?i)\\s*" + Pattern.quote( ParsingConstants.KEYWORD_FACET ), "" );
 			result = recognizePropertiesHolder( newLine, br, new BlockFacet( this.definitionFile ));
 		}
 
@@ -182,7 +182,7 @@ public class FileDefinitionParser {
 
 		int result = P_CODE_NO;
 		if( line.trim().toLowerCase().startsWith( ParsingConstants.KEYWORD_INSTANCE_OF )) {
-			String newLine = line.replaceFirst( "\\s*" + Pattern.quote( ParsingConstants.KEYWORD_INSTANCE_OF ), "" );
+			String newLine = line.replaceFirst( "(?i)\\s*" + Pattern.quote( ParsingConstants.KEYWORD_INSTANCE_OF ), "" );
 			BlockInstanceOf newInstance = new BlockInstanceOf( this.definitionFile );
 			result = recognizePropertiesHolder( newLine, br, newInstance );
 

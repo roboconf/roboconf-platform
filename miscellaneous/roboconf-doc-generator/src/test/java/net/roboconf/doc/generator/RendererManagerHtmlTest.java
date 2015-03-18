@@ -33,13 +33,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.RuntimeModelIo;
-import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.RenderingManager.Renderer;
 import nu.validator.messages.MessageEmitter;
@@ -50,40 +46,13 @@ import nu.validator.source.SourceCode;
 import nu.validator.validation.SimpleDocumentValidator;
 import nu.validator.xml.SystemErrErrorHandler;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.xml.sax.InputSource;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RendererManagerHtmlTest {
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
-	private File applicationDirectory;
-	private File outputDir;
-	private ApplicationLoadResult alr;
-	private RenderingManager rm;
-
-
-	@Before
-	public void before() throws Exception {
-
-		this.applicationDirectory = TestUtils.findTestFile( "/lamp" );
-		Assert.assertNotNull( this.applicationDirectory );
-		Assert.assertTrue( this.applicationDirectory.exists());
-
-		this.alr = RuntimeModelIo.loadApplication( this.applicationDirectory );
-		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( this.alr.getLoadErrors()));
-
-		this.outputDir = this.folder.newFolder();
-		this.rm = new RenderingManager();
-	}
-
+public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 
 	@Test
 	public void checkHtmlValidatorWorks() throws Exception {
@@ -209,11 +178,7 @@ public class RendererManagerHtmlTest {
 	private void verifyHtml( File f ) throws Exception {
 
 		String content = Utils.readFileContent( f );
-		String loweredContent = content.toLowerCase();
-		Assert.assertFalse( loweredContent.contains( " null " ));
-		Assert.assertFalse( loweredContent.contains( ">null" ));
-		Assert.assertFalse( loweredContent.contains( "null<" ));
-
+		verifyContent( content );
 		Assert.assertTrue( "Invalid HTML file: ", validateHtml( content ));
 	}
 

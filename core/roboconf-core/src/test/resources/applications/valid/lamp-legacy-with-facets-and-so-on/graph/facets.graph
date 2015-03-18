@@ -5,6 +5,6 @@ facet Virtual_Machine {
 }
 
 # The deployable facet
-facet deployable {
+Facet deployable {
 	# nothing
 }
