@@ -28,7 +28,9 @@ package net.roboconf.doc.generator;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.doc.generator.internal.IRenderer;
@@ -40,12 +42,33 @@ import net.roboconf.doc.generator.internal.renderers.MarkdownRenderer;
  */
 public class RenderingManager {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
+
+
 	/**
 	 * The available rendering solutions.
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public enum Renderer {
 		HTML, PDF, MARKDOWN, FOP;
+
+		/**
+		 * Finds a renderer by name (case-insensitive).
+		 * @param renderer a render name
+		 * @return a render, or null if none matched
+		 */
+		public static Renderer which( String renderer ) {
+
+			Renderer result = null;
+			for( Renderer r : values()) {
+				if( r.toString().equalsIgnoreCase( renderer )) {
+					result = r;
+					break;
+				}
+			}
+
+			return result;
+		}
 	}
 
 
@@ -62,6 +85,44 @@ public class RenderingManager {
 	throws IOException {
 		options = fixOptions( options );
 		buildRenderer( outputDirectory, application, applicationDirectory, renderer ).render( options );
+	}
+
+
+	/**
+	 * Renders a Roboconf application into a given format.
+	 * <p>
+	 * When several renderers are provided, images generation is performed only once.
+	 * </p>
+	 *
+	 * @param outputDirectory the directory into which the documentation must be generated
+	 * @param application an application
+	 * @param applicationDirectory the application's directory
+	 * @param renderers a non-null list of render names
+	 * @param options the generation options (can be null)
+	 * @throws IOException if something went wrong
+	 */
+	public void render( File outputDirectory, Application application, File applicationDirectory, List<String> renderers, Map<String,String> options )
+	throws IOException {
+
+		options = fixOptions( options );
+		if( renderers.size() > 1 )
+			options.put( DocConstants.OPTION_GEN_IMAGES_ONCE, "true" );
+
+		for( String renderer : renderers ) {
+			Renderer r = Renderer.which( renderer );
+			if( r == null ) {
+				this.logger.severe( "No renderer called '" + renderer +"' was found. Skipping it." );
+				continue;
+			}
+
+			String subDirName = renderer.toLowerCase();
+			String locale = options.get( DocConstants.OPTION_LOCALE );
+			if( locale != null )
+				subDirName += "_" + locale;
+
+			File subDir = new File( outputDirectory, subDirName );
+			buildRenderer( subDir, application, applicationDirectory, r ).render( options );
+		}
 	}
 
 

@@ -9,13 +9,13 @@
 </head>
 
 <body>
-	<a href="roboconf.html"><img id="header-img" src="roboconf.jpg" alt="Roboconf" /></a>
+	<a href="index.html"><img id="header-img" src="roboconf.jpg" alt="Roboconf" /></a>
 	
 	<div class="menu">
-		${MENU}
+${MENU}
 	</div>
 	<div class="content">	
-		${CONTENT}
+${CONTENT}
 	</div>
 	<div class="clear"></div>
 	

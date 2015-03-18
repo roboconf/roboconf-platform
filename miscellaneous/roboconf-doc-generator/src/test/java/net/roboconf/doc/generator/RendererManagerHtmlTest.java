@@ -123,7 +123,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		f = new File( this.outputDir, "png" );
 		Assert.assertTrue( f.isDirectory());
 
-		f = new File( this.outputDir, "roboconf.html" );
+		f = new File( this.outputDir, "index.html" );
 		Assert.assertTrue( f.exists());
 
 		Assert.assertEquals( 4, this.outputDir.listFiles().length );
@@ -151,7 +151,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		f = new File( this.outputDir, "instances" );
 		Assert.assertTrue( f.isDirectory());
 
-		f = new File( this.outputDir, "roboconf.html" );
+		f = new File( this.outputDir, "index.html" );
 		Assert.assertTrue( f.exists());
 
 		Assert.assertEquals( 6, this.outputDir.listFiles().length );

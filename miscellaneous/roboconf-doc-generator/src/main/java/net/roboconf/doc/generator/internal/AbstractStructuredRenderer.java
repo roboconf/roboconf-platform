@@ -149,7 +149,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	protected abstract String renderDocumentTitle();
 	protected abstract String renderDocumentIndex();
 
-	protected abstract String renderImage( String componentName, DiagramType type, String absoluteImagePath );
+	protected abstract String renderImage( String componentName, DiagramType type, String relativeImagePath );
 
 	protected abstract String applyBoldStyle( String text, String keyword );
 	protected abstract String applyLink( String text, String linkId );
@@ -354,7 +354,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 					String componentName = i.getComponent().getName();
 					String link = componentName;
 					if( this.options.containsKey( DocConstants.OPTION_HTML_EXPLODED ))
-						link = "../" + DocConstants.SECTION_COMPONENTS + componentName; //$NON-NLS-1$
+						link = "../../" + DocConstants.SECTION_COMPONENTS + componentName; //$NON-NLS-1$
 
 					String installer = ComponentHelpers.findComponentInstaller( i.getComponent());
 					section.append( addTableLine(
@@ -401,18 +401,24 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	throws IOException {
 
 		String baseName = comp.getName() + "_" + type; //$NON-NLS-1$
-		File pngFile = new File( this.outputDirectory, "png/" + baseName + ".png" ); //$NON-NLS-1$ //$NON-NLS-2$
-		Utils.createDirectory( pngFile.getParentFile());
+		String relativePath = "png/" + baseName + ".png"; //$NON-NLS-1$ //$NON-NLS-2$
+		if( this.options.containsKey( DocConstants.OPTION_GEN_IMAGES_ONCE ))
+			relativePath = "../" + relativePath;
 
-		GraphUtils.writeGraph(
-				pngFile,
-				comp,
-				transformer.getConfiguredLayout(),
-				transformer.getGraph(),
-				transformer.getEdgeShapeTransformer(),
-				this.options );
+		File pngFile = new File( this.outputDirectory, relativePath ).getCanonicalFile();
+		if( ! pngFile.exists()) {
 
-		sb.append( renderImage( comp.getName(), type, pngFile.getAbsolutePath()));
+			Utils.createDirectory( pngFile.getParentFile());
+			GraphUtils.writeGraph(
+					pngFile,
+					comp,
+					transformer.getConfiguredLayout(),
+					transformer.getGraph(),
+					transformer.getEdgeShapeTransformer(),
+					this.options );
+		}
+
+		sb.append( renderImage( comp.getName(), type, relativePath ));
 	}
 
 

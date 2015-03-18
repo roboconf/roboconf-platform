@@ -29,6 +29,7 @@ import java.io.File;
 
 import net.roboconf.core.utils.Utils;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
@@ -76,6 +77,9 @@ public class ValidateApplicationMojoTest extends ValidateProjectMojoTest {
 		ValidateApplicationMojo mojo = (ValidateApplicationMojo) super.findMojo( projectName, "validate-application" );
 		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
 		Assert.assertNotNull( project );
+
+		final MavenSession mavenSession = this.rule.newMavenSession( project );
+		this.rule.setVariableValueToObject( mojo, "session", mavenSession );
 
 		// Copy the resources
 		Utils.copyDirectory(

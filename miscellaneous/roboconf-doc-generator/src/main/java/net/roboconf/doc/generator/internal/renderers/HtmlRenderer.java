@@ -108,9 +108,9 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 		StringBuilder sb = new StringBuilder();
 		for( String s : paragraph.trim().split( "\n\n" )) {
-			sb.append( "<p>" );
+			sb.append( "\n<p>" );
 			sb.append( s.trim().replaceAll( "\n", "<br />" ));
-			sb.append( "</p>\n" );
+			sb.append( "</p>\n\n" );
 		}
 
 		return sb.toString();
@@ -126,14 +126,14 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	protected String renderList( Collection<String> listItems ) {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( "<ul>\n" );
+		sb.append( "\n<ul>\n" );
 		for( String s : listItems ) {
 			sb.append( "\t<li>" );
 			sb.append( s );
 			sb.append( "</li>\n" );
 		}
 
-		sb.append( "</ul>\n" );
+		sb.append( "</ul>\n\n" );
 		return sb.toString();
 	}
 
@@ -198,7 +198,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 			}
 
 		} else {
-			sb.append( "<p class=\"separator\"> &nbsp; </p>\n" );
+			sb.append( "\n<p class=\"separator\"> &nbsp; </p>\n" );
 		}
 
 		return sb.toString();
@@ -222,13 +222,9 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	 * #renderImage(java.lang.String, net.roboconf.doc.generator.internal.AbstractStructuredRenderer.DiagramType, java.lang.String)
 	 */
 	@Override
-	protected String renderImage( String componentName, DiagramType type, String absoluteImagePath ) {
-
-		String outputPath = this.outputDirectory.getAbsolutePath();
-		String path = absoluteImagePath.substring( outputPath.length() + 1 );
-
+	protected String renderImage( String componentName, DiagramType type, String relativeImagePath ) {
 		String alt = componentName + " - " + type;
-		return "<img src=\"" + path + "\" alt=\"" + alt + "\" />\n";
+		return "<img src=\"" + relativeImagePath + "\" alt=\"" + alt + "\" />\n";
 	}
 
 
@@ -253,9 +249,9 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "<ul>\n" );
-		sb.append( "<li><a href=\"roboconf.html#overview\">Overview</a></li>\n" );
-		sb.append( "<li><a href=\"roboconf.html#components\">Components</a></li>\n" );
-		sb.append( "<li><a href=\"roboconf.html#instances\">Instances</a></li>\n" );
+		sb.append( "\t<li><a href=\"roboconf.html#overview\">Overview</a></li>\n" );
+		sb.append( "\t<li><a href=\"roboconf.html#components\">Components</a></li>\n" );
+		sb.append( "\t<li><a href=\"roboconf.html#instances\">Instances</a></li>\n" );
 		sb.append( "</ul>\n" );
 
 		this.menu = sb.toString();
@@ -390,7 +386,8 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 					.replace( CONTENT_MARKUP, entry.getValue().toString())
 					.replace( MENU_MARKUP, this.menu )
 					.replace( "href=\"", "href=\"../" )
-					.replace( "src=\"", "src=\"../" );
+					.replace( "src=\"", "src=\"../" )
+					.replaceAll( "\n{3,}", "\n\n" );
 
 			File targetFile = new File( this.outputDirectory, entry.getKey() + ".html" );
 			Utils.createDirectory( targetFile.getParentFile());
@@ -401,9 +398,11 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 		String toWrite = out.toString( "UTF-8" )
 				.replace( TITLE_MARKUP, this.application.getName())
 				.replace( CONTENT_MARKUP, fileContent )
-				.replace( MENU_MARKUP, this.menu );
+				.replace( MENU_MARKUP, this.menu )
+				.replaceAll( "\n{3,}", "\n\n" );
 
-		File targetFile = new File( this.outputDirectory, "roboconf.html" );
+		File targetFile = new File( this.outputDirectory, "index.html" );
+		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( toWrite, targetFile );
 
 		// Copy the CSS

@@ -37,6 +37,7 @@ import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -64,6 +65,9 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
 
+	@Parameter( defaultValue = "${session}", readonly = true, required = true )
+	private MavenSession session;
+
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -75,6 +79,7 @@ public class ValidateApplicationMojo extends AbstractMojo {
 
 		// Validate the application
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( completeAppDirectory );
+		this.session.getUserProperties().put( MavenPluginConstants.SESSION_APP, alr.getApplication());
 
 		// Analyze the result
 		try {

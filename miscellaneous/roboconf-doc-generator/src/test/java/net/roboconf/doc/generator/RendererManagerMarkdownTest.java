@@ -40,7 +40,6 @@ import org.junit.Test;
  */
 public class RendererManagerMarkdownTest extends AbstractTestForRendererManager {
 
-
 	@Test
 	public void testMarkdown_nullOptions() throws Exception {
 
@@ -88,7 +87,7 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 		File f = new File( this.outputDir, "png" );
 		Assert.assertTrue( f.isDirectory());
 
-		f = new File( this.outputDir, "roboconf.md" );
+		f = new File( this.outputDir, "index.md" );
 		Assert.assertTrue( f.exists());
 
 		String content = Utils.readFileContent( f );
