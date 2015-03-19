@@ -62,6 +62,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	protected File applicationDirectory;
 	protected Map<String,String> options;
 	protected Messages messages;
+	protected String locale;
 
 
 	/**
@@ -97,9 +98,9 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		StringBuilder sb = new StringBuilder();
 
 		// Check the language
-		String locale = options.get( DocConstants.OPTION_LOCALE );
-		if( locale != null )
-			this.messages = new Messages( locale );
+		this.locale = options.get( DocConstants.OPTION_LOCALE );
+		if( this.locale != null )
+			this.messages = new Messages( this.locale );
 		else
 			this.messages = new Messages();
 
@@ -433,8 +434,22 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	private String readCustomInformation( File applicationDirectory, String componentName, String suffix )
 	throws IOException {
 
+		// Prepare the file name
+		StringBuilder sb = new StringBuilder();
+		sb.append( componentName );
+		if( this.locale != null )
+			sb.append( "_" + this.locale );
+
+		sb.append( suffix );
+		sb.insert( 0, "/" ); //$NON-NLS-1$
+		sb.insert( 0, DocConstants.DOC_DIR );
+
+		// Handle usual (doc) and Maven (src/main/doc) cases
+		File f = new File( applicationDirectory, sb.toString());
+		if( ! f.exists())
+			f = new File( f.getParentFile().getParentFile(), sb.toString());
+
 		String result = ""; //$NON-NLS-1$
-		File f = new File( applicationDirectory, DocConstants.DOC_DIR + "/" + componentName + suffix ); //$NON-NLS-1$
 		if( f.exists())
 			result = Utils.readFileContent( f );
 

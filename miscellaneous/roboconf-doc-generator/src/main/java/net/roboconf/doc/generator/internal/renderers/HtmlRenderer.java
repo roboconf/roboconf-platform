@@ -27,6 +27,7 @@ package net.roboconf.doc.generator.internal.renderers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -49,6 +50,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	private static final String TITLE_MARKUP = "${TITLE}";
 	private static final String MENU_MARKUP = "${MENU}";
 	private static final String CONTENT_MARKUP = "${CONTENT}";
+	private static final String CSS_MARKUP = "${CSS}";
 
 	private String menu;
 	private final Map<String,StringBuilder> sectionNameToContent = new HashMap<String,StringBuilder> ();
@@ -372,9 +374,30 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	protected File writeFileContent( String fileContent ) throws IOException {
 
 		// Load the template
-		InputStream in = getClass().getResourceAsStream( "/html.tpl" );
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Utils.copyStream( in, out );
+		InputStream in = null;
+		try {
+			in = getClass().getResourceAsStream( "/html.tpl" );
+			Utils.copyStream( in, out );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Create the target directory
+		File targetFile = new File( this.outputDirectory, "index.html" );
+		Utils.createDirectory( targetFile.getParentFile());
+
+		// Deal with the CSS file
+		final String css;
+		final String cssReference = this.options.get( DocConstants.OPTION_HTML_CSS_REFERENCE );
+		if( cssReference != null ) {
+			css = cssReference.trim();
+
+		} else {
+			css = "style.css";
+			writeCssFile();
+		}
 
 		// Write sections
 		for( Map.Entry<String,StringBuilder> entry : this.sectionNameToContent.entrySet()) {
@@ -389,31 +412,35 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 					.replace( "src=\"", "src=\"../" )
 					.replaceAll( "\n{3,}", "\n\n" );
 
-			File targetFile = new File( this.outputDirectory, entry.getKey() + ".html" );
-			Utils.createDirectory( targetFile.getParentFile());
-			Utils.writeStringInto( toWrite, targetFile );
+			if( cssReference != null )
+				toWrite = toWrite.replace( "../" + CSS_MARKUP, css );
+			else
+				toWrite = toWrite.replace( CSS_MARKUP, css );
+
+			File sectionFile = new File( this.outputDirectory, entry.getKey() + ".html" );
+			Utils.createDirectory( sectionFile.getParentFile());
+			Utils.writeStringInto( toWrite, sectionFile );
 		}
 
 		// Write the main file
 		String toWrite = out.toString( "UTF-8" )
 				.replace( TITLE_MARKUP, this.application.getName())
+				.replace( CSS_MARKUP, css )
 				.replace( CONTENT_MARKUP, fileContent )
 				.replace( MENU_MARKUP, this.menu )
 				.replaceAll( "\n{3,}", "\n\n" );
 
-		File targetFile = new File( this.outputDirectory, "index.html" );
-		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( toWrite, targetFile );
 
-		// Copy the CSS
-		in = getClass().getResourceAsStream( "/style.css" );
-		File cssFile = new File( this.outputDirectory, "style.css" );
-		Utils.copyStream( in, cssFile );
-
 		// And the header image
-		in = getClass().getResourceAsStream( "/roboconf.jpg" );
-		File imgFile = new File( this.outputDirectory, "roboconf.jpg" );
-		Utils.copyStream( in, imgFile );
+		try {
+			in = getClass().getResourceAsStream( "/roboconf.jpg" );
+			File imgFile = new File( this.outputDirectory, "roboconf.jpg" );
+			Utils.copyStream( in, imgFile );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
 
 		return targetFile;
 	}
@@ -421,5 +448,24 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 	private String createId( String title ) {
 		return title.toLowerCase().replaceAll( "\\s+", "-" );
+	}
+
+
+	private void writeCssFile() throws IOException {
+
+		InputStream in = null;
+		String location = this.options.get( DocConstants.OPTION_HTML_CSS_FILE );
+		try {
+			if( ! Utils.isEmptyOrWhitespaces( location ))
+				in = new FileInputStream( new File( location ));
+			else
+				in = getClass().getResourceAsStream( "/style.css" );
+
+			File cssFile = new File( this.outputDirectory, "style.css" );
+			Utils.copyStream( in, cssFile );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
 	}
 }
