@@ -55,6 +55,17 @@ import com.vmware.vim25.mo.VirtualMachine;
 public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "iaas-vmware";
+
+	static final String URL = "vmware.url";
+	static final String USER = "vmware.user";
+	static final String PASSWORD = "vmware.password";
+	static final String IGNORE_CERTIFICATE = "vmware.ignorecert";
+	static final String TEMPLATE = "vmware.template";
+	static final String CLUSTER = "vmware.cluster";
+	static final String DATA_CENTER = "vmware.datacenter";
+	static final String VM_USER = "vmware.vmuser";
+	static final String VM_PASSWORD = "vmware.vmpassword";
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
@@ -84,17 +95,17 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	throws TargetException {
 
 		try {
-			final String machineImageId = targetProperties.get("vmware.template");
+			final String machineImageId = targetProperties.get( TEMPLATE );
 			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
 
 			final ComputeResource vmwareComputeResource = (ComputeResource)(
 					new InventoryNavigator( vmwareServiceInstance.getRootFolder())
-					.searchManagedEntity("ComputeResource", targetProperties.get("vmware.cluster")));
+					.searchManagedEntity("ComputeResource", targetProperties.get( CLUSTER )));
 
 			// Generate the user data first, so that nothing has been done on the IaaS if it fails
 			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineImageId );
-			String vmwareDataCenter = targetProperties.get("vmware.datacenter");
+			String vmwareDataCenter = targetProperties.get( DATA_CENTER );
 			Folder vmFolder =
 					((Datacenter)(new InventoryNavigator( vmwareServiceInstance.getRootFolder())
 					.searchManagedEntity("Datacenter", vmwareDataCenter)))
@@ -102,7 +113,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 			this.logger.fine("machineImageId=" + machineImageId);
 			if (vm == null || vmFolder == null)
-				throw new TargetException("VirtualMachine (= " + vm + " ) or Datacenter path (= " + vmFolder + " ) is NOT correct. Pls double check.");
+				throw new TargetException("VirtualMachine (= " + vm + " ) or Datacenter path (= " + vmFolder + " ) is NOT correct. Please, double check.");
 
 			VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
 			cloneSpec.setLocation(new VirtualMachineRelocateSpec());
@@ -117,7 +128,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 			this.logger.fine("Cloning the template: "+ machineImageId +" ...");
 			String status = task.waitForTask();
 			if (!status.equals(Task.SUCCESS))
-				throw new TargetException("Failure: Virtual Machine cannot be cloned");
+				throw new TargetException("Failure: Virtual Machine cannot be cloned." );
 
 			VirtualMachine vm2 = getVirtualMachine( vmwareServiceInstance, rootInstanceName );
 			this.logger.fine("Transforming the clone template to Virtual machine ...");
@@ -132,7 +143,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 			this.logger.fine("Starting the virtual machine: "+ rootInstanceName +" ...");
 			status = task.waitForTask();
 			if( ! status.equals( Task.SUCCESS ))
-				throw new TargetException("Failure -: Virtual Machine cannot be started");
+				throw new TargetException("Failure: Virtual Machine cannot be started." );
 
 			return vm2.getName();
 
@@ -205,19 +216,19 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, instanceId );
 			if (vm == null)
-				throw new TargetException("error vm: "+instanceId+" not found");
+				throw new TargetException( "Error vm: " + instanceId + " was not found");
 
 			Task task = vm.powerOffVM_Task();
 			try {
 				if(!(task.waitForTask()).equals(Task.SUCCESS))
-					throw new TargetException("error when trying to stop vm: "+instanceId);
+					throw new TargetException( "Error while trying to stop vm: " + instanceId);
 
 			} catch (InterruptedException ignore) { /*ignore*/ }
 
 			task = vm.destroy_Task();
 			try {
 				if(!(task.waitForTask()).equals(Task.SUCCESS))
-					throw new TargetException("error when trying to remove vm: "+instanceId);
+					throw new TargetException( "Error while trying to remove vm: " + instanceId);
 
 			} catch (InterruptedException ignore) { /*ignore*/ }
 
@@ -247,9 +258,9 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	throws RemoteException, MalformedURLException {
 
 		return new ServiceInstance(
-				new URL(targetProperties.get("vmware.url")),
-				targetProperties.get("vmware.user"),
-				targetProperties.get("vmware.password"),
-				Boolean.parseBoolean(targetProperties.get("vmware.ignorecert")));
+				new URL(targetProperties.get( URL )),
+				targetProperties.get( USER ),
+				targetProperties.get( PASSWORD ),
+				Boolean.parseBoolean(targetProperties.get( IGNORE_CERTIFICATE )));
 	}
 }
