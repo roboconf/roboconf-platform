@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ITargetResolver;
@@ -65,11 +66,7 @@ public final class TargetHelpers {
 	 */
 	public static Map<String,String> loadTargetProperties( File applicationFilesDirectory, Instance instance ) throws IOException {
 
-		Instance realRootInstance = instance;
-		while(realRootInstance.getParent() != null && ! Constants.TARGET_INSTALLER.equalsIgnoreCase(realRootInstance.getComponent().getInstallerName())) {
-			realRootInstance = realRootInstance.getParent();
-		}
-
+		Instance realRootInstance = InstanceHelpers.findRootInstance( instance );
 		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, realRootInstance );
 		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
 
