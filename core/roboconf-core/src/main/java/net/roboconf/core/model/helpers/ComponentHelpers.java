@@ -34,12 +34,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.comparators.AbstractTypeComparator;
 
 /**
  * Helpers related to components.
@@ -87,6 +89,21 @@ public final class ComponentHelpers {
 			partialGraph.getRootComponents().add( component );
 
 		return findComponent( partialGraph, componentName );
+	}
+
+
+	/**
+	 * Extracts the names of abstract types.
+	 * @param types a non-null list of types
+	 * @return a non-null list of string
+	 */
+	public static List<String> extractNames( Collection<? extends AbstractType> types ) {
+
+		List<String> result = new ArrayList<String> ();
+		for( AbstractType t : types )
+			result.add( t.getName());
+
+		return result;
 	}
 
 
@@ -531,6 +548,99 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds the component dependencies for a given component.
+	 * @param component a component
+	 * @return a non-null map containing component or facet names that this component needs
+	 */
+	public static Map<String,Boolean> findComponentDependenciesFor( Component component ) {
+
+		Map<String,Boolean> map = new HashMap<String,Boolean> ();
+		for( Map.Entry<String,Boolean> entry : findAllImportedVariables( component ).entrySet()) {
+			String componentOrFacet = VariableHelpers.parseVariableName( entry.getKey()).getKey();
+			Boolean b = map.get( componentOrFacet );
+			if( b == null || b )
+				map.put( componentOrFacet, entry.getValue());
+		}
+
+		return map;
+	}
+
+
+	/**
+	 * Finds all the components a component depends on.
+	 * @param component a component
+	 * @param app the application
+	 * @return a non-null map (key = component name, value = true if the dependency is optional, false otherwise)
+	 */
+	public static Map<Component,Boolean> findComponentDependenciesFor( Component component, Application app ) {
+
+		// Determine which components or facets are required.
+		Map<String,Boolean> map = findComponentDependenciesFor( component );
+
+		// Resolve names to components
+		Map<Component,Boolean> result = new HashMap<Component,Boolean> ();
+		for( Component c : findAllComponents( app )) {
+
+			// Check component names first.
+			Boolean required = map.get( c.getName());
+			if( required != null ) {
+				result.put( c, required );
+			}
+
+			// Or maybe it is a facet name.
+			else for( Facet f : findAllFacets( c )) {
+				required = map.get( f.getName());
+
+				// If this component owns the facet, stop here.
+				if( required != null ) {
+					result.put( c, required );
+					break;
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds all the components that depend on a given component.
+	 * @param component a component
+	 * @param app the application
+	 * @return a non-null map (key = component name, value = true if the dependency is optional, false otherwise)
+	 */
+	public static Map<Component,Boolean> findComponentsThatDependOn( Component component, Application app ) {
+
+		// Determine the matching prefixes.
+		Set<String> prefixes = new HashSet<String> ();
+		prefixes.add( component.getName());
+		for( Facet f : findAllFacets( component ))
+			prefixes.add( f.getName());
+
+		// Resolve names to components
+		Map<Component,Boolean> result = new HashMap<Component,Boolean> ();
+		for( Component c : findAllComponents( app )) {
+
+			Map<String,Boolean> map = findComponentDependenciesFor( c );
+			map.keySet().retainAll( prefixes );
+
+			// Empty map => 'c' does not depend on 'component'
+			if( map.isEmpty())
+				continue;
+
+			// Otherwise, determine the dependency
+			boolean value = true;
+			for( Boolean b : map.values())
+				value = value && b;
+
+			result.put( c, value );
+		}
+
+		return result;
+	}
+
+
+	/**
 	 * Fixes the name of an exported variable name.
 	 * <p>
 	 * An exported variable must ALWAYS be prefixed with the name of the "type"
@@ -566,7 +676,7 @@ public final class ComponentHelpers {
 	private static Collection<Component> findAncestorsOrChildren( final Component component, final boolean children ) {
 
 		// The algorithm of death...
-		Set<Component> result = new HashSet<Component> ();
+		Set<Component> result = new TreeSet<Component>( new AbstractTypeComparator());
 		for( Component c : findAllExtendedComponents( component )) {
 
 			// A component may have zero child or ancestor.

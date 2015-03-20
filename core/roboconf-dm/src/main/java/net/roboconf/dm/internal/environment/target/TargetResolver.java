@@ -64,7 +64,7 @@ public class TargetResolver implements ITargetResolver {
 			String targetId = targetProperties.get( TARGET_ID );
 			targetHandler = findTargetHandler( targets, targetId );
 			if( targetHandler == null )
-				throw new TargetException( "No deployment handler was found for " + instance.getName() + "." );
+				throw new TargetException( "No deployment handler was found for " + instance.getName() + ". Target ID: " + targetId );
 
 		} catch( IOException e ) {
 			throw new TargetException( e );

@@ -1,0 +1,152 @@
+/* Global Properties */
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+html, body {
+	height: 100%;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-size: 14px;
+	line-height: 20px;
+}
+
+.clear {
+	clear: both;
+}
+
+p {
+	padding: 4px 0;
+}
+
+ul {
+	margin: 7px 0 10px 0;
+}
+
+/* Top Menu */
+
+#header-img {
+	height: 90px;
+	margin: 8px 0 28px 10px;
+	padding: 0 34px 14px 18px;
+	border-bottom: solid black 3px;
+}
+
+/* Left Menu */
+
+.menu {
+	position: fixed;
+	left: 22px;
+	width: 180px;
+}
+
+.menu li {
+	color: black;
+}
+
+.menu > ul {
+	list-style: none;
+}
+
+.menu > ul > li > a {
+	position: relative;
+	display: block;
+	padding: 7px 0 7px 10px;
+}
+
+.menu li:hover {
+	color: #b23e4b;
+}
+
+.menu a, .menu a:active, .menu a:hover {
+	color: inherit;
+	text-decoration: none;
+}
+
+.menu li.active {
+	font-weight: bold;
+	color: #b23e4b;
+}
+
+/* Other Pages */
+
+.content {
+	margin-left: 260px;
+	margin-right: 34px;
+	padding-bottom: 60px;
+}
+
+.content a, .content a:hover {
+	color: #b23e4b;
+	text-decoration: none;
+}
+
+.content h1 {
+	font-size: 2.4em;
+	font-weight: bold;
+	margin: 15px 0 10px 0;
+}
+
+.content h2 {
+	font-size: 1.7em;
+	font-weight: bold;
+	margin-top: 15px;
+}
+
+.content h3 {
+	font-size: 1.1em;
+	font-weight: normal;
+	text-decoration: underline;
+	margin: 12px 0 0 0;
+}
+
+.content .separator {
+	margin-bottom: 24px;
+}
+
+.content ul {
+	list-style-type: square;
+	padding-left: 40px;
+}
+
+.content ol {
+	padding-left: 40px;
+}
+
+.content ul > li > ul {
+	list-style-type: disc;
+	margin-bottom: 18px;
+	margin-top: -6px;
+}
+
+.content pre {
+	margin-bottom: 18px;
+}
+
+.content img {
+	margin: 20px 14px;
+}
+
+/* Tables */
+
+table {
+	margin: 16px 0 27px;
+	border: solid black 1px;
+	border-collapse: collapse;
+	width: 100%;
+	table-layout: fixed;
+}
+
+table td {
+	border: solid black 1px;
+	padding: 10px 14px;
+}
+
+table th {
+	background-color: #c8c8c8;
+	text-align: left;
+	font-weight: bold;
+	border: solid black 1px;
+	padding: 10px 14px;
+}

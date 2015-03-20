@@ -44,6 +44,9 @@ public class ComplexApplicationFactory1 {
 	public static final String TOMCAT_8 = "tomcat8";
 	public static final String MYSQL = "MySql";
 	public static final String MONGO_DB = "MongoDB";
+	public static final String APP_1 = "app1";
+	public static final String APP_2 = "app2";
+	public static final String APP_3 = "app3";
 
 	public static final String FACET_VM = "VM";
 	public static final String FACET_DEPLOYABLE = "deployable";
@@ -111,13 +114,31 @@ public class ComplexApplicationFactory1 {
 		Component tomcat8 = new Component( TOMCAT_8 );
 		tomcat8.extendComponent( tomcat );
 
+		// Add redundant variables for the MySQL type
 		Component mySql = new Component( MYSQL ).installerName( "bash" );
+		mySql.exportedVariables.put( "ip", null );
+		mySql.exportedVariables.put( "port", "3306" );
 		mySql.associateFacet( facetDb );
 
 		Component mongoWithoutFacet = new Component( MONGO_DB ).installerName( "Chef" );
 		mongoWithoutFacet.exportedVariables.put( "ip", null );
 		mongoWithoutFacet.exportedVariables.put( "port", "28017" );
 		root1.addChild( mongoWithoutFacet );
+
+		// Applications
+		Component app1 = new Component( APP_1 ).installerName( "file" );
+		app1.importedVariables.put( "Database.port", true );
+		tomcat.addChild( app1 );
+
+		Component app2 = new Component( APP_2 ).installerName( "file" );
+		app2.importedVariables.put( "MySql.ip", false );
+		app2.importedVariables.put( "MySql.port", true );
+		app2.importedVariables.put( "MongoDB.ip", true );
+		app2.importedVariables.put( "MongoDB.port", true );
+		tomcat.addChild( app2 );
+
+		Component app3 = new Component( APP_3 ).installerName( "file" );
+		tomcat8.addChild( app3 );
 
 		return app;
 	}

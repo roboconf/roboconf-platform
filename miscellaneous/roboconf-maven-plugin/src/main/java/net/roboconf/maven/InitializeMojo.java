@@ -78,7 +78,7 @@ public class InitializeMojo extends AbstractMojo {
 		if( Utils.isEmptyOrWhitespaces( this.project.getBuild().getOutputDirectory())
 				|| this.project.getBuild().getOutputDirectory().toLowerCase().endsWith( "/target/classes" )) {
 
-			getLog().debug( "Changing default output directory to " + MavenPluginConstants.TARGET_MODEL_DIRECTORY + "." );
+			getLog().debug( "Changing the default output directory to " + MavenPluginConstants.TARGET_MODEL_DIRECTORY + "." );
 			File outputDirectory = new File( this.project.getBasedir(), MavenPluginConstants.TARGET_MODEL_DIRECTORY );
 			this.project.getBuild().setOutputDirectory( outputDirectory.getAbsolutePath());
 		}

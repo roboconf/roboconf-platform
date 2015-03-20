@@ -192,15 +192,7 @@ public class TargetResolverTest {
 		Assert.assertTrue( propsDir.mkdirs());
 
 		File propsFile = new File( propsDir, Constants.TARGET_PROPERTIES_FILE_NAME );
-		Properties props = new Properties();
-		FileOutputStream os = null;
-		try {
-			os = new FileOutputStream( propsFile );
-			props.store( os, null );
-
-		} finally {
-			Utils.closeQuietly( os );
-		}
+		Utils.writeStringInto( "", propsFile );
 
 		TargetResolver resolver = new TargetResolver();
 		resolver.findTargetHandler( null, ma, rootInstance );
@@ -214,8 +206,21 @@ public class TargetResolverTest {
 		Application app = new Application( "my app" );
 		ManagedApplication ma = new ManagedApplication( app, appDir );
 
-		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "targetHandlers" ));
+		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		TargetResolver resolver = new TargetResolver();
-		resolver.findTargetHandler( null, ma, rootInstance );
+		resolver.findTargetHandler( new ArrayList<TargetHandler>( 0 ), ma, rootInstance );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testFindTargetHandler_invalidInstaller() throws Exception {
+
+		File appDir = this.folder.newFolder( "roboconf_test" );
+		Application app = new Application( "my app" );
+		ManagedApplication ma = new ManagedApplication( app, appDir );
+
+		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "not target" ));
+		TargetResolver resolver = new TargetResolver();
+		resolver.findTargetHandler( new ArrayList<TargetHandler>( 0 ), ma, rootInstance );
 	}
 }

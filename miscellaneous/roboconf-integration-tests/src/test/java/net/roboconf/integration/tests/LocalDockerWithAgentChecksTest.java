@@ -31,6 +31,9 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 
 import java.io.File;
 import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -62,6 +65,21 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * A test where the DM launches Docker containers and checks agents work.
+ * <p>
+ * This test takes quite a long time to run (more than 3 minutes). It also requires
+ * a high internet connection to update the Docker image system (sudo apt-get update...).
+ * </p>
+ * <p>
+ * It was tested on the campus of Université Joseph Fourier (which has a very good internet
+ * connection). It also needs a local Docker install and a local RabbitMQ with "roboconf/roboconf"
+ * credentials ("localhost/guest/guest" does not work - "localhost" does not designate the same thing
+ * for the Docker container and the host machine - and "guest/guest" only works with "localhost").
+ * </p>
+ * <p>
+ * For all these reasons, this test is disabled (@ignored). You can activate it when you want to
+ * verify Docker support with the DM, agents, Karaf and OSGi environments.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunnerWithDocker.class )
@@ -110,12 +128,22 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 				"configuration-directory-location",
 				dir.getCanonicalPath()));
 
-		String ipAddress = Inet4Address.getLocalHost().getHostAddress();
+		String ipAddress = findIpAddress();
 		logger.info( "Configuring the DM with IP " + ipAddress );
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.dm.configuration.cfg",
 				"message-server-ip",
 				ipAddress ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.dm.configuration.cfg",
+				"message-server-username",
+				RoboconfPaxRunnerWithDocker.RBCF ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.dm.configuration.cfg",
+				"message-server-password",
+				RoboconfPaxRunnerWithDocker.RBCF ));
 
 		// Install Docker support
 		String roboconfVersion = getRoboconfVersion();
@@ -164,7 +192,6 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 
 		String agentLocation = System.getProperty( AGENT_LOC );
 		Assert.assertNotNull( agentLocation );
-		System.out.println( agentLocation );
 		Assert.assertTrue( new File( agentLocation ).exists());
 
 		StringBuilder sb = new StringBuilder();
@@ -197,18 +224,27 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		Instance anotherRootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Tomcat VM 1" );
 		Assert.assertNotNull( anotherRootInstance );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, anotherRootInstance.getStatus());
-		try {
-			this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
-			Thread.sleep( 800 );
-			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
+		Logger logger = Logger.getLogger( getClass().getName());
+		logger.info( "About to deploy the first root instance." );
+		try {
+			// The image is generated once, on the first deployment
+			this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
+			Thread.sleep( 1000 * 30 );
+			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
+			logger.info( "The first root instance was sucessfully deployed." );
+
+			// The image is reused, so we only create a new container
+			logger.info( "About to deploy the second root instance." );
 			this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.DEPLOYED_STARTED );
-			Thread.sleep( 800 );
+			Thread.sleep( 1000 * 10 );
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherRootInstance.getStatus());
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
+			logger.info( "The second root instance was sucessfully deployed." );
 
 		} finally {
 			// Undeploy them all
+			logger.info( "About to undeploy all the root instances." );
 			this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
 			this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.NOT_DEPLOYED );
 
@@ -216,5 +252,35 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, anotherRootInstance.getStatus());
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 		}
+	}
+
+
+	/**
+	 * Finds a Docker-reachable IP address for this machine.
+	 * @return an IP address (which will never be 127.0.0.1)
+	 * @throws Exception if no IP address was found
+	 */
+	private String findIpAddress() throws Exception {
+
+		String ipAddress = null;
+		Enumeration<?> e = NetworkInterface.getNetworkInterfaces();
+		loop: while( e.hasMoreElements()) {
+			NetworkInterface n = (NetworkInterface) e.nextElement();
+			Enumeration<?> ee = n.getInetAddresses();
+
+			while( ee.hasMoreElements()) {
+				InetAddress i = (InetAddress) ee.nextElement();
+				if( i instanceof Inet4Address
+						&& ! "127.0.0.1".equals( i.getHostAddress())) {
+					ipAddress = i.getHostAddress();
+					break loop;
+				}
+			}
+		}
+
+		if( ipAddress == null )
+			throw new Exception( "No IP address was found." );
+
+		return ipAddress;
 	}
 }

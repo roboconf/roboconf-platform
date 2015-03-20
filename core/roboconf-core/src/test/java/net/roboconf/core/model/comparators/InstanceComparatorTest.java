@@ -23,15 +23,15 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model;
+package net.roboconf.core.model.comparators;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.InstanceComparator;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
 import org.junit.Test;

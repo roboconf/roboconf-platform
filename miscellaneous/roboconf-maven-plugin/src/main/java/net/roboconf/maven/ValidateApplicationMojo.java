@@ -27,16 +27,22 @@ package net.roboconf.maven;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import net.roboconf.core.Constants;
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.ErrorCode.ErrorLevel;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -64,6 +70,15 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
 
+	@Parameter( defaultValue = "${session}", readonly = true, required = true )
+	private MavenSession session;
+
+	@Parameter( defaultValue = "false" )
+	private boolean recipe;
+
+	@Parameter( defaultValue = "false" )
+	private boolean official;
+
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -75,6 +90,15 @@ public class ValidateApplicationMojo extends AbstractMojo {
 
 		// Validate the application
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( completeAppDirectory );
+		this.session.getUserProperties().put( MavenPluginConstants.SESSION_APP, alr.getApplication());
+
+		// Deal with recipes specifics
+		Collection<RoboconfError> recipeErrors = null;
+		if( this.recipe ) {
+			filterErrorsForRecipes( alr.getLoadErrors());
+			recipeErrors = validateRecipesSpecifics( this.project, alr.getApplication(), this.official );
+			alr.getLoadErrors().addAll( recipeErrors );
+		}
 
 		// Analyze the result
 		try {
@@ -82,6 +106,9 @@ public class ValidateApplicationMojo extends AbstractMojo {
 				reportErrors( alr );
 				if( RoboconfErrorHelpers.containsCriticalErrors( alr.getLoadErrors()))
 					throw new MojoFailureException( "Errors were found in the application." );
+
+				if( this.official && ! recipeErrors.isEmpty())
+					throw new MojoFailureException( "Warnings were found in official recipes. Please, fix them." );
 			}
 
 		} catch( IOException e ) {
@@ -90,6 +117,11 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	}
 
 
+	/**
+	 * Reports errors (in the logger and in a file).
+	 * @param alr
+	 * @throws IOException
+	 */
 	private void reportErrors( ApplicationLoadResult alr ) throws IOException {
 
 		// Add a log entry
@@ -133,5 +165,75 @@ public class ValidateApplicationMojo extends AbstractMojo {
 		File targetFile = new File( this.project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
 		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( globalSb.toString(), targetFile );
+	}
+
+
+	/**
+	 * Filters errors for recipes.
+	 * <p>
+	 * Indeed, some errors only make sense for complete applications, not for
+	 * reusable recipes. This method removes them from the input list of errors.
+	 * </p>
+	 *
+	 * @param errors a non-null list of errors
+	 */
+	private void filterErrorsForRecipes( Collection<RoboconfError> errors ) {
+
+		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
+		for( RoboconfError error : errors ) {
+			if( error.getErrorCode() == ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET )
+				toRemove.add( error );
+		}
+
+		errors.removeAll( toRemove );
+	}
+
+
+	/**
+	 * Validate aspects that are specific to recipes (i.e. partial Roboconf applications).
+	 * <p>
+	 * Most of this validation could have been handled through enforcer rules. However,
+	 * they are all warnings and we do not want to create hundreds of projects. We can
+	 * see these rules as good practices that will be shared amongst all the Roboonf users.
+	 * </p>
+	 * <p>
+	 * At worst, users can ignore these warnings.
+	 * Or they can submit a feature request to add or remove validation rules.
+	 * </p>
+	 *
+	 * @param project a Maven project
+	 * @param application an application
+	 * @param official true if this recipe is maintained by the Roboconf team, false otherwise
+	 * @return a non-null list of errors
+	 */
+	static Collection<RoboconfError> validateRecipesSpecifics( MavenProject project, Application application, boolean official ) {
+
+		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
+		if( ! project.getName().equals( project.getName().toLowerCase()))
+			result.add( new RoboconfError( ErrorCode.REC_PROJECT_IN_LOWER_CASE ));
+
+		if( ! application.getRootInstances().isEmpty())
+			result.add( new RoboconfError( ErrorCode.REC_AVOID_INSTANCES ));
+
+		if( official && ! Constants.OFFICIAL_RECIPES_NAMESPACE.equals( project.getGroupId()))
+			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_NAMESPACE ));
+
+		if( official && ! Constants.OFFICIAL_RECIPES_NAMESPACE.equals( application.getNamespace()))
+			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_NAMESPACE ));
+
+		if( ! project.getName().equals( project.getArtifactId()))
+			result.add( new RoboconfError( ErrorCode.REC_NON_MATCHING_ARTIFACT_ID ));
+
+		File[] files = project.getBasedir().listFiles();
+		boolean found = false;
+		if( files != null ) {
+			for( int i=0; i<files.length && ! found; i++ )
+				found = files[ i ].getName().matches( "(?i)readme\\.?" );
+		}
+
+		if( ! found )
+			result.add( new RoboconfError( ErrorCode.REC_MISSING_README ));
+
+		return result;
 	}
 }

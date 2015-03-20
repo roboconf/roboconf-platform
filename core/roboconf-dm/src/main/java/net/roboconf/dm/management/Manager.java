@@ -56,6 +56,7 @@ import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.environment.messaging.RCDm;
+import net.roboconf.dm.internal.environment.target.TargetHelpers;
 import net.roboconf.dm.internal.environment.target.TargetResolver;
 import net.roboconf.dm.internal.management.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.management.CheckerMessagesTask;
@@ -486,6 +487,8 @@ public class Manager {
 		}
 
 		ManagedApplication ma = new ManagedApplication( application, targetDirectory );
+		TargetHelpers.verifyTargets( this.targetResolver, ma, this.targetHandlers );
+
 		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
@@ -777,7 +780,7 @@ public class Manager {
 			ma.storeAwaitingMessage( instance, message );
 
 		// If the message has been stored, let's try to send all the stored messages.
-		// This preserve message ordering (FIFO).
+		// This preserves message ordering (FIFO).
 
 		// If the VM is online, process awaiting messages to prevent waiting.
 		// This can work concurrently with the messages timer.

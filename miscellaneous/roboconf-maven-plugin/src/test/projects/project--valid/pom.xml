@@ -40,6 +40,14 @@
 				<version>${project.version}</version>
 				<extensions>true</extensions>
 				<configuration></configuration>
+				<executions>
+					<execution>
+						<id>doc</id>
+						<goals>
+							<goal>documentation</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

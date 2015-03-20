@@ -39,6 +39,7 @@ import com.rabbitmq.client.ConnectionFactory;
 public abstract class RabbitMqTestUtils {
 
 	private static final String MESSAGE_SERVER_IP = "127.0.0.1";
+	private static final String GUEST = "guest";
 
 
 	/**
@@ -58,17 +59,31 @@ public abstract class RabbitMqTestUtils {
 	 * </code>
 	 * </p>
 	 */
-	public static boolean checkRabbitMqIsRunning() throws Exception {
+	public static boolean checkRabbitMqIsRunning() {
+		return checkRabbitMqIsRunning( MESSAGE_SERVER_IP, GUEST, GUEST );
+	}
 
+
+	/**
+	 * A method to check whether RabbitMQ is rabbitMqIsRunning or not.
+	 * <p>
+	 * Tests that must be skipped if it is not rabbitMqIsRunning must begin with
+	 * <code>
+	 * Assume.assumeTrue( rabbitMqIsRunning );
+	 * </code>
+	 * </p>
+	 */
+	public static boolean checkRabbitMqIsRunning( String messageServerIp, String username, String password ) {
+
+		Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 		boolean rabbitMqIsRunning = false;
 		Channel channel = null;
 		try {
-			channel = createTestChannel();
+			channel = createTestChannel( messageServerIp, username, password );
 			Object o = channel.getConnection().getServerProperties().get( "version" );
 
 			String version = String.valueOf( o );
 			if( ! isVersionGOEThreeDotTwo( version )) {
-				Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 				logger.warning( "Tests are skipped because RabbitMQ must be at least in version 3.2.x." );
 
 			} else {
@@ -76,14 +91,18 @@ public abstract class RabbitMqTestUtils {
 			}
 
 		} catch( Exception e ) {
-			Logger logger = Logger.getLogger( RabbitMqTestUtils.class.getName());
 			logger.warning( "Tests are skipped because RabbitMQ is not rabbitMqIsRunning." );
 			Utils.logException( logger, e );
 
 		} finally {
-			if( channel != null ) {
-				channel.close();
-				channel.getConnection().close();
+			try {
+				if( channel != null ) {
+					channel.close();
+					channel.getConnection().close();
+				}
+
+			} catch( Exception e ) {
+				Utils.logException( logger, e );
 			}
 		}
 
@@ -119,9 +138,24 @@ public abstract class RabbitMqTestUtils {
 	 * @throws IOException if the creation failed
 	 */
 	public static Channel createTestChannel() throws IOException {
+		return createTestChannel( MESSAGE_SERVER_IP, GUEST, GUEST );
+	}
+
+
+	/**
+	 * Creates a channel to interact with a RabbitMQ server for tests.
+	 * @param messageServerIp the message server's IP address
+	 * @param username the user name for the messaging server
+	 * @param password the password for the messaging server
+	 * @return a non-null channel
+	 * @throws IOException if the creation failed
+	 */
+	public static Channel createTestChannel( String messageServerIp, String username, String password ) throws IOException {
 
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost( MESSAGE_SERVER_IP );
+		factory.setHost( messageServerIp );
+		factory.setUsername( username );
+		factory.setPassword( password );
 		Channel channel = factory.newConnection().createChannel();
 
 		return channel;

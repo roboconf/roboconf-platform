@@ -76,6 +76,21 @@ public final class Utils {
 
 
 	/**
+	 * Capitalizes a string.
+	 * @param s a string
+	 * @return the capitalized string
+	 */
+	public static String capitalize( String s ) {
+
+		String result = s;
+		if( ! Utils.isEmptyOrWhitespaces( s ))
+			result = Character.toUpperCase( s.charAt( 0 )) + s.substring( 1 ).toLowerCase();
+
+		return result;
+	}
+
+
+	/**
 	 * @param o1 an object
 	 * @param o2 another object
 	 * @return true if both objects are null or if they are equal
@@ -551,6 +566,22 @@ public final class Utils {
 			// Existing file or empty directory => delete it
 			else if( ! currentFile.delete())
 				throw new IOException( currentFile.getAbsolutePath() + " could not be deleted." );
+		}
+	}
+
+
+	/**
+	 * Deletes files recursively and remains quiet even if an exception is thrown.
+	 * @param files the files to delete
+	 */
+	public static void deleteFilesRecursivelyAndQuitely( File... files ) {
+
+		try {
+			deleteFilesRecursively( files );
+
+		} catch( IOException e ) {
+			Logger logger = Logger.getLogger( Utils.class.getName());
+			logException( logger, e );
 		}
 	}
 

@@ -25,6 +25,8 @@
 
 package net.roboconf.integration.tests.internal;
 
+import net.roboconf.messaging.internal.RabbitMqTestUtils;
+
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
@@ -53,7 +55,7 @@ public class RoboconfPaxRunner extends PaxExam {
 	@Override
 	public void run( RunNotifier notifier ) {
 
-		if( ! IntegrationTestsUtils.rabbitMqIsRunning()) {
+		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning()) {
 			Description description = Description.createSuiteDescription( this.testClass );
 			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running." )));
 

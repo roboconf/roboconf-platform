@@ -12,7 +12,7 @@ instance of VM {
 }
 
 # A VM with MySQL only
-instance of VM {
+insTance of VM {
 	name: MySQL VM;
 	
 	instance of MySQL {
