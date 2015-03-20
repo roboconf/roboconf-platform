@@ -36,8 +36,8 @@
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
-	<artifactId>roboconf-plugin-bash</artifactId>
-	<name>Roboconf :: Plugin :: Bash</name>
+	<artifactId>roboconf-plugin-script</artifactId>
+	<name>Roboconf :: Plugin :: Script</name>
 	<packaging>bundle</packaging>
 	
 	<dependencies>

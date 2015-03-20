@@ -204,7 +204,7 @@ public class FromInstancesTest {
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
 		vmComponent.addChild( tomcatComponent );
 
-		Component warComponent = new Component( "WAR" ).installerName( "bash" );
+		Component warComponent = new Component( "WAR" ).installerName( "script" );
 		tomcatComponent.addChild( warComponent );
 
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( graphs ).size());

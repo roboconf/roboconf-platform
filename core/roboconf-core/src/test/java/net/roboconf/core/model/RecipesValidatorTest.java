@@ -44,15 +44,17 @@ import org.junit.rules.TemporaryFolder;
  */
 public class RecipesValidatorTest {
 
+	final String BASH_DIRECTIVE = "#!/bin/bash";
+
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
 
 	@Test
-	public void testBashValidation_noScriptAtAll() throws Exception {
+	public void testScriptValidation_noScriptAtAll() throws Exception {
 		File appDir = this.folder.newFolder();
 
-		Component comp = new Component( "toto" ).installerName( "bash" );
+		Component comp = new Component( "toto" ).installerName( "script" );
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, RecipesValidator.SCRIPTS_DIR_NAME ).mkdirs());
 
@@ -61,30 +63,30 @@ public class RecipesValidatorTest {
 
 
 	@Test
-	public void testBashValidation_success() throws Exception {
+	public void testScriptValidation_success() throws Exception {
 		File appDir = this.folder.newFolder();
 
-		Component comp = new Component( "toto" ).installerName( "bash" );
+		Component comp = new Component( "toto" ).installerName( "script" );
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, RecipesValidator.SCRIPTS_DIR_NAME ).mkdirs());
-		Utils.writeStringInto( RecipesValidator.BASH_DIRECTIVE + "\ntest", new File( directory, RecipesValidator.SCRIPTS_DIR_NAME + "/test.sh" ));
+		Utils.writeStringInto( BASH_DIRECTIVE + "\ntest", new File( directory, RecipesValidator.SCRIPTS_DIR_NAME + "/test.sh" ));
 
 		Assert.assertEquals( 0, RecipesValidator.validateComponentRecipes( appDir, comp ).size());
 	}
 
 
 	@Test
-	public void testBashValidation_noScriptsDirectory() throws Exception {
+	public void testScriptValidation_noScriptsDirectory() throws Exception {
 
 		File appDir = this.folder.newFolder();
-		Component comp = new Component( "toto" ).installerName( "bash" );
+		Component comp = new Component( "toto" ).installerName( "script" );
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( directory.mkdirs());
-		Utils.writeStringInto( RecipesValidator.BASH_DIRECTIVE + "\n", new File( directory, "test.sh" ));
+		Utils.writeStringInto( BASH_DIRECTIVE + "\n", new File( directory, "test.sh" ));
 
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.REC_BASH_NO_SCRIPTS_DIR, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, errors.get( 0 ).getErrorCode());
 	}
 
 

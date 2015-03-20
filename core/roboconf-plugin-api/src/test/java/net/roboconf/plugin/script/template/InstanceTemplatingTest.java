@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.bash.template;
+package net.roboconf.plugin.script.template;
 
 import java.io.File;
 import java.io.StringWriter;

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.bash.internal;
+package net.roboconf.plugin.script.internal;
 
 import static org.junit.Assert.assertTrue;
 
@@ -41,6 +41,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
+import net.roboconf.plugin.script.internal.PluginScript;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -52,29 +53,29 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
-public class PluginBashTest {
+public class PluginScriptTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
-	// This is hard-coded path for Linux, but this is because the Bash plugin
+	// This is hard-coded path for Linux, but this is because the Script plugin
 	// only makes sense for Linux systems. Tests that try to execute scripts
 	// first check that we are indeed on a Linux system. Otherwise, they are skipped.
 	private final static File OUTPUT_DIR = new File( "/tmp/roboconf-test-for-bash" );
 
 	private final Instance inst = new Instance( "sample" )
 			.component( new Component( "some-component" )
-			.installerName( PluginBash.PLUGIN_NAME ));
+			.installerName( PluginScript.PLUGIN_NAME ));
 
 	private final File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( this.inst );
-	private PluginBash plugin;
+	private PluginScript plugin;
 
 
 	@Before
 	public void resetPlugin() throws Exception {
 
 		// New plugin instance
-		this.plugin = new PluginBash();
+		this.plugin = new PluginScript();
 		this.plugin.setNames( "app", "test" );
 
 		// Useful to watch real bash content on debug (and for code coverage)
@@ -105,7 +106,7 @@ public class PluginBashTest {
 
 	@Test
 	public void testPluginName() {
-		Assert.assertEquals( PluginBash.PLUGIN_NAME, new PluginBash().getPluginName());
+		Assert.assertEquals( PluginScript.PLUGIN_NAME, new PluginScript().getPluginName());
 	}
 
 
@@ -126,7 +127,7 @@ public class PluginBashTest {
 
 	@Test
 	public void testInitialize() throws Exception {
-		Instance inst = new Instance("whatever").component(new Component("whatever").installerName( PluginBash.PLUGIN_NAME ));
+		Instance inst = new Instance("whatever").component(new Component("whatever").installerName( PluginScript.PLUGIN_NAME ));
 		this.plugin.initialize( inst );
 	}
 

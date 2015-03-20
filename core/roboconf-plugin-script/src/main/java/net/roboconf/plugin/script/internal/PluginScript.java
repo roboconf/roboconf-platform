@@ -23,9 +23,10 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.bash.internal;
+package net.roboconf.plugin.script.internal;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,7 +46,7 @@ import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 /**
- * The plug-in invokes a shell script on every life cycle change.
+ * The plug-in invokes a (shell) script on every life cycle change.
  * <p>
  * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br />
  * Let's take an example with the "start" action to understand the way this plug-in works.
@@ -65,9 +66,9 @@ import net.roboconf.plugin.api.template.InstanceTemplateHelper;
  * @author Pierre-Yves Gibello - Linagora
  * @author Christophe Hamerling - Linagora
  */
-public class PluginBash implements PluginInterface {
+public class PluginScript implements PluginInterface {
 
-	public static final String PLUGIN_NAME = "bash";
+	public static final String PLUGIN_NAME = "script";
 	private static final String SCRIPTS_FOLDER_NAME = "scripts";
 	private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
 	private static final String FILES_FOLDER_NAME = "files";
@@ -167,16 +168,25 @@ public class PluginBash implements PluginInterface {
     private void prepareAndExecuteCommand(String action, Instance instance, Import importChanged, InstanceStatus statusChanged)
     throws IOException, InterruptedException {
 
-        this.logger.info("Preparing the invocation of " + action + ".sh for instance " + instance );
+        this.logger.info("Preparing the invocation of " + action + " script for instance " + instance );
         File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 
         File scriptsFolder = new File(instanceDirectory, SCRIPTS_FOLDER_NAME);
         File templatesFolder = new File(instanceDirectory, TEMPLATES_FOLDER_NAME);
 
+        // Look for action script (default <action>.sh, or any file that starts with <action>)
         File script = new File(scriptsFolder, action + ".sh");
-        File template = new File(templatesFolder, action + ".sh.template");
+        if(! script.exists()) {
+        	File[] foundFiles = scriptsFolder.listFiles(new ActionFileFilter(action));
+        	if(foundFiles != null && foundFiles.length > 0) {
+        		script = foundFiles[0];
+        		if(foundFiles.length > 1) this.logger.warning("More than one " + action + " script found: taking the 1st one, " + script.getName());
+        	}
+        }
+        
+        File template = new File(templatesFolder, action + ".template");
         if( ! template.exists())
-        	template = new File(templatesFolder, "default.sh.template");
+        	template = new File(templatesFolder, "default.template");
 
         if (script.exists()) {
             executeScript(script, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
@@ -200,7 +210,7 @@ public class PluginBash implements PluginInterface {
      * @throws IOException
      */
     protected File generateTemplate(File template, Instance instance) throws IOException {
-        File generated = File.createTempFile(instance.getName(), ".sh");
+        File generated = File.createTempFile(instance.getName(), ".script");
         InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
         return generated;
     }
@@ -240,7 +250,7 @@ public class PluginBash implements PluginInterface {
 
     	int exitCode = ProgramUtils.executeCommand( this.logger, command, script.getParentFile(), environmentVars );
         if( exitCode != 0 )
-        	throw new IOException( "Bash script execution failed. Exit code: " + exitCode );
+        	throw new IOException( "Script execution failed. Exit code: " + exitCode );
     }
 
 
@@ -274,7 +284,7 @@ public class PluginBash implements PluginInterface {
      * "workers_2_portAJP=8010"
      * ==========================
      * </pre>
-     * With this way of formatting vars, the Bash script will know
+     * With this way of formatting vars, the script will know
      * everything it needs to use these vars
      * </p>
      *
@@ -325,4 +335,23 @@ public class PluginBash implements PluginInterface {
 				f.setExecutable( true );
 		}
 	}
+
+	/**
+	 * @author Pierre-Yves Gibello - Linagora
+	 */
+	static class ActionFileFilter implements FilenameFilter {
+		
+		final String prefix;
+		
+		public ActionFileFilter(String prefix) {
+			this.prefix = prefix;
+		}
+		
+		@Override
+		public boolean accept(File dir, String name) {
+			return (this.prefix == null || this.prefix.length() < 1
+					? false : name.startsWith(prefix));
+		}
+	}
+
 }

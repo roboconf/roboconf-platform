@@ -4,9 +4,9 @@
 		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
 		xmlns="org.apache.felix.ipojo">
 
-	<component classname="net.roboconf.plugin.bash.internal.PluginBash" name="roboconf-plugin-bash">
+	<component classname="net.roboconf.plugin.script.internal.PluginScript" name="roboconf-plugin-script">
 		<provides />
 	</component>
 	
-	<instance component="roboconf-plugin-bash" name="Roboconf Plugin - Bash" />
+	<instance component="roboconf-plugin-script" name="Roboconf Plugin - Script" />
 </ipojo>
