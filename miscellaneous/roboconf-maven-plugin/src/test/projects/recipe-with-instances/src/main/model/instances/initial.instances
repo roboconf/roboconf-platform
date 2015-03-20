@@ -1,0 +1,4 @@
+
+instance of MySQL {
+	name: MySQL;
+}

@@ -82,7 +82,7 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 	 */
 	private void checkInternationalization( String textToSearch ) throws Exception {
 
-		File f = new File( this.outputDir, "roboconf.html" );
+		File f = new File( this.outputDir, "index.html" );
 		Assert.assertTrue( f.exists());
 
 		String s = Utils.readFileContent( f );

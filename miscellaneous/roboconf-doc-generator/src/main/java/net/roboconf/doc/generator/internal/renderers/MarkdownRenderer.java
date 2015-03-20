@@ -176,13 +176,9 @@ public class MarkdownRenderer extends AbstractStructuredRenderer {
 	 * #renderImage(java.lang.String, net.roboconf.doc.generator.internal.AbstractStructuredRenderer.DiagramType, java.lang.String)
 	 */
 	@Override
-	protected String renderImage( String componentName, DiagramType type, String absoluteImagePath ) {
-
-		String outputPath = this.outputDirectory.getAbsolutePath();
-		String path = absoluteImagePath.substring( outputPath.length() + 1 );
-
+	protected String renderImage( String componentName, DiagramType type, String relativeImagePath ) {
 		String alt = componentName + " - " + type;
-		return "![" + alt + "](" + path + " \"" + componentName + "\")\n\n";
+		return "![" + alt + "](" + relativeImagePath + " \"" + componentName + "\")\n\n";
 	}
 
 
@@ -320,7 +316,8 @@ public class MarkdownRenderer extends AbstractStructuredRenderer {
 	@Override
 	protected File writeFileContent( String fileContent ) throws IOException {
 
-		File targetFile = new File( this.outputDirectory, "roboconf.md" );
+		File targetFile = new File( this.outputDirectory, "index.md" );
+		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( fileContent.replaceAll( "\n{3,}", "\n\n" ), targetFile );
 
 		return targetFile;

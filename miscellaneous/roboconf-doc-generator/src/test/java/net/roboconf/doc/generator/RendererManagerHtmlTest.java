@@ -29,7 +29,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -68,7 +70,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, null );
 
-		verifySingleHtml();
+		verifySingleHtml( true );
 	}
 
 
@@ -79,7 +81,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		Map<String,String> options = new HashMap<String,String> ();
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
 
-		verifySingleHtml();
+		verifySingleHtml( true );
 	}
 
 
@@ -90,7 +92,99 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		this.alr.getApplication().getRootInstances().clear();
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, null );
 
-		verifySingleHtml();
+		verifySingleHtml( true );
+	}
+
+
+	@Test
+	public void testSingleHtml_withReferencedCss() throws Exception {
+
+		Assert.assertEquals( 0, this.outputDir.listFiles().length );
+		Map<String,String> options = new HashMap<String,String> ();
+		options.put(  DocConstants.OPTION_HTML_CSS_REFERENCE, "http://hop.css" );
+
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+
+		String content = verifySingleHtml( false );
+		Assert.assertFalse( content.contains( "style.css" ));
+		Assert.assertTrue( content.contains( "href=\"http://hop.css\"" ));
+	}
+
+
+	@Test
+	public void testSingleHtml_withCustomCss() throws Exception {
+
+		final String cssContent = "* { margin: 0; }";
+		File tempCssFile = this.folder.newFile();
+		Utils.writeStringInto( cssContent, tempCssFile );
+
+		Assert.assertEquals( 0, this.outputDir.listFiles().length );
+		Map<String,String> options = new HashMap<String,String> ();
+		options.put(  DocConstants.OPTION_HTML_CSS_FILE, tempCssFile.getAbsolutePath());
+
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+
+		String content = verifySingleHtml( true );
+		Assert.assertTrue( content.contains( "href=\"style.css\"" ));
+
+		File cssFile = new File( this.outputDir, "style.css" );
+		Assert.assertTrue( cssFile.exists());
+		String readContent = Utils.readFileContent( cssFile );
+		Assert.assertEquals( cssContent, readContent );
+	}
+
+
+	@Test
+	public void testExplodedHtml_withReferencedCss() throws Exception {
+
+		Assert.assertEquals( 0, this.outputDir.listFiles().length );
+		Map<String,String> options = new HashMap<String,String> ();
+		options.put(  DocConstants.OPTION_HTML_CSS_REFERENCE, "http://hop.css" );
+		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
+
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+
+		List<String> contents = verifyExplodedHtml( false );
+		for( int i=0; i<contents.size(); i++ ) {
+			String content = contents.get( i );
+			Assert.assertFalse( "Index " + i, content.contains( "style.css" ));
+			Assert.assertTrue( "Index " + i, content.contains( "href=\"http://hop.css\"" ));
+		}
+	}
+
+
+	@Test
+	public void testExplodedHtml_withCustomCss() throws Exception {
+
+		final String cssContent = "* { padding: 0; }";
+		File tempCssFile = this.folder.newFile();
+		Utils.writeStringInto( cssContent, tempCssFile );
+
+		Assert.assertEquals( 0, this.outputDir.listFiles().length );
+		Map<String,String> options = new HashMap<String,String> ();
+		options.put(  DocConstants.OPTION_HTML_CSS_FILE, tempCssFile.getAbsolutePath());
+		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
+
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+
+		List<String> contents = verifyExplodedHtml( true );
+		int dotLevel = 0;
+		int twoDotsLevel = 0;
+		for( int i=0; i<contents.size(); i++ ) {
+			String content = contents.get( i );
+			if( content.contains( "href=\"style.css\"" ))
+				dotLevel ++;
+			else if( content.contains( "href=\"../style.css\"" ))
+				twoDotsLevel ++;
+		}
+
+		Assert.assertEquals( "Only index.html should contain href=\"style.css\"", 1, dotLevel );
+		Assert.assertEquals( "All the sections should contain href=\"../style.css\"", contents.size() - 1, twoDotsLevel );
+
+		File cssFile = new File( this.outputDir, "style.css" );
+		Assert.assertTrue( cssFile.exists());
+		String readContent = Utils.readFileContent( cssFile );
+		Assert.assertEquals( cssContent, readContent );
 	}
 
 
@@ -105,42 +199,52 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
-		verifyExplodedHtml();
+		verifyExplodedHtml( true );
 	}
 
 
 	/**
 	 * Verifies assertions for the single HTML mode.
+	 * @param hasStyleCss true if the output should contain a style.css file
+	 * @return the file content (for additional checks)
 	 */
-	private void verifySingleHtml() throws Exception {
+	private String verifySingleHtml( boolean hasStyleCss ) throws Exception {
 
 		File f = new File( this.outputDir, "roboconf.jpg" );
 		Assert.assertTrue( f.exists());
 
-		f = new File( this.outputDir, "style.css" );
-		Assert.assertTrue( f.exists());
+		if( hasStyleCss ) {
+			f = new File( this.outputDir, "style.css" );
+			Assert.assertTrue( f.exists());
+		}
 
 		f = new File( this.outputDir, "png" );
 		Assert.assertTrue( f.isDirectory());
 
-		f = new File( this.outputDir, "roboconf.html" );
+		f = new File( this.outputDir, "index.html" );
 		Assert.assertTrue( f.exists());
 
-		Assert.assertEquals( 4, this.outputDir.listFiles().length );
-		verifyHtml( f );
+		int fileCount = hasStyleCss ? 4 : 3;
+		Assert.assertEquals( fileCount, this.outputDir.listFiles().length );
+		return verifyHtml( f );
 	}
 
 
 	/**
 	 * Verifies assertions for the exploded HTML mode.
+	 * @param hasStyleCss true if the output should contain a style.css file
+	 * @return the generated files' content (for additional checks)
 	 */
-	private void verifyExplodedHtml() throws Exception {
+	private List<String> verifyExplodedHtml( boolean hasStyleCss ) throws Exception {
+		List<String> result = new ArrayList<String> ();
 
 		File f = new File( this.outputDir, "roboconf.jpg" );
 		Assert.assertTrue( f.exists());
 
-		f = new File( this.outputDir, "style.css" );
-		Assert.assertTrue( f.exists());
+		if( hasStyleCss ) {
+			f = new File( this.outputDir, "style.css" );
+			Assert.assertTrue( f.exists());
+		}
 
 		f = new File( this.outputDir, "png" );
 		Assert.assertTrue( f.isDirectory());
@@ -151,35 +255,41 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		f = new File( this.outputDir, "instances" );
 		Assert.assertTrue( f.isDirectory());
 
-		f = new File( this.outputDir, "roboconf.html" );
+		f = new File( this.outputDir, "index.html" );
 		Assert.assertTrue( f.exists());
 
-		Assert.assertEquals( 6, this.outputDir.listFiles().length );
-		verifyHtml( f );
+		int fileCount = hasStyleCss ? 6 : 5;
+		Assert.assertEquals( fileCount, this.outputDir.listFiles().length );
+		result.add( verifyHtml( f ));
 
 		for( Component c : ComponentHelpers.findAllComponents( this.alr.getApplication())) {
 			f = new File( this.outputDir, DocConstants.SECTION_COMPONENTS + c.getName() + ".html" );
 			Assert.assertTrue( f.getAbsolutePath(), f.exists());
-			verifyHtml( f );
+			result.add( verifyHtml( f ));
 		}
 
 		for( Instance i : this.alr.getApplication().getRootInstances()) {
 			f = new File( this.outputDir, DocConstants.SECTION_INSTANCES + i.getName() + ".html" );
 			Assert.assertTrue( f.getAbsolutePath(), f.exists());
-			verifyHtml( f );
+			result.add( verifyHtml( f ));
 		}
+
+		return result;
 	}
 
 
 	/**
 	 * Verifies a HTML file.
 	 * @param f
+	 * @return the file content (for additional checks)
 	 */
-	private void verifyHtml( File f ) throws Exception {
+	private String verifyHtml( File f ) throws Exception {
 
 		String content = Utils.readFileContent( f );
 		verifyContent( content );
 		Assert.assertTrue( "Invalid HTML file: ", validateHtml( content ));
+
+		return content;
 	}
 
 

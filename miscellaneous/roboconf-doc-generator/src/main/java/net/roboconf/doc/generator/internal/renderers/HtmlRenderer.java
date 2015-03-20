@@ -27,6 +27,7 @@ package net.roboconf.doc.generator.internal.renderers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -49,6 +50,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	private static final String TITLE_MARKUP = "${TITLE}";
 	private static final String MENU_MARKUP = "${MENU}";
 	private static final String CONTENT_MARKUP = "${CONTENT}";
+	private static final String CSS_MARKUP = "${CSS}";
 
 	private String menu;
 	private final Map<String,StringBuilder> sectionNameToContent = new HashMap<String,StringBuilder> ();
@@ -108,9 +110,9 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 		StringBuilder sb = new StringBuilder();
 		for( String s : paragraph.trim().split( "\n\n" )) {
-			sb.append( "<p>" );
+			sb.append( "\n<p>" );
 			sb.append( s.trim().replaceAll( "\n", "<br />" ));
-			sb.append( "</p>\n" );
+			sb.append( "</p>\n\n" );
 		}
 
 		return sb.toString();
@@ -126,14 +128,14 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	protected String renderList( Collection<String> listItems ) {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( "<ul>\n" );
+		sb.append( "\n<ul>\n" );
 		for( String s : listItems ) {
 			sb.append( "\t<li>" );
 			sb.append( s );
 			sb.append( "</li>\n" );
 		}
 
-		sb.append( "</ul>\n" );
+		sb.append( "</ul>\n\n" );
 		return sb.toString();
 	}
 
@@ -198,7 +200,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 			}
 
 		} else {
-			sb.append( "<p class=\"separator\"> &nbsp; </p>\n" );
+			sb.append( "\n<p class=\"separator\"> &nbsp; </p>\n" );
 		}
 
 		return sb.toString();
@@ -222,13 +224,9 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	 * #renderImage(java.lang.String, net.roboconf.doc.generator.internal.AbstractStructuredRenderer.DiagramType, java.lang.String)
 	 */
 	@Override
-	protected String renderImage( String componentName, DiagramType type, String absoluteImagePath ) {
-
-		String outputPath = this.outputDirectory.getAbsolutePath();
-		String path = absoluteImagePath.substring( outputPath.length() + 1 );
-
+	protected String renderImage( String componentName, DiagramType type, String relativeImagePath ) {
 		String alt = componentName + " - " + type;
-		return "<img src=\"" + path + "\" alt=\"" + alt + "\" />\n";
+		return "<img src=\"" + relativeImagePath + "\" alt=\"" + alt + "\" />\n";
 	}
 
 
@@ -253,9 +251,9 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append( "<ul>\n" );
-		sb.append( "<li><a href=\"roboconf.html#overview\">Overview</a></li>\n" );
-		sb.append( "<li><a href=\"roboconf.html#components\">Components</a></li>\n" );
-		sb.append( "<li><a href=\"roboconf.html#instances\">Instances</a></li>\n" );
+		sb.append( "\t<li><a href=\"roboconf.html#overview\">Overview</a></li>\n" );
+		sb.append( "\t<li><a href=\"roboconf.html#components\">Components</a></li>\n" );
+		sb.append( "\t<li><a href=\"roboconf.html#instances\">Instances</a></li>\n" );
 		sb.append( "</ul>\n" );
 
 		this.menu = sb.toString();
@@ -376,9 +374,30 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	protected File writeFileContent( String fileContent ) throws IOException {
 
 		// Load the template
-		InputStream in = getClass().getResourceAsStream( "/html.tpl" );
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Utils.copyStream( in, out );
+		InputStream in = null;
+		try {
+			in = getClass().getResourceAsStream( "/html.tpl" );
+			Utils.copyStream( in, out );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Create the target directory
+		File targetFile = new File( this.outputDirectory, "index.html" );
+		Utils.createDirectory( targetFile.getParentFile());
+
+		// Deal with the CSS file
+		final String css;
+		final String cssReference = this.options.get( DocConstants.OPTION_HTML_CSS_REFERENCE );
+		if( cssReference != null ) {
+			css = cssReference.trim();
+
+		} else {
+			css = "style.css";
+			writeCssFile();
+		}
 
 		// Write sections
 		for( Map.Entry<String,StringBuilder> entry : this.sectionNameToContent.entrySet()) {
@@ -390,31 +409,38 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 					.replace( CONTENT_MARKUP, entry.getValue().toString())
 					.replace( MENU_MARKUP, this.menu )
 					.replace( "href=\"", "href=\"../" )
-					.replace( "src=\"", "src=\"../" );
+					.replace( "src=\"", "src=\"../" )
+					.replaceAll( "\n{3,}", "\n\n" );
 
-			File targetFile = new File( this.outputDirectory, entry.getKey() + ".html" );
-			Utils.createDirectory( targetFile.getParentFile());
-			Utils.writeStringInto( toWrite, targetFile );
+			if( cssReference != null )
+				toWrite = toWrite.replace( "../" + CSS_MARKUP, css );
+			else
+				toWrite = toWrite.replace( CSS_MARKUP, css );
+
+			File sectionFile = new File( this.outputDirectory, entry.getKey() + ".html" );
+			Utils.createDirectory( sectionFile.getParentFile());
+			Utils.writeStringInto( toWrite, sectionFile );
 		}
 
 		// Write the main file
 		String toWrite = out.toString( "UTF-8" )
 				.replace( TITLE_MARKUP, this.application.getName())
+				.replace( CSS_MARKUP, css )
 				.replace( CONTENT_MARKUP, fileContent )
-				.replace( MENU_MARKUP, this.menu );
+				.replace( MENU_MARKUP, this.menu )
+				.replaceAll( "\n{3,}", "\n\n" );
 
-		File targetFile = new File( this.outputDirectory, "roboconf.html" );
 		Utils.writeStringInto( toWrite, targetFile );
 
-		// Copy the CSS
-		in = getClass().getResourceAsStream( "/style.css" );
-		File cssFile = new File( this.outputDirectory, "style.css" );
-		Utils.copyStream( in, cssFile );
-
 		// And the header image
-		in = getClass().getResourceAsStream( "/roboconf.jpg" );
-		File imgFile = new File( this.outputDirectory, "roboconf.jpg" );
-		Utils.copyStream( in, imgFile );
+		try {
+			in = getClass().getResourceAsStream( "/roboconf.jpg" );
+			File imgFile = new File( this.outputDirectory, "roboconf.jpg" );
+			Utils.copyStream( in, imgFile );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
 
 		return targetFile;
 	}
@@ -422,5 +448,24 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 	private String createId( String title ) {
 		return title.toLowerCase().replaceAll( "\\s+", "-" );
+	}
+
+
+	private void writeCssFile() throws IOException {
+
+		InputStream in = null;
+		String location = this.options.get( DocConstants.OPTION_HTML_CSS_FILE );
+		try {
+			if( ! Utils.isEmptyOrWhitespaces( location ))
+				in = new FileInputStream( new File( location ));
+			else
+				in = getClass().getResourceAsStream( "/style.css" );
+
+			File cssFile = new File( this.outputDirectory, "style.css" );
+			Utils.copyStream( in, cssFile );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
 	}
 }

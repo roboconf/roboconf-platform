@@ -81,8 +81,8 @@ public class VmWareMachineConfigurator implements MachineConfigurator {
 			// If yes, write user data.
 			GuestOperationsManager gom = this.vmwareServiceInstance.getGuestOperationsManager();
 			NamePasswordAuthentication npa = new NamePasswordAuthentication();
-			npa.username = this.targetProperties.get("vmware.vmuser");
-			npa.password = this.targetProperties.get("vmware.vmpassword");
+			npa.username = this.targetProperties.get( VmwareIaasHandler.VM_USER );
+			npa.password = this.targetProperties.get( VmwareIaasHandler.VM_PASSWORD );
 			GuestProgramSpec spec = new GuestProgramSpec();
 
 			spec.programPath = "/bin/echo";

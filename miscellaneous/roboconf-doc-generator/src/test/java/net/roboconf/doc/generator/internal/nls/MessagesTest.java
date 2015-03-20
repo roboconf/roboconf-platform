@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,36 +23,20 @@
  * limitations under the License.
  */
 
-package net.roboconf.maven;
+package net.roboconf.doc.generator.internal.nls;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface MavenPluginConstants {
+public class MessagesTest {
 
-	/**
-	 * The src/main/model directory.
-	 */
-	String SOURCE_MODEL_DIRECTORY = "src/main/model";
-
-	/**
-	 * The Maven output of the model directory.
-	 */
-	String TARGET_MODEL_DIRECTORY = "target/roboconf-model";
-
-	/**
-	 * The Maven output of the documentation directory.
-	 */
-	String TARGET_DOC_DIRECTORY = "target/documentation";
-
-	/**
-	 * The relative path of the validation results.
-	 */
-	String VALIDATION_RESULT_PATH = "target/roboconf/roboconf-validation.txt";
-
-
-	/**
-	 * A key to store the loaded application in a Maven session.
-	 */
-	String SESSION_APP = "session.roboconf.app";
+	@Test
+	public void testUnknownKey() {
+		Messages messages = new Messages();
+		Assert.assertNotNull( messages.get( "unknown.key" ));
+	}
 }

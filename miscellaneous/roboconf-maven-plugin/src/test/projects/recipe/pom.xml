@@ -26,7 +26,7 @@
 		<maven>3.0.3</maven>
 	</prerequisites>
 	
-	<groupId>net.roboconf.test</groupId>
+	<groupId>net.roboconf.recipes</groupId>
 	<artifactId>this-is-for-test-only</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<name>This is for Test ONLY</name>
@@ -40,14 +40,6 @@
 				<version>${project.version}</version>
 				<extensions>true</extensions>
 				<configuration></configuration>
-				<executions>
-					<execution>
-						<id>doc</id>
-						<goals>
-							<goal>documentation</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>

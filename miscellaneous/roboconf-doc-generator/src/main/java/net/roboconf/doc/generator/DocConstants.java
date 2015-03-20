@@ -57,6 +57,11 @@ public interface DocConstants {
 	 */
 	String COMP_EXTRA = ".extra.txt";
 
+	/**
+	 * The prefix for all the options.
+	 */
+	String OPTION_PREFIX = "option.";
+
 
 
 	/**
@@ -65,7 +70,7 @@ public interface DocConstants {
 	 * Default to {@link #DEFAULT_BACKGROUND_COLOR}.
 	 * </p>
 	 */
-	String OPTION_IMG_BACKGROUND_COLOR = "option.img.background.color";
+	String OPTION_IMG_BACKGROUND_COLOR = OPTION_PREFIX + "img.background.color";
 
 	/**
 	 * The option to specify the foreground color in generated images.
@@ -73,7 +78,7 @@ public interface DocConstants {
 	 * Default to {@link #DEFAULT_FOREGROUND_COLOR}.
 	 * </p>
 	 */
-	String OPTION_IMG_FOREGROUND_COLOR = "option.img.foreground.color";
+	String OPTION_IMG_FOREGROUND_COLOR = OPTION_PREFIX + "img.foreground.color";
 
 	/**
 	 * The option to specify the background color of highlighted components in generated images.
@@ -81,7 +86,7 @@ public interface DocConstants {
 	 * Default to {@link #DEFAULT_HIGHLIGHT_BG_COLOR}.
 	 * </p>
 	 */
-	String OPTION_IMG_HIGHLIGHT_BG_COLOR = "option.img.highlight.bg.color";
+	String OPTION_IMG_HIGHLIGHT_BG_COLOR = OPTION_PREFIX + "img.highlight.bg.color";
 
 
 
@@ -91,7 +96,7 @@ public interface DocConstants {
 	 * An URL is expected (http or file).
 	 * </p>
 	 */
-	String OPTION_HTML_CSS_FILE = "option.html.css.file";
+	String OPTION_HTML_CSS_FILE = OPTION_PREFIX + "html.css.file";
 
 	/**
 	 * The option to reference a custom CSS file for HTML outputs.
@@ -100,12 +105,12 @@ public interface DocConstants {
 	 * (e.g. on a remote server).
 	 * </p>
 	 */
-	String OPTION_HTML_CSS_REFERENCE = "option.html.css.reference";
+	String OPTION_HTML_CSS_REFERENCE = OPTION_PREFIX + "html.css.reference";
 
 	/**
 	 * The option to specify the output should be divided in several HTML files.
 	 */
-	String OPTION_HTML_EXPLODED = "option.html.exploded";
+	String OPTION_HTML_EXPLODED = OPTION_PREFIX + "html.exploded";
 
 
 
@@ -115,7 +120,16 @@ public interface DocConstants {
 	 * Example: en_US, fr_FR.
 	 * </p>
 	 */
-	String OPTION_LOCALE = "option.locale";
+	String OPTION_LOCALE = OPTION_PREFIX + "locale";
+
+	/**
+	 * The option to generate images only once in a generation row.
+	 * <p>
+	 * If we generate HTML and PDF documentation, these are two generate
+	 * operations but this option will prevent generating images twice.
+	 * </p>
+	 */
+	String OPTION_GEN_IMAGES_ONCE = OPTION_PREFIX + "gen.images.once";
 
 
 

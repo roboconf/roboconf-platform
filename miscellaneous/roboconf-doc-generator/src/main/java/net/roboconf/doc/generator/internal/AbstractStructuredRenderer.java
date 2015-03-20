@@ -62,6 +62,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	protected File applicationDirectory;
 	protected Map<String,String> options;
 	protected Messages messages;
+	protected String locale;
 
 
 	/**
@@ -97,9 +98,9 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		StringBuilder sb = new StringBuilder();
 
 		// Check the language
-		String locale = options.get( DocConstants.OPTION_LOCALE );
-		if( locale != null )
-			this.messages = new Messages( locale );
+		this.locale = options.get( DocConstants.OPTION_LOCALE );
+		if( this.locale != null )
+			this.messages = new Messages( this.locale );
 		else
 			this.messages = new Messages();
 
@@ -149,7 +150,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	protected abstract String renderDocumentTitle();
 	protected abstract String renderDocumentIndex();
 
-	protected abstract String renderImage( String componentName, DiagramType type, String absoluteImagePath );
+	protected abstract String renderImage( String componentName, DiagramType type, String relativeImagePath );
 
 	protected abstract String applyBoldStyle( String text, String keyword );
 	protected abstract String applyLink( String text, String linkId );
@@ -354,7 +355,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 					String componentName = i.getComponent().getName();
 					String link = componentName;
 					if( this.options.containsKey( DocConstants.OPTION_HTML_EXPLODED ))
-						link = "../" + DocConstants.SECTION_COMPONENTS + componentName; //$NON-NLS-1$
+						link = "../../" + DocConstants.SECTION_COMPONENTS + componentName; //$NON-NLS-1$
 
 					String installer = ComponentHelpers.findComponentInstaller( i.getComponent());
 					section.append( addTableLine(
@@ -401,18 +402,24 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	throws IOException {
 
 		String baseName = comp.getName() + "_" + type; //$NON-NLS-1$
-		File pngFile = new File( this.outputDirectory, "png/" + baseName + ".png" ); //$NON-NLS-1$ //$NON-NLS-2$
-		Utils.createDirectory( pngFile.getParentFile());
+		String relativePath = "png/" + baseName + ".png"; //$NON-NLS-1$ //$NON-NLS-2$
+		if( this.options.containsKey( DocConstants.OPTION_GEN_IMAGES_ONCE ))
+			relativePath = "../" + relativePath;
 
-		GraphUtils.writeGraph(
-				pngFile,
-				comp,
-				transformer.getConfiguredLayout(),
-				transformer.getGraph(),
-				transformer.getEdgeShapeTransformer(),
-				this.options );
+		File pngFile = new File( this.outputDirectory, relativePath ).getCanonicalFile();
+		if( ! pngFile.exists()) {
 
-		sb.append( renderImage( comp.getName(), type, pngFile.getAbsolutePath()));
+			Utils.createDirectory( pngFile.getParentFile());
+			GraphUtils.writeGraph(
+					pngFile,
+					comp,
+					transformer.getConfiguredLayout(),
+					transformer.getGraph(),
+					transformer.getEdgeShapeTransformer(),
+					this.options );
+		}
+
+		sb.append( renderImage( comp.getName(), type, relativePath ));
 	}
 
 
@@ -427,8 +434,22 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	private String readCustomInformation( File applicationDirectory, String componentName, String suffix )
 	throws IOException {
 
+		// Prepare the file name
+		StringBuilder sb = new StringBuilder();
+		sb.append( componentName );
+		if( this.locale != null )
+			sb.append( "_" + this.locale );
+
+		sb.append( suffix );
+		sb.insert( 0, "/" ); //$NON-NLS-1$
+		sb.insert( 0, DocConstants.DOC_DIR );
+
+		// Handle usual (doc) and Maven (src/main/doc) cases
+		File f = new File( applicationDirectory, sb.toString());
+		if( ! f.exists())
+			f = new File( f.getParentFile().getParentFile(), sb.toString());
+
 		String result = ""; //$NON-NLS-1$
-		File f = new File( applicationDirectory, DocConstants.DOC_DIR + "/" + componentName + suffix ); //$NON-NLS-1$
 		if( f.exists())
 			result = Utils.readFileContent( f );
 

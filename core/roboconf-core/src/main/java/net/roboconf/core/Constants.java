@@ -92,4 +92,9 @@ public interface Constants {
 	 * A specific variable whose value is set at runtime.
 	 */
 	String SPECIFIC_VARIABLE_IP = "ip";
+
+	/**
+	 * The default name space for official Roboconf recipes.
+	 */
+	String OFFICIAL_RECIPES_NAMESPACE = "net.roboconf.recipes";
 }

@@ -85,7 +85,13 @@
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-core</artifactId>
-			<version>0.3-SNAPSHOT</version>
+			<version>${project.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-doc-generator</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 		
 		<dependency>

@@ -40,14 +40,45 @@ import org.junit.Test;
  */
 public class RendererManagerMarkdownTest extends AbstractTestForRendererManager {
 
-
 	@Test
 	public void testMarkdown_nullOptions() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, null );
 
-		verifyMarkdown();
+		verifyMarkdown( true );
+	}
+
+
+	@Test
+	public void testMarkdown_withDocDirectoryLikeInMaven() throws Exception {
+
+		File newDocDirectory = new File( this.applicationDirectory, "../" + DocConstants.DOC_DIR );
+		File oldDocDirectory = new File( this.applicationDirectory, DocConstants.DOC_DIR );
+
+		Utils.deleteFilesRecursively( newDocDirectory );
+		Assert.assertFalse( newDocDirectory.exists());
+
+		Utils.copyDirectory( oldDocDirectory, newDocDirectory );
+		Assert.assertTrue( newDocDirectory.exists());
+
+		Assert.assertEquals( 0, this.outputDir.listFiles().length );
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, null );
+
+		verifyMarkdown( true );
+	}
+
+
+	@Test
+	public void testMarkdown_withFrenchLocale() throws Exception {
+
+		Assert.assertEquals( 0, this.outputDir.listFiles().length );
+		Map<String,String> options = new HashMap<String,String> ();
+		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
+
+		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, options );
+
+		verifyMarkdown( false );
 	}
 
 
@@ -58,7 +89,7 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 		Map<String,String> options = new HashMap<String,String> ();
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, options );
 
-		verifyMarkdown();
+		verifyMarkdown( true );
 	}
 
 
@@ -76,22 +107,29 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.MARKDOWN, options );
 
-		verifyMarkdown();
+		verifyMarkdown( true );
 	}
 
 
 	/**
 	 * Verifies assertions about markdown files.
+	 * @param defaultLocale true to search for English content, false for French
+	 * @return the main file's content
 	 */
-	private void verifyMarkdown() throws Exception {
+	private void verifyMarkdown( boolean defaultLocale ) throws Exception {
 
 		File f = new File( this.outputDir, "png" );
 		Assert.assertTrue( f.isDirectory());
 
-		f = new File( this.outputDir, "roboconf.md" );
+		f = new File( this.outputDir, "index.md" );
 		Assert.assertTrue( f.exists());
 
 		String content = Utils.readFileContent( f );
 		verifyContent( content );
+
+		if( defaultLocale )
+			Assert.assertTrue( content.contains( "extra information about Apache." ));
+		else
+			Assert.assertTrue( content.contains( "une belle information à ajouter dans" ));
 	}
 }
