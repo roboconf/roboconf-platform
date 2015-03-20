@@ -28,6 +28,7 @@ package net.roboconf.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -179,9 +180,14 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	 */
 	private void filterErrorsForRecipes( Collection<RoboconfError> errors ) {
 
+		List<ErrorCode> codesToSkip = Arrays.asList(
+				ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
+				ErrorCode.RM_UNRESOLVABLE_VARIABLE
+		);
+
 		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
 		for( RoboconfError error : errors ) {
-			if( error.getErrorCode() == ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET )
+			if( codesToSkip.contains( error.getErrorCode()))
 				toRemove.add( error );
 		}
 
@@ -209,26 +215,23 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	static Collection<RoboconfError> validateRecipesSpecifics( MavenProject project, Application application, boolean official ) {
 
 		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
-		if( ! project.getName().equals( project.getName().toLowerCase()))
-			result.add( new RoboconfError( ErrorCode.REC_PROJECT_IN_LOWER_CASE ));
+		if( ! project.getArtifactId().equals( project.getArtifactId().toLowerCase()))
+			result.add( new RoboconfError( ErrorCode.REC_ARTIFACT_ID_IN_LOWER_CASE ));
 
 		if( ! application.getRootInstances().isEmpty())
 			result.add( new RoboconfError( ErrorCode.REC_AVOID_INSTANCES ));
 
 		if( official && ! Constants.OFFICIAL_RECIPES_NAMESPACE.equals( project.getGroupId()))
-			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_NAMESPACE ));
+			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_GROUP_ID ));
 
-		if( official && ! Constants.OFFICIAL_RECIPES_NAMESPACE.equals( application.getNamespace()))
-			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_NAMESPACE ));
-
-		if( ! project.getName().equals( project.getArtifactId()))
+		if( ! project.getArtifactId().equals( project.getArtifactId()))
 			result.add( new RoboconfError( ErrorCode.REC_NON_MATCHING_ARTIFACT_ID ));
 
 		File[] files = project.getBasedir().listFiles();
 		boolean found = false;
 		if( files != null ) {
 			for( int i=0; i<files.length && ! found; i++ )
-				found = files[ i ].getName().matches( "(?i)readme\\.?" );
+				found = files[ i ].getName().matches( "(?i)readme(\\..*)?" );
 		}
 
 		if( ! found )

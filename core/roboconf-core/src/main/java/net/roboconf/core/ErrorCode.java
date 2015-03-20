@@ -158,10 +158,10 @@ public enum ErrorCode {
 	REC_PUPPET_MISSING_PARAM_RUNNING_STATE( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts must have a 'runningState' parameter." ),
 	REC_PUPPET_MISSING_PARAM_FROM_IMPORT( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Component imports mean the Puppet module must have matching parameters." ),
 	REC_BASH_NO_SCRIPTS_DIR( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Bash scripts must be placed under a 'scripts' directory." ),
-	REC_PROJECT_IN_LOWER_CASE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe project names should be in lower case." ),
+	REC_ARTIFACT_ID_IN_LOWER_CASE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' artifact ID should be in lower case." ),
 	REC_MISSING_README( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects should contain a readme file." ),
-	REC_OFFICIAL_NAMESPACE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Official recipe projects should use " + Constants.OFFICIAL_RECIPES_NAMESPACE + " as their namespace and group ID." ),
-	REC_NON_MATCHING_ARTIFACT_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects should have the same name than their artifact ID." ),
+	REC_OFFICIAL_GROUP_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Official recipe projects should use " + Constants.OFFICIAL_RECIPES_NAMESPACE + " as their group ID." ),
+	REC_NON_MATCHING_ARTIFACT_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' directories should have the same name than their artifact ID." ),
 	REC_AVOID_INSTANCES( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects do not have to contain instances definitions." ),
 
 	// Execution Errors
