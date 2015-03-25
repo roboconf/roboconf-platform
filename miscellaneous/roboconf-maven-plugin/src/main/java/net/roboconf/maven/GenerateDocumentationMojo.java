@@ -31,14 +31,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.doc.generator.DocConstants;
 import net.roboconf.doc.generator.RenderingManager;
 
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -48,14 +50,12 @@ import org.apache.maven.project.MavenProject;
  * The <strong>documentation</strong> mojo.
  * @author Vincent Zurczak - Linagora
  */
-@Mojo( name="documentation", defaultPhase = LifecyclePhase.SITE )
+@Mojo( name="documentation" )
+@Execute( phase = LifecyclePhase.PREPARE_PACKAGE )
 public class GenerateDocumentationMojo extends AbstractMojo {
 
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
-
-	@Parameter( defaultValue = "${session}", readonly = true )
-	private MavenSession session;
 
 	@Parameter
 	private List<String> renderers;
@@ -67,12 +67,17 @@ public class GenerateDocumentationMojo extends AbstractMojo {
 	private Map<String,String> options;
 
 
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 
-		// Find the elements
+		// Reload the application (it was already validated).
+		// - Sharing complex objects amongst mojos appears to be quite complicated.
 		File appDirectory = new File( this.project.getBuild().getOutputDirectory());
-		Application app = (Application) this.session.getUserProperties().get( MavenPluginConstants.SESSION_APP );
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( appDirectory );
+		Application app = alr.getApplication();
+		if( app == null )
+			throw new MojoExecutionException( "The application object could not be loaded." );
 
 		// Prepare the output directory
 		File docDirectory = new File( this.project.getBasedir(), MavenPluginConstants.TARGET_DOC_DIRECTORY );

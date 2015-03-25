@@ -43,7 +43,6 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -71,9 +70,6 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
 
-	@Parameter( defaultValue = "${session}", readonly = true, required = true )
-	private MavenSession session;
-
 	@Parameter( defaultValue = "false" )
 	private boolean recipe;
 
@@ -89,9 +85,8 @@ public class ValidateApplicationMojo extends AbstractMojo {
 		if( ! completeAppDirectory.isDirectory())
 			throw new MojoExecutionException( "The target model directory could not be found. " + completeAppDirectory );
 
-		// Validate the application
+		// Load and validate the application
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( completeAppDirectory );
-		this.session.getUserProperties().put( MavenPluginConstants.SESSION_APP, alr.getApplication());
 
 		// Deal with recipes specifics
 		Collection<RoboconfError> recipeErrors = null;

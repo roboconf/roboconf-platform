@@ -35,7 +35,6 @@ import java.util.Map;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.DocConstants;
 
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -135,29 +134,19 @@ public class GenerateDocumentationMojoTest extends ValidateProjectMojoTest {
 
 	private File findAndExecuteMojo( List<String> renderers, List<String> locales, List<String> options ) throws Exception {
 
-		// Execute the validate mojo before the documentation one
-		final String projectName = "project--valid";
-		ValidateApplicationMojo validateMojo = (ValidateApplicationMojo) super.findMojo( projectName, "validate-application" );
-		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( validateMojo, "project" );
+		// Find the mojo.
+		GenerateDocumentationMojo docMojo = (GenerateDocumentationMojo) super.findMojo( "project--valid", "documentation" );
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( docMojo, "project" );
 		Assert.assertNotNull( project );
 
-		final MavenSession mavenSession = this.rule.newMavenSession( project );
-		this.rule.setVariableValueToObject( validateMojo, "session", mavenSession );
+		this.rule.setVariableValueToObject( docMojo, "locales", locales );
+		this.rule.setVariableValueToObject( docMojo, "renderers", renderers );
+		this.rule.setVariableValueToObject( docMojo, "options", options );
 
 		// Copy the resources
 		Utils.copyDirectory(
 				new File( project.getBasedir(), MavenPluginConstants.SOURCE_MODEL_DIRECTORY ),
 				new File( project.getBuild().getOutputDirectory()));
-
-		// Validate...
-		validateMojo.execute();
-
-		// Only then, run the documentation mojo (and we reuse the Maven session!)
-		GenerateDocumentationMojo docMojo = (GenerateDocumentationMojo) super.findMojo( projectName, "documentation" );
-		this.rule.setVariableValueToObject( docMojo, "locales", locales );
-		this.rule.setVariableValueToObject( docMojo, "renderers", renderers );
-		this.rule.setVariableValueToObject( docMojo, "options", options );
-		this.rule.setVariableValueToObject( docMojo, "session", mavenSession );
 
 		// Initial check
 		File docDirectory = new File( project.getBasedir(), MavenPluginConstants.TARGET_DOC_DIRECTORY );
