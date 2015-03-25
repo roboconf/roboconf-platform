@@ -46,7 +46,7 @@ import net.roboconf.plugin.api.PluginInterface;
 import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 /**
- * The plug-in invokes a (shell) script on every life cycle change.
+ * The plug-in invokes a script (eg. shell) on every life cycle change.
  * <p>
  * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br />
  * Let's take an example with the "start" action to understand the way this plug-in works.
