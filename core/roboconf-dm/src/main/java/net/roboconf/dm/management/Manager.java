@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Timer;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -611,8 +610,7 @@ public class Manager {
 		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 		checkConfiguration();
 
-		// TODO other targets than Docker eligible ??
-		if( instance.getParent() == null || "target".equals(instance.getComponent().getInstallerName())) {
+		if( instance.getParent() == null ) {
 			if( newStatus == InstanceStatus.NOT_DEPLOYED
 					&& ( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED
 						|| instance.getStatus() == InstanceStatus.DEPLOYING
@@ -620,9 +618,7 @@ public class Manager {
 				undeployRoot( ma, instance );
 
 			else if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED
-					//TODO commented this for testing (and accepting STOPPED status)
-					//&& newStatus == InstanceStatus.DEPLOYED_STARTED )
-					&& (newStatus == InstanceStatus.DEPLOYED_STARTED || newStatus == InstanceStatus.DEPLOYED_STOPPED))
+					&& newStatus == InstanceStatus.DEPLOYED_STARTED )
 				deployRoot( ma, instance );
 
 			else
@@ -835,8 +831,7 @@ public class Manager {
 
 		// It only makes sense for root instances.
 		this.logger.fine( "Deploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
-		// TODO Other targets than Docker eligible to be a "root" instance with parent(s) ??
-		if( rootInstance.getParent() != null && ! "target".equals(rootInstance.getComponent().getInstallerName())) {
+		if( rootInstance.getParent() != null ) {
 			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;
 		}
@@ -870,21 +865,6 @@ public class Manager {
 			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
 			Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
 			targetProperties.putAll( rootInstance.data );
-
-			// Deploying VM into a VM (eg. Docker)
-			// TODO Other targets than Docker eligible ??
-			if(rootInstance.getParent() != null) {
-				this.logger.fine("Trying to deploy Docker container inside VM !!");
-				this.logger.fine("Target is: " + target + ", handler=" + target.getHandler());
-				String endpoint = targetProperties.get("docker.endpoint");
-				String ipAddress = rootInstance.getParent().data.get(Instance.IP_ADDRESS);
-				this.logger.fine("Endpoint: " + endpoint + ", ip: " + ipAddress);
-				if(endpoint != null && ipAddress != null) {
-					Properties params = new Properties();
-					params.setProperty("ip", ipAddress);
-					targetProperties.put("docker.endpoint", Utils.expandTemplate(endpoint, params));
-				}
-			}
 
 			machineId = target.getHandler().createMachine(
 					targetProperties, this.messageServerIp, this.messageServerUsername, this.messageServerPassword,

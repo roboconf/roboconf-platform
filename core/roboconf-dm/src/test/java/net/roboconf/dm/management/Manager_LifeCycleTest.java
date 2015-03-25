@@ -97,13 +97,10 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 
 		// Switch a root instance only works if the state is DEPLOYED_STARTED...
-		//TODO uncomment this test...
-		/*
 		this.manager.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STOPPED );
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		*/
 
 		this.manager.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
