@@ -46,16 +46,25 @@ public interface DocConstants {
 	String SECTION_INSTANCES = "instances/";
 
 
+	/**
+	 * The file suffix for all the custom information.
+	 */
+	String FILE_SUFFIX = ".txt";
 
 	/**
 	 * The file extension for custom summary about a component.
 	 */
-	String COMP_SUMMARY = ".summary.txt";
+	String COMP_SUMMARY = ".summary" + FILE_SUFFIX;
 
 	/**
 	 * The file extension for extra information about a component.
 	 */
-	String COMP_EXTRA = ".extra.txt";
+	String COMP_EXTRA = ".extra" + FILE_SUFFIX;
+
+	/**
+	 * The file name prefix for application descriptions.
+	 */
+	String APP_DESC_PREFIX = "app.desc";
 
 	/**
 	 * The prefix for all the options.
