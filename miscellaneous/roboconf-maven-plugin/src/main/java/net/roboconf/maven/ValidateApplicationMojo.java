@@ -28,7 +28,6 @@ package net.roboconf.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -86,14 +85,17 @@ public class ValidateApplicationMojo extends AbstractMojo {
 			throw new MojoExecutionException( "The target model directory could not be found. " + completeAppDirectory );
 
 		// Load and validate the application
-		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( completeAppDirectory );
-
-		// Deal with recipes specifics
+		ApplicationLoadResult alr;
 		Collection<RoboconfError> recipeErrors = null;
 		if( this.recipe ) {
-			filterErrorsForRecipes( alr.getLoadErrors());
+			alr = RuntimeModelIo.loadApplicationFlexibly( completeAppDirectory );
+			RoboconfErrorHelpers.filterErrorsForRecipes( alr.getLoadErrors());
+
 			recipeErrors = validateRecipesSpecifics( this.project, alr.getApplication(), this.official );
 			alr.getLoadErrors().addAll( recipeErrors );
+
+		} else {
+			alr = RuntimeModelIo.loadApplication( completeAppDirectory );
 		}
 
 		// Analyze the result
@@ -161,32 +163,6 @@ public class ValidateApplicationMojo extends AbstractMojo {
 		File targetFile = new File( this.project.getBasedir(), MavenPluginConstants.VALIDATION_RESULT_PATH );
 		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( globalSb.toString(), targetFile );
-	}
-
-
-	/**
-	 * Filters errors for recipes.
-	 * <p>
-	 * Indeed, some errors only make sense for complete applications, not for
-	 * reusable recipes. This method removes them from the input list of errors.
-	 * </p>
-	 *
-	 * @param errors a non-null list of errors
-	 */
-	private void filterErrorsForRecipes( Collection<RoboconfError> errors ) {
-
-		List<ErrorCode> codesToSkip = Arrays.asList(
-				ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
-				ErrorCode.RM_UNRESOLVABLE_VARIABLE
-		);
-
-		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
-		for( RoboconfError error : errors ) {
-			if( codesToSkip.contains( error.getErrorCode()))
-				toRemove.add( error );
-		}
-
-		errors.removeAll( toRemove );
 	}
 
 

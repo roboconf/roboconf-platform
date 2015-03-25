@@ -51,6 +51,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.Rule;
@@ -550,7 +551,7 @@ public class RuntimeModelIoTest {
 		desc.setNamespace( "net.roboconf" );
 
 		ApplicationDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
-		Iterator<RoboconfError> it = RuntimeModelIo.loadApplication( dir ).loadErrors.iterator();
+		Iterator<RoboconfError> it = RuntimeModelIo.loadApplicationFlexibly( dir ).loadErrors.iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, it.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.CO_GRAPH_COULD_NOT_BE_BUILT, it.next().getErrorCode());
 	}
@@ -580,5 +581,25 @@ public class RuntimeModelIoTest {
 
 		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
 		Assert.assertEquals( 0, RuntimeModelIo.loadApplication( dir ).loadErrors.size());
+	}
+
+
+	@Test
+	public void testParsingWithRecipeProject() throws Exception {
+
+		// Normal load
+		File dir = TestUtils.findTestFile( "/reusable.recipe" );
+		Assert.assertTrue( dir.exists());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr.getLoadErrors());
+
+		Assert.assertEquals( 1, alr.getLoadErrors().size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, alr.getLoadErrors().iterator().next().getErrorCode());
+
+		// Flexible load
+		alr = RuntimeModelIo.loadApplicationFlexibly( dir );
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr.getLoadErrors());
+		Assert.assertEquals( 0, alr.getLoadErrors().size());
 	}
 }

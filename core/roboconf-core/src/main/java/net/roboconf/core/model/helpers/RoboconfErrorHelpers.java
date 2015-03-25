@@ -26,9 +26,11 @@
 package net.roboconf.core.model.helpers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.ErrorCode.ErrorLevel;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.ModelError;
@@ -119,5 +121,31 @@ public final class RoboconfErrorHelpers {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Filters errors for recipes.
+	 * <p>
+	 * Indeed, some errors only make sense for complete applications, not for
+	 * reusable recipes. This method removes them from the input list of errors.
+	 * </p>
+	 *
+	 * @param errors a non-null list of errors
+	 */
+	public static void filterErrorsForRecipes( Collection<RoboconfError> errors ) {
+
+		List<ErrorCode> codesToSkip = Arrays.asList(
+				ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
+				ErrorCode.RM_UNRESOLVABLE_VARIABLE
+		);
+
+		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
+		for( RoboconfError error : errors ) {
+			if( codesToSkip.contains( error.getErrorCode()))
+				toRemove.add( error );
+		}
+
+		errors.removeAll( toRemove );
 	}
 }
