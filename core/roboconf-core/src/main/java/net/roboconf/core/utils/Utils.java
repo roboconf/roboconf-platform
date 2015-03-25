@@ -122,6 +122,44 @@ public final class Utils {
 
 
 	/**
+	 * Expand a template, replacing each {{ param }} by the corresponding value.
+	 * <p>
+	 * Eg. "My name is {{ name }}" will result in "My name is Bond", provided that "params" contains "name=Bond".
+	 * </p>
+	 *
+	 * @param s the template to expand
+	 * @param params the parameters to be expanded in the template
+	 * @return the expanded template
+	 */
+	public static String expandTemplate(String s, Properties params) {
+
+		String result;
+		if( params == null || params.size() < 1 ) {
+			result = s;
+
+		} else {
+			StringBuffer sb = new StringBuffer();
+			Pattern pattern = Pattern.compile( "\\{\\{\\s*\\S+\\s*\\}\\}" );
+			Matcher m = pattern.matcher( s );
+
+			while( m.find()) {
+				String raw = m.group();
+				String varName = m.group().replace('{', ' ').replace('}', ' ').trim();
+				String val = params.getProperty(varName);
+				val = (val == null ? raw : val.trim());
+
+				m.appendReplacement(sb, val);
+			}
+
+			m.appendTail( sb );
+			result = sb.toString();
+		}
+
+		return result;
+	}
+
+
+	/**
 	 * Closes a stream quietly.
 	 * @param in an input stream (can be null)
 	 */

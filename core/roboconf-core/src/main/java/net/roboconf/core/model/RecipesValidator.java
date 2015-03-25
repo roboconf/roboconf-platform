@@ -65,7 +65,6 @@ import net.roboconf.core.utils.Utils;
  */
 public final class RecipesValidator {
 
-	public static final String BASH_DIRECTIVE = "#!/bin/bash";
 	public static final String SCRIPTS_DIR_NAME = "scripts";
 
 
@@ -88,8 +87,8 @@ public final class RecipesValidator {
 		List<ModelError> result;
 		if( "puppet".equalsIgnoreCase( component.getInstallerName()))
 			result = validatePuppetComponent( applicationFilesDirectory, component );
-		else if( "bash".equalsIgnoreCase( component.getInstallerName()))
-			result = validateBashComponent( applicationFilesDirectory, component );
+		else if( "script".equalsIgnoreCase( component.getInstallerName()))
+			result = validateScriptComponent( applicationFilesDirectory, component );
 		else
 			result = Collections.emptyList();
 
@@ -103,14 +102,14 @@ public final class RecipesValidator {
 	 * @param component the component
 	 * @return a non-null list of errors
 	 */
-	private static List<ModelError> validateBashComponent( File applicationFilesDirectory, Component component ) {
+	private static List<ModelError> validateScriptComponent( File applicationFilesDirectory, Component component ) {
 		List<ModelError> result = new ArrayList<ModelError> ();
 
 		// There must be a "scripts" directory
 		File directory = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, component );
 		File scriptsDir = new File( directory, SCRIPTS_DIR_NAME );
 		if( ! scriptsDir.exists())
-			result.add( new ModelError( ErrorCode.REC_BASH_NO_SCRIPTS_DIR, component, "Component: " + component ));
+			result.add( new ModelError( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR, component, "Component: " + component ));
 
 		return result;
 	}

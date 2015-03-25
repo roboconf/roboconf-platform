@@ -26,19 +26,14 @@
 package net.roboconf.dm.rest.client.delegates;
 
 import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.rest.client.exceptions.ApplicationException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**

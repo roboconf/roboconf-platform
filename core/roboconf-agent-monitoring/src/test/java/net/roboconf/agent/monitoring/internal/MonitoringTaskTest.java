@@ -65,20 +65,6 @@ public class MonitoringTaskTest {
 	}
 
 	@Test
-	public void testExpandString() {
-		Properties params = new Properties();
-		params.setProperty("firstname", "James");
-		params.setProperty("lastname", "Bond");
-		String tmpl = "My name is {{lastname}}, {{ firstname }} {{ lastname }}!";
-		Assert.assertEquals(
-				"My name is Bond, James Bond!",
-				(new MonitoringTask(null)).expandString(tmpl, params));
-
-		tmpl = "This is an {{ unknown }} parameter";
-		Assert.assertEquals(tmpl, (new MonitoringTask(null)).expandString(tmpl, params));
-	}
-
-	@Test
 	public void testExtractRuleSections_file() throws Exception {
 
 		File f = TestUtils.findTestFile( "/file-events.conf" );

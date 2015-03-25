@@ -177,7 +177,7 @@ public class FromInstanceDefinitionTest {
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
 		vmComponent.addChild( tomcatComponent );
 
-		Component warComponent = new Component( "WAR" ).installerName( "bash" );
+		Component warComponent = new Component( "WAR" ).installerName( "script" );
 		tomcatComponent.addChild( warComponent );
 
 		// The file to read
@@ -218,7 +218,7 @@ public class FromInstanceDefinitionTest {
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
 		vmComponent.addChild( tomcatComponent );
 
-		Component warComponent = new Component( "WAR" ).installerName( "bash" );
+		Component warComponent = new Component( "WAR" ).installerName( "script" );
 		tomcatComponent.addChild( warComponent );
 
 		// The file to read
@@ -272,7 +272,7 @@ public class FromInstanceDefinitionTest {
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
 		vmComponent.addChild( tomcatComponent );
 
-		Component warComponent = new Component( "WAR" ).installerName( "bash" );
+		Component warComponent = new Component( "WAR" ).installerName( "script" );
 		tomcatComponent.addChild( warComponent );
 
 		// The file to read
@@ -319,7 +319,7 @@ public class FromInstanceDefinitionTest {
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
 		vmComponent.addChild( tomcatComponent );
 
-		Component warComponent = new Component( "WAR" ).installerName( "bash" );
+		Component warComponent = new Component( "WAR" ).installerName( "script" );
 		tomcatComponent.addChild( warComponent );
 
 		// The file to read

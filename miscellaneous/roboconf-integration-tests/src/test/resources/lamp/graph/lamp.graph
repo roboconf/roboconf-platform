@@ -14,19 +14,19 @@ VM {
 
 # MySQL database
 MySQL {
-	installer: bash;
+	installer: script;
 	exports: ip, port = 3306;
 }
 
 # Tomcat
 Tomcat {
-	installer: bash;
+	installer: script;
 	exports: ip, portAJP = 8009;
 	imports: MySQL.ip, MySQL.port;
 }
 
 # Apache Load Balancer
 Apache {
-	installer: bash;
+	installer: script;
 	imports: Tomcat.portAJP, Tomcat.ip;
 }

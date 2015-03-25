@@ -115,7 +115,7 @@ public class ComplexApplicationFactory1 {
 		tomcat8.extendComponent( tomcat );
 
 		// Add redundant variables for the MySQL type
-		Component mySql = new Component( MYSQL ).installerName( "bash" );
+		Component mySql = new Component( MYSQL ).installerName( "script" );
 		mySql.exportedVariables.put( "ip", null );
 		mySql.exportedVariables.put( "port", "3306" );
 		mySql.associateFacet( facetDb );

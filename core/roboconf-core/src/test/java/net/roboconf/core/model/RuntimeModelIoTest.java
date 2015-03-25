@@ -452,7 +452,7 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( ErrorCode.PROJ_MISSING_INSTANCE_EP, iterator.next().getErrorCode());
 
 		File instancesFile = new File( instDir, "init.instances" );
-		fileContent = "facet MyFacet {\n}\n\nA {\n\tinstaller: bash;\n}";
+		fileContent = "facet MyFacet {\n}\n\nA {\n\tinstaller: script;\n}";
 		Utils.copyStream( new ByteArrayInputStream( fileContent.getBytes( "UTF-8" )), instancesFile );
 
 		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();

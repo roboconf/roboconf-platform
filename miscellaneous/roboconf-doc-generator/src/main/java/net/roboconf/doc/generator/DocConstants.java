@@ -127,7 +127,7 @@ public interface DocConstants {
 	 * By default, a Roboconf image is used.
 	 * </p>
 	 */
-	String OPTION_HTML_HEADER_IMAGE_FILE = OPTION_PREFIX + "header.image.file";
+	String OPTION_HTML_HEADER_IMAGE_FILE = OPTION_PREFIX + "html.header.image.file";
 
 
 

@@ -86,7 +86,7 @@ public class RoboconfErrorHelpersTest {
 		Assert.assertEquals( 0, RoboconfErrorHelpers.resolveErrorsWithLocation( alr ).size());
 
 		// Try with an application that contains only a runtime error
-		alr.getLoadErrors().add( new RoboconfError( ErrorCode.REC_BASH_NO_SCRIPTS_DIR ));
+		alr.getLoadErrors().add( new RoboconfError( ErrorCode.REC_SCRIPT_NO_SCRIPTS_DIR ));
 		alr.getLoadErrors().add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, c1 ));
 		alr.getLoadErrors().add( new ModelError( ErrorCode.RM_INVALID_COMPONENT_INSTALLER, c2 ));
 

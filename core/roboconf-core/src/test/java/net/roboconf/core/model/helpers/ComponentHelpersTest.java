@@ -175,7 +175,7 @@ public class ComponentHelpersTest {
 		app.getGraphs().getRootComponents().add( root3 );
 		Assert.assertEquals( 3, ComponentHelpers.findAllComponents( app ).size());
 
-		Component childComponent = new Component( "child" ).installerName( "bash" );
+		Component childComponent = new Component( "child" ).installerName( "script" );
 		root3.addChild( childComponent );
 		Assert.assertEquals( 4, ComponentHelpers.findAllComponents( app ).size());
 	}

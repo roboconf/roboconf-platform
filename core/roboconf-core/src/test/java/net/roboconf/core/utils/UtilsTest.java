@@ -38,6 +38,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -203,6 +204,27 @@ public class UtilsTest {
 		Assert.assertFalse( Utils.isEmptyOrWhitespaces( "b" ));
 	}
 
+	@Test
+	public void testExpandString() {
+
+		// Null properties
+		Assert.assertEquals( "toto", Utils.expandTemplate( "toto", null ));
+
+		// No property
+		Properties params = new Properties();
+		Assert.assertEquals( "toto", Utils.expandTemplate( "toto", params ));
+
+		// With properties
+		params.setProperty("firstname", "James");
+		params.setProperty("lastname", "Bond");
+		String tmpl = "My name is {{lastname}}, {{ firstname }} {{ lastname }}!";
+		Assert.assertEquals(
+				"My name is Bond, James Bond!",
+				Utils.expandTemplate(tmpl, params));
+
+		tmpl = "This is an {{ unknown }} parameter";
+		Assert.assertEquals( tmpl, Utils.expandTemplate(tmpl, params));
+	}
 
 	@Test
 	public void testExtractZipArchive() throws Exception {
