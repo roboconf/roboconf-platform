@@ -66,10 +66,10 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationBinding_2() throws Exception {
 
-		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\",\"namespace\":\"net.roboconf\"}";
+		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Application app = new Application( "my application" ).qualifier( "v1-17.snapshot" ).namespace( "net.roboconf" );
+		Application app = new Application( "my application" ).qualifier( "v1-17.snapshot" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
@@ -80,7 +80,6 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
-		Assert.assertEquals( app.getNamespace(), readApp.getNamespace());
 	}
 
 

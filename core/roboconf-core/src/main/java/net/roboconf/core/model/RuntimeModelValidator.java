@@ -429,9 +429,6 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( descriptor.getQualifier()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, descriptor ));
 
-		if( Utils.isEmptyOrWhitespaces( descriptor.getNamespace()))
-			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_NAMESPACE, descriptor ));
-
 		if( Utils.isEmptyOrWhitespaces( descriptor.getDslId()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, descriptor ));
 

@@ -102,7 +102,6 @@ public final class RuntimeModelIo {
 				app.setName( appDescriptor.getName());
 				app.setDescription( appDescriptor.getDescription());
 				app.setQualifier( appDescriptor.getQualifier());
-				app.setNamespace( appDescriptor.getNamespace());
 				app.setDslId( appDescriptor.getDslId());
 
 				Collection<ModelError> errors = RuntimeModelValidator.validate( appDescriptor );
@@ -148,7 +147,6 @@ public final class RuntimeModelIo {
 			appDescriptor.setName( "generated" );
 			appDescriptor.setDslId( "whatever" );
 			appDescriptor.setQualifier( "generated" );
-			appDescriptor.setNamespace( "generated" );
 
 			ApplicationLoadResult alr = new ApplicationLoadResult();
 			alr.application = new Application();

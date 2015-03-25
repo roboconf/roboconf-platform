@@ -201,7 +201,6 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( "Legacy LAMP", result.application.getName());
 		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());
 		Assert.assertEquals( "sample", result.application.getQualifier());
-		Assert.assertEquals( "net.roboconf", result.application.getNamespace());
 		Assert.assertEquals( "roboconf-1.0", result.application.getDslId());
 
 		Assert.assertNotNull( result.application.getGraphs());
@@ -388,7 +387,6 @@ public class RuntimeModelIoTest {
 		Properties props = new Properties();
 		props.setProperty( ApplicationDescriptor.APPLICATION_NAME, "app-name" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_QUALIFIER, "snapshot" );
-		props.setProperty( ApplicationDescriptor.APPLICATION_NAMESPACE, "net.roboconf" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
 		FileOutputStream fos = null;

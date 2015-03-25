@@ -100,7 +100,6 @@ public enum ErrorCode {
 
 	// Runtime Model Errors
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
-	RM_MISSING_APPLICATION_NAMESPACE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application namespace is missing." ),
 	RM_MISSING_APPLICATION_DSL_ID( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The DSL identifier to read model files is missing. The default parser will be used." ),
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),

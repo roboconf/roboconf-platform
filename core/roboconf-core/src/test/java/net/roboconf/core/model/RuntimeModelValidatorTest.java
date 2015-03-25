@@ -410,7 +410,6 @@ public class RuntimeModelValidatorTest {
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAMESPACE, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -418,19 +417,11 @@ public class RuntimeModelValidatorTest {
 		desc.setName( "My Application #!" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAMESPACE, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		desc.setQualifier( "Snapshot Build #2401" );
-		iterator = RuntimeModelValidator.validate( desc ).iterator();
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAMESPACE, iterator.next().getErrorCode());
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
-		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());
-		Assert.assertFalse( iterator.hasNext());
-
-		desc.setNamespace( "net.roboconf" );
 		iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_DSL_ID, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, iterator.next().getErrorCode());

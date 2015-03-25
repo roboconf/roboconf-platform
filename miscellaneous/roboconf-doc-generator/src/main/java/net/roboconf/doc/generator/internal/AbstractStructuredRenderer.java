@@ -116,7 +116,6 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 		sb.append( startTable());
 		sb.append( addTableLine( this.messages.get( "app.name" ), this.application.getName())); //$NON-NLS-1$
-		sb.append( addTableLine( this.messages.get( "app.ns" ), this.application.getNamespace())); //$NON-NLS-1$
 		sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.application.getQualifier())); //$NON-NLS-1$
 		sb.append( endTable());
 

@@ -55,7 +55,7 @@ public class ProjectUtilsTest {
 		File dir = this.folder.newFolder();
 		CreationBean bean = new CreationBean()
 							.projectDescription( "some desc" ).projectName( "my-project" )
-							.projectNamespace( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" ).mavenProject( false );
+							.groupId( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" ).mavenProject( false );
 
 		Assert.assertEquals( 0, dir.listFiles().length );
 		ProjectUtils.createProjectSkeleton( dir, bean );
@@ -78,7 +78,7 @@ public class ProjectUtilsTest {
 		File dir = this.folder.newFolder();
 		CreationBean bean = new CreationBean()
 							.projectDescription( "some desc" ).projectName( "my-project" )
-							.projectNamespace( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" )
+							.groupId( "net.roboconf" ).projectVersion( "1.0-SNAPSHOT" )
 							.pluginVersion( "1.0.0" );
 
 		Assert.assertEquals( 0, dir.listFiles().length );
@@ -98,7 +98,6 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplication().getName());
 		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplication().getQualifier());
-		Assert.assertEquals( "${project.artifact.groupId}", alr.getApplication().getNamespace());
 	}
 
 
@@ -109,7 +108,7 @@ public class ProjectUtilsTest {
 		CreationBean bean = new CreationBean()
 							.projectDescription( "some desc" ).projectName( "my project" )
 							.projectVersion( "1.0-SNAPSHOT" ).pluginVersion( "1.0.0" )
-							.projectNamespace( "net.roboconf" ).artifactId( "roboconf-sample" );
+							.groupId( "net.roboconf" ).artifactId( "roboconf-sample" );
 
 		File pomSkeleton = TestUtils.findTestFile( "/test-pom-skeleton.xml" );
 		Assert.assertTrue( pomSkeleton.exists());
@@ -140,7 +139,6 @@ public class ProjectUtilsTest {
 		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
 		Assert.assertEquals( bean.getProjectName(), alr.getApplication().getName());
 		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplication().getQualifier());
-		Assert.assertEquals( "${project.artifact.groupId}", alr.getApplication().getNamespace());
 	}
 
 
