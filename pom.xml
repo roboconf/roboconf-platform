@@ -59,7 +59,7 @@
 		<module>core/roboconf-target-iaas-vmware</module>
 		
 		<!-- Agent plug-ins -->
-		<module>core/roboconf-plugin-bash</module>
+		<module>core/roboconf-plugin-script</module>
 		<module>core/roboconf-plugin-puppet</module>
 		<module>core/roboconf-plugin-file</module>
 		<module>core/roboconf-plugin-logger</module>

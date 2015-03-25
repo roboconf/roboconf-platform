@@ -63,7 +63,7 @@ public class TestApplication extends Application {
 		mySqlComponent.exportedVariables.put( "mysql.ip", null );
 		this.mySql = new Instance( "mysql-server" ).component( mySqlComponent );
 
-		Component warComponent = new Component( "war" ).installerName( "bash" );
+		Component warComponent = new Component( "war" ).installerName( "script" );
 		warComponent.exportedVariables.put( "war.port", "8080" );
 		warComponent.exportedVariables.put( "war.ip", null );
 		warComponent.importedVariables.put( "mysql.port", false );
