@@ -127,6 +127,7 @@ public enum ErrorCode {
 	RM_NO_ROOT_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "No root component was found in the graph." ),
 	RM_NOT_A_ROOT_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The graph(s) references a component as a root component while this component has ancestors." ),
 	RM_UNRESOLVABLE_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is imported but no component exports it." ),
+	RM_UNRESOLVABLE_FACET_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A facet variable is imported but no component inherits from this facet." ),
 
 	RM_EMPTY_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance name cannot be empty." ),
 	RM_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid instance name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),

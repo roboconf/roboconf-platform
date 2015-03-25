@@ -89,7 +89,7 @@ public class ValidateApplicationMojo extends AbstractMojo {
 		Collection<RoboconfError> recipeErrors = null;
 		if( this.recipe ) {
 			alr = RuntimeModelIo.loadApplicationFlexibly( completeAppDirectory );
-			RoboconfErrorHelpers.filterErrorsForRecipes( alr.getLoadErrors());
+			RoboconfErrorHelpers.filterErrorsForRecipes( alr );
 
 			recipeErrors = validateRecipesSpecifics( this.project, alr.getApplication(), this.official );
 			alr.getLoadErrors().addAll( recipeErrors );

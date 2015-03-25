@@ -133,19 +133,19 @@ public final class RoboconfErrorHelpers {
 	 *
 	 * @param errors a non-null list of errors
 	 */
-	public static void filterErrorsForRecipes( Collection<RoboconfError> errors ) {
+	public static void filterErrorsForRecipes( ApplicationLoadResult alr ) {
 
 		List<ErrorCode> codesToSkip = Arrays.asList(
-				ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
-				ErrorCode.RM_UNRESOLVABLE_VARIABLE
+			ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
+			ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE
 		);
 
 		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
-		for( RoboconfError error : errors ) {
+		for( RoboconfError error : alr.getLoadErrors()) {
 			if( codesToSkip.contains( error.getErrorCode()))
 				toRemove.add( error );
 		}
 
-		errors.removeAll( toRemove );
+		alr.getLoadErrors().removeAll( toRemove );
 	}
 }

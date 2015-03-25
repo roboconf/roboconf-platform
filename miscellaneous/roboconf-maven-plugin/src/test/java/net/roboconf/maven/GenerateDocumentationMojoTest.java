@@ -55,7 +55,7 @@ public class GenerateDocumentationMojoTest extends ValidateProjectMojoTest {
 
 		Assert.assertEquals( 4, html.listFiles().length );
 		Assert.assertTrue( new File( html, "index.html" ).isFile());
-		Assert.assertTrue( new File( html, "roboconf.jpg" ).isFile());
+		Assert.assertTrue( new File( html, "header.jpg" ).isFile());
 		Assert.assertTrue( new File( html, "style.css" ).isFile());
 		Assert.assertTrue( new File( html, "png" ).isDirectory());
 	}
@@ -72,7 +72,7 @@ public class GenerateDocumentationMojoTest extends ValidateProjectMojoTest {
 
 		Assert.assertEquals( 4, html.listFiles().length );
 		Assert.assertTrue( new File( html, "index.html" ).isFile());
-		Assert.assertTrue( new File( html, "roboconf.jpg" ).isFile());
+		Assert.assertTrue( new File( html, "header.jpg" ).isFile());
 		Assert.assertTrue( new File( html, "style.css" ).isFile());
 		Assert.assertTrue( new File( html, "png" ).isDirectory());
 	}
@@ -89,7 +89,7 @@ public class GenerateDocumentationMojoTest extends ValidateProjectMojoTest {
 
 		Assert.assertEquals( 3, html.listFiles().length );
 		Assert.assertTrue( new File( html, "index.html" ).isFile());
-		Assert.assertTrue( new File( html, "roboconf.jpg" ).isFile());
+		Assert.assertTrue( new File( html, "header.jpg" ).isFile());
 		Assert.assertTrue( new File( html, "style.css" ).isFile());
 
 		File md = new File( dir, "markdown" );
@@ -120,7 +120,7 @@ public class GenerateDocumentationMojoTest extends ValidateProjectMojoTest {
 
 			Assert.assertEquals( locale, 3, html.listFiles().length );
 			Assert.assertTrue( new File( html, "index.html" ).isFile());
-			Assert.assertTrue( new File( html, "roboconf.jpg" ).isFile());
+			Assert.assertTrue( new File( html, "header.jpg" ).isFile());
 			Assert.assertTrue( new File( html, "style.css" ).isFile());
 
 			File md = new File( dir, "markdown_" + locale );

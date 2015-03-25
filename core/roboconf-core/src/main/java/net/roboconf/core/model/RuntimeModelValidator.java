@@ -272,13 +272,29 @@ public final class RuntimeModelValidator {
 			}
 		}
 
+		// Intermediate step: deal with facet variables
+		Set<String> facetVariables = new HashSet<String> ();
+		for( Facet f : graphs.getFacetNameToFacet().values()) {
+			facetVariables.addAll( f.exportedVariables.keySet());
+			facetVariables.add( f.getName() + "." + Constants.WILDCARD );
+		}
+
 		// Are all the imports and exports resolvable?
 		for( Map.Entry<String,Boolean> entry : importedVariableNameToExported.entrySet()) {
+
+			// Resolved. Great!
 			if( entry.getValue())
 				continue;
 
+			// Maybe it is facet variable, with no component associated with this facet.
+			// This check is useful for recipes.
+			ErrorCode errorCode = ErrorCode.RM_UNRESOLVABLE_VARIABLE;
+			if( facetVariables.contains( entry.getKey()))
+				errorCode = ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE;
+
+			// Add an error about unknown variable
 			for( Component component : importedVariableToImporters.get( entry.getKey()))
-				errors.add( new ModelError( ErrorCode.RM_UNRESOLVABLE_VARIABLE, component, "Variable name: " + entry.getKey()));
+				errors.add( new ModelError( errorCode, component, "Variable name: " + entry.getKey()));
 		}
 
 		return errors;

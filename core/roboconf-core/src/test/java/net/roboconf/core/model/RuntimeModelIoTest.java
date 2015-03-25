@@ -546,7 +546,6 @@ public class RuntimeModelIoTest {
 		desc.setQualifier( "qualifier" );
 		desc.setInstanceEntryPoint( "model.instances" );
 		desc.setDslId( "roboconf-1.0" );
-		desc.setNamespace( "net.roboconf" );
 
 		ApplicationDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
 		Iterator<RoboconfError> it = RuntimeModelIo.loadApplicationFlexibly( dir ).loadErrors.iterator();
@@ -574,7 +573,6 @@ public class RuntimeModelIoTest {
 		desc.setQualifier( "qualifier" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
-		desc.setNamespace( "net.roboconf" );
 		ApplicationDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
 
 		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
@@ -590,14 +588,28 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( dir.exists());
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
-		RoboconfErrorHelpers.filterErrorsForRecipes( alr.getLoadErrors());
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
 
 		Assert.assertEquals( 1, alr.getLoadErrors().size());
 		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, alr.getLoadErrors().iterator().next().getErrorCode());
 
 		// Flexible load
 		alr = RuntimeModelIo.loadApplicationFlexibly( dir );
-		RoboconfErrorHelpers.filterErrorsForRecipes( alr.getLoadErrors());
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
 		Assert.assertEquals( 0, alr.getLoadErrors().size());
+	}
+
+
+	@Test
+	public void testParsingWithInvalidRecipeProject() throws Exception {
+
+		File dir = TestUtils.findTestFile( "/reusable.recipe.with.errors" );
+		Assert.assertTrue( dir.exists());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( dir );
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+		Assert.assertEquals( 1, alr.getLoadErrors().size());
+		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, alr.getLoadErrors().iterator().next().getErrorCode());
+		Assert.assertTrue( alr.getLoadErrors().iterator().next().getDetails().contains( "f.*" ));
 	}
 }
