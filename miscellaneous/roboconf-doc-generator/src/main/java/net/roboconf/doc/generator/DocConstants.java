@@ -121,6 +121,14 @@ public interface DocConstants {
 	 */
 	String OPTION_HTML_EXPLODED = OPTION_PREFIX + "html.exploded";
 
+	/**
+	 * The option to specify the path of an image file to use as the header image.
+	 * <p>
+	 * By default, a Roboconf image is used.
+	 * </p>
+	 */
+	String OPTION_HTML_HEADER_IMAGE_FILE = OPTION_PREFIX + "header.image.file";
+
 
 
 	/**

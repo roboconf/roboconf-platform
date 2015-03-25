@@ -9,7 +9,7 @@
 </head>
 
 <body>
-	<a href="index.html"><img id="header-img" src="roboconf.jpg" alt="Roboconf" /></a>
+	<a href="index.html"><img id="header-img" src="header.jpg" alt="header" /></a>
 	
 	<div class="menu">
 ${MENU}
