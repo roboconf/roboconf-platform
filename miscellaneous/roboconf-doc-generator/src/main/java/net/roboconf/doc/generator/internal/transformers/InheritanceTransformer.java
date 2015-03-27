@@ -26,9 +26,9 @@
 package net.roboconf.doc.generator.internal.transformers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
 
 /**
@@ -50,10 +50,40 @@ public class InheritanceTransformer extends HierarchicalTransformer {
 			Collection<Component> extendingComponents,
 			int maxPerLine ) {
 
-		super(
-				component,
-				extendedComponent == null ? new ArrayList<Component>( 0 ) : Arrays.asList( extendedComponent ),
-				extendingComponents,
-				maxPerLine );
+		super( component, asList( extendedComponent ), asList( extendingComponents ), maxPerLine );
+	}
+
+
+	/**
+	 * Convenience method to reuse the super constructor.
+	 * @param extendedComponent
+	 * @return a non-null collection
+	 */
+	static Collection<AbstractType> asList( Component extendedComponent ) {
+
+		Collection<AbstractType> result;
+		if( extendedComponent == null ) {
+			result = new ArrayList<AbstractType>( 0 );
+
+		} else {
+			result = new ArrayList<AbstractType>( 1 );
+			result.add( extendedComponent );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Convenience method to reuse the super constructor.
+	 * @param components
+	 * @return a non-null collection
+	 */
+	static Collection<AbstractType> asList( Collection<Component> components ) {
+
+		Collection<AbstractType> result = new ArrayList<AbstractType> ();
+		result.addAll( components );
+
+		return result;
 	}
 }

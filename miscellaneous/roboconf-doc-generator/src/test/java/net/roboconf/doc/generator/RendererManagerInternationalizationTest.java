@@ -77,9 +77,7 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 		options.put( DocConstants.OPTION_LOCALE, "oops" );
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
-		String s = checkInternationalization();
-		Assert.assertTrue( s.contains( "Components" ));
-		Assert.assertFalse( s.contains( "significant" ));
+		checkInternationalization();
 	}
 
 

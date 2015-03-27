@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.doc.generator.internal.GraphUtils;
 import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
@@ -52,11 +53,11 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	private static final int V_MARGIN = 50;
 
 	private final Component component;
-	private final Map<Component,Point2D> componentToLocation;
+	private final Map<AbstractType,Point2D> typeToLocation;
 	private final int maxPerLine;
-	private final List<Component> aloneOnRow;
+	private final List<AbstractType> aloneOnRow;
 
-	private final Graph<Component,String> graph;
+	private final Graph<AbstractType,String> graph;
 	private int currentWidth = H_MARGIN;
 	private int currentHeigth = V_MARGIN;
 	private int maxRowWidth;
@@ -71,30 +72,30 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	 */
 	public HierarchicalTransformer(
 			Component component,
-			Collection<Component> ancestors,
-			Collection<Component> children,
+			Collection<AbstractType> ancestors,
+			Collection<AbstractType> children,
 			int maxPerLine ) {
 
 		// Store fields
 		this.component = component;
 		this.maxPerLine = maxPerLine;
-		this.componentToLocation = new HashMap<Component,Point2D> ();
-		this.aloneOnRow = new ArrayList<Component> ();
+		this.typeToLocation = new HashMap<AbstractType,Point2D> ();
+		this.aloneOnRow = new ArrayList<AbstractType> ();
 
 		// Builds the graph
-		this.graph = new DirectedOrderedSparseMultigraph<Component,String> ();
+		this.graph = new DirectedOrderedSparseMultigraph<AbstractType,String> ();
 		int cpt = 1;
 
-		for( Component c : ancestors )
-			this.graph.addVertex( c );
+		for( AbstractType t : ancestors )
+			this.graph.addVertex( t );
 
 		this.graph.addVertex( component );
-		for( Component c : ancestors )
-			this.graph.addEdge( "can contain" + cpt++, c, component );
+		for( AbstractType t : ancestors )
+			this.graph.addEdge( "can contain" + cpt++, t, component );
 
-		for( Component c : children ) {
-			this.graph.addVertex( c );
-			this.graph.addEdge( "can contain" + cpt++, component, c );
+		for( AbstractType t : children ) {
+			this.graph.addVertex( t );
+			this.graph.addEdge( "can contain" + cpt++, component, t );
 		}
 
 		// In these first steps, vertices are aligned on the left
@@ -113,12 +114,12 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 		this.currentHeigth += V_MARGIN;
 
 		// Center alone vertices
-		for( Component c : this.aloneOnRow ) {
-			int width = GraphUtils.computeShapeWidth( c );
+		for( AbstractType t : this.aloneOnRow ) {
+			int width = GraphUtils.computeShapeWidth( t );
 			int newX = (this.maxRowWidth - width) / 2;
 
 			if( newX > H_MARGIN ) {
-				Point2D p = transform( c );
+				Point2D p = transform( t );
 				p.setLocation( newX, p.getY());
 			}
 		}
@@ -130,7 +131,7 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	 */
 	private void dealWithMainComponent() {
 
-		this.componentToLocation.put(
+		this.typeToLocation.put(
 				this.component,
 				new Point2D.Double( H_MARGIN, this.currentHeigth ));
 
@@ -146,10 +147,10 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	 * Finds the position of other components.
 	 * @param others a non-null list of components
 	 */
-	private void dealWithOthers( Collection<Component> others ) {
+	private void dealWithOthers( Collection<AbstractType> others ) {
 
 		int col = 1;
-		for( Component c : others ) {
+		for( AbstractType t : others ) {
 
 			if( col > this.maxPerLine ) {
 				col = 1;
@@ -157,8 +158,8 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 				this.currentWidth = H_MARGIN;
 			}
 
-			this.componentToLocation.put( c, new Point2D.Double( this.currentWidth, this.currentHeigth ));
-			this.currentWidth += H_PADDING + GraphUtils.computeShapeWidth( c );
+			this.typeToLocation.put( t, new Point2D.Double( this.currentWidth, this.currentHeigth ));
+			this.currentWidth += H_PADDING + GraphUtils.computeShapeWidth( t );
 			col ++;
 
 			this.maxRowWidth = Math.max( this.maxRowWidth, this.currentWidth );
@@ -175,8 +176,8 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	 * #transform(java.lang.Object)
 	 */
 	@Override
-	public Point2D transform( Component input ) {
-		return this.componentToLocation.get( input );
+	public Point2D transform( AbstractType input ) {
+		return this.typeToLocation.get( input );
 	}
 
 
@@ -197,7 +198,7 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	 * #getGraph()
 	 */
 	@Override
-	public Graph<Component,String> getGraph() {
+	public Graph<AbstractType,String> getGraph() {
 		return this.graph;
 	}
 
@@ -208,7 +209,7 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	 * #getEdgeShapeTransformer()
 	 */
 	@Override
-	public AbstractEdgeShapeTransformer<Component,String> getEdgeShapeTransformer() {
-		return new EdgeShape.Line<Component,String> ();
+	public AbstractEdgeShapeTransformer<AbstractType,String> getEdgeShapeTransformer() {
+		return new EdgeShape.Line<AbstractType,String> ();
 	}
 }
