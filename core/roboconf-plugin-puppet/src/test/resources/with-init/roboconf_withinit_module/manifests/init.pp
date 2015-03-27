@@ -1,4 +1,4 @@
-class roboconf_withinit_module($runningState = undef, $importAdded = undef, $importRemoved = undef, $importComponent = undef, $withoperations = undef) {
+class roboconf_withinit_module($runningState = undef, $importDiff = undef, $withoperations = undef) {
 
   # A file generated from a template
   file{"/tmp/roboconf-test-for-puppet/WithInit.tpl.$runningState":

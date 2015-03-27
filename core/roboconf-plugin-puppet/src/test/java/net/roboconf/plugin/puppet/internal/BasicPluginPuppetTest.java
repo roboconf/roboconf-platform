@@ -207,12 +207,12 @@ public class BasicPluginPuppetTest {
 		// Try with the changed import
 		Import imp = new Import( "/vm/sth", "some component" );
 		String s = this.plugin.generateCodeToExecute( "roboconf_test-component", instance, PuppetState.RUNNING, imp, false );
-		Assert.assertTrue( s.endsWith( ", importComponent => some component}" ));
+		Assert.assertTrue( s.endsWith( ", component => some component}}" ));
 
 		// And when the component is null
 		imp = new Import( "/vm/sth", null );
 		s = this.plugin.generateCodeToExecute( "roboconf_test-component", instance, PuppetState.RUNNING, imp, false );
-		Assert.assertTrue( s.endsWith( ", importComponent => undef}" ));
+		Assert.assertTrue( s.endsWith( ", component => undef}}" ));
 	}
 
 
