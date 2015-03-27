@@ -26,6 +26,7 @@
 package net.roboconf.core.model;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -74,13 +75,13 @@ public final class RuntimeModelIo {
 	 * @return a load result (never null)
 	 */
 	public static ApplicationLoadResult loadApplication( File projectDirectory ) {
+
 		ApplicationLoadResult result = new ApplicationLoadResult();
 		Application app = new Application();
+		result.application = app;
 
 		ApplicationDescriptor appDescriptor = null;
 		File descDirectory = new File( projectDirectory, Constants.PROJECT_DIR_DESC );
-		File instDirectory = new File( projectDirectory, Constants.PROJECT_DIR_INSTANCES );
-		File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 
 
 		// Read the application descriptor
@@ -101,7 +102,6 @@ public final class RuntimeModelIo {
 				app.setName( appDescriptor.getName());
 				app.setDescription( appDescriptor.getDescription());
 				app.setQualifier( appDescriptor.getQualifier());
-				app.setNamespace( appDescriptor.getNamespace());
 				app.setDslId( appDescriptor.getDslId());
 
 				Collection<ModelError> errors = RuntimeModelValidator.validate( appDescriptor );
@@ -120,6 +120,64 @@ public final class RuntimeModelIo {
 			}
 		}
 
+		return loadApplication( projectDirectory, appDescriptor, result );
+	}
+
+
+	/**
+	 * Loads an application from a directory.
+	 * <p>
+	 * This method allows to load an application which does not have a descriptor.
+	 * If it has one, it will be read. Otherwise, a default one will be generated.
+	 * This is convenient for reusable recipes.
+	 * </p>
+	 *
+	 * @param projectDirectory the project directory
+	 * @return a load result (never null)
+	 */
+	public static ApplicationLoadResult loadApplicationFlexibly( File projectDirectory ) {
+
+		File descDirectory = new File( projectDirectory, Constants.PROJECT_DIR_DESC );
+		ApplicationLoadResult result;
+		if( descDirectory.exists()) {
+			result = loadApplication( projectDirectory );
+
+		} else {
+			ApplicationDescriptor appDescriptor = new ApplicationDescriptor();
+			appDescriptor.setName( "generated" );
+			appDescriptor.setDslId( "whatever" );
+			appDescriptor.setQualifier( "generated" );
+
+			ApplicationLoadResult alr = new ApplicationLoadResult();
+			alr.application = new Application();
+
+			File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
+			File[] graphFiles = graphDirectory.listFiles( new GraphFileFilter());
+			if( graphFiles != null && graphFiles.length > 0 )
+				appDescriptor.setGraphEntryPoint( graphFiles[ 0 ].getName());
+
+			result = loadApplication( projectDirectory, appDescriptor, alr );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Loads an application from a directory.
+	 * @param projectDirectory the project directory
+	 * @param appDescriptor the application's descriptor
+	 * @param result the result to populate
+	 * @return a load result (never null)
+	 */
+	private static ApplicationLoadResult loadApplication(
+			File projectDirectory,
+			ApplicationDescriptor appDescriptor,
+			ApplicationLoadResult result ) {
+
+		Application app = result.application;
+		File instDirectory = new File( projectDirectory, Constants.PROJECT_DIR_INSTANCES );
+		File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 
 		// Load the graph
 		GRAPH: if( ! graphDirectory.exists()) {
@@ -182,9 +240,6 @@ public final class RuntimeModelIo {
 			result.loadErrors.addAll( errors );
 		}
 
-
-		// Complete the result
-		result.application = app;
 		return result;
 	}
 
@@ -302,5 +357,16 @@ public final class RuntimeModelIo {
 
 		FileDefinition def = new FromInstances().buildFileDefinition( rootInstances, targetFile, false, true );
 		ParsingModelIo.saveRelationsFile( def, false, "\n" );
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class GraphFileFilter implements FileFilter {
+		@Override
+		public boolean accept( File f ) {
+			return f.isFile() && f.getName().toLowerCase().endsWith( ".graph" );
+		}
 	}
 }

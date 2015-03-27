@@ -39,7 +39,7 @@ public class Application implements Serializable {
 
 	private static final long serialVersionUID = -4753958407033243184L;
 
-	private String name, qualifier, description, namespace, dslId;
+	private String name, qualifier, description, dslId;
 	private Graphs graphs;
 	private final Collection<Instance> rootInstances = new LinkedHashSet<Instance> ();
 
@@ -99,20 +99,6 @@ public class Application implements Serializable {
 	 */
 	public void setQualifier( String qualifier ) {
 		this.qualifier = qualifier;
-	}
-
-	/**
-	 * @return the namespace
-	 */
-	public String getNamespace() {
-		return this.namespace;
-	}
-
-	/**
-	 * @param namespace the namespace to set
-	 */
-	public void setNamespace( String namespace ) {
-		this.namespace = namespace;
 	}
 
 	/**
@@ -190,14 +176,6 @@ public class Application implements Serializable {
 	 */
 	public Application description( String description ) {
 		this.description = description;
-		return this;
-	}
-
-	/**
-	 * Sets the name space in a chain approach.
-	 */
-	public Application namespace( String namespace ) {
-		this.namespace = namespace;
 		return this;
 	}
 

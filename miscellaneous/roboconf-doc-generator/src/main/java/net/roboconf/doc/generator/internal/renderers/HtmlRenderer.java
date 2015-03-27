@@ -433,9 +433,18 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 		Utils.writeStringInto( toWrite, targetFile );
 
 		// And the header image
+		String imagePath = this.options.get( DocConstants.OPTION_HTML_HEADER_IMAGE_FILE );
 		try {
-			in = getClass().getResourceAsStream( "/roboconf.jpg" );
-			File imgFile = new File( this.outputDirectory, "roboconf.jpg" );
+			File sourceFile = null;
+			if( imagePath != null )
+				sourceFile = new File( imagePath );
+
+			if( sourceFile != null && sourceFile.exists())
+				in = new FileInputStream( sourceFile );
+			else
+				in = getClass().getResourceAsStream( "/roboconf.jpg" );
+
+			File imgFile = new File( this.outputDirectory, "header.jpg" );
 			Utils.copyStream( in, imgFile );
 
 		} finally {

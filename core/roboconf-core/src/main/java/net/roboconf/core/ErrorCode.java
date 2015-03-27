@@ -100,7 +100,6 @@ public enum ErrorCode {
 
 	// Runtime Model Errors
 	RM_MISSING_APPLICATION_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application name is missing." ),
-	RM_MISSING_APPLICATION_NAMESPACE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application namespace is missing." ),
 	RM_MISSING_APPLICATION_DSL_ID( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The DSL identifier to read model files is missing. The default parser will be used." ),
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
@@ -128,6 +127,7 @@ public enum ErrorCode {
 	RM_NO_ROOT_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "No root component was found in the graph." ),
 	RM_NOT_A_ROOT_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The graph(s) references a component as a root component while this component has ancestors." ),
 	RM_UNRESOLVABLE_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is imported but no component exports it." ),
+	RM_UNRESOLVABLE_FACET_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A facet variable is imported but no component inherits from this facet." ),
 
 	RM_EMPTY_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance name cannot be empty." ),
 	RM_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid instance name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
@@ -158,10 +158,10 @@ public enum ErrorCode {
 	REC_PUPPET_MISSING_PARAM_RUNNING_STATE( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts must have a 'runningState' parameter." ),
 	REC_PUPPET_MISSING_PARAM_FROM_IMPORT( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Component imports mean the Puppet module must have matching parameters." ),
 	REC_SCRIPT_NO_SCRIPTS_DIR( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Scripts must be placed under a 'scripts' directory." ),
-	REC_PROJECT_IN_LOWER_CASE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe project names should be in lower case." ),
+	REC_ARTIFACT_ID_IN_LOWER_CASE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' artifact ID should be in lower case." ),
 	REC_MISSING_README( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects should contain a readme file." ),
-	REC_OFFICIAL_NAMESPACE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Official recipe projects should use " + Constants.OFFICIAL_RECIPES_NAMESPACE + " as their namespace and group ID." ),
-	REC_NON_MATCHING_ARTIFACT_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects should have the same name than their artifact ID." ),
+	REC_OFFICIAL_GROUP_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Official recipe projects should use " + Constants.OFFICIAL_RECIPES_NAMESPACE + " as their group ID." ),
+	REC_NON_MATCHING_ARTIFACT_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' directories should have the same name than their artifact ID." ),
 	REC_AVOID_INSTANCES( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects do not have to contain instances definitions." ),
 
 	// Execution Errors

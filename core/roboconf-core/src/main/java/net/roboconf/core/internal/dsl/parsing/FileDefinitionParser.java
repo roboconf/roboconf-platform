@@ -601,8 +601,7 @@ public class FileDefinitionParser {
 	 * @param line
 	 */
 	private void addModelError( ErrorCode errorCode, int line ) {
-		ParsingError me = new ParsingError( errorCode, this.definitionFile.getEditedFile(), line );
-		this.definitionFile.getParsingErrors().add( me );
+		addModelError( errorCode, line, null );
 	}
 
 

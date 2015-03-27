@@ -58,9 +58,6 @@ public class ApplicationDescriptorTest {
 		desc1.setQualifier( UUID.randomUUID().toString());
 		saveAndCompare( desc1 );
 
-		desc1.setNamespace( UUID.randomUUID().toString());
-		saveAndCompare( desc1 );
-
 		desc1.setDslId( UUID.randomUUID().toString());
 		saveAndCompare( desc1 );
 
@@ -82,7 +79,6 @@ public class ApplicationDescriptorTest {
 		Assert.assertEquals( desc1.getDescription(), desc2.getDescription());
 		Assert.assertEquals( desc1.getName(), desc2.getName());
 		Assert.assertEquals( desc1.getQualifier(), desc2.getQualifier());
-		Assert.assertEquals( desc1.getNamespace(), desc2.getNamespace());
 		Assert.assertEquals( desc1.getDslId(), desc2.getDslId());
 		Assert.assertEquals( desc1.getGraphEntryPoint(), desc2.getGraphEntryPoint());
 		Assert.assertEquals( desc1.getInstanceEntryPoint(), desc2.getInstanceEntryPoint());

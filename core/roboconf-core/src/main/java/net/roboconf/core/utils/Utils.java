@@ -120,32 +120,44 @@ public final class Utils {
 		return result;
 	}
 
+
 	/**
 	 * Expand a template, replacing each {{ param }} by the corresponding value.
+	 * <p>
 	 * Eg. "My name is {{ name }}" will result in "My name is Bond", provided that "params" contains "name=Bond".
-	 * @param s The template to expand
-	 * @param params The parameters to be expanded in the template
-	 * @return The expanded template.
+	 * </p>
+	 *
+	 * @param s the template to expand
+	 * @param params the parameters to be expanded in the template
+	 * @return the expanded template
 	 */
 	public static String expandTemplate(String s, Properties params) {
-		if(params == null || params.size() < 1) return s;
 
-		Pattern pattern = Pattern.compile( "\\{\\{\\s*\\S+\\s*\\}\\}" );
-		Matcher m = pattern.matcher(s);
+		String result;
+		if( params == null || params.size() < 1 ) {
+			result = s;
 
-		StringBuffer sb = new StringBuffer();
-		while (m.find()) {
-			String raw = m.group();
-			String varName = m.group().replace('{', ' ').replace('}', ' ').trim();
-			String val = params.getProperty(varName);
-			val = (val == null ? raw : val.trim());
+		} else {
+			StringBuffer sb = new StringBuffer();
+			Pattern pattern = Pattern.compile( "\\{\\{\\s*\\S+\\s*\\}\\}" );
+			Matcher m = pattern.matcher( s );
 
-			m.appendReplacement(sb, val);
+			while( m.find()) {
+				String raw = m.group();
+				String varName = m.group().replace('{', ' ').replace('}', ' ').trim();
+				String val = params.getProperty(varName);
+				val = (val == null ? raw : val.trim());
+
+				m.appendReplacement(sb, val);
+			}
+
+			m.appendTail( sb );
+			result = sb.toString();
 		}
-		m.appendTail(sb);
 
-		return sb.toString();
+		return result;
 	}
+
 
 	/**
 	 * Closes a stream quietly.
@@ -377,8 +389,7 @@ public final class Utils {
 	 */
 	public static List<File> listAllFiles( File directory, boolean includeDirectories ) {
 
-		if( ! directory.exists()
-				|| ! directory.isDirectory())
+		if( ! directory.isDirectory())
 			throw new IllegalArgumentException( directory.getAbsolutePath() + " does not exist or is not a directory." );
 
 		List<File> result = new ArrayList<File> ();
@@ -488,17 +499,14 @@ public final class Utils {
 		if( zipFile == null || targetDirectory == null )
 			throw new IllegalArgumentException( "The ZIP file and the target directory cannot be null." );
 
-		if( ! zipFile.exists()
-				|| ! zipFile.isFile())
+		if( ! zipFile.isFile())
 			throw new IllegalArgumentException( "ZIP file " + targetDirectory.getName() + " does not exist." );
 
 		if( targetDirectory.exists()
 				&& ! targetDirectory.isDirectory())
 			throw new IllegalArgumentException( "Target directory " + targetDirectory.getName() + " is not a directory." );
 
-		if( ! targetDirectory.exists()
-				&& ! targetDirectory.mkdirs())
-			throw new IOException( "Target directory " + targetDirectory.getName() + " could not be created." );
+		Utils.createDirectory( targetDirectory );
 
 		// Load the ZIP file
 		ZipFile theZipFile = new ZipFile( zipFile );
@@ -515,13 +523,10 @@ public final class Utils {
 					// Case 'directory': create it.
 					// Case 'file': create its parents and copy the content.
 					if( entry.isDirectory()) {
-						if( ! f.exists() && ! f.mkdirs())
-							throw new IOException( "Failed to create directory for entry: " + entry.getName());
-
-					} else if( ! f.getParentFile().exists() && ! f.getParentFile().mkdirs()) {
-						throw new IOException( "Failed to create parent directory for entry: " + entry.getName());
+						Utils.createDirectory( f );
 
 					} else {
+						Utils.createDirectory( f.getParentFile());
 						os = new FileOutputStream( f );
 						copyStream( theZipFile.getInputStream( entry ), os );
 					}
@@ -674,18 +679,12 @@ public final class Utils {
 	 */
 	public static void copyDirectory( File source, File target ) throws IOException {
 
-		if( ! target.exists()
-				&& ! target.mkdirs())
-			throw new IOException( "The directory " + target + " could not be created." );
-
+		Utils.createDirectory( target );
 		for( File sourceFile : listAllFiles( source, false )) {
 			String path = computeFileRelativeLocation( source, sourceFile );
 			File targetFile = new File( target, path );
 
-			if( ! targetFile.getParentFile().exists()
-					&& ! targetFile.getParentFile().mkdirs())
-				throw new IOException( "The directory " + targetFile.getParentFile() + " could not be created." );
-
+			Utils.createDirectory( targetFile.getParentFile());
 			copyStream( sourceFile, targetFile );
 		}
 	}

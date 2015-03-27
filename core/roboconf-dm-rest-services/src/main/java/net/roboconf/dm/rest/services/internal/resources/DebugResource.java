@@ -312,7 +312,6 @@ public class DebugResource implements IDebugResource {
 		descriptor.setDescription( "An application to test a deployment target (debug purpose)." );
 		descriptor.setGraphEntryPoint( "whole.graph" );
 		descriptor.setInstanceEntryPoint( "model.instances" );
-		descriptor.setNamespace( "net.roboconf" );
 		descriptor.setQualifier( "DEBUG" );
 
 		ApplicationDescriptor.save( new File( metaDir, Constants.PROJECT_FILE_DESCRIPTOR ), descriptor );

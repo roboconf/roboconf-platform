@@ -27,7 +27,9 @@ package net.roboconf.core.model.beans;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  * This object contains sets of related components.
@@ -37,11 +39,19 @@ public class Graphs implements Serializable {
 
 	private static final long serialVersionUID = 2918281424743945139L;
 	private final Collection<Component> rootsComponents = new HashSet<Component> ();
+	private final Map<String,Facet> facetNameToFacet = new HashMap<String,Facet> ();
 
 	/**
 	 * @return a non-null list of root components
 	 */
 	public Collection<Component> getRootComponents() {
 		return this.rootsComponents;
+	}
+
+	/**
+	 * @return the facetNameToFacet
+	 */
+	public Map<String,Facet> getFacetNameToFacet() {
+		return this.facetNameToFacet;
 	}
 }

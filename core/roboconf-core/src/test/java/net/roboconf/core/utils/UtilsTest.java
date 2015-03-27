@@ -206,7 +206,15 @@ public class UtilsTest {
 
 	@Test
 	public void testExpandString() {
+
+		// Null properties
+		Assert.assertEquals( "toto", Utils.expandTemplate( "toto", null ));
+
+		// No property
 		Properties params = new Properties();
+		Assert.assertEquals( "toto", Utils.expandTemplate( "toto", params ));
+
+		// With properties
 		params.setProperty("firstname", "James");
 		params.setProperty("lastname", "Bond");
 		String tmpl = "My name is {{lastname}}, {{ firstname }} {{ lastname }}!";
@@ -215,7 +223,7 @@ public class UtilsTest {
 				Utils.expandTemplate(tmpl, params));
 
 		tmpl = "This is an {{ unknown }} parameter";
-		Assert.assertEquals(tmpl, Utils.expandTemplate(tmpl, params));
+		Assert.assertEquals( tmpl, Utils.expandTemplate(tmpl, params));
 	}
 
 	@Test

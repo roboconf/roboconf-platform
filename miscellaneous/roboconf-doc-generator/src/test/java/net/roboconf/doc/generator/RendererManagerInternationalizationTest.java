@@ -48,7 +48,9 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 		options.put( DocConstants.OPTION_LOCALE, "en_US" );
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
-		checkInternationalization( "Components" );
+		String s = checkInternationalization();
+		Assert.assertTrue( s.contains( "Components" ));
+		Assert.assertFalse( s.contains( "significant" ));
 	}
 
 
@@ -60,7 +62,10 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
-		checkInternationalization( "Composants" );
+		String s = checkInternationalization();
+		Assert.assertTrue( s.contains( "Composants" ));
+		Assert.assertTrue( s.contains( "significatif" ));
+		Assert.assertFalse( s.contains( "significant" ));
 	}
 
 
@@ -72,21 +77,23 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 		options.put( DocConstants.OPTION_LOCALE, "oops" );
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
-		checkInternationalization( "Components" );
+		String s = checkInternationalization();
+		Assert.assertTrue( s.contains( "Components" ));
+		Assert.assertFalse( s.contains( "significant" ));
 	}
 
 
 	/**
 	 * Verifies assertions about the generated file.
-	 * @param textToSearch
 	 */
-	private void checkInternationalization( String textToSearch ) throws Exception {
+	private String checkInternationalization() throws Exception {
 
 		File f = new File( this.outputDir, "index.html" );
 		Assert.assertTrue( f.exists());
 
 		String s = Utils.readFileContent( f );
 		verifyContent( s );
-		Assert.assertTrue( s.contains( textToSearch ));
+
+		return s;
 	}
 }

@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -141,6 +142,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		Map<String,String> options = new HashMap<String,String> ();
 		options.put(  DocConstants.OPTION_HTML_CSS_REFERENCE, "http://hop.css" );
 		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
+		options.put( DocConstants.OPTION_HTML_HEADER_IMAGE_FILE, "inexisting-will-be-replaced-by-default" );
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
 
@@ -154,16 +156,22 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 
 
 	@Test
-	public void testExplodedHtml_withCustomCss() throws Exception {
+	public void testExplodedHtml_withCustomCssAndHeader() throws Exception {
 
 		final String cssContent = "* { padding: 0; }";
 		File tempCssFile = this.folder.newFile();
 		Utils.writeStringInto( cssContent, tempCssFile );
 
+		File roboconfImage = TestUtils.findTestFile( "/roboconf.jpg" );
+		File targetImage = this.folder.newFile();
+		Utils.copyStream( roboconfImage, targetImage );
+		Assert.assertTrue( targetImage.exists());
+
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
 		Map<String,String> options = new HashMap<String,String> ();
 		options.put(  DocConstants.OPTION_HTML_CSS_FILE, tempCssFile.getAbsolutePath());
 		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
+		options.put( DocConstants.OPTION_HTML_HEADER_IMAGE_FILE, targetImage.getAbsolutePath());
 
 		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
 
@@ -210,7 +218,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	 */
 	private String verifySingleHtml( boolean hasStyleCss ) throws Exception {
 
-		File f = new File( this.outputDir, "roboconf.jpg" );
+		File f = new File( this.outputDir, "header.jpg" );
 		Assert.assertTrue( f.exists());
 
 		if( hasStyleCss ) {
@@ -238,7 +246,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	private List<String> verifyExplodedHtml( boolean hasStyleCss ) throws Exception {
 		List<String> result = new ArrayList<String> ();
 
-		File f = new File( this.outputDir, "roboconf.jpg" );
+		File f = new File( this.outputDir, "header.jpg" );
 		Assert.assertTrue( f.exists());
 
 		if( hasStyleCss ) {

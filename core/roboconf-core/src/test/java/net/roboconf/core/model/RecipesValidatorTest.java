@@ -44,8 +44,6 @@ import org.junit.rules.TemporaryFolder;
  */
 public class RecipesValidatorTest {
 
-	final String BASH_DIRECTIVE = "#!/bin/bash";
-
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
@@ -69,7 +67,7 @@ public class RecipesValidatorTest {
 		Component comp = new Component( "toto" ).installerName( "script" );
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, RecipesValidator.SCRIPTS_DIR_NAME ).mkdirs());
-		Utils.writeStringInto( BASH_DIRECTIVE + "\ntest", new File( directory, RecipesValidator.SCRIPTS_DIR_NAME + "/test.sh" ));
+		Utils.writeStringInto( "\ntest", new File( directory, RecipesValidator.SCRIPTS_DIR_NAME + "/test.sh" ));
 
 		Assert.assertEquals( 0, RecipesValidator.validateComponentRecipes( appDir, comp ).size());
 	}
@@ -82,7 +80,7 @@ public class RecipesValidatorTest {
 		Component comp = new Component( "toto" ).installerName( "script" );
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( directory.mkdirs());
-		Utils.writeStringInto( BASH_DIRECTIVE + "\n", new File( directory, "test.sh" ));
+		Utils.writeStringInto( "", new File( directory, "test.sh" ));
 
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 1, errors.size());

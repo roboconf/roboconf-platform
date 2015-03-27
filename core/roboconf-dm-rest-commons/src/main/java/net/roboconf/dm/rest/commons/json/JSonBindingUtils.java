@@ -56,7 +56,6 @@ public final class JSonBindingUtils {
 	private static final String APP_NAME = "name";
 	private static final String APP_DESC = "desc";
 	private static final String APP_QUALIFIER = "qualifier";
-	private static final String APP_NAMESPACE = "namespace";
 
 	private static final String INST_NAME = "name";
 	private static final String INST_PATH = "path";
@@ -125,9 +124,6 @@ public final class JSonBindingUtils {
 			if( app.getQualifier() != null )
 				generator.writeStringField( APP_QUALIFIER, app.getQualifier());
 
-			if( app.getNamespace() != null )
-				generator.writeStringField( APP_NAMESPACE, app.getNamespace());
-
 			generator.writeEndObject();
 		}
 	}
@@ -155,9 +151,6 @@ public final class JSonBindingUtils {
 
 	        if(( n = node.get( APP_QUALIFIER )) != null )
 	        	application.setQualifier( n.textValue());
-
-	        if(( n = node.get( APP_NAMESPACE )) != null )
-	        	application.setNamespace( n.textValue());
 
 			return application;
 		}

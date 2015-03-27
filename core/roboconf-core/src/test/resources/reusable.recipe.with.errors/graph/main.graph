@@ -1,0 +1,9 @@
+Apache-mjk-latest {
+	installer: something;
+	imports: loadbalance_able_ajp.*, f.*;
+	exports: ip;
+}
+
+facet loadbalance_able_ajp {
+    exports: ip, portAJP = 8009;
+}

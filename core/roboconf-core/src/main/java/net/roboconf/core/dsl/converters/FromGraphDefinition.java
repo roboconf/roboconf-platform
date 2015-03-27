@@ -367,6 +367,9 @@ public class FromGraphDefinition {
 				result.getRootComponents().add( cd.object );
 		}
 
+		for( FacetData data : this.facetNameToFacetData.values())
+			result.getFacetNameToFacet().put( data.object.getName(), data.object );
+
 		return result;
 	}
 

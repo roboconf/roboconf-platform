@@ -116,11 +116,10 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 		sb.append( startTable());
 		sb.append( addTableLine( this.messages.get( "app.name" ), this.application.getName())); //$NON-NLS-1$
-		sb.append( addTableLine( this.messages.get( "app.ns" ), this.application.getNamespace())); //$NON-NLS-1$
 		sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.application.getQualifier())); //$NON-NLS-1$
 		sb.append( endTable());
 
-		sb.append( renderParagraph( this.application.getDescription()));
+		sb.append( renderApplicationDescription());
 		sb.append( renderPageBreak());
 		sb.append( renderSections( new ArrayList<String>( 0 )));
 
@@ -391,6 +390,32 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 
 	/**
+	 * Renders the application's description.
+	 * @return a non-null string
+	 * @throws IOException if something went wrong
+	 */
+	private Object renderApplicationDescription() throws IOException {
+
+		// No locale? => Display the application's description.
+		// Otherwise, read app.desc_fr_FR.txt or the required file for another locale.
+		// If it does not exist, return the empty string.
+
+		String s;
+		if( this.locale == null
+				&& ! Utils.isEmptyOrWhitespaces( this.application.getDescription()))
+			s = this.application.getDescription();
+		else
+			s = readCustomInformation( this.applicationDirectory, DocConstants.APP_DESC_PREFIX, DocConstants.FILE_SUFFIX );
+
+		String result = "";
+		if( ! Utils.isEmptyOrWhitespaces( s ))
+			result = renderParagraph( s );
+
+		return result;
+	}
+
+
+	/**
 	 * Generates and saves an image.
 	 * @param comp the component to highlight in the image
 	 * @param type the kind of relation to show in the diagram
@@ -426,17 +451,17 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	/**
 	 * Reads user-specified information from the project.
 	 * @param applicationDirectory the application's directory
-	 * @param componentName the component name
+	 * @param prefix the prefix name
 	 * @param suffix the file's suffix (see the DocConstants interface)
 	 * @return the read information, as a string (never null)
 	 * @throws IOException if the file could not be read
 	 */
-	private String readCustomInformation( File applicationDirectory, String componentName, String suffix )
+	private String readCustomInformation( File applicationDirectory, String prefix, String suffix )
 	throws IOException {
 
 		// Prepare the file name
 		StringBuilder sb = new StringBuilder();
-		sb.append( componentName );
+		sb.append( prefix );
 		if( this.locale != null )
 			sb.append( "_" + this.locale );
 

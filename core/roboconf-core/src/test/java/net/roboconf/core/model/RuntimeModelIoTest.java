@@ -51,6 +51,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.Rule;
@@ -200,7 +201,6 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( "Legacy LAMP", result.application.getName());
 		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());
 		Assert.assertEquals( "sample", result.application.getQualifier());
-		Assert.assertEquals( "net.roboconf", result.application.getNamespace());
 		Assert.assertEquals( "roboconf-1.0", result.application.getDslId());
 
 		Assert.assertNotNull( result.application.getGraphs());
@@ -387,7 +387,6 @@ public class RuntimeModelIoTest {
 		Properties props = new Properties();
 		props.setProperty( ApplicationDescriptor.APPLICATION_NAME, "app-name" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_QUALIFIER, "snapshot" );
-		props.setProperty( ApplicationDescriptor.APPLICATION_NAMESPACE, "net.roboconf" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
 		props.setProperty( ApplicationDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
 		FileOutputStream fos = null;
@@ -547,10 +546,9 @@ public class RuntimeModelIoTest {
 		desc.setQualifier( "qualifier" );
 		desc.setInstanceEntryPoint( "model.instances" );
 		desc.setDslId( "roboconf-1.0" );
-		desc.setNamespace( "net.roboconf" );
 
 		ApplicationDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
-		Iterator<RoboconfError> it = RuntimeModelIo.loadApplication( dir ).loadErrors.iterator();
+		Iterator<RoboconfError> it = RuntimeModelIo.loadApplicationFlexibly( dir ).loadErrors.iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, it.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.CO_GRAPH_COULD_NOT_BE_BUILT, it.next().getErrorCode());
 	}
@@ -575,10 +573,43 @@ public class RuntimeModelIoTest {
 		desc.setQualifier( "qualifier" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
-		desc.setNamespace( "net.roboconf" );
 		ApplicationDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
 
 		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
 		Assert.assertEquals( 0, RuntimeModelIo.loadApplication( dir ).loadErrors.size());
+	}
+
+
+	@Test
+	public void testParsingWithRecipeProject() throws Exception {
+
+		// Normal load
+		File dir = TestUtils.findTestFile( "/reusable.recipe" );
+		Assert.assertTrue( dir.exists());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+
+		Assert.assertEquals( 1, alr.getLoadErrors().size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, alr.getLoadErrors().iterator().next().getErrorCode());
+
+		// Flexible load
+		alr = RuntimeModelIo.loadApplicationFlexibly( dir );
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+		Assert.assertEquals( 0, alr.getLoadErrors().size());
+	}
+
+
+	@Test
+	public void testParsingWithInvalidRecipeProject() throws Exception {
+
+		File dir = TestUtils.findTestFile( "/reusable.recipe.with.errors" );
+		Assert.assertTrue( dir.exists());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( dir );
+		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+		Assert.assertEquals( 1, alr.getLoadErrors().size());
+		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, alr.getLoadErrors().iterator().next().getErrorCode());
+		Assert.assertTrue( alr.getLoadErrors().iterator().next().getDetails().contains( "f.*" ));
 	}
 }

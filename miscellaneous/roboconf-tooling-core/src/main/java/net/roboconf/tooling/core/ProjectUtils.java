@@ -46,7 +46,6 @@ public final class ProjectUtils {
 	static final String INSTANCES_EP = "model.instances";
 
 	private static final String TPL_NAME = "${NAME}";
-	private static final String TPL_NAMESPACE = "${NAMESPACE}";
 	private static final String TPL_DESCRIPTION = "${DESCRIPTION}";
 	private static final String TPL_VERSION = "${VERSION}";
 	private static final String TPL_POM_GROUP = "${GROUPD_ID}";
@@ -111,7 +110,6 @@ public final class ProjectUtils {
 		Utils.copyStream( in, out );
 		String tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
-				.replace( TPL_NAMESPACE, creationBean.getProjectNamespace())
 				.replace( TPL_VERSION, creationBean.getProjectVersion())
 				.replace( TPL_DESCRIPTION, creationBean.getProjectDescription());
 
@@ -146,7 +144,7 @@ public final class ProjectUtils {
 		Utils.copyStream( in, out );
 		String tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
-				.replace( TPL_POM_GROUP, creationBean.getProjectNamespace())
+				.replace( TPL_POM_GROUP, creationBean.getGroupId())
 				.replace( TPL_POM_PLUGIN_VERSION, creationBean.getPluginVersion())
 				.replace( TPL_VERSION, creationBean.getProjectVersion())
 				.replace( TPL_POM_ARTIFACT, creationBean.getArtifactId())
@@ -161,7 +159,6 @@ public final class ProjectUtils {
 		Utils.copyStream( in, out );
 		tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
-				.replace( TPL_NAMESPACE, "${project.artifact.groupId}" )
 				.replace( TPL_VERSION, "${project.version}--${timestamp}" )
 				.replace( TPL_DESCRIPTION, "${project.description}" );
 
@@ -198,8 +195,8 @@ public final class ProjectUtils {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class CreationBean {
-		private String projectName, projectDescription, projectVersion, projectNamespace;
-		private String artifactId, pluginVersion;
+		private String projectName, projectDescription, projectVersion;
+		private String artifactId, pluginVersion, groupId;
 		private String customPomLocation;
 		private boolean mavenProject = true;
 
@@ -240,12 +237,12 @@ public final class ProjectUtils {
 			return this;
 		}
 
-		public String getProjectNamespace() {
-			return this.projectNamespace;
+		public String getGroupId() {
+			return this.groupId;
 		}
 
-		public CreationBean projectNamespace( String projectNamespace ) {
-			this.projectNamespace = projectNamespace;
+		public CreationBean groupId( String groupId ) {
+			this.groupId = groupId;
 			return this;
 		}
 

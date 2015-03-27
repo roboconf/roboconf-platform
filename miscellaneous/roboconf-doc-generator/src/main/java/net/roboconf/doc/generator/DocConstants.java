@@ -46,16 +46,25 @@ public interface DocConstants {
 	String SECTION_INSTANCES = "instances/";
 
 
+	/**
+	 * The file suffix for all the custom information.
+	 */
+	String FILE_SUFFIX = ".txt";
 
 	/**
 	 * The file extension for custom summary about a component.
 	 */
-	String COMP_SUMMARY = ".summary.txt";
+	String COMP_SUMMARY = ".summary" + FILE_SUFFIX;
 
 	/**
 	 * The file extension for extra information about a component.
 	 */
-	String COMP_EXTRA = ".extra.txt";
+	String COMP_EXTRA = ".extra" + FILE_SUFFIX;
+
+	/**
+	 * The file name prefix for application descriptions.
+	 */
+	String APP_DESC_PREFIX = "app.desc";
 
 	/**
 	 * The prefix for all the options.
@@ -111,6 +120,14 @@ public interface DocConstants {
 	 * The option to specify the output should be divided in several HTML files.
 	 */
 	String OPTION_HTML_EXPLODED = OPTION_PREFIX + "html.exploded";
+
+	/**
+	 * The option to specify the path of an image file to use as the header image.
+	 * <p>
+	 * By default, a Roboconf image is used.
+	 * </p>
+	 */
+	String OPTION_HTML_HEADER_IMAGE_FILE = OPTION_PREFIX + "html.header.image.file";
 
 
 

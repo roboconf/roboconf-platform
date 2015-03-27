@@ -41,12 +41,11 @@ public class ApplicationDescriptor {
 	public static final String APPLICATION_NAME = "application-name";
 	public static final String APPLICATION_QUALIFIER = "application-qualifier";
 	public static final String APPLICATION_DESCRIPTION = "application-description";
-	public static final String APPLICATION_NAMESPACE = "application-namespace";
 	public static final String APPLICATION_DSL_ID = "application-dsl-id";
 	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
 	public static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
 
-	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId, namespace;
+	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId;
 
 
 	/**
@@ -135,20 +134,6 @@ public class ApplicationDescriptor {
 	}
 
 	/**
-	 * @return the namespace
-	 */
-	public String getNamespace() {
-		return this.namespace;
-	}
-
-	/**
-	 * @param namespace the namespace to set
-	 */
-	public void setNamespace( String namespace ) {
-		this.namespace = namespace;
-	}
-
-	/**
 	 * Loads an application descriptor.
 	 * @param properties a properties object
 	 * @return an application descriptor (not null)
@@ -162,7 +147,6 @@ public class ApplicationDescriptor {
 		result.graphEntryPoint = properties.getProperty( APPLICATION_GRAPH_EP, null );
 		result.instanceEntryPoint = properties.getProperty( APPLICATION_INSTANCES_EP, null );
 		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
-		result.namespace = properties.getProperty( APPLICATION_NAMESPACE, null );
 
 		return result;
 	}
@@ -195,9 +179,6 @@ public class ApplicationDescriptor {
 		Properties properties = new Properties();
 		if( descriptor.name != null )
 			properties.setProperty( APPLICATION_NAME, descriptor.name );
-
-		if( descriptor.namespace != null )
-			properties.setProperty( APPLICATION_NAMESPACE, descriptor.namespace );
 
 		if( descriptor.qualifier != null )
 			properties.setProperty( APPLICATION_QUALIFIER, descriptor.qualifier );

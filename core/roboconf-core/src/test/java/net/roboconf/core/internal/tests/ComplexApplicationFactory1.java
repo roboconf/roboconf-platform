@@ -70,7 +70,7 @@ public class ComplexApplicationFactory1 {
 	 */
 	public static Application newApplication() {
 
-		Application app = new Application( "name" ).qualifier( "test" ).namespace( "net.roboconf" ).dslId( ParsingConstants.DSL_VERSION );
+		Application app = new Application( "name" ).qualifier( "test" ).dslId( ParsingConstants.DSL_VERSION );
 		Graphs graph = new Graphs();
 		app.setGraphs( graph );
 

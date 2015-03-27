@@ -42,7 +42,6 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -70,9 +69,6 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
 
-	@Parameter( defaultValue = "${session}", readonly = true, required = true )
-	private MavenSession session;
-
 	@Parameter( defaultValue = "false" )
 	private boolean recipe;
 
@@ -88,16 +84,18 @@ public class ValidateApplicationMojo extends AbstractMojo {
 		if( ! completeAppDirectory.isDirectory())
 			throw new MojoExecutionException( "The target model directory could not be found. " + completeAppDirectory );
 
-		// Validate the application
-		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( completeAppDirectory );
-		this.session.getUserProperties().put( MavenPluginConstants.SESSION_APP, alr.getApplication());
-
-		// Deal with recipes specifics
+		// Load and validate the application
+		ApplicationLoadResult alr;
 		Collection<RoboconfError> recipeErrors = null;
 		if( this.recipe ) {
-			filterErrorsForRecipes( alr.getLoadErrors());
+			alr = RuntimeModelIo.loadApplicationFlexibly( completeAppDirectory );
+			RoboconfErrorHelpers.filterErrorsForRecipes( alr );
+
 			recipeErrors = validateRecipesSpecifics( this.project, alr.getApplication(), this.official );
 			alr.getLoadErrors().addAll( recipeErrors );
+
+		} else {
+			alr = RuntimeModelIo.loadApplication( completeAppDirectory );
 		}
 
 		// Analyze the result
@@ -169,27 +167,6 @@ public class ValidateApplicationMojo extends AbstractMojo {
 
 
 	/**
-	 * Filters errors for recipes.
-	 * <p>
-	 * Indeed, some errors only make sense for complete applications, not for
-	 * reusable recipes. This method removes them from the input list of errors.
-	 * </p>
-	 *
-	 * @param errors a non-null list of errors
-	 */
-	private void filterErrorsForRecipes( Collection<RoboconfError> errors ) {
-
-		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
-		for( RoboconfError error : errors ) {
-			if( error.getErrorCode() == ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET )
-				toRemove.add( error );
-		}
-
-		errors.removeAll( toRemove );
-	}
-
-
-	/**
 	 * Validate aspects that are specific to recipes (i.e. partial Roboconf applications).
 	 * <p>
 	 * Most of this validation could have been handled through enforcer rules. However,
@@ -209,26 +186,23 @@ public class ValidateApplicationMojo extends AbstractMojo {
 	static Collection<RoboconfError> validateRecipesSpecifics( MavenProject project, Application application, boolean official ) {
 
 		Collection<RoboconfError> result = new ArrayList<RoboconfError> ();
-		if( ! project.getName().equals( project.getName().toLowerCase()))
-			result.add( new RoboconfError( ErrorCode.REC_PROJECT_IN_LOWER_CASE ));
+		if( ! project.getArtifactId().equals( project.getArtifactId().toLowerCase()))
+			result.add( new RoboconfError( ErrorCode.REC_ARTIFACT_ID_IN_LOWER_CASE ));
 
 		if( ! application.getRootInstances().isEmpty())
 			result.add( new RoboconfError( ErrorCode.REC_AVOID_INSTANCES ));
 
 		if( official && ! Constants.OFFICIAL_RECIPES_NAMESPACE.equals( project.getGroupId()))
-			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_NAMESPACE ));
+			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_GROUP_ID ));
 
-		if( official && ! Constants.OFFICIAL_RECIPES_NAMESPACE.equals( application.getNamespace()))
-			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_NAMESPACE ));
-
-		if( ! project.getName().equals( project.getArtifactId()))
+		if( ! project.getArtifactId().equals( project.getArtifactId()))
 			result.add( new RoboconfError( ErrorCode.REC_NON_MATCHING_ARTIFACT_ID ));
 
 		File[] files = project.getBasedir().listFiles();
 		boolean found = false;
 		if( files != null ) {
 			for( int i=0; i<files.length && ! found; i++ )
-				found = files[ i ].getName().matches( "(?i)readme\\.?" );
+				found = files[ i ].getName().matches( "(?i)readme(\\..*)?" );
 		}
 
 		if( ! found )

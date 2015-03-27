@@ -49,10 +49,4 @@ public interface MavenPluginConstants {
 	 * The relative path of the validation results.
 	 */
 	String VALIDATION_RESULT_PATH = "target/roboconf/roboconf-validation.txt";
-
-
-	/**
-	 * A key to store the loaded application in a Maven session.
-	 */
-	String SESSION_APP = "session.roboconf.app";
 }
