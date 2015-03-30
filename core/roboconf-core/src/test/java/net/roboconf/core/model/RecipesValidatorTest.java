@@ -147,10 +147,8 @@ public class RecipesValidatorTest {
 		Utils.copyStream( inputFile, targetFile );
 
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
-		Assert.assertEquals( 3, errors.size());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, errors.get( 0 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, errors.get( 1 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_COMP, errors.get( 2 ).getErrorCode());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, errors.get( 0 ).getErrorCode());
 	}
 
 
@@ -184,10 +182,8 @@ public class RecipesValidatorTest {
 		Utils.copyStream( inputFile, targetFile );
 
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
-		Assert.assertEquals( 3, errors.size());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, errors.get( 0 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, errors.get( 1 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_COMP, errors.get( 2 ).getErrorCode());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, errors.get( 0 ).getErrorCode());
 	}
 
 
@@ -209,10 +205,8 @@ public class RecipesValidatorTest {
 		// The init.pp is not considered as being called during updates.
 		// So, no error about imports.
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
-		Assert.assertEquals( 3, errors.size());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, errors.get( 0 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, errors.get( 1 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_COMP, errors.get( 2 ).getErrorCode());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, errors.get( 0 ).getErrorCode());
 	}
 
 
