@@ -39,7 +39,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ValidateApplicationMojoTest extends ValidateProjectMojoTest {
+public class ValidateApplicationMojoTest extends AbstractTest {
 
 	@Test( expected = MojoFailureException.class )
 	public void testValidProjectButInvalidApp() throws Exception {

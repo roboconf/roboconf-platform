@@ -21,6 +21,7 @@
 				<phases>
 					<initialize>net.roboconf:roboconf-maven-plugin:initialize</initialize>
 					<validate>net.roboconf:roboconf-maven-plugin:validate-project</validate>
+					<generate-resources>net.roboconf:roboconf-maven-plugin:resolve</generate-resources>
 					<process-resources>org.apache.maven.plugins:maven-resources-plugin:resources</process-resources>
 					<compile>net.roboconf:roboconf-maven-plugin:validate-application</compile>
 					<package>net.roboconf:roboconf-maven-plugin:package</package>

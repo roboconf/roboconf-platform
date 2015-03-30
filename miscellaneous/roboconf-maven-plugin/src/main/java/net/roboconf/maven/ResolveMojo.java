@@ -25,6 +25,15 @@
 
 package net.roboconf.maven;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.utils.Utils;
+
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -47,5 +56,42 @@ public class ResolveMojo extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 
+		// Find the target directory
+		File completeAppDirectory = new File( this.project.getBuild().getOutputDirectory());
+
+		// Copy the resources in the target directory
+		Set<Artifact> artifacts = new HashSet<Artifact> ();
+		if( this.project.getDependencyArtifacts() != null )
+			artifacts.addAll( this.project.getDependencyArtifacts());
+
+		for( Artifact art : artifacts ) {
+
+			// Only accept ZIP files
+			if( art.getFile() == null
+					|| ! art.getFile().exists()
+					|| ! art.getFile().getName().toLowerCase().endsWith( ".zip" )) {
+				getLog().warn( "Artifact " + art.getArtifactId() + " is not a ZIP file. Its content will not be copied in the target model directory." );
+				continue;
+			}
+
+			// Prepare the extraction
+			File temporaryDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-temp" );
+			File targetDirectory = new File( completeAppDirectory, Constants.PROJECT_DIR_GRAPH + "/" + art.getArtifactId());
+			getLog().debug( "Copying the content of artifact " + art.getArtifactId() + " under " + targetDirectory );
+			try {
+
+				// Extract graph files - assumed to be at the root of the graph directory
+				Utils.extractZipArchive( art.getFile(), targetDirectory, "graph/[^/]*\\.graph", "graph/" );
+
+				// Extract component files - directories
+				Utils.extractZipArchive( art.getFile(), targetDirectory.getParentFile(), "graph/.*/.*", "graph/" );
+
+			} catch( IOException e ) {
+				throw new MojoExecutionException( "The ZIP archive for artifact " + art.getArtifactId() + " could not be extracted.", e );
+
+			} finally {
+				Utils.deleteFilesRecursivelyAndQuitely( temporaryDirectory );
+			}
+		}
 	}
 }

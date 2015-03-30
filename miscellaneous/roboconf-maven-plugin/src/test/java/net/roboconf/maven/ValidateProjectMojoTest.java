@@ -25,30 +25,15 @@
 
 package net.roboconf.maven;
 
-import java.io.File;
-
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.testing.MojoRule;
-import org.apache.maven.plugin.testing.resources.TestResources;
-import org.apache.maven.project.MavenProject;
-import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ValidateProjectMojoTest {
+public class ValidateProjectMojoTest extends AbstractTest {
 
 	private static final String GOAL = "validate-project";
-
-	@Rule
-	public MojoRule rule = new MojoRule();
-
-	@Rule
-	public TestResources resources = new TestResources();
-
 
 
 	@Test( expected = MojoFailureException.class )
@@ -64,33 +49,5 @@ public class ValidateProjectMojoTest {
 		findMojo( "project--invalid-app", GOAL ).execute();
 		findMojo( "project--valid-with-warnings", GOAL ).execute();
 		findMojo( "project--valid", GOAL ).execute();
-	}
-
-
-	protected AbstractMojo findMojo( String projectName, String goalName ) throws Exception {
-
-		// Find the project
-		File baseDir = this.resources.getBasedir( projectName );
-		Assert.assertNotNull( baseDir );
-		Assert.assertTrue( baseDir.exists());
-		Assert.assertTrue( baseDir.isDirectory());
-
-		File pom = new File( baseDir, "pom.xml" );
-		AbstractMojo mojo = (AbstractMojo) this.rule.lookupMojo( goalName, pom );
-		Assert.assertNotNull( mojo );
-
-		// Create the Maven project by hand (...)
-		final MavenProject mvnProject = new MavenProject() ;
-        mvnProject.setFile( pom ) ;
-
-        this.rule.setVariableValueToObject( mojo, "project", mvnProject );
-		Assert.assertNotNull( this.rule.getVariableValueFromObject( mojo, "project" ));
-
-		// Initialize the project
-		InitializeMojo initMojo = new InitializeMojo();
-		initMojo.setProject( mvnProject );
-		initMojo.execute();
-
-		return mojo;
 	}
 }
