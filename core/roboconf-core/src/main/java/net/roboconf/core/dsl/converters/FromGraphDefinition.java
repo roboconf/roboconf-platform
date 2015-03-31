@@ -123,7 +123,7 @@ public class FromGraphDefinition {
 
 			if( ! importedFile.exists()) {
 				ParsingError error = new ParsingError( ErrorCode.CO_UNREACHABLE_FILE, file, 0 );
-				error.setDetails( "Import location: " + importedFile );
+				error.setDetails( "File location: " + importedFile );
 				this.errors.add( error );
 				continue;
 			}

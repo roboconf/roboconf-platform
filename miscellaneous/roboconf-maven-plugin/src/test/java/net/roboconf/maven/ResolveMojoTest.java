@@ -36,6 +36,7 @@ import net.roboconf.core.utils.Utils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
@@ -80,6 +81,7 @@ public class ResolveMojoTest extends AbstractTest {
 		Assert.assertTrue( baseDir.isDirectory());
 
 		AbstractMojo mojo = findMojo( projectName, "resolve" );
+		this.rule.setVariableValueToObject( mojo, "local", new TestMavenArtifactRepository());
 
 		// Add dependencies
 		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
@@ -119,6 +121,7 @@ public class ResolveMojoTest extends AbstractTest {
 		Assert.assertTrue( baseDir.isDirectory());
 
 		AbstractMojo mojo = findMojo( projectName, "resolve" );
+		this.rule.setVariableValueToObject( mojo, "local", new TestMavenArtifactRepository());
 
 		// Add dependencies
 		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
@@ -153,5 +156,17 @@ public class ResolveMojoTest extends AbstractTest {
 		TestUtils.createZipFile( entryToContent, targetZipFile );
 
 		return targetZipFile;
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class TestMavenArtifactRepository extends MavenArtifactRepository {
+
+		@Override
+		public Artifact find( Artifact artifact ) {
+			return artifact;
+		}
 	}
 }
