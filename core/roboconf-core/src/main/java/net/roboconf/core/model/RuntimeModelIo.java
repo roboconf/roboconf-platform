@@ -144,12 +144,12 @@ public final class RuntimeModelIo {
 
 		} else {
 			ApplicationDescriptor appDescriptor = new ApplicationDescriptor();
-			appDescriptor.setName( "generated" );
-			appDescriptor.setDslId( "whatever" );
-			appDescriptor.setQualifier( "generated" );
+			appDescriptor.setName( Constants.GENERATED );
+			appDescriptor.setDslId( Constants.GENERATED );
+			appDescriptor.setQualifier( Constants.GENERATED );
 
 			ApplicationLoadResult alr = new ApplicationLoadResult();
-			alr.application = new Application();
+			alr.application = new Application( Constants.GENERATED ).dslId( Constants.GENERATED ).qualifier( Constants.GENERATED );
 
 			File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 			File[] graphFiles = graphDirectory.listFiles( new GraphFileFilter());

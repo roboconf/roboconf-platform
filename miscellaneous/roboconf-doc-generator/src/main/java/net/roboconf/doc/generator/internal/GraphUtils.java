@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.DocConstants;
@@ -73,16 +74,16 @@ public final class GraphUtils {
 
 
 	/**
-	 * Computes the width of a shape for a given component.
-	 * @param component a component
+	 * Computes the width of a shape for a given component or facet.
+	 * @param type a type
 	 * @return the width it should take once displayed as a graph vertex
 	 */
-	public static int computeShapeWidth( Component component ) {
+	public static int computeShapeWidth( AbstractType type ) {
 
 		Font font = GraphUtils.getDefaultFont();
     	BufferedImage img = new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB );
     	FontMetrics fm = img.getGraphics().getFontMetrics( font );
-    	int width = fm.stringWidth( component.getName());
+    	int width = fm.stringWidth( type.getName());
 
     	width = Math.max( width, 80 ) + 20;
     	return width;
@@ -109,20 +110,20 @@ public final class GraphUtils {
 	public static void writeGraph(
 			File outputFile,
 			Component selectedComponent,
-			Layout<Component,String> layout,
-			Graph<Component,String> graph ,
-			AbstractEdgeShapeTransformer<Component,String> edgeShapeTransformer,
+			Layout<AbstractType,String> layout,
+			Graph<AbstractType,String> graph ,
+			AbstractEdgeShapeTransformer<AbstractType,String> edgeShapeTransformer,
 			Map<String,String> options )
 	throws IOException {
 
-		VisualizationImageServer<Component,String> vis =
-				new VisualizationImageServer<Component,String>( layout, layout.getSize());
+		VisualizationImageServer<AbstractType,String> vis =
+				new VisualizationImageServer<AbstractType,String>( layout, layout.getSize());
 
 		vis.setBackground( Color.WHITE );
 		vis.getRenderContext().setEdgeLabelTransformer( new NoStringLabeller ());
 		vis.getRenderContext().setEdgeShapeTransformer( edgeShapeTransformer );
 
-		vis.getRenderContext().setVertexLabelTransformer( new ToStringLabeller<Component> ());
+		vis.getRenderContext().setVertexLabelTransformer( new ToStringLabeller<AbstractType> ());
 		vis.getRenderContext().setVertexShapeTransformer( new VertexShape());
 		vis.getRenderContext().setVertexFontTransformer( new VertexFont());
 
@@ -170,7 +171,7 @@ public final class GraphUtils {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	static class VertexColor implements Transformer<Component,Paint> {
+	static class VertexColor implements Transformer<AbstractType,Paint> {
 		private final Component selectedComponent;
 		private final Color defaultBgColor, highlightBgcolor;
 
@@ -181,8 +182,8 @@ public final class GraphUtils {
 		}
 
 		@Override
-		public Paint transform( Component component ) {
-            return component.equals( this.selectedComponent ) ? this.highlightBgcolor : this.defaultBgColor;
+		public Paint transform( AbstractType type ) {
+            return type.equals( this.selectedComponent ) ? this.highlightBgcolor : this.defaultBgColor;
         }
     }
 
@@ -190,9 +191,9 @@ public final class GraphUtils {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	static class VertexFont implements Transformer<Component,Font> {
+	static class VertexFont implements Transformer<AbstractType,Font> {
         @Override
-		public Font transform( Component component ) {
+		public Font transform( AbstractType type ) {
             return GraphUtils.getDefaultFont();
         }
     }
@@ -239,10 +240,10 @@ public final class GraphUtils {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	static class VertexShape implements Transformer<Component,Shape> {
+	static class VertexShape implements Transformer<AbstractType,Shape> {
         @Override
-		public Shape transform( Component component ) {
-        	int width = computeShapeWidth( component );
+		public Shape transform( AbstractType type ) {
+        	int width = computeShapeWidth( type );
         	return new Ellipse2D.Double( -width / 2.0, -SHAPE_HEIGHT / 2.0, width, SHAPE_HEIGHT );
         }
     }

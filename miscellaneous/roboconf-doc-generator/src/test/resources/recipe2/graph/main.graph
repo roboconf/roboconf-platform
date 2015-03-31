@@ -1,0 +1,16 @@
+# This graph is not realistic.
+# It aims at verifying code coverage.
+
+facet VM {
+	children: Tomcat;
+}
+
+Tomcat {
+	installer: whatever;
+	exports: ip, portAJP = 8009;
+	children: app;
+}
+
+facet app {
+    exports: name = default;
+}

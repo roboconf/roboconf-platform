@@ -495,6 +495,31 @@ public final class Utils {
 	public static void extractZipArchive( File zipFile, File targetDirectory )
 	throws IOException {
 
+		extractZipArchive( zipFile, targetDirectory, null, null );
+	}
+
+
+	/**
+	 * Extracts a ZIP archive in a directory (with advanced options).
+	 * <p>
+	 * Imagine you have an archive that contains pom.xml, graph/main.graph and graph/vm/init.pp.
+	 * Let's now suppose you want to extract only the files located under "graph". And let's suppose
+	 * you do not want to create a "graph" sub-directory in your target. Then...
+	 * </p>
+	 * <code>extractZipArchive( your.zip, your.target.dir, "graph/.*\\.graph, "graph/" );</code>
+	 * <p>
+	 * ... will only create main.graph in your target directory (and not graph/main.graph).
+	 * </p>
+	 *
+	 * @param zipFile a ZIP file (not null, must exist)
+	 * @param targetDirectory the target directory (may not exist but must be a directory)
+	 * @param entryPattern a pattern to only extract some entries (null for all entries)
+	 * @param removedEntryPrefix an entry prefix to remove (null to ignore)
+	 * @throws IOException if something went wrong
+	 */
+	public static void extractZipArchive( File zipFile, File targetDirectory, String entryPattern, String removedEntryPrefix )
+	throws IOException {
+
 		// Make some checks
 		if( zipFile == null || targetDirectory == null )
 			throw new IllegalArgumentException( "The ZIP file and the target directory cannot be null." );
@@ -515,10 +540,25 @@ public final class Utils {
 		// And start the copy
 		try {
 			while( entries.hasMoreElements()) {
+				ZipEntry entry = entries.nextElement();
+				String suffix = entry.getName();
+
+				// Deal with extract options
+				if( entryPattern != null
+						&& ! suffix.matches( entryPattern ))
+					continue;
+
+				if( removedEntryPrefix != null
+						&& suffix.startsWith( removedEntryPrefix ))
+					suffix = suffix.substring( removedEntryPrefix.length());
+
+				if( isEmptyOrWhitespaces( suffix ))
+					continue;
+
+				// Extract...
 				FileOutputStream os = null;
 				try {
-					ZipEntry entry = entries.nextElement();
-					File f = new File( targetDirectory, entry.getName());
+					File f = new File( targetDirectory, suffix );
 
 					// Case 'directory': create it.
 					// Case 'file': create its parents and copy the content.

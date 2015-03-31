@@ -39,7 +39,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ValidateApplicationMojoTest extends ValidateProjectMojoTest {
+public class ValidateApplicationMojoTest extends AbstractTest {
 
 	@Test( expected = MojoFailureException.class )
 	public void testValidProjectButInvalidApp() throws Exception {
@@ -113,7 +113,7 @@ public class ValidateApplicationMojoTest extends ValidateProjectMojoTest {
 		this.rule.setVariableValueToObject( mojo, "recipe", true );
 		this.rule.setVariableValueToObject( mojo, "official", true );
 
-		project.setGroupId( Constants.OFFICIAL_RECIPES_NAMESPACE );
+		project.setGroupId( Constants.OFFICIAL_RECIPES_GROUP_ID );
 		project.setArtifactId( project.getName());
 		Assert.assertTrue( new File( project.getBasedir(), "readme" ).createNewFile());
 
