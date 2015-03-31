@@ -55,7 +55,7 @@ public class DockerFileGeneratorTest {
 
 	@Test
 	public void testNewFileGenerator() {
-		DockerfileGenerator gen = new DockerfileGenerator(this.agentPackZip.getAbsolutePath(), null);
+		DockerfileGenerator gen = new DockerfileGenerator("file://" + this.agentPackZip.getAbsolutePath(), null);
 		Assert.assertEquals(gen.getPackages(), "openjdk-7-jre-headless");
 		Assert.assertFalse(gen.isTar());
 

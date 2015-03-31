@@ -199,18 +199,12 @@ public final class RecipesValidator {
 
 		// Check the update parameters
 		if( withUpdateParams ) {
-			if( ! params.remove( "$importAdded" ))
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_ADDED, component, "Component: " + component + ", File: " + pp ));
-			if( ! params.remove( "$importRemoved" ))
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_REMOVED, component, "Component: " + component + ", File: " + pp ));
-			if( ! params.remove( "$importComponent" ))
-				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_COMP, component, "Component: " + component + ", File: " + pp ));
+			if( ! params.remove( "$importDiff" ))
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_MISSING_PARAM_IMPORT_DIFF, component, "Component: " + component + ", File: " + pp ));
 		}
 
 		// Prevent errors with start.pp, etc
-		params.remove( "$importAdded" );
-		params.remove( "$importRemoved" );
-		params.remove( "$importComponent" );
+		params.remove( "$importDiff" );
 
 		// Check the other ones
 		if( ! params.remove( "$runningState" ))

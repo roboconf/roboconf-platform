@@ -1,4 +1,4 @@
-class roboconf_withinit_module($runningState = undef, $importAdded = undef, $importRemoved = undef, $importComponent = undef, $withoperations = undef) {
+class roboconf_withinit_module($runningState = undef, $importDiff = undef, $withoperations = undef) {
 
   exec{ "hello":
     command => "echo 'Hello!'",
