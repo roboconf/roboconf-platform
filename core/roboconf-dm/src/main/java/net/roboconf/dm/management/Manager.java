@@ -503,22 +503,30 @@ public class Manager {
 	 * @throws IOException
 	 */
 	public void deleteApplication( ManagedApplication ma ) throws UnauthorizedActionException, IOException {
-		checkConfiguration();
 
-		// Check we can do this
+		// What really matters is that there is no agent running.
 		String applicationName = ma.getApplication().getName();
 		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 			if( rootInstance.getStatus() != InstanceStatus.NOT_DEPLOYED )
 				throw new UnauthorizedActionException( applicationName + " contains instances that are still deployed." );
 		}
 
-		// If yes, do it
 		this.logger.fine( "Deleting application " + applicationName + "..." );
-		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
+
+		// Deal with the messaging stuff
+		try {
+			checkConfiguration();
+			this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
+			this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
+
+		} catch( Exception e ) {
+			Utils.logException( this.logger, e );
+		}
+
+		// Delete the files
 		Utils.deleteFilesRecursively( ma.getApplicationFilesDirectory());
 		ConfigurationUtils.deleteInstancesFile( ma.getName(), this.configurationDirectory );
 
-		this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
 		this.appNameToManagedApplication.remove( applicationName );
 		this.logger.fine( "Application " + applicationName + " was successfully deleted." );
 	}

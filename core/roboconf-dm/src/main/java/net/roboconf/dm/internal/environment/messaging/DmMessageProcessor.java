@@ -197,7 +197,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( instancePath );
 			sb.append( " (app =  " );
 			sb.append( app );
-			sb.append( ") but the rioot instance is not deployed. Status update is dismissed." );
+			sb.append( ") but the root instance is not deployed. Status update is dismissed." );
 			this.logger.warning( sb.toString());
 
 		} else {
