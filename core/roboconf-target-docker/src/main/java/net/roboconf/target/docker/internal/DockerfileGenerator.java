@@ -25,9 +25,12 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.logging.Logger;
@@ -41,7 +44,7 @@ import net.roboconf.core.utils.Utils;
 public class DockerfileGenerator {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final File agentPack;
+	private final String agentPackURL;
 
 	private String packages = "openjdk-7-jre-headless";
 	private boolean isTar = true;
@@ -49,15 +52,17 @@ public class DockerfileGenerator {
 
 	/**
 	 * Constructor for docker file generator.
-	 * @param agentPack path to the agent tarball or zip
+	 * @param agentPackURL URL or path to the agent tarball or zip
 	 * @param packages packages to be installed using apt-get (including JRE)
 	 */
-	public DockerfileGenerator(String agentPack, String packages) {
-		this.agentPack = new File(agentPack);
+	public DockerfileGenerator(String agentPackURL, String packages) {
+		File test = new File(agentPackURL);
+		this.agentPackURL = (test.exists() ? "file://" : "") + agentPackURL;
+
 		if(packages != null)
 			this.packages = packages;
 
-		if(agentPack.endsWith(".zip"))
+		if(agentPackURL.endsWith(".zip"))
 			this.isTar = false;
 	}
 
@@ -70,10 +75,20 @@ public class DockerfileGenerator {
 	public File generateDockerfile() throws IOException {
 		// Create temporary dockerfile directory
 		Path dockerfile = Files.createTempDirectory("roboconf_");
-
+		
 		// Copy agent package in temp dockerfile directory
-		File tmpPack = new File(dockerfile.toFile(), this.agentPack.getName());
-		Utils.copyStream(this.agentPack, tmpPack);
+		String agentFilename = this.agentPackURL.substring(this.agentPackURL.lastIndexOf('/') + 1);
+		File tmpPack = new File(dockerfile.toFile(), agentFilename);
+		
+		URL u = new URL(this.agentPackURL);
+		URLConnection uc = u.openConnection();
+		BufferedInputStream in = null;
+		try {
+			in = new BufferedInputStream(uc.getInputStream());
+			Utils.copyStream(in, tmpPack);
+		} finally {
+			Utils.closeQuietly(in);
+		}
 		tmpPack.setReadable(true);
 
 		this.logger.fine( "Generating a Dockerfile." );
@@ -82,13 +97,13 @@ public class DockerfileGenerator {
 		try {
 			out = new PrintWriter( generated, "UTF-8" );
 			out.println("FROM ubuntu");
-			out.println("COPY " + this.agentPack.getName() + " /usr/local/");
+			out.println("COPY " + agentFilename + " /usr/local/");
 			out.println("RUN apt-get update");
 			out.println("RUN apt-get -y install " + this.packages);
-			out.println("RUN cd /usr/local; " + (this.isTar ? "tar xvzf " : "unzip ") + this.agentPack.getName());
+			out.println("RUN cd /usr/local; " + (this.isTar ? "tar xvzf " : "unzip ") + agentFilename);
 
 			// Remove extension from file name (generally .zip or .tar.gz, possibly .tgz or .tar)
-			String extractDir = this.agentPack.getName();
+			String extractDir = tmpPack.getName();
 			int pos;
 			if((pos = extractDir.lastIndexOf('.')) > 0)
 				extractDir = extractDir.substring(0, pos);

@@ -385,12 +385,14 @@ public class PluginPuppet implements PluginInterface {
 			sb.append( ", " + importedTypes );
 
 		if(importChanged != null) {
-			sb.append(", "
-					+ (importAdded ? "importAdded => {" : "importRemoved => {")
-					+ formatImport(importChanged) + "}");
-
 			String componentName = importChanged.getComponentName();
-			sb.append(", importComponent => " + (componentName != null ? componentName : "undef"));
+			sb.append(", importDiff => {"
+					+ (importAdded ? "added => {" : "removed => {")
+					+ formatImport(importChanged) + "}, "
+					+ (importAdded ? "removed => undef" : "added => undef")
+					+ ", component => "
+					+ (componentName != null ? componentName : "undef")
+					+ "}");
 		}
 
 		sb.append("}");
