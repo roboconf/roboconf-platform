@@ -84,7 +84,23 @@
 				<artifactId>karaf-maven-plugin</artifactId>
 				<configuration>
 					<bootFeatures>
-						<feature>standard</feature>
+						<!-- Karaf 4.x has split the "standard" features into many sub-features -->
+						<feature>shell-compat</feature>
+						<feature>feature</feature>
+						<feature>instance</feature>
+						<feature>jaas</feature>
+						<feature>diagnostic</feature>
+						<feature>log</feature>
+						<feature>service</feature>
+						<feature>webconsole</feature>
+						<feature>aries-blueprint</feature>
+						<feature>ssh</feature>
+						<feature>bundle</feature>
+						<feature>config</feature>
+						<feature>deployer</feature>
+						<feature>system</feature>
+						<feature>package</feature>
+
 						<feature>management</feature>
 						<feature>webconsole</feature>
 						<feature>ipojo-all</feature>
