@@ -31,11 +31,14 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
@@ -94,8 +97,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	@Override
 	public void render( Map<String,String> options ) throws IOException {
 
+		// Keep the options
 		this.options = options;
-		StringBuilder sb = new StringBuilder();
 
 		// Check the language
 		this.locale = options.get( DocConstants.OPTION_LOCALE );
@@ -103,6 +106,21 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			this.messages = new Messages( this.locale );
 		else
 			this.messages = new Messages();
+
+		// What to render?
+		if( options.containsKey( DocConstants.OPTION_RECIPE ))
+			renderRecipe();
+		else
+			renderApplication();
+	}
+
+
+	/**
+	 * Renders an application.
+	 * @throws IOException
+	 */
+	private void renderApplication() throws IOException {
+		StringBuilder sb = new StringBuilder();
 
 		// First pages
 		sb.append( renderDocumentTitle());
@@ -128,6 +146,48 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 		// Render information about initial instances
 		sb.append( renderInstances());
+
+		writeFileContent( sb.toString());
+	}
+
+
+	/**
+	 * Renders a recipe.
+	 * @throws IOException
+	 */
+	private void renderRecipe() throws IOException {
+		StringBuilder sb = new StringBuilder();
+
+		// First pages
+		if( ! Constants.GENERATED.equalsIgnoreCase( this.application.getName())) {
+			sb.append( renderDocumentTitle());
+			sb.append( renderPageBreak());
+
+			sb.append( renderParagraph( this.messages.get( "intro" ))); //$NON-NLS-1$
+			sb.append( renderPageBreak());
+
+			sb.append( renderDocumentIndex());
+			sb.append( renderPageBreak());
+
+			sb.append( startTable());
+			sb.append( addTableLine( this.messages.get( "app.name" ), this.application.getName())); //$NON-NLS-1$
+			sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.application.getQualifier())); //$NON-NLS-1$
+			sb.append( endTable());
+
+			sb.append( renderApplicationDescription());
+			sb.append( renderPageBreak());
+			sb.append( renderSections( new ArrayList<String>( 0 )));
+
+		} else {
+			sb.append( renderDocumentIndex());
+			sb.append( renderPageBreak());
+		}
+
+		// Render information about components
+		sb.append( renderComponents());
+
+		// Render information about facets
+		sb.append( renderFacets());
 
 		writeFileContent( sb.toString());
 	}
@@ -162,8 +222,6 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 	/**
 	 * Renders information about the components.
-	 * @param application the application
-	 * @param applicationDirectory the application's directory
 	 * @return a string builder (never null)
 	 * @throws IOException
 	 */
@@ -244,8 +302,29 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 			// Hierarchy
 			section.append( renderTitle3( this.messages.get( "hierarchy" ))); //$NON-NLS-1$
-			Collection<Component> ancestors = ComponentHelpers.findAllAncestors( comp );
-			Collection<Component> children = ComponentHelpers.findAllChildren( comp );
+			Collection<AbstractType> ancestors = new ArrayList<AbstractType>();
+			ancestors.addAll( ComponentHelpers.findAllAncestors( comp ));
+
+			Set<AbstractType> children = new HashSet<AbstractType>();;
+			children.addAll( ComponentHelpers.findAllChildren( comp ));
+
+			// For recipes, ancestors and children should include facets
+			if( this.options.containsKey( DocConstants.OPTION_RECIPE )) {
+				for( AbstractType type : comp.getAncestors()) {
+					if( type instanceof Facet ) {
+						ancestors.add( type );
+						ancestors.addAll( ComponentHelpers.findAllExtendingFacets((Facet) type));
+					}
+				}
+
+				for( AbstractType type : comp.getChildren()) {
+					if( type instanceof Facet ) {
+						children.add( type );
+						children.addAll( ComponentHelpers.findAllExtendingFacets((Facet) type));
+					}
+				}
+			}
+
 			if( ! ancestors.isEmpty() || ! children.isEmpty()) {
 				AbstractRoboconfTransformer transformer = new HierarchicalTransformer( comp, ancestors, children, 4 );
 				saveImage( comp, DiagramType.HIERARCHY, transformer, section );
@@ -304,9 +383,65 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 
 	/**
+	 * Renders information about the facets.
+	 * @return a string builder (never null)
+	 * @throws IOException
+	 */
+	private StringBuilder renderFacets() throws IOException {
+
+		StringBuilder sb = new StringBuilder();
+		if( ! this.application.getGraphs().getFacetNameToFacet().isEmpty()) {
+
+			sb.append( renderTitle1( this.messages.get( "facets" ))); //$NON-NLS-1$
+			sb.append( renderParagraph( this.messages.get( "facets.intro" ))); //$NON-NLS-1$
+
+			List<String> sectionNames = new ArrayList<String> ();
+			List<Facet> allFacets = new ArrayList<Facet>( this.application.getGraphs().getFacetNameToFacet().values());
+			Collections.sort( allFacets, new AbstractTypeComparator());
+
+			for( Facet facet : allFacets ) {
+
+				// Start a new section
+				final String sectionName = DocConstants.SECTION_FACETS + facet.getName();
+				StringBuilder section = startSection( sectionName );
+
+				// Overview
+				section.append( renderTitle2( facet.getName()));
+
+				String customInfo = readCustomInformation( this.applicationDirectory, facet.getName(), DocConstants.FACET_DETAILS );
+				if( ! Utils.isEmptyOrWhitespaces( customInfo )) {
+					section.append( renderTitle3( this.messages.get( "overview" ))); //$NON-NLS-1$
+					section.append( renderParagraph( customInfo ));
+				}
+
+				// Exported variables
+				Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( facet );
+				section.append( renderTitle3( this.messages.get( "exports" ))); //$NON-NLS-1$
+				if( exportedVariables.isEmpty()) {
+					String msg = MessageFormat.format( this.messages.get( "facet.no.export" ), facet ); //$NON-NLS-1$
+					section.append( renderParagraph( msg ));
+
+				} else {
+					String msg = MessageFormat.format( this.messages.get( "facet.exports" ), facet ); //$NON-NLS-1$
+					section.append( renderParagraph( msg ));
+					section.append( renderList( convertExports( exportedVariables )));
+				}
+
+				// End the section
+				section = endSection( sectionName, section );
+				sb.append( section );
+				sectionNames.add( sectionName );
+			}
+
+			sb.append( renderSections( sectionNames ));
+		}
+
+		return sb;
+	}
+
+
+	/**
 	 * Renders information about the instances.
-	 * @param application the application
-	 * @param applicationDirectory the application's directory
 	 * @return a string builder (never null)
 	 */
 	private StringBuilder renderInstances() {

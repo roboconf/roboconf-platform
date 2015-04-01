@@ -286,7 +286,7 @@ public final class RuntimeModelValidator {
 			if( entry.getValue())
 				continue;
 
-			// Maybe it is facet variable, with no component associated with this facet.
+			// Maybe it is a facet variable, with no component associated with this facet.
 			// This check is useful for recipes.
 			ErrorCode errorCode = ErrorCode.RM_UNRESOLVABLE_VARIABLE;
 			if( facetVariables.contains( entry.getKey()))

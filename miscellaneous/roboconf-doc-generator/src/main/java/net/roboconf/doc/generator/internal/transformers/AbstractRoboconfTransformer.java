@@ -28,7 +28,7 @@ package net.roboconf.doc.generator.internal.transformers;
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
 
-import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.AbstractType;
 
 import org.apache.commons.collections15.Transformer;
 
@@ -52,7 +52,7 @@ import edu.uci.ics.jung.visualization.decorators.AbstractEdgeShapeTransformer;
  *
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractRoboconfTransformer implements Transformer<Component,Point2D> {
+public abstract class AbstractRoboconfTransformer implements Transformer<AbstractType,Point2D> {
 
 	/**
 	 * @return the graph dimension (based on the positions)
@@ -63,19 +63,19 @@ public abstract class AbstractRoboconfTransformer implements Transformer<Compone
 	/**
 	 * @return the graph
 	 */
-	public abstract Graph<Component,String> getGraph();
+	public abstract Graph<AbstractType,String> getGraph();
 
 
 	/**
 	 * @return a shape transformer for edges
 	 */
-	public abstract AbstractEdgeShapeTransformer<Component,String> getEdgeShapeTransformer();
+	public abstract AbstractEdgeShapeTransformer<AbstractType,String> getEdgeShapeTransformer();
 
 
 	/**
 	 * @return a layout that use the computed positions
 	 */
-	public Layout<Component,String> getConfiguredLayout() {
-		return new StaticLayout<Component,String>( getGraph(), this, getGraphDimension());
+	public Layout<AbstractType,String> getConfiguredLayout() {
+		return new StaticLayout<AbstractType,String>( getGraph(), this, getGraphDimension());
 	}
 }

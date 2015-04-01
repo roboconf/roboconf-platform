@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -237,7 +238,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	 */
 	@Override
 	protected String renderDocumentTitle() {
-		return "<h1 id=\"overview\">" + this.application.getName() + "</h1>\n";
+		return "<h1 id=\"" + this.messages.get( "introduction" ) + "\">" + this.application.getName() + "</h1>\n";
 	}
 
 
@@ -249,13 +250,30 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	@Override
 	protected String renderDocumentIndex() {
 
+		// What keys should we inject in the index?
+		List<String> keys = new ArrayList<String> ();
+		keys.add( "introduction" );
+		keys.add( "components" );
+		if( this.options.containsKey( DocConstants.OPTION_RECIPE )) {
+			if( ! this.application.getGraphs().getFacetNameToFacet().isEmpty())
+				keys.add( "facets" );
+
+		} else {
+			keys.add( "instances" );
+		}
+
+		// Create the index
 		StringBuilder sb = new StringBuilder();
 		sb.append( "<ul>\n" );
-		sb.append( "\t<li><a href=\"roboconf.html#overview\">Overview</a></li>\n" );
-		sb.append( "\t<li><a href=\"roboconf.html#components\">Components</a></li>\n" );
-		sb.append( "\t<li><a href=\"roboconf.html#instances\">Instances</a></li>\n" );
-		sb.append( "</ul>\n" );
+		for( String key : keys ) {
+			sb.append( "\t<li><a href=\"index.html#" );
+			sb.append( this.messages.get( key ).toLowerCase());
+			sb.append( "\">" );
+			sb.append( this.messages.get( key ));
+			sb.append( "</a></li>\n" );
+		}
 
+		sb.append( "</ul>\n" );
 		this.menu = sb.toString();
 		return "";
 	}

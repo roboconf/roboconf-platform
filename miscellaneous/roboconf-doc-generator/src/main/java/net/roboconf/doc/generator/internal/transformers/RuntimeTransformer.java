@@ -28,6 +28,7 @@ package net.roboconf.doc.generator.internal.transformers;
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
 
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import edu.uci.ics.jung.algorithms.layout.Layout;
@@ -41,7 +42,7 @@ import edu.uci.ics.jung.visualization.decorators.EdgeShape;
  */
 public class RuntimeTransformer extends AbstractRoboconfTransformer {
 
-	private Graph<Component,String> graph;
+	private Graph<AbstractType,String> graph;
 	private final Component component;
 
 
@@ -58,7 +59,7 @@ public class RuntimeTransformer extends AbstractRoboconfTransformer {
 
 
 	@Override
-	public Point2D transform( Component input ) {
+	public Point2D transform( AbstractType input ) {
 		return null;
 	}
 
@@ -79,7 +80,7 @@ public class RuntimeTransformer extends AbstractRoboconfTransformer {
 	 * #getGraph()
 	 */
 	@Override
-	public Graph<Component,String> getGraph() {
+	public Graph<AbstractType,String> getGraph() {
 		return this.graph;
 	}
 
@@ -90,8 +91,8 @@ public class RuntimeTransformer extends AbstractRoboconfTransformer {
 	 * #getConfiguredLayout()
 	 */
 	@Override
-	public Layout<Component,String> getConfiguredLayout() {
-		return new StaticLayout<Component,String>( this.graph, this, getGraphDimension());
+	public Layout<AbstractType,String> getConfiguredLayout() {
+		return new StaticLayout<AbstractType,String>( this.graph, this, getGraphDimension());
 	}
 
 
@@ -101,7 +102,7 @@ public class RuntimeTransformer extends AbstractRoboconfTransformer {
 	 * #getEdgeShapeTransformer()
 	 */
 	@Override
-	public AbstractEdgeShapeTransformer<Component,String> getEdgeShapeTransformer() {
-		return new EdgeShape.Loop<Component,String> ();
+	public AbstractEdgeShapeTransformer<AbstractType,String> getEdgeShapeTransformer() {
+		return new EdgeShape.Loop<AbstractType,String> ();
 	}
 }

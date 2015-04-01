@@ -42,7 +42,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class GenerateDocumentationMojoTest extends ValidateProjectMojoTest {
+public class GenerateDocumentationMojoTest extends AbstractTest {
 
 	@Test
 	public void testSingleHtml() throws Exception {

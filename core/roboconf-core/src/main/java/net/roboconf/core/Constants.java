@@ -94,7 +94,12 @@ public interface Constants {
 	String SPECIFIC_VARIABLE_IP = "ip";
 
 	/**
-	 * The default name space for official Roboconf recipes.
+	 * The default group ID for official Roboconf recipes.
 	 */
-	String OFFICIAL_RECIPES_NAMESPACE = "net.roboconf.recipes";
+	String OFFICIAL_RECIPES_GROUP_ID = "net.roboconf.recipes";
+
+	/**
+	 * A constant used for generated applications (used with recipes).
+	 */
+	String GENERATED = "generated";
 }

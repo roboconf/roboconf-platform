@@ -192,7 +192,7 @@ public class ValidateApplicationMojo extends AbstractMojo {
 		if( ! application.getRootInstances().isEmpty())
 			result.add( new RoboconfError( ErrorCode.REC_AVOID_INSTANCES ));
 
-		if( official && ! Constants.OFFICIAL_RECIPES_NAMESPACE.equals( project.getGroupId()))
+		if( official && ! Constants.OFFICIAL_RECIPES_GROUP_ID.equals( project.getGroupId()))
 			result.add( new RoboconfError( ErrorCode.REC_OFFICIAL_GROUP_ID ));
 
 		if( ! project.getArtifactId().equals( project.getArtifactId()))

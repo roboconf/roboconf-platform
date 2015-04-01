@@ -225,21 +225,6 @@ public class Manager_BasicsTest {
 	}
 
 
-	@Test( expected = IOException.class )
-	public void testDeleteApplication_invalidConfiguration() throws Exception {
-
-		this.manager = new Manager();
-
-		TestApplication app = new TestApplication();
-		File f = this.folder.newFolder();
-		ManagedApplication ma = new ManagedApplication( app, f );
-
-		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
-		this.manager.deleteApplication( ma );
-		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
-	}
-
-
 	@Test( expected = ImpossibleInsertionException.class )
 	public void testAddInstance_impossibleInsertion_rootInstance() throws Exception {
 
@@ -796,5 +781,31 @@ public class Manager_BasicsTest {
 		Message sentMessage = this.msgClient.sentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdSetRootInstance.class, sentMessage.getClass());
 		Assert.assertNotNull(((MsgCmdSetRootInstance) sentMessage).getRootInstance());
+	}
+
+
+	@Test
+	public void applicationsShouldBeDeletedEvenWhenNoMessagingServer() throws Exception {
+
+		this.manager = new Manager();
+
+		TestApplication app = new TestApplication();
+		File f = this.folder.newFolder();
+		ManagedApplication ma = new ManagedApplication( app, f );
+
+		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+
+		try {
+			this.manager.checkConfiguration();
+			Assert.fail( "An exception should have been thrown, there is no messaging server in this test!" );
+
+		} catch( Exception e ) {
+			// ignore
+		}
+
+		this.manager.deleteApplication( ma );
+		Assert.assertEquals( 0, this.manager.getAppNameToManagedApplication().size());
 	}
 }

@@ -25,25 +25,148 @@
 
 package net.roboconf.maven;
 
-import org.apache.maven.plugin.testing.MojoRule;
-import org.apache.maven.plugin.testing.resources.TestResources;
+import java.io.File;
+import java.util.HashSet;
+import java.util.Map;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.Utils;
+
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.project.MavenProject;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ResolveMojoTest {
+public class ResolveMojoTest extends AbstractTest {
 
 	@Rule
-	public TestResources resources = new TestResources();
-
-	@Rule
-	public MojoRule rule = new MojoRule();
+	public TemporaryFolder folder = new TemporaryFolder();
 
 
 	@Test
-	public void testPeanuts() throws Exception {
-		new ResolveMojo().execute();
+	public void testNoDependency() throws Exception {
+		final String projectName = "project--valid";
+
+		File baseDir = this.resources.getBasedir( projectName );
+		Assert.assertNotNull( baseDir );
+		Assert.assertTrue( baseDir.isDirectory());
+
+		File targetDir = new File( baseDir, MavenPluginConstants.TARGET_MODEL_DIRECTORY + "/" + Constants.PROJECT_DIR_GRAPH );
+		Assert.assertFalse( targetDir.isDirectory());
+		findMojo( projectName, "resolve" ).execute();
+
+		// The mojo does not create the directory is there is no dependency
+		Assert.assertFalse( targetDir.isDirectory());
+	}
+
+
+	@Test
+	public void testWithInvalidRoboconfDependencies() throws Exception {
+
+		// Prepare the project
+		final String projectName = "project--valid";
+
+		File baseDir = this.resources.getBasedir( projectName );
+		Assert.assertNotNull( baseDir );
+		Assert.assertTrue( baseDir.isDirectory());
+
+		AbstractMojo mojo = findMojo( projectName, "resolve" );
+		this.rule.setVariableValueToObject( mojo, "local", new TestMavenArtifactRepository());
+
+		// Add dependencies
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		project.setDependencyArtifacts( new HashSet<Artifact> ());
+
+		Artifact notRbcfArtifact1 = new DefaultArtifact( "net.roboconf", "roboconf-core", "0.2", "runtime", "jar", null, new DefaultArtifactHandler());
+		project.getDependencyArtifacts().add( notRbcfArtifact1 );
+
+		Artifact notRbcfArtifact2 = new DefaultArtifact( "net.roboconf", "roboconf-core", "0.2", "runtime", "jar", null, new DefaultArtifactHandler());
+		notRbcfArtifact2.setFile( new File( "file that does not exist" ));
+		project.getDependencyArtifacts().add( notRbcfArtifact2 );
+
+		Artifact notRbcfArtifact3 = new DefaultArtifact( "net.roboconf", "roboconf-core", "0.2", "runtime", "jar", null, new DefaultArtifactHandler());
+		File temp = this.folder.newFile( "toto.zip" );
+		Assert.assertTrue( temp.exists());
+
+		notRbcfArtifact3.setFile( temp );
+		project.getDependencyArtifacts().add( notRbcfArtifact3 );
+
+		// Execute it
+		File targetDir = new File( baseDir, MavenPluginConstants.TARGET_MODEL_DIRECTORY + "/" + Constants.PROJECT_DIR_GRAPH );
+		Assert.assertFalse( targetDir.isDirectory());
+		mojo.execute();
+
+		Assert.assertFalse( targetDir.isDirectory());
+	}
+
+
+	@Test
+	public void testWithRoboconfDependency() throws Exception {
+
+		// Prepare the project
+		final String projectName = "project--valid";
+
+		File baseDir = this.resources.getBasedir( projectName );
+		Assert.assertNotNull( baseDir );
+		Assert.assertTrue( baseDir.isDirectory());
+
+		AbstractMojo mojo = findMojo( projectName, "resolve" );
+		this.rule.setVariableValueToObject( mojo, "local", new TestMavenArtifactRepository());
+
+		// Add dependencies
+		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
+		project.setDependencyArtifacts( new HashSet<Artifact> ());
+
+		Artifact dep = new DefaultArtifact( "net.roboconf", "recipe", "0.2", "runtime", "jar", null, new DefaultArtifactHandler());
+		dep.setFile( zipRecipe());
+		project.getDependencyArtifacts().add( dep );
+
+		// Execute it
+		File targetDir = new File( baseDir, MavenPluginConstants.TARGET_MODEL_DIRECTORY + "/" + Constants.PROJECT_DIR_GRAPH );
+		Assert.assertFalse( targetDir.isDirectory());
+		mojo.execute();
+
+		Assert.assertTrue( targetDir.isDirectory());
+		Assert.assertEquals( 2, targetDir.listFiles().length );
+		Assert.assertTrue( new File( targetDir, "recipe" ).isDirectory());
+		Assert.assertTrue( new File( targetDir, "recipe/lamp.graph" ).isFile());
+		Assert.assertTrue( new File( targetDir, "MySQL" ).isDirectory());
+		Assert.assertTrue( new File( targetDir, "MySQL/readme.md" ).isFile());
+	}
+
+
+	private File zipRecipe() throws Exception {
+
+		File baseDir = this.resources.getBasedir( "recipe" );
+		Assert.assertNotNull( baseDir );
+		Assert.assertTrue( baseDir.isDirectory());
+
+		File targetZipFile = this.folder.newFile( "dep.zip" );
+		Map<String,String> entryToContent = Utils.storeDirectoryResourcesAsString( new File( baseDir, MavenPluginConstants.SOURCE_MODEL_DIRECTORY ));
+		TestUtils.createZipFile( entryToContent, targetZipFile );
+
+		return targetZipFile;
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class TestMavenArtifactRepository extends MavenArtifactRepository {
+
+		@Override
+		public Artifact find( Artifact artifact ) {
+			return artifact;
+		}
 	}
 }

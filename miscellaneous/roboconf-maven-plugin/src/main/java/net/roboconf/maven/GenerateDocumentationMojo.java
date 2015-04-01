@@ -73,8 +73,8 @@ public class GenerateDocumentationMojo extends AbstractMojo {
 
 		// Reload the application (it was already validated).
 		// - Sharing complex objects amongst mojos appears to be quite complicated.
-		File appDirectory = new File( this.project.getBuild().getOutputDirectory());
-		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( appDirectory );
+		File appDirectory = new File( this.project.getBasedir(), MavenPluginConstants.TARGET_MODEL_DIRECTORY );
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( appDirectory );
 		Application app = alr.getApplication();
 		if( app == null )
 			throw new MojoExecutionException( "The application object could not be loaded." );

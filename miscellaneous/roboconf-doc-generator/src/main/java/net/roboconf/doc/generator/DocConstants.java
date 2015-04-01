@@ -41,6 +41,11 @@ public interface DocConstants {
 	String SECTION_COMPONENTS = "components/";
 
 	/**
+	 * The section name dedicated to facets.
+	 */
+	String SECTION_FACETS = "facets/";
+
+	/**
 	 * The section name dedicated to instances.
 	 */
 	String SECTION_INSTANCES = "instances/";
@@ -60,6 +65,11 @@ public interface DocConstants {
 	 * The file extension for extra information about a component.
 	 */
 	String COMP_EXTRA = ".extra" + FILE_SUFFIX;
+
+	/**
+	 * The file extension for custom summary about a component.
+	 */
+	String FACET_DETAILS = ".facet" + FILE_SUFFIX;
 
 	/**
 	 * The file name prefix for application descriptions.
@@ -96,6 +106,11 @@ public interface DocConstants {
 	 * </p>
 	 */
 	String OPTION_IMG_HIGHLIGHT_BG_COLOR = OPTION_PREFIX + "img.highlight.bg.color";
+
+	/**
+	 * The option to indicate we deal with a recipe and not a complete application.
+	 */
+	String OPTION_RECIPE = OPTION_PREFIX + "recipe";
 
 
 

@@ -1,0 +1,5 @@
+# MySQL database
+MySQL {
+	installer: puppet-or-bash-chef---;
+	exports: ip, port = 3306;
+}

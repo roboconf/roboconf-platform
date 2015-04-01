@@ -261,6 +261,69 @@ public class UtilsTest {
 
 
 	@Test
+	public void testExtractZipArchive_withOptions() throws Exception {
+
+		// Prepare the original ZIP
+		File zipFile = this.folder.newFile( "roboconf_test.zip" );
+		Map<String,String> entryToContent = TestUtils.buildZipContent();
+
+		TestUtils.createZipFile( entryToContent, zipFile );
+		TestUtils.compareZipContent( zipFile, entryToContent );
+
+		// Prepare the output directory
+		File existingDirectory = this.folder.newFolder( "roboconf_test" );
+		Assert.assertTrue( existingDirectory.exists());
+		Assert.assertEquals( 0, Utils.listAllFiles( existingDirectory ).size());
+
+		// Extract
+		final String pattern = "graph/.*";
+		Utils.extractZipArchive( zipFile, existingDirectory, pattern, "graph/" );
+
+		// And compare
+		Assert.assertNotSame( 0, Utils.listAllFiles( existingDirectory ).size());
+		Map<String,String> fileToContent = Utils.storeDirectoryResourcesAsString( existingDirectory );
+		Assert.assertEquals( 3, fileToContent.size());
+
+		for( Map.Entry<String,String> entry : fileToContent.entrySet()) {
+			Assert.assertTrue( entryToContent.containsKey( "graph/" + entry.getKey()));
+			String value = entryToContent.remove( "graph/" + entry.getKey());
+			Assert.assertEquals( entry.getValue(), value );
+		}
+	}
+
+
+	@Test
+	public void testExtractZipArchive_withOptions_invalidPrefix() throws Exception {
+
+		// Prepare the original ZIP
+		File zipFile = this.folder.newFile( "roboconf_test.zip" );
+		Map<String,String> entryToContent = TestUtils.buildZipContent();
+
+		TestUtils.createZipFile( entryToContent, zipFile );
+		TestUtils.compareZipContent( zipFile, entryToContent );
+
+		// Prepare the output directory
+		File existingDirectory = this.folder.newFolder( "roboconf_test" );
+		Assert.assertTrue( existingDirectory.exists());
+		Assert.assertEquals( 0, Utils.listAllFiles( existingDirectory ).size());
+
+		// Extract
+		final String pattern = "graph/.*";
+		Utils.extractZipArchive( zipFile, existingDirectory, pattern, "invalid/" );
+
+		// And compare
+		Assert.assertEquals( 3, Utils.listAllFiles( existingDirectory ).size());
+		Map<String,String> fileToContent = Utils.storeDirectoryResourcesAsString( existingDirectory );
+
+		for( Map.Entry<String,String> entry : fileToContent.entrySet()) {
+			Assert.assertTrue( entryToContent.containsKey( entry.getKey()));
+			String value = entryToContent.remove( entry.getKey());
+			Assert.assertEquals( entry.getValue(), value );
+		}
+	}
+
+
+	@Test
 	public void testExtractZipArchive_inexistingDirectory() throws Exception {
 
 		// Prepare the original ZIP
