@@ -44,9 +44,9 @@ public interface AgentMessagingInterface {
 	String getApplicationName();
 
 	/**
-	 * @return the root instance's name
+	 * @return the scoped instance's
 	 */
-	Instance getRootInstance();
+	Instance getScopedInstance();
 
 	/**
 	 * Forces the sending of a heart beat to the DM.

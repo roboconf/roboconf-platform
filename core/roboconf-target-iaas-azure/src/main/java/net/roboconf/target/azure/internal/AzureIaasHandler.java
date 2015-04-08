@@ -53,6 +53,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -94,12 +95,17 @@ public class AzureIaasHandler implements TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
 		String instanceId = null;
 		try {
+			// For IaaS, we only expect root instance names to be passed
+			if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+				throw new TargetException( "Only root instances can be passed in arguments." );
+
+			String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 			final AzureProperties azureProperties = buildProperties( targetProperties );
 
 			// The following part enables to transmit data to the VM.
@@ -184,7 +190,7 @@ public class AzureIaasHandler implements TargetHandler {
 		String messagingIp,
 		String messagingUsername,
 		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );

@@ -70,7 +70,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/file-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 3, handlers.size());
@@ -104,7 +104,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/nagios-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 3, handlers.size());
@@ -135,7 +135,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/rest-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 1, handlers.size());
@@ -156,7 +156,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/mixed-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 2, handlers.size());
@@ -181,7 +181,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/mixed-events-templating.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		File propertiesFile = TestUtils.findTestFile( "/mixed-events-templating.properties" );
 		Assert.assertTrue( propertiesFile.exists());
@@ -208,7 +208,7 @@ public class MonitoringTaskTest {
 
 		String fileContent = MonitoringTask.RULE_BEGINNING;
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
@@ -220,7 +220,7 @@ public class MonitoringTaskTest {
 
 		String fileContent = MonitoringTask.RULE_BEGINNING + " file event id with spaces]";
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
@@ -232,7 +232,7 @@ public class MonitoringTaskTest {
 
 		String fileContent = MonitoringTask.RULE_BEGINNING + " unknown event-id]\nok";
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
@@ -250,7 +250,7 @@ public class MonitoringTaskTest {
 		MsgNotifAutonomic msg = (MsgNotifAutonomic) this.messagingClient.messagesForTheDm.get( 0 );
 		Assert.assertEquals( this.agentInterface.getApplicationName(), msg.getApplicationName());
 		Assert.assertEquals( "myRuleName", msg.getEventId());
-		Assert.assertEquals( this.agentInterface.getRootInstance().getName(), msg.getRootInstanceName());
+		Assert.assertEquals( "/" + this.agentInterface.getScopedInstance().getName(), msg.getScopedInstancePath());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "does not exist" ));
 	}
 
@@ -280,7 +280,7 @@ public class MonitoringTaskTest {
 		Instance rootInstance = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
 		Instance childInstance = new Instance( "child" ).component( new Component( "Child" ).installerName( "whatever" ));
 		InstanceHelpers.insertChild( rootInstance, childInstance );
-		this.agentInterface.setRootInstance( rootInstance );
+		this.agentInterface.setScopedInstance( rootInstance );
 
 		// Create the resources
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( childInstance );

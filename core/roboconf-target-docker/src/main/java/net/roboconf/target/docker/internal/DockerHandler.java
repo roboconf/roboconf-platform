@@ -83,7 +83,7 @@ public class DockerHandler implements TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
@@ -148,7 +148,7 @@ public class DockerHandler implements TargetHandler {
 			.createContainerCmd(imageId)
 			.withCmd("/usr/local/roboconf-agent/start.sh",
 						"application-name=" + applicationName,
-						"root-instance-name=" + rootInstanceName,
+						"scoped-instance-path=" + scopedInstancePath,
 						"message-server-ip=" + messagingIp,
 						"message-server-username=" + messagingUsername,
 						"message-server-password=" + messagingPassword)
@@ -171,7 +171,7 @@ public class DockerHandler implements TargetHandler {
 		String messagingIp,
 		String messagingUsername,
 		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure with Docker." );

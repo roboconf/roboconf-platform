@@ -43,6 +43,7 @@ import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
@@ -62,7 +63,7 @@ public class Agent implements AgentMessagingInterface {
 
 	// Component properties (ipojo)
 	String messageServerIp, messageServerUsername, messageServerPassword;
-	String applicationName, rootInstanceName, ipAddress, targetId;
+	String applicationName, scopedInstancePath, ipAddress, targetId;
 	boolean overrideProperties = false, simulatePlugins = true;
 
 	// Fields that should be injected (ipojo)
@@ -72,8 +73,10 @@ public class Agent implements AgentMessagingInterface {
 	private final Logger logger;
 	private String messagingFactoryType;
 	private ReconfigurableClientAgent messagingClient;
+	private Instance scopedInstance;
 	Timer heartBeatTimer;
-	private Instance rootInstance;
+
+
 
 	/**
 	 * Constructor.
@@ -142,7 +145,7 @@ public class Agent implements AgentMessagingInterface {
 		// Send a last message to the DM
 		try {
 			if( this.messagingClient.isConnected()) {
-				this.messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.rootInstanceName ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.scopedInstancePath ));
 				this.logger.fine( "Agent " + getAgentId() + " notified the DM it was about to stop." );
 			}
 
@@ -186,7 +189,7 @@ public class Agent implements AgentMessagingInterface {
 		if( this.messagingClient != null )
 			messageProcessor = (AgentMessageProcessor) this.messagingClient.getMessageProcessor();
 
-		return messageProcessor == null || messageProcessor.rootInstance == null;
+		return messageProcessor == null || messageProcessor.scopedInstance == null;
 	}
 
 
@@ -230,7 +233,7 @@ public class Agent implements AgentMessagingInterface {
 
 		// Initialize the result, if any
 		if( result != null )
-			result.setNames( this.applicationName, this.rootInstanceName );
+			result.setNames( this.applicationName, this.scopedInstancePath );
 
 		return result;
 	}
@@ -343,7 +346,7 @@ public class Agent implements AgentMessagingInterface {
 
 				this.applicationName = props.getApplicationName();
 				this.ipAddress = props.getIpAddress();
-				this.rootInstanceName = props.getRootInstanceName();
+				this.scopedInstancePath = props.getScopedInstancePath();
 
 				this.messageServerIp = props.getMessageServerIp();
 				this.messageServerUsername = props.getMessageServerUsername();
@@ -351,9 +354,12 @@ public class Agent implements AgentMessagingInterface {
 			}
 		}
 
+		// Extract the root instance's name
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( this.scopedInstancePath );
+
 		// Update the messaging connection
 		this.messagingClient.setApplicationName( this.applicationName );
-		this.messagingClient.setRootInstanceName( this.rootInstanceName );
+		this.messagingClient.setRootInstanceName( rootInstanceName );
 		this.messagingClient.setIpAddress( this.ipAddress );
 		this.messagingClient.setNeedsModel( needsModel());
 		this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
@@ -372,10 +378,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @return the root instance name
+	 * @return the scoped instance's path
 	 */
-	public String getRootInstanceName() {
-		return this.rootInstanceName;
+	public String getScopedInstancePath() {
+		return this.scopedInstancePath;
 	}
 
 
@@ -428,10 +434,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @param rootInstanceName the rootInstanceName to set
+	 * @param rootInstanceName the scopedInstancePath to set
 	 */
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
+	public void setScopedInstancePath( String scopedInstancePath ) {
+		this.scopedInstancePath = scopedInstancePath;
 	}
 
 
@@ -481,7 +487,7 @@ public class Agent implements AgentMessagingInterface {
 	String getAgentId() {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( Utils.isEmptyOrWhitespaces( this.rootInstanceName ) ? "?" : this.rootInstanceName );
+		sb.append( Utils.isEmptyOrWhitespaces( this.scopedInstancePath ) ? "?" : this.scopedInstancePath );
 		if( ! Utils.isEmptyOrWhitespaces( this.applicationName ))
 			sb.append( " @ " + this.applicationName );
 
@@ -490,18 +496,17 @@ public class Agent implements AgentMessagingInterface {
 
 
 	@Override
-	public Instance getRootInstance() {
-		return this.rootInstance;
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
 	}
 
 
-	public void setRootInstance(Instance rootInstance) {
-		this.rootInstance = rootInstance;
+	public void setScopedInstance(Instance scopedInstance) {
+		this.scopedInstance = scopedInstance;
 	}
 
 
 	public List<PluginInterface> getPlugins() {
 		return this.plugins;
 	}
-
 }

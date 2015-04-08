@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -90,10 +91,19 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
+		this.logger.fine( "Creating a new VM @ VMware." );
+
+		// For IaaS, we only expect root instance names to be passed
+		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+			throw new TargetException( "Only root instances can be passed in arguments." );
+
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
+
+		// Deal with the creation
 		try {
 			final String machineImageId = targetProperties.get( TEMPLATE );
 			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
@@ -165,18 +175,19 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName ) {
 
 		String userData = "";
 		try {
-			userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, scopedInstancePath );
 
 		} catch( IOException e ) {
 			this.logger.severe( "User data could not be generated." );
 			Utils.logException( this.logger, e );
 		}
 
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 		return new VmWareMachineConfigurator( targetProperties, userData, rootInstanceName );
 	}
 

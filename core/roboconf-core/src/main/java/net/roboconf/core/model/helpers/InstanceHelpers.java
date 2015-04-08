@@ -288,6 +288,43 @@ public final class InstanceHelpers {
 
 
 	/**
+	 * Finds the scoped instance for an instance (i.e. the agent that manages this instance).
+	 * @param instance an instance (not null)
+	 * @return a non-null instance, the scoped instance
+	 */
+	public static Instance findScopedInstance( Instance instance ) {
+
+		Instance scopedInstance = instance;
+		while( scopedInstance.getParent() != null
+				&& ! isTarget( scopedInstance ))
+			scopedInstance = scopedInstance.getParent();
+
+		return scopedInstance;
+	}
+
+
+	/**
+	 * Finds all the scoped instances from an application.
+	 * @return a non-null list
+	 */
+	public static List<Instance> findAllScopedInstances( Application app ) {
+
+		List<Instance> instanceList = new ArrayList<Instance> ();
+		List<Instance> todo = new ArrayList<Instance> ();
+		todo.addAll( app.getRootInstances());
+
+		while( ! todo.isEmpty()) {
+			Instance current = todo.remove( 0 );
+			todo.addAll( current.getChildren());
+			if( isTarget( current ))
+				instanceList.add( current );
+		}
+
+		return instanceList;
+	}
+
+
+	/**
 	 * Gets all the instances of an application.
 	 * @param application an application (not null)
 	 * @return a non-null list of instances
@@ -448,5 +485,57 @@ public final class InstanceHelpers {
 	public static boolean isTarget( Instance instance ) {
 		return instance.getComponent() != null
 				&& Constants.TARGET_INSTALLER.equalsIgnoreCase( instance.getComponent().getInstallerName());
+	}
+
+
+	/**
+	 * Removes children instances which are off-scope.
+	 * <p>
+	 * Agents manage all the instances under their scoped instance, except those
+	 * that are associated with the "target" installer. Such instances are indeed managed by another agent.
+	 * </p>
+	 *
+	 * @return a non-null list
+	 */
+	public static void removeOffScopeInstances( Instance scopedInstance ) {
+
+		List<Instance> todo = new ArrayList<Instance> ();
+		if( scopedInstance != null )
+			todo.addAll( scopedInstance.getChildren());
+
+		while( ! todo.isEmpty()) {
+			Instance current = todo.remove( 0 );
+			if( isTarget( current ))
+				current.getParent().getChildren().remove( current );
+			else
+				todo.addAll( current.getChildren());
+		}
+	}
+
+
+	/**
+	 * Finds the root instance's path from another instance path.
+	 * @param scopedInstancePath a scoped instance path (may be null)
+	 * @return a non-null root instance path
+	 */
+	public static String findRootInstancePath( String scopedInstancePath ) {
+
+		String result;
+		if( Utils.isEmptyOrWhitespaces( scopedInstancePath )) {
+			// Do not return null
+			result = "";
+
+		} else if( scopedInstancePath.contains( "/" )) {
+			// Be as flexible as possible with paths
+			String s = scopedInstancePath.replaceFirst( "^/*", "" );
+			int index = s.indexOf( '/' );
+			result = index > 0 ? s.substring( 0, index ) : s;
+
+		} else {
+			// Assumed to be a root instance name
+			result = scopedInstancePath;
+		}
+
+		return result;
 	}
 }

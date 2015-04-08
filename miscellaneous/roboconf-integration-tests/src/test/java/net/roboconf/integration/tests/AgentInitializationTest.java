@@ -170,9 +170,9 @@ public class AgentInitializationTest extends DmTest {
 		Agent agent = myResolver.handler.agentIdToAgent.values().iterator().next();
 		Thread.sleep( 1000 );
 		Assert.assertFalse( agent.needsModel());
-		Assert.assertNotNull( agent.getRootInstance());
-		Assert.assertEquals( "MySQL VM", agent.getRootInstanceName());
-		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( agent.getRootInstance()).size());
+		Assert.assertNotNull( agent.getScopedInstance());
+		Assert.assertEquals( "MySQL VM", agent.getScopedInstance().getName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( agent.getScopedInstance()).size());
 
 		// Try to instantiate another VM
 		Instance anotherRootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Tomcat VM 1" );
@@ -189,9 +189,9 @@ public class AgentInitializationTest extends DmTest {
 
 		Thread.sleep( 1000 );
 		Assert.assertFalse( anotherAgent.needsModel());
-		Assert.assertNotNull( anotherAgent.getRootInstance());
-		Assert.assertEquals( "Tomcat VM 1", anotherAgent.getRootInstanceName());
-		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( anotherAgent.getRootInstance()).size());
+		Assert.assertNotNull( anotherAgent.getScopedInstance());
+		Assert.assertEquals( "Tomcat VM 1", anotherAgent.getScopedInstance().getName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( anotherAgent.getScopedInstance()).size());
 
 		// Undeploy them all
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );

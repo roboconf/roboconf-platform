@@ -25,6 +25,8 @@
 
 package net.roboconf.agent.internal;
 
+import java.util.List;
+
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -42,14 +44,12 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
-
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.List;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -82,7 +82,7 @@ public class AgentMessageProcessor_BasicTest {
 	public void testDmPingResponse() throws IllegalAccessException {
 		// Simulate a ping message from the DM.
 		MsgEcho ping = new MsgEcho( "PING:TEST", 1234L );
-		AgentMessageProcessor processor = (AgentMessageProcessor) agent.getMessagingClient().getMessageProcessor();
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		processor.processMessage( ping );
 
 		// Check the agent has sent a 'PONG' response to the DM.
@@ -104,17 +104,17 @@ public class AgentMessageProcessor_BasicTest {
 		TestApplication app = new TestApplication();
 
 		// Adding an child instance when there is no root
-		Assert.assertNull( processor.rootInstance );
+		Assert.assertNull( processor.scopedInstance );
 		processor.processMessage( new MsgCmdAddInstance( app.getMySql()));
-		Assert.assertNull( processor.rootInstance );
+		Assert.assertNull( processor.scopedInstance );
 
 		// Adding a root instance must fail too
 		processor.processMessage( new MsgCmdAddInstance( app.getMySqlVm()));
-		Assert.assertNull( processor.rootInstance );
+		Assert.assertNull( processor.scopedInstance );
 
 		// Create a copy of the root instance and insert a child
 		Instance newMySqlVm = new Instance( app.getMySqlVm().getName()).component( app.getMySqlVm().getComponent());
-		processor.rootInstance = newMySqlVm;
+		processor.scopedInstance = newMySqlVm;
 
 		app.getMySql().overriddenExports.put( "some-value", "loop" );
 		Assert.assertEquals( 0, newMySqlVm.getChildren().size());
@@ -150,39 +150,39 @@ public class AgentMessageProcessor_BasicTest {
 
 
 	@Test
-	public void testSetRootInstance() {
+	public void testSetscopedInstance() {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplication app = new TestApplication();
 
 		// Insert a non-root element
-		Assert.assertNull( processor.rootInstance );
-		processor.processMessage( new MsgCmdSetRootInstance( app.getMySql()));
-		Assert.assertNull( processor.rootInstance );
+		Assert.assertNull( processor.scopedInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getMySql()));
+		Assert.assertNull( processor.scopedInstance );
 		Assert.assertEquals( 0, this.client.messagesForAgentsCount.get());
 
 		// Insert a root
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
 
 		// We cannot change the root
-		processor.processMessage( new MsgCmdSetRootInstance( app.getMySqlVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getMySqlVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcat()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcat()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 
 		// Make sure the final state of the root instance is always "deployed and started"
-		processor.rootInstance = null;
+		processor.scopedInstance = null;
 		this.client.messagesForAgentsCount.set( 0 );
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
 	}
 
@@ -199,7 +199,7 @@ public class AgentMessageProcessor_BasicTest {
 
 		// With a root instance
 		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		processor.scopedInstance = app.getTomcatVm();
 
 		processor.processMessage( new MsgCmdSendInstances());
 		Assert.assertEquals(
@@ -226,8 +226,8 @@ public class AgentMessageProcessor_BasicTest {
 		// Unlike with a real messaging client, we do not check variables in our test client.
 		// So, one processed instance = one message sent other agents.
 		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
-		processor.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+		processor.scopedInstance = app.getTomcatVm();
+		processor.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		processor.processMessage( new MsgCmdResynchronize());
 		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
@@ -255,14 +255,14 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Remove an instance when there is no model
 		TestApplication app = new TestApplication();
-		Assert.assertNull( processor.rootInstance );
+		Assert.assertNull( processor.scopedInstance );
 		processor.processMessage( new MsgCmdRemoveInstance( app.getMySqlVm()));
-		Assert.assertNull( processor.rootInstance );
+		Assert.assertNull( processor.scopedInstance );
 
 		// Set a root instance and try to remove it => fail
-		processor.rootInstance = app.getMySqlVm();
+		processor.scopedInstance = app.getMySqlVm();
 		processor.processMessage( new MsgCmdRemoveInstance( app.getMySqlVm()));
-		Assert.assertEquals( app.getMySqlVm(), processor.rootInstance );
+		Assert.assertEquals( app.getMySqlVm(), processor.scopedInstance );
 
 		// Try to remove an invalid child
 		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( app.getMySqlVm()).size());
@@ -304,7 +304,7 @@ public class AgentMessageProcessor_BasicTest {
 		this.client.failMessageSending.set( true );
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		processor.rootInstance = new TestApplication().getMySqlVm();
+		processor.scopedInstance = new TestApplication().getMySqlVm();
 		processor.processMessage( new MsgCmdSendInstances());
 		// The processor won't be able to send the model through the messaging.
 	}

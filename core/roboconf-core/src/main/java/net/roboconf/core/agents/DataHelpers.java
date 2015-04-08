@@ -39,7 +39,7 @@ public final class DataHelpers {
 	public static final String MESSAGING_IP = "messaging.ip";
 	public static final String MESSAGING_USERNAME = "messaging.username";
 	public static final String MESSAGING_PASSWORD = "messaging.password";
-	public static final String ROOT_INSTANCE_NAME = "root.instance.name";
+	public static final String SCOPED_INSTANCE_PATH = "scoped.instance.path";
 	public static final String APPLICATION_NAME = "application.name";
 
 
@@ -82,7 +82,7 @@ public final class DataHelpers {
 	 * @param messagingUsername the user name to connect to the messaging server
 	 * @param messagingPassword the password to connect to the messaging server
 	 * @param applicationName the application name
-	 * @param rootInstanceName the root instance name
+	 * @param scopedInstancePath the scoped instance's path (the instance associated with the agent)
 	 * @return a non-null object
 	 */
 	public static Properties writeUserDataAsProperties(
@@ -90,14 +90,14 @@ public final class DataHelpers {
 			String messagingUsername,
 			String messagingPassword,
 			String applicationName,
-			String rootInstanceName ) {
+			String scopedInstancePath ) {
 
 		Properties result = new Properties();
 		if( applicationName != null )
 			result.setProperty( APPLICATION_NAME, applicationName );
 
-		if( rootInstanceName != null )
-			result.setProperty( ROOT_INSTANCE_NAME, rootInstanceName );
+		if( scopedInstancePath != null )
+			result.setProperty( SCOPED_INSTANCE_PATH, scopedInstancePath );
 
 		if( messagingServerIp != null )
 			result.setProperty( MESSAGING_IP, messagingServerIp );

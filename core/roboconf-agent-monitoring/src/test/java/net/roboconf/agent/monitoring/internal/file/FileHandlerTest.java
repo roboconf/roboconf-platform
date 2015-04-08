@@ -44,7 +44,7 @@ public class FileHandlerTest {
 
 	private static final String EVENT_NAME = "whatever";
 	private static final String APP_NAME = "app";
-	private static final String ROOT_INSTANCE_NAME = "root";
+	private static final String SCOPED_INSTANCE_PATH = "/root";
 
 
 	@Test
@@ -54,7 +54,7 @@ public class FileHandlerTest {
 		Assert.assertFalse( f.exists());
 
 		String content = f.getAbsolutePath();
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, content );
+		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
 		Assert.assertEquals( content, handler.getFileLocation());
 		Assert.assertFalse( handler.isDeleteIfExists());
 		Assert.assertFalse( handler.isNotifyIfNotExists());
@@ -69,7 +69,7 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = f.getAbsolutePath();
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, content );
+		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
 		Assert.assertEquals( content, handler.getFileLocation());
 		Assert.assertFalse( handler.isDeleteIfExists());
 		Assert.assertFalse( handler.isNotifyIfNotExists());
@@ -78,7 +78,7 @@ public class FileHandlerTest {
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
 		Assert.assertEquals( EVENT_NAME, msg.getEventId());
-		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
+		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "checked" ));
 
 		Assert.assertTrue( f.exists());
@@ -92,7 +92,7 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = FileHandler.DELETE_IF_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, content );
+		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
 		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
 		Assert.assertTrue( handler.isDeleteIfExists());
 		Assert.assertFalse( handler.isNotifyIfNotExists());
@@ -101,7 +101,7 @@ public class FileHandlerTest {
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
 		Assert.assertEquals( EVENT_NAME, msg.getEventId());
-		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
+		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "deleted" ));
 
 		Assert.assertFalse( f.exists());
@@ -115,7 +115,7 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = FileHandler.DELETE_IF_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, content );
+		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
 		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
 		Assert.assertTrue( handler.isDeleteIfExists());
 		Assert.assertFalse( handler.isNotifyIfNotExists());
@@ -124,7 +124,7 @@ public class FileHandlerTest {
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
 		Assert.assertEquals( EVENT_NAME, msg.getEventId());
-		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
+		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "deleted" ));
 
 		Assert.assertFalse( f.exists());
@@ -135,7 +135,7 @@ public class FileHandlerTest {
 	public void testInvalidContent() throws Exception {
 
 		String content = "it does not matter, since there are \n several lines \n here, no message will be produced";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, content );
+		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
 		Assert.assertNull( handler.getFileLocation());
 		Assert.assertFalse( handler.isDeleteIfExists());
 		Assert.assertFalse( handler.isNotifyIfNotExists());
@@ -151,7 +151,7 @@ public class FileHandlerTest {
 		Assert.assertFalse( f.exists());
 
 		String content = FileHandler.NOTIFY_IF_NOT_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, content );
+		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
 		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
 		Assert.assertFalse( handler.isDeleteIfExists());
 		Assert.assertTrue( handler.isNotifyIfNotExists());
@@ -160,7 +160,7 @@ public class FileHandlerTest {
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
 		Assert.assertEquals( EVENT_NAME, msg.getEventId());
-		Assert.assertEquals( ROOT_INSTANCE_NAME, msg.getRootInstanceName());
+		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "does not exist" ));
 
 		Assert.assertFalse( f.exists());
@@ -174,7 +174,7 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = FileHandler.NOTIFY_IF_NOT_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, ROOT_INSTANCE_NAME, content );
+		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
 		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
 		Assert.assertFalse( handler.isDeleteIfExists());
 		Assert.assertTrue( handler.isNotifyIfNotExists());

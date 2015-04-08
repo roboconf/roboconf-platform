@@ -56,7 +56,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.target.api.TargetHandler;
 
@@ -326,15 +326,15 @@ public class Manager_BasicsTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.removeInstance( ma, app.getTomcatVm());
 
 		Assert.assertEquals( 1, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm());
+		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 0 ).getClass());
 		Assert.assertEquals(
@@ -352,7 +352,7 @@ public class Manager_BasicsTest {
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.removeInstance( ma, app.getTomcat());
 
@@ -374,7 +374,7 @@ public class Manager_BasicsTest {
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager = new Manager();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
@@ -651,12 +651,12 @@ public class Manager_BasicsTest {
 
 		this.manager.getMessagingClient().closeConnection();
 		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		this.manager.stop();
 		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 	}
 
@@ -779,8 +779,8 @@ public class Manager_BasicsTest {
 		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
 
 		Message sentMessage = this.msgClient.sentMessages.get( 0 );
-		Assert.assertEquals( MsgCmdSetRootInstance.class, sentMessage.getClass());
-		Assert.assertNotNull(((MsgCmdSetRootInstance) sentMessage).getRootInstance());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, sentMessage.getClass());
+		Assert.assertNotNull(((MsgCmdSetScopedInstance) sentMessage).getScopedInstance());
 	}
 
 

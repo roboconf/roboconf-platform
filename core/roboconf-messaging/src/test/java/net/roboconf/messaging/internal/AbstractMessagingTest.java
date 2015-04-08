@@ -46,7 +46,7 @@ import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.reconfigurables.ReconfigurableClient;
@@ -114,16 +114,16 @@ public abstract class AbstractMessagingTest {
 		Assert.assertEquals( 0, agentMessages.size());
 
 		// The agent is already listening to the DM.
-		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdSetRootInstance( rootInstance ));
+		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdSetScopedInstance( rootInstance ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 1, agentMessages.size());
-		Assert.assertEquals( MsgCmdSetRootInstance.class, agentMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages.get( 0 ).getClass());
 
 		agentClient.listenToTheDm( ListenerCommand.START );
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdRemoveInstance( rootInstance ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 2, agentMessages.size());
-		Assert.assertEquals( MsgCmdSetRootInstance.class, agentMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages.get( 1 ).getClass());
 
 		// The agent sends a message to the DM
@@ -142,7 +142,7 @@ public abstract class AbstractMessagingTest {
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 3, agentMessages.size());
-		Assert.assertEquals( MsgCmdSetRootInstance.class, agentMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages.get( 1 ).getClass());
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentMessages.get( 2 ).getClass());
 
@@ -225,33 +225,33 @@ public abstract class AbstractMessagingTest {
 		agentClient_2.listenToTheDm( ListenerCommand.START );
 
 		// The DM sends messages
-		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetRootInstance( app1_root1 ));
-		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdSetRootInstance( app2_root ));
-		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdSetRootInstance( app1_root2 ));
+		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetScopedInstance( app1_root1 ));
+		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdSetScopedInstance( app2_root ));
+		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdSetScopedInstance( app1_root2 ));
 		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdRemoveInstance( app2_root ));
 		dmClient.sendMessageToAgent( app2, app2_root, new MsgCmdChangeInstanceState( app2_root, InstanceStatus.DEPLOYED_STOPPED ));
 		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdRemoveInstance( app1_root2 ));
 		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdRemoveInstance( app1_root2 ));
 		dmClient.sendMessageToAgent( app1, app1_root2, new MsgCmdChangeInstanceState( app1_root2, InstanceStatus.NOT_DEPLOYED ));
 		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdRemoveInstance( app1_root1 ));
-		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetRootInstance( app1_root1 ));
+		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetScopedInstance( app1_root1 ));
 
 		// Check what was received
 		Thread.sleep( DELAY );
 
 		Assert.assertEquals( 3, agentMessages_11.size());
-		Assert.assertEquals( MsgCmdSetRootInstance.class, agentMessages_11.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages_11.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages_11.get( 1 ).getClass());
-		Assert.assertEquals( MsgCmdSetRootInstance.class, agentMessages_11.get( 2 ).getClass());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages_11.get( 2 ).getClass());
 
 		Assert.assertEquals( 4, agentMessages_12.size());
-		Assert.assertEquals( MsgCmdSetRootInstance.class, agentMessages_12.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages_12.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages_12.get( 1 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages_12.get( 2 ).getClass());
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentMessages_12.get( 3 ).getClass());
 
 		Assert.assertEquals( 3, agentMessages_2.size());
-		Assert.assertEquals( MsgCmdSetRootInstance.class, agentMessages_2.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages_2.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages_2.get( 1 ).getClass());
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentMessages_2.get( 2 ).getClass());
 	}

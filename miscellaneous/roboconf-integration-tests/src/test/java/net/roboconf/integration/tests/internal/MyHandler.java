@@ -50,13 +50,13 @@ public class MyHandler implements TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
 		Agent agent = new Agent();
 		agent.setApplicationName( applicationName );
-		agent.setRootInstanceName( rootInstanceName );
+		agent.setScopedInstancePath( scopedInstancePath );
 		agent.setTargetId( "in-memory" );
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
@@ -65,7 +65,7 @@ public class MyHandler implements TargetHandler {
 		agent.setMessageServerPassword( messagingPassword );
 		agent.start();
 
-		String key = rootInstanceName + " @ " + applicationName;
+		String key = scopedInstancePath + " @ " + applicationName;
 		this.agentIdToAgent.put( key, agent );
 
 		return key;
@@ -79,7 +79,7 @@ public class MyHandler implements TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName)
 	throws TargetException {
 		// nothing

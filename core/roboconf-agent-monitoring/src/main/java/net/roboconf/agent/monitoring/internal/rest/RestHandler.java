@@ -152,7 +152,7 @@ public class RestHandler extends MonitoringHandler {
 			this.logger.finer( "Received response: " + response );
 
 		} else if( evalCondition( map )) {
-			result = new MsgNotifAutonomic( this.applicationName, this.vmInstanceName, this.eventId, response.toString());
+			result = new MsgNotifAutonomic( this.applicationName, this.scopedInstancePath, this.eventId, response.toString());
 		}
 
 		return result;

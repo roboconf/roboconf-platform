@@ -52,7 +52,7 @@ public interface TargetHandler {
 	 * @param messagingUsername the user name to connect to the messaging server
 	 * @param messagingPassword the password to connect to the messaging server
 	 * @param applicationName the application name
-	 * @param rootInstanceName the name of the root instance associated with this VM
+	 * @param scopedInstancePath the scoped instance's path
 	 * @return the (machine) ID of this machine (should be unique for the target manager)
 	 * @throws TargetException
 	 */
@@ -61,7 +61,7 @@ public interface TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException;
 
@@ -83,7 +83,7 @@ public interface TargetHandler {
 	 * @param messagingUsername the user name to connect to the messaging server
 	 * @param messagingPassword the password to connect to the messaging server
 	 * @param applicationName the application name
-	 * @param rootInstanceName the name of the root instance associated with this VM
+	 * @param scopedInstancePath the scoped instance's path
 	 * @throws TargetException
 	 */
 	void configureMachine(
@@ -92,7 +92,7 @@ public interface TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException;
 

@@ -26,54 +26,38 @@
 package net.roboconf.messaging.messages.from_agent_to_dm;
 
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.messages.Message;
 
 /**
  * @author Noël - LIG
  */
-public class MsgNotifHeartbeat extends Message {
+public class MsgNotifHeartbeat extends AbstractMsgNotif {
 
 	private static final long serialVersionUID = -5112964737944073719L;
 
-	private final String rootInstanceName, applicationName, ipAddress;
+	private final String ipAddress;
 	private boolean modelRequired = false;
 
 
 	/**
 	 * Constructor.
 	 * @param applicationName the application name
-	 * @param rootInstanceName the root instance (machine) name
+	 * @param scopedInstancePath the scoped instance's path
 	 * @param ipAddress the IP address
 	 */
-	public MsgNotifHeartbeat( String applicationName, String rootInstanceName, String ipAddress ) {
-		super();
-		this.rootInstanceName = rootInstanceName;
+	public MsgNotifHeartbeat( String applicationName, String scopedInstancePath, String ipAddress ) {
+		super( applicationName, scopedInstancePath );
 		this.ipAddress = ipAddress;
-		this.applicationName = applicationName;
 	}
 
 	/**
 	 * Constructor.
 	 * @param applicationName the application name
-	 * @param rootInstance the root instance
+	 * @param scopedInstance the scoped instance (associated with the agent)
 	 * @param ipAddress the IP address
 	 */
-	public MsgNotifHeartbeat( String applicationName, Instance rootInstance, String ipAddress ) {
-		this( applicationName, rootInstance.getName(), ipAddress );
-	}
-
-	/**
-	 * @return the rootInstanceName
-	 */
-	public String getRootInstanceName() {
-		return this.rootInstanceName;
-	}
-
-	/**
-	 * @return the applicationName
-	 */
-	public String getApplicationName() {
-		return this.applicationName;
+	public MsgNotifHeartbeat( String applicationName, Instance scopedInstance, String ipAddress ) {
+		super( applicationName, scopedInstance );
+		this.ipAddress = ipAddress;
 	}
 
 	/**

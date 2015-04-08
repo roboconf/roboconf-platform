@@ -49,7 +49,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceStat
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.Test;
@@ -137,8 +137,8 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_setRootInstance() throws Exception {
 
-		MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( new Instance( "instance1" ));
-		checkBasics( msg, MsgCmdSetRootInstance.class );
+		MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ));
+		checkBasics( msg, MsgCmdSetScopedInstance.class );
 	}
 
 

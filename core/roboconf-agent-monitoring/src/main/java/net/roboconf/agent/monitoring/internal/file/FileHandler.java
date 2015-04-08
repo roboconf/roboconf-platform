@@ -106,7 +106,7 @@ public class FileHandler extends MonitoringHandler {
 
 				// Create a message if necessary
 				if( cause != null )
-					result = new MsgNotifAutonomic( this.applicationName, this.vmInstanceName, this.eventId, cause );
+					result = new MsgNotifAutonomic( this.applicationName, this.scopedInstancePath, this.eventId, cause );
 			}
 
 		} catch( IOException e ) {
