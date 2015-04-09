@@ -46,9 +46,9 @@ public interface IAgentClient extends IClient {
 
 
 	/**
-	 * Sets the name of the root instance associated with the agent.
+	 * Sets the path of the (scoped) instance associated with the agent.
 	 */
-	void setRootInstanceName( String rootInstanceName );
+	void setScopedInstancePath( String scopedInstancePath );
 
 
 	// Resolve exports

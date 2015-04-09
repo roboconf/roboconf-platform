@@ -43,7 +43,6 @@ import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
-import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
@@ -354,12 +353,9 @@ public class Agent implements AgentMessagingInterface {
 			}
 		}
 
-		// Extract the root instance's name
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( this.scopedInstancePath );
-
 		// Update the messaging connection
 		this.messagingClient.setApplicationName( this.applicationName );
-		this.messagingClient.setRootInstanceName( rootInstanceName );
+		this.messagingClient.setScopedInstancePath( this.scopedInstancePath );
 		this.messagingClient.setIpAddress( this.ipAddress );
 		this.messagingClient.setNeedsModel( needsModel());
 		this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );

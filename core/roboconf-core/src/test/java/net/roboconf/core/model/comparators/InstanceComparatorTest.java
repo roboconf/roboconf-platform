@@ -31,7 +31,6 @@ import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
 import org.junit.Test;
@@ -106,11 +105,15 @@ public class InstanceComparatorTest {
 		Instance i2_1 = new Instance( "tomcat" );
 		Instance i10_1 = new Instance( "tomcat" );
 		Instance i11_1 = new Instance( "tomcat" );
+		Instance i11_2 = new Instance( "tomcat2" );
+		Instance i11_2_1 = new Instance( "app" );
 
 		InstanceHelpers.insertChild( i1, i1_1 );
 		InstanceHelpers.insertChild( i2, i2_1 );
 		InstanceHelpers.insertChild( i10, i10_1 );
 		InstanceHelpers.insertChild( i11, i11_1 );
+		InstanceHelpers.insertChild( i11, i11_2 );
+		InstanceHelpers.insertChild( i11_2, i11_2_1 );
 
 		List<Instance> instances = new ArrayList<Instance> ();
 		instances.add( i1 );
@@ -121,6 +124,8 @@ public class InstanceComparatorTest {
 		instances.add( i2_1 );
 		instances.add( i10_1 );
 		instances.add( i11_1 );
+		instances.add( i11_2 );
+		instances.add( i11_2_1 );
 
 		Collections.sort( instances, new InstanceComparator());
 		Assert.assertEquals( i1, instances.get( 0 ));
@@ -129,7 +134,44 @@ public class InstanceComparatorTest {
 		Assert.assertEquals( i10_1, instances.get( 3 ));
 		Assert.assertEquals( i11, instances.get( 4 ));
 		Assert.assertEquals( i11_1, instances.get( 5 ));
-		Assert.assertEquals( i2, instances.get( 6 ));
-		Assert.assertEquals( i2_1, instances.get( 7 ));
+		Assert.assertEquals( i11_2, instances.get( 6 ));
+		Assert.assertEquals( i11_2_1, instances.get( 7 ));
+		Assert.assertEquals( i2, instances.get( 8 ));
+		Assert.assertEquals( i2_1, instances.get( 9 ));
+	}
+
+
+	@Test
+	public void testWithInvalidInstancePath() {
+
+		Instance inst1 = new Instance( "inst" );
+		Instance inst2 = new Instance();
+		Instance inst3 = new Instance();
+		Instance inst4 = new Instance( "instance" );
+
+		List<Instance> instances = new ArrayList<Instance> ();
+		instances.add( inst1 );
+		instances.add( inst2 );
+		instances.add( inst3 );
+		instances.add( inst4 );
+
+		Collections.sort( instances, new InstanceComparator());
+		Assert.assertEquals( inst2, instances.get( 0 ));
+		Assert.assertEquals( inst3, instances.get( 1 ));
+		Assert.assertEquals( inst1, instances.get( 2 ));
+		Assert.assertEquals( inst4, instances.get( 3 ));
+
+		// Try another insertion order
+		instances.clear();
+		instances.add( inst2 );
+		instances.add( inst1 );
+		instances.add( inst3 );
+		instances.add( inst4 );
+
+		Collections.sort( instances, new InstanceComparator());
+		Assert.assertEquals( inst2, instances.get( 0 ));
+		Assert.assertEquals( inst3, instances.get( 1 ));
+		Assert.assertEquals( inst1, instances.get( 2 ));
+		Assert.assertEquals( inst4, instances.get( 3 ));
 	}
 }

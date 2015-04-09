@@ -500,8 +500,7 @@ public final class InstanceHelpers {
 	public static void removeOffScopeInstances( Instance scopedInstance ) {
 
 		List<Instance> todo = new ArrayList<Instance> ();
-		if( scopedInstance != null )
-			todo.addAll( scopedInstance.getChildren());
+		todo.addAll( scopedInstance.getChildren());
 
 		while( ! todo.isEmpty()) {
 			Instance current = todo.remove( 0 );

@@ -46,7 +46,7 @@ public class TestClientAgent implements IAgentClient {
 	public AtomicBoolean connected = new AtomicBoolean( false );
 	public AtomicBoolean failMessageSending = new AtomicBoolean( false );
 
-	private String messageServerIp, messageServerUsername, messageServerPassword, applicationName, rootInstanceName;
+	private String messageServerIp, messageServerUsername, messageServerPassword, applicationName, scopedInstancePath;
 
 
 
@@ -78,8 +78,8 @@ public class TestClientAgent implements IAgentClient {
 	}
 
 	@Override
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
+	public void setScopedInstancePath( String scopedInstancePath ) {
+		this.scopedInstancePath = scopedInstancePath;
 	}
 
 	@Override
@@ -178,9 +178,9 @@ public class TestClientAgent implements IAgentClient {
 	}
 
 	/**
-	 * @return the rootInstanceName
+	 * @return the scopedInstancePath
 	 */
-	public String getRootInstanceName() {
-		return this.rootInstanceName;
+	public String getScopedInstancePath() {
+		return this.scopedInstancePath;
 	}
 }

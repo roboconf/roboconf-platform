@@ -48,6 +48,30 @@ public class ComponentTest {
 
 
 	@Test
+	public void testHashCode() {
+
+		Component comp = new Component();
+		Assert.assertTrue( comp.hashCode() > 0 );
+
+		comp.setName( "comp" );
+		Assert.assertTrue( comp.hashCode() > 0 );
+	}
+
+
+	@Test
+	public void testEquals() {
+
+		Component comp = new Component( "comp" );
+		Assert.assertFalse( comp.equals( null ));
+		Assert.assertFalse( comp.equals( new Component( "comp2" )));
+		Assert.assertFalse( comp.equals( new Facet( "comp" )));
+
+		Assert.assertEquals( comp, comp );
+		Assert.assertEquals( comp, new Component( "comp" ));
+	}
+
+
+	@Test
 	public void testInsertChild() {
 
 		Component component_1 = new Component( "comp 1" );

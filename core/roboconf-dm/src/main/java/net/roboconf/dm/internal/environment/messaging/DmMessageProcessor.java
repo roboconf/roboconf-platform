@@ -116,13 +116,14 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 		if( scopedInstance == null ) {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A 'DOWN' notification was received from an unknown agent: " );
-			sb.append( scopedInstance );
+			sb.append( scopedInstancePath );
 			sb.append( " (app =  " );
 			sb.append( app );
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
 		} else {
+			// FIXME: is this useful?
 			for( Instance inst : InstanceHelpers.buildHierarchicalList( scopedInstance ))
 				inst.setStatus( InstanceStatus.NOT_DEPLOYED );
 

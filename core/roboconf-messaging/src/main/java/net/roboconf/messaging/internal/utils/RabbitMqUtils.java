@@ -83,18 +83,28 @@ public final class RabbitMqUtils {
 	 * @return a non-null string
 	 */
 	public static String buildRoutingKeyForAgent( Instance instance ) {
-		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
-		return buildRoutingKeyForAgent( rootInstance.getName());
+		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
+		return buildRoutingKeyForAgent( InstanceHelpers.computeInstancePath( scopedInstance ));
 	}
 
 
 	/**
 	 * Builds the routing key for an agent.
-	 * @param rootInstanceName the name of the root instance associated with the agent
+	 * @param scopedInstancePath the path of the (scoped) instance associated with the agent
 	 * @return a non-null string
 	 */
-	public static String buildRoutingKeyForAgent( String rootInstanceName ) {
-		return "machine." + rootInstanceName;
+	public static String buildRoutingKeyForAgent( String scopedInstancePath ) {
+		return "machine." + escapeInstancePath( scopedInstancePath );
+	}
+
+
+	/**
+	 * Removes unnecessary slashes and transforms the others into dots.
+	 * @param instancePath a non-null instance path
+	 * @return a non-null string
+	 */
+	public static String escapeInstancePath( String instancePath ) {
+		return instancePath.replaceFirst( "^/*", "" ).replaceFirst( "/*$", "" ).replaceAll( "/+", "." );
 	}
 
 

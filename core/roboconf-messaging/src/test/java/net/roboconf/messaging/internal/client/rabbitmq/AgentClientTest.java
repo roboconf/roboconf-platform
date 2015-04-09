@@ -56,7 +56,7 @@ public class AgentClientTest {
 		RabbitMqClientAgent agentClient = new RabbitMqClientAgent();
 		agentClient.setParameters( "localhost", "guest", "guest" );
 		agentClient.setApplicationName( "app" );
-		agentClient.setRootInstanceName( "root" );
+		agentClient.setScopedInstancePath( "/root" );
 
 		Assert.assertFalse( agentClient.isConnected());
 		Assert.assertNull( agentClient.channel );
