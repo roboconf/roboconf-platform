@@ -132,7 +132,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 1, instances.size());
 
 		ComponentInstance instance = instances.get( 0 );
-		Assert.assertEquals( "MySQL VM @ Legacy LAMP", instance.getInstanceName());
+		Assert.assertEquals( "/MySQL VM @ Legacy LAMP", instance.getInstanceName());
 		Assert.assertEquals( ComponentInstance.VALID, instance.getState());
 		Assert.assertTrue( instance.isStarted());
 

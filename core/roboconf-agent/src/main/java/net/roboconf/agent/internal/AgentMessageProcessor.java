@@ -212,11 +212,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		List<Instance> instancesToProcess = new ArrayList<Instance> ();
 
 		// Update the model and determine what must be updated
-		if( newScopedInstance.getParent() != null ) {
-			this.logger.severe( "The received instance is not a root one. Request to update the local model is dropped." );
+		if( ! InstanceHelpers.isTarget( newScopedInstance )) {
+			this.logger.severe( "The received instance is not a scoped one. Request to update the local model is dropped." );
 
 		} else if( this.scopedInstance == null ) {
-			this.logger.fine( "Setting the root instance." );
+			this.logger.fine( "Setting the scoped instance." );
 			this.scopedInstance = newScopedInstance;
 			InstanceHelpers.removeOffScopeInstances( newScopedInstance );
 

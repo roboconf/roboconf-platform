@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -773,6 +774,37 @@ public class Manager_BasicsTest {
 
 		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( app.getName(), app.getMySqlVm(), "192.168.1.45" );
 		msg.setModelRequired( true );
+
+		this.manager.getMessagingClient().getMessageProcessor().storeMessage( msg );
+		Thread.sleep( 100 );
+		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+
+		Message sentMessage = this.msgClient.sentMessages.get( 0 );
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, sentMessage.getClass());
+		Assert.assertNotNull(((MsgCmdSetScopedInstance) sentMessage).getScopedInstance());
+	}
+
+
+	@Test
+	public void testMsgNotifHeartbeat_requestModel_nonRoot() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app, null );
+		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+
+		this.msgClient.sentMessages.clear();
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+
+		// War is not a target / scoped instance: nothing will happen
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( app.getName(), app.getWar(), "192.168.1.45" );
+		msg.setModelRequired( true );
+
+		this.manager.getMessagingClient().getMessageProcessor().storeMessage( msg );
+		Thread.sleep( 100 );
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+
+		// Let's try again, but we change the WAR installer
+		app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
 
 		this.manager.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );

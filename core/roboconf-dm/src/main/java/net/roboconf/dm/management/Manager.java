@@ -876,9 +876,10 @@ public class Manager {
 			Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
 			targetProperties.putAll( scopedInstance.data );
 
+			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 			machineId = target.getHandler().createMachine(
 					targetProperties, this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
-					scopedInstance.getName(), ma.getApplication().getName());
+					scopedInstancePath, ma.getName());
 
 			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Scoped instance " + path + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
@@ -886,7 +887,7 @@ public class Manager {
 			target.getHandler().configureMachine(
 					targetProperties, machineId,
 					this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
-					scopedInstance.getName(), ma.getApplication().getName());
+					scopedInstancePath, ma.getName());
 
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 

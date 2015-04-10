@@ -117,7 +117,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A 'DOWN' notification was received from an unknown agent: " );
 			sb.append( scopedInstancePath );
-			sb.append( " (app =  " );
+			sb.append( " (app = " );
 			sb.append( app );
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
@@ -145,9 +145,18 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A 'HEART BEAT' was received from an unknown agent: " );
 			sb.append( scopedInstancePath );
-			sb.append( " (app =  " );
+			sb.append( " (app = " );
 			sb.append( app );
 			sb.append( ")." );
+			this.logger.warning( sb.toString());
+
+		} else if( ! InstanceHelpers.isTarget( scopedInstance )) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "A 'HEART BEAT' was received for a non-scoped instance: " );
+			sb.append( scopedInstancePath );
+			sb.append( " (app = " );
+			sb.append( app );
+			sb.append( "). The heart beat is dropped." );
 			this.logger.warning( sb.toString());
 
 		} else {
@@ -188,7 +197,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A 'CHANGED' notification was received from an unknown instance: " );
 			sb.append( instancePath );
-			sb.append( " (app =  " );
+			sb.append( " (app = " );
 			sb.append( app );
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
@@ -198,7 +207,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A 'CHANGED' notification was received from a instance: " );
 			sb.append( instancePath );
-			sb.append( " (app =  " );
+			sb.append( " (app = " );
 			sb.append( app );
 			sb.append( ") but the root instance is not deployed. Status update is dismissed." );
 			this.logger.warning( sb.toString());
@@ -232,14 +241,14 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A 'REMOVE' notification was received for an unknown instance: " );
 			sb.append( instancePath );
-			sb.append( " (app =  " );
+			sb.append( " (app = " );
 			sb.append( app );
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
 		} else {
-			if( instance.getParent() == null )
-				this.logger.warning( "Anormal behavior. A 'REMOVE' notification was received for a root instance: " + instancePath + "." );
+			if( InstanceHelpers.isTarget( instance ))
+				this.logger.warning( "Anormal behavior. A 'REMOVE' notification was received for a scoped instance: " + instancePath + "." );
 			else
 				instance.getParent().getChildren().remove( instance );
 
@@ -258,7 +267,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			StringBuilder sb = new StringBuilder();
 			sb.append( "A notification associated with autonomic management was received for an unknown instance: " );
 			sb.append( message.getScopedInstancePath());
-			sb.append( " (app =  " );
+			sb.append( " (app = " );
 			sb.append( app );
 			sb.append( ")." );
 			this.logger.warning( sb.toString());

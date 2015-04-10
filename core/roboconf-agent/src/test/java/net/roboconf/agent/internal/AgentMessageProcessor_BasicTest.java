@@ -29,6 +29,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
@@ -184,6 +185,43 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
+	}
+
+
+	@Test
+	public void testSetscopedInstance_nonRoot() {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplication app = new TestApplication();
+		app.getTomcat().getComponent().installerName( Constants.TARGET_INSTALLER );
+
+		// Insert a non-root element
+		Assert.assertNull( processor.scopedInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcat()));
+		Assert.assertEquals( app.getTomcat(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
+		Assert.assertEquals( "Expected a message for Tomcat and the WAR.", 2, this.client.messagesForAgentsCount.get());
+	}
+
+
+	@Test
+	public void testSetscopedInstance_rootWithTargetChild() {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplication app = new TestApplication();
+		app.getTomcat().getComponent().installerName( Constants.TARGET_INSTALLER );
+
+		// Insert a root element
+		Assert.assertNull( processor.scopedInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
+		Assert.assertEquals( "Expected a message for the Tomcat VM (children were removed).", 1, this.client.messagesForAgentsCount.get());
+
+		// The Tomcat (child) instance was removed because it is a target (so managed by another agent)
+		Assert.assertEquals( 1, InstanceHelpers.buildHierarchicalList( app.getTomcatVm()).size());
 	}
 
 
