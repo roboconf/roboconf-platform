@@ -105,16 +105,16 @@ public class CheckerMessagesTaskTest {
 
 		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdSendInstances());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
 
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 		task.run();
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm());
+		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm());
 		Assert.assertEquals( 2, messages.size());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 1 ).getClass());
@@ -132,15 +132,15 @@ public class CheckerMessagesTaskTest {
 		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdSendInstances());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
 
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 		task.run();
-		Assert.assertNull( ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()));
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertNull( ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()));
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 	}
 
 
@@ -155,16 +155,16 @@ public class CheckerMessagesTaskTest {
 		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdSendInstances());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
 
 		// Messages are still there
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 		task.run();
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 	}
 
 
@@ -179,15 +179,15 @@ public class CheckerMessagesTaskTest {
 		CheckerMessagesTask task = new CheckerMessagesTask( this.manager, client );
 
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdSendInstances());
 		ma.storeAwaitingMessage( app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
 
 		// Messages are still there
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 		task.run();
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 	}
 }

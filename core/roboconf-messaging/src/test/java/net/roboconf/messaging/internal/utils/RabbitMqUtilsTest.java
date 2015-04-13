@@ -96,7 +96,10 @@ public class RabbitMqUtilsTest {
 	@Test
 	public void testBuildRoutingKeyForAgent_String() {
 
-		Assert.assertNotNull( RabbitMqUtils.buildRoutingKeyForAgent( "root" ));
+		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "root" ));
+		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "/root" ));
+		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "/root/" ));
+		Assert.assertEquals( "machine.root.docker", RabbitMqUtils.buildRoutingKeyForAgent( "/root/docker" ));
 		Assert.assertNotSame(
 				RabbitMqUtils.buildRoutingKeyForAgent( "root1" ),
 				RabbitMqUtils.buildRoutingKeyForAgent( "root2" ));

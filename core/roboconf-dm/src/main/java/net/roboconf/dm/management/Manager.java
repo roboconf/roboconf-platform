@@ -72,7 +72,7 @@ import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceStat
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.target.api.TargetException;
@@ -505,6 +505,7 @@ public class Manager {
 	public void deleteApplication( ManagedApplication ma ) throws UnauthorizedActionException, IOException {
 
 		// What really matters is that there is no agent running.
+		// If all the root instances are not deployed, then nothing is deployed at all.
 		String applicationName = ma.getApplication().getName();
 		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 			if( rootInstance.getStatus() != InstanceStatus.NOT_DEPLOYED )
@@ -547,10 +548,10 @@ public class Manager {
 			throw new ImpossibleInsertionException( instance.getName());
 
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + ma.getName() + "." );
-		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
+		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
 
 		// Store the message because we want to make sure the message is not lost
-		ma.storeAwaitingMessage( instance, new MsgCmdSetRootInstance( rootInstance ));
+		ma.storeAwaitingMessage( instance, new MsgCmdSetScopedInstance( scopedInstance ));
 		saveConfiguration( ma );
 	}
 
@@ -618,16 +619,16 @@ public class Manager {
 		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 		checkConfiguration();
 
-		if( instance.getParent() == null ) {
+		if( InstanceHelpers.isTarget( instance )) {
 			if( newStatus == InstanceStatus.NOT_DEPLOYED
 					&& ( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED
 						|| instance.getStatus() == InstanceStatus.DEPLOYING
 						|| instance.getStatus() == InstanceStatus.STARTING ))
-				undeployRoot( ma, instance );
+				undeployTarget( ma, instance );
 
 			else if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED
 					&& newStatus == InstanceStatus.DEPLOYED_STARTED )
-				deployRoot( ma, instance );
+				deployTarget( ma, instance );
 
 			else
 				this.logger.warning( "Ignoring a request to update a root instance's state." );
@@ -752,7 +753,7 @@ public class Manager {
 				if( initialInstance.getParent() != null )
 					changeInstanceState( ma, initialInstance, InstanceStatus.NOT_DEPLOYED );
 				else
-					undeployRoot( ma, initialInstance );
+					undeployTarget( ma, initialInstance );
 
 			} catch( Exception e ) {
 				gotExceptions = true;
@@ -788,15 +789,15 @@ public class Manager {
 
 		// If the VM is online, process awaiting messages to prevent waiting.
 		// This can work concurrently with the messages timer.
-		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
-		if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
+		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
+		if( scopedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 			List<Message> messages = ma.removeAwaitingMessages( instance );
 			if( ! messages.isEmpty())
-				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + rootInstance.getName() + "." );
+				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + InstanceHelpers.computeInstancePath( scopedInstance ) + "." );
 
 			for( Message msg : messages ) {
 				try {
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
 
 				} catch( IOException e ) {
 					this.logger.severe( "Error while sending a stored message. " + e.getMessage());
@@ -829,70 +830,72 @@ public class Manager {
 
 
 	/**
-	 * Deploys a root instance.
+	 * Deploys a scoped instance.
 	 * @param ma the managed application
-	 * @param rootInstance the instance to deploy (not null)
+	 * @param scopedInstance the instance to deploy (not null)
 	 * @throws IOException if an error occurred with the messaging
 	 * @throws TargetException if an error occurred with the target handler
 	 */
-	void deployRoot( ManagedApplication ma, Instance rootInstance ) throws TargetException, IOException {
+	void deployTarget( ManagedApplication ma, Instance scopedInstance ) throws TargetException, IOException {
 
-		// It only makes sense for root instances.
-		this.logger.fine( "Deploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
-		if( rootInstance.getParent() != null ) {
-			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
+		// It only makes sense for scoped instances.
+		String path = InstanceHelpers.computeInstancePath( scopedInstance );
+		this.logger.fine( "Deploying scoped instance '" + path + "' in " + ma.getName() + "..." );
+		if( ! InstanceHelpers.isTarget( scopedInstance )) {
+			this.logger.fine( "Deploy action for instance '" + path + "' is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;
 		}
 
 		// We must prevent the concurrent creation of several VMs for a same root instance.
 		// See #80.
 		synchronized( LOCK ) {
-			if( rootInstance.data.get( Instance.TARGET_ACQUIRED ) == null ) {
-				rootInstance.data.put( Instance.TARGET_ACQUIRED, "yes" );
+			if( scopedInstance.data.get( Instance.TARGET_ACQUIRED ) == null ) {
+				scopedInstance.data.put( Instance.TARGET_ACQUIRED, "yes" );
 			} else {
-				this.logger.finer( "Root instance " + rootInstance + " is already under deployment. This redundant request is dropped." );
+				this.logger.finer( "Scoped instance '" + path + "' is already under deployment. This redundant request is dropped." );
 				return;
 			}
 		}
 
 		// If the VM creation was already done, then its machine ID has already been set.
 		// It does not mean the VM is already configured, it may take some time.
-		String machineId = rootInstance.data.get( Instance.MACHINE_ID );
+		String machineId = scopedInstance.data.get( Instance.MACHINE_ID );
 		if( machineId != null ) {
-			this.logger.fine( "Deploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
+			this.logger.fine( "Deploy action for instance " + path + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
 			return;
 		}
 
 		checkConfiguration();
-		InstanceStatus initialStatus = rootInstance.getStatus();
+		InstanceStatus initialStatus = scopedInstance.getStatus();
 		try {
-			rootInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdSetRootInstance msg = new MsgCmdSetRootInstance( rootInstance );
-			send( ma, msg, rootInstance );
+			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
+			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( scopedInstance );
+			send( ma, msg, scopedInstance );
 
-			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
+			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, scopedInstance );
 			Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
-			targetProperties.putAll( rootInstance.data );
+			targetProperties.putAll( scopedInstance.data );
 
+			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 			machineId = target.getHandler().createMachine(
 					targetProperties, this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
-					rootInstance.getName(), ma.getApplication().getName());
+					scopedInstancePath, ma.getName());
 
-			rootInstance.data.put( Instance.MACHINE_ID, machineId );
-			this.logger.fine( "Root instance " + rootInstance.getName() + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
+			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
+			this.logger.fine( "Scoped instance " + path + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
 			target.getHandler().configureMachine(
 					targetProperties, machineId,
 					this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
-					rootInstance.getName(), ma.getApplication().getName());
+					scopedInstancePath, ma.getName());
 
-			this.logger.fine( "Root instance " + rootInstance.getName() + "'s configuration is on its way in " + ma.getName() + "." );
+			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 
 		} catch( Exception e ) {
-			this.logger.severe( "Failed to deploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.severe( "Failed to deploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
 
-			rootInstance.setStatus( initialStatus );
+			scopedInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
 				throw (TargetException) e;
 			else if( e instanceof IOException )
@@ -905,53 +908,54 @@ public class Manager {
 
 
 	/**
-	 * Undeploys a root instance.
+	 * Undeploys a scoped instance.
 	 * @param ma the managed application
-	 * @param rootInstance the instance to undeploy (not null)
+	 * @param scopedInstance the instance to undeploy (not null)
 	 * @throws IOException if an error occurred with the messaging
 	 * @throws TargetException if an error occurred with the target handler
 	 */
-	void undeployRoot( ManagedApplication ma, Instance rootInstance ) throws TargetException, IOException {
+	void undeployTarget( ManagedApplication ma, Instance scopedInstance ) throws TargetException, IOException {
 
-		this.logger.fine( "Undeploying root instance " + rootInstance.getName() + " in " + ma.getName() + "..." );
-		if( rootInstance.getParent() != null ) {
-			this.logger.fine( "Undeploy action for instance " + rootInstance.getName() + " is cancelled in " + ma.getName() + ". Not a root instance." );
+		String path = InstanceHelpers.computeInstancePath( scopedInstance );
+		this.logger.fine( "Undeploying root instance '" + path + "' in " + ma.getName() + "..." );
+		if( ! InstanceHelpers.isTarget( scopedInstance )) {
+			this.logger.fine( "Undeploy action for instance '" + path + "' is cancelled in " + ma.getName() + ". Not a root instance." );
 			return;
 		}
 
 		checkConfiguration();
-		InstanceStatus initialStatus = rootInstance.getStatus();
+		InstanceStatus initialStatus = scopedInstance.getStatus();
 		try {
 			// Terminate the machine...
 			// ...  and notify other agents this agent was killed.
-			this.logger.fine( "Machine " + rootInstance.getName() + " is about to be deleted in " + ma.getName() + "." );
-			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
-			String machineId = rootInstance.data.remove( Instance.MACHINE_ID );
+			this.logger.fine( "Agent '" + path + "' is about to be deleted in " + ma.getName() + "." );
+			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, scopedInstance );
+			String machineId = scopedInstance.data.remove( Instance.MACHINE_ID );
 			if( machineId != null ) {
 				Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
-				targetProperties.putAll( rootInstance.data );
+				targetProperties.putAll( scopedInstance.data );
 
 				target.getHandler().terminateMachine( targetProperties, machineId );
-				this.messagingClient.propagateAgentTermination( ma.getApplication(), rootInstance );
+				this.messagingClient.propagateAgentTermination( ma.getApplication(), scopedInstance );
 			}
 
-			this.logger.fine( "Machine " + rootInstance.getName() + " was successfully deleted in " + ma.getName() + "." );
-			for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance )) {
+			this.logger.fine( "Agent '" + path + "' was successfully deleted in " + ma.getName() + "." );
+			for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
 				i.setStatus( InstanceStatus.NOT_DEPLOYED );
 				// DM won't send old imports upon restart...
 				i.getImports().clear();
 			}
 
 			// Remove useless data for the configuration backup
-			rootInstance.data.remove( Instance.IP_ADDRESS );
-			rootInstance.data.remove( Instance.TARGET_ACQUIRED );
-			this.logger.fine( "Root instance " + rootInstance.getName() + "'s undeployment was successfully requested in " + ma.getName() + "." );
+			scopedInstance.data.remove( Instance.IP_ADDRESS );
+			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+			this.logger.fine( "Scoped instance " + path + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( Exception e ) {
-			this.logger.severe( "Failed to undeploy root instance " + rootInstance.getName() + " in " + ma.getName() + ". " + e.getMessage());
+			this.logger.severe( "Failed to undeploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
 
-			rootInstance.setStatus( initialStatus );
+			scopedInstance.setStatus( initialStatus );
 			if( e instanceof TargetException)
 				throw (TargetException) e;
 			else if( e instanceof IOException )

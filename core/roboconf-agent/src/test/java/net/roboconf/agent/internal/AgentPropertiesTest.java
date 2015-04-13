@@ -46,14 +46,14 @@ public class AgentPropertiesTest {
 		Assert.assertNull( ad.getMessageServerIp());
 		Assert.assertNull( ad.getMessageServerPassword());
 		Assert.assertNull( ad.getMessageServerUsername());
-		Assert.assertNull( ad.getRootInstanceName());
+		Assert.assertNull( ad.getScopedInstancePath());
 	}
 
 
 	@Test
 	public void testReadIaasProperties_all() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString( "ip", "user", "pwd", "my app", "root name" );
+		String s = DataHelpers.writeUserDataAsString( "ip", "user", "pwd", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
@@ -61,14 +61,14 @@ public class AgentPropertiesTest {
 		Assert.assertEquals( "ip", ad.getMessageServerIp());
 		Assert.assertEquals( "pwd", ad.getMessageServerPassword());
 		Assert.assertEquals( "user", ad.getMessageServerUsername());
-		Assert.assertEquals( "root name", ad.getRootInstanceName());
+		Assert.assertEquals( "/root/path", ad.getScopedInstancePath());
 	}
 
 
 	@Test
 	public void testReadIaasProperties_partial() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString( "ip", "user", null, "my app", "root name" );
+		String s = DataHelpers.writeUserDataAsString( "ip", "user", null, "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
@@ -76,14 +76,14 @@ public class AgentPropertiesTest {
 		Assert.assertEquals( "ip", ad.getMessageServerIp());
 		Assert.assertNull( ad.getMessageServerPassword());
 		Assert.assertEquals( "user", ad.getMessageServerUsername());
-		Assert.assertEquals( "root name", ad.getRootInstanceName());
+		Assert.assertEquals( "/root/path", ad.getScopedInstancePath());
 	}
 
 
 	@Test
 	public void testReadIaasProperties_withSpecialCharacters() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString( "ip\\:port", "user", "pwd:with:two;dots\\:", "my app", "root name" );
+		String s = DataHelpers.writeUserDataAsString( "ip\\:port", "user", "pwd:with:two;dots\\:", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
@@ -91,7 +91,7 @@ public class AgentPropertiesTest {
 		Assert.assertEquals( "ip:port", ad.getMessageServerIp());
 		Assert.assertEquals( "pwd:with:two;dots:", ad.getMessageServerPassword());
 		Assert.assertEquals( "user", ad.getMessageServerUsername());
-		Assert.assertEquals( "root name", ad.getRootInstanceName());
+		Assert.assertEquals( "/root/path", ad.getScopedInstancePath());
 	}
 
 
@@ -100,7 +100,7 @@ public class AgentPropertiesTest {
 
 		AgentProperties ad = new AgentProperties();
 		ad.setApplicationName( "my app" );
-		ad.setRootInstanceName( "root" );
+		ad.setScopedInstancePath( "/root" );
 		ad.setMessageServerIp( "192.168.1.18" );
 		ad.setMessageServerPassword( "azerty (;))" );
 		ad.setMessageServerUsername( "personne" );
@@ -114,9 +114,9 @@ public class AgentPropertiesTest {
 		Assert.assertNotNull( ad.validate());
 		ad.setApplicationName( "my app" );
 
-		ad.setRootInstanceName( "" );
+		ad.setScopedInstancePath( "" );
 		Assert.assertNotNull( ad.validate());
-		ad.setRootInstanceName( "root" );
+		ad.setScopedInstancePath( "root" );
 
 		ad.setMessageServerIp( null );
 		Assert.assertNotNull( ad.validate());

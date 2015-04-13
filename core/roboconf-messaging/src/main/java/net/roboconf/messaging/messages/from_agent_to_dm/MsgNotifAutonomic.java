@@ -25,8 +25,6 @@
 
 package net.roboconf.messaging.messages.from_agent_to_dm;
 
-import net.roboconf.messaging.messages.Message;
-
 /**
  * Monitoring event (e.g. crossed threshold).
  * <p>
@@ -36,27 +34,21 @@ import net.roboconf.messaging.messages.Message;
  *
  * @author Pierre-Yves Gibello - Linagora
  */
-public class MsgNotifAutonomic extends Message {
+public class MsgNotifAutonomic extends AbstractMsgNotif {
 
 	private static final long serialVersionUID = -8930645802175790064L;
-
-	private final String eventId;
-	private final String eventInfo;
-	private final String rootInstanceName;
-	private final String applicationName;
+	private final String eventId, eventInfo;
 
 
 	/**
 	 * Constructor.
 	 * @param applicationName the application name
-	 * @param rootInstanceName the root instance's name
+	 * @param scopedInstancePath the scoped instance's path
 	 * @param eventId the event ID
 	 * @param eventInfo info about the event (eg. result of Nagios Livestatus query)
 	 */
-	public MsgNotifAutonomic( String applicationName, String rootInstanceName, String eventId, String eventInfo ) {
-		super();
-		this.rootInstanceName = rootInstanceName;
-		this.applicationName = applicationName;
+	public MsgNotifAutonomic( String applicationName, String scopedInstancePath, String eventId, String eventInfo ) {
+		super( applicationName, scopedInstancePath );
 		this.eventInfo = eventInfo;
 		this.eventId = eventId;
 	}
@@ -73,19 +65,5 @@ public class MsgNotifAutonomic extends Message {
 	 */
 	public String getEventInfo() {
 		return this.eventInfo;
-	}
-
-	/**
-	 * @return the rootInstanceName
-	 */
-	public String getRootInstanceName() {
-		return this.rootInstanceName;
-	}
-
-	/**
-	 * @return the applicationName
-	 */
-	public String getApplicationName() {
-		return this.applicationName;
 	}
 }

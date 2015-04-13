@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -90,12 +91,17 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
 
+		// For IaaS, we only expect root instance names to be passed
+		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+			throw new TargetException( "Only root instances can be passed in arguments." );
+
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 		NovaApi novaApi = OpenstackIaasHandler.novaApi( targetProperties );
 		String anyZoneName = novaApi.getConfiguredZones().iterator().next();
 		String vmName = applicationName + "." + rootInstanceName;
@@ -188,7 +194,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName ) {
 		return new OpenstackMachineConfigurator( targetProperties, machineId );
 	}

@@ -28,8 +28,6 @@ package net.roboconf.core.model.beans;
 import java.util.HashSet;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Graphs;
 
 import org.junit.Test;
 
@@ -69,6 +67,46 @@ public class ApplicationTest {
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 1, set.size());
+	}
+
+
+	@Test
+	public void testEqualsAndHashCode_3() {
+
+		Application app1 = new Application();
+		Application app2 = new Application( "app" ).qualifier( "whatever" );
+
+		HashSet<Application> set = new HashSet<Application>( 2 );
+		set.add( app1 );
+		set.add( app2 );
+		Assert.assertEquals( 2, set.size());
+	}
+
+
+	@Test
+	public void testEqualsAndHashCode_4() {
+
+		Application app1 = new Application( "app" ).qualifier( "v1" );
+		Application app2 = new Application( "app" ).qualifier( "v3" );
+
+		HashSet<Application> set = new HashSet<Application>( 2 );
+		set.add( app1 );
+		set.add( app2 );
+		Assert.assertEquals( 2, set.size());
+	}
+
+
+	@Test
+	public void testEquals() {
+
+		Application app = new Application( "app" );
+		Assert.assertFalse( app.equals( null ));
+		Assert.assertFalse( app.equals( new Application()));
+		Assert.assertFalse( app.equals( new Application( "app" ).qualifier( "something" )));
+		Assert.assertFalse( app.equals( new Object()));
+
+		Assert.assertEquals( app, app );
+		Assert.assertEquals( app, new Application( "app" ));
 	}
 
 

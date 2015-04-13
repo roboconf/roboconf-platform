@@ -156,15 +156,15 @@ public class Agent_BasicsTest {
 		Assert.assertFalse( agent.getAgentId().contains( "null" ));
 		Assert.assertTrue( agent.getAgentId().contains( "my app" ));
 
-		agent.rootInstanceName = "root instance";
+		agent.scopedInstancePath = "/root";
 		Assert.assertFalse( agent.getAgentId().contains( "null" ));
 		Assert.assertTrue( agent.getAgentId().contains( "my app" ));
-		Assert.assertTrue( agent.getAgentId().contains( "root instance" ));
+		Assert.assertTrue( agent.getAgentId().contains( "/root" ));
 
 		agent.applicationName = null;
 		Assert.assertFalse( agent.getAgentId().contains( "null" ));
 		Assert.assertFalse( agent.getAgentId().contains( "my app" ));
-		Assert.assertTrue( agent.getAgentId().contains( "root instance" ));
+		Assert.assertTrue( agent.getAgentId().contains( "/root" ));
 	}
 
 
@@ -183,7 +183,7 @@ public class Agent_BasicsTest {
 
 	@Test
 	public void testNeedModel_modelReceived() {
-		((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).rootInstance = new Instance( "root" );
+		((AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor()).scopedInstance = new Instance( "root" );
 		Assert.assertFalse( this.agent.needsModel());
 	}
 

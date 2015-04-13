@@ -74,12 +74,13 @@ public class InMemoryHandler implements TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
-		// Need to wait?
 		this.logger.fine( "Creating a new agent in memory." );
+
+		// Need to wait?
 		try {
 			String delayAsString = null;
 			if( targetProperties != null )
@@ -100,9 +101,9 @@ public class InMemoryHandler implements TargetHandler {
 	    configuration.put( "message-server-username", messagingUsername );
 	    configuration.put( "message-server-password", messagingPassword );
 	    configuration.put( "application-name", applicationName );
-	    configuration.put( "root-instance-name", rootInstanceName );
+	    configuration.put( "scoped-instance-path", scopedInstancePath );
 
-	    String machineId = rootInstanceName + " @ " + applicationName;
+	    String machineId = scopedInstancePath + " @ " + applicationName;
 	    configuration.put( Factory.INSTANCE_NAME_PROPERTY, machineId );
 
 	    if( this.agentFactory == null )
@@ -114,7 +115,7 @@ public class InMemoryHandler implements TargetHandler {
 	    	instance.start();
 
 		} catch( Exception e ) {
-			throw new TargetException( "An in-memory agent could not be launched. Root instance name: " + rootInstanceName, e );
+			throw new TargetException( "An in-memory agent could not be launched. Scoped instance path: " + scopedInstancePath, e );
 		}
 
 		return machineId;
@@ -133,7 +134,7 @@ public class InMemoryHandler implements TargetHandler {
 		String messagingIp,
 		String messagingUsername,
 		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 

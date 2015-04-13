@@ -57,7 +57,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 	public static final String THOSE_THAT_IMPORT = "those.that.import.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String applicationName, rootInstanceName, messageServerIp, messageServerUsername, messageServerPassword;
+	private String applicationName, scopedInstancePath, messageServerIp, messageServerUsername, messageServerPassword;
 	private LinkedBlockingQueue<Message> messageQueue;
 
 	String consumerTag;
@@ -100,11 +100,11 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IAgentClient#setRootInstanceName(java.lang.String)
+	 * @see net.roboconf.messaging.client.IAgentClient#setScopedInstancePath(java.lang.String)
 	 */
 	@Override
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
+	public void setScopedInstancePath( String scopedInstancePath ) {
+		this.scopedInstancePath = scopedInstancePath;
 	}
 
 
@@ -145,7 +145,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 		final QueueingConsumer consumer = new QueueingConsumer( this.channel );
 		this.consumerTag = this.channel.basicConsume( queueName, true, consumer );
 
-		String threadName = "Roboconf - Queue listener for Agent " + this.rootInstanceName;
+		String threadName = "Roboconf - Queue listener for Agent " + this.scopedInstancePath;
 		String id = "Agent '" + getAgentId() + "'";
 		new ListeningThread( threadName, this.logger, consumer, this.messageQueue, id ).start();
 	}
@@ -369,7 +369,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 		// Bind the root instance name with the queue
 		String queueName = getQueueName();
 		String exchangeName = RabbitMqUtils.buildExchangeName( this.applicationName, false );
-		String routingKey = RabbitMqUtils.buildRoutingKeyForAgent( this.rootInstanceName );
+		String routingKey = RabbitMqUtils.buildRoutingKeyForAgent( this.scopedInstancePath );
 
 		// queueBind is idem-potent
 		if( command == ListenerCommand.START ) {
@@ -384,11 +384,11 @@ public class RabbitMqClientAgent implements IAgentClient {
 
 
 	private String getQueueName() {
-		return this.applicationName + "." + this.rootInstanceName;
+		return this.applicationName + RabbitMqUtils.escapeInstancePath( this.scopedInstancePath );
 	}
 
 
 	private String getAgentId() {
-		return Utils.isEmptyOrWhitespaces( this.rootInstanceName ) ? "?" : this.rootInstanceName;
+		return Utils.isEmptyOrWhitespaces( this.scopedInstancePath ) ? "?" : this.scopedInstancePath;
 	}
 }

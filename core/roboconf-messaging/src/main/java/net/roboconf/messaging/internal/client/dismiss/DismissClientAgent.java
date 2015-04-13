@@ -80,7 +80,7 @@ public class DismissClientAgent implements IAgentClient {
 
 
 	@Override
-	public void setRootInstanceName( String rootInstanceName ) {
+	public void setScopedInstancePath( String scopedInstancePath ) {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
 	}
 

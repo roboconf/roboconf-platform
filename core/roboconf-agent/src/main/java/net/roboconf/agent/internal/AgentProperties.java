@@ -37,7 +37,7 @@ import net.roboconf.core.utils.Utils;
  */
 public class AgentProperties {
 
-	private String applicationName, ipAddress, rootInstanceName;
+	private String applicationName, ipAddress, scopedInstancePath;
 	private String messageServerIp, messageServerUsername, messageServerPassword;
 
 
@@ -58,6 +58,22 @@ public class AgentProperties {
 
 
 	/**
+	 * @return the scopedInstancePath
+	 */
+	public String getScopedInstancePath() {
+		return this.scopedInstancePath;
+	}
+
+
+	/**
+	 * @param scopedInstancePath the scopedInstancePath to set
+	 */
+	public void setScopedInstancePath( String scopedInstancePath ) {
+		this.scopedInstancePath = scopedInstancePath;
+	}
+
+
+	/**
 	 * @return the ipAddress
 	 */
 	public String getIpAddress() {
@@ -70,22 +86,6 @@ public class AgentProperties {
 	 */
 	public void setIpAddress( String ipAddress ) {
 		this.ipAddress = ipAddress;
-	}
-
-
-	/**
-	 * @return the rootInstanceName
-	 */
-	public String getRootInstanceName() {
-		return this.rootInstanceName;
-	}
-
-
-	/**
-	 * @param rootInstanceName the rootInstanceName to set
-	 */
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
 	}
 
 
@@ -152,8 +152,8 @@ public class AgentProperties {
 			result = "The message server's user name cannot be null or empty.";
 		else if( Utils.isEmptyOrWhitespaces( this.applicationName ))
 			result = "The application name cannot be null or empty.";
-		else if( Utils.isEmptyOrWhitespaces( this.rootInstanceName ))
-			result = "The root instance name cannot be null or empty.";
+		else if( Utils.isEmptyOrWhitespaces( this.scopedInstancePath ))
+			result = "The scoped instance's path cannot be null or empty.";
 
 		return result;
 	}
@@ -186,7 +186,7 @@ public class AgentProperties {
 		// Given #213, we have to replace some characters escaped by AWS (and probably Openstack too).
 		AgentProperties result = new AgentProperties();
 		result.setApplicationName( updatedField( props, DataHelpers.APPLICATION_NAME ));
-		result.setRootInstanceName( updatedField( props, DataHelpers.ROOT_INSTANCE_NAME ));
+		result.setScopedInstancePath( updatedField( props, DataHelpers.SCOPED_INSTANCE_PATH ));
 		result.setMessageServerIp( updatedField( props, DataHelpers.MESSAGING_IP ));
 		result.setMessageServerUsername( updatedField( props, DataHelpers.MESSAGING_USERNAME ));
 		result.setMessageServerPassword( updatedField( props, DataHelpers.MESSAGING_PASSWORD ));

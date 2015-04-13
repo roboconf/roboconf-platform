@@ -83,7 +83,7 @@ public class AgentMessageProcessor_ImportsTest {
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		processor.scopedInstance = app.getTomcatVm();
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		// There are as many client invocations as started instances
@@ -104,7 +104,7 @@ public class AgentMessageProcessor_ImportsTest {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -181,7 +181,7 @@ public class AgentMessageProcessor_ImportsTest {
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -224,7 +224,7 @@ public class AgentMessageProcessor_ImportsTest {
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -257,7 +257,7 @@ public class AgentMessageProcessor_ImportsTest {
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
 		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );
-		processor.rootInstance = i1;
+		processor.scopedInstance = i1;
 
 		// Adding itself does not work
 		Assert.assertEquals( 0, i1.getImports().size());

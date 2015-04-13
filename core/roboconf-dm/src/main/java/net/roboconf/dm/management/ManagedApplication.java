@@ -53,7 +53,7 @@ public class ManagedApplication {
 	private final File applicationFilesDirectory;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
-	private final Map<Instance,List<Message>> rootInstanceToAwaitingMessages;
+	private final Map<Instance,List<Message>> scopedInstanceToAwaitingMessages;
 
 
 
@@ -63,7 +63,7 @@ public class ManagedApplication {
 	public ManagedApplication( Application application, File applicationFilesDirectory ) {
 		this.applicationFilesDirectory = applicationFilesDirectory;
 		this.application = application;
-		this.rootInstanceToAwaitingMessages = new HashMap<Instance,List<Message>> ();
+		this.scopedInstanceToAwaitingMessages = new HashMap<Instance,List<Message>> ();
 	}
 
 
@@ -72,8 +72,8 @@ public class ManagedApplication {
 	}
 
 
-	public Map<Instance,List<Message>> getRootInstanceToAwaitingMessages() {
-		return this.rootInstanceToAwaitingMessages;
+	public Map<Instance,List<Message>> getScopedInstanceToAwaitingMessages() {
+		return this.scopedInstanceToAwaitingMessages;
 	}
 
 
@@ -101,16 +101,16 @@ public class ManagedApplication {
 	 */
 	public void storeAwaitingMessage( Instance instance, Message msg ) {
 
-		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
-		this.logger.finer( "Storing message " + msg.getClass().getSimpleName() + " for instance " + rootInstance );
+		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
+		this.logger.finer( "Storing message " + msg.getClass().getSimpleName() + " for instance " + scopedInstance );
 
 		// We need synchronized access to the map.
 		// ConcurrentHashMap does not suit. We need atomic insertion in the lists (which are map values).
-		synchronized( this.rootInstanceToAwaitingMessages ) {
-			List<Message> messages = this.rootInstanceToAwaitingMessages.get( rootInstance );
+		synchronized( this.scopedInstanceToAwaitingMessages ) {
+			List<Message> messages = this.scopedInstanceToAwaitingMessages.get( scopedInstance );
 			if( messages == null ) {
 				messages = new ArrayList<Message>( 1 );
-				this.rootInstanceToAwaitingMessages.put( rootInstance, messages );
+				this.scopedInstanceToAwaitingMessages.put( scopedInstance, messages );
 			}
 
 			messages.add( msg );
@@ -129,12 +129,12 @@ public class ManagedApplication {
 	 */
 	public List<Message> removeAwaitingMessages( Instance instance ) {
 
-		Instance rootInstance = InstanceHelpers.findRootInstance( instance );
+		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
 		List<Message> result = null;
 
 		// We reduce the spent time in the synchronized section.
-		synchronized( this.rootInstanceToAwaitingMessages ) {
-			result = this.rootInstanceToAwaitingMessages.remove( rootInstance );
+		synchronized( this.scopedInstanceToAwaitingMessages ) {
+			result = this.scopedInstanceToAwaitingMessages.remove( scopedInstance );
 		}
 
 		return result != null ? result : new ArrayList<Message>( 0 );
@@ -143,51 +143,50 @@ public class ManagedApplication {
 
 	/**
 	 * Acknowledges a heart beat.
-	 * @param rootInstance a root instance
+	 * @param scopedInstance a root instance
 	 */
-	public void acknowledgeHeartBeat( Instance rootInstance ) {
+	public void acknowledgeHeartBeat( Instance scopedInstance ) {
 
-		String count = rootInstance.data.get( MISSED_HEARTBEATS );
+		String count = scopedInstance.data.get( MISSED_HEARTBEATS );
 		if( count != null
 				&& Integer.parseInt( count ) > THRESHOLD )
-			this.logger.info( "Machine " + rootInstance.getName() + " is alive and reachable again." );
+			this.logger.info( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " is alive and reachable again." );
 
-		rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-		rootInstance.data.remove( MISSED_HEARTBEATS );
+		scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+		scopedInstance.data.remove( MISSED_HEARTBEATS );
 	}
 
 
 	/**
-	 * Check the root instances states with respect to missed heart beats.
+	 * Check the scoped instances states with respect to missed heart beats.
 	 */
 	public void checkStates() {
 
-		// Check the status of root instances
-		// We copy the list of instances to avoid concurrent modifications.
-		Collection<Instance> instances = new ArrayList<Instance>( this.application.getRootInstances());
-		for( Instance rootInstance : instances ) {
+		// Check the status of scoped instances
+		Collection<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( this.application );
+		for( Instance scopedInstance : scopedInstances ) {
 
 			// Never started instances,
-			// or root instances that have been stopped by an agent,
+			// or scoped instances that have been stopped by an agent,
 			// are not processed anymore here
-			if( rootInstance.getStatus() == InstanceStatus.NOT_DEPLOYED
-					|| rootInstance.getStatus() == InstanceStatus.DEPLOYING
-					|| rootInstance.getStatus() == InstanceStatus.UNDEPLOYING ) {
-				rootInstance.data.remove( MISSED_HEARTBEATS );
+			if( scopedInstance.getStatus() == InstanceStatus.NOT_DEPLOYED
+					|| scopedInstance.getStatus() == InstanceStatus.DEPLOYING
+					|| scopedInstance.getStatus() == InstanceStatus.UNDEPLOYING ) {
+				scopedInstance.data.remove( MISSED_HEARTBEATS );
 				continue;
 			}
 
 			// Otherwise
-			String countAs = rootInstance.data.get( MISSED_HEARTBEATS );
+			String countAs = scopedInstance.data.get( MISSED_HEARTBEATS );
 			int count = countAs == null ? 0 : Integer.parseInt( countAs );
 			if( ++ count > THRESHOLD ) {
-				rootInstance.setStatus( InstanceStatus.PROBLEM );
+				scopedInstance.setStatus( InstanceStatus.PROBLEM );
 
 				if( count == THRESHOLD + 1 )
-					this.logger.severe( "Machine " + rootInstance.getName() + " has not sent heartbeats for quite a long time. Status changed to PROBLEM." );
+					this.logger.severe( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " has not sent heartbeats for quite a long time. Status changed to PROBLEM." );
 			}
 
-			rootInstance.data.put( MISSED_HEARTBEATS, String.valueOf( count ));
+			scopedInstance.data.put( MISSED_HEARTBEATS, String.valueOf( count ));
 		}
 	}
 }

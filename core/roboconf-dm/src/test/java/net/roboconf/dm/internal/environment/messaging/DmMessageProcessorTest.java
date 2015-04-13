@@ -26,6 +26,7 @@
 package net.roboconf.dm.internal.environment.messaging;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -225,6 +226,20 @@ public class DmMessageProcessorTest {
 		MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( this.app.getName(), new Instance( "whatever" ));
 		int instancesCount = InstanceHelpers.getAllInstances( this.app ).size();
 
+		this.processor.processMessage( msg );
+		Assert.assertEquals( instancesCount, InstanceHelpers.getAllInstances( this.app ).size());
+	}
+
+
+	@Test
+	public void testProcessMsgNotifInstanceRemoved_scopedInstance() {
+
+		this.app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
+
+		int instancesCount = InstanceHelpers.getAllInstances( this.app ).size();
+		MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( this.app.getName(), this.app.getWar());
+
+		// Nothing removed
 		this.processor.processMessage( msg );
 		Assert.assertEquals( instancesCount, InstanceHelpers.getAllInstances( this.app ).size());
 	}

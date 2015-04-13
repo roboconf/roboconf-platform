@@ -31,24 +31,24 @@ import net.roboconf.messaging.messages.Message;
 /**
  * @author Noël - LIG
  */
-public class MsgCmdSetRootInstance extends Message {
+public class MsgCmdSetScopedInstance extends Message {
 
 	private static final long serialVersionUID = 411037586577734609L;
-	private final Instance rootInstance;
+	private final Instance scopedInstance;
 
 	/**
 	 * Constructor.
-	 * @param rootInstance
+	 * @param scopedInstance
 	 */
-	public MsgCmdSetRootInstance( Instance rootInstance ) {
+	public MsgCmdSetScopedInstance( Instance scopedInstance ) {
 		super();
-		this.rootInstance = rootInstance;
+		this.scopedInstance = scopedInstance;
 	}
 
 	/**
-	 * @return the root instance
+	 * @return the scoped instance
 	 */
-	public Instance getRootInstance() {
-		return this.rootInstance;
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
 	}
 }

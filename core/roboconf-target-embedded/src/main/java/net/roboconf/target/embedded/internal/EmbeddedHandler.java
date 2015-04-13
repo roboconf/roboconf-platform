@@ -63,11 +63,11 @@ public class EmbeddedHandler implements TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
-		String machineId = rootInstanceName + " (" + TARGET_ID + ")";
+		String machineId = scopedInstancePath + " (" + TARGET_ID + ")";
 		this.machineIdToRunning.put( machineId, Boolean.TRUE );
 		return machineId;
 	}
@@ -97,7 +97,7 @@ public class EmbeddedHandler implements TargetHandler {
 		String messagingIp,
 		String messagingUsername,
 		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 		// nothing

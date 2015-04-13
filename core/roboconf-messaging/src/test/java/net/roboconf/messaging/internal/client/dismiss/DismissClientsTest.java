@@ -68,7 +68,7 @@ public class DismissClientsTest {
 		client.publishExports( null );
 		client.publishExports( null, "" );
 		client.requestExportsFromOtherAgents( null );
-		client.setRootInstanceName( "root" );
+		client.setScopedInstancePath( "/root" );
 		client.setApplicationName( "app" );
 		client.sendMessageToTheDm( null );
 		client.unpublishExports( null );

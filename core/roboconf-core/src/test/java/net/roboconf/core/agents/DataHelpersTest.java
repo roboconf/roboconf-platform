@@ -39,26 +39,26 @@ public class DataHelpersTest {
 	@Test
 	public void testWriteAndRead() throws Exception {
 
-		String rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", "pwd", "app", "root" );
+		String rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", "pwd", "app", "/root" );
 		Properties props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
-		Assert.assertEquals( "root", props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( "/root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
 		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( null, "user", "pwd", "app", "root" );
+		rawProperties = DataHelpers.writeUserDataAsString( null, "user", "pwd", "app", "/root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
-		Assert.assertEquals( "root", props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( "/root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
 		Assert.assertEquals( null, props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", null, "pwd", "app", "root" );
+		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", null, "pwd", "app", "/root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
-		Assert.assertEquals( "root", props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( "/root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
 		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( null, props.getProperty( DataHelpers.MESSAGING_USERNAME ));
@@ -66,7 +66,7 @@ public class DataHelpersTest {
 		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", null, "app", "root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
-		Assert.assertEquals( "root", props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( "root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
 		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( null, props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
@@ -74,7 +74,7 @@ public class DataHelpersTest {
 		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", "pwd", null, "root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( null, props.getProperty( DataHelpers.APPLICATION_NAME ));
-		Assert.assertEquals( "root", props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( "root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
 		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
@@ -82,7 +82,7 @@ public class DataHelpersTest {
 		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", "pwd", "app", null );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
-		Assert.assertEquals( null, props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( null, props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
 		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
@@ -90,7 +90,7 @@ public class DataHelpersTest {
 		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24:9120", "user", "pwd", "app", null );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
-		Assert.assertEquals( null, props.getProperty( DataHelpers.ROOT_INSTANCE_NAME ));
+		Assert.assertEquals( null, props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
 		Assert.assertEquals( "192.168.1.24:9120", props.getProperty( DataHelpers.MESSAGING_IP ));
 		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
 		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));

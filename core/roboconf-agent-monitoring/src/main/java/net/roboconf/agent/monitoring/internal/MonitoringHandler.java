@@ -35,18 +35,18 @@ public abstract class MonitoringHandler {
 
 	protected String eventId;
 	protected String applicationName;
-	protected String vmInstanceName;
+	protected String scopedInstancePath;
 
 	/**
 	 * Create a new monitoring handler.
-	 * @param eventName The event ID
-	 * @param applicationName The application name
-	 * @param vmInstanceName The instance name
+	 * @param eventName the event ID
+	 * @param applicationName the application name
+	 * @param scopedInstancePath the scoped' instance path (associated with the agent)
 	 */
-	public MonitoringHandler( String eventName, String applicationName, String vmInstanceName ) {
+	public MonitoringHandler( String eventName, String applicationName, String scopedInstancePath ) {
 		this.eventId = eventName;
 		this.applicationName = applicationName;
-		this.vmInstanceName = vmInstanceName;
+		this.scopedInstancePath = scopedInstancePath;
 	}
 
 	/**

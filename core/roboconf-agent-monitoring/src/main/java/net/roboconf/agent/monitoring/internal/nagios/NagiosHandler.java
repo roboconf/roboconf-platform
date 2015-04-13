@@ -90,7 +90,7 @@ public class NagiosHandler extends MonitoringHandler {
 			String liveStatusResponse = client.queryLivestatus( this.nagiosInstructions );
 			result = new MsgNotifAutonomic(
 					this.applicationName,
-					this.vmInstanceName,
+					this.scopedInstancePath,
 					this.eventId,
 					liveStatusResponse );
 

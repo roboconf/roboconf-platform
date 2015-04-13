@@ -41,7 +41,7 @@ import net.roboconf.messaging.processors.AbstractMessageProcessor;
  */
 public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient> implements IAgentClient {
 
-	private String applicationName, rootInstanceName, ipAddress;
+	private String applicationName, scopedInstancePath, ipAddress;
 	private boolean needsModel = false;
 
 
@@ -68,12 +68,12 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 	protected void openConnection( IAgentClient newMessagingClient ) throws IOException {
 
 		newMessagingClient.setApplicationName( this.applicationName );
-		newMessagingClient.setRootInstanceName( this.rootInstanceName );
+		newMessagingClient.setScopedInstancePath( this.scopedInstancePath );
 		newMessagingClient.openConnection();
 
 		newMessagingClient.listenToTheDm( ListenerCommand.START );
 
-		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.applicationName, this.rootInstanceName, this.ipAddress );
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.applicationName, this.scopedInstancePath, this.ipAddress );
 		msg.setModelRequired( this.needsModel );
 		newMessagingClient.sendMessageToTheDm( msg );
 	}
@@ -182,8 +182,8 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 
 	@Override
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
+	public void setScopedInstancePath( String scopedInstancePath ) {
+		this.scopedInstancePath = scopedInstancePath;
 	}
 
 

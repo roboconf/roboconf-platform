@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -78,11 +79,19 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
 		this.logger.fine( "Creating a new machine on AWS." );
+
+		// For IaaS, we only expect root instance names to be passed
+		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+			throw new TargetException( "Only root instances can be passed in arguments." );
+
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
+
+		// Deal with the creation
 		String instanceId = null;
 		try {
 			AmazonEC2 ec2 = createEc2Client( targetProperties );
@@ -115,9 +124,10 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName ) {
 
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 		String tagName = applicationName + "." + rootInstanceName;
 		return new Ec2MachineConfigurator( targetProperties, machineId, tagName );
 	}

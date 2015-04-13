@@ -36,7 +36,7 @@ import net.roboconf.messaging.internal.client.test.TestClientAgent;
 public class MyAgentInterface implements AgentMessagingInterface {
 
 	private final TestClientAgent messagingClient;
-	private Instance rootInstance;
+	private Instance scopedInstance;
 
 
 	/**
@@ -58,12 +58,12 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	}
 
 	@Override
-	public Instance getRootInstance() {
-		return this.rootInstance;
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
 	}
 
-	public void setRootInstance( Instance rootInstance ) {
-		this.rootInstance = rootInstance;
+	public void setScopedInstance( Instance scopedInstance ) {
+		this.scopedInstance = scopedInstance;
 	}
 
 	@Override

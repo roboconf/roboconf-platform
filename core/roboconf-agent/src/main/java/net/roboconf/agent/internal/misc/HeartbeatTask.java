@@ -57,7 +57,7 @@ public class HeartbeatTask extends TimerTask {
 		try {
 			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat(
 					this.agent.getApplicationName(),
-					this.agent.getRootInstanceName(),
+					this.agent.getScopedInstancePath(),
 					this.agent.getIpAddress());
 
 			heartBeat.setModelRequired( this.agent.needsModel());

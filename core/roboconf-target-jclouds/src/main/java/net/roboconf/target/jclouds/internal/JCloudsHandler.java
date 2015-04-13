@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -87,7 +88,7 @@ public class JCloudsHandler implements TargetHandler {
 			String messagingIp,
 			String messagingUsername,
 			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
@@ -95,6 +96,11 @@ public class JCloudsHandler implements TargetHandler {
 		final String providerId = targetProperties.get( PROVIDER_ID );
 		ComputeService computeService = jcloudContext( targetProperties );
 
+		// For IaaS, we only expect root instance names to be passed
+		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+			throw new TargetException( "Only root instances can be passed in arguments." );
+
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 		String machineId = null;
 		try {
 			// Create a template from an image and a flavor/hardware
@@ -168,7 +174,7 @@ public class JCloudsHandler implements TargetHandler {
 		String messagingIp,
 		String messagingUsername,
 		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );

@@ -38,7 +38,7 @@ import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -107,12 +107,12 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertTrue( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
-		Message msg = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
-		Assert.assertEquals( MsgCmdSetRootInstance.class, msg.getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetRootInstance) msg).getRootInstance());
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
 
 		// ... or NOT_DEPLOYED (the current state is DEPLOYING)
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
@@ -124,8 +124,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
 		// ... Same thing if the current state is DEPLOYED_STARTED
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -137,8 +137,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 	}
 
 
@@ -157,7 +157,7 @@ public class Manager_LifeCycleTest {
 		this.manager.changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
 
 		Message msg = this.msgClient.sentMessages.get( 0 );
@@ -171,7 +171,7 @@ public class Manager_LifeCycleTest {
 		this.manager.changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
 
 		msg = this.msgClient.sentMessages.get( 0 );
@@ -185,7 +185,7 @@ public class Manager_LifeCycleTest {
 		this.manager.changeInstanceState( ma, app.getMySql(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
 
 		msg = this.msgClient.sentMessages.get( 0 );
@@ -213,40 +213,40 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
-		Message msg = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Try other states
-		ma.getRootInstanceToAwaitingMessages().clear();
+		ma.getScopedInstanceToAwaitingMessages().clear();
 		this.manager.changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
-		msg = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Not_DEPLOYED
-		ma.getRootInstanceToAwaitingMessages().clear();
+		ma.getScopedInstanceToAwaitingMessages().clear();
 		this.manager.changeInstanceState( ma, app.getMySql(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
-		msg = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) msg).getNewState());
@@ -278,23 +278,23 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 
 		// Nothing happens with children instances
-		this.manager.deployRoot( ma, app.getMySql());
+		this.manager.deployTarget( ma, app.getMySql());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Let's try with a root instance
-		this.manager.deployRoot( ma, app.getMySqlVm());
+		this.manager.deployTarget( ma, app.getMySqlVm());
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertTrue( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm());
+		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm());
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
-		Assert.assertEquals( MsgCmdSetRootInstance.class, msg.getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetRootInstance) msg).getRootInstance());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
 	}
 
 
@@ -314,22 +314,22 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( this.targetResolver.instanceToRequestsCount.get( instance ));
 		Assert.assertNull( instance.data.get( Instance.TARGET_ACQUIRED ));
 
-		this.manager.deployRoot( ma, instance );
-		this.manager.deployRoot( ma, instance );
+		this.manager.deployTarget( ma, instance );
+		this.manager.deployTarget( ma, instance );
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertNotNull( instance.data.get( Instance.TARGET_ACQUIRED ));
 		Assert.assertTrue( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 
 		// 2 requests to deploy a root instance, but one is filtered by the DM.
 		Assert.assertEquals((Integer) 1, this.targetResolver.instanceToRequestsCount.get( instance ));
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm());
+		List<Message> messages = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm());
 		Assert.assertEquals( 1, messages.size());
 
 		Message msg = messages.get( 0 );
-		Assert.assertEquals( MsgCmdSetRootInstance.class, msg.getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetRootInstance) msg).getRootInstance());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
 	}
 
 
@@ -341,15 +341,15 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// A root instance is considered to be deployed if it has a machine ID.
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "something" );
-		this.manager.deployRoot( ma, app.getMySqlVm());
+		this.manager.deployTarget( ma, app.getMySqlVm());
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 	}
 
 
@@ -372,13 +372,13 @@ public class Manager_LifeCycleTest {
 
 		// Nothing happens with children instances
 		try {
-			this.manager.deployRoot( ma, app.getMySql());
+			this.manager.deployTarget( ma, app.getMySql());
 
 		} catch( Exception e ) {
 			Assert.fail( "Nothing should have happened here." );
 		}
 
-		this.manager.deployRoot( ma, app.getMySqlVm());
+		this.manager.deployTarget( ma, app.getMySqlVm());
 	}
 
 
@@ -391,7 +391,7 @@ public class Manager_LifeCycleTest {
 		this.manager = new Manager();
 		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
-		this.manager.deployRoot( ma, app.getMySqlVm());
+		this.manager.deployTarget( ma, app.getMySqlVm());
 	}
 
 
@@ -405,21 +405,21 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 
 		// Nothing happens with children instances
-		this.manager.undeployRoot( ma, app.getMySql());
+		this.manager.undeployTarget( ma, app.getMySql());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Let's try with a root instance
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "something" );
-		this.manager.undeployRoot( ma, app.getMySqlVm());
+		this.manager.undeployTarget( ma, app.getMySqlVm());
 
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 	}
 
@@ -434,19 +434,19 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 
 		// Nothing happens with children instances
-		this.manager.undeployRoot( ma, app.getMySql());
+		this.manager.undeployTarget( ma, app.getMySql());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Let's try with a root instance
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.manager.undeployRoot( ma, app.getMySqlVm());
+		this.manager.undeployTarget( ma, app.getMySqlVm());
 
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 	}
 
@@ -461,33 +461,33 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 
 		// Nothing happens with children instances
-		this.manager.undeployRoot( ma, app.getMySql());
+		this.manager.undeployTarget( ma, app.getMySql());
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Let's try with a root instance
 		app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
-		this.manager.undeployRoot( ma, app.getMySqlVm());
+		this.manager.undeployTarget( ma, app.getMySqlVm());
 
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// The state means nothing in fact, the machine ID does
-		ma.getRootInstanceToAwaitingMessages().clear();
+		ma.getScopedInstanceToAwaitingMessages().clear();
 		app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "something" );
-		this.manager.undeployRoot( ma, app.getMySqlVm());
+		this.manager.undeployTarget( ma, app.getMySqlVm());
 
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 	}
 
 
@@ -510,13 +510,13 @@ public class Manager_LifeCycleTest {
 
 		// Nothing happens with children instances
 		try {
-			this.manager.undeployRoot( ma, app.getMySql());
+			this.manager.undeployTarget( ma, app.getMySql());
 
 		} catch( Exception e ) {
 			Assert.fail( "Nothing should have happened here." );
 		}
 
-		this.manager.undeployRoot( ma, app.getMySqlVm());
+		this.manager.undeployTarget( ma, app.getMySqlVm());
 	}
 
 
@@ -530,7 +530,7 @@ public class Manager_LifeCycleTest {
 		this.manager = new Manager();
 		this.manager.configurationDirectory = this.folder.newFolder();
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
-		this.manager.undeployRoot( ma, app.getMySqlVm());
+		this.manager.undeployTarget( ma, app.getMySqlVm());
 	}
 
 
@@ -542,32 +542,32 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.deployAndStartAll( ma, null );
 
 		Assert.assertTrue( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertTrue( this.targetResolver.instanceToRunningStatus.get( app.getTomcatVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// MySQL
-		List<Message> mySqlMessages = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm());
+		List<Message> mySqlMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm());
 		Assert.assertEquals( 2, mySqlMessages.size());
 
-		Assert.assertEquals( MsgCmdSetRootInstance.class, mySqlMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetRootInstance) mySqlMessages.get( 0 )).getRootInstance());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, mySqlMessages.get( 0 ).getClass());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) mySqlMessages.get( 0 )).getScopedInstance());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, mySqlMessages.get( 1 ).getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) mySqlMessages.get( 1 )).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) mySqlMessages.get( 1 )).getNewState());
 
 		// Tomcat
-		List<Message> tomcatMessages = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm());
+		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm());
 		Assert.assertEquals( 3, tomcatMessages.size());
 
-		Assert.assertEquals( MsgCmdSetRootInstance.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdSetRootInstance) tomcatMessages.get( 0 )).getRootInstance());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, tomcatMessages.get( 0 ).getClass());
+		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdSetScopedInstance) tomcatMessages.get( 0 )).getScopedInstance());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 1 ).getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
@@ -587,21 +587,21 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.deployAndStartAll( ma, app.getTomcatVm());
 
 		Assert.assertNull( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertTrue( this.targetResolver.instanceToRunningStatus.get( app.getTomcatVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Tomcat
-		List<Message> tomcatMessages = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm());
+		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm());
 		Assert.assertEquals( 3, tomcatMessages.size());
 
-		Assert.assertEquals( MsgCmdSetRootInstance.class, tomcatMessages.get( 0 ).getClass());
-		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdSetRootInstance) tomcatMessages.get( 0 )).getRootInstance());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, tomcatMessages.get( 0 ).getClass());
+		Assert.assertEquals( app.getTomcatVm(), ((MsgCmdSetScopedInstance) tomcatMessages.get( 0 )).getScopedInstance());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 1 ).getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) tomcatMessages.get( 1 )).getInstancePath());
@@ -621,14 +621,14 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.manager.deployAndStartAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 2, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, this.msgClient.sentMessages.get( 0 ).getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) this.msgClient.sentMessages.get( 0 )).getInstancePath());
@@ -648,17 +648,17 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYING );
 		this.manager.deployAndStartAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Tomcat
-		List<Message> tomcatMessages = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm());
+		List<Message> tomcatMessages = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm());
 		Assert.assertEquals( 2, tomcatMessages.size());
 
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, tomcatMessages.get( 0 ).getClass());
@@ -692,22 +692,22 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.stopAll( ma, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 2, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
 
-		Message msg = ma.getRootInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()),((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 
-		msg = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
@@ -722,16 +722,16 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.stopAll( ma, app.getTomcatVm());
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
 
-		Message msg = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
@@ -746,16 +746,16 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.stopAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
 
-		Message msg = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
@@ -783,7 +783,7 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().data.put( Instance.MACHINE_ID, "some id..." );
 		app.getMySqlVm().data.put( Instance.MACHINE_ID, "another id..." );
@@ -793,7 +793,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getTomcatVm()));
 
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 	}
 
 
@@ -805,7 +805,7 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		app.getTomcatVm().data.put( Instance.MACHINE_ID, "some id..." );
 		this.manager.undeployAll( ma, app.getTomcatVm());
@@ -813,7 +813,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getTomcatVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 	}
 
 
@@ -825,16 +825,16 @@ public class Manager_LifeCycleTest {
 		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
-		Assert.assertEquals( 0, ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.undeployAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
 
-		Message msg = ma.getRootInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) msg).getNewState());

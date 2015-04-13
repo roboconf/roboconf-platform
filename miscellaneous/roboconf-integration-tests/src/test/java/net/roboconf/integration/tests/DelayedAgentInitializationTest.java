@@ -36,6 +36,7 @@ import javax.inject.Inject;
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.AbstractTest;
@@ -142,8 +143,8 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		options.add( editConfigurationFilePut(
 				  "etc/net.roboconf.agent.configuration.cfg",
-				  "root-instance-name",
-				  app.getMySqlVm().getName()));
+				  "scoped-instance-path",
+				  InstanceHelpers.computeInstancePath( app.getMySqlVm())));
 
 		// Add an invalid configuration for the DM
 		options.add( editConfigurationFilePut(
@@ -194,7 +195,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Check the agent
 		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
-		Assert.assertNull( this.agentItf.getRootInstance());
+		Assert.assertNull( this.agentItf.getScopedInstance());
 		Assert.assertNotNull( this.agentItf.getMessagingClient());
 		Assert.assertTrue( this.agentItf.getMessagingClient().isConnected());
 
@@ -215,8 +216,8 @@ public class DelayedAgentInitializationTest extends DmTest {
 		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
 		Assert.assertNotNull( this.agentItf.getMessagingClient());
 		Assert.assertTrue( this.agentItf.getMessagingClient().isConnected());
-		Assert.assertNotNull( this.agentItf.getRootInstance());
-		Assert.assertEquals( app.getMySqlVm(), this.agentItf.getRootInstance());
+		Assert.assertNotNull( this.agentItf.getScopedInstance());
+		Assert.assertEquals( app.getMySqlVm(), this.agentItf.getScopedInstance());
 
 		// And the DM should have considered the root instance as started.
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());

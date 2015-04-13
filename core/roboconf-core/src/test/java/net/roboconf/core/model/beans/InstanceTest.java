@@ -57,4 +57,16 @@ public class InstanceTest {
 		Assert.assertEquals( 2, inst.channel( "yeah" ).channels.size());
 		Assert.assertEquals( 2, inst.channel( "woo" ).channels.size());
 	}
+
+
+	@Test
+	public void testEquals() {
+
+		Instance hop = new Instance( "hop" );
+		Assert.assertFalse( hop.equals( null ));
+		Assert.assertFalse( hop.equals( new Instance( "hop2" )));
+
+		Assert.assertEquals( hop, hop );
+		Assert.assertEquals( hop, new Instance ("hop" ));
+	}
 }

@@ -29,8 +29,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.beans.Import;
-import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
 
@@ -57,5 +55,25 @@ public class ImportTest {
 
 		imp = new Import( new Instance( "my VM" ));
 		Assert.assertEquals( "/my VM", imp.getInstancePath());
+	}
+
+
+	@Test
+	public void testHashCode() {
+
+		Assert.assertTrue( new Import( "inst", "comp" ).hashCode() > 0 );
+		Assert.assertTrue( new Import( new Instance()).hashCode() > 0 );
+	}
+
+
+	@Test
+	public void testEquals() {
+
+		Import imp = new Import( "inst", "comp" );
+		Assert.assertFalse( imp.equals( null ));
+		Assert.assertFalse( imp.equals( new Import( "inst2", "comp" )));
+
+		Assert.assertEquals( imp, imp );
+		Assert.assertEquals( imp, new Import( "inst", "comp" ));
 	}
 }
