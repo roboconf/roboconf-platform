@@ -34,6 +34,7 @@ import java.util.Properties;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ResourceUtils;
@@ -62,8 +63,8 @@ public class TargetResolverTest {
 
 		// Create a target properties file
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app" );
-		ManagedApplication ma = new ManagedApplication( app, appDir );
+		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
@@ -97,8 +98,8 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_invalidInstallerName() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app" );
-		ManagedApplication ma = new ManagedApplication( app, appDir );
+		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
@@ -126,8 +127,8 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_unknownTargetId_emptyArray() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app" );
-		ManagedApplication ma = new ManagedApplication( app, appDir );
+		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
@@ -155,8 +156,8 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_unknownTargetId_nullArray() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app" );
-		ManagedApplication ma = new ManagedApplication( app, appDir );
+		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
@@ -184,8 +185,8 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_noTargetIdInProperties() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app" );
-		ManagedApplication ma = new ManagedApplication( app, appDir );
+		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		File propsDir = ResourceUtils.findInstanceResourcesDirectory( appDir, rootInstance );
@@ -203,8 +204,8 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_noTargetProperties() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app" );
-		ManagedApplication ma = new ManagedApplication( app, appDir );
+		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
 		TargetResolver resolver = new TargetResolver();
@@ -216,8 +217,8 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_invalidInstaller() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app" );
-		ManagedApplication ma = new ManagedApplication( app, appDir );
+		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "not target" ));
 		TargetResolver resolver = new TargetResolver();

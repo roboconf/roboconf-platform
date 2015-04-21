@@ -37,6 +37,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -260,7 +261,7 @@ public class InstanceHelpersTest {
 	@Test
 	public void testGetAllInstances() {
 
-		Application app = new Application();
+		Application app = new Application( new ApplicationTemplate());
 		Instance[] rootInstances = new Instance[ 8 ];
 		for( int i=0; i<rootInstances.length; i++ ) {
 			rootInstances[ i ] = new Instance( "i-" + i );
@@ -300,7 +301,7 @@ public class InstanceHelpersTest {
 	@Test
 	public void testFindInstancesByComponentName() {
 
-		Application app = new Application();
+		ApplicationTemplate app = new ApplicationTemplate();
 		Component tomcat = new Component( "tomcat" ).installerName( "puppet" );
 		Component other = new Component( "other" ).installerName( "chef" );
 
@@ -360,13 +361,13 @@ public class InstanceHelpersTest {
 	@Test
 	public void testTryToInsertChildInstance() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-with-only-components" );
+		File directory = TestUtils.findTestFile( "/applications/lamp-legacy-with-only-components" );
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
-		Assert.assertNotNull( result.getApplication());
+		Assert.assertNotNull( result.getApplicationTemplate());
 		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( result.getLoadErrors()));
 
-		Application app = result.getApplication();
+		ApplicationTemplate app = result.getApplicationTemplate();
 		app.getRootInstances().clear();
 		Assert.assertEquals( 0, InstanceHelpers.getAllInstances( app ).size());
 
@@ -637,7 +638,7 @@ public class InstanceHelpersTest {
 		InstanceHelpers.insertChild( server, app1 );
 		InstanceHelpers.insertChild( server2, app2 );
 
-		Application app = new Application( "test" );
+		Application app = new Application( "test", new ApplicationTemplate());
 		app.getRootInstances().add( root );
 
 		List<Instance> instances = InstanceHelpers.findAllScopedInstances( app );

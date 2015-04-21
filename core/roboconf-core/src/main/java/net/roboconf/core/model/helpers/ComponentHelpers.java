@@ -38,6 +38,7 @@ import java.util.TreeSet;
 
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -443,6 +444,25 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds all the components of an application template.
+	 * <p>
+	 * Inheritance cycles are ignored.
+	 * </p>
+	 *
+	 * @param app an application template (not null)
+	 * @return a non-null list of components
+	 */
+	public static List<Component> findAllComponents( ApplicationTemplate app ) {
+
+		List<Component> result = new ArrayList<Component> ();
+		if( app.getGraphs() != null )
+			result.addAll( findAllComponents( app.getGraphs()));
+
+		return result;
+	}
+
+
+	/**
 	 * Finds all the components of an application.
 	 * <p>
 	 * Inheritance cycles are ignored.
@@ -454,8 +474,8 @@ public final class ComponentHelpers {
 	public static List<Component> findAllComponents( Application app ) {
 
 		List<Component> result = new ArrayList<Component> ();
-		if( app.getGraphs() != null )
-			result.addAll( findAllComponents( app.getGraphs()));
+		if( app.getTemplate() != null )
+			result.addAll( findAllComponents( app.getTemplate()));
 
 		return result;
 	}
@@ -550,7 +570,7 @@ public final class ComponentHelpers {
 	/**
 	 * Finds the component dependencies for a given component.
 	 * @param component a component
-	 * @return a non-null map containing component or facet names that this component needs
+	 * @return a non-null map (key = component name, value = true if the dependency is optional, false otherwise)
 	 */
 	public static Map<String,Boolean> findComponentDependenciesFor( Component component ) {
 
@@ -572,7 +592,7 @@ public final class ComponentHelpers {
 	 * @param app the application
 	 * @return a non-null map (key = component name, value = true if the dependency is optional, false otherwise)
 	 */
-	public static Map<Component,Boolean> findComponentDependenciesFor( Component component, Application app ) {
+	public static Map<Component,Boolean> findComponentDependenciesFor( Component component, ApplicationTemplate app ) {
 
 		// Determine which components or facets are required.
 		Map<String,Boolean> map = findComponentDependenciesFor( component );
@@ -609,7 +629,7 @@ public final class ComponentHelpers {
 	 * @param app the application
 	 * @return a non-null map (key = component name, value = true if the dependency is optional, false otherwise)
 	 */
-	public static Map<Component,Boolean> findComponentsThatDependOn( Component component, Application app ) {
+	public static Map<Component,Boolean> findComponentsThatDependOn( Component component, ApplicationTemplate app ) {
 
 		// Determine the matching prefixes.
 		Set<String> prefixes = new HashSet<String> ();

@@ -29,10 +29,13 @@ import java.io.StringWriter;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.rest.commons.Diagnostic;
+import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 
 import org.junit.Test;
 
@@ -44,18 +47,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class JSonBindingUtilsTest {
 
 	@Test
-	public void testApplicationBinding_1() throws Exception {
+	public void testApplicationTemplateBinding_1() throws Exception {
 
-		final String result = "{\"name\":\"app1\",\"desc\":\"some text\",\"qualifier\":\"v1\"}";
+		final String result = "{\"desc\":\"some text\",\"qualifier\":\"v1\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Application app = new Application( "app1" ).description( "some text" ).qualifier( "v1" );
+		ApplicationTemplate app = new ApplicationTemplate().description( "some text" ).qualifier( "v1" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
-		Application readApp = mapper.readValue( result, Application.class );
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
 		Assert.assertEquals( app, readApp );
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
@@ -64,12 +67,48 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
-	public void testApplicationBinding_2() throws Exception {
+	public void testApplicationTemplateBinding_2() throws Exception {
 
 		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		Application app = new Application( "my application" ).qualifier( "v1-17.snapshot" );
+		ApplicationTemplate app = new ApplicationTemplate( "my application" ).qualifier( "v1-17.snapshot" );
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+	}
+
+
+	@Test
+	public void testApplicationTemplateBinding_3() throws Exception {
+
+		final String result = "null";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, null );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
+		Assert.assertNull( readApp );
+	}
+
+
+	@Test
+	public void testApplicationBinding_1() throws Exception {
+
+		final String result = "{\"name\":\"app1\",\"desc\":\"some text\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Application app = new Application( "app1", null ).description( "some text" );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
@@ -79,7 +118,27 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app, readApp );
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
-		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+	}
+
+
+	@Test
+	public void testApplicationBinding_2() throws Exception {
+
+		final String result = "{\"tpl\":{\"name\":\"oops\",\"desc\":\"hello!\"}}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "oops" ).description( "hello!" );
+		Application app = new Application( tpl );
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Application readApp = mapper.readValue( result, Application.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getTemplate(), readApp.getTemplate());
 	}
 
 
@@ -237,5 +296,135 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+	}
+
+
+	@Test
+	public void testInstanceBinding_6() throws Exception {
+
+		final String result = "{\"component\":{\"name\":\"server-component\"}}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Instance inst = new Instance().component( new Component( "server-component" )).status( null );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, inst );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Instance readInst = mapper.readValue( result, Instance.class );
+		Assert.assertEquals( inst.getName(), readInst.getName());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, readInst.getStatus());
+		Assert.assertEquals( inst.channels, readInst.channels );
+		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
+	}
+
+
+	@Test
+	public void testDiagnosticBinding_1() throws Exception {
+
+		final String result = "{\"path\":\"/vm\",\"dependencies\":[]}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Diagnostic diag = new Diagnostic( "/vm" );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, diag );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Diagnostic readDiag = mapper.readValue( result, Diagnostic.class );
+		Assert.assertEquals( diag.getInstancePath(), readDiag.getInstancePath());
+		Assert.assertEquals( diag.getDependenciesInformation(), readDiag.getDependenciesInformation());
+	}
+
+
+	@Test
+	public void testDiagnosticBinding_2() throws Exception {
+
+		final String result = "{\"path\":\"/vm\",\"dependencies\":[{\"name\":\"mysql\",\"optional\":\"true\",\"resolved\":\"false\"},"
+		+ "{\"name\":\"mongo\",\"optional\":\"false\",\"resolved\":\"true\"}]}";
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		Diagnostic diag = new Diagnostic( "/vm" );
+		diag.getDependenciesInformation().add( new DependencyInformation( "mysql", true, false ));
+		diag.getDependenciesInformation().add( new DependencyInformation( "mongo", false, true ));
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, diag );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Diagnostic readDiag = mapper.readValue( result, Diagnostic.class );
+		Assert.assertEquals( diag.getInstancePath(), readDiag.getInstancePath());
+		Assert.assertEquals( diag.getDependenciesInformation().size(), readDiag.getDependenciesInformation().size());
+
+		for( int i=0; i<diag.getDependenciesInformation().size(); i++ ) {
+			DependencyInformation original = diag.getDependenciesInformation().get( i );
+			DependencyInformation read = readDiag.getDependenciesInformation().get( i );
+
+			Assert.assertEquals( original.getDependencyName(), read.getDependencyName());
+			Assert.assertEquals( original.isOptional(), read.isOptional());
+			Assert.assertEquals( original.isResolved(), read.isResolved());
+		}
+	}
+
+
+	@Test
+	public void testDiagnosticBinding_3() throws Exception {
+
+		final String result = "{\"dependencies\":[]}";
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		Diagnostic diag = new Diagnostic();
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, diag );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Diagnostic readDiag = mapper.readValue( "{}", Diagnostic.class );
+		Assert.assertEquals( diag.getInstancePath(), readDiag.getInstancePath());
+		Assert.assertEquals( diag.getDependenciesInformation(), readDiag.getDependenciesInformation());
+	}
+
+
+	@Test
+	public void testDependencyInformationBinding_1() throws Exception {
+
+		final String result = "{\"name\":\"/vm\",\"optional\":\"true\",\"resolved\":\"false\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		DependencyInformation info = new DependencyInformation( "/vm", true, false );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, info );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		DependencyInformation readInfo = mapper.readValue( result, DependencyInformation.class );
+		Assert.assertEquals( info.getDependencyName(), readInfo.getDependencyName());
+		Assert.assertEquals( info.isOptional(), readInfo.isOptional());
+		Assert.assertEquals( info.isResolved(), readInfo.isResolved());
+	}
+
+
+	@Test
+	public void testDependencyInformationBinding_2() throws Exception {
+
+		final String result = "{\"optional\":\"false\",\"resolved\":\"false\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		DependencyInformation info = new DependencyInformation();
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, info );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		DependencyInformation readInfo = mapper.readValue( "{}", DependencyInformation.class );
+		Assert.assertEquals( info.getDependencyName(), readInfo.getDependencyName());
+		Assert.assertEquals( info.isOptional(), readInfo.isOptional());
+		Assert.assertEquals( info.isResolved(), readInfo.isResolved());
 	}
 }

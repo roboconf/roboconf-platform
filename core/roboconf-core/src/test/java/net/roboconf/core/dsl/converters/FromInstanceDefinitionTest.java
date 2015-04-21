@@ -35,6 +35,7 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
@@ -187,7 +188,7 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
 		// The assertions
-		Application app = new Application();
+		Application app = new Application( new ApplicationTemplate());
 		app.getRootInstances().addAll( rootInstances );
 
 		Assert.assertEquals( 3, rootInstances.size());
@@ -228,7 +229,7 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
 		// The assertions
-		Application app = new Application();
+		Application app = new Application( new ApplicationTemplate());
 		app.getRootInstances().addAll( rootInstances );
 
 		Assert.assertEquals( 14, rootInstances.size());
@@ -282,7 +283,7 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
 		// The assertions
-		Application app = new Application();
+		Application app = new Application( new ApplicationTemplate());
 		app.getRootInstances().addAll( rootInstances );
 
 		Assert.assertEquals( 3, rootInstances.size());
@@ -330,7 +331,7 @@ public class FromInstanceDefinitionTest {
 		Assert.assertEquals( ErrorCode.CO_CONFLICTING_INFERRED_INSTANCE, fromDef.getErrors().iterator().next().getErrorCode());
 
 		// The assertions
-		Application app = new Application();
+		Application app = new Application( new ApplicationTemplate());
 		app.getRootInstances().addAll( rootInstances );
 
 		Assert.assertEquals( 5, rootInstances.size());

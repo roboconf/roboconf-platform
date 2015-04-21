@@ -77,6 +77,22 @@ public class RoboconfErrorHelpersTest {
 
 
 	@Test
+	public void testExtractAndFormatWarnings() {
+
+		Collection<RoboconfError> errors = new ArrayList<RoboconfError> ();
+		Assert.assertEquals( 0, RoboconfErrorHelpers.extractAndFormatWarnings( errors ).size());
+
+		RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY );
+		errors.add( error );
+		Assert.assertEquals( 1, RoboconfErrorHelpers.extractAndFormatWarnings( errors ).size());
+
+		error.setDetails( "whatever" );
+		errors.add( new RoboconfError( ErrorCode.PM_DUPLICATE_PROPERTY ));
+		Assert.assertEquals( 1, RoboconfErrorHelpers.extractAndFormatWarnings( errors ).size());
+	}
+
+
+	@Test
 	public void testResolveErrorsWithLocation() {
 		ApplicationLoadResult alr = new ApplicationLoadResult();
 		Component c1 = new Component( "comp1" );

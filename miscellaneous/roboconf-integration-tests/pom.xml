@@ -70,6 +70,13 @@
 		
 		<dependency>
 			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-dm-rest-commons</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-messaging</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>

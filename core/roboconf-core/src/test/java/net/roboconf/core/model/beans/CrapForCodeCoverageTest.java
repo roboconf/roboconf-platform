@@ -26,9 +26,6 @@
 package net.roboconf.core.model.beans;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
 
@@ -48,7 +45,7 @@ public class CrapForCodeCoverageTest {
 		Assert.assertNull( comp.toString());
 		Assert.assertNotNull( comp.name( "azerty" ).toString());
 
-		Application app = new Application();
+		Application app = new Application( new ApplicationTemplate());
 		Assert.assertNull( app.toString());
 		Assert.assertNotNull( app.name( "azerty" ).toString());
 	}

@@ -78,11 +78,13 @@ public class DmMessageProcessorForAutonomicTest {
 			this.processor.stopProcessor();
 
 		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
-		this.manager.getAppNameToManagedApplication().clear();
+		this.manager.getNameToManagedApplication().clear();
 
-		File appDirectory = ConfigurationUtils.findApplicationdirectory( this.app.getName(), dir );
+		File appDirectory = ConfigurationUtils.findApplicationDirectory( this.app.getName(), dir );
 		Assert.assertTrue( appDirectory.mkdirs());
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, appDirectory ));
+		this.app.setDirectory( appDirectory );
+
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 	}
 
 
@@ -96,10 +98,10 @@ public class DmMessageProcessorForAutonomicTest {
 	public void testAutonomic() throws Exception {
 
 		// Copy resources
-		ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( this.app.getName());
+		ManagedApplication ma = this.manager.getNameToManagedApplication().get( this.app.getName());
 		Assert.assertNotNull( ma );
 
-		File dir = new File( ma.getApplicationFilesDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
+		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
 		Assert.assertTrue( dir.mkdirs());
 
 		File targetFile = new File( dir, Constants.FILE_RULES );

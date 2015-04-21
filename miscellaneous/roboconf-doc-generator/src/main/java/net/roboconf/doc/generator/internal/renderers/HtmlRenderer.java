@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.DocConstants;
 import net.roboconf.doc.generator.internal.AbstractStructuredRenderer;
@@ -60,11 +60,11 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	/**
 	 * Constructor.
 	 * @param outputDirectory
-	 * @param application
+	 * @param applicationTemplate
 	 * @param applicationDirectory
 	 */
-	public HtmlRenderer( File outputDirectory, Application application, File applicationDirectory ) {
-		super( outputDirectory, application, applicationDirectory );
+	public HtmlRenderer( File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory ) {
+		super( outputDirectory, applicationTemplate, applicationDirectory );
 	}
 
 
@@ -238,7 +238,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	 */
 	@Override
 	protected String renderDocumentTitle() {
-		return "<h1 id=\"" + this.messages.get( "introduction" ) + "\">" + this.application.getName() + "</h1>\n";
+		return "<h1 id=\"" + this.messages.get( "introduction" ) + "\">" + this.applicationTemplate.getName() + "</h1>\n";
 	}
 
 
@@ -255,7 +255,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 		keys.add( "introduction" );
 		keys.add( "components" );
 		if( this.options.containsKey( DocConstants.OPTION_RECIPE )) {
-			if( ! this.application.getGraphs().getFacetNameToFacet().isEmpty())
+			if( ! this.applicationTemplate.getGraphs().getFacetNameToFacet().isEmpty())
 				keys.add( "facets" );
 
 		} else {
@@ -442,7 +442,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 		// Write the main file
 		String toWrite = out.toString( "UTF-8" )
-				.replace( TITLE_MARKUP, this.application.getName())
+				.replace( TITLE_MARKUP, this.applicationTemplate.getName())
 				.replace( CSS_MARKUP, css )
 				.replace( CONTENT_MARKUP, fileContent )
 				.replace( MENU_MARKUP, this.menu )

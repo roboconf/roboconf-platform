@@ -40,6 +40,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
@@ -59,20 +60,24 @@ public interface IManagementResource {
 	String PATH = "/" + UrlConstants.APPLICATIONS;
 
 
+	// Application Templates
+
+
 	/**
-	 * Loads an application from a ZIP file.
+	 * Loads an application template from a ZIP file.
 	 * @param uploadedInputStream the uploaded archive
 	 * @param fileDetail the file details
 	 * @return a response
 	 */
 	@POST
+	@Path("/templates")
 	@Consumes( MediaType.MULTIPART_FORM_DATA )
-	Response loadApplication(
+	Response loadApplicationTemplate(
 			@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail );
 
 	/**
-	 * Loads an application from a local ZIP file.
+	 * Loads an application template from a local ZIP file.
 	 * <p>
 	 * A directory containing a Roboconf application (model + resources)
 	 * could be fairly heavy (several hundreds of megabytes). We must
@@ -89,9 +94,42 @@ public interface IManagementResource {
 	 * @return a response
 	 */
 	@POST
-	@Path("/local")
+	@Path("/templates/local")
 	@Consumes( MediaType.APPLICATION_JSON )
-	Response loadApplication( @QueryParam( "local-file-path" ) String localFilePath );
+	Response loadApplicationTemplate( @QueryParam( "local-file-path" ) String localFilePath );
+
+	/**
+	 * Lists the application templates.
+	 * @return a non-null list
+	 */
+	@GET
+	@Path("/templates")
+	@Produces( MediaType.APPLICATION_JSON )
+	List<ApplicationTemplate> listApplicationTemplates();
+
+	/**
+	 * Deletes an application template.
+	 * @param tplName the application template's name
+	 * @param tplQualifier the application template's qualifier
+	 * @return a response
+	 */
+	@DELETE
+	@Path("/templates/{name}/{qualifier}/delete")
+	Response deleteApplicationTemplate( @PathParam("name") String tplName, @PathParam("qualifier") String tplQualifier );
+
+
+	// Applications
+
+
+	/**
+	 * Creates a new application.
+	 * @param app an application
+	 * @return a response
+	 */
+	@POST
+	@Consumes( MediaType.APPLICATION_JSON )
+	Response createApplication( Application app );
+
 
 	/**
 	 * Lists the applications.

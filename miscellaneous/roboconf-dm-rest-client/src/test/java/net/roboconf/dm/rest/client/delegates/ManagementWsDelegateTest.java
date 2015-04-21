@@ -36,8 +36,10 @@ import javax.ws.rs.core.UriBuilder;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
@@ -107,9 +109,7 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( 0, apps.size());
 
 		TestApplication app = new TestApplication();
-		this.manager.getAppNameToManagedApplication().put(
-				app.getName(),
-				new ManagedApplication( app, null ));
+		this.manager.getNameToManagedApplication().put( app.getName(), 	new ManagedApplication( app ));
 
 		apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
@@ -117,7 +117,28 @@ public class ManagementWsDelegateTest {
 
 		Application receivedApp = apps.get( 0 );
 		Assert.assertEquals( app.getName(), receivedApp.getName());
-		Assert.assertEquals( app.getQualifier(), receivedApp.getQualifier());
+		Assert.assertEquals( app.getDescription(), receivedApp.getDescription());
+	}
+
+
+	@Test
+	public void testListApplicationTemplates() throws Exception {
+
+		List<ApplicationTemplate> templates = this.client.getManagementDelegate().listApplicationTemplates();
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 0, templates.size());
+
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
+
+		templates = this.client.getManagementDelegate().listApplicationTemplates();
+		Assert.assertNotNull( templates );
+		Assert.assertEquals( 1, templates.size());
+
+		ApplicationTemplate receivedTpl = templates.get( 0 );
+		Assert.assertEquals( tpl.getName(), receivedTpl.getName());
+		Assert.assertEquals( tpl.getDescription(), receivedTpl.getDescription());
+		Assert.assertEquals( tpl.getQualifier(), receivedTpl.getQualifier());
 	}
 
 
@@ -131,7 +152,7 @@ public class ManagementWsDelegateTest {
 	public void testShutdownApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 		this.client.getManagementDelegate().shutdownApplication( app.getName());
 	}
 
@@ -146,7 +167,7 @@ public class ManagementWsDelegateTest {
 	public void testDeleteApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
 		this.client.getManagementDelegate().deleteApplication( app.getName());
@@ -155,89 +176,89 @@ public class ManagementWsDelegateTest {
 
 
 	@Test
-	public void testLoadApplication_localPath_success() throws Exception {
+	public void testLoadApplicationTemplate_localPath_success() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/lamp" );
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
 
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		this.client.getManagementDelegate().loadApplication( directory.getAbsolutePath());
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplication_localPath_alreadyExisting() throws Exception {
+	public void testLoadApplicationTemplate_localPath_alreadyExisting() throws Exception {
 
-		Application app = new Application( "Legacy LAMP" );
-		this.manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
-		File directory = TestUtils.findTestFile( "/lamp" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
+		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
 
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 		try {
-			this.client.getManagementDelegate().loadApplication( directory.getAbsolutePath());
+			this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
 		} catch( ManagementException e ) {
 			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
 		}
 
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplication_localPath_invalidApplication() throws Exception {
+	public void testLoadApplicationTemplate_localPath_invalidApplication() throws Exception {
 
 		File directory = new File( "not/existing/file" );
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
 		try {
-			this.client.getManagementDelegate().loadApplication( directory.getAbsolutePath());
+			this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
 		} catch( ManagementException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplication_localPath_nullLocation() throws Exception {
+	public void testLoadApplicationTemplate_localPath_nullLocation() throws Exception {
 
 		try {
-			this.client.getManagementDelegate().loadApplication((String) null);
+			this.client.getManagementDelegate().loadApplicationTemplate((String) null);
 			Assert.fail( "An exception was expected." );
 
 		} catch( ManagementException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplication_localPath_fileLocation() throws Exception {
+	public void testLoadApplicationTemplate_localPath_fileLocation() throws Exception {
 
 		File targetDirectory = this.folder.newFile( "roboconf_app.zip" );
 		try {
-			this.client.getManagementDelegate().loadApplication( targetDirectory.getAbsolutePath());
+			this.client.getManagementDelegate().loadApplicationTemplate( targetDirectory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
 		} catch( ManagementException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplication_zip_success() throws Exception {
+	public void testLoadApplicationTemplate_zip_success() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/lamp" );
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
 		Map<String,String> entryToContent = Utils.storeDirectoryResourcesAsString( directory );
 
@@ -245,19 +266,19 @@ public class ManagementWsDelegateTest {
 		TestUtils.createZipFile( entryToContent, targetFile );
 		Assert.assertTrue( targetFile.exists());
 
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		this.client.getManagementDelegate().loadApplication( targetFile );
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( targetFile );
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
 
 	@Test
-	public void testLoadApplication_zip_alreadyExisting() throws Exception {
+	public void testLoadApplicationTemplate_zip_alreadyExisting() throws Exception {
 
-		Application app = new Application( "Legacy LAMP" );
-		this.manager.getAppNameToManagedApplication().put( app.getName(), new ManagedApplication( app, null ));
+		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
+		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
 
-		File directory = TestUtils.findTestFile( "/lamp" );
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
 		Map<String,String> entryToContent = Utils.storeDirectoryResourcesAsString( directory );
 
@@ -265,51 +286,111 @@ public class ManagementWsDelegateTest {
 		TestUtils.createZipFile( entryToContent, targetFile );
 		Assert.assertTrue( targetFile.exists());
 
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 		try {
-			this.client.getManagementDelegate().loadApplication( targetFile );
+			this.client.getManagementDelegate().loadApplicationTemplate( targetFile );
 			Assert.fail( "An exception was expected." );
 
 		} catch( ManagementException e ) {
 			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
 		}
 
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
 	}
 
 
 	@Test( expected = IOException.class )
-	public void testLoadApplication_zip_inexistingZip() throws Exception {
+	public void testLoadApplicationTemplate_zip_inexistingZip() throws Exception {
 		File targetFile = new File( "not/existing/file" );
-		this.client.getManagementDelegate().loadApplication( targetFile );
+		this.client.getManagementDelegate().loadApplicationTemplate( targetFile );
 	}
 
 
 	@Test( expected = IOException.class )
-	public void testLoadApplication_zip_nullZip() throws Exception {
-		this.client.getManagementDelegate().loadApplication((File) null );
+	public void testLoadApplicationTemplate_zip_nullZip() throws Exception {
+		this.client.getManagementDelegate().loadApplicationTemplate((File) null );
 	}
 
 
 	@Test( expected = IOException.class )
-	public void testLoadApplication_zip_zipIsDirectory() throws Exception {
+	public void testLoadApplicationTemplate_zip_zipIsDirectory() throws Exception {
 		File targetFile = new File( System.getProperty( "java.io.tmpdir" ));
-		this.client.getManagementDelegate().loadApplication( targetFile );
+		this.client.getManagementDelegate().loadApplicationTemplate( targetFile );
 	}
 
 
 	@Test
-	public void testLoadApplication_zip_invalidZip() throws Exception {
+	public void testLoadApplicationTemplate_zip_invalidZip() throws Exception {
 
 		File targetDirectory = this.folder.newFile( "roboconf_app.zip" );
 		try {
-			this.client.getManagementDelegate().loadApplication( targetDirectory );
+			this.client.getManagementDelegate().loadApplicationTemplate( targetDirectory );
 			Assert.fail( "An exception was expected." );
 
 		} catch( ManagementException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+	}
+
+
+	@Test( expected = ManagementException.class )
+	public void createApplication_IOException() throws Exception {
+		this.client.getManagementDelegate().createApplication( "app", null, null );
+	}
+
+
+	@Test
+	public void createApplication_success() throws Exception {
+
+		// Create the template
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( directory.exists());
+
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
+
+		// Create two applications
 		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		this.client.getManagementDelegate().createApplication( "app1", "Legacy LAMP", "sample" );
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+		this.client.getManagementDelegate().createApplication( "app2", "Legacy LAMP", "sample" );
+		Assert.assertEquals( 2, this.client.getManagementDelegate().listApplications().size());
+	}
+
+
+	@Test
+	public void testDeleteApplicationTemplate() throws Exception {
+
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( directory.exists());
+
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
+
+		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "sample" );
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+	}
+
+
+	@Test( expected = ManagementException.class )
+	public void testDeleteApplicationTemplate_failure() throws Exception {
+
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( directory.exists());
+
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
+
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		this.client.getManagementDelegate().createApplication( "app1", "Legacy LAMP", "sample" );
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+
+		// We cannot delete it, an application is associated with this template
+		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "sample" );
 	}
 }

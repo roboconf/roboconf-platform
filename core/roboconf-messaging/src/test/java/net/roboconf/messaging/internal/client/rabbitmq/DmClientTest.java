@@ -72,17 +72,17 @@ public class DmClientTest {
 		Assert.assertEquals( oldChannel, dmClient.channel );
 
 		Assert.assertEquals( 0, dmClient.applicationNameToConsumerTag.size());
-		dmClient.listenToAgentMessages( new Application( "app" ), ListenerCommand.START );
+		dmClient.listenToAgentMessages( new Application( "app", null ), ListenerCommand.START );
 		Assert.assertEquals( 1, dmClient.applicationNameToConsumerTag.size());
 
 		String consumerTag = dmClient.applicationNameToConsumerTag.get( "app" );
 		Assert.assertNotNull( consumerTag );
 
-		dmClient.listenToAgentMessages( new Application( "app" ), ListenerCommand.START ); // should be ignored
+		dmClient.listenToAgentMessages( new Application( "app", null ), ListenerCommand.START ); // should be ignored
 		Assert.assertEquals( 1, dmClient.applicationNameToConsumerTag.size());
 		Assert.assertEquals( consumerTag, dmClient.applicationNameToConsumerTag.get( "app" ));
 
-		dmClient.listenToAgentMessages( new Application( "app" ), ListenerCommand.STOP );
+		dmClient.listenToAgentMessages( new Application( "app", null ), ListenerCommand.STOP );
 		Assert.assertEquals( 0, dmClient.applicationNameToConsumerTag.size());
 
 		// Check the DM's neutral queue
@@ -103,7 +103,7 @@ public class DmClientTest {
 		Assert.assertNull( dmClient.neutralConsumerTag );
 
 		// Close the connection
-		dmClient.deleteMessagingServerArtifacts( new Application( "app" ));
+		dmClient.deleteMessagingServerArtifacts( new Application( "app", null ));
 		dmClient.closeConnection();
 		Assert.assertNull( dmClient.channel );
 

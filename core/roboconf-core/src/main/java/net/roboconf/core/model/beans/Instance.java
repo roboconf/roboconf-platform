@@ -293,6 +293,25 @@ public class Instance implements Serializable {
 
 
 		/**
+		 * A secured way to determine whether a string designates an existing status.
+		 * @param s a string (can be null)
+		 * @return true if it is a state name, false otheriwse
+		 */
+		public static boolean isValidState( String s ) {
+
+			boolean valid = false;
+			for( InstanceStatus status : InstanceStatus.values()) {
+				if( status.toString().equalsIgnoreCase( s )) {
+					valid = true;
+					break;
+				}
+			}
+
+			return valid;
+		}
+
+
+		/**
 		 * @return the stable
 		 */
 		public boolean isStable() {

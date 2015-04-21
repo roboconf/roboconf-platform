@@ -26,16 +26,19 @@
 package net.roboconf.dm.rest.services.internal.resources;
 
 import java.io.InputStream;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
@@ -80,7 +83,7 @@ public interface IDebugResource {
 	 * <li>It sends the message to the messaging server. The recipient is the DM itself.</li>
 	 * <li>It waits for the messaging server to propagate the message to the DM. A wait timeout can be specified by the
 	 * {@code timeout} parameter (default is 1000ms, max
-	 * {@value net.roboconf.dm.rest.services.internal.resources.DebugResource#MAXIMUM_TIMEOUT}ms). Then:
+	 * {@value net.roboconf.dm.rest.services.internal.resources.impl.DebugResource#MAXIMUM_TIMEOUT}ms). Then:
 	 * <ul>
 	 * <li>If the message is received before the timeout expires, a positive {@code 200 OK} response is
 	 * returned.</li>
@@ -110,7 +113,7 @@ public interface IDebugResource {
 	 * <li>It sends the 'PING' message to the specified {@code root-instance-name}.</li>
 	 * <li>It waits for the agent to respond a 'PONG' to the DM. A wait timeout can be specified by the {@code timeout}
 	 * parameter (default is 1000ms, max
-	 * {@value net.roboconf.dm.rest.services.internal.resources.DebugResource#MAXIMUM_TIMEOUT}ms). Then:
+	 * {@value net.roboconf.dm.rest.services.internal.resources.impl.DebugResource#MAXIMUM_TIMEOUT}ms). Then:
 	 * <ul>
 	 * <li>If the message is received before the timeout expires, a positive {@code 200 OK} response is
 	 * returned.</li>
@@ -141,9 +144,10 @@ public interface IDebugResource {
 	 * The diagnostic is based on the information hold by the DM, and not by the agent.
 	 * </p>
 	 *
-	 * @return a response
+	 * @return a response (with a diagnostic in case of code 200)
 	 */
 	@GET
+	@Produces( MediaType.APPLICATION_JSON )
 	@Path("/diagnose-instance")
 	Response diagnoseInstance( @QueryParam("application-name") String applicationName,
 	                           @QueryParam("instance-path") String instancePath );
@@ -155,9 +159,10 @@ public interface IDebugResource {
 	 * The diagnostic is based on the information hold by the DM, and not by the agent.
 	 * </p>
 	 *
-	 * @return a response
+	 * @return a list of diagnostics (one per instance in the application)
 	 */
 	@GET
+	@Produces( MediaType.APPLICATION_JSON )
 	@Path("/diagnose-application")
-	Response diagnoseApplication( @QueryParam("application-name") String applicationName );
+	List<Diagnostic> diagnoseApplication( @QueryParam("application-name") String applicationName );
 }

@@ -26,15 +26,14 @@
 package net.roboconf.dm.internal.utils;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
+import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 
@@ -43,8 +42,9 @@ import net.roboconf.dm.management.ManagedApplication;
  */
 public final class ConfigurationUtils {
 
+	public static final String TEMPLATES = "application-templates";
 	public static final String APPLICATIONS = "applications";
-	public static final String INSTANCES = "instances";
+	public static final String INSTANCES_FILE = "current.instances";
 
 
 	/**
@@ -56,34 +56,32 @@ public final class ConfigurationUtils {
 
 
 	/**
-	 * Given a configuration directory, this method finds the application directories.
-	 * @param configurationDirectory the configuration directory
-	 * @return a non-null list
-	 */
-	public static List<File> findApplicationDirectories( File configurationDirectory ) {
-
-		List<File> result = new ArrayList<File> ();
-		File[] files = new File( configurationDirectory, APPLICATIONS ).listFiles( new FileFilter() {
-			@Override
-			public boolean accept( File f ) {
-				return f.isDirectory();
-			}
-		});
-
-		if( files != null )
-			result.addAll( Arrays.asList( files ));
-
-		return result;
-	}
-
-
-	/**
 	 * @param applicationName an application name
 	 * @param configurationDirectory the configuration directory
 	 * @return a non-null file that should point to an application directory
 	 */
-	public static File findApplicationdirectory( String applicationName, File configurationDirectory ) {
+	public static File findApplicationDirectory( String applicationName, File configurationDirectory ) {
 		return new File( configurationDirectory, APPLICATIONS + "/" + applicationName );
+	}
+
+
+	/**
+	 * Finds the directory that contains the files for an application template.
+	 * @param tpl an application template
+	 * @param configurationDirectory the DM's configuration directory
+	 * @return a non-null file that should point to a directory
+	 */
+	public static File findTemplateDirectory( ApplicationTemplate tpl, File configurationDirectory ) {
+
+		StringBuilder sb = new StringBuilder( TEMPLATES );
+		sb.append( "/" );
+		sb.append( tpl.getName());
+		if( ! Utils.isEmptyOrWhitespaces( tpl.getQualifier())) {
+			sb.append( " - " );
+			sb.append( tpl.getQualifier());
+		}
+
+		return new File( configurationDirectory, sb.toString());
 	}
 
 
@@ -96,7 +94,8 @@ public final class ConfigurationUtils {
 	public static void saveInstances( ManagedApplication ma, File configurationDirectory ) {
 
 		Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
-		File targetFile = new File( configurationDirectory, INSTANCES + "/" + ma.getName() + ".instances" );
+		String relativeFilePath = findInstancesRelativeLocation( ma.getName());
+		File targetFile = new File( configurationDirectory, relativeFilePath );
 		try {
 			Utils.createDirectory( targetFile.getParentFile());
 			RuntimeModelIo.writeInstances( targetFile, ma.getApplication().getRootInstances());
@@ -109,36 +108,40 @@ public final class ConfigurationUtils {
 
 
 	/**
-	 * Deletes the instances definition for a given application.
-	 * @param applicationName the application name
-	 * @param configurationDirectory the configuration directory
-	 */
-	public static void deleteInstancesFile( String applicationName, File configurationDirectory ) {
-
-		File targetFile = new File( configurationDirectory, INSTANCES + "/" + applicationName + ".instances" );
-		if( targetFile.exists()
-				&& ! targetFile.delete()) {
-			Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
-			logger.warning( "Instance file " + targetFile + " could not be deleted." );
-		}
-	}
-
-
-	/**
 	 * Restores instances and set them in the application.
 	 * @param ma the application
 	 * @param configurationDirectory the configuration directory
 	 */
 	public static InstancesLoadResult restoreInstances( ManagedApplication ma, File configurationDirectory ) {
 
-		File instDirectory = new File( configurationDirectory, INSTANCES );
-		File sourceFile = new File( instDirectory, ma.getName() + ".instances" );
+		String relativeFilePath = findInstancesRelativeLocation( ma.getName());
+		File sourceFile = new File( configurationDirectory, relativeFilePath );
+		Graphs graphs = ma.getApplication().getTemplate().getGraphs();
 		InstancesLoadResult result;
 		if( sourceFile.exists())
-			result = RuntimeModelIo.loadInstances( sourceFile, instDirectory, ma.getApplication().getGraphs(), ma.getApplication().getName());
+			result = RuntimeModelIo.loadInstances( sourceFile, sourceFile.getParentFile(), graphs, ma.getApplication().getName());
 		else
 			result = new InstancesLoadResult();
 
 		return result;
+	}
+
+
+	/**
+	 * Finds the relative file path of the file that stores instances for a given application.
+	 * @param appName the application's name
+	 * @return a non-null string
+	 */
+	public static String findInstancesRelativeLocation( String appName ) {
+
+		StringBuilder sb = new StringBuilder( APPLICATIONS );
+		sb.append( "/" );
+		sb.append( appName );
+		sb.append( "/" );
+		sb.append( Constants.PROJECT_DIR_INSTANCES );
+		sb.append( "/" );
+		sb.append( INSTANCES_FILE );
+
+		return sb.toString();
 	}
 }

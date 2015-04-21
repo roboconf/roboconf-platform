@@ -30,6 +30,7 @@ import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 import java.io.File;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -87,7 +88,7 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		File resourcesDirectory = TestUtils.findTestFile( "/simple", getClass());
+		File resourcesDirectory = TestUtils.findApplicationDirectory( "simple" );
 		String appLocation = resourcesDirectory.getAbsolutePath();
 		return OptionUtils.combine(
 				super.config(),
@@ -104,9 +105,10 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		ManagedApplication ma = this.manager.loadNewApplication( new File( appLocation ));
+		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
 
 		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
 		Instance app = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/App VM/App" );

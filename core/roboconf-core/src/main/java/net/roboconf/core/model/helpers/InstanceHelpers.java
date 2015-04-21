@@ -38,7 +38,9 @@ import java.util.Set;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
+import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 
@@ -200,7 +202,7 @@ public final class InstanceHelpers {
 	 * @param instancePath the instance path
 	 * @return an instance, or null if it was not found
 	 */
-	public static Instance findInstanceByPath( Application application, String instancePath ) {
+	public static Instance findInstanceByPath( AbstractApplication application, String instancePath ) {
 
 		Collection<Instance> currentList = new ArrayList<Instance> ();
 		if( application != null )
@@ -246,7 +248,7 @@ public final class InstanceHelpers {
 	 */
 	public static Instance findInstanceByPath( Instance rootInstance, String instancePath ) {
 
-		Application tempApplication = new Application();
+		Application tempApplication = new Application( new ApplicationTemplate());
 		if( rootInstance != null )
 			tempApplication.getRootInstances().add( rootInstance );
 
@@ -260,7 +262,7 @@ public final class InstanceHelpers {
 	 * @param componentName a component name (not null)
 	 * @return a non-null list of instances
 	 */
-	public static List<Instance> findInstancesByComponentName( Application application, String componentName ) {
+	public static List<Instance> findInstancesByComponentName( AbstractApplication application, String componentName ) {
 
 		List<Instance> result = new ArrayList<Instance> ();
 		for( Instance inst : getAllInstances( application )) {
@@ -338,7 +340,7 @@ public final class InstanceHelpers {
 	 * from the root instances to the bottom leaves.
 	 * </p>
 	 */
-	public static List<Instance> getAllInstances( Application application ) {
+	public static List<Instance> getAllInstances( AbstractApplication application ) {
 
 		List<Instance> result = new ArrayList<Instance> ();
 		for( Instance instance : application.getRootInstances())
@@ -367,7 +369,7 @@ public final class InstanceHelpers {
 	 * @param childInstance the child instance (not null)
 	 * @return true if the child instance could be inserted, false otherwise
 	 */
-	public static boolean tryToInsertChildInstance( Application application, Instance parentInstance, Instance childInstance ) {
+	public static boolean tryToInsertChildInstance( AbstractApplication application, Instance parentInstance, Instance childInstance ) {
 
 		boolean success = false;
 		Collection<Instance> list = parentInstance == null ? application.getRootInstances() : parentInstance.getChildren();

@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.lifecycle.AbstractLifeCycleManager;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
@@ -298,7 +298,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			if( msg.getOverridenExports() != null )
 				newInstance.overriddenExports.putAll( msg.getOverridenExports());
 
-			Application tempApp = new Application( "temp app" );
+			ApplicationTemplate tempApp = new ApplicationTemplate( "temp app" );
 			tempApp.getRootInstances().add( parentInstance );
 			if( ! InstanceHelpers.tryToInsertChildInstance( tempApp, parentInstance, newInstance )) {
 				this.logger.severe( "The new '" + msg.getInstanceName() + "' instance could not be inserted into the local model." );

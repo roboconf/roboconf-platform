@@ -50,5 +50,11 @@ public class BlockInstanceOfTest {
 		block.getInnerBlocks().add( new BlockProperty( def, ParsingConstants.PROPERTY_INSTANCE_NAME, "foo" ));
 		Assert.assertTrue( block.toString().contains( "my-component" ));
 		Assert.assertTrue( block.toString().contains( "foo" ));
+		Assert.assertTrue( block.toString().contains( " as " ));
+
+		block.getInnerBlocks().clear();
+		block.getInnerBlocks().add( new BlockProperty( def, ParsingConstants.PROPERTY_INSTANCE_NAME, "  " ));
+		Assert.assertTrue( block.toString().contains( "my-component" ));
+		Assert.assertFalse( block.toString().contains( " as " ));
 	}
 }

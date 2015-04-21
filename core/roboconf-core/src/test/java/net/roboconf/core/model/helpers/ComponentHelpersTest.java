@@ -33,8 +33,9 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.ComplexApplicationFactory1;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -73,7 +74,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindComponentFrom() {
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		Component comp = app.getTomcatVm().getComponent();
 
 		Assert.assertNull( ComponentHelpers.findComponentFrom( comp, "inexisting" ));
@@ -124,7 +125,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllComponents_simple() {
 
-		Application app = new Application();
+		ApplicationTemplate app = new ApplicationTemplate();
 		Assert.assertEquals( 0, ComponentHelpers.findAllComponents( app ).size());
 
 		Graphs graphs = new Graphs();
@@ -146,15 +147,27 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllComponents_complex1() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 		Assert.assertEquals( 10, ComponentHelpers.findAllComponents( app ).size());
+	}
+
+
+	@Test
+	public void testFindAllComponents_appInstance() {
+
+		ApplicationTemplate tpl = ComplexApplicationFactory1.newApplication();
+		Application app = new Application( tpl );
+		Assert.assertEquals( 10, ComponentHelpers.findAllComponents( app ).size());
+
+		app = new Application( null );
+		Assert.assertEquals( 0, ComponentHelpers.findAllComponents( app ).size());
 	}
 
 
 	@Test
 	public void testFindAllComponents_extended() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 		app.getGraphs().getRootComponents().clear();
 
 		Component root1 = new Component( "root1" ).installerName( Constants.TARGET_INSTALLER );
@@ -184,7 +197,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllChildren_complex1() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 		Component root1 = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
 		Assert.assertNotNull( root1 );
 		Assert.assertEquals( 1, root1.getChildren().size());
@@ -236,7 +249,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllChildren_testApp() {
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 
 		Collection<Component> children = ComponentHelpers.findAllChildren( app.getTomcat().getComponent());
 		Assert.assertEquals( 1, children.size());
@@ -273,7 +286,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindFacets() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 		Component root1 = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
 		Assert.assertNotNull( root1 );
 		Assert.assertEquals( 1, root1.getFacets().size());
@@ -326,7 +339,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllFacets() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 		Component root1 = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
 		Assert.assertNotNull( root1 );
 
@@ -366,7 +379,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllExtendedComponents_complex1() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 		Component tomcat = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.TOMCAT );
 		Assert.assertNotNull( tomcat );
 
@@ -418,7 +431,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllExtendingComponents_complex1() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 		Component tomcat8 = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.TOMCAT_8 );
 		Assert.assertNotNull( tomcat8 );
 
@@ -465,7 +478,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllAncestors_testApp() {
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 
 		Collection<Component> ancestors = ComponentHelpers.findAllAncestors( app.getTomcat().getComponent());
 		Assert.assertEquals( 1, ancestors.size());
@@ -489,7 +502,7 @@ public class ComponentHelpersTest {
 	@Test
 	public void testFindAllAncestors_complex1() {
 
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 
 		Component root1 = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
 		Assert.assertNotNull( root1 );
@@ -648,7 +661,7 @@ public class ComponentHelpersTest {
 
 	@Test
 	public void testFindComponentDependenciesFor_namesOnly() {
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 
 		// Root with no dependency
 		Component comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
@@ -691,7 +704,7 @@ public class ComponentHelpersTest {
 
 	@Test
 	public void testFindComponentDependenciesFor_resolvedComponents() {
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 
 		// Root with no dependency
 		Component comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );
@@ -738,7 +751,7 @@ public class ComponentHelpersTest {
 
 	@Test
 	public void testFindComponentsThatDependOn() {
-		Application app = ComplexApplicationFactory1.newApplication();
+		ApplicationTemplate app = ComplexApplicationFactory1.newApplication();
 
 		// Root with no dependency
 		Component comp = ComponentHelpers.findComponent( app.getGraphs(), ComplexApplicationFactory1.ROOT_1 );

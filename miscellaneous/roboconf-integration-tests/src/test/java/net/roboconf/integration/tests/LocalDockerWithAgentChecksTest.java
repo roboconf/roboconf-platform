@@ -41,6 +41,7 @@ import javax.inject.Inject;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -116,7 +117,7 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		Logger logger = Logger.getLogger( getClass().getName());
 
 		// Indicate the location of the application to deploy
-		File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
+		File resourcesDirectory = TestUtils.findApplicationDirectory( "lamp" );
 		String appLocation = resourcesDirectory.getAbsolutePath();
 		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
 
@@ -179,9 +180,10 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		ManagedApplication ma = this.manager.loadNewApplication( new File( appLocation ));
+		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
 
 		// Write Docker properties
 		File appDir = new File( dir, "applications/Legacy LAMP/graph" );

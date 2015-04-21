@@ -170,7 +170,7 @@
 					<version>2.4.0</version>
 					<extensions>true</extensions>
 				</plugin>
-	
+				
 				<!-- Required for Coveralls! -->
 				<plugin>
 					<groupId>org.eluder.coveralls</groupId>

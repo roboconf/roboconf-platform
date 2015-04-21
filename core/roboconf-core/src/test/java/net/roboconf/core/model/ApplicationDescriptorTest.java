@@ -29,6 +29,8 @@ import java.io.File;
 import java.util.UUID;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,32 +57,27 @@ public class ApplicationDescriptorTest {
 		desc1.setName( UUID.randomUUID().toString());
 		saveAndCompare( desc1 );
 
-		desc1.setQualifier( UUID.randomUUID().toString());
+		desc1.setTemplateName( "my-tpl" );
 		saveAndCompare( desc1 );
 
-		desc1.setDslId( UUID.randomUUID().toString());
-		saveAndCompare( desc1 );
-
-		desc1.setGraphEntryPoint( UUID.randomUUID().toString());
-		saveAndCompare( desc1 );
-
-		desc1.setInstanceEntryPoint( UUID.randomUUID().toString());
+		desc1.setTemplateQualifier( "version 1" );
 		saveAndCompare( desc1 );
 	}
 
 
-	private void saveAndCompare( ApplicationDescriptor desc1 ) throws Exception {
+	private void saveAndCompare( ApplicationDescriptor desc ) throws Exception {
 
 		File f = this.folder.newFile();
 
-		ApplicationDescriptor.save( f, desc1 );
+		ApplicationTemplate tpl = new ApplicationTemplate( desc.getTemplateName()).qualifier( desc.getTemplateQualifier());
+		Application app = new Application( desc.getName(), tpl ).description( desc.getDescription());
+
+		ApplicationDescriptor.save( f, app );
 		ApplicationDescriptor desc2 = ApplicationDescriptor.load( f );
 
-		Assert.assertEquals( desc1.getDescription(), desc2.getDescription());
-		Assert.assertEquals( desc1.getName(), desc2.getName());
-		Assert.assertEquals( desc1.getQualifier(), desc2.getQualifier());
-		Assert.assertEquals( desc1.getDslId(), desc2.getDslId());
-		Assert.assertEquals( desc1.getGraphEntryPoint(), desc2.getGraphEntryPoint());
-		Assert.assertEquals( desc1.getInstanceEntryPoint(), desc2.getInstanceEntryPoint());
+		Assert.assertEquals( desc.getDescription(), desc2.getDescription());
+		Assert.assertEquals( desc.getName(), desc2.getName());
+		Assert.assertEquals( desc.getTemplateName(), desc2.getTemplateName());
+		Assert.assertEquals( desc.getTemplateQualifier(), desc2.getTemplateQualifier());
 	}
 }

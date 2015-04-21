@@ -27,7 +27,7 @@ package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
@@ -71,7 +71,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testSetMessagingClient() throws Exception {
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// Initialize the model
@@ -202,7 +202,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, inst.getStatus());
 
 		// Same thing with a local model
-		processor.scopedInstance = new TestApplication().getMySqlVm();
+		processor.scopedInstance = new TestApplicationTemplate().getMySqlVm();
 		processor.processMessage( new MsgCmdChangeInstanceState( inst, InstanceStatus.DEPLOYED_STARTED ));
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, inst.getStatus());
 	}
@@ -223,7 +223,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		app.getMySql().getComponent().setInstallerName( "unknown installer" );
 
 		// Initialize the model
@@ -242,7 +242,7 @@ public class AgentMessageProcessor_StateChangeTest {
 	public void testStateChangeWithTransitiveState() {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getMySqlVm();
 
 		// Unstable (transitive) states => no state change
@@ -279,7 +279,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
@@ -325,7 +325,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
@@ -371,7 +371,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
@@ -420,7 +420,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());

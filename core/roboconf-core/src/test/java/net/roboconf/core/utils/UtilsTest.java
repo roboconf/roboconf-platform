@@ -47,6 +47,7 @@ import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.Utils.DirectoryFileFilter;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -817,5 +818,34 @@ public class UtilsTest {
 		Assert.assertEquals( "Toto", Utils.capitalize( "Toto" ));
 		Assert.assertEquals( "Toto", Utils.capitalize( "tOTo" ));
 		Assert.assertEquals( "Toto oops", Utils.capitalize( "tOTo oops" ));
+	}
+
+
+	@Test
+	public void testDirectoryFileFilter() throws Exception {
+
+		DirectoryFileFilter filter = new DirectoryFileFilter();
+		Assert.assertTrue( filter.accept( this.folder.newFolder()));
+		Assert.assertFalse( filter.accept( this.folder.newFile()));
+		Assert.assertFalse( filter.accept( new File( "inexisting" )));
+	}
+
+
+	@Test
+	public void testListDirectories() throws Exception {
+
+		File root = new File( "inexisting" );
+		Assert.assertEquals( 0, Utils.listDirectories( root ).size());
+
+		root = this.folder.newFolder();
+		Assert.assertEquals( 0, Utils.listDirectories( root ).size());
+
+		Assert.assertTrue( new File( root, "toto.txt" ).createNewFile());
+		Assert.assertTrue( new File( root, "dir" ).mkdir());
+		Assert.assertTrue( new File( root, "dir/dir1" ).mkdir());
+
+		List<File> directories = Utils.listDirectories( root );
+		Assert.assertEquals( 1, directories.size());
+		Assert.assertEquals( "dir", directories.get( 0 ).getName());
 	}
 }

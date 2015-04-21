@@ -30,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -39,13 +40,11 @@ import net.roboconf.core.utils.Utils;
 public class ApplicationDescriptor {
 
 	public static final String APPLICATION_NAME = "application-name";
-	public static final String APPLICATION_QUALIFIER = "application-qualifier";
 	public static final String APPLICATION_DESCRIPTION = "application-description";
-	public static final String APPLICATION_DSL_ID = "application-dsl-id";
-	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
-	public static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
+	public static final String APPLICATION_TPL_NAME = "template-name";
+	public static final String APPLICATION_TPL_QUALIFIER = "template-qualifier";
 
-	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId;
+	private String name, description, templateName, templateQualifier;
 
 
 	/**
@@ -77,60 +76,31 @@ public class ApplicationDescriptor {
 	}
 
 	/**
-	 * @return the qualifier
+	 * @return the templateName
 	 */
-	public String getQualifier() {
-		return this.qualifier;
+	public String getTemplateName() {
+		return this.templateName;
 	}
 
 	/**
-	 * @param qualifier the qualifier to set
+	 * @param templateName the templateName to set
 	 */
-	public void setQualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public void setTemplateName( String templateName ) {
+		this.templateName = templateName;
 	}
 
 	/**
-	 * @return the graphEntryPoint
+	 * @return the templateQualifier
 	 */
-	public String getGraphEntryPoint() {
-		return this.graphEntryPoint;
+	public String getTemplateQualifier() {
+		return this.templateQualifier;
 	}
 
 	/**
-	 * @param graphEntryPoint the graphEntryPoint to set
+	 * @param templateQualifier the templateQualifier to set
 	 */
-	public void setGraphEntryPoint( String graphEntryPoint ) {
-		this.graphEntryPoint = graphEntryPoint;
-	}
-
-	/**
-	 * @return the instanceEntryPoint
-	 */
-	public String getInstanceEntryPoint() {
-		return this.instanceEntryPoint;
-	}
-
-	/**
-	 * @param instanceEntryPoint the instanceEntryPoint to set
-	 */
-	public void setInstanceEntryPoint( String instanceEntryPoint ) {
-		this.instanceEntryPoint = instanceEntryPoint;
-	}
-
-
-	/**
-	 * @return the dslId
-	 */
-	public String getDslId() {
-		return this.dslId;
-	}
-
-	/**
-	 * @param dslId the dslId to set
-	 */
-	public void setDslId( String dslId ) {
-		this.dslId = dslId;
+	public void setTemplateQualifier( String templateQualifier ) {
+		this.templateQualifier = templateQualifier;
 	}
 
 	/**
@@ -143,10 +113,8 @@ public class ApplicationDescriptor {
 		ApplicationDescriptor result = new ApplicationDescriptor();
 		result.name = properties.getProperty( APPLICATION_NAME, null );
 		result.description = properties.getProperty( APPLICATION_DESCRIPTION, null );
-		result.qualifier = properties.getProperty( APPLICATION_QUALIFIER, null );
-		result.graphEntryPoint = properties.getProperty( APPLICATION_GRAPH_EP, null );
-		result.instanceEntryPoint = properties.getProperty( APPLICATION_INSTANCES_EP, null );
-		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
+		result.templateName = properties.getProperty( APPLICATION_TPL_NAME, null );
+		result.templateQualifier = properties.getProperty( APPLICATION_TPL_QUALIFIER, null );
 
 		return result;
 	}
@@ -161,9 +129,6 @@ public class ApplicationDescriptor {
 	public static ApplicationDescriptor load( File f ) throws IOException {
 
 		Properties properties = Utils.readPropertiesFile( f );
-		if( properties.get( "fail.read" ) != null )
-			throw new IOException( "This is for test purpose..." );
-
 		return load( properties );
 	}
 
@@ -171,29 +136,25 @@ public class ApplicationDescriptor {
 	/**
 	 * Saves an application descriptor.
 	 * @param f the file where the properties will be saved
-	 * @param descriptor an application descriptor (not null)
+	 * @param app an application (not null)
 	 * @throws IOException if the file could not be written
 	 */
-	public static void save( File f, ApplicationDescriptor descriptor ) throws IOException {
+	public static void save( File f, Application app ) throws IOException {
 
 		Properties properties = new Properties();
-		if( descriptor.name != null )
-			properties.setProperty( APPLICATION_NAME, descriptor.name );
+		if( ! Utils.isEmptyOrWhitespaces( app.getName()))
+			properties.setProperty( APPLICATION_NAME, app.getName());
 
-		if( descriptor.qualifier != null )
-			properties.setProperty( APPLICATION_QUALIFIER, descriptor.qualifier );
+		if( ! Utils.isEmptyOrWhitespaces( app.getDescription()))
+			properties.setProperty( APPLICATION_DESCRIPTION, app.getDescription());
 
-		if( descriptor.dslId != null )
-			properties.setProperty( APPLICATION_DSL_ID, descriptor.dslId );
+		if( app.getTemplate() != null ) {
+			if( ! Utils.isEmptyOrWhitespaces( app.getTemplate().getName()))
+				properties.setProperty( APPLICATION_TPL_NAME, app.getTemplate().getName());
 
-		if( descriptor.description != null )
-			properties.setProperty( APPLICATION_DESCRIPTION, descriptor.description );
-
-		if( descriptor.graphEntryPoint != null )
-			properties.setProperty( APPLICATION_GRAPH_EP, descriptor.graphEntryPoint );
-
-		if( descriptor.instanceEntryPoint != null )
-			properties.setProperty( APPLICATION_INSTANCES_EP, descriptor.instanceEntryPoint );
+			if( ! Utils.isEmptyOrWhitespaces( app.getTemplate().getQualifier()))
+				properties.setProperty( APPLICATION_TPL_QUALIFIER, app.getTemplate().getQualifier());
+		}
 
 		FileOutputStream fos = null;
 		try {

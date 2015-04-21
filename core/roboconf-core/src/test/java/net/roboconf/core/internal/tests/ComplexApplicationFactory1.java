@@ -27,7 +27,7 @@ package net.roboconf.core.internal.tests;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.dsl.ParsingConstants;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -68,9 +68,9 @@ public class ComplexApplicationFactory1 {
 	 * Creates an application with component inheritance and facets.
 	 * @return an application
 	 */
-	public static Application newApplication() {
+	public static ApplicationTemplate newApplication() {
 
-		Application app = new Application( "name" ).qualifier( "test" ).dslId( ParsingConstants.DSL_VERSION );
+		ApplicationTemplate app = new ApplicationTemplate( "name" ).qualifier( "test" ).dslId( ParsingConstants.DSL_VERSION );
 		Graphs graph = new Graphs();
 		app.setGraphs( graph );
 

@@ -82,8 +82,8 @@ public class RulesParserTest {
 	@Test
 	public void testParsing_inexsting() throws Exception {
 
-		Application app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, new File( "inexisting" ));
+		Application app = new TestApplication().directory( new File( "inexisting" ));
+		ManagedApplication ma = new ManagedApplication( app );
 		Map<String,AutonomicRule> map = RulesParser.parseRules( ma );
 		Assert.assertEquals( 0, map.size());
 	}

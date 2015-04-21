@@ -43,7 +43,7 @@ import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.converters.FromInstanceDefinition;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -374,7 +374,7 @@ public class RuntimeModelValidatorTest {
 	@Test
 	public void testApplication() {
 
-		Application app = new Application();
+		ApplicationTemplate app = new ApplicationTemplate();
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
@@ -406,7 +406,7 @@ public class RuntimeModelValidatorTest {
 	@Test
 	public void testApplicationDescriptor() {
 
-		ApplicationDescriptor desc = new ApplicationDescriptor();
+		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( desc ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, iterator.next().getErrorCode());
@@ -525,7 +525,7 @@ public class RuntimeModelValidatorTest {
 		Instance vmInstance2 = new Instance("vm2" ).component( vmComponent1 );
 		InstanceHelpers.insertChild( vmInstance1, vmInstance2 );
 
-		Application app = new Application( "app" ).qualifier( "snapshot" ).graphs( graphs );
+		ApplicationTemplate app = new ApplicationTemplate( "app" ).qualifier( "snapshot" ).graphs( graphs );
 		app.getRootInstances().add( vmInstance1 );
 
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();
@@ -564,7 +564,7 @@ public class RuntimeModelValidatorTest {
 		Instance tomcatInstance = new Instance("tomcat" ).component( tomcatComponent );
 		InstanceHelpers.insertChild( vmInstance, tomcatInstance );
 
-		Application app = new Application( "app" ).qualifier( "snapshot" ).graphs( graphs );
+		ApplicationTemplate app = new ApplicationTemplate( "app" ).qualifier( "snapshot" ).graphs( graphs );
 		app.getRootInstances().add( vmInstance );
 
 		Iterator<ModelError> iterator = RuntimeModelValidator.validate( app ).iterator();

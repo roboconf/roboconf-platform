@@ -34,9 +34,11 @@ import java.util.List;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.dm.rest.client.WsClient;
+import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
@@ -87,7 +89,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
+		File resourcesDirectory = TestUtils.findApplicationDirectory( "lamp" );
 		String appLocation = resourcesDirectory.getAbsolutePath();
 		String jerseyVersion = MavenUtils.getArtifactVersion( "com.sun.jersey", "jersey-client" );
 
@@ -149,23 +151,32 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		Assert.assertNotNull( appLocation );
 		Assert.assertTrue( new File( appLocation ).exists());
 
-		// Load an application
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		this.client.getManagementDelegate().loadApplication( appLocation );
+		// Load an application template
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( appLocation );
+		List<ApplicationTemplate> templates = this.client.getManagementDelegate().listApplicationTemplates();
+		Assert.assertEquals( 1, templates.size());
 
-		// Test the applications listing
+		ApplicationTemplate tpl = templates.get( 0 );
+		Assert.assertEquals( "Legacy LAMP", tpl.getName());
+		Assert.assertEquals( "sample", tpl.getQualifier());
+
+		// Create an application
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+		this.client.getManagementDelegate().createApplication( "app1", tpl.getName(), tpl.getQualifier());
 		List<Application> apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertEquals( 1, apps.size());
 
 		Application receivedApp = apps.get( 0 );
-		Assert.assertEquals( "Legacy LAMP", receivedApp.getName());
-		Assert.assertEquals( "sample", receivedApp.getQualifier());
+		Assert.assertEquals( "app1", receivedApp.getName());
+		Assert.assertEquals( "Legacy LAMP", receivedApp.getTemplate().getName());
+		Assert.assertEquals( "sample", receivedApp.getTemplate().getQualifier());
 
 		// Check the JSon serialization
-		URI targetUri = URI.create( ROOT_URL + "/app/Legacy%20LAMP/children?instance-path=/Apache%20VM" );
+		URI targetUri = URI.create( ROOT_URL + "/app/app1/children?instance-path=/Apache%20VM" );
 		String s = TestUtils.readUriContent( targetUri );
 		Assert.assertEquals(
-				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"script\"}}]",
+				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
 				s );
 
 		// Test the debug resources.
@@ -176,20 +187,20 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 10000L ));
 
 		// Deploy and start the "Apache VM" root instance.
-		this.client.getApplicationDelegate().deployAndStartAll( "Legacy LAMP", "/Apache VM" );
+		this.client.getApplicationDelegate().deployAndStartAll( "app1", "/Apache VM" );
 		Thread.sleep( 300L );
 
 		// Ping the "Apache VM" root instance.
-		Assert.assertEquals( "Has received ping response TEST from agent Apache VM",
-				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "Legacy LAMP", "Apache VM", "TEST", 10000L ));
+		Assert.assertEquals(
+				"Has received ping response TEST from agent Apache VM",
+				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "app1", "Apache VM", "TEST", 10000L ));
 
 		// Diagnose the "Legacy LAMP" application.
-		Application diagnosedApplication = this.client.getDebugDelegate().diagnoseApplication( "Legacy LAMP" );
-		Assert.assertEquals( "Legacy LAMP", diagnosedApplication.getName());
+		List<Instance> allInstances = this.client.getApplicationDelegate().listChildrenInstances( "app1", null, true );
+		Assert.assertEquals( 6, allInstances.size());
 
-		// Diagnose the "Apache VM" instance.
-		Instance diagnosedInstance = this.client.getDebugDelegate().diagnoseInstance( "Legacy LAMP", "Apache VM" );
-		Assert.assertEquals( "Apache VM", diagnosedInstance.getName());
-
+		List<Diagnostic> diags = this.client.getDebugDelegate().diagnoseApplication( "app1" );
+		Assert.assertNotNull( diags );
+		Assert.assertEquals( 6, diags.size());
 	}
 }

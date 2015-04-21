@@ -45,6 +45,8 @@ public class TestClientDm implements IDmClient {
 
 	public final List<Message> sentMessages = new ArrayList<Message> ();
 	public AtomicBoolean connected = new AtomicBoolean( false );
+	public AtomicBoolean failClosingConnection = new AtomicBoolean( false );
+	public AtomicBoolean failListeningToTheDm = new AtomicBoolean( false );
 	public AtomicBoolean failMessageSending = new AtomicBoolean( false );
 
 	private String messageServerIp, messageServerUsername, messageServerPassword;
@@ -60,6 +62,9 @@ public class TestClientDm implements IDmClient {
 
 	@Override
 	public void closeConnection() throws IOException {
+		if( this.failClosingConnection.get())
+			throw new IOException( "Closing the connection was configured to fail." );
+
 		this.connected.set( false );
 	}
 
@@ -95,7 +100,9 @@ public class TestClientDm implements IDmClient {
 
 	@Override
 	public void listenToTheDm( ListenerCommand command ) throws IOException {
-		// nothing, we do not care
+
+		if( this.failListeningToTheDm.get())
+			throw new IOException( "Listening to the DM was configured to fail." );
 	}
 
 	@Override

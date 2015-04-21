@@ -61,7 +61,8 @@ public class ManagedApplicationTest {
 
 		File f = this.folder.newFolder( "Roboconf_test" );
 		this.app = new TestApplication();
-		this.ma = new ManagedApplication( this.app, f );
+		this.app.setDirectory( f );
+		this.ma = new ManagedApplication( this.app );
 	}
 
 
@@ -72,13 +73,11 @@ public class ManagedApplicationTest {
 
 
 	@Test
-	public void testGetName() {
+	public void testShortcuts() {
 
-		ManagedApplication ma = new ManagedApplication( null, null );
-		Assert.assertNull( ma.getName());
-
-		ma = new ManagedApplication( this.app, null );
-		Assert.assertEquals( this.app.getName(), ma.getName());
+		Assert.assertEquals( this.app.getName(), this.ma.getName());
+		Assert.assertEquals( this.ma.getApplication().getTemplate().getGraphs(), this.ma.getGraphs());
+		Assert.assertEquals( this.ma.getApplication().getTemplate().getDirectory(), this.ma.getTemplateDirectory());
 	}
 
 

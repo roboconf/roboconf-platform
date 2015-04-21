@@ -78,7 +78,7 @@ public class RabbitMqUtilsTest {
 
 	@Test
 	public void testBuildExchangeName_Application() {
-		Application app = new Application( "my-app" );
+		Application app = new Application( "my-app", null );
 
 		Assert.assertNotNull( RabbitMqUtils.buildExchangeName( app, true ));
 		Assert.assertNotNull( RabbitMqUtils.buildExchangeName( app, false ));
