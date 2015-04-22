@@ -285,9 +285,9 @@ public class RecipesValidatorTest {
 		File targetFile = new File( directory, "roboconf_toto/manifests/start.pp" );
 		Utils.writeStringInto( "Not a valid puppet class...", targetFile );
 
-		// We only parse what we know...
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
-		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.REC_PUPPET_SYNTAX_ERROR, errors.get( 0 ).getErrorCode());
 	}
 
 
@@ -308,5 +308,25 @@ public class RecipesValidatorTest {
 		// We only parse what we know...
 		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
 		Assert.assertEquals( 0, errors.size());
+	}
+
+
+	@Test
+	public void testPuppetValidation_invalidSyntax() throws Exception {
+		File appDir = this.folder.newFolder();
+
+		Component comp = new Component( "toto" ).installerName( "puppet" );
+
+		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
+		Assert.assertTrue( new File( directory, "roboconf_toto/manifests" ).mkdirs());
+
+		File targetFile = new File( directory, "roboconf_toto/manifests/start.pp" );
+		File inputFile = TestUtils.findTestFile( "/recipes/invalid-syntax.pp" );
+		Utils.copyStream( inputFile, targetFile );
+
+		// We only parse what we know...
+		List<ModelError> errors = RecipesValidator.validateComponentRecipes( appDir, comp );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.REC_PUPPET_SYNTAX_ERROR, errors.get( 0 ).getErrorCode());
 	}
 }

@@ -68,7 +68,9 @@ public final class ProgramUtils {
 		logger.fine( "Executing command: " + Arrays.toString( command ));
 
 		ProcessBuilder pb = new ProcessBuilder( command );
-		if(workingDir != null) pb.directory(workingDir);
+		if( workingDir != null )
+			pb.directory(workingDir);
+
 		Map<String,String> env = pb.environment();
 		if( environmentVars != null && env != null ) {
 			// No putAll() here: null key or value would cause NPE
