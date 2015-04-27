@@ -78,12 +78,12 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	 * Flag indicating if this watcher has already tracked down the templates already present in the template
 	 * directory.
 	 */
-	private AtomicBoolean hasBeenProvisioned = new AtomicBoolean( false );
+	private AtomicBoolean hasBeenProvisioned = new AtomicBoolean(false);
 
 	/**
 	 * The lock for keeping watched templates.
 	 */
-	private final ReadWriteLock lock = new ReentrantReadWriteLock( true );
+	private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
 	/**
 	 * The templates being watched, index by the name of the scoped application (or {@code null} for global templates)
@@ -101,7 +101,47 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	/**
 	 * The logger.
 	 */
-	private final Logger logger = Logger.getLogger( this.getClass().getName() );
+	private final Logger logger = Logger.getLogger(this.getClass().getName());
+
+	/**
+	 * Factory for the watcher thread.
+	 */
+	private static final class WatcherThreadFactory implements ThreadFactory {
+		@Override
+		public Thread newThread( final Runnable r ) {
+			return new Thread(r, "Roboconf.TemplateWatcher");
+		}
+	}
+
+	/**
+	 * The instance of the the watcher thread factory.
+	 */
+	private static final ThreadFactory THREAD_FACTORY = new WatcherThreadFactory();
+
+	/**
+	 * A file filter that only matches template directories, i.e. the root template directory and its first-level
+	 * children. It is guaranteed that this filter is only called with directory files.
+	 */
+	private static class TemplateDirectoryFileFilter extends AbstractFileFilter {
+		/**
+		 * The root template directory.
+		 */
+		final File rootTemplateDir;
+
+		/**
+		 * Create a template directory file filter.
+		 *
+		 * @param rootTemplateDir the root template directory.
+		 */
+		TemplateDirectoryFileFilter( final File rootTemplateDir ) {
+			this.rootTemplateDir = rootTemplateDir;
+		}
+
+		@Override
+		public boolean accept( final File file ) {
+			return rootTemplateDir.equals(file) || rootTemplateDir.equals(file.getParentFile());
+		}
+	}
 
 	/**
 	 * Create a template watcher.
@@ -116,27 +156,22 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 		this.manager = manager;
 
 		// Register the custom helpers.
-		this.handlebars.registerHelper( AllHelper.NAME, AllHelper.INSTANCE );
+		this.handlebars.registerHelper(AllHelper.NAME, AllHelper.INSTANCE);
 
 		// We need the canonical directory, in order to test relationship w/ monitoring template candidates.
 		this.templateDir = templateDir.getCanonicalFile();
 
 		// Create the observer, register this object as the event listener.
 		final FileAlterationObserver observer = new FileAlterationObserver(
-				this.templateDir, TemplateEntry.getTemplateFileFilter( this.templateDir ) );
-		observer.addListener( this );
+				this.templateDir, TemplateEntry.getTemplateFileFilter(this.templateDir));
+		observer.addListener(this);
 
 		// Create the monitor.
-		this.monitor = new FileAlterationMonitor( pollInterval, observer );
-		this.monitor.setThreadFactory( new ThreadFactory() {
-			@Override
-			public Thread newThread( final Runnable r ) {
-				return new Thread( r, "Roboconf.TemplateWatcher" );
-			}
-		} );
+		this.monitor = new FileAlterationMonitor(pollInterval, observer);
+		this.monitor.setThreadFactory(THREAD_FACTORY);
 
-		this.logger.fine( "Template watcher configured with templateDir=" + this.templateDir.toString()
-				+ " and pollInterval=" + pollInterval );
+		this.logger.fine("Template watcher configured with templateDir=" + this.templateDir.toString()
+				+ " and pollInterval=" + pollInterval);
 	}
 
 	/**
@@ -148,8 +183,8 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 		try {
 			this.monitor.start();
 		} catch (final Exception e) {
-			this.logger.warning( "Cannot start template watcher" );
-			Utils.logException( this.logger, e );
+			this.logger.warning("Cannot start template watcher");
+			Utils.logException(this.logger, e);
 		}
 	}
 
@@ -162,8 +197,8 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 		try {
 			this.monitor.stop();
 		} catch (final Exception e) {
-			this.logger.warning( "Cannot stop template watcher" );
-			Utils.logException( this.logger, e );
+			this.logger.warning("Cannot stop template watcher");
+			Utils.logException(this.logger, e);
 		}
 	}
 
@@ -181,17 +216,17 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 			final Collection<TemplateEntry> result = new ArrayList<TemplateEntry>();
 			// Process the application-specific templates.
 			if (appName != null) {
-				Map<String, TemplateEntry> appSpecificTemplates = this.templates.get( appName );
+				Map<String, TemplateEntry> appSpecificTemplates = this.templates.get(appName);
 				if (appSpecificTemplates != null) {
-					result.addAll( appSpecificTemplates.values() );
+					result.addAll(appSpecificTemplates.values());
 				}
 			}
 			// Process the global templates.
-			Map<String, TemplateEntry> globalTemplates = this.templates.get( null );
+			Map<String, TemplateEntry> globalTemplates = this.templates.get(null);
 			if (globalTemplates != null) {
-				result.addAll( globalTemplates.values() );
+				result.addAll(globalTemplates.values());
 			}
-			return Collections.unmodifiableCollection( result );
+			return Collections.unmodifiableCollection(result);
 		} finally {
 			this.lock.readLock().unlock();
 		}
@@ -212,22 +247,22 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 			final Template template = handlebars.compile(
 					new StringTemplateSource(
 							templateFile.toString(),
-							Utils.readFileContent( templateFile ) ) );
+							Utils.readFileContent(templateFile)));
 			// Create the entry.
 			templateEntry = new TemplateEntry(
 					templateFile,
-					TemplateEntry.getTemplateId( templateFile ),
-					TemplateEntry.getTemplateApplicationName( templateDir, templateFile ),
-					template );
+					TemplateEntry.getTemplateId(templateFile),
+					TemplateEntry.getTemplateApplicationName(templateDir, templateFile),
+					template);
 		} catch (final IOException e) {
-			this.logger.warning( "Cannot compile template " + templateFile );
-			Utils.logException( this.logger, e );
+			this.logger.warning("Cannot compile template " + templateFile);
+			Utils.logException(this.logger, e);
 		} catch (final IllegalArgumentException e) {
-			this.logger.warning( "Cannot compile template " + templateFile );
-			Utils.logException( this.logger, e );
+			this.logger.warning("Cannot compile template " + templateFile);
+			Utils.logException(this.logger, e);
 		} catch (final HandlebarsException e) {
-			this.logger.warning( "Cannot compile template " + templateFile );
-			Utils.logException( this.logger, e );
+			this.logger.warning("Cannot compile template " + templateFile);
+			Utils.logException(this.logger, e);
 		}
 		return templateEntry;
 	}
@@ -239,12 +274,12 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	 * @GuardedBy this.lock.writeLock()
 	 */
 	private void updateTemplateEntry( final TemplateEntry templateEntry ) {
-		Map<String, TemplateEntry> specificTemplates = this.templates.get( templateEntry.appName );
+		Map<String, TemplateEntry> specificTemplates = this.templates.get(templateEntry.appName);
 		if (specificTemplates == null) {
 			specificTemplates = new HashMap<String, TemplateEntry>();
-			this.templates.put( templateEntry.appName, specificTemplates );
+			this.templates.put(templateEntry.appName, specificTemplates);
 		}
-		specificTemplates.put( templateEntry.id, templateEntry );
+		specificTemplates.put(templateEntry.id, templateEntry);
 	}
 
 	//
@@ -253,10 +288,10 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 
 	@Override
 	public void onStart( final FileAlterationObserver observer ) {
-		if (!this.hasBeenProvisioned.getAndSet( true )) {
+		if (!this.hasBeenProvisioned.getAndSet(true)) {
 			// We must list the templates already present in the directory, as they won't otherwise trigger any event,
 			// and thus be ignored.
-			this.logger.fine( "Initial provisioning of templates..." );
+			this.logger.fine("Initial provisioning of templates...");
 
 			// Find all the template files: the global *and* the specific ones.
 			final Collection<File> templateFiles = FileUtils.listFiles(
@@ -264,24 +299,19 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 					// Regular file filter:
 					// List readable files with the template extension.
 					FileFilterUtils.and(
-							FileFilterUtils.suffixFileFilter( MonitoringService.MONITORING_TEMPLATE_FILE_EXTENSION ),
-							CanReadFileFilter.CAN_READ ),
+							FileFilterUtils.suffixFileFilter(MonitoringService.TEMPLATE_FILE_EXTENSION),
+							CanReadFileFilter.CAN_READ),
 					// Directory filter:
 					// Go through the root template directory and its direct children.
-					new AbstractFileFilter() {
-						@Override
-						public boolean accept( final File file ) {
-							return templateDir.equals( file ) || templateDir.equals( file.getParentFile() );
-						}
-					} );
+					new TemplateDirectoryFileFilter(this.templateDir));
 
 			// Compile all the template files, outside of the critical section.
 			final Collection<TemplateEntry> templateEntries = new ArrayList<TemplateEntry>();
 			for (final File templateFile : templateFiles) {
-				final TemplateEntry templateEntry = compileTemplate( templateFile );
+				final TemplateEntry templateEntry = compileTemplate(templateFile);
 				if (templateEntry != null) {
-					templateEntries.add( templateEntry );
-					this.logger.finest( "++ Added " + templateEntry );
+					templateEntries.add(templateEntry);
+					this.logger.finest("++ Added " + templateEntry);
 				}
 			}
 
@@ -289,68 +319,68 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 			this.lock.writeLock().lock();
 			try {
 				for (final TemplateEntry templateEntry : templateEntries) {
-					updateTemplateEntry( templateEntry );
+					updateTemplateEntry(templateEntry);
 				}
 			} finally {
 				this.lock.writeLock().unlock();
 			}
 			// Notify the manager, outside of the lock.
-			this.manager.processTemplates( templateEntries );
+			this.manager.processTemplates(templateEntries);
 		}
 	}
 
 	@Override
 	public void onFileCreate( final File file ) {
 		// Compile the template file, outside of the critical section.
-		final TemplateEntry templateEntry = compileTemplate( file );
+		final TemplateEntry templateEntry = compileTemplate(file);
 		if (templateEntry != null) {
 
 			// Update the template map.
 			this.lock.writeLock().lock();
 			try {
-				updateTemplateEntry( templateEntry );
-				this.logger.finest( "++ Added " + templateEntry );
+				updateTemplateEntry(templateEntry);
+				this.logger.finest("++ Added " + templateEntry);
 			} finally {
 				this.lock.writeLock().unlock();
 			}
 			// Notify the manager, outside of the critical section.
-			this.manager.processTemplates( Collections.singletonList( templateEntry ) );
+			this.manager.processTemplates(Collections.singletonList(templateEntry));
 		}
 	}
 
 	@Override
 	public void onFileChange( final File file ) {
 		// Compile the template file, outside of the critical section.
-		final TemplateEntry templateEntry = compileTemplate( file );
+		final TemplateEntry templateEntry = compileTemplate(file);
 		if (templateEntry != null) {
 
 			// Update the template map.
 			this.lock.writeLock().lock();
 			try {
-				updateTemplateEntry( templateEntry );
-				this.logger.finest( "!! Updated " + file );
+				updateTemplateEntry(templateEntry);
+				this.logger.finest("!! Updated " + file);
 			} finally {
 				this.lock.writeLock().unlock();
 			}
 			// Notify the manager, outside of the critical section.
-			this.manager.processTemplates( Collections.singletonList( templateEntry ) );
+			this.manager.processTemplates(Collections.singletonList(templateEntry));
 		}
 	}
 
 	@Override
 	public void onFileDelete( final File file ) {
-		final String appName = TemplateEntry.getTemplateApplicationName( this.templateDir, file );
-		final String id = TemplateEntry.getTemplateId( file );
+		final String appName = TemplateEntry.getTemplateApplicationName(this.templateDir, file);
+		final String id = TemplateEntry.getTemplateId(file);
 		this.lock.writeLock().lock();
 		try {
-			Map<String, TemplateEntry> specificTemplates = this.templates.get( appName );
+			Map<String, TemplateEntry> specificTemplates = this.templates.get(appName);
 			if (specificTemplates != null) {
-				specificTemplates.remove( id );
+				specificTemplates.remove(id);
 				if (specificTemplates.isEmpty()) {
-					this.templates.remove( appName );
+					this.templates.remove(appName);
 				}
 			}
-			this.logger.finest( "-- Removed " + file );
+			this.logger.finest("-- Removed " + file);
 		} finally {
 			this.lock.writeLock().unlock();
 		}

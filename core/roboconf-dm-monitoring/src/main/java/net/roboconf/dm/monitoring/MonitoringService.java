@@ -40,31 +40,31 @@ import net.roboconf.core.model.beans.Application;
 public interface MonitoringService {
 
 	/**
-	 * The name of the directory where application monitoring templates are read from, relative to the Roboconf
+	 * The name of the directory where application templates are read from, relative to the Roboconf configuration
+	 * directory.
+	 */
+	String TEMPLATE_DIRECTORY = "templates";
+
+	/**
+	 * The name of the directory where application generated files are written/updated, relative to the Roboconf
 	 * configuration directory.
 	 */
-	String MONITORING_TEMPLATE_DIRECTORY = "monitoring-template";
+	String TARGET_DIRECTORY = "generated";
 
 	/**
-	 * The name of the directory where application monitoring generated files are written/updated, relative to the
-	 * Roboconf configuration directory.
+	 * The extension for template files.
 	 */
-	String MONITORING_TARGET_DIRECTORY = "monitoring-generated";
+	String TEMPLATE_FILE_EXTENSION = ".tpl";
 
 	/**
-	 * The extension of monitoring template files.
-	 */
-	String MONITORING_TEMPLATE_FILE_EXTENSION = ".tpl";
-
-	/**
-	 * Get the target directory, where monitoring reports are generated.
+	 * Gets the target directory, where monitoring reports are generated.
 	 *
 	 * @return the target directory.
 	 */
 	File getTargetDirectory();
 
 	/**
-	 * Add a monitoring template.
+	 * Adds a monitoring template.
 	 *
 	 * @param application the application scope for the template to add, or {@code null} to add a global template.
 	 * @param name        the name of the template to add.
@@ -77,7 +77,7 @@ public interface MonitoringService {
 	boolean addTemplate( Application application, String name, InputStream content ) throws IOException;
 
 	/**
-	 * Get the current list of the monitoring templates, for the given application.
+	 * Gets the current list of the monitoring templates, for the given application.
 	 * <p>
 	 * The returned set <em>does not</em> contain the global template identifiers, as they may collide with the
 	 * application-specific template identifiers. In order to get the global template, call this method with the
@@ -91,7 +91,7 @@ public interface MonitoringService {
 	Set<String> listTemplates( Application application );
 
 	/**
-	 * Remove a monitoring template.
+	 * Removes a monitoring template.
 	 *
 	 * @param application the application scope for the template to remove, or {@code null} to remove a global
 	 *                    template.

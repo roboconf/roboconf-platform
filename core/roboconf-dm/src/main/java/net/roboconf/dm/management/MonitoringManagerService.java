@@ -38,14 +38,14 @@ import net.roboconf.core.model.beans.Application;
 public interface MonitoringManagerService {
 
 	/**
-	 * Start the monitoring, using the provided Roboconf configuration directory.
+	 * Starts the monitoring, using the provided Roboconf configuration directory.
 	 *
 	 * @param configDir the Roboconf configuration directory.
 	 */
 	void startMonitoring( File configDir );
 
 	/**
-	 * Add the given application to the monitoring manager, so it can start to monitor it.<p>This method is called by
+	 * Adds the given application to the monitoring manager, so it can start to monitor it.<p>This method is called by
 	 * the Roboconf DM when an application is added, or when binding to the monitoring manager.</p>
 	 *
 	 * @param app the application to add.
@@ -54,7 +54,7 @@ public interface MonitoringManagerService {
 	void addApplication( Application app );
 
 	/**
-	 * Notify the monitoring manager that the given application model has changed, and that the monitoring reports must
+	 * Notifies the monitoring manager that the given application model has changed, and that the monitoring reports must
 	 * be regenerated.
 	 *
 	 * @param app the changing application.
@@ -63,8 +63,8 @@ public interface MonitoringManagerService {
 	void updateApplication( Application app );
 
 	/**
-	 * Remove the given application from the monitoring manager, so it stops to be monitored.<p>This method is called by
-	 * the Roboconf DM when an application is removed.</p><p>The monitoring templates and reports sepcific to the
+	 * Removes the given application from the monitoring manager, so it stops to be monitored.<p>This method is called
+	 * by the Roboconf DM when an application is removed.</p><p>The monitoring templates and reports specific to the
 	 * application being removed are <em>kept and left untouched.</em></p>
 	 *
 	 * @param app the application to remove.
@@ -73,7 +73,7 @@ public interface MonitoringManagerService {
 	void removeApplication( Application app );
 
 	/**
-	 * Stop the monitoring. All the applications that are currently monitored are removed, and must be re-added after
+	 * Stops the monitoring. All the applications that are currently monitored are removed, and must be re-added after
 	 * this service has been {@linkplain #startMonitoring(File) started} again.
 	 */
 	void stopMonitoring();

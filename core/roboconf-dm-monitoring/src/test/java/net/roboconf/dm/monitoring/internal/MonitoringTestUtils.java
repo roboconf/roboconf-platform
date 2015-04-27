@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.github.jknack.handlebars.Context;
 import com.github.jknack.handlebars.Template;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
@@ -59,17 +58,17 @@ public class MonitoringTestUtils {
 	 * @return the created matcher.
 	 */
 	public static Condition<File> hasContent( final String expectedContent ) {
-		return new Condition<File>( "file has content \"" + expectedContent + "\"" ) {
+		return new Condition<File>("file has content \"" + expectedContent + "\"") {
 			@Override
 			public boolean matches( File value ) {
 				String actualContent;
 				try {
-					actualContent = Utils.readFileContent( value );
+					actualContent = Utils.readFileContent(value);
 				} catch (final IOException e) {
 					// Hum... Embarrassing!
 					actualContent = null;
 				}
-				return Objects.equals( expectedContent, actualContent );
+				return Objects.equals(expectedContent, actualContent);
 			}
 		};
 	}
@@ -80,20 +79,21 @@ public class MonitoringTestUtils {
 	 * The template string content string is converted to an {@code InputStream} before being passed to the
 	 * {@link net.roboconf.dm.monitoring.MonitoringService#addTemplate(Application, String, InputStream)} method.
 	 * </p>
+	 *
 	 * @param monitoringManager the Roboconf monitoring manager being tested.
-	 * @param application the application scope for the template to add, or {@code null} to add a global template.
-	 * @param name        the name of the template to add.
-	 * @param content     the string content of the template to add.
+	 * @param application       the application scope for the template to add, or {@code null} to add a global
+	 *                          template.
+	 * @param name              the name of the template to add.
+	 * @param content           the string content of the template to add.
 	 * @return {@code true} is the template was successfully added, {@code false} if there is already a template with
 	 * the same name.
-	 * 
 	 * @throws IOException if the template cannot be added because of an IO error.
 	 */
 	public static boolean addStringTemplate( final MonitoringManager monitoringManager,
-								   final Application application,
-								   final String name,
-								   final String content ) throws IOException {
-		return monitoringManager.addTemplate(application, name, new ByteArrayInputStream( content.getBytes() ) );
+											 final Application application,
+											 final String name,
+											 final String content ) throws IOException {
+		return monitoringManager.addTemplate(application, name, new ByteArrayInputStream(content.getBytes()));
 	}
 
 	/**
@@ -105,15 +105,17 @@ public class MonitoringTestUtils {
 	public static Map<String, InstanceContextBean> instancesByPath( final Collection<InstanceContextBean> instances ) {
 		final Map<String, InstanceContextBean> result = new LinkedHashMap<String, InstanceContextBean>();
 		for (final InstanceContextBean instance : instances) {
-			result.put( instance.getPath(), instance );
+			result.put(instance.getPath(), instance);
 		}
 		return result;
 	}
 
 	/**
 	 * Transform the given set of variable contexts to a {@code string -> string} map.
-	 * <p>The result of this method is left unspecified if the given set contains the same variable definition more
-	 * than once.</p>
+	 * <p>
+	 * The result of this method is left unspecified if the given set contains the same variable definition more than
+	 * once.
+	 * </p>
 	 *
 	 * @param variables the variables to map.
 	 * @return the map with, for each provided variable, its name as key and its value as value.
@@ -121,7 +123,7 @@ public class MonitoringTestUtils {
 	public static Map<String, String> variableMapOf( final Set<VariableContextBean> variables ) {
 		final Map<String, String> result = new LinkedHashMap<String, String>();
 		for (final VariableContextBean var : variables) {
-			result.put( var.getName(), var.getValue() );
+			result.put(var.getName(), var.getValue());
 		}
 		return result;
 	}
@@ -129,15 +131,15 @@ public class MonitoringTestUtils {
 	/**
 	 * Process the given template, using the given monitoring context.
 	 * <p>
-	 * This method relies on the {@code MonitoringManager} and friends classes to process the template. So the result is
-	 * exactly the same as the one that would be written in a monitoring report by the manager. 
+	 * This method relies on the {@code MonitoringManager} and friends classes to process the template. So the result
+	 * is exactly the same as the one that would be written in a monitoring report by the manager.
 	 * </p>
-	 * 
+	 *
 	 * @param template the template to apply.
-	 * @param context the monitoring context of an application.   
+	 * @param context  the monitoring context of an application.
 	 * @return the result of the template application to the given context.
 	 */
-	public static String processTemplate(final Template template, final ApplicationContextBean context) {
+	public static String processTemplate( final Template template, final ApplicationContextBean context ) {
 		// TODO
 		return null;
 	}

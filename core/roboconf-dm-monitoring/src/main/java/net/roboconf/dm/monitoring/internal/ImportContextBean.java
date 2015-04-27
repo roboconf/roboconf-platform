@@ -53,11 +53,11 @@ public class ImportContextBean {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder( "import from " + this.instance.path + ':' );
+		final StringBuilder sb = new StringBuilder("import from " + this.instance.path + ':');
 		for (final Iterator<VariableContextBean> i = this.variables.iterator(); i.hasNext(); ) {
-			sb.append( i.next() );
+			sb.append(i.next());
 			if (i.hasNext()) {
-				sb.append( ", " );
+				sb.append(", ");
 			}
 		}
 		return sb.toString();

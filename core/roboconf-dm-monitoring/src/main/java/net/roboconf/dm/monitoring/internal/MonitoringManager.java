@@ -72,7 +72,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	/**
 	 * The big bad global lock.
 	 */
-	private final ReadWriteLock lock = new ReentrantReadWriteLock( true );
+	private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
 	/**
 	 * The Roboconf configuration directory.
@@ -83,7 +83,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	private File configDir;
 
 	/**
-	 * The monitoring template directory: {@code ${configDir}}/{@value #MONITORING_TEMPLATE_DIRECTORY}.
+	 * The monitoring template directory: {@code ${configDir}}/{@value #TEMPLATE_DIRECTORY}.
 	 *
 	 * @GuardedBy this.lock
 	 * @see #resetTemplateWatcher()
@@ -91,7 +91,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	private File templateDir;
 
 	/**
-	 * The monitoring reports target directory: {@code ${configDir}}/{@value #MONITORING_TARGET_DIRECTORY}.
+	 * The monitoring reports target directory: {@code ${configDir}}/{@value #TARGET_DIRECTORY}.
 	 *
 	 * @GuardedBy this.lock
 	 * @see #resetTemplateWatcher()
@@ -126,7 +126,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	/**
 	 * The logger.
 	 */
-	private final Logger logger = Logger.getLogger( this.getClass().getName() );
+	private final Logger logger = Logger.getLogger(this.getClass().getName());
 
 	/**
 	 * Set the poll interval for the template watcher.
@@ -138,7 +138,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		this.lock.writeLock().lock();
 		try {
 			this.pollInterval = pollInterval;
-			this.logger.config( "Template watcher poll interval set to " + pollInterval );
+			this.logger.config("Template watcher poll interval set to " + pollInterval);
 
 			// The template watcher needs to be updated.
 			resetTemplateWatcher();
@@ -154,12 +154,12 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	public void start() {
 		this.lock.writeLock().lock();
 		try {
-			this.logger.fine( "Component instance is starting..." );
+			this.logger.fine("Component instance is starting...");
 
 			// Just trigger a reset of the template watcher, it should start it, if it is well-configured.
 			resetTemplateWatcher();
 
-			this.logger.fine( "Component instance is started!" );
+			this.logger.fine("Component instance is started!");
 		} finally {
 			this.lock.writeLock().unlock();
 		}
@@ -172,7 +172,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	public void stop() {
 		this.lock.writeLock().lock();
 		try {
-			this.logger.fine( "Component instance is stopping..." );
+			this.logger.fine("Component instance is stopping...");
 
 			// Stop the template watcher, only if it was running.
 			if (this.templateWatcher != null) {
@@ -180,7 +180,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 				this.templateWatcher = null;
 			}
 
-			this.logger.fine( "Component instance is stopped!" );
+			this.logger.fine("Component instance is stopped!");
 		} finally {
 			this.lock.writeLock().unlock();
 		}
@@ -202,37 +202,37 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 
 		// Update the template & target directories, based on the provided configuration directory.
 		if (this.configDir != null) {
-			this.logger.config( "Reconfiguring template watcher..." );
+			this.logger.config("Reconfiguring template watcher...");
 
-			this.templateDir = new File( configDir, "monitoring-template" );
+			this.templateDir = new File(configDir, TEMPLATE_DIRECTORY);
 			try {
-				Utils.createDirectory( this.templateDir );
+				Utils.createDirectory(this.templateDir);
 			} catch (final IOException e) {
-				this.logger.severe( "Cannot access to template directory: " + this.templateDir );
-				Utils.logException( this.logger, e );
+				this.logger.severe("Cannot access to template directory: " + this.templateDir);
+				Utils.logException(this.logger, e);
 			}
 
-			this.targetDir = new File( configDir, "monitoring-generated" );
+			this.targetDir = new File(configDir, TARGET_DIRECTORY);
 			try {
-				Utils.createDirectory( this.targetDir );
+				Utils.createDirectory(this.targetDir);
 			} catch (final IOException e) {
-				this.logger.severe( "Cannot access to target directory: " + this.targetDir );
-				Utils.logException( this.logger, e );
+				this.logger.severe("Cannot access to target directory: " + this.targetDir);
+				Utils.logException(this.logger, e);
 			}
 
 			// Start the template watcher again.
 			try {
-				this.templateWatcher = new TemplateWatcher( this, templateDir, this.pollInterval );
+				this.templateWatcher = new TemplateWatcher(this, templateDir, this.pollInterval);
 				this.templateWatcher.start();
 				// The initial provisioning of the template watcher will trigger a full generation of the all the
 				// monitoring reports, for each monitored application. So the new target directory will be repopulated
 				// promptly.
 			} catch (final IOException e) {
-				this.logger.warning( "Cannot create template watcher" );
-				Utils.logException( this.logger, e );
+				this.logger.warning("Cannot create template watcher");
+				Utils.logException(this.logger, e);
 			}
 		} else {
-			this.logger.config( "Monitoring manager is disabled: no configuration directory set!" );
+			this.logger.config("Monitoring manager is disabled: no configuration directory set!");
 			this.templateDir = null;
 			this.targetDir = null;
 			// We do *not* restart the template watcher here, as we wait for the configuration directory to be set.
@@ -245,24 +245,24 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 
 	@Override
 	public void startMonitoring( final File configDir ) {
-		Objects.requireNonNull( configDir, "configDir is null" );
+		Objects.requireNonNull(configDir, "configDir is null");
 		this.lock.writeLock().lock();
 		try {
 			if (this.configDir == null) {
-				this.logger.fine( "Monitoring is starting..." );
+				this.logger.fine("Monitoring is starting...");
 				this.configDir = configDir;
-				this.logger.config( "Configuration directory set to " + this.configDir );
+				this.logger.config("Configuration directory set to " + this.configDir);
 
 				// The MonitoringManagerService method declaration clearly specifies that all the registered
 				// applications are cleared. This is required since the DM, when reconfigured, stores, removes, and
 				// restore all the applications. When restored, the DM loadApplication() method calls the
 				// addApplication() of this class.
-				this.logger.fine( "Monitored applications have been removed: " + this.applications.keySet() );
+				this.logger.fine("Monitored applications have been removed: " + this.applications.keySet());
 				this.applications.clear();
 
 				// The template watcher is going to be started.
 				resetTemplateWatcher();
-				this.logger.fine( "Monitoring is started!" );
+				this.logger.fine("Monitoring is started!");
 			}
 		} finally {
 			this.lock.writeLock().unlock();
@@ -274,13 +274,13 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		this.lock.writeLock().lock();
 		try {
 			if (this.configDir != null) {
-				this.logger.info( "Monitoring is stopping..." );
+				this.logger.info("Monitoring is stopping...");
 				this.configDir = null;
 				this.applications.clear();
 
 				// The template watcher is going to be stopped.
 				resetTemplateWatcher();
-				this.logger.info( "Monitoring is stopped!" );
+				this.logger.info("Monitoring is stopped!");
 			}
 		} finally {
 			this.lock.writeLock().unlock();
@@ -295,7 +295,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	 */
 	private void ensureMonitoringIsStarted() {
 		if (this.configDir == null) {
-			throw new IllegalStateException( "monitoring not started" );
+			throw new IllegalStateException("monitoring not started");
 		}
 	}
 
@@ -303,17 +303,17 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	public void addApplication( final Application app ) {
 		// First create the monitored application entry.
 		final String name = app.getName();
-		final MonitoredApplication monitoredApp = new MonitoredApplication( app );
+		final MonitoredApplication monitoredApp = new MonitoredApplication(app);
 		final boolean added;
 		this.lock.writeLock().lock();
 		try {
 			ensureMonitoringIsStarted();
 			// Check if the application is already in the map.
-			if (!this.applications.containsKey( name )) {
+			if (!this.applications.containsKey(name)) {
 				// Add the monitored application entry.
-				this.applications.put( name, monitoredApp );
+				this.applications.put(name, monitoredApp);
 				added = true;
-				this.logger.info( "Monitored application has been added: " + name );
+				this.logger.info("Monitored application has been added: " + name);
 			} else {
 				added = false;
 			}
@@ -322,7 +322,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		}
 		// Refresh the application's context & generate reports, outside of the lock.
 		if (added) {
-			processApplication( monitoredApp );
+			processApplication(monitoredApp);
 		}
 	}
 
@@ -333,14 +333,14 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		this.lock.readLock().lock();
 		try {
 			ensureMonitoringIsStarted();
-			monitored = this.applications.get( name );
+			monitored = this.applications.get(name);
 		} finally {
 			this.lock.readLock().unlock();
 		}
 		// Refresh the application's context & generate reports, outside of the lock.
 		if (monitored != null) {
-			this.logger.info( "Monitored application is being updated: " + name );
-			processApplication( monitored );
+			this.logger.info("Monitored application is being updated: " + name);
+			processApplication(monitored);
 		}
 	}
 
@@ -351,9 +351,9 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		try {
 			ensureMonitoringIsStarted();
 			// Check if the application is already is the map.
-			if (this.applications.containsKey( name )) {
-				this.applications.remove( name );
-				this.logger.info( "Monitored application has been removed: " + name );
+			if (this.applications.containsKey(name)) {
+				this.applications.remove(name);
+				this.logger.info("Monitored application has been removed: " + name);
 			}
 		} finally {
 			this.lock.writeLock().unlock();
@@ -372,7 +372,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	 * @param templates the template to process.
 	 */
 	public void processTemplates( final Collection<TemplateEntry> templates ) {
-		this.logger.info( "Processing templates: " + templates + "..." );
+		this.logger.info("Processing templates: " + templates + "...");
 		// Get the monitoring contexts for each application.
 		final Map<String, Context> contexts = new HashMap<String, Context>();
 		final File targetDir;
@@ -381,10 +381,10 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 			targetDir = this.targetDir;
 			if (targetDir != null) {
 				for (final MonitoredApplication app : this.applications.values()) {
-					contexts.put( app.getModel().getName(), app.getCurrentContext() );
+					contexts.put(app.getModel().getName(), app.getCurrentContext());
 				}
 			} else {
-				this.logger.warning( "Target directory is not configured, cannot process templates!" );
+				this.logger.warning("Target directory is not configured, cannot process templates!");
 			}
 		} finally {
 			this.lock.readLock().unlock();
@@ -393,9 +393,9 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		for (final TemplateEntry templateEntry : templates) {
 			if (templateEntry.appName != null) {
 				// Application-specific template, only apply the scoped application context (if it exists).
-				final Context appContext = contexts.get( templateEntry.appName );
+				final Context appContext = contexts.get(templateEntry.appName);
 				if (appContext != null) {
-					process( templateEntry.appName, appContext, templateEntry, targetDir );
+					process(templateEntry.appName, appContext, templateEntry, targetDir);
 				} else {
 					this.logger.finest("Cannot process template " + templateEntry + ": application " +
 							templateEntry.appName + " is not monitored");
@@ -403,7 +403,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 			} else {
 				// Global template, apply each one of the existing application contexts.
 				for (final Entry<String, Context> contextEntry : contexts.entrySet()) {
-					process( contextEntry.getKey(), contextEntry.getValue(), templateEntry, targetDir );
+					process(contextEntry.getKey(), contextEntry.getValue(), templateEntry, targetDir);
 				}
 			}
 		}
@@ -424,7 +424,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		this.lock.readLock().lock();
 		try {
 			if (this.templateWatcher != null) {
-				templates = this.templateWatcher.getTemplates( name );
+				templates = this.templateWatcher.getTemplates(name);
 				targetDir = this.targetDir;
 			} else {
 				templates = null;
@@ -438,23 +438,23 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		if (templates != null) {
 			if (!templates.isEmpty()) {
 				for (final TemplateEntry templateEntry : templates) {
-					process( name, context, templateEntry, targetDir );
+					process(name, context, templateEntry, targetDir);
 				}
 			} else {
-				logger.fine( "No template to process for application " + name );
+				logger.fine("No template to process for application " + name);
 			}
 		} else {
-			logger.warning( "Template watcher is disabled. No template can be retrieved for application " + name );
+			logger.warning("Template watcher is disabled. No template can be retrieved for application " + name);
 		}
 	}
 
 	/**
 	 * Generate the monitoring reports for one application using one template.
 	 *
-	 * @param appName the name of the application
-	 * @param context the monitoring context of the application.
+	 * @param appName       the name of the application
+	 * @param context       the monitoring context of the application.
 	 * @param templateEntry the monitoring template entry.
-	 * @param targetDir the monitoring report target directory.
+	 * @param targetDir     the monitoring report target directory.
 	 */
 	private void process( final String appName, final Context context, final TemplateEntry templateEntry,
 						  final File targetDir ) {
@@ -464,32 +464,32 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		final File parentDir;
 		final File targetFile;
 		if (templateEntry.appName != null) {
-			parentDir = new File( targetDir, appName );
-			targetFile = new File( parentDir, templateEntry.id );
+			parentDir = new File(targetDir, appName);
+			targetFile = new File(parentDir, templateEntry.id);
 		} else {
 			parentDir = targetDir;
-			targetFile = new File( targetDir, appName + '.' + templateEntry.id );
+			targetFile = new File(targetDir, appName + '.' + templateEntry.id);
 		}
 
 		try {
-			this.logger.fine( "Applying template " + templateEntry.id + " to application " + appName + "..." );
+			this.logger.fine("Applying template " + templateEntry.id + " to application " + appName + "...");
 
 			// Apply the context to the template.
-			final String output = templateEntry.template.apply( context );
+			final String output = templateEntry.template.apply(context);
 			// Create the parent directory, as it may not yet exist.
-			Utils.createDirectory( parentDir );
+			Utils.createDirectory(parentDir);
 			// Write the content to the target file.
-			Utils.writeStringInto( output, targetFile );
+			Utils.writeStringInto(output, targetFile);
 
 		} catch (final IOException e) {
-			this.logger.warning( "Cannot apply template " + templateEntry.id + " to application " + appName );
-			Utils.logException( this.logger, e );
+			this.logger.warning("Cannot apply template " + templateEntry.id + " to application " + appName);
+			Utils.logException(this.logger, e);
 		} catch (final HandlebarsException e) {
-			this.logger.warning( "Cannot apply template " + templateEntry.id + " to application " + appName );
-			Utils.logException( this.logger, e );
+			this.logger.warning("Cannot apply template " + templateEntry.id + " to application " + appName);
+			Utils.logException(this.logger, e);
 		} catch (final Throwable e) {
-			this.logger.warning( "Cannot apply template " + templateEntry.id + " to application " + appName );
-			Utils.logException( this.logger, new UndeclaredThrowableException( e ) );
+			this.logger.warning("Cannot apply template " + templateEntry.id + " to application " + appName);
+			Utils.logException(this.logger, new UndeclaredThrowableException(e));
 		}
 	}
 
@@ -527,7 +527,7 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 		// Append the application name, if not null.
 		final File result;
 		if (application != null) {
-			result = new File( templateDir, application.getName() );
+			result = new File(templateDir, application.getName());
 		} else {
 			result = templateDir;
 		}
@@ -537,18 +537,18 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 	@Override
 	public boolean addTemplate( final Application application, final String name, final InputStream content )
 			throws IOException {
-		Objects.requireNonNull( name, "name is null" );
-		Objects.requireNonNull( content, "content is null" );
-		final File templateDir = getTemplateDirectory( application );
+		Objects.requireNonNull(name, "name is null");
+		Objects.requireNonNull(content, "content is null");
+		final File templateDir = getTemplateDirectory(application);
 		// Directory may not yet exist, create it!
-		Utils.createDirectory( templateDir );
+		Utils.createDirectory(templateDir);
 
 		// Check if the template exists.
 		final boolean added;
-		final File template = new File( templateDir, name + MONITORING_TEMPLATE_FILE_EXTENSION );
+		final File template = new File(templateDir, name + TEMPLATE_FILE_EXTENSION);
 		if (!template.exists()) {
 			// Copy the template!
-			Utils.copyStream( content, template );
+			Utils.copyStream(content, template);
 			added = true;
 		} else {
 			added = false;
@@ -558,13 +558,13 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 
 	@Override
 	public Set<String> listTemplates( final Application application ) {
-		final File templateDir = getTemplateDirectory( application );
+		final File templateDir = getTemplateDirectory(application);
 		// List the files, using the exact same filter the watcher uses/would use.
 		final File[] templateFiles = templateDir.listFiles(
 				(FileFilter) FileFilterUtils.and(
 						FileFilterUtils.fileFileFilter(),
-						FileFilterUtils.suffixFileFilter( MonitoringService.MONITORING_TEMPLATE_FILE_EXTENSION ),
-						CanReadFileFilter.CAN_READ ) );
+						FileFilterUtils.suffixFileFilter(MonitoringService.TEMPLATE_FILE_EXTENSION),
+						CanReadFileFilter.CAN_READ));
 		// Extract the identifiers from the templates.
 		Set<String> templateNames;
 		if (templateFiles != null && templateFiles.length > 0) {
@@ -572,9 +572,9 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 			for (final File templateFile : templateFiles) {
 				// Add the template file name, but remove the ".tpl" extension.
 				final String name = templateFile.getName();
-				templateNames.add( name.substring( 0, name.length() - MONITORING_TEMPLATE_FILE_EXTENSION.length() ) );
+				templateNames.add(name.substring(0, name.length() - TEMPLATE_FILE_EXTENSION.length()));
 			}
-			templateNames = Collections.unmodifiableSet( templateNames );
+			templateNames = Collections.unmodifiableSet(templateNames);
 		} else {
 			templateNames = Collections.emptySet();
 		}
@@ -583,9 +583,9 @@ public class MonitoringManager implements MonitoringManagerService, MonitoringSe
 
 	@Override
 	public boolean removeTemplate( final Application application, final String name ) throws IOException {
-		Objects.requireNonNull( name, "name is null" );
-		final File template = new File( getTemplateDirectory( application ),
-				name + MONITORING_TEMPLATE_FILE_EXTENSION );
+		Objects.requireNonNull(name, "name is null");
+		final File template = new File(getTemplateDirectory(application),
+				name + TEMPLATE_FILE_EXTENSION);
 		return template.exists() && template.isFile() && template.delete();
 	}
 

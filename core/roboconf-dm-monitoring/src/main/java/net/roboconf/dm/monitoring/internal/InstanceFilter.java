@@ -32,7 +32,7 @@ import java.util.LinkedList;
 
 /**
  * An instance filter based on a component path and/or an installer name.
- * 
+ *
  * <p>
  * This filter is used in the {@linkplain AllHelper all} Handlebars template helper.
  * </p>
@@ -81,10 +81,10 @@ public final class InstanceFilter {
 	 */
 	public static InstanceFilter createFilter( final String path ) {
 		// Split the path.
-		final String[] elements = path.split( PATH_SEPARATOR, -1 );
+		final String[] elements = path.split(PATH_SEPARATOR, -1);
 		final int last = elements.length - 1;
 		if (last == -1) {
-			throw new IllegalArgumentException( "Empty component path" );
+			throw new IllegalArgumentException("Empty component path");
 		}
 
 		// Iterate in reverse order, as the instances we want are those on the right side of the path.
@@ -94,16 +94,16 @@ public final class InstanceFilter {
 			final String element = elements[i];
 
 			// Sanity checks
-			if (element.isEmpty() || element.contains( JOKER ) && element.length() != JOKER.length()) {
-				throw new IllegalArgumentException( "Empty component path: " + path );
+			if (element.isEmpty() || element.contains(JOKER) && element.length() != JOKER.length()) {
+				throw new IllegalArgumentException("Empty component path: " + path);
 			}
 
 			// Node for the current element.
 			final AndNode currentNode = new AndNode();
 
 			// Type name filter
-			if (!JOKER.equals( element )) {
-				currentNode.delegates.add( new TypeNode( element ) );
+			if (!JOKER.equals(element)) {
+				currentNode.delegates.add(new TypeNode(element));
 			}
 
 			// Special handling if the path begins with a leading '/'.
@@ -111,7 +111,7 @@ public final class InstanceFilter {
 			// In this case the first element is empty "", despite the component path remains valid.
 			// The following element (at index 1) must match root instances only.
 			if (i == 1 && elements[0].isEmpty()) {
-				currentNode.delegates.add( new RootInstanceNode() );
+				currentNode.delegates.add(new RootInstanceNode());
 				// The next element is an empty string.
 				// If we don't shortcut it, it will make the next iteration fail.
 				// Skip it by forcing the index to its ending bound.
@@ -123,14 +123,14 @@ public final class InstanceFilter {
 				rootNode = currentNode;
 			} else {
 				// Chain the current node with its parent node.
-				parentNode.delegates.add( new ParentInstanceNode( currentNode ) );
+				parentNode.delegates.add(new ParentInstanceNode(currentNode));
 			}
 
 			// Shift and reiterate.
 			parentNode = currentNode;
 		}
 
-		return new InstanceFilter( path, rootNode );
+		return new InstanceFilter(path, rootNode);
 	}
 
 	/**
@@ -142,8 +142,8 @@ public final class InstanceFilter {
 	public Collection<InstanceContextBean> apply( Collection<InstanceContextBean> instances ) {
 		final ArrayList<InstanceContextBean> result = new ArrayList<InstanceContextBean>();
 		for (InstanceContextBean instance : instances) {
-			if (rootNode.isMatching( instance )) {
-				result.add( instance );
+			if (rootNode.isMatching(instance)) {
+				result.add(instance);
 			}
 		}
 		result.trimToSize();
@@ -152,7 +152,7 @@ public final class InstanceFilter {
 
 	/**
 	 * Get the path string of this filter.
-	 * 
+	 *
 	 * @return the path string of this filter.
 	 */
 	public String getPath() {
@@ -194,7 +194,7 @@ public final class InstanceFilter {
 		boolean isMatching( final InstanceContextBean instance ) {
 			boolean result = true;
 			for (Node n : this.delegates) {
-				if (!n.isMatching( instance )) {
+				if (!n.isMatching(instance)) {
 					result = false;
 					break;
 				}
@@ -223,7 +223,7 @@ public final class InstanceFilter {
 
 		@Override
 		boolean isMatching( final InstanceContextBean instance ) {
-			return instance.types.contains( typeName );
+			return instance.types.contains(typeName);
 		}
 	}
 
@@ -248,7 +248,7 @@ public final class InstanceFilter {
 
 		@Override
 		boolean isMatching( final InstanceContextBean instance ) {
-			return instance.parent != null && parentInstanceNode.isMatching( instance.parent );
+			return instance.parent != null && parentInstanceNode.isMatching(instance.parent);
 		}
 
 	}

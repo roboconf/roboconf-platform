@@ -62,6 +62,57 @@ public final class TemplateEntry {
 	final Template template;
 
 	/**
+	 * File filter that only selects template files that are in the root template directory, or in a first-level
+	 * sub-directory.
+	 */
+	private static class TemplateFileFilter extends AbstractFileFilter {
+		/**
+		 * The root template directory.
+		 */
+		private final File rootTemplateDir;
+
+		/**
+		 * Create a template file filter.
+		 *
+		 * @param rootTemplateDir the root template directory.
+		 */
+		TemplateFileFilter( final File rootTemplateDir ) {
+			this.rootTemplateDir = rootTemplateDir;
+		}
+
+		@Override
+		public boolean accept( File file ) {
+			final File parentDir = file.getParentFile();
+			return rootTemplateDir.equals(parentDir) || rootTemplateDir.equals(parentDir.getParentFile());
+		}
+	}
+
+	/**
+	 * File filter that only selects sub-template directories. It is guaranteed that this filter is only called with
+	 * directory files.
+	 */
+	private static class TemplateSubDirectoryFileFilter extends AbstractFileFilter {
+		/**
+		 * The root template directory.
+		 */
+		private final File rootTemplateDir;
+
+		/**
+		 * Create a template sub-directory file filter.
+		 *
+		 * @param rootTemplateDir the root template directory.
+		 */
+		TemplateSubDirectoryFileFilter( final File rootTemplateDir ) {
+			this.rootTemplateDir = rootTemplateDir;
+		}
+
+		@Override
+		public boolean accept( File file ) {
+			return rootTemplateDir.equals(file.getParentFile());
+		}
+	}
+
+	/**
 	 * Get the file filter for monitoring templates selection inside the given template directory.
 	 *
 	 * Templates must:
@@ -86,25 +137,14 @@ public final class TemplateEntry {
 		return FileFilterUtils.or(
 				FileFilterUtils.and(
 						FileFilterUtils.fileFileFilter(),
-						FileFilterUtils.suffixFileFilter( MonitoringService.MONITORING_TEMPLATE_FILE_EXTENSION ),
+						FileFilterUtils.suffixFileFilter(MonitoringService.TEMPLATE_FILE_EXTENSION),
 						CanReadFileFilter.CAN_READ,
-						new AbstractFileFilter() {
-							@Override
-							public boolean accept( File file ) {
-								final File parentDir = file.getParentFile();
-								return templateDir.equals( parentDir ) || templateDir.equals( parentDir.getParentFile() );
-							}
-						} ),
+						new TemplateFileFilter(templateDir)),
 				FileFilterUtils.and(
 						FileFilterUtils.directoryFileFilter(),
 						CanReadFileFilter.CAN_READ,
-						new AbstractFileFilter() {
-							@Override
-							public boolean accept( File file ) {
-								return templateDir.equals( file.getParentFile() );
-							}
-						} )
-				);
+						new TemplateSubDirectoryFileFilter(templateDir))
+		);
 	}
 
 	/**
@@ -117,21 +157,21 @@ public final class TemplateEntry {
 	 * @throws IllegalStateException if the provided {@code templateFile} does not match
 	 */
 	public static String getTemplateApplicationName( final File templateDir, final File templateFile ) {
-		if (!templateFile.getName().endsWith( MonitoringService.MONITORING_TEMPLATE_FILE_EXTENSION )) {
-			throw new IllegalArgumentException( "not a template file name: " + templateFile.getName() );
+		if (!templateFile.getName().endsWith(MonitoringService.TEMPLATE_FILE_EXTENSION)) {
+			throw new IllegalArgumentException("not a template file name: " + templateFile.getName());
 		}
 		final File parentDir = templateFile.getParentFile();
 		final String appName;
-		if (templateDir.equals( parentDir )) {
+		if (templateDir.equals(parentDir)) {
 			// No intermediate directory, the template is global!
 			appName = null;
-		} else if (templateDir.equals( parentDir.getParentFile() )) {
+		} else if (templateDir.equals(parentDir.getParentFile())) {
 			// One intermediate directory: the template is specific to one application.
 			// The name of the application is the name of the intermediate directory.
 			appName = parentDir.getName();
 		} else {
 			// Too many levels!
-			throw new IllegalArgumentException( "not a template file: " + templateFile );
+			throw new IllegalArgumentException("not a template file: " + templateFile);
 		}
 		return appName;
 	}
@@ -161,10 +201,10 @@ public final class TemplateEntry {
 	 */
 	public static String getTemplateId( final File templateFile ) {
 		final String name = templateFile.getName();
-		if (!name.endsWith( MonitoringService.MONITORING_TEMPLATE_FILE_EXTENSION )) {
-			throw new IllegalArgumentException( "not a template file name: " + name );
+		if (!name.endsWith(MonitoringService.TEMPLATE_FILE_EXTENSION)) {
+			throw new IllegalArgumentException("not a template file name: " + name);
 		}
-		return name.substring( 0, name.length() - MonitoringService.MONITORING_TEMPLATE_FILE_EXTENSION.length() );
+		return name.substring(0, name.length() - MonitoringService.TEMPLATE_FILE_EXTENSION.length());
 	}
 
 	@Override

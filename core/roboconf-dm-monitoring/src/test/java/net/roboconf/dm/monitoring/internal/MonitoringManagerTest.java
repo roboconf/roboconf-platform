@@ -36,8 +36,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static net.roboconf.dm.monitoring.MonitoringService.MONITORING_TARGET_DIRECTORY;
-import static net.roboconf.dm.monitoring.MonitoringService.MONITORING_TEMPLATE_DIRECTORY;
+import static net.roboconf.dm.monitoring.MonitoringService.TARGET_DIRECTORY;
+import static net.roboconf.dm.monitoring.MonitoringService.TEMPLATE_DIRECTORY;
 import static net.roboconf.dm.monitoring.internal.MonitoringTestUtils.addStringTemplate;
 import static net.roboconf.dm.monitoring.internal.MonitoringTestUtils.hasContent;
 import static org.fest.assertions.Assertions.assertThat;
@@ -79,43 +79,43 @@ public class MonitoringManagerTest {
 	 * A sample application.
 	 */
 	private final Application app1 = new Application()
-			.name( "test-app-1" )
-			.description( "An application being tested" )
-			.qualifier( "test" )
-			.graphs( new Graphs() );
+			.name("test-app-1")
+			.description("An application being tested")
+			.qualifier("test")
+			.graphs(new Graphs());
 
 	/**
 	 * Another sample application.
 	 */
 	private final Application app2 = new Application()
-			.name( "test-app-2" )
-			.description( "Another application being tested" )
-			.qualifier( "test" )
-			.graphs( new Graphs() );
+			.name("test-app-2")
+			.description("Another application being tested")
+			.qualifier("test")
+			.graphs(new Graphs());
 
 	@Before
 	public void before() throws IOException {
 		// Create the configuration directory.
 		final File configDir = tmpDir.newFolder();
-		templateDir = new File( configDir, MONITORING_TEMPLATE_DIRECTORY );
-		targetDir = new File( configDir, MONITORING_TARGET_DIRECTORY );
+		templateDir = new File(configDir, TEMPLATE_DIRECTORY);
+		targetDir = new File(configDir, TARGET_DIRECTORY);
 
 		// Create & configure the monitoring manager component.
 		manager = new MonitoringManager();
-		manager.setPollInterval( POLL_INTERVAL );
+		manager.setPollInterval(POLL_INTERVAL);
 		manager.start();
-		manager.startMonitoring( configDir );
+		manager.startMonitoring(configDir);
 
 		// Add the applications
-		manager.addApplication( app1 );
-		manager.addApplication( app2 );
+		manager.addApplication(app1);
+		manager.addApplication(app2);
 	}
 
 	@After
 	public void after() throws IOException {
 		// Remove the applications
-		manager.removeApplication( app1 );
-		manager.removeApplication( app2 );
+		manager.removeApplication(app1);
+		manager.removeApplication(app2);
 
 		manager.stopMonitoring();
 		manager.stop();
@@ -123,125 +123,125 @@ public class MonitoringManagerTest {
 
 	@Test
 	public void testRootDirectoriesAreCreated() {
-		assertThat( templateDir ).exists().isDirectory();
-		assertThat( targetDir ).exists().isDirectory();
+		assertThat(templateDir).exists().isDirectory();
+		assertThat(targetDir).exists().isDirectory();
 	}
 
 	@Test
 	public void testGlobalAndSpecificTemplates() throws IOException, InterruptedException {
 		// Add global & local (app-specific) templates.
-		addStringTemplate( manager, null, "global.test", "global:{{name}}" );
-		addStringTemplate( manager, app1, "local1.test", "app1:{{name}}" );
-		addStringTemplate( manager, app2, "local2.test", "app2:{{name}}" );
+		addStringTemplate(manager, null, "global.test", "global:{{name}}");
+		addStringTemplate(manager, app1, "local1.test", "app1:{{name}}");
+		addStringTemplate(manager, app2, "local2.test", "app2:{{name}}");
 
 		// Check the templates are here.
-		assertThat( manager.listTemplates( null ) ).containsOnly( "global.test" );
-		assertThat( manager.listTemplates( app1 ) ).containsOnly( "local1.test" );
-		assertThat( manager.listTemplates( app2 ) ).containsOnly( "local2.test" );
+		assertThat(manager.listTemplates(null)).containsOnly("global.test");
+		assertThat(manager.listTemplates(app1)).containsOnly("local1.test");
+		assertThat(manager.listTemplates(app2)).containsOnly("local2.test");
 
 		// Wait for a while, so the reports are generated.
-		Thread.sleep( 2 * POLL_INTERVAL );
+		Thread.sleep(2 * POLL_INTERVAL);
 
 		// Check the presence and the content of the global monitoring reports.
-		assertThat( new File( targetDir, "test-app-1.global.test" ) )
+		assertThat(new File(targetDir, "test-app-1.global.test"))
 				.exists()
 				.isFile()
-				.satisfies( hasContent( "global:test-app-1" ) );
-		assertThat( new File( targetDir, "test-app-2.global.test" ) )
+				.satisfies(hasContent("global:test-app-1"));
+		assertThat(new File(targetDir, "test-app-2.global.test"))
 				.exists()
 				.isFile()
-				.satisfies( hasContent( "global:test-app-2" ) );
+				.satisfies(hasContent("global:test-app-2"));
 
 		// Check the presence and the content of the local monitoring reports.
-		assertThat( new File( targetDir, "test-app-1" + File.separatorChar + "local1.test" ) )
+		assertThat(new File(targetDir, "test-app-1" + File.separatorChar + "local1.test"))
 				.exists()
 				.isFile()
-				.satisfies( hasContent( "app1:test-app-1" ) );
-		assertThat( new File( targetDir, "test-app-2" + File.separatorChar + "local2.test" ) )
+				.satisfies(hasContent("app1:test-app-1"));
+		assertThat(new File(targetDir, "test-app-2" + File.separatorChar + "local2.test"))
 				.exists()
 				.isFile()
-				.satisfies( hasContent( "app2:test-app-2" ) );
+				.satisfies(hasContent("app2:test-app-2"));
 
 		// Remove the applications
-		manager.removeApplication( app1 );
-		manager.removeApplication( app2 );
+		manager.removeApplication(app1);
+		manager.removeApplication(app2);
 	}
 
 	@Test
 	public void testUpdateApplication() throws IOException, InterruptedException {
 		// Add global & local (app-specific) templates.
-		addStringTemplate( manager, null, "global.test", "global:{{description}}" );
-		addStringTemplate( manager, app1, "local1.test", "app1:{{description}}" );
+		addStringTemplate(manager, null, "global.test", "global:{{description}}");
+		addStringTemplate(manager, app1, "local1.test", "app1:{{description}}");
 
-		final File global = new File( targetDir, "test-app-1.global.test" );
-		final File local = new File( targetDir, "test-app-1" + File.separatorChar + "local1.test" );
+		final File global = new File(targetDir, "test-app-1.global.test");
+		final File local = new File(targetDir, "test-app-1" + File.separatorChar + "local1.test");
 
 		// Wait for a while, so the reports are generated.
-		Thread.sleep( 2 * POLL_INTERVAL );
+		Thread.sleep(2 * POLL_INTERVAL);
 
 		// Check the presence and the content of the global monitoring reports.
-		assertThat( global ).exists().isFile().satisfies( hasContent( "global:An application being tested" ) );
+		assertThat(global).exists().isFile().satisfies(hasContent("global:An application being tested"));
 
 		// Check the presence and the content of the local monitoring reports.
-		assertThat( local ).exists().isFile().satisfies( hasContent( "app1:An application being tested" ) );
+		assertThat(local).exists().isFile().satisfies(hasContent("app1:An application being tested"));
 
 		// Change the application, check, update, and recheck!
-		app1.setDescription( "CHANGED!" );
+		app1.setDescription("CHANGED!");
 
 		// Wait for a while... just in case an (unwanted) update occurs.
-		Thread.sleep( 2 * POLL_INTERVAL );
+		Thread.sleep(2 * POLL_INTERVAL);
 
 		// Should not have changed!
-		assertThat( global ).satisfies( hasContent( "global:An application being tested" ) );
-		assertThat( local ).satisfies( hasContent( "app1:An application being tested" ) );
+		assertThat(global).satisfies(hasContent("global:An application being tested"));
+		assertThat(local).satisfies(hasContent("app1:An application being tested"));
 
 		// Update the application, the reports should be updated synchronously.
-		manager.updateApplication( app1 );
-		assertThat( global ).satisfies( hasContent( "global:CHANGED!" ) );
-		assertThat( local ).satisfies( hasContent( "app1:CHANGED!" ) );
+		manager.updateApplication(app1);
+		assertThat(global).satisfies(hasContent("global:CHANGED!"));
+		assertThat(local).satisfies(hasContent("app1:CHANGED!"));
 	}
 
 	@Test
 	public void testRemoveApplication() throws IOException, InterruptedException {
 		// Add global & local (app-specific) templates.
-		addStringTemplate( manager, null, "global.test", "global:{{description}}" );
-		addStringTemplate( manager, app1, "local.test", "local:{{description}}" );
+		addStringTemplate(manager, null, "global.test", "global:{{description}}");
+		addStringTemplate(manager, app1, "local.test", "local:{{description}}");
 
-		final File global = new File( targetDir, "test-app-1.global.test" );
-		final File local = new File( targetDir, "test-app-1" + File.separatorChar + "local.test" );
+		final File global = new File(targetDir, "test-app-1.global.test");
+		final File local = new File(targetDir, "test-app-1" + File.separatorChar + "local.test");
 
 		// Wait for a while, so the reports are generated.
-		Thread.sleep( 2 * POLL_INTERVAL );
+		Thread.sleep(2 * POLL_INTERVAL);
 
 		// Check the presence and the content monitoring reports.
-		assertThat( global ).exists().isFile().satisfies( hasContent( "global:An application being tested" ) );
-		assertThat( local ).exists().isFile().satisfies( hasContent( "local:An application being tested" ) );
+		assertThat(global).exists().isFile().satisfies(hasContent("global:An application being tested"));
+		assertThat(local).exists().isFile().satisfies(hasContent("local:An application being tested"));
 
 		// Remove the application.
-		manager.removeApplication( app1 );
+		manager.removeApplication(app1);
 
 		// Update the app which has just been removed, so nothing should happen.
-		app1.setDescription( "CHANGED!" );
-		manager.updateApplication( app1 );
+		app1.setDescription("CHANGED!");
+		manager.updateApplication(app1);
 
 		// Wait for a while... just in case an (unwanted) update occurs.
-		Thread.sleep( 2 * POLL_INTERVAL );
+		Thread.sleep(2 * POLL_INTERVAL);
 
 		// Generated reports should not have changed!
-		assertThat( global ).satisfies( hasContent( "global:An application being tested" ) );
-		assertThat( local ).satisfies( hasContent( "local:An application being tested" ) );
+		assertThat(global).satisfies(hasContent("global:An application being tested"));
+		assertThat(local).satisfies(hasContent("local:An application being tested"));
 
 		// Add additional templates.
-		addStringTemplate( manager, null, "global2.test", "global2:{{description}}" );
-		addStringTemplate( manager, app1, "local2.test", "local2:{{description}}" );
+		addStringTemplate(manager, null, "global2.test", "global2:{{description}}");
+		addStringTemplate(manager, app1, "local2.test", "local2:{{description}}");
 
 		// Wait for a while... just in case an (unwanted) monitoring report generation occurs.
-		Thread.sleep( 2 * POLL_INTERVAL );
+		Thread.sleep(2 * POLL_INTERVAL);
 
 		// Update the application, the reports should be updated synchronously.
-		manager.updateApplication( app1 );
-		assertThat( new File( targetDir, "test-app-1.global2.test" ) ).doesNotExist();
-		assertThat( new File( targetDir, "test-app-1" + File.separatorChar + "local2.test" ) ).doesNotExist();
+		manager.updateApplication(app1);
+		assertThat(new File(targetDir, "test-app-1.global2.test")).doesNotExist();
+		assertThat(new File(targetDir, "test-app-1" + File.separatorChar + "local2.test")).doesNotExist();
 	}
 
 }
