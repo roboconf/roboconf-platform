@@ -7,7 +7,7 @@ class roboconf_withoperations_module::deploy($runningState = undef, $withinit = 
 
   file{"/tmp/roboconf-test-for-puppet/WithOperations.file.deploy":
     ensure  => file,
-    mode => 755,
+    mode => "755",
     source => "puppet:///modules/roboconf_withoperations_module/WithOperationsFile.txt"
   }
 }
