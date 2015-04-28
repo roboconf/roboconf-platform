@@ -11,6 +11,10 @@
 			<callback type="unbind" method="targetDisappears" />
 			<callback type="modified" method="targetWasModified" />
 		</requires>
+		<requires optional="true">
+			<callback type="bind" method="bindMonitoringManager" />
+			<callback type="unbind" method="unbindMonitoringManager" />
+		</requires>
 		
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />

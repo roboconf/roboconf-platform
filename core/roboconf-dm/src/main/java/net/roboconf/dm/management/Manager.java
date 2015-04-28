@@ -112,6 +112,10 @@ public class Manager {
 	protected final List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
 	protected String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
 
+	// Monitoring manager optional dependency. May be null.
+	// @GuardedBy this
+	private MonitoringManagerService monitoringManager;
+
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected String messagingFactoryType;
@@ -195,10 +199,62 @@ public class Manager {
 			}
 		}
 
-		for( ManagedApplication ma : this.appManager.getManagedApplications())
+		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
+			// Stop the monitoring.
+			// May be called before the unbindMonitoringManager() method.
+			synchronized (this) {
+				if (this.monitoringManager != null) {
+					this.logger.fine( "Stopping monitoring manager..." );
+					// Disable the monitoring manager.
+					this.monitoringManager.stopMonitoring();
+					this.monitoringManager = null;
+					this.logger.fine( "Monitoring manager stopped!" );
+				}
+			}
+
 			saveConfiguration( ma );
+		}
 
 		this.logger.info( "The DM was stopped." );
+	}
+
+
+	/**
+	 * Binds to the {@code MonitoringManagerService}.
+	 * @param monitoringManager the {@code MonitoringManagerService}
+	 */
+	public synchronized void bindMonitoringManager( MonitoringManagerService monitoringManager ) {
+
+		this.logger.fine( "Binding to monitoring manager service..." );
+		if (this.configurationDirectory != null) {
+			// We only start the monitoring if the configuration directory is configured.
+			// If not, the monitoring will be started in the reconfigure() method.
+			monitoringManager.startMonitoring( this.configurationDirectory );
+
+			// Register the applications in the monitoring manager.
+			for (ManagedApplication app : this.appManager.getManagedApplications())
+				monitoringManager.addApplication( app.getApplication());
+
+			this.monitoringManager = monitoringManager;
+		}
+		this.logger.fine( "Now bound to monitoring manager service!" );
+	}
+
+
+	/**
+	 * Unbinds from the {@code MonitoringManagerService}.
+	 * @param monitoringManager the {@code MonitoringManagerService}
+	 */
+	public synchronized void unbindMonitoringManager( MonitoringManagerService monitoringManager ) {
+
+		// May be called after the stop method.
+		if (this.monitoringManager != null) {
+			this.logger.fine( "Unbinding from monitoring manager service..." );
+			// Disable the monitoring manager.
+			monitoringManager.stopMonitoring();
+			this.monitoringManager = null;
+			this.logger.fine( "Unbound from monitoring manager service!" );
+		}
 	}
 
 
@@ -376,6 +432,15 @@ public class Manager {
 			}
 		}
 
+		// Restart the monitoring, using the new configuration directory.
+		synchronized (this) {
+			if( this.monitoringManager != null ) {
+				this.monitoringManager.stopMonitoring();
+				this.monitoringManager.startMonitoring( this.configurationDirectory );
+				// Applications are re-added as they are reloaded, in the restoreApplications() method.
+			}
+		}
+
 		// Update the messaging client
 		if( this.messagingClient != null ) {
 			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
@@ -417,6 +482,12 @@ public class Manager {
 	 */
 	public void saveConfiguration( ManagedApplication ma ) {
 		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
+
+		synchronized( this ) {
+			if( this.monitoringManager != null ) {
+				this.monitoringManager.updateApplication( ma.getApplication());
+			}
+		}
 	}
 
 
@@ -550,6 +621,14 @@ public class Manager {
 		// Start listening to messages
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 
+		// Start the monitoring of the application.
+		synchronized (this) {
+			if (this.monitoringManager != null) {
+				this.monitoringManager.addApplication( ma.getApplication());
+			}
+		}
+
+		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 		return ma;
 	}
 
@@ -579,6 +658,13 @@ public class Manager {
 
 		} catch( IOException e ) {
 			Utils.logException( this.logger, e );
+		}
+
+		// Stop the monitoring of the outgoing application.
+		synchronized (this) {
+			if (this.monitoringManager != null) {
+				this.monitoringManager.removeApplication( ma.getApplication());
+			}
 		}
 
 		// Delete artifacts

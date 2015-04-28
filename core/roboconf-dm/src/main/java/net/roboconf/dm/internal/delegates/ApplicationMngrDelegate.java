@@ -41,6 +41,7 @@ import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -102,6 +103,10 @@ public class ApplicationMngrDelegate {
 			File newDir = new File( targetDirectory, dir.getName());
 			Utils.copyDirectory( dir, newDir );
 		}
+
+		// Update the application name in all the root instances
+		for( Instance rootInstance : app.getRootInstances())
+			rootInstance.data.put( Instance.APPLICATION_NAME, app.getName());
 
 		// Register the application
 		ManagedApplication ma = new ManagedApplication( app );

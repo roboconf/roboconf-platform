@@ -1,0 +1,51 @@
+# The facets.
+facet Virtual {
+}
+
+facet Machine {
+}
+
+facet Service {
+}
+
+facet Application {
+}
+
+facet VirtualMachine {
+	extends: Virtual, Machine;
+}
+
+facet NetworkService {
+	extends: Service;
+}
+
+# The components
+Vm {
+	facets: VirtualMachine;
+	installer: target;
+}
+
+MySql {
+	facets: NetworkService;
+	installer: puppet;
+	exports: ip, port = 3306;
+}
+
+Apache {
+	facets: NetworkService;
+	installer: script;
+	imports: Tomcat.ip, Tomcat.ajpPort;
+}
+
+Tomcat {
+	facets: NetworkService;
+	installer: docker;
+	exports: ip, ajpPort = 8009;
+	imports: MySql.ip, MySql.port;
+}
+
+War {
+	facets: Application;
+	installer: human;
+	imports: MySql.*;
+}

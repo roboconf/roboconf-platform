@@ -45,6 +45,7 @@
 		<module>core/roboconf-agent-monitoring</module>
 		
 		<module>core/roboconf-dm</module>
+		<module>core/roboconf-dm-monitoring</module>
 		<module>core/roboconf-dm-rest-commons</module>
 		<module>core/roboconf-dm-rest-services</module>
 		

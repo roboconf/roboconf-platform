@@ -1,0 +1,25 @@
+instance of Vm {
+	name: ApacheVm;
+	instance of Apache {
+		name: Apache;
+	}
+}
+
+instance of Vm {
+	name: MySqlVm;
+	instance of MySql {
+		name: MySql;
+	}
+}
+
+instance of Vm {
+	name: TomcatVm;
+	count: 2;
+	instance of Tomcat {
+		name: Tomcat;
+		ajpPort: 9021;
+		instance of War {
+			name: WebApp;
+		}
+	}
+}
