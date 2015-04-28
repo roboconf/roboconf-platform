@@ -201,6 +201,12 @@
 				</executions>
 			</plugin>
 
+			<!-- 
+				Enunciate does not work with JDK 8.
+				See https://github.com/stoicflame/enunciate/issues/68
+				Uncomment it once it is resolved.
+			 -->
+			<!-- 
 			<plugin>
 				<groupId>org.codehaus.enunciate</groupId>
 				<artifactId>maven-enunciate-plugin</artifactId>
@@ -216,6 +222,7 @@
 					<docsDir>${project.build.directory}/docs</docsDir>
 				</configuration>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 

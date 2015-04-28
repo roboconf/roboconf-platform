@@ -136,7 +136,7 @@ public class MonitoringManagerTest {
 		assertThat(this.manager.listTemplates(this.app2)).containsOnly("local2.test");
 
 		// Wait for a while, so the reports are generated.
-		Thread.sleep(2 * POLL_INTERVAL);
+		Thread.sleep(3 * POLL_INTERVAL);
 
 		// Check the presence and the content of the global monitoring reports.
 		assertThat(new File(this.targetDir, "test-app-1.global.test"))
@@ -174,7 +174,7 @@ public class MonitoringManagerTest {
 		final File local = new File(this.targetDir, "test-app-1" + File.separatorChar + "local1.test");
 
 		// Wait for a while, so the reports are generated.
-		Thread.sleep(2 * POLL_INTERVAL);
+		Thread.sleep(3 * POLL_INTERVAL);
 
 		// Check the presence and the content of the global monitoring reports.
 		assertThat(global).exists().isFile().satisfies(hasContent("global:An application being tested"));
@@ -186,7 +186,7 @@ public class MonitoringManagerTest {
 		this.app1.setDescription("CHANGED!");
 
 		// Wait for a while... just in case an (unwanted) update occurs.
-		Thread.sleep(2 * POLL_INTERVAL);
+		Thread.sleep(3 * POLL_INTERVAL);
 
 		// Should not have changed!
 		assertThat(global).satisfies(hasContent("global:An application being tested"));
@@ -209,7 +209,7 @@ public class MonitoringManagerTest {
 		final File local = new File(this.targetDir, "test-app-1" + File.separatorChar + "local.test");
 
 		// Wait for a while, so the reports are generated.
-		Thread.sleep(2 * POLL_INTERVAL);
+		Thread.sleep(3 * POLL_INTERVAL);
 
 		// Check the presence and the content monitoring reports.
 		assertThat(global).exists().isFile().satisfies(hasContent("global:An application being tested"));
@@ -223,7 +223,7 @@ public class MonitoringManagerTest {
 		this.manager.updateApplication(this.app1);
 
 		// Wait for a while... just in case an (unwanted) update occurs.
-		Thread.sleep(2 * POLL_INTERVAL);
+		Thread.sleep(3 * POLL_INTERVAL);
 
 		// Generated reports should not have changed!
 		assertThat(global).satisfies(hasContent("global:An application being tested"));
@@ -234,7 +234,7 @@ public class MonitoringManagerTest {
 		addStringTemplate(this.manager, this.app1, "local2.test", "local2:{{description}}");
 
 		// Wait for a while... just in case an (unwanted) monitoring report generation occurs.
-		Thread.sleep(2 * POLL_INTERVAL);
+		Thread.sleep(3 * POLL_INTERVAL);
 
 		// Update the application, the reports should be updated synchronously.
 		this.manager.updateApplication(this.app1);
