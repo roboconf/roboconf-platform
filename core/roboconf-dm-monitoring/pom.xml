@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+   Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+
+   The present code is developed in the scope of the joint LINAGORA -
+   Université Joseph Fourier - Floralis research program and is designated
+   as a "Result" pursuant to the terms and conditions of the LINAGORA
+   - Université Joseph Fourier - Floralis research program. Each copyright
+   holder of Results enumerated here above fully & independently holds complete
+   ownership of the complete Intellectual Property rights applicable to the whole
+   of said Results, and may freely exploit it in any manner which does not infringe
+   the moral rights of the other copyright holders.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>net.roboconf</groupId>
+		<artifactId>roboconf-platform-parent</artifactId>
+		<version>0.4-SNAPSHOT</version>
+		<relativePath>../../pom.xml</relativePath>
+	</parent>
+
+	<groupId>net.roboconf</groupId>
+	<artifactId>roboconf-dm-monitoring</artifactId>
+	<name>Roboconf :: Deployment Manager :: Monitoring</name>
+	<packaging>bundle</packaging>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-core</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-dm</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo.annotations</artifactId>
+			<version>${ipojo.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.github.jknack</groupId>
+			<artifactId>handlebars</artifactId>
+			<version>2.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.easytesting</groupId>
+			<artifactId>fest-assert</artifactId>
+			<version>1.4</version>
+			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<!-- We use a fresher version.-->
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-core</artifactId>
+			<type>test-jar</type>
+			<version>0.4-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Import-Package>
+							net.roboconf.*;version="${project.version}",
+							org.slf4j;version="[1.6.4,2.0.0)",
+						</Import-Package>
+						<Export-Package>net.roboconf.dm.monitoring;version="${project.version}"</Export-Package>
+						<Private-Package>net.roboconf.dm.monitoring.internal</Private-Package>
+						<Embed-Dependency>
+							commons-io,
+							handlebars,
+							commons-lang3,
+							antlr4-runtime
+						</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+					</instructions>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-ipojo-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>ipojo-bundle</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
