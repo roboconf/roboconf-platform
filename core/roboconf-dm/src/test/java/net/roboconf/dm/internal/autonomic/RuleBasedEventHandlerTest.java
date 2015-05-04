@@ -83,14 +83,15 @@ public class RuleBasedEventHandlerTest {
 			this.processor.stopProcessor();
 
 		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
-		this.manager.getAppNameToManagedApplication().clear();
+		this.manager.getNameToManagedApplication().clear();
 
 		this.app = new TestApplication();
-		File appDirectory = ConfigurationUtils.findApplicationdirectory( this.app.getName(), dir );
+		File appDirectory = ConfigurationUtils.findApplicationDirectory( this.app.getName(), dir );
 		Assert.assertTrue( appDirectory.mkdirs());
+		this.app.setDirectory( appDirectory );
 
-		this.ma = new ManagedApplication( this.app, appDirectory );
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.ma = new ManagedApplication( this.app );
+		this.manager.getNameToManagedApplication().put( this.app.getName(), this.ma );
 	}
 
 
@@ -189,7 +190,7 @@ public class RuleBasedEventHandlerTest {
 	public void testEmail_missingMailTo() throws Exception {
 
 		File propFile = new File(
-				this.ma.getApplicationFilesDirectory(),
+				this.ma.getDirectory(),
 				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
 
 		Assert.assertTrue( propFile.getParentFile().mkdirs());
@@ -203,7 +204,7 @@ public class RuleBasedEventHandlerTest {
 	public void testEmail_withMailTo() throws Exception {
 
 		File propFile = new File(
-				this.ma.getApplicationFilesDirectory(),
+				this.ma.getDirectory(),
 				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
 
 		Assert.assertTrue( propFile.getParentFile().mkdirs());
@@ -229,7 +230,7 @@ public class RuleBasedEventHandlerTest {
 	public void testEmail_withMailTo_andCustomSubject() throws Exception {
 
 		File propFile = new File(
-				this.ma.getApplicationFilesDirectory(),
+				this.ma.getDirectory(),
 				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
 
 		Assert.assertTrue( propFile.getParentFile().mkdirs());
@@ -255,7 +256,7 @@ public class RuleBasedEventHandlerTest {
 	public void testEmail_withMailTo_andSubjectOnly() throws Exception {
 
 		File propFile = new File(
-				this.ma.getApplicationFilesDirectory(),
+				this.ma.getDirectory(),
 				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
 
 		Assert.assertTrue( propFile.getParentFile().mkdirs());

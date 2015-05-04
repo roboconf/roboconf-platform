@@ -35,13 +35,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
-import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.file.FileDataBodyPart;
@@ -65,15 +64,16 @@ public class ManagementWsDelegate {
 	}
 
 
+	// Templates
+
+
 	/**
-	 * Uploads a ZIP file and loads its application.
+	 * Uploads a ZIP file and loads its application template.
 	 * @param applicationFile a ZIP archive file
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
 	 * @throws ManagementException if a problem occurred with the applications management
 	 * @throws IOException if the file was not found or is invalid
 	 */
-	public void loadApplication( File applicationFile ) throws ManagementException, IOException {
+	public void loadApplicationTemplate( File applicationFile ) throws ManagementException, IOException {
 
 		if( applicationFile == null
 				|| ! applicationFile.exists()
@@ -86,7 +86,7 @@ public class ManagementWsDelegate {
 		part.bodyPart( new FileDataBodyPart( "file", applicationFile, MediaType.APPLICATION_OCTET_STREAM_TYPE));
 
 		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS )
+				.path( UrlConstants.APPLICATIONS ).path( "templates" )
 				.type( MediaType.MULTIPART_FORM_DATA_TYPE )
 				.post( ClientResponse.class, part );
 
@@ -101,16 +101,14 @@ public class ManagementWsDelegate {
 
 
 	/**
-	 * Loads an application from a file which was already uploaded on the DM's machine.
+	 * Loads an application template from a file which was already uploaded on the DM's machine.
 	 * @param applicationFile a ZIP archive file
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
 	 * @throws ManagementException if a problem occurred with the applications management
 	 */
-	public void loadApplication( String remoteFilePath ) throws ManagementException {
+	public void loadApplicationTemplate( String remoteFilePath ) throws ManagementException {
 		this.logger.finer( "Loading an already-uploaded application. " + remoteFilePath );
 
-		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "local" );
+		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "templates" ).path( "local" );
 		if( remoteFilePath != null )
 			path = path.queryParam( "local-file-path", remoteFilePath );
 
@@ -126,10 +124,80 @@ public class ManagementWsDelegate {
 
 
 	/**
+	 * Lists application templates.
+	 * @return a non-null list of application templates
+	 * @throws ManagementException if a problem occurred with the applications management
+	 */
+	public List<ApplicationTemplate> listApplicationTemplates() throws ManagementException {
+		this.logger.finer( "Listing application templates..." );
+
+		List<ApplicationTemplate> result = this.resource
+				.path( UrlConstants.APPLICATIONS ).path( "templates" )
+				.accept( MediaType.APPLICATION_JSON )
+				.get( new GenericType<List<ApplicationTemplate>> () {});
+
+		if( result != null )
+			this.logger.finer( result.size() + " application templates were found on the DM." );
+		else
+			this.logger.finer( "No application template was found on the DM." );
+
+		return result != null ? result : new ArrayList<ApplicationTemplate> ();
+	}
+
+
+	/**
+	 * Deletes an application.
+	 * @param templateName the template name
+	 * @param templateQualifier the template qualifier
+	 * @throws ManagementException if a problem occurred with the applications management
+	 */
+	public void deleteApplicationTemplate( String templateName, String templateQualifier ) throws ManagementException {
+		this.logger.finer( "Removing application template " + templateName + "..." );
+
+		ClientResponse response = this.resource
+				.path( UrlConstants.APPLICATIONS ).path( "templates" )
+				.path( templateName ).path( templateQualifier ).path( "delete" )
+				.delete( ClientResponse.class );
+
+		String text = response.getEntity( String.class );
+		this.logger.finer( text );
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
+			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
+	}
+
+
+	// Applications
+
+
+	/**
+	 * Creates an application from a template.
+	 * @param applicationName the application name
+	 * @param templateName the template's name
+	 * @param templateQualifier the template's qualifier
+	 * @throws ManagementException if a problem occurred with the applications management
+	 */
+	public void createApplication( String applicationName, String templateName, String templateQualifier )
+	throws ManagementException {
+
+		this.logger.finer( "Creating application " + applicationName + " from " + templateName + " - " + templateQualifier + "..." );
+		ApplicationTemplate tpl = new ApplicationTemplate( templateName ).qualifier( templateQualifier );
+		Application app = new Application( applicationName, tpl );
+
+		ClientResponse response = this.resource
+				.path( UrlConstants.APPLICATIONS )
+				.type( MediaType.APPLICATION_JSON )
+				.post( ClientResponse.class, app );
+
+		String text = response.getEntity( String.class );
+		this.logger.finer( text );
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
+			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
+	}
+
+
+	/**
 	 * Lists applications.
 	 * @return a non-null list of applications
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
 	 * @throws ManagementException if a problem occurred with the applications management
 	 */
 	public List<Application> listApplications() throws ManagementException {
@@ -152,8 +220,6 @@ public class ManagementWsDelegate {
 	/**
 	 * Shutdowns an application.
 	 * @param applicationName the application name
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
 	 * @throws ManagementException if a problem occurred with the applications management
 	 */
 	public void shutdownApplication( String applicationName ) throws ManagementException {
@@ -173,8 +239,6 @@ public class ManagementWsDelegate {
 	/**
 	 * Deletes an application.
 	 * @param applicationName the application name
-	 * @throws UniformInterfaceException if something went wrong
-	 * @throws ClientHandlerException if something went wrong
 	 * @throws ManagementException if a problem occurred with the applications management
 	 */
 	public void deleteApplication( String applicationName ) throws ManagementException {

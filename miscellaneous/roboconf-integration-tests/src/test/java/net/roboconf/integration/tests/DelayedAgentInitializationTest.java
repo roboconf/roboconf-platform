@@ -35,6 +35,7 @@ import javax.inject.Inject;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
@@ -97,6 +98,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// and that come from external modules.
 		probe.addTest( AbstractTest.class );
 		probe.addTest( DmTest.class );
+		probe.addTest( TestApplicationTemplate.class );
 		probe.addTest( TestApplication.class );
 
 		// Force the use of the AgentMessagingInterface from the agent's bundle.
@@ -185,8 +187,8 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Make like if the DM had already deployed an application's part
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null );
-		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
 
 		// Check the DM
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
@@ -206,7 +208,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Manager#reconfigure() reloads all the applications from its configuration.
 		// Since we loaded one in-memory, we must restore it ourselves.
-		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
 
 		// Force the agent to send a heart beat message.
 		this.agentItf.forceHeartbeatSending();

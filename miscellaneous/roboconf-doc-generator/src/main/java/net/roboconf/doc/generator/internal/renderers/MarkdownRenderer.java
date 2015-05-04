@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.DocConstants;
 import net.roboconf.doc.generator.internal.AbstractStructuredRenderer;
@@ -45,11 +45,11 @@ public class MarkdownRenderer extends AbstractStructuredRenderer {
 	/**
 	 * Constructor.
 	 * @param outputDirectory
-	 * @param application
+	 * @param applicationTemplate
 	 * @param applicationDirectory
 	 */
-	public MarkdownRenderer( File outputDirectory, Application application, File applicationDirectory ) {
-		super( outputDirectory, application, applicationDirectory );
+	public MarkdownRenderer( File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory ) {
+		super( outputDirectory, applicationTemplate, applicationDirectory );
 	}
 
 
@@ -189,7 +189,7 @@ public class MarkdownRenderer extends AbstractStructuredRenderer {
 	 */
 	@Override
 	protected String renderDocumentTitle() {
-		return "# " + this.application.getName() + "\n\n";
+		return "# " + this.applicationTemplate.getName() + "\n\n";
 	}
 
 

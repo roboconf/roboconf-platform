@@ -61,7 +61,7 @@ public interface IApplicationResource {
 	 * Changes the state of an instance for a given application.
 	 * @param applicationName the application name
 	 * @param newState the new state (see {@link InstanceStatus})
-	 * @param instancePath the instance pat (not null)
+	 * @param instancePath the instance path (not null)
 	 * @return a response
 	 */
 	@POST
@@ -72,7 +72,7 @@ public interface IApplicationResource {
 	/**
 	 * Deploys and starts several instances at once.
 	 * @param applicationName the application name
-	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
 	 */
 	@POST
@@ -83,7 +83,7 @@ public interface IApplicationResource {
 	/**
 	 * Stops several instances at once.
 	 * @param applicationName the application name
-	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
 	 */
 	@POST
@@ -94,7 +94,7 @@ public interface IApplicationResource {
 	/**
 	 * Undeploys several instances at once.
 	 * @param applicationName the application name
-	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
 	 */
 	@POST
@@ -139,7 +139,7 @@ public interface IApplicationResource {
 	/**
 	 * Lists the paths of the children of an instance.
 	 * @param applicationName the application name
-	 * @param instancePath the instance pat (null to consider the whole application)
+	 * @param instancePath the instance path (null to consider the whole application)
 	 * @param allChildren true to get all the children, false to only get the direct children
 	 * @return a non-null list
 	 */

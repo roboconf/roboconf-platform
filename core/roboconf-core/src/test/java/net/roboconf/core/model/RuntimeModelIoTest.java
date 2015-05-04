@@ -44,6 +44,7 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.RuntimeModelIo.GraphFileFilter;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -70,20 +71,20 @@ public class RuntimeModelIoTest {
 	@Test
 	public void testLoadApplication_Lamp_Legacy_1() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-with-only-components" );
+		File directory = TestUtils.findTestFile( "/applications/lamp-legacy-with-only-components" );
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
-		Assert.assertNotNull( result.application );
+		Assert.assertNotNull( result.applicationTemplate );
 		Assert.assertEquals( 4, result.loadErrors.size());
 		for( RoboconfError error : result.loadErrors )
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
-		Assert.assertEquals( "Legacy LAMP", result.application.getName());
-		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());
-		Assert.assertEquals( "sample", result.application.getQualifier());
+		Assert.assertEquals( "Legacy LAMP", result.applicationTemplate.getName());
+		Assert.assertEquals( "A sample LAMP application", result.applicationTemplate.getDescription());
+		Assert.assertEquals( "sample", result.applicationTemplate.getQualifier());
 
-		Assert.assertNotNull( result.application.getGraphs());
-		Graphs g = result.application.getGraphs();
+		Assert.assertNotNull( result.applicationTemplate.getGraphs());
+		Graphs g = result.applicationTemplate.getGraphs();
 		Assert.assertEquals( 1, g.getRootComponents().size());
 
 		Component vmComponent = g.getRootComponents().iterator().next();
@@ -147,8 +148,8 @@ public class RuntimeModelIoTest {
 		}
 
 		// Instances
-		Assert.assertEquals( 3, result.application.getRootInstances().size());
-		for( Instance i : result.application.getRootInstances()) {
+		Assert.assertEquals( 3, result.applicationTemplate.getRootInstances().size());
+		for( Instance i : result.applicationTemplate.getRootInstances()) {
 			if( "Apache VM".equals( i.getName())) {
 				Assert.assertEquals( "VM", i.getComponent().getName());
 				Assert.assertEquals( 1, i.getChildren().size());
@@ -189,22 +190,22 @@ public class RuntimeModelIoTest {
 	@Test
 	public void testLoadApplication_Lamp_Legacy_2() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-with-facets-and-so-on" );
+		File directory = TestUtils.findTestFile( "/applications/lamp-legacy-with-facets-and-so-on" );
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
-		Assert.assertNotNull( result.application );
+		Assert.assertNotNull( result.applicationTemplate );
 		Assert.assertEquals( 3, result.loadErrors.size());
 		for( RoboconfError error : result.loadErrors )
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
 		// Test the graph and descriptor
-		Assert.assertEquals( "Legacy LAMP", result.application.getName());
-		Assert.assertEquals( "A sample LAMP application", result.application.getDescription());
-		Assert.assertEquals( "sample", result.application.getQualifier());
-		Assert.assertEquals( "roboconf-1.0", result.application.getDslId());
+		Assert.assertEquals( "Legacy LAMP", result.applicationTemplate.getName());
+		Assert.assertEquals( "A sample LAMP application", result.applicationTemplate.getDescription());
+		Assert.assertEquals( "sample", result.applicationTemplate.getQualifier());
+		Assert.assertEquals( "roboconf-1.0", result.applicationTemplate.getDslId());
 
-		Assert.assertNotNull( result.application.getGraphs());
-		Graphs g = result.application.getGraphs();
+		Assert.assertNotNull( result.applicationTemplate.getGraphs());
+		Graphs g = result.applicationTemplate.getGraphs();
 		Assert.assertEquals( 3, g.getRootComponents().size());
 
 		Set<String> rootComponentNames = new HashSet<String> ();
@@ -297,16 +298,16 @@ public class RuntimeModelIoTest {
 		expectedPaths.add( "/Tomcat VM 3/Tomcat" );
 
 		Set<String> realPaths = new HashSet<String> ();
-		for( Instance inst : InstanceHelpers.getAllInstances( result.getApplication()))
+		for( Instance inst : InstanceHelpers.getAllInstances( result.getApplicationTemplate()))
 			realPaths.add( InstanceHelpers.computeInstancePath( inst ));
 
 		Assert.assertEquals( expectedPaths.size(), realPaths.size());
 		realPaths.removeAll( expectedPaths );
 		Assert.assertEquals( 0, realPaths.size());
 
-		Instance tomcat1 = InstanceHelpers.findInstanceByPath( result.getApplication(), "/Tomcat VM 1/Tomcat" );
-		Instance tomcat2 = InstanceHelpers.findInstanceByPath( result.getApplication(), "/Tomcat VM 2/Tomcat" );
-		Instance tomcat3 = InstanceHelpers.findInstanceByPath( result.getApplication(), "/Tomcat VM 3/Tomcat" );
+		Instance tomcat1 = InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/Tomcat VM 1/Tomcat" );
+		Instance tomcat2 = InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/Tomcat VM 2/Tomcat" );
+		Instance tomcat3 = InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/Tomcat VM 3/Tomcat" );
 
 		Assert.assertEquals( tomcat1.getComponent(), tomcat2.getComponent());
 		Assert.assertEquals( tomcat1.getComponent(), tomcat3.getComponent());
@@ -334,17 +335,17 @@ public class RuntimeModelIoTest {
 	@Test
 	public void testLoadApplication_Mongo() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/applications/valid/mongo" );
+		File directory = TestUtils.findTestFile( "/applications/mongo" );
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
-		Assert.assertNotNull( result.application );
+		Assert.assertNotNull( result.applicationTemplate );
 		Assert.assertEquals( 2, result.loadErrors.size());
 		for( RoboconfError error : result.loadErrors )
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
-		Assert.assertEquals( "Mongo", result.application.getName());
-		Assert.assertNotNull( result.application.getGraphs());
-		Graphs g = result.application.getGraphs();
+		Assert.assertEquals( "Mongo", result.applicationTemplate.getName());
+		Assert.assertNotNull( result.applicationTemplate.getGraphs());
+		Graphs g = result.applicationTemplate.getGraphs();
 		Assert.assertEquals( 1, g.getRootComponents().size());
 
 		Component vmComponent = g.getRootComponents().iterator().next();
@@ -385,10 +386,10 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_FILE, iterator.next().getErrorCode());
 
 		Properties props = new Properties();
-		props.setProperty( ApplicationDescriptor.APPLICATION_NAME, "app-name" );
-		props.setProperty( ApplicationDescriptor.APPLICATION_QUALIFIER, "snapshot" );
-		props.setProperty( ApplicationDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
-		props.setProperty( ApplicationDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
+		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_NAME, "app-name" );
+		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_QUALIFIER, "snapshot" );
+		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
+		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
 		FileOutputStream fos = null;
 		try {
 			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
@@ -435,7 +436,7 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
 		try {
 			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
-			props.setProperty( ApplicationDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
+			props.setProperty( ApplicationTemplateDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
 			props.store( fos, null );
 
 		} finally {
@@ -470,19 +471,19 @@ public class RuntimeModelIoTest {
 	@Test
 	public void testLoadApplication_KarafJoramJndi() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/applications/valid/karaf-joram-jndi" );
+		File directory = TestUtils.findTestFile( "/applications/karaf-joram-jndi" );
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
-		Assert.assertNotNull( result.application );
+		Assert.assertNotNull( result.applicationTemplate );
 		Assert.assertEquals( 6, result.loadErrors.size());
 		for( RoboconfError error : result.loadErrors )
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
 
-		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf" ));
-		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec21" ));
-		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec21/jndiec2" ));
-		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec22" ));
-		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplication(), "/vmec2karaf/karafec22/joramec2" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/vmec2karaf" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/vmec2karaf/karafec21" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/vmec2karaf/karafec21/jndiec2" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/vmec2karaf/karafec22" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( result.getApplicationTemplate(), "/vmec2karaf/karafec22/joramec2" ));
 	}
 
 
@@ -541,13 +542,13 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
 		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES + "/model.instances" ).createNewFile());
 
-		ApplicationDescriptor desc = new ApplicationDescriptor();
+		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
 		desc.setQualifier( "qualifier" );
 		desc.setInstanceEntryPoint( "model.instances" );
 		desc.setDslId( "roboconf-1.0" );
 
-		ApplicationDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
+		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
 		Iterator<RoboconfError> it = RuntimeModelIo.loadApplicationFlexibly( dir ).loadErrors.iterator();
 		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_GEP, it.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.CO_GRAPH_COULD_NOT_BE_BUILT, it.next().getErrorCode());
@@ -568,12 +569,12 @@ public class RuntimeModelIoTest {
 		File graphFile = new File( dir, Constants.PROJECT_DIR_GRAPH + "/app.graph" );
 		Assert.assertTrue( graphFile.createNewFile());
 
-		ApplicationDescriptor desc = new ApplicationDescriptor();
+		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
 		desc.setName( "app name" );
 		desc.setQualifier( "qualifier" );
 		desc.setGraphEntryPoint( "app.graph" );
 		desc.setDslId( "roboconf-1.0" );
-		ApplicationDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
+		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
 
 		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
 		Assert.assertEquals( 0, RuntimeModelIo.loadApplication( dir ).loadErrors.size());
@@ -611,5 +612,17 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( 1, alr.getLoadErrors().size());
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, alr.getLoadErrors().iterator().next().getErrorCode());
 		Assert.assertTrue( alr.getLoadErrors().iterator().next().getDetails().contains( "f.*" ));
+	}
+
+
+	@Test
+	public void testGraphFileFilter() throws Exception {
+
+		GraphFileFilter filter = new GraphFileFilter();
+		Assert.assertFalse( filter.accept( new File( "inexisting" )));
+
+		Assert.assertTrue( filter.accept( this.folder.newFile( "toto.graph" )));
+		Assert.assertFalse( filter.accept( this.folder.newFile( "toto.txt" )));
+		Assert.assertFalse( filter.accept( this.folder.newFolder( "sth.graph" )));
 	}
 }

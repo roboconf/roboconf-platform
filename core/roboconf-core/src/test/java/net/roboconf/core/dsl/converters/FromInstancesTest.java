@@ -40,6 +40,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
@@ -251,7 +252,7 @@ public class FromInstancesTest {
 		for( Instance rootInstance : rootInstances ) {
 
 			// We have the same number of instances
-			Application tempApp = new Application();
+			Application tempApp = new Application( new ApplicationTemplate());
 			tempApp.getRootInstances().addAll( newRootInstances );
 
 			String rootInstancePath = InstanceHelpers.computeInstancePath( rootInstance );

@@ -31,9 +31,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -50,7 +52,6 @@ public class ManagedApplication {
 	static final int THRESHOLD = 2;
 
 	private final Application application;
-	private final File applicationFilesDirectory;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private final Map<Instance,List<Message>> scopedInstanceToAwaitingMessages;
@@ -60,15 +61,12 @@ public class ManagedApplication {
 	/**
 	 * Constructor.
 	 */
-	public ManagedApplication( Application application, File applicationFilesDirectory ) {
-		this.applicationFilesDirectory = applicationFilesDirectory;
+	public ManagedApplication( Application application ) {
+		Objects.requireNonNull( application );
+		Objects.requireNonNull( application.getTemplate());
+
 		this.application = application;
 		this.scopedInstanceToAwaitingMessages = new HashMap<Instance,List<Message>> ();
-	}
-
-
-	public File getApplicationFilesDirectory() {
-		return this.applicationFilesDirectory;
 	}
 
 
@@ -82,11 +80,29 @@ public class ManagedApplication {
 	}
 
 
-	/**
-	 * @return the application's name
-	 */
+	public File getDirectory() {
+		return this.application.getDirectory();
+	}
+
+
 	public String getName() {
-		return this.application == null ? null : this.application.getName();
+		return this.application.getName();
+	}
+
+
+	public Graphs getGraphs() {
+		return this.application.getTemplate().getGraphs();
+	}
+
+
+	public File getTemplateDirectory() {
+		return this.application.getTemplate().getDirectory();
+	}
+
+
+	@Override
+	public String toString() {
+		return String.valueOf( this.application );
 	}
 
 
@@ -183,7 +199,7 @@ public class ManagedApplication {
 				scopedInstance.setStatus( InstanceStatus.PROBLEM );
 
 				if( count == THRESHOLD + 1 )
-					this.logger.severe( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " has not sent heartbeats for quite a long time. Status changed to PROBLEM." );
+					this.logger.severe( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " has not sent heart beats for quite a long time. Status changed to PROBLEM." );
 			}
 
 			scopedInstance.data.put( MISSED_HEARTBEATS, String.valueOf( count ));

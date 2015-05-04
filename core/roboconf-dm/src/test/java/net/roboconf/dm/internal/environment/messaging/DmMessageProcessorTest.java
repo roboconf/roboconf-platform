@@ -75,8 +75,8 @@ public class DmMessageProcessorTest {
 			this.processor.stopProcessor();
 
 		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
-		this.manager.getAppNameToManagedApplication().clear();
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.manager.getNameToManagedApplication().clear();
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 	}
 
 
@@ -162,7 +162,7 @@ public class DmMessageProcessorTest {
 	@Test
 	public void testProcessMsgNotifInstanceChanged_invalidInstance() {
 
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), new Instance( "invalid instance" ));
@@ -177,7 +177,7 @@ public class DmMessageProcessorTest {
 	@Test
 	public void testProcessMsgNotifInstanceChanged_rootIsNotDeployed() {
 
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
 
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), this.app.getMySql());

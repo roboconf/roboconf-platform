@@ -28,6 +28,7 @@ package net.roboconf.core.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -418,6 +419,33 @@ public final class Utils {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Lists directories located under a given file.
+	 * @param root a file
+	 * @return a non-null list of directories
+	 */
+	public static List<File> listDirectories( File root ) {
+
+		List<File> result = new ArrayList<File> ();
+		File[] files = root.listFiles( new DirectoryFileFilter());
+		if( files != null )
+			result.addAll( Arrays.asList( files ));
+
+		return result;
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	static class DirectoryFileFilter implements FileFilter {
+		@Override
+		public boolean accept( File f ) {
+			return f.isDirectory();
+		}
 	}
 
 

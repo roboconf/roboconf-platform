@@ -35,10 +35,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.github.jknack.handlebars.Template;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
+
 import org.fest.assertions.Condition;
+
+import com.github.jknack.handlebars.Template;
 
 /**
  * Utility methods dedicated to the testing of the Roboconf monitoring support.
@@ -49,7 +51,9 @@ public class MonitoringTestUtils {
 
 	// Prevent instantiations.
 	private MonitoringTestUtils() {
+		// nothing
 	}
+
 
 	/**
 	 * Create a condition that matches {@code File}s with a content equal to the given value.
@@ -73,8 +77,9 @@ public class MonitoringTestUtils {
 		};
 	}
 
+
 	/**
-	 * Add a template to the monitoring manager.
+	 * Adds a template to the monitoring manager.
 	 * <p>
 	 * The template string content string is converted to an {@code InputStream} before being passed to the
 	 * {@link net.roboconf.dm.monitoring.MonitoringService#addTemplate(Application, String, InputStream)} method.
@@ -96,9 +101,9 @@ public class MonitoringTestUtils {
 		return monitoringManager.addTemplate(application, name, new ByteArrayInputStream(content.getBytes()));
 	}
 
+
 	/**
-	 * Map the given instances by their path.
-	 *
+	 * Maps the given instances by their path.
 	 * @param instances the instances to map.
 	 * @return the map of the given instances, indexed by path.
 	 */
@@ -110,8 +115,9 @@ public class MonitoringTestUtils {
 		return result;
 	}
 
+
 	/**
-	 * Transform the given set of variable contexts to a {@code string -> string} map.
+	 * Transforms the given set of variable contexts to a {@code string -> string} map.
 	 * <p>
 	 * The result of this method is left unspecified if the given set contains the same variable definition more than
 	 * once.
@@ -128,8 +134,9 @@ public class MonitoringTestUtils {
 		return result;
 	}
 
+
 	/**
-	 * Process the given template, using the given monitoring context.
+	 * Processes the given template, using the given monitoring context.
 	 * <p>
 	 * This method relies on the {@code MonitoringManager} and friends classes to process the template. So the result
 	 * is exactly the same as the one that would be written in a monitoring report by the manager.
@@ -143,5 +150,4 @@ public class MonitoringTestUtils {
 		// TODO
 		return null;
 	}
-
 }

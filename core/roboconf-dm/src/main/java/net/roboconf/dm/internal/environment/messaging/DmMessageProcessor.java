@@ -35,6 +35,7 @@ import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
+import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.client.IDmClient;
@@ -60,6 +61,7 @@ import net.roboconf.messaging.processors.AbstractMessageProcessor;
 public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
+	private final ApplicationMngrDelegate appManager;
 	private final Manager manager;
 	private final RuleBasedEventHandler ruleBasedHandler;
 
@@ -67,9 +69,11 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	/**
 	 * Constructor.
 	 * @param manager
+	 * @param appManager
 	 */
-	public DmMessageProcessor( Manager manager ) {
+	public DmMessageProcessor( Manager manager, ApplicationMngrDelegate appManager ) {
 		super( "Roboconf DM - Message Processor" );
+		this.appManager = appManager;
 		this.manager = manager;
 		this.ruleBasedHandler = new RuleBasedEventHandler( this.manager );
 	}
@@ -109,7 +113,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifMachineDown( MsgNotifMachineDown message ) {
 
 		String scopedInstancePath = message.getScopedInstancePath();
-		Application app = this.manager.findApplicationByName( message.getApplicationName());
+		Application app = this.appManager.findApplicationByName( message.getApplicationName());
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( app, scopedInstancePath );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -136,7 +140,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifHeartbeat( MsgNotifHeartbeat message ) {
 
 		String scopedInstancePath = message.getScopedInstancePath();
-		ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( message.getApplicationName());
+		ManagedApplication ma = this.appManager.findManagedApplicationByName( message.getApplicationName());
 		Application app = ma == null ? null : ma.getApplication();
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( app, scopedInstancePath );
 
@@ -146,7 +150,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( "A 'HEART BEAT' was received from an unknown agent: " );
 			sb.append( scopedInstancePath );
 			sb.append( " (app = " );
-			sb.append( app );
+			sb.append( ma );
 			sb.append( ")." );
 			this.logger.warning( sb.toString());
 
@@ -155,7 +159,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( "A 'HEART BEAT' was received for a non-scoped instance: " );
 			sb.append( scopedInstancePath );
 			sb.append( " (app = " );
-			sb.append( app );
+			sb.append( ma );
 			sb.append( "). The heart beat is dropped." );
 			this.logger.warning( sb.toString());
 
@@ -169,13 +173,13 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			}
 
 			ma.acknowledgeHeartBeat( scopedInstance );
-			this.logger.finest( "A heart beat was acknowledged for " + scopedInstancePath + " in the application " + app.getName() + "." );
+			this.logger.finest( "A heart beat was acknowledged for " + scopedInstancePath + " in the application " + ma + "." );
 
 			// A heart beat may also say whether the agent receive its model
 			try {
 				if( message.isModelRequired()) {
 					this.logger.info( "The DM is sending its model to agent " + scopedInstancePath + "." );
-					this.messagingClient.sendMessageToAgent( app, scopedInstance, new MsgCmdSetScopedInstance( scopedInstance ));
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, new MsgCmdSetScopedInstance( scopedInstance ));
 				}
 
 			} catch( IOException e ) {
@@ -189,7 +193,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifInstanceChanged( MsgNotifInstanceChanged message ) {
 
 		String instancePath = message.getInstancePath();
-		Application app = this.manager.findApplicationByName( message.getApplicationName());
+		Application app = this.appManager.findApplicationByName( message.getApplicationName());
 		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -233,7 +237,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifInstanceRemoved( MsgNotifInstanceRemoved message ) {
 
 		String instancePath = message.getInstancePath();
-		Application app = this.manager.findApplicationByName( message.getApplicationName());
+		Application app = this.appManager.findApplicationByName( message.getApplicationName());
 		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -259,7 +263,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private void processMsgMonitoringEvent( MsgNotifAutonomic message ) {
 
-		Application app = this.manager.findApplicationByName( message.getApplicationName());
+		Application app = this.appManager.findApplicationByName( message.getApplicationName());
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( app, message.getScopedInstancePath());
 
 		// If 'app' is null, then 'instance' is also null.
@@ -273,7 +277,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			this.logger.warning( sb.toString());
 
 		} else {
-			ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( app.getName());
+			ManagedApplication ma = this.appManager.findManagedApplicationByName( app.getName());
 			this.ruleBasedHandler.handleEvent( ma, message );
 		}
 	}

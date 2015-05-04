@@ -88,6 +88,22 @@ public class TestUtils {
 
 
 	/**
+	 * Finds the location of an application directory located in the "roboconf-core" module.
+	 * @param currentDirectory the current directory (generally, <code>new File( "." );</code>).
+	 * @param appName the application's name (not null)
+	 * @return a non-null file (that may not exist
+	 */
+	public static File findApplicationDirectory( String appName ) throws IOException {
+
+		// This method must support test execution from Maven and IDE (e.g. Eclipse).
+		String suffix = "core/roboconf-core/src/test/resources/applications/" + appName;
+		File result = new File( "../../" + suffix ).getCanonicalFile();
+
+		return result;
+	}
+
+
+	/**
 	 * Finds a test file.
 	 * @param fileName must start with '/'
 	 * @param clazz a class to search the class path

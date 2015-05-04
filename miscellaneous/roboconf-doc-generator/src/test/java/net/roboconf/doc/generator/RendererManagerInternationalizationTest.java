@@ -47,7 +47,7 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 		Map<String,String> options = new HashMap<String,String> ();
 		options.put( DocConstants.OPTION_LOCALE, "en_US" );
 
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
 		String s = checkInternationalization();
 		Assert.assertTrue( s.contains( "Components" ));
 		Assert.assertFalse( s.contains( "significant" ));
@@ -61,7 +61,7 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 		Map<String,String> options = new HashMap<String,String> ();
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
 		String s = checkInternationalization();
 		Assert.assertTrue( s.contains( "Composants" ));
 		Assert.assertTrue( s.contains( "significatif" ));
@@ -76,7 +76,7 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 		Map<String,String> options = new HashMap<String,String> ();
 		options.put( DocConstants.OPTION_LOCALE, "oops" );
 
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
 		checkInternationalization();
 	}
 

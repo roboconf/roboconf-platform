@@ -60,9 +60,9 @@ public class RabbitMqTest extends AbstractMessagingTest {
 			RabbitMqClientDm client = new RabbitMqClientDm();
 			client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
 			client.openConnection();
-			client.deleteMessagingServerArtifacts( new Application( "app" ));
-			client.deleteMessagingServerArtifacts( new Application( "app1" ));
-			client.deleteMessagingServerArtifacts( new Application( "app2" ));
+			client.deleteMessagingServerArtifacts( new Application( "app", null ));
+			client.deleteMessagingServerArtifacts( new Application( "app1", null ));
+			client.deleteMessagingServerArtifacts( new Application( "app2", null ));
 			client.closeConnection();
 		}
 	}

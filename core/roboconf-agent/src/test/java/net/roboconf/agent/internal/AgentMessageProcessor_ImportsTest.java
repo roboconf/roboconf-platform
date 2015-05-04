@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
@@ -82,7 +82,7 @@ public class AgentMessageProcessor_ImportsTest {
 		TestClientAgent client = getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
@@ -103,7 +103,7 @@ public class AgentMessageProcessor_ImportsTest {
 	public void testImports() throws Exception {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -180,7 +180,7 @@ public class AgentMessageProcessor_ImportsTest {
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -223,7 +223,7 @@ public class AgentMessageProcessor_ImportsTest {
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );

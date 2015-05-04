@@ -30,7 +30,7 @@ import java.util.List;
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.Constants;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
@@ -102,7 +102,7 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 
 		// Adding an child instance when there is no root
 		Assert.assertNull( processor.scopedInstance );
@@ -155,7 +155,7 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 
 		// Insert a non-root element
 		Assert.assertNull( processor.scopedInstance );
@@ -193,7 +193,7 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		app.getTomcat().getComponent().installerName( Constants.TARGET_INSTALLER );
 
 		// Insert a non-root element
@@ -210,7 +210,7 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Initialize all the stuff
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		app.getTomcat().getComponent().installerName( Constants.TARGET_INSTALLER );
 
 		// Insert a root element
@@ -236,7 +236,7 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
 
 		// With a root instance
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 
 		processor.processMessage( new MsgCmdSendInstances());
@@ -263,7 +263,7 @@ public class AgentMessageProcessor_BasicTest {
 		// With a root instance which has no variable.
 		// Unlike with a real messaging client, we do not check variables in our test client.
 		// So, one processed instance = one message sent other agents.
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 		processor.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
@@ -292,7 +292,7 @@ public class AgentMessageProcessor_BasicTest {
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// Remove an instance when there is no model
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		Assert.assertNull( processor.scopedInstance );
 		processor.processMessage( new MsgCmdRemoveInstance( app.getMySqlVm()));
 		Assert.assertNull( processor.scopedInstance );
@@ -342,7 +342,7 @@ public class AgentMessageProcessor_BasicTest {
 		this.client.failMessageSending.set( true );
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		processor.scopedInstance = new TestApplication().getMySqlVm();
+		processor.scopedInstance = new TestApplicationTemplate().getMySqlVm();
 		processor.processMessage( new MsgCmdSendInstances());
 		// The processor won't be able to send the model through the messaging.
 	}

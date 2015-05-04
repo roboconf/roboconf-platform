@@ -9,7 +9,7 @@ class roboconf_withinit_module($runningState = undef, $importDiff = undef, $with
   # The exact copy of a file
   file{"/tmp/roboconf-test-for-puppet/WithInit.file.$runningState":
     ensure  => file,
-    mode => 755,
+    mode => "755",
     source => "puppet:///modules/roboconf_withinit_module/WithInitFile.txt"
   }
 }

@@ -25,134 +25,62 @@
 
 package net.roboconf.core.model.beans;
 
+import java.io.File;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
 /**
  * An application groups an identifier, graph definitions and instances.
  * @author Vincent Zurczak - Linagora
  */
-public class Application implements Serializable {
+public class Application extends AbstractApplication implements Serializable {
 
 	private static final long serialVersionUID = -4753958407033243184L;
-
-	private String name, qualifier, description, dslId;
-	private Graphs graphs;
-	private final Collection<Instance> rootInstances = new LinkedHashSet<Instance> ();
+	private final ApplicationTemplate template;
 
 
 	/**
 	 * Constructor.
+	 * @param template
 	 */
-	public Application() {
-		// nothing
+	public Application( ApplicationTemplate template ) {
+		this.template = template;
+
+		// We must duplicate all the instances
+		if( template != null ) {
+			for( Instance rootInstance : template.getRootInstances())
+				getRootInstances().add( InstanceHelpers.replicateInstance( rootInstance ));
+		}
 	}
 
 	/**
 	 * Constructor.
 	 * @param name
+	 * @param template
 	 */
-	public Application( String name ) {
+	public Application( String name, ApplicationTemplate template ) {
+		this( template );
 		this.name = name;
 	}
 
 	/**
-	 * @return the name
+	 * @return the template
 	 */
-	public String getName() {
-		return this.name;
-	}
-
-	/**
-	 * @param name the name to set
-	 */
-	public void setName( String name ) {
-		this.name = name;
-	}
-
-	/**
-	 * @return the description
-	 */
-	public String getDescription() {
-		return this.description;
-	}
-
-	/**
-	 * @param description the description to set
-	 */
-	public void setDescription( String description ) {
-		this.description = description;
-	}
-
-	/**
-	 * @return the qualifier
-	 */
-	public String getQualifier() {
-		return this.qualifier;
-	}
-
-	/**
-	 * @param qualifier the qualifier to set
-	 */
-	public void setQualifier( String qualifier ) {
-		this.qualifier = qualifier;
-	}
-
-	/**
-	 * @return the dslId
-	 */
-	public String getDslId() {
-		return this.dslId;
-	}
-
-	/**
-	 * @param dslId the dslId to set
-	 */
-	public void setDslId( String dslId ) {
-		this.dslId = dslId;
-	}
-
-	/**
-	 * @return the graphs
-	 */
-	public Graphs getGraphs() {
-		return this.graphs;
-	}
-
-	/**
-	 * @param graphs the graphs to set
-	 */
-	public void setGraphs( Graphs graphs ) {
-		this.graphs = graphs;
-	}
-
-	/**
-	 * @return the root instances
-	 */
-	public Collection<Instance> getRootInstances() {
-		return this.rootInstances;
+	public ApplicationTemplate getTemplate() {
+		return this.template;
 	}
 
 	@Override
 	public boolean equals( Object obj ) {
 		return obj instanceof Application
-				&& Utils.areEqual( this.name, ((Application) obj ).getName())
-				&& Utils.areEqual( this.qualifier, ((Application) obj ).getQualifier());
+				&& Utils.areEqual( this.name, ((Application) obj ).getName());
 	}
 
 	@Override
 	public int hashCode() {
-		int i1 = this.name == null ? 29 : this.name.hashCode();
-		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
-		return i1 * i2;
-	}
-
-	@Override
-	public String toString() {
-		return this.name;
+		return this.name == null ? 29 : this.name.hashCode();
 	}
 
 	/**
@@ -160,14 +88,6 @@ public class Application implements Serializable {
 	 */
 	public Application name( String name ) {
 		this.name = name;
-		return this;
-	}
-
-	/**
-	 * Sets the qualifier in a chain approach.
-	 */
-	public Application qualifier( String qualifier ) {
-		this.qualifier = qualifier;
 		return this;
 	}
 
@@ -180,18 +100,10 @@ public class Application implements Serializable {
 	}
 
 	/**
-	 * Sets the DSL ID in a chain approach.
+	 * Sets the directory in a chain approach.
 	 */
-	public Application dslId( String dslId ) {
-		this.dslId = dslId;
-		return this;
-	}
-
-	/**
-	 * Sets the graphs in a chain approach.
-	 */
-	public Application graphs( Graphs graphs ) {
-		this.graphs = graphs;
+	public Application directory( File directory ) {
+		this.directory = directory;
 		return this;
 	}
 }

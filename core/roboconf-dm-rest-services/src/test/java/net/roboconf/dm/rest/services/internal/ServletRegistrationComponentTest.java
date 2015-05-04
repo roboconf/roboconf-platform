@@ -76,7 +76,7 @@ public class ServletRegistrationComponentTest {
 		this.manager.start();
 
 		this.app = new TestApplication();
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 	}
 
 

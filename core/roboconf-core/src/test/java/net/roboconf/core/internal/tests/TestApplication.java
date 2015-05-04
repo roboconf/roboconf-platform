@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,10 +25,7 @@
 
 package net.roboconf.core.internal.tests;
 
-import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -37,7 +34,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
  */
 public class TestApplication extends Application {
 
-	private static final long serialVersionUID = -8616929491081715953L;
+	private static final long serialVersionUID = 6625970180959007726L;
 	private final Instance tomcatVm, mySqlVm, tomcat, mySql, war;
 
 
@@ -45,44 +42,14 @@ public class TestApplication extends Application {
 	 * Constructor.
 	 */
 	public TestApplication() {
-		super();
-		setName( "test-app" );
-		setQualifier( "test" );
+		super( "test", new TestApplicationTemplate());
 
-		// Root instances
-		Component vmComponent = new Component( "vm" ).installerName( Constants.TARGET_INSTALLER );
-		this.tomcatVm = new Instance( "tomcat-vm" ).component( vmComponent );
-		this.mySqlVm = new Instance( "mysql-vm" ).component( vmComponent );
-
-		// Children instances
-		Component tomcatComponent = new Component( "tomcat" ).installerName( "puppet" );
-		this.tomcat = new Instance( "tomcat-server" ).component( tomcatComponent );
-
-		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" );
-		mySqlComponent.exportedVariables.put( "mysql.port", "3306" );
-		mySqlComponent.exportedVariables.put( "mysql.ip", null );
-		this.mySql = new Instance( "mysql-server" ).component( mySqlComponent );
-
-		Component warComponent = new Component( "war" ).installerName( "script" );
-		warComponent.exportedVariables.put( "war.port", "8080" );
-		warComponent.exportedVariables.put( "war.ip", null );
-		warComponent.importedVariables.put( "mysql.port", false );
-		warComponent.importedVariables.put( "mysql.ip", false );
-		this.war = new Instance( "hello-world" ).component( warComponent );
-
-		// Make the glue
-		InstanceHelpers.insertChild( this.tomcatVm, this.tomcat );
-		InstanceHelpers.insertChild( this.tomcat, this.war );
-		InstanceHelpers.insertChild( this.mySqlVm, this.mySql );
-
-		vmComponent.addChild( mySqlComponent );
-		vmComponent.addChild( tomcatComponent );
-		tomcatComponent.addChild( warComponent );
-
-		setGraphs( new Graphs());
-		getGraphs().getRootComponents().add( vmComponent );
-		getRootInstances().add( this.mySqlVm );
-		getRootInstances().add( this.tomcatVm );
+		TestApplicationTemplate tpl = (TestApplicationTemplate) getTemplate();
+		this.tomcatVm = InstanceHelpers.findInstanceByPath( this, InstanceHelpers.computeInstancePath( tpl.getTomcatVm()));
+		this.mySqlVm = InstanceHelpers.findInstanceByPath( this, InstanceHelpers.computeInstancePath( tpl.getMySqlVm()));
+		this.tomcat = InstanceHelpers.findInstanceByPath( this, InstanceHelpers.computeInstancePath( tpl.getTomcat()));
+		this.mySql = InstanceHelpers.findInstanceByPath( this, InstanceHelpers.computeInstancePath( tpl.getMySql()));
+		this.war = InstanceHelpers.findInstanceByPath( this, InstanceHelpers.computeInstancePath( tpl.getWar()));
 	}
 
 
@@ -128,9 +95,10 @@ public class TestApplication extends Application {
 
 	@Override
 	public boolean equals( Object obj ) {
-		return super.equals( obj )
-				&& obj instanceof TestApplication;
+		return obj instanceof TestApplication
+				&& super.equals( obj );
 	}
+
 
 	@Override
 	public int hashCode() {

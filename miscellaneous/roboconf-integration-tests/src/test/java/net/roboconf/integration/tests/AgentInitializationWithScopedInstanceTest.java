@@ -39,6 +39,7 @@ import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -109,15 +110,8 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 		List<Option> options = getBaseOptions();
 
 		// Store the application's location
-		String appLocation = null;
-		try {
-			File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
-			appLocation = resourcesDirectory.getAbsolutePath();
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
+		File resourcesDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		String appLocation = resourcesDirectory.getAbsolutePath();
 		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
 
 		// Deploy the agent's bundles
@@ -150,9 +144,10 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		ManagedApplication ma = this.manager.loadNewApplication( new File( appLocation ));
+		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
 
 		// There is no agent yet (no root instance was deployed)
 		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
@@ -189,7 +184,7 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherScopedInstance.getStatus());
 
 		Assert.assertEquals( 2, myResolver.handler.agentIdToAgent.size());
-		Agent anotherAgent = myResolver.handler.agentIdToAgent.get( "/MySQL VM/MySQL @ Legacy LAMP" );
+		Agent anotherAgent = myResolver.handler.agentIdToAgent.get( "/MySQL VM/MySQL @ test" );
 		Assert.assertNotNull( anotherAgent );
 
 		Thread.sleep( 1000 );

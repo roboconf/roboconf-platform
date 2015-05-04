@@ -30,6 +30,7 @@ import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Instance;
@@ -90,7 +91,7 @@ public abstract class AbstractMessagingTest {
 	public void testExchangesBetweenTheDmAndOneAgent() throws Exception {
 
 		// Initialize everything
-		Application app = new Application( "app" );
+		Application app = new Application( "app", new ApplicationTemplate());
 		Instance rootInstance = new Instance( "root" );
 
 		List<Message> dmMessages = new ArrayList<Message> ();
@@ -183,8 +184,8 @@ public abstract class AbstractMessagingTest {
 
 		// Initialize everything
 		// 1 DM, 2 agents (root1 and root2) for application app1 and 1 agent (root) for app2.
-		Application app1 = new Application( "app1" );
-		Application app2 = new Application( "app2" );
+		Application app1 = new Application( "app1", new ApplicationTemplate());
+		Application app2 = new Application( "app2", new ApplicationTemplate());
 		Instance app1_root1 = new Instance( "root1" );
 		Instance app1_root2 = new Instance( "root2" );
 		Instance app2_root = new Instance( "root" );
@@ -265,8 +266,8 @@ public abstract class AbstractMessagingTest {
 
 		// 3 agents (tomcat, mysql, apache) for application app1 and 1 agent (root) for app2.
 		// This last one should not receive anything!
-		Application app1 = new Application( "app1" );
-		Application app2 = new Application( "app2" );
+		Application app1 = new Application( "app1", new ApplicationTemplate());
+		Application app2 = new Application( "app2", new ApplicationTemplate());
 
 		Component tomcatComponent = new Component( "Tomcat" );
 		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );
@@ -452,8 +453,8 @@ public abstract class AbstractMessagingTest {
 
 		// 3 agents (tomcat, mysql, apache) for application app1 and 1 agent (root) for app2.
 		// This last one should not receive anything!
-		Application app1 = new Application( "app1" );
-		Application app2 = new Application( "app2" );
+		Application app1 = new Application( "app1", new ApplicationTemplate());
+		Application app2 = new Application( "app2", new ApplicationTemplate());
 
 		Component tomcatComponent = new Component( "Tomcat" );
 		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );
@@ -569,7 +570,7 @@ public abstract class AbstractMessagingTest {
 	public void testExportsBetweenSiblingAgents() throws Exception {
 
 		// The model
-		Application app = new Application( "app" );
+		Application app = new Application( "app", null );
 
 		Facet facet = new Facet( "facet" );
 		facet.exportedVariables.put( "facet.data", "hello" );
@@ -654,8 +655,8 @@ public abstract class AbstractMessagingTest {
 
 		// 3 agents (tomcat, mysql, apache) for application app1 and 1 agent (root) for app2.
 		// This last one should not receive anything!
-		Application app1 = new Application( "app1" );
-		Application app2 = new Application( "app2" );
+		Application app1 = new Application( "app1", null );
+		Application app2 = new Application( "app2", null );
 
 		Component tomcatComponent = new Component( "Tomcat" );
 		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );

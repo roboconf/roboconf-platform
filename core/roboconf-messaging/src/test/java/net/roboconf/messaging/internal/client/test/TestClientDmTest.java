@@ -76,10 +76,10 @@ public class TestClientDmTest {
 		TestClientDm client = new TestClientDm();
 		Assert.assertEquals( 0, client.sentMessages.size());
 
-		client.sendMessageToAgent( new Application( "app" ), new Instance( "whatever" ), new MsgCmdResynchronize());
+		client.sendMessageToAgent( new Application( "app", null ), new Instance( "whatever" ), new MsgCmdResynchronize());
 		Assert.assertEquals( 1, client.sentMessages.size());
 
-		client.sendMessageToAgent( new Application( "app-2" ), new Instance( "whatever" ), new MsgCmdResynchronize());
+		client.sendMessageToAgent( new Application( "app-2", null ), new Instance( "whatever" ), new MsgCmdResynchronize());
 		Assert.assertEquals( 2, client.sentMessages.size());
 	}
 
@@ -89,7 +89,7 @@ public class TestClientDmTest {
 
 		TestClientDm client = new TestClientDm();
 		client.failMessageSending.set( true );
-		client.sendMessageToAgent( new Application( "app" ), new Instance( "whatever" ), new MsgCmdResynchronize());
+		client.sendMessageToAgent( new Application( "app", null ), new Instance( "whatever" ), new MsgCmdResynchronize());
 	}
 
 
@@ -116,15 +116,33 @@ public class TestClientDmTest {
 	}
 
 
+	@Test( expected = IOException.class )
+	public void testCloseConnection_withException() throws Exception {
+
+		TestClientDm client = new TestClientDm();
+		client.failClosingConnection.set( true );
+		client.closeConnection();
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testListeningToTheDm_withException() throws Exception {
+
+		TestClientDm client = new TestClientDm();
+		client.failListeningToTheDm.set( true );
+		client.listenToTheDm( ListenerCommand.START );
+	}
+
+
 	@Test
 	public void forCodeCoverageOnly() throws Exception {
 
 		TestClientDm client = new TestClientDm();
-		client.propagateAgentTermination( new Application(), new Instance());
-		client.deleteMessagingServerArtifacts( new Application( "whatever" ));
+		client.propagateAgentTermination( new Application( null ), new Instance());
+		client.deleteMessagingServerArtifacts( new Application( "whatever", null ));
 
-		client.listenToAgentMessages( new Application( "app" ), ListenerCommand.START );
-		client.listenToAgentMessages( new Application( "app" ), ListenerCommand.STOP );
+		client.listenToAgentMessages( new Application( "app", null ), ListenerCommand.START );
+		client.listenToAgentMessages( new Application( "app", null ), ListenerCommand.STOP );
 
 		client.listenToTheDm( ListenerCommand.START );
 		client.listenToTheDm( ListenerCommand.STOP );

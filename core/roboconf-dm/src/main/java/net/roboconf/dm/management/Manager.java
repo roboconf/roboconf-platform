@@ -28,39 +28,33 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
-import net.roboconf.core.model.RuntimeModelIo;
-import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
-import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
+import net.roboconf.dm.internal.delegates.ApplicationTemplateMngrDelegate;
+import net.roboconf.dm.internal.delegates.InstanceMngrDelegate;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.environment.messaging.RCDm;
-import net.roboconf.dm.internal.environment.target.TargetHelpers;
-import net.roboconf.dm.internal.environment.target.TargetResolver;
-import net.roboconf.dm.internal.management.CheckerHeartbeatsTask;
-import net.roboconf.dm.internal.management.CheckerMessagesTask;
+import net.roboconf.dm.internal.tasks.CheckerHeartbeatsTask;
+import net.roboconf.dm.internal.tasks.CheckerMessagesTask;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
-import net.roboconf.dm.management.ITargetResolver.Target;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
@@ -68,11 +62,7 @@ import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.target.api.TargetException;
@@ -117,34 +107,37 @@ public class Manager {
 
 	// Constants
 	private static final long TIMER_PERIOD = 6000;
-	private static final Object LOCK = new Object();
 
 	// Injected by iPojo or Admin Config
-	private final List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
-	private String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
+	protected final List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
+	protected String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
 
 	// Monitoring manager optional dependency. May be null.
 	// @GuardedBy this
 	private MonitoringManagerService monitoringManager;
 
 	// Internal fields
-	private final Map<String,ManagedApplication> appNameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
-	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String messagingFactoryType;
-	private RCDm messagingClient;
+	protected final Logger logger = Logger.getLogger( getClass().getName());
+	protected String messagingFactoryType;
+	protected final ApplicationTemplateMngrDelegate templateManager;
+	protected final ApplicationMngrDelegate appManager;
+	protected final InstanceMngrDelegate instanceManager;
+	protected Timer timer;
 
-	final List<MsgEcho> echoMessages = new ArrayList<MsgEcho>();
+	private final List<MsgEcho> echoMessages = new ArrayList<MsgEcho>();
+	private RCDm messagingClient;
 	File configurationDirectory;
-	ITargetResolver targetResolver;
-	Timer timer;
 
 
 	/**
 	 * Constructor.
 	 */
 	public Manager() {
+		super();
+		this.templateManager = new ApplicationTemplateMngrDelegate();
+		this.appManager = new ApplicationMngrDelegate();
+		this.instanceManager = new InstanceMngrDelegate( this );
 		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
-		this.targetResolver = new TargetResolver();
 	}
 
 
@@ -158,13 +151,13 @@ public class Manager {
 
 		this.logger.info( "The DM is about to be launched." );
 
-		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
-		this.messagingClient = new RCDm( this );
+		DmMessageProcessor messageProcessor = new DmMessageProcessor( this, this.appManager );
+		this.messagingClient = new RCDm( this.appManager );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
 		this.timer = new Timer( "Roboconf's Management Timer", false );
-		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this, this.messagingClient ), 0, TIMER_PERIOD );
-		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this ), 0, Constants.HEARTBEAT_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.appManager, this.messagingClient ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.appManager ), 0, Constants.HEARTBEAT_PERIOD );
 
 		reconfigure();
 
@@ -206,137 +199,61 @@ public class Manager {
 			}
 		}
 
-		// Stop the monitoring.
-		// May be called before the unbindMonitoringManager() method.
-		synchronized (this) {
-			if (this.monitoringManager != null) {
-				logger.fine( "Stopping monitoring manager..." );
-				// Disable the monitoring manager.
-				monitoringManager.stopMonitoring();
-				this.monitoringManager = null;
-				logger.fine( "Monitoring manager stopped!" );
+		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
+			// Stop the monitoring.
+			// May be called before the unbindMonitoringManager() method.
+			synchronized (this) {
+				if (this.monitoringManager != null) {
+					this.logger.fine( "Stopping monitoring manager..." );
+					// Disable the monitoring manager.
+					this.monitoringManager.stopMonitoring();
+					this.monitoringManager = null;
+					this.logger.fine( "Monitoring manager stopped!" );
+				}
 			}
-		}
 
-		for( ManagedApplication ma : this.appNameToManagedApplication.values())
 			saveConfiguration( ma );
+		}
 
 		this.logger.info( "The DM was stopped." );
 	}
 
 
 	/**
-	 * This method reconfigures the manager.
-	 * <p>
-	 * It is invoked by iPojo when the configuration changes.
-	 * It may be invoked before the start() method is.
-	 * </p>
-	 */
-	public void reconfigure() {
-
-		// Backup the current
-		for( ManagedApplication ma : this.appNameToManagedApplication.values())
-			saveConfiguration( ma );
-
-		// Update the configuration directory
-		File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
-		if( Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation )) {
-			this.logger.warning( "Invalid location for the configuration directory (empty or null). Switching to " + defaultConfigurationDirectory );
-			this.configurationDirectory = defaultConfigurationDirectory;
-
-		} else {
-			this.configurationDirectory = new File( this.configurationDirectoryLocation );
-			try {
-				Utils.createDirectory( this.configurationDirectory );
-
-			} catch( IOException e ) {
-				this.logger.warning( "Could not create " + this.configurationDirectory + ". Switching to " + defaultConfigurationDirectory );
-				this.configurationDirectory = defaultConfigurationDirectory;
-			}
-		}
-
-		// Restart the monitoring, using the new configuration directory.
-		synchronized (this) {
-			if (this.monitoringManager != null) {
-				this.monitoringManager.stopMonitoring();
-				this.monitoringManager.startMonitoring( this.configurationDirectory );
-				// Applications are re-added as they are reloaded, in the restoreApplications() method.
-			}
-		}
-
-		// Update the messaging client
-		if( this.messagingClient != null ) {
-			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
-			try {
-				if( this.messagingClient.isConnected())
-					this.messagingClient.listenToTheDm( ListenerCommand.START );
-
-			} catch ( IOException e ) {
-				this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
-			}
-		}
-
-
-		// Reset and restore applications.
-		// We ALWAYS do it, because we must also reconfigure the new client with respect
-		// to what we already deployed.
-		// FIXME: should we backup the current configuration first?
-		restoreApplications();
-
-		this.logger.info( "The DM was successfully (re)configured." );
-	}
-
-
-	/**
-	 * Bind to the {@code MonitoringManagerService}.
-	 *
+	 * Binds to the {@code MonitoringManagerService}.
 	 * @param monitoringManager the {@code MonitoringManagerService}
 	 */
 	public synchronized void bindMonitoringManager( MonitoringManagerService monitoringManager ) {
-		logger.fine( "Binding to monitoring manager service..." );
+
+		this.logger.fine( "Binding to monitoring manager service..." );
 		if (this.configurationDirectory != null) {
-			// We only start the monitoring if the configuration directory is configured. If not, the monitoring will be
-			// started in the reconfigure() method.
+			// We only start the monitoring if the configuration directory is configured.
+			// If not, the monitoring will be started in the reconfigure() method.
 			monitoringManager.startMonitoring( this.configurationDirectory );
+
 			// Register the applications in the monitoring manager.
-			for (ManagedApplication app : this.appNameToManagedApplication.values())
-				monitoringManager.addApplication( app.getApplication() );
+			for (ManagedApplication app : this.appManager.getManagedApplications())
+				monitoringManager.addApplication( app.getApplication());
+
 			this.monitoringManager = monitoringManager;
 		}
-		logger.fine( "Now bound to monitoring manager service!" );
+		this.logger.fine( "Now bound to monitoring manager service!" );
 	}
 
 
 	/**
-	 * Unbind from the {@code MonitoringManagerService}.
-	 *
+	 * Unbinds from the {@code MonitoringManagerService}.
 	 * @param monitoringManager the {@code MonitoringManagerService}
 	 */
 	public synchronized void unbindMonitoringManager( MonitoringManagerService monitoringManager ) {
+
 		// May be called after the stop method.
 		if (this.monitoringManager != null) {
-			logger.fine( "Unbinding from monitoring manager service..." );
+			this.logger.fine( "Unbinding from monitoring manager service..." );
 			// Disable the monitoring manager.
 			monitoringManager.stopMonitoring();
 			this.monitoringManager = null;
-			logger.fine( "Unbound from monitoring manager service!" );
-		}
-	}
-
-
-	/**
-	 * Saves the configuration (instances).
-	 * @param ma a non-null managed application
-	 */
-	public void saveConfiguration( ManagedApplication ma ) {
-		// Save the state of the application.
-		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
-
-		// Application state has changed => (re)generate the monitoring reports.
-		synchronized (this) {
-			if (this.monitoringManager != null) {
-				this.monitoringManager.updateApplication( ma.getApplication() );
-			}
+			this.logger.fine( "Unbound from monitoring manager service!" );
 		}
 	}
 
@@ -406,40 +323,6 @@ public class Manager {
 
 
 	/**
-	 * @param targetResolver the targetResolver to set
-	 */
-	public void setTargetResolver( ITargetResolver targetResolver ) {
-		this.targetResolver = targetResolver;
-	}
-
-
-	/**
-	 * @throws IOException if the configuration is invalid
-	 */
-	public void checkConfiguration() throws IOException {
-
-		String msg = null;
-		if( this.messagingClient == null )
-			msg = "The DM was not started.";
-		else if( ! this.messagingClient.hasValidClient())
-			msg = "The DM's configuration is invalid. Please, review the messaging settings.";
-
-		if( msg != null ) {
-			this.logger.warning( msg );
-			throw new IOException( msg );
-		}
-	}
-
-
-	/**
-	 * @return the messagingClient
-	 */
-	public ReconfigurableClientDm getMessagingClient() {
-		return this.messagingClient;
-	}
-
-
-	/**
 	 * @param configurationDirectoryLocation the configurationDirectoryLocation to set
 	 */
 	public void setConfigurationDirectoryLocation( String configurationDirectoryLocation ) {
@@ -472,18 +355,10 @@ public class Manager {
 
 
 	/**
-	 * @return a non-null map (key = application name, value = managed application)
+	 * @return the targetHandlers
 	 */
-	public Map<String,ManagedApplication> getAppNameToManagedApplication() {
-		return this.appNameToManagedApplication;
-	}
-
-
-	/**
-	 * @return the messagingFactoryType
-	 */
-	public String getMessagingFactoryType() {
-		return this.messagingFactoryType;
+	public List<TargetHandler> getTargetHandlers() {
+		return Collections.unmodifiableList( this.targetHandlers );
 	}
 
 
@@ -496,15 +371,190 @@ public class Manager {
 
 
 	/**
-	 * @return the targetHandlers
+	 * @return the messageServerIp
 	 */
-	public List<TargetHandler> getTargetHandlers() {
-		return Collections.unmodifiableList( this.targetHandlers );
+	public String getMessageServerIp() {
+		return this.messageServerIp;
 	}
 
 
 	/**
-	 * @return the echoMessages
+	 * @return the messageServerUsername
+	 */
+	public String getMessageServerUsername() {
+		return this.messageServerUsername;
+	}
+
+
+	/**
+	 * @return the messageServerPassword
+	 */
+	public String getMessageServerPassword() {
+		return this.messageServerPassword;
+	}
+
+
+	/**
+	 * @return the configurationDirectoryLocation
+	 */
+	public String getConfigurationDirectoryLocation() {
+		return this.configurationDirectoryLocation;
+	}
+
+
+	/**
+	 * This method reconfigures the manager.
+	 * <p>
+	 * It is invoked by iPojo when the configuration changes.
+	 * It may be invoked before the start() method is.
+	 * </p>
+	 */
+	public void reconfigure() {
+
+		// Backup the current
+		for( ManagedApplication ma : this.appManager.getManagedApplications())
+			saveConfiguration( ma );
+
+		// Update the configuration directory
+		File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
+		if( Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation )) {
+			this.logger.warning( "Invalid location for the configuration directory (empty or null). Switching to " + defaultConfigurationDirectory );
+			this.configurationDirectory = defaultConfigurationDirectory;
+
+		} else {
+			this.configurationDirectory = new File( this.configurationDirectoryLocation );
+			try {
+				Utils.createDirectory( this.configurationDirectory );
+
+			} catch( IOException e ) {
+				this.logger.warning( "Could not create " + this.configurationDirectory + ". Switching to " + defaultConfigurationDirectory );
+				this.configurationDirectory = defaultConfigurationDirectory;
+			}
+		}
+
+		// Restart the monitoring, using the new configuration directory.
+		synchronized (this) {
+			if( this.monitoringManager != null ) {
+				this.monitoringManager.stopMonitoring();
+				this.monitoringManager.startMonitoring( this.configurationDirectory );
+				// Applications are re-added as they are reloaded, in the restoreApplications() method.
+			}
+		}
+
+		// Update the messaging client
+		if( this.messagingClient != null ) {
+			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
+			try {
+				if( this.messagingClient.isConnected())
+					this.messagingClient.listenToTheDm( ListenerCommand.START );
+
+			} catch ( IOException e ) {
+				this.logger.log( Level.WARNING, "Cannot start to listen to the debug queue", e );
+			}
+		}
+
+
+		// Reset and restore applications.
+		// We ALWAYS do it, because we must also reconfigure the new client with respect
+		// to what we already deployed.
+		this.templateManager.restoreTemplates( this.configurationDirectory );
+		this.appManager.restoreApplications( this.configurationDirectory, this.templateManager );
+		for( ManagedApplication ma : this.appManager.getManagedApplications())
+			this.instanceManager.restoreInstanceStates( ma );
+
+		this.logger.info( "The DM was successfully (re)configured." );
+	}
+
+
+	/**
+	 * Finds an application by name.
+	 * @param applicationName an application name (not null)
+	 * @return the associated application, or null if it was not found
+	 */
+	public Application findApplicationByName( String applicationName ) {
+		return this.appManager.findApplicationByName( applicationName );
+	}
+
+
+	/**
+	 * Saves the configuration (instances).
+	 * @param ma a non-null managed application
+	 */
+	public void saveConfiguration( ManagedApplication ma ) {
+		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
+
+		synchronized( this ) {
+			if( this.monitoringManager != null ) {
+				this.monitoringManager.updateApplication( ma.getApplication());
+			}
+		}
+	}
+
+
+	/**
+	 * @return a non-null map (key = application name, value = managed application)
+	 */
+	public Map<String,ManagedApplication> getNameToManagedApplication() {
+		return this.appManager.getNameToManagedApplication();
+	}
+
+
+	/**
+	 * @return a non-null set of all the application templates
+	 */
+	public Set<ApplicationTemplate> getApplicationTemplates() {
+		return this.templateManager.getAllTemplates();
+	}
+
+
+	/**
+	 * @return the raw templates (never null)
+	 */
+	public Map<ApplicationTemplate,Boolean> getRawApplicationTemplates() {
+		return this.templateManager.getRawTemplates();
+	}
+
+
+	/**
+	 * @throws IOException if the configuration is invalid
+	 */
+	public void checkConfiguration() throws IOException {
+
+		String msg = null;
+		if( this.messagingClient == null )
+			msg = "The DM was not started.";
+		else if( ! this.messagingClient.hasValidClient())
+			msg = "The DM's configuration is invalid. Please, review the messaging settings.";
+
+		if( msg != null ) {
+			this.logger.warning( msg );
+			throw new IOException( msg );
+		}
+	}
+
+
+	/**
+	 * @return the messagingClient
+	 */
+	public ReconfigurableClientDm getMessagingClient() {
+		return this.messagingClient;
+	}
+
+
+	/**
+	 * Loads a new application template.
+	 * @see ApplicationTemplateMngrDelegate#loadApplicationTemplate(File, File)
+	 */
+	public ApplicationTemplate loadApplicationTemplate( File applicationFilesDirectory )
+	throws AlreadyExistingException, InvalidApplicationException, IOException {
+
+		checkConfiguration();
+		return this.templateManager.loadApplicationTemplate( applicationFilesDirectory, this.configurationDirectory );
+	}
+
+
+	/**
+	 * @return the echo messages
 	 */
 	public List<MsgEcho> getEchoMessages() {
 		return this.echoMessages;
@@ -512,64 +562,73 @@ public class Manager {
 
 
 	/**
-	 * Finds an application by name.
-	 * @param applicationName the application name (not null)
-	 * @return an application, or null if it was not found
+	 * Deletes an application template.
 	 */
-	public Application findApplicationByName( String applicationName ) {
-		ManagedApplication ma = this.appNameToManagedApplication.get( applicationName );
-		return ma != null ? ma.getApplication() : null;
+	public void deleteApplicationTemplate( String tplName, String tplQualifier )
+	throws UnauthorizedActionException, InvalidApplicationException, IOException {
+
+		checkConfiguration();
+		ApplicationTemplate tpl = this.templateManager.findTemplate( tplName, tplQualifier );
+		if( tpl == null )
+			throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
+
+		if( this.appManager.isTemplateUsed( tpl ))
+			throw new UnauthorizedActionException( tplName + " (" + tplQualifier + ") is still used by applications. It cannot be deleted." );
+		else
+			this.templateManager.deleteApplicationTemplate( tpl, this.configurationDirectory );
 	}
 
 
 	/**
-	 * Loads a new application.
-	 * <p>
-	 * An application cannot be loaded before the messaging client connection was established.
-	 * </p>
-	 *
-	 * @param applicationFilesDirectory the application's directory
-	 * @return the managed application that was created
-	 * @throws AlreadyExistingException if the application already exists
-	 * @throws InvalidApplicationException if the application contains critical errors
-	 * @throws IOException if the messaging could not be initialized
+	 * Creates a new application from a template.
+	 * @param ma the managed application
+	 * @return a managed application (never null)
+	 * @throws IOException
+	 * @throws AlreadyExistingException
+	 * @throws InvalidApplicationException
 	 */
-	public ManagedApplication loadNewApplication( File applicationFilesDirectory )
-	throws AlreadyExistingException, InvalidApplicationException, IOException {
+	public ManagedApplication createApplication( String name, String description, String tplName, String tplQualifier )
+	throws IOException, AlreadyExistingException, InvalidApplicationException {
 
-		this.logger.info( "Loading application from " + applicationFilesDirectory + "..." );
+		// Always verify the configuration first
 		checkConfiguration();
 
-		ApplicationLoadResult lr = RuntimeModelIo.loadApplication( applicationFilesDirectory );
-		checkErrors( lr.getLoadErrors());
+		// Create the application
+		ApplicationTemplate tpl = this.templateManager.findTemplate( tplName, tplQualifier );
+		if( tpl == null )
+			throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
-		Application application = lr.getApplication();
-		if( null != findApplicationByName( application.getName()))
-			throw new AlreadyExistingException( application.getName());
+		return createApplication( name, description, tpl );
+	}
 
-		File targetDirectory = ConfigurationUtils.findApplicationdirectory( application.getName(), this.configurationDirectory );
-		if( ! applicationFilesDirectory.equals( targetDirectory )) {
-			if( Utils.isAncestorFile( targetDirectory, applicationFilesDirectory ))
-				throw new IOException( "Cannot move " + applicationFilesDirectory + " in Roboconf's work directory. Already a child directory." );
-			else
-				Utils.copyDirectory( applicationFilesDirectory, targetDirectory );
-		}
 
-		ManagedApplication ma = new ManagedApplication( application, targetDirectory );
-		TargetHelpers.verifyTargets( this.targetResolver, ma, this.targetHandlers );
+	/**
+	 * Creates a new application from a template.
+	 * @param ma the managed application
+	 * @return a managed application (never null)
+	 * @throws IOException
+	 * @throws AlreadyExistingException
+	 */
+	public ManagedApplication createApplication( String name, String description, ApplicationTemplate tpl )
+	throws IOException, AlreadyExistingException {
 
-		this.appNameToManagedApplication.put( ma.getApplication().getName(), ma );
+		// Always verify the configuration first
+		checkConfiguration();
+
+		// Create the application
+		ManagedApplication ma = this.appManager.createApplication( name, description, tpl, this.configurationDirectory );
+
+		// Start listening to messages
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 
 		// Start the monitoring of the application.
 		synchronized (this) {
 			if (this.monitoringManager != null) {
-				this.monitoringManager.addApplication( ma.getApplication() );
+				this.monitoringManager.addApplication( ma.getApplication());
 			}
 		}
 
 		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
-
 		return ma;
 	}
 
@@ -578,9 +637,10 @@ public class Manager {
 	 * Deletes an application.
 	 * @param ma the managed application
 	 * @throws UnauthorizedActionException if parts of the application are still running
-	 * @throws IOException
+	 * @throws IOException if errors occurred with the messaging or the removal of resources
 	 */
-	public void deleteApplication( ManagedApplication ma ) throws UnauthorizedActionException, IOException {
+	public void deleteApplication( ManagedApplication ma )
+	throws UnauthorizedActionException, IOException {
 
 		// What really matters is that there is no agent running.
 		// If all the root instances are not deployed, then nothing is deployed at all.
@@ -590,82 +650,50 @@ public class Manager {
 				throw new UnauthorizedActionException( applicationName + " contains instances that are still deployed." );
 		}
 
-		this.logger.fine( "Deleting application " + applicationName + "..." );
-
-		// Deal with the messaging stuff
+		// Stop listening to messages first
 		try {
 			checkConfiguration();
 			this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
 			this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
 
-		} catch( Exception e ) {
+		} catch( IOException e ) {
 			Utils.logException( this.logger, e );
 		}
 
 		// Stop the monitoring of the outgoing application.
 		synchronized (this) {
 			if (this.monitoringManager != null) {
-				this.monitoringManager.removeApplication( ma.getApplication() );
+				this.monitoringManager.removeApplication( ma.getApplication());
 			}
 		}
 
-		// Delete the files
-		Utils.deleteFilesRecursively( ma.getApplicationFilesDirectory());
-		ConfigurationUtils.deleteInstancesFile( ma.getName(), this.configurationDirectory );
-
-		this.appNameToManagedApplication.remove( applicationName );
-		this.logger.fine( "Application " + applicationName + " was successfully deleted." );
+		// Delete artifacts
+		this.appManager.deleteApplication( ma.getApplication(), this.configurationDirectory );
 	}
 
 
 	/**
 	 * Adds an instance.
-	 * @param ma the managed application
-	 * @param parentInstance the parent instance
-	 * @param instance the instance to insert (not null)
-	 * @throws ImpossibleInsertionException if the instance could not be added
+	 * @see InstanceMngrDelegate#addInstance(ManagedApplication, Instance, Instance)
 	 */
 	public void addInstance( ManagedApplication ma, Instance parentInstance, Instance instance )
 	throws ImpossibleInsertionException, IOException {
 
 		checkConfiguration();
-		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
-			throw new ImpossibleInsertionException( instance.getName());
-
-		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + ma.getName() + "." );
-		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
-
-		// Store the message because we want to make sure the message is not lost
-		ma.storeAwaitingMessage( instance, new MsgCmdSetScopedInstance( scopedInstance ));
+		this.instanceManager.addInstance( ma, parentInstance, instance );
 		saveConfiguration( ma );
 	}
 
 
 	/**
 	 * Removes an instance.
-	 * @param ma the managed application
-	 * @param instance the instance to remove (not null)
-	 * @throws UnauthorizedActionException if we try to remove an instance that seems to be running
-	 * @throws IOException if an error occurred with the messaging
+	 * @see InstanceMngrDelegate#removeInstance(ManagedApplication, Instance)
 	 */
-	public void removeInstance( ManagedApplication ma, Instance instance ) throws UnauthorizedActionException, IOException {
+	public void removeInstance( ManagedApplication ma, Instance instance )
+	throws UnauthorizedActionException, IOException {
 
 		checkConfiguration();
-		for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
-			if( i.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed in " + ma.getName() + "." );
-		}
-
-		// Whatever is the state of the agent, we try to send a message.
-		MsgCmdRemoveInstance message = new MsgCmdRemoveInstance( instance );
-		send( ma, message, instance );
-
-		if( instance.getParent() == null )
-			ma.getApplication().getRootInstances().remove( instance );
-		else
-			instance.getParent().getChildren().remove( instance );
-
-		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
+		this.instanceManager.removeInstance( ma, instance );
 		saveConfiguration( ma );
 	}
 
@@ -680,175 +708,59 @@ public class Manager {
 	 */
 	public void resynchronizeAgents( ManagedApplication ma ) throws IOException {
 
-		this.logger.fine( "Resynchronizing agents in " + ma.getName() + "..." );
 		checkConfiguration();
+		this.logger.fine( "Resynchronizing agents in " + ma.getName() + "..." );
 		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 			if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED )
 				send ( ma, new MsgCmdResynchronize(), rootInstance );
 		}
+
+		this.logger.fine( "Requests were sent to resynchronize agents in " + ma.getName() + "." );
 	}
 
 
 	/**
 	 * Changes the state of an instance.
-	 * @param ma the managed application
-	 * @param instance the instance whose state must be updated
-	 * @param newStatus the new status
-	 * @throws IOException if an error occurred with the messaging
-	 * @throws TargetException if an error occurred with a target
+	 * @see InstanceMngrDelegate#changeInstanceState(ManagedApplication, Instance, InstanceStatus)
 	 */
 	public void changeInstanceState( ManagedApplication ma, Instance instance, InstanceStatus newStatus )
 	throws IOException, TargetException {
 
-		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 		checkConfiguration();
-
-		if( InstanceHelpers.isTarget( instance )) {
-			if( newStatus == InstanceStatus.NOT_DEPLOYED
-					&& ( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED
-						|| instance.getStatus() == InstanceStatus.DEPLOYING
-						|| instance.getStatus() == InstanceStatus.STARTING ))
-				undeployTarget( ma, instance );
-
-			else if( instance.getStatus() == InstanceStatus.NOT_DEPLOYED
-					&& newStatus == InstanceStatus.DEPLOYED_STARTED )
-				deployTarget( ma, instance );
-
-			else
-				this.logger.warning( "Ignoring a request to update a root instance's state." );
-
-		} else {
-			Map<String,byte[]> instanceResources = null;
-			if( newStatus == InstanceStatus.DEPLOYED_STARTED
-					|| newStatus == InstanceStatus.DEPLOYED_STOPPED )
-				instanceResources = ResourceUtils.storeInstanceResources( ma.getApplicationFilesDirectory(), instance );
-
-			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, newStatus, instanceResources );
-			send( ma, message, instance );
-			this.logger.fine( "A message was (or will be) sent to the agent to change the state of " + instancePath + " in " + ma.getName() + "." );
-		}
+		this.instanceManager.changeInstanceState( ma, instance, newStatus );
 	}
 
 
 	/**
 	 * Deploys and starts all the instances of an application.
-	 * @param ma an application
-	 * @param instance the instance from which we deploy and start (can be null)
-	 * <p>
-	 * This instance and all its children will be deployed and started.
-	 * If null, then all the application instances are considered.
-	 * </p>
-	 *
-	 * @throws IOException if a problem occurred with the messaging
+	 * @see InstanceMngrDelegate#deployAndStartAll(ManagedApplication, Instance)
 	 */
 	public void deployAndStartAll( ManagedApplication ma, Instance instance ) throws IOException {
 
 		checkConfiguration();
-		Collection<Instance> initialInstances;
-		if( instance != null )
-			initialInstances = Arrays.asList( instance );
-		else
-			initialInstances = ma.getApplication().getRootInstances();
-
-		boolean gotExceptions = false;
-		for( Instance initialInstance : initialInstances ) {
-			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance )) {
-				try {
-					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STARTED );
-
-				} catch( Exception e ) {
-					gotExceptions = true;
-				}
-			}
-		}
-
-		if( gotExceptions ) {
-			this.logger.info( "One or several errors occurred while deploying and starting instances." );
-			throw new IOException( "One or several errors occurred while deploying and starting instances." );
-		}
+		this.instanceManager.deployAndStartAll( ma, instance );
 	}
 
 
 	/**
 	 * Stops all the started instances of an application.
-	 * @param ma an application
-	 * @param instance the instance from which we deploy and start (can be null)
-	 * <p>
-	 * This instance and all its children will be deployed and started.
-	 * If null, then all the application instances are considered.
-	 * </p>
-	 *
-	 * @throws IOException if a problem occurred with the messaging
+	 * @see InstanceMngrDelegate#stopAll(ManagedApplication, Instance)
 	 */
 	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException {
 
 		checkConfiguration();
-		Collection<Instance> initialInstances;
-		if( instance != null )
-			initialInstances = Arrays.asList( instance );
-		else
-			initialInstances = ma.getApplication().getRootInstances();
-
-		// We do not need to stop all the instances, just the first children
-		boolean gotExceptions = false;
-		for( Instance initialInstance : initialInstances ) {
-			try {
-				if( initialInstance.getParent() != null )
-					changeInstanceState( ma, initialInstance, InstanceStatus.DEPLOYED_STOPPED );
-				else for( Instance i : initialInstance.getChildren())
-					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STOPPED );
-
-			} catch( Exception e ) {
-				gotExceptions = true;
-			}
-		}
-
-		if( gotExceptions ) {
-			this.logger.info( "One or several errors occurred while stopping instances." );
-			throw new IOException( "One or several errors occurred while stopping instances." );
-		}
+		this.instanceManager.stopAll( ma, instance );
 	}
 
 
 	/**
 	 * Undeploys all the instances of an application.
-	 * @param ma an application
-	 * @param instance the instance from which we deploy and start (can be null)
-	 * <p>
-	 * This instance and all its children will be deployed and started.
-	 * If null, then all the application instances are considered.
-	 * </p>
-	 *
-	 * @throws IOException if a problem occurred with the messaging
+	 * @see InstanceMngrDelegate#undeployAll(ManagedApplication, Instance)
 	 */
 	public void undeployAll( ManagedApplication ma, Instance instance ) throws IOException {
 
 		checkConfiguration();
-		Collection<Instance> initialInstances;
-		if( instance != null )
-			initialInstances = Arrays.asList( instance );
-		else
-			initialInstances = ma.getApplication().getRootInstances();
-
-		// We do not need to undeploy all the instances, just the first instance
-		boolean gotExceptions = false;
-		for( Instance initialInstance : initialInstances ) {
-			try {
-				if( initialInstance.getParent() != null )
-					changeInstanceState( ma, initialInstance, InstanceStatus.NOT_DEPLOYED );
-				else
-					undeployTarget( ma, initialInstance );
-
-			} catch( Exception e ) {
-				gotExceptions = true;
-			}
-		}
-
-		if( gotExceptions ) {
-			this.logger.info( "One or several errors occurred while undeploying instances." );
-			throw new IOException( "One or several errors occurred while undeploying instances." );
-		}
+		this.instanceManager.undeployAll( ma, instance );
 	}
 
 
@@ -859,283 +771,53 @@ public class Manager {
 	 * @param instance the targetHandlers instance
 	 * @throws IOException if an error occurred with the messaging
 	 */
-	void send( ManagedApplication ma, Message message, Instance instance ) throws IOException {
+	public void send( ManagedApplication ma, Message message, Instance instance ) throws IOException {
 
-		// We do NOT send directly a message!
-		// We either ignore or store it.
-		if( this.messagingClient == null
-				|| ! this.messagingClient.isConnected())
-			this.logger.severe( "The connection with the messaging server was badly initialized. Message dropped." );
-		else
+		if( this.messagingClient != null
+				&& this.messagingClient.isConnected()) {
+
+			// We do NOT send directly a message!
 			ma.storeAwaitingMessage( instance, message );
 
-		// If the message has been stored, let's try to send all the stored messages.
-		// This preserves message ordering (FIFO).
+			// If the message has been stored, let's try to send all the stored messages.
+			// This preserves message ordering (FIFO).
 
-		// If the VM is online, process awaiting messages to prevent waiting.
-		// This can work concurrently with the messages timer.
-		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
-		if( scopedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
-			List<Message> messages = ma.removeAwaitingMessages( instance );
-			if( ! messages.isEmpty())
-				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + InstanceHelpers.computeInstancePath( scopedInstance ) + "." );
+			// If the VM is online, process awaiting messages to prevent waiting.
+			// This can work concurrently with the messages timer.
+			Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
+			if( scopedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 
-			for( Message msg : messages ) {
-				try {
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
+				List<Message> messages = ma.removeAwaitingMessages( instance );
+				String path = InstanceHelpers.computeInstancePath( scopedInstance );
+				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + path + "." );
 
-				} catch( IOException e ) {
-					this.logger.severe( "Error while sending a stored message. " + e.getMessage());
-					Utils.logException( this.logger, e );
+				for( Message msg : messages ) {
+					try {
+						this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
+
+					} catch( IOException e ) {
+						this.logger.severe( "Error while sending a stored message. " + e.getMessage());
+						Utils.logException( this.logger, e );
+					}
 				}
 			}
+
+		} else {
+			this.logger.severe( "The connection with the messaging server was badly initialized. Message dropped." );
 		}
 	}
 
 
 	/**
-	 * Check errors.
-	 * @param errors a list of errors and warnings (not null but may be empty)
-	 * @throws InvalidApplicationException if the list contains criticial errors
+	 * @param targetResolver the target resolver to set
 	 */
-	void checkErrors( Collection<RoboconfError> errors ) throws InvalidApplicationException {
-
-		if( RoboconfErrorHelpers.containsCriticalErrors( errors ))
-			throw new InvalidApplicationException( errors );
-
-		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( errors )) {
-			StringBuilder sb = new StringBuilder();
-			sb.append( warning.getErrorCode().getMsg());
-			if( ! Utils.isEmptyOrWhitespaces( warning.getDetails()))
-				sb.append( " " + warning.getDetails());
-
-			this.logger.warning( sb.toString());
-		}
+	public void setTargetResolver( ITargetResolver targetResolver ) {
+		this.instanceManager.setTargetResolver( targetResolver );
 	}
 
 
-	/**
-	 * Deploys a scoped instance.
-	 * @param ma the managed application
-	 * @param scopedInstance the instance to deploy (not null)
-	 * @throws IOException if an error occurred with the messaging
-	 * @throws TargetException if an error occurred with the target handler
-	 */
-	void deployTarget( ManagedApplication ma, Instance scopedInstance ) throws TargetException, IOException {
+	// TODO: move the ping methods in its own delegate
 
-		// It only makes sense for scoped instances.
-		String path = InstanceHelpers.computeInstancePath( scopedInstance );
-		this.logger.fine( "Deploying scoped instance '" + path + "' in " + ma.getName() + "..." );
-		if( ! InstanceHelpers.isTarget( scopedInstance )) {
-			this.logger.fine( "Deploy action for instance '" + path + "' is cancelled in " + ma.getName() + ". Not a root instance." );
-			return;
-		}
-
-		// We must prevent the concurrent creation of several VMs for a same root instance.
-		// See #80.
-		synchronized( LOCK ) {
-			if( scopedInstance.data.get( Instance.TARGET_ACQUIRED ) == null ) {
-				scopedInstance.data.put( Instance.TARGET_ACQUIRED, "yes" );
-			} else {
-				this.logger.finer( "Scoped instance '" + path + "' is already under deployment. This redundant request is dropped." );
-				return;
-			}
-		}
-
-		// If the VM creation was already done, then its machine ID has already been set.
-		// It does not mean the VM is already configured, it may take some time.
-		String machineId = scopedInstance.data.get( Instance.MACHINE_ID );
-		if( machineId != null ) {
-			this.logger.fine( "Deploy action for instance " + path + " is cancelled in " + ma.getName() + ". Already associated with a machine." );
-			return;
-		}
-
-		checkConfiguration();
-		InstanceStatus initialStatus = scopedInstance.getStatus();
-		try {
-			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( scopedInstance );
-			send( ma, msg, scopedInstance );
-
-			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, scopedInstance );
-			Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
-			targetProperties.putAll( scopedInstance.data );
-
-			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-			machineId = target.getHandler().createMachine(
-					targetProperties, this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
-					scopedInstancePath, ma.getName());
-
-			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
-			this.logger.fine( "Scoped instance " + path + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
-
-			target.getHandler().configureMachine(
-					targetProperties, machineId,
-					this.messageServerIp, this.messageServerUsername, this.messageServerPassword,
-					scopedInstancePath, ma.getName());
-
-			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
-
-		} catch( Exception e ) {
-			this.logger.severe( "Failed to deploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
-			Utils.logException( this.logger, e );
-
-			scopedInstance.setStatus( initialStatus );
-			if( e instanceof TargetException)
-				throw (TargetException) e;
-			else if( e instanceof IOException )
-				throw (IOException) e;
-
-		} finally {
-			saveConfiguration( ma );
-		}
-	}
-
-
-	/**
-	 * Undeploys a scoped instance.
-	 * @param ma the managed application
-	 * @param scopedInstance the instance to undeploy (not null)
-	 * @throws IOException if an error occurred with the messaging
-	 * @throws TargetException if an error occurred with the target handler
-	 */
-	void undeployTarget( ManagedApplication ma, Instance scopedInstance ) throws TargetException, IOException {
-
-		String path = InstanceHelpers.computeInstancePath( scopedInstance );
-		this.logger.fine( "Undeploying root instance '" + path + "' in " + ma.getName() + "..." );
-		if( ! InstanceHelpers.isTarget( scopedInstance )) {
-			this.logger.fine( "Undeploy action for instance '" + path + "' is cancelled in " + ma.getName() + ". Not a root instance." );
-			return;
-		}
-
-		checkConfiguration();
-		InstanceStatus initialStatus = scopedInstance.getStatus();
-		try {
-			// Terminate the machine...
-			// ...  and notify other agents this agent was killed.
-			this.logger.fine( "Agent '" + path + "' is about to be deleted in " + ma.getName() + "." );
-			Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, scopedInstance );
-			String machineId = scopedInstance.data.remove( Instance.MACHINE_ID );
-			if( machineId != null ) {
-				Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
-				targetProperties.putAll( scopedInstance.data );
-
-				target.getHandler().terminateMachine( targetProperties, machineId );
-				this.messagingClient.propagateAgentTermination( ma.getApplication(), scopedInstance );
-			}
-
-			this.logger.fine( "Agent '" + path + "' was successfully deleted in " + ma.getName() + "." );
-			for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
-				i.setStatus( InstanceStatus.NOT_DEPLOYED );
-				// DM won't send old imports upon restart...
-				i.getImports().clear();
-			}
-
-			// Remove useless data for the configuration backup
-			scopedInstance.data.remove( Instance.IP_ADDRESS );
-			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
-			this.logger.fine( "Scoped instance " + path + "'s undeployment was successfully requested in " + ma.getName() + "." );
-
-		} catch( Exception e ) {
-			this.logger.severe( "Failed to undeploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
-			Utils.logException( this.logger, e );
-
-			scopedInstance.setStatus( initialStatus );
-			if( e instanceof TargetException)
-				throw (TargetException) e;
-			else if( e instanceof IOException )
-				throw (IOException) e;
-
-		} finally {
-			saveConfiguration( ma );
-		}
-	}
-
-
-	/**
-	 * Restores the applications.
-	 */
-	void restoreApplications() {
-
-		// Restore applications
-		this.appNameToManagedApplication.clear();
-
-		for (File dir : ConfigurationUtils.findApplicationDirectories( this.configurationDirectory )) {
-			try {
-				loadNewApplication( dir );
-
-			} catch( AlreadyExistingException e ) {
-				this.logger.warning( "Cannot restore application in " + dir + " (already existing)." );
-				Utils.logException( this.logger, e );
-
-			} catch( InvalidApplicationException e ) {
-				this.logger.warning( "Cannot restore application in " + dir + " (invalid application)." );
-				Utils.logException( this.logger, e );
-
-			} catch( IOException e ) {
-				this.logger.warning( "Application restoration was incomplete from " + dir + " (I/O exception). The messaging configuration is probably invalid." );
-				Utils.logException( this.logger, e );
-			}
-		}
-
-		// Restore instances
-		for( ManagedApplication ma : this.appNameToManagedApplication.values()) {
-
-			// Instance definition
-			InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, this.configurationDirectory );
-			try {
-				checkErrors( ilr.getLoadErrors());
-				if( ilr.getRootInstances().isEmpty())
-					continue;
-
-				ma.getApplication().getRootInstances().clear();
-				ma.getApplication().getRootInstances().addAll( ilr.getRootInstances());
-
-			} catch( InvalidApplicationException e ) {
-				this.logger.severe( "Cannot restore instances for application " + ma.getName() + " (errors were found)." );
-				Utils.logException( this.logger, e );
-			}
-
-			// States
-			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-				try {
-					// Not associated with a VM? => Everything must be not deployed.
-					String machineId = rootInstance.data.get( Instance.MACHINE_ID );
-					if( machineId == null ) {
-						rootInstance.data.remove( Instance.IP_ADDRESS );
-						rootInstance.data.remove( Instance.TARGET_ACQUIRED );
-						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
-							i.setStatus( InstanceStatus.NOT_DEPLOYED );
-
-						continue;
-					}
-
-					// Not a running VM? => Everything must be not deployed.
-					Target target = this.targetResolver.findTargetHandler( this.targetHandlers, ma, rootInstance );
-					Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
-					targetProperties.putAll( rootInstance.data );
-
-					if( ! target.getHandler().isMachineRunning( targetProperties, machineId )) {
-						rootInstance.data.remove( Instance.IP_ADDRESS );
-						rootInstance.data.remove( Instance.MACHINE_ID );
-						rootInstance.data.remove( Instance.TARGET_ACQUIRED );
-						for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
-							i.setStatus( InstanceStatus.NOT_DEPLOYED );
-					}
-
-					// Otherwise, ask the agent to resent the states
-					else {
-						rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-						this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
-					}
-
-				} catch( Exception e ) {
-					this.logger.severe( "Could not request states for agent " + rootInstance.getName() + " (I/O exception)." );
-					Utils.logException( this.logger, e );
-				}
-			}
-		}
-	}
 
 	/**
 	 * Pings the DM through the messaging queue.

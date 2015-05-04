@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
@@ -103,7 +104,7 @@ public class ReconfigurableClientTest {
 		Assert.assertFalse( client.hasValidClient());
 		Assert.assertFalse( client.isConnected());
 
-		client.deleteMessagingServerArtifacts( new Application( "app" ));
+		client.deleteMessagingServerArtifacts( new Application( "app", new ApplicationTemplate()));
 		client.propagateAgentTermination( null, null );
 	}
 

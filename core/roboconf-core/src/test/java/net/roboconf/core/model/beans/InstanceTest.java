@@ -44,6 +44,14 @@ public class InstanceTest {
 
 
 	@Test
+	public void testIsValidState() {
+		Assert.assertTrue( InstanceStatus.isValidState( "starting" ));
+		Assert.assertTrue( InstanceStatus.isValidState( "StarTing" ));
+		Assert.assertFalse( InstanceStatus.isValidState( "Startin" ));
+	}
+
+
+	@Test
 	public void testChain() {
 
 		Instance inst = new Instance().name( "ins" ).status( InstanceStatus.DEPLOYING ).component( null ).parent( null );
