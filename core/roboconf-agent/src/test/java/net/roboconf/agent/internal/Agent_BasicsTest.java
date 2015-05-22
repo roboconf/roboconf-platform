@@ -31,7 +31,9 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
 
 import org.junit.After;
@@ -44,13 +46,21 @@ import org.junit.Test;
 public class Agent_BasicsTest {
 
 	private Agent agent;
+	private MessagingClientFactoryRegistry registry;
 
 
 	@Before
 	public void initializeAgent() throws Exception {
+		this.registry = new MessagingClientFactoryRegistry();
+		this.registry.addMessagingClientFactory(new TestClientFactory());
+
 		this.agent = new Agent();
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		// We first need to start the agent, so it creates the reconfigurable messaging client.
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
+		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
+		this.agent.getMessagingClient().setRegistry(registry);
+		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
 		getInternalClient().messagesForTheDm.clear();
@@ -95,12 +105,16 @@ public class Agent_BasicsTest {
 
 		// Start
 		this.agent.start();
+		this.agent.getMessagingClient().setRegistry(this.registry);
+		this.agent.reconfigure();
 		client = getInternalClient();
 		Assert.assertTrue( client.isConnected());
 
 		// Start when already started => nothing
 		IAgentClient oldClient = client;
 		this.agent.start();
+		this.agent.getMessagingClient().setRegistry(this.registry);
+		this.agent.reconfigure();
 		client = getInternalClient();
 		Assert.assertTrue( client.isConnected());
 		Assert.assertNotSame( oldClient, client );
@@ -110,6 +124,8 @@ public class Agent_BasicsTest {
 		Assert.assertFalse( client.isConnected());
 
 		this.agent.start();
+		this.agent.getMessagingClient().setRegistry(this.registry);
+		this.agent.reconfigure();
 		client = getInternalClient();
 		Assert.assertTrue( client.isConnected());
 

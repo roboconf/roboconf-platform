@@ -28,6 +28,7 @@ package net.roboconf.dm.internal.delegates;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public class InstanceMngrDelegate {
 
 	/**
 	 * Constructor.
-	 * @param manager
+	 * @param manager the DM.
 	 */
 	public InstanceMngrDelegate( Manager manager ) {
 		this.manager = manager;
@@ -175,7 +176,7 @@ public class InstanceMngrDelegate {
 
 		Collection<Instance> initialInstances;
 		if( instance != null )
-			initialInstances = Arrays.asList( instance );
+			initialInstances = Collections.singletonList(instance);
 		else
 			initialInstances = ma.getApplication().getRootInstances();
 
@@ -214,7 +215,7 @@ public class InstanceMngrDelegate {
 
 		Collection<Instance> initialInstances;
 		if( instance != null )
-			initialInstances = Arrays.asList( instance );
+			initialInstances = Collections.singletonList(instance);
 		else
 			initialInstances = ma.getApplication().getRootInstances();
 
@@ -256,7 +257,7 @@ public class InstanceMngrDelegate {
 
 		Collection<Instance> initialInstances;
 		if( instance != null )
-			initialInstances = Arrays.asList( instance );
+			initialInstances = Collections.singletonList(instance);
 		else
 			initialInstances = ma.getApplication().getRootInstances();
 
@@ -300,7 +301,7 @@ public class InstanceMngrDelegate {
 
 				// Not a running VM? => Everything must be not deployed.
 				Target target = this.targetResolver.findTargetHandler( this.manager.getTargetHandlers(), ma, rootInstance );
-				Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
+				Map<String,String> targetProperties = new HashMap<>( target.getProperties());
 				targetProperties.putAll( rootInstance.data );
 
 				if( ! target.getHandler().isMachineRunning( targetProperties, machineId )) {
@@ -371,26 +372,22 @@ public class InstanceMngrDelegate {
 			this.manager.send( ma, msg, scopedInstance );
 
 			Target target = this.targetResolver.findTargetHandler( this.manager.getTargetHandlers(), ma, scopedInstance );
-			Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
+			Map<String,String> targetProperties = new HashMap<>( target.getProperties());
 			targetProperties.putAll( scopedInstance.data );
 
 			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 			machineId = target.getHandler().createMachine(
 					targetProperties,
-					this.manager.getMessageServerIp(),
-					this.manager.getMessageServerUsername(),
-					this.manager.getMessageServerPassword(),
+					this.manager.getMessagingConfiguration(),
 					scopedInstancePath, ma.getName());
 
 			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Scoped instance " + path + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
 			target.getHandler().configureMachine(
-					targetProperties, machineId,
-					this.manager.getMessageServerIp(),
-					this.manager.getMessageServerUsername(),
-					this.manager.getMessageServerPassword(),
-					scopedInstancePath, ma.getName());
+					targetProperties,
+					this.manager.getMessagingConfiguration(),
+					machineId, scopedInstancePath, ma.getName());
 
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 
@@ -445,17 +442,12 @@ public class InstanceMngrDelegate {
 			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
 			this.logger.fine( "Scoped instance " + path + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
-		} catch( TargetException e ) {
+		} catch( TargetException | IOException e ) {
 			scopedInstance.setStatus( initialStatus );
 			this.logger.severe( "Failed to undeploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
 			throw e;
 
-		} catch( IOException e ) {
-			scopedInstance.setStatus( initialStatus );
-			this.logger.severe( "Failed to undeploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
-			Utils.logException( this.logger, e );
-			throw e;
 		}
 	}
 }

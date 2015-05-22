@@ -29,7 +29,9 @@ import static org.ops4j.pax.exam.CoreOptions.jarProbe;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -44,6 +46,8 @@ import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
+import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.client.IClient;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -203,7 +207,12 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Both cannot communicate.
 		// Let's wait a little bit and let's reconfigure the DM with the right credentials.
-		this.manager.setMessageServerUsername( "guest" );
+		final Map<String, String> messagingConfiguration = new LinkedHashMap<>();
+		messagingConfiguration.put(IClient.MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_RABBIT_MQ);
+		messagingConfiguration.put(MessagingConstants.RABBITMQ_SERVER_IP, "localhost");
+		messagingConfiguration.put(MessagingConstants.RABBITMQ_SERVER_USERNAME, "guest");
+		messagingConfiguration.put(MessagingConstants.RABBITMQ_SERVER_PASSWORD, "guest");
+		this.manager.getMessagingClient().setConfiguration(messagingConfiguration);
 		this.manager.reconfigure();
 
 		// Manager#reconfigure() reloads all the applications from its configuration.

@@ -26,6 +26,8 @@
 package net.roboconf.messaging.internal.client.dismiss;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
@@ -40,12 +42,6 @@ import net.roboconf.messaging.messages.Message;
 public class DismissClientAgent implements IAgentClient {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-
-
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
-	}
 
 
 	@Override
@@ -130,5 +126,26 @@ public class DismissClientAgent implements IAgentClient {
 	@Override
 	public void listenToTheDm( ListenerCommand command ) throws IOException {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+	}
+
+
+	@Override
+	public String getMessagingType() {
+		// Dismiss client has no type.
+		return null;
+	}
+
+
+	@Override
+	public Map<String, String> getConfiguration() {
+		// Dismiss client has no configuration.
+		return Collections.emptyMap();
+	}
+
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		// Cannot apply any configuration to the dismiss client.
+		return false;
 	}
 }

@@ -41,7 +41,9 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
@@ -61,9 +63,16 @@ public class AgentMessageProcessor_ImportsTest {
 
 	@Before
 	public void initializeAgent() throws Exception {
+		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+		registry.addMessagingClientFactory(new TestClientFactory());
+
 		this.agent = new Agent();
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		// We first need to start the agent, so it creates the reconfigurable messaging client.
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
+		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
+		this.agent.getMessagingClient().setRegistry(registry);
+		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
 		getInternalClient().messagesForTheDm.clear();
@@ -176,7 +185,7 @@ public class AgentMessageProcessor_ImportsTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -219,7 +228,7 @@ public class AgentMessageProcessor_ImportsTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 

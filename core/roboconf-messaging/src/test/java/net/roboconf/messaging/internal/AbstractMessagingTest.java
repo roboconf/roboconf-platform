@@ -68,7 +68,7 @@ import org.junit.After;
 public abstract class AbstractMessagingTest {
 
 	private static final long DELAY = 700;
-	private final List<ReconfigurableClient<?>> clients = new ArrayList<ReconfigurableClient<?>> ();
+	private final List<ReconfigurableClient<?>> clients = new ArrayList<> ();
 
 
 	@After
@@ -94,19 +94,19 @@ public abstract class AbstractMessagingTest {
 		Application app = new Application( "app", new ApplicationTemplate());
 		Instance rootInstance = new Instance( "root" );
 
-		List<Message> dmMessages = new ArrayList<Message> ();
-		List<Message> agentMessages = new ArrayList<Message> ();
+		List<Message> dmMessages = new ArrayList<>();
+		List<Message> agentMessages = new ArrayList<>();
 
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		dmClient.switchMessagingType(getMessagingType());
 		this.clients.add( dmClient );
 
 		ReconfigurableClientAgent agentClient = new ReconfigurableClientAgent();
 		agentClient.associateMessageProcessor( createAgentProcessor( agentMessages ));
 		agentClient.setApplicationName( app.getName());
 		agentClient.setScopedInstancePath( "/" + rootInstance.getName());
-		agentClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		agentClient.switchMessagingType(getMessagingType());
 		this.clients.add( agentClient );
 
 		// No message yet
@@ -190,34 +190,34 @@ public abstract class AbstractMessagingTest {
 		Instance app1_root2 = new Instance( "root2" );
 		Instance app2_root = new Instance( "root" );
 
-		List<Message> dmMessages = new ArrayList<Message> ();
+		List<Message> dmMessages = new ArrayList<>();
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		dmClient.switchMessagingType(getMessagingType());
 		this.clients.add( dmClient );
 
-		List<Message> agentMessages_11 = new ArrayList<Message> ();
+		List<Message> agentMessages_11 = new ArrayList<>();
 		ReconfigurableClientAgent agentClient_11 = new ReconfigurableClientAgent();
 		agentClient_11.associateMessageProcessor( createAgentProcessor( agentMessages_11 ));
 		agentClient_11.setApplicationName( app1.getName());
 		agentClient_11.setScopedInstancePath( "/" + app1_root1.getName());
-		agentClient_11.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		agentClient_11.switchMessagingType(getMessagingType());
 		this.clients.add( agentClient_11 );
 
-		List<Message> agentMessages_12 = new ArrayList<Message> ();
+		List<Message> agentMessages_12 = new ArrayList<>();
 		ReconfigurableClientAgent agentClient_12 = new ReconfigurableClientAgent();
 		agentClient_12.associateMessageProcessor( createAgentProcessor( agentMessages_12 ));
 		agentClient_12.setApplicationName( app1.getName());
 		agentClient_12.setScopedInstancePath( "/" + app1_root2.getName());
-		agentClient_12.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		agentClient_12.switchMessagingType(getMessagingType());
 		this.clients.add( agentClient_12 );
 
-		List<Message> agentMessages_2 = new ArrayList<Message> ();
+		List<Message> agentMessages_2 = new ArrayList<>();
 		ReconfigurableClientAgent agentClient_2 = new ReconfigurableClientAgent();
 		agentClient_2.associateMessageProcessor( createAgentProcessor( agentMessages_2 ));
 		agentClient_2.setApplicationName( app2.getName());
 		agentClient_2.setScopedInstancePath( "/" + app2_root.getName());
-		agentClient_2.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		agentClient_2.switchMessagingType(getMessagingType());
 		this.clients.add( agentClient_2 );
 
 		// Everybody starts listening...
@@ -298,36 +298,36 @@ public abstract class AbstractMessagingTest {
 		Instance other = new Instance( "other" ).component( otherComponent );
 
 		// Initialize the messaging
-		List<Message> tomcatMessages = new ArrayList<Message> ();
+		List<Message> tomcatMessages = new ArrayList<>();
 		ReconfigurableClientAgent tomcatClient = new ReconfigurableClientAgent();
 		tomcatClient.associateMessageProcessor( createAgentProcessor( tomcatMessages ));
 		tomcatClient.setApplicationName( app1.getName());
 		tomcatClient.setScopedInstancePath( "/" + tomcat.getName());
-		tomcatClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		tomcatClient.switchMessagingType(getMessagingType());
 		this.clients.add( tomcatClient );
 
-		List<Message> apacheMessages = new ArrayList<Message> ();
+		List<Message> apacheMessages = new ArrayList<>();
 		ReconfigurableClientAgent apacheClient = new ReconfigurableClientAgent();
 		apacheClient.associateMessageProcessor( createAgentProcessor( apacheMessages ));
 		apacheClient.setApplicationName( app1.getName());
 		apacheClient.setScopedInstancePath( "/" + apache.getName());
-		apacheClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		apacheClient.switchMessagingType(getMessagingType());
 		this.clients.add( apacheClient );
 
-		List<Message> mySqlMessages = new ArrayList<Message> ();
+		List<Message> mySqlMessages = new ArrayList<>();
 		ReconfigurableClientAgent mySqlClient = new ReconfigurableClientAgent();
 		mySqlClient.associateMessageProcessor( createAgentProcessor( mySqlMessages ));
 		mySqlClient.setApplicationName( app1.getName());
 		mySqlClient.setScopedInstancePath( "/" + mysql.getName());
-		mySqlClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		mySqlClient.switchMessagingType(getMessagingType());
 		this.clients.add( mySqlClient );
 
-		List<Message> otherMessages = new ArrayList<Message> ();
+		List<Message> otherMessages = new ArrayList<>();
 		ReconfigurableClientAgent otherClient = new ReconfigurableClientAgent();
 		otherClient.associateMessageProcessor( createAgentProcessor( otherMessages ));
 		otherClient.setApplicationName( app2.getName());
 		otherClient.setScopedInstancePath( "/" + other.getName());
-		otherClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		otherClient.switchMessagingType(getMessagingType());
 		this.clients.add( otherClient );
 
 		// OK, let's start.
@@ -485,36 +485,36 @@ public abstract class AbstractMessagingTest {
 		Instance other = new Instance( "other" ).component( otherComponent );
 
 		// Initialize the messaging
-		List<Message> tomcatMessages = new ArrayList<Message> ();
+		List<Message> tomcatMessages = new ArrayList<>();
 		ReconfigurableClientAgent tomcatClient = new ReconfigurableClientAgent();
 		tomcatClient.associateMessageProcessor( createAgentProcessor( tomcatMessages ));
 		tomcatClient.setApplicationName( app1.getName());
 		tomcatClient.setScopedInstancePath( "/" + tomcat.getName());
-		tomcatClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		tomcatClient.switchMessagingType(getMessagingType());
 		this.clients.add( tomcatClient );
 
-		List<Message> apacheMessages = new ArrayList<Message> ();
+		List<Message> apacheMessages = new ArrayList<>();
 		ReconfigurableClientAgent apacheClient = new ReconfigurableClientAgent();
 		apacheClient.associateMessageProcessor( createAgentProcessor( apacheMessages ));
 		apacheClient.setApplicationName( app1.getName());
 		apacheClient.setScopedInstancePath( "/" + apache.getName());
-		apacheClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		apacheClient.switchMessagingType(getMessagingType());
 		this.clients.add( apacheClient );
 
-		List<Message> mySqlMessages = new ArrayList<Message> ();
+		List<Message> mySqlMessages = new ArrayList<>();
 		ReconfigurableClientAgent mySqlClient = new ReconfigurableClientAgent();
 		mySqlClient.associateMessageProcessor( createAgentProcessor( mySqlMessages ));
 		mySqlClient.setApplicationName( app1.getName());
 		mySqlClient.setScopedInstancePath( "/" + mysql.getName());
-		mySqlClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		mySqlClient.switchMessagingType(getMessagingType());
 		this.clients.add( mySqlClient );
 
-		List<Message> otherMessages = new ArrayList<Message> ();
+		List<Message> otherMessages = new ArrayList<>();
 		ReconfigurableClientAgent otherClient = new ReconfigurableClientAgent();
 		otherClient.associateMessageProcessor( createAgentProcessor( otherMessages ));
 		otherClient.setApplicationName( app2.getName());
 		otherClient.setScopedInstancePath( "/" + other.getName());
-		otherClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		otherClient.switchMessagingType(getMessagingType());
 		this.clients.add( otherClient );
 
 		// OK, let's start.
@@ -588,20 +588,20 @@ public abstract class AbstractMessagingTest {
 		Instance instance2 = new Instance( "instance2" ).component( component );
 
 		// Initialize the messaging
-		List<Message> messages1 = new ArrayList<Message> ();
+		List<Message> messages1 = new ArrayList<>();
 		ReconfigurableClientAgent client1 = new ReconfigurableClientAgent();
 		client1.associateMessageProcessor( createAgentProcessor( messages1 ));
 		client1.setApplicationName( app.getName());
 		client1.setScopedInstancePath( "/" + instance1.getName());
-		client1.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		client1.switchMessagingType(getMessagingType());
 		this.clients.add( client1 );
 
-		List<Message> messages2 = new ArrayList<Message> ();
+		List<Message> messages2 = new ArrayList<>();
 		ReconfigurableClientAgent client2 = new ReconfigurableClientAgent();
 		client2.associateMessageProcessor( createAgentProcessor( messages2 ));
 		client2.setApplicationName( app.getName());
 		client2.setScopedInstancePath( "/" + instance2.getName());
-		client2.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		client2.switchMessagingType(getMessagingType());
 		this.clients.add( client2 );
 
 		// OK, let's start.
@@ -678,10 +678,10 @@ public abstract class AbstractMessagingTest {
 
 		// This one is a good candidate to receive something when others publish something.
 		// Except it is not in the same application.
-		List<Message> dmMessages = new ArrayList<Message> ();
+		List<Message> dmMessages = new ArrayList<>();
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		dmClient.switchMessagingType(getMessagingType());
 		this.clients.add( dmClient );
 
 		Component otherComponent = new Component( "other" );
@@ -693,42 +693,42 @@ public abstract class AbstractMessagingTest {
 		Instance other = new Instance( "other" ).component( otherComponent );
 
 		// Initialize the messaging
-		List<Message> tomcatMessages = new ArrayList<Message> ();
+		List<Message> tomcatMessages = new ArrayList<>();
 		ReconfigurableClientAgent tomcatClient = new ReconfigurableClientAgent();
 		tomcatClient.associateMessageProcessor( createAgentProcessor( tomcatMessages ));
 		tomcatClient.setApplicationName( app1.getName());
 		tomcatClient.setScopedInstancePath( "/" + tomcat.getName());
-		tomcatClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		tomcatClient.switchMessagingType(getMessagingType());
 		tomcatClient.listenToTheDm( ListenerCommand.START );
 		tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, tomcat );
 		this.clients.add( tomcatClient );
 
-		List<Message> apacheMessages = new ArrayList<Message> ();
+		List<Message> apacheMessages = new ArrayList<>();
 		ReconfigurableClientAgent apacheClient = new ReconfigurableClientAgent();
 		apacheClient.associateMessageProcessor( createAgentProcessor( apacheMessages ));
 		apacheClient.setApplicationName( app1.getName());
 		apacheClient.setScopedInstancePath( "/" + apache.getName());
-		apacheClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		apacheClient.switchMessagingType(getMessagingType());
 		apacheClient.listenToTheDm( ListenerCommand.START );
 		apacheClient.listenToExportsFromOtherAgents( ListenerCommand.START, apache );
 		this.clients.add( apacheClient );
 
-		List<Message> mySqlMessages = new ArrayList<Message> ();
+		List<Message> mySqlMessages = new ArrayList<>();
 		ReconfigurableClientAgent mySqlClient = new ReconfigurableClientAgent();
 		mySqlClient.associateMessageProcessor( createAgentProcessor( mySqlMessages ));
 		mySqlClient.setApplicationName( app1.getName());
 		mySqlClient.setScopedInstancePath( "/" + mysql.getName());
-		mySqlClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		mySqlClient.switchMessagingType(getMessagingType());
 		mySqlClient.listenToTheDm( ListenerCommand.START );
 		mySqlClient.listenToExportsFromOtherAgents( ListenerCommand.START, mysql );
 		this.clients.add( mySqlClient );
 
-		List<Message> otherMessages = new ArrayList<Message> ();
+		List<Message> otherMessages = new ArrayList<>();
 		ReconfigurableClientAgent otherClient = new ReconfigurableClientAgent();
 		otherClient.associateMessageProcessor( createAgentProcessor( otherMessages ));
 		otherClient.setApplicationName( app2.getName());
 		otherClient.setScopedInstancePath( "/" + other.getName());
-		otherClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		otherClient.switchMessagingType(getMessagingType());
 		otherClient.listenToTheDm( ListenerCommand.START );
 		otherClient.listenToExportsFromOtherAgents( ListenerCommand.START, other );
 		this.clients.add( otherClient );
@@ -754,10 +754,10 @@ public abstract class AbstractMessagingTest {
 
 	public void testDmDebug() throws Exception {
 
-		List<Message> dmMessages = new ArrayList<Message> ();
+		List<Message> dmMessages = new ArrayList<>();
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingClient( getMessagingIp(), getMessagingUsername(), getMessagingPassword(), getMessagingFactoryName());
+		dmClient.switchMessagingType(getMessagingType());
 		this.clients.add( dmClient );
 
 		dmClient.sendMessageToTheDm( new MsgEcho( "hey 1", 4L ));
@@ -784,8 +784,5 @@ public abstract class AbstractMessagingTest {
 
 	protected abstract AbstractMessageProcessor<IDmClient> createDmProcessor( List<Message> dmMessages );
 	protected abstract AbstractMessageProcessor<IAgentClient> createAgentProcessor( List<Message> agentMessages );
-	protected abstract String getMessagingIp();
-	protected abstract String getMessagingUsername();
-	protected abstract String getMessagingPassword();
-	protected abstract String getMessagingFactoryName();
+	protected abstract String getMessagingType();
 }

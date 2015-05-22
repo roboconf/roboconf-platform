@@ -25,6 +25,8 @@
 
 package net.roboconf.messaging.internal.client.dismiss;
 
+import java.util.Collections;
+
 import junit.framework.Assert;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 
@@ -49,7 +51,9 @@ public class DismissClientsTest {
 		client.sendMessageToTheDm( null );
 		client.listenToTheDm( ListenerCommand.START );
 		client.setMessageQueue( null );
-		client.setParameters( null, null, null );
+		client.getMessagingType();
+		client.getConfiguration();
+		client.setConfiguration(Collections.<String, String>emptyMap());
 	}
 
 
@@ -61,7 +65,6 @@ public class DismissClientsTest {
 		Assert.assertFalse( client.isConnected());
 		client.openConnection();
 		client.setMessageQueue( null );
-		client.setParameters( null, null, null );
 		client.listenToExportsFromOtherAgents( ListenerCommand.STOP, null );
 		client.listenToRequestsFromOtherAgents( ListenerCommand.STOP, null );
 		client.listenToTheDm( ListenerCommand.START );
@@ -72,5 +75,8 @@ public class DismissClientsTest {
 		client.setApplicationName( "app" );
 		client.sendMessageToTheDm( null );
 		client.unpublishExports( null );
+		client.getMessagingType();
+		client.getConfiguration();
+		client.setConfiguration(Collections.<String, String>emptyMap());
 	}
 }

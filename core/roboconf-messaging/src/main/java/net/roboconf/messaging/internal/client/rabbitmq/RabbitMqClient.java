@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,38 +23,23 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.api.internal;
+package net.roboconf.messaging.internal.client.rabbitmq;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
+import net.roboconf.messaging.client.IClient;
+import net.roboconf.messaging.client.IDmClient;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * The RabbitMQ client for the DM.
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class TestMachineConfigurator implements MachineConfigurator {
-
-	private final AtomicInteger cpt;
-	private final boolean failConfiguration;
-
+public interface RabbitMqClient extends IClient {
 
 	/**
-	 * Constructor.
+	 * Change the configuration of this RabbitMQ messaging client.
+	 * @param messageServerIp the RabbitMQ server IP/hostname.
+	 * @param messageServerUsername the username needed to connect to the RabbitMQ server.
+	 * @param messageServerPassword the password needed to connect to the RabbitMQ server.
 	 */
-	public TestMachineConfigurator( AtomicInteger cpt, boolean failConfiguration ) {
-		this.cpt = cpt;
-		this.failConfiguration = failConfiguration;
-	}
+	void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword );
 
-	@Override
-	public boolean configure() throws TargetException {
-
-		if( this.failConfiguration
-				&& this.cpt.get() == 1 )
-			throw new TargetException( "This is for test purpose." );
-
-		// We consider it is configuration after 3 invocations.
-		return this.cpt.incrementAndGet() == 3;
-	}
 }

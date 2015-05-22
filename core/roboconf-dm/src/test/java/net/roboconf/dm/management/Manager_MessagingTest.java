@@ -46,8 +46,7 @@ public class Manager_MessagingTest {
 		Manager manager = new Manager();
 		try {
 			manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-			manager.setMessagingFactoryType( MessagingConstants.FACTORY_RABBIT_MQ );
-			manager.setMessageServerUsername( "invalid" );
+			manager.setMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
 			manager.start();
 
 		} finally {

@@ -88,9 +88,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
@@ -113,7 +111,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 					.searchManagedEntity("ComputeResource", targetProperties.get( CLUSTER )));
 
 			// Generate the user data first, so that nothing has been done on the IaaS if it fails
-			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			String userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, rootInstanceName );
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineImageId );
 			String vmwareDataCenter = targetProperties.get( DATA_CENTER );
 			Folder vmFolder =
@@ -171,16 +169,14 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public MachineConfigurator machineConfigurator(
 			Map<String,String> targetProperties,
+			Map<String,String> messagingConfiguration,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String scopedInstancePath,
 			String applicationName ) {
 
 		String userData = "";
 		try {
-			userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, scopedInstancePath );
+			userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, scopedInstancePath );
 
 		} catch( IOException e ) {
 			this.logger.severe( "User data could not be generated." );
@@ -201,7 +197,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
 	throws TargetException {
 
-		boolean result = false;
+		boolean result;
 		try {
 			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineId );
@@ -243,11 +239,9 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 			} catch (InterruptedException ignore) { /*ignore*/ }
 
-		} catch( RemoteException e ) {
+		} catch( RemoteException | MalformedURLException e ) {
 			throw new TargetException(e);
 
-		} catch( MalformedURLException e ) {
-			throw new TargetException(e);
 		}
 	}
 

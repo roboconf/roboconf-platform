@@ -26,49 +26,110 @@
 package net.roboconf.messaging.reconfigurables;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IClient;
+import net.roboconf.messaging.factory.MessagingClientFactory;
+import net.roboconf.messaging.factory.MessagingClientFactoryListener;
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 
 /**
- * A class that wraps a messaging client and can reconfigure it.
+ * A class that can switch dynamically between messaging types.
  * @param <T> a sub-class of {@link IClient}
  * @author Vincent Zurczak - Linagora
  */
-public abstract class ReconfigurableClient<T extends IClient> implements IClient {
+public abstract class ReconfigurableClient<T extends IClient> implements IClient, MessagingClientFactoryListener {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private AbstractMessageProcessor<T> messageProcessor;
+	private String messagingType;
 	private T messagingClient;
+	private MessagingClientFactoryRegistry registry;
 
+	protected ReconfigurableClient() {
+		// Try to find the MessagingClientFactoryRegistry service.
+		setRegistry(lookupMessagingClientFactoryRegistryService());
+	}
+
+	/**
+	 * @return the {@code MessagingClientFactoryRegistry} associated to this client.
+	 */
+	public synchronized MessagingClientFactoryRegistry getRegistry() {
+		return this.registry;
+	}
+
+	/**
+	 * Sets the {@code MessagingClientFactoryRegistry} associated for this client.
+	 * @param registry the {@code MessagingClientFactoryRegistry} for this client.
+	 */
+	public synchronized void setRegistry(MessagingClientFactoryRegistry registry) {
+		if (this.registry != null) {
+			this.registry.removeListener(this);
+		}
+		this.registry = registry;
+		if (registry != null) {
+			registry.addListener(this);
+		}
+	}
+
+	/**
+	 * Try to locate the {@code MessagingClientFactoryRegistry} service in an OSGi execution context.
+	 * <p>
+	 * NOTE: this method is, by definition, very dirty.
+	 * </p>
+	 * @return the located {@code MessagingClientFactoryRegistry} service, or {@code null} if the service cannot be
+	 * found, or if there is no OSGi execution context.
+	 */
+	public static MessagingClientFactoryRegistry lookupMessagingClientFactoryRegistryService() {
+		MessagingClientFactoryRegistry result = null;
+		final Bundle bundle = FrameworkUtil.getBundle(ReconfigurableClient.class);
+		if (bundle != null) {
+			final BundleContext bundleContext = bundle.getBundleContext();
+			if (bundleContext != null) {
+				// There must be only *one* MessagingClientFactoryRegistry service.
+				final ServiceReference<MessagingClientFactoryRegistry> reference =
+						bundleContext.getServiceReference(MessagingClientFactoryRegistry.class);
+				if (reference != null) {
+					result = bundleContext.getService(reference);
+					// The service will be unget when this bundle stops. No need to worry!
+				}
+			}
+		}
+		return result;
+	}
+
+	@Override
+	public synchronized String getMessagingType() {
+		return this.messagingType;
+	}
 
 	/**
 	 * Changes the internal messaging client.
-	 * @param messageServerIp the IP address of the messaging server
-	 * @param messageServerUser the user name for the messaging server
-	 * @param messageServerPwd the password for the messaging server
 	 * @param factoryName the factory name (see {@link MessagingConstants})
 	 */
-	public void switchMessagingClient(
-			String messageServerIp,
-			String messageServerUser,
-			String messageServerPwd,
-			String factoryName ) {
+	public void switchMessagingType( String factoryName ) {
 
 		// Create a new client
 		T newMessagingClient = null;
 		try {
-			newMessagingClient = createNewMessagingClient( messageServerIp, messageServerUser, messageServerPwd, factoryName );
+			newMessagingClient = createMessagingClient(factoryName);
 			if( newMessagingClient != null ) {
 				newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
-				openConnection( newMessagingClient );
+				openConnection(newMessagingClient);
 			}
 
 		} catch( IOException e ) {
-			this.logger.warning( "An error occured while creating a new messaging client. " + e.getMessage());
+			this.logger.warning( "An error occurred while creating a new messaging client. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
 
@@ -78,26 +139,95 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		synchronized( this ) {
 			oldClient = this.messagingClient;
 			this.messagingClient = newMessagingClient;
+			this.messagingType = factoryName;
 		}
 
-		closeConnection( oldClient, "The previous client could not be terminated correctly." );
+		closeConnection(oldClient, "The previous client could not be terminated correctly.");
 	}
 
+	@Override
+	public void addMessagingClientFactory( final MessagingClientFactory factory ) {
+		synchronized( this ) {
+			if (this.messagingClient == null && factory.getType().equals(this.messagingType)) {
+				// This is the messaging factory we were expecting...
+				// We can try to switch to this incoming factory right now!
+
+				// Create a new client
+				T newMessagingClient = null;
+				try {
+					newMessagingClient = createMessagingClient(factory.getType());
+					if( newMessagingClient != null ) {
+						newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
+						openConnection(newMessagingClient);
+					}
+
+				} catch( IOException e ) {
+					this.logger.warning( "An error occurred while creating a new messaging client. " + e.getMessage());
+					Utils.logException( this.logger, e );
+				}
+
+				// Replace the current client
+				// (the new client may be null, it is not a problem - see #getMessagingClient())
+				this.messagingClient = newMessagingClient;
+			}
+		}
+	}
+
+	@Override
+	public void removeMessagingClientFactory( final MessagingClientFactory factory ) {
+		T oldClient = null;
+		synchronized( this ) {
+			if (this.messagingClient != null && this.messagingClient.getMessagingType().equals(this.messagingType)) {
+				// This is the messaging factory we were using...
+				// We must release our messaging client right now.
+				oldClient = this.messagingClient;
+				this.messagingClient = null;
+			}
+		}
+		closeConnection(oldClient, "The previous client could not be terminated correctly.");
+	}
+
+	@Override
+	public Map<String, String> getConfiguration() {
+		final T messagingClient;
+		final Map<String, String> result;
+		synchronized (this) {
+			messagingClient = this.messagingClient;
+		}
+		if (messagingClient != null) {
+			result = this.messagingClient.getConfiguration();
+		} else {
+			result = Collections.emptyMap();
+		}
+		return result;
+	}
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		final T messagingClient;
+		final String messagingType;
+		final boolean result;
+		synchronized (this) {
+			messagingClient = this.messagingClient;
+			messagingType = this.messagingType;
+		}
+		if (messagingClient != null && messagingType.equals(configuration.get(MESSAGING_TYPE_PROPERTY))) {
+			result = messagingClient.setConfiguration(configuration);
+		} else {
+			// Guard against inapplicable configurations.
+			result = false;
+		}
+		return result;
+	}
 
 	/**
 	 * Creates a new messaging client and opens a connection with the messaging server.
-	 * @param messageServerIp the server's IP
-	 * @param messageServerUser the server's user name
-	 * @param messageServerPwd the server's password
 	 * @param factoryName the factory name (see {@link MessagingConstants})
-	 * @return a new messaging client
+	 * @return a new messaging client, or {@code null} if {@code factoryName} is {@code null} or cannot be found in the
+	 * available messaging factories.
 	 * @throws IOException if something went wrong
 	 */
-	protected abstract T createNewMessagingClient(
-			String messageServerIp,
-			String messageServerUser,
-			String messageServerPwd,
-			String factoryName )
+	protected abstract T createMessagingClient( String factoryName )
 	throws IOException;
 
 
@@ -180,6 +310,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 */
 	protected synchronized void resetInternalClient() {
 		this.messagingClient = null;
+		this.messagingType = null;
 	}
 
 

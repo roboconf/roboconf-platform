@@ -31,7 +31,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.internal.client.MessageServerClientFactory;
+import net.roboconf.messaging.factory.MessagingClientFactory;
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.internal.client.dismiss.DismissClientDm;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.processors.AbstractMessageProcessor;
@@ -45,18 +46,16 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 	// Methods inherited from ReconfigurableClient
 
 	@Override
-	protected IDmClient createNewMessagingClient(
-			String messageServerIp,
-			String messageServerUser,
-			String messageServerPwd,
-			String factoryName )
-	throws IOException {
-
-		MessageServerClientFactory factory = new MessageServerClientFactory();
-		IDmClient client = factory.createDmClient( factoryName );
-		if( client != null )
-			client.setParameters( messageServerIp, messageServerUser, messageServerPwd );
-
+	protected IDmClient createMessagingClient( String factoryName )
+			throws IOException {
+		IDmClient client = null;
+		MessagingClientFactoryRegistry registry = getRegistry();
+		if (registry != null) {
+			MessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
+			if (factory != null) {
+				client = factory.createDmClient();
+			}
+		}
 		return client;
 	}
 
@@ -80,12 +79,6 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 
 	// Wrapping of the internal client
-
-
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		getMessagingClient().setParameters( messageServerIp, messageServerUsername, messageServerPassword );
-	}
 
 
 	@Override

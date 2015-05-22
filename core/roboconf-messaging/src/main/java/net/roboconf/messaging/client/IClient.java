@@ -26,6 +26,7 @@
 package net.roboconf.messaging.client;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.messaging.messages.Message;
@@ -36,24 +37,32 @@ import net.roboconf.messaging.messages.Message;
 public interface IClient {
 
 	/**
-	 * Start or stop listening to events.
-	 * @author Vincent Zurczak - Linagora
+	 * The name of the property which contains the type of messaging.
+	 * <p>
+	 * The value of this property <em>must</em> be a {@code String}, and may be {@code null} to indicate the messaging
+	 * type is left unconfigured.
+	 * </p>
+	 * <p>
+	 * This property is used in the provider-specific {@linkplain #getConfiguration() messaging configuration} to
+	 * ensure a configuration is applicable to a given messaging client. It is also used by
+	 * {@link net.roboconf.messaging.factory.MessagingClientFactory} services to indicate which type of messaging they
+	 * support. In the latter case, the property value <em>must</em> be non-{@code null}.
+	 * </p>
 	 */
-	public enum ListenerCommand {
-		START, STOP
-	};
-
+	String MESSAGING_TYPE_PROPERTY = "net.roboconf.messaging.type";
 
 	/**
-	 * Sets the connection parameters.
-	 * @param messageServerIp the IP address of the messaging server
-	 * @param messageServerUsername the user name to connect to the server
-	 * @param messageServerPassword the password to connect to the server
+	 * Start or stop listening to events.
+	 *
+	 * @author Vincent Zurczak - Linagora
 	 */
-	void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword );
+	enum ListenerCommand {
+		START, STOP
+	}
 
 	/**
 	 * Sets the message queue where the client can store the messages to process.
+	 *
 	 * @param messageQueue the message queue
 	 */
 	void setMessageQueue( LinkedBlockingQueue<Message> messageQueue );
@@ -78,6 +87,7 @@ public interface IClient {
 
 	/**
 	 * Sends a message to the DM.
+	 *
 	 * @param message the message to send
 	 * @throws IOException if something went wrong
 	 */
@@ -85,8 +95,36 @@ public interface IClient {
 
 	/**
 	 * Configures the listener for messages from the DM.
+	 *
 	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
 	 * @throws IOException if something went wrong
 	 */
 	void listenToTheDm( ListenerCommand command ) throws IOException;
+
+	/**
+	 * @return the type of messaging currently used by this client.
+	 */
+	String getMessagingType();
+
+	/**
+	 * Gets the provider-specific messaging configuration of this client.
+	 * <p>
+	 * Messaging configuration is needed in order to configure a Roboconf VM, for instance when it is replicated.
+	 * </p>
+	 *
+	 * @return the provider-specific messaging configuration of this client.
+	 */
+	// TODO: /!\ they may be differences between DM & agents messaging configurations (i.e HTTP server/client certificate, passwords, ...). Exposing everything in the same configuration may raise serious security issues.
+	Map<String, String> getConfiguration();
+
+	/**
+	 * Attempts to apply the given provider-specific messaging configuration to this client.
+	 * <p></p>
+	 *
+	 * @param configuration the configuration to apply.
+	 * @return {@code true} if the configuration has been successfully applied, {@code false} otherwise.
+	 * @throws IllegalArgumentException if the {@linkplain #MESSAGING_TYPE_PROPERTY messaging type} of the given
+	 *                                  configuration does not match this client's one ({@link #getMessagingType()}.
+	 */
+	boolean setConfiguration( Map<String, String> configuration );
 }

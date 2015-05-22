@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -40,14 +41,19 @@ import net.roboconf.core.utils.Utils;
 public class ToRunByHand {
 
 	private static final String PROPS_LOCATION = "/data1/targets/amazon.linagora.properties";
-	private static final String MSG_IP = "whatever:4895";
-	private static final String MSG_USER = "roboconf";
-	private static final String MSG_PWD = "rob:op;4";
+
+	private static Map<String, String> msgCfg = new LinkedHashMap<>();
+	static {
+		msgCfg = new LinkedHashMap<>();
+		msgCfg.put("net.roboconf.messaging.type", "factory.test");
+		msgCfg.put("net.roboconf.messaging.rabbitmq.server.ip", "whatever:4895");
+		msgCfg.put("net.roboconf.messaging.rabbitmq.server.user", "roboconf");
+		msgCfg.put("net.roboconf.messaging.rabbitmq.server.password", "rob:op;4");
+	}
 
 
 	/**
 	 * A test that starts a new VM, passes user data, waits 5 minutes and terminates the VM.
-	 * @param args
 	 * @throws Exception
 	 */
 	public static void main( String args[] ) throws Exception {
@@ -55,7 +61,7 @@ public class ToRunByHand {
 		if( ! new File( PROPS_LOCATION ).exists())
 			throw new IllegalArgumentException( "The properties file does not exist." );
 
-		Map<String,String> conf = new HashMap<String,String> ();
+		Map<String,String> conf = new HashMap<>();
 		Properties p = new Properties();
 		InputStream in = null;
 		try {
@@ -72,8 +78,8 @@ public class ToRunByHand {
 		Ec2IaasHandler target = new Ec2IaasHandler();
 		String serverId = null;
 		try {
-			serverId = target.createMachine( conf, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
-			target.configureMachine( conf, serverId, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
+			serverId = target.createMachine( conf, msgCfg, "root", "app" );
+			target.configureMachine( conf, msgCfg, serverId, "root", "app" );
 
 			// 1 minute
 			Thread.sleep( 60000 );

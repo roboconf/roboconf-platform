@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,38 +23,28 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.api.internal;
-
-import java.util.concurrent.atomic.AtomicInteger;
-
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
+package net.roboconf.messaging.factory;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * A listener notified when a messaging client factory appears or disappears.
+ * <p>
+ * In order to be notified listeners must be registered with the
+ * {@link MessagingClientFactoryRegistry#addListener(MessagingClientFactoryListener)} method.
+ * </p>
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class TestMachineConfigurator implements MachineConfigurator {
-
-	private final AtomicInteger cpt;
-	private final boolean failConfiguration;
-
+public interface MessagingClientFactoryListener {
 
 	/**
-	 * Constructor.
+	 * Called when a messaging client factory appears.
+	 * @param factory the appearing messaging client factory.
 	 */
-	public TestMachineConfigurator( AtomicInteger cpt, boolean failConfiguration ) {
-		this.cpt = cpt;
-		this.failConfiguration = failConfiguration;
-	}
+	void addMessagingClientFactory(MessagingClientFactory factory);
 
-	@Override
-	public boolean configure() throws TargetException {
+	/**
+	 * Called when a messaging client factory disappears.
+	 * @param factory the disappearing messaging client factory.
+	 */
+	void removeMessagingClientFactory(MessagingClientFactory factory);
 
-		if( this.failConfiguration
-				&& this.cpt.get() == 1 )
-			throw new TargetException( "This is for test purpose." );
-
-		// We consider it is configuration after 3 invocations.
-		return this.cpt.incrementAndGet() == 3;
-	}
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,38 +23,46 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.api.internal;
+package net.roboconf.messaging.factory;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.client.IClient;
+import net.roboconf.messaging.client.IDmClient;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * A service that allows to create Roboconf messaging clients.
+ *
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class TestMachineConfigurator implements MachineConfigurator {
+public interface MessagingClientFactory {
 
-	private final AtomicInteger cpt;
-	private final boolean failConfiguration;
+	/**
+	 * When exposed as a service, this property indicates the type of messaging this factory provides.
+	 * <p>
+	 * This property is <em>mandatory</em>, its value is <em>immutable</em> and must be an non-null {@code String}.
+	 * </p>
+	 * @see #getType()
+	 */
+	String MESSAGING_TYPE_PROPERTY = IClient.MESSAGING_TYPE_PROPERTY;
+
+	/**
+	 * Get the type of messaging this factory supports.
+	 * @return the type of messaging this factory supports.
+	 * @see #MESSAGING_TYPE_PROPERTY
+	 */
+	String getType();
+
+	/**
+	 * Creates a messaging client for the DM.
+	 * @return the created DM messaging client.
+	 */
+	IDmClient createDmClient();
 
 
 	/**
-	 * Constructor.
+	 * Creates a messaging client for an agent.
+	 * @return the created agent messaging client.
 	 */
-	public TestMachineConfigurator( AtomicInteger cpt, boolean failConfiguration ) {
-		this.cpt = cpt;
-		this.failConfiguration = failConfiguration;
-	}
+	IAgentClient createAgentClient();
 
-	@Override
-	public boolean configure() throws TargetException {
-
-		if( this.failConfiguration
-				&& this.cpt.get() == 1 )
-			throw new TargetException( "This is for test purpose." );
-
-		// We consider it is configuration after 3 invocations.
-		return this.cpt.incrementAndGet() == 3;
-	}
 }

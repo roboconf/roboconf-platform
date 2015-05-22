@@ -30,7 +30,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.client.MessageServerClientFactory;
+import net.roboconf.messaging.factory.MessagingClientFactory;
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.internal.client.dismiss.DismissClientAgent;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
@@ -48,18 +49,16 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 	// Methods inherited from ReconfigurableClient
 
 	@Override
-	protected IAgentClient createNewMessagingClient(
-			String messageServerIp,
-			String messageServerUser,
-			String messageServerPwd,
-			String factoryName )
+	protected IAgentClient createMessagingClient( String factoryName )
 	throws IOException {
-
-		MessageServerClientFactory factory = new MessageServerClientFactory();
-		IAgentClient client = factory.createAgentClient( factoryName );
-		if( client != null )
-			client.setParameters( messageServerIp, messageServerUser, messageServerPwd );
-
+		IAgentClient client = null;
+		MessagingClientFactoryRegistry registry = getRegistry();
+		if (registry != null) {
+			MessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
+			if (factory != null) {
+				client = factory.createAgentClient();
+			}
+		}
 		return client;
 	}
 
@@ -92,12 +91,6 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 
 	// Wrapping of the internal client
-
-
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		getMessagingClient().setParameters( messageServerIp, messageServerUsername, messageServerPassword );
-	}
 
 
 	@Override

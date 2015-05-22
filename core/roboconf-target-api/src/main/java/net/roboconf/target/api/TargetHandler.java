@@ -44,13 +44,11 @@ public interface TargetHandler {
 	 * <p>
 	 * The machine must have a Roboconf agent installed on it.<br />
 	 * This method only deals with the creation of a VM. Configuring the network,
-	 * storage and so on, should be done {@link #configureMachine(Map, String)}.
+	 * storage and so on, should be done {@link #configureMachine(Map, Map, String, String, String)}.
 	 * </p>
 	 *
 	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
-	 * @param messagingIp the IP of the messaging server
-	 * @param messagingUsername the user name to connect to the messaging server
-	 * @param messagingPassword the password to connect to the messaging server
+	 * @param messagingProperties the configuration for the messaging.
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the scoped instance's path
 	 * @return the (machine) ID of this machine (should be unique for the target manager)
@@ -58,9 +56,7 @@ public interface TargetHandler {
 	 */
 	String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String, String> messagingProperties,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException;
@@ -79,19 +75,15 @@ public interface TargetHandler {
 	 *
 	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
 	 * @param machineId the ID machine of the machine to configure
-	 * @param messagingIp the IP of the messaging server
-	 * @param messagingUsername the user name to connect to the messaging server
-	 * @param messagingPassword the password to connect to the messaging server
+	 * @param messagingProperties the configuration for the messaging.
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the scoped instance's path
 	 * @throws TargetException
 	 */
 	void configureMachine(
 			Map<String,String> targetProperties,
+			Map<String, String> messagingProperties,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException;

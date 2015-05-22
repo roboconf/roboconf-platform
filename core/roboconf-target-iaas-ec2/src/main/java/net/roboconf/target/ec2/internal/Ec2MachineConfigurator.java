@@ -26,6 +26,7 @@
 package net.roboconf.target.ec2.internal;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -59,8 +60,8 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 *
 	 * @author Vincent Zurczak - Linagora
 	 */
-	public static enum State {
-		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, ASSOCIATE_STORAGE, COMPLETE;
+	public enum State {
+		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, ASSOCIATE_STORAGE, COMPLETE
 	}
 
 	private final String machineId, tagName;
@@ -74,9 +75,6 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 	/**
 	 * Constructor.
-	 * @param targetProperties
-	 * @param machineId
-	 * @param tagName
 	 */
 	public Ec2MachineConfigurator( Map<String,String> targetProperties, String machineId, String tagName  ) {
 		this.machineId = machineId;
@@ -122,7 +120,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	private boolean checkVmIsKnown() {
 
 		DescribeInstancesRequest dis = new DescribeInstancesRequest();
-		dis.setInstanceIds( Arrays.asList( this.machineId ));
+		dis.setInstanceIds(Collections.singletonList(this.machineId));
 
 		DescribeInstancesResult disresult = this.ec2Api.describeInstances(dis);
 		return disresult.getReservations().size() > 0
@@ -139,7 +137,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		// We cannot tag directly after the VM creation. See #197.
 		// We need it to be known by all the EC2 components.
 		Tag tag = new Tag( "Name", this.tagName );
-		CreateTagsRequest ctr = new CreateTagsRequest( Arrays.asList( this.machineId ), Arrays.asList( tag ));
+		CreateTagsRequest ctr = new CreateTagsRequest(Collections.singletonList(this.machineId), Arrays.asList( tag ));
 		this.ec2Api.createTags( ctr );
 
 		return true;
@@ -170,7 +168,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	private boolean checkVmIsStarted() {
 
 		DescribeInstancesRequest dis = new DescribeInstancesRequest();
-		dis.setInstanceIds( Arrays.asList( this.machineId ));
+		dis.setInstanceIds(Collections.singletonList(this.machineId));
 
 		DescribeInstancesResult disresult = this.ec2Api.describeInstances( dis );
 		return "running".equalsIgnoreCase( disresult.getReservations().get(0).getInstances().get(0).getState().getName());

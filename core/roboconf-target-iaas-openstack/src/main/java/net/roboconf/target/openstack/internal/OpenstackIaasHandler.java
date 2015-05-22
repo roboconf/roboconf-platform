@@ -88,9 +88,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
@@ -132,13 +130,13 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			throw new TargetException( "No image named '" + imageName + "' was found." );
 
 		// Prepare the server creation
-		Map<String,String> metadata = new HashMap<String,String>( 3 );
+		Map<String,String> metadata = new HashMap<>(3);
 		metadata.put( "Application Name", applicationName );
 		metadata.put( "Root Instance Name", rootInstanceName );
 		metadata.put( "Created by", "Roboconf" );
 
 		try {
-			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			String userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, rootInstanceName );
 			CreateServerOptions options = CreateServerOptions.Builder
 					.keyPairName( targetProperties.get( OpenstackIaasHandler.KEY_PAIR ))
 					.securityGroupNames( targetProperties.get( OpenstackIaasHandler.SECURITY_GROUP ))
@@ -190,10 +188,8 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public MachineConfigurator machineConfigurator(
 			Map<String,String> targetProperties,
+			Map<String,String> messagingConfiguration,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String scopedInstancePath,
 			String applicationName ) {
 		return new OpenstackMachineConfigurator( targetProperties, machineId );

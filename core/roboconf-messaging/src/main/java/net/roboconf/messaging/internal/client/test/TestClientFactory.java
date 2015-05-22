@@ -23,49 +23,42 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.internal.client;
+package net.roboconf.messaging.internal.client.test;
 
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.internal.client.rabbitmq.RabbitMqClientAgent;
-import net.roboconf.messaging.internal.client.rabbitmq.RabbitMqClientDm;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.internal.client.test.TestClientDm;
+import net.roboconf.messaging.factory.MessagingClientFactory;
+import org.apache.felix.ipojo.annotations.Component;
+import org.apache.felix.ipojo.annotations.Instantiate;
+import org.apache.felix.ipojo.annotations.Provides;
+import org.apache.felix.ipojo.annotations.ServiceProperty;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * Messaging client factory for tests.
+ *
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class MessageServerClientFactory {
+@Component(name = "roboconf-messaging-client-factory-test", publicFactory = false)
+@Provides(specifications = MessagingClientFactory.class)
+@Instantiate(name = "Roboconf Test Messaging Client Factory")
+public class TestClientFactory implements MessagingClientFactory {
 
-	/**
-	 * @param factoryName the factory name (one of this class's constants)
-	 * @return a new instance of message server client, null if the factory name is unknown
-	 */
-	public IDmClient createDmClient( String factoryName ) {
+	@ServiceProperty(name = MessagingClientFactory.MESSAGING_TYPE_PROPERTY)
+	private final String type = MessagingConstants.FACTORY_TEST;
 
-		IDmClient result = null;
-		if( MessagingConstants.FACTORY_RABBIT_MQ.equalsIgnoreCase( factoryName ))
-			result = new RabbitMqClientDm();
-		else if( MessagingConstants.FACTORY_TEST.equals( factoryName ))
-			result = new TestClientDm();
-
-		return result;
+	@Override
+	public String getType() {
+		return this.type;
 	}
 
+	@Override
+	public IDmClient createDmClient() {
+		return new TestClientDm();
+	}
 
-	/**
-	 * @param factoryName the factory name (one of this class's constants)
-	 * @return a new instance of message server client, null if the factory name is unknown
-	 */
-	public IAgentClient createAgentClient( String factoryName ) {
-
-		IAgentClient result = null;
-		if( MessagingConstants.FACTORY_RABBIT_MQ.equalsIgnoreCase( factoryName ))
-			result = new RabbitMqClientAgent();
-		else if( MessagingConstants.FACTORY_TEST.equals( factoryName ))
-			result = new TestClientAgent();
-
-		return result;
+	@Override
+	public IAgentClient createAgentClient() {
+		return new TestClientAgent();
 	}
 }

@@ -55,6 +55,8 @@ import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.messaging.MessagingConstants;
 
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.internal.client.test.TestClientFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -64,23 +66,28 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DebuResourceTest {
+public class DebugResourceTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
 	private Manager manager;
 	private DebugResource resource;
+	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void initializeDm() throws IOException {
+		this.registry.addMessagingClientFactory(new TestClientFactory());
 
 		this.manager = new Manager();
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
+		// Reconfigure with the messaging client factory registry set.
+		this.manager.getMessagingClient().setRegistry(this.registry);
+		this.manager.reconfigure();
 
 		this.resource = new DebugResource( this.manager );
 	}

@@ -57,7 +57,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	protected long delay = DEFAULT_DELAY;
 
 	private final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor( 1 );
-	private final Map<String,MachineConfigurator> machineIdToConfigurators = new ConcurrentHashMap<String,MachineConfigurator> ();
+	private final Map<String,MachineConfigurator> machineIdToConfigurators = new ConcurrentHashMap<> ();
 
 
 	/**
@@ -90,18 +90,11 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public final void configureMachine(
 			Map<String,String> targetProperties,
+			Map<String, String> messagingProperties,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String rootInstanceName,
 			String applicationName )
 	throws TargetException {
@@ -109,10 +102,8 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 		this.logger.fine( "Configuring machine '" + machineId + "'." );
 		this.machineIdToConfigurators.put( machineId, machineConfigurator(
 				targetProperties,
+				messagingProperties,
 				machineId,
-				messagingIp,
-				messagingUsername,
-				messagingPassword,
 				rootInstanceName,
 				applicationName ));
 	}
@@ -122,20 +113,16 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 * Gets or builds a machine configurator to (guess what!) configure a machine.
 	 *
 	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param messagingProperties the configuration for the messaging.
 	 * @param machineId the ID machine of the machine to configure
-	 * @param messagingIp the IP of the messaging server
-	 * @param messagingUsername the user name to connect to the messaging server
-	 * @param messagingPassword the password to connect to the messaging server
 	 * @param applicationName the application name
 	 * @param rootInstanceName the name of the root instance associated with this VM
 	 * @return a machine configurator
 	 */
 	public abstract MachineConfigurator machineConfigurator(
 			Map<String,String> targetProperties,
+			Map<String, String> messagingProperties,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String rootInstanceName,
 			String applicationName );
 
@@ -174,7 +161,6 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 
 		/**
 		 * Constructor.
-		 * @param machineIdToConfigurators
 		 */
 		public CheckingRunnable( Map<String,MachineConfigurator> machineIdToConfigurators ) {
 			super();
@@ -186,7 +172,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 		public void run() {
 
 			// Check the state of all the launchers
-			Set<String> keysToRemove = new HashSet<String> ();
+			Set<String> keysToRemove = new HashSet<> ();
 			for( Map.Entry<String,MachineConfigurator> entry : this.machineIdToConfigurators.entrySet()) {
 
 				MachineConfigurator handler = entry.getValue();

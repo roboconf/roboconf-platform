@@ -26,17 +26,30 @@
 package net.roboconf.target.in_memory;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.target.api.TargetException;
 
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class InMemoryHandler_withoutIPojoTest {
+
+	private Map<String, String> msgCfg = new LinkedHashMap<>();
+
+	@Before
+	public void setMessagingConfiguration() {
+		msgCfg = new LinkedHashMap<>();
+		msgCfg.put("net.roboconf.messaging.type", "telepathy");
+		msgCfg.put("mindControl", "false");
+		msgCfg.put("psychosisProtection", "active");
+	}
+
 
 	@Test
 	public void checkBasics() throws Exception {
@@ -51,7 +64,7 @@ public class InMemoryHandler_withoutIPojoTest {
 	@Test( expected = TargetException.class )
 	public void testCreateVm() throws Exception {
 
-		new InMemoryHandler().createMachine( null, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+		new InMemoryHandler().createMachine( null, msgCfg, "vm", "my app" );
 	}
 
 
@@ -62,10 +75,10 @@ public class InMemoryHandler_withoutIPojoTest {
 		handler.setDefaultDelay( 100L );
 		Assert.assertEquals( 100L, handler.getDefaultDelay());
 
-		Map<String,String> targetProperties = new HashMap<String,String>( 1 );
+		Map<String,String> targetProperties = new HashMap<>(1);
 		targetProperties.put( InMemoryHandler.DELAY, "20L" );
 
-		handler.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+		handler.createMachine( targetProperties, msgCfg, "vm", "my app" );
 	}
 
 
@@ -76,8 +89,8 @@ public class InMemoryHandler_withoutIPojoTest {
 		handler.setDefaultDelay( 10L );
 		Assert.assertEquals( 10L, handler.getDefaultDelay());
 
-		Map<String,String> targetProperties = new HashMap<String,String>( 0 );
-		handler.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "vm", "my app" );
+		Map<String,String> targetProperties = new HashMap<>(0);
+		handler.createMachine( targetProperties, msgCfg, "vm", "my app" );
 	}
 
 
@@ -85,7 +98,9 @@ public class InMemoryHandler_withoutIPojoTest {
 	public void testConfigureAndIsRunning() throws Exception {
 
 		InMemoryHandler handler = new InMemoryHandler();
-		handler.configureMachine( null, "my app", null, null, null, null, null );
+		handler.configureMachine( null, msgCfg, "my app", null, null );
 		Assert.assertFalse( handler.isMachineRunning( null, "whatever, there is no iPojo factory" ));
 	}
+
+
 }

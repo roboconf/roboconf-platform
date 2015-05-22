@@ -75,7 +75,7 @@ public class ReconfigurableClientTest {
 		// The internal client will be null.
 		// But still, there will be no NPE or other exception.
 		ReconfigurableClientDm client = new ReconfigurableClientDm();
-		client.switchMessagingClient( null, null, null, null );
+		client.switchMessagingType( null );
 		client.openConnection();
 	}
 
@@ -86,7 +86,7 @@ public class ReconfigurableClientTest {
 		// The internal client will be null.
 		// But still, there will be no NPE or other exception.
 		ReconfigurableClientAgent client = new ReconfigurableClientAgent();
-		client.switchMessagingClient( null, null, null, null );
+		client.switchMessagingType( null );
 		client.openConnection();
 	}
 
@@ -99,7 +99,6 @@ public class ReconfigurableClientTest {
 		Assert.assertNotNull( client.getMessagingClient());
 
 		// Invoke other method, no matter in which order
-		client.setParameters( "localhost", "guest", "guest" );
 		client.setMessageQueue( new LinkedBlockingQueue<Message> ());
 		Assert.assertFalse( client.hasValidClient());
 		Assert.assertFalse( client.isConnected());
@@ -117,7 +116,6 @@ public class ReconfigurableClientTest {
 		Assert.assertNotNull( client.getMessagingClient());
 
 		// Invoke other method, no matter in which order
-		client.setParameters( "localhost", "guest", "guest" );
 		client.setMessageQueue( new LinkedBlockingQueue<Message> ());
 		Assert.assertFalse( client.hasValidClient());
 		Assert.assertFalse( client.isConnected());

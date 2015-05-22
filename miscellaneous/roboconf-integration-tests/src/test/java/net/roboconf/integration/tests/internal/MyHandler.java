@@ -36,7 +36,7 @@ import net.roboconf.target.api.TargetHandler;
  * @author Vincent Zurczak - Linagora
  */
 public class MyHandler implements TargetHandler {
-	public final Map<String,Agent> agentIdToAgent = new ConcurrentHashMap<String,Agent> ();
+	public final Map<String,Agent> agentIdToAgent = new ConcurrentHashMap<>();
 
 
 	@Override
@@ -47,9 +47,7 @@ public class MyHandler implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String, String> messagingProperties,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
@@ -60,9 +58,7 @@ public class MyHandler implements TargetHandler {
 		agent.setTargetId( "in-memory" );
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
-		agent.setMessageServerIp( messagingIp );
-		agent.setMessageServerUsername( messagingUsername );
-		agent.setMessageServerPassword( messagingPassword );
+		agent.getMessagingClient().setConfiguration(messagingProperties);
 		agent.start();
 
 		String key = scopedInstancePath + " @ " + applicationName;
@@ -75,10 +71,8 @@ public class MyHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 			Map<String,String> targetProperties,
+			Map<String, String> messagingProperties,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String scopedInstancePath,
 			String applicationName)
 	throws TargetException {

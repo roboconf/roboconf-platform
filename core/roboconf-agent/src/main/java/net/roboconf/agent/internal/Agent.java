@@ -61,16 +61,15 @@ import net.roboconf.plugin.api.PluginInterface;
 public class Agent implements AgentMessagingInterface {
 
 	// Component properties (ipojo)
-	String messageServerIp, messageServerUsername, messageServerPassword;
 	String applicationName, scopedInstancePath, ipAddress, targetId;
 	boolean overrideProperties = false, simulatePlugins = true;
 
 	// Fields that should be injected (ipojo)
-	final List<PluginInterface> plugins = new ArrayList<PluginInterface> ();
+	final List<PluginInterface> plugins = new ArrayList<> ();
 
 	// Internal fields
 	private final Logger logger;
-	private String messagingFactoryType;
+	private String messagingType;
 	private ReconfigurableClientAgent messagingClient;
 	private Instance scopedInstance;
 	Timer heartBeatTimer;
@@ -82,7 +81,7 @@ public class Agent implements AgentMessagingInterface {
 	 */
 	public Agent() {
 		this.logger = Logger.getLogger( getClass().getName());
-		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
+		this.messagingType = MessagingConstants.FACTORY_RABBIT_MQ;
 
 		// Set default value for IP address
 		// Will be overridden in many cases (e.g. on IaaS with user-data).
@@ -262,7 +261,7 @@ public class Agent implements AgentMessagingInterface {
 
 	/**
 	 * This method is invoked by iPojo every time a new plug-in appears.
-	 * @param pi
+	 * @param pi the appearing plugin.
 	 */
 	public void pluginAppears( PluginInterface pi ) {
 		if( pi != null ) {
@@ -275,7 +274,7 @@ public class Agent implements AgentMessagingInterface {
 
 	/**
 	 * This method is invoked by iPojo every time a plug-in disappears.
-	 * @param pi
+	 * @param pi the disappearing plugin.
 	 */
 	public void pluginDisappears( PluginInterface pi ) {
 
@@ -294,7 +293,7 @@ public class Agent implements AgentMessagingInterface {
 
 	/**
 	 * This method is invoked by iPojo every time a plug-in is modified.
-	 * @param pi
+	 * @param pi the modified plugin.
 	 */
 	public void pluginWasModified( PluginInterface pi ) {
 		this.logger.info( "Plugin '" + pi.getPluginName() + "' was modified in Roboconf's agent." );
@@ -347,9 +346,6 @@ public class Agent implements AgentMessagingInterface {
 				this.ipAddress = props.getIpAddress();
 				this.scopedInstancePath = props.getScopedInstancePath();
 
-				this.messageServerIp = props.getMessageServerIp();
-				this.messageServerUsername = props.getMessageServerUsername();
-				this.messageServerPassword = props.getMessageServerPassword();
 			}
 		}
 
@@ -358,7 +354,7 @@ public class Agent implements AgentMessagingInterface {
 		this.messagingClient.setScopedInstancePath( this.scopedInstancePath );
 		this.messagingClient.setIpAddress( this.ipAddress );
 		this.messagingClient.setNeedsModel( needsModel());
-		this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
+		this.messagingClient.switchMessagingType( this.messagingType);
 
 		this.logger.info( "The agent was successfully (re)configured." );
 	}
@@ -390,34 +386,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @return the messagingFactoryType
+	 * @return the messagingType
 	 */
-	public String getMessagingFactoryType() {
-		return this.messagingFactoryType;
-	}
-
-
-	/**
-	 * @param messageServerIp the messageServerIp to set
-	 */
-	public void setMessageServerIp( String messageServerIp ) {
-		this.messageServerIp = messageServerIp;
-	}
-
-
-	/**
-	 * @param messageServerUsername the messageServerUsername to set
-	 */
-	public void setMessageServerUsername( String messageServerUsername ) {
-		this.messageServerUsername = messageServerUsername;
-	}
-
-
-	/**
-	 * @param messageServerPassword the messageServerPassword to set
-	 */
-	public void setMessageServerPassword( String messageServerPassword ) {
-		this.messageServerPassword = messageServerPassword;
+	public String getMessagingType() {
+		return this.messagingType;
 	}
 
 
@@ -430,7 +402,7 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @param rootInstanceName the scopedInstancePath to set
+	 * @param scopedInstancePath the scopedInstancePath to set
 	 */
 	public void setScopedInstancePath( String scopedInstancePath ) {
 		this.scopedInstancePath = scopedInstancePath;
@@ -470,10 +442,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @param messagingFactoryType the messagingFactoryType to set
+	 * @param messagingType the messaging type to set
 	 */
-	public void setMessagingFactoryType( String messagingFactoryType ) {
-		this.messagingFactoryType = messagingFactoryType;
+	public void setMessagingType( String messagingType ) {
+		this.messagingType = messagingType;
 	}
 
 
@@ -485,7 +457,7 @@ public class Agent implements AgentMessagingInterface {
 		StringBuilder sb = new StringBuilder();
 		sb.append( Utils.isEmptyOrWhitespaces( this.scopedInstancePath ) ? "?" : this.scopedInstancePath );
 		if( ! Utils.isEmptyOrWhitespaces( this.applicationName ))
-			sb.append( " @ " + this.applicationName );
+			sb.append(" @ ").append(this.applicationName);
 
 		return sb.toString();
 	}

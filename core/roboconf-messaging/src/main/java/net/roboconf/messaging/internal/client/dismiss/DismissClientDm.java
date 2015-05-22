@@ -26,6 +26,8 @@
 package net.roboconf.messaging.internal.client.dismiss;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
@@ -42,12 +44,6 @@ import net.roboconf.messaging.messages.Message;
 public class DismissClientDm implements IDmClient {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-
-
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
-	}
 
 
 	@Override
@@ -99,8 +95,27 @@ public class DismissClientDm implements IDmClient {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
+	@Override
+	public String getMessagingType() {
+		return null;
+	}
 
-    @Override
+
+	@Override
+	public Map<String, String> getConfiguration() {
+		// Dismiss client has no configuration.
+		return Collections.emptyMap();
+	}
+
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		// Cannot apply any configuration to the dismiss client.
+		return false;
+	}
+
+
+	@Override
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );

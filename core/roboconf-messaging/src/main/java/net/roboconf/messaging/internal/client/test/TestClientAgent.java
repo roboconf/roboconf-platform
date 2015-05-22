@@ -27,12 +27,15 @@ package net.roboconf.messaging.internal.client.test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.messages.Message;
 
@@ -41,21 +44,14 @@ import net.roboconf.messaging.messages.Message;
  */
 public class TestClientAgent implements IAgentClient {
 
-	public final List<Message> messagesForTheDm = new ArrayList<Message> ();
+	public final List<Message> messagesForTheDm = new ArrayList<> ();
 	public AtomicInteger messagesForAgentsCount = new AtomicInteger();
 	public AtomicBoolean connected = new AtomicBoolean( false );
 	public AtomicBoolean failMessageSending = new AtomicBoolean( false );
+	// TODO(?) : May be a good idea to make the previous parameters configurable via setConfiguration().
 
-	private String messageServerIp, messageServerUsername, messageServerPassword, applicationName, scopedInstancePath;
+	private String applicationName, scopedInstancePath;
 
-
-
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		this.messageServerIp = messageServerIp;
-		this.messageServerPassword = messageServerPassword;
-		this.messageServerUsername = messageServerUsername;
-	}
 
 	@Override
 	public boolean isConnected() {
@@ -145,29 +141,23 @@ public class TestClientAgent implements IAgentClient {
 	}
 
 	@Override
+	public String getMessagingType() {
+		return MessagingConstants.FACTORY_TEST;
+	}
+
+	@Override
+	public Map<String, String> getConfiguration() {
+		return Collections.singletonMap(MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_TEST);
+	}
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		return MessagingConstants.FACTORY_TEST.equals(configuration.get(MESSAGING_TYPE_PROPERTY));
+	}
+
+	@Override
 	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
 		// nothing
-	}
-
-	/**
-	 * @return the messageServerIp
-	 */
-	public String getMessageServerIp() {
-		return this.messageServerIp;
-	}
-
-	/**
-	 * @return the messageServerUsername
-	 */
-	public String getMessageServerUsername() {
-		return this.messageServerUsername;
-	}
-
-	/**
-	 * @return the messageServerPassword
-	 */
-	public String getMessageServerPassword() {
-		return this.messageServerPassword;
 	}
 
 	/**

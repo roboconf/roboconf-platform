@@ -85,9 +85,7 @@ public class JCloudsHandler implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
@@ -170,10 +168,8 @@ public class JCloudsHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 		Map<String,String> targetProperties,
+		Map<String,String> messagingConfiguration,
 		String machineId,
-		String messagingIp,
-		String messagingUsername,
-		String messagingPassword,
 		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {

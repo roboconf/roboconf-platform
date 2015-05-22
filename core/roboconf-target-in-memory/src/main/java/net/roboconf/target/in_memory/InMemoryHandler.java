@@ -71,9 +71,7 @@ public class InMemoryHandler implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
@@ -96,10 +94,10 @@ public class InMemoryHandler implements TargetHandler {
 		}
 
 		// Prepare the properties of the new POJO
-		Dictionary<String,Object> configuration = new Hashtable<String,Object> ();
-	    configuration.put( "message-server-ip", messagingIp );
-	    configuration.put( "message-server-username", messagingUsername );
-	    configuration.put( "message-server-password", messagingPassword );
+		Dictionary<String,Object> configuration = new Hashtable<>();
+		for(String k : messagingConfiguration.keySet()) {
+			configuration.put(k, messagingConfiguration.get(k));
+		}
 	    configuration.put( "application-name", applicationName );
 	    configuration.put( "scoped-instance-path", scopedInstancePath );
 
@@ -130,10 +128,8 @@ public class InMemoryHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 		Map<String,String> targetProperties,
+		Map<String,String> messagingConfiguration,
 		String machineId,
-		String messagingIp,
-		String messagingUsername,
-		String messagingPassword,
 		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {

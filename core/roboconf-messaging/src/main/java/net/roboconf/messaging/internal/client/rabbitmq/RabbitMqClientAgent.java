@@ -26,7 +26,9 @@
 package net.roboconf.messaging.internal.client.rabbitmq;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -35,6 +37,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.internal.utils.RabbitMqUtils;
 import net.roboconf.messaging.internal.utils.SerializationUtils;
@@ -51,7 +54,7 @@ import com.rabbitmq.client.QueueingConsumer;
  * The RabbitMQ client for an agent.
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqClientAgent implements IAgentClient {
+public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 
 	private static final String THOSE_THAT_EXPORT = "those.that.export.";
 	public static final String THOSE_THAT_IMPORT = "those.that.import.";
@@ -160,7 +163,7 @@ public class RabbitMqClientAgent implements IAgentClient {
 		StringBuilder sb = new StringBuilder( "Agent '" + getAgentId());
 		sb.append( "' is closing its connection to RabbitMQ.");
 		if( this.channel != null )
-			sb.append( " Channel # " + this.channel.getChannelNumber());
+			sb.append(" Channel # ").append(this.channel.getChannelNumber());
 
 		this.logger.info( sb.toString());
 
@@ -380,6 +383,40 @@ public class RabbitMqClientAgent implements IAgentClient {
 			this.logger.fine( "Agent '" + getAgentId() + "' stops listening to the DM." );
 			this.channel.queueUnbind( queueName, exchangeName, routingKey );
 		}
+	}
+
+
+	@Override
+	public String getMessagingType() {
+		return MessagingConstants.FACTORY_RABBIT_MQ;
+	}
+
+
+	@Override
+	public Map<String, String> getConfiguration() {
+		final Map<String, String> configuration = new LinkedHashMap<>();
+		configuration.put(MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_RABBIT_MQ);
+		configuration.put(MessagingConstants.RABBITMQ_SERVER_IP, this.messageServerIp);
+		configuration.put(MessagingConstants.RABBITMQ_SERVER_USERNAME, this.messageServerUsername);
+		configuration.put(MessagingConstants.RABBITMQ_SERVER_PASSWORD, this.messageServerPassword);
+		return Collections.unmodifiableMap(configuration);
+	}
+
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		final boolean result;
+		final String type = configuration.get(MESSAGING_TYPE_PROPERTY);
+		final String ip = configuration.get(MessagingConstants.RABBITMQ_SERVER_IP);
+		final String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
+		final String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
+		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type) && ip != null && username != null && password != null) {
+			setParameters(ip, username, password);
+			result = true;
+		} else {
+			result = false;
+		}
+		return result;
 	}
 
 

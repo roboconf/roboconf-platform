@@ -26,10 +26,14 @@
 package net.roboconf.messaging.internal.client.test;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.client.IClient;
 import net.roboconf.messaging.client.IClient.ListenerCommand;
 import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
@@ -56,17 +60,20 @@ public class TestClientDmTest {
 
 
 	@Test
-	public void testSetParameters() throws Exception {
+	public void testGetConfiguration() throws Exception {
 
 		TestClientDm client = new TestClientDm();
-		Assert.assertNull( client.getMessageServerIp());
-		Assert.assertNull( client.getMessageServerPassword());
-		Assert.assertNull( client.getMessageServerUsername());
 
-		client.setParameters( "192.168.1.15", "oops", "again" );
-		Assert.assertEquals( "192.168.1.15", client.getMessageServerIp());
-		Assert.assertEquals( "oops", client.getMessageServerUsername());
-		Assert.assertEquals( "again", client.getMessageServerPassword());
+		final Map<String, String> config = client.getConfiguration();
+		Assert.assertEquals(1, config.size());
+		Assert.assertEquals(MessagingConstants.FACTORY_TEST, config.get(IClient.MESSAGING_TYPE_PROPERTY));
+	}
+
+
+	@Test
+	public void testSetConfiguration() throws Exception {
+		TestClientDm client = new TestClientDm();
+		Assert.assertTrue(client.setConfiguration(Collections.singletonMap(IClient.MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_TEST)));
 	}
 
 

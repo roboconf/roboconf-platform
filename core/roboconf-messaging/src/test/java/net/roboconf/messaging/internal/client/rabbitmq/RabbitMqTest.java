@@ -149,26 +149,23 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	}
 
 
-	@Override
-	protected String getMessagingIp() {
+	private String getMessagingIp() {
 		return "localhost";
 	}
 
 
-	@Override
-	protected String getMessagingUsername() {
+	private String getMessagingUsername() {
+		return "guest";
+	}
+
+
+	private String getMessagingPassword() {
 		return "guest";
 	}
 
 
 	@Override
-	protected String getMessagingPassword() {
-		return "guest";
-	}
-
-
-	@Override
-	protected String getMessagingFactoryName() {
+	protected String getMessagingType() {
 		return MessagingConstants.FACTORY_RABBIT_MQ;
 	}
 }

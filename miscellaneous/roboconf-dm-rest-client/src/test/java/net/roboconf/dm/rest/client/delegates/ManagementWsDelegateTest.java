@@ -49,6 +49,8 @@ import net.roboconf.dm.rest.client.exceptions.ManagementException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.MessagingConstants;
 
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.internal.client.test.TestClientFactory;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import org.junit.Before;
@@ -70,6 +72,8 @@ public class ManagementWsDelegateTest {
 	private WsClient client;
 	private Manager manager;
 	private HttpServer httpServer;
+	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+
 
 
 	@After
@@ -86,12 +90,16 @@ public class ManagementWsDelegateTest {
 
 	@Before
 	public void before() throws Exception {
+		this.registry.addMessagingClientFactory(new TestClientFactory());
 
 		this.manager = new Manager();
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
+		// Reconfigure with the messaging client factory registry set.
+		this.manager.getMessagingClient().setRegistry(this.registry);
+		this.manager.reconfigure();
 
 		URI uri = UriBuilder.fromUri( REST_URI ).build();
 		RestApplication restApp = new RestApplication( this.manager );

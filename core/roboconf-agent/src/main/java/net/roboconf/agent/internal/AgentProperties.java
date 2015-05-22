@@ -26,11 +26,15 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.client.IClient;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -38,7 +42,7 @@ import net.roboconf.core.utils.Utils;
 public class AgentProperties {
 
 	private String applicationName, ipAddress, scopedInstancePath;
-	private String messageServerIp, messageServerUsername, messageServerPassword;
+	private Map<String, String> messagingConfiguration;
 
 
 	/**
@@ -90,50 +94,17 @@ public class AgentProperties {
 
 
 	/**
-	 * @return the messageServerIp
+	 * @return the messaging configuration.
 	 */
-	public String getMessageServerIp() {
-		return this.messageServerIp;
+	public Map<String, String> getMessagingConfiguration() {
+		return messagingConfiguration;
 	}
 
-
 	/**
-	 * @param messageServerIp the messageServerIp to set
+	 * @param messagingConfiguration the messaging configuration to set.
 	 */
-	public void setMessageServerIp( String messageServerIp ) {
-		this.messageServerIp = messageServerIp;
-	}
-
-
-	/**
-	 * @return the messageServerUsername
-	 */
-	public String getMessageServerUsername() {
-		return this.messageServerUsername;
-	}
-
-
-	/**
-	 * @param messageServerUsername the messageServerUsername to set
-	 */
-	public void setMessageServerUsername( String messageServerUsername ) {
-		this.messageServerUsername = messageServerUsername;
-	}
-
-
-	/**
-	 * @return the messageServerPassword
-	 */
-	public String getMessageServerPassword() {
-		return this.messageServerPassword;
-	}
-
-
-	/**
-	 * @param messageServerPassword the messageServerPassword to set
-	 */
-	public void setMessageServerPassword( String messageServerPassword ) {
-		this.messageServerPassword = messageServerPassword;
+	public void setMessagingConfiguration( Map<String, String> messagingConfiguration ) {
+		this.messagingConfiguration = messagingConfiguration;
 	}
 
 
@@ -144,12 +115,10 @@ public class AgentProperties {
 	public String validate() {
 
 		String result = null;
-		if( Utils.isEmptyOrWhitespaces( this.messageServerIp ))
-			result = "The message server IP cannot be null or empty.";
-		else if( Utils.isEmptyOrWhitespaces( this.messageServerPassword ))
-			result = "The message server's password cannot be null or empty.";
-		else if( Utils.isEmptyOrWhitespaces( this.messageServerUsername ))
-			result = "The message server's user name cannot be null or empty.";
+		if( this.messagingConfiguration == null || this.messagingConfiguration.isEmpty())
+			result = "The message configuration cannot be null or empty.";
+		else if( this.messagingConfiguration.get(IClient.MESSAGING_TYPE_PROPERTY) == null)
+			result = "The message configuration does not contain the messaging type.";
 		else if( Utils.isEmptyOrWhitespaces( this.applicationName ))
 			result = "The application name cannot be null or empty.";
 		else if( Utils.isEmptyOrWhitespaces( this.scopedInstancePath ))
@@ -187,9 +156,15 @@ public class AgentProperties {
 		AgentProperties result = new AgentProperties();
 		result.setApplicationName( updatedField( props, DataHelpers.APPLICATION_NAME ));
 		result.setScopedInstancePath( updatedField( props, DataHelpers.SCOPED_INSTANCE_PATH ));
-		result.setMessageServerIp( updatedField( props, DataHelpers.MESSAGING_IP ));
-		result.setMessageServerUsername( updatedField( props, DataHelpers.MESSAGING_USERNAME ));
-		result.setMessageServerPassword( updatedField( props, DataHelpers.MESSAGING_PASSWORD ));
+
+		final Map<String, String> messagingConfiguration = new LinkedHashMap<>();
+		for (String k : props.stringPropertyNames()) {
+			if (!DataHelpers.APPLICATION_NAME.equals(k) && !DataHelpers.SCOPED_INSTANCE_PATH.equals(k)) {
+				// All other properties are considered messaging-specific.
+				messagingConfiguration.put(k, updatedField( props, k));
+			}
+		}
+		result.setMessagingConfiguration(Collections.unmodifiableMap(messagingConfiguration));
 
 		return result;
 	}
@@ -197,8 +172,8 @@ public class AgentProperties {
 
 	/**
 	 * Gets a property and updates it to prevent escaped characters.
-	 * @param props
-	 * @param fieldName
+	 * @param props the IAAS properties.
+	 * @param fieldName the name of the field to read.
 	 * @return an updated string
 	 */
 	private static String updatedField( Properties props, String fieldName ) {
@@ -209,4 +184,5 @@ public class AgentProperties {
 
 		return property;
 	}
+
 }

@@ -26,6 +26,7 @@
 package net.roboconf.messaging;
 
 /**
+ * Messaging related constants.
  * @author Vincent Zurczak - Linagora
  */
 public interface MessagingConstants {
@@ -44,4 +45,10 @@ public interface MessagingConstants {
 	 * The "dismissed" message.
 	 */
 	String DISMISSED_MESSAGE = "No messaging client is available. Action is dismissed. Review the messaging configuration.";
+
+	// RabbitMQ specific configuration properties
+	// TODO: move that somewhere else!
+	String RABBITMQ_SERVER_IP = "net.roboconf.messaging.rabbitmq.server.ip";
+	String RABBITMQ_SERVER_USERNAME = "net.roboconf.messaging.rabbitmq.server.username";
+	String RABBITMQ_SERVER_PASSWORD = "net.roboconf.messaging.rabbitmq.server.password";
 }

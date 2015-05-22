@@ -27,12 +27,15 @@ package net.roboconf.messaging.internal.client.test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.messages.Message;
 
@@ -49,16 +52,6 @@ public class TestClientDm implements IDmClient {
 	public AtomicBoolean failListeningToTheDm = new AtomicBoolean( false );
 	public AtomicBoolean failMessageSending = new AtomicBoolean( false );
 
-	private String messageServerIp, messageServerUsername, messageServerPassword;
-
-
-
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		this.messageServerIp = messageServerIp;
-		this.messageServerPassword = messageServerPassword;
-		this.messageServerUsername = messageServerUsername;
-	}
 
 	@Override
 	public void closeConnection() throws IOException {
@@ -106,6 +99,21 @@ public class TestClientDm implements IDmClient {
 	}
 
 	@Override
+	public String getMessagingType() {
+		return MessagingConstants.FACTORY_TEST;
+	}
+
+	@Override
+	public Map<String, String> getConfiguration() {
+		return Collections.singletonMap(MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_TEST);
+	}
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		return MessagingConstants.FACTORY_TEST.equals(configuration.get(MESSAGING_TYPE_PROPERTY));
+	}
+
+	@Override
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 		// nothing, we do not care
@@ -127,24 +135,4 @@ public class TestClientDm implements IDmClient {
 		// nothing
 	}
 
-	/**
-	 * @return the messageServerIp
-	 */
-	public String getMessageServerIp() {
-		return this.messageServerIp;
-	}
-
-	/**
-	 * @return the messageServerUsername
-	 */
-	public String getMessageServerUsername() {
-		return this.messageServerUsername;
-	}
-
-	/**
-	 * @return the messageServerPassword
-	 */
-	public String getMessageServerPassword() {
-		return this.messageServerPassword;
-	}
 }

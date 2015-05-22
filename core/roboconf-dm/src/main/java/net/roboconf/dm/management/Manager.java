@@ -87,9 +87,7 @@ import net.roboconf.target.api.TargetHandler;
  * <code><pre>
  * // Configure
  * Manager manager = new Manager();
- * manager.setMessageServerIp( "localhost" );
- * manager.setMessageServerUsername( "guest" );
- * manager.setMessageServerPassword( "guest" );
+ * manager.setMessagingType( "rabbitmq" );
  *
  * // Change the way we resolve handlers for deployment targets
  * manager.setTargetResolver( ... );
@@ -109,8 +107,8 @@ public class Manager {
 	private static final long TIMER_PERIOD = 6000;
 
 	// Injected by iPojo or Admin Config
-	protected final List<TargetHandler> targetHandlers = new ArrayList<TargetHandler> ();
-	protected String messageServerIp, messageServerUsername, messageServerPassword, configurationDirectoryLocation;
+	protected final List<TargetHandler> targetHandlers = new ArrayList<> ();
+	protected String configurationDirectoryLocation;
 
 	// Monitoring manager optional dependency. May be null.
 	// @GuardedBy this
@@ -118,13 +116,13 @@ public class Manager {
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
-	protected String messagingFactoryType;
+	protected String messagingType;
 	protected final ApplicationTemplateMngrDelegate templateManager;
 	protected final ApplicationMngrDelegate appManager;
 	protected final InstanceMngrDelegate instanceManager;
 	protected Timer timer;
 
-	private final List<MsgEcho> echoMessages = new ArrayList<MsgEcho>();
+	private final List<MsgEcho> echoMessages = new ArrayList<>();
 	private RCDm messagingClient;
 	File configurationDirectory;
 
@@ -137,7 +135,7 @@ public class Manager {
 		this.templateManager = new ApplicationTemplateMngrDelegate();
 		this.appManager = new ApplicationMngrDelegate();
 		this.instanceManager = new InstanceMngrDelegate( this );
-		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
+		this.messagingType = MessagingConstants.FACTORY_RABBIT_MQ;
 	}
 
 
@@ -260,7 +258,7 @@ public class Manager {
 
 	/**
 	 * This method is invoked by iPojo every time a new target handler appears.
-	 * @param targetHandlers
+	 * @param targetItf the appearing target handler.
 	 */
 	public void targetAppears( TargetHandler targetItf ) {
 		if( targetItf != null ) {
@@ -273,7 +271,7 @@ public class Manager {
 
 	/**
 	 * This method is invoked by iPojo every time a target handler disappears.
-	 * @param targetHandlers
+	 * @param targetItf the disappearing target handler.ers
 	 */
 	public void targetDisappears( TargetHandler targetItf ) {
 
@@ -292,7 +290,7 @@ public class Manager {
 
 	/**
 	 * This method is invoked by iPojo every time a target is modified.
-	 * @param targetHandlers
+	 * @param targetItf the modified target handler.
 	 */
 	public void targetWasModified( TargetHandler targetItf ) {
 		this.logger.info( "Target handler '" + targetItf.getTargetId() + "' was modified in Roboconf's DM." );
@@ -331,30 +329,6 @@ public class Manager {
 
 
 	/**
-	 * @param messageServerIp the messageServerIp to set
-	 */
-	public void setMessageServerIp( String messageServerIp ) {
-		this.messageServerIp = messageServerIp;
-	}
-
-
-	/**
-	 * @param messageServerUsername the messageServerUsername to set
-	 */
-	public void setMessageServerUsername( String messageServerUsername ) {
-		this.messageServerUsername = messageServerUsername;
-	}
-
-
-	/**
-	 * @param messageServerPassword the messageServerPassword to set
-	 */
-	public void setMessageServerPassword( String messageServerPassword ) {
-		this.messageServerPassword = messageServerPassword;
-	}
-
-
-	/**
 	 * @return the targetHandlers
 	 */
 	public List<TargetHandler> getTargetHandlers() {
@@ -363,34 +337,10 @@ public class Manager {
 
 
 	/**
-	 * @param messagingFactoryType the messagingFactoryType to set
+	 * @param messagingType the messagingType to set
 	 */
-	public void setMessagingFactoryType( String messagingFactoryType ) {
-		this.messagingFactoryType = messagingFactoryType;
-	}
-
-
-	/**
-	 * @return the messageServerIp
-	 */
-	public String getMessageServerIp() {
-		return this.messageServerIp;
-	}
-
-
-	/**
-	 * @return the messageServerUsername
-	 */
-	public String getMessageServerUsername() {
-		return this.messageServerUsername;
-	}
-
-
-	/**
-	 * @return the messageServerPassword
-	 */
-	public String getMessageServerPassword() {
-		return this.messageServerPassword;
+	public void setMessagingType( String messagingType ) {
+		this.messagingType = messagingType;
 	}
 
 
@@ -443,7 +393,7 @@ public class Manager {
 
 		// Update the messaging client
 		if( this.messagingClient != null ) {
-			this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
+			this.messagingClient.switchMessagingType(this.messagingType);
 			try {
 				if( this.messagingClient.isConnected())
 					this.messagingClient.listenToTheDm( ListenerCommand.START );
@@ -581,7 +531,6 @@ public class Manager {
 
 	/**
 	 * Creates a new application from a template.
-	 * @param ma the managed application
 	 * @return a managed application (never null)
 	 * @throws IOException
 	 * @throws AlreadyExistingException
@@ -604,7 +553,6 @@ public class Manager {
 
 	/**
 	 * Creates a new application from a template.
-	 * @param ma the managed application
 	 * @return a managed application (never null)
 	 * @throws IOException
 	 * @throws AlreadyExistingException
@@ -931,4 +879,9 @@ public class Manager {
 
 		return foundMessage;
 	}
+
+	public Map<String, String> getMessagingConfiguration() {
+		return this.messagingClient.getConfiguration();
+	}
+
 }
