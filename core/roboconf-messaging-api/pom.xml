@@ -22,7 +22,8 @@
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
-   limitations under the License.
+   limitations under the License.age governing permissions and limitations
+  ~ under the License.
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -36,50 +37,23 @@
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
-	<artifactId>roboconf-dm</artifactId>
-	<name>Roboconf :: Deployment Manager</name>
+	<artifactId>roboconf-messaging-api</artifactId>
+	<name>Roboconf :: Messaging :: API</name>
 	<packaging>bundle</packaging>
 	
 	<dependencies>
 		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-core</artifactId>
-  			<version>${project.version}</version>
-  			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-messaging-api</artifactId>
-  			<version>${project.version}</version>
-  			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-target-api</artifactId>
-  			<version>${project.version}</version>
-  			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
 			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-core</artifactId>
-  			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
+			<artifactId>roboconf-core</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>com.sun.mail</groupId>
-			<artifactId>javax.mail</artifactId>
-			<version>1.5.2</version>
-		</dependency>
-
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<scope>test</scope>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo.annotations</artifactId>
+			<version>${ipojo.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -88,17 +62,35 @@
 			<version>4.3.1</version>
 			<scope>provided</scope>
 		</dependency>
-
+	
 		<dependency>
-			   <groupId>org.apache.felix</groupId>
-			   <artifactId>org.apache.felix.ipojo</artifactId>
-			   <version>${ipojo.version}</version>
-			   <scope>test</scope>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
+	
 	<build>
-		<plugins>			
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Import-Package>
+							net.roboconf.*;version="${project.version}",
+							org.osgi.framework; version="[1.6,2.0)"
+						</Import-Package>
+						<Export-Package>
+							!net.roboconf.messaging.internal.*,
+							net.roboconf.messaging.*
+						</Export-Package>
+						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+					</instructions>
+				</configuration>
+			</plugin>
+			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -110,22 +102,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Import-Package>
-							net.roboconf.*;version="${project.version}",
-						</Import-Package>
-						<Export-Package>net.roboconf.dm.management.*</Export-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
-					</instructions>
-				</configuration>
-			</plugin>
-			
+
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-ipojo-plugin</artifactId>

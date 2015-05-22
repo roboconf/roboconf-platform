@@ -1,0 +1,7 @@
+net/roboconf/messaging/rabbitmq/RabbitMqClientFactory.class
+net/roboconf/messaging/rabbitmq/RabbitMqClientAgent.class
+net/roboconf/messaging/rabbitmq/DmReturnListener.class
+net/roboconf/messaging/rabbitmq/RabbitMqUtils.class
+net/roboconf/messaging/rabbitmq/RabbitMqClientDm.class
+net/roboconf/messaging/rabbitmq/ListeningThread.class
+net/roboconf/messaging/rabbitmq/RabbitMqClient.class

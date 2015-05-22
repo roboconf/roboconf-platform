@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: net.roboconf.messaging.rabbitmq.RabbitMqTest
+-------------------------------------------------------------------------------
+Tests run: 7, Failures: 0, Errors: 0, Skipped: 7, Time elapsed: 0.012 sec - in net.roboconf.messaging.rabbitmq.RabbitMqTest

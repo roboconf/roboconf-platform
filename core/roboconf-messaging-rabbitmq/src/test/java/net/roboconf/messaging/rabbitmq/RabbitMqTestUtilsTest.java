@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,44 +23,30 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal;
+package net.roboconf.messaging.rabbitmq;
 
+import junit.framework.Assert;
 
-import net.roboconf.messaging.rabbitmq.RabbitMqTestUtils;
-import org.junit.runner.Description;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.model.InitializationError;
-import org.ops4j.pax.exam.junit.PaxExam;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RoboconfPaxRunner extends PaxExam {
+public class RabbitMqTestUtilsTest {
 
-	private final Class<?> testClass;
+	@Test
+	public void testIsVersionGreaterThanThreeDotTwo() {
 
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.2" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.2.1" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.3" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "4.2" ));
 
-	/**
-	 * Constructor.
-	 * @param klass
-	 * @throws InitializationError
-	 */
-	public RoboconfPaxRunner( Class<?> klass ) throws InitializationError {
-		super( klass );
-		this.testClass = klass;
-	}
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.1" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.1.3" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.0" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "2.1" ));
 
-
-	@Override
-	public void run( RunNotifier notifier ) {
-
-		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning()) {
-			Description description = Description.createSuiteDescription( this.testClass );
-			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running." )));
-
-		} else {
-			super.run( notifier );
-		}
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "whatever" ));
 	}
 }

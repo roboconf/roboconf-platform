@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1432313694093
+Build-Jdk: 1.8.0_45
+Built-By: bourretp
+Bundle-Description: A solution for elastic deployments
+Bundle-License: http://www.apache.org/licenses/LICENSE-2.0.txt
+Bundle-ManifestVersion: 2
+Bundle-Name: Roboconf :: Messaging :: Rabbit MQ
+Bundle-SymbolicName: net.roboconf.messaging-rabbitmq
+Bundle-Version: 0.4.0.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Embed-Dependency: *;scope=compile|runtime;inline=true;groupId=!net.roboc
+ onf
+Embed-Transitive: true
+Export-Package: net.roboconf.messaging.rabbitmq;uses:="net.roboconf.core
+ .model.beans,net.roboconf.messaging.client,net.roboconf.messaging.facto
+ ry,net.roboconf.messaging.messages";version="0.4.0.SNAPSHOT"
+Import-Package: net.roboconf.core.model.beans;version="0.4.0.SNAPSHOT",n
+ et.roboconf.core.model.helpers;version="0.4.0.SNAPSHOT",net.roboconf.co
+ re.utils;version="0.4.0.SNAPSHOT",net.roboconf.messaging;version="0.4.0
+ .SNAPSHOT",net.roboconf.messaging.client;version="0.4.0.SNAPSHOT",net.r
+ oboconf.messaging.factory;version="0.4.0.SNAPSHOT",net.roboconf.messagi
+ ng.messages;version="0.4.0.SNAPSHOT",net.roboconf.messaging.messages.fr
+ om_agent_to_agent;version="0.4.0.SNAPSHOT",net.roboconf.messaging.utils
+ ;version="0.4.0.SNAPSHOT",javax.net,javax.net.ssl,org.osgi.framework;ve
+ rsion="[1.6,2.0)"
+Tool: Bnd-2.1.0.20130426-122213

@@ -1,0 +1,7 @@
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/test/java/net/roboconf/messaging/rabbitmq/DmReturnListenerTest.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/test/java/net/roboconf/messaging/rabbitmq/RabbitMqTest.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/test/java/net/roboconf/messaging/rabbitmq/RabbitMqTestUtilsTest.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/test/java/net/roboconf/messaging/rabbitmq/RabbitMqUtilsTest.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/test/java/net/roboconf/messaging/rabbitmq/DmClientTest.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/test/java/net/roboconf/messaging/rabbitmq/RabbitMqTestUtils.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/test/java/net/roboconf/messaging/rabbitmq/AgentClientTest.java

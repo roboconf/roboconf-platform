@@ -69,7 +69,7 @@
 		
 		<dependency>
   			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-messaging</artifactId>
+  			<artifactId>roboconf-messaging-api</artifactId>
   			<version>${project.version}</version>
   			<scope>provided</scope>
 		</dependency>

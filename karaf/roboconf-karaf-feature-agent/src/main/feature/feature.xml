@@ -13,7 +13,8 @@
     	<feature>ipojo-all</feature>
     	
         <bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
-        <bundle>mvn:net.roboconf/roboconf-messaging/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-messaging-api/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-messaging-rabbitmq/${project.version}</bundle>
         <bundle start-level="85">mvn:net.roboconf/roboconf-agent/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-agent-default/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-agent-monitoring/${project.version}</bundle>

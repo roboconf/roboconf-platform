@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,44 +23,50 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal;
+package net.roboconf.messaging.rabbitmq;
 
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
-import net.roboconf.messaging.rabbitmq.RabbitMqTestUtils;
-import org.junit.runner.Description;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.model.InitializationError;
-import org.ops4j.pax.exam.junit.PaxExam;
+import net.roboconf.messaging.messages.Message;
+
+import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RoboconfPaxRunner extends PaxExam {
+public class ListeningThread extends Thread {
 
-	private final Class<?> testClass;
+	private final Logger logger;
+	private final QueueingConsumer consumer;
+	private final LinkedBlockingQueue<Message> messageQueue;
+	private final String id;
 
 
 	/**
 	 * Constructor.
-	 * @param klass
-	 * @throws InitializationError
 	 */
-	public RoboconfPaxRunner( Class<?> klass ) throws InitializationError {
-		super( klass );
-		this.testClass = klass;
+	public ListeningThread(
+			String threadName,
+			Logger logger,
+			QueueingConsumer consumer,
+			LinkedBlockingQueue<Message> messageQueue,
+			String id ) {
+
+		super( threadName );
+		this.logger = logger;
+		this.consumer = consumer;
+		this.messageQueue = messageQueue;
+		this.id = id;
 	}
 
 
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Thread#run()
+	 */
 	@Override
-	public void run( RunNotifier notifier ) {
-
-		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning()) {
-			Description description = Description.createSuiteDescription( this.testClass );
-			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running." )));
-
-		} else {
-			super.run( notifier );
-		}
+	public void run() {
+		RabbitMqUtils.listenToRabbitMq( this.id, this.logger, this.consumer, this.messageQueue );
 	}
 }

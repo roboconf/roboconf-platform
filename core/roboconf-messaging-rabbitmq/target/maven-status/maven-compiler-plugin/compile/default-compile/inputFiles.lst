@@ -1,0 +1,7 @@
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClientDm.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClientAgent.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClient.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqUtils.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/DmReturnListener.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClientFactory.java
+/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/ListeningThread.java
