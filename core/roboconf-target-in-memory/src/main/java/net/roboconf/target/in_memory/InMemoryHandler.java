@@ -95,8 +95,8 @@ public class InMemoryHandler implements TargetHandler {
 
 		// Prepare the properties of the new POJO
 		Dictionary<String,Object> configuration = new Hashtable<>();
-		for(String k : messagingConfiguration.keySet()) {
-			configuration.put(k, messagingConfiguration.get(k));
+		for(Map.Entry<String, String> e : messagingConfiguration.entrySet()) {
+			configuration.put(e.getKey(), e.getValue());
 		}
 	    configuration.put( "application-name", applicationName );
 	    configuration.put( "scoped-instance-path", scopedInstancePath );

@@ -97,6 +97,7 @@ public class ManagementWsDelegateTest {
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
+
 		// Reconfigure with the messaging client factory registry set.
 		this.manager.getMessagingClient().setRegistry(this.registry);
 		this.manager.reconfigure();

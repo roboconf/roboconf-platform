@@ -28,10 +28,35 @@ package net.roboconf.messaging.rabbitmq;
 import net.roboconf.messaging.client.IClient;
 
 /**
- * The RabbitMQ client for the DM.
+ * Common RabbitMQ client-related stuffs.
  * @author Pierre Bourret - Université Joseph Fourier
  */
 public interface RabbitMqClient extends IClient {
+
+	/**
+	 * The default value of the IP address property.
+	 * <p>
+	 * By default, the client assumes the RabbitMQ server is hosted on {@code localhost}, with the default port.
+	 * </p>
+	 */
+	String DEFAULT_IP = "localhost";
+
+	/**
+	 * The default value of the username property.
+	 * <p>
+	 * By default, the client connects as {@code guest}, the default account only available locally.
+	 * </p>
+	 */
+	String DEFAULT_USERNAME = "guest";
+
+	/**
+	 * The default value of the password property.
+	 * <p>
+	 * By default, the client connects as {@code guest}, the default account only available locally. This property holds
+	 * the default password for this default account.
+	 * </p>
+	 */
+	String DEFAULT_PASSWORD = "guest";
 
 	/**
 	 * Change the configuration of this RabbitMQ messaging client.

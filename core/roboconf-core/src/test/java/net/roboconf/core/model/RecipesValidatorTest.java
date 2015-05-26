@@ -35,7 +35,6 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -272,7 +271,6 @@ public class RecipesValidatorTest {
 
 
 	@Test
-	@Ignore
 	public void testPuppetValidation_invalidPuppetClass() throws Exception {
 		File appDir = this.folder.newFolder();
 
@@ -314,7 +312,6 @@ public class RecipesValidatorTest {
 
 
 	@Test
-	@Ignore
 	public void testPuppetValidation_invalidSyntax() throws Exception {
 		File appDir = this.folder.newFolder();
 

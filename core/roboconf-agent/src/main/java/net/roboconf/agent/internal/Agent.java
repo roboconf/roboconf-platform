@@ -61,7 +61,7 @@ import net.roboconf.plugin.api.PluginInterface;
 public class Agent implements AgentMessagingInterface {
 
 	// Component properties (ipojo)
-	String applicationName, scopedInstancePath, ipAddress, targetId;
+	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType;
 	boolean overrideProperties = false, simulatePlugins = true;
 
 	// Fields that should be injected (ipojo)
@@ -69,7 +69,6 @@ public class Agent implements AgentMessagingInterface {
 
 	// Internal fields
 	private final Logger logger;
-	private String messagingType;
 	private ReconfigurableClientAgent messagingClient;
 	private Instance scopedInstance;
 	Timer heartBeatTimer;

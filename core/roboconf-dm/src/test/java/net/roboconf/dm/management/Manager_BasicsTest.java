@@ -91,6 +91,7 @@ public class Manager_BasicsTest {
 		this.manager.setConfigurationDirectoryLocation( directory.getAbsolutePath());
 		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.start();
+
 		// Reconfigure with the messaging client factory registry set.
 		this.manager.getMessagingClient().setRegistry(this.registry);
 		this.manager.reconfigure();

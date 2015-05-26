@@ -28,7 +28,6 @@ package net.roboconf.messaging.reconfigurables;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
@@ -85,8 +84,9 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	/**
 	 * Try to locate the {@code MessagingClientFactoryRegistry} service in an OSGi execution context.
 	 * <p>
-	 * NOTE: this method is, by definition, very dirty.
+	 * NOTE: this method is, by definition, quite dirty.
 	 * </p>
+	 * TODO: what happens when the registry component is being started, but the service is not yet registered. Wait? How long?
 	 * @return the located {@code MessagingClientFactoryRegistry} service, or {@code null} if the service cannot be
 	 * found, or if there is no OSGi execution context.
 	 */

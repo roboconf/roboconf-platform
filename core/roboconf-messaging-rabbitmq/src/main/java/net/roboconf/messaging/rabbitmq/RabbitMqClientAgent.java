@@ -406,10 +406,16 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	public boolean setConfiguration( final Map<String, String> configuration ) {
 		final boolean result;
 		final String type = configuration.get(MESSAGING_TYPE_PROPERTY);
-		final String ip = configuration.get(MessagingConstants.RABBITMQ_SERVER_IP);
-		final String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
-		final String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
-		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type) && ip != null && username != null && password != null) {
+		String ip = configuration.get(MessagingConstants.RABBITMQ_SERVER_IP);
+		String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
+		String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
+		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type)) {
+			if (ip == null)
+				ip = DEFAULT_IP;
+			if (username == null)
+				username = DEFAULT_USERNAME;
+			if (password == null)
+				password = DEFAULT_PASSWORD;
 			setParameters(ip, username, password);
 			result = true;
 		} else {

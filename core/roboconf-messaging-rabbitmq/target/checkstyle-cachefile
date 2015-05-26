@@ -1,9 +1,0 @@
-#Fri May 22 18:54:52 CEST 2015
-/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/DmReturnListener.java=1432313563000
-/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/ListeningThread.java=1432312014000
-/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClient.java=1432312023000
-/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqUtils.java=1432313563000
-/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClientDm.java=1432313563000
-/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClientAgent.java=1432313563000
-/home/bourretp/Workspace/roboconf/platform/core/roboconf-messaging-rabbitmq/src/main/java/net/roboconf/messaging/rabbitmq/RabbitMqClientFactory.java=1432311753000
-configuration*?=192DA4F847C677F9D1AF077B379C82B45B61F3B7

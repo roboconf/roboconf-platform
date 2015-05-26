@@ -81,6 +81,7 @@ public class RuleBasedEventHandlerTest {
 		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.setConfigurationDirectoryLocation( dir.getAbsolutePath());
 		this.manager.start();
+
 		// Reconfigure with the messaging client factory registry set.
 		this.manager.getMessagingClient().setRegistry(this.registry);
 		this.manager.reconfigure();

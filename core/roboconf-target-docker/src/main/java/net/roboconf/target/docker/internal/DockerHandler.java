@@ -149,8 +149,8 @@ public class DockerHandler implements TargetHandler {
 		args.add("scoped-instance-path=" + scopedInstancePath);
 
 		// TODO: modify the agent launcher script to take care of these arguments. May need to rethink the following lines. Maybe in a separate messaging configuration file
-		for(String k : messagingConfiguration.keySet()) {
-			args.add(k + '=' + messagingConfiguration.get(k));
+		for(Map.Entry<String, String> e : messagingConfiguration.entrySet()) {
+			args.add(e.getKey() + '=' + e.getValue());
 		}
 
 		CreateContainerResponse container = dockerClient

@@ -92,10 +92,9 @@ public final class DataHelpers {
 			result.setProperty( SCOPED_INSTANCE_PATH, scopedInstancePath );
 
 		if( messagingConfiguration != null ) {
-			for (String k : messagingConfiguration.keySet()) {
-				String v = messagingConfiguration.get(k);
-				if (v != null) {
-					result.setProperty(k, v);
+			for (Map.Entry<String, String> e : messagingConfiguration.entrySet()) {
+				if (e.getValue() != null) {
+					result.setProperty(e.getKey(), e.getValue());
 				}
 			}
 		}

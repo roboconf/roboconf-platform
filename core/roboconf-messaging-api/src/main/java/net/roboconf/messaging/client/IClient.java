@@ -62,7 +62,6 @@ public interface IClient {
 
 	/**
 	 * Sets the message queue where the client can store the messages to process.
-	 *
 	 * @param messageQueue the message queue
 	 */
 	void setMessageQueue( LinkedBlockingQueue<Message> messageQueue );
@@ -87,7 +86,6 @@ public interface IClient {
 
 	/**
 	 * Sends a message to the DM.
-	 *
 	 * @param message the message to send
 	 * @throws IOException if something went wrong
 	 */
@@ -95,7 +93,6 @@ public interface IClient {
 
 	/**
 	 * Configures the listener for messages from the DM.
-	 *
 	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
 	 * @throws IOException if something went wrong
 	 */
@@ -111,7 +108,6 @@ public interface IClient {
 	 * <p>
 	 * Messaging configuration is needed in order to configure a Roboconf VM, for instance when it is replicated.
 	 * </p>
-	 *
 	 * @return the provider-specific messaging configuration of this client.
 	 */
 	// TODO: /!\ they may be differences between DM & agents messaging configurations (i.e HTTP server/client certificate, passwords, ...). Exposing everything in the same configuration may raise serious security issues.
@@ -119,8 +115,6 @@ public interface IClient {
 
 	/**
 	 * Attempts to apply the given provider-specific messaging configuration to this client.
-	 * <p></p>
-	 *
 	 * @param configuration the configuration to apply.
 	 * @return {@code true} if the configuration has been successfully applied, {@code false} otherwise.
 	 * @throws IllegalArgumentException if the {@linkplain #MESSAGING_TYPE_PROPERTY messaging type} of the given

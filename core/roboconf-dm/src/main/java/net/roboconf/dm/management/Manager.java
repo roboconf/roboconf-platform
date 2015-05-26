@@ -108,7 +108,7 @@ public class Manager {
 
 	// Injected by iPojo or Admin Config
 	protected final List<TargetHandler> targetHandlers = new ArrayList<> ();
-	protected String configurationDirectoryLocation;
+	protected String configurationDirectoryLocation, messagingType;
 
 	// Monitoring manager optional dependency. May be null.
 	// @GuardedBy this
@@ -116,7 +116,6 @@ public class Manager {
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
-	protected String messagingType;
 	protected final ApplicationTemplateMngrDelegate templateManager;
 	protected final ApplicationMngrDelegate appManager;
 	protected final InstanceMngrDelegate instanceManager;
