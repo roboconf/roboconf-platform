@@ -68,19 +68,19 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	// The logger
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
 
-	@Property(name = MessagingConstants.RABBITMQ_SERVER_IP)
+	@Property(name = MessagingConstants.RABBITMQ_SERVER_IP, value = RabbitMqClient.DEFAULT_IP)
 	public void setMessageServerIp( final String messageServerIp ) {
 		this.messageServerIp = messageServerIp;
 		this.logger.finer("Server IP set to " + messageServerIp);
 	}
 
-	@Property(name = MessagingConstants.RABBITMQ_SERVER_USERNAME)
+	@Property(name = MessagingConstants.RABBITMQ_SERVER_USERNAME, value = RabbitMqClient.DEFAULT_USERNAME)
 	public void setMessageServerUsername( final String messageServerUsername ) {
 		this.messageServerUsername = messageServerUsername;
 		this.logger.finer("Server username set to " + messageServerUsername);
 	}
 
-	@Property(name = MessagingConstants.RABBITMQ_SERVER_PASSWORD)
+	@Property(name = MessagingConstants.RABBITMQ_SERVER_PASSWORD, value = RabbitMqClient.DEFAULT_PASSWORD)
 	public void setMessageServerPassword( final String messageServerPassword ) {
 		this.messageServerPassword = messageServerPassword;
 		this.logger.finer("Server password set to " + messageServerPassword);

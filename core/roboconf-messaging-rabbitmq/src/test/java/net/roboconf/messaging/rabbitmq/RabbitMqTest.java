@@ -37,6 +37,7 @@ import net.roboconf.messaging.processors.AbstractMessageProcessor;
 
 import org.junit.After;
 import org.junit.Assume;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -49,6 +50,16 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	@BeforeClass
 	public static void checkRabbitMqIsRunning() throws Exception {
 		rabbitMqIsRunning = RabbitMqTestUtils.checkRabbitMqIsRunning();
+	}
+
+	@Before
+	public void registerRabbitMqFactory() {
+
+		final RabbitMqClientFactory factory = new RabbitMqClientFactory();
+		factory.setMessageServerIp(getMessagingIp());
+		factory.setMessageServerUsername(getMessagingUsername());
+		factory.setMessageServerPassword(getMessagingPassword());
+		this.registry.addMessagingClientFactory(factory);
 	}
 
 
