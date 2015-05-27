@@ -157,13 +157,6 @@
 			<version>4.3.1</version>
 			<scope>provided</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.ipojo</artifactId>
-			<version>${ipojo.version}</version>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 	
 	<build>
