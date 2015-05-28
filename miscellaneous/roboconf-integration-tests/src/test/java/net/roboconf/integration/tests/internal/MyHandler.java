@@ -58,8 +58,8 @@ public class MyHandler implements TargetHandler {
 		agent.setTargetId( "in-memory" );
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
-		agent.getMessagingClient().setConfiguration(messagingProperties);
 		agent.start();
+		agent.getMessagingClient().setConfiguration(messagingProperties);
 
 		String key = scopedInstancePath + " @ " + applicationName;
 		this.agentIdToAgent.put( key, agent );
