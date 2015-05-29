@@ -27,6 +27,7 @@ package net.roboconf.messaging.rabbitmq;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.logging.Logger;
@@ -36,6 +37,9 @@ import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.factory.MessagingClientFactory;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClient;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Property;
@@ -69,19 +73,19 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
 
 	@Property(name = MessagingConstants.RABBITMQ_SERVER_IP, value = RabbitMqClient.DEFAULT_IP)
-	public void setMessageServerIp( final String messageServerIp ) {
+	public synchronized void setMessageServerIp( final String messageServerIp ) {
 		this.messageServerIp = messageServerIp;
 		this.logger.finer("Server IP set to " + messageServerIp);
 	}
 
 	@Property(name = MessagingConstants.RABBITMQ_SERVER_USERNAME, value = RabbitMqClient.DEFAULT_USERNAME)
-	public void setMessageServerUsername( final String messageServerUsername ) {
+	public synchronized void setMessageServerUsername( final String messageServerUsername ) {
 		this.messageServerUsername = messageServerUsername;
 		this.logger.finer("Server username set to " + messageServerUsername);
 	}
 
 	@Property(name = MessagingConstants.RABBITMQ_SERVER_PASSWORD, value = RabbitMqClient.DEFAULT_PASSWORD)
-	public void setMessageServerPassword( final String messageServerPassword ) {
+	public synchronized void setMessageServerPassword( final String messageServerPassword ) {
 		this.messageServerPassword = messageServerPassword;
 		this.logger.finer("Server password set to " + messageServerPassword);
 	}
@@ -99,7 +103,9 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 		// Now reconfigure all the clients.
 		for (RabbitMqClient client : clients) {
 			try {
-				client.setParameters(this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
+				final ReconfigurableClient<?> reconfigurable = client.getReconfigurableClient();
+				if (reconfigurable != null)
+					reconfigurable.replaceMessagingClient();
 			} catch (Throwable t) {
 				// Warn but continue to reconfigure the next clients!
 				this.logger.warning("A client has thrown an exception on reconfiguration: " + client);
@@ -114,8 +120,8 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	}
 
 	@Override
-	public synchronized IDmClient createDmClient() {
-		final RabbitMqClientDm client = new RabbitMqClientDm();
+	public synchronized IDmClient createDmClient( final ReconfigurableClientDm parent ) {
+		final RabbitMqClientDm client = new RabbitMqClientDm(parent);
 		client.setParameters(this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
 		clients.add(client);
 		this.logger.finer("Created a new DM client");
@@ -123,12 +129,37 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	}
 
 	@Override
-	public synchronized IAgentClient createAgentClient() {
-		final RabbitMqClientAgent client = new RabbitMqClientAgent();
+	public synchronized IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
+		final RabbitMqClientAgent client = new RabbitMqClientAgent(parent);
 		client.setParameters(this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
 		clients.add(client);
 		this.logger.finer("Created a new Agent client");
 		return client;
+	}
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		final boolean result;
+		final String type = configuration.get(MESSAGING_TYPE_PROPERTY);
+		String ip = configuration.get(MessagingConstants.RABBITMQ_SERVER_IP);
+		String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
+		String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
+		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type)) {
+			if (ip == null)
+				ip = RabbitMqClient.DEFAULT_IP;
+			if (username == null)
+				username = RabbitMqClient.DEFAULT_USERNAME;
+			if (password == null)
+				password = RabbitMqClient.DEFAULT_PASSWORD;
+			setMessageServerIp(ip);
+			setMessageServerUsername(username);
+			setMessageServerPassword(password);
+			reconfigure();
+			result = true;
+		} else {
+			result = false;
+		}
+		return result;
 	}
 
 }

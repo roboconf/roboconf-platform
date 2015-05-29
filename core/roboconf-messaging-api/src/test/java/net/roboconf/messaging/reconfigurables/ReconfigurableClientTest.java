@@ -26,15 +26,23 @@
 package net.roboconf.messaging.reconfigurables;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.client.IClient;
 import net.roboconf.messaging.client.IDmClient;
+import net.roboconf.messaging.factory.MessagingClientFactory;
+import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.internal.client.dismiss.DismissClientAgent;
+import net.roboconf.messaging.internal.client.dismiss.DismissClientDm;
+import net.roboconf.messaging.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.internal.client.test.TestClientDm;
 import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.processors.AbstractMessageProcessorTest.EmptyTestDmMessageProcessor;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -138,4 +146,175 @@ public class ReconfigurableClientTest {
 
 		client.associateMessageProcessor( processor );
 	}
+
+	@Test
+	public void testFactorySwitchClientDm() {
+		// Create the messaging client factory registry, and register the "foo" and "bar" dummy factories.
+		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+		registry.addMessagingClientFactory(new DummyMessagingClientFactory("foo"));
+		registry.addMessagingClientFactory(new DummyMessagingClientFactory("bar"));
+
+		// Create the client DM
+		final ReconfigurableClientDm client = new ReconfigurableClientDm();
+		client.associateMessageProcessor(new AbstractMessageProcessor<IDmClient>("dummy.messageProcessor") {
+			@Override
+			protected void processMessage( final Message message ) {
+
+			}
+		});
+		client.setRegistry(registry);
+
+		// Check initial state.
+		Assert.assertNull(client.getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DismissClientDm);
+		Assert.assertSame(registry, client.getRegistry());
+
+		// Switch to foo!
+		client.switchMessagingType("foo");
+		Assert.assertEquals("foo", client.getMessagingType());
+		Assert.assertEquals("foo", client.getMessagingClient().getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingDmClient);
+
+		// Switch to bar!
+		client.switchMessagingType("bar");
+		Assert.assertEquals("bar", client.getMessagingType());
+		Assert.assertEquals("bar", client.getMessagingClient().getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingDmClient);
+
+		// Switch to null!
+		client.switchMessagingType(null);
+		Assert.assertNull(client.getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DismissClientDm);
+	}
+
+	@Test
+	public void testFactorySwitchClientAgent() {
+		// Create the messaging client factory registry, and register the "foo" and "bar" dummy factories.
+		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+		registry.addMessagingClientFactory(new DummyMessagingClientFactory("foo"));
+		registry.addMessagingClientFactory(new DummyMessagingClientFactory("bar"));
+
+		// Create the client DM
+		final ReconfigurableClientAgent client = new ReconfigurableClientAgent();
+		client.associateMessageProcessor(new AbstractMessageProcessor<IAgentClient>("dummy.messageProcessor") {
+			@Override
+			protected void processMessage( final Message message ) {
+
+			}
+		});
+		client.setRegistry(registry);
+
+		// Check initial state.
+		Assert.assertNull(client.getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DismissClientAgent);
+		Assert.assertSame(registry, client.getRegistry());
+
+		// Switch to foo!
+		client.switchMessagingType("foo");
+		Assert.assertEquals("foo", client.getMessagingType());
+		Assert.assertEquals("foo", client.getMessagingClient().getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingAgentClient);
+
+		// Switch to bar!
+		client.switchMessagingType("bar");
+		Assert.assertEquals("bar", client.getMessagingType());
+		Assert.assertEquals("bar", client.getMessagingClient().getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DummyMessagingAgentClient);
+
+		// Switch to null!
+		client.switchMessagingType(null);
+		Assert.assertNull(client.getMessagingType());
+		Assert.assertTrue(client.getMessagingClient() instanceof DismissClientAgent);
+	}
+
+	/**
+	 * A stupid messaging client.
+	 */
+	private static class DummyMessagingClientFactory implements MessagingClientFactory {
+
+		/**
+		 * The type of the messaging factory.
+		 */
+		final String type;
+
+		/**
+		 * Constructor.
+		 *
+		 * @param type the type of the messaging factory.
+		 */
+		DummyMessagingClientFactory( final String type ) {
+			this.type = type;
+		}
+
+		@Override
+		public String getType() {
+			return this.type;
+		}
+
+		@Override
+		public IDmClient createDmClient( final ReconfigurableClientDm parent ) {
+			return new DummyMessagingDmClient(this.type);
+		}
+
+		@Override
+		public IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
+			return new DummyMessagingAgentClient(this.type);
+		}
+
+		@Override
+		public boolean setConfiguration( final Map<String, String> configuration ) {
+			return this.type.equals(configuration.get(IClient.MESSAGING_TYPE_PROPERTY));
+		}
+	}
+
+	/**
+	 * A dummy DM messaging client.
+	 */
+	private static class DummyMessagingDmClient extends TestClientDm {
+
+		/**
+		 * The type of the messaging client.
+		 */
+		final String type;
+
+		/**
+		 * Constructor.
+		 *
+		 * @param type the type of the messaging client.
+		 */
+		DummyMessagingDmClient( final String type ) {
+			this.type = type;
+		}
+
+		@Override
+		public String getMessagingType() {
+			return this.type;
+		}
+	}
+
+	/**
+	 * A dummy Agent messaging client.
+	 */
+	private static class DummyMessagingAgentClient extends TestClientAgent {
+
+		/**
+		 * The type of the messaging client.
+		 */
+		final String type;
+
+		/**
+		 * Constructor.
+		 *
+		 * @param type the type of the messaging client.
+		 */
+		DummyMessagingAgentClient( final String type ) {
+			this.type = type;
+		}
+
+		@Override
+		public String getMessagingType() {
+			return this.type;
+		}
+	}
+
 }

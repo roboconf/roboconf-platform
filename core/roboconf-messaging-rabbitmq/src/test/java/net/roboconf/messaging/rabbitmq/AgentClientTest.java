@@ -52,7 +52,7 @@ public class AgentClientTest {
 	public void testConnectAndDisconnect() throws Exception {
 		Assume.assumeTrue( rabbitMqIsRunning );
 
-		RabbitMqClientAgent agentClient = new RabbitMqClientAgent();
+		RabbitMqClientAgent agentClient = new RabbitMqClientAgent(null);
 		agentClient.setParameters( "localhost", "guest", "guest" );
 		agentClient.setApplicationName( "app" );
 		agentClient.setScopedInstancePath( "/root" );

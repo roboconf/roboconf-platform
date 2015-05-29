@@ -109,11 +109,6 @@ public class TestClientDm implements IDmClient {
 	}
 
 	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
-		return MessagingConstants.FACTORY_TEST.equals(configuration.get(MESSAGING_TYPE_PROPERTY));
-	}
-
-	@Override
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 		// nothing, we do not care

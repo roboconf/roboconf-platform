@@ -53,7 +53,6 @@ public class DismissClientsTest {
 		client.setMessageQueue( null );
 		client.getMessagingType();
 		client.getConfiguration();
-		client.setConfiguration(Collections.<String, String>emptyMap());
 	}
 
 
@@ -77,6 +76,5 @@ public class DismissClientsTest {
 		client.unpublishExports( null );
 		client.getMessagingType();
 		client.getConfiguration();
-		client.setConfiguration(Collections.<String, String>emptyMap());
 	}
 }

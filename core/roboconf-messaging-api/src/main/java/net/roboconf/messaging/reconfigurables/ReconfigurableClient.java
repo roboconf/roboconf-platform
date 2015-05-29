@@ -187,6 +187,19 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		closeConnection(oldClient, "The previous client could not be terminated correctly.");
 	}
 
+	/**
+	 * Called when the actual messaging client needs to be replaced, because of a reconfiguration.
+	 * <p>
+	 * This reconfigurable messaging client <em>must</em> use the exact same factory to recreate a nex client.
+	 * </p>
+	 * @throws IOException if client replacement has failed.
+	 */
+	public void replaceMessagingClient() throws IOException {
+		synchronized( this ) {
+			this.messagingClient = createMessagingClient(this.messagingType);
+		}
+	}
+
 	@Override
 	public Map<String, String> getConfiguration() {
 		final T messagingClient;
@@ -202,23 +215,6 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		return result;
 	}
 
-	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
-		final T messagingClient;
-		final String messagingType;
-		final boolean result;
-		synchronized (this) {
-			messagingClient = this.messagingClient;
-			messagingType = this.messagingType;
-		}
-		if (messagingClient != null && messagingType.equals(configuration.get(MESSAGING_TYPE_PROPERTY))) {
-			result = messagingClient.setConfiguration(configuration);
-		} else {
-			// Guard against inapplicable configurations.
-			result = false;
-		}
-		return result;
-	}
 
 	/**
 	 * Creates a new messaging client and opens a connection with the messaging server.
@@ -332,4 +328,5 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 			}
 		}
 	}
+
 }

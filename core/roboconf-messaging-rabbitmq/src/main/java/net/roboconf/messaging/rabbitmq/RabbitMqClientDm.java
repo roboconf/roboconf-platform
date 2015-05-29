@@ -26,6 +26,7 @@
 package net.roboconf.messaging.rabbitmq;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -40,6 +41,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IDmClient;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
@@ -61,11 +63,22 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String messageServerIp, messageServerUsername, messageServerPassword;
 	private LinkedBlockingQueue<Message> messageQueue;
+	private final WeakReference<ReconfigurableClientDm> reconfigurable;
 
 	String neutralConsumerTag;
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<>();
 	Channel channel;
 	QueueingConsumer consumer;
+
+	public RabbitMqClientDm( final ReconfigurableClientDm reconfigurable ) {
+		this.reconfigurable = new WeakReference<>(reconfigurable);
+	}
+
+
+	@Override
+	public ReconfigurableClientDm getReconfigurableClient() {
+		return this.reconfigurable.get();
+	}
 
 
 	/*
@@ -304,30 +317,6 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 		configuration.put(MessagingConstants.RABBITMQ_SERVER_PASSWORD, this.messageServerPassword);
 		return Collections.unmodifiableMap(configuration);
 	}
-
-
-	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
-		final boolean result;
-		final String type = configuration.get(MESSAGING_TYPE_PROPERTY);
-		String ip = configuration.get(MessagingConstants.RABBITMQ_SERVER_IP);
-		String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
-		String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
-		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type)) {
-			if (ip == null)
-				ip = DEFAULT_IP;
-			if (username == null)
-				username = DEFAULT_USERNAME;
-			if (password == null)
-				password = DEFAULT_PASSWORD;
-			setParameters(ip, username, password);
-			result = true;
-		} else {
-			result = false;
-		}
-		return result;
-	}
-
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.client.IDmClient

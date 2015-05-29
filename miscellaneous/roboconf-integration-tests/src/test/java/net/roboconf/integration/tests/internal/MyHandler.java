@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.agent.internal.Agent;
+import net.roboconf.messaging.factory.MessagingClientFactory;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -59,7 +60,9 @@ public class MyHandler implements TargetHandler {
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
 		agent.start();
-		agent.getMessagingClient().setConfiguration(messagingProperties);
+
+		MessagingClientFactory factory = agent.getMessagingClient().getRegistry().getMessagingClientFactory(messagingProperties.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY));
+		factory.setConfiguration(messagingProperties);
 
 		String key = scopedInstancePath + " @ " + applicationName;
 		this.agentIdToAgent.put( key, agent );

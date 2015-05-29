@@ -41,7 +41,6 @@ public class TargetHandlerMock implements TargetHandler {
 
 	/**
 	 * Constructor.
-	 * @param installerName
 	 */
 	public TargetHandlerMock( String installerName ) {
 		this.installerName = installerName;

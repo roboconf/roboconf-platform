@@ -58,7 +58,7 @@ public class MonitoringTaskTest {
 
 	@Before
 	public void initializeMessagingClient() {
-		this.messagingClient = (TestClientAgent) new TestClientFactory().createAgentClient();
+		this.messagingClient = (TestClientAgent) new TestClientFactory().createAgentClient(null);
 		this.agentInterface = new MyAgentInterface( this.messagingClient );
 	}
 

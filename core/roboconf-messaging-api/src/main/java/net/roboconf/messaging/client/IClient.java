@@ -108,17 +108,9 @@ public interface IClient {
 	 * <p>
 	 * Messaging configuration is needed in order to configure a Roboconf VM, for instance when it is replicated.
 	 * </p>
-	 * @return the provider-specific messaging configuration of this client.
+	 * @return the provider-specific messaging configuration of this client. The returned map is unmodifiable.
 	 */
 	// TODO: /!\ they may be differences between DM & agents messaging configurations (i.e HTTP server/client certificate, passwords, ...). Exposing everything in the same configuration may raise serious security issues.
 	Map<String, String> getConfiguration();
 
-	/**
-	 * Attempts to apply the given provider-specific messaging configuration to this client.
-	 * @param configuration the configuration to apply.
-	 * @return {@code true} if the configuration has been successfully applied, {@code false} otherwise.
-	 * @throws IllegalArgumentException if the {@linkplain #MESSAGING_TYPE_PROPERTY messaging type} of the given
-	 *                                  configuration does not match this client's one ({@link #getMessagingType()}.
-	 */
-	boolean setConfiguration( Map<String, String> configuration );
 }

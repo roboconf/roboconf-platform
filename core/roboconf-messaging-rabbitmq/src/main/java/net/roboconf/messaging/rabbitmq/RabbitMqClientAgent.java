@@ -26,6 +26,7 @@
 package net.roboconf.messaging.rabbitmq;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -39,6 +40,8 @@ import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.utils.SerializationUtils;
 import net.roboconf.messaging.messages.Message;
 import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
@@ -61,10 +64,14 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private String applicationName, scopedInstancePath, messageServerIp, messageServerUsername, messageServerPassword;
 	private LinkedBlockingQueue<Message> messageQueue;
+	private final WeakReference<ReconfigurableClientAgent> reconfigurable;
 
 	String consumerTag;
 	Channel	channel;
 
+	public RabbitMqClientAgent( final ReconfigurableClientAgent reconfigurable ) {
+		this.reconfigurable = new WeakReference<>(reconfigurable);
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -76,6 +83,12 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 		this.messageServerIp = messageServerIp;
 		this.messageServerUsername = messageServerUsername;
 		this.messageServerPassword = messageServerPassword;
+	}
+
+
+	@Override
+	public ReconfigurableClientAgent getReconfigurableClient() {
+		return this.reconfigurable.get();
 	}
 
 
@@ -399,29 +412,6 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 		configuration.put(MessagingConstants.RABBITMQ_SERVER_USERNAME, this.messageServerUsername);
 		configuration.put(MessagingConstants.RABBITMQ_SERVER_PASSWORD, this.messageServerPassword);
 		return Collections.unmodifiableMap(configuration);
-	}
-
-
-	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
-		final boolean result;
-		final String type = configuration.get(MESSAGING_TYPE_PROPERTY);
-		String ip = configuration.get(MessagingConstants.RABBITMQ_SERVER_IP);
-		String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
-		String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
-		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type)) {
-			if (ip == null)
-				ip = DEFAULT_IP;
-			if (username == null)
-				username = DEFAULT_USERNAME;
-			if (password == null)
-				password = DEFAULT_PASSWORD;
-			setParameters(ip, username, password);
-			result = true;
-		} else {
-			result = false;
-		}
-		return result;
 	}
 
 

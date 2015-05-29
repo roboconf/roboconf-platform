@@ -54,7 +54,7 @@ public class DmClientTest {
 	public void testExceptions() throws Exception {
 		Assume.assumeTrue( rabbitMqIsRunning );
 
-		RabbitMqClientDm dmClient = new RabbitMqClientDm();
+		RabbitMqClientDm dmClient = new RabbitMqClientDm(null);
 		dmClient.setParameters( "localhost", "guest", "guest" );
 
 		Assert.assertFalse( dmClient.isConnected());

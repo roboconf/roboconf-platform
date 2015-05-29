@@ -53,7 +53,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 		if (registry != null) {
 			MessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
 			if (factory != null) {
-				client = factory.createDmClient();
+				client = factory.createDmClient(this);
 			}
 		}
 		return client;

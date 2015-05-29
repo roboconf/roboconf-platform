@@ -26,6 +26,7 @@
 package net.roboconf.messaging.rabbitmq;
 
 import net.roboconf.messaging.client.IClient;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClient;
 
 /**
  * Common RabbitMQ client-related stuffs.
@@ -65,5 +66,10 @@ public interface RabbitMqClient extends IClient {
 	 * @param messageServerPassword the password needed to connect to the RabbitMQ server.
 	 */
 	void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword );
+
+	/**
+	 * @return the wrapping reconfigurable client (may be {@code null}).
+	 */
+	ReconfigurableClient<?> getReconfigurableClient();
 
 }

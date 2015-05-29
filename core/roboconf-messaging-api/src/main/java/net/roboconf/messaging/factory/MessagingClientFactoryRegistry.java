@@ -72,7 +72,13 @@ public class MessagingClientFactoryRegistry {
 	 * with the given type.
 	 */
 	public MessagingClientFactory getMessagingClientFactory(String type) {
-		return this.factories.get(type);
+		final MessagingClientFactory result;
+		if (type != null) {
+			result = this.factories.get(type);
+		} else {
+			result = null;
+		}
+		return result;
 	}
 
 	/**

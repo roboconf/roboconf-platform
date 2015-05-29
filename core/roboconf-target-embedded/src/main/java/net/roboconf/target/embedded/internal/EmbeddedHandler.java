@@ -38,7 +38,7 @@ import net.roboconf.target.api.TargetHandler;
 public class EmbeddedHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "embedded";
-	private final Map<String,Boolean> machineIdToRunning = new HashMap<String,Boolean> ();
+	private final Map<String,Boolean> machineIdToRunning = new HashMap<> ();
 
 
 	/*

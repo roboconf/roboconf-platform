@@ -28,10 +28,14 @@ package net.roboconf.messaging.rabbitmq;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import net.roboconf.core.utils.Utils;
-
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.client.IClient;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClient;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -158,5 +162,33 @@ public abstract class RabbitMqTestUtils {
 		factory.setPassword( password );
 
 		return factory.newConnection().createChannel();
+	}
+
+	/**
+	 * Get the delegate messaging client of a reconfigurable messaging client.
+	 *
+	 * @param reconfigurable the reconfigurable messaging client.
+	 * @param type           the expected type of the internal messaging client.
+	 * @param <T>            the expected type of the internal messaging client.
+	 * @return the internal messaging client, or {@code null} if it is not defined, or has the wrong type.
+	 * @throws IllegalAccessException if the internal messaging client could not be read.
+	 */
+	public static RabbitMqClientDm getMessagingClientDm( ReconfigurableClientDm reconfigurable )
+			throws IllegalAccessException {
+		return TestUtils.getInternalField(reconfigurable, "messagingClient", RabbitMqClientDm.class);
+	}
+
+	/**
+	 * Get the delegate messaging client of a reconfigurable messaging client.
+	 *
+	 * @param reconfigurable the reconfigurable messaging client.
+	 * @param type           the expected type of the internal messaging client.
+	 * @param <T>            the expected type of the internal messaging client.
+	 * @return the internal messaging client, or {@code null} if it is not defined, or has the wrong type.
+	 * @throws IllegalAccessException if the internal messaging client could not be read.
+	 */
+	public static RabbitMqClientAgent getMessagingClientAgent( ReconfigurableClientAgent reconfigurable )
+			throws IllegalAccessException {
+		return TestUtils.getInternalField(reconfigurable, "messagingClient", RabbitMqClientAgent.class);
 	}
 }

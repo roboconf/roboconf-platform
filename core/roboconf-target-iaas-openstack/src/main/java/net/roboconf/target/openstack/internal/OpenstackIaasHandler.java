@@ -241,6 +241,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	 * @return a non-null object
 	 * @throws TargetException if the target properties are invalid
 	 */
+	// TODO: never used!!!???
 	static NeutronApi neutronApi( Map<String,String> targetProperties ) throws TargetException {
 
 		validate( targetProperties );

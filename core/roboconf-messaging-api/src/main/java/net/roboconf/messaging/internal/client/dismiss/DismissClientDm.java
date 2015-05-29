@@ -107,14 +107,6 @@ public class DismissClientDm implements IDmClient {
 		return Collections.emptyMap();
 	}
 
-
-	@Override
-	public boolean setConfiguration( final Map<String, String> configuration ) {
-		// Cannot apply any configuration to the dismiss client.
-		return false;
-	}
-
-
 	@Override
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {

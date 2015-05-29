@@ -67,7 +67,7 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	public void cleanRabbitMq() throws Exception {
 
 		if( rabbitMqIsRunning ) {
-			RabbitMqClientDm client = new RabbitMqClientDm();
+			RabbitMqClientDm client = new RabbitMqClientDm(null);
 			client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
 			client.openConnection();
 			client.deleteMessagingServerArtifacts( new Application( "app", null ));

@@ -26,7 +26,6 @@
 package net.roboconf.messaging.internal.client.test;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -67,13 +66,6 @@ public class TestClientDmTest {
 		final Map<String, String> config = client.getConfiguration();
 		Assert.assertEquals(1, config.size());
 		Assert.assertEquals(MessagingConstants.FACTORY_TEST, config.get(IClient.MESSAGING_TYPE_PROPERTY));
-	}
-
-
-	@Test
-	public void testSetConfiguration() throws Exception {
-		TestClientDm client = new TestClientDm();
-		Assert.assertTrue(client.setConfiguration(Collections.singletonMap(IClient.MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_TEST)));
 	}
 
 

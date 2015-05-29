@@ -56,7 +56,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		if (registry != null) {
 			MessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
 			if (factory != null) {
-				client = factory.createAgentClient();
+				client = factory.createAgentClient(this);
 			}
 		}
 		return client;

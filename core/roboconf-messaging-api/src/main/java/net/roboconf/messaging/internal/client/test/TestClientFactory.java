@@ -25,10 +25,14 @@
 
 package net.roboconf.messaging.internal.client.test;
 
+import java.util.Map;
+
 import net.roboconf.messaging.MessagingConstants;
 import net.roboconf.messaging.client.IAgentClient;
 import net.roboconf.messaging.client.IDmClient;
 import net.roboconf.messaging.factory.MessagingClientFactory;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Provides;
@@ -53,12 +57,18 @@ public class TestClientFactory implements MessagingClientFactory {
 	}
 
 	@Override
-	public IDmClient createDmClient() {
+	public IDmClient createDmClient( final ReconfigurableClientDm parent ) {
 		return new TestClientDm();
 	}
 
 	@Override
-	public IAgentClient createAgentClient() {
+	public IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
 		return new TestClientAgent();
+	}
+
+	@Override
+	public boolean setConfiguration( final Map<String, String> configuration ) {
+		// Nothing to reconfigure.
+		return MessagingConstants.FACTORY_TEST.equals(configuration.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY));
 	}
 }
