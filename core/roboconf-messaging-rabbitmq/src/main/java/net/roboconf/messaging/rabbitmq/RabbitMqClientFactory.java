@@ -105,7 +105,7 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 			try {
 				final ReconfigurableClient<?> reconfigurable = client.getReconfigurableClient();
 				if (reconfigurable != null)
-					reconfigurable.replaceMessagingClient();
+					reconfigurable.switchMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
 			} catch (Throwable t) {
 				// Warn but continue to reconfigure the next clients!
 				this.logger.warning("A client has thrown an exception on reconfiguration: " + client);
