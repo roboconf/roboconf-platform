@@ -42,6 +42,7 @@ import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
+import org.apache.felix.ipojo.annotations.Invalidate;
 import org.apache.felix.ipojo.annotations.Property;
 import org.apache.felix.ipojo.annotations.Provides;
 import org.apache.felix.ipojo.annotations.StaticServiceProperty;
@@ -93,7 +94,15 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	@Updated
 	public void reconfigure() {
 		// Set the properties for all created clients.
+		resetClients(false);
+	}
 
+	@Invalidate
+	public void stop() {
+		resetClients(true);
+	}
+
+	private void resetClients(boolean shutdown) {
 		// Make fresh snapshots of the clients, as we don't want to reconfigure them while holding the lock.
 		final ArrayList<RabbitMqClient> clients;
 		synchronized (this) {
@@ -105,7 +114,10 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 			try {
 				final ReconfigurableClient<?> reconfigurable = client.getReconfigurableClient();
 				if (reconfigurable != null)
-					reconfigurable.switchMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
+					if (shutdown)
+						reconfigurable.switchMessagingType(null);
+					else
+						reconfigurable.switchMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
 			} catch (Throwable t) {
 				// Warn but continue to reconfigure the next clients!
 				this.logger.warning("A client has thrown an exception on reconfiguration: " + client);
