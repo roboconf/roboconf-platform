@@ -87,7 +87,7 @@ public class RabbitMqClientFactoryTest {
 		Assert.assertEquals("guest", config1.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
 
 		// Reconfigure the factory.
-		factory.setMessageServerIp("example.com");
+		factory.setMessageServerIp("127.0.0.1");
 		factory.setMessageServerUsername("john.doe");
 		factory.setMessageServerPassword("1234");
 		factory.reconfigure();
@@ -97,7 +97,7 @@ public class RabbitMqClientFactoryTest {
 		Assert.assertNotSame(client1, client2);
 		final Map<String, String> config2 = client2.getConfiguration();
 		Assert.assertEquals(MessagingConstants.FACTORY_RABBIT_MQ, config2.get(IClient.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("example.com", config2.get(MessagingConstants.RABBITMQ_SERVER_IP));
+		Assert.assertEquals("127.0.0.1", config2.get(MessagingConstants.RABBITMQ_SERVER_IP));
 		Assert.assertEquals("john.doe", config2.get(MessagingConstants.RABBITMQ_SERVER_USERNAME));
 		Assert.assertEquals("1234", config2.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
 	}
@@ -126,7 +126,7 @@ public class RabbitMqClientFactoryTest {
 		Assert.assertEquals("guest", config1.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
 
 		// Reconfigure the factory.
-		factory.setMessageServerIp("example.com");
+		factory.setMessageServerIp("127.0.0.1");
 		factory.setMessageServerUsername("john.doe");
 		factory.setMessageServerPassword("1234");
 		factory.reconfigure();
@@ -136,7 +136,7 @@ public class RabbitMqClientFactoryTest {
 		Assert.assertNotSame(client1, client2);
 		final Map<String, String> config2 = client2.getConfiguration();
 		Assert.assertEquals(MessagingConstants.FACTORY_RABBIT_MQ, config2.get(IClient.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("example.com", config2.get(MessagingConstants.RABBITMQ_SERVER_IP));
+		Assert.assertEquals("127.0.0.1", config2.get(MessagingConstants.RABBITMQ_SERVER_IP));
 		Assert.assertEquals("john.doe", config2.get(MessagingConstants.RABBITMQ_SERVER_USERNAME));
 		Assert.assertEquals("1234", config2.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
 	}
