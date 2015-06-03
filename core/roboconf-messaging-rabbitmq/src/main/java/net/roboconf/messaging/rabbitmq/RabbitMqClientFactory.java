@@ -28,6 +28,7 @@ package net.roboconf.messaging.rabbitmq;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.logging.Logger;
@@ -157,16 +158,31 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 		String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
 		String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
 		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type)) {
+			// Handles default values.
 			if (ip == null)
 				ip = RabbitMqClient.DEFAULT_IP;
 			if (username == null)
 				username = RabbitMqClient.DEFAULT_USERNAME;
 			if (password == null)
 				password = RabbitMqClient.DEFAULT_PASSWORD;
-			setMessageServerIp(ip);
-			setMessageServerUsername(username);
-			setMessageServerPassword(password);
-			reconfigure();
+			// Avoid unnecessary (and potentially problematic) reconfiguration if nothing has changed.
+			boolean hasChanged = false;
+			synchronized (this) {
+				if (!Objects.equals(this.messageServerIp, ip)) {
+					setMessageServerIp(ip);
+					hasChanged = true;
+				}
+				if (!Objects.equals(this.messageServerUsername, username)) {
+					setMessageServerUsername(username);
+					hasChanged = true;
+				}
+				if (!Objects.equals(this.messageServerPassword, password)) {
+					setMessageServerPassword(password);
+					hasChanged = true;
+				}
+			}
+			if (hasChanged)
+				reconfigure();
 			result = true;
 		} else {
 			result = false;
