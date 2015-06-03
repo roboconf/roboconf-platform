@@ -134,7 +134,6 @@ public class Manager {
 		this.templateManager = new ApplicationTemplateMngrDelegate();
 		this.appManager = new ApplicationMngrDelegate();
 		this.instanceManager = new InstanceMngrDelegate( this );
-		this.messagingType = MessagingConstants.FACTORY_RABBIT_MQ;
 	}
 
 

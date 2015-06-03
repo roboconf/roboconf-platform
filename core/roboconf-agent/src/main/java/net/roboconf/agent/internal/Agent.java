@@ -80,7 +80,6 @@ public class Agent implements AgentMessagingInterface {
 	 */
 	public Agent() {
 		this.logger = Logger.getLogger( getClass().getName());
-		this.messagingType = MessagingConstants.FACTORY_RABBIT_MQ;
 
 		// Set default value for IP address
 		// Will be overridden in many cases (e.g. on IaaS with user-data).
