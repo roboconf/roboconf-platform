@@ -113,8 +113,10 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 	@Override
 	public void closeConnection() throws IOException {
-		getMessagingClient().closeConnection();
-		resetInternalClient();
+		final IAgentClient toClose = resetInternalClient();
+		if (toClose != null) {
+			toClose.closeConnection();
+		}
 	}
 
 

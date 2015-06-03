@@ -115,7 +115,7 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 				final ReconfigurableClient<?> reconfigurable = client.getReconfigurableClient();
 				if (reconfigurable != null)
 					if (shutdown)
-						reconfigurable.switchMessagingType(null);
+						reconfigurable.closeConnection();
 					else
 						reconfigurable.switchMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
 			} catch (Throwable t) {

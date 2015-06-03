@@ -101,8 +101,10 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 	@Override
 	public void closeConnection() throws IOException {
-		getMessagingClient().closeConnection();
-		resetInternalClient();
+		final IDmClient toClose = resetInternalClient();
+		if (toClose != null) {
+			toClose.closeConnection();
+		}
 	}
 
 

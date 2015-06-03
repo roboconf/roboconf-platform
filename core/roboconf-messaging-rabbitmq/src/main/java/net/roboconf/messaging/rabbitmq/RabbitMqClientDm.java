@@ -110,7 +110,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * @see net.roboconf.messaging.client.IClient#isConnected()
 	 */
 	@Override
-	public boolean isConnected() {
+	public synchronized boolean isConnected() {
 		return this.channel != null;
 	}
 
@@ -120,7 +120,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * @see net.roboconf.messaging.client.IClient#openConnection()
 	 */
 	@Override
-	public void openConnection() throws IOException {
+	public synchronized void openConnection() throws IOException {
 
 		// Already connected? Do nothing
 		this.logger.info( "The DM is opening a connection to RabbitMQ." );
@@ -154,7 +154,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * #closeConnection()
 	 */
 	@Override
-	public void closeConnection() throws IOException {
+	public synchronized void closeConnection() throws IOException {
 
 		StringBuilder sb = new StringBuilder( "The DM is closing its connection to RabbitMQ." );
 		if( this.channel != null )
@@ -174,7 +174,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * #publishMessageToAgent(net.roboconf.core.model.beans.Application, net.roboconf.core.model.beans.Instance, net.roboconf.messaging.messages.Message)
 	 */
 	@Override
-	public void sendMessageToAgent( Application application, Instance instance, Message message )
+	public synchronized void sendMessageToAgent( Application application, Instance instance, Message message )
 	throws IOException {
 
 		String exchangeName = RabbitMqUtils.buildExchangeName( application, false );
@@ -198,7 +198,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * #listenToAgentMessages(net.roboconf.core.model.beans.Application, net.roboconf.messaging.client.IClient.ListenerCommand)
 	 */
 	@Override
-	public void listenToAgentMessages( Application application, ListenerCommand command )
+	public synchronized void listenToAgentMessages( Application application, ListenerCommand command )
 	throws IOException {
 
 		if( command == ListenerCommand.STOP ) {
@@ -243,7 +243,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * #sendMessageToTheDm(net.roboconf.messaging.messages.Message)
 	 */
 	@Override
-	public void sendMessageToTheDm( Message msg ) throws IOException {
+	public synchronized void sendMessageToTheDm( Message msg ) throws IOException {
 
 		// The DM can send messages to itself (e.g. for debug).
 		// This method could also be used to broadcast information to (potential) other DMs.
@@ -268,7 +268,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * #listenToTheDm(net.roboconf.messaging.client.IClient.ListenerCommand)
 	 */
 	@Override
-	public void listenToTheDm( ListenerCommand command )
+	public synchronized void listenToTheDm( ListenerCommand command )
 	throws IOException {
 
 		if( command == ListenerCommand.START ) {
@@ -323,7 +323,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * #deleteMessagingServerArtifacts(net.roboconf.core.model.beans.Application)
 	 */
 	@Override
-	public void deleteMessagingServerArtifacts( Application application )
+	public synchronized void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 
 		// We delete the exchanges
@@ -339,7 +339,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	 * #propagateAgentTermination(net.roboconf.core.model.beans.Application, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void propagateAgentTermination( Application application, Instance rootInstance )
+	public synchronized void propagateAgentTermination( Application application, Instance rootInstance )
 	throws IOException {
 
 		this.logger.fine( "The DM is propagating the termination of agent '" + rootInstance + "'." );

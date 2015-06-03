@@ -291,9 +291,10 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	/**
 	 * Resets the internal client (sets it to null).
 	 */
-	protected synchronized void resetInternalClient() {
+	protected synchronized T resetInternalClient() {
+		T oldClient = this.messagingClient;
 		this.messagingClient = null;
-		this.messagingType = null;
+		return oldClient;
 	}
 
 
