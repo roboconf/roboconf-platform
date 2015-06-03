@@ -32,7 +32,7 @@ import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.messages.Message;
 
 import org.junit.Assume;
 import org.junit.BeforeClass;

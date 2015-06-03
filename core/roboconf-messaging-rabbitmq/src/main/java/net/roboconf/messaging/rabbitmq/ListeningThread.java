@@ -28,7 +28,7 @@ package net.roboconf.messaging.rabbitmq;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.messages.Message;
 
 import com.rabbitmq.client.QueueingConsumer;
 

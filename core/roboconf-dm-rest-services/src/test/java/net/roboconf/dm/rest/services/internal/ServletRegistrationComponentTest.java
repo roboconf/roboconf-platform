@@ -42,7 +42,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
-import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.api.MessagingConstants;
 
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;

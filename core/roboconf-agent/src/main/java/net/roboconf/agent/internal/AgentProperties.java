@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.client.IClient;
+import net.roboconf.messaging.api.client.IClient;
 
 /**
  * @author Vincent Zurczak - Linagora

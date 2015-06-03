@@ -28,12 +28,12 @@ package net.roboconf.messaging.rabbitmq;
 import java.util.List;
 
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.internal.AbstractMessagingTest;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.processors.AbstractMessageProcessor;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 
 import org.junit.After;
 import org.junit.Assume;

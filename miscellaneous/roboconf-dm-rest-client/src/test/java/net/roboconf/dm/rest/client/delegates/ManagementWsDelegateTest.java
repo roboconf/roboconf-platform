@@ -47,10 +47,10 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ManagementException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
-import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.api.MessagingConstants;
 
-import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import org.junit.Before;

@@ -39,7 +39,7 @@ import java.util.logging.Logger;
 import junit.framework.Assert;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler.LocalHostnameVerifier;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler.LocalX509TrustManager;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 import org.junit.Test;
 

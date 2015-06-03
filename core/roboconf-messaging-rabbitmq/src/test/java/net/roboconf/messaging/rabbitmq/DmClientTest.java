@@ -29,8 +29,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.client.IClient.ListenerCommand;
+import net.roboconf.messaging.api.messages.Message;
 
 import org.junit.Assume;
 import org.junit.BeforeClass;

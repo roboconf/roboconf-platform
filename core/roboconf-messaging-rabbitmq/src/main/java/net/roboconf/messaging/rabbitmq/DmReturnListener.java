@@ -29,8 +29,8 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.utils.SerializationUtils;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.api.messages.Message;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.ReturnListener;

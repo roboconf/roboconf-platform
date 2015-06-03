@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.agent.internal.Agent;
-import net.roboconf.messaging.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 

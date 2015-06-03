@@ -35,10 +35,10 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.messaging.internal.client.test.TestClientDm;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 import org.junit.Before;
 import org.junit.Rule;

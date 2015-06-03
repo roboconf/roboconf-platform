@@ -25,8 +25,8 @@
 
 package net.roboconf.messaging.rabbitmq;
 
-import net.roboconf.messaging.client.IClient;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClient;
+import net.roboconf.messaging.api.client.IClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
  * Common RabbitMQ client-related stuffs.

@@ -44,9 +44,8 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**

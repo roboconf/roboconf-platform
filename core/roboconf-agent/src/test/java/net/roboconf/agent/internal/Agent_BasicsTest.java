@@ -29,12 +29,12 @@ import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.internal.client.test.TestClientFactory;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 
 import org.junit.After;
 import org.junit.Before;

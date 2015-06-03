@@ -38,16 +38,16 @@ import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
 import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
-import net.roboconf.messaging.processors.AbstractMessageProcessor;
+import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
+import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 
 /**
  * This class is in charge of updating the model from messages / notifications.
@@ -81,8 +81,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.AbstractMessageProcessor
-	 * #processMessage(net.roboconf.messaging.messages.Message)
+	 * @see net.roboconf.messaging.api.client.AbstractMessageProcessor
+	 * #processMessage(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
 	public void processMessage( Message message ) {

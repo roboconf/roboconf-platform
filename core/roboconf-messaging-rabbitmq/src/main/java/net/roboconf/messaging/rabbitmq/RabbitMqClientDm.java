@@ -39,12 +39,12 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
-import net.roboconf.messaging.utils.SerializationUtils;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -83,7 +83,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient
+	 * @see net.roboconf.messaging.api.client.IClient
 	 * #setParameters(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
@@ -96,7 +96,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient
+	 * @see net.roboconf.messaging.api.client.IClient
 	 * #setMessageQueue(java.util.concurrent.LinkedBlockingQueue)
 	 */
 	@Override
@@ -107,7 +107,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient#isConnected()
+	 * @see net.roboconf.messaging.api.client.IClient#isConnected()
 	 */
 	@Override
 	public synchronized boolean isConnected() {
@@ -117,7 +117,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient#openConnection()
+	 * @see net.roboconf.messaging.api.client.IClient#openConnection()
 	 */
 	@Override
 	public synchronized void openConnection() throws IOException {
@@ -150,7 +150,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 
 	/* (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient
+	 * @see net.roboconf.messaging.api.client.IClient
 	 * #closeConnection()
 	 */
 	@Override
@@ -170,8 +170,8 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IDmClient
-	 * #publishMessageToAgent(net.roboconf.core.model.beans.Application, net.roboconf.core.model.beans.Instance, net.roboconf.messaging.messages.Message)
+	 * @see net.roboconf.messaging.api.client.IDmClient
+	 * #publishMessageToAgent(net.roboconf.core.model.beans.Application, net.roboconf.core.model.beans.Instance, net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
 	public synchronized void sendMessageToAgent( Application application, Instance instance, Message message )
@@ -194,8 +194,8 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 
 	/* (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IDmClient
-	 * #listenToAgentMessages(net.roboconf.core.model.beans.Application, net.roboconf.messaging.client.IClient.ListenerCommand)
+	 * @see net.roboconf.messaging.api.client.IDmClient
+	 * #listenToAgentMessages(net.roboconf.core.model.beans.Application, net.roboconf.messaging.api.client.IClient.ListenerCommand)
 	 */
 	@Override
 	public synchronized void listenToAgentMessages( Application application, ListenerCommand command )
@@ -239,8 +239,8 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient
-	 * #sendMessageToTheDm(net.roboconf.messaging.messages.Message)
+	 * @see net.roboconf.messaging.api.client.IClient
+	 * #sendMessageToTheDm(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
 	public synchronized void sendMessageToTheDm( Message msg ) throws IOException {
@@ -264,8 +264,8 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IClient
-	 * #listenToTheDm(net.roboconf.messaging.client.IClient.ListenerCommand)
+	 * @see net.roboconf.messaging.api.client.IClient
+	 * #listenToTheDm(net.roboconf.messaging.api.client.IClient.ListenerCommand)
 	 */
 	@Override
 	public synchronized void listenToTheDm( ListenerCommand command )
@@ -319,7 +319,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 	}
 
 	/* (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IDmClient
+	 * @see net.roboconf.messaging.api.client.IDmClient
 	 * #deleteMessagingServerArtifacts(net.roboconf.core.model.beans.Application)
 	 */
 	@Override
@@ -335,7 +335,7 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.client.IDmClient
+	 * @see net.roboconf.messaging.api.client.IDmClient
 	 * #propagateAgentTermination(net.roboconf.core.model.beans.Application, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override

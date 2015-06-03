@@ -82,8 +82,8 @@
 							org.osgi.framework; version="[1.6,2.0)"
 						</Import-Package>
 						<Export-Package>
-							!net.roboconf.messaging.internal.*,
-							net.roboconf.messaging.*
+							!net.roboconf.messaging.api.internal.*,
+							net.roboconf.messaging.api*
 						</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

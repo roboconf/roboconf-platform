@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.management;
 
-import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.api.MessagingConstants;
 
 import org.junit.Rule;
 import org.junit.Test;

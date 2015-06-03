@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 import junit.framework.Assert;
 import net.roboconf.core.agents.DataHelpers;
 
-import net.roboconf.messaging.client.IClient;
+import net.roboconf.messaging.api.client.IClient;
 import org.junit.Test;
 
 /**

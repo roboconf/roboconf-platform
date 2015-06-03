@@ -32,10 +32,8 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.client.IClient;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClient;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 /**
  * @author Vincent Zurczak - Linagora

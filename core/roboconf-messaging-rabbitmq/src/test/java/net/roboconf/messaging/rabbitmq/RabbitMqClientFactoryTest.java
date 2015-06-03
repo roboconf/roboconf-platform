@@ -27,21 +27,21 @@ package net.roboconf.messaging.rabbitmq;
 
 import java.util.Map;
 
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IClient;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.processors.AbstractMessageProcessor;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.client.IClient;
+import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Tests for the RabbitMQ {@link net.roboconf.messaging.factory.MessagingClientFactory}.
+ * Tests for the RabbitMQ {@link net.roboconf.messaging.api.factory.MessagingClientFactory}.
  *
  * @author Pierre Bourret - Université Joseph Fourier
  */

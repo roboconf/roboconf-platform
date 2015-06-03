@@ -59,12 +59,11 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.client.IClient.ListenerCommand;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 

@@ -34,8 +34,8 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.utils.SerializationUtils;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.api.messages.Message;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;

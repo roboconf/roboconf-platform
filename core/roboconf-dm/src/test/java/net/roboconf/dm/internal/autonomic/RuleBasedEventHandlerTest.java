@@ -43,10 +43,10 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.api.MessagingConstants;
 
-import net.roboconf.messaging.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
