@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
 
 import org.junit.Before;
@@ -64,7 +65,9 @@ public class InMemoryHandler_withoutIPojoTest {
 	@Test( expected = TargetException.class )
 	public void testCreateVm() throws Exception {
 
-		new InMemoryHandler().createMachine( null, msgCfg, "vm", "my app" );
+		InMemoryHandler target = new InMemoryHandler();
+		target.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
+		target.createMachine(null, msgCfg, "vm", "my app");
 	}
 
 
@@ -78,6 +81,8 @@ public class InMemoryHandler_withoutIPojoTest {
 		Map<String,String> targetProperties = new HashMap<>(1);
 		targetProperties.put( InMemoryHandler.DELAY, "20L" );
 
+		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
+
 		handler.createMachine( targetProperties, msgCfg, "vm", "my app" );
 	}
 
@@ -90,6 +95,9 @@ public class InMemoryHandler_withoutIPojoTest {
 		Assert.assertEquals( 10L, handler.getDefaultDelay());
 
 		Map<String,String> targetProperties = new HashMap<>(0);
+
+		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
+
 		handler.createMachine( targetProperties, msgCfg, "vm", "my app" );
 	}
 

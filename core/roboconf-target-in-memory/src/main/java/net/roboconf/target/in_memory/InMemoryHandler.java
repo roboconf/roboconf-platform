@@ -32,6 +32,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -51,6 +53,7 @@ public class InMemoryHandler implements TargetHandler {
 	private Factory agentFactory;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final AtomicLong defaultDelay = new AtomicLong( 0L );
+	private MessagingClientFactoryRegistry registry;
 
 
 	/*
@@ -62,6 +65,9 @@ public class InMemoryHandler implements TargetHandler {
 		return TARGET_ID;
 	}
 
+	public void setMessagingFactoryRegistry(MessagingClientFactoryRegistry registry) {
+		this.registry = registry;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -95,11 +101,16 @@ public class InMemoryHandler implements TargetHandler {
 
 		// Prepare the properties of the new POJO
 		Dictionary<String,Object> configuration = new Hashtable<>();
-		for(Map.Entry<String, String> e : messagingConfiguration.entrySet()) {
-			configuration.put(e.getKey(), e.getValue());
-		}
+		final String messagingType = messagingConfiguration.get("net.roboconf.messaging.type");
 	    configuration.put( "application-name", applicationName );
 	    configuration.put( "scoped-instance-path", scopedInstancePath );
+		configuration.put( "messaging-type", messagingType);
+
+		// Reconfigure the messaging factory.
+		MessagingClientFactory messagingFactory = this.registry.getMessagingClientFactory(messagingType);
+		if (messagingFactory != null) {
+			messagingFactory.setConfiguration(messagingConfiguration);
+		}
 
 	    String machineId = scopedInstancePath + " @ " + applicationName;
 	    configuration.put( Factory.INSTANCE_NAME_PROPERTY, machineId );

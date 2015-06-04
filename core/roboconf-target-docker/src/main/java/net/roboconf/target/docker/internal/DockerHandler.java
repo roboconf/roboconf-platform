@@ -147,6 +147,7 @@ public class DockerHandler implements TargetHandler {
 		args.add("/usr/local/roboconf-agent/start.sh");
 		args.add("application-name=" + applicationName);
 		args.add("scoped-instance-path=" + scopedInstancePath);
+		args.add("messaging-type=" + messagingConfiguration.get("net.roboconf.messaging.type"));
 
 		// TODO: modify the agent launcher script to take care of these arguments. May need to rethink the following lines. Maybe in a separate messaging configuration file
 		for(Map.Entry<String, String> e : messagingConfiguration.entrySet()) {

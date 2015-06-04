@@ -53,16 +53,21 @@ public class MyHandler implements TargetHandler {
 			String applicationName )
 	throws TargetException {
 
+		final String messagingType = messagingProperties.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY);
+
 		Agent agent = new Agent();
 		agent.setApplicationName( applicationName );
 		agent.setScopedInstancePath( scopedInstancePath );
 		agent.setTargetId( "in-memory" );
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
+		agent.setMessagingType(messagingType);
 		agent.start();
 
-		MessagingClientFactory factory = agent.getMessagingClient().getRegistry().getMessagingClientFactory(messagingProperties.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY));
-		factory.setConfiguration(messagingProperties);
+		MessagingClientFactory factory = agent.getMessagingClient().getRegistry().getMessagingClientFactory(messagingType);
+		if (factory != null) {
+			factory.setConfiguration(messagingProperties);
+		}
 
 		String key = scopedInstancePath + " @ " + applicationName;
 		this.agentIdToAgent.put( key, agent );
