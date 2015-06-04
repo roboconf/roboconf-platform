@@ -44,6 +44,7 @@ import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
+import net.roboconf.messaging.api.MessagingConstants;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -140,6 +141,10 @@ public class DelayedAgentInitializationTest extends DmTest {
 				  "etc/net.roboconf.agent.configuration.cfg",
 				  "scoped-instance-path",
 				  InstanceHelpers.computeInstancePath( app.getMySqlVm())));
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"messaging-type",
+				MessagingConstants.FACTORY_RABBIT_MQ));
 
 		// Add an invalid configuration for the DM
 		options.add( editConfigurationFilePut(
