@@ -60,7 +60,7 @@ public class TargetResolver implements ITargetResolver {
 			if( ! Constants.TARGET_INSTALLER.equalsIgnoreCase( installerName ))
 				throw new TargetException( "Unsupported installer name: " + installerName );
 
-			targetProperties = TargetHelpers.loadTargetProperties( ma.getDirectory(), instance );
+			targetProperties = TargetHelpers.loadTargetProperties( ma.getTemplateDirectory(), instance );
 			String targetId = targetProperties.get( TARGET_ID );
 			targetHandler = findTargetHandler( targets, targetId );
 

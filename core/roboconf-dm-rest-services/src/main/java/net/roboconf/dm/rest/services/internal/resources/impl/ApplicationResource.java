@@ -361,30 +361,28 @@ public class ApplicationResource implements IApplicationResource {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.dm.internal.rest.api.IApplicationWs
-	 * #findPossibleComponentChildren(java.lang.String, java.lang.String)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #findComponentChildren(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<Component> findPossibleComponentChildren( String applicationName, String instancePath ) {
+	public List<Component> findComponentChildren( String applicationName, String componentName ) {
 
-		if( instancePath == null )
-			this.logger.fine( "Request: list possible root instances in " + applicationName + "." );
+		if( componentName == null )
+			this.logger.fine( "Request: list root components in " + applicationName + "." );
 		else
-			this.logger.fine( "Request: find components that can be deployed under " + instancePath + " in " + applicationName + "." );
-
-		Application app = this.manager.findApplicationByName( applicationName );
-		Instance instance = null;
-		if( app != null
-				&& instancePath != null )
-			instance = InstanceHelpers.findInstanceByPath( app, instancePath );
+			this.logger.fine( "Request: find components that can be deployed under a " + componentName + " component in " + applicationName + "." );
 
 		List<Component> result = new ArrayList<Component> ();
-		if( instance != null )
-			result.addAll( ComponentHelpers.findAllChildren( instance.getComponent()));
-
-		else if( app != null
-				&& instancePath == null )
-			result.addAll( app.getTemplate().getGraphs().getRootComponents());
+		Application app = this.manager.findApplicationByName( applicationName );
+		if( app != null ) {
+			Component comp;
+			if( componentName == null )
+				result.addAll( app.getTemplate().getGraphs().getRootComponents());
+			else if(( comp = ComponentHelpers.findComponent( app, componentName )) != null )
+				result.addAll( ComponentHelpers.findAllChildren( comp ));
+			else
+				this.logger.fine( "No component called " + componentName + " was found in " + applicationName + "." );
+		}
 
 		return result;
 	}
@@ -392,27 +390,22 @@ public class ApplicationResource implements IApplicationResource {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.dm.internal.rest.client.exceptions.server.IGraphWs
-	 * #findPossibleParentInstances(java.lang.String, java.lang.String)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #findComponentAncestors(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<String> findPossibleParentInstances( String applicationName, String componentName ) {
+	public List<Component> findComponentAncestors( String applicationName, String componentName ) {
 
-		this.logger.fine( "Request: find instances where a component " + componentName + " could be deployed on, in " + applicationName + "." );
-		List<String> result = new ArrayList<String> ();
+		this.logger.fine( "Request: find components where a " + componentName + " component could be deployed on, in " + applicationName + "." );
+		List<Component> result = new ArrayList<Component> ();
+
 		Application app = this.manager.findApplicationByName( applicationName );
-
-		// Run through all the instances.
-		// See if their component can support a child "of type componentName".
 		if( app != null ) {
-			for( Instance instance : InstanceHelpers.getAllInstances( app )) {
-				for( Component c : ComponentHelpers.findAllChildren( instance.getComponent())) {
-					if( componentName.equals( c.getName())) {
-						String instancePath = InstanceHelpers.computeInstancePath( instance );
-						result.add( instancePath );
-					}
-				}
-			}
+			Component comp = ComponentHelpers.findComponent( app.getTemplate().getGraphs(), componentName );
+			if( comp != null )
+				result.addAll( ComponentHelpers.findAllAncestors( comp ));
+			else
+				this.logger.fine( "No component called " + componentName + " was found in " + applicationName + "." );
 		}
 
 		return result;

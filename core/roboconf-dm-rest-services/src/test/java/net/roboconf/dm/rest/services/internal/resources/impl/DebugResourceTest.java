@@ -64,7 +64,7 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DebuResourceTest {
+public class DebugResourceTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();

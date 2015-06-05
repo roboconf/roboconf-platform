@@ -153,22 +153,6 @@ public interface IApplicationResource {
 
 
 	/**
-	 * Finds possible components under a given instance.
-	 * <p>
-	 * This method answers the question: what can we deploy on this instance?
-	 * </p>
-	 *
-	 * @param applicationName the application name
-	 * @param instancePath the instance path (if null, we consider the application as the root)
-	 * @return a non-null list of components names
-	 */
-	@GET
-	@Path( "/possibilities" )
-	@Produces( MediaType.APPLICATION_JSON )
-	List<Component> findPossibleComponentChildren( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
-
-
-	/**
 	 * Lists the available components in this application.
 	 * @param applicationName the application name
 	 * @return a non-null list of components
@@ -180,17 +164,24 @@ public interface IApplicationResource {
 
 
 	/**
-	 * Finds possible parent instances for a given component.
-	 * <p>
-	 * This method answers the question: where could I deploy such a component?
-	 * </p>
-	 *
-	 *
+	 * Finds possible parent components for a given component.
 	 * @param applicationName the application name
 	 * @return a non-null list of instances paths
 	 */
 	@GET
-	@Path("/component/{componentName}")
+	@Path("/components/ancestors")
 	@Produces( MediaType.APPLICATION_JSON )
-	List<String> findPossibleParentInstances( @PathParam("name") String applicationName, @PathParam("componentName") String componentName );
+	List<Component> findComponentAncestors( @PathParam("name") String applicationName, @QueryParam("name") String componentName );
+
+
+	/**
+	 * Finds possible components under a given component.
+	 * @param applicationName the application name
+	 * @param componentName a component name (if not specified, returns all the root components)
+	 * @return a non-null list of components names
+	 */
+	@GET
+	@Path( "/components/children" )
+	@Produces( MediaType.APPLICATION_JSON )
+	List<Component> findComponentChildren( @PathParam("name") String applicationName, @QueryParam("name") String componentName );
 }
