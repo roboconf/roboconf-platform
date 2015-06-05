@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.lifecycle.AbstractLifeCycleManager;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
@@ -43,22 +43,22 @@ import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
-import net.roboconf.messaging.processors.AbstractMessageProcessor;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.client.IClient.ListenerCommand;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
+import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -81,7 +81,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Agent agent;
-	Instance rootInstance;
+	Instance scopedInstance;
 
 
 	/**
@@ -95,15 +95,15 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 
 	/*
-	 * @see net.roboconf.messaging.client.AbstractMessageProcessor
-	 * #processMessage(net.roboconf.messaging.messages.Message)
+	 * @see net.roboconf.messaging.api.client.AbstractMessageProcessor
+	 * #processMessage(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
 	protected void processMessage( Message message ) {
 
 		try {
-			if( message instanceof MsgCmdSetRootInstance )
-				processMsgSetRootInstance((MsgCmdSetRootInstance) message );
+			if( message instanceof MsgCmdSetScopedInstance )
+				processMsgSetScopedInstance((MsgCmdSetScopedInstance) message );
 
 			else if( message instanceof MsgCmdRemoveInstance )
 				processMsgRemoveInstance((MsgCmdRemoveInstance) message );
@@ -167,8 +167,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 */
 	void processMsgResynchronize( MsgCmdResynchronize message ) throws IOException {
 
-		if( this.rootInstance != null ) {
-			for( Instance i : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+		if( this.scopedInstance != null ) {
+			for( Instance i : InstanceHelpers.buildHierarchicalList( this.scopedInstance )) {
 				if( i.getStatus() == InstanceStatus.DEPLOYED_STARTED )
 					this.messagingClient.publishExports( i );
 			}
@@ -184,8 +184,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	void processMsgSendInstances( MsgCmdSendInstances message ) throws IOException {
 
 		String appName = this.agent.getApplicationName();
-		if( this.rootInstance != null ) {
-			for( Instance i : InstanceHelpers.buildHierarchicalList( this.rootInstance ))
+		if( this.scopedInstance != null ) {
+			for( Instance i : InstanceHelpers.buildHierarchicalList( this.scopedInstance ))
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( appName, i ));
 		}
 	}
@@ -206,24 +206,26 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * @throws IOException if an error occurred with the messaging
 	 * @throws PluginException if an error occurred while initializing the plug-in
 	 */
-	void processMsgSetRootInstance( MsgCmdSetRootInstance msg ) throws IOException, PluginException {
+	void processMsgSetScopedInstance( MsgCmdSetScopedInstance msg ) throws IOException, PluginException {
 
-		Instance newRootInstance = msg.getRootInstance();
+		Instance newScopedInstance = msg.getScopedInstance();
 		List<Instance> instancesToProcess = new ArrayList<Instance> ();
 
 		// Update the model and determine what must be updated
-		if( newRootInstance.getParent() != null ) {
-			this.logger.severe( "The received instance is not a root one. Request to update the local model is dropped." );
+		if( ! InstanceHelpers.isTarget( newScopedInstance )) {
+			this.logger.severe( "The received instance is not a scoped one. Request to update the local model is dropped." );
 
-		} else if( this.rootInstance == null ) {
-			this.logger.fine( "Setting the root instance." );
-			this.rootInstance = newRootInstance;
-			this.agent.setRootInstance(newRootInstance); // Inject root instance in agent
-			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.rootInstance ));
+		} else if( this.scopedInstance == null ) {
+			this.logger.fine( "Setting the scoped instance." );
+			this.scopedInstance = newScopedInstance;
+			InstanceHelpers.removeOffScopeInstances( newScopedInstance );
 
-			if( this.rootInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
-				this.rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.agent.getApplicationName(), newRootInstance ));
+			this.agent.setScopedInstance( newScopedInstance );
+			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.scopedInstance ));
+
+			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+				this.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.agent.getApplicationName(), this.scopedInstance ));
 			}
 		}
 
@@ -244,7 +246,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 		// Remove the instance
 		boolean removed = false;
-		Instance instance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getInstancePath());
+		Instance instance = InstanceHelpers.findInstanceByPath( this.scopedInstance, msg.getInstancePath());
 		if( instance == null ) {
 			this.logger.severe( "No instance matched " + msg.getInstancePath() + " on the agent. Request to remove it from the model is dropped." );
 
@@ -280,7 +282,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	void processMsgAddInstance( MsgCmdAddInstance msg ) throws IOException, PluginException {
 
 		Component instanceComponent;
-		Instance parentInstance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getParentInstancePath());
+		Instance parentInstance = InstanceHelpers.findInstanceByPath( this.scopedInstance, msg.getParentInstancePath());
 		if( parentInstance == null ) {
 			this.logger.severe( "The parent instance for " + msg.getParentInstancePath() + " was not found. The request to add a new instance is dropped." );
 
@@ -296,7 +298,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			if( msg.getOverridenExports() != null )
 				newInstance.overriddenExports.putAll( msg.getOverridenExports());
 
-			Application tempApp = new Application( "temp app" );
+			ApplicationTemplate tempApp = new ApplicationTemplate( "temp app" );
 			tempApp.getRootInstances().add( parentInstance );
 			if( ! InstanceHelpers.tryToInsertChildInstance( tempApp, parentInstance, newInstance )) {
 				this.logger.severe( "The new '" + msg.getInstanceName() + "' instance could not be inserted into the local model." );
@@ -319,7 +321,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	throws IOException, PluginException {
 
 		PluginInterface plugin;
-		Instance instance = InstanceHelpers.findInstanceByPath( this.rootInstance, msg.getInstancePath());
+		Instance instance = InstanceHelpers.findInstanceByPath( this.scopedInstance, msg.getInstancePath());
 		if( instance == null )
 			this.logger.severe( "No instance matched " + msg.getInstancePath() + " on the agent. Request to deploy it is dropped." );
 
@@ -343,7 +345,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 */
 	void processMsgRequestImport( MsgCmdRequestImport msg ) throws IOException {
 
-		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.scopedInstance )) {
 			if( instance.getStatus() == InstanceStatus.DEPLOYED_STARTED )
 				this.messagingClient.publishExports( instance, msg.getComponentOrFacetName());
 		}
@@ -360,7 +362,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 		// Go through all the instances to see which ones are impacted
 		String appName = this.agent.getApplicationName();
-		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.scopedInstance )) {
 
 			Set<String> importPrefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
 			if( ! importPrefixes.contains( msg.getComponentOrFacetName()))
@@ -401,7 +403,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 		// Go through all the instances to see which ones need an update
 		String appName = this.agent.getApplicationName();
-		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.rootInstance )) {
+		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.scopedInstance )) {
 
 			// This instance does not depends on it
 			Set<String> importPrefixes = VariableHelpers.findPrefixesForImportedVariables( instance );

@@ -53,6 +53,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -91,22 +92,25 @@ public class AzureIaasHandler implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String, String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
-			String rootInstanceName,
+			Map<String,String> messagingConfiguration,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
-		String instanceId = null;
+		String instanceId;
 		try {
+			// For IaaS, we only expect root instance names to be passed
+			if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+				throw new TargetException( "Only root instances can be passed in arguments." );
+
+			String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 			final AzureProperties azureProperties = buildProperties( targetProperties );
 
 			// The following part enables to transmit data to the VM.
 			// When the VM is up, it will be able to read this data.
 			// TODO: Azure does not allow a VM name with spaces whereas graph configuration of Roboconf supports it. It conflicts.
 			// channelName = channelName.replaceAll("\\s+","-").toLowerCase();
-			String userData = DataHelpers.writeUserDataAsString( messagingIp, messagingUsername, messagingPassword, applicationName, rootInstanceName );
+			String userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, rootInstanceName );
 			String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
 
 			replaceValueOfTagInXMLFile(azureProperties.getCreateCloudServiceTemplate(), "ServiceName", rootInstanceName );
@@ -180,11 +184,9 @@ public class AzureIaasHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 		Map<String,String> targetProperties,
+		Map<String,String> messagingConfiguration,
 		String machineId,
-		String messagingIp,
-		String messagingUsername,
-		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
@@ -367,7 +369,7 @@ public class AzureIaasHandler implements TargetHandler {
 	throws GeneralSecurityException, IOException {
 
 		SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
-		HttpsURLConnection con = null;
+		HttpsURLConnection con;
 		con = (HttpsURLConnection) url.openConnection();
 		con.setSSLSocketFactory(sslFactory);
 		con.setDoOutput(true);
@@ -389,7 +391,7 @@ public class AzureIaasHandler implements TargetHandler {
 	throws GeneralSecurityException, IOException {
 
 		SSLSocketFactory sslFactory = this.getSSLSocketFactory(keyStore, keyStorePassword);
-		HttpsURLConnection con = null;
+		HttpsURLConnection con;
 		con = (HttpsURLConnection) url.openConnection();
 		con.setSSLSocketFactory(sslFactory);
 		con.setRequestMethod("DELETE");

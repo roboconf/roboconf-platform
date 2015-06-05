@@ -147,6 +147,7 @@ public enum ErrorCode {
 	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
 	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource (recipe) directory." ),
 	PROJ_NO_TARGET_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A root component does not have a target.properties file in its resources." ),
+	PROJ_APPLICATION_TEMPLATE_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application template was not found." ),
 
 	// Recipes Errors
 	REC_PUPPET_DISLIKES_WILDCARD_IMPORTS( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Puppet modules may encounter problems with Roboconf wildcard imports." ),
@@ -155,6 +156,7 @@ public enum ErrorCode {
 	REC_PUPPET_MISSING_PARAM_IMPORT_DIFF( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts that handle updates must have an 'importDiff' parameter." ),
 	REC_PUPPET_MISSING_PARAM_RUNNING_STATE( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Puppet scripts must have a 'runningState' parameter." ),
 	REC_PUPPET_MISSING_PARAM_FROM_IMPORT( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Component imports mean the Puppet module must have matching parameters." ),
+	REC_PUPPET_SYNTAX_ERROR( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "The 'puppet parser validate' found errors in a PP file." ),
 	REC_SCRIPT_NO_SCRIPTS_DIR( ErrorLevel.SEVERE, ErrorCategory.RECIPES, "Scripts must be placed under a 'scripts' directory." ),
 	REC_ARTIFACT_ID_IN_LOWER_CASE( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' artifact ID should be in lower case." ),
 	REC_MISSING_README( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects should contain a readme file." ),

@@ -39,7 +39,7 @@ import java.util.TreeSet;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.AbstractType;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Instance;
@@ -61,7 +61,7 @@ import net.roboconf.doc.generator.internal.transformers.InheritanceTransformer;
 public abstract class AbstractStructuredRenderer implements IRenderer {
 
 	protected File outputDirectory;
-	protected Application application;
+	protected ApplicationTemplate applicationTemplate;
 	protected File applicationDirectory;
 	protected Map<String,String> options;
 	protected Messages messages;
@@ -79,12 +79,12 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	/**
 	 * Constructor.
 	 * @param outputDirectory
-	 * @param application
+	 * @param applicationTemplate
 	 * @param applicationDirectory
 	 */
-	public AbstractStructuredRenderer( File outputDirectory, Application application, File applicationDirectory ) {
+	public AbstractStructuredRenderer( File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory ) {
 		this.outputDirectory = outputDirectory;
-		this.application = application;
+		this.applicationTemplate = applicationTemplate;
 		this.applicationDirectory = applicationDirectory;
 	}
 
@@ -116,7 +116,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 
 	/**
-	 * Renders an application.
+	 * Renders an applicationTemplate.
 	 * @throws IOException
 	 */
 	private void renderApplication() throws IOException {
@@ -133,8 +133,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		sb.append( renderPageBreak());
 
 		sb.append( startTable());
-		sb.append( addTableLine( this.messages.get( "app.name" ), this.application.getName())); //$NON-NLS-1$
-		sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.application.getQualifier())); //$NON-NLS-1$
+		sb.append( addTableLine( this.messages.get( "app.name" ), this.applicationTemplate.getName())); //$NON-NLS-1$
+		sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.applicationTemplate.getQualifier())); //$NON-NLS-1$
 		sb.append( endTable());
 
 		sb.append( renderApplicationDescription());
@@ -159,7 +159,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		StringBuilder sb = new StringBuilder();
 
 		// First pages
-		if( ! Constants.GENERATED.equalsIgnoreCase( this.application.getName())) {
+		if( ! Constants.GENERATED.equalsIgnoreCase( this.applicationTemplate.getName())) {
 			sb.append( renderDocumentTitle());
 			sb.append( renderPageBreak());
 
@@ -170,8 +170,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			sb.append( renderPageBreak());
 
 			sb.append( startTable());
-			sb.append( addTableLine( this.messages.get( "app.name" ), this.application.getName())); //$NON-NLS-1$
-			sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.application.getQualifier())); //$NON-NLS-1$
+			sb.append( addTableLine( this.messages.get( "app.name" ), this.applicationTemplate.getName())); //$NON-NLS-1$
+			sb.append( addTableLine( this.messages.get( "app.qualifier" ), this.applicationTemplate.getQualifier())); //$NON-NLS-1$
 			sb.append( endTable());
 
 			sb.append( renderApplicationDescription());
@@ -232,7 +232,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		sb.append( renderParagraph( this.messages.get( "components.intro" ))); //$NON-NLS-1$
 
 		List<String> sectionNames = new ArrayList<String> ();
-		List<Component> allComponents = ComponentHelpers.findAllComponents( this.application );
+		List<Component> allComponents = ComponentHelpers.findAllComponents( this.applicationTemplate );
 		Collections.sort( allComponents, new AbstractTypeComparator());
 		for( Component comp : allComponents ) {
 
@@ -390,13 +390,13 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	private StringBuilder renderFacets() throws IOException {
 
 		StringBuilder sb = new StringBuilder();
-		if( ! this.application.getGraphs().getFacetNameToFacet().isEmpty()) {
+		if( ! this.applicationTemplate.getGraphs().getFacetNameToFacet().isEmpty()) {
 
 			sb.append( renderTitle1( this.messages.get( "facets" ))); //$NON-NLS-1$
 			sb.append( renderParagraph( this.messages.get( "facets.intro" ))); //$NON-NLS-1$
 
 			List<String> sectionNames = new ArrayList<String> ();
-			List<Facet> allFacets = new ArrayList<Facet>( this.application.getGraphs().getFacetNameToFacet().values());
+			List<Facet> allFacets = new ArrayList<Facet>( this.applicationTemplate.getGraphs().getFacetNameToFacet().values());
 			Collections.sort( allFacets, new AbstractTypeComparator());
 
 			for( Facet facet : allFacets ) {
@@ -450,7 +450,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		sb.append( renderTitle1( this.messages.get( "instances" ))); //$NON-NLS-1$
 		sb.append( renderParagraph( this.messages.get( "instances.intro" ))); //$NON-NLS-1$
 
-		if( this.application.getRootInstances().isEmpty()) {
+		if( this.applicationTemplate.getRootInstances().isEmpty()) {
 			sb.append( renderParagraph( this.messages.get( "instances.none" ))); //$NON-NLS-1$
 
 		} else  {
@@ -459,7 +459,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			// Split by root instance
 			List<String> sectionNames = new ArrayList<String> ();
 			Set<Instance> sortedRootInstances = new TreeSet<Instance>( new InstanceComparator());
-			sortedRootInstances.addAll( this.application.getRootInstances());
+			sortedRootInstances.addAll( this.applicationTemplate.getRootInstances());
 			for( Instance inst : sortedRootInstances ) {
 
 				// Start a section
@@ -537,8 +537,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 		String s;
 		if( this.locale == null
-				&& ! Utils.isEmptyOrWhitespaces( this.application.getDescription()))
-			s = this.application.getDescription();
+				&& ! Utils.isEmptyOrWhitespaces( this.applicationTemplate.getDescription()))
+			s = this.applicationTemplate.getDescription();
 		else
 			s = readCustomInformation( this.applicationDirectory, DocConstants.APP_DESC_PREFIX, DocConstants.FILE_SUFFIX );
 

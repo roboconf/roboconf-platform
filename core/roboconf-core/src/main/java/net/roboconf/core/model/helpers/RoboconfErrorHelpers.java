@@ -37,6 +37,7 @@ import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.SourceReference;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -79,6 +80,27 @@ public final class RoboconfErrorHelpers {
 		for( RoboconfError error : errors ) {
 			if( error.getErrorCode().getLevel() == ErrorLevel.WARNING )
 				result.add( error );
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Extracts and formats warnings so that they can be displayed by a logger.
+	 * @param errors a non-null list of errors
+	 * @return a list of string, each one being readable information about a warning
+	 */
+	public static List<String> extractAndFormatWarnings( Collection<? extends RoboconfError> errors ) {
+
+		List<String> result = new ArrayList<String> ();
+		for( RoboconfError warning : RoboconfErrorHelpers.findWarnings( errors )) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( warning.getErrorCode().getMsg());
+			if( ! Utils.isEmptyOrWhitespaces( warning.getDetails()))
+				sb.append( " " + warning.getDetails());
+
+			result.add( sb.toString());
 		}
 
 		return result;

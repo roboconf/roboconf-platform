@@ -1,7 +1,8 @@
 # Roboconf 
 [![Build Status](http://travis-ci.org/roboconf/roboconf-platform.png?branch=master)](http://travis-ci.org/roboconf/roboconf-platform)
 [![Coverage Status](http://coveralls.io/repos/roboconf/roboconf-platform/badge.png)](http://coveralls.io/r/roboconf/roboconf-platform)
-[![License](https://pypip.in/license/apache-libcloud/badge.png)](http://www.apache.org/licenses/LICENSE-2.0)
+[![License](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+[![Maven Central](https://img.shields.io/badge/Maven%20Central-v0.3-yellow.svg)](http://repo1.maven.org/maven2/net/roboconf/)
 
 [![Issue Stats](http://issuestats.com/github/roboconf/roboconf-platform/badge/issue)](http://issuestats.com/github/roboconf/roboconf-platform)
 [![Issue Stats](http://issuestats.com/github/roboconf/roboconf-platform/badge/pr)](http://issuestats.com/github/roboconf/roboconf-platform)

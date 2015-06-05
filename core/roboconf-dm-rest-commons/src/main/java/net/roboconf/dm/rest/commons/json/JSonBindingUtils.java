@@ -29,10 +29,13 @@ import java.io.IOException;
 import java.util.Map;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.rest.commons.Diagnostic;
+import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -55,7 +58,8 @@ public final class JSonBindingUtils {
 
 	private static final String APP_NAME = "name";
 	private static final String APP_DESC = "desc";
-	private static final String APP_QUALIFIER = "qualifier";
+	private static final String APP_INST_TPL = "tpl";
+	private static final String APP_TPL_QUALIFIER = "qualifier";
 
 	private static final String INST_NAME = "name";
 	private static final String INST_PATH = "path";
@@ -66,6 +70,13 @@ public final class JSonBindingUtils {
 
 	private static final String COMP_NAME = "name";
 	private static final String COMP_INSTALLER = "installer";
+
+	private static final String DEP_NAME = "name";
+	private static final String DEP_OPTIONAL = "optional";
+	private static final String DEP_RESOLVED = "resolved";
+
+	private static final String DIAG_PATH = "path";
+	private static final String DIAG_DEPENDENCIES = "dependencies";
 
 
 	/**
@@ -90,14 +101,189 @@ public final class JSonBindingUtils {
 		module.addSerializer( Instance.class, new InstanceSerializer());
 		module.addDeserializer( Instance.class, new InstanceDeserializer());
 
+		module.addSerializer( ApplicationTemplate.class, new ApplicationTemplateSerializer());
+		module.addDeserializer( ApplicationTemplate.class, new ApplicationTemplateDeserializer());
+
 		module.addSerializer( Application.class, new ApplicationSerializer());
 		module.addDeserializer( Application.class, new ApplicationDeserializer());
 
 		module.addSerializer( Component.class, new ComponentSerializer());
 		module.addDeserializer( Component.class, new ComponentDeserializer());
 
+		module.addSerializer( Diagnostic.class, new DiagnosticSerializer());
+		module.addDeserializer( Diagnostic.class, new DiagnosticDeserializer());
+
+		module.addSerializer( DependencyInformation.class, new DependencyInformationSerializer());
+		module.addDeserializer( DependencyInformation.class, new DependencyInformationDeserializer());
+
 		mapper.registerModule( module );
 		return mapper;
+	}
+
+
+	/**
+	 * A JSon serializer for application templates.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ApplicationTemplateSerializer extends JsonSerializer<ApplicationTemplate> {
+
+		@Override
+		public void serialize(
+				ApplicationTemplate app,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( app.getName() != null )
+				generator.writeStringField( APP_NAME, app.getName());
+
+			if( app.getDescription() != null )
+				generator.writeStringField( APP_DESC, app.getDescription());
+
+			if( app.getQualifier() != null )
+				generator.writeStringField( APP_TPL_QUALIFIER, app.getQualifier());
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for application templates.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ApplicationTemplateDeserializer extends JsonDeserializer<ApplicationTemplate> {
+
+		@Override
+		public ApplicationTemplate deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        ApplicationTemplate application = new ApplicationTemplate();
+
+	        JsonNode n;
+	        if(( n = node.get( APP_NAME )) != null )
+	        	application.setName( n.textValue());
+
+	        if(( n = node.get( APP_DESC )) != null )
+	        	application.setDescription( n.textValue());
+
+	        if(( n = node.get( APP_TPL_QUALIFIER )) != null )
+	        	application.setQualifier( n.textValue());
+
+			return application;
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for diagnostics.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class DiagnosticSerializer extends JsonSerializer<Diagnostic> {
+
+		@Override
+		public void serialize(
+				Diagnostic diag,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( diag.getInstancePath() != null )
+				generator.writeStringField( DIAG_PATH, diag.getInstancePath());
+
+			generator.writeArrayFieldStart( DIAG_DEPENDENCIES );
+			for( DependencyInformation info : diag.getDependenciesInformation())
+				generator.writeObject( info );
+			generator.writeEndArray();
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for diagnostics.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class DiagnosticDeserializer extends JsonDeserializer<Diagnostic> {
+
+		@Override
+		public Diagnostic deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        Diagnostic diag = new Diagnostic();
+
+	        JsonNode n;
+	        if(( n = node.get( DIAG_PATH )) != null )
+	        	diag.setInstancePath( n.textValue());
+
+	        if(( n = node.get( DIAG_DEPENDENCIES )) != null ) {
+	        	for( JsonNode arrayNodeItem : n ) {
+	        		ObjectMapper mapper = createObjectMapper();
+		        	DependencyInformation info = mapper.readValue( arrayNodeItem.toString(), DependencyInformation.class );
+	        		diag.getDependenciesInformation().add( info );
+	        	}
+	        }
+
+			return diag;
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for dependencies information.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class DependencyInformationSerializer extends JsonSerializer<DependencyInformation> {
+
+		@Override
+		public void serialize(
+				DependencyInformation info,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( info.getDependencyName() != null )
+				generator.writeStringField( DEP_NAME, info.getDependencyName());
+
+			generator.writeStringField( DEP_OPTIONAL, String.valueOf( info.isOptional()));
+			generator.writeStringField( DEP_RESOLVED, String.valueOf( info.isResolved()));
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for dependencies information.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class DependencyInformationDeserializer extends JsonDeserializer<DependencyInformation> {
+
+		@Override
+		public DependencyInformation deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        DependencyInformation info = new DependencyInformation();
+
+	        JsonNode n;
+	        if(( n = node.get( DEP_NAME )) != null )
+	        	info.setDependencyName( n.textValue());
+
+	        if(( n = node.get( DEP_OPTIONAL )) != null )
+	        	info.setOptional( Boolean.valueOf( n.textValue()));
+
+	        if(( n = node.get( DEP_RESOLVED )) != null )
+	        	info.setResolved( Boolean.valueOf( n.textValue()));
+
+			return info;
+		}
 	}
 
 
@@ -121,8 +307,8 @@ public final class JSonBindingUtils {
 			if( app.getDescription() != null )
 				generator.writeStringField( APP_DESC, app.getDescription());
 
-			if( app.getQualifier() != null )
-				generator.writeStringField( APP_QUALIFIER, app.getQualifier());
+			if( app.getTemplate() != null )
+				generator.writeObjectField( APP_INST_TPL, app.getTemplate());
 
 			generator.writeEndObject();
 		}
@@ -140,17 +326,23 @@ public final class JSonBindingUtils {
 
 			ObjectCodec oc = parser.getCodec();
 	        JsonNode node = oc.readTree( parser );
-	        Application application = new Application();
 
+	        Application application;
 	        JsonNode n;
+	        if(( n = node.get( APP_INST_TPL )) != null ) {
+	        	ObjectMapper mapper = createObjectMapper();
+	        	ApplicationTemplate appTemplate = mapper.readValue( n.toString(), ApplicationTemplate.class );
+	        	application = new Application( appTemplate );
+
+	        } else {
+	        	application = new Application( null );
+	        }
+
 	        if(( n = node.get( APP_NAME )) != null )
 	        	application.setName( n.textValue());
 
 	        if(( n = node.get( APP_DESC )) != null )
 	        	application.setDescription( n.textValue());
-
-	        if(( n = node.get( APP_QUALIFIER )) != null )
-	        	application.setQualifier( n.textValue());
 
 			return application;
 		}

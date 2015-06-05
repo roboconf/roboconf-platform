@@ -39,9 +39,9 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.client.IClient.ListenerCommand;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 

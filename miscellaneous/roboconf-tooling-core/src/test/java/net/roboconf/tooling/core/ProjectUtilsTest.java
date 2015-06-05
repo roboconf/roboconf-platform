@@ -66,9 +66,9 @@ public class ProjectUtilsTest {
 		for( RoboconfError roboconfError : alr.getLoadErrors())
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
 
-		Assert.assertEquals( bean.getProjectDescription(), alr.getApplication().getDescription());
-		Assert.assertEquals( bean.getProjectName(), alr.getApplication().getName());
-		Assert.assertEquals( bean.getProjectVersion(), alr.getApplication().getQualifier());
+		Assert.assertEquals( bean.getProjectDescription(), alr.getApplicationTemplate().getDescription());
+		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
+		Assert.assertEquals( bean.getProjectVersion(), alr.getApplicationTemplate().getQualifier());
 	}
 
 
@@ -95,9 +95,9 @@ public class ProjectUtilsTest {
 		for( RoboconfError roboconfError : alr.getLoadErrors())
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
 
-		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
-		Assert.assertEquals( bean.getProjectName(), alr.getApplication().getName());
-		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplication().getQualifier());
+		Assert.assertEquals( "${project.description}", alr.getApplicationTemplate().getDescription());
+		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
+		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getQualifier());
 	}
 
 
@@ -136,9 +136,9 @@ public class ProjectUtilsTest {
 		for( RoboconfError roboconfError : alr.getLoadErrors())
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, roboconfError.getErrorCode());
 
-		Assert.assertEquals( "${project.description}", alr.getApplication().getDescription());
-		Assert.assertEquals( bean.getProjectName(), alr.getApplication().getName());
-		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplication().getQualifier());
+		Assert.assertEquals( "${project.description}", alr.getApplicationTemplate().getDescription());
+		Assert.assertEquals( bean.getProjectName(), alr.getApplicationTemplate().getName());
+		Assert.assertEquals( "${project.version}--${timestamp}", alr.getApplicationTemplate().getQualifier());
 	}
 
 

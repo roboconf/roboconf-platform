@@ -1,0 +1,122 @@
+/**
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ *
+ * The present code is developed in the scope of the joint LINAGORA -
+ * Université Joseph Fourier - Floralis research program and is designated
+ * as a "Result" pursuant to the terms and conditions of the LINAGORA
+ * - Université Joseph Fourier - Floralis research program. Each copyright
+ * holder of Results enumerated here above fully & independently holds complete
+ * ownership of the complete Intellectual Property rights applicable to the whole
+ * of said Results, and may freely exploit it in any manner which does not infringe
+ * the moral rights of the other copyright holders.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.roboconf.core.model.beans;
+
+import java.util.HashSet;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
+
+/**
+ * @author Vincent Zurczak - Linagora
+ */
+public class ApplicationTemplateTest {
+
+	@Test
+	public void testEqualsAndHashCode_1() {
+
+		ApplicationTemplate app1 = new ApplicationTemplate();
+		app1.setName( "app" );
+		app1.setQualifier( "snapshot" );
+
+		ApplicationTemplate app2 = new ApplicationTemplate();
+		app2.setName( "app" );
+		app2.setQualifier( "snapshot" );
+
+		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		set.add( app1 );
+		set.add( app2 );
+		Assert.assertEquals( 1, set.size());
+	}
+
+
+	@Test
+	public void testEqualsAndHashCode_2() {
+
+		ApplicationTemplate app1 = new ApplicationTemplate();
+		app1.setName( "app" );
+
+		ApplicationTemplate app2 = new ApplicationTemplate();
+		app2.setName( "app" );
+
+		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		set.add( app1 );
+		set.add( app2 );
+		Assert.assertEquals( 1, set.size());
+	}
+
+
+	@Test
+	public void testEqualsAndHashCode_3() {
+
+		ApplicationTemplate app1 = new ApplicationTemplate();
+		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "whatever" );
+
+		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		set.add( app1 );
+		set.add( app2 );
+		Assert.assertEquals( 2, set.size());
+	}
+
+
+	@Test
+	public void testEqualsAndHashCode_4() {
+
+		ApplicationTemplate app1 = new ApplicationTemplate( "app" ).qualifier( "v1" );
+		ApplicationTemplate app2 = new ApplicationTemplate( "app" ).qualifier( "v3" );
+
+		HashSet<ApplicationTemplate> set = new HashSet<ApplicationTemplate>( 2 );
+		set.add( app1 );
+		set.add( app2 );
+		Assert.assertEquals( 2, set.size());
+	}
+
+
+	@Test
+	public void testEquals() {
+
+		ApplicationTemplate app = new ApplicationTemplate( "app" );
+		Assert.assertFalse( app.equals( null ));
+		Assert.assertFalse( app.equals( new ApplicationTemplate()));
+		Assert.assertFalse( app.equals( new ApplicationTemplate( "app" ).qualifier( "something" )));
+		Assert.assertFalse( app.equals( new Object()));
+
+		Assert.assertEquals( app, app );
+		Assert.assertEquals( app, new ApplicationTemplate( "app" ));
+	}
+
+
+	@Test
+	public void testChain() {
+
+		ApplicationTemplate app = new ApplicationTemplate().name( "ins" ).description( "desc" ).qualifier( "snapshot" ).graphs( new Graphs());
+		Assert.assertEquals( "ins", app.getName());
+		Assert.assertEquals( "desc", app.getDescription());
+		Assert.assertEquals( "snapshot", app.getQualifier());
+		Assert.assertNotNull( app.getGraphs());
+	}
+}

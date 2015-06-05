@@ -92,7 +92,7 @@ public class PackageMojoTest {
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( targetDirectory );
 		Assert.assertEquals( 0, alr.getLoadErrors().size());
-		Assert.assertEquals( "${project.version}", alr.getApplication().getQualifier());
+		Assert.assertEquals( "${project.version}", alr.getApplicationTemplate().getQualifier());
 
 		File notFilteredFile = new File( targetDirectory, "graph/Tomcat/readme.md" );
 		Assert.assertTrue( notFilteredFile.exists());

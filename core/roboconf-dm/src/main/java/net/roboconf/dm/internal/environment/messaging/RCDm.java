@@ -27,38 +27,38 @@ package net.roboconf.dm.internal.environment.messaging;
 
 import java.io.IOException;
 
+import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class RCDm extends ReconfigurableClientDm {
 
-	private final Manager manager;
+	private final ApplicationMngrDelegate appManager;
 
 
 	/**
 	 * Constructor.
-	 * @param manager
+	 * @param appManager
 	 */
-	public RCDm( Manager manager ) {
+	public RCDm( ApplicationMngrDelegate appManager ) {
 		super();
-		this.manager = manager;
+		this.appManager = appManager;
 	}
 
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.reconfigurables.ReconfigurableClientDm
-	 * #openConnection(net.roboconf.messaging.client.IDmClient)
+	 * @see net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm
+	 * #openConnection(net.roboconf.messaging.api.client.IDmClient)
 	 */
 	@Override
 	protected void openConnection( IDmClient newMessagingClient ) throws IOException {
 		super.openConnection( newMessagingClient );
-		for( ManagedApplication ma : this.manager.getAppNameToManagedApplication().values())
+		for( ManagedApplication ma : this.appManager.getManagedApplications())
 			newMessagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 	}
 }

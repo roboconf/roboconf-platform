@@ -38,6 +38,7 @@ import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -108,15 +109,8 @@ public class AgentInitializationTest extends DmTest {
 		List<Option> options = getBaseOptions();
 
 		// Store the application's location
-		String appLocation = null;
-		try {
-			File resourcesDirectory = TestUtils.findTestFile( "/lamp", getClass());
-			appLocation = resourcesDirectory.getAbsolutePath();
-
-		} catch( Exception e ) {
-			// nothing
-		}
-
+		File resourcesDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		String appLocation = resourcesDirectory.getAbsolutePath();
 		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
 
 		// Deploy the agent's bundles
@@ -149,9 +143,10 @@ public class AgentInitializationTest extends DmTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		ManagedApplication ma = this.manager.loadNewApplication( new File( appLocation ));
+		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getAppNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
 
 		// There is no agent yet (no root instance was deployed)
 		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
@@ -170,9 +165,9 @@ public class AgentInitializationTest extends DmTest {
 		Agent agent = myResolver.handler.agentIdToAgent.values().iterator().next();
 		Thread.sleep( 1000 );
 		Assert.assertFalse( agent.needsModel());
-		Assert.assertNotNull( agent.getRootInstance());
-		Assert.assertEquals( "MySQL VM", agent.getRootInstanceName());
-		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( agent.getRootInstance()).size());
+		Assert.assertNotNull( agent.getScopedInstance());
+		Assert.assertEquals( "MySQL VM", agent.getScopedInstance().getName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( agent.getScopedInstance()).size());
 
 		// Try to instantiate another VM
 		Instance anotherRootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Tomcat VM 1" );
@@ -184,14 +179,14 @@ public class AgentInitializationTest extends DmTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherRootInstance.getStatus());
 
 		Assert.assertEquals( 2, myResolver.handler.agentIdToAgent.size());
-		Agent anotherAgent = myResolver.handler.agentIdToAgent.get( "Tomcat VM 1 @ Legacy LAMP" );
+		Agent anotherAgent = myResolver.handler.agentIdToAgent.get( "/Tomcat VM 1 @ test" );
 		Assert.assertNotNull( anotherAgent );
 
 		Thread.sleep( 1000 );
 		Assert.assertFalse( anotherAgent.needsModel());
-		Assert.assertNotNull( anotherAgent.getRootInstance());
-		Assert.assertEquals( "Tomcat VM 1", anotherAgent.getRootInstanceName());
-		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( anotherAgent.getRootInstance()).size());
+		Assert.assertNotNull( anotherAgent.getScopedInstance());
+		Assert.assertEquals( "Tomcat VM 1", anotherAgent.getScopedInstance().getName());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( anotherAgent.getScopedInstance()).size());
 
 		// Undeploy them all
 		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );

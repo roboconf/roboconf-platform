@@ -54,11 +54,12 @@ public class InstanceComparator implements Serializable, Comparator<Instance> {
 		}
 
 		// If the compared segments are equal, compare the remains
-		if( isBefore == null ) {
-			isBefore = p1.length > p2.length ? p1 : p1.length < p2.length ? p2 : null;
-		}
+		int result = -1;
+		if( isBefore == null )
+			result = p1.length - p2.length;
+		else if( isBefore == p1 )
+			result = 1;
 
-		// Return a result
-		return isBefore == null ? 0 : isBefore == p1 ? 1 : -1;
+		return result;
 	}
 }

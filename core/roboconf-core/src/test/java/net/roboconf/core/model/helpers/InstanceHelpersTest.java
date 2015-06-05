@@ -37,6 +37,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -260,7 +261,7 @@ public class InstanceHelpersTest {
 	@Test
 	public void testGetAllInstances() {
 
-		Application app = new Application();
+		Application app = new Application( new ApplicationTemplate());
 		Instance[] rootInstances = new Instance[ 8 ];
 		for( int i=0; i<rootInstances.length; i++ ) {
 			rootInstances[ i ] = new Instance( "i-" + i );
@@ -300,7 +301,7 @@ public class InstanceHelpersTest {
 	@Test
 	public void testFindInstancesByComponentName() {
 
-		Application app = new Application();
+		ApplicationTemplate app = new ApplicationTemplate();
 		Component tomcat = new Component( "tomcat" ).installerName( "puppet" );
 		Component other = new Component( "other" ).installerName( "chef" );
 
@@ -360,13 +361,13 @@ public class InstanceHelpersTest {
 	@Test
 	public void testTryToInsertChildInstance() throws Exception {
 
-		File directory = TestUtils.findTestFile( "/applications/valid/lamp-legacy-with-only-components" );
+		File directory = TestUtils.findTestFile( "/applications/lamp-legacy-with-only-components" );
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
-		Assert.assertNotNull( result.getApplication());
+		Assert.assertNotNull( result.getApplicationTemplate());
 		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( result.getLoadErrors()));
 
-		Application app = result.getApplication();
+		ApplicationTemplate app = result.getApplicationTemplate();
 		app.getRootInstances().clear();
 		Assert.assertEquals( 0, InstanceHelpers.getAllInstances( app ).size());
 
@@ -513,5 +514,137 @@ public class InstanceHelpersTest {
 
 		inst.getComponent().setInstallerName( Constants.TARGET_INSTALLER );
 		Assert.assertTrue( InstanceHelpers.isTarget( inst ));
+	}
+
+
+	@Test
+	public void testFindRootInstancePath() {
+
+		Assert.assertEquals( "", InstanceHelpers.findRootInstancePath( null ));
+		Assert.assertEquals( "", InstanceHelpers.findRootInstancePath( "  " ));
+		Assert.assertEquals( "root", InstanceHelpers.findRootInstancePath( "root" ));
+		Assert.assertEquals( "root", InstanceHelpers.findRootInstancePath( "/root" ));
+		Assert.assertEquals( "root", InstanceHelpers.findRootInstancePath( "/root/" ));
+		Assert.assertEquals( "root", InstanceHelpers.findRootInstancePath( "//root//" ));
+		Assert.assertEquals( "", InstanceHelpers.findRootInstancePath( "/" ));
+		Assert.assertEquals( "root", InstanceHelpers.findRootInstancePath( "/root/server/whatever" ));
+		Assert.assertEquals( "root", InstanceHelpers.findRootInstancePath( "root/invalid" ));
+	}
+
+
+	@Test
+	public void testRemoveOffScopeInstances_zero() {
+
+		Instance root = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance server = new Instance( "server" ).component( new Component( "Server" ).installerName( "whatever" ));
+		Instance app1 = new Instance( "app1" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance app2 = new Instance( "app2" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance server2 = new Instance( "server2" ).component( new Component( "Server" ).installerName( "whatever" ));
+
+		InstanceHelpers.insertChild( root, server );
+		InstanceHelpers.insertChild( root, server2 );
+		InstanceHelpers.insertChild( server, app1 );
+		InstanceHelpers.insertChild( server, app2 );
+
+		Assert.assertEquals( 5, InstanceHelpers.buildHierarchicalList( root ).size());
+		InstanceHelpers.removeOffScopeInstances( root );
+		Assert.assertEquals( 5, InstanceHelpers.buildHierarchicalList( root ).size());
+	}
+
+
+	@Test
+	public void testRemoveOffScopeInstances_oneTarget() {
+
+		Instance root = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance server = new Instance( "server" ).component( new Component( "Server" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance app1 = new Instance( "app1" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance app2 = new Instance( "app2" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance server2 = new Instance( "server2" ).component( new Component( "Server" ).installerName( "whatever" ));
+
+		InstanceHelpers.insertChild( root, server );
+		InstanceHelpers.insertChild( root, server2 );
+		InstanceHelpers.insertChild( server, app1 );
+		InstanceHelpers.insertChild( server2, app2 );
+
+		Assert.assertEquals( 5, InstanceHelpers.buildHierarchicalList( root ).size());
+		InstanceHelpers.removeOffScopeInstances( root );
+
+		List<Instance> instances = InstanceHelpers.buildHierarchicalList( root );
+		Assert.assertEquals( 3, instances.size());
+		Assert.assertTrue( instances.contains( root ));
+		Assert.assertTrue( instances.contains( server2 ));
+		Assert.assertTrue( instances.contains( app2 ));
+	}
+
+
+	@Test
+	public void testRemoveOffScopeInstances_oneMiddleTarget() {
+
+		Instance root = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance server = new Instance( "server" ).component( new Component( "Server" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance app1 = new Instance( "app1" ).component( new Component( "Application" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance app2 = new Instance( "app2" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance server2 = new Instance( "server2" ).component( new Component( "Server" ).installerName( "whatever" ));
+
+		InstanceHelpers.insertChild( root, server );
+		InstanceHelpers.insertChild( root, server2 );
+		InstanceHelpers.insertChild( server, app1 );
+		InstanceHelpers.insertChild( server2, app2 );
+
+		Assert.assertEquals( 5, InstanceHelpers.buildHierarchicalList( root ).size());
+		Assert.assertEquals( 2, InstanceHelpers.buildHierarchicalList( server ).size());
+		InstanceHelpers.removeOffScopeInstances( server );
+
+		Assert.assertEquals( 4, InstanceHelpers.buildHierarchicalList( root ).size());
+
+		List<Instance> instances = InstanceHelpers.buildHierarchicalList( server );
+		Assert.assertEquals( 1, instances.size());
+		Assert.assertTrue( instances.contains( server ));
+	}
+
+
+	@Test
+	public void testFindScopedInstance() {
+
+		Instance root = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance server = new Instance( "server" ).component( new Component( "Server" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance app1 = new Instance( "app1" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance app2 = new Instance( "app2" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance server2 = new Instance( "server2" ).component( new Component( "Server" ).installerName( "whatever" ));
+
+		InstanceHelpers.insertChild( root, server );
+		InstanceHelpers.insertChild( root, server2 );
+		InstanceHelpers.insertChild( server, app1 );
+		InstanceHelpers.insertChild( server2, app2 );
+
+		Assert.assertEquals( root, InstanceHelpers.findScopedInstance( root ));
+		Assert.assertEquals( server, InstanceHelpers.findScopedInstance( server ));
+		Assert.assertEquals( server, InstanceHelpers.findScopedInstance( app1 ));
+		Assert.assertEquals( root, InstanceHelpers.findScopedInstance( app2 ));
+	}
+
+
+	@Test
+	public void testFindAllScopedInstances() {
+
+		Instance root = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance server = new Instance( "server" ).component( new Component( "Server" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance app1 = new Instance( "app1" ).component( new Component( "Application" ).installerName( "whatever" ));
+		Instance app2 = new Instance( "app2" ).component( new Component( "Application" ).installerName( Constants.TARGET_INSTALLER ));
+		Instance server2 = new Instance( "server2" ).component( new Component( "Server" ).installerName( "whatever" ));
+
+		InstanceHelpers.insertChild( root, server );
+		InstanceHelpers.insertChild( root, server2 );
+		InstanceHelpers.insertChild( server, app1 );
+		InstanceHelpers.insertChild( server2, app2 );
+
+		Application app = new Application( "test", new ApplicationTemplate());
+		app.getRootInstances().add( root );
+
+		List<Instance> instances = InstanceHelpers.findAllScopedInstances( app );
+		Assert.assertEquals( 3, instances.size());
+		Assert.assertTrue( instances.contains( root ));
+		Assert.assertTrue( instances.contains( server ));
+		Assert.assertTrue( instances.contains( app2 ));
 	}
 }

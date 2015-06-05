@@ -22,7 +22,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-parent</artifactId>
-		<version>1.2</version>
+		<version>1.3</version>
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
@@ -37,14 +37,18 @@
 	
 		<!-- Core Modules -->
 		<module>core/roboconf-core</module>
-		<module>core/roboconf-messaging</module>
+		<module>core/roboconf-messaging-api</module>
 		<module>core/roboconf-target-api</module>
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-agent</module>
 		<module>core/roboconf-agent-default</module>
 		<module>core/roboconf-agent-monitoring</module>
 		
+		<!-- Messaging providers -->
+		<module>core/roboconf-messaging-rabbitmq</module>
+		
 		<module>core/roboconf-dm</module>
+		<module>core/roboconf-dm-monitoring</module>
 		<module>core/roboconf-dm-rest-commons</module>
 		<module>core/roboconf-dm-rest-services</module>
 		
@@ -170,7 +174,7 @@
 					<version>2.4.0</version>
 					<extensions>true</extensions>
 				</plugin>
-	
+				
 				<!-- Required for Coveralls! -->
 				<plugin>
 					<groupId>org.eluder.coveralls</groupId>

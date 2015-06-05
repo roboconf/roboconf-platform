@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.doc.generator.internal.IRenderer;
 import net.roboconf.doc.generator.internal.renderers.HtmlRenderer;
 import net.roboconf.doc.generator.internal.renderers.MarkdownRenderer;
@@ -75,16 +75,20 @@ public class RenderingManager {
 	/**
 	 * Renders a Roboconf application into a given format.
 	 * @param outputDirectory the directory into which the documentation must be generated
-	 * @param application an application
+	 * @param applicationTemplate an application template
 	 * @param applicationDirectory the application's directory
 	 * @param renderer a renderer
 	 * @param options the generation options (can be null)
 	 * @throws IOException if something went wrong
 	 */
-	public void render( File outputDirectory, Application application, File applicationDirectory, Renderer renderer, Map<String,String> options )
+	public void render(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			Renderer renderer, Map<String,String> options )
 	throws IOException {
 		options = fixOptions( options );
-		buildRenderer( outputDirectory, application, applicationDirectory, renderer ).render( options );
+		buildRenderer( outputDirectory, applicationTemplate, applicationDirectory, renderer ).render( options );
 	}
 
 
@@ -95,13 +99,18 @@ public class RenderingManager {
 	 * </p>
 	 *
 	 * @param outputDirectory the directory into which the documentation must be generated
-	 * @param application an application
+	 * @param applicationTemplate an application template
 	 * @param applicationDirectory the application's directory
 	 * @param renderers a non-null list of render names
 	 * @param options the generation options (can be null)
 	 * @throws IOException if something went wrong
 	 */
-	public void render( File outputDirectory, Application application, File applicationDirectory, List<String> renderers, Map<String,String> options )
+	public void render(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			List<String> renderers,
+			Map<String,String> options )
 	throws IOException {
 
 		options = fixOptions( options );
@@ -121,7 +130,7 @@ public class RenderingManager {
 				subDirName += "_" + locale;
 
 			File subDir = new File( outputDirectory, subDirName );
-			buildRenderer( subDir, application, applicationDirectory, r ).render( options );
+			buildRenderer( subDir, applicationTemplate, applicationDirectory, r ).render( options );
 		}
 	}
 
@@ -152,21 +161,25 @@ public class RenderingManager {
 	/**
 	 * Builds the right renderer.
 	 * @param outputDirectory
-	 * @param application
+	 * @param applicationTemplate
 	 * @param applicationDirectory
 	 * @param renderer
 	 * @return a renderer
 	 */
-	private IRenderer buildRenderer( File outputDirectory, Application application, File applicationDirectory, Renderer renderer ) {
+	private IRenderer buildRenderer(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			Renderer renderer ) {
 
 		IRenderer result = null;
 		switch( renderer ) {
 		case HTML:
-			result = new HtmlRenderer( outputDirectory, application, applicationDirectory );
+			result = new HtmlRenderer( outputDirectory, applicationTemplate, applicationDirectory );
 			break;
 
 		case MARKDOWN:
-			result = new MarkdownRenderer( outputDirectory, application, applicationDirectory );
+			result = new MarkdownRenderer( outputDirectory, applicationTemplate, applicationDirectory );
 			break;
 
 		default:

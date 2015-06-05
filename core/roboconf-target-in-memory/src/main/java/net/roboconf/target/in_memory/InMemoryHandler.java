@@ -32,6 +32,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -51,6 +53,7 @@ public class InMemoryHandler implements TargetHandler {
 	private Factory agentFactory;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final AtomicLong defaultDelay = new AtomicLong( 0L );
+	private MessagingClientFactoryRegistry registry;
 
 
 	/*
@@ -62,6 +65,9 @@ public class InMemoryHandler implements TargetHandler {
 		return TARGET_ID;
 	}
 
+	public void setMessagingFactoryRegistry(MessagingClientFactoryRegistry registry) {
+		this.registry = registry;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -71,15 +77,14 @@ public class InMemoryHandler implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
-			String rootInstanceName,
+			Map<String,String> messagingConfiguration,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
-		// Need to wait?
 		this.logger.fine( "Creating a new agent in memory." );
+
+		// Need to wait?
 		try {
 			String delayAsString = null;
 			if( targetProperties != null )
@@ -95,14 +100,19 @@ public class InMemoryHandler implements TargetHandler {
 		}
 
 		// Prepare the properties of the new POJO
-		Dictionary<String,Object> configuration = new Hashtable<String,Object> ();
-	    configuration.put( "message-server-ip", messagingIp );
-	    configuration.put( "message-server-username", messagingUsername );
-	    configuration.put( "message-server-password", messagingPassword );
+		Dictionary<String,Object> configuration = new Hashtable<>();
+		final String messagingType = messagingConfiguration.get("net.roboconf.messaging.type");
 	    configuration.put( "application-name", applicationName );
-	    configuration.put( "root-instance-name", rootInstanceName );
+	    configuration.put( "scoped-instance-path", scopedInstancePath );
+		configuration.put( "messaging-type", messagingType);
 
-	    String machineId = rootInstanceName + " @ " + applicationName;
+		// Reconfigure the messaging factory.
+		MessagingClientFactory messagingFactory = this.registry.getMessagingClientFactory(messagingType);
+		if (messagingFactory != null) {
+			messagingFactory.setConfiguration(messagingConfiguration);
+		}
+
+	    String machineId = scopedInstancePath + " @ " + applicationName;
 	    configuration.put( Factory.INSTANCE_NAME_PROPERTY, machineId );
 
 	    if( this.agentFactory == null )
@@ -114,7 +124,7 @@ public class InMemoryHandler implements TargetHandler {
 	    	instance.start();
 
 		} catch( Exception e ) {
-			throw new TargetException( "An in-memory agent could not be launched. Root instance name: " + rootInstanceName, e );
+			throw new TargetException( "An in-memory agent could not be launched. Scoped instance path: " + scopedInstancePath, e );
 		}
 
 		return machineId;
@@ -129,11 +139,9 @@ public class InMemoryHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 		Map<String,String> targetProperties,
+		Map<String,String> messagingConfiguration,
 		String machineId,
-		String messagingIp,
-		String messagingUsername,
-		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 

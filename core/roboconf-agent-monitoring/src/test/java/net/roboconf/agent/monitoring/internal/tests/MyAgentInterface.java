@@ -27,8 +27,8 @@ package net.roboconf.agent.monitoring.internal.tests;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -36,7 +36,7 @@ import net.roboconf.messaging.internal.client.test.TestClientAgent;
 public class MyAgentInterface implements AgentMessagingInterface {
 
 	private final TestClientAgent messagingClient;
-	private Instance rootInstance;
+	private Instance scopedInstance;
 
 
 	/**
@@ -58,12 +58,12 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	}
 
 	@Override
-	public Instance getRootInstance() {
-		return this.rootInstance;
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
 	}
 
-	public void setRootInstance( Instance rootInstance ) {
-		this.rootInstance = rootInstance;
+	public void setScopedInstance( Instance scopedInstance ) {
+		this.scopedInstance = scopedInstance;
 	}
 
 	@Override

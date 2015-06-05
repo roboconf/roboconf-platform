@@ -33,7 +33,7 @@ import java.util.Map;
 
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.doc.generator.DocConstants;
 import net.roboconf.doc.generator.RenderingManager;
 
@@ -75,7 +75,7 @@ public class GenerateDocumentationMojo extends AbstractMojo {
 		// - Sharing complex objects amongst mojos appears to be quite complicated.
 		File appDirectory = new File( this.project.getBasedir(), MavenPluginConstants.TARGET_MODEL_DIRECTORY );
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( appDirectory );
-		Application app = alr.getApplication();
+		ApplicationTemplate app = alr.getApplicationTemplate();
 		if( app == null )
 			throw new MojoExecutionException( "The application object could not be loaded." );
 

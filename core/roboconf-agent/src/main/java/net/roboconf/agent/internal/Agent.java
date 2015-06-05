@@ -44,9 +44,8 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
@@ -61,26 +60,25 @@ import net.roboconf.plugin.api.PluginInterface;
 public class Agent implements AgentMessagingInterface {
 
 	// Component properties (ipojo)
-	String messageServerIp, messageServerUsername, messageServerPassword;
-	String applicationName, rootInstanceName, ipAddress, targetId;
+	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType;
 	boolean overrideProperties = false, simulatePlugins = true;
 
 	// Fields that should be injected (ipojo)
-	final List<PluginInterface> plugins = new ArrayList<PluginInterface> ();
+	final List<PluginInterface> plugins = new ArrayList<> ();
 
 	// Internal fields
 	private final Logger logger;
-	private String messagingFactoryType;
 	private ReconfigurableClientAgent messagingClient;
+	private Instance scopedInstance;
 	Timer heartBeatTimer;
-	private Instance rootInstance;
+
+
 
 	/**
 	 * Constructor.
 	 */
 	public Agent() {
 		this.logger = Logger.getLogger( getClass().getName());
-		this.messagingFactoryType = MessagingConstants.FACTORY_RABBIT_MQ;
 
 		// Set default value for IP address
 		// Will be overridden in many cases (e.g. on IaaS with user-data).
@@ -142,7 +140,7 @@ public class Agent implements AgentMessagingInterface {
 		// Send a last message to the DM
 		try {
 			if( this.messagingClient.isConnected()) {
-				this.messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.rootInstanceName ));
+				this.messagingClient.sendMessageToTheDm( new MsgNotifMachineDown( this.applicationName, this.scopedInstancePath ));
 				this.logger.fine( "Agent " + getAgentId() + " notified the DM it was about to stop." );
 			}
 
@@ -186,7 +184,7 @@ public class Agent implements AgentMessagingInterface {
 		if( this.messagingClient != null )
 			messageProcessor = (AgentMessageProcessor) this.messagingClient.getMessageProcessor();
 
-		return messageProcessor == null || messageProcessor.rootInstance == null;
+		return messageProcessor == null || messageProcessor.scopedInstance == null;
 	}
 
 
@@ -230,7 +228,7 @@ public class Agent implements AgentMessagingInterface {
 
 		// Initialize the result, if any
 		if( result != null )
-			result.setNames( this.applicationName, this.rootInstanceName );
+			result.setNames( this.applicationName, this.scopedInstancePath );
 
 		return result;
 	}
@@ -260,7 +258,7 @@ public class Agent implements AgentMessagingInterface {
 
 	/**
 	 * This method is invoked by iPojo every time a new plug-in appears.
-	 * @param pi
+	 * @param pi the appearing plugin.
 	 */
 	public void pluginAppears( PluginInterface pi ) {
 		if( pi != null ) {
@@ -273,7 +271,7 @@ public class Agent implements AgentMessagingInterface {
 
 	/**
 	 * This method is invoked by iPojo every time a plug-in disappears.
-	 * @param pi
+	 * @param pi the disappearing plugin.
 	 */
 	public void pluginDisappears( PluginInterface pi ) {
 
@@ -292,7 +290,7 @@ public class Agent implements AgentMessagingInterface {
 
 	/**
 	 * This method is invoked by iPojo every time a plug-in is modified.
-	 * @param pi
+	 * @param pi the modified plugin.
 	 */
 	public void pluginWasModified( PluginInterface pi ) {
 		this.logger.info( "Plugin '" + pi.getPluginName() + "' was modified in Roboconf's agent." );
@@ -343,20 +341,17 @@ public class Agent implements AgentMessagingInterface {
 
 				this.applicationName = props.getApplicationName();
 				this.ipAddress = props.getIpAddress();
-				this.rootInstanceName = props.getRootInstanceName();
+				this.scopedInstancePath = props.getScopedInstancePath();
 
-				this.messageServerIp = props.getMessageServerIp();
-				this.messageServerUsername = props.getMessageServerUsername();
-				this.messageServerPassword = props.getMessageServerPassword();
 			}
 		}
 
 		// Update the messaging connection
 		this.messagingClient.setApplicationName( this.applicationName );
-		this.messagingClient.setRootInstanceName( this.rootInstanceName );
+		this.messagingClient.setScopedInstancePath( this.scopedInstancePath );
 		this.messagingClient.setIpAddress( this.ipAddress );
 		this.messagingClient.setNeedsModel( needsModel());
-		this.messagingClient.switchMessagingClient( this.messageServerIp, this.messageServerUsername, this.messageServerPassword, this.messagingFactoryType );
+		this.messagingClient.switchMessagingType( this.messagingType);
 
 		this.logger.info( "The agent was successfully (re)configured." );
 	}
@@ -372,10 +367,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @return the root instance name
+	 * @return the scoped instance's path
 	 */
-	public String getRootInstanceName() {
-		return this.rootInstanceName;
+	public String getScopedInstancePath() {
+		return this.scopedInstancePath;
 	}
 
 
@@ -388,34 +383,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @return the messagingFactoryType
+	 * @return the messagingType
 	 */
-	public String getMessagingFactoryType() {
-		return this.messagingFactoryType;
-	}
-
-
-	/**
-	 * @param messageServerIp the messageServerIp to set
-	 */
-	public void setMessageServerIp( String messageServerIp ) {
-		this.messageServerIp = messageServerIp;
-	}
-
-
-	/**
-	 * @param messageServerUsername the messageServerUsername to set
-	 */
-	public void setMessageServerUsername( String messageServerUsername ) {
-		this.messageServerUsername = messageServerUsername;
-	}
-
-
-	/**
-	 * @param messageServerPassword the messageServerPassword to set
-	 */
-	public void setMessageServerPassword( String messageServerPassword ) {
-		this.messageServerPassword = messageServerPassword;
+	public String getMessagingType() {
+		return this.messagingType;
 	}
 
 
@@ -428,10 +399,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @param rootInstanceName the rootInstanceName to set
+	 * @param scopedInstancePath the scopedInstancePath to set
 	 */
-	public void setRootInstanceName( String rootInstanceName ) {
-		this.rootInstanceName = rootInstanceName;
+	public void setScopedInstancePath( String scopedInstancePath ) {
+		this.scopedInstancePath = scopedInstancePath;
 	}
 
 
@@ -468,10 +439,10 @@ public class Agent implements AgentMessagingInterface {
 
 
 	/**
-	 * @param messagingFactoryType the messagingFactoryType to set
+	 * @param messagingType the messaging type to set
 	 */
-	public void setMessagingFactoryType( String messagingFactoryType ) {
-		this.messagingFactoryType = messagingFactoryType;
+	public void setMessagingType( String messagingType ) {
+		this.messagingType = messagingType;
 	}
 
 
@@ -481,27 +452,26 @@ public class Agent implements AgentMessagingInterface {
 	String getAgentId() {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append( Utils.isEmptyOrWhitespaces( this.rootInstanceName ) ? "?" : this.rootInstanceName );
+		sb.append( Utils.isEmptyOrWhitespaces( this.scopedInstancePath ) ? "?" : this.scopedInstancePath );
 		if( ! Utils.isEmptyOrWhitespaces( this.applicationName ))
-			sb.append( " @ " + this.applicationName );
+			sb.append(" @ ").append(this.applicationName);
 
 		return sb.toString();
 	}
 
 
 	@Override
-	public Instance getRootInstance() {
-		return this.rootInstance;
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
 	}
 
 
-	public void setRootInstance(Instance rootInstance) {
-		this.rootInstance = rootInstance;
+	public void setScopedInstance(Instance scopedInstance) {
+		this.scopedInstance = scopedInstance;
 	}
 
 
 	public List<PluginInterface> getPlugins() {
 		return this.plugins;
 	}
-
 }

@@ -38,7 +38,7 @@ import net.roboconf.target.api.TargetHandler;
 public class EmbeddedHandler implements TargetHandler {
 
 	public static final String TARGET_ID = "embedded";
-	private final Map<String,Boolean> machineIdToRunning = new HashMap<String,Boolean> ();
+	private final Map<String,Boolean> machineIdToRunning = new HashMap<> ();
 
 
 	/*
@@ -59,15 +59,13 @@ public class EmbeddedHandler implements TargetHandler {
 	 */
 	@Override
 	public String createMachine(
-		Map<String, String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
-			String rootInstanceName,
+			Map<String, String> targetProperties,
+			Map<String,String> messagingConfiguration,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
-		String machineId = rootInstanceName + " (" + TARGET_ID + ")";
+		String machineId = scopedInstancePath + " (" + TARGET_ID + ")";
 		this.machineIdToRunning.put( machineId, Boolean.TRUE );
 		return machineId;
 	}
@@ -93,11 +91,9 @@ public class EmbeddedHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 		Map<String,String> targetProperties,
+		Map<String,String> messagingConfiguration,
 		String machineId,
-		String messagingIp,
-		String messagingUsername,
-		String messagingPassword,
-		String rootInstanceName,
+		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {
 		// nothing

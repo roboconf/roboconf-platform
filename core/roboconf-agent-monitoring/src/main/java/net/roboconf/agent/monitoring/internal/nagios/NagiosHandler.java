@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.monitoring.internal.MonitoringHandler;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
  * Handler to check Nagios (polling).
@@ -90,7 +90,7 @@ public class NagiosHandler extends MonitoringHandler {
 			String liveStatusResponse = client.queryLivestatus( this.nagiosInstructions );
 			result = new MsgNotifAutonomic(
 					this.applicationName,
-					this.vmInstanceName,
+					this.scopedInstancePath,
 					this.eventId,
 					liveStatusResponse );
 

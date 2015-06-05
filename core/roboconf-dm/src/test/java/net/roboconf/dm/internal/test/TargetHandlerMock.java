@@ -41,7 +41,6 @@ public class TargetHandlerMock implements TargetHandler {
 
 	/**
 	 * Constructor.
-	 * @param installerName
 	 */
 	public TargetHandlerMock( String installerName ) {
 		this.installerName = installerName;
@@ -60,9 +59,7 @@ public class TargetHandlerMock implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String,String> messagingConfiguration,
 			String rootInstanceName,
 			String applicationName )
 	throws TargetException {
@@ -72,10 +69,8 @@ public class TargetHandlerMock implements TargetHandler {
 	@Override
 	public void configureMachine(
 			Map<String,String> targetProperties,
+			Map<String,String> messagingConfiguration,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String rootInstanceName,
 			String applicationName)
 	throws TargetException {

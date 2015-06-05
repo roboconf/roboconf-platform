@@ -43,7 +43,7 @@ import net.roboconf.agent.monitoring.internal.rest.RestHandler;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
  * Scheduler for periodic monitoring checks (polling).
@@ -79,13 +79,14 @@ public class MonitoringTask extends TimerTask {
 		this.logger.fine( "Monitoring Task is being invoked." );
 
 		// Root Instance may not yet have been injected: skip !
-		if( this.agentInterface.getRootInstance() == null) {
+		if( this.agentInterface.getScopedInstance() == null) {
 			this.logger.fine( "The agent's model has not yet been initialized. Monitoring cannot work yet." );
 			return;
 		}
 
 		// Otherwise, check all the instances
-		for( Instance inst : InstanceHelpers.buildHierarchicalList( this.agentInterface.getRootInstance())) {
+		for( Instance inst : InstanceHelpers.buildHierarchicalList( this.agentInterface.getScopedInstance())) {
+
 			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( inst );
 			File measureFile = new File( dir, inst.getComponent().getName() + ".measures" );
 			if( ! measureFile.exists())
@@ -178,11 +179,13 @@ public class MonitoringTask extends TimerTask {
 		return result;
 	}
 
+
 	private void addSectionIfNotEmpty(List<String> sections, String section) {
-		if(section.trim().length() > 0) sections.add(section);
+		if( ! Utils.isEmptyOrWhitespaces( section ))
+			sections.add(section);
 	}
 
-	
+
 
 	/**
 	 * Creates a handler.
@@ -194,15 +197,15 @@ public class MonitoringTask extends TimerTask {
 	MonitoringHandler createHandler( String parserId, String eventId, String ruleContent ) {
 
 		String appName = this.agentInterface.getApplicationName();
-		String rootInstanceName = this.agentInterface.getRootInstance().getName();
+		String scopedInstancePath = InstanceHelpers.computeInstancePath( this.agentInterface.getScopedInstance());
 
 		MonitoringHandler result = null;
 		if( PARSER_FILE.equalsIgnoreCase( parserId ))
-			result = new FileHandler( eventId, appName, rootInstanceName, ruleContent );
+			result = new FileHandler( eventId, appName, scopedInstancePath, ruleContent );
 		else if( PARSER_NAGIOS.equalsIgnoreCase( parserId ))
-			result = new NagiosHandler( eventId, appName, rootInstanceName, ruleContent );
+			result = new NagiosHandler( eventId, appName, scopedInstancePath, ruleContent );
 		else if( PARSER_REST.equalsIgnoreCase( parserId ))
-			result = new RestHandler( eventId, appName, rootInstanceName, ruleContent );
+			result = new RestHandler( eventId, appName, scopedInstancePath, ruleContent );
 
 		return result;
 	}

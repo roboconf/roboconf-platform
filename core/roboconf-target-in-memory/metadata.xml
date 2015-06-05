@@ -8,6 +8,9 @@
 	<component classname="net.roboconf.target.in_memory.InMemoryHandler" name="roboconf-target-in-memory">
 		<provides />
 		<requires filter="(factory.name=roboconf-agent-in-memory)" field="agentFactory" optional="false" />
+		<requires>
+			<callback type="bind" method="setMessagingFactoryRegistry" />
+		</requires>
 	</component>
 	
 	<instance component="roboconf-target-in-memory" name="Roboconf Target - In memory" />

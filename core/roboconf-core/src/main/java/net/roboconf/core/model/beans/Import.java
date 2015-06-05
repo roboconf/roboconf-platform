@@ -120,7 +120,7 @@ public class Import implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return this.instancePath == null ? 17 : this.instancePath.hashCode();
+		return this.instancePath.hashCode();
 	}
 
 

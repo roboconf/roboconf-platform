@@ -38,7 +38,7 @@ import java.util.Set;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
@@ -409,10 +409,10 @@ public final class RuntimeModelValidator {
 
 	/**
 	 * Validates an application.
-	 * @param app an application (not null)
+	 * @param app an application template (not null)
 	 * @return a non-null list of errors
 	 */
-	public static Collection<ModelError> validate( Application app ) {
+	public static Collection<ModelError> validate( ApplicationTemplate app ) {
 
 		Collection<ModelError> errors = new ArrayList<ModelError> ();
 		if( Utils.isEmptyOrWhitespaces( app.getName()))
@@ -436,7 +436,7 @@ public final class RuntimeModelValidator {
 	 * @param descriptor a descriptor
 	 * @return a non-null list of errors
 	 */
-	public static Collection<ModelError> validate( ApplicationDescriptor descriptor ) {
+	public static Collection<ModelError> validate( ApplicationTemplateDescriptor descriptor ) {
 
 		Collection<ModelError> errors = new ArrayList<ModelError> ();
 		if( Utils.isEmptyOrWhitespaces( descriptor.getName()))

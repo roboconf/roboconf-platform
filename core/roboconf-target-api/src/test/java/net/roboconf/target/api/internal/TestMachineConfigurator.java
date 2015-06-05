@@ -41,8 +41,6 @@ public class TestMachineConfigurator implements MachineConfigurator {
 
 	/**
 	 * Constructor.
-	 * @param cpt
-	 * @param failConfiguration
 	 */
 	public TestMachineConfigurator( AtomicInteger cpt, boolean failConfiguration ) {
 		this.cpt = cpt;

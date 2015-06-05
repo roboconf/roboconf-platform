@@ -35,13 +35,16 @@ import javax.inject.Inject;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -96,6 +99,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// and that come from external modules.
 		probe.addTest( AbstractTest.class );
 		probe.addTest( DmTest.class );
+		probe.addTest( TestApplicationTemplate.class );
 		probe.addTest( TestApplication.class );
 
 		// Force the use of the AgentMessagingInterface from the agent's bundle.
@@ -118,23 +122,16 @@ public class DelayedAgentInitializationTest extends DmTest {
 				DelayedAgentInitializationTest.class
 		));
 
-		// Add a valid configuration for the agent
-		options.add( editConfigurationFilePut(
-				  "etc/net.roboconf.agent.configuration.cfg",
-				  "message-server-ip",
-				  "localhost" ));
+		// Generic messaging update note:
+		//
+		// Messaging configuration is now externalized to the RabbitMQ-specific configuration file:
+		//         net.roboconf.messaging.rabbitmq.cfg
+		// Because the DM and the agent run on the same platform (in this test), this messaging configuration is common
+		// to both of them. As a workaround, we keep the default (valid) messaging configuration, and artificially
+		// close the DM client's connection.
 
-		options.add( editConfigurationFilePut(
-				  "etc/net.roboconf.agent.configuration.cfg",
-				  "message-server-username",
-				  "guest" ));
-
-		options.add( editConfigurationFilePut(
-				  "etc/net.roboconf.agent.configuration.cfg",
-				  "message-server-password",
-				  "guest" ));
-
-		TestApplication app = new TestApplication();
+		// Add the configuration for the agent
+				TestApplication app = new TestApplication();
 		options.add( editConfigurationFilePut(
 				  "etc/net.roboconf.agent.configuration.cfg",
 				  "application-name",
@@ -142,8 +139,12 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		options.add( editConfigurationFilePut(
 				  "etc/net.roboconf.agent.configuration.cfg",
-				  "root-instance-name",
-				  app.getMySqlVm().getName()));
+				  "scoped-instance-path",
+				  InstanceHelpers.computeInstancePath( app.getMySqlVm())));
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"messaging-type",
+				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
 
 		// Add an invalid configuration for the DM
 		options.add( editConfigurationFilePut(
@@ -182,10 +183,13 @@ public class DelayedAgentInitializationTest extends DmTest {
 		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
 		this.manager.reconfigure();
 
+		// Artificially closes the DM-side client, to prevent Agent <-> DM exchanges.
+		this.manager.getMessagingClient().closeConnection();
+
 		// Make like if the DM had already deployed an application's part
 		TestApplication app = new TestApplication();
-		ManagedApplication ma = new ManagedApplication( app, null );
-		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
 
 		// Check the DM
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
@@ -194,18 +198,18 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Check the agent
 		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
-		Assert.assertNull( this.agentItf.getRootInstance());
+		Assert.assertNull( this.agentItf.getScopedInstance());
 		Assert.assertNotNull( this.agentItf.getMessagingClient());
 		Assert.assertTrue( this.agentItf.getMessagingClient().isConnected());
 
 		// Both cannot communicate.
 		// Let's wait a little bit and let's reconfigure the DM with the right credentials.
-		this.manager.setMessageServerUsername( "guest" );
+		// DM reconfiguration should now use the common RabbitMQ configuration (which *is* correct).
 		this.manager.reconfigure();
 
 		// Manager#reconfigure() reloads all the applications from its configuration.
 		// Since we loaded one in-memory, we must restore it ourselves.
-		this.manager.getAppNameToManagedApplication().put( app.getName(), ma );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
 
 		// Force the agent to send a heart beat message.
 		this.agentItf.forceHeartbeatSending();
@@ -215,8 +219,8 @@ public class DelayedAgentInitializationTest extends DmTest {
 		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
 		Assert.assertNotNull( this.agentItf.getMessagingClient());
 		Assert.assertTrue( this.agentItf.getMessagingClient().isConnected());
-		Assert.assertNotNull( this.agentItf.getRootInstance());
-		Assert.assertEquals( app.getMySqlVm(), this.agentItf.getRootInstance());
+		Assert.assertNotNull( this.agentItf.getScopedInstance());
+		Assert.assertEquals( app.getMySqlVm(), this.agentItf.getScopedInstance());
 
 		// And the DM should have considered the root instance as started.
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());

@@ -33,10 +33,10 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -61,7 +61,8 @@ public class ManagedApplicationTest {
 
 		File f = this.folder.newFolder( "Roboconf_test" );
 		this.app = new TestApplication();
-		this.ma = new ManagedApplication( this.app, f );
+		this.app.setDirectory( f );
+		this.ma = new ManagedApplication( this.app );
 	}
 
 
@@ -72,13 +73,11 @@ public class ManagedApplicationTest {
 
 
 	@Test
-	public void testGetName() {
+	public void testShortcuts() {
 
-		ManagedApplication ma = new ManagedApplication( null, null );
-		Assert.assertNull( ma.getName());
-
-		ma = new ManagedApplication( this.app, null );
-		Assert.assertEquals( this.app.getName(), ma.getName());
+		Assert.assertEquals( this.app.getName(), this.ma.getName());
+		Assert.assertEquals( this.ma.getApplication().getTemplate().getGraphs(), this.ma.getGraphs());
+		Assert.assertEquals( this.ma.getApplication().getTemplate().getDirectory(), this.ma.getTemplateDirectory());
 	}
 
 
@@ -86,18 +85,18 @@ public class ManagedApplicationTest {
 	public void testStoreAwaitingMessage() {
 
 		Instance rootInstance = new Instance( "root" );
-		Assert.assertEquals( 0, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
 		this.ma.storeAwaitingMessage( rootInstance, new MsgCmdSendInstances());
-		Assert.assertEquals( 1, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = this.ma.getRootInstanceToAwaitingMessages().get( rootInstance );
+		List<Message> messages = this.ma.getScopedInstanceToAwaitingMessages().get( rootInstance );
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
 
 		Instance childInstance = new Instance( "child" );
 		InstanceHelpers.insertChild( rootInstance, childInstance );
 		this.ma.storeAwaitingMessage( childInstance, new MsgCmdAddInstance( childInstance ));
-		Assert.assertEquals( 1, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
 
 		Assert.assertEquals( 2, messages.size());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
@@ -105,9 +104,9 @@ public class ManagedApplicationTest {
 
 		childInstance.setParent( null );
 		this.ma.storeAwaitingMessage( childInstance, new MsgCmdRemoveInstance( childInstance ));
-		Assert.assertEquals( 2, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, this.ma.getScopedInstanceToAwaitingMessages().size());
 
-		messages = this.ma.getRootInstanceToAwaitingMessages().get( childInstance );
+		messages = this.ma.getScopedInstanceToAwaitingMessages().get( childInstance );
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 0 ).getClass());
 	}
@@ -116,14 +115,14 @@ public class ManagedApplicationTest {
 	@Test
 	public void testRemoveAwaitingMessages() {
 
-		Assert.assertEquals( 0, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( new Instance( "whatever" )).size());
 
 		Instance rootInstance = new Instance( "root" );
 		this.ma.storeAwaitingMessage( rootInstance, new MsgCmdSendInstances());
-		Assert.assertEquals( 1, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, this.ma.removeAwaitingMessages( rootInstance ).size());
-		Assert.assertEquals( 0, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( rootInstance ).size());
 	}
 
@@ -132,12 +131,12 @@ public class ManagedApplicationTest {
 	public void testStoreAndRemove() {
 
 		Instance rootInstance = new Instance( "root" );
-		Assert.assertEquals( 0, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
 		this.ma.storeAwaitingMessage( rootInstance, new MsgCmdSendInstances());
 		this.ma.storeAwaitingMessage( rootInstance, new MsgCmdSendInstances());
-		Assert.assertEquals( 1, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
 
-		List<Message> messages = this.ma.getRootInstanceToAwaitingMessages().get( rootInstance );
+		List<Message> messages = this.ma.getScopedInstanceToAwaitingMessages().get( rootInstance );
 		Assert.assertEquals( 2, messages.size());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 1 ).getClass());
@@ -146,10 +145,10 @@ public class ManagedApplicationTest {
 		Assert.assertEquals( 2, messages.size());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 1 ).getClass());
-		Assert.assertEquals( 0, this.ma.getRootInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.ma.storeAwaitingMessage( rootInstance, new MsgCmdRemoveInstance( rootInstance ));
-		messages = this.ma.getRootInstanceToAwaitingMessages().get( rootInstance );
+		messages = this.ma.getScopedInstanceToAwaitingMessages().get( rootInstance );
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 0 ).getClass());
 	}

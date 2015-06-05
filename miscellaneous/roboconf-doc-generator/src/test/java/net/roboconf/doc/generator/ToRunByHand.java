@@ -56,7 +56,7 @@ public class ToRunByHand {
 			ApplicationLoadResult alr = RuntimeModelIo.loadApplication( f );
 
 			Map<String,String> options = new HashMap<String,String> ();
-			new RenderingManager().render( outputDir, alr.getApplication(), f, Renderer.HTML, options );
+			new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.HTML, options );
 
 		} catch( Exception e ) {
 			e.printStackTrace();

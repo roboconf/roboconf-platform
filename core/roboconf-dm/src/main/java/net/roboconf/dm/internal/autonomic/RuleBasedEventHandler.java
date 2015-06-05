@@ -50,7 +50,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
  * An event handler to evaluate rules.
@@ -146,7 +146,7 @@ public class RuleBasedEventHandler {
 		 * mail.smtp.ssl.trust: my.mail.server
 		 */
 		File propFile = new File(
-				ma.getApplicationFilesDirectory(),
+				ma.getApplication().getDirectory(),
 				Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES + ".properties" );
 
 		Properties mailProperties = Utils.readPropertiesFile( propFile );
@@ -217,7 +217,7 @@ public class RuleBasedEventHandler {
 			// First check that all component to instantiate are valid and found...
 			// Necessary, not to create a VM then try to instantiate a fake component there!
 			for( String s : templates) {
-				Component compToInstantiate = ComponentHelpers.findComponent( ma.getApplication().getGraphs(), s);
+				Component compToInstantiate = ComponentHelpers.findComponent( ma.getApplication().getTemplate().getGraphs(), s);
 				if( compToInstantiate == null )
 					throw new IOException( "Component " + s + " was not found in application " + ma.getApplication().getName());
 			}
@@ -225,7 +225,7 @@ public class RuleBasedEventHandler {
 			// We register new instances in the model
 			Instance previousInstance = null;
 			for( String s : templates) {
-				Component compToInstantiate = ComponentHelpers.findComponent( ma.getApplication().getGraphs(), s);
+				Component compToInstantiate = ComponentHelpers.findComponent( ma.getApplication().getTemplate().getGraphs(), s);
 				// compToInstantiate should never be null (check done above).
 
 				// All the root instances must have a different name. Others do not matter.
@@ -307,8 +307,7 @@ public class RuleBasedEventHandler {
 
 		@Override
 		protected PasswordAuthentication getPasswordAuthentication() {
-  		  return new PasswordAuthentication(this.username, this.password);
-  	  	}
+			return new PasswordAuthentication(this.username, this.password);
+		}
 	}
-
 }

@@ -26,6 +26,7 @@
 package net.roboconf.dm.internal.environment.messaging;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -33,13 +34,13 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.After;
 import org.junit.Before;
@@ -65,7 +66,7 @@ public class DmMessageProcessorTest {
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
 
@@ -74,8 +75,8 @@ public class DmMessageProcessorTest {
 			this.processor.stopProcessor();
 
 		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
-		this.manager.getAppNameToManagedApplication().clear();
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.manager.getNameToManagedApplication().clear();
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 	}
 
 
@@ -161,7 +162,7 @@ public class DmMessageProcessorTest {
 	@Test
 	public void testProcessMsgNotifInstanceChanged_invalidInstance() {
 
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), new Instance( "invalid instance" ));
@@ -176,7 +177,7 @@ public class DmMessageProcessorTest {
 	@Test
 	public void testProcessMsgNotifInstanceChanged_rootIsNotDeployed() {
 
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, null ));
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
 
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), this.app.getMySql());
@@ -225,6 +226,20 @@ public class DmMessageProcessorTest {
 		MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( this.app.getName(), new Instance( "whatever" ));
 		int instancesCount = InstanceHelpers.getAllInstances( this.app ).size();
 
+		this.processor.processMessage( msg );
+		Assert.assertEquals( instancesCount, InstanceHelpers.getAllInstances( this.app ).size());
+	}
+
+
+	@Test
+	public void testProcessMsgNotifInstanceRemoved_scopedInstance() {
+
+		this.app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
+
+		int instancesCount = InstanceHelpers.getAllInstances( this.app ).size();
+		MsgNotifInstanceRemoved msg = new MsgNotifInstanceRemoved( this.app.getName(), this.app.getWar());
+
+		// Nothing removed
 		this.processor.processMessage( msg );
 		Assert.assertEquals( instancesCount, InstanceHelpers.getAllInstances( this.app ).size());
 	}

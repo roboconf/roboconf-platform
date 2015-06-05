@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.management.exceptions;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import net.roboconf.core.RoboconfError;
@@ -43,6 +44,12 @@ public class InvalidApplicationException extends Exception {
 		super( convertErrorsListToString( errors ));
 	}
 
+	/**
+	 * Constructor.
+	 */
+	public InvalidApplicationException( RoboconfError error ) {
+		super( convertErrorsListToString( Arrays.asList( error )));
+	}
 
 	/**
 	 * @param errors a non-null list of errors
@@ -54,12 +61,12 @@ public class InvalidApplicationException extends Exception {
 		sb.append( "The application contains errors." );
 
 		for( RoboconfError error : errors ) {
-			sb.append( "\n<br />[ " );
+			sb.append( "\n[ " );
 			sb.append( error.getErrorCode().getLevel());
 			sb.append( " ] " );
 			sb.append( error.getErrorCode().getMsg());
 			if( error.getDetails() != null ) {
-				sb.append( "\n<br />Details: " );
+				sb.append( "\nDetails: " );
 				sb.append( error.getDetails());
 			}
 		}

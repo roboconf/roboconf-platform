@@ -16,11 +16,9 @@
 		</requires>
 		
 		<properties updated="reconfigure" pid="net.roboconf.agent.configuration">
-			<property name="message-server-ip" method="setMessageServerIp" />
-			<property name="message-server-username" method="setMessageServerUsername" />
-			<property name="message-server-password" method="setMessageServerPassword" />
+			<property name="messaging-type" method="setMessagingType" />
 			<property name="application-name" method="setApplicationName" />
-			<property name="root-instance-name" method="setRootInstanceName" />
+			<property name="scoped-instance-path" method="setScopedInstancePath" />
 			<property name="ip-address-of-the-agent" method="setIpAddress" />
 			<property name="target-id" method="setTargetId" type="java.lang.String" />
 			<property name="override-properties-with-user-data" method="setOverrideProperties" value="true" />
@@ -38,11 +36,9 @@
 		<properties updated="reconfigure" pid="net.roboconf.agent-in-memory.configuration">
 		
 			<!-- Values that will be set by the IaaS in memory -->
-			<property name="message-server-ip" method="setMessageServerIp" />
-			<property name="message-server-username" method="setMessageServerUsername" />
-			<property name="message-server-password" method="setMessageServerPassword" />
+			<property name="messaging-type" method="setMessagingType" />
 			<property name="application-name" method="setApplicationName" />
-			<property name="root-instance-name" method="setRootInstanceName" />
+			<property name="scoped-instance-path" method="setScopedInstancePath" />
 			
 			<!-- Predefined Values -->
 			<property name="ip-address-of-the-agent" method="setIpAddress" value="localhost" />

@@ -15,12 +15,14 @@
 	
 		<!-- Core bundles -->
 		<bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
-		<bundle>mvn:net.roboconf/roboconf-messaging/${project.version}</bundle>
+		<bundle>mvn:net.roboconf/roboconf-messaging-api/${project.version}</bundle>
+		<bundle>mvn:net.roboconf/roboconf-messaging-rabbitmq/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-rest-commons/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-rest-services/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}/war</bundle>
 		<bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
+		<bundle>mvn:net.roboconf/roboconf-dm-monitoring/${project.version}</bundle>
 		
 		<!-- Optional bundles, to start depending on our needs -->
 		<!-- Deployment targets handlers could go here. -->

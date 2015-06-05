@@ -35,9 +35,11 @@ import java.util.Properties;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
@@ -107,11 +109,20 @@ public class TargetHelpersTest {
 		Graphs graph = new Graphs();
 		graph.getRootComponents().add( comp );
 
-		Application app = new Application( "test" ).graphs( graph );
-		app.getRootInstances().add( new Instance( "inst" ).component( comp ));
+		Component child = new Component( "child" );
+		comp.addChild( child );
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "test" ).graphs( graph );
+		Application app = new Application( "test", tpl );
+
+		Instance rootInstance = new Instance( "root" ).component( comp );
+		Instance childInstance = new Instance( "child" ).component( child );
+		InstanceHelpers.insertChild( rootInstance, childInstance );
+
+		app.getRootInstances().add( rootInstance );
 
 		// Test the validation. A log entry is created.
-		ManagedApplication ma = new ManagedApplication( app, null );
+		ManagedApplication ma = new ManagedApplication( app );
 		TargetHelpers.verifyTargets( new TargetResolver(), ma, null );
 	}
 }

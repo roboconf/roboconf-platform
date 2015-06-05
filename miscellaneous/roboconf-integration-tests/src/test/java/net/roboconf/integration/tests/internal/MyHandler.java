@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.agent.internal.Agent;
+import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -36,7 +37,7 @@ import net.roboconf.target.api.TargetHandler;
  * @author Vincent Zurczak - Linagora
  */
 public class MyHandler implements TargetHandler {
-	public final Map<String,Agent> agentIdToAgent = new ConcurrentHashMap<String,Agent> ();
+	public final Map<String,Agent> agentIdToAgent = new ConcurrentHashMap<>();
 
 
 	@Override
@@ -47,25 +48,28 @@ public class MyHandler implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
-			String rootInstanceName,
+			Map<String, String> messagingProperties,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
+		final String messagingType = messagingProperties.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY);
+
 		Agent agent = new Agent();
 		agent.setApplicationName( applicationName );
-		agent.setRootInstanceName( rootInstanceName );
+		agent.setScopedInstancePath( scopedInstancePath );
 		agent.setTargetId( "in-memory" );
 		agent.setSimulatePlugins( true );
 		agent.setIpAddress( "127.0.0.1" );
-		agent.setMessageServerIp( messagingIp );
-		agent.setMessageServerUsername( messagingUsername );
-		agent.setMessageServerPassword( messagingPassword );
+		agent.setMessagingType(messagingType);
 		agent.start();
 
-		String key = rootInstanceName + " @ " + applicationName;
+		MessagingClientFactory factory = agent.getMessagingClient().getRegistry().getMessagingClientFactory(messagingType);
+		if (factory != null) {
+			factory.setConfiguration(messagingProperties);
+		}
+
+		String key = scopedInstancePath + " @ " + applicationName;
 		this.agentIdToAgent.put( key, agent );
 
 		return key;
@@ -75,11 +79,9 @@ public class MyHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 			Map<String,String> targetProperties,
+			Map<String, String> messagingProperties,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName)
 	throws TargetException {
 		// nothing

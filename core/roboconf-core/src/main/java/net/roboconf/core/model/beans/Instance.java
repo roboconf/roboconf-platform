@@ -57,14 +57,14 @@ public class Instance implements Serializable {
 
 	/**
 	 * A constant to store in {@link #getData()} and that indicates a root instance was "taken" by a target handler.
-	 * <p>Storing this information in a root instance is enough.</p>
+	 * <p>Storing this information in a scoped instance is enough.</p>
 	 * <p>
-	 * When a root instance is still NOT_DEPLOYED but that this key is present
+	 * When a scoped instance is still NOT_DEPLOYED but that this key is present
 	 * in {@link #data}, it means the creation of a machine was acknowledged by the
 	 * DM but that the processing has not yet started for this instance.
 	 * </p>
 	 * <p>
-	 * Such situations could occur when a user starts a lot of root instances
+	 * Such situations could occur when a user starts a lot of scoped instances
 	 * at once.
 	 * </p>
 	 */
@@ -289,6 +289,25 @@ public class Instance implements Serializable {
 			}
 
 			return result;
+		}
+
+
+		/**
+		 * A secured way to determine whether a string designates an existing status.
+		 * @param s a string (can be null)
+		 * @return true if it is a state name, false otheriwse
+		 */
+		public static boolean isValidState( String s ) {
+
+			boolean valid = false;
+			for( InstanceStatus status : InstanceStatus.values()) {
+				if( status.toString().equalsIgnoreCase( s )) {
+					valid = true;
+					break;
+				}
+			}
+
+			return valid;
 		}
 
 

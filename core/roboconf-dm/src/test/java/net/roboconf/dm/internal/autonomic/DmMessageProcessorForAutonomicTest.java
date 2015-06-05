@@ -40,9 +40,11 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 import org.junit.After;
 import org.junit.Before;
@@ -61,28 +63,36 @@ public class DmMessageProcessorForAutonomicTest {
 	private TestApplication app;
 	private DmMessageProcessor processor;
 	private Manager manager;
+	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
+		this.registry.addMessagingClientFactory(new TestClientFactory());
 		File dir = this.folder.newFolder();
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setConfigurationDirectoryLocation( dir.getAbsolutePath());
 		this.manager.start();
+
+		// Reconfigure with the messaging client factory registry set.
+		this.manager.getMessagingClient().setRegistry(this.registry);
+		this.manager.reconfigure();
 
 		this.app = new TestApplication();
 		if( this.processor != null )
 			this.processor.stopProcessor();
 
 		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
-		this.manager.getAppNameToManagedApplication().clear();
+		this.manager.getNameToManagedApplication().clear();
 
-		File appDirectory = ConfigurationUtils.findApplicationdirectory( this.app.getName(), dir );
+		File appDirectory = ConfigurationUtils.findApplicationDirectory( this.app.getName(), dir );
 		Assert.assertTrue( appDirectory.mkdirs());
-		this.manager.getAppNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app, appDirectory ));
+		this.app.setDirectory( appDirectory );
+
+		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 	}
 
 
@@ -96,10 +106,10 @@ public class DmMessageProcessorForAutonomicTest {
 	public void testAutonomic() throws Exception {
 
 		// Copy resources
-		ManagedApplication ma = this.manager.getAppNameToManagedApplication().get( this.app.getName());
+		ManagedApplication ma = this.manager.getNameToManagedApplication().get( this.app.getName());
 		Assert.assertNotNull( ma );
 
-		File dir = new File( ma.getApplicationFilesDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
+		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
 		Assert.assertTrue( dir.mkdirs());
 
 		File targetFile = new File( dir, Constants.FILE_RULES );

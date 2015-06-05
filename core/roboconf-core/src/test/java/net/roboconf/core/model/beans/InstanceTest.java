@@ -44,6 +44,14 @@ public class InstanceTest {
 
 
 	@Test
+	public void testIsValidState() {
+		Assert.assertTrue( InstanceStatus.isValidState( "starting" ));
+		Assert.assertTrue( InstanceStatus.isValidState( "StarTing" ));
+		Assert.assertFalse( InstanceStatus.isValidState( "Startin" ));
+	}
+
+
+	@Test
 	public void testChain() {
 
 		Instance inst = new Instance().name( "ins" ).status( InstanceStatus.DEPLOYING ).component( null ).parent( null );
@@ -56,5 +64,17 @@ public class InstanceTest {
 		Assert.assertEquals( 1, inst.channel( "woo" ).channels.size());
 		Assert.assertEquals( 2, inst.channel( "yeah" ).channels.size());
 		Assert.assertEquals( 2, inst.channel( "woo" ).channels.size());
+	}
+
+
+	@Test
+	public void testEquals() {
+
+		Instance hop = new Instance( "hop" );
+		Assert.assertFalse( hop.equals( null ));
+		Assert.assertFalse( hop.equals( new Instance( "hop2" )));
+
+		Assert.assertEquals( hop, hop );
+		Assert.assertEquals( hop, new Instance ("hop" ));
 	}
 }

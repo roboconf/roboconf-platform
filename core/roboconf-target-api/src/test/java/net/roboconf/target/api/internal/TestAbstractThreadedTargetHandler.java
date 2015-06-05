@@ -42,7 +42,6 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 
 	/**
 	 * Constructor.
-	 * @param failConfiguration
 	 */
 	public TestAbstractThreadedTargetHandler( boolean failConfiguration ) {
 		this.failConfiguration = failConfiguration;
@@ -57,9 +56,7 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String, String> messagingProperties,
 			String rootInstanceName,
 			String applicationName )
 	throws TargetException {
@@ -84,10 +81,8 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 	@Override
 	public MachineConfigurator machineConfigurator(
 			Map<String,String> targetProperties,
+			Map<String, String> messagingProperties,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
 			String rootInstanceName,
 			String applicationName ) {
 

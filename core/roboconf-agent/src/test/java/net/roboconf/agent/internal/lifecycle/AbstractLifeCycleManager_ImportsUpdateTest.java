@@ -35,7 +35,7 @@ import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 

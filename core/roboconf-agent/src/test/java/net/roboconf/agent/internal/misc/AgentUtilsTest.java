@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
@@ -74,7 +74,7 @@ public class AgentUtilsTest {
 	public void testInstanceResources() throws Exception {
 
 		// Prepare our resources
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
 		fileNameToFileContent.put( "f1.txt", "I am file 1".getBytes( "UTF-8" ));
 		fileNameToFileContent.put( "f2.txt", "I am file 2".getBytes( "UTF-8" ));
@@ -101,7 +101,7 @@ public class AgentUtilsTest {
 	public void testInstanceResources_noResources() throws Exception {
 
 		// Prepare our resources
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 
 		// Save our resources
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
@@ -123,7 +123,7 @@ public class AgentUtilsTest {
 
 		// The directory where we should write is an existing file.
 		// Prepare our resources
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
 		Utils.deleteFilesRecursively( dir );
 		Assert.assertFalse( dir.exists());
@@ -145,7 +145,7 @@ public class AgentUtilsTest {
 
 		// The directory where we should write contains a conflicting file.
 		// Prepare our resources
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
 		fileNameToFileContent.put( "dir1/dir2/f3.txt", "I am file 3".getBytes( "UTF-8" ));
 

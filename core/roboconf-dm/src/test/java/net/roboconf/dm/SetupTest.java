@@ -28,10 +28,10 @@ package net.roboconf.dm;
 import java.util.Collection;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 
 import org.junit.Test;
 
@@ -41,10 +41,10 @@ import org.junit.Test;
 public class SetupTest {
 
 	@Test
-	public void testTestApplication() {
+	public void testApplicationTemplate() {
 
-		Application app = new TestApplication();
-		Collection<ModelError> errors = RuntimeModelValidator.validate( app );
+		ApplicationTemplate tpl = new TestApplicationTemplate();
+		Collection<ModelError> errors = RuntimeModelValidator.validate( tpl );
 		Assert.assertEquals( 0, errors.size());
 	}
 }

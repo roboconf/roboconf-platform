@@ -26,7 +26,7 @@
 package net.roboconf.agent;
 
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.api.client.IAgentClient;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -44,9 +44,9 @@ public interface AgentMessagingInterface {
 	String getApplicationName();
 
 	/**
-	 * @return the root instance's name
+	 * @return the scoped instance's
 	 */
-	Instance getRootInstance();
+	Instance getScopedInstance();
 
 	/**
 	 * Forces the sending of a heart beat to the DM.

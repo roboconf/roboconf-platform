@@ -27,15 +27,17 @@ package net.roboconf.agent.internal;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetRootInstance;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -53,9 +55,16 @@ public class AgentMessageProcessor_StateChangeTest {
 
 	@Before
 	public void initializeAgent() throws Exception {
+		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+		registry.addMessagingClientFactory(new TestClientFactory());
+
 		this.agent = new Agent();
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		// We first need to start the agent, so it creates the reconfigurable messaging client.
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
+		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
+		this.agent.getMessagingClient().setRegistry(registry);
+		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
 		TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class ).messagesForTheDm.clear();
@@ -71,93 +80,93 @@ public class AgentMessageProcessor_StateChangeTest {
 	@Test
 	public void testSetMessagingClient() throws Exception {
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// Initialize the model
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 
 		// Try to deploy sub-child should fail
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getWar(), InstanceStatus.DEPLOYED_STOPPED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getWar(), InstanceStatus.DEPLOYED_STARTED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		// Test the Tomcat life cycle
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STOPPED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.NOT_DEPLOYED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STARTED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.NOT_DEPLOYED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		// Deploy the WAR when Tomcat is stopped => OK
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STOPPED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getWar(), InstanceStatus.DEPLOYED_STOPPED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getWar().getStatus());
 
 		// Start the WAR when Tomcat is stopped => fail
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getWar(), InstanceStatus.DEPLOYED_STARTED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getWar().getStatus());
 
 		// Start the WAR when Tomcat is started => OK
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STARTED ));
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getWar(), InstanceStatus.NOT_DEPLOYED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STARTED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getWar(), InstanceStatus.DEPLOYED_STARTED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getTomcat().getStatus());
 		// The WAR needs a MySQL
 		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getWar().getStatus());
 
 		// What happens now if we stop Tomcat? The WAR should be stopped too.
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STOPPED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getWar().getStatus());
 
 		// Same with undeploy
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.NOT_DEPLOYED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
@@ -173,7 +182,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getTomcat().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.DEPLOYED_STOPPED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 
@@ -185,7 +194,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getTomcat().getStatus());
 
 		processor.processMessage( new MsgCmdChangeInstanceState( app.getTomcat(), InstanceStatus.NOT_DEPLOYED ));
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getTomcat().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getWar().getStatus());
 	}
@@ -202,7 +211,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, inst.getStatus());
 
 		// Same thing with a local model
-		processor.rootInstance = new TestApplication().getMySqlVm();
+		processor.scopedInstance = new TestApplicationTemplate().getMySqlVm();
 		processor.processMessage( new MsgCmdChangeInstanceState( inst, InstanceStatus.DEPLOYED_STARTED ));
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, inst.getStatus());
 	}
@@ -219,16 +228,16 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
+		TestApplicationTemplate app = new TestApplicationTemplate();
 		app.getMySql().getComponent().setInstallerName( "unknown installer" );
 
 		// Initialize the model
-		processor.processMessage( new MsgCmdSetRootInstance( app.getMySqlVm()));
-		Assert.assertEquals( app.getMySqlVm(), processor.rootInstance );
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getMySqlVm()));
+		Assert.assertEquals( app.getMySqlVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 
@@ -242,8 +251,8 @@ public class AgentMessageProcessor_StateChangeTest {
 	public void testStateChangeWithTransitiveState() {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getMySqlVm();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getMySqlVm();
 
 		// Unstable (transitive) states => no state change
 		for( InstanceStatus status : InstanceStatus.values()) {
@@ -275,14 +284,14 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 
 		/*
 		 * Scenario:
@@ -321,14 +330,14 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 
 		/*
 		 * Scenario:
@@ -367,14 +376,14 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 
 		/*
 		 * Scenario:
@@ -416,14 +425,14 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
-		processor.processMessage( new MsgCmdSetRootInstance( app.getTomcatVm()));
-		Assert.assertEquals( app.getTomcatVm(), processor.rootInstance );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.rootInstance.getStatus());
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 
 		/*
 		 * Scenario:

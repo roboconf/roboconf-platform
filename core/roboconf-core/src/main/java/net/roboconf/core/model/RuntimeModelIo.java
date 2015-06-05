@@ -41,7 +41,7 @@ import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.converters.FromInstanceDefinition;
 import net.roboconf.core.dsl.converters.FromInstances;
 import net.roboconf.core.dsl.parsing.FileDefinition;
-import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
@@ -77,10 +77,10 @@ public final class RuntimeModelIo {
 	public static ApplicationLoadResult loadApplication( File projectDirectory ) {
 
 		ApplicationLoadResult result = new ApplicationLoadResult();
-		Application app = new Application();
-		result.application = app;
+		ApplicationTemplate app = new ApplicationTemplate();
+		result.applicationTemplate = app;
 
-		ApplicationDescriptor appDescriptor = null;
+		ApplicationTemplateDescriptor appDescriptor = null;
 		File descDirectory = new File( projectDirectory, Constants.PROJECT_DIR_DESC );
 
 
@@ -98,7 +98,7 @@ public final class RuntimeModelIo {
 			}
 
 			try {
-				appDescriptor = ApplicationDescriptor.load( descriptorFile );
+				appDescriptor = ApplicationTemplateDescriptor.load( descriptorFile );
 				app.setName( appDescriptor.getName());
 				app.setDescription( appDescriptor.getDescription());
 				app.setQualifier( appDescriptor.getQualifier());
@@ -143,13 +143,13 @@ public final class RuntimeModelIo {
 			result = loadApplication( projectDirectory );
 
 		} else {
-			ApplicationDescriptor appDescriptor = new ApplicationDescriptor();
+			ApplicationTemplateDescriptor appDescriptor = new ApplicationTemplateDescriptor();
 			appDescriptor.setName( Constants.GENERATED );
 			appDescriptor.setDslId( Constants.GENERATED );
 			appDescriptor.setQualifier( Constants.GENERATED );
 
 			ApplicationLoadResult alr = new ApplicationLoadResult();
-			alr.application = new Application( Constants.GENERATED ).dslId( Constants.GENERATED ).qualifier( Constants.GENERATED );
+			alr.applicationTemplate = new ApplicationTemplate( Constants.GENERATED ).dslId( Constants.GENERATED ).qualifier( Constants.GENERATED );
 
 			File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 			File[] graphFiles = graphDirectory.listFiles( new GraphFileFilter());
@@ -172,10 +172,11 @@ public final class RuntimeModelIo {
 	 */
 	private static ApplicationLoadResult loadApplication(
 			File projectDirectory,
-			ApplicationDescriptor appDescriptor,
+			ApplicationTemplateDescriptor appDescriptor,
 			ApplicationLoadResult result ) {
 
-		Application app = result.application;
+		ApplicationTemplate app = result.applicationTemplate;
+		result.applicationTemplate.setDirectory( projectDirectory );
 		File instDirectory = new File( projectDirectory, Constants.PROJECT_DIR_INSTANCES );
 		File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 
@@ -249,15 +250,15 @@ public final class RuntimeModelIo {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class ApplicationLoadResult {
-		Application application;
+		ApplicationTemplate applicationTemplate;
 		final Collection<RoboconfError> loadErrors = new ArrayList<RoboconfError> ();
 		final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
 
 		/**
 		 * @return the application (can be null)
 		 */
-		public Application getApplication() {
-			return this.application;
+		public ApplicationTemplate getApplicationTemplate() {
+			return this.applicationTemplate;
 		}
 
 		/**
@@ -363,7 +364,7 @@ public final class RuntimeModelIo {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	private static class GraphFileFilter implements FileFilter {
+	static class GraphFileFilter implements FileFilter {
 		@Override
 		public boolean accept( File f ) {
 			return f.isFile() && f.getName().toLowerCase().endsWith( ".graph" );

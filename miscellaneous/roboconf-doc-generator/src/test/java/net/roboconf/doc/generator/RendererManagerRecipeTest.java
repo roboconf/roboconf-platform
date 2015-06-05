@@ -78,7 +78,7 @@ public class RendererManagerRecipeTest {
 		// Generate...
 		RenderingManager rm = new RenderingManager();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
-		rm.render( outputDir, alr.getApplication(), applicationDirectory, renderers, options );
+		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options );
 
 		// With this example, there is only one component.
 		// So, no graph and no generated diagram.
@@ -129,7 +129,7 @@ public class RendererManagerRecipeTest {
 		// Generate...
 		RenderingManager rm = new RenderingManager();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
-		rm.render( outputDir, alr.getApplication(), applicationDirectory, renderers, options );
+		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options );
 
 		// With this example, there is only one component.
 		// So, no graph and no generated diagram.
@@ -180,7 +180,7 @@ public class RendererManagerRecipeTest {
 		// Generate...
 		RenderingManager rm = new RenderingManager();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
-		rm.render( outputDir, alr.getApplication(), applicationDirectory, renderers, options );
+		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options );
 
 		// One component, one facet, everything is fine.
 		Assert.assertEquals( 3, outputDir.listFiles().length );

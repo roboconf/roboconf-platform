@@ -50,7 +50,7 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 		renderers.add( Renderer.MARKDOWN.toString());
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, renderers, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null );
 		Assert.assertEquals( 3, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.HTML.toString().toLowerCase());
@@ -73,7 +73,7 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 		renderers.add( Renderer.MARKDOWN.toString());
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, renderers, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null );
 		Assert.assertEquals( 1, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.MARKDOWN.toString().toLowerCase());
@@ -93,7 +93,7 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 		renderers.add( "oops" );
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, renderers, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null );
 		Assert.assertEquals( 2, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.HTML.toString().toLowerCase());
@@ -116,7 +116,7 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplication(), this.applicationDirectory, renderers, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, options );
 		Assert.assertEquals( 3, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.HTML.toString().toLowerCase() + "_fr_FR" );

@@ -45,6 +45,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 
@@ -153,6 +154,7 @@ public final class RecipesValidator {
 			File pp2 = new File( modules.get( 0 ), "manifests/init.pp" );
 			File withUpdateParams = pp1.exists() ? pp1 : pp2;
 
+			// Validate the files
 			children = new File( modules.get( 0 ), "manifests" ).listFiles();
 			children = children == null ? new File[ 0 ] : children;
 			for( File f : children ) {
@@ -182,6 +184,21 @@ public final class RecipesValidator {
 	 */
 	private static void checkPuppetFile( File pp, boolean withUpdateParams, Component component, Collection<ModelError> errors )
 	throws IOException {
+
+		// Try to use the Puppet validator
+		String[] cmd = { "puppet", "parser", "validate", pp.getAbsolutePath()};
+		Logger logger = Logger.getLogger( RecipesValidator.class.getName());
+		try {
+			int execCode = ProgramUtils.executeCommand( logger, cmd, null, null );
+			if( execCode != 0 )
+				errors.add( new ModelError( ErrorCode.REC_PUPPET_SYNTAX_ERROR, component, "Component: " + component + ", File: " + pp ));
+
+		} catch( Exception e ) {
+			logger.info( "Puppet parser is not available on the machine." );
+		}
+
+		// We do not validate with puppet-lint.
+		// Indeed, this tool is mostly about coding style and conventions.
 
 		// Extract the script parameters
 		Pattern pattern = Pattern.compile( "class [^(]+\\(([^)]+)\\)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL );

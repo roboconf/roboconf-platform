@@ -67,7 +67,7 @@ public final class RulesParser {
 	public static Map<String,AutonomicRule> parseRules( ManagedApplication ma ) throws IOException {
 
 		Map<String,AutonomicRule> result = new HashMap<String,AutonomicRule> ();
-		File rulesFile = new File( ma.getApplicationFilesDirectory(), Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES);
+		File rulesFile = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES);
 		if( rulesFile.isFile())
 			result.putAll( parseRules( rulesFile ));
 

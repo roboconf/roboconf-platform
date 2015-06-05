@@ -33,18 +33,20 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.After;
@@ -61,9 +63,16 @@ public class AgentMessageProcessor_ImportsTest {
 
 	@Before
 	public void initializeAgent() throws Exception {
+		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+		registry.addMessagingClientFactory(new TestClientFactory());
+
 		this.agent = new Agent();
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		// We first need to start the agent, so it creates the reconfigurable messaging client.
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
+		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
+		this.agent.getMessagingClient().setRegistry(registry);
+		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
 		getInternalClient().messagesForTheDm.clear();
@@ -82,8 +91,8 @@ public class AgentMessageProcessor_ImportsTest {
 		TestClientAgent client = getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		// There are as many client invocations as started instances
@@ -103,8 +112,8 @@ public class AgentMessageProcessor_ImportsTest {
 	public void testImports() throws Exception {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
-		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -176,12 +185,12 @@ public class AgentMessageProcessor_ImportsTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -219,12 +228,12 @@ public class AgentMessageProcessor_ImportsTest {
 			}
 		};
 
-		this.agent.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
-		TestApplication app = new TestApplication();
-		processor.rootInstance = app.getTomcatVm();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -257,7 +266,7 @@ public class AgentMessageProcessor_ImportsTest {
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
 		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );
-		processor.rootInstance = i1;
+		processor.scopedInstance = i1;
 
 		// Adding itself does not work
 		Assert.assertEquals( 0, i1.getImports().size());

@@ -40,10 +40,9 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.MessageServerClientFactory;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -59,8 +58,7 @@ public class MonitoringTaskTest {
 
 	@Before
 	public void initializeMessagingClient() {
-		MessageServerClientFactory factory = new MessageServerClientFactory();
-		this.messagingClient = (TestClientAgent) factory.createAgentClient( MessagingConstants.FACTORY_TEST );
+		this.messagingClient = (TestClientAgent) new TestClientFactory().createAgentClient(null);
 		this.agentInterface = new MyAgentInterface( this.messagingClient );
 	}
 
@@ -70,7 +68,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/file-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 3, handlers.size());
@@ -104,7 +102,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/nagios-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 3, handlers.size());
@@ -135,7 +133,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/rest-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 1, handlers.size());
@@ -156,7 +154,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/mixed-events.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( f, fileContent, null );
 		Assert.assertEquals( 2, handlers.size());
@@ -181,7 +179,7 @@ public class MonitoringTaskTest {
 		File f = TestUtils.findTestFile( "/mixed-events-templating.conf" );
 		String fileContent = Utils.readFileContent( f );
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		File propertiesFile = TestUtils.findTestFile( "/mixed-events-templating.properties" );
 		Assert.assertTrue( propertiesFile.exists());
@@ -208,7 +206,7 @@ public class MonitoringTaskTest {
 
 		String fileContent = MonitoringTask.RULE_BEGINNING;
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
@@ -220,7 +218,7 @@ public class MonitoringTaskTest {
 
 		String fileContent = MonitoringTask.RULE_BEGINNING + " file event id with spaces]";
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
@@ -232,7 +230,7 @@ public class MonitoringTaskTest {
 
 		String fileContent = MonitoringTask.RULE_BEGINNING + " unknown event-id]\nok";
 		MonitoringTask task = new MonitoringTask( this.agentInterface );
-		this.agentInterface.setRootInstance( new Instance( "root" ));
+		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandler> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
 		Assert.assertEquals( 0, handlers.size());
@@ -250,7 +248,7 @@ public class MonitoringTaskTest {
 		MsgNotifAutonomic msg = (MsgNotifAutonomic) this.messagingClient.messagesForTheDm.get( 0 );
 		Assert.assertEquals( this.agentInterface.getApplicationName(), msg.getApplicationName());
 		Assert.assertEquals( "myRuleName", msg.getEventId());
-		Assert.assertEquals( this.agentInterface.getRootInstance().getName(), msg.getRootInstanceName());
+		Assert.assertEquals( "/" + this.agentInterface.getScopedInstance().getName(), msg.getScopedInstancePath());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "does not exist" ));
 	}
 
@@ -280,7 +278,7 @@ public class MonitoringTaskTest {
 		Instance rootInstance = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
 		Instance childInstance = new Instance( "child" ).component( new Component( "Child" ).installerName( "whatever" ));
 		InstanceHelpers.insertChild( rootInstance, childInstance );
-		this.agentInterface.setRootInstance( rootInstance );
+		this.agentInterface.setScopedInstance( rootInstance );
 
 		// Create the resources
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( childInstance );

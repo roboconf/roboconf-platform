@@ -26,10 +26,11 @@
 package net.roboconf.target.ec2.internal;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -75,19 +76,25 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
-			String rootInstanceName,
+			Map<String,String> messagingConfiguration,
+			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
 
 		this.logger.fine( "Creating a new machine on AWS." );
-		String instanceId = null;
+
+		// For IaaS, we only expect root instance names to be passed
+		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+			throw new TargetException( "Only root instances can be passed in arguments." );
+
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
+
+		// Deal with the creation
+		String instanceId;
 		try {
 			AmazonEC2 ec2 = createEc2Client( targetProperties );
 			String userData = DataHelpers.writeUserDataAsString(
-					messagingIp, messagingUsername, messagingPassword,
+					messagingConfiguration,
 					applicationName, rootInstanceName );
 
 			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode( targetProperties, userData );
@@ -111,13 +118,12 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 	@Override
 	public MachineConfigurator machineConfigurator(
 			Map<String,String> targetProperties,
+			Map<String,String> messagingConfiguration,
 			String machineId,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
-			String rootInstanceName,
+			String scopedInstancePath,
 			String applicationName ) {
 
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 		String tagName = applicationName + "." + rootInstanceName;
 		return new Ec2MachineConfigurator( targetProperties, machineId, tagName );
 	}
@@ -136,7 +142,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 		try {
 			AmazonEC2 ec2 = createEc2Client( targetProperties );
 			DescribeInstancesRequest dis = new DescribeInstancesRequest();
-			dis.setInstanceIds( Arrays.asList( machineId ));
+			dis.setInstanceIds(Collections.singletonList(machineId));
 
 			DescribeInstancesResult disresult = ec2.describeInstances( dis );
 			result = ! disresult.getReservations().isEmpty();
@@ -235,7 +241,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
 		String flavor = targetProperties.get(Ec2Constants.VM_INSTANCE_TYPE);
 		if( Utils.isEmptyOrWhitespaces( flavor ))
-			flavor = "t1.micro";
+			flavor = "t1.micro"; // TODO: Never used!!!???
 
 		runInstancesRequest.setInstanceType( targetProperties.get(Ec2Constants.VM_INSTANCE_TYPE));
 		runInstancesRequest.setImageId( targetProperties.get( Ec2Constants.AMI_VM_NODE ));
@@ -248,7 +254,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 		if( Utils.isEmptyOrWhitespaces(secGroup))
 			secGroup = "default";
 
-		runInstancesRequest.setSecurityGroups( Arrays.asList( secGroup ));
+		runInstancesRequest.setSecurityGroups(Collections.singletonList(secGroup));
 
 		// The following part enables to transmit data to the VM.
 		// When the VM is up, it will be able to read this data.
