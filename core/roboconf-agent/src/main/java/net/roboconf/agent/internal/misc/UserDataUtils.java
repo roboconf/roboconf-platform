@@ -140,15 +140,7 @@ public final class UserDataUtils {
 			String userDataEncoded = getValueOfTagInXMLFile( "/var/lib/waagent/ovf-env.xml", "CustomData" );
 			userData = new String( Base64.decodeBase64( userDataEncoded.getBytes( "UTF-8" )), "UTF-8" );
 
-		} catch( IOException e ) {
-			logger.severe( "The agent properties could not be read. " + e.getMessage());
-			Utils.logException( logger, e );
-
-		} catch( ParserConfigurationException e ) {
-			logger.severe( "The agent properties could not be read. " + e.getMessage());
-			Utils.logException( logger, e );
-
-		} catch( SAXException e ) {
+		} catch( IOException | ParserConfigurationException | SAXException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
 			Utils.logException( logger, e );
 		}
@@ -161,11 +153,7 @@ public final class UserDataUtils {
 			publicIPAddress = getSpecificAttributeOfTagInXMLFile( "/var/lib/waagent/SharedConfig.xml", "Endpoint", "loadBalancedPublicAddress" );
 			result.setIpAddress( publicIPAddress );
 
-		} catch( ParserConfigurationException e ) {
-			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
-			Utils.logException( logger, e );
-
-		} catch( SAXException e ) {
+		} catch( ParserConfigurationException | SAXException e ) {
 			logger.severe( "The agent could not retrieve a public IP address. " + e.getMessage());
 			Utils.logException( logger, e );
 

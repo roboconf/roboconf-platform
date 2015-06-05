@@ -80,9 +80,7 @@ public class DockerHandler implements TargetHandler {
 	@Override
 	public String createMachine(
 			Map<String,String> targetProperties,
-			String messagingIp,
-			String messagingUsername,
-			String messagingPassword,
+			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
 	throws TargetException {
@@ -144,14 +142,21 @@ public class DockerHandler implements TargetHandler {
 			}
 		}
 
+		// Build the command line, passing the messaging configuration.
+		List<String> args = new ArrayList<>();
+		args.add("/usr/local/roboconf-agent/start.sh");
+		args.add("application-name=" + applicationName);
+		args.add("scoped-instance-path=" + scopedInstancePath);
+		args.add("messaging-type=" + messagingConfiguration.get("net.roboconf.messaging.type"));
+
+		// TODO: modify the agent launcher script to take care of these arguments. May need to rethink the following lines. Maybe in a separate messaging configuration file
+		for(Map.Entry<String, String> e : messagingConfiguration.entrySet()) {
+			args.add(e.getKey() + '=' + e.getValue());
+		}
+
 		CreateContainerResponse container = dockerClient
 			.createContainerCmd(imageId)
-			.withCmd("/usr/local/roboconf-agent/start.sh",
-						"application-name=" + applicationName,
-						"scoped-instance-path=" + scopedInstancePath,
-						"message-server-ip=" + messagingIp,
-						"message-server-username=" + messagingUsername,
-						"message-server-password=" + messagingPassword)
+			.withCmd(args.toArray(new String[args.size()]))
 			.exec();
 
 		dockerClient.startContainerCmd(container.getId()).exec();
@@ -167,10 +172,8 @@ public class DockerHandler implements TargetHandler {
 	@Override
 	public void configureMachine(
 		Map<String,String> targetProperties,
+		Map<String,String> messagingConfiguration,
 		String machineId,
-		String messagingIp,
-		String messagingUsername,
-		String messagingPassword,
 		String scopedInstancePath,
 		String applicationName )
 	throws TargetException {

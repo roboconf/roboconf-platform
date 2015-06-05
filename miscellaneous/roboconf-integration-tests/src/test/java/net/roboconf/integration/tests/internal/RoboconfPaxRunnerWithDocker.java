@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.internal.RabbitMqTestUtils;
+import net.roboconf.messaging.rabbitmq.internal.RabbitMqTestUtils;
 import net.roboconf.target.docker.internal.DockerHandler;
 import net.roboconf.target.docker.internal.DockerTestUtils;
 import net.roboconf.target.docker.internal.DockerUtils;
@@ -67,7 +67,7 @@ public class RoboconfPaxRunnerWithDocker extends PaxExam {
 	public void run( RunNotifier notifier ) {
 
 		// We need RabbitMQ
-		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning( "127.0.0.1", RBCF, RBCF )) {
+		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning("127.0.0.1", RBCF, RBCF)) {
 			Description description = Description.createSuiteDescription( this.testClass );
 			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running or does not accept the 'roboconf' user." )));
 

@@ -28,6 +28,7 @@ package net.roboconf.target.docker.internal;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -58,6 +59,16 @@ public class DockerHandler_withContainerTest {
 	private boolean dockerIsInstalled = true;
 	private DockerClient docker;
 	private String dockerImageId;
+
+	private Map<String, String> msgCfg = new LinkedHashMap<>();
+
+	@Before
+	public void setMessagingConfiguration() {
+		msgCfg = new LinkedHashMap<>();
+		msgCfg.put("net.roboconf.messaging.type", "telepathy");
+		msgCfg.put("mindControl", "false");
+		msgCfg.put("psychosisProtection", "active");
+	}
 
 
 
@@ -111,11 +122,11 @@ public class DockerHandler_withContainerTest {
 		DockerHandler target = new DockerHandler();
 		Map<String,String> targetProperties = loadTargetProperties();
 
-		String containerId = target.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "test", "roboconf" );
+		String containerId = target.createMachine( targetProperties, msgCfg, "test", "roboconf" );
 		Assert.assertNotNull( containerId );
 		Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
 
-		target.configureMachine( targetProperties, containerId, null, null, null, null, null );
+		target.configureMachine( targetProperties, msgCfg, containerId, null, null );
 		target.terminateMachine( targetProperties, containerId );
 		Assert.assertFalse( target.isMachineRunning( targetProperties, containerId ));
 	}
@@ -129,7 +140,7 @@ public class DockerHandler_withContainerTest {
 		Map<String,String> targetProperties = loadTargetProperties();
 		targetProperties.remove( DockerHandler.IMAGE_ID );
 
-		target.createMachine( targetProperties, "127.0.0.1", "roboconf", "roboconf", "test", "roboconf" );
+		target.createMachine( targetProperties, msgCfg, "test", "roboconf" );
 	}
 
 
@@ -141,7 +152,7 @@ public class DockerHandler_withContainerTest {
 		File propertiesFile = new File( Thread.currentThread().getContextClassLoader().getResource("conf/docker.properties").getFile());
 		Properties p = Utils.readPropertiesFile( propertiesFile );
 
-		HashMap<String,String> targetProperties = new HashMap<String,String> ();
+		HashMap<String,String> targetProperties = new HashMap<>();
 		for( Map.Entry<Object,Object> entry : p.entrySet())
 			targetProperties.put( entry.getKey().toString(), entry.getValue().toString());
 

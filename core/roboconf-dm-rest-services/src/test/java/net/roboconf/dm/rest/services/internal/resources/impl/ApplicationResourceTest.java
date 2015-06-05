@@ -45,11 +45,13 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.test.TestClientDm;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -72,6 +74,7 @@ public class ApplicationResourceTest {
 	private ManagedApplication ma;
 	private Manager manager;
 	private TestClientDm msgClient;
+	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@After
@@ -82,12 +85,17 @@ public class ApplicationResourceTest {
 
 	@Before
 	public void before() throws Exception {
+		this.registry.addMessagingClientFactory(new TestClientFactory());
 
 		this.manager = new Manager();
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
+
+		// Reconfigure with the messaging client factory registry set.
+		this.manager.getMessagingClient().setRegistry(this.registry);
+		this.manager.reconfigure();
 
 		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
 		this.msgClient.sentMessages.clear();
@@ -476,7 +484,7 @@ public class ApplicationResourceTest {
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
 
-		List<String> paths = new ArrayList<String> ();
+		List<String> paths = new ArrayList<> ();
 		for( Instance inst : this.app.getTomcatVm().getChildren())
 			paths.add( InstanceHelpers.computeInstancePath( inst ));
 
@@ -500,7 +508,7 @@ public class ApplicationResourceTest {
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
 
-		List<String> paths = new ArrayList<String> ();
+		List<String> paths = new ArrayList<> ();
 		for( Instance inst : this.app.getTomcatVm().getChildren())
 			paths.add( InstanceHelpers.computeInstancePath( inst ));
 

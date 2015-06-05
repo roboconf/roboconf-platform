@@ -40,10 +40,9 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.MessageServerClientFactory;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -59,8 +58,7 @@ public class MonitoringTaskTest {
 
 	@Before
 	public void initializeMessagingClient() {
-		MessageServerClientFactory factory = new MessageServerClientFactory();
-		this.messagingClient = (TestClientAgent) factory.createAgentClient( MessagingConstants.FACTORY_TEST );
+		this.messagingClient = (TestClientAgent) new TestClientFactory().createAgentClient(null);
 		this.agentInterface = new MyAgentInterface( this.messagingClient );
 	}
 

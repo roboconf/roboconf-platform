@@ -91,11 +91,11 @@
 					<archive>
 						<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
 					</archive>
-					<webResources>
+					<!--<webResources>
 						<resource>
 							<directory>${project.build.directory}/roboconf-web-administration/app</directory>
 						</resource>
-					</webResources>
+					</webResources>-->
 				</configuration>
 			</plugin>
 			

@@ -46,7 +46,7 @@ import javax.net.ssl.X509TrustManager;
 
 import net.roboconf.agent.monitoring.internal.MonitoringHandler;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
  * Handler to check the value returned by a REST call on a URL.

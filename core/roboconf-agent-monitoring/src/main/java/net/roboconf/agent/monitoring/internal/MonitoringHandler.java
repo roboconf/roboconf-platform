@@ -25,7 +25,7 @@
 
 package net.roboconf.agent.monitoring.internal;
 
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
  * Handler invoked to deal with a monitoring solution.

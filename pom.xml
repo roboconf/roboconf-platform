@@ -37,12 +37,15 @@
 	
 		<!-- Core Modules -->
 		<module>core/roboconf-core</module>
-		<module>core/roboconf-messaging</module>
+		<module>core/roboconf-messaging-api</module>
 		<module>core/roboconf-target-api</module>
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-agent</module>
 		<module>core/roboconf-agent-default</module>
 		<module>core/roboconf-agent-monitoring</module>
+		
+		<!-- Messaging providers -->
+		<module>core/roboconf-messaging-rabbitmq</module>
 		
 		<module>core/roboconf-dm</module>
 		<module>core/roboconf-dm-monitoring</module>

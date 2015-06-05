@@ -39,7 +39,7 @@ import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
  * A class to store runtime information for an application.

@@ -30,7 +30,7 @@ import java.util.Map;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.messaging.client.IAgentClient;
+import net.roboconf.messaging.api.client.IAgentClient;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 

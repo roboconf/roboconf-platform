@@ -50,7 +50,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
  * An event handler to evaluate rules.

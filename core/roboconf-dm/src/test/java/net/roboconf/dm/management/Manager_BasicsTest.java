@@ -46,15 +46,17 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.messaging.MessagingConstants;
-import net.roboconf.messaging.internal.client.test.TestClientDm;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifHeartbeat;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.After;
@@ -74,10 +76,12 @@ public class Manager_BasicsTest {
 	private Manager manager;
 	private TestClientDm msgClient;
 	private TestTargetResolver targetResolver;
+	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
+		this.registry.addMessagingClientFactory(new TestClientFactory());
 
 		File directory = this.folder.newFolder();
 		this.targetResolver = new TestTargetResolver();
@@ -85,8 +89,12 @@ public class Manager_BasicsTest {
 		this.manager = new Manager();
 		this.manager.setTargetResolver( this.targetResolver );
 		this.manager.setConfigurationDirectoryLocation( directory.getAbsolutePath());
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.start();
+
+		// Reconfigure with the messaging client factory registry set.
+		this.manager.getMessagingClient().setRegistry(this.registry);
+		this.manager.reconfigure();
 
 		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
 		this.msgClient.sentMessages.clear();
@@ -553,8 +561,7 @@ public class Manager_BasicsTest {
 	@Test( expected = IOException.class )
 	public void testCheckConfiguration_invalidConfiguration() throws Exception {
 
-		this.manager.setMessageServerIp( "whatever" );
-		this.manager.setMessagingFactoryType( "whatever" );
+		this.manager.setMessagingType("whatever");
 		this.manager.reconfigure();
 		this.manager.checkConfiguration();
 	}
@@ -583,7 +590,7 @@ public class Manager_BasicsTest {
 		// Copy an application in the configuration
 		File source = TestUtils.findApplicationDirectory( "lamp" );
 		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( source );
-		ManagedApplication ma = this.manager.createApplication( "lamp3", "test", tpl );
+		this.manager.createApplication( "lamp3", "test", tpl );
 
 		// Reset the manager's configuration (simply reload it)
 		this.manager.reconfigure();
@@ -591,7 +598,7 @@ public class Manager_BasicsTest {
 
 		// Check there is an application
 		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
-		ma = this.manager.getNameToManagedApplication().get( "lamp3" );
+		ManagedApplication ma = this.manager.getNameToManagedApplication().get( "lamp3" );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
 		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
@@ -622,7 +629,7 @@ public class Manager_BasicsTest {
 		// Make sure the VM is considered as deployed in the pseudo-IaaS
 		TargetHandler th = this.targetResolver.findTargetHandler( null, ma, apache ).getHandler();
 		Assert.assertNotNull( th );
-		th.createMachine( null, null, null, null, apache.getName(), ma.getName());
+		th.createMachine( null, null, apache.getName(), ma.getName());
 
 		// Update the instances
 		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
@@ -673,7 +680,7 @@ public class Manager_BasicsTest {
 		// Make sure the VM is considered as deployed in the pseudo-IaaS
 		TargetHandler th = this.targetResolver.findTargetHandler( null, ma, apache ).getHandler();
 		Assert.assertNotNull( th );
-		String machineId = th.createMachine( null, null, null, null, apache.getName(), ma.getName());
+		String machineId = th.createMachine( null, null, apache.getName(), ma.getName());
 
 		// Update the instances
 		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );

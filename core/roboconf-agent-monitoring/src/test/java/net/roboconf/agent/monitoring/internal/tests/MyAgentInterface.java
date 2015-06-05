@@ -27,8 +27,8 @@ package net.roboconf.agent.monitoring.internal.tests;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
 
 /**
  * @author Vincent Zurczak - Linagora

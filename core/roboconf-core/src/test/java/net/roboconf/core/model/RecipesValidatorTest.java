@@ -26,15 +26,18 @@
 package net.roboconf.core.model;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
-
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -46,6 +49,25 @@ public class RecipesValidatorTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+
+	private final Logger logger = Logger.getLogger(this.getClass().getName());
+
+	/**
+	 * @return {@code true} if and only if puppet is installed.
+	 * @throws IOException when something bad happened.
+	 */
+	private boolean puppetIsInstalled() throws IOException {
+		int exitCode;
+		try {
+			exitCode = ProgramUtils.executeCommand(
+					this.logger,
+					new String[]{"puppet", "-v"},
+					null, null);
+		} catch (InterruptedException | IOException e) {
+			exitCode = 1;
+		}
+		return exitCode == 0;
+	}
 
 
 	@Test
@@ -272,6 +294,8 @@ public class RecipesValidatorTest {
 
 	@Test
 	public void testPuppetValidation_invalidPuppetClass() throws Exception {
+		Assume.assumeTrue(puppetIsInstalled());
+
 		File appDir = this.folder.newFolder();
 
 		Component comp = new Component( "toto" ).installerName( "puppet" );
@@ -313,6 +337,8 @@ public class RecipesValidatorTest {
 
 	@Test
 	public void testPuppetValidation_invalidSyntax() throws Exception {
+		Assume.assumeTrue(puppetIsInstalled());
+
 		File appDir = this.folder.newFolder();
 
 		Component comp = new Component( "toto" ).installerName( "puppet" );

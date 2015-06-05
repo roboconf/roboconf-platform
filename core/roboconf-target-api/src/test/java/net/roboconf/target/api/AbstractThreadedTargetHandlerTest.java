@@ -56,7 +56,7 @@ public class AbstractThreadedTargetHandlerTest {
 			Assert.assertEquals( 0, th.getCpt());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( null, "machine-id", null, null, null, null, null );
+			th.configureMachine( null, null, "machine-id", null, null );
 			th.start();
 
 			Assert.assertEquals( 1, configurators.size());
@@ -98,7 +98,7 @@ public class AbstractThreadedTargetHandlerTest {
 			Assert.assertEquals( 0, th.getCpt());
 
 			// For test purpose, we call configure before start (to reduce thread sleep).
-			th.configureMachine( null, "machine-id", null, null, null, null, null );
+			th.configureMachine( null, null, "machine-id", null, null );
 			th.start();
 
 			Assert.assertEquals( 0, th.getCpt());

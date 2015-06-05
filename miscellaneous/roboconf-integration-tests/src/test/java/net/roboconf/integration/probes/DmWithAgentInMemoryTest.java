@@ -26,6 +26,7 @@
 package net.roboconf.integration.probes;
 
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,6 +37,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -89,6 +91,11 @@ public abstract class DmWithAgentInMemoryTest extends AbstractTest {
 				.artifactId( "roboconf-target-in-memory" )
 				.version( getRoboconfVersion())
 				.start());
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"messaging-type",
+				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
 
 		return options.toArray( new Option[ options.size()]);
 	}
