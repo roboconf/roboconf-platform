@@ -28,12 +28,15 @@ package net.roboconf.target.openstack.internal;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import net.roboconf.core.utils.Utils;
+
+import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPERTY;
+import static net.roboconf.messaging.api.MessagingConstants.TEST_FACTORY_TYPE;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -41,15 +44,6 @@ import net.roboconf.core.utils.Utils;
 public class ToRunByHand {
 
 	private static final String PROPS_LOCATION = "/data1/targets/openstack.ow2.properties";
-	private static Map<String, String> msgCfg = new LinkedHashMap<>();
-	static {
-		msgCfg = new LinkedHashMap<>();
-		msgCfg.put("net.roboconf.messaging.type", "factory.test");
-		msgCfg.put("net.roboconf.messaging.rabbitmq.server.ip", "whatever");
-		msgCfg.put("net.roboconf.messaging.rabbitmq.server.user", "roboconf");
-		msgCfg.put("net.roboconf.messaging.rabbitmq.server.password", "roboconf");
-	}
-
 
 	/**
 	 * A test that starts a new VM, passes user data, waits 5 minutes and terminates the VM.
@@ -78,6 +72,7 @@ public class ToRunByHand {
 		target.start();
 		String serverId = null;
 		try {
+			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, TEST_FACTORY_TYPE);
 			serverId = target.createMachine( conf, msgCfg, "root", "app" );
 			target.configureMachine( conf, msgCfg, serverId, "root", "app" );
 

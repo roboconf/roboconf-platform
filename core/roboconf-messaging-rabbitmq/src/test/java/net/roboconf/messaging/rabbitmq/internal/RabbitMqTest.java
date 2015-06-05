@@ -23,18 +23,18 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.util.List;
 
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IAgentClient;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -67,8 +67,7 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	public void cleanRabbitMq() throws Exception {
 
 		if( rabbitMqIsRunning ) {
-			RabbitMqClientDm client = new RabbitMqClientDm(null);
-			client.setParameters( getMessagingIp(), getMessagingUsername(), getMessagingPassword());
+			RabbitMqClientDm client = new RabbitMqClientDm(null, getMessagingIp(), getMessagingUsername(), getMessagingPassword());
 			client.openConnection();
 			client.deleteMessagingServerArtifacts( new Application( "app", null ));
 			client.deleteMessagingServerArtifacts( new Application( "app1", null ));
@@ -176,6 +175,6 @@ public class RabbitMqTest extends AbstractMessagingTest {
 
 	@Override
 	protected String getMessagingType() {
-		return MessagingConstants.FACTORY_RABBIT_MQ;
+		return RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
 	}
 }

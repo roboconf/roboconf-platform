@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -54,8 +54,7 @@ public class DmClientTest {
 	public void testExceptions() throws Exception {
 		Assume.assumeTrue( rabbitMqIsRunning );
 
-		RabbitMqClientDm dmClient = new RabbitMqClientDm(null);
-		dmClient.setParameters( "localhost", "guest", "guest" );
+		RabbitMqClientDm dmClient = new RabbitMqClientDm(null, "localhost", "guest", "guest" );
 
 		Assert.assertFalse( dmClient.isConnected());
 		Assert.assertNull( dmClient.channel );

@@ -34,7 +34,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.client.IClient;
+import net.roboconf.messaging.api.MessagingConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -117,7 +117,7 @@ public class AgentProperties {
 		String result = null;
 		if( this.messagingConfiguration == null || this.messagingConfiguration.isEmpty())
 			result = "The message configuration cannot be null or empty.";
-		else if( this.messagingConfiguration.get(IClient.MESSAGING_TYPE_PROPERTY) == null)
+		else if( this.messagingConfiguration.get(MessagingConstants.MESSAGING_TYPE_PROPERTY) == null)
 			result = "The message configuration does not contain the messaging type.";
 		else if( Utils.isEmptyOrWhitespaces( this.applicationName ))
 			result = "The application name cannot be null or empty.";

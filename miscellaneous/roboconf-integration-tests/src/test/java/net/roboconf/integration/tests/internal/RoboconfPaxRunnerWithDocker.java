@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.rabbitmq.RabbitMqTestUtils;
+import net.roboconf.messaging.rabbitmq.internal.RabbitMqTestUtils;
 import net.roboconf.target.docker.internal.DockerHandler;
 import net.roboconf.target.docker.internal.DockerTestUtils;
 import net.roboconf.target.docker.internal.DockerUtils;

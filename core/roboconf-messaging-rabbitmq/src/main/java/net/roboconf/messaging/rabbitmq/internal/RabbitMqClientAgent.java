@@ -23,22 +23,16 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IAgentClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.utils.SerializationUtils;
@@ -47,70 +41,26 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
 
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * The RabbitMQ client for an agent.
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
+public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient {
 
 	private static final String THOSE_THAT_EXPORT = "those.that.export.";
 	public static final String THOSE_THAT_IMPORT = "those.that.import.";
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String applicationName, scopedInstancePath, messageServerIp, messageServerUsername, messageServerPassword;
-	private LinkedBlockingQueue<Message> messageQueue;
-	private final WeakReference<ReconfigurableClientAgent> reconfigurable;
+	private String applicationName, scopedInstancePath;
 
 	String consumerTag;
-	Channel	channel;
 
-	public RabbitMqClientAgent( final ReconfigurableClientAgent reconfigurable ) {
-		this.reconfigurable = new WeakReference<>(reconfigurable);
+	public RabbitMqClientAgent( final ReconfigurableClientAgent reconfigurable, String ip, String username, String password ) {
+		super(reconfigurable, ip, username, password);
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient
-	 * #setParameters(java.lang.String, java.lang.String, java.lang.String)
-	 */
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		this.messageServerIp = messageServerIp;
-		this.messageServerUsername = messageServerUsername;
-		this.messageServerPassword = messageServerPassword;
-	}
-
-
-	@Override
-	public ReconfigurableClientAgent getReconfigurableClient() {
-		return this.reconfigurable.get();
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient
-	 * #setMessageQueue(java.util.concurrent.LinkedBlockingQueue)
-	 */
-	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
-		this.messageQueue = messageQueue;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient#isConnected()
-	 */
-	@Override
-	public boolean isConnected() {
-		return this.channel != null;
-	}
-
 
 	/*
 	 * (non-Javadoc)
@@ -127,7 +77,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * @see net.roboconf.messaging.api.client.IClient#openConnection()
 	 */
 	@Override
-	public void openConnection() throws IOException {
+	public synchronized void openConnection() throws IOException {
 
 		// Already connected? Do nothing
 		this.logger.info( "Agent '" + getAgentId() + "' is opening a connection to RabbitMQ." );
@@ -169,7 +119,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * @see net.roboconf.messaging.api.client.IClient#closeConnection()
 	 */
 	@Override
-	public void closeConnection() throws IOException {
+	public synchronized void closeConnection() throws IOException {
 
 		StringBuilder sb = new StringBuilder( "Agent '" + getAgentId());
 		sb.append( "' is closing its connection to RabbitMQ.");
@@ -197,7 +147,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * @see net.roboconf.messaging.api.client.IAgentClient#setApplicationName(java.lang.String)
 	 */
 	@Override
-	public void setApplicationName( String applicationName ) {
+	public synchronized void setApplicationName( String applicationName ) {
 		this.applicationName = applicationName;
 	}
 
@@ -222,7 +172,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * #publishExports(net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void publishExports( Instance instance, String facetOrComponentName ) throws IOException {
+	public synchronized void publishExports( Instance instance, String facetOrComponentName ) throws IOException {
 		this.logger.fine( "Agent '" + getAgentId() + "' is publishing its exports prefixed by " + facetOrComponentName + "." );
 
 		// Find the variables to export.
@@ -254,7 +204,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * #unpublishExports(net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void unpublishExports( Instance instance ) throws IOException {
+	public synchronized void unpublishExports( Instance instance ) throws IOException {
 		this.logger.fine( "Agent '" + getAgentId() + "' is un-publishing its exports." );
 
 		// For all the exported variables...
@@ -280,7 +230,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * #listenToRequestsFromOtherAgents(net.roboconf.messaging.api.client.IClient.ListenerCommand, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void listenToRequestsFromOtherAgents( ListenerCommand command, Instance instance )
+	public synchronized void listenToRequestsFromOtherAgents( ListenerCommand command, Instance instance )
 	throws IOException {
 
 		// With RabbitMQ, and for agents, listening to others means
@@ -309,7 +259,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * #requestExportsFromOtherAgents(net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void requestExportsFromOtherAgents( Instance instance ) throws IOException {
+	public synchronized void requestExportsFromOtherAgents( Instance instance ) throws IOException {
 		this.logger.fine( "Agent '" + getAgentId() + "' is requesting exports from other agents." );
 
 		// For all the imported variables...
@@ -333,7 +283,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * #listenToExportsFromOtherAgents(net.roboconf.messaging.api.client.IClient.ListenerCommand, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public void listenToExportsFromOtherAgents( ListenerCommand command, Instance instance ) throws IOException {
+	public synchronized void listenToExportsFromOtherAgents( ListenerCommand command, Instance instance ) throws IOException {
 
 		// With RabbitMQ, and for agents, listening to others means
 		// create a binding between the "agents" exchange and the agent's queue.
@@ -362,7 +312,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * #sendMessageToTheDm(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
-	public void sendMessageToTheDm( Message message ) throws IOException {
+	public synchronized void sendMessageToTheDm( Message message ) throws IOException {
 
 		this.logger.fine( "Agent '" + getAgentId() + "' is sending a " + message.getClass().getSimpleName() + " message to the DM." );
 		this.channel.basicPublish(
@@ -378,7 +328,7 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 	 * #listenToTheDm(net.roboconf.messaging.api.client.IClient.ListenerCommand)
 	 */
 	@Override
-	public void listenToTheDm( ListenerCommand command ) throws IOException {
+	public synchronized void listenToTheDm( ListenerCommand command ) throws IOException {
 
 		// Bind the root instance name with the queue
 		String queueName = getQueueName();
@@ -394,23 +344,6 @@ public class RabbitMqClientAgent implements IAgentClient, RabbitMqClient {
 			this.logger.fine( "Agent '" + getAgentId() + "' stops listening to the DM." );
 			this.channel.queueUnbind( queueName, exchangeName, routingKey );
 		}
-	}
-
-
-	@Override
-	public String getMessagingType() {
-		return MessagingConstants.FACTORY_RABBIT_MQ;
-	}
-
-
-	@Override
-	public Map<String, String> getConfiguration() {
-		final Map<String, String> configuration = new LinkedHashMap<>();
-		configuration.put(MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_RABBIT_MQ);
-		configuration.put(MessagingConstants.RABBITMQ_SERVER_IP, this.messageServerIp);
-		configuration.put(MessagingConstants.RABBITMQ_SERVER_USERNAME, this.messageServerUsername);
-		configuration.put(MessagingConstants.RABBITMQ_SERVER_PASSWORD, this.messageServerPassword);
-		return Collections.unmodifiableMap(configuration);
 	}
 
 

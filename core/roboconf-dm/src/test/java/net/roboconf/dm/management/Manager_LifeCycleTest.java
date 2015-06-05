@@ -74,7 +74,7 @@ public class Manager_LifeCycleTest {
 		this.manager = new Manager();
 		this.manager.setTargetResolver( this.targetResolver );
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.start();
 
 		// Reconfigure with the messaging client factory registry set.

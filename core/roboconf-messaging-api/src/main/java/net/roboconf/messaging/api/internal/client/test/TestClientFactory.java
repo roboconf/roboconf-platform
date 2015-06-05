@@ -49,7 +49,7 @@ import org.apache.felix.ipojo.annotations.ServiceProperty;
 public class TestClientFactory implements MessagingClientFactory {
 
 	@ServiceProperty(name = MessagingClientFactory.MESSAGING_TYPE_PROPERTY)
-	private final String type = MessagingConstants.FACTORY_TEST;
+	private final String type = MessagingConstants.TEST_FACTORY_TYPE;
 
 	@Override
 	public String getType() {
@@ -69,6 +69,6 @@ public class TestClientFactory implements MessagingClientFactory {
 	@Override
 	public boolean setConfiguration( final Map<String, String> configuration ) {
 		// Nothing to reconfigure.
-		return MessagingConstants.FACTORY_TEST.equals(configuration.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY));
+		return MessagingConstants.TEST_FACTORY_TYPE.equals(configuration.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY));
 	}
 }

@@ -23,9 +23,10 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
@@ -67,7 +68,14 @@ public class DmReturnListener implements ReturnListener {
 			Utils.logException( this.logger, e );
 		}
 
-		this.logger.warning("A message sent by the DM was not received by any agent queue." + "\nMessage type: "
-				+ messageType + "\nRouting key: " + routingKey + "\nReason: " + replyText);
+		if (this.logger.isLoggable(Level.WARNING)) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("A message sent by the DM was not received by any agent queue.\n");
+			sb.append("Message type: " + messageType + '\n');
+			sb.append("Routing key: " + routingKey + '\n');
+			sb.append("Reason: " + replyText);
+			this.logger.warning(sb.toString());
+		}
+
 	}
 }

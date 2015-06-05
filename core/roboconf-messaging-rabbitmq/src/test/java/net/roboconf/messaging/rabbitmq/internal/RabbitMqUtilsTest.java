@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -96,7 +96,7 @@ public class RabbitMqUtilsTest {
 	public void testBuildRoutingKeyForAgent_String() {
 
 		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "root" ));
-		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "/root" ));
+		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent("/root"));
 		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "/root/" ));
 		Assert.assertEquals( "machine.root.docker", RabbitMqUtils.buildRoutingKeyForAgent( "/root/docker" ));
 		Assert.assertNotSame(

@@ -31,7 +31,6 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IClient;
 import net.roboconf.messaging.api.client.IClient.ListenerCommand;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 
@@ -63,7 +62,7 @@ public class TestClientAgentTest {
 
 		final Map<String, String> config = client.getConfiguration();
 		Assert.assertEquals(1, config.size());
-		Assert.assertEquals(MessagingConstants.FACTORY_TEST, config.get(IClient.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals(MessagingConstants.TEST_FACTORY_TYPE, config.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 	}
 
 

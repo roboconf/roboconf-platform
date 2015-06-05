@@ -37,7 +37,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -95,7 +95,7 @@ public abstract class DmWithAgentInMemoryTest extends AbstractTest {
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
 				"messaging-type",
-				MessagingConstants.FACTORY_RABBIT_MQ));
+				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
 
 		return options.toArray( new Option[ options.size()]);
 	}

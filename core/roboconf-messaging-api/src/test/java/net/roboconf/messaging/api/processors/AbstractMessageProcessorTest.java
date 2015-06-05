@@ -108,7 +108,7 @@ public class AbstractMessageProcessorTest {
 		 * Constructor.
 		 */
 		public EmptyTestDmMessageProcessor() {
-			super( MessagingConstants.FACTORY_TEST );
+			super( MessagingConstants.TEST_FACTORY_TYPE);
 		}
 
 		@Override

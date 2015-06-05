@@ -23,23 +23,18 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
-import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.api.utils.SerializationUtils;
@@ -47,7 +42,6 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
@@ -56,64 +50,17 @@ import com.rabbitmq.client.QueueingConsumer;
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
+public class RabbitMqClientDm extends RabbitMqClient implements IDmClient {
 
 	private static final String DM_NEUTRAL_QUEUE_NAME = "roboconf.dm.neutral";
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
-	private String messageServerIp, messageServerUsername, messageServerPassword;
-	private LinkedBlockingQueue<Message> messageQueue;
-	private final WeakReference<ReconfigurableClientDm> reconfigurable;
-
 	String neutralConsumerTag;
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<>();
-	Channel channel;
 	QueueingConsumer consumer;
 
-	public RabbitMqClientDm( final ReconfigurableClientDm reconfigurable ) {
-		this.reconfigurable = new WeakReference<>(reconfigurable);
+	public RabbitMqClientDm( final ReconfigurableClientDm reconfigurable, String ip, String username, String password ) {
+		super(reconfigurable, ip, username, password);
 	}
-
-
-	@Override
-	public ReconfigurableClientDm getReconfigurableClient() {
-		return this.reconfigurable.get();
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient
-	 * #setParameters(java.lang.String, java.lang.String, java.lang.String)
-	 */
-	@Override
-	public void setParameters( String messageServerIp, String messageServerUsername, String messageServerPassword ) {
-		this.messageServerIp = messageServerIp;
-		this.messageServerUsername = messageServerUsername;
-		this.messageServerPassword = messageServerPassword;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient
-	 * #setMessageQueue(java.util.concurrent.LinkedBlockingQueue)
-	 */
-	@Override
-	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
-		this.messageQueue = messageQueue;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient#isConnected()
-	 */
-	@Override
-	public synchronized boolean isConnected() {
-		return this.channel != null;
-	}
-
 
 	/*
 	 * (non-Javadoc)
@@ -301,22 +248,6 @@ public class RabbitMqClientDm implements IDmClient, RabbitMqClient {
 		}
 	}
 
-
-	@Override
-	public String getMessagingType() {
-		return MessagingConstants.FACTORY_RABBIT_MQ;
-	}
-
-
-	@Override
-	public Map<String, String> getConfiguration() {
-		final Map<String, String> configuration = new LinkedHashMap<>();
-		configuration.put(MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_RABBIT_MQ);
-		configuration.put(MessagingConstants.RABBITMQ_SERVER_IP, this.messageServerIp);
-		configuration.put(MessagingConstants.RABBITMQ_SERVER_USERNAME, this.messageServerUsername);
-		configuration.put(MessagingConstants.RABBITMQ_SERVER_PASSWORD, this.messageServerPassword);
-		return Collections.unmodifiableMap(configuration);
-	}
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.messaging.api.client.IDmClient

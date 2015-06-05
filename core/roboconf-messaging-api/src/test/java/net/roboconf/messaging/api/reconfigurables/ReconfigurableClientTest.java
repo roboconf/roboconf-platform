@@ -31,8 +31,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IClient;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
@@ -263,7 +263,7 @@ public class ReconfigurableClientTest {
 
 		@Override
 		public boolean setConfiguration( final Map<String, String> configuration ) {
-			return this.type.equals(configuration.get(IClient.MESSAGING_TYPE_PROPERTY));
+			return this.type.equals(configuration.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 		}
 	}
 

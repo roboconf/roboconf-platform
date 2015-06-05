@@ -28,27 +28,44 @@ package net.roboconf.messaging.api;
 /**
  * Messaging related constants.
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public interface MessagingConstants {
 
 	/**
-	 * The factory's name for RabbitMQ clients.
+	 * The prefix for all messaging-related properties.
+	 * <p>
+	 * This property syntax allows target handlers to automatically recognize such properties, and propagate them to
+	 * the agents they create.
+	 * </p>
 	 */
-	String FACTORY_RABBIT_MQ = "factory.rabbit.mq";
+	String MESSAGING_PROPERTY_PREFIX = "net.roboconf.messaging";
+
+	/**
+	 * The name of the property which contains the type of messaging.
+	 * <p>
+	 * The value of this property <em>must</em> be a {@code String}, and may be {@code null} to indicate the messaging
+	 * type is left unconfigured.
+	 * </p>
+	 * <p>
+	 * This property is used in the provider-specific
+	 * {@linkplain net.roboconf.messaging.api.client.IClient#getConfiguration() messaging configuration} to ensure a
+	 * configuration is applicable to a given messaging client. It is also used by
+	 * {@link net.roboconf.messaging.api.factory.MessagingClientFactory} services to indicate which type of messaging
+	 * they
+	 * support. In the latter case, the property value <em>must</em> be non-{@code null}.
+	 * </p>
+	 */
+	String MESSAGING_TYPE_PROPERTY = MESSAGING_PROPERTY_PREFIX + ".type";
 
 	/**
 	 * The factory's name for test clients.
 	 */
-	String FACTORY_TEST = "factory.test";
+	String TEST_FACTORY_TYPE = "test";
 
 	/**
 	 * The "dismissed" message.
 	 */
 	String DISMISSED_MESSAGE = "No messaging client is available. Action is dismissed. Review the messaging configuration.";
 
-	// RabbitMQ specific configuration properties
-	// TODO: move that somewhere else!
-	String RABBITMQ_SERVER_IP = "net.roboconf.messaging.rabbitmq.server.ip";
-	String RABBITMQ_SERVER_USERNAME = "net.roboconf.messaging.rabbitmq.server.username";
-	String RABBITMQ_SERVER_PASSWORD = "net.roboconf.messaging.rabbitmq.server.password";
 }

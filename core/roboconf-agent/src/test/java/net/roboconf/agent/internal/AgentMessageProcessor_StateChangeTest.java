@@ -60,7 +60,7 @@ public class AgentMessageProcessor_StateChangeTest {
 
 		this.agent = new Agent();
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
-		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
 		this.agent.getMessagingClient().setRegistry(registry);
@@ -228,7 +228,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -284,7 +284,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -330,7 +330,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -376,7 +376,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -425,7 +425,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
+		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 

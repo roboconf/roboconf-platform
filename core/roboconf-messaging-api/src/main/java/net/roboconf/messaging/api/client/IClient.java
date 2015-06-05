@@ -37,21 +37,6 @@ import net.roboconf.messaging.api.messages.Message;
 public interface IClient {
 
 	/**
-	 * The name of the property which contains the type of messaging.
-	 * <p>
-	 * The value of this property <em>must</em> be a {@code String}, and may be {@code null} to indicate the messaging
-	 * type is left unconfigured.
-	 * </p>
-	 * <p>
-	 * This property is used in the provider-specific {@linkplain #getConfiguration() messaging configuration} to
-	 * ensure a configuration is applicable to a given messaging client. It is also used by
-	 * {@link net.roboconf.messaging.api.factory.MessagingClientFactory} services to indicate which type of messaging they
-	 * support. In the latter case, the property value <em>must</em> be non-{@code null}.
-	 * </p>
-	 */
-	String MESSAGING_TYPE_PROPERTY = "net.roboconf.messaging.type";
-
-	/**
 	 * Start or stop listening to events.
 	 *
 	 * @author Vincent Zurczak - Linagora

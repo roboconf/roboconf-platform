@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,13 +34,13 @@ import java.util.WeakHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IAgentClient;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Invalidate;
@@ -58,7 +58,7 @@ import org.apache.felix.ipojo.annotations.Updated;
 		managedservice = "net.roboconf.messaging.rabbitmq")
 @Provides(specifications = MessagingClientFactory.class,
 		properties = @StaticServiceProperty(name = MessagingClientFactory.MESSAGING_TYPE_PROPERTY, type = "string",
-				value = MessagingConstants.FACTORY_RABBIT_MQ))
+				value = RabbitMqConstants.RABBITMQ_FACTORY_TYPE))
 @Instantiate(name = "Roboconf RabbitMQ Messaging Client Factory")
 public class RabbitMqClientFactory implements MessagingClientFactory {
 
@@ -74,19 +74,19 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	// The logger
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
 
-	@Property(name = MessagingConstants.RABBITMQ_SERVER_IP, value = RabbitMqClient.DEFAULT_IP)
+	@Property(name = RabbitMqConstants.RABBITMQ_SERVER_IP, value = RabbitMqClient.DEFAULT_IP)
 	public synchronized void setMessageServerIp( final String messageServerIp ) {
 		this.messageServerIp = messageServerIp;
 		this.logger.finer("Server IP set to " + messageServerIp);
 	}
 
-	@Property(name = MessagingConstants.RABBITMQ_SERVER_USERNAME, value = RabbitMqClient.DEFAULT_USERNAME)
+	@Property(name = RabbitMqConstants.RABBITMQ_SERVER_USERNAME, value = RabbitMqClient.DEFAULT_USERNAME)
 	public synchronized void setMessageServerUsername( final String messageServerUsername ) {
 		this.messageServerUsername = messageServerUsername;
 		this.logger.finer("Server username set to " + messageServerUsername);
 	}
 
-	@Property(name = MessagingConstants.RABBITMQ_SERVER_PASSWORD, value = RabbitMqClient.DEFAULT_PASSWORD)
+	@Property(name = RabbitMqConstants.RABBITMQ_SERVER_PASSWORD, value = RabbitMqClient.DEFAULT_PASSWORD)
 	public synchronized void setMessageServerPassword( final String messageServerPassword ) {
 		this.messageServerPassword = messageServerPassword;
 		this.logger.finer("Server password set to " + messageServerPassword);
@@ -118,7 +118,7 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 					if (shutdown)
 						reconfigurable.closeConnection();
 					else
-						reconfigurable.switchMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
+						reconfigurable.switchMessagingType(RabbitMqConstants.RABBITMQ_FACTORY_TYPE);
 			} catch (Throwable t) {
 				// Warn but continue to reconfigure the next clients!
 				this.logger.warning("A client has thrown an exception on reconfiguration: " + client);
@@ -129,13 +129,12 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 
 	@Override
 	public String getType() {
-		return MessagingConstants.FACTORY_RABBIT_MQ;
+		return RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
 	}
 
 	@Override
 	public synchronized IDmClient createDmClient( final ReconfigurableClientDm parent ) {
-		final RabbitMqClientDm client = new RabbitMqClientDm(parent);
-		client.setParameters(this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
+		final RabbitMqClientDm client = new RabbitMqClientDm(parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
 		clients.add(client);
 		this.logger.finer("Created a new DM client");
 		return client;
@@ -143,8 +142,7 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 
 	@Override
 	public synchronized IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
-		final RabbitMqClientAgent client = new RabbitMqClientAgent(parent);
-		client.setParameters(this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
+		final RabbitMqClientAgent client = new RabbitMqClientAgent(parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
 		clients.add(client);
 		this.logger.finer("Created a new Agent client");
 		return client;
@@ -154,10 +152,11 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	public boolean setConfiguration( final Map<String, String> configuration ) {
 		final boolean result;
 		final String type = configuration.get(MESSAGING_TYPE_PROPERTY);
-		String ip = configuration.get(MessagingConstants.RABBITMQ_SERVER_IP);
-		String username = configuration.get(MessagingConstants.RABBITMQ_SERVER_USERNAME);
-		String password = configuration.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD);
-		if (MessagingConstants.FACTORY_RABBIT_MQ.equals(type)) {
+		if (RabbitMqConstants.RABBITMQ_FACTORY_TYPE.equals(type)) {
+			String ip = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_IP);
+			String username = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME);
+			String password = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD);
+
 			// Handles default values.
 			if (ip == null)
 				ip = RabbitMqClient.DEFAULT_IP;
@@ -165,7 +164,9 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 				username = RabbitMqClient.DEFAULT_USERNAME;
 			if (password == null)
 				password = RabbitMqClient.DEFAULT_PASSWORD;
+
 			// Avoid unnecessary (and potentially problematic) reconfiguration if nothing has changed.
+			// First we detect for changes, and set the parameters accordingly.
 			boolean hasChanged = false;
 			synchronized (this) {
 				if (!Objects.equals(this.messageServerIp, ip)) {
@@ -181,10 +182,16 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 					hasChanged = true;
 				}
 			}
+
+			// Then, if changes has occurred, we reconfigure the factory. This will invalidate every created client.
+			// Otherwise, if nothing has changed, we do nothing. Thus we avoid invalidating clients uselessly, and
+			// prevent any message loss.
 			if (hasChanged)
 				reconfigure();
 			result = true;
 		} else {
+
+			// Not a configuration for this RabbitMQ client factory.
 			result = false;
 		}
 		return result;

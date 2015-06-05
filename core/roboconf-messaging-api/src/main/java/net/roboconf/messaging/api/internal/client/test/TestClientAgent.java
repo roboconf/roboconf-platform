@@ -142,12 +142,12 @@ public class TestClientAgent implements IAgentClient {
 
 	@Override
 	public String getMessagingType() {
-		return MessagingConstants.FACTORY_TEST;
+		return MessagingConstants.TEST_FACTORY_TYPE;
 	}
 
 	@Override
 	public Map<String, String> getConfiguration() {
-		return Collections.singletonMap(MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_TEST);
+		return Collections.singletonMap(MessagingConstants.MESSAGING_TYPE_PROPERTY, MessagingConstants.TEST_FACTORY_TYPE);
 	}
 
 	@Override

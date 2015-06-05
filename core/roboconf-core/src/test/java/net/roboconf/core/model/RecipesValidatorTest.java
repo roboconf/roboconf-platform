@@ -61,9 +61,9 @@ public class RecipesValidatorTest {
 		try {
 			exitCode = ProgramUtils.executeCommand(
 					this.logger,
-					new String[]{"which", "puppet"},
+					new String[]{"puppet", "-v"},
 					null, null);
-		} catch (InterruptedException e) {
+		} catch (InterruptedException | IOException e) {
 			exitCode = 1;
 		}
 		return exitCode == 0;

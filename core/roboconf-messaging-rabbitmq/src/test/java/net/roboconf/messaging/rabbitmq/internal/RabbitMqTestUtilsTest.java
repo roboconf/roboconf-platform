@@ -23,19 +23,30 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
+
+import junit.framework.Assert;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmReturnListenerTest {
+public class RabbitMqTestUtilsTest {
 
 	@Test
-	public void testDeserializationError() throws Exception {
+	public void testIsVersionGreaterThanThreeDotTwo() {
 
-		DmReturnListener listener = new DmReturnListener();
-		listener.handleReturn( 0, "reply", "exchange", "routingKey", null, new byte[ 1 ]);
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.2" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.2.1" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.3" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "4.2" ));
+
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.1" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.1.3" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.0" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "2.1" ));
+
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "whatever" ));
 	}
 }

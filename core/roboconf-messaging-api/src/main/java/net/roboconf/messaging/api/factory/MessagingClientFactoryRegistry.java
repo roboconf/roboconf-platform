@@ -136,7 +136,7 @@ public class MessagingClientFactoryRegistry {
 	}
 
 	/**
-	 * Notify the messaging client factory listeners that a factory has been added/removed.
+	 * Notifies the messaging client factory listeners that a factory has been added/removed.
 	 * @param factory the incoming/outgoing messaging client factory.
 	 * @param isAdded flag indicating whether the factory has been added or removed.
 	 */

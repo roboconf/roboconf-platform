@@ -23,19 +23,19 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq;
+package net.roboconf.messaging.rabbitmq.internal;
 
 import java.util.Map;
 
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IClient;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,15 +76,15 @@ public class RabbitMqClientFactoryTest {
 			}
 		});
 		client.setRegistry(this.registry);
-		client.switchMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
+		client.switchMessagingType(RabbitMqConstants.RABBITMQ_FACTORY_TYPE);
 
 		// Check the initial (default) configuration.
 		final RabbitMqClientDm client1 = RabbitMqTestUtils.getMessagingClientDm(client);
 		final Map<String, String> config1 = client1.getConfiguration();
-		Assert.assertEquals(MessagingConstants.FACTORY_RABBIT_MQ, config1.get(IClient.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("localhost", config1.get(MessagingConstants.RABBITMQ_SERVER_IP));
-		Assert.assertEquals("guest", config1.get(MessagingConstants.RABBITMQ_SERVER_USERNAME));
-		Assert.assertEquals("guest", config1.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
+		Assert.assertEquals(RabbitMqConstants.RABBITMQ_FACTORY_TYPE, config1.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals("localhost", config1.get(RabbitMqConstants.RABBITMQ_SERVER_IP));
+		Assert.assertEquals("guest", config1.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME));
+		Assert.assertEquals("guest", config1.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD));
 
 		// Reconfigure the factory.
 		factory.setMessageServerIp("127.0.0.1");
@@ -96,10 +96,10 @@ public class RabbitMqClientFactoryTest {
 		final RabbitMqClientDm client2 = RabbitMqTestUtils.getMessagingClientDm(client);
 		Assert.assertNotSame(client1, client2);
 		final Map<String, String> config2 = client2.getConfiguration();
-		Assert.assertEquals(MessagingConstants.FACTORY_RABBIT_MQ, config2.get(IClient.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("127.0.0.1", config2.get(MessagingConstants.RABBITMQ_SERVER_IP));
-		Assert.assertEquals("john.doe", config2.get(MessagingConstants.RABBITMQ_SERVER_USERNAME));
-		Assert.assertEquals("1234", config2.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
+		Assert.assertEquals(RabbitMqConstants.RABBITMQ_FACTORY_TYPE, config2.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals("127.0.0.1", config2.get(RabbitMqConstants.RABBITMQ_SERVER_IP));
+		Assert.assertEquals("john.doe", config2.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME));
+		Assert.assertEquals("1234", config2.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD));
 	}
 
 	@Test
@@ -115,15 +115,15 @@ public class RabbitMqClientFactoryTest {
 		client.setRegistry(this.registry);
 		client.setApplicationName("test");
 		client.setScopedInstancePath("/test");
-		client.switchMessagingType(MessagingConstants.FACTORY_RABBIT_MQ);
+		client.switchMessagingType(RabbitMqConstants.RABBITMQ_FACTORY_TYPE);
 
 		// Check the initial (default) configuration.
 		final RabbitMqClientAgent client1 = RabbitMqTestUtils.getMessagingClientAgent(client);
 		final Map<String, String> config1 = client1.getConfiguration();
-		Assert.assertEquals(MessagingConstants.FACTORY_RABBIT_MQ, config1.get(IClient.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("localhost", config1.get(MessagingConstants.RABBITMQ_SERVER_IP));
-		Assert.assertEquals("guest", config1.get(MessagingConstants.RABBITMQ_SERVER_USERNAME));
-		Assert.assertEquals("guest", config1.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
+		Assert.assertEquals(RabbitMqConstants.RABBITMQ_FACTORY_TYPE, config1.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals("localhost", config1.get(RabbitMqConstants.RABBITMQ_SERVER_IP));
+		Assert.assertEquals("guest", config1.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME));
+		Assert.assertEquals("guest", config1.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD));
 
 		// Reconfigure the factory.
 		factory.setMessageServerIp("127.0.0.1");
@@ -135,10 +135,10 @@ public class RabbitMqClientFactoryTest {
 		final RabbitMqClientAgent client2 = RabbitMqTestUtils.getMessagingClientAgent(client);
 		Assert.assertNotSame(client1, client2);
 		final Map<String, String> config2 = client2.getConfiguration();
-		Assert.assertEquals(MessagingConstants.FACTORY_RABBIT_MQ, config2.get(IClient.MESSAGING_TYPE_PROPERTY));
-		Assert.assertEquals("127.0.0.1", config2.get(MessagingConstants.RABBITMQ_SERVER_IP));
-		Assert.assertEquals("john.doe", config2.get(MessagingConstants.RABBITMQ_SERVER_USERNAME));
-		Assert.assertEquals("1234", config2.get(MessagingConstants.RABBITMQ_SERVER_PASSWORD));
+		Assert.assertEquals(RabbitMqConstants.RABBITMQ_FACTORY_TYPE, config2.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals("127.0.0.1", config2.get(RabbitMqConstants.RABBITMQ_SERVER_IP));
+		Assert.assertEquals("john.doe", config2.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME));
+		Assert.assertEquals("1234", config2.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD));
 	}
 
 }

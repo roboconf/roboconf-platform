@@ -26,7 +26,7 @@
 package net.roboconf.integration.tests.internal;
 
 
-import net.roboconf.messaging.rabbitmq.RabbitMqTestUtils;
+import net.roboconf.messaging.rabbitmq.internal.RabbitMqTestUtils;
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
