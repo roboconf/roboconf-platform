@@ -241,9 +241,9 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 		RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
 		String flavor = targetProperties.get(Ec2Constants.VM_INSTANCE_TYPE);
 		if( Utils.isEmptyOrWhitespaces( flavor ))
-			flavor = "t1.micro"; // TODO: Never used!!!???
+			flavor = "t1.micro";
 
-		runInstancesRequest.setInstanceType( targetProperties.get(Ec2Constants.VM_INSTANCE_TYPE));
+		runInstancesRequest.setInstanceType( flavor );
 		runInstancesRequest.setImageId( targetProperties.get( Ec2Constants.AMI_VM_NODE ));
 
 		runInstancesRequest.setMinCount( 1 );
