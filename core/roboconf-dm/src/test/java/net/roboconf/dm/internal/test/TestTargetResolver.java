@@ -40,8 +40,8 @@ import net.roboconf.target.api.TargetHandler;
  */
 public class TestTargetResolver extends TargetResolver {
 
-	public final Map<Instance,Boolean> instanceToRunningStatus = new HashMap<Instance,Boolean> ();
-	public final Map<Instance,Integer> instanceToRequestsCount = new HashMap<Instance,Integer> ();
+	public final Map<Instance,Boolean> instanceToRunningStatus = new HashMap<> ();
+	public final Map<Instance,Integer> instanceToRequestsCount = new HashMap<> ();
 
 
 	@Override
@@ -58,9 +58,7 @@ public class TestTargetResolver extends TargetResolver {
 			@Override
 			public String createMachine(
 					Map<String,String> targetProperties,
-					String messagingIp,
-					String messagingUsername,
-					String messagingPassword,
+					Map<String,String> messagingConfiguration,
 					String rootInstanceName,
 					String applicationName )
 			throws TargetException {
@@ -78,10 +76,8 @@ public class TestTargetResolver extends TargetResolver {
 			@Override
 			public void configureMachine(
 					Map<String,String> targetProperties,
+					Map<String,String> messagingConfiguration,
 					String machineId,
-					String messagingIp,
-					String messagingUsername,
-					String messagingPassword,
 					String rootInstanceName,
 					String applicationName)
 			throws TargetException {

@@ -29,8 +29,8 @@ import java.io.IOException;
 
 import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -52,8 +52,8 @@ public class RCDm extends ReconfigurableClientDm {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.reconfigurables.ReconfigurableClientDm
-	 * #openConnection(net.roboconf.messaging.client.IDmClient)
+	 * @see net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm
+	 * #openConnection(net.roboconf.messaging.api.client.IDmClient)
 	 */
 	@Override
 	protected void openConnection( IDmClient newMessagingClient ) throws IOException {

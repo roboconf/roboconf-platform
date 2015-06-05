@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.monitoring.internal.MonitoringHandler;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
  * Handler to check the existence of a file or a directory (useful for tests and demonstrations).

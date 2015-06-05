@@ -28,8 +28,8 @@ package net.roboconf.agent.internal.lifecycle;
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
 
 import org.junit.Test;
 

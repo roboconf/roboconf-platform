@@ -42,7 +42,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
-import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.api.MessagingConstants;
 
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
@@ -71,7 +71,7 @@ public class ServletRegistrationComponentTest {
 	@Before
 	public void initializeManager() throws Exception {
 		this.manager = new Manager();
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.start();
 

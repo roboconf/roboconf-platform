@@ -43,22 +43,22 @@ import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.client.IAgentClient;
-import net.roboconf.messaging.client.IClient.ListenerCommand;
-import net.roboconf.messaging.messages.Message;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdAddImport;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRemoveImport;
-import net.roboconf.messaging.messages.from_agent_to_agent.MsgCmdRequestImport;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceChanged;
-import net.roboconf.messaging.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdAddInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdResynchronize;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSendInstances;
-import net.roboconf.messaging.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
-import net.roboconf.messaging.messages.from_dm_to_dm.MsgEcho;
-import net.roboconf.messaging.processors.AbstractMessageProcessor;
+import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.client.IClient.ListenerCommand;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
+import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -95,8 +95,8 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 
 	/*
-	 * @see net.roboconf.messaging.client.AbstractMessageProcessor
-	 * #processMessage(net.roboconf.messaging.messages.Message)
+	 * @see net.roboconf.messaging.api.client.AbstractMessageProcessor
+	 * #processMessage(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override
 	protected void processMessage( Message message ) {

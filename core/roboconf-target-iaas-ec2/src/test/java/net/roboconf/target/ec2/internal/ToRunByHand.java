@@ -28,11 +28,15 @@ package net.roboconf.target.ec2.internal;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import net.roboconf.core.utils.Utils;
+
+import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPERTY;
+import static net.roboconf.messaging.api.MessagingConstants.TEST_FACTORY_TYPE;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -40,14 +44,9 @@ import net.roboconf.core.utils.Utils;
 public class ToRunByHand {
 
 	private static final String PROPS_LOCATION = "/data1/targets/amazon.linagora.properties";
-	private static final String MSG_IP = "whatever:4895";
-	private static final String MSG_USER = "roboconf";
-	private static final String MSG_PWD = "rob:op;4";
-
 
 	/**
 	 * A test that starts a new VM, passes user data, waits 5 minutes and terminates the VM.
-	 * @param args
 	 * @throws Exception
 	 */
 	public static void main( String args[] ) throws Exception {
@@ -55,7 +54,7 @@ public class ToRunByHand {
 		if( ! new File( PROPS_LOCATION ).exists())
 			throw new IllegalArgumentException( "The properties file does not exist." );
 
-		Map<String,String> conf = new HashMap<String,String> ();
+		Map<String,String> conf = new HashMap<>();
 		Properties p = new Properties();
 		InputStream in = null;
 		try {
@@ -72,8 +71,9 @@ public class ToRunByHand {
 		Ec2IaasHandler target = new Ec2IaasHandler();
 		String serverId = null;
 		try {
-			serverId = target.createMachine( conf, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
-			target.configureMachine( conf, serverId, MSG_IP, MSG_USER, MSG_PWD, "root", "app" );
+			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, TEST_FACTORY_TYPE);
+			serverId = target.createMachine( conf, msgCfg, "root", "app" );
+			target.configureMachine( conf, msgCfg, serverId, "root", "app" );
 
 			// 1 minute
 			Thread.sleep( 60000 );

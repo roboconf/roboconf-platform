@@ -48,7 +48,7 @@ public class OpenstackIaasHandlerTest {
 	@Test
 	public void testValidate() throws Exception {
 
-		Map<String,String> targetProperties = new HashMap<String,String> ();
+		Map<String,String> targetProperties = new HashMap<>();
 		targetProperties.put( OpenstackIaasHandler.FLAVOR_NAME, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.TENANT_NAME, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.IMAGE_NAME, UUID.randomUUID().toString());
@@ -69,7 +69,7 @@ public class OpenstackIaasHandlerTest {
 	public void testValidate_error1() throws Exception {
 
 		// Tenant name is missing
-		Map<String,String> targetProperties = new HashMap<String,String> ();
+		Map<String,String> targetProperties = new HashMap<>();
 		targetProperties.put( OpenstackIaasHandler.FLAVOR_NAME, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.IMAGE_NAME, UUID.randomUUID().toString());
 		targetProperties.put( OpenstackIaasHandler.SECURITY_GROUP, UUID.randomUUID().toString());
@@ -91,7 +91,7 @@ public class OpenstackIaasHandlerTest {
 	@Test
 	public void testIdentity() {
 
-		Map<String,String> targetProperties = new HashMap<String,String> ();
+		Map<String,String> targetProperties = new HashMap<>();
 		targetProperties.put( OpenstackIaasHandler.TENANT_NAME, "tenant" );
 		targetProperties.put( OpenstackIaasHandler.USER, "me" );
 		Assert.assertEquals( "tenant:me", OpenstackIaasHandler.identity( targetProperties ));

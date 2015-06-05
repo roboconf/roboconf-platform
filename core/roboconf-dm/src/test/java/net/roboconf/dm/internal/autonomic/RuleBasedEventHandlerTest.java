@@ -43,8 +43,10 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.MessagingConstants;
+import net.roboconf.messaging.api.MessagingConstants;
 
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -65,18 +67,24 @@ public class RuleBasedEventHandlerTest {
 	private DmMessageProcessor processor;
 	private Manager manager;
 	private RuleBasedEventHandler handler;
+	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
 
+		this.registry.addMessagingClientFactory(new TestClientFactory());
 		File dir = this.folder.newFolder();
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setMessagingFactoryType( MessagingConstants.FACTORY_TEST );
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setConfigurationDirectoryLocation( dir.getAbsolutePath());
 		this.manager.start();
+
+		// Reconfigure with the messaging client factory registry set.
+		this.manager.getMessagingClient().setRegistry(this.registry);
+		this.manager.reconfigure();
 
 		this.handler = new RuleBasedEventHandler( this.manager );
 		if( this.processor != null )
@@ -140,7 +148,7 @@ public class RuleBasedEventHandlerTest {
 		this.handler.createInstances( this.ma, sb.toString());
 		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
 
-		Collection<Instance> rootInstances = new ArrayList<Instance> ();
+		Collection<Instance> rootInstances = new ArrayList<> ();
 		rootInstances.addAll( this.ma.getApplication().getRootInstances());
 		rootInstances.remove( this.app.getMySqlVm());
 		rootInstances.remove( this.app.getTomcatVm());

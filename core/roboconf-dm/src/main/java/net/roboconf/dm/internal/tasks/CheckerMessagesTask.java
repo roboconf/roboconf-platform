@@ -35,8 +35,8 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.messaging.client.IDmClient;
-import net.roboconf.messaging.messages.Message;
+import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
  * @author Vincent Zurczak - Linagora

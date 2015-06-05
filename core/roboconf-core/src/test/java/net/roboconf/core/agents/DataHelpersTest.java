@@ -25,6 +25,9 @@
 
 package net.roboconf.core.agents;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
@@ -36,63 +39,82 @@ import org.junit.Test;
  */
 public class DataHelpersTest {
 
+	public static final String MESSAGING_IP = "messaging.ip";
+	public static final String MESSAGING_USERNAME = "messaging.username";
+	public static final String MESSAGING_PASSWORD = "messaging.password";
+
 	@Test
 	public void testWriteAndRead() throws Exception {
 
-		String rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", "pwd", "app", "/root" );
+		String rawProperties = DataHelpers.writeUserDataAsString( msgCfg("192.168.1.24", "user", "pwd"), "app", "/root" );
 		Properties props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
 		Assert.assertEquals( "/root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
-		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
-		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+		Assert.assertEquals( "192.168.1.24", props.getProperty( MESSAGING_IP ));
+		Assert.assertEquals( "pwd", props.getProperty( MESSAGING_PASSWORD ));
+		Assert.assertEquals( "user", props.getProperty( MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( null, "user", "pwd", "app", "/root" );
+		rawProperties = DataHelpers.writeUserDataAsString( msgCfg(null, "user", "pwd"), "app", "/root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
 		Assert.assertEquals( "/root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( null, props.getProperty( DataHelpers.MESSAGING_IP ));
-		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
-		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+		Assert.assertEquals( null, props.getProperty( MESSAGING_IP ));
+		Assert.assertEquals( "pwd", props.getProperty( MESSAGING_PASSWORD ));
+		Assert.assertEquals( "user", props.getProperty( MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", null, "pwd", "app", "/root" );
+		rawProperties = DataHelpers.writeUserDataAsString( msgCfg("192.168.1.24", null, "pwd"), "app", "/root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
 		Assert.assertEquals( "/root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
-		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
-		Assert.assertEquals( null, props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+		Assert.assertEquals( "192.168.1.24", props.getProperty( MESSAGING_IP ));
+		Assert.assertEquals( "pwd", props.getProperty( MESSAGING_PASSWORD ));
+		Assert.assertEquals( null, props.getProperty( MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", null, "app", "root" );
+		rawProperties = DataHelpers.writeUserDataAsString( msgCfg("192.168.1.24", "user", null), "app", "root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
 		Assert.assertEquals( "root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
-		Assert.assertEquals( null, props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
-		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+		Assert.assertEquals( "192.168.1.24", props.getProperty( MESSAGING_IP ));
+		Assert.assertEquals( null, props.getProperty( MESSAGING_PASSWORD ));
+		Assert.assertEquals( "user", props.getProperty( MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", "pwd", null, "root" );
+		rawProperties = DataHelpers.writeUserDataAsString( msgCfg("192.168.1.24", "user", "pwd"), null, "root" );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( null, props.getProperty( DataHelpers.APPLICATION_NAME ));
 		Assert.assertEquals( "root", props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
-		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
-		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+		Assert.assertEquals( "192.168.1.24", props.getProperty( MESSAGING_IP ));
+		Assert.assertEquals( "pwd", props.getProperty( MESSAGING_PASSWORD ));
+		Assert.assertEquals( "user", props.getProperty( MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24", "user", "pwd", "app", null );
+		rawProperties = DataHelpers.writeUserDataAsString( msgCfg("192.168.1.24", "user", "pwd"), "app", null );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
 		Assert.assertEquals( null, props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "192.168.1.24", props.getProperty( DataHelpers.MESSAGING_IP ));
-		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
-		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+		Assert.assertEquals( "192.168.1.24", props.getProperty( MESSAGING_IP ));
+		Assert.assertEquals( "pwd", props.getProperty( MESSAGING_PASSWORD ));
+		Assert.assertEquals( "user", props.getProperty( MESSAGING_USERNAME ));
 
-		rawProperties = DataHelpers.writeUserDataAsString( "192.168.1.24:9120", "user", "pwd", "app", null );
+		rawProperties = DataHelpers.writeUserDataAsString( msgCfg("192.168.1.24:9120", "user", "pwd"), "app", null );
 		props = DataHelpers.readUserData( rawProperties );
 		Assert.assertEquals( "app", props.getProperty( DataHelpers.APPLICATION_NAME ));
 		Assert.assertEquals( null, props.getProperty( DataHelpers.SCOPED_INSTANCE_PATH ));
-		Assert.assertEquals( "192.168.1.24:9120", props.getProperty( DataHelpers.MESSAGING_IP ));
-		Assert.assertEquals( "pwd", props.getProperty( DataHelpers.MESSAGING_PASSWORD ));
-		Assert.assertEquals( "user", props.getProperty( DataHelpers.MESSAGING_USERNAME ));
+		Assert.assertEquals( "192.168.1.24:9120", props.getProperty( MESSAGING_IP ));
+		Assert.assertEquals( "pwd", props.getProperty( MESSAGING_PASSWORD ));
+		Assert.assertEquals( "user", props.getProperty( MESSAGING_USERNAME ));
+	}
+
+	/**
+	 * Creates a pseudo messaging configuration for the given IP and credentials.
+	 * @param ip the pseudo IP address.
+	 * @param user the pseudo user.
+	 * @param pass the pseudo password.
+	 * @return the pseudo messaging configuration.
+	 */
+	private static Map<String, String> msgCfg(String ip, String user, String pass) {
+		Map<String, String> result = new LinkedHashMap<>();
+		result.put(MESSAGING_IP, ip);
+		result.put(MESSAGING_USERNAME, user);
+		result.put(MESSAGING_PASSWORD, pass);
+		return Collections.unmodifiableMap(result);
 	}
 }

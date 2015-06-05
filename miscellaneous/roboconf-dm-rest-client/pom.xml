@@ -146,9 +146,16 @@
 		
 		<dependency>
   			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-messaging</artifactId>
+  			<artifactId>roboconf-messaging-api</artifactId>
   			<version>${project.version}</version>
   			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.3.1</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	

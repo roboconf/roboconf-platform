@@ -16,9 +16,7 @@
 		</requires>
 		
 		<properties updated="reconfigure" pid="net.roboconf.agent.configuration">
-			<property name="message-server-ip" method="setMessageServerIp" />
-			<property name="message-server-username" method="setMessageServerUsername" />
-			<property name="message-server-password" method="setMessageServerPassword" />
+			<property name="messaging-type" method="setMessagingType" />
 			<property name="application-name" method="setApplicationName" />
 			<property name="scoped-instance-path" method="setScopedInstancePath" />
 			<property name="ip-address-of-the-agent" method="setIpAddress" />
@@ -38,9 +36,7 @@
 		<properties updated="reconfigure" pid="net.roboconf.agent-in-memory.configuration">
 		
 			<!-- Values that will be set by the IaaS in memory -->
-			<property name="message-server-ip" method="setMessageServerIp" />
-			<property name="message-server-username" method="setMessageServerUsername" />
-			<property name="message-server-password" method="setMessageServerPassword" />
+			<property name="messaging-type" method="setMessagingType" />
 			<property name="application-name" method="setApplicationName" />
 			<property name="scoped-instance-path" method="setScopedInstancePath" />
 			

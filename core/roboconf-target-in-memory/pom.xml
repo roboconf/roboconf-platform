@@ -68,6 +68,13 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-messaging-api</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
 		
 		<dependency>
 			<groupId>junit</groupId>
@@ -84,7 +91,8 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.target.api.*;version="${project.version}"
+							net.roboconf.target.api.*;version="${project.version}",
+							net.roboconf.messaging.api.*;version="${project.version}"
 						</Import-Package>
 					</instructions>
 				</configuration>

@@ -53,9 +53,6 @@ public class VmWareMachineConfigurator implements MachineConfigurator {
 
 	/**
 	 * Constructor.
-	 * @param targetProperties
-	 * @param userData
-	 * @param rootInstanceName
 	 */
 	public VmWareMachineConfigurator( Map<String,String> targetProperties, String userData, String rootInstanceName ) {
 		this.targetProperties = targetProperties;
