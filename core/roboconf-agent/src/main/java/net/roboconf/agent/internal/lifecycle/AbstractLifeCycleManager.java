@@ -158,6 +158,7 @@ public abstract class AbstractLifeCycleManager {
 					this.logger.severe( "An error occured while starting " + InstanceHelpers.computeInstancePath( impactedInstance ));
 					Utils.logException( this.logger, e );
 					impactedInstance.setStatus( oldState );
+					this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, impactedInstance ));
 				}
 
 			} else if( impactedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
@@ -407,7 +408,7 @@ public abstract class AbstractLifeCycleManager {
 
 		} finally {
 			// In the case where the instances were stopped because of a change in "imports",
-			// we remain in the starting phase, so that we can start automatically when the required
+			// we remain in the unresolved phase, so that we can start automatically when the required
 			// imports arrive.
 			List<Instance> forNotifications = new ArrayList<Instance> ();
 			for( Instance i : instancesToStop ) {
