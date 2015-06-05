@@ -122,8 +122,8 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: load application from " + localFilePath + "." );
 		Response response;
 		try {
-			this.manager.loadApplicationTemplate( new File( localFilePath ));
-			response = Response.ok().build();
+			ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( localFilePath ));
+			response = Response.ok().entity( tpl ).build();
 
 		} catch( AlreadyExistingException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "A new application template could not be loaded.", e ).build();
@@ -192,11 +192,12 @@ public class ManagementResource implements IManagementResource {
 	public Response createApplication( Application app ) {
 
 		this.logger.fine( "Request: create application " + app + "." );
-		Response result = Response.ok().build();
+		Response result;
 		try {
 			String tplName = app.getTemplate() == null ? null : app.getTemplate().getName();
 			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getQualifier();
-			this.manager.createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
+			ManagedApplication ma = this.manager.createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
+			result = Response.ok().entity( ma.getApplication()).build();
 
 		} catch( InvalidApplicationException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, "Application " + app + " references an invalid template.", e ).build();

@@ -1,0 +1,4 @@
+instance of server {
+	name: server;
+	configuration = master-slave;
+}

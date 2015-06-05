@@ -383,19 +383,19 @@ public class ApplicationResourceTest {
 
 
 	@Test
-	public void testFindPossibleComponentChildren() throws Exception {
+	public void testComponentChildren() throws Exception {
 
-		List<Component> components = this.resource.findPossibleComponentChildren( "inexisting", "" );
+		List<Component> components = this.resource.findComponentChildren( "inexisting", "" );
 		Assert.assertEquals( 0, components.size());
 
-		components = this.resource.findPossibleComponentChildren( this.app.getName(), "inexisting-component" );
+		components = this.resource.findComponentChildren( this.app.getName(), "inexisting-component" );
 		Assert.assertEquals( 0, components.size());
 
-		components = this.resource.findPossibleComponentChildren( this.app.getName(), null );
+		components = this.resource.findComponentChildren( this.app.getName(), null );
 		Assert.assertEquals( 1, components.size());
 		Assert.assertTrue( components.contains( this.app.getMySqlVm().getComponent()));
 
-		components = this.resource.findPossibleComponentChildren( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
+		components = this.resource.findComponentChildren( this.app.getName(), this.app.getMySqlVm().getComponent().getName());
 		Assert.assertEquals( 2, components.size());
 		Assert.assertTrue( components.contains( this.app.getMySql().getComponent()));
 		Assert.assertTrue( components.contains( this.app.getTomcat().getComponent()));
@@ -403,18 +403,17 @@ public class ApplicationResourceTest {
 
 
 	@Test
-	public void testFindPossibleParentInstances() throws Exception {
+	public void testComponentAncestors() throws Exception {
 
-		List<String> instancePaths = this.resource.findPossibleParentInstances( "inexisting", "my-comp" );
-		Assert.assertEquals( 0, instancePaths.size());
+		List<Component> components = this.resource.findComponentAncestors( "inexisting", "my-comp" );
+		Assert.assertEquals( 0, components.size());
 
-		instancePaths = this.resource.findPossibleParentInstances( this.app.getName(), "my-comp" );
-		Assert.assertEquals( 0, instancePaths.size());
+		components = this.resource.findComponentAncestors( this.app.getName(), "my-comp" );
+		Assert.assertEquals( 0, components.size());
 
-		instancePaths = this.resource.findPossibleParentInstances( this.app.getName(), this.app.getTomcat().getComponent().getName());
-		Assert.assertEquals( 2, instancePaths.size());
-		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( this.app.getMySqlVm())));
-		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( this.app.getTomcatVm())));
+		components = this.resource.findComponentAncestors( this.app.getName(), this.app.getTomcat().getComponent().getName());
+		Assert.assertEquals( 1, components.size());
+		Assert.assertTrue( components.contains( this.app.getMySqlVm().getComponent()));
 	}
 
 

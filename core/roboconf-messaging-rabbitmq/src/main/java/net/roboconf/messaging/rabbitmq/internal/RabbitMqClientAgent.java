@@ -28,18 +28,19 @@ package net.roboconf.messaging.rabbitmq.internal;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.utils.SerializationUtils;
 
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
@@ -158,12 +159,16 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 	 */
 	@Override
 	public void publishExports( Instance instance ) throws IOException {
-		this.logger.fine( "Agent '" + getAgentId() + "' is publishing its exports." );
 
 		// For all the exported variables...
 		// ... find the component or facet name...
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance ))
+		Set<String> names = VariableHelpers.findPrefixesForExportedVariables( instance );
+		if( names.isEmpty())
+			this.logger.fine( "Agent '" + getAgentId() + "' is publishing its exports." );
+
+		else for( String facetOrComponentName : names ) {
 			publishExports( instance, facetOrComponentName );
+		}
 	}
 
 
@@ -211,6 +216,9 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 		// ... find the component or facet name...
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
 
+			// Log here, for debug
+			this.logger.fine( "Agent '" + getAgentId() + "' is un-publishing its exports (" + facetOrComponentName + ")." );
+
 			// Publish them
 			MsgCmdRemoveImport message = new MsgCmdRemoveImport(
 					facetOrComponentName,
@@ -243,11 +251,11 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 			String exchangeName = RabbitMqUtils.buildExchangeName( this.applicationName, false );
 
 			if( command == ListenerCommand.START ) {
-				this.logger.fine( "Agent '" + getAgentId() + "' starts listening requests from other agents." );
+				this.logger.fine( "Agent '" + getAgentId() + "' starts listening requests from other agents (" + facetOrComponentName + ")." );
 				this.channel.queueBind( queueName, exchangeName, routingKey );
 
 			} else {
-				this.logger.fine( "Agent '" + getAgentId() + "' stops listening requests from other agents." );
+				this.logger.fine( "Agent '" + getAgentId() + "' stops listening requests from other agents (" + facetOrComponentName + ")." );
 				this.channel.queueUnbind( queueName, exchangeName, routingKey );
 			}
 		}
@@ -265,6 +273,9 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 		// For all the imported variables...
 		// ... find the component or facet name...
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( instance )) {
+
+			// Log here, for debug
+			this.logger.fine( "Agent '" + getAgentId() + "' is requesting exports from other agents (" + facetOrComponentName + ")." );
 
 			// ... and ask to publish them.
 			// Grouping variable requests by prefix reduces the number of messages.
@@ -295,11 +306,11 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 			String exchangeName = RabbitMqUtils.buildExchangeName( this.applicationName, false );
 
 			if( command == ListenerCommand.START ) {
-				this.logger.fine( "Agent '" + getAgentId() + "' starts listening exports from other agents." );
+				this.logger.fine( "Agent '" + getAgentId() + "' starts listening exports from other agents (" + facetOrComponentName + ")." );
 				this.channel.queueBind( queueName, exchangeName, routingKey );
 
 			} else {
-				this.logger.fine( "Agent '" + getAgentId() + "' stops listening exports from other agents." );
+				this.logger.fine( "Agent '" + getAgentId() + "' stops listening exports from other agents (" + facetOrComponentName + ")." );
 				this.channel.queueUnbind( queueName, exchangeName, routingKey );
 			}
 		}

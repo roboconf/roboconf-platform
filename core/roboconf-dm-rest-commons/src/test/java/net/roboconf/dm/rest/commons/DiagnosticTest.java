@@ -32,7 +32,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DiagnstocTest {
+public class DiagnosticTest {
 
 	@Test
 	public void testConstructor() {

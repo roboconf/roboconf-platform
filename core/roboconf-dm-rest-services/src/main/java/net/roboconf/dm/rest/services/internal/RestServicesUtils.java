@@ -65,7 +65,11 @@ public final class RestServicesUtils {
 
 		logger.severe( sb.toString());
 		Utils.logException( logger, e );
-		return Response.status( status ).entity( sb.toString());
+
+		// Errors should return a JSon object.
+		// Otherwise, Restangular cannot parse error messages.
+		String details = msg == null ? "Not specified." : msg.replaceAll( "\"", "\\\"" );
+		return Response.status( status ).entity( "{\"reason\":\"" + details + "\"}" );
 	}
 
 

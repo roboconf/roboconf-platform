@@ -302,18 +302,18 @@ public class ApplicationWsDelegate {
 	 * @param instancePath an instance path (null to get root components)
 	 * @return a non-null list of component names
 	 */
-	public List<Component> findPossibleComponentChildren( String applicationName, String instancePath ) {
-		this.logger.finer( "Listing possible child components for instance " + instancePath + "..." );
+	public List<Component> findComponentChildren( String applicationName, String componentName ) {
+		this.logger.finer( "Listing possible children components for component " + componentName + "..." );
 
-		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "possibilities" );
-		if( instancePath != null )
-			path = path.queryParam( "instance-path", instancePath );
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "components/children" );
+		if( componentName != null )
+			path = path.queryParam( "name", componentName );
 
 		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
 		if( result != null )
-			this.logger.finer( result.size() + " possible children was or were found for " + instancePath + "." );
+			this.logger.finer( result.size() + " possible children was or were found for " + componentName + "." );
 		else
-			this.logger.finer( "No possible child was found for " + instancePath + "." );
+			this.logger.finer( "No possible child was found for " + componentName + "." );
 
 		return result != null ? result : new ArrayList<Component> ();
 	}
@@ -325,18 +325,19 @@ public class ApplicationWsDelegate {
 	 * @param componentName a component name
 	 * @return a non-null list of instance paths
 	 */
-	public List<String> findPossibleParentInstances( String applicationName, String componentName ) {
-		this.logger.finer( "Listing possible parent instances for component " + componentName + "..." );
+	public List<Component> findComponentAncestors( String applicationName, String componentName ) {
+		this.logger.finer( "Listing possible parent components for component " + componentName + "..." );
 
-		List<String> result = this.resource
-				.path( UrlConstants.APP ).path( applicationName ).path( "component" ).path( componentName )
-				.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<String>> () {});
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "components/ancestors" );
+		if( componentName != null )
+			path = path.queryParam( "name", componentName );
 
+		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
 		if( result != null )
 			this.logger.finer( result.size() + " possible parents was or were found for " + componentName + "." );
 		else
 			this.logger.finer( "No possible parent was found for " + componentName + "." );
 
-		return result != null ? result : new ArrayList<String> ();
+		return result != null ? result : new ArrayList<Component> ();
 	}
 }

@@ -50,11 +50,16 @@
 		<exec executable="npm" dir="${project.build.directory}/roboconf-web-administration" osfamily="unix" failonerror="true">
 			<arg line="install" />
 		</exec>
-
+		
 		<!-- 
-			TODO: we should use grunt to assemble the final package. 
-			See http://addyosmani.com/blog/making-maven-grunt/ 
+			Should we use the '- - production' flag for NPM?
+			We would need a dedicated Gulp task then...
 		-->
+		
+		<exec executable="gulp" dir="${project.build.directory}/roboconf-web-administration" failonerror="true">
+			<!-- prepare-dev -->
+			<arg line="inject-dev" />
+		</exec>
 	</target>
 
 </project>

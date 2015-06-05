@@ -91,11 +91,14 @@
 					<archive>
 						<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
 					</archive>
-					<!--<webResources>
+					<webResources>
 						<resource>
-							<directory>${project.build.directory}/roboconf-web-administration/app</directory>
+							<!-- Embed the DEV files for the moment -->
+							<directory>${project.build.directory}/roboconf-web-administration/target/dev</directory>
+							<!-- To embed the minified version (for later) -->
+							<!--<directory>${project.build.directory}/roboconf-web-administration/target/dist</directory> -->
 						</resource>
-					</webResources>-->
+					</webResources>
 				</configuration>
 			</plugin>
 			

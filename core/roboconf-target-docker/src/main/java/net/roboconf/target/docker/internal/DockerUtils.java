@@ -102,7 +102,7 @@ public final class DockerUtils {
 			List<Image> images = dockerClient.listImagesCmd().exec();
 			images = images == null ? new ArrayList<Image>( 0 ) : images;
 			if( findImageById( imageId, images ) != null )
-				dockerClient.removeImageCmd( imageId ).exec();
+				dockerClient.removeImageCmd( imageId ).withForce( true ).exec();
 		}
 	}
 

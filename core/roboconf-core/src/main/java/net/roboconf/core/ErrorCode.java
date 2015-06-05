@@ -47,8 +47,8 @@ public enum ErrorCode {
 	P_O_C_BRACKET_MISSING( ErrorLevel.SEVERE, ErrorCategory.PARSING, "A facet, component or instance name must be followed by an opening curly bracket." ),
 	P_C_C_BRACKET_MISSING( ErrorLevel.SEVERE, ErrorCategory.PARSING, "A facet, component or instance declaration must end with a closing curly bracket." ),
 	P_UNRECOGNIZED_BLOCK( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Unrecognized block. 'import', 'facet', 'instanceof' or a component name were expected." ),
-	P_INVALID_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid content. A property was expected." ),
-	P_INVALID_PROPERTY_OR_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid content. A property or an instance was expected." ),
+	P_INVALID_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Syntax error: a property was expected." ),
+	P_INVALID_PROPERTY_OR_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Syntax error: a property or an instance was expected." ),
 	P_INVALID_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid file type. It mixes facet, component and instance definitions." ),
 	P_NO_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "No file type. No import, facet, component or instance definition was found." ),
 

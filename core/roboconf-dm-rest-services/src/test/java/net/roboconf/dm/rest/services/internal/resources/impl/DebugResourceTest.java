@@ -54,14 +54,15 @@ import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.messaging.api.MessagingConstants;
-
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -73,7 +74,7 @@ public class DebugResourceTest {
 
 	private Manager manager;
 	private DebugResource resource;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before

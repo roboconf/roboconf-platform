@@ -16,6 +16,7 @@ before_script:
   - sudo apt-get update -y
   - sudo apt-get install rubygems
   - gem install puppet
+  - npm install -g gulp
 
 # For debug only
 #  - puppet --version
