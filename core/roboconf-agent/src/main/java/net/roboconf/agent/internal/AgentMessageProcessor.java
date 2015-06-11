@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -417,7 +418,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			// If an instance depends on its component, make sure it does not add itself to the imports.
 			// Example: MongoDB may depend on other MongoDB instances.
-			if( Utils.areEqual(
+			if( Objects.equals(
 					InstanceHelpers.computeInstancePath( instance ),
 					msg.getAddedInstancePath()))
 				continue;

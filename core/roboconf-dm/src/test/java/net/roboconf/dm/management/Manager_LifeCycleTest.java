@@ -62,13 +62,12 @@ public class Manager_LifeCycleTest {
 	private Manager manager;
 	private TestClientDm msgClient;
 	private TestTargetResolver targetResolver;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
 		this.registry.addMessagingClientFactory(new TestClientFactory());
-
 		this.targetResolver = new TestTargetResolver();
 
 		this.manager = new Manager();

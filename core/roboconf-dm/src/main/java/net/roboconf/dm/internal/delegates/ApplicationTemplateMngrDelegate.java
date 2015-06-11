@@ -28,6 +28,7 @@ package net.roboconf.dm.internal.delegates;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -158,8 +159,8 @@ public class ApplicationTemplateMngrDelegate {
 
 		ApplicationTemplate result = null;
 		for( ApplicationTemplate tpl : this.templates.keySet()) {
-			if( Utils.areEqual( tpl.getName(), name )
-					&& Utils.areEqual( tpl.getQualifier(), qualifier )) {
+			if( Objects.equals( tpl.getName(), name )
+					&& Objects.equals( tpl.getQualifier(), qualifier )) {
 				result = tpl;
 				break;
 			}

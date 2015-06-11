@@ -33,6 +33,7 @@ import java.net.URL;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -188,7 +189,7 @@ public class RestHandler extends MonitoringHandler {
 
 			} catch( NumberFormatException e ) {
 				if( "==".equals( this.conditionOperator ) || "=".equals( this.conditionOperator ))
-					result = Utils.areEqual( value, this.conditionThreshold );
+					result = Objects.equals( value, this.conditionThreshold );
 				else
 					this.logger.fine( "Invalid double. " + e.getMessage());
 			}

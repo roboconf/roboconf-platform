@@ -155,7 +155,6 @@ public class Manager {
 		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.appManager ), 0, Constants.HEARTBEAT_PERIOD );
 
 		reconfigure();
-
 		this.logger.info( "The DM was launched." );
 	}
 
