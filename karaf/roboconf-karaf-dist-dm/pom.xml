@@ -69,12 +69,6 @@
 			<scope>runtime</scope>
 		</dependency>
 		
-		<!-- Branding -->
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-karaf-branding-dm</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -114,31 +108,6 @@
 			
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>copy</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>net.roboconf</groupId>
-									<artifactId>roboconf-karaf-branding-dm</artifactId>
-									<version>${project.version}</version>
-									<outputDirectory>target/assembly/lib</outputDirectory>
-									<destFileName>branding.jar</destFileName>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
 					<execution>
@@ -150,7 +119,10 @@
 						<configuration>
 							<target>
 								<copy todir="target/assembly/etc" overwrite="true">
-									<fileset dir="${basedir}/karaf-resources" includes="**/*.cfg" />
+									<fileset dir="${basedir}/karaf-resources">
+										<include name="**/*.cfg"/>
+										<include name="**/*.properties"/>
+									</fileset>
 								</copy>
 							</target>
 						</configuration>

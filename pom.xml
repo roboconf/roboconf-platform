@@ -69,8 +69,6 @@
 		<module>core/roboconf-plugin-logger</module>
 		
 		<!-- Distributions -->
-		<module>karaf/roboconf-karaf-branding-agent</module>
-		<module>karaf/roboconf-karaf-branding-dm</module>
 		<module>karaf/roboconf-karaf-feature-agent</module>
 		<module>karaf/roboconf-karaf-feature-dm</module>
 		<module>karaf/roboconf-karaf-dist-agent</module>
