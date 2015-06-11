@@ -41,7 +41,7 @@ import net.roboconf.core.utils.Utils;
  * Generate a Dockerfile directory with all necessary stuff to setup a Roboconf agent.
  * @author Pierre-Yves Gibello - Linagora
  */
-public class DockerfileGenerator {
+public class DockerFileGenerator {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String agentPackURL;
@@ -55,7 +55,7 @@ public class DockerfileGenerator {
 	 * @param agentPackURL URL or path to the agent tarball or zip
 	 * @param packages packages to be installed using apt-get (including JRE)
 	 */
-	public DockerfileGenerator(String agentPackURL, String packages) {
+	public DockerFileGenerator(String agentPackURL, String packages) {
 		File test = new File(agentPackURL);
 		this.agentPackURL = (test.exists() ? "file://" : "") + agentPackURL;
 

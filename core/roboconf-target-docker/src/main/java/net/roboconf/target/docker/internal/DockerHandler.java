@@ -117,7 +117,7 @@ public class DockerHandler implements TargetHandler {
 			InputStream response = null;
 			File dockerfile = null;
 			try {
-				dockerfile = new DockerfileGenerator(pack, targetProperties.get(AGENT_JRE_AND_PACKAGES)).generateDockerfile();
+				dockerfile = new DockerFileGenerator(pack, targetProperties.get(AGENT_JRE_AND_PACKAGES)).generateDockerfile();
 				this.logger.fine( "Creating an image from the generated Dockerfile." );
 				response = dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
 

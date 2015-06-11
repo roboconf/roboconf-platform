@@ -55,11 +55,11 @@ public class DockerFileGeneratorTest {
 
 	@Test
 	public void testNewFileGenerator() {
-		DockerfileGenerator gen = new DockerfileGenerator("file://" + this.agentPackZip.getAbsolutePath(), null);
+		DockerFileGenerator gen = new DockerFileGenerator("file://" + this.agentPackZip.getAbsolutePath(), null);
 		Assert.assertEquals(gen.getPackages(), "openjdk-7-jre-headless");
 		Assert.assertFalse(gen.isTar());
 
-		gen = new DockerfileGenerator(this.agentPackTgz.getAbsolutePath(), "pack1 pack2");
+		gen = new DockerFileGenerator(this.agentPackTgz.getAbsolutePath(), "pack1 pack2");
 		Assert.assertEquals(gen.getPackages(), "pack1 pack2");
 		Assert.assertTrue(gen.isTar());
 	}
@@ -69,7 +69,7 @@ public class DockerFileGeneratorTest {
 
 		File dockerfile = null;
 		try {
-			DockerfileGenerator gen = new DockerfileGenerator(this.agentPackTgz.getAbsolutePath(), null);
+			DockerFileGenerator gen = new DockerFileGenerator(this.agentPackTgz.getAbsolutePath(), null);
 			dockerfile = gen.generateDockerfile();
 			Assert.assertTrue(dockerfile.exists());
 			Assert.assertTrue(dockerfile.isDirectory());

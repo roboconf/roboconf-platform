@@ -69,13 +69,14 @@ public final class DockerUtils {
 				&& Utils.isEmptyOrWhitespaces( targetProperties.get( DockerHandler.AGENT_PACKAGE )))
 			throw new TargetException( DockerHandler.IMAGE_ID + " or " + DockerHandler.AGENT_PACKAGE + " is missing in the configuration." );
 
-		if( Utils.isEmptyOrWhitespaces( targetProperties.get( DockerHandler.ENDPOINT )))
-			throw new TargetException( DockerHandler.ENDPOINT + " is missing in the configuration." );
+		String edpt = targetProperties.get( DockerHandler.ENDPOINT );
+		if( Utils.isEmptyOrWhitespaces( edpt ))
+			edpt = "http://localhost:4243";
 
 		// The configuration is straight-forward.
 		DockerClientConfigBuilder config =
 				DockerClientConfig.createDefaultConfigBuilder()
-				.withUri( targetProperties.get( DockerHandler.ENDPOINT ))
+				.withUri( edpt )
 				.withUsername( targetProperties.get( DockerHandler.USER ))
 				.withPassword( targetProperties.get( DockerHandler.PASSWORD ))
 				.withEmail( targetProperties.get( DockerHandler.EMAIL ))
