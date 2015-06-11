@@ -78,6 +78,18 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds a component by name.
+	 * @param app an application (not null)
+	 * @param name the component name (not null)
+	 * @return a component (can be null)
+	 */
+	public static Component findComponent( Application app, String name ) {
+		Graphs graphs = app.getTemplate().getGraphs();
+		return findComponent( graphs, name );
+	}
+
+
+	/**
 	 * Finds a component by name from another component.
 	 * @param component the component used to build a partial graph (should not be null)
 	 * @param componentName the component name (not null)

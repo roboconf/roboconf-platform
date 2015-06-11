@@ -223,10 +223,15 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.agent.setScopedInstance( newScopedInstance );
 			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.scopedInstance ));
 
+			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
 				this.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.agent.getApplicationName(), this.scopedInstance ));
 			}
+
+			// Listen to requests from other agents for the scoped instance ONLY.
+			// See #301. It won't be done anywhere else for the scoped instance.
+			this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.START, this.scopedInstance );
 		}
 
 		// Configure the messaging

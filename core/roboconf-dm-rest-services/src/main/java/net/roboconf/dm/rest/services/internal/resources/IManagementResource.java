@@ -72,6 +72,7 @@ public interface IManagementResource {
 	@POST
 	@Path("/templates")
 	@Consumes( MediaType.MULTIPART_FORM_DATA )
+	@Produces( MediaType.APPLICATION_JSON )
 	Response loadApplicationTemplate(
 			@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail );
@@ -96,6 +97,7 @@ public interface IManagementResource {
 	@POST
 	@Path("/templates/local")
 	@Consumes( MediaType.APPLICATION_JSON )
+	@Produces( MediaType.APPLICATION_JSON )
 	Response loadApplicationTemplate( @QueryParam( "local-file-path" ) String localFilePath );
 
 	/**
@@ -114,7 +116,8 @@ public interface IManagementResource {
 	 * @return a response
 	 */
 	@DELETE
-	@Path("/templates/{name}/{qualifier}/delete")
+	@Path("/templates/{name}/{qualifier}")
+	@Produces( MediaType.APPLICATION_JSON )
 	Response deleteApplicationTemplate( @PathParam("name") String tplName, @PathParam("qualifier") String tplQualifier );
 
 
@@ -128,6 +131,7 @@ public interface IManagementResource {
 	 */
 	@POST
 	@Consumes( MediaType.APPLICATION_JSON )
+	@Produces( MediaType.APPLICATION_JSON )
 	Response createApplication( Application app );
 
 
@@ -152,6 +156,7 @@ public interface IManagementResource {
 	 */
 	@POST
 	@Path("/{name}/shutdown")
+	@Produces( MediaType.APPLICATION_JSON )
 	Response shutdownApplication( @PathParam("name") String applicationName );
 
 	/**
@@ -161,5 +166,6 @@ public interface IManagementResource {
 	 */
 	@DELETE
 	@Path("/{name}/delete")
+	@Produces( MediaType.APPLICATION_JSON )
 	Response deleteApplication( @PathParam("name") String applicationName );
 }

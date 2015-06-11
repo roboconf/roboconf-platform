@@ -486,6 +486,7 @@ public class FileDefinitionParserTest {
 
 		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<String,ParsingError> ();
 		resourceNameToErrorCode.put( "instanceof-invalid-property.instances", new ParsingError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, null, 2 ));
+		resourceNameToErrorCode.put( "instanceof-invalid-property-2.instances", new ParsingError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, null, 3 ));
 		resourceNameToErrorCode.put( "instanceof-invalid-end.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
 		resourceNameToErrorCode.put( "instanceof-missing-closing-cb.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 3 ));
 		resourceNameToErrorCode.put( "instanceof-missing-opening-cb.instances", new ParsingError( ErrorCode.P_O_C_BRACKET_MISSING, null, 1 ));

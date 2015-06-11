@@ -156,7 +156,7 @@ public class ManagementWsDelegate {
 
 		ClientResponse response = this.resource
 				.path( UrlConstants.APPLICATIONS ).path( "templates" )
-				.path( templateName ).path( templateQualifier ).path( "delete" )
+				.path( templateName ).path( templateQualifier )
 				.delete( ClientResponse.class );
 
 		String text = response.getEntity( String.class );

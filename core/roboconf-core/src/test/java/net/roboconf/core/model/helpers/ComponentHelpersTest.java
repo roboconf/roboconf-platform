@@ -33,6 +33,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.ComplexApplicationFactory1;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -68,6 +69,10 @@ public class ComponentHelpersTest {
 		Component duplicateC1 = new Component( "c1" );
 		g.getRootComponents().add( duplicateC1 );
 		Assert.assertNotNull( ComponentHelpers.findComponent( g, "c1" ));
+
+		TestApplication app = new TestApplication();
+		Assert.assertNotNull( ComponentHelpers.findComponent( app, "tomcat" ));
+		Assert.assertNull( ComponentHelpers.findComponent( app, "tommy" ));
 	}
 
 

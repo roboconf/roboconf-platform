@@ -302,38 +302,38 @@ public class ApplicationWsDelegateTest {
 
 
 	@Test
-	public void testFindPossibleComponentChildren() throws Exception {
+	public void testFindComponentChildren() throws Exception {
 
-		List<Component> components = this.client.getApplicationDelegate().findPossibleComponentChildren( "inexisting", "" );
+		List<Component> components = this.client.getApplicationDelegate().findComponentChildren( "inexisting", "" );
 		Assert.assertEquals( 0, components.size());
 
-		components = this.client.getApplicationDelegate().findPossibleComponentChildren( this.app.getName(), "inexisting-component" );
+		components = this.client.getApplicationDelegate().findComponentChildren( this.app.getName(), "inexisting-component" );
 		Assert.assertEquals( 0, components.size());
 
-		components = this.client.getApplicationDelegate().findPossibleComponentChildren( this.app.getName(), null );
+		components = this.client.getApplicationDelegate().findComponentChildren( this.app.getName(), null );
 		Assert.assertEquals( 1, components.size());
 		Assert.assertTrue( components.contains( this.app.getMySqlVm().getComponent()));
 
-		components = this.client.getApplicationDelegate().findPossibleComponentChildren( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
+		components = this.client.getApplicationDelegate().findComponentChildren( this.app.getName(), this.app.getMySqlVm().getComponent().getName());
 		Assert.assertEquals( 2, components.size());
-		Assert.assertTrue( components.contains( this.app.getMySql().getComponent()));
-		Assert.assertTrue( components.contains( this.app.getTomcat().getComponent()));
+		Assert.assertTrue( components.contains( this.app.getMySql().getComponent()));;
+		Assert.assertTrue( components.contains( this.app.getTomcat().getComponent()));;
 	}
 
 
 	@Test
-	public void testFindPossibleParentInstances() throws Exception {
+	public void testFindComponentAncestors() throws Exception {
 
-		List<String> instancePaths = this.client.getApplicationDelegate().findPossibleParentInstances( "inexisting", "my-comp" );
-		Assert.assertEquals( 0, instancePaths.size());
+		List<Component> components = this.client.getApplicationDelegate().findComponentAncestors( "inexisting", "my-comp" );
+		Assert.assertEquals( 0, components.size());
 
-		instancePaths = this.client.getApplicationDelegate().findPossibleParentInstances( this.app.getName(), "my-comp" );
-		Assert.assertEquals( 0, instancePaths.size());
+		components = this.client.getApplicationDelegate().findComponentAncestors( this.app.getName(), "my-comp" );
+		Assert.assertEquals( 0, components.size());
 
-		instancePaths = this.client.getApplicationDelegate().findPossibleParentInstances( this.app.getName(), this.app.getTomcat().getComponent().getName());
-		Assert.assertEquals( 2, instancePaths.size());
-		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( this.app.getMySqlVm())));
-		Assert.assertTrue( instancePaths.contains( InstanceHelpers.computeInstancePath( this.app.getTomcatVm())));
+		components = this.client.getApplicationDelegate().findComponentAncestors( this.app.getName(), this.app.getTomcat().getComponent().getName());
+		Assert.assertEquals( 1, components.size());
+		Assert.assertTrue( components.contains( this.app.getMySqlVm().getComponent()));
+		Assert.assertTrue( components.contains( this.app.getTomcatVm().getComponent()));
 	}
 
 

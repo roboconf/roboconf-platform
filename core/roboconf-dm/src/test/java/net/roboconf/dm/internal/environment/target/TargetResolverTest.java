@@ -63,7 +63,10 @@ public class TargetResolverTest {
 
 		// Create a target properties file
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ApplicationTemplate appTpl = new ApplicationTemplate();
+		appTpl.setDirectory( appDir );
+		
+		Application app = new Application( "my app", appTpl ).directory( appDir );
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
