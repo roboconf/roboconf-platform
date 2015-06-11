@@ -132,9 +132,9 @@ public class AgentMessageProcessor_ImportsTest {
 		Assert.assertEquals( 1, client.messagesForTheDm.size());
 
 		// Request variables from the scoped instance
-		Assert.assertEquals( 0, client.messagesForAgentsCount.get());
-		processor.processMessage( new MsgCmdRequestImport( app.getTomcatVm().getComponent().getName()));
 		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
+		processor.processMessage( new MsgCmdRequestImport( app.getTomcatVm().getComponent().getName()));
+		Assert.assertEquals( 2, client.messagesForAgentsCount.get());
 		Assert.assertEquals( 1, client.messagesForTheDm.size());
 	}
 

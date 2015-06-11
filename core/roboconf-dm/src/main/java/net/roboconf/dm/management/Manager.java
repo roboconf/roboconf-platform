@@ -111,7 +111,7 @@ public class Manager {
 
 	// Monitoring manager optional dependency. May be null.
 	// @GuardedBy this
-	private MonitoringManagerService monitoringManager;
+	private TemplatingManagerService templatingManager;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
@@ -194,15 +194,15 @@ public class Manager {
 		}
 
 		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
-			// Stop the monitoring.
+			// Stop the templating.
 			// May be called before the unbindMonitoringManager() method.
 			synchronized (this) {
-				if (this.monitoringManager != null) {
-					this.logger.fine( "Stopping monitoring manager..." );
-					// Disable the monitoring manager.
-					this.monitoringManager.stopMonitoring();
-					this.monitoringManager = null;
-					this.logger.fine( "Monitoring manager stopped!" );
+				if (this.templatingManager != null) {
+					this.logger.fine( "Stopping templating manager..." );
+					// Disable the templating manager.
+					this.templatingManager.stopTemplating();
+					this.templatingManager = null;
+					this.logger.fine( "Templating manager stopped!" );
 				}
 			}
 
@@ -214,40 +214,39 @@ public class Manager {
 
 
 	/**
-	 * Binds to the {@code MonitoringManagerService}.
-	 * @param monitoringManager the {@code MonitoringManagerService}
+	 * Binds to the {@code TemplatingManagerService}.
+	 * @param templatingManager the {@code MonitoringManagerService}
 	 */
-	public synchronized void bindMonitoringManager( MonitoringManagerService monitoringManager ) {
+	public synchronized void bindTemplatingManager( TemplatingManagerService templatingManager ) {
 
-		this.logger.fine( "Binding to monitoring manager service..." );
+		this.logger.fine( "Binding to templating manager service..." );
 		if (this.configurationDirectory != null) {
-			// We only start the monitoring if the configuration directory is configured.
-			// If not, the monitoring will be started in the reconfigure() method.
-			monitoringManager.startMonitoring( this.configurationDirectory );
+			// We only start the templating if the configuration directory is configured.
+			// If not, the templating will be started in the reconfigure() method.
+			templatingManager.startTemplating( this.configurationDirectory );
 
-			// Register the applications in the monitoring manager.
+			// Register the applications in the templating manager.
 			for (ManagedApplication app : this.appManager.getManagedApplications())
-				monitoringManager.addApplication( app.getApplication());
+				templatingManager.addApplication( app.getApplication());
 
-			this.monitoringManager = monitoringManager;
+			this.templatingManager = templatingManager;
 		}
-		this.logger.fine( "Now bound to monitoring manager service!" );
+		this.logger.fine( "Now bound to templating manager service!" );
 	}
 
 
 	/**
 	 * Unbinds from the {@code MonitoringManagerService}.
-	 * @param monitoringManager the {@code MonitoringManagerService}
+	 * @param templatingManager the {@code MonitoringManagerService}
 	 */
-	public synchronized void unbindMonitoringManager( MonitoringManagerService monitoringManager ) {
+	public synchronized void unbindTemplatingManager( TemplatingManagerService templatingManager ) {
 
 		// May be called after the stop method.
-		if (this.monitoringManager != null) {
-			this.logger.fine( "Unbinding from monitoring manager service..." );
-			// Disable the monitoring manager.
-			monitoringManager.stopMonitoring();
-			this.monitoringManager = null;
-			this.logger.fine( "Unbound from monitoring manager service!" );
+		if (this.templatingManager != null) {
+			this.logger.fine( "Unbinding from templating manager service..." );
+			templatingManager.stopTemplating();
+			this.templatingManager = null;
+			this.logger.fine( "Unbound from templating manager service!" );
 		}
 	}
 
@@ -378,11 +377,11 @@ public class Manager {
 			}
 		}
 
-		// Restart the monitoring, using the new configuration directory.
+		// Restart the templating, using the new configuration directory.
 		synchronized (this) {
-			if( this.monitoringManager != null ) {
-				this.monitoringManager.stopMonitoring();
-				this.monitoringManager.startMonitoring( this.configurationDirectory );
+			if( this.templatingManager != null ) {
+				this.templatingManager.stopTemplating();
+				this.templatingManager.startTemplating( this.configurationDirectory );
 				// Applications are re-added as they are reloaded, in the restoreApplications() method.
 			}
 		}
@@ -430,8 +429,8 @@ public class Manager {
 		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
 
 		synchronized( this ) {
-			if( this.monitoringManager != null ) {
-				this.monitoringManager.updateApplication( ma.getApplication());
+			if( this.templatingManager != null ) {
+				this.templatingManager.updateApplication( ma.getApplication());
 			}
 		}
 	}
@@ -565,10 +564,10 @@ public class Manager {
 		// Start listening to messages
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 
-		// Start the monitoring of the application.
+		// Start the templating of the application.
 		synchronized (this) {
-			if (this.monitoringManager != null) {
-				this.monitoringManager.addApplication( ma.getApplication());
+			if (this.templatingManager != null) {
+				this.templatingManager.addApplication( ma.getApplication());
 			}
 		}
 
@@ -604,10 +603,10 @@ public class Manager {
 			Utils.logException( this.logger, e );
 		}
 
-		// Stop the monitoring of the outgoing application.
+		// Stop the templating of the outgoing application.
 		synchronized (this) {
-			if (this.monitoringManager != null) {
-				this.monitoringManager.removeApplication( ma.getApplication());
+			if (this.templatingManager != null) {
+				this.templatingManager.removeApplication( ma.getApplication());
 			}
 		}
 

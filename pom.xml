@@ -48,7 +48,7 @@
 		<module>core/roboconf-messaging-rabbitmq</module>
 		
 		<module>core/roboconf-dm</module>
-		<module>core/roboconf-dm-monitoring</module>
+		<module>core/roboconf-dm-templating</module>
 		<module>core/roboconf-dm-rest-commons</module>
 		<module>core/roboconf-dm-rest-services</module>
 		
