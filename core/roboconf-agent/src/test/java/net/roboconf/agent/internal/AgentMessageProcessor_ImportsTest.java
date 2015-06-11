@@ -47,6 +47,7 @@ import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.After;
@@ -63,13 +64,15 @@ public class AgentMessageProcessor_ImportsTest {
 
 	@Before
 	public void initializeAgent() throws Exception {
+
 		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 		registry.addMessagingClientFactory(new TestClientFactory());
-
 		this.agent = new Agent();
+
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
 		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
+
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
 		this.agent.getMessagingClient().setRegistry(registry);
 		this.agent.reconfigure();
@@ -105,6 +108,34 @@ public class AgentMessageProcessor_ImportsTest {
 
 		processor.processMessage( new MsgCmdRequestImport( "war" ));
 		Assert.assertEquals( 3, client.messagesForAgentsCount.get());
+	}
+
+
+	@Test
+	public void testImportsRequestOnScopedInstance() throws Exception {
+
+		TestClientAgent client = getInternalClient();
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+
+		// Our scoped instance has variables to export
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		app.getTomcatVm().getComponent().exportedVariables.put( "config", "test" );
+
+		// Remove children instances to not simplify the test
+		app.getTomcatVm().getChildren().clear();
+
+		// Set the scoped instance
+		Assert.assertNull( processor.scopedInstance );
+		Assert.assertEquals( 0, client.messagesForTheDm.size());
+		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
+		Assert.assertEquals( processor.scopedInstance, app.getTomcatVm());
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
+
+		// Request variables from the scoped instance
+		Assert.assertEquals( 0, client.messagesForAgentsCount.get());
+		processor.processMessage( new MsgCmdRequestImport( app.getTomcatVm().getComponent().getName()));
+		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 1, client.messagesForTheDm.size());
 	}
 
 

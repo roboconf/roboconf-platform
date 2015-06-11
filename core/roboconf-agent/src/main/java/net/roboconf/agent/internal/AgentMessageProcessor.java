@@ -223,6 +223,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			this.agent.setScopedInstance( newScopedInstance );
 			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.scopedInstance ));
+			instancesToProcess.remove( this.scopedInstance );
 
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
@@ -235,7 +236,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.messagingClient.listenToRequestsFromOtherAgents( ListenerCommand.START, this.scopedInstance );
 		}
 
-		// Configure the messaging
+		// Configure the messaging.
+		// The scoped instance is excluded from this part as it does not make
+		// sense for it to have dependencies.
 		for( Instance instanceToProcess : instancesToProcess ) {
 			this.messagingClient.listenToExportsFromOtherAgents( ListenerCommand.START, instanceToProcess );
 			this.messagingClient.requestExportsFromOtherAgents( instanceToProcess );
