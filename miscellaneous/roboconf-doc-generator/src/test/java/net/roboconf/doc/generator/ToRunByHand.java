@@ -54,7 +54,6 @@ public class ToRunByHand {
 				throw new IOException( "Could not create the output directory." );
 
 			ApplicationLoadResult alr = RuntimeModelIo.loadApplication( f );
-
 			Map<String,String> options = new HashMap<String,String> ();
 			new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.HTML, options );
 
