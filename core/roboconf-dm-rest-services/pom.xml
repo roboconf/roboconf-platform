@@ -200,30 +200,41 @@
 					</execution>
 				</executions>
 			</plugin>
+			</plugins>
+	</build>
 
+	<profiles>
+		<profile>
+			<id>rest-documentation</id>
+			
 			<!-- 
 				Enunciate does not work with JDK 8.
 				See https://github.com/stoicflame/enunciate/issues/68
-				Uncomment it once it is resolved.
+				Update it once it is resolved.
 			 -->
-			<!-- 
-			<plugin>
-				<groupId>org.codehaus.enunciate</groupId>
-				<artifactId>maven-enunciate-plugin</artifactId>
-				<version>1.30.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>docs</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<docsDir>${project.build.directory}/docs</docsDir>
-				</configuration>
-			</plugin>
-			-->
-		</plugins>
-	</build>
+			<activation>
+				<jdk>1.7</jdk>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.enunciate</groupId>
+						<artifactId>maven-enunciate-plugin</artifactId>
+						<version>1.30.1</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>docs</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<docsDir>${project.build.directory}/docs</docsDir>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>
