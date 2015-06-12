@@ -25,7 +25,7 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -101,10 +101,32 @@ public final class DockerUtils {
 
 		if( imageId != null ) {
 			List<Image> images = dockerClient.listImagesCmd().exec();
-			images = images == null ? new ArrayList<Image>( 0 ) : images;
 			if( findImageById( imageId, images ) != null )
 				dockerClient.removeImageCmd( imageId ).withForce( true ).exec();
 		}
+	}
+
+
+	/**
+	 * Finds an image by ID or by tag.
+	 * @param imageId an image ID (can be null)
+	 * @param dockerClient a Docker client (not null)
+	 * @return an image, or null if none matched
+	 */
+	public static Image findImageByIdOrByTag( String name, DockerClient dockerClient ) {
+
+		Image image = null;
+		if( ! Utils.isEmptyOrWhitespaces( name )) {
+			Logger logger = Logger.getLogger( DockerUtils.class.getName());
+
+			List<Image> images = dockerClient.listImagesCmd().exec();
+			if(( image = DockerUtils.findImageById( name, images )) != null )
+				logger.fine( "Found a Docker image with ID " + name );
+			else if(( image = DockerUtils.findImageByTag( name, images )) != null )
+				logger.fine( "Found a Docker image with tag " + name );
+		}
+
+		return image;
 	}
 
 
@@ -129,26 +151,6 @@ public final class DockerUtils {
 
 
 	/**
-	 * Finds a container by ID.
-	 * @param containerId the container ID (not null)
-	 * @param containers a non-null list of containers
-	 * @return an container, or null if none was found
-	 */
-	public static Container findContainerById( String containerId, List<Container> containers ) {
-
-		Container result = null;
-		for( Container container : containers ) {
-			if( container.getId().equals( containerId )) {
-				result = container;
-				break;
-			}
-		}
-
-		return result;
-	}
-
-
-	/**
 	 * Finds an image by tag.
 	 * @param imageTag the image tag (not null)
 	 * @param images a non-null list of images
@@ -163,6 +165,32 @@ public final class DockerUtils {
 					result = img;
 					break;
 				}
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds a container by ID or by name.
+	 * @param containerId the container ID or name (not null)
+	 * @param dockerClient a Docker client
+	 * @return a container, or null if none was found
+	 */
+	public static Container findContainerByIdOrByName( String name, DockerClient dockerClient ) {
+
+		Container result = null;
+		List<Container> containers = dockerClient.listContainersCmd().exec();
+		for( Container container : containers ) {
+			List<String> names = Arrays.asList( container.getNames());
+
+			// Docker containers are prefixed with '/'.
+			// At least, those we created, since their parent is the Docker daemon.
+			if( container.getId().equals( name )
+					|| names.contains( "/" + name )) {
+				result = container;
+				break;
 			}
 		}
 

@@ -25,30 +25,23 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Image;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
-public class DockerHandler implements TargetHandler {
+public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "docker";
-	public static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
 
 	static String IMAGE_ID = "docker.image";
 	static String ENDPOINT = "docker.endpoint";
@@ -58,6 +51,8 @@ public class DockerHandler implements TargetHandler {
 	static String VERSION = "docker.version";
 	static String AGENT_PACKAGE = "docker.agent.package";
 	static String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
+	static String COMMAND = "docker.command.line";
+	static String USE_COMMAND = "docker.command.use";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
@@ -86,98 +81,37 @@ public class DockerHandler implements TargetHandler {
 	throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
-		DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
 
 		// Search an existing image in the local Docker repository
-		String imageId = targetProperties.get(IMAGE_ID);
-		Image image = null;
-		if( ! Utils.isEmptyOrWhitespaces( imageId )) {
-			List<Image> images = dockerClient.listImagesCmd().exec();
-			images = images == null ? new ArrayList<Image>( 0 ) : images;
+		String imageId = targetProperties.get( IMAGE_ID );
+		String pack = targetProperties.get( AGENT_PACKAGE );
+		if( imageId == null && Utils.isEmptyOrWhitespaces( pack ))
+			throw new TargetException("Docker image " + imageId + " not found, and no " + AGENT_PACKAGE + " specified.");
 
-			image = DockerUtils.findImageById( imageId, images );
-			if( image != null )
-				this.logger.fine( "Found a Docker image with ID " + imageId );
-			else if(( image = DockerUtils.findImageByTag( imageId, images )) != null )
-				this.logger.fine( "Found a Docker image with tag " + imageId );
-		}
-
-		// Generate a Docker image, if possible
-		if( image == null ) {
-
-			String pack = targetProperties.get( AGENT_PACKAGE );
-			if( Utils.isEmptyOrWhitespaces( pack ))
-				throw new TargetException("Docker image " + imageId + " not found, and no " + AGENT_PACKAGE + " specified.");
-
-			if( Utils.isEmptyOrWhitespaces( imageId ))
-				imageId = DEFAULT_IMG_NAME;
-
-			// Generate docker image
-			this.logger.fine("Docker image not found: build one from generated Dockerfile.");
-			InputStream response = null;
-			File dockerfile = null;
-			try {
-				dockerfile = new DockerFileGenerator(pack, targetProperties.get(AGENT_JRE_AND_PACKAGES)).generateDockerfile();
-				this.logger.fine( "Creating an image from the generated Dockerfile." );
-				response = dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
-
-				// Check response (last line = "Successfully built <imageId>") ...
-				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				Utils.copyStream(response, out);
-				String s = out.toString("UTF-8").trim();
-				this.logger.fine( "Docker's output: " + s );
-
-				String realImageId = s.substring(s.lastIndexOf(' ') + 1).substring(0, 12);
-				this.logger.fine( "Generated image's ID: " + realImageId );
-
-				// Tag the new image with the specified ID (so that it gets reused next time)
-				dockerClient.tagImageCmd( realImageId, imageId, imageId ).exec();
-
-			} catch( Exception e ) {
-				throw new TargetException(e);
-
-			} finally {
-				Utils.closeQuietly(response);
-				Utils.deleteFilesRecursivelyAndQuitely( dockerfile );
-			}
-		}
-
-		// Build the command line, passing the messaging configuration.
-		List<String> args = new ArrayList<>();
-		args.add("/usr/local/roboconf-agent/start.sh");
-		args.add("application-name=" + applicationName);
-		args.add("scoped-instance-path=" + scopedInstancePath);
-		args.add("messaging-type=" + messagingConfiguration.get("net.roboconf.messaging.type"));
-
-		// TODO: modify the agent launcher script to take care of these arguments. May need to rethink the following lines. Maybe in a separate messaging configuration file
-		for(Map.Entry<String, String> e : messagingConfiguration.entrySet()) {
-			args.add(e.getKey() + '=' + e.getValue());
-		}
-
-		CreateContainerResponse container = dockerClient
-			.createContainerCmd(imageId)
-			.withCmd(args.toArray(new String[args.size()]))
-			.exec();
-
-		dockerClient.startContainerCmd(container.getId()).exec();
-		return container.getId();
+		// We do not do anything else here.
+		// We return a UUID. This will be used to tag our container.
+		return "rbcf_" + UUID.randomUUID().toString();
 	}
 
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
 	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void configureMachine(
-		Map<String,String> targetProperties,
-		Map<String,String> messagingConfiguration,
-		String machineId,
-		String scopedInstancePath,
-		String applicationName )
-	throws TargetException {
-		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure with Docker." );
+	public MachineConfigurator machineConfigurator(
+			Map<String,String> targetProperties,
+			Map<String,String> messagingConfiguration,
+			String machineId,
+			String scopedInstancePath,
+			String applicationName ) {
+
+		// machineId does not match a real container ID.
+		// It is the name of the container we will create.
+		return new DockerMachineConfigurator(
+				targetProperties, messagingConfiguration, machineId,
+				scopedInstancePath, applicationName );
 	}
 
 
@@ -193,12 +127,10 @@ public class DockerHandler implements TargetHandler {
 		boolean result = false;
 		try {
 			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
-			List<Container> containers = dockerClient.listContainersCmd().exec();
-			containers = containers == null ? new ArrayList<Container>( 0 ) : containers;
-			result = DockerUtils.findContainerById( machineId, containers ) != null;
+			result = DockerUtils.findContainerByIdOrByName( machineId, dockerClient ) != null;
 
 		} catch( Exception e ) {
-			// nothing, we can consider it is not running
+			// nothing, we consider it is not running
 		}
 
 		return result;
@@ -211,16 +143,23 @@ public class DockerHandler implements TargetHandler {
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
+	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
 
-		this.logger.fine( "Terminating machine " + instanceId );
+		this.logger.fine( "Terminating machine " + machineId );
 		try {
 			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
-			dockerClient.killContainerCmd(instanceId).exec();
-			dockerClient.removeContainerCmd(instanceId).exec();
+			Container container = DockerUtils.findContainerByIdOrByName( machineId, dockerClient );
+
+			// The case "container == null" is possible.
+			// Indeed, it may have been killed manually. This method will then
+			// just mark the Roboconf instance as "not deployed" without throwing an exception.
+			if( container != null ) {
+				dockerClient.killContainerCmd( container.getId()).exec();
+				dockerClient.removeContainerCmd( container.getId()).exec();
+			}
 
 		} catch( Exception e ) {
-			throw new TargetException(e);
+			throw new TargetException( e );
 		}
 	}
 }

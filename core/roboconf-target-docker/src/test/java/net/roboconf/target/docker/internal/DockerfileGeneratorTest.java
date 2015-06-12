@@ -27,73 +27,72 @@ package net.roboconf.target.docker.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 import junit.framework.Assert;
 import net.roboconf.core.utils.Utils;
 
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
-public class DockerFileGeneratorTest {
+public class DockerfileGeneratorTest {
 
-	File agentPackTgz;
-	File agentPackZip;
-
-	@Before
-	public void prepareTest() throws IOException {
-		this.agentPackTgz = Files.createTempFile("dockertest", ".tar.gz").toFile();
-		this.agentPackTgz.deleteOnExit();
-
-		this.agentPackZip = Files.createTempFile("dockertest", ".zip").toFile();
-		this.agentPackZip.deleteOnExit();
-	}
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 
 	@Test
-	public void testNewFileGenerator() {
-		DockerFileGenerator gen = new DockerFileGenerator("file://" + this.agentPackZip.getAbsolutePath(), null);
+	public void testNewFileGenerator() throws Exception {
+
+		File agentPackZip = this.folder.newFile( "dockertest.zip" );
+		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null);
 		Assert.assertEquals(gen.getPackages(), "openjdk-7-jre-headless");
 		Assert.assertFalse(gen.isTar());
 
-		gen = new DockerFileGenerator(this.agentPackTgz.getAbsolutePath(), "pack1 pack2");
-		Assert.assertEquals(gen.getPackages(), "pack1 pack2");
-		Assert.assertTrue(gen.isTar());
+		File agentPackTgz = this.folder.newFile( "dockertest.tar.gz" );
+		gen = new DockerfileGenerator( agentPackTgz.getAbsolutePath(), "pack1 pack2" );
+		Assert.assertEquals( gen.getPackages(), "pack1 pack2");
+		Assert.assertTrue( gen.isTar());
 	}
 
 	@Test
 	public void testGenerateDockerFile() throws IOException {
 
 		File dockerfile = null;
-		try {
-			DockerFileGenerator gen = new DockerFileGenerator(this.agentPackTgz.getAbsolutePath(), null);
-			dockerfile = gen.generateDockerfile();
-			Assert.assertTrue(dockerfile.exists());
-			Assert.assertTrue(dockerfile.isDirectory());
+		File[] files = new File[] {
+				this.folder.newFile( "dockertest.tar.gz" ),
+				this.folder.newFile( "dockertest.zip" )
+		};
 
-			File f = new File(dockerfile, "Dockerfile");
-			Assert.assertTrue(f.exists());
-			Assert.assertTrue(f.length() > 0);
+		for( File file : files ) {
+			try {
+				DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null );
+				dockerfile = gen.generateDockerfile();
+				Assert.assertTrue( file.getName(), dockerfile.isDirectory());
 
-			f = new File(dockerfile, "start.sh");
-			Assert.assertTrue(f.exists());
-			Assert.assertTrue(f.length() > 0);
-			Assert.assertTrue(f.canExecute());
+				File f = new File(dockerfile, "Dockerfile");
+				Assert.assertTrue( file.getName(), f.exists());
+				Assert.assertTrue( file.getName(), f.length() > 0 );
 
-			f = new File(dockerfile, "rc.local");
-			Assert.assertTrue(f.exists());
-			Assert.assertTrue(f.length() > 0);
-			Assert.assertTrue(f.canExecute());
+				f = new File(dockerfile, "start.sh");
+				Assert.assertTrue( file.getName(), f.exists());
+				Assert.assertTrue( file.getName(), f.length() > 0 );
+				Assert.assertTrue( file.getName(), f.canExecute());
 
-			f = new File(dockerfile, this.agentPackTgz.getName());
-			Assert.assertTrue(f.exists());
+				f = new File(dockerfile, "rc.local");
+				Assert.assertTrue( file.getName(), f.exists());
+				Assert.assertTrue( file.getName(), f.length() > 0 );
+				Assert.assertTrue( file.getName(), f.canExecute());
 
-		} finally {
-			if(dockerfile != null)
+				f = new File(dockerfile, file.getName());
+				Assert.assertTrue( file.getName(), f.exists());
+
+			} finally {
 				Utils.deleteFilesRecursively(dockerfile);
+			}
 		}
 	}
 }

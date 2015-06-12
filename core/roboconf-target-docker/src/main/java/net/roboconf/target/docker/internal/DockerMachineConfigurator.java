@@ -1,0 +1,217 @@
+/**
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ *
+ * The present code is developed in the scope of the joint LINAGORA -
+ * Université Joseph Fourier - Floralis research program and is designated
+ * as a "Result" pursuant to the terms and conditions of the LINAGORA
+ * - Université Joseph Fourier - Floralis research program. Each copyright
+ * holder of Results enumerated here above fully & independently holds complete
+ * ownership of the complete Intellectual Property rights applicable to the whole
+ * of said Results, and may freely exploit it in any manner which does not infringe
+ * the moral rights of the other copyright holders.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package net.roboconf.target.docker.internal;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
+import net.roboconf.target.api.TargetException;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.model.Image;
+
+/**
+ * @author Vincent Zurczak - Linagora
+ */
+public class DockerMachineConfigurator implements MachineConfigurator {
+
+	private static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
+
+	/**
+	 * The various states this class instances may have.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	enum State {
+		NO_IMAGE, IMAGE_UNDER_CREATION, HAS_IMAGE, DONE
+	}
+
+	private DockerClient dockerClient;
+	private State state = State.NO_IMAGE;
+	private final Logger logger = Logger.getLogger( getClass().getName());
+
+	private final Map<String,String> targetProperties;
+	private final Map<String,String> messagingConfiguration;
+	private final String machineId, scopedInstancePath, applicationName;
+
+
+
+	/**
+	 * Constructor.
+	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
+	 * @param messagingProperties the configuration for the messaging.
+	 * @param machineId the ID machine of the machine to configure
+	 * @param applicationName the application name
+	 * @param rootInstanceName the name of the root instance associated with this VM
+	 */
+	public DockerMachineConfigurator(
+			Map<String,String> targetProperties,
+			Map<String,String> messagingConfiguration,
+			String machineId,
+			String scopedInstancePath,
+			String applicationName ) {
+
+		this.targetProperties = targetProperties;
+		this.messagingConfiguration = messagingConfiguration;
+		this.applicationName = applicationName;
+		this.scopedInstancePath = scopedInstancePath;
+		this.machineId = machineId;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator
+	 * #configure()
+	 */
+	@Override
+	public boolean configure() throws TargetException {
+
+		if( this.dockerClient == null )
+			this.dockerClient = DockerUtils.createDockerClient( this.targetProperties );
+
+		String imageId = this.targetProperties.get( DockerHandler.IMAGE_ID );
+		Image image = DockerUtils.findImageByIdOrByTag( imageId, this.dockerClient );
+
+		if( image != null )
+			this.state = State.HAS_IMAGE;
+		else if( this.state == State.NO_IMAGE )
+			createImage( imageId );
+		// else: the image is under creation...
+
+		if( this.state == State.HAS_IMAGE )
+			createContainer( imageId );
+
+		return this.state == State.DONE;
+	}
+
+
+	/**
+	 * Creates a container.
+	 * @param imageId the image ID
+	 * @throws TargetException if something went wrong
+	 */
+	private void createContainer( String imageId ) throws TargetException {
+		this.logger.info( "Creating container " + this.machineId + " from image " + imageId );
+
+		// Build the command line, passing the messaging configuration.
+		List<String> args = new ArrayList<> ();
+		String command = this.targetProperties.get( DockerHandler.COMMAND );
+		if( Utils.isEmptyOrWhitespaces( command ))
+			command = "/usr/local/roboconf-agent/start.sh";
+
+		args.add( command );
+
+		// Pass the name of the configuration file for the messaging.
+		// By convention, we will pass it as the first command argument.
+		String messagingType = this.messagingConfiguration.get( "net.roboconf.messaging.type" );
+		args.add( "net.roboconf.messaging." + messagingType + ".cfg" );
+
+		// Agent configuration is prefixed with 'agent.'
+		args.add( "agent.application-name=" + this.applicationName );
+		args.add( "agent.scoped-instance-path=" + this.scopedInstancePath );
+		args.add( "agent.messaging-type=" + messagingType );
+
+		// Messaging parameters are prefixed with 'msg.'
+		for( Map.Entry<String,String> e : this.messagingConfiguration.entrySet())
+			args.add( "msg." + e.getKey() + '=' + e.getValue());
+
+		// We do not have to execute our command. A default command may have been set into the Dockerfile.
+		// In this case, it means the user does not want the DM to pass dynamic parameters in the command.
+		// We at least use it in tests (do not launch a real Roboconf agent, just an empty container).
+		String useCommandAS = this.targetProperties.get( DockerHandler.USE_COMMAND );
+		boolean useCommand = useCommandAS == null ? true : Boolean.valueOf( useCommandAS );
+		try {
+			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId ).withName( this.machineId );
+			if( useCommand )
+				cmd = cmd.withCmd( args.toArray( new String[ 0 ]));
+
+			CreateContainerResponse container = cmd.exec();
+			this.dockerClient.startContainerCmd( container.getId()).exec();
+
+			// We're done here!
+			this.state = State.DONE;
+			this.dockerClient.close();
+
+		} catch( Exception e ) {
+			throw new TargetException( e );
+		}
+	}
+
+
+	/**
+	 * Creates an image.
+	 * @param imageId the image ID
+	 * @throws TargetException if something went wrong
+	 */
+	private void createImage( String imageId ) throws TargetException {
+
+		this.state = State.IMAGE_UNDER_CREATION;
+		this.logger.info( "Creating image " + imageId + " from a generated Dockerfile." );
+
+		InputStream response = null;
+		File dockerfile = null;
+		try {
+			String pack = this.targetProperties.get( DockerHandler.AGENT_PACKAGE );
+			dockerfile = new DockerfileGenerator(pack, this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES )).generateDockerfile();
+
+			BuildImageCmd cmd = this.dockerClient.buildImageCmd( dockerfile ).withTag( DEFAULT_IMG_NAME );
+			if( imageId != null )
+				cmd = cmd.withTag( imageId );
+
+			response = cmd.exec();
+
+			// Creating an image can take time, as system commands may be executed (apt-get...).
+			// Copying the output makes the thread last longer. Therefore, given the way the threaded
+			// target handler is implemented, other Docker creations/configurations will be delayed.
+			// This is why we check whether getting the output is really necessary.
+			//if( this.logger.isLoggable( Level.FINE )) {
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				Utils.copyStream(response, out);
+				String s = out.toString("UTF-8").trim();
+				this.logger.fine( "Docker's output: " + s );
+			//}
+
+			// No need to get the real image ID... Docker has it.
+			// Besides, we search images by both IDs and tags.
+
+		} catch( Exception e ) {
+			throw new TargetException( e );
+
+		} finally {
+			Utils.closeQuietly( response );
+			Utils.deleteFilesRecursivelyAndQuitely( dockerfile );
+		}
+	}
+}

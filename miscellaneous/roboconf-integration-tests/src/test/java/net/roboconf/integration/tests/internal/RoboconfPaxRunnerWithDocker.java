@@ -31,7 +31,6 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.rabbitmq.internal.RabbitMqTestUtils;
-import net.roboconf.target.docker.internal.DockerHandler;
 import net.roboconf.target.docker.internal.DockerTestUtils;
 import net.roboconf.target.docker.internal.DockerUtils;
 
@@ -49,6 +48,8 @@ import com.github.dockerjava.api.DockerClient;
 public class RoboconfPaxRunnerWithDocker extends PaxExam {
 
 	public static final String RBCF = "roboconf";
+	private static final String IMG_NAME = "roboconf-it-test";
+
 	private final Class<?> testClass;
 
 
@@ -80,10 +81,10 @@ public class RoboconfPaxRunnerWithDocker extends PaxExam {
 
 				Map<String,String> targetProperties = new HashMap<String,String> ();
 				targetProperties.put( "docker.endpoint", "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
-				targetProperties.put( "docker.image", DockerHandler.DEFAULT_IMG_NAME );
+				targetProperties.put( "docker.image", IMG_NAME );
 
 				DockerClient client = DockerUtils.createDockerClient( targetProperties );
-				DockerUtils.deleteImageIfItExists( DockerHandler.DEFAULT_IMG_NAME, client );
+				DockerUtils.deleteImageIfItExists( IMG_NAME, client );
 
 			} catch( Exception e ) {
 				Logger logger = Logger.getLogger( getClass().getName());

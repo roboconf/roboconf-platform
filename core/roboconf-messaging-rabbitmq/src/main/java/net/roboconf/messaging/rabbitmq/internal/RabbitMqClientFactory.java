@@ -41,6 +41,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+
 import org.apache.felix.ipojo.annotations.Component;
 import org.apache.felix.ipojo.annotations.Instantiate;
 import org.apache.felix.ipojo.annotations.Invalidate;
@@ -51,14 +52,20 @@ import org.apache.felix.ipojo.annotations.Updated;
 
 /**
  * Messaging client factory for Rabbit MQ.
- *
  * @author Pierre Bourret - Université Joseph Fourier
  */
-@Component(name = "roboconf-messaging-client-factory-rabbitmq", publicFactory = false,
-		managedservice = "net.roboconf.messaging.rabbitmq")
-@Provides(specifications = MessagingClientFactory.class,
-		properties = @StaticServiceProperty(name = MessagingClientFactory.MESSAGING_TYPE_PROPERTY, type = "string",
-				value = RabbitMqConstants.RABBITMQ_FACTORY_TYPE))
+@Component(
+		name = "roboconf-messaging-client-factory-rabbitmq",
+		publicFactory = false,
+		managedservice = "net.roboconf.messaging.rabbitmq"
+)
+@Provides(
+		specifications = MessagingClientFactory.class,
+		properties = @StaticServiceProperty(
+				name = MessagingClientFactory.MESSAGING_TYPE_PROPERTY,
+				type = "string",
+				value = RabbitMqConstants.RABBITMQ_FACTORY_TYPE
+))
 @Instantiate(name = "Roboconf RabbitMQ Messaging Client Factory")
 public class RabbitMqClientFactory implements MessagingClientFactory {
 
@@ -135,7 +142,7 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	@Override
 	public synchronized IDmClient createDmClient( final ReconfigurableClientDm parent ) {
 		final RabbitMqClientDm client = new RabbitMqClientDm(parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
-		clients.add(client);
+		this.clients.add(client);
 		this.logger.finer("Created a new DM client");
 		return client;
 	}
@@ -143,7 +150,7 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 	@Override
 	public synchronized IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
 		final RabbitMqClientAgent client = new RabbitMqClientAgent(parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
-		clients.add(client);
+		this.clients.add(client);
 		this.logger.finer("Created a new Agent client");
 		return client;
 	}

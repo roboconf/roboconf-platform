@@ -1,4 +1,6 @@
 # Set the base image to Ubuntu
 FROM ubuntu
-# Update the repository sources list
-RUN apt-get update
+
+# Put a default command to execute.
+# This one will keep the container running.
+CMD ["tail", "-f", "/dev/null"]
