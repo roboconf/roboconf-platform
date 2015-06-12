@@ -184,16 +184,16 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 		// Check the connection between the DM and the MQ.
 		Assert.assertEquals(
 				"Has received Echo message TEST",
-				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 10000L ));
+				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 30000L ));
 
 		// Deploy and start the "Apache VM" root instance.
 		this.client.getApplicationDelegate().deployAndStartAll( "app1", "/Apache VM" );
-		Thread.sleep( 300L );
+		Thread.sleep( 1000L );
 
 		// Ping the "Apache VM" root instance.
 		Assert.assertEquals(
 				"Has received ping response TEST from agent Apache VM",
-				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "app1", "Apache VM", "TEST", 10000L ));
+				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "app1", "Apache VM", "TEST", 30000L ));
 
 		// Diagnose the "Legacy LAMP" application.
 		List<Instance> allInstances = this.client.getApplicationDelegate().listChildrenInstances( "app1", null, true );
