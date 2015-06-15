@@ -11,13 +11,24 @@
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
 	
-	<!-- 
-	Twitter bootstrap comes with lots of files with different extensions.
-	So, we should be flexible here.
-	 -->
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
-		<url-pattern>*.*</url-pattern>
+		<url-pattern>img/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>templates/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>lib/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet-mapping>
+		<servlet-name>default</servlet-name>
+		<url-pattern>*.(html|css|js|ico|jpg)</url-pattern>
 	</servlet-mapping>
 	
 	<error-page>
