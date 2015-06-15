@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
@@ -38,7 +40,6 @@ import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator
 import net.roboconf.target.api.TargetException;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Image;
@@ -65,29 +66,33 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	private final Map<String,String> targetProperties;
 	private final Map<String,String> messagingConfiguration;
 	private final String machineId, scopedInstancePath, applicationName;
+	private final ConcurrentHashMap<String,String> imagesInCreation;
 
 
 
 	/**
 	 * Constructor.
 	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
-	 * @param messagingProperties the configuration for the messaging.
+	 * @param messagingConfiguration the messaging configuration
 	 * @param machineId the ID machine of the machine to configure
 	 * @param applicationName the application name
-	 * @param rootInstanceName the name of the root instance associated with this VM
+	 * @param scopedInstancePath the path of the scoped/root instance
+	 * @param imagesInCreation the images in creation (not null)
 	 */
 	public DockerMachineConfigurator(
 			Map<String,String> targetProperties,
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName ) {
+			String applicationName,
+			ConcurrentHashMap<String,String> imagesInCreation ) {
 
 		this.targetProperties = targetProperties;
 		this.messagingConfiguration = messagingConfiguration;
 		this.applicationName = applicationName;
 		this.scopedInstancePath = scopedInstancePath;
 		this.machineId = machineId;
+		this.imagesInCreation = imagesInCreation;
 	}
 
 
@@ -102,16 +107,24 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			this.dockerClient = DockerUtils.createDockerClient( this.targetProperties );
 
 		String imageId = this.targetProperties.get( DockerHandler.IMAGE_ID );
-		Image image = DockerUtils.findImageByIdOrByTag( imageId, this.dockerClient );
+		String fixedImageId = fixImageId( imageId );
+		Image image = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
 
-		if( image != null )
+		if( image != null ) {
+			this.logger.fine( "Creating image " + fixedImageId + "..." );
 			this.state = State.HAS_IMAGE;
-		else if( this.state == State.NO_IMAGE )
-			createImage( imageId );
+
+		} else if( this.state == State.NO_IMAGE ) {
+			this.logger.fine( "Creating image " + fixedImageId + "..." );
+			createImage( fixedImageId );
+		}
 		// else: the image is under creation...
 
-		if( this.state == State.HAS_IMAGE )
-			createContainer( imageId );
+		if( this.state == State.HAS_IMAGE ) {
+			this.logger.fine( "Creating a container from image " + fixedImageId + "..." );
+			this.imagesInCreation.remove( fixedImageId );
+			createContainer( fixedImageId );
+		}
 
 		return this.state == State.DONE;
 	}
@@ -136,7 +149,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		// Pass the name of the configuration file for the messaging.
 		// By convention, we will pass it as the first command argument.
 		String messagingType = this.messagingConfiguration.get( "net.roboconf.messaging.type" );
-		args.add( "net.roboconf.messaging." + messagingType + ".cfg" );
+		args.add( "etc/net.roboconf.messaging." + messagingType + ".cfg" );
 
 		// Agent configuration is prefixed with 'agent.'
 		args.add( "agent.application-name=" + this.applicationName );
@@ -177,6 +190,12 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 */
 	private void createImage( String imageId ) throws TargetException {
 
+		// Acquire a lock for the image ID. This prevent concurrent insertions.
+		// The configurator that inserted the value is in charge of creating the image.
+		if( this.imagesInCreation.putIfAbsent( imageId, "anything" ) != null )
+			return;
+
+		// Create the image
 		this.state = State.IMAGE_UNDER_CREATION;
 		this.logger.info( "Creating image " + imageId + " from a generated Dockerfile." );
 
@@ -185,23 +204,18 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		try {
 			String pack = this.targetProperties.get( DockerHandler.AGENT_PACKAGE );
 			dockerfile = new DockerfileGenerator(pack, this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES )).generateDockerfile();
-
-			BuildImageCmd cmd = this.dockerClient.buildImageCmd( dockerfile ).withTag( DEFAULT_IMG_NAME );
-			if( imageId != null )
-				cmd = cmd.withTag( imageId );
-
-			response = cmd.exec();
+			response = this.dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
 
 			// Creating an image can take time, as system commands may be executed (apt-get...).
 			// Copying the output makes the thread last longer. Therefore, given the way the threaded
 			// target handler is implemented, other Docker creations/configurations will be delayed.
 			// This is why we check whether getting the output is really necessary.
-			//if( this.logger.isLoggable( Level.FINE )) {
+			if( this.logger.isLoggable( Level.FINE )) {
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				Utils.copyStream(response, out);
 				String s = out.toString("UTF-8").trim();
 				this.logger.fine( "Docker's output: " + s );
-			//}
+			}
 
 			// No need to get the real image ID... Docker has it.
 			// Besides, we search images by both IDs and tags.
@@ -213,5 +227,14 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			Utils.closeQuietly( response );
 			Utils.deleteFilesRecursivelyAndQuitely( dockerfile );
 		}
+	}
+
+
+	/**
+	 * @param imageId
+	 * @return a non-null string
+	 */
+	private String fixImageId( String imageId ) {
+		return Utils.isEmptyOrWhitespaces( imageId ) ? DEFAULT_IMG_NAME : imageId;
 	}
 }

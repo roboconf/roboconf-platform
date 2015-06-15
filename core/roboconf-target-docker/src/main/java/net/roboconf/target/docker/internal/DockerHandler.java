@@ -27,6 +27,7 @@ package net.roboconf.target.docker.internal;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
@@ -55,6 +56,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static String USE_COMMAND = "docker.command.use";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final ConcurrentHashMap<String,String> imagesInCreation = new ConcurrentHashMap<> ();
 
 
 	/*
@@ -86,7 +88,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		String imageId = targetProperties.get( IMAGE_ID );
 		String pack = targetProperties.get( AGENT_PACKAGE );
 		if( imageId == null && Utils.isEmptyOrWhitespaces( pack ))
-			throw new TargetException("Docker image " + imageId + " not found, and no " + AGENT_PACKAGE + " specified.");
+			throw new TargetException("Neither " + IMAGE_ID + " nor " + AGENT_PACKAGE + " were specified.");
 
 		// We do not do anything else here.
 		// We return a UUID. This will be used to tag our container.
@@ -111,7 +113,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		// It is the name of the container we will create.
 		return new DockerMachineConfigurator(
 				targetProperties, messagingConfiguration, machineId,
-				scopedInstancePath, applicationName );
+				scopedInstancePath, applicationName, this.imagesInCreation );
 	}
 
 
