@@ -5,6 +5,8 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<component classname="net.roboconf.target.docker.internal.DockerHandler" name="roboconf-target-docker">
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
 		<provides />
 	</component>
 	
