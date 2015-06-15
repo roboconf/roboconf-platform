@@ -45,20 +45,15 @@
 	<!-- Execute npm install -->
 	<target name="target.npm" description="Invoking NPM to download JS dependencies...">
 		<exec executable="cmd" dir="${project.build.directory}/roboconf-web-administration" osfamily="windows" failonerror="true">
-			<arg line="/c npm install" />
+			<arg line="/c npm install --production" />
 		</exec>
 		<exec executable="npm" dir="${project.build.directory}/roboconf-web-administration" osfamily="unix" failonerror="true">
 			<arg line="install" />
+			<arg line="--production" />
 		</exec>
 		
-		<!-- 
-			Should we use the '- - production' flag for NPM?
-			We would need a dedicated Gulp task then...
-		-->
-		
 		<exec executable="gulp" dir="${project.build.directory}/roboconf-web-administration" failonerror="true">
-			<!-- prepare-dev -->
-			<arg line="inject-dev" />
+			<arg line="embed" />
 		</exec>
 	</target>
 
