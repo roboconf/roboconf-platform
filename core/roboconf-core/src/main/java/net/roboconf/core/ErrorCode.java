@@ -117,8 +117,8 @@ public enum ErrorCode {
 
 	RM_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable name cannot be empty or null." ),
 	RM_INVALID_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid variable name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
-	RM_MISSING_VARIABLE_VALUE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "All the variables (except network ones, such as IP) must have a default value." ),
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but was not defined in its component." ),
+	RM_MISSING_VARIABLE_VALUE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "All the variables (except network ones, such as IP) must have a value." ),
 	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but could not be resolved in its component." ),
 
 	RM_CYCLE_IN_COMPONENTS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A cycle was detected in the graph(s)." ),

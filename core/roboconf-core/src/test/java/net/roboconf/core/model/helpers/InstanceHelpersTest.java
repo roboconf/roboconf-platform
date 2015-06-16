@@ -392,7 +392,9 @@ public class InstanceHelpersTest {
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, tomcatInstance_1, mySqlInstance_1 ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, mySqlInstance_1, tomcatInstance_1 ));
 		Assert.assertEquals( 2, InstanceHelpers.getAllInstances( app ).size());
+		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, mySqlInstance_1 ));
 
+		mySqlInstance_1.overriddenExports.put( "port", "3307" );
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, mySqlInstance_1 ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 
@@ -401,7 +403,7 @@ public class InstanceHelpersTest {
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instanceWithNoComponent ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 
-		Instance instWithInvalidName = new Instance( "inst!!!" ).component( ComponentHelpers.findComponent( app.getGraphs(), "MySQL" ));
+		Instance instWithInvalidName = new Instance( "inst!!!" ).component( ComponentHelpers.findComponent( app.getGraphs(), "Apache" ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instWithInvalidName ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 

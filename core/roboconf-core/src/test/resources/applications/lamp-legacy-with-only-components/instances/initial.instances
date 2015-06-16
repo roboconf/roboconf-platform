@@ -17,6 +17,7 @@ instance of VM {
 	
 	instance of MySQL {
 		name: MySQL;
+		port: 3306;
 	}
 }
 
