@@ -83,8 +83,8 @@ public final class GraphUtils {
 		Font font = GraphUtils.getDefaultFont();
     	BufferedImage img = new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB );
     	FontMetrics fm = img.getGraphics().getFontMetrics( font );
-    	int width = fm.stringWidth( type.getName());
 
+    	int width = fm.stringWidth( type.getName());
     	width = Math.max( width, 80 ) + 20;
     	return width;
 	}

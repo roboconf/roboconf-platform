@@ -25,10 +25,15 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -43,8 +48,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.dockerjava.api.command.CreateImageResponse;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
@@ -59,17 +64,16 @@ public class DockerHandler_withContainerTest {
 	private boolean dockerIsInstalled = true;
 	private DockerClient docker;
 	private String dockerImageId;
-
 	private Map<String, String> msgCfg = new LinkedHashMap<>();
+
 
 	@Before
 	public void setMessagingConfiguration() {
-		msgCfg = new LinkedHashMap<>();
-		msgCfg.put("net.roboconf.messaging.type", "telepathy");
-		msgCfg.put("mindControl", "false");
-		msgCfg.put("psychosisProtection", "active");
+		this.msgCfg = new LinkedHashMap<>();
+		this.msgCfg.put("net.roboconf.messaging.type", "telepathy");
+		this.msgCfg.put("mindControl", "false");
+		this.msgCfg.put("psychosisProtection", "active");
 	}
-
 
 
 	@Before
@@ -122,13 +126,32 @@ public class DockerHandler_withContainerTest {
 		DockerHandler target = new DockerHandler();
 		Map<String,String> targetProperties = loadTargetProperties();
 
-		String containerId = target.createMachine( targetProperties, msgCfg, "test", "roboconf" );
-		Assert.assertNotNull( containerId );
-		Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+		// Start it
+		try {
+			target.start();
+			String containerId = target.createMachine( targetProperties, this.msgCfg, "test", "roboconf" );
+			Assert.assertNotNull( containerId );
 
-		target.configureMachine( targetProperties, msgCfg, containerId, null, null );
-		target.terminateMachine( targetProperties, containerId );
-		Assert.assertFalse( target.isMachineRunning( targetProperties, containerId ));
+			// DockerMachineConfigurator is implemented in such a way that it runs only
+			// once when the image already exists. However, we must wait for the thread pool
+			// executor to pick up the configurator.
+			target.configureMachine( targetProperties, this.msgCfg, containerId, "test", "roboconf" );
+			Thread.sleep( 2000 );
+
+			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+			target.configureMachine( targetProperties, this.msgCfg, containerId, null, null );
+
+			// Just for verification, try to terminate an invalid container
+			target.terminateMachine( targetProperties, "invalid identifier" );
+			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+
+			// Terminate the container
+			target.terminateMachine( targetProperties, containerId );
+			Assert.assertFalse( target.isMachineRunning( targetProperties, containerId ));
+
+		} finally {
+			target.stop();
+		}
 	}
 
 
@@ -140,7 +163,26 @@ public class DockerHandler_withContainerTest {
 		Map<String,String> targetProperties = loadTargetProperties();
 		targetProperties.remove( DockerHandler.IMAGE_ID );
 
-		target.createMachine( targetProperties, msgCfg, "test", "roboconf" );
+		target.createMachine( targetProperties, this.msgCfg, "test", "roboconf" );
+	}
+
+
+	@Test
+	public void testDockerUtils_onLimits() {
+		DockerUtils.deleteImageIfItExists( null, this.docker );
+		Assert.assertTrue( "No exception is thrown trying to delete a null image ID.", true );
+
+		DockerUtils.deleteImageIfItExists( "bla 11 4 2 bla", this.docker );
+		Assert.assertTrue( "No exception is thrown trying to delete something that does not exist.", true );
+
+		Container container = DockerUtils.findContainerByIdOrByName( "bla 11 4 2 bla", this.docker );
+		Assert.assertNull( container );
+
+		Image image = DockerUtils.findImageByIdOrByTag( null, this.docker );
+		Assert.assertNull( image );
+
+		image = DockerUtils.findImageByIdOrByTag( "invalid", this.docker );
+		Assert.assertNull( image );
 	}
 
 
@@ -149,7 +191,8 @@ public class DockerHandler_withContainerTest {
 	 */
 	private Map<String,String> loadTargetProperties() throws Exception {
 
-		File propertiesFile = new File( Thread.currentThread().getContextClassLoader().getResource("conf/docker.properties").getFile());
+		URL res = Thread.currentThread().getContextClassLoader().getResource("conf/docker.properties");
+		File propertiesFile = new File( res.getFile());
 		Properties p = Utils.readPropertiesFile( propertiesFile );
 
 		HashMap<String,String> targetProperties = new HashMap<>();
@@ -168,15 +211,23 @@ public class DockerHandler_withContainerTest {
 	 * @throws IOException
 	 */
 	private void prepareDockerTest() throws Exception {
+		final String tag = "roboconf-test";
 
 		DockerClientConfigBuilder config = DockerClientConfig.createDefaultConfigBuilder();
 		config.withUri( "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
 
 		this.docker = DockerClientBuilder.getInstance( config.build()).build();
-		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource("image").getFile());
-		BuildImageCmd img = this.docker.buildImageCmd(baseDir).withNoCache().withTag("roboconf-test");
-		CreateImageResponse rsp = this.docker.createImageCmd( "roboconf-test", img.getTarInputStream()).exec();
+		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource("./image").getFile());
 
-		this.dockerImageId = rsp.getId();
+		InputStream in = this.docker.buildImageCmd(baseDir).withNoCache().withTag( tag ).exec();
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		Utils.copyStream( in, os );
+		this.logger.finest( os.toString( "UTF-8" ));
+
+		List<Image> images = this.docker.listImagesCmd().exec();
+		images = images == null ? new ArrayList<Image>( 0 ) : images;
+		Image img = DockerUtils.findImageByTag( tag, images );
+
+		this.dockerImageId = img.getId();
 	}
 }

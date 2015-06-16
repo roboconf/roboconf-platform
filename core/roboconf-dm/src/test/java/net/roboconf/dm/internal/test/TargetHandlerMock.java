@@ -26,8 +26,8 @@
 package net.roboconf.dm.internal.test;
 
 import java.util.Map;
+import java.util.Objects;
 
-import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -85,7 +85,7 @@ public class TargetHandlerMock implements TargetHandler {
 	@Override
 	public boolean equals( Object obj ) {
 		return obj instanceof TargetHandlerMock
-				&& Utils.areEqual( this.installerName, ((TargetHandlerMock) obj ).installerName );
+				&& Objects.equals( this.installerName, ((TargetHandlerMock) obj ).installerName );
 	}
 
 	@Override

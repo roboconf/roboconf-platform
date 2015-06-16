@@ -54,4 +54,10 @@ public class DockerHandler_withoutContainerTest {
 		boolean running = new DockerHandler().isMachineRunning( new HashMap<String,String> (), "whatever" );
 		Assert.assertFalse( running );
 	}
+
+
+	@Test( expected = TargetException.class )
+	public void testCreateMachine_invalidConfiguration() throws Exception {
+		new DockerHandler().createMachine( new HashMap<String,String>( 0 ), null, null, null );
+	}
 }

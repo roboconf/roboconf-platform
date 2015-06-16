@@ -12,8 +12,8 @@
 			<callback type="modified" method="targetWasModified" />
 		</requires>
 		<requires optional="true">
-			<callback type="bind" method="bindMonitoringManager" />
-			<callback type="unbind" method="unbindMonitoringManager" />
+			<callback type="bind" method="bindTemplatingManager" />
+			<callback type="unbind" method="unbindTemplatingManager" />
 		</requires>
 		
 		<callback transition="validate" method="start" />

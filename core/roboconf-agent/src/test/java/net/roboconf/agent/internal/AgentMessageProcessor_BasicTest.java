@@ -65,13 +65,15 @@ public class AgentMessageProcessor_BasicTest {
 
 	@Before
 	public void initializeAgent() throws Exception {
+
 		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 		registry.addMessagingClientFactory(new TestClientFactory());
-
 		this.agent = new Agent();
+
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
 		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.agent.start();
+
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
 		this.agent.getMessagingClient().setRegistry(registry);
 		this.agent.reconfigure();

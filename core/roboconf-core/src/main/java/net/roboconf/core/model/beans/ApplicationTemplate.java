@@ -26,8 +26,7 @@
 package net.roboconf.core.model.beans;
 
 import java.io.Serializable;
-
-import net.roboconf.core.utils.Utils;
+import java.util.Objects;
 
 /**
  * An application template groups an identifier, graph definitions and instances.
@@ -101,8 +100,8 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	@Override
 	public boolean equals( Object obj ) {
 		return obj instanceof ApplicationTemplate
-				&& Utils.areEqual( this.name, ((ApplicationTemplate) obj ).getName())
-				&& Utils.areEqual( this.qualifier, ((ApplicationTemplate) obj ).getQualifier());
+				&& Objects.equals( this.name, ((ApplicationTemplate) obj ).getName())
+				&& Objects.equals( this.qualifier, ((ApplicationTemplate) obj ).getQualifier());
 	}
 
 	@Override

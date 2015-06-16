@@ -27,9 +27,9 @@ package net.roboconf.core.model.beans;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Objects;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 
 /**
  * An application groups an identifier, graph definitions and instances.
@@ -75,7 +75,7 @@ public class Application extends AbstractApplication implements Serializable {
 	@Override
 	public boolean equals( Object obj ) {
 		return obj instanceof Application
-				&& Utils.areEqual( this.name, ((Application) obj ).getName());
+				&& Objects.equals( this.name, ((Application) obj ).getName());
 	}
 
 	@Override

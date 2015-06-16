@@ -28,9 +28,12 @@ package net.roboconf.target.docker.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import junit.framework.Assert;
 import net.roboconf.target.api.TargetException;
 
 import org.junit.Test;
+
+import com.github.dockerjava.api.DockerClient;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -38,28 +41,30 @@ import org.junit.Test;
 public class DockerUtilsTest {
 
 	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_noImage() throws Exception {
+	public void testInvalidConfiguration_noImage_noPackage() throws Exception {
 
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( DockerHandler.ENDPOINT, "whatever" );
-		DockerUtils.createDockerClient( new HashMap<String,String> ());
+		DockerUtils.createDockerClient( map );
 	}
 
 
-	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_noEndpoint_noAgentPackage() throws Exception {
+	@Test
+	public void testIncompleteConfiguration_noEndpoint_withImage() throws Exception {
 
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( DockerHandler.IMAGE_ID, "whatever" );
-		DockerUtils.createDockerClient( map );
+		DockerClient client = DockerUtils.createDockerClient( map );
+		Assert.assertNotNull( client );
 	}
 
 
-	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_noEndpoint_noImageId() throws Exception {
+	@Test
+	public void testIncompleteConfiguration_noEndpoint_withPackage() throws Exception {
 
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( DockerHandler.AGENT_PACKAGE, "whatever" );
-		DockerUtils.createDockerClient( map );
+		DockerClient client = DockerUtils.createDockerClient( map );
+		Assert.assertNotNull( client );
 	}
 }

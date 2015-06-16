@@ -29,9 +29,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 
 /**
  * An Import is a list of variables an instance exports.
@@ -114,7 +114,7 @@ public class Import implements Serializable {
 	@Override
 	public boolean equals( Object obj ) {
 		return obj instanceof Import
-				&& Utils.areEqual( this.instancePath, ((Import) obj).instancePath );
+				&& Objects.equals( this.instancePath, ((Import) obj).instancePath );
 	}
 
 

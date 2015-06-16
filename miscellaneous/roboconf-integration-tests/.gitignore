@@ -13,6 +13,7 @@
 /bin
 /maven-eclipse.xml
 /.settings
+/roboconf-dm-it
 
 #idea
 *.iml

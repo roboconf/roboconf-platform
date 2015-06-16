@@ -171,19 +171,6 @@ public class UtilsTest {
 
 
 	@Test
-	public void testAreEqual() {
-
-		Assert.assertTrue( Utils.areEqual( null, null ));
-		Assert.assertFalse( Utils.areEqual( null, new Object()));
-		Assert.assertFalse( Utils.areEqual( new Object(), null ));
-		Assert.assertFalse( Utils.areEqual( new Object(), new Object()));
-
-		Object o = new Object();
-		Assert.assertTrue( Utils.areEqual( o, o ));
-	}
-
-
-	@Test
 	public void testWriteStringInto() throws Exception {
 
 		File f = this.folder.newFile();

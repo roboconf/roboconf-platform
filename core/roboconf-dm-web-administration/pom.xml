@@ -93,10 +93,7 @@
 					</archive>
 					<webResources>
 						<resource>
-							<!-- Embed the DEV files for the moment -->
-							<directory>${project.build.directory}/roboconf-web-administration/target/dev</directory>
-							<!-- To embed the minified version (for later) -->
-							<!--<directory>${project.build.directory}/roboconf-web-administration/target/dist</directory> -->
+							<directory>${project.build.directory}/roboconf-web-administration/target/dist</directory>
 						</resource>
 					</webResources>
 				</configuration>
