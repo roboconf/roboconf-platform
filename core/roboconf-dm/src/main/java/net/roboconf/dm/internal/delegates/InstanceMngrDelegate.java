@@ -400,6 +400,11 @@ public class InstanceMngrDelegate {
 				throw (TargetException) e;
 			else if( e instanceof IOException )
 				throw (IOException) e;
+
+		} finally {
+			synchronized( LOCK ) {
+				scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+			}
 		}
 	}
 
