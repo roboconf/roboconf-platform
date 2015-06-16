@@ -350,7 +350,12 @@ public final class RuntimeModelValidator {
 		// Overridden variables may not contain the facet or component prefix.
 		// To remain as flexible as possible, we will try to resolve them as component or facet variables.
 		Map<String,Set<String>> localNameToFullNames = new HashMap<String,Set<String>> ();
-		Set<String> inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
+		Set<String> inheritedVarNames;
+		if( instance.getComponent() != null )
+		 inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
+		else
+			inheritedVarNames = new HashSet<>( 0 );
+		
 		for( String inheritedVarName : inheritedVarNames ) {
 			String localName = VariableHelpers.parseVariableName( inheritedVarName ).getValue();
 			Set<String> fullNames = localNameToFullNames.get( localName );

@@ -276,11 +276,14 @@ public class RuntimeModelIoTest {
 
 		Component vmOpenstack = ComponentHelpers.findComponent( g, "VM_Openstack" );
 		Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( vmOpenstack );
-		Assert.assertEquals( 2, exportedVariables.size());
+		Assert.assertEquals( 4, exportedVariables.size());
 		Assert.assertEquals( "else", exportedVariables.get( "VM_Openstack.something" ));
 		Assert.assertNull( exportedVariables.get( "Virtual_Machine.ip" ));
+
 		Assert.assertTrue( exportedVariables.containsKey( "Virtual_Machine.ip" ));
-		Assert.assertFalse( exportedVariables.containsKey( "VM_Openstack.ip" ));
+		Assert.assertTrue( exportedVariables.containsKey( "VM_Openstack.ip" ));
+		Assert.assertTrue( exportedVariables.containsKey( "VM.ip" ));
+
 		Assert.assertEquals( ComponentHelpers.findComponent( g, "VM" ), vmOpenstack.getExtendedComponent());
 		Assert.assertNotNull( vmOpenstack.getExtendedComponent());
 

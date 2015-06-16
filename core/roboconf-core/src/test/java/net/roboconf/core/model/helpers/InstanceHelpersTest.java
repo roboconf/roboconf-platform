@@ -215,7 +215,7 @@ public class InstanceHelpersTest {
 		component.exportedVariables.put( "extended.v", "nop" );
 
 		Map<String,String> map = InstanceHelpers.findAllExportedVariables( instance );
-		Assert.assertEquals( 10, map.size());
+		Assert.assertEquals( 16, map.size());
 
 		Assert.assertEquals( "some value", map.get( "comp 1.var1" ));
 		Assert.assertEquals( "var 2 value", map.get( "comp 1.var2" ));
@@ -225,9 +225,15 @@ public class InstanceHelpersTest {
 
 		Assert.assertEquals( "nop", map.get( "extended.v" ));
 
+		// The first one was specifically overridden in the instance
 		Assert.assertEquals( "my-value", map.get( "f1.param1" ));
+		Assert.assertEquals( "value1", map.get( "comp 1.param1" ));
+
 		Assert.assertEquals( "value2", map.get( "f2.param2" ));
+		Assert.assertEquals( "value2", map.get( "comp 1.param2" ));
+
 		Assert.assertEquals( "component overrides facet", map.get( "f3.param3" ));
+		Assert.assertEquals( "component overrides facet", map.get( "comp 1.param3" ));
 
 		Assert.assertEquals( "facet overrides facet", map.get( "f4.param4-1" ));
 		Assert.assertEquals( "value4", map.get( "f4.param4-2" ));

@@ -18,11 +18,11 @@ app {
 	installer: bash;
 	exports: ip, port = toto;
 	
-	# Nobody exports variables that starts with "messaging."
-	imports: database.*, messaging.*;
+	# Nobody exports variables that start with "d-messaging."
+	imports: database.*, d-messaging.*;
 }
 
-# Facets are not really useful, except for test purpose
+# Facets...
 facet f-messaging {
 	exports: queue = default;
 }
