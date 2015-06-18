@@ -103,11 +103,6 @@ public final class RuntimeModelValidator {
 				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, "Variable name: " + exportedVarName ));
 			else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID ))
 				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, "Variable name: " + exportedVarName ));
-
-			else if( Utils.isEmptyOrWhitespaces( entry.getValue())
-					&& ! Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( exportedVarName )
-					&& ! exportedVarName.toLowerCase().endsWith( "." + Constants.SPECIFIC_VARIABLE_IP ))
-				errors.add( new ModelError( ErrorCode.RM_MISSING_VARIABLE_VALUE, component, "Variable name: " + exportedVarName ));
 		}
 
 		// A component cannot import variables it exports unless these imports are optional.
@@ -175,11 +170,6 @@ public final class RuntimeModelValidator {
 				result.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, facet, "Variable name: " + exportedVarName ));
 			else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID ))
 				result.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, facet, "Variable name: " + exportedVarName ));
-
-			else if( Utils.isEmptyOrWhitespaces( entry.getValue())
-					&& ! Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( exportedVarName )
-					&& ! exportedVarName.toLowerCase().endsWith( Constants.SPECIFIC_VARIABLE_IP ))
-				result.add( new ModelError( ErrorCode.RM_MISSING_VARIABLE_VALUE, facet, "Variable name: " + exportedVarName ));
 		}
 
 		// Look for cycles in inheritance
@@ -350,7 +340,12 @@ public final class RuntimeModelValidator {
 		// Overridden variables may not contain the facet or component prefix.
 		// To remain as flexible as possible, we will try to resolve them as component or facet variables.
 		Map<String,Set<String>> localNameToFullNames = new HashMap<String,Set<String>> ();
-		Set<String> inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
+		Set<String> inheritedVarNames;
+		if( instance.getComponent() != null )
+		 inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
+		else
+			inheritedVarNames = new HashSet<>( 0 );
+
 		for( String inheritedVarName : inheritedVarNames ) {
 			String localName = VariableHelpers.parseVariableName( inheritedVarName ).getValue();
 			Set<String> fullNames = localNameToFullNames.get( localName );
@@ -386,6 +381,18 @@ public final class RuntimeModelValidator {
 
 				errors.add( new ModelError( ErrorCode.RM_AMBIGUOUS_OVERRIDING, instance, sb.toString()));
 			}
+		}
+
+		// The graph(s) may define exported variables without values.
+		// So, all the variables an instance exports must have a value, except network ones (ip, ...).
+		for( Map.Entry<String,String> entry : InstanceHelpers.findAllExportedVariables( instance ).entrySet()) {
+			String name = entry.getKey();
+			String value = entry.getValue();
+
+			if( Utils.isEmptyOrWhitespaces( value )
+					&& ! Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( name )
+					&& ! name.toLowerCase().endsWith( "." + Constants.SPECIFIC_VARIABLE_IP ))
+				errors.add( new ModelError( ErrorCode.RM_MISSING_VARIABLE_VALUE, instance, "Variable name: " + name ));
 		}
 
 		return errors;

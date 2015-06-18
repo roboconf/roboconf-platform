@@ -391,15 +391,18 @@ public class InstanceMngrDelegate {
 
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 
-		} catch( Exception e ) {
+		} catch( TargetException | IOException e ) {
 			this.logger.severe( "Failed to deploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
 
+			// The creation failed, remove the lock for another retry
+			synchronized( LOCK ) {
+				scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+			}
+
+			// Restore the state and propagate the exception
 			scopedInstance.setStatus( initialStatus );
-			if( e instanceof TargetException)
-				throw (TargetException) e;
-			else if( e instanceof IOException )
-				throw (IOException) e;
+			throw e;
 		}
 	}
 

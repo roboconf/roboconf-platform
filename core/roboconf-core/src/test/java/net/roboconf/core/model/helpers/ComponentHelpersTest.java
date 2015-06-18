@@ -595,7 +595,113 @@ public class ComponentHelpersTest {
 
 
 	@Test
-	public void testfindAllExportedVariables() {
+	public void testfindAllExportedVariables_simple() {
+
+		Component comp = new Component( "comp" );
+		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( comp );
+		Assert.assertEquals( 0, exports.size());
+
+		comp.exportedVariables.put( "test", "ok" );
+		exports = ComponentHelpers.findAllExportedVariables( comp );
+		Assert.assertEquals( 1, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+	}
+
+
+	@Test
+	public void testfindAllExportedVariables_withFacet() {
+
+		Component comp = new Component( "comp" );
+		comp.exportedVariables.put( "test", "ok" );
+
+		Facet f = new Facet( "facet" );
+		f.exportedVariables.put( "property", "value" );
+		comp.associateFacet( f );
+
+		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( comp );
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "value", exports.get( "facet.property" ));
+		Assert.assertEquals( "value", exports.get( "comp.property" ));
+
+		// Override a facet property
+		comp.exportedVariables.put( "facet.property", "something different" );
+		exports = ComponentHelpers.findAllExportedVariables( comp );
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "something different", exports.get( "facet.property" ));
+		Assert.assertEquals( "something different", exports.get( "comp.property" ));
+
+		// Global override
+		comp.exportedVariables.remove( "facet.property" );
+		comp.exportedVariables.put( "property", "great" );
+		exports = ComponentHelpers.findAllExportedVariables( comp );
+
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "great", exports.get( "facet.property" ));
+		Assert.assertEquals( "great", exports.get( "comp.property" ));
+
+		// Local override
+		comp.exportedVariables.remove( "property" );
+		comp.exportedVariables.put( "comp.property", "ha! ha!" );
+		exports = ComponentHelpers.findAllExportedVariables( comp );
+
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "value", exports.get( "facet.property" ));
+		Assert.assertEquals( "ha! ha!", exports.get( "comp.property" ));
+	}
+
+
+	@Test
+	public void testfindAllExportedVariables_withComponentExtension() {
+
+		Component comp = new Component( "comp" );
+		comp.exportedVariables.put( "test", "ok" );
+
+		Component parent = new Component( "parent" );
+		parent.exportedVariables.put( "property", "value" );
+		comp.extendComponent( parent );
+
+		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( comp );
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "value", exports.get( "parent.property" ));
+		Assert.assertEquals( "value", exports.get( "comp.property" ));
+
+		// Override a parent property
+		comp.exportedVariables.put( "parent.property", "something different" );
+		exports = ComponentHelpers.findAllExportedVariables( comp );
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "something different", exports.get( "parent.property" ));
+		Assert.assertEquals( "something different", exports.get( "comp.property" ));
+
+		// Global override
+		comp.exportedVariables.remove( "parent.property" );
+		comp.exportedVariables.put( "property", "great" );
+		exports = ComponentHelpers.findAllExportedVariables( comp );
+
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "great", exports.get( "parent.property" ));
+		Assert.assertEquals( "great", exports.get( "comp.property" ));
+
+		// Local override
+		comp.exportedVariables.remove( "property" );
+		comp.exportedVariables.put( "comp.property", "ha! ha!" );
+		exports = ComponentHelpers.findAllExportedVariables( comp );
+
+		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( "ok", exports.get( "comp.test" ));
+		Assert.assertEquals( "value", exports.get( "parent.property" ));
+		Assert.assertEquals( "ha! ha!", exports.get( "comp.property" ));
+	}
+
+
+	@Test
+	public void testfindAllExportedVariables_veryComplex() {
 
 		// Create a model
 		Component root = new Component( "root" );
@@ -616,10 +722,12 @@ public class ComponentHelpersTest {
 		serverWithApp.associateFacet( anotherServerFacet );
 		serverWithApp.exportedVariables.put( "ip", null );
 		serverWithApp.exportedVariables.put( serverWithApp.getName() + ".port", "8080" );
+		serverWithApp.exportedVariables.put( "env", "test" );
 
 		// Override the value of a variable that comes from a super facet/component
 		serverWithAnotherApp.exportedVariables.put( serverFacet.getName() + ".url-suffix", "another/path" );
 		serverWithAnotherApp.exportedVariables.put( "whatever", "something" );
+		serverWithAnotherApp.exportedVariables.put( "env", "prod" );
 
 		db.exportedVariables.put( "ip", null );
 		db.exportedVariables.put( "port", "3306" );
@@ -634,19 +742,35 @@ public class ComponentHelpersTest {
 		Assert.assertEquals( "3306", exports.get( "database.port" ));
 
 		exports = ComponentHelpers.findAllExportedVariables( serverWithApp );
-		Assert.assertEquals( 3, exports.size());
+		Assert.assertEquals( 5, exports.size());
 		Assert.assertTrue( exports.containsKey( serverWithApp.getName() + ".ip" ));
 		Assert.assertNull( exports.get( serverWithApp.getName() + ".ip" ));
+
 		Assert.assertEquals( "8080", exports.get( serverWithApp.getName() + ".port" ));
+		Assert.assertEquals( "test", exports.get( serverWithApp.getName() + ".env" ));
+		Assert.assertEquals( "some/path", exports.get( serverWithApp.getName() + ".url-suffix" ));
 		Assert.assertEquals( "some/path", exports.get( serverFacet.getName() + ".url-suffix" ));
 
+		// Since there is inheritance, there will be variables duplication
 		exports = ComponentHelpers.findAllExportedVariables( serverWithAnotherApp );
-		Assert.assertEquals( 4, exports.size());
+		Assert.assertEquals( 10, exports.size());
 		Assert.assertTrue( exports.containsKey( serverWithApp.getName() + ".ip" ));
 		Assert.assertNull( exports.get( serverWithApp.getName() + ".ip" ));
+
+		Assert.assertTrue( exports.containsKey( serverWithAnotherApp.getName() + ".ip" ));
+		Assert.assertNull( exports.get( serverWithAnotherApp.getName() + ".ip" ));
+
 		Assert.assertEquals( "8080", exports.get( serverWithApp.getName() + ".port" ));
+		Assert.assertEquals( "8080", exports.get( serverWithAnotherApp.getName() + ".port" ));
+
 		Assert.assertEquals( "another/path", exports.get( serverFacet.getName() + ".url-suffix" ));
+		Assert.assertEquals( "some/path", exports.get( serverWithApp.getName() + ".url-suffix" ));
+		Assert.assertEquals( "some/path", exports.get( serverWithAnotherApp.getName() + ".url-suffix" ));
+
 		Assert.assertEquals( "something", exports.get( serverWithAnotherApp.getName() + ".whatever" ));
+
+		Assert.assertEquals( "prod", exports.get( serverWithApp.getName() + ".env" ));
+		Assert.assertEquals( "prod", exports.get( serverWithAnotherApp.getName() + ".env" ));
 	}
 
 

@@ -126,6 +126,7 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 						reconfigurable.closeConnection();
 					else
 						reconfigurable.switchMessagingType(RabbitMqConstants.RABBITMQ_FACTORY_TYPE);
+
 			} catch (Throwable t) {
 				// Warn but continue to reconfigure the next clients!
 				this.logger.warning("A client has thrown an exception on reconfiguration: " + client);
@@ -203,5 +204,4 @@ public class RabbitMqClientFactory implements MessagingClientFactory {
 		}
 		return result;
 	}
-
 }

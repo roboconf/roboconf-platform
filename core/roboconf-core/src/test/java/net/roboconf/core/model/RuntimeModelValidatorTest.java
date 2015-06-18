@@ -146,7 +146,6 @@ public class RuntimeModelValidatorTest {
 
 		comp.exportedVariables.put( "toto", "" );
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
-		Assert.assertEquals( ErrorCode.RM_MISSING_VARIABLE_VALUE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 		comp.exportedVariables.clear();
 
@@ -193,7 +192,6 @@ public class RuntimeModelValidatorTest {
 
 		facet.exportedVariables.put( "toto", "" );
 		iterator = RuntimeModelValidator.validate( facet ).iterator();
-		Assert.assertEquals( ErrorCode.RM_MISSING_VARIABLE_VALUE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 		facet.exportedVariables.clear();
 
@@ -354,6 +352,44 @@ public class RuntimeModelValidatorTest {
 		inst.overriddenExports.put( "inst.value", "whatever" );
 		iterator = RuntimeModelValidator.validate( inst ).iterator();
 		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+	}
+
+
+	@Test
+	public void testInstance_noVariableValue() {
+
+		// Create a valid instance and a valid component
+		Instance inst = new Instance( "my instance" );
+		Iterator<ModelError> iterator = RuntimeModelValidator.validate( inst ).iterator();
+		Assert.assertEquals( ErrorCode.RM_EMPTY_INSTANCE_COMPONENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Component comp = new Component( "comp" ).installerName( "target" );
+		comp.exportedVariables.put( "ip", "" );
+		comp.exportedVariables.put( "p1", "value1" );
+		comp.exportedVariables.put( "p2", "" );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
+
+		// Associate them together => variable without value
+		inst.setComponent( comp );
+		iterator = RuntimeModelValidator.validate( inst ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_VARIABLE_VALUE, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		// Fix it and make sure validation succeeds
+		inst.overriddenExports.put( "inst.value1", "whatever" );
+		inst.overriddenExports.put( "comp.p2", "a default value" );
+		iterator = RuntimeModelValidator.validate( inst ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		// Define a new instance variable without value => error
+		inst.overriddenExports.put( "something else", "" );
+		iterator = RuntimeModelValidator.validate( inst ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MAGIC_INSTANCE_VARIABLE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_MISSING_VARIABLE_VALUE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 	}
 

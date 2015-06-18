@@ -32,12 +32,13 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import com.rabbitmq.client.Channel;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+
+import com.rabbitmq.client.Channel;
 
 /**
  * Common RabbitMQ client-related stuffs.
@@ -71,13 +72,21 @@ public abstract class RabbitMqClient implements IClient {
 	 */
 	static final String DEFAULT_PASSWORD = "guest";
 
+
 	protected final Logger logger = Logger.getLogger(this.getClass().getName());
 	protected final String messageServerIp, messageServerUsername, messageServerPassword;
+	private final WeakReference<ReconfigurableClient<?>> reconfigurable;
 	protected LinkedBlockingQueue<Message> messageQueue;
 	Channel channel;
-	private final WeakReference<ReconfigurableClient<?>> reconfigurable;
 
 
+	/**
+	 * Constructor.
+	 * @param reconfigurable
+	 * @param ip
+	 * @param username
+	 * @param password
+	 */
 	protected RabbitMqClient( ReconfigurableClient<?> reconfigurable, String ip, String username, String password ) {
 		this.reconfigurable = new WeakReference<ReconfigurableClient<?>>(reconfigurable);
 		this.messageServerIp = ip;
@@ -93,20 +102,24 @@ public abstract class RabbitMqClient implements IClient {
 		return this.reconfigurable.get();
 	}
 
+
 	@Override
 	public final void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
 		this.messageQueue = messageQueue;
 	}
+
 
 	@Override
 	public final synchronized boolean isConnected() {
 		return this.channel != null;
 	}
 
+
 	@Override
 	public final String getMessagingType() {
 		return RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
 	}
+
 
 	@Override
 	public final Map<String, String> getConfiguration() {

@@ -56,16 +56,25 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 	public static final String THOSE_THAT_IMPORT = "those.that.import.";
 
 	private String applicationName, scopedInstancePath;
-
 	String consumerTag;
 
+
+	/**
+	 * Constructor.
+	 * @param reconfigurable
+	 * @param ip
+	 * @param username
+	 * @param password
+	 */
 	public RabbitMqClientAgent( final ReconfigurableClientAgent reconfigurable, String ip, String username, String password ) {
 		super(reconfigurable, ip, username, password);
 	}
 
+
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IAgentClient#setScopedInstancePath(java.lang.String)
+	 * @see net.roboconf.messaging.api.client.IAgentClient
+	 * #setScopedInstancePath(java.lang.String)
 	 */
 	@Override
 	public void setScopedInstancePath( String scopedInstancePath ) {
@@ -75,7 +84,8 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient#openConnection()
+	 * @see net.roboconf.messaging.api.client.IClient
+	 * #openConnection()
 	 */
 	@Override
 	public synchronized void openConnection() throws IOException {
