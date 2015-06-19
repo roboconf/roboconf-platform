@@ -45,6 +45,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	public static final String TARGET_ID = "docker";
 
 	static String IMAGE_ID = "docker.image";
+	static String BASE_IMAGE = "docker.base.image";
 	static String ENDPOINT = "docker.endpoint";
 	static String USER = "docker.user";
 	static String PASSWORD = "docker.password";

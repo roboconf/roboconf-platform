@@ -49,19 +49,33 @@ public class DockerfileGenerator {
 
 	private String packages = "openjdk-7-jre-headless";
 	private boolean isTar = true;
+	private String baseImageName = "ubuntu";
 
 
 	/**
 	 * Constructor for docker file generator.
-	 * @param agentPackURL URL or path to the agent tarball or zip
+	 * @param agentPackURL URL or path to the agent tarball or zip (not null)
 	 * @param packages packages to be installed using apt-get (including JRE)
+	 * <p>
+	 * Set to "openjdk-7-jre-headless" if null.
+	 * </p>
+	 *
+	 * @param baseImageName the name of the base image used to create a new image
+	 * <p>
+	 * This parameter can be null.<br />
+	 * In this case, "ubuntu" will be used as the
+	 * base image name (<code>FROM ubuntu</code>).
+	 * </p>
 	 */
-	public DockerfileGenerator(String agentPackURL, String packages) {
+	public DockerfileGenerator( String agentPackURL, String packages, String baseImageName ) {
 		File test = new File(agentPackURL);
 		this.agentPackURL = (test.exists() ? "file://" : "") + agentPackURL;
 
-		if(packages != null)
+		if( ! Utils.isEmptyOrWhitespaces( packages ))
 			this.packages = packages;
+
+		if( ! Utils.isEmptyOrWhitespaces( baseImageName ))
+			this.baseImageName = baseImageName;
 
 		if(agentPackURL.toLowerCase().endsWith(".zip"))
 			this.isTar = false;
@@ -69,7 +83,7 @@ public class DockerfileGenerator {
 
 
 	/**
-	 * Generate docker file.
+	 * Generates a dockerfile.
 	 * @return path to a full-fledged temporary Dockerfile directory
 	 * @throws IOException
 	 */
@@ -98,7 +112,7 @@ public class DockerfileGenerator {
 		PrintWriter out = null;
 		try {
 			out = new PrintWriter( generated, "UTF-8" );
-			out.println("FROM ubuntu");
+			out.println("FROM " + this.baseImageName);
 			out.println("COPY " + agentFilename + " /usr/local/");
 			out.println("RUN apt-get update");
 
@@ -164,5 +178,13 @@ public class DockerfileGenerator {
 	 */
 	public boolean isTar() {
 		return this.isTar;
+	}
+
+
+	/**
+	 * @return the baseImageName
+	 */
+	public String getBaseImageName() {
+		return this.baseImageName;
 	}
 }

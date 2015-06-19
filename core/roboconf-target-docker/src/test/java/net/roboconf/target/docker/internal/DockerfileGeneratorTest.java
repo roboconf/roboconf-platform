@@ -48,15 +48,18 @@ public class DockerfileGeneratorTest {
 	public void testNewFileGenerator() throws Exception {
 
 		File agentPackZip = this.folder.newFile( "dockertest.zip" );
-		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null);
-		Assert.assertEquals(gen.getPackages(), "openjdk-7-jre-headless");
-		Assert.assertFalse(gen.isTar());
+		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null, null);
+		Assert.assertEquals( "openjdk-7-jre-headless", gen.getPackages());
+		Assert.assertEquals( "ubuntu", gen.getBaseImageName());
+		Assert.assertFalse( gen.isTar());
 
 		File agentPackTgz = this.folder.newFile( "dockertest.tar.gz" );
-		gen = new DockerfileGenerator( agentPackTgz.getAbsolutePath(), "pack1 pack2" );
-		Assert.assertEquals( gen.getPackages(), "pack1 pack2");
+		gen = new DockerfileGenerator( agentPackTgz.getAbsolutePath(), "pack1 pack2", "ubuntu:15.1" );
+		Assert.assertEquals( "pack1 pack2", gen.getPackages());
+		Assert.assertEquals( "ubuntu:15.1", gen.getBaseImageName());
 		Assert.assertTrue( gen.isTar());
 	}
+
 
 	@Test
 	public void testGenerateDockerFile() throws IOException {
@@ -69,13 +72,16 @@ public class DockerfileGeneratorTest {
 
 		for( File file : files ) {
 			try {
-				DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null );
+				DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null, null );
 				dockerfile = gen.generateDockerfile();
 				Assert.assertTrue( file.getName(), dockerfile.isDirectory());
 
 				File f = new File(dockerfile, "Dockerfile");
 				Assert.assertTrue( file.getName(), f.exists());
 				Assert.assertTrue( file.getName(), f.length() > 0 );
+
+				String dfContent = Utils.readFileContent( f );
+				Assert.assertTrue( dfContent.startsWith( "FROM ubuntu\n" ));
 
 				f = new File(dockerfile, "start.sh");
 				Assert.assertTrue( file.getName(), f.exists());
@@ -93,6 +99,30 @@ public class DockerfileGeneratorTest {
 			} finally {
 				Utils.deleteFilesRecursively(dockerfile);
 			}
+		}
+	}
+
+
+	@Test
+	public void testGenerateDockerFile_withOtherBaseImage() throws IOException {
+
+		File dockerfile = null;
+		File file = this.folder.newFile( "dockertest.tar.gz" );
+
+		try {
+			DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null, "titi:21" );
+			dockerfile = gen.generateDockerfile();
+			Assert.assertTrue( file.getName(), dockerfile.isDirectory());
+
+			File f = new File(dockerfile, "Dockerfile");
+			Assert.assertTrue( file.getName(), f.exists());
+			Assert.assertTrue( file.getName(), f.length() > 0 );
+
+			String dfContent = Utils.readFileContent( f );
+			Assert.assertTrue( dfContent.startsWith( "FROM titi:21\n" ));
+
+		} finally {
+			Utils.deleteFilesRecursively(dockerfile);
 		}
 	}
 }
