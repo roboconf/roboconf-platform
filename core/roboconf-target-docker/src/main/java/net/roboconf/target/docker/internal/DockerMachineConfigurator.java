@@ -144,13 +144,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		// Deal with the options.
 		// We pass them as arguments rather than by using the REST capabilities.
 		String options = this.targetProperties.get( DockerHandler.COMMAND_OPTIONS );
-		if( ! Utils.isEmptyOrWhitespaces( options )) {
-			String[] parts = options.split( " " );
-			for( String part : parts ) {
-				if( ! Utils.isEmptyOrWhitespaces( part ))
-					args.add( part );
-			}
-		}
+		args.addAll( Utils.splitCmdLine( options ));
 
 		// Add the command
 		String command = this.targetProperties.get( DockerHandler.COMMAND );
