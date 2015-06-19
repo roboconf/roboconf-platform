@@ -123,35 +123,19 @@ public class DockerHandler_withContainerTest {
 	public void testCreateAndTerminateVM() throws Exception {
 
 		Assume.assumeTrue( this.dockerIsInstalled );
-		DockerHandler target = new DockerHandler();
 		Map<String,String> targetProperties = loadTargetProperties();
+		testCreateAndTerminateVM( targetProperties );
+	}
 
-		// Start it
-		try {
-			target.start();
-			String containerId = target.createMachine( targetProperties, this.msgCfg, "test", "roboconf" );
-			Assert.assertNotNull( containerId );
 
-			// DockerMachineConfigurator is implemented in such a way that it runs only
-			// once when the image already exists. However, we must wait for the thread pool
-			// executor to pick up the configurator.
-			target.configureMachine( targetProperties, this.msgCfg, containerId, "test", "roboconf" );
-			Thread.sleep( 2000 );
+	@Test
+	public void testCreateAndTerminateVM_withOptions() throws Exception {
 
-			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
-			target.configureMachine( targetProperties, this.msgCfg, containerId, null, null );
+		Assume.assumeTrue( this.dockerIsInstalled );
+		Map<String,String> targetProperties = loadTargetProperties();
+		targetProperties.put( DockerHandler.COMMAND_OPTIONS, "--cap-add SYS_PTRACE" );
 
-			// Just for verification, try to terminate an invalid container
-			target.terminateMachine( targetProperties, "invalid identifier" );
-			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
-
-			// Terminate the container
-			target.terminateMachine( targetProperties, containerId );
-			Assert.assertFalse( target.isMachineRunning( targetProperties, containerId ));
-
-		} finally {
-			target.stop();
-		}
+		testCreateAndTerminateVM( targetProperties );
 	}
 
 
@@ -229,5 +213,41 @@ public class DockerHandler_withContainerTest {
 		Image img = DockerUtils.findImageByTag( tag, images );
 
 		this.dockerImageId = img.getId();
+	}
+
+
+	/**
+	 * Creates, checks and terminates a Docker container.
+	 * @param targetProperties the target properties
+	 * @throws Exception
+	 */
+	private void testCreateAndTerminateVM( Map<String,String> targetProperties ) throws Exception {
+
+		DockerHandler target = new DockerHandler();
+		try {
+			target.start();
+			String containerId = target.createMachine( targetProperties, this.msgCfg, "test", "roboconf" );
+			Assert.assertNotNull( containerId );
+
+			// DockerMachineConfigurator is implemented in such a way that it runs only
+			// once when the image already exists. However, we must wait for the thread pool
+			// executor to pick up the configurator.
+			target.configureMachine( targetProperties, this.msgCfg, containerId, "test", "roboconf" );
+			Thread.sleep( 2000 );
+
+			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+			target.configureMachine( targetProperties, this.msgCfg, containerId, null, null );
+
+			// Just for verification, try to terminate an invalid container
+			target.terminateMachine( targetProperties, "invalid identifier" );
+			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
+
+			// Terminate the container
+			target.terminateMachine( targetProperties, containerId );
+			Assert.assertFalse( target.isMachineRunning( targetProperties, containerId ));
+
+		} finally {
+			target.stop();
+		}
 	}
 }
