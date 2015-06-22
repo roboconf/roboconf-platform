@@ -152,7 +152,7 @@ public class InstanceMngrDelegate {
 			Map<String,byte[]> instanceResources = null;
 			if( newStatus == InstanceStatus.DEPLOYED_STARTED
 					|| newStatus == InstanceStatus.DEPLOYED_STOPPED )
-				instanceResources = ResourceUtils.storeInstanceResources( ma.getDirectory(), instance );
+				instanceResources = ResourceUtils.storeInstanceResources( ma.getTemplateDirectory(), instance );
 
 			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, newStatus, instanceResources );
 			this.manager.send( ma, message, instance );
