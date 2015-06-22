@@ -34,6 +34,8 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.IconUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 
@@ -57,6 +59,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 public final class JSonBindingUtils {
 
 	private static final String APP_NAME = "name";
+	private static final String APP_ICON = "icon";
 	private static final String APP_DESC = "desc";
 	private static final String APP_INST_TPL = "tpl";
 	private static final String APP_TPL_QUALIFIER = "qualifier";
@@ -143,6 +146,10 @@ public final class JSonBindingUtils {
 
 			if( app.getQualifier() != null )
 				generator.writeStringField( APP_TPL_QUALIFIER, app.getQualifier());
+
+			String iconLocation = IconUtils.findIconUrl( app );
+			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
+				generator.writeStringField( APP_ICON, iconLocation );
 
 			generator.writeEndObject();
 		}
@@ -309,6 +316,10 @@ public final class JSonBindingUtils {
 
 			if( app.getTemplate() != null )
 				generator.writeObjectField( APP_INST_TPL, app.getTemplate());
+
+			String iconLocation = IconUtils.findIconUrl( app );
+			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
+				generator.writeStringField( APP_ICON, iconLocation );
 
 			generator.writeEndObject();
 		}

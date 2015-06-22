@@ -46,6 +46,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.internal.delegates.ApplicationTemplateMngrDelegate;
@@ -875,8 +876,27 @@ public class Manager {
 		return foundMessage;
 	}
 
-	public Map<String, String> getMessagingConfiguration() {
+
+	/**
+	 * @return the messaging configuration
+	 */
+	public Map<String,String> getMessagingConfiguration() {
 		return this.messagingClient.getConfiguration();
 	}
 
+
+	/**
+	 * Finds an icon from an URL path.
+	 * <p>
+	 * Notice that this method may fail to return a result during
+	 * reconfigurations.
+	 * </p>
+	 *
+	 * @param urlPath an icon path
+	 * @return an existing image file, or null if none was found
+	 */
+	public File findIconFromPath( String urlPath ) {
+		Map.Entry<String,String> entry = IconUtils.decodeIconUrl( urlPath );
+		return ConfigurationUtils.findIcon( entry.getKey(), entry.getValue(), this.configurationDirectory );
+	}
 }

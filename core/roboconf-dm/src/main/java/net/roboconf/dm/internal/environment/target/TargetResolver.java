@@ -77,15 +77,15 @@ public class TargetResolver implements ITargetResolver {
 
 	/**
 	 * Finds the right targetHandlers handler.
-	 * @param targetHandlers the list of available handlers (can be null)
+	 * @param targets the list of available handlers (can be null)
 	 * @param targetId the targetHandlers ID
 	 * @return a handler for a deployment targetHandlers, or null if none matched
 	 */
-	protected TargetHandler findTargetHandler( List<TargetHandler> target, String targetId ) {
+	protected TargetHandler findTargetHandler( List<TargetHandler> targets, String targetId ) {
 
 		TargetHandler result = null;
-		if( target != null && targetId != null ) {
-			for( TargetHandler itf : target ) {
+		if( targets != null && targetId != null ) {
+			for( TargetHandler itf : targets ) {
 				if( targetId.equalsIgnoreCase( itf.getTargetId())) {
 					result = itf;
 					break;
