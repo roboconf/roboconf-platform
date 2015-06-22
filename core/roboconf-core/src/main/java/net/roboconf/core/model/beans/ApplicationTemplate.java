@@ -25,6 +25,7 @@
 
 package net.roboconf.core.model.beans;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -148,6 +149,14 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	 */
 	public ApplicationTemplate graphs( Graphs graphs ) {
 		this.graphs = graphs;
+		return this;
+	}
+
+	/**
+	 * Sets the directory in a chain approach.
+	 */
+	public ApplicationTemplate directory( File directory ) {
+		this.directory = directory;
 		return this;
 	}
 }

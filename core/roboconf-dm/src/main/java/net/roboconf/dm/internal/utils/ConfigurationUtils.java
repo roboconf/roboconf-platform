@@ -34,6 +34,7 @@ import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 
@@ -143,5 +144,31 @@ public final class ConfigurationUtils {
 		sb.append( INSTANCES_FILE );
 
 		return sb.toString();
+	}
+
+
+	/**
+	 * Finds the icon associated with an application template.
+	 * @param tpl the template
+	 * @param configurationDirectory the DM's configuration directory
+	 * @return an existing file, or null if no icon was found
+	 */
+	public static File findIcon( String name, String qualifier, File configurationDirectory ) {
+
+		// Deal with an invalid directory
+		if( configurationDirectory == null )
+			return null;
+
+		// Find the root directory
+		File root;
+		if( ! Utils.isEmptyOrWhitespaces( qualifier )) {
+			ApplicationTemplate tpl = new ApplicationTemplate( name ).qualifier( qualifier );
+			root = ConfigurationUtils.findTemplateDirectory( tpl, configurationDirectory );
+		} else {
+			root = ConfigurationUtils.findApplicationDirectory( name, configurationDirectory );
+		}
+
+		// Find an icon in the directory
+		return IconUtils.findIcon( root );
 	}
 }

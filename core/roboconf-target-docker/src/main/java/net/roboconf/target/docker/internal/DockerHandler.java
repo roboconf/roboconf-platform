@@ -45,6 +45,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	public static final String TARGET_ID = "docker";
 
 	static String IMAGE_ID = "docker.image";
+	static String BASE_IMAGE = "docker.base.image";
 	static String ENDPOINT = "docker.endpoint";
 	static String USER = "docker.user";
 	static String PASSWORD = "docker.password";
@@ -54,6 +55,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 	static String COMMAND = "docker.command.line";
 	static String USE_COMMAND = "docker.command.use";
+	static String COMMAND_OPTIONS = "docker.command.options";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final ConcurrentHashMap<String,String> imagesInCreation = new ConcurrentHashMap<> ();

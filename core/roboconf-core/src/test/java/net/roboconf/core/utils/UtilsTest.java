@@ -835,4 +835,38 @@ public class UtilsTest {
 		Assert.assertEquals( 1, directories.size());
 		Assert.assertEquals( "dir", directories.get( 0 ).getName());
 	}
+
+
+	@Test
+	public void testSplitCmdLine() {
+
+		Assert.assertEquals( 0, Utils.splitCmdLine( null ).size());
+		Assert.assertEquals( 0, Utils.splitCmdLine( "" ).size());
+		Assert.assertEquals( 0, Utils.splitCmdLine( "  " ).size());
+
+		// Arguments should be trimmed
+		String[] one = { "cmd", " cmd", "cmd  ", "  cmd " };
+		for( String s : one ) {
+			List<String> args = Utils.splitCmdLine( s );
+			Assert.assertEquals( 1, args.size());
+			Assert.assertEquals( "cmd", args.get( 0 ));
+		}
+
+		String[] any = {
+				"cmd --options value1 value2",
+				"cmd --options  value1  value2",
+				"cmd   --options value1 value2 ",
+				"    cmd  --options value1 \t value2 "
+		};
+
+		// Arguments should be trimmed
+		for( String s : any ) {
+			List<String> args = Utils.splitCmdLine( s );
+			Assert.assertEquals( 4, args.size());
+			Assert.assertEquals( "cmd", args.get( 0 ));
+			Assert.assertEquals( "--options", args.get( 1 ));
+			Assert.assertEquals( "value1", args.get( 2 ));
+			Assert.assertEquals( "value2", args.get( 3 ));
+		}
+	}
 }

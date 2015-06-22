@@ -140,6 +140,13 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		// Build the command line, passing the messaging configuration.
 		List<String> args = new ArrayList<> ();
+
+		// Deal with the options.
+		// We pass them as arguments rather than by using the REST capabilities.
+		String options = this.targetProperties.get( DockerHandler.COMMAND_OPTIONS );
+		args.addAll( Utils.splitCmdLine( options ));
+
+		// Add the command
 		String command = this.targetProperties.get( DockerHandler.COMMAND );
 		if( Utils.isEmptyOrWhitespaces( command ))
 			command = "/usr/local/roboconf-agent/start.sh";
@@ -202,8 +209,12 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		InputStream response = null;
 		File dockerfile = null;
 		try {
-			String pack = this.targetProperties.get( DockerHandler.AGENT_PACKAGE );
-			dockerfile = new DockerfileGenerator(pack, this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES )).generateDockerfile();
+			DockerfileGenerator gen = new DockerfileGenerator(
+					this.targetProperties.get( DockerHandler.AGENT_PACKAGE ),
+					this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES ),
+					this.targetProperties.get( DockerHandler.BASE_IMAGE ));
+
+			dockerfile = gen.generateDockerfile();
 			response = this.dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
 
 			// Creating an image can take time, as system commands may be executed (apt-get...).

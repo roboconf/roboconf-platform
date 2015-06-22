@@ -28,15 +28,23 @@ package net.roboconf.integration.tests;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.util.List;
 
+import javax.imageio.ImageIO;
+
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.UriUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.integration.probes.AbstractTest;
@@ -66,6 +74,7 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
 	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
+	private static final String ICONS_URL = "http://localhost:8181/roboconf-icons";
 
 	private WsClient client;
 
@@ -179,8 +188,43 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 				"[{\"name\":\"Apache\",\"path\":\"/Apache VM/Apache\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"Apache\",\"installer\":\"puppet\"}}]",
 				s );
 
-		// Test the debug resources.
+		// Copy an image in the application's directory
+		Application originalApp = this.manager.findApplicationByName( "app1" );
+		Assert.assertNotNull( originalApp );
+		File descDir = new File( originalApp.getDirectory(), Constants.PROJECT_DIR_DESC );
+		Assert.assertTrue( descDir.exists());
 
+		BufferedImage img = new BufferedImage( 100, 100, BufferedImage.TYPE_INT_ARGB );
+		File targetFile = new File( descDir, "application.png" );
+		ImageIO.write( img, "png", targetFile );
+
+		// Make sure we can get the image from the server
+		URL url = new URL( ICONS_URL + "/app1/application.png" );
+		InputStream in = null;
+		try {
+			in = url.openStream();
+			Utils.copyStream( in, new ByteArrayOutputStream());
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Make sure getting an invalid icon returns an error
+		url = new URL( ICONS_URL + "/invalid-app-name/application.png" );
+		in = null;
+		try {
+			in = url.openStream();
+			Utils.copyStream( in, new ByteArrayOutputStream());
+			Assert.fail( "An exception was expected here" );
+
+		} catch( Exception e ) {
+			// nothing
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Test the debug resources.
 		// Check the connection between the DM and the MQ.
 		Assert.assertEquals(
 				"Has received Echo message TEST",
