@@ -232,6 +232,8 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// Besides, we search images by both IDs and tags.
 
 		} catch( Exception e ) {
+			// Release the lock so that we can try again (e.g. if the base image was not already there).
+			this.imagesInCreation.remove( imageId );
 			throw new TargetException( e );
 
 		} finally {
