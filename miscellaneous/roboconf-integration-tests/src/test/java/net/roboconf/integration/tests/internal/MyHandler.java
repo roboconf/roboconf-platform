@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.agent.internal.Agent;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -82,7 +83,8 @@ public class MyHandler implements TargetHandler {
 			Map<String, String> messagingProperties,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName)
+			String applicationName,
+			Instance scopedInstance )
 	throws TargetException {
 		// nothing
 	}

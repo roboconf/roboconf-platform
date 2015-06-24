@@ -180,10 +180,11 @@ public class PluginScript implements PluginInterface {
         	File[] foundFiles = scriptsFolder.listFiles(new ActionFileFilter(action));
         	if(foundFiles != null && foundFiles.length > 0) {
         		script = foundFiles[0];
-        		if(foundFiles.length > 1) this.logger.warning("More than one " + action + " script found: taking the 1st one, " + script.getName());
+        		if(foundFiles.length > 1)
+        			this.logger.warning("More than one " + action + " script found: taking the 1st one, " + script.getName());
         	}
         }
-        
+
         File template = new File(templatesFolder, action + ".template");
         if( ! template.exists())
         	template = new File(templatesFolder, "default.template");
@@ -340,17 +341,17 @@ public class PluginScript implements PluginInterface {
 	 * @author Pierre-Yves Gibello - Linagora
 	 */
 	static class ActionFileFilter implements FilenameFilter {
-		
+
 		final String prefix;
-		
+
 		public ActionFileFilter(String prefix) {
 			this.prefix = prefix;
 		}
-		
+
 		@Override
 		public boolean accept(File dir, String name) {
 			return (this.prefix == null || this.prefix.length() < 1
-					? false : name.startsWith(prefix));
+					? false : name.startsWith(this.prefix));
 		}
 	}
 

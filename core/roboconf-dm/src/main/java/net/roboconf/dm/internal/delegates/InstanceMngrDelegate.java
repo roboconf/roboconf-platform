@@ -387,7 +387,7 @@ public class InstanceMngrDelegate {
 			target.getHandler().configureMachine(
 					targetProperties,
 					this.manager.getMessagingConfiguration(),
-					machineId, scopedInstancePath, ma.getName());
+					machineId, scopedInstancePath, ma.getName(), scopedInstance );
 
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 

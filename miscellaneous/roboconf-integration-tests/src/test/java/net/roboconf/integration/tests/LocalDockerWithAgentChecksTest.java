@@ -96,6 +96,11 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 	protected Manager manager;
 
 
+	public LocalDockerWithAgentChecksTest() {
+		this.showLogs = true;
+	}
+
+
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
 
@@ -129,21 +134,22 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 				"configuration-directory-location",
 				dir.getCanonicalPath()));
 
+		// Configure the messaging
 		String ipAddress = findIpAddress();
 		logger.info( "Configuring the DM with IP " + ipAddress );
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				"message-server-ip",
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				"net.roboconf.messaging.rabbitmq.server.ip",
 				ipAddress ));
 
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				"message-server-username",
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				"net.roboconf.messaging.rabbitmq.server.username",
 				RoboconfPaxRunnerWithDocker.RBCF ));
 
 		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				"message-server-password",
+				"etc/net.roboconf.messaging.rabbitmq.cfg",
+				"net.roboconf.messaging.rabbitmq.server.password",
 				RoboconfPaxRunnerWithDocker.RBCF ));
 
 		// Install Docker support
@@ -186,7 +192,7 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
 
 		// Write Docker properties
-		File appDir = new File( dir, "applications/Legacy LAMP/graph" );
+		File appDir = new File( dir, "application-templates/Legacy LAMP - sample/graph" );
 		Assert.assertTrue( appDir.isDirectory());
 
 		File resDir = new File( appDir, "VM" );
@@ -218,6 +224,9 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		Assert.assertTrue( resDir.mkdir());
 		Utils.writeStringInto( "#!/bin/bash\necho mysql > mysql.txt", new File( resDir, "deploy.sh" ));
 
+		// Wait few seconds for the Docker handler to be registered
+		Thread.sleep( 1000 * 4 );
+
 		// Instantiate root instances
 		Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
 		Assert.assertNotNull( rootInstance );
@@ -230,7 +239,8 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		Logger logger = Logger.getLogger( getClass().getName());
 		logger.info( "About to deploy the first root instance." );
 		try {
-			// The image is generated once, on the first deployment
+			// The image is generated once, on the first deployment.
+			// 30 seconds is enough is the internet speed connection is very good...
 			this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
 			Thread.sleep( 1000 * 30 );
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());

@@ -27,6 +27,7 @@ package net.roboconf.target.docker.internal;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
@@ -64,6 +66,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	private State state = State.NO_IMAGE;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
+	private final Instance scopedInstance;
 	private final Map<String,String> targetProperties;
 	private final Map<String,String> messagingConfiguration;
 	private final String machineId, scopedInstancePath, applicationName;
@@ -79,6 +82,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the path of the scoped/root instance
 	 * @param imagesInCreation the images in creation (not null)
+	 * @param scopedInstance the scoped instance
 	 */
 	public DockerMachineConfigurator(
 			Map<String,String> targetProperties,
@@ -86,7 +90,8 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			String machineId,
 			String scopedInstancePath,
 			String applicationName,
-			ConcurrentHashMap<String,String> imagesInCreation ) {
+			ConcurrentHashMap<String,String> imagesInCreation,
+			Instance scopedInstance ) {
 
 		this.targetProperties = targetProperties;
 		this.messagingConfiguration = messagingConfiguration;
@@ -94,13 +99,23 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		this.scopedInstancePath = scopedInstancePath;
 		this.machineId = machineId;
 		this.imagesInCreation = imagesInCreation;
+		this.scopedInstance = scopedInstance;
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator
-	 * #configure()
-	 */
+	@Override
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
+	}
+
+
+	@Override
+	public void close() throws IOException {
+		if( this.dockerClient != null )
+			this.dockerClient.close();
+	}
+
+
 	@Override
 	public boolean configure() throws TargetException {
 
@@ -182,11 +197,12 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		// Execute...
 		try {
+			String containerName = this.scopedInstancePath.replaceFirst( "^/", "" ).replace( "/", "-" ).replaceAll( "\\s+", "_" );
 			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId )
-					.withName( this.machineId )
+					.withName( containerName )
 					.withCmd( args.toArray( new String[ args.size()]));
 
-			//DockerUtils.configureOptions( options, cmd );
+			DockerUtils.configureOptions( options, cmd );
 			CreateContainerResponse container = cmd.exec();
 
 			// Log warnings, if any
@@ -207,7 +223,10 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 			// We're done here!
 			this.state = State.DONE;
-			this.dockerClient.close();
+
+			// We replace the machine ID in the instance.
+			// The configurator will be stopped anyway.
+			this.scopedInstance.data.put( Instance.MACHINE_ID, container.getId());
 
 		} catch( Exception e ) {
 			throw new TargetException( e );
@@ -256,11 +275,9 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// No need to get the real image ID... Docker has it.
 			// Besides, we search images by both IDs and tags.
 
+		} catch( Exception e ) {
 			// Release the lock so that we can try again (e.g. if the base image was not already there).
 			//this.imagesInCreation.remove( imageId );
-
-		} catch( Exception e ) {
-			// The image creation will not be tried again.
 			throw new TargetException( e );
 
 		} finally {

@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
 
@@ -45,10 +46,10 @@ public class InMemoryHandler_withoutIPojoTest {
 
 	@Before
 	public void setMessagingConfiguration() {
-		msgCfg = new LinkedHashMap<>();
-		msgCfg.put("net.roboconf.messaging.type", "telepathy");
-		msgCfg.put("mindControl", "false");
-		msgCfg.put("psychosisProtection", "active");
+		this.msgCfg = new LinkedHashMap<>();
+		this.msgCfg.put("net.roboconf.messaging.type", "telepathy");
+		this.msgCfg.put("mindControl", "false");
+		this.msgCfg.put("psychosisProtection", "active");
 	}
 
 
@@ -67,7 +68,7 @@ public class InMemoryHandler_withoutIPojoTest {
 
 		InMemoryHandler target = new InMemoryHandler();
 		target.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
-		target.createMachine(null, msgCfg, "vm", "my app");
+		target.createMachine(null, this.msgCfg, "vm", "my app");
 	}
 
 
@@ -83,7 +84,7 @@ public class InMemoryHandler_withoutIPojoTest {
 
 		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
 
-		handler.createMachine( targetProperties, msgCfg, "vm", "my app" );
+		handler.createMachine( targetProperties, this.msgCfg, "vm", "my app" );
 	}
 
 
@@ -98,7 +99,7 @@ public class InMemoryHandler_withoutIPojoTest {
 
 		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
 
-		handler.createMachine( targetProperties, msgCfg, "vm", "my app" );
+		handler.createMachine( targetProperties, this.msgCfg, "vm", "my app" );
 	}
 
 
@@ -106,9 +107,7 @@ public class InMemoryHandler_withoutIPojoTest {
 	public void testConfigureAndIsRunning() throws Exception {
 
 		InMemoryHandler handler = new InMemoryHandler();
-		handler.configureMachine( null, msgCfg, "my app", null, null );
+		handler.configureMachine( null, this.msgCfg, "my app", null, null, new Instance());
 		Assert.assertFalse( handler.isMachineRunning( null, "whatever, there is no iPojo factory" ));
 	}
-
-
 }

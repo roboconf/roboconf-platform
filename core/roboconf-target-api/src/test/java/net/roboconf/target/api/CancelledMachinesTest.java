@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,40 +23,41 @@
  * limitations under the License.
  */
 
-package net.roboconf.target.embedded.internal;
+package net.roboconf.target.api;
 
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.beans.Instance;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.CancelledMachines;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class EmbeddedHandlerTest {
+public class CancelledMachinesTest {
 
 	@Test
-	public void testTargetEmbedded() throws Exception {
+	public void testWorkflow() {
 
-		EmbeddedHandler target = new EmbeddedHandler();
-		Assert.assertEquals( EmbeddedHandler.TARGET_ID, target.getTargetId());
-		target.terminateMachine( null, null );
-		target.terminateMachine( new HashMap<String,String>(), "anything" );
+		CancelledMachines cm = new CancelledMachines();
+		Assert.assertEquals( 0, cm.removeSnapshot().size());
 
-		Assert.assertFalse( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
-		Assert.assertNotNull( target.createMachine( null, null, "nothing", "app" ));
-		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
+		cm.addMachineId( "test1" );
+		Set<String> snapshot = cm.removeSnapshot();
+		Assert.assertEquals( 1, snapshot.size());
+		Assert.assertEquals( "test1", snapshot.iterator().next());
 
-		Assert.assertNotNull( target.createMachine( new HashMap<String,String>(), new HashMap<String,String>(), null, null ));
-		target.configureMachine(
-				new HashMap<String,String>( 0 ),
-				new HashMap<String,String>( 0 ),
-				null, null, null,
-				new Instance());
+		cm.addMachineId( "test2" );
+		cm.addMachineId( "test3" );
+		snapshot = cm.removeSnapshot();
+		Assert.assertEquals( 2, snapshot.size());
 
-		target.terminateMachine( new HashMap<String,String>(), null );
-		target.terminateMachine( null, "anything" );
+		Iterator<String> it = snapshot.iterator();
+		Assert.assertEquals( "test2", it.next());
+		Assert.assertEquals( "test3", it.next());
+
+		Assert.assertEquals( 0, cm.removeSnapshot().size());
 	}
 }

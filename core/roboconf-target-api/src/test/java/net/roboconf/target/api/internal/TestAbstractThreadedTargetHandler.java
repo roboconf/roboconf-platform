@@ -28,6 +28,7 @@ package net.roboconf.target.api.internal;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 
@@ -84,9 +85,10 @@ public class TestAbstractThreadedTargetHandler extends AbstractThreadedTargetHan
 			Map<String, String> messagingProperties,
 			String machineId,
 			String rootInstanceName,
-			String applicationName ) {
+			String applicationName,
+			Instance scopedInstance ) {
 
-		return new TestMachineConfigurator( this.cpt, this.failConfiguration );
+		return new TestMachineConfigurator( this.cpt, this.failConfiguration, scopedInstance );
 	}
 
 

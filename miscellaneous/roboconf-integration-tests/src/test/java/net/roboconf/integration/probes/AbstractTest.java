@@ -53,6 +53,7 @@ import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 public abstract class AbstractTest {
 
 	public static final long PLATFORM_TIMEOUT = 30000;
+	protected boolean showLogs = false;
 
 
 	/**
@@ -88,15 +89,17 @@ public abstract class AbstractTest {
 		options.add( keepRuntimeFolder());
 		options.add( systemTimeout( PLATFORM_TIMEOUT ));
 
-		// Override the log configuration in Karaf
-		options.add( logLevel( LogLevel.ERROR ));
-		options.add( editConfigurationFilePut(
-				  "etc/org.ops4j.pax.logging.cfg",
-				  "log4j.logger.net.roboconf",
-				  "ERROR, roboconf" ));
+		if( ! this.showLogs ) {
+			// Override the log configuration in Karaf
+			options.add( logLevel( LogLevel.ERROR ));
+			options.add( editConfigurationFilePut(
+					  "etc/org.ops4j.pax.logging.cfg",
+					  "log4j.logger.net.roboconf",
+					  "ERROR, roboconf" ));
 
-		// Do not show the Karaf console in the logs
-		options.add( configureConsole().ignoreLocalConsole());
+			// Do not show the Karaf console in the logs
+			options.add( configureConsole().ignoreLocalConsole());
+		}
 
 		return options;
 	}
