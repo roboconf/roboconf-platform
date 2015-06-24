@@ -25,11 +25,13 @@
 
 package net.roboconf.target.ec2.internal;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
@@ -64,6 +66,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, ASSOCIATE_STORAGE, COMPLETE
 	}
 
+	private final Instance scopedInstance;
 	private final String machineId, tagName;
 	private final Map<String,String> targetProperties;
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -76,10 +79,28 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	/**
 	 * Constructor.
 	 */
-	public Ec2MachineConfigurator( Map<String,String> targetProperties, String machineId, String tagName  ) {
+	public Ec2MachineConfigurator(
+			Map<String,String> targetProperties,
+			String machineId,
+			String tagName,
+			Instance scopedInstance  ) {
+
 		this.machineId = machineId;
 		this.targetProperties = targetProperties;
 		this.tagName = tagName;
+		this.scopedInstance = scopedInstance;
+	}
+
+
+	@Override
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
+	}
+
+
+	@Override
+	public void close() throws IOException {
+		// nothing
 	}
 
 

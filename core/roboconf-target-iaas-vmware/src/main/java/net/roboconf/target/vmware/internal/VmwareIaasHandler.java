@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
@@ -163,8 +164,8 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map, java.lang.String,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
+	 * java.util.Map, java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public MachineConfigurator machineConfigurator(
@@ -172,7 +173,8 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName ) {
+			String applicationName,
+			Instance scopedInstance ) {
 
 		String userData = "";
 		try {
@@ -184,7 +186,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 		}
 
 		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
-		return new VmWareMachineConfigurator( targetProperties, userData, rootInstanceName );
+		return new VmWareMachineConfigurator( targetProperties, userData, rootInstanceName, scopedInstance );
 	}
 
 
@@ -217,25 +219,27 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
+	public void terminateMachine( Map<String, String> targetProperties, String machineId ) throws TargetException {
 
 		try {
+			cancelMachineConfigurator( machineId );
+
 			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
-			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, instanceId );
+			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineId );
 			if (vm == null)
-				throw new TargetException( "Error vm: " + instanceId + " was not found");
+				throw new TargetException( "Error vm: " + machineId + " was not found");
 
 			Task task = vm.powerOffVM_Task();
 			try {
 				if(!(task.waitForTask()).equals(Task.SUCCESS))
-					throw new TargetException( "Error while trying to stop vm: " + instanceId);
+					throw new TargetException( "Error while trying to stop vm: " + machineId);
 
 			} catch (InterruptedException ignore) { /*ignore*/ }
 
 			task = vm.destroy_Task();
 			try {
 				if(!(task.waitForTask()).equals(Task.SUCCESS))
-					throw new TargetException( "Error while trying to remove vm: " + instanceId);
+					throw new TargetException( "Error while trying to remove vm: " + machineId);
 
 			} catch (InterruptedException ignore) { /*ignore*/ }
 

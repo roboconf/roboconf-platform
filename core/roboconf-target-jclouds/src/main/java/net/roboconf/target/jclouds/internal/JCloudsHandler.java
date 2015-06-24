@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
@@ -162,8 +163,8 @@ public class JCloudsHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void configureMachine(
@@ -171,7 +172,8 @@ public class JCloudsHandler implements TargetHandler {
 		Map<String,String> messagingConfiguration,
 		String machineId,
 		String scopedInstancePath,
-		String applicationName )
+		String applicationName,
+		Instance scopedInstance )
 	throws TargetException {
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
 	}

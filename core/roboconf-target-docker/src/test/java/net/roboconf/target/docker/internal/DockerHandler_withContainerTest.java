@@ -36,9 +36,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
@@ -133,9 +136,34 @@ public class DockerHandler_withContainerTest {
 
 		Assume.assumeTrue( this.dockerIsInstalled );
 		Map<String,String> targetProperties = loadTargetProperties();
-		targetProperties.put( DockerHandler.COMMAND_OPTIONS, "--cap-add SYS_PTRACE" );
+		targetProperties.put( DockerHandler.OPTION_PREFIX_RUN + "cap-add", "SYS_PTRACE" );
 
 		testCreateAndTerminateVM( targetProperties );
+	}
+
+
+	@Test( expected = TargetException.class )
+	public void testConfigureVM_invalidBaseImage() throws Exception {
+
+		Assume.assumeTrue( this.dockerIsInstalled );
+		Map<String,String> targetProperties = loadTargetProperties();
+		targetProperties.put( DockerHandler.IMAGE_ID, "will-not-be-generated" );
+		targetProperties.put( DockerHandler.BASE_IMAGE, "oops81:unknown" );
+
+		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
+				targetProperties, this.msgCfg, "656sdf6sd", "/test", "app",
+				new ConcurrentHashMap<String,String> (),
+				new Instance());
+
+		try {
+			configurator.dockerClient = this.docker;
+			configurator.createImage( "will-not-be-generated" );
+
+		} finally {
+			configurator.dockerClient = null;
+			configurator.close();
+			Assert.assertNull( DockerUtils.findImageByIdOrByTag( "will-not-be-generated", this.docker ));
+		}
 	}
 
 
@@ -148,6 +176,15 @@ public class DockerHandler_withContainerTest {
 		targetProperties.remove( DockerHandler.IMAGE_ID );
 
 		target.createMachine( targetProperties, this.msgCfg, "test", "roboconf" );
+	}
+
+
+	@Test
+	public void checkImagesAreFoundCorrectly() {
+
+		Assert.assertNull( DockerUtils.findImageByIdOrByTag( "oops81:unknown", this.docker ));
+		Assert.assertNotNull( DockerUtils.findImageByIdOrByTag( "ubuntu", this.docker ));
+		Assert.assertNotNull( DockerUtils.findImageByIdOrByTag( "ubuntu:latest", this.docker ));
 	}
 
 
@@ -222,21 +259,39 @@ public class DockerHandler_withContainerTest {
 	 * @throws Exception
 	 */
 	private void testCreateAndTerminateVM( Map<String,String> targetProperties ) throws Exception {
+		testCreateAndTerminateVM( targetProperties, 2000 );
+	}
+
+
+	/**
+	 * Creates, checks and terminates a Docker container.
+	 * @param targetProperties the target properties
+	 * @param wait the time to wait before checking if the container started
+	 * @throws Exception
+	 */
+	private void testCreateAndTerminateVM( Map<String,String> targetProperties, long wait ) throws Exception {
 
 		DockerHandler target = new DockerHandler();
+		Instance scopedInstance = new Instance( "test-596598515" );
+		String path = InstanceHelpers.computeInstancePath( scopedInstance );
 		try {
 			target.start();
-			String containerId = target.createMachine( targetProperties, this.msgCfg, "test", "roboconf" );
+			String containerId = target.createMachine( targetProperties, this.msgCfg, path, "roboconf" );
 			Assert.assertNotNull( containerId );
+			Assert.assertNull( scopedInstance.data.get( Instance.MACHINE_ID ));
 
 			// DockerMachineConfigurator is implemented in such a way that it runs only
 			// once when the image already exists. However, we must wait for the thread pool
 			// executor to pick up the configurator.
-			target.configureMachine( targetProperties, this.msgCfg, containerId, "test", "roboconf" );
-			Thread.sleep( 2000 );
+			target.configureMachine( targetProperties, this.msgCfg, containerId, path, "roboconf", scopedInstance );
+			Thread.sleep( wait );
 
+			// Be careful, the Docker target changes the machine ID
+			Assert.assertNotNull( scopedInstance.data.get( Instance.MACHINE_ID ));
+			containerId = scopedInstance.data.get( Instance.MACHINE_ID );
+
+			// Check the machine is running
 			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
-			target.configureMachine( targetProperties, this.msgCfg, containerId, null, null );
 
 			// Just for verification, try to terminate an invalid container
 			target.terminateMachine( targetProperties, "invalid identifier" );

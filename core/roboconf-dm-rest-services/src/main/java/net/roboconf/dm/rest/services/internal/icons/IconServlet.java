@@ -71,7 +71,6 @@ public class IconServlet extends HttpServlet {
 		} else {
 			resp.setContentType( IconUtils.findMimeType( f ));
 			resp.setContentLength((int) f.length());
-			//resp.setHeader( "Content-disposition","attachment; filename=" + f.getName());
 
 			OutputStream out = resp.getOutputStream();
 			Utils.copyStream( f, out );

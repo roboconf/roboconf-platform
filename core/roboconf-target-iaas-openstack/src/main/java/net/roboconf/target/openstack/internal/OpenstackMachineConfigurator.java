@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
@@ -69,6 +70,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		WAITING_VM, ASSOCIATE_FLOATING_IP, COMPLETE;
 	}
 
+	private final Instance scopedInstance;
 	private final String machineId;
 	private final Map<String,String> targetProperties;
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -83,9 +85,23 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	 * @param targetProperties
 	 * @param machineId
 	 */
-	public OpenstackMachineConfigurator( Map<String,String> targetProperties, String machineId ) {
+	public OpenstackMachineConfigurator( Map<String,String> targetProperties, String machineId, Instance scopedInstance ) {
 		this.machineId = machineId;
 		this.targetProperties = targetProperties;
+		this.scopedInstance = scopedInstance;
+	}
+
+
+	@Override
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
+	}
+
+
+	@Override
+	public void close() throws IOException {
+		if( this.novaApi != null )
+			this.novaApi.close();
 	}
 
 
@@ -105,9 +121,6 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 
 		//if( state == State.ASSOCIATE_NETWORK )
 		//	associateNetwork();
-
-		if( this.state == State.COMPLETE )
-			complete();
 
 		return this.state == State.COMPLETE;
 	}
@@ -189,19 +202,4 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 //
 //		}
 //	}
-
-
-	/**
-	 * Closes the Nova client.
-	 */
-	private void complete() {
-
-		try {
-			this.novaApi.close();
-
-		} catch( IOException e ) {
-			this.logger.warning( "A Nova client could not be closed. " + e.getMessage());
-			Utils.logException( this.logger, e );
-		}
-	}
 }

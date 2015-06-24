@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
@@ -43,19 +44,22 @@ import com.github.dockerjava.api.model.Container;
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "docker";
+	static final String DOCKER_CONFIG_ID = "docker.config.id";
 
-	static String IMAGE_ID = "docker.image";
-	static String BASE_IMAGE = "docker.base.image";
-	static String ENDPOINT = "docker.endpoint";
-	static String USER = "docker.user";
-	static String PASSWORD = "docker.password";
-	static String EMAIL = "docker.email";
-	static String VERSION = "docker.version";
-	static String AGENT_PACKAGE = "docker.agent.package";
-	static String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
-	static String COMMAND = "docker.command.line";
-	static String USE_COMMAND = "docker.command.use";
-	static String COMMAND_OPTIONS = "docker.command.options";
+	static final String IMAGE_ID = "docker.image";
+	static final String BASE_IMAGE = "docker.base.image";
+	static final String ENDPOINT = "docker.endpoint";
+	static final String USER = "docker.user";
+	static final String PASSWORD = "docker.password";
+	static final String EMAIL = "docker.email";
+	static final String VERSION = "docker.version";
+	static final String AGENT_PACKAGE = "docker.agent.package";
+	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
+	static final String COMMAND = "docker.command.line";
+	static final String USE_COMMAND = "docker.command.use";
+
+	static String OPTION_PREFIX = "docker.option.";
+	static String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final ConcurrentHashMap<String,String> imagesInCreation = new ConcurrentHashMap<> ();
@@ -93,7 +97,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			throw new TargetException("Neither " + IMAGE_ID + " nor " + AGENT_PACKAGE + " were specified.");
 
 		// We do not do anything else here.
-		// We return a UUID. This will be used to tag our container.
+		// We return a UUID.
 		return "rbcf_" + UUID.randomUUID().toString();
 	}
 
@@ -101,7 +105,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * java.util.Map, java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public MachineConfigurator machineConfigurator(
@@ -109,13 +113,14 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName ) {
+			String applicationName,
+			Instance scopedInstance ) {
 
 		// machineId does not match a real container ID.
 		// It is the name of the container we will create.
 		return new DockerMachineConfigurator(
 				targetProperties, messagingConfiguration, machineId,
-				scopedInstancePath, applicationName, this.imagesInCreation );
+				scopedInstancePath, applicationName, this.imagesInCreation, scopedInstance );
 	}
 
 
@@ -151,6 +156,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 		this.logger.fine( "Terminating machine " + machineId );
 		try {
+			cancelMachineConfigurator( machineId );
 			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
 			Container container = DockerUtils.findContainerByIdOrByName( machineId, dockerClient );
 

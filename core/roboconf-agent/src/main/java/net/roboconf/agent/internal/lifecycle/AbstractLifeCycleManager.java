@@ -288,14 +288,9 @@ public abstract class AbstractLifeCycleManager {
 		} finally {
 			// Update the status of all the instances
 			for( Instance i : instancesToUndeploy ) {
-				// Prevent old imports from being resent later on
-				i.getImports().clear();
 				i.setStatus( newStatus );
-			}
-
-			// Propagate the changes
-			for( Instance i : instancesToUndeploy )
 				this.messagingClient.sendMessageToTheDm( new MsgNotifInstanceChanged( this.appName, i ));
+			}
 		}
 	}
 

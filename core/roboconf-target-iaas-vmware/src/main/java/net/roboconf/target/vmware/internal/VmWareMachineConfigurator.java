@@ -25,9 +25,11 @@
 
 package net.roboconf.target.vmware.internal;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
 
@@ -47,6 +49,7 @@ public class VmWareMachineConfigurator implements MachineConfigurator {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Map<String,String> targetProperties;
 	private final String userData, rootInstanceName;
+	private final Instance scopedInstance;
 
 	private ServiceInstance vmwareServiceInstance;
 
@@ -54,10 +57,28 @@ public class VmWareMachineConfigurator implements MachineConfigurator {
 	/**
 	 * Constructor.
 	 */
-	public VmWareMachineConfigurator( Map<String,String> targetProperties, String userData, String rootInstanceName ) {
+	public VmWareMachineConfigurator(
+			Map<String,String> targetProperties,
+			String userData,
+			String rootInstanceName,
+			Instance scopedInstance ) {
+
 		this.targetProperties = targetProperties;
 		this.userData = userData;
 		this.rootInstanceName = rootInstanceName;
+		this.scopedInstance = scopedInstance;
+	}
+
+
+	@Override
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
+	}
+
+
+	@Override
+	public void close() throws IOException {
+		// nothing
 	}
 
 

@@ -180,10 +180,11 @@ public class PluginScript implements PluginInterface {
         	File[] foundFiles = scriptsFolder.listFiles(new ActionFileFilter(action));
         	if(foundFiles != null && foundFiles.length > 0) {
         		script = foundFiles[0];
-        		if(foundFiles.length > 1) this.logger.warning("More than one " + action + " script found: taking the 1st one, " + script.getName());
+        		if(foundFiles.length > 1)
+        			this.logger.warning("More than one " + action + " script found: taking the 1st one, " + script.getName());
         	}
         }
-        
+
         File template = new File(templatesFolder, action + ".template");
         if( ! template.exists())
         	template = new File(templatesFolder, "default.template");
@@ -210,22 +211,31 @@ public class PluginScript implements PluginInterface {
      * @throws IOException
      */
     protected File generateTemplate(File template, Instance instance) throws IOException {
-        File generated = File.createTempFile(instance.getName(), ".script");
+
+    	String scriptName = instance.getName().replace( "\\s+", "_" );
+        File generated = File.createTempFile( scriptName, ".script");
         InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
+
         return generated;
     }
 
 
-    protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir)
+    protected void executeScript(
+    		File script,
+    		Instance instance,
+    		Import importChanged,
+    		InstanceStatus statusChanged,
+    		String instanceDir )
     throws IOException, InterruptedException {
 
     	String[] command = { script.getAbsolutePath() };
-    	if(! script.canExecute()) {
+    	if(! script.canExecute())
     		script.setExecutable(true);
-    	}
+
     	Map<String, String> environmentVars = new HashMap<String, String>();
     	Map<String, String> vars = formatExportedVars(instance);
     	environmentVars.putAll(vars);
+
     	Map<String, String> importedVars = formatImportedVars(instance);
     	environmentVars.putAll(importedVars);
     	environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
@@ -317,6 +327,7 @@ public class PluginScript implements PluginInterface {
                     String vname = VariableHelpers.parseVariableName(entry2.getKey()).getValue();
                     importedVars.put(importTypeName + "_" + i + "_" + vname, entry2.getValue());
                 }
+
                 ++i;
             }
         }
@@ -340,18 +351,16 @@ public class PluginScript implements PluginInterface {
 	 * @author Pierre-Yves Gibello - Linagora
 	 */
 	static class ActionFileFilter implements FilenameFilter {
-		
 		final String prefix;
-		
+
 		public ActionFileFilter(String prefix) {
 			this.prefix = prefix;
 		}
-		
+
 		@Override
 		public boolean accept(File dir, String name) {
 			return (this.prefix == null || this.prefix.length() < 1
-					? false : name.startsWith(prefix));
+					? false : name.startsWith(this.prefix));
 		}
 	}
-
 }

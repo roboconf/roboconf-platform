@@ -25,6 +25,9 @@
 
 package net.roboconf.target.ec2.internal;
 
+import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPERTY;
+import static net.roboconf.messaging.api.MessagingConstants.TEST_FACTORY_TYPE;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -33,10 +36,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
-
-import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPERTY;
-import static net.roboconf.messaging.api.MessagingConstants.TEST_FACTORY_TYPE;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -73,7 +74,7 @@ public class ToRunByHand {
 		try {
 			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, TEST_FACTORY_TYPE);
 			serverId = target.createMachine( conf, msgCfg, "root", "app" );
-			target.configureMachine( conf, msgCfg, serverId, "root", "app" );
+			target.configureMachine( conf, msgCfg, serverId, "root", "app", new Instance( "root" ));
 
 			// 1 minute
 			Thread.sleep( 60000 );

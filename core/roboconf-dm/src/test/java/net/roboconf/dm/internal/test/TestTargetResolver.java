@@ -79,7 +79,8 @@ public class TestTargetResolver extends TargetResolver {
 					Map<String,String> messagingConfiguration,
 					String machineId,
 					String rootInstanceName,
-					String applicationName)
+					String applicationName,
+					Instance scopedInstance )
 			throws TargetException {
 				// nothing
 			}

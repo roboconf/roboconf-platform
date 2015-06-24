@@ -28,6 +28,7 @@ package net.roboconf.dm.internal.test;
 import java.util.Map;
 import java.util.Objects;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -72,7 +73,8 @@ public class TargetHandlerMock implements TargetHandler {
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String rootInstanceName,
-			String applicationName)
+			String applicationName,
+			Instance scopedInstance )
 	throws TargetException {
 		// nothing
 	}
