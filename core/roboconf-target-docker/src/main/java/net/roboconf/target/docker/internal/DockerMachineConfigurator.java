@@ -62,7 +62,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		NO_IMAGE, IMAGE_UNDER_CREATION, HAS_IMAGE, DONE
 	}
 
-	private DockerClient dockerClient;
+	DockerClient dockerClient;
 	private State state = State.NO_IMAGE;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
@@ -151,7 +151,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @param imageId the image ID
 	 * @throws TargetException if something went wrong
 	 */
-	private void createContainer( String imageId ) throws TargetException {
+	void createContainer( String imageId ) throws TargetException {
 		this.logger.info( "Creating container " + this.machineId + " from image " + imageId );
 
 		// Build the command line, passing the messaging configuration.
@@ -239,24 +239,32 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @param imageId the image ID
 	 * @throws TargetException if something went wrong
 	 */
-	private void createImage( String imageId ) throws TargetException {
+	void createImage( String imageId ) throws TargetException {
 
 		// Acquire a lock for the image ID. This prevent concurrent insertions.
 		// The configurator that inserted the value is in charge of creating the image.
 		if( this.imagesInCreation.putIfAbsent( imageId, "anything" ) != null )
 			return;
 
-		// Create the image
 		this.state = State.IMAGE_UNDER_CREATION;
 		this.logger.info( "Creating image " + imageId + " from a generated Dockerfile." );
 
+		// Verify the base image exists, if any
+		String baseImageRef = this.targetProperties.get( DockerHandler.BASE_IMAGE );
+		if( ! Utils.isEmptyOrWhitespaces( baseImageRef )) {
+			Image baseImage = DockerUtils.findImageByIdOrByTag( baseImageRef, this.dockerClient );
+			if( baseImage == null )
+				throw new TargetException( "Base image '" + baseImageRef + "' was not found. Image generation is not possible." );
+		}
+
+		// Create the image
 		InputStream response = null;
 		File dockerfile = null;
 		try {
 			DockerfileGenerator gen = new DockerfileGenerator(
 					this.targetProperties.get( DockerHandler.AGENT_PACKAGE ),
 					this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES ),
-					this.targetProperties.get( DockerHandler.BASE_IMAGE ));
+					baseImageRef );
 
 			dockerfile = gen.generateDockerfile();
 			response = this.dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
@@ -277,7 +285,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		} catch( Exception e ) {
 			// Release the lock so that we can try again (e.g. if the base image was not already there).
-			//this.imagesInCreation.remove( imageId );
+			this.imagesInCreation.remove( imageId );
 			throw new TargetException( e );
 
 		} finally {
