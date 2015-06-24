@@ -211,22 +211,31 @@ public class PluginScript implements PluginInterface {
      * @throws IOException
      */
     protected File generateTemplate(File template, Instance instance) throws IOException {
-        File generated = File.createTempFile(instance.getName(), ".script");
+
+    	String scriptName = instance.getName().replace( "\\s+", "_" );
+        File generated = File.createTempFile( scriptName, ".script");
         InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
+
         return generated;
     }
 
 
-    protected void executeScript(File script, Instance instance, Import importChanged, InstanceStatus statusChanged, String instanceDir)
+    protected void executeScript(
+    		File script,
+    		Instance instance,
+    		Import importChanged,
+    		InstanceStatus statusChanged,
+    		String instanceDir )
     throws IOException, InterruptedException {
 
     	String[] command = { script.getAbsolutePath() };
-    	if(! script.canExecute()) {
+    	if(! script.canExecute())
     		script.setExecutable(true);
-    	}
+
     	Map<String, String> environmentVars = new HashMap<String, String>();
     	Map<String, String> vars = formatExportedVars(instance);
     	environmentVars.putAll(vars);
+
     	Map<String, String> importedVars = formatImportedVars(instance);
     	environmentVars.putAll(importedVars);
     	environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
@@ -318,6 +327,7 @@ public class PluginScript implements PluginInterface {
                     String vname = VariableHelpers.parseVariableName(entry2.getKey()).getValue();
                     importedVars.put(importTypeName + "_" + i + "_" + vname, entry2.getValue());
                 }
+
                 ++i;
             }
         }
@@ -341,7 +351,6 @@ public class PluginScript implements PluginInterface {
 	 * @author Pierre-Yves Gibello - Linagora
 	 */
 	static class ActionFileFilter implements FilenameFilter {
-
 		final String prefix;
 
 		public ActionFileFilter(String prefix) {
@@ -354,5 +363,4 @@ public class PluginScript implements PluginInterface {
 					? false : name.startsWith(this.prefix));
 		}
 	}
-
 }
