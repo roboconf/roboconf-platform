@@ -26,8 +26,11 @@
 package net.roboconf.agent.internal.lifecycle;
 
 import junit.framework.Assert;
+import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.messaging.api.client.IAgentClient;
 import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
 
@@ -73,5 +76,27 @@ public class AbstractLifeCycleManager_BasicTest {
 					TransitiveStates.class,
 					AbstractLifeCycleManager.build( instance, appName, messagingClient ).getClass());
 		}
+	}
+
+
+	@Test
+	public void undeployingShouldNotModifyImportsList() throws Exception {
+
+		IAgentClient messagingClient = new TestClientAgent();
+		Instance instance = new Instance( "inst" );
+		Assert.assertTrue( instance.getImports().isEmpty());
+
+		instance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+		ImportHelpers.addImport( instance, "test", new Import( "/dep", "depComponent" ));
+		Assert.assertFalse( instance.getImports().isEmpty());
+
+		AbstractLifeCycleManager.build( instance, "app", messagingClient ).changeInstanceState(
+				instance,
+				new PluginMock(),
+				InstanceStatus.NOT_DEPLOYED,
+				null );
+
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, instance.getStatus());
+		Assert.assertFalse( instance.getImports().isEmpty());
 	}
 }
