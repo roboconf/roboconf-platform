@@ -25,7 +25,10 @@
 
 package net.roboconf.target.docker.internal;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -33,7 +36,11 @@ import java.util.logging.Logger;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
+import org.apache.commons.lang.WordUtils;
+
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -193,6 +200,122 @@ public final class DockerUtils {
 				break;
 			}
 		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds the options and tries to configure them on the creation command.
+	 * @param options the options (key = name, value = option value)
+	 * @param cmd a non-null command to create a container
+	 * @throws TargetException
+	 */
+	public static void configureOptions( Map<String,String> options, CreateContainerCmd cmd )
+	throws TargetException {
+
+		// Basically, we had two choices:
+		// 1. Map our properties to the Java REST API.
+		// 2. By-pass it and send our custom JSon object.
+		//
+		// The second option is much more complicated.
+		// So, we use Java reflection and some hacks to match Docker properties
+		// with the setter methods available in the API. The API remains in charge
+		// of generating the right JSon objects.
+		Map<String,String> hackedSetterNames = new HashMap<> ();
+		hackedSetterNames.put( "withMemory", "withMemoryLimit" );
+
+		// Deal with the options
+		for( Map.Entry<String,String> entry : options.entrySet()) {
+			String optionValue = entry.getValue();
+
+			// Now, guess what option to set
+			String methodName = entry.getKey().replace( "-", " " ).trim();
+			methodName = WordUtils.capitalize( methodName );
+			methodName = methodName.replace( " ", "" );
+			methodName = "with" + methodName;
+
+			String alternativeName = hackedSetterNames.get( methodName );
+			if( alternativeName != null )
+				methodName = alternativeName;
+
+			Method _m = null;
+			for( Method m : cmd.getClass().getMethods()) {
+				if( methodName.equalsIgnoreCase( m.getName())) {
+					_m = m;
+					break;
+				}
+			}
+
+			// Handle errors
+			List<Class<?>> types = new ArrayList<> ();
+			types.add( String.class );
+			types.add( String[].class );
+			types.add( long.class );
+			types.add( int.class );
+			types.add( boolean.class );
+			types.add( Capability[].class );
+
+			if( _m == null )
+				throw new TargetException( "Nothing matched the " + entry.getKey() + " option in the REST API. Please, report it." );
+			else if( _m.getParameterTypes().length != 1 )
+				throw new TargetException( "No method matched the " + entry.getKey() + " option in the REST API. Please, report it." );
+			else if( ! types.contains( _m.getParameterTypes()[ 0 ]))
+				throw new TargetException( "The " + entry.getKey() + " option is not supported by Roboconf. Please, add a feature request." );
+
+			// Try to set the option in the REST client
+			try {
+				Object o = prepareParameter( optionValue, _m.getParameterTypes()[ 0 ]);
+				_m.invoke( cmd, o );
+
+			} catch( ReflectiveOperationException | IllegalArgumentException e ) {
+				throw new TargetException( "Option " + entry.getKey() + " could not be set." );
+			}
+		}
+	}
+
+
+	/**
+	 * Prepares the parameter to pass it to the REST API.
+	 * @param rawValue the raw value, as a string
+	 * @param clazz the class associated with the input parameter
+	 * @return the object, converted to the right class
+	 * @throws TargetException
+	 */
+	public static Object prepareParameter( String rawValue, Class<?> clazz ) throws TargetException {
+
+		// Simple types
+		Object result;
+		if( clazz == int.class )
+			result = Integer.parseInt( rawValue );
+		else if( clazz == long.class )
+			result = Long.parseLong( rawValue );
+		else if( clazz == boolean.class )
+			result = Boolean.parseBoolean( rawValue );
+
+		// Arrays of string
+		else if( clazz == String[].class ) {
+			List<String> parts = Utils.splitNicely( rawValue, "," );
+			result = parts.toArray( new String[ parts.size()]);
+		}
+
+		// Capabilities
+		else if( clazz == Capability[].class ) {
+			List<Capability> caps = new ArrayList<> ();
+			for( String s : Utils.splitNicely( rawValue, "," )) {
+				try {
+					caps.add( Capability.valueOf( s ));
+				} catch( Exception e ) {
+					throw new TargetException( "Unknown capability: " + s );
+				}
+			}
+
+			result = caps.toArray( new Capability[ caps.size()]);
+		}
+
+		// Default: keep the string
+		else
+			result = rawValue;
 
 		return result;
 	}

@@ -113,23 +113,6 @@ public final class Utils {
 
 
 	/**
-	 * Splits a command line string.
-	 * @param cmdLine a string (can be null)
-	 * @return a non-null array containing all the command arguments (separated by spaces)
-	 */
-	public static List<String> splitCmdLine( String cmdLine ) {
-
-		List<String> result;
-		if( Utils.isEmptyOrWhitespaces( cmdLine ))
-			result = new ArrayList<>( 0 );
-		else
-			result = Arrays.asList( cmdLine.trim().split( "\\s+" ));
-
-		return result;
-	}
-
-
-	/**
 	 * Expand a template, replacing each {{ param }} by the corresponding value.
 	 * <p>
 	 * Eg. "My name is {{ name }}" will result in "My name is Bond", provided that "params" contains "name=Bond".

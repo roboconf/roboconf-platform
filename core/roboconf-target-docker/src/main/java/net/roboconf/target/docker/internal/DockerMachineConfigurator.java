@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -141,43 +142,67 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		// Build the command line, passing the messaging configuration.
 		List<String> args = new ArrayList<> ();
 
-		// Deal with the options.
-		// We pass them as arguments rather than by using the REST capabilities.
-		String options = this.targetProperties.get( DockerHandler.COMMAND_OPTIONS );
-		args.addAll( Utils.splitCmdLine( options ));
-
-		// Add the command
-		String command = this.targetProperties.get( DockerHandler.COMMAND );
-		if( Utils.isEmptyOrWhitespaces( command ))
-			command = "/usr/local/roboconf-agent/start.sh";
-
-		args.add( command );
-
-		// Pass the name of the configuration file for the messaging.
-		// By convention, we will pass it as the first command argument.
-		String messagingType = this.messagingConfiguration.get( "net.roboconf.messaging.type" );
-		args.add( "etc/net.roboconf.messaging." + messagingType + ".cfg" );
-
-		// Agent configuration is prefixed with 'agent.'
-		args.add( "agent.application-name=" + this.applicationName );
-		args.add( "agent.scoped-instance-path=" + this.scopedInstancePath );
-		args.add( "agent.messaging-type=" + messagingType );
-
-		// Messaging parameters are prefixed with 'msg.'
-		for( Map.Entry<String,String> e : this.messagingConfiguration.entrySet())
-			args.add( "msg." + e.getKey() + '=' + e.getValue());
-
 		// We do not have to execute our command. A default command may have been set into the Dockerfile.
 		// In this case, it means the user does not want the DM to pass dynamic parameters in the command.
 		// We at least use it in tests (do not launch a real Roboconf agent, just an empty container).
 		String useCommandAS = this.targetProperties.get( DockerHandler.USE_COMMAND );
 		boolean useCommand = useCommandAS == null ? true : Boolean.valueOf( useCommandAS );
-		try {
-			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId ).withName( this.machineId );
-			if( useCommand )
-				cmd = cmd.withCmd( args.toArray( new String[ 0 ]));
 
+		if( useCommand ) {
+			// Add the command
+			String command = this.targetProperties.get( DockerHandler.COMMAND );
+			if( Utils.isEmptyOrWhitespaces( command ))
+				command = "/usr/local/roboconf-agent/start.sh";
+
+			args.add( command );
+
+			// Pass the name of the configuration file for the messaging.
+			// By convention, we will pass it as the first command argument.
+			String messagingType = this.messagingConfiguration.get( "net.roboconf.messaging.type" );
+			args.add( "etc/net.roboconf.messaging." + messagingType + ".cfg" );
+
+			// Agent configuration is prefixed with 'agent.'
+			args.add( "agent.application-name=" + this.applicationName );
+			args.add( "agent.scoped-instance-path=" + this.scopedInstancePath );
+			args.add( "agent.messaging-type=" + messagingType );
+
+			// Messaging parameters are prefixed with 'msg.'
+			for( Map.Entry<String,String> e : this.messagingConfiguration.entrySet())
+				args.add( "msg." + e.getKey() + '=' + e.getValue());
+		}
+
+		// Deal with the options.
+		Map<String,String> options = new HashMap<> ();
+		for( Map.Entry<String,String> entry : this.targetProperties.entrySet()) {
+			if( entry.getKey().toLowerCase().startsWith( DockerHandler.OPTION_PREFIX_RUN )) {
+				String key = entry.getKey().substring( DockerHandler.OPTION_PREFIX_RUN.length());
+				options.put( key, entry.getValue());
+			}
+		}
+
+		// Execute...
+		try {
+			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId )
+					.withName( this.machineId )
+					.withCmd( args.toArray( new String[ args.size()]));
+
+			//DockerUtils.configureOptions( options, cmd );
 			CreateContainerResponse container = cmd.exec();
+
+			// Log warnings, if any
+			if( container.getWarnings() != null
+					&& container.getWarnings().length > 0
+					&& this.logger.isLoggable( Level.FINE )) {
+
+				StringBuilder sb = new StringBuilder();
+				sb.append( "The following warnings have been found.\n" );
+				for( String s : container.getWarnings())
+					sb.append( s + "\n" );
+
+				this.logger.fine( sb.toString().trim());
+			}
+
+			// And start the container
 			this.dockerClient.startContainerCmd( container.getId()).exec();
 
 			// We're done here!
@@ -231,9 +256,11 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// No need to get the real image ID... Docker has it.
 			// Besides, we search images by both IDs and tags.
 
-		} catch( Exception e ) {
 			// Release the lock so that we can try again (e.g. if the base image was not already there).
-			this.imagesInCreation.remove( imageId );
+			//this.imagesInCreation.remove( imageId );
+
+		} catch( Exception e ) {
+			// The image creation will not be tried again.
 			throw new TargetException( e );
 
 		} finally {

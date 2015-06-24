@@ -133,7 +133,7 @@ public class DockerHandler_withContainerTest {
 
 		Assume.assumeTrue( this.dockerIsInstalled );
 		Map<String,String> targetProperties = loadTargetProperties();
-		targetProperties.put( DockerHandler.COMMAND_OPTIONS, "--cap-add SYS_PTRACE" );
+		targetProperties.put( DockerHandler.OPTION_PREFIX_RUN + "cap-add", "SYS_PTRACE" );
 
 		testCreateAndTerminateVM( targetProperties );
 	}
