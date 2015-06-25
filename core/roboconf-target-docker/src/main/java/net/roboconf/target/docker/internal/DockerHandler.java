@@ -65,6 +65,15 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	private final ConcurrentHashMap<String,String> imagesInCreation = new ConcurrentHashMap<> ();
 
 
+	/**
+	 * Constructor.
+	 */
+	public DockerHandler() {
+		// Wait 3 seconds between every polling
+		this.delay = 3000;
+	}
+
+
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.TargetHandler#getTargetId()

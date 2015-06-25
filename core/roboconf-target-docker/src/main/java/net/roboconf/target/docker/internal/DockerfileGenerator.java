@@ -77,7 +77,7 @@ public class DockerfileGenerator {
 		if( ! Utils.isEmptyOrWhitespaces( baseImageName ))
 			this.baseImageName = baseImageName;
 
-		if(agentPackURL.toLowerCase().endsWith(".zip"))
+		if(agentPackURL.toLowerCase().endsWith("zip"))
 			this.isTar = false;
 	}
 
@@ -93,7 +93,7 @@ public class DockerfileGenerator {
 		Path dockerfile = Files.createTempDirectory("roboconf_");
 
 		// Copy agent package in temp dockerfile directory
-		String agentFilename = this.agentPackURL.substring(this.agentPackURL.lastIndexOf('/') + 1);
+		String agentFilename = findAgentFileName( this.agentPackURL, this.isTar );
 		File tmpPack = new File(dockerfile.toFile(), agentFilename);
 		tmpPack.setReadable(true);
 
@@ -186,5 +186,26 @@ public class DockerfileGenerator {
 	 */
 	public String getBaseImageName() {
 		return this.baseImageName;
+	}
+
+
+	/**
+	 * Finds the name of the agent file.
+	 * @param url the agent's URL (not null)
+	 * @param isTar true if it is a TAR.GZ, false for a ZIP
+	 * <p>
+	 * This parameter is ignored unless the URL does not contain a valid file name.
+	 * </p>
+	 *
+	 * @return a non-null string
+	 */
+	static String findAgentFileName( String url, boolean isTar ) {
+
+		String agentFilename = url.substring( url.lastIndexOf('/') + 1 );
+		if( agentFilename.contains( "?" )
+				|| agentFilename.contains( "&" ))
+			agentFilename = "roboconf-agent" + (isTar ? ".tar.gz" : ".zip");
+
+		return agentFilename;
 	}
 }

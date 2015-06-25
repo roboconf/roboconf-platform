@@ -125,4 +125,33 @@ public class DockerfileGeneratorTest {
 			Utils.deleteFilesRecursively(dockerfile);
 		}
 	}
+
+
+	@Test
+	public void testFindAgentFileName() {
+
+		Assert.assertEquals(
+				"agent-0.4.tar.gz",
+				DockerfileGenerator.findAgentFileName( "file:/home/toto/.m2/net/roboconf/.../agent-0.4.tar.gz", true ));
+
+		Assert.assertEquals(
+				"agent-0.4.zip",
+				DockerfileGenerator.findAgentFileName( "file:/home/toto/.m2/net/roboconf/.../agent-0.4.zip", false ));
+
+		Assert.assertEquals(
+				"roboconf-agent-0.5.zip",
+				DockerfileGenerator.findAgentFileName( "http://maven/.../roboconf-agent-0.5.zip", false ));
+
+		Assert.assertEquals(
+				"roboconf-agent-0.5.tar.gz",
+				DockerfileGenerator.findAgentFileName( "http://maven/.../roboconf-agent-0.5.tar.gz", true ));
+
+		Assert.assertEquals(
+				"roboconf-agent.tar.gz",
+				DockerfileGenerator.findAgentFileName( "https://oss.sonatype.org/.../redirect?a=roboconf-karaf-dist-agent&v=0.4&p=zip", true ));
+
+		Assert.assertEquals(
+				"roboconf-agent.zip",
+				DockerfileGenerator.findAgentFileName( "https://oss.sonatype.org/.../redirect?a=roboconf-karaf-dist-agent&v=0.4&p=zip", false ));
+	}
 }
