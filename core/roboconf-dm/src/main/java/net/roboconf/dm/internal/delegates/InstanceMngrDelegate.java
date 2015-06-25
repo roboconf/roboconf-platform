@@ -136,7 +136,12 @@ public class InstanceMngrDelegate {
 		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 
 		if( InstanceHelpers.isTarget( instance )) {
-			List<InstanceStatus> es = Arrays.asList( InstanceStatus.DEPLOYED_STARTED, InstanceStatus.DEPLOYING, InstanceStatus.STARTING );
+			List<InstanceStatus> es = Arrays.asList(
+					InstanceStatus.DEPLOYED_STARTED,
+					InstanceStatus.DEPLOYING,
+					InstanceStatus.STARTING,
+					InstanceStatus.PROBLEM );
+
 			if( newStatus == InstanceStatus.NOT_DEPLOYED
 					&& es.contains( instance.getStatus()))
 				undeployTarget( ma, instance );
