@@ -456,6 +456,8 @@ public class InstanceMngrDelegate {
 			Utils.logException( this.logger, e );
 			throw e;
 
+		} finally {
+			ma.removeAwaitingMessages( scopedInstance );
 		}
 	}
 }
