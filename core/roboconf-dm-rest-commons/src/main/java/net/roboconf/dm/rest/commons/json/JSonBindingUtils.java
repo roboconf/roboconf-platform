@@ -61,6 +61,7 @@ public final class JSonBindingUtils {
 	private static final String APP_NAME = "name";
 	private static final String APP_ICON = "icon";
 	private static final String APP_DESC = "desc";
+	private static final String APP_INFO = "info";
 	private static final String APP_INST_TPL = "tpl";
 	private static final String APP_TPL_QUALIFIER = "qualifier";
 
@@ -321,7 +322,26 @@ public final class JSonBindingUtils {
 			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
 				generator.writeStringField( APP_ICON, iconLocation );
 
-			generator.writeEndObject();
+			// #357 Add a state for applications in JSon objects
+			// Info is read-only information.
+			// We do not expect it for deserialization
+			String info = null;
+	        for( Instance rootInstance : app.getRootInstances()) {
+	        	if( rootInstance.getStatus() == InstanceStatus.PROBLEM ) {
+	        		info = "warn";
+	        		break;
+	        	}
+
+	        	if( rootInstance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
+	        		info = "ok";
+	        		break;
+	        	}
+	        }
+
+	        if( info != null )
+	        	generator.writeObjectField( APP_INFO, info );
+
+	        generator.writeEndObject();
 		}
 	}
 
