@@ -36,6 +36,7 @@ import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.model.Container;
 
 /**
@@ -69,8 +70,8 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	 * Constructor.
 	 */
 	public DockerHandler() {
-		// Wait 3 seconds between every polling
-		this.delay = 3000;
+		// Wait 2 seconds between every polling
+		this.delay = 2000;
 	}
 
 
@@ -145,7 +146,8 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		boolean result = false;
 		try {
 			DockerClient dockerClient = DockerUtils.createDockerClient( targetProperties );
-			result = DockerUtils.findContainerByIdOrByName( machineId, dockerClient ) != null;
+			ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
+			result = state != null && state.isRunning();
 
 		} catch( Exception e ) {
 			// nothing, we consider it is not running
@@ -173,8 +175,11 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			// Indeed, it may have been killed manually. This method will then
 			// just mark the Roboconf instance as "not deployed" without throwing an exception.
 			if( container != null ) {
-				dockerClient.killContainerCmd( container.getId()).exec();
-				dockerClient.removeContainerCmd( container.getId()).exec();
+				ContainerState state = DockerUtils.getContainerState( machineId, dockerClient );
+				if( state.isRunning() || state.isPaused())
+					dockerClient.killContainerCmd( container.getId()).exec();
+
+				dockerClient.removeContainerCmd( container.getId()).withForce( true ).exec();
 			}
 
 		} catch( Exception e ) {

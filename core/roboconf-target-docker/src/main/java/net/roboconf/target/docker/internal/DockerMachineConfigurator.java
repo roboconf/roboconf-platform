@@ -127,17 +127,15 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		Image image = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
 
 		if( image != null ) {
-			this.logger.fine( "Creating image " + fixedImageId + "..." );
+			this.logger.fine( "Image " + fixedImageId + " was found." );
 			this.state = State.HAS_IMAGE;
 
 		} else if( this.state == State.NO_IMAGE ) {
-			this.logger.fine( "Creating image " + fixedImageId + "..." );
 			createImage( fixedImageId );
 		}
 		// else: the image is under creation...
 
 		if( this.state == State.HAS_IMAGE ) {
-			this.logger.fine( "Creating a container from image " + fixedImageId + "..." );
 			this.imagesInCreation.remove( fixedImageId );
 			createContainer( fixedImageId );
 		}
@@ -222,6 +220,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			this.dockerClient.startContainerCmd( container.getId()).exec();
 
 			// We're done here!
+			this.logger.fine( "Container " + this.machineId + " was succesfully created as " + container.getId());
 			this.state = State.DONE;
 
 			// We replace the machine ID in the instance.
@@ -243,8 +242,11 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		// Acquire a lock for the image ID. This prevent concurrent insertions.
 		// The configurator that inserted the value is in charge of creating the image.
-		if( this.imagesInCreation.putIfAbsent( imageId, "anything" ) != null )
+		this.logger.fine( "Trying to create image " + imageId + "..." );
+		if( this.imagesInCreation.putIfAbsent( imageId, "anything" ) != null ) {
+			this.logger.fine( "Image " + imageId + " is already under creation." );
 			return;
+		}
 
 		this.state = State.IMAGE_UNDER_CREATION;
 		this.logger.info( "Creating image " + imageId + " from a generated Dockerfile." );

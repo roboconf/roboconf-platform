@@ -40,6 +40,8 @@ import org.apache.commons.lang.WordUtils;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.model.Capability;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
@@ -188,7 +190,7 @@ public final class DockerUtils {
 	public static Container findContainerByIdOrByName( String name, DockerClient dockerClient ) {
 
 		Container result = null;
-		List<Container> containers = dockerClient.listContainersCmd().exec();
+		List<Container> containers = dockerClient.listContainersCmd().withShowAll( true ).exec();
 		for( Container container : containers ) {
 			List<String> names = Arrays.asList( container.getNames());
 
@@ -199,6 +201,28 @@ public final class DockerUtils {
 				result = container;
 				break;
 			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Gets the state of a container.
+	 * @param containerId the container ID
+	 * @param dockerClient the Docker client
+	 * @return a container state, or null if the container was not found
+	 */
+	public static ContainerState getContainerState( String containerId, DockerClient dockerClient ) {
+
+		ContainerState result = null;
+		try {
+			InspectContainerResponse resp = dockerClient.inspectContainerCmd( containerId ).exec();
+			if( resp != null )
+				result = resp.getState();
+
+		} catch( Exception e ) {
+			// nothing
 		}
 
 		return result;

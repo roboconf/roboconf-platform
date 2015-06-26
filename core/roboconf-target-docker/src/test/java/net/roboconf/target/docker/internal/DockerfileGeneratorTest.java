@@ -93,6 +93,11 @@ public class DockerfileGeneratorTest {
 				Assert.assertTrue( file.getName(), f.length() > 0 );
 				Assert.assertTrue( file.getName(), f.canExecute());
 
+				f = new File(dockerfile, "rename.sh");
+				Assert.assertTrue( file.getName(), f.exists());
+				Assert.assertTrue( file.getName(), f.length() > 0 );
+				Assert.assertTrue( file.getName(), f.canExecute());
+
 				f = new File(dockerfile, file.getName());
 				Assert.assertTrue( file.getName(), f.exists());
 
