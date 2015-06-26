@@ -31,9 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -88,7 +88,7 @@ public class Instance implements Serializable {
 	private String name;
 	private Component component;
 	private Instance parent;
-	private final Collection<Instance> children = new LinkedHashSet<Instance> ();
+	private final Collection<Instance> children = new CopyOnWriteArraySet<Instance> ();
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
 
 	public final Collection<String> channels = new HashSet<String> ();
