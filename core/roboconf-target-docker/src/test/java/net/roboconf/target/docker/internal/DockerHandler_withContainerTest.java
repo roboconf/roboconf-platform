@@ -259,17 +259,6 @@ public class DockerHandler_withContainerTest {
 	 * @throws Exception
 	 */
 	private void testCreateAndTerminateVM( Map<String,String> targetProperties ) throws Exception {
-		testCreateAndTerminateVM( targetProperties, 2000 );
-	}
-
-
-	/**
-	 * Creates, checks and terminates a Docker container.
-	 * @param targetProperties the target properties
-	 * @param wait the time to wait before checking if the container started
-	 * @throws Exception
-	 */
-	private void testCreateAndTerminateVM( Map<String,String> targetProperties, long wait ) throws Exception {
 
 		DockerHandler target = new DockerHandler();
 		Instance scopedInstance = new Instance( "test-596598515" );
@@ -284,7 +273,7 @@ public class DockerHandler_withContainerTest {
 			// once when the image already exists. However, we must wait for the thread pool
 			// executor to pick up the configurator.
 			target.configureMachine( targetProperties, this.msgCfg, containerId, path, "roboconf", scopedInstance );
-			Thread.sleep( wait );
+			Thread.sleep( 3000 );
 
 			// Be careful, the Docker target changes the machine ID
 			Assert.assertNotNull( scopedInstance.data.get( Instance.MACHINE_ID ));

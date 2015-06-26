@@ -159,6 +159,34 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
+	public void testApplicationBinding_4() throws Exception {
+
+		Application app = new Application( "test", null );
+		app.getRootInstances().add( new Instance( "r" ).status( InstanceStatus.PROBLEM ));
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+
+		Assert.assertEquals( "{\"name\":\"test\",\"info\":\"warn\"}", writer.toString());
+	}
+
+
+	@Test
+	public void testApplicationBinding_5() throws Exception {
+
+		Application app = new Application( "test", null ).description( "hi!" );
+		app.getRootInstances().add( new Instance( "r" ).status( InstanceStatus.DEPLOYED_STARTED ));
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+
+		Assert.assertEquals( "{\"name\":\"test\",\"desc\":\"hi!\",\"info\":\"ok\"}", writer.toString());
+	}
+
+
+	@Test
 	public void testComponentBinding_1() throws Exception {
 
 		final String result = "{\"name\":\"component 1\",\"installer\":\"target\"}";

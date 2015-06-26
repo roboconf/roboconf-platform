@@ -77,7 +77,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	public void start() {
 
 		// FIXME: should we create a new timer on every start?
-		this.timer.scheduleAtFixedRate(
+		this.timer.scheduleWithFixedDelay(
 				new CheckingRunnable( this.machineIdToConfigurators, this.cancelledMachineIds ),
 				0, this.delay, TimeUnit.MILLISECONDS );
 	}
@@ -259,6 +259,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 		 */
 		private void closeConfigurator( String machineId, MachineConfigurator handler ) {
 			try {
+				this.logger.fine( "Closing the configurator for machine " + machineId );
 				handler.close();
 
 			} catch( Exception e ) {

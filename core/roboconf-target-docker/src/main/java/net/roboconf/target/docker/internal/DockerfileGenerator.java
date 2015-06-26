@@ -77,7 +77,7 @@ public class DockerfileGenerator {
 		if( ! Utils.isEmptyOrWhitespaces( baseImageName ))
 			this.baseImageName = baseImageName;
 
-		if(agentPackURL.toLowerCase().endsWith(".zip"))
+		if(agentPackURL.toLowerCase().endsWith("zip"))
 			this.isTar = false;
 	}
 
@@ -92,16 +92,16 @@ public class DockerfileGenerator {
 		// Create temporary dockerfile directory
 		Path dockerfile = Files.createTempDirectory("roboconf_");
 
-		// Copy agent package in temp dockerfile directory
-		String agentFilename = this.agentPackURL.substring(this.agentPackURL.lastIndexOf('/') + 1);
+		// Copy agent package in temporary dockerfile directory
+		String agentFilename = findAgentFileName( this.agentPackURL, this.isTar );
 		File tmpPack = new File(dockerfile.toFile(), agentFilename);
 		tmpPack.setReadable(true);
 
-		URL u = new URL(this.agentPackURL);
+		URL u = new URL( this.agentPackURL );
 		URLConnection uc = u.openConnection();
 		InputStream in = null;
 		try {
-			in = new BufferedInputStream(uc.getInputStream());
+			in = new BufferedInputStream( uc.getInputStream());
 			Utils.copyStream(in, tmpPack);
 		} finally {
 			Utils.closeQuietly(in);
@@ -122,10 +122,13 @@ public class DockerfileGenerator {
 			out.println("RUN apt-get -y install " + this.packages);
 			out.println("RUN cd /usr/local; " + (this.isTar ? "tar xvzf " : "unzip ") + agentFilename);
 
-			// Remove extension from file name (generally .zip or .tar.gz, possibly .tgz or .tar)
-			String extractDir = tmpPack.getName();
-			extractDir = extractDir.replace( ".tar", "" ).replace( ".gz", "" ).replace( ".tgz", "" ).replace( ".zip", "" );
-			out.println("RUN ln -s /usr/local/" + extractDir + " /usr/local/roboconf-agent");
+			// We used to assume the name of the extracted directory was the name of the ZIP file
+			// without any file extension. This is wrong. If one points to a snapshot version (e.g. hosted on Sonatype)
+			// then the file name contains a qualifier while the inner directory contains the SNAPSHOT mention.
+			// The only assumption we can do is that it starts with "roboconf-something-agent".
+			// We will rename this directory to "roboconf-agent".
+			out.println("COPY rename.sh /usr/local/");
+			out.println("RUN cd /usr/local; ./rename.sh");
 
 			// The rc.local and start.sh files will be generated as well!
 			out.println("COPY rc.local /etc/");
@@ -135,28 +138,19 @@ public class DockerfileGenerator {
 			Utils.closeQuietly(out);
 		}
 
-		// Generate start.sh startup script for roboconf agent
-		this.logger.fine( "Generating the start script for the Roboconf agent." );
-		generated = new File(dockerfile.toFile(), "start.sh");
-		try {
-			in = this.getClass().getResourceAsStream( "/start.sh" );
-			Utils.copyStream( in, generated );
-			generated.setExecutable(true, false);
+		// Copy resources in the Dockerfile
+		String[] toCopy = { "start.sh", "rename.sh", "rc.local" };
+		for( String s : toCopy ) {
+			this.logger.fine( "Copying " + s + "..." );
+			generated = new File( dockerfile.toFile(), s );
+			try {
+				in = this.getClass().getResourceAsStream( "/" + s );
+				Utils.copyStream( in, generated );
+				generated.setExecutable( true, false );
 
-		} finally {
-			Utils.closeQuietly( in );
-		}
-
-		// Generate rc.local script to launch roboconf agent at boot time
-		this.logger.fine( "Generating a rc.local file." );
-		generated = new File(dockerfile.toFile(), "rc.local");
-		try {
-			in = this.getClass().getResourceAsStream( "/rc.local" );
-			Utils.copyStream( in, generated );
-			generated.setExecutable(true, false);
-
-		} finally {
-			Utils.closeQuietly( in );
+			} finally {
+				Utils.closeQuietly( in );
+			}
 		}
 
 		return dockerfile.toFile();
@@ -186,5 +180,26 @@ public class DockerfileGenerator {
 	 */
 	public String getBaseImageName() {
 		return this.baseImageName;
+	}
+
+
+	/**
+	 * Finds the name of the agent file.
+	 * @param url the agent's URL (not null)
+	 * @param isTar true if it is a TAR.GZ, false for a ZIP
+	 * <p>
+	 * This parameter is ignored unless the URL does not contain a valid file name.
+	 * </p>
+	 *
+	 * @return a non-null string
+	 */
+	static String findAgentFileName( String url, boolean isTar ) {
+
+		String agentFilename = url.substring( url.lastIndexOf('/') + 1 );
+		if( agentFilename.contains( "?" )
+				|| agentFilename.contains( "&" ))
+			agentFilename = "roboconf-agent" + (isTar ? ".tar.gz" : ".zip");
+
+		return agentFilename;
 	}
 }
