@@ -63,8 +63,8 @@ public final class JSonBindingUtils {
 	private static final String APP_DESC = "desc";
 	private static final String APP_INFO = "info";
 
-	private static final String APP_INST_TPL_NAME = "tpl-name";
-	private static final String APP_INST_TPL_QUALIFIER = "tpl-qualifier";
+	private static final String APP_INST_TPL_NAME = "tplName";
+	private static final String APP_INST_TPL_QUALIFIER = "tplQualifier";
 
 	private static final String APP_TPL_QUALIFIER = "qualifier";
 	private static final String APP_TPL_APPS = "apps";
