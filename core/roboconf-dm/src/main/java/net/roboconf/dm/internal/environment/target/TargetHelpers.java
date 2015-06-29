@@ -60,14 +60,13 @@ public final class TargetHelpers {
 	/**
 	 * Loads the targetHandlers properties.
 	 * @param applicationFilesDirectory the directory where application resources are stored
-	 * @param instance the root instance to find the targetHandlers properties
+	 * @param scopedInstance the scoped instance to find the targetHandlers properties
 	 * @return a non-null properties
 	 * @throws IOException if the targetHandlers properties file was not found
 	 */
-	public static Map<String,String> loadTargetProperties( File applicationFilesDirectory, Instance instance ) throws IOException {
+	public static Map<String,String> loadTargetProperties( File applicationFilesDirectory, Instance scopedInstance ) throws IOException {
 
-		Instance realRootInstance = InstanceHelpers.findRootInstance( instance );
-		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, realRootInstance );
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, scopedInstance );
 		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
 
 		Map<String,String> result = new HashMap<String,String>();
@@ -76,7 +75,7 @@ public final class TargetHelpers {
 			result.put( entry.getKey().toString(), entry.getValue().toString());
 		}
 
-		return result;
+		return expandProperties( scopedInstance, result );
 	}
 
 
@@ -100,5 +99,41 @@ public final class TargetHelpers {
 				logger.warning( e.getMessage());
 			}
 		}
+	}
+
+
+	/**
+	 * Expands the properties.
+	 * <p>
+	 * Property values that contain {{ ip }} will be updated.
+	 * {{ ip }} will be replaced by the IP address of the root instance
+	 * (which may - or not) be the same than the scoped instance).
+	 * </p>
+	 *
+	 * @param scopedInstance the scoped instance (not null)
+	 * @param targetProperties the target properties (not null)
+	 * @return a new map equivalent to the input but with expanded properties)
+	 */
+	public static Map<String,String> expandProperties( Instance scopedInstance, Map<String,String> targetProperties ) {
+
+		Logger logger = Logger.getLogger( TargetHelpers.class.getName());
+		Instance rootInstance = InstanceHelpers.findRootInstance( scopedInstance );
+		String ipAddress = rootInstance.data.get( Instance.IP_ADDRESS );
+		if( ipAddress == null )
+			ipAddress = "";
+
+		Properties params = new Properties();
+		params.setProperty( Constants.SPECIFIC_VARIABLE_IP, ipAddress );
+
+		Map<String,String> newTargetProperties = new HashMap<>( targetProperties.size());
+		for( Map.Entry<String,String> entry : targetProperties.entrySet()) {
+			String p = Utils.expandTemplate( entry.getValue(), params );
+			newTargetProperties.put( entry.getKey(), p );
+
+			if( ! p.equals( entry.getValue()))
+				logger.fine( "Target property '" + entry.getKey() + "' was expanded to " + p );
+		}
+
+		return newTargetProperties;
 	}
 }

@@ -80,24 +80,75 @@ public class TargetHelpersTest {
 
 		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, component );
 		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
-
-		OutputStream fos = null;
-		try {
-			Assert.assertTrue( f.getParentFile().mkdirs());
-
-			fos = new FileOutputStream( f );
-			Properties props = new Properties();
-			props.setProperty( "my-key", "my value" );
-			props.store( fos, null );
-
-		} finally {
-			Utils.closeQuietly( fos );
-		}
+		writeProperty( f, "my-key", "my-value" );
 
 		Instance instance = new Instance( "my-vm-instance" ).component( component );
 		Map<String, String> loadedProperties = TargetHelpers.loadTargetProperties( applicationDirectory, instance );
 		Assert.assertNotNull( loadedProperties );
-		Assert.assertEquals( "my value", loadedProperties.get("my-key"));
+		Assert.assertEquals( "my-value", loadedProperties.get("my-key"));
+	}
+
+
+	@Test
+	public void testLoadTargetProperties_withExpandedProperty_rootInstanceIsDifferent() throws Exception {
+
+		final Component component = new Component( "my-vm" );
+		File applicationDirectory = this.folder.newFolder( "roboconf_test" );
+		if( applicationDirectory.exists())
+			Utils.deleteFilesRecursively( applicationDirectory );
+
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, component );
+		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
+		writeProperty( f, "test.ip", "{{ip}}:4243" );
+
+		Instance instance = new Instance( "my-scope-instance" ).component( component );
+		Instance rootInstance = new Instance( "root" );
+		InstanceHelpers.insertChild( rootInstance, instance );
+		rootInstance.data.put( Instance.IP_ADDRESS, "192.168.1.87" );
+
+		Map<String, String> loadedProperties = TargetHelpers.loadTargetProperties( applicationDirectory, instance );
+		Assert.assertNotNull( loadedProperties );
+		Assert.assertEquals( "192.168.1.87:4243", loadedProperties.get("test.ip"));
+	}
+
+
+	@Test
+	public void testLoadTargetProperties_withExpandedProperty_scopeInstanceIsRoot() throws Exception {
+
+		final Component component = new Component( "my-vm" );
+		File applicationDirectory = this.folder.newFolder( "roboconf_test" );
+		if( applicationDirectory.exists())
+			Utils.deleteFilesRecursively( applicationDirectory );
+
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, component );
+		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
+		writeProperty( f, "test.ip", "{{ip}}:4243" );
+
+		Instance instance = new Instance( "my-scope-instance" ).component( component );
+		instance.data.put( Instance.IP_ADDRESS, "192.168.1.84" );
+
+		Map<String, String> loadedProperties = TargetHelpers.loadTargetProperties( applicationDirectory, instance );
+		Assert.assertNotNull( loadedProperties );
+		Assert.assertEquals( "192.168.1.84:4243", loadedProperties.get("test.ip"));
+	}
+
+
+	@Test
+	public void testLoadTargetProperties_withExpandedProperty_noIp() throws Exception {
+
+		final Component component = new Component( "my-vm" );
+		File applicationDirectory = this.folder.newFolder( "roboconf_test" );
+		if( applicationDirectory.exists())
+			Utils.deleteFilesRecursively( applicationDirectory );
+
+		File f = ResourceUtils.findInstanceResourcesDirectory( applicationDirectory, component );
+		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
+		writeProperty( f, "test.ip", "{{ip}}:4243" );
+
+		Instance instance = new Instance( "my-scope-instance" ).component( component );
+		Map<String, String> loadedProperties = TargetHelpers.loadTargetProperties( applicationDirectory, instance );
+		Assert.assertNotNull( loadedProperties );
+		Assert.assertEquals( ":4243", loadedProperties.get("test.ip"));
 	}
 
 
@@ -124,5 +175,22 @@ public class TargetHelpersTest {
 		// Test the validation. A log entry is created.
 		ManagedApplication ma = new ManagedApplication( app );
 		TargetHelpers.verifyTargets( new TargetResolver(), ma, null );
+	}
+
+
+	private void writeProperty( File targetFile, String key, String value ) throws IOException {
+
+		OutputStream fos = null;
+		try {
+			Assert.assertTrue( targetFile.getParentFile().mkdirs());
+
+			fos = new FileOutputStream( targetFile );
+			Properties props = new Properties();
+			props.setProperty( key, value );
+			props.store( fos, null );
+
+		} finally {
+			Utils.closeQuietly( fos );
+		}
 	}
 }
