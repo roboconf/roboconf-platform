@@ -148,7 +148,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationBinding_2() throws Exception {
 
-		final String result = "{\"tpl-name\":\"oops\",\"tpl-qualifier\":\"hello!\"}";
+		final String result = "{\"tplName\":\"oops\",\"tplQualifier\":\"hello!\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "oops" ).qualifier( "hello!" );
@@ -214,7 +214,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationBinding_6() throws Exception {
 
-		final String result = "{\"name\":\"app1\",\"tpl-name\":\"oops\"}";
+		final String result = "{\"name\":\"app1\",\"tplName\":\"oops\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "oops" );
@@ -237,7 +237,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationBinding_7() throws Exception {
 
-		final String result = "{\"name\":\"app1\",\"tpl-name\":\"\",\"tpl-qualifier\":\"oops\"}";
+		final String result = "{\"name\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "" ).qualifier( "oops" );
