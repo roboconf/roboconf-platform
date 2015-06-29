@@ -107,6 +107,33 @@ public class ApplicationTest {
 
 
 	@Test
+	public void testAssociations() {
+
+		ApplicationTemplate tpl = new ApplicationTemplate();
+		Assert.assertEquals( 0, tpl.getAssociatedApplications().size());
+
+		Application app1 = new Application( "1", tpl );
+		Assert.assertEquals( 1, tpl.getAssociatedApplications().size());
+
+		Application app2 = new Application( "2", tpl );
+		Assert.assertEquals( 2, tpl.getAssociatedApplications().size());
+
+		app1.removeAssociationWithTemplate();
+		Assert.assertEquals( 1, tpl.getAssociatedApplications().size());
+
+		app2.removeAssociationWithTemplate();
+		Assert.assertEquals( 0, tpl.getAssociatedApplications().size());
+
+		// Limits
+		app1.removeAssociationWithTemplate();
+
+		Application app3 = new Application( null );
+		app3.removeAssociationWithTemplate();
+		// No exception
+	}
+
+
+	@Test
 	public void checkInstanceReplication() {
 
 		TestApplicationTemplate tpl = new TestApplicationTemplate();

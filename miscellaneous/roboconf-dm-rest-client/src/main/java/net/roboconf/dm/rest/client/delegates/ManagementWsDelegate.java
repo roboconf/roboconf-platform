@@ -245,7 +245,7 @@ public class ManagementWsDelegate {
 		this.logger.finer( "Removing application " + applicationName + "..." );
 
 		ClientResponse response = this.resource
-				.path( UrlConstants.APPLICATIONS ).path( applicationName ).path( "delete" )
+				.path( UrlConstants.APPLICATIONS ).path( applicationName )
 				.delete( ClientResponse.class );
 
 		String text = response.getEntity( String.class );

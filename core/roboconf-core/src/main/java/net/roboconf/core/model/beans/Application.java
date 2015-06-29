@@ -50,6 +50,7 @@ public class Application extends AbstractApplication implements Serializable {
 
 		// We must duplicate all the instances
 		if( template != null ) {
+			template.associateApplication( this );
 			for( Instance rootInstance : template.getRootInstances())
 				getRootInstances().add( InstanceHelpers.replicateInstance( rootInstance ));
 		}
@@ -105,5 +106,13 @@ public class Application extends AbstractApplication implements Serializable {
 	public Application directory( File directory ) {
 		this.directory = directory;
 		return this;
+	}
+
+	/**
+	 * Removes the association between this application and its template.
+	 */
+	public void removeAssociationWithTemplate() {
+		if( this.template != null )
+			this.template.removeApplicationAssocation( this );
 	}
 }
