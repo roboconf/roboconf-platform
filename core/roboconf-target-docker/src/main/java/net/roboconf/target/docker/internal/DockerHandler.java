@@ -59,8 +59,8 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String COMMAND = "docker.command.line";
 	static final String USE_COMMAND = "docker.command.use";
 
-	static String OPTION_PREFIX = "docker.option.";
-	static String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
+	static final String OPTION_PREFIX = "docker.option.";
+	static final String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final ConcurrentHashMap<String,String> imagesInCreation = new ConcurrentHashMap<> ();
