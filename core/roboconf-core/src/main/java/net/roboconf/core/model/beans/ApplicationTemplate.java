@@ -27,6 +27,9 @@ package net.roboconf.core.model.beans;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -39,6 +42,10 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 
 	private String qualifier, dslId;
 	private Graphs graphs;
+
+	// We use a list because an application's attributes may be modified.
+	// With a set, this could result in unpredictable behaviors.
+	private final List<Application> associatedApplications = new ArrayList<> ();
 
 
 	/**
@@ -158,5 +165,34 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	public ApplicationTemplate directory( File directory ) {
 		this.directory = directory;
 		return this;
+	}
+
+	/**
+	 * @return the associated applications
+	 */
+	public List<Application> getAssociatedApplications() {
+		synchronized( this.associatedApplications ) {
+			return Collections.unmodifiableList( this.associatedApplications );
+		}
+	}
+
+	/**
+	 * Associates an application with this template.
+	 * @param app an application (not null)
+	 */
+	void associateApplication( Application app ) {
+		synchronized( this.associatedApplications ) {
+			this.associatedApplications.add( app );
+		}
+	}
+
+	/**
+	 * Deletes the association between an application and this template.
+	 * @param app an application (not null)
+	 */
+	void removeApplicationAssocation( Application app ) {
+		synchronized( this.associatedApplications ) {
+			this.associatedApplications.remove( app );
+		}
 	}
 }

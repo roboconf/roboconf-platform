@@ -49,7 +49,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationTemplateBinding_1() throws Exception {
 
-		final String result = "{\"desc\":\"some text\",\"qualifier\":\"v1\"}";
+		final String result = "{\"desc\":\"some text\",\"qualifier\":\"v1\",\"apps\":[]}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate app = new ApplicationTemplate().description( "some text" ).qualifier( "v1" );
@@ -69,10 +69,13 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationTemplateBinding_2() throws Exception {
 
-		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\"}";
+		final String result = "{\"name\":\"my application\",\"qualifier\":\"v1-17.snapshot\",\"apps\":[\"a1\",\"a2\"]}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		ApplicationTemplate app = new ApplicationTemplate( "my application" ).qualifier( "v1-17.snapshot" );
+		new Application( "a1", app );
+		new Application( "a2", app );
+
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
@@ -103,6 +106,27 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
+	public void testApplicationTemplateBinding_4() throws Exception {
+
+		final String result = "{\"name\":\"my application\",\"apps\":[]}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ApplicationTemplate app = new ApplicationTemplate( "my application" );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+	}
+
+
+	@Test
 	public void testApplicationBinding_1() throws Exception {
 
 		final String result = "{\"name\":\"app1\",\"desc\":\"some text\"}";
@@ -124,11 +148,12 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testApplicationBinding_2() throws Exception {
 
-		final String result = "{\"tpl\":{\"name\":\"oops\",\"desc\":\"hello!\"}}";
+		final String result = "{\"tplName\":\"oops\",\"tplQualifier\":\"hello!\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "oops" ).description( "hello!" );
+		ApplicationTemplate tpl = new ApplicationTemplate( "oops" ).qualifier( "hello!" );
 		Application app = new Application( tpl );
+
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, app );
 		String s = writer.toString();
@@ -183,6 +208,52 @@ public class JSonBindingUtilsTest {
 		mapper.writeValue( writer, app );
 
 		Assert.assertEquals( "{\"name\":\"test\",\"desc\":\"hi!\",\"info\":\"ok\"}", writer.toString());
+	}
+
+
+	@Test
+	public void testApplicationBinding_6() throws Exception {
+
+		final String result = "{\"name\":\"app1\",\"tplName\":\"oops\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "oops" );
+		Application app = new Application( "app1", tpl );
+		app.getRootInstances().add( new Instance( "r" ));
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Application readApp = mapper.readValue( result, Application.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getTemplate(), readApp.getTemplate());
+	}
+
+
+	@Test
+	public void testApplicationBinding_7() throws Exception {
+
+		final String result = "{\"name\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "" ).qualifier( "oops" );
+		Application app = new Application( "app1", tpl );
+		app.getRootInstances().add( new Instance( "r" ));
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Application readApp = mapper.readValue( result, Application.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getTemplate(), readApp.getTemplate());
 	}
 
 

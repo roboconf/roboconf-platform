@@ -112,7 +112,6 @@ public class Agent implements AgentMessagingInterface {
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, Constants.HEARTBEAT_PERIOD, Constants.HEARTBEAT_PERIOD );
 
-
 		this.logger.info( "Agent '" + getAgentId() + "' was launched." );
 	}
 

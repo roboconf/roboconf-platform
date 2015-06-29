@@ -165,7 +165,7 @@ public interface IManagementResource {
 	 * @return a response
 	 */
 	@DELETE
-	@Path("/{name}/delete")
+	@Path("/{name}")
 	@Produces( MediaType.APPLICATION_JSON )
 	Response deleteApplication( @PathParam("name") String applicationName );
 }
