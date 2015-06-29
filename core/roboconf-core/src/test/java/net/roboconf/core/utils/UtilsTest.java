@@ -530,7 +530,7 @@ public class UtilsTest {
 	@Test( expected = IllegalArgumentException.class )
 	public void testComputeFileRelativeLocation_failure_notASubFile() {
 
-		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ));
+		final File rootDir = new File( System.getProperty( "java.io.tmpdir" ), "does-not-exist");
 		Utils.computeFileRelativeLocation( rootDir, new File( "invalid-path" ));
 	}
 
