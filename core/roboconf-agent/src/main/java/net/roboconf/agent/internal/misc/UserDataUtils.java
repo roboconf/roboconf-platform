@@ -181,8 +181,8 @@ public final class UserDataUtils {
 			try {
 				// Open file in overwrite mode (append=false)
 				out = new PrintWriter(new FileOutputStream(etcDir + File.separator + fileName), false);
-				for(String key : msgData.keySet()) {
-					out.println(key + ": " + msgData.get(key));
+				for(Map.Entry<String, String> entry : msgData.entrySet()) {
+					out.println(entry.getKey() + ": " + entry.getValue());
 				}
 			} finally {
 				Utils.closeQuietly(out);
