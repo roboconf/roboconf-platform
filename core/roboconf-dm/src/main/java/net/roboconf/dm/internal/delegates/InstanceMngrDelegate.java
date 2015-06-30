@@ -151,7 +151,7 @@ public class InstanceMngrDelegate {
 				deployTarget( ma, instance );
 
 			else
-				this.logger.warning( "Ignoring a request to update a scoped instance's state." );
+				this.logger.warning( "Ignoring a request to update a scoped instance's state. New state was " + newStatus );
 
 		} else {
 			Map<String,byte[]> instanceResources = null;
