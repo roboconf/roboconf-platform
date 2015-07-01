@@ -31,7 +31,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.5-SNAPSHOT</version>
+		<version>0.4-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
@@ -98,7 +98,7 @@
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-core</artifactId>
 			<type>test-jar</type>
-			<version>0.5-SNAPSHOT</version>
+			<version>0.4-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 
