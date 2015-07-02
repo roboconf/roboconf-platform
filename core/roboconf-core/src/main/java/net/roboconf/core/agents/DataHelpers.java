@@ -72,11 +72,9 @@ public final class DataHelpers {
 
 	/**
 	 * Writes user data as properties.
-	 * @param messagingServerIp the IP of the messaging server
-	 * @param messagingUsername the user name to connect to the messaging server
-	 * @param messagingPassword the password to connect to the messaging server
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the scoped instance's path (the instance associated with the agent)
+	 * @param messagingConfiguration a map containing the messaging configuration
 	 * @return a non-null object
 	 */
 	public static Properties writeUserDataAsProperties(

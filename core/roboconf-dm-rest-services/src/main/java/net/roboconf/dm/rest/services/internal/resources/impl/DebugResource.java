@@ -74,8 +74,8 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 @Path( IDebugResource.PATH )
 public class DebugResource implements IDebugResource {
 
-	final static String ROOT_COMPONENT_NAME = "Machine";
-	final static long MAXIMUM_TIMEOUT = 10000L;
+	public static final long MAXIMUM_TIMEOUT = 10000L;
+	static final String ROOT_COMPONENT_NAME = "Machine";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;

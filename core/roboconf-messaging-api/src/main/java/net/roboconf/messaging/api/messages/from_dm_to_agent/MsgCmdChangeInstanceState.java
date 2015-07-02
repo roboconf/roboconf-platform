@@ -69,6 +69,7 @@ public class MsgCmdChangeInstanceState extends Message {
 	/**
 	 * Constructor.
 	 * @param instance
+	 * @param newState
 	 */
 	public MsgCmdChangeInstanceState( Instance instance, InstanceStatus newState ) {
 		this( InstanceHelpers.computeInstancePath( instance ), newState, null );
@@ -76,7 +77,8 @@ public class MsgCmdChangeInstanceState extends Message {
 
 	/**
 	 * Constructor.
-	 * @param instance
+	 * @param instancePath
+	 * @param newState
 	 */
 	public MsgCmdChangeInstanceState( String instancePath, InstanceStatus newState ) {
 		this( instancePath, newState, null );

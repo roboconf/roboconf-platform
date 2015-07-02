@@ -359,7 +359,6 @@ public final class Utils {
 	/**
 	 * Equivalent to <code>listAllFiles( directory, false )</code>.
 	 * @param directory an existing directory
-	 * @param includeDirectories true to include directories, false to exclude them from the result
 	 * @return a non-null list of files
 	 */
 	public static List<File> listAllFiles( File directory ) {

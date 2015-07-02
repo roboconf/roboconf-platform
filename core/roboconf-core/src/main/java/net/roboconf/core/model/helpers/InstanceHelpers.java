@@ -134,7 +134,7 @@ public final class InstanceHelpers {
 	 * <p>
 	 * This method does not check anything.
 	 * In real implementations, such as in the DM, one should
-	 * use {@link #tryToInsertChildInstance(Application, Instance, Instance)}.
+	 * use {@link #tryToInsertChildInstance(AbstractApplication, Instance, Instance)}.
 	 * </p>
 	 *
 	 * @param child a child instance (not null)
@@ -497,7 +497,7 @@ public final class InstanceHelpers {
 	 * that are associated with the "target" installer. Such instances are indeed managed by another agent.
 	 * </p>
 	 *
-	 * @return a non-null list
+	 * @param scopedInstance a scoped instance
 	 */
 	public static void removeOffScopeInstances( Instance scopedInstance ) {
 

@@ -54,7 +54,6 @@ public class Import implements Serializable {
 	/**
 	 * Constructor.
 	 * @param instance
-	 * @param exportedVars
 	 */
 	public Import( Instance instance ) {
 		this(

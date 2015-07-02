@@ -207,7 +207,7 @@ public class PluginScript implements PluginInterface {
      * Generates a file from the template and the instance.
      * @param template
      * @param instance
-     * @return
+     * @return the generated file
      * @throws IOException
      */
     protected File generateTemplate(File template, Instance instance) throws IOException {

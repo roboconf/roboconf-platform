@@ -39,8 +39,7 @@ public class MsgCmdRequestImport extends Message {
 
 	/**
 	 * Constructor.
-	 * @param variableName
-	 * @param subChannelName
+	 * @param componentOrFacetName
 	 */
 	public MsgCmdRequestImport( String componentOrFacetName ) {
 		super();

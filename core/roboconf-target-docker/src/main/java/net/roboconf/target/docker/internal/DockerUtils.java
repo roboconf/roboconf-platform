@@ -118,7 +118,7 @@ public final class DockerUtils {
 
 	/**
 	 * Finds an image by ID or by tag.
-	 * @param imageId an image ID (can be null)
+	 * @param name an image ID or a tag name (can be null)
 	 * @param dockerClient a Docker client (not null)
 	 * @return an image, or null if none matched
 	 */
@@ -183,7 +183,7 @@ public final class DockerUtils {
 
 	/**
 	 * Finds a container by ID or by name.
-	 * @param containerId the container ID or name (not null)
+	 * @param name the container ID or name (not null)
 	 * @param dockerClient a Docker client
 	 * @return a container, or null if none was found
 	 */

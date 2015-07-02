@@ -98,7 +98,7 @@ public class FromGraphDefinition {
 
 	/**
 	 * @param file the initial file to parse
-	 * @return an instance of {@link Graphs} built from a {@link FileRelations}
+	 * @return a graph(s)
 	 * <p>
 	 * The result is not significant if there are errors.<br />
 	 * Conversion errors are available by using {@link #getErrors()}.

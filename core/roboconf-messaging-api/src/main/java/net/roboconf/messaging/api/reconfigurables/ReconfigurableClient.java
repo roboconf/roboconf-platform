@@ -37,6 +37,7 @@ import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryListener;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
+
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -175,30 +176,33 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 	@Override
 	public void removeMessagingClientFactory( final MessagingClientFactory factory ) {
+
 		T oldClient = null;
 		synchronized( this ) {
-			if (this.messagingClient != null && this.messagingClient.getMessagingType().equals(this.messagingType)) {
+			if (this.messagingClient != null
+					&& this.messagingClient.getMessagingType().equals(this.messagingType)) {
+
 				// This is the messaging factory we were using...
 				// We must release our messaging client right now.
 				oldClient = this.messagingClient;
 				this.messagingClient = null;
 			}
 		}
+
 		closeConnection(oldClient, "The previous client could not be terminated correctly.");
 	}
 
 	@Override
-	public Map<String, String> getConfiguration() {
-		final T messagingClient;
-		final Map<String, String> result;
-		synchronized (this) {
-			messagingClient = this.messagingClient;
+	public Map<String,String> getConfiguration() {
+
+		final Map<String,String> result;
+		synchronized( this ) {
+			if( this.messagingClient != null )
+				result = this.messagingClient.getConfiguration();
+			else
+				result = Collections.emptyMap();
 		}
-		if (messagingClient != null) {
-			result = this.messagingClient.getConfiguration();
-		} else {
-			result = Collections.emptyMap();
-		}
+
 		return result;
 	}
 

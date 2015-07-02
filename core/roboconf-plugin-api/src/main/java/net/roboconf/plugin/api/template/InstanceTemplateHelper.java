@@ -126,7 +126,7 @@ public final class InstanceTemplateHelper {
 	 *
 	 * @param instance the instance whose imports must be injected
 	 * @param templateFile the template file
-	 * @param targetFile the file to write into
+	 * @param out the file to write into
 	 * @throws IOException if something went wrong
 	 */
 	public static void injectInstanceImports(Instance instance, File templateFile, File out)

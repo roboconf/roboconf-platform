@@ -299,7 +299,7 @@ public class ApplicationWsDelegate {
 	/**
 	 * Finds the component names you could instantiate and deploy on an existing instance.
 	 * @param applicationName the application name
-	 * @param instancePath an instance path (null to get root components)
+	 * @param componentName a component name (null to get root components)
 	 * @return a non-null list of component names
 	 */
 	public List<Component> findComponentChildren( String applicationName, String componentName ) {

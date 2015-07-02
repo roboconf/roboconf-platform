@@ -153,7 +153,7 @@ public final class RoboconfErrorHelpers {
 	 * reusable recipes. This method removes them from the input list of errors.
 	 * </p>
 	 *
-	 * @param errors a non-null list of errors
+	 * @param alr an {@link ApplicationLoadResult}
 	 */
 	public static void filterErrorsForRecipes( ApplicationLoadResult alr ) {
 

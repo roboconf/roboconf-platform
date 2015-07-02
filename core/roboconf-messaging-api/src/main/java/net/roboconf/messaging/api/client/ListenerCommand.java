@@ -23,44 +23,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.messages.from_agent_to_dm;
-
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.api.messages.Message;
+package net.roboconf.messaging.api.client;
 
 /**
- * @author Noël - LIG
+ * Start or stop listening to events.
+ * @author Vincent Zurczak - Linagora
  */
-public class MsgNotifInstanceRemoved extends Message {
-
-	private static final long serialVersionUID = -5023778542512797206L;
-	private final String instancePath;
-	private final String applicationName;
-
-
-	/**
-	 * Constructor.
-	 * @param applicationName
-	 * @param instance
-	 */
-	public MsgNotifInstanceRemoved( String applicationName, Instance instance ) {
-		super();
-		this.instancePath = InstanceHelpers.computeInstancePath( instance );
-		this.applicationName = applicationName;
-	}
-
-	/**
-	 * @return the instancePath
-	 */
-	public String getInstancePath() {
-		return this.instancePath;
-	}
-
-	/**
-	 * @return the applicationName
-	 */
-	public String getApplicationName() {
-		return this.applicationName;
-	}
+public enum ListenerCommand {
+	START, STOP
 }
