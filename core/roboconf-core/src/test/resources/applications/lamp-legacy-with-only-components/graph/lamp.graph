@@ -15,7 +15,7 @@ VM {
 # MySQL database
 MySQL {
 	installer: puppet;
-	exports: ip, port = 3306;
+	exports: ip, port;
 }
 
 # Tomcat

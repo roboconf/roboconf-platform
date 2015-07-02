@@ -136,7 +136,12 @@ public class InstanceMngrDelegate {
 		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 
 		if( InstanceHelpers.isTarget( instance )) {
-			List<InstanceStatus> es = Arrays.asList( InstanceStatus.DEPLOYED_STARTED, InstanceStatus.DEPLOYING, InstanceStatus.STARTING );
+			List<InstanceStatus> es = Arrays.asList(
+					InstanceStatus.DEPLOYED_STARTED,
+					InstanceStatus.DEPLOYING,
+					InstanceStatus.STARTING,
+					InstanceStatus.PROBLEM );
+
 			if( newStatus == InstanceStatus.NOT_DEPLOYED
 					&& es.contains( instance.getStatus()))
 				undeployTarget( ma, instance );
@@ -146,13 +151,13 @@ public class InstanceMngrDelegate {
 				deployTarget( ma, instance );
 
 			else
-				this.logger.warning( "Ignoring a request to update a scoped instance's state." );
+				this.logger.warning( "Ignoring a request to update a scoped instance's state. New state was " + newStatus );
 
 		} else {
 			Map<String,byte[]> instanceResources = null;
 			if( newStatus == InstanceStatus.DEPLOYED_STARTED
 					|| newStatus == InstanceStatus.DEPLOYED_STOPPED )
-				instanceResources = ResourceUtils.storeInstanceResources( ma.getDirectory(), instance );
+				instanceResources = ResourceUtils.storeInstanceResources( ma.getTemplateDirectory(), instance );
 
 			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, newStatus, instanceResources );
 			this.manager.send( ma, message, instance );
@@ -387,19 +392,22 @@ public class InstanceMngrDelegate {
 			target.getHandler().configureMachine(
 					targetProperties,
 					this.manager.getMessagingConfiguration(),
-					machineId, scopedInstancePath, ma.getName());
+					machineId, scopedInstancePath, ma.getName(), scopedInstance );
 
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 
-		} catch( Exception e ) {
+		} catch( TargetException | IOException e ) {
 			this.logger.severe( "Failed to deploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
 
+			// The creation failed, remove the lock for another retry
+			synchronized( LOCK ) {
+				scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+			}
+
+			// Restore the state and propagate the exception
 			scopedInstance.setStatus( initialStatus );
-			if( e instanceof TargetException)
-				throw (TargetException) e;
-			else if( e instanceof IOException )
-				throw (IOException) e;
+			throw e;
 		}
 	}
 
@@ -448,6 +456,8 @@ public class InstanceMngrDelegate {
 			Utils.logException( this.logger, e );
 			throw e;
 
+		} finally {
+			ma.removeAwaitingMessages( scopedInstance );
 		}
 	}
 }

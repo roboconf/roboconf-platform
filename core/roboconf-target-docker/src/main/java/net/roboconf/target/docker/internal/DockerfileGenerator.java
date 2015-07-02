@@ -28,6 +28,7 @@ package net.roboconf.target.docker.internal;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLConnection;
@@ -48,70 +49,87 @@ public class DockerfileGenerator {
 
 	private String packages = "openjdk-7-jre-headless";
 	private boolean isTar = true;
+	private String baseImageName = "ubuntu";
 
 
 	/**
 	 * Constructor for docker file generator.
-	 * @param agentPackURL URL or path to the agent tarball or zip
+	 * @param agentPackURL URL or path to the agent tarball or zip (not null)
 	 * @param packages packages to be installed using apt-get (including JRE)
+	 * <p>
+	 * Set to "openjdk-7-jre-headless" if null.
+	 * </p>
+	 *
+	 * @param baseImageName the name of the base image used to create a new image
+	 * <p>
+	 * This parameter can be null.<br />
+	 * In this case, "ubuntu" will be used as the
+	 * base image name (<code>FROM ubuntu</code>).
+	 * </p>
 	 */
-	public DockerfileGenerator(String agentPackURL, String packages) {
+	public DockerfileGenerator( String agentPackURL, String packages, String baseImageName ) {
 		File test = new File(agentPackURL);
 		this.agentPackURL = (test.exists() ? "file://" : "") + agentPackURL;
 
-		if(packages != null)
+		if( ! Utils.isEmptyOrWhitespaces( packages ))
 			this.packages = packages;
 
-		if(agentPackURL.endsWith(".zip"))
+		if( ! Utils.isEmptyOrWhitespaces( baseImageName ))
+			this.baseImageName = baseImageName;
+
+		if(agentPackURL.toLowerCase().endsWith("zip"))
 			this.isTar = false;
 	}
 
 
 	/**
-	 * Generate docker file.
+	 * Generates a dockerfile.
 	 * @return path to a full-fledged temporary Dockerfile directory
 	 * @throws IOException
 	 */
 	public File generateDockerfile() throws IOException {
+
 		// Create temporary dockerfile directory
 		Path dockerfile = Files.createTempDirectory("roboconf_");
-		
-		// Copy agent package in temp dockerfile directory
-		String agentFilename = this.agentPackURL.substring(this.agentPackURL.lastIndexOf('/') + 1);
+
+		// Copy agent package in temporary dockerfile directory
+		String agentFilename = findAgentFileName( this.agentPackURL, this.isTar );
 		File tmpPack = new File(dockerfile.toFile(), agentFilename);
-		
-		URL u = new URL(this.agentPackURL);
+		tmpPack.setReadable(true);
+
+		URL u = new URL( this.agentPackURL );
 		URLConnection uc = u.openConnection();
-		BufferedInputStream in = null;
+		InputStream in = null;
 		try {
-			in = new BufferedInputStream(uc.getInputStream());
+			in = new BufferedInputStream( uc.getInputStream());
 			Utils.copyStream(in, tmpPack);
 		} finally {
 			Utils.closeQuietly(in);
 		}
-		tmpPack.setReadable(true);
 
 		this.logger.fine( "Generating a Dockerfile." );
 		File generated = new File(dockerfile.toFile(), "Dockerfile");
 		PrintWriter out = null;
 		try {
 			out = new PrintWriter( generated, "UTF-8" );
-			out.println("FROM ubuntu");
+			out.println("FROM " + this.baseImageName);
 			out.println("COPY " + agentFilename + " /usr/local/");
 			out.println("RUN apt-get update");
+
+			if( ! this.isTar )
+				out.println("RUN apt-get -y install unzip");
+
 			out.println("RUN apt-get -y install " + this.packages);
 			out.println("RUN cd /usr/local; " + (this.isTar ? "tar xvzf " : "unzip ") + agentFilename);
 
-			// Remove extension from file name (generally .zip or .tar.gz, possibly .tgz or .tar)
-			String extractDir = tmpPack.getName();
-			int pos;
-			if((pos = extractDir.lastIndexOf('.')) > 0)
-				extractDir = extractDir.substring(0, pos);
+			// We used to assume the name of the extracted directory was the name of the ZIP file
+			// without any file extension. This is wrong. If one points to a snapshot version (e.g. hosted on Sonatype)
+			// then the file name contains a qualifier while the inner directory contains the SNAPSHOT mention.
+			// The only assumption we can do is that it starts with "roboconf-something-agent".
+			// We will rename this directory to "roboconf-agent".
+			out.println("COPY rename.sh /usr/local/");
+			out.println("RUN cd /usr/local; ./rename.sh");
 
-			if(extractDir.endsWith(".tar"))
-				extractDir = extractDir.substring(0, extractDir.length() - 4);
-
-			out.println("RUN ln -s /usr/local/" + extractDir + " /usr/local/roboconf-agent");
 			// The rc.local and start.sh files will be generated as well!
 			out.println("COPY rc.local /etc/");
 			out.println("COPY start.sh /usr/local/roboconf-agent/");
@@ -120,47 +138,21 @@ public class DockerfileGenerator {
 			Utils.closeQuietly(out);
 		}
 
-		// Generate start.sh startup script for roboconf agent
-		this.logger.fine( "Generating the start script for the Roboconf agent." );
-		generated = new File(dockerfile.toFile(), "start.sh");
-		out = null;
-		try {
-			out = new PrintWriter( generated, "UTF-8" );
-			out.println("#!/bin/bash");
-			out.println("# Startup script for roboconf agent on Docker");
-			out.println("cd /usr/local/roboconf-agent");
-			out.println("echo \"# Roboconf agent configuration - DO NOT EDIT: Generated by roboconf\" >  etc/net.roboconf.agent.configuration.cfg");
-			out.println("for p in \"$@\"");
-			out.println("do");
-			out.println("echo $p >> etc/net.roboconf.agent.configuration.cfg");
-			out.println("done");
-			out.println("cd bin");
-			out.println("./karaf");
+		// Copy resources in the Dockerfile
+		String[] toCopy = { "start.sh", "rename.sh", "rc.local" };
+		for( String s : toCopy ) {
+			this.logger.fine( "Copying " + s + "..." );
+			generated = new File( dockerfile.toFile(), s );
+			try {
+				in = this.getClass().getResourceAsStream( "/" + s );
+				Utils.copyStream( in, generated );
+				generated.setExecutable( true, false );
 
-		} finally {
-			Utils.closeQuietly(out);
+			} finally {
+				Utils.closeQuietly( in );
+			}
 		}
 
-		generated.setExecutable(true, false);
-
-		// Generate rc.local script to launch roboconf agent at boot time
-		this.logger.fine( "Generating a rc.local file." );
-		generated = new File(dockerfile.toFile(), "rc.local");
-		out = null;
-		try {
-			out = new PrintWriter( generated, "UTF-8" );
-			out.println("#!/bin/sh -e");
-			out.println("# Generated by roboconf...");
-			out.println("apt-get update");
-			out.println("cd /usr/local/roboconf-agent");
-			out.println("./start.sh");
-			out.println("exit 0");
-
-		} finally {
-			Utils.closeQuietly(out);
-		}
-
-		generated.setExecutable(true, false);
 		return dockerfile.toFile();
 	}
 
@@ -180,5 +172,34 @@ public class DockerfileGenerator {
 	 */
 	public boolean isTar() {
 		return this.isTar;
+	}
+
+
+	/**
+	 * @return the baseImageName
+	 */
+	public String getBaseImageName() {
+		return this.baseImageName;
+	}
+
+
+	/**
+	 * Finds the name of the agent file.
+	 * @param url the agent's URL (not null)
+	 * @param isTar true if it is a TAR.GZ, false for a ZIP
+	 * <p>
+	 * This parameter is ignored unless the URL does not contain a valid file name.
+	 * </p>
+	 *
+	 * @return a non-null string
+	 */
+	static String findAgentFileName( String url, boolean isTar ) {
+
+		String agentFilename = url.substring( url.lastIndexOf('/') + 1 );
+		if( agentFilename.contains( "?" )
+				|| agentFilename.contains( "&" ))
+			agentFilename = "roboconf-agent" + (isTar ? ".tar.gz" : ".zip");
+
+		return agentFilename;
 	}
 }

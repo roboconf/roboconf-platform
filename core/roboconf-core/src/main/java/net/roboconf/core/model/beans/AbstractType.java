@@ -31,8 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
-import net.roboconf.core.utils.Utils;
+import java.util.Objects;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -65,7 +64,7 @@ public abstract class AbstractType implements Serializable {
 	public boolean equals( Object obj ) {
 		return obj != null
 				&& obj.getClass().equals( getClass())
-				&& Utils.areEqual( this.name, ((AbstractType) obj).getName());
+				&& Objects.equals( this.name, ((AbstractType) obj).getName());
 	}
 
 	@Override

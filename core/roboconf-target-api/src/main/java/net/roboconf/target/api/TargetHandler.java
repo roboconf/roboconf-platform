@@ -27,6 +27,8 @@ package net.roboconf.target.api;
 
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Instance;
+
 /**
  * The interface to implement to support a new deployment target.
  * @author Vincent Zurczak - Linagora
@@ -78,6 +80,7 @@ public interface TargetHandler {
 	 * @param messagingProperties the configuration for the messaging.
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the scoped instance's path
+	 * @param scopedInstance the scoped instance
 	 * @throws TargetException
 	 */
 	void configureMachine(
@@ -85,7 +88,8 @@ public interface TargetHandler {
 			Map<String, String> messagingProperties,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName )
+			String applicationName,
+			Instance scopedInstance )
 	throws TargetException;
 
 

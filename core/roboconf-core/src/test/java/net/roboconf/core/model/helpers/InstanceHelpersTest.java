@@ -215,7 +215,7 @@ public class InstanceHelpersTest {
 		component.exportedVariables.put( "extended.v", "nop" );
 
 		Map<String,String> map = InstanceHelpers.findAllExportedVariables( instance );
-		Assert.assertEquals( 10, map.size());
+		Assert.assertEquals( 16, map.size());
 
 		Assert.assertEquals( "some value", map.get( "comp 1.var1" ));
 		Assert.assertEquals( "var 2 value", map.get( "comp 1.var2" ));
@@ -225,9 +225,15 @@ public class InstanceHelpersTest {
 
 		Assert.assertEquals( "nop", map.get( "extended.v" ));
 
+		// The first one was specifically overridden in the instance
 		Assert.assertEquals( "my-value", map.get( "f1.param1" ));
+		Assert.assertEquals( "value1", map.get( "comp 1.param1" ));
+
 		Assert.assertEquals( "value2", map.get( "f2.param2" ));
+		Assert.assertEquals( "value2", map.get( "comp 1.param2" ));
+
 		Assert.assertEquals( "component overrides facet", map.get( "f3.param3" ));
+		Assert.assertEquals( "component overrides facet", map.get( "comp 1.param3" ));
 
 		Assert.assertEquals( "facet overrides facet", map.get( "f4.param4-1" ));
 		Assert.assertEquals( "value4", map.get( "f4.param4-2" ));
@@ -386,7 +392,9 @@ public class InstanceHelpersTest {
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, tomcatInstance_1, mySqlInstance_1 ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, mySqlInstance_1, tomcatInstance_1 ));
 		Assert.assertEquals( 2, InstanceHelpers.getAllInstances( app ).size());
+		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, mySqlInstance_1 ));
 
+		mySqlInstance_1.overriddenExports.put( "port", "3307" );
 		Assert.assertTrue( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, mySqlInstance_1 ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 
@@ -395,7 +403,7 @@ public class InstanceHelpersTest {
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instanceWithNoComponent ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 
-		Instance instWithInvalidName = new Instance( "inst!!!" ).component( ComponentHelpers.findComponent( app.getGraphs(), "MySQL" ));
+		Instance instWithInvalidName = new Instance( "inst!!!" ).component( ComponentHelpers.findComponent( app.getGraphs(), "Apache" ));
 		Assert.assertFalse( InstanceHelpers.tryToInsertChildInstance( app, vmInstance, instWithInvalidName ));
 		Assert.assertEquals( 3, InstanceHelpers.getAllInstances( app ).size());
 

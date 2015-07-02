@@ -128,6 +128,7 @@ public class ApplicationMngrDelegate {
 
 		this.logger.info( "Deleting the application called " + app.getName() + "..." );
 		this.nameToManagedApplication.remove( app.getName());
+		app.removeAssociationWithTemplate();
 
 		File targetDirectory = ConfigurationUtils.findApplicationDirectory( app.getName(), configurationDirectory );
 		Utils.deleteFilesRecursively( targetDirectory );

@@ -1,0 +1,15 @@
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+
+	<command-bundle xmlns="http://karaf.apache.org/xmlns/shell/v1.1.0">
+		<command>
+			<action class="net.roboconf.karaf.commands.dm.targets.InstallTargetCommand" />
+			<completers>
+				<ref component-id="RoboconfTargetCompleter" />
+				<null />
+			</completers>
+		</command>
+	</command-bundle>
+
+	<bean id="RoboconfTargetCompleter" class="net.roboconf.karaf.commands.dm.targets.TargetCompleter" />
+
+</blueprint>

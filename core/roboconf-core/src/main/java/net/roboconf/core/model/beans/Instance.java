@@ -31,9 +31,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -44,19 +44,19 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 public class Instance implements Serializable {
 
 	/**
-	 * A constant to store the IP address in {@link #getData()}.
-	 * <p>Storing this information in a root instance is enough.</p>
+	 * A constant to store the IP address in {@link #data}.
+	 * <p>Storing this information in a scoped instance is enough.</p>
 	 */
 	public static final String IP_ADDRESS = "ip.address";
 
 	/**
-	 * A constant to store the machine ID in {@link #getData()}.
-	 * <p>Storing this information in a root instance is enough.</p>
+	 * A constant to store the machine ID in {@link #data}.
+	 * <p>Storing this information in a scoped instance is enough.</p>
 	 */
 	public static final String MACHINE_ID = "machine.id";
 
 	/**
-	 * A constant to store in {@link #getData()} and that indicates a root instance was "taken" by a target handler.
+	 * A constant to store in {@link #data} and that indicates a scoped instance was "taken" by a target handler.
 	 * <p>Storing this information in a scoped instance is enough.</p>
 	 * <p>
 	 * When a scoped instance is still NOT_DEPLOYED but that this key is present
@@ -71,10 +71,16 @@ public class Instance implements Serializable {
 	public static final String TARGET_ACQUIRED = "target.acquired";
 
 	/**
-	 * A constant to store the application name in {@link #getData()}.
-	 * <p>Storing this information in a root instance is enough.</p>
+	 * A constant to store the application name in {@link #data}.
+	 * <p>Storing this information in a scoped instance is enough.</p>
 	 */
 	public static final String APPLICATION_NAME = "application.name";
+
+	/**
+	 * A constant to store the last problem in {@link #data}.
+	 * <p>Storing this information in a scoped instance is enough.</p>
+	 */
+	public static final String LAST_PROBLEM = "last.problem";
 
 
 	private static final long serialVersionUID = -3320865356277185064L;
@@ -82,7 +88,7 @@ public class Instance implements Serializable {
 	private String name;
 	private Component component;
 	private Instance parent;
-	private final Collection<Instance> children = new LinkedHashSet<Instance> ();
+	private final Collection<Instance> children = new CopyOnWriteArraySet<Instance> ();
 	private InstanceStatus status = InstanceStatus.NOT_DEPLOYED;
 
 	public final Collection<String> channels = new HashSet<String> ();

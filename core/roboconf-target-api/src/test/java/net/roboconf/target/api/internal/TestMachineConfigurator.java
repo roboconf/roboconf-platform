@@ -25,8 +25,10 @@
 
 package net.roboconf.target.api.internal;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
 
@@ -37,13 +39,16 @@ public class TestMachineConfigurator implements MachineConfigurator {
 
 	private final AtomicInteger cpt;
 	private final boolean failConfiguration;
+	private final Instance scopedInstance;
 
 
 	/**
 	 * Constructor.
+	 * @param scopedInstance
 	 */
-	public TestMachineConfigurator( AtomicInteger cpt, boolean failConfiguration ) {
+	public TestMachineConfigurator( AtomicInteger cpt, boolean failConfiguration, Instance scopedInstance  ) {
 		this.cpt = cpt;
+		this.scopedInstance = scopedInstance;
 		this.failConfiguration = failConfiguration;
 	}
 
@@ -54,7 +59,17 @@ public class TestMachineConfigurator implements MachineConfigurator {
 				&& this.cpt.get() == 1 )
 			throw new TargetException( "This is for test purpose." );
 
-		// We consider it is configuration after 3 invocations.
+		// We consider it is configured after 3 invocations.
 		return this.cpt.incrementAndGet() == 3;
+	}
+
+	@Override
+	public Instance getScopedInstance() {
+		return this.scopedInstance;
+	}
+
+	@Override
+	public void close() throws IOException {
+		// nothing
 	}
 }

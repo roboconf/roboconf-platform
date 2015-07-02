@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
@@ -183,7 +184,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * java.util.Map, java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public MachineConfigurator machineConfigurator(
@@ -191,8 +192,9 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName ) {
-		return new OpenstackMachineConfigurator( targetProperties, machineId );
+			String applicationName,
+			Instance scopedInstance ) {
+		return new OpenstackMachineConfigurator( targetProperties, machineId, scopedInstance );
 	}
 
 
@@ -206,6 +208,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 		try {
 			this.logger.info( "Terminating Openstack machine. Machine ID: " + machineId );
+			cancelMachineConfigurator( machineId );
 
 			NovaApi novaApi = novaApi( targetProperties );
 			String anyZoneName = novaApi.getConfiguredZones().iterator().next();

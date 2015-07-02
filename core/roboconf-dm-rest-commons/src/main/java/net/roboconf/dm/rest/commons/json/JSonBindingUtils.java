@@ -34,6 +34,8 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.IconUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 
@@ -57,9 +59,15 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 public final class JSonBindingUtils {
 
 	private static final String APP_NAME = "name";
+	private static final String APP_ICON = "icon";
 	private static final String APP_DESC = "desc";
-	private static final String APP_INST_TPL = "tpl";
+	private static final String APP_INFO = "info";
+
+	private static final String APP_INST_TPL_NAME = "tplName";
+	private static final String APP_INST_TPL_QUALIFIER = "tplQualifier";
+
 	private static final String APP_TPL_QUALIFIER = "qualifier";
+	private static final String APP_TPL_APPS = "apps";
 
 	private static final String INST_NAME = "name";
 	private static final String INST_PATH = "path";
@@ -144,6 +152,17 @@ public final class JSonBindingUtils {
 			if( app.getQualifier() != null )
 				generator.writeStringField( APP_TPL_QUALIFIER, app.getQualifier());
 
+			// Read-only information.
+			// We do not expect it for deserialization
+			String iconLocation = IconUtils.findIconUrl( app );
+			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
+				generator.writeStringField( APP_ICON, iconLocation );
+
+			generator.writeArrayFieldStart( APP_TPL_APPS );
+			for( Application associatedApp : app.getAssociatedApplications())
+				generator.writeObject( associatedApp.getName());
+
+			generator.writeEndArray();
 			generator.writeEndObject();
 		}
 	}
@@ -307,10 +326,38 @@ public final class JSonBindingUtils {
 			if( app.getDescription() != null )
 				generator.writeStringField( APP_DESC, app.getDescription());
 
-			if( app.getTemplate() != null )
-				generator.writeObjectField( APP_INST_TPL, app.getTemplate());
+			if( app.getTemplate() != null ) {
+				if( app.getTemplate().getName() != null )
+					generator.writeObjectField( APP_INST_TPL_NAME, app.getTemplate().getName());
 
-			generator.writeEndObject();
+				if( app.getTemplate().getQualifier() != null )
+					generator.writeObjectField( APP_INST_TPL_QUALIFIER, app.getTemplate().getQualifier());
+			}
+
+			// Read-only information.
+			// We do not expect it for deserialization
+			String iconLocation = IconUtils.findIconUrl( app );
+			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
+				generator.writeStringField( APP_ICON, iconLocation );
+
+			// #357 Add a state for applications in JSon objects
+			String info = null;
+			for( Instance rootInstance : app.getRootInstances()) {
+				if( rootInstance.getStatus() == InstanceStatus.PROBLEM ) {
+					info = "warn";
+					break;
+				}
+
+				if( rootInstance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
+					info = "ok";
+					break;
+				}
+			}
+
+	        if( info != null )
+	        	generator.writeObjectField( APP_INFO, info );
+
+	        generator.writeEndObject();
 		}
 	}
 
@@ -329,9 +376,14 @@ public final class JSonBindingUtils {
 
 	        Application application;
 	        JsonNode n;
-	        if(( n = node.get( APP_INST_TPL )) != null ) {
-	        	ObjectMapper mapper = createObjectMapper();
-	        	ApplicationTemplate appTemplate = mapper.readValue( n.toString(), ApplicationTemplate.class );
+	        if(( n = node.get( APP_INST_TPL_NAME )) != null ) {
+	        	ApplicationTemplate appTemplate = new ApplicationTemplate();
+	        	appTemplate.setName( n.textValue());
+
+	        	n = node.get( APP_INST_TPL_QUALIFIER );
+	        	if( n != null )
+	        		appTemplate.setQualifier( n.textValue());
+
 	        	application = new Application( appTemplate );
 
 	        } else {

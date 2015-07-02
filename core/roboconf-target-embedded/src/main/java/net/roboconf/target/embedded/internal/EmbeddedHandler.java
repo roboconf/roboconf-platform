@@ -28,6 +28,7 @@ package net.roboconf.target.embedded.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -85,8 +86,8 @@ public class EmbeddedHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void configureMachine(
@@ -94,7 +95,8 @@ public class EmbeddedHandler implements TargetHandler {
 		Map<String,String> messagingConfiguration,
 		String machineId,
 		String scopedInstancePath,
-		String applicationName )
+		String applicationName,
+		Instance scopedInstance )
 	throws TargetException {
 		// nothing
 	}

@@ -41,17 +41,12 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class CheckerMessagesTaskTest {
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
 
 	private ApplicationMngrDelegate appManager;
 	private TestApplication app;

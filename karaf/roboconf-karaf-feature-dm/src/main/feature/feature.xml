@@ -22,7 +22,10 @@
 		<bundle>mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}/war</bundle>
 		<bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
-		<bundle>mvn:net.roboconf/roboconf-dm-monitoring/${project.version}</bundle>
+		<bundle>mvn:net.roboconf/roboconf-dm-templating/${project.version}</bundle>
+		
+		<!-- Commands -->
+		<bundle>mvn:net.roboconf/roboconf-karaf-commands-dm/${project.version}</bundle>
 		
 		<!-- Optional bundles, to start depending on our needs -->
 		<!-- Deployment targets handlers could go here. -->

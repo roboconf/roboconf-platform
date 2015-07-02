@@ -30,6 +30,7 @@ import java.util.Hashtable;
 import java.util.logging.Logger;
 
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.services.internal.icons.IconServlet;
 
 import org.osgi.service.http.HttpService;
 
@@ -47,7 +48,8 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
 public class ServletRegistrationComponent {
 
 	// Constants
-	static final String CONTEXT = "/roboconf-dm";
+	static final String REST_CONTEXT = "/roboconf-dm";
+	static final String ICONS_CONTEXT = "/roboconf-icons";
 
 	// Injected by iPojo
 	private HttpService httpService;
@@ -67,18 +69,22 @@ public class ServletRegistrationComponent {
 	 * @throws Exception
 	 */
 	public void starting() throws Exception {
-
-		this.logger.fine( "iPojo registers a servlet to serve REST resources for the DM." );
+		this.logger.fine( "iPojo registers REST and icons servlets related to Roboconf's DM." );
 
 		// Create the REST application with its resources
 		RestApplication app = new RestApplication( this.manager );
-
-		// Prepare the parameters for the servlet
 		Dictionary<String,String> initParams = new Hashtable<String,String> ();
-		initParams.put( "servlet-name", "Roboconf DM" );
+		initParams.put( "servlet-name", "Roboconf DM (REST)" );
 
 		ServletContainer jerseyServlet = new ServletContainer( app );
-		this.httpService.registerServlet( CONTEXT, jerseyServlet, initParams, null );
+		this.httpService.registerServlet( REST_CONTEXT, jerseyServlet, initParams, null );
+
+		// Deal with the icons servlet
+		initParams = new Hashtable<String,String> ();
+		initParams.put( "servlet-name", "Roboconf DM (icons)" );
+
+		IconServlet iconServlet = new IconServlet( this.manager );
+		this.httpService.registerServlet( ICONS_CONTEXT, iconServlet, initParams, null );
 	}
 
 
@@ -88,11 +94,14 @@ public class ServletRegistrationComponent {
 	 */
 	public void stopping() throws Exception {
 
-		this.logger.fine( "iPojo unregisters a servlet to serve REST resources for the DM." );
-		if( this.httpService != null )
-			this.httpService.unregister( CONTEXT );
-		else
-			this.logger.fine( "The HTTP service is gone. The servlet was already unregistered." );
+		this.logger.fine( "iPojo unregisters REST and icons servlets related to Roboconf's DM." );
+		if( this.httpService != null ) {
+			this.httpService.unregister( REST_CONTEXT );
+			this.httpService.unregister( ICONS_CONTEXT );
+
+		} else {
+			this.logger.fine( "The HTTP service is gone. The servlets were already unregistered." );
+		}
 	}
 
 

@@ -27,14 +27,14 @@ package net.roboconf.core.model.beans;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public abstract class AbstractApplication {
 
-	protected final Collection<Instance> rootInstances = new LinkedHashSet<Instance> ();
+	protected final Collection<Instance> rootInstances = new CopyOnWriteArraySet<Instance> ();
 	protected String name, description;
 	protected File directory;
 

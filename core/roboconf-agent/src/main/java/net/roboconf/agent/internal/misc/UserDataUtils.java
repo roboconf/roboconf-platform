@@ -27,9 +27,12 @@ package net.roboconf.agent.internal.misc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.URL;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -166,6 +169,28 @@ public final class UserDataUtils {
 	}
 
 
+	/**
+	 * Reconfigures the messaging.
+	 * @param etcDir the KARAF_ETC directory
+	 * @param msgData the messaging configuration parameters
+	 */
+	public static void reconfigureMessaging(String etcDir, Map<String,String> msgData, String messagingType) throws IOException {
+		if( ! Utils.isEmptyOrWhitespaces(etcDir)) {
+			String fileName = "net.roboconf.messaging." + messagingType + ".cfg";
+			PrintWriter out = null;
+			try {
+				// Open file in overwrite mode (append=false)
+				out = new PrintWriter(new FileOutputStream(etcDir + File.separator + fileName), false);
+				for(Map.Entry<String, String> entry : msgData.entrySet()) {
+					out.println(entry.getKey() + ": " + entry.getValue());
+				}
+			} finally {
+				Utils.closeQuietly(out);
+			}
+		}
+	}
+
+
 	// FIXME: there must be a shorter way with XPath...
 	private static String getValueOfTagInXMLFile( String filePath, String tagName )
 	throws ParserConfigurationException, SAXException, IOException {
@@ -189,7 +214,6 @@ public final class UserDataUtils {
 
 		return valueOfTagName;
 	}
-
 
 	private static String getSpecificAttributeOfTagInXMLFile(String filePath, String tagName, String attrName)
 	throws ParserConfigurationException, SAXException, IOException {

@@ -92,16 +92,6 @@ public final class Utils {
 
 
 	/**
-	 * @param o1 an object
-	 * @param o2 another object
-	 * @return true if both objects are null or if they are equal
-	 */
-	public static boolean areEqual( Object o1, Object o2 ) {
-		return o1 == null ? o2 == null : o1.equals( o2 );
-	}
-
-
-	/**
 	 * Splits a string and formats the result.
 	 * @param toSplit the string to split (can be null)
 	 * @param separator the separator (cannot be null or the empty string)

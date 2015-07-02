@@ -62,13 +62,12 @@ public class Manager_LifeCycleTest {
 	private Manager manager;
 	private TestClientDm msgClient;
 	private TestTargetResolver targetResolver;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
 		this.registry.addMessagingClientFactory(new TestClientFactory());
-
 		this.targetResolver = new TestTargetResolver();
 
 		this.manager = new Manager();
@@ -127,27 +126,28 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 		this.manager.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.STARTING );
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
 		this.manager.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// ... Same thing if the current state is DEPLOYED_STARTED
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.manager.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.STARTING );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager.changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instanceToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.instanceToRunningStatus.get( app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 	}
 
 

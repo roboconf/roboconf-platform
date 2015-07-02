@@ -1,0 +1,13 @@
+instance of VM {
+	name: vm1;
+	instance of App {
+		name: app;
+	}
+}
+
+instance of VM {
+	name: vm2;
+	instance of App {
+		name: app;
+	}
+}

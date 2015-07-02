@@ -47,9 +47,9 @@ import edu.uci.ics.jung.visualization.decorators.EdgeShape;
  */
 public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 
+	private static final int MIN_H_MARGIN = 100;
 	private static final int H_PADDING = 50;
 	private static final int V_PADDING = 2 * GraphUtils.SHAPE_HEIGHT;
-	private static final int H_MARGIN = 100;
 	private static final int V_MARGIN = 50;
 
 	private final Component component;
@@ -58,9 +58,9 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	private final List<AbstractType> aloneOnRow;
 
 	private final Graph<AbstractType,String> graph;
-	private int currentWidth = H_MARGIN;
+	private int currentWidth = MIN_H_MARGIN;
 	private int currentHeigth = V_MARGIN;
-	private int maxRowWidth;
+	private int maxRowWidth, hMargin;
 
 
 	/**
@@ -81,6 +81,14 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 		this.maxPerLine = maxPerLine;
 		this.typeToLocation = new HashMap<AbstractType,Point2D> ();
 		this.aloneOnRow = new ArrayList<AbstractType> ();
+
+		// Compute the effective horizontal margin for this graph
+		this.hMargin = computeHMargin( component );
+		for( AbstractType t : ancestors )
+			this.hMargin = Math.max( this.hMargin, computeHMargin( t ));
+
+		for( AbstractType t : children )
+			this.hMargin = Math.max( this.hMargin, computeHMargin( t ));
 
 		// Builds the graph
 		this.graph = new DirectedOrderedSparseMultigraph<AbstractType,String> ();
@@ -118,7 +126,7 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 			int width = GraphUtils.computeShapeWidth( t );
 			int newX = (this.maxRowWidth - width) / 2;
 
-			if( newX > H_MARGIN ) {
+			if( newX > this.hMargin ) {
 				Point2D p = transform( t );
 				p.setLocation( newX, p.getY());
 			}
@@ -133,12 +141,10 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 
 		this.typeToLocation.put(
 				this.component,
-				new Point2D.Double( H_MARGIN, this.currentHeigth ));
+				new Point2D.Double( this.hMargin, this.currentHeigth ));
 
 		int width = H_PADDING + GraphUtils.computeShapeWidth( this.component );
 		this.maxRowWidth = Math.max( this.maxRowWidth, width );
-		this.currentWidth = H_MARGIN;
-
 		this.aloneOnRow.add( this.component );
 	}
 
@@ -150,12 +156,13 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	private void dealWithOthers( Collection<AbstractType> others ) {
 
 		int col = 1;
+		this.currentWidth = this.hMargin;
 		for( AbstractType t : others ) {
 
 			if( col > this.maxPerLine ) {
 				col = 1;
 				this.currentHeigth += V_PADDING + GraphUtils.SHAPE_HEIGHT;
-				this.currentWidth = H_MARGIN;
+				this.currentWidth = this.hMargin;
 			}
 
 			this.typeToLocation.put( t, new Point2D.Double( this.currentWidth, this.currentHeigth ));
@@ -211,5 +218,28 @@ public class HierarchicalTransformer extends AbstractRoboconfTransformer {
 	@Override
 	public AbstractEdgeShapeTransformer<AbstractType,String> getEdgeShapeTransformer() {
 		return new EdgeShape.Line<AbstractType,String> ();
+	}
+
+
+	/**
+	 * Computes an horizontal margin for a given node.
+	 * <p>
+	 * We used to have a static horizontal margin, but images were
+	 * truncated for long names. See roboconf-platform#315
+	 * </p>
+	 *
+	 * @param input a node (can be null)
+	 * @return a positive integer
+	 */
+	private static int computeHMargin( AbstractType input ) {
+
+		int basis = MIN_H_MARGIN;
+		if( input != null
+				&& input.getName().length() > 17 ) {
+			// Beyond 17 characters, we give 3 pixels for every new characters.
+			basis += 3 * (input.getName().length() - 17);
+		}
+
+		return basis;
 	}
 }

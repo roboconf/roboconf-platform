@@ -76,12 +76,12 @@ public class Manager_BasicsTest {
 	private Manager manager;
 	private TestClientDm msgClient;
 	private TestTargetResolver targetResolver;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
-		this.registry.addMessagingClientFactory(new TestClientFactory());
+		this.registry.addMessagingClientFactory( new TestClientFactory());
 
 		File directory = this.folder.newFolder();
 		this.targetResolver = new TestTargetResolver();
@@ -932,5 +932,24 @@ public class Manager_BasicsTest {
 		this.manager.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( app, this.manager.findApplicationByName( app.getName()));
+	}
+
+
+	@Test
+	public void testFindIconFromPath() throws Exception {
+
+		File appDir = ConfigurationUtils.findApplicationDirectory( "app", this.manager.configurationDirectory );
+		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
+		Assert.assertTrue( descDir.mkdirs());
+
+		File trickFile = new File( descDir, "directory.jpg" );
+		Assert.assertTrue( trickFile.mkdirs());
+		Assert.assertNull( this.manager.findIconFromPath( "/app/whatever.jpg" ));
+
+		File singleJpgFile = new File( descDir, "whatever.jpg" );
+		Assert.assertTrue( singleJpgFile.createNewFile());
+		Assert.assertEquals( singleJpgFile, this.manager.findIconFromPath( "/app/whatever.jpg" ));
+		Assert.assertEquals( singleJpgFile, this.manager.findIconFromPath( "/app/whatever.png" ));
+		Assert.assertEquals( singleJpgFile, this.manager.findIconFromPath( "/app/whatever.cool" ));
 	}
 }

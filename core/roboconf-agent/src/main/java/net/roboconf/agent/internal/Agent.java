@@ -106,12 +106,51 @@ public class Agent implements AgentMessagingInterface {
 		this.messagingClient = new ReconfigurableClientAgent();
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
+		
+		// Do we need to override properties with user data?
+		if( Utils.isEmptyOrWhitespaces( this.targetId )) {
+			this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
+
+		} else if( ! this.overrideProperties ) {
+			this.logger.fine( "User data are NOT supposed to be used." );
+
+		} else {
+			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
+			AgentProperties props = null;
+			if( AgentConstants.PLATFORM_EC2.equalsIgnoreCase( this.targetId )
+					|| AgentConstants.PLATFORM_OPENSTACK.equalsIgnoreCase( this.targetId ))
+				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
+
+			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.targetId ))
+				props = UserDataUtils.findParametersForAzure( this.logger );
+
+			else
+				this.logger.warning( "Unknown target ID. No user data will be retrieved." );
+
+			if( props != null ) {
+				String errorMessage = props.validate();
+				if( errorMessage != null )
+					this.logger.severe( "An error was found in user data. " + errorMessage );
+
+				this.applicationName = props.getApplicationName();
+				this.ipAddress = props.getIpAddress();
+				this.scopedInstancePath = props.getScopedInstancePath();
+
+				try {
+					UserDataUtils.reconfigureMessaging(
+						System.getProperty("karaf.etc"),
+						props.getMessagingConfiguration(),
+						this.messagingType);
+				} catch(IOException e) {
+					this.logger.severe("Error in messaging reconfiguration from user data: " + e);
+				}
+			}
+		}
 		reconfigure();
 
 		TimerTask timerTask = new HeartbeatTask( this );
 		this.heartBeatTimer = new Timer( "Roboconf's Heartbeat Timer @ Agent", true );
 		this.heartBeatTimer.scheduleAtFixedRate( timerTask, Constants.HEARTBEAT_PERIOD, Constants.HEARTBEAT_PERIOD );
-
 
 		this.logger.info( "Agent '" + getAgentId() + "' was launched." );
 	}
@@ -312,38 +351,6 @@ public class Agent implements AgentMessagingInterface {
 		if( this.messagingClient == null ) {
 			this.logger.info( "The agent has not yet been started. Configuration is dropped." );
 			return;
-		}
-
-		// Do we need to override properties with user data?
-		if( Utils.isEmptyOrWhitespaces( this.targetId )) {
-			this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
-
-		} else if( ! this.overrideProperties ) {
-			this.logger.fine( "User data are NOT supposed to be used." );
-
-		} else {
-			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
-			AgentProperties props = null;
-			if( AgentConstants.PLATFORM_EC2.equalsIgnoreCase( this.targetId )
-					|| AgentConstants.PLATFORM_OPENSTACK.equalsIgnoreCase( this.targetId ))
-				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
-
-			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.targetId ))
-				props = UserDataUtils.findParametersForAzure( this.logger );
-
-			else
-				this.logger.warning( "Unknown target ID. No user data will be retrieved." );
-
-			if( props != null ) {
-				String errorMessage = props.validate();
-				if( errorMessage != null )
-					this.logger.severe( "An error was found in user data. " + errorMessage );
-
-				this.applicationName = props.getApplicationName();
-				this.ipAddress = props.getIpAddress();
-				this.scopedInstancePath = props.getScopedInstancePath();
-
-			}
 		}
 
 		// Update the messaging connection

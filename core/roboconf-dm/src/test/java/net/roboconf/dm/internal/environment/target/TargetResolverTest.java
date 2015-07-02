@@ -65,7 +65,7 @@ public class TargetResolverTest {
 		File appDir = this.folder.newFolder( "roboconf_test" );
 		ApplicationTemplate appTpl = new ApplicationTemplate();
 		appTpl.setDirectory( appDir );
-		
+
 		Application app = new Application( "my app", appTpl ).directory( appDir );
 		ManagedApplication ma = new ManagedApplication( app );
 
@@ -101,7 +101,10 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_invalidInstallerName() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ApplicationTemplate tpl = new ApplicationTemplate( "test" );
+		tpl.setDirectory( appDir );
+
+		Application app = new Application( "my app", tpl );
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
@@ -130,7 +133,10 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_unknownTargetId_emptyArray() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ApplicationTemplate tpl = new ApplicationTemplate( "test" );
+		tpl.setDirectory( appDir );
+
+		Application app = new Application( "my app", tpl );
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
@@ -159,7 +165,10 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_unknownTargetId_nullArray() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ApplicationTemplate tpl = new ApplicationTemplate( "test" );
+		tpl.setDirectory( appDir );
+
+		Application app = new Application( "my app", tpl );
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
@@ -188,7 +197,10 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_noTargetIdInProperties() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ApplicationTemplate tpl = new ApplicationTemplate( "test" );
+		tpl.setDirectory( appDir );
+
+		Application app = new Application( "my app", tpl );
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
@@ -199,7 +211,7 @@ public class TargetResolverTest {
 		Utils.writeStringInto( "", propsFile );
 
 		TargetResolver resolver = new TargetResolver();
-		resolver.findTargetHandler( null, ma, rootInstance );
+		resolver.findTargetHandler( new ArrayList<TargetHandler>( 0 ), ma, rootInstance );
 	}
 
 
@@ -207,7 +219,10 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_noTargetProperties() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ApplicationTemplate tpl = new ApplicationTemplate( "test" );
+		tpl.setDirectory( appDir );
+
+		Application app = new Application( "my app", tpl );
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "target" ));
@@ -220,7 +235,10 @@ public class TargetResolverTest {
 	public void testFindTargetHandler_invalidInstaller() throws Exception {
 
 		File appDir = this.folder.newFolder( "roboconf_test" );
-		Application app = new Application( "my app", new ApplicationTemplate()).directory( appDir );
+		ApplicationTemplate tpl = new ApplicationTemplate( "test" );
+		tpl.setDirectory( appDir );
+
+		Application app = new Application( "my app", tpl );
 		ManagedApplication ma = new ManagedApplication( app );
 
 		Instance rootInstance = new Instance( "root" ).component( new Component( "comp" ).installerName( "not target" ));

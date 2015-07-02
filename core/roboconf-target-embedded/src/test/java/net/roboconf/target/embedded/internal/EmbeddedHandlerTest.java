@@ -28,6 +28,7 @@ package net.roboconf.target.embedded.internal;
 import java.util.HashMap;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
 
@@ -49,7 +50,11 @@ public class EmbeddedHandlerTest {
 		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
 
 		Assert.assertNotNull( target.createMachine( new HashMap<String,String>(), new HashMap<String,String>(), null, null ));
-		target.configureMachine( new HashMap<String,String>(), new HashMap<String,String>(), null, null, null );
+		target.configureMachine(
+				new HashMap<String,String>( 0 ),
+				new HashMap<String,String>( 0 ),
+				null, null, null,
+				new Instance());
 
 		target.terminateMachine( new HashMap<String,String>(), null );
 		target.terminateMachine( null, "anything" );

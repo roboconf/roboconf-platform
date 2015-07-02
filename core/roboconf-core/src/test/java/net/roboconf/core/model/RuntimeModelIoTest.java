@@ -120,7 +120,7 @@ public class RuntimeModelIoTest {
 
 				Assert.assertEquals( 2, exportedVariables.size());
 				Assert.assertTrue( exportedVariables.containsKey( "MySQL.ip" ));
-				Assert.assertEquals( "3306", exportedVariables.get( "MySQL.port" ));
+				Assert.assertNull( exportedVariables.get( "MySQL.port" ));
 				Assert.assertEquals( 0, importedVariables.size());
 
 				SourceReference sr = result.getObjectToSource().get( childComponent );
@@ -169,6 +169,11 @@ public class RuntimeModelIoTest {
 				Assert.assertEquals( i, child.getParent());
 				Assert.assertEquals( "MySQL", child.getName());
 				Assert.assertEquals( "MySQL", child.getComponent().getName());
+
+				Map<String,String> exportedVariables = InstanceHelpers.findAllExportedVariables( child );
+				Assert.assertEquals( "3306", exportedVariables.get( "MySQL.port" ));
+				Assert.assertNull( child.getComponent().exportedVariables.get( "MySQL.port" ));
+				Assert.assertNull( child.getComponent().exportedVariables.get( "port" ));
 
 			} else if( "Tomcat VM 1".equals( i.getName())) {
 				Assert.assertEquals( "VM", i.getComponent().getName());
@@ -276,11 +281,14 @@ public class RuntimeModelIoTest {
 
 		Component vmOpenstack = ComponentHelpers.findComponent( g, "VM_Openstack" );
 		Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( vmOpenstack );
-		Assert.assertEquals( 2, exportedVariables.size());
+		Assert.assertEquals( 4, exportedVariables.size());
 		Assert.assertEquals( "else", exportedVariables.get( "VM_Openstack.something" ));
 		Assert.assertNull( exportedVariables.get( "Virtual_Machine.ip" ));
+
 		Assert.assertTrue( exportedVariables.containsKey( "Virtual_Machine.ip" ));
-		Assert.assertFalse( exportedVariables.containsKey( "VM_Openstack.ip" ));
+		Assert.assertTrue( exportedVariables.containsKey( "VM_Openstack.ip" ));
+		Assert.assertTrue( exportedVariables.containsKey( "VM.ip" ));
+
 		Assert.assertEquals( ComponentHelpers.findComponent( g, "VM" ), vmOpenstack.getExtendedComponent());
 		Assert.assertNotNull( vmOpenstack.getExtendedComponent());
 

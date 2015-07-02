@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.beans.Application;
@@ -128,5 +129,63 @@ public class ConfigurationUtilsTest {
 
 		tpl.setQualifier( "v2" );
 		Assert.assertEquals( "test - v2", ConfigurationUtils.findTemplateDirectory( tpl, configurationDirectory ).getName());
+	}
+
+
+	@Test
+	public void testFindIcon_app() throws Exception {
+
+		File configDir = this.folder.newFolder();
+		File appDir = ConfigurationUtils.findApplicationDirectory( "app", configDir );
+		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
+		Assert.assertTrue( descDir.mkdirs());
+
+		File trickFile = new File( descDir, "directory.jpg" );
+		Assert.assertTrue( trickFile.mkdirs());
+		Assert.assertNull( ConfigurationUtils.findIcon( "app", null, configDir ));
+
+		File singleJpgFile = new File( descDir, "whatever.jpg" );
+		Assert.assertTrue( singleJpgFile.createNewFile());
+		Assert.assertEquals( singleJpgFile, ConfigurationUtils.findIcon( "app", null, configDir ));
+
+		File defaultFile = new File( descDir, "application.sVg" );
+		Assert.assertTrue( defaultFile.createNewFile());
+		Assert.assertEquals( defaultFile, ConfigurationUtils.findIcon( "app", null, configDir ));
+		Assert.assertEquals( defaultFile, ConfigurationUtils.findIcon( "app", "", configDir ));
+	}
+
+
+	@Test
+	public void testFindIcon_tpl() throws Exception {
+
+		File configDir = this.folder.newFolder();
+		ApplicationTemplate tpl = new ApplicationTemplate( "app" ).qualifier( "v1" );
+
+		File appDir = ConfigurationUtils.findTemplateDirectory( tpl, configDir );
+		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
+		Assert.assertTrue( descDir.mkdirs());
+
+		File trickFile = new File( descDir, "file.txt" );
+		Assert.assertTrue( trickFile.createNewFile());
+		Assert.assertNull( ConfigurationUtils.findIcon( "app", "v1", configDir ));
+
+		File singleJpgFile = new File( descDir, "whatever.jpg" );
+		Assert.assertTrue( singleJpgFile.createNewFile());
+		Assert.assertEquals( singleJpgFile, ConfigurationUtils.findIcon( "app", "v1", configDir ));
+
+		File defaultFile = new File( descDir, "application.sVg" );
+		Assert.assertTrue( defaultFile.createNewFile());
+		Assert.assertEquals( defaultFile, ConfigurationUtils.findIcon( "app", "v1", configDir ));
+
+		Assert.assertNull( ConfigurationUtils.findIcon( "app", "", configDir ));
+		Assert.assertNull( ConfigurationUtils.findIcon( "app", "v2", configDir ));
+	}
+
+
+	@Test
+	public void testFindIcon_nullConfigDirectory() throws Exception {
+
+		// In case we try to get an icon while the DM is reconfigured
+		Assert.assertNull( ConfigurationUtils.findIcon( "app", "v1", null ));
 	}
 }

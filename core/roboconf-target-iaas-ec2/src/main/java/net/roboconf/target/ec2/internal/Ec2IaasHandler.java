@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
@@ -112,8 +113,9 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler
+	 * #machineConfigurator(java.util.Map, java.util.Map, java.lang.String,
+	 * java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public MachineConfigurator machineConfigurator(
@@ -121,11 +123,12 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String machineId,
 			String scopedInstancePath,
-			String applicationName ) {
+			String applicationName,
+			Instance scopedInstance ) {
 
 		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
 		String tagName = applicationName + "." + rootInstanceName;
-		return new Ec2MachineConfigurator( targetProperties, machineId, tagName );
+		return new Ec2MachineConfigurator( targetProperties, machineId, tagName, scopedInstance );
 	}
 
 
@@ -165,13 +168,14 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String, String> targetProperties, String instanceId ) throws TargetException {
+	public void terminateMachine( Map<String, String> targetProperties, String machineId ) throws TargetException {
 
-		this.logger.fine( "Terminating machine '" + instanceId + "'." );
+		this.logger.fine( "Terminating machine '" + machineId + "'." );
+		cancelMachineConfigurator( machineId );
 		try {
 			AmazonEC2 ec2 = createEc2Client( targetProperties );
 			TerminateInstancesRequest terminateInstancesRequest = new TerminateInstancesRequest();
-			terminateInstancesRequest.withInstanceIds( instanceId );
+			terminateInstancesRequest.withInstanceIds( machineId );
 			ec2.terminateInstances( terminateInstancesRequest );
 
 		} catch( Exception e ) {

@@ -80,6 +80,10 @@ public class AgentInitializationTest extends DmTest {
 	@Inject
 	protected Manager manager;
 
+	/* Uncomment this for full logging
+	public AgentInitializationTest() {
+		this.showLogs = true;
+	}*/
 
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {

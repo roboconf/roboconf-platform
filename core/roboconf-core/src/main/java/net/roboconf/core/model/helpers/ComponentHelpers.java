@@ -177,31 +177,7 @@ public final class ComponentHelpers {
 	 * @return a non-null map of exported variables (key = variable name, value = variable value).
 	 */
 	public static Map<String,String> findAllExportedVariables( Component component ) {
-
-		// Go through all the super types
-		Map<String,String> result = new HashMap<String,String> ();
-		List<Component> extendedComponents = findAllExtendedComponents( component );
-		Collections.reverse( extendedComponents );
-
-		// Process all the facets first
-		for( Component c : extendedComponents ) {
-			for( Facet f : c.getFacets())
-				result.putAll( findAllExportedVariables( f ));
-		}
-
-		// Process the components then
-		for( Component c : extendedComponents ) {
-			// If a variable name already exists from the inherited one, we can directly override it.
-			// Otherwise, we may have to update the variable prefix.
-			for( Map.Entry<String,String> var : c.exportedVariables.entrySet()) {
-				if( result.containsKey( var.getKey()))
-					result.put( var.getKey(), var.getValue());
-				else
-					result.put( fixVariableName( c, var.getKey()), var.getValue());
-			}
-		}
-
-		return result;
+		return findAllExportedVariables( component, new HashSet<Component>( 0 ));
 	}
 
 
@@ -748,6 +724,91 @@ public final class ComponentHelpers {
 			}
 		}
 
+		return result;
+	}
+
+
+	/**
+	 * Finds all the exported variables for a given component.
+	 * <p>
+	 * This method also fixes the name of the exported variables (set the right prefixes, if required).
+	 * </p>
+	 * <p>
+	 * A component can override variables values of the components its extends.
+	 * It can also override variable values from inherited and associated facets.
+	 * </p>
+	 * <p>
+	 * To solve conflicts between facets and inherited components, facets variables are
+	 * resolved first. Then, component values are injected and may thus override facet
+	 * values.
+	 * </p>
+	 *
+	 * @param component a non-null component
+	 * @param alreadyChecked a non-null list of already checked components (prevents cycles)
+	 * @return a non-null map of exported variables (key = variable name, value = variable value).
+	 */
+	private static Map<String,String> findAllExportedVariables( Component component, Set<Component> alreadyChecked ) {
+		Map<String,String> result = new HashMap<String,String> ();
+
+		// Get all the inherited variables from facets
+		for( Facet f : component.getFacets())
+			result.putAll( findAllExportedVariables( f ));
+
+		// Now, get all the exported variables by super components.
+		// Recursive call here...
+		List<Component> extendedComponents = findAllExtendedComponents( component );
+		Collections.reverse( extendedComponents );
+		extendedComponents.remove( component );
+		extendedComponents.removeAll( alreadyChecked );
+
+		Set<Component> ac = new HashSet<>( alreadyChecked );
+		ac.add( component );
+		for( Component c : extendedComponents )
+			result.putAll( findAllExportedVariables( c, ac ));
+
+		// Handle current variables
+		Map<String,String> newVariables = new HashMap<> ();
+		for( Map.Entry<String,String> entry : component.exportedVariables.entrySet()) {
+
+			// If a variable name already exists from the inherited one, we can directly override it.
+			if( result.containsKey( entry.getKey()))
+				newVariables.put( entry.getKey(), entry.getValue());
+
+			// Or it is a new value
+			else
+				newVariables.put( fixVariableName( component, entry.getKey()), entry.getValue());
+
+			// Override inherited variables.
+			// If the component exports a and that its inherits Alpha.a, then we should
+			// override the value of Alpha.a too. In some way, we skip prefixes...
+			for( String inheritedName : result.keySet()) {
+				String nameSuffix = VariableHelpers.parseVariableName( inheritedName ).getValue();
+				if( entry.getKey().equals( nameSuffix ))
+					newVariables.put( inheritedName, entry.getValue());
+			}
+		}
+
+		result.putAll( newVariables );
+
+		// Now, we must replicate variables that do not have the right prefix.
+		// Let's assume that A extends B, that A exports a1, a2, and that B exports b1.
+		// Then...
+		// A exports A.a1 and A.a2. So far, so good.
+		// Now, B exports B.b1.
+		//
+		// Besides, B is also a "A". So, its exports A.a1 and A.a2 (if someone wants to know all the A instances, B should respond).
+		// Now, if someone only wants to know B instances, B should propagate inherited information with its name prefix.
+		// So, B will also export B.a1 and B.a2
+		newVariables.clear();;
+		for( Map.Entry<String,String> entry : result.entrySet()) {
+			Map.Entry<String,String> var = VariableHelpers.parseVariableName( entry.getKey());
+			String newKey = component.getName() + "." + var.getValue();
+			if( ! component.getName().equals( var.getKey())
+					&& ! result.containsKey( newKey ))
+				newVariables.put( newKey, entry.getValue());
+		}
+
+		result.putAll( newVariables );
 		return result;
 	}
 }

@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
@@ -133,8 +134,8 @@ public class InMemoryHandler implements TargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler#configureMachine(java.util.Map, java.util.Map,
+	 * java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public void configureMachine(
@@ -142,7 +143,8 @@ public class InMemoryHandler implements TargetHandler {
 		Map<String,String> messagingConfiguration,
 		String machineId,
 		String scopedInstancePath,
-		String applicationName )
+		String applicationName,
+		Instance scopedInstance )
 	throws TargetException {
 
 		this.logger.fine( "Configuring machine '" + machineId + "': nothing to configure." );
