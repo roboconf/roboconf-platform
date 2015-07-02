@@ -111,6 +111,32 @@ public class ApplicationResource implements IApplicationResource {
 
 	/*
 	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #setDescription(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Response setDescription( String applicationName, String desc ) {
+
+		this.logger.fine( "Request: changing the description of " + applicationName + "." );
+		Response response = Response.ok().build();
+		ManagedApplication ma;
+
+		try {
+			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+			else
+				this.manager.updateApplication( ma, desc );
+
+		} catch( IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
 	 * @see net.roboconf.dm.internal.rest.api.IApplicationWs
 	 * #deployAndStartAll(java.lang.String, java.lang.String)
 	 */

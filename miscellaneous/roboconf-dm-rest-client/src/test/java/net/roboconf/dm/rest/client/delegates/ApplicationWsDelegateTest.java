@@ -80,7 +80,7 @@ public class ApplicationWsDelegateTest {
 	private Manager manager;
 	private HttpServer httpServer;
 	private TestClientDm msgClient;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@After
@@ -185,6 +185,24 @@ public class ApplicationWsDelegateTest {
 		Assert.assertEquals( 1, messages.size());
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( instancePath, ((MsgCmdChangeInstanceState) messages.get( 0 )).getInstancePath());
+	}
+
+
+	@Test
+	public void testSetDescription_ok() throws Exception {
+
+		String newDesc = "a new description";
+		this.app.setDirectory( this.folder.newFolder());
+
+		Assert.assertFalse( newDesc.equals( this.app.getDescription()));
+		this.client.getApplicationDelegate().setDescription( this.app.getName(), newDesc );
+		Assert.assertEquals( newDesc, this.app.getDescription());
+	}
+
+
+	@Test( expected = ApplicationException.class )
+	public void testSetDescription_noApp() throws Exception {
+		this.client.getApplicationDelegate().setDescription( "error", "new description" );
 	}
 
 

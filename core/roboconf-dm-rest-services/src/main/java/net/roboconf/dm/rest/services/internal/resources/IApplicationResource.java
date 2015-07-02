@@ -70,6 +70,17 @@ public interface IApplicationResource {
 
 
 	/**
+	 * Sets the description of the application.
+	 * @param applicationName the application name
+	 * @param desc the new description
+	 * @return a response
+	 */
+	@POST
+	@Path( "/description" )
+	Response setDescription( @PathParam("name") String applicationName, String desc );
+
+
+	/**
 	 * Deploys and starts several instances at once.
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)

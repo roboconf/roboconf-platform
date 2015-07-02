@@ -98,6 +98,30 @@ public class ApplicationWsDelegate {
 
 
 	/**
+	 * Changes the description of an application.
+	 * @param applicationName the application name
+	 * @param newDesc the new description to set
+	 * @throws ApplicationException if something went wrong
+	 */
+	public void setDescription( String applicationName, String newDesc )
+	throws ApplicationException {
+
+		this.logger.finer( "Updating the description of application " + applicationName + "." );
+
+		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "description" );
+		ClientResponse response = path.accept( MediaType.TEXT_PLAIN ).post( ClientResponse.class, newDesc );
+
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
+			String value = response.getEntity( String.class );
+			this.logger.finer( response.getStatusInfo() + ": " + value );
+			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+		}
+
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
+	}
+
+
+	/**
 	 * Deploys and starts several instances at once.
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null for all the application instances)
