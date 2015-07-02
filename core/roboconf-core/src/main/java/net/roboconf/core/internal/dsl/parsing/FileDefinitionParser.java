@@ -90,7 +90,7 @@ public class FileDefinitionParser {
 	 * Reads a definition file.
 	 * @return an instance of {@link FileDefinition} (never null)
 	 * <p>
-	 * Parsing errors are stored in the result.<br />
+	 * Parsing errors are stored in the result.<br>
 	 * See {@link FileDefinition#getParsingErrors()}.
 	 * </p>
 	 */
@@ -302,7 +302,7 @@ public class FileDefinitionParser {
 	 * @param line a string (not null)
 	 * @return an array of 2 strings
 	 * <p>
-	 * Index 0: the line without the in-line comment. Never null.<br />
+	 * Index 0: the line without the in-line comment. Never null.<br>
 	 * Index 1: the in-line comment (if not null, it starts with a '#' symbol).
 	 * </p>
 	 */

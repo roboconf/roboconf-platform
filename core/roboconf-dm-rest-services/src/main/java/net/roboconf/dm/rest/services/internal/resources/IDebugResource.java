@@ -93,7 +93,6 @@ public interface IDebugResource {
 	 * </ul>
 	 * </li>
 	 * </ol>
-	 * </p>
 	 *
 	 * @param message a customized message content.
 	 * @param timeout the timeout in milliseconds (ms) to wait before considering the message is lost.
@@ -123,7 +122,6 @@ public interface IDebugResource {
 	 * </ul>
 	 * </li>
 	 * </ol>
-	 * </p>
 	 *
 	 * @param applicationName  the name of the application holding the targeted agent.
 	 * @param rootInstanceName the identifier of the targeted agent.

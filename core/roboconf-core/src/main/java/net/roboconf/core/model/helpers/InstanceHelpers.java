@@ -96,9 +96,9 @@ public final class InstanceHelpers {
 	/**
 	 * Builds a list of instances ordered hierarchically.
 	 * <p>
-	 * Basically, we give it a root instance (level 0).<br />
-	 * This instance is added in the list head.<br />
-	 * Then, it adds child instances at level 1.<br />
+	 * Basically, we give it a root instance (level 0).<br>
+	 * This instance is added in the list head.<br>
+	 * Then, it adds child instances at level 1.<br>
 	 * Then, at level 2, etc.
 	 * </p>
 	 * <p>
@@ -331,9 +331,9 @@ public final class InstanceHelpers {
 	 * @param application an application (not null)
 	 * @return a non-null list of instances
 	 * <p>
-	 * The result is a list made up of ordered lists.<br />
-	 * root-0, child-0-1, child-0-2, child-0-1-1, etc.<br />
-	 * root-1, child-1-1, child-1-2, child-1-1-1, etc.<br />
+	 * The result is a list made up of ordered lists.<br>
+	 * root-0, child-0-1, child-0-2, child-0-1-1, etc.<br>
+	 * root-1, child-1-1, child-1-2, child-1-1-1, etc.<br>
 	 * </p>
 	 * <p>
 	 * It means the resulting list can be considered as valid for starting instances
@@ -357,7 +357,7 @@ public final class InstanceHelpers {
 	 * 		<li>Check that the graph(s) allow it (coherence with respect to the components).</li>
 	 * 		<li>Insert the instance.</li>
 	 * 		<li>Validate the application after insertion.</li>
-	 * 		<li>Critical error => revert the insertion.</li>
+	 * 		<li>Critical error =&gt; revert the insertion.</li>
 	 * </ol>
 	 * <p>
 	 * This method assumes the application is already valid before the insertion.

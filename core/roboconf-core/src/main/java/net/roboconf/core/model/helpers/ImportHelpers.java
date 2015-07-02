@@ -52,7 +52,7 @@ public final class ImportHelpers {
 	/**
 	 * Determines whether an instance has all the imports it needs.
 	 * <p>
-	 * Master of Obvious said:<br />
+	 * Master of Obvious said:<br>
 	 * By definition, optional imports are not considered to be required.
 	 * </p>
 	 *

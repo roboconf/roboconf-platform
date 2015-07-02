@@ -103,7 +103,7 @@ public class FromInstanceDefinition {
 	 * @param file the file to parse
 	 * @return a non-null collection of root rootInstances wrapped in machines
 	 * <p>
-	 * The result is not significant if there are errors.<br />
+	 * The result is not significant if there are errors.<br>
 	 * Conversion errors are available by using {@link #getErrors()}.
 	 * </p>
 	 */
