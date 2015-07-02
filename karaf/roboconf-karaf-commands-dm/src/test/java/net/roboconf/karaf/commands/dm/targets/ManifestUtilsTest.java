@@ -51,4 +51,24 @@ public class ManifestUtilsTest {
 		props.put( ManifestUtils.BUNDLE_VERSION, version );
 		Assert.assertEquals( version, ManifestUtils.findBundleVersion( props ));
 	}
+
+
+	@Test
+	public void testFindRoboconfVersion() {
+
+		Assert.assertEquals( "0.4", ManifestUtils.findRoboconfVersion( "0.4" ));
+		Assert.assertEquals( "0.4", ManifestUtils.findRoboconfVersion( "0.4.0" ));
+		Assert.assertEquals( "0.4.1", ManifestUtils.findRoboconfVersion( "0.4.1" ));
+		Assert.assertEquals( "0.4-SNAPSHOT", ManifestUtils.findRoboconfVersion( "0.4.0-SNAPSHOT" ));
+		Assert.assertEquals( "0.4.1-SNAPSHOT", ManifestUtils.findRoboconfVersion( "0.4.1-SNAPSHOT" ));
+		Assert.assertEquals( "12.52", ManifestUtils.findRoboconfVersion( "12.52.0" ));
+		Assert.assertEquals( "12.52-SNAPSHOT", ManifestUtils.findRoboconfVersion( "12.52.0-SNAPSHOT" ));
+		Assert.assertEquals( "12.52.1-SNAPSHOT", ManifestUtils.findRoboconfVersion( "12.52.1-SNAPSHOT" ));
+		Assert.assertEquals( "12.52.1-snapshoT", ManifestUtils.findRoboconfVersion( "12.52.1-snapshoT" ));
+
+		Assert.assertEquals( "0.4.0.1", ManifestUtils.findRoboconfVersion( "0.4.0.1" ));
+		Assert.assertEquals( "whatever", ManifestUtils.findRoboconfVersion( "whatever" ));
+		Assert.assertEquals( "", ManifestUtils.findRoboconfVersion( "" ));
+		Assert.assertNull( ManifestUtils.findRoboconfVersion( null ));
+	}
 }

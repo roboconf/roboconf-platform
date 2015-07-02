@@ -50,7 +50,8 @@ public class InstallTargetCommand extends OsgiCommandSupport {
 	 * Constructor.
 	 */
 	public InstallTargetCommand() {
-		this.roboconfVersion = ManifestUtils.findBundleVersion();
+		String bundleVersion = ManifestUtils.findBundleVersion();
+		this.roboconfVersion = ManifestUtils.findRoboconfVersion( bundleVersion );
 	}
 
 
