@@ -37,7 +37,7 @@ import com.sun.jersey.spi.container.ContainerResponseFilter;
 /**
  * A filter to handle CORS.
  * <p>
- * CORS means Cross-Origin Domain.<br />
+ * CORS means Cross-Origin Domain.<br>
  * We use this filter to allow our REST clients to be served from
  * a different domain than our REST API.
  * </p>

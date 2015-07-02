@@ -100,7 +100,7 @@ public class FromGraphDefinition {
 	 * @param file the initial file to parse
 	 * @return a graph(s)
 	 * <p>
-	 * The result is not significant if there are errors.<br />
+	 * The result is not significant if there are errors.<br>
 	 * Conversion errors are available by using {@link #getErrors()}.
 	 * </p>
 	 */

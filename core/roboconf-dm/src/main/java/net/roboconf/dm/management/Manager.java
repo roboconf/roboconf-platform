@@ -81,10 +81,10 @@ import net.roboconf.target.api.TargetHandler;
  * of instances. Therefore, the DM does the minimal set of actions on instances.
  * </p>
  * <p>
- * This class is designed to work with OSGi, iPojo and Admin Config.<br />
+ * This class is designed to work with OSGi, iPojo and Admin Config.<br>
  * But it can also be used programmatically.
  * </p>
- * <code><pre>
+ * <pre><code>
  * // Configure
  * Manager manager = new Manager();
  * manager.setMessagingType( "rabbitmq" );
@@ -94,7 +94,7 @@ import net.roboconf.target.api.TargetHandler;
  *
  * // Connect to the messaging server
  * manager.start();
- * </pre></code>
+ * </code></pre>
  *
  * @author Noël - LIG
  * @author Pierre-Yves Gibello - Linagora

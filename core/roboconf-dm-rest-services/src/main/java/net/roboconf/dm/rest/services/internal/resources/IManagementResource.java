@@ -86,7 +86,7 @@ public interface IManagementResource {
 	 * equivalent solution) to upload a file on the DM's machine.
 	 * </p>
 	 * <p>
-	 * This operation covers this use case.<br />
+	 * This operation covers this use case.<br>
 	 * It will load an application from a file which was already uploaded
 	 * on the DM's machine.
 	 * </p>

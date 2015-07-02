@@ -58,7 +58,7 @@ import net.roboconf.core.utils.Utils;
  * runtime but also in external tools.
  * </p>
  * <p>
- * This is why we allow this class to break modularity.<br />
+ * This is why we allow this class to break modularity.<br>
  * And once again, it aims at bringing useful feedback to users.
  * </p>
  *
