@@ -116,7 +116,7 @@ public class MsgCmdAddInstance extends Message {
 	}
 
 	/**
-	 * @param overriddenExports the overriddenExports to set
+	 * @param overridenExports the overriddenExports to set
 	 */
 	public void setOverridenExports( Map<String,String> overridenExports ) {
 		this.overridenExports = overridenExports;

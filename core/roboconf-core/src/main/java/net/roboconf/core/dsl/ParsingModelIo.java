@@ -54,8 +54,8 @@ public final class ParsingModelIo {
 	 * @param ignoreComments true to ignore comments during parsing
 	 * @return an instance of {@link FileDefinition} (never null)
 	 * <p>
-	 * Parsing errors are stored in the result.<br />
-	 * See {@link FileRelations#getParingErrors()}.
+	 * Parsing errors are stored in the result.<br>
+	 * See {@link FileDefinition#getParsingErrors()}.
 	 * </p>
 	 */
 	public static FileDefinition readConfigurationFile( File relationsFile, boolean ignoreComments ) {

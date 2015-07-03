@@ -44,9 +44,9 @@ public interface TargetHandler {
 	/**
 	 * Creates a machine.
 	 * <p>
-	 * The machine must have a Roboconf agent installed on it.<br />
+	 * The machine must have a Roboconf agent installed on it.<br>
 	 * This method only deals with the creation of a VM. Configuring the network,
-	 * storage and so on, should be done {@link #configureMachine(Map, Map, String, String, String)}.
+	 * storage and so on, should be done {@link #configureMachine(Map, Map, String, String, String, Instance)}.
 	 * </p>
 	 *
 	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)

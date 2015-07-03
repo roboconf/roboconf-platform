@@ -31,7 +31,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IClient.ListenerCommand;
+import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 
 import org.junit.Test;

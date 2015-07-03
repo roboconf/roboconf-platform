@@ -120,7 +120,7 @@ public final class ResourceUtils {
 	 * </p>
 	 *
 	 * @param applicationFilesDirectory the application's directory
-	 * @param componentName the component name (may be null)
+	 * @param component a component (may be null)
 	 * @return a non-null file (that may not exist)
 	 */
 	public static File findInstanceResourcesDirectory( File applicationFilesDirectory, Component component ) {

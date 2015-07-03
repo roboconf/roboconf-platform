@@ -80,7 +80,7 @@ public abstract class AbstractType implements Serializable {
 
 	/**
 	 * Creates a bi-directional relation between this element and another type.
-	 * @param facet a facet
+	 * @param type an abstract type (facet or component)
 	 */
 	public void addChild( AbstractType type ) {
 		this.children.add( type );

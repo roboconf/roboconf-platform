@@ -85,7 +85,6 @@ public class RuleBasedEventHandler {
 	/**
 	 * Reacts upon autonomic monitoring message (aka "autonomic event").
 	 * @param event The autonomic event message
-	 * @throws Exception
 	 */
 	public void handleEvent( ManagedApplication ma, MsgNotifAutonomic event ) {
 

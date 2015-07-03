@@ -62,7 +62,7 @@ public class DockerfileGenerator {
 	 *
 	 * @param baseImageName the name of the base image used to create a new image
 	 * <p>
-	 * This parameter can be null.<br />
+	 * This parameter can be null.<br>
 	 * In this case, "ubuntu" will be used as the
 	 * base image name (<code>FROM ubuntu</code>).
 	 * </p>

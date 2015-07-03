@@ -35,6 +35,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;

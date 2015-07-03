@@ -213,7 +213,7 @@ public final class Utils {
 	/**
 	 * Copies the content from in into os.
 	 * <p>
-	 * Neither <i>in</i> nor <i>os</i> are closed by this method.<br />
+	 * Neither <i>in</i> nor <i>os</i> are closed by this method.<br>
 	 * They must be explicitly closed after this method is called.
 	 * </p>
 	 *
@@ -234,7 +234,7 @@ public final class Utils {
 	/**
 	 * Copies the content from in into outputFile.
 	 * <p>
-	 * <i>in</i> is not closed by this method.<br />
+	 * <i>in</i> is not closed by this method.<br>
 	 * It must be explicitly closed after this method is called.
 	 * </p>
 	 *
@@ -359,7 +359,6 @@ public final class Utils {
 	/**
 	 * Equivalent to <code>listAllFiles( directory, false )</code>.
 	 * @param directory an existing directory
-	 * @param includeDirectories true to include directories, false to exclude them from the result
 	 * @return a non-null list of files
 	 */
 	public static List<File> listAllFiles( File directory ) {
@@ -652,7 +651,7 @@ public final class Utils {
 	/**
 	 * Writes an exception's stack trace into a string.
 	 * <p>
-	 * This method used to be public.<br />
+	 * This method used to be public.<br>
 	 * Its visibility was reduced to promote {@link #logException(Logger, Exception)},
 	 * which has better performances.
 	 * </p>

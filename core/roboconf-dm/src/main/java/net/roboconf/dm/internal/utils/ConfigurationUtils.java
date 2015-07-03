@@ -90,7 +90,6 @@ public final class ConfigurationUtils {
 	 * Saves the instances into a file.
 	 * @param ma the application (not null)
 	 * @param configurationDirectory the configuration directory
-	 * @throws IOException if something went wrong
 	 */
 	public static void saveInstances( ManagedApplication ma, File configurationDirectory ) {
 
@@ -149,7 +148,8 @@ public final class ConfigurationUtils {
 
 	/**
 	 * Finds the icon associated with an application template.
-	 * @param tpl the template
+	 * @param name the application or template name
+	 * @param qualifier the template qualifier or <code>null</code> for an application
 	 * @param configurationDirectory the DM's configuration directory
 	 * @return an existing file, or null if no icon was found
 	 */

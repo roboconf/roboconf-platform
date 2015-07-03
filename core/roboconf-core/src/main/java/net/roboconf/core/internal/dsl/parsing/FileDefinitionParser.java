@@ -90,8 +90,8 @@ public class FileDefinitionParser {
 	 * Reads a definition file.
 	 * @return an instance of {@link FileDefinition} (never null)
 	 * <p>
-	 * Parsing errors are stored in the result.<br />
-	 * See {@link FileDefinition#getParingErrors()}.
+	 * Parsing errors are stored in the result.<br>
+	 * See {@link FileDefinition#getParsingErrors()}.
 	 * </p>
 	 */
 	public FileDefinition read() {
@@ -302,7 +302,7 @@ public class FileDefinitionParser {
 	 * @param line a string (not null)
 	 * @return an array of 2 strings
 	 * <p>
-	 * Index 0: the line without the in-line comment. Never null.<br />
+	 * Index 0: the line without the in-line comment. Never null.<br>
 	 * Index 1: the in-line comment (if not null, it starts with a '#' symbol).
 	 * </p>
 	 */
@@ -391,7 +391,12 @@ public class FileDefinitionParser {
 	 * @param line
 	 * @param br
 	 * @param holderInstance
-	 * @return
+	 * @return an integer code
+	 * <p>
+	 * {@value P_CODE_NO} if not recognized,
+	 * {@value P_CODE_YES} if it is and {@value P_CODE_CANCEL} otherwise.
+	 * </p>
+	 *
 	 * @throws IOException
 	 */
 	private int recognizePropertiesHolder( String line, BufferedReader br, AbstractBlockHolder holderInstance )
@@ -504,7 +509,7 @@ public class FileDefinitionParser {
 
 	/**
 	 * @param br
-	 * @return
+	 * @return the next read line, or null if the buffer's end was reached
 	 * @throws IOException
 	 */
 	String nextLine( BufferedReader br ) throws IOException {

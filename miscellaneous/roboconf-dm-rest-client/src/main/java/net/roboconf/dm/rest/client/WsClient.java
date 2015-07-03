@@ -57,7 +57,7 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
  * Thrown exceptions contain the error code and the error message.
  * </p>
  * <p>
- * About the logging policy...<br />
+ * About the logging policy...<br>
  * Every client method logs an entry when it is invoked.
  * It logs a second entry once the REST invocation has completed, and provided a runtime
  * exception was not thrown by the REST library.

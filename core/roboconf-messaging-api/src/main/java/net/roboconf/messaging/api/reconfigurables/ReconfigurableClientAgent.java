@@ -30,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.factory.MessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.dismiss.DismissClientAgent;

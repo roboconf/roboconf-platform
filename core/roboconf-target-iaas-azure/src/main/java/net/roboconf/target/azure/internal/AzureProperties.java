@@ -87,7 +87,7 @@ public class AzureProperties {
 	}
 
 	/**
-	 * @param createCloudServiceFile the createCloudServiceFile.xml template file to set
+	 * @param createCloudServiceTemplate the createCloudServiceFile.xml template file to set
 	 */
 	public void setCreateCloudServiceTemplate( String createCloudServiceTemplate ) {
 		this.createCloudServiceTemplate = createCloudServiceTemplate;
@@ -101,7 +101,7 @@ public class AzureProperties {
 	}
 
 	/**
-	 * @param createDeploymentFile the createDeployment.xml template file to set
+	 * @param createDeploymentTemplate the createDeployment.xml template file to set
 	 */
 	public void setCreateDeploymentTemplate( String createDeploymentTemplate ) {
 		this.createDeploymentTemplate = createDeploymentTemplate;

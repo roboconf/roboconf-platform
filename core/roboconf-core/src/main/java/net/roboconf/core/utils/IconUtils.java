@@ -63,7 +63,7 @@ public final class IconUtils {
 	/**
 	 * <i>Encodes</i> the URL for an application or a template.
 	 * <p>
-	 * For an application, it looks like <code>/app/icon.jpg</code>.<br />
+	 * For an application, it looks like <code>/app/icon.jpg</code>.<br>
 	 * For a template, it looks like <code>/app/qualifier/icon.jpg</code>.
 	 * </p>
 	 * <p>

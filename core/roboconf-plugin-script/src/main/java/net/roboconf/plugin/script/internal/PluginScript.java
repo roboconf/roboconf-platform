@@ -48,7 +48,7 @@ import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 /**
  * The plug-in invokes a script (eg. shell) on every life cycle change.
  * <p>
- * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br />
+ * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br>
  * Let's take an example with the "start" action to understand the way this plug-in works.
  * </p>
  * <ul>
@@ -207,7 +207,7 @@ public class PluginScript implements PluginInterface {
      * Generates a file from the template and the instance.
      * @param template
      * @param instance
-     * @return
+     * @return the generated file
      * @throws IOException
      */
     protected File generateTemplate(File template, Instance instance) throws IOException {

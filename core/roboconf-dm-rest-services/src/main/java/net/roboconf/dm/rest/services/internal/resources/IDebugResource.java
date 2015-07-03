@@ -40,6 +40,7 @@ import javax.ws.rs.core.Response;
 
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.UrlConstants;
+import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
@@ -83,7 +84,7 @@ public interface IDebugResource {
 	 * <li>It sends the message to the messaging server. The recipient is the DM itself.</li>
 	 * <li>It waits for the messaging server to propagate the message to the DM. A wait timeout can be specified by the
 	 * {@code timeout} parameter (default is 1000ms, max
-	 * {@value net.roboconf.dm.rest.services.internal.resources.impl.DebugResource#MAXIMUM_TIMEOUT}ms). Then:
+	 * {@value DebugResource#MAXIMUM_TIMEOUT} ms). Then:
 	 * <ul>
 	 * <li>If the message is received before the timeout expires, a positive {@code 200 OK} response is
 	 * returned.</li>
@@ -92,7 +93,6 @@ public interface IDebugResource {
 	 * </ul>
 	 * </li>
 	 * </ol>
-	 * </p>
 	 *
 	 * @param message a customized message content.
 	 * @param timeout the timeout in milliseconds (ms) to wait before considering the message is lost.
@@ -113,7 +113,7 @@ public interface IDebugResource {
 	 * <li>It sends the 'PING' message to the specified {@code root-instance-name}.</li>
 	 * <li>It waits for the agent to respond a 'PONG' to the DM. A wait timeout can be specified by the {@code timeout}
 	 * parameter (default is 1000ms, max
-	 * {@value net.roboconf.dm.rest.services.internal.resources.impl.DebugResource#MAXIMUM_TIMEOUT}ms). Then:
+	 * {@value DebugResource#MAXIMUM_TIMEOUT} ms). Then:
 	 * <ul>
 	 * <li>If the message is received before the timeout expires, a positive {@code 200 OK} response is
 	 * returned.</li>
@@ -122,7 +122,6 @@ public interface IDebugResource {
 	 * </ul>
 	 * </li>
 	 * </ol>
-	 * </p>
 	 *
 	 * @param applicationName  the name of the application holding the targeted agent.
 	 * @param rootInstanceName the identifier of the targeted agent.

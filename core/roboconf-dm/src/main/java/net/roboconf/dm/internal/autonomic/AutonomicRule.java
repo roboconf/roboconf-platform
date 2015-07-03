@@ -69,7 +69,7 @@ public class AutonomicRule {
 
 	/**
 	 * Set the reaction info for this rule.
-	 * @param reactionId The reaction info
+	 * @param reactionInfo The reaction info
 	 */
 	public void setReactionInfo(String reactionInfo) {
 		this.reactionInfo = reactionInfo;

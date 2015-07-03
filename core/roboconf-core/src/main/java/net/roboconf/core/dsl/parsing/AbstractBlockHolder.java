@@ -114,7 +114,7 @@ public abstract class AbstractBlockHolder extends AbstractBlock {
 
 	/**
 	 * @return the supported properties (not null)
-	 * @see Constants
+	 * @see net.roboconf.core.Constants
 	 */
 	public abstract String[] getSupportedPropertyNames();
 }

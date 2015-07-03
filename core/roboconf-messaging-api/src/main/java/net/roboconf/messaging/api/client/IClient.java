@@ -37,15 +37,6 @@ import net.roboconf.messaging.api.messages.Message;
 public interface IClient {
 
 	/**
-	 * Start or stop listening to events.
-	 *
-	 * @author Vincent Zurczak - Linagora
-	 */
-	enum ListenerCommand {
-		START, STOP
-	}
-
-	/**
 	 * Sets the message queue where the client can store the messages to process.
 	 * @param messageQueue the message queue
 	 */
@@ -95,7 +86,8 @@ public interface IClient {
 	 * </p>
 	 * @return the provider-specific messaging configuration of this client. The returned map is unmodifiable.
 	 */
-	// TODO: /!\ they may be differences between DM & agents messaging configurations (i.e HTTP server/client certificate, passwords, ...). Exposing everything in the same configuration may raise serious security issues.
+	// TODO: /!\ they may be differences between DM & agents messaging configurations (i.e HTTP server/client certificate, passwords, ...).
+	// Exposing everything in the same configuration may raise serious security issues.
 	Map<String, String> getConfiguration();
 
 }

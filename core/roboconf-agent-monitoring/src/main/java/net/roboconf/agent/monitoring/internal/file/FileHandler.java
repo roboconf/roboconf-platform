@@ -50,7 +50,7 @@ public class FileHandler extends MonitoringHandler {
 
 	/**
 	 * Constructor.
-	 * @param eventId
+	 * @param eventName
 	 * @param applicationName
 	 * @param vmInstanceName
 	 * @param fileContent

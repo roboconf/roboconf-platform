@@ -50,7 +50,7 @@ public class MsgNotifInstanceChanged extends Message {
 	/**
 	 * Constructor.
 	 * @param applicationName the application name
-	 * @param componentInstance
+	 * @param instance the changed instance
 	 */
 	public MsgNotifInstanceChanged( String applicationName, Instance instance ) {
 		super();
