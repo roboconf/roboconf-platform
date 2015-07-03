@@ -82,23 +82,12 @@
 						<feature>shell-compat</feature>
 						<feature>feature</feature>
 						<feature>instance</feature>
-						<feature>jaas</feature>
-						<feature>diagnostic</feature>
 						<feature>log</feature>
-						<feature>service</feature>
-						<feature>webconsole</feature>
 						<feature>aries-blueprint</feature>
 						<feature>ssh</feature>
 						<feature>bundle</feature>
 						<feature>config</feature>
-						<feature>deployer</feature>
-						<feature>system</feature>
-						<feature>package</feature>
-
-						<feature>management</feature>
-						<feature>webconsole</feature>
 						<feature>ipojo-all</feature>
-						<feature>ipojo-webconsole</feature>
 						<feature>roboconf-agent</feature>
 					</bootFeatures>
 				</configuration>
