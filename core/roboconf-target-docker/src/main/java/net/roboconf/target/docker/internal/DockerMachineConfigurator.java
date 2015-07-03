@@ -285,6 +285,9 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// No need to get the real image ID... Docker has it.
 			// Besides, we search images by both IDs and tags.
 
+			// Update the state to create the container right after.
+			this.state = State.HAS_IMAGE;
+
 		} catch( Exception e ) {
 			// Release the lock so that we can try again (e.g. if the base image was not already there).
 			this.imagesInCreation.remove( imageId );
