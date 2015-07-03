@@ -74,7 +74,7 @@ public class ApplicationResourceTest {
 	private ManagedApplication ma;
 	private Manager manager;
 	private TestClientDm msgClient;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@After
@@ -224,6 +224,38 @@ public class ApplicationResourceTest {
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 0, messages.size());
+	}
+
+
+	@Test
+	public void testSetDescription_ok() throws Exception {
+
+		String newDesc = "a new description";
+		Assert.assertFalse( newDesc.equals( this.app.getDescription()));
+		this.app.setDirectory( this.folder.newFolder());
+
+		Response resp = this.resource.setDescription( this.app.getName(), newDesc );
+		Assert.assertEquals( newDesc, this.app.getDescription());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testSetDescription_appNotFound() throws Exception {
+		Response resp = this.resource.setDescription( "error", "new description" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testSetDescription_ioException() throws Exception {
+
+		String newDesc = "a new description";
+		Assert.assertFalse( newDesc.equals( this.app.getDescription()));
+		this.app.setDirectory( this.folder.newFile());
+
+		Response resp = this.resource.setDescription( this.app.getName(), newDesc );
+		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
 	}
 
 

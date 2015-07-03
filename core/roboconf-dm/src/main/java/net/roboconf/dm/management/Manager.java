@@ -578,6 +578,19 @@ public class Manager {
 
 
 	/**
+	 * Updates an application with a new description.
+	 * @param app the application to update
+	 * @param newDesc the new description
+	 * @throws IOException
+	 */
+	public void updateApplication( ManagedApplication ma, String newDesc ) throws IOException {
+		checkConfiguration();
+		this.appManager.updateApplication( ma.getApplication(), newDesc );
+		this.logger.fine( "The description of application " + ma.getApplication().getName() + " was successfully updated." );
+	}
+
+
+	/**
 	 * Deletes an application.
 	 * @param ma the managed application
 	 * @throws UnauthorizedActionException if parts of the application are still running

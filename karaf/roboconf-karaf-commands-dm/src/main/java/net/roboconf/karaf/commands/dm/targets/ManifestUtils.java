@@ -30,6 +30,8 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.sshd.common.util.IoUtils;
 
@@ -46,6 +48,38 @@ public final class ManifestUtils {
 	 */
 	private ManifestUtils() {
 		// nothing
+	}
+
+
+	/**
+	 * Finds the Roboconf version from the bundle version.
+	 * <p>
+	 * If the third digit in the version is 0, then we remove it.
+	 * </p>
+	 * <p>
+	 * Bundle-version = 0.4.0 => 0.4
+	 * <br />
+	 * Bundle-version = 0.4.0-SNAPSHOT => 0.4-SNAPSHOT
+	 * <br />
+	 * Bundle-version = 0.4.1 => 0.4.1
+	 * </p>
+	 *
+	 * @param bundleVersion the bundle version (can be null)
+	 * @return null if the bundle version was null, or the updated version otherwise
+	 */
+	public static String findRoboconfVersion( String bundleVersion ) {
+
+		String result = null;
+		if( bundleVersion != null ) {
+			Pattern pattern = Pattern.compile( "(\\d+\\.\\d+)\\.0(-SNAPSHOT)?$", Pattern.CASE_INSENSITIVE );
+			Matcher m = pattern.matcher( bundleVersion );
+			if( m.find())
+				result = m.replaceFirst( "$1$2" );
+			else
+				result = bundleVersion;
+		}
+
+		return result;
 	}
 
 

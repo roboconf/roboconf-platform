@@ -118,6 +118,23 @@ public class ApplicationMngrDelegate {
 
 
 	/**
+	 * Updates an application with a new description.
+	 * @param app the application to update
+	 * @param newDesc the new description
+	 * @throws IOException
+	 */
+	public void updateApplication( Application app, String newDesc ) throws IOException {
+
+		app.setDescription( newDesc );
+		File targetDirectory = app.getDirectory();
+
+		File descFile = new File( targetDirectory, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Utils.createDirectory( descFile.getParentFile());
+		ApplicationDescriptor.save( descFile, app );
+	}
+
+
+	/**
 	 * Deletes an application.
 	 * @param app an application
 	 * @param configurationDirectory the DM's configuration directory

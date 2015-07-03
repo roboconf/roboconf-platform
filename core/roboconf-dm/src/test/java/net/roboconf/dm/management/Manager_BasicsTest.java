@@ -432,6 +432,39 @@ public class Manager_BasicsTest {
 	}
 
 
+	@Test
+	public void testUpdateApplication_success() throws Exception {
+
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+
+		String newDesc = "new description";
+		Assert.assertEquals( 0, app.getDirectory().listFiles().length );
+		Assert.assertFalse( newDesc.equals( app.getDescription()));
+
+		this.manager.updateApplication( ma, newDesc );
+		Assert.assertEquals( newDesc, app.getDescription());
+		Assert.assertEquals( 1, app.getDirectory().listFiles().length );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testUpdateApplication_saveFailure() throws Exception {
+
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFile());
+
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+
+		String newDesc = "new description";
+		this.manager.updateApplication( ma, newDesc );
+	}
+
+
 	@Test( expected = InvalidApplicationException.class )
 	public void testCreateApplication_invalidTemplate() throws Exception {
 
