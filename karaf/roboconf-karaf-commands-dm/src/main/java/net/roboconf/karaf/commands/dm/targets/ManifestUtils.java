@@ -67,16 +67,16 @@ public final class ManifestUtils {
 	 * @param bundleVersion the bundle version (can be null)
 	 * @return null if the bundle version was null, or the updated version otherwise
 	 */
-	public static String findRoboconfVersion( String bundleVersion ) {
+	public static String findMavenVersion( String bundleVersion ) {
 
-		String result = null;
+		String result = bundleVersion;
 		if( bundleVersion != null ) {
-			Pattern pattern = Pattern.compile( "(\\d+\\.\\d+)\\.0(-SNAPSHOT)?$", Pattern.CASE_INSENSITIVE );
-			Matcher m = pattern.matcher( bundleVersion );
+			result = bundleVersion.replaceAll( "(?i:(\\.|-)SNAPSHOT$)", "-SNAPSHOT" );
+
+			Pattern pattern = Pattern.compile( "(\\d+\\.\\d+)\\.0(-SNAPSHOT)?$" );
+			Matcher m = pattern.matcher( result );
 			if( m.find())
 				result = m.replaceFirst( "$1$2" );
-			else
-				result = bundleVersion;
 		}
 
 		return result;
