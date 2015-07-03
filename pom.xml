@@ -73,8 +73,6 @@
 
 		<!-- Distributions -->
 		<module>karaf/roboconf-karaf-commands-dm</module>
-		<module>karaf/roboconf-karaf-branding-agent</module>
-		<module>karaf/roboconf-karaf-branding-dm</module>
 		<module>karaf/roboconf-karaf-feature-agent</module>
 		<module>karaf/roboconf-karaf-feature-dm</module>
 		<module>karaf/roboconf-karaf-dist-agent</module>
@@ -93,7 +91,7 @@
 	<properties>
 		<jersey.stack.version>1.18.2</jersey.stack.version>
 		<jackson.stack.version>2.3.1</jackson.stack.version>
-		<karaf.version>3.0.3</karaf.version>
+		<karaf.version>4.0.0</karaf.version>
 		<ipojo.version>1.12.1</ipojo.version>
 		<jclouds.version>1.8.1</jclouds.version>
 	</properties>

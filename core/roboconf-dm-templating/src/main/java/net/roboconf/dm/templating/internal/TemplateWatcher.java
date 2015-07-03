@@ -90,7 +90,7 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	 * The templates being watched, index by the name of the scoped application (or {@code null} for global templates)
 	 * and then by the template identifier.
 	 *
-	 * @GuardedBy lock
+	 * GuardedBy lock
 	 */
 	private final Map<String, Map<String, TemplateEntry>> templates = new HashMap<String, Map<String, TemplateEntry>>();
 
@@ -178,7 +178,7 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	/**
 	 * Start this template watcher.
 	 *
-	 * @GuardedBy this.manager.globalLock.writeLock()
+	 * GuardedBy this.manager.globalLock.writeLock()
 	 */
 	public void start() {
 		try {
@@ -192,7 +192,7 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	/**
 	 * Stop this template watcher.
 	 *
-	 * @GuardedBy this.manager.globalLock.writeLock()
+	 * GuardedBy this.manager.globalLock.writeLock()
 	 */
 	public void stop() {
 		try {
@@ -272,7 +272,7 @@ public class TemplateWatcher extends FileAlterationListenerAdaptor {
 	 * Add/update the given template entry in the {@code templates} map.
 	 *
 	 * @param templateEntry the template entry to add/update.
-	 * @GuardedBy this.lock.writeLock()
+	 * GuardedBy this.lock.writeLock()
 	 */
 	private void updateTemplateEntry( final TemplateEntry templateEntry ) {
 		Map<String, TemplateEntry> specificTemplates = this.templates.get(templateEntry.appName);

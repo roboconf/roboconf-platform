@@ -77,7 +77,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 
 	/**
 	 * The Roboconf configuration directory.
-	 * @GuardedBy this.lock
+	 * GuardedBy this.lock
 	 * @see #startTemplating(File)
 	 */
 	private File configDir;
@@ -85,7 +85,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 	/**
 	 * The templates directory: {@code ${configDir}}/{@value #TEMPLATE_DIRECTORY}.
 	 *
-	 * @GuardedBy this.lock
+	 * GuardedBy this.lock
 	 * @see #resetTemplateWatcher()
 	 */
 	private File templateDir;
@@ -93,7 +93,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 	/**
 	 * The target directory: {@code ${configDir}}/{@value #TARGET_DIRECTORY}.
 	 *
-	 * @GuardedBy this.lock
+	 * GuardedBy this.lock
 	 * @see #resetTemplateWatcher()
 	 */
 	private File targetDir;
@@ -101,7 +101,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 	/**
 	 * The poll interval for the template watcher, or any negative value to disable.
 	 *
-	 * @GuardedBy this.lock
+	 * GuardedBy this.lock
 	 * @see #setPollInterval(long)
 	 */
 	private long pollInterval;
@@ -109,7 +109,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 	/**
 	 * The monitored applications, indexed by name.
 	 *
-	 * @GuardedBy this.lock
+	 * GuardedBy this.lock
 	 * @see #addApplication(Application)
 	 * @see #removeApplication(Application)
 	 * @see #stopTemplating()
@@ -118,7 +118,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 
 	/**
 	 * The template watcher.
-	 * @GuardedBy this.lock
+	 * GuardedBy this.lock
 	 */
 	private TemplateWatcher templateWatcher;
 
@@ -190,7 +190,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 
 	/**
 	 * Updates the template watcher after a change in the templating manager configuration.
-	 * @GuardedBy this.lock.writeLock()
+	 * GuardedBy this.lock.writeLock()
 	 */
 	private void resetTemplateWatcher() {
 		// The template & poll interval may have changed. The template watcher must be updated because it is tracking
@@ -294,7 +294,7 @@ public class TemplatingManager implements TemplatingManagerService, TemplatingSe
 	 * Does nothing if templating is started, fail otherwise.
 	 *
 	 * @throws IllegalStateException if templating is not started.
-	 * @GuardedBy this.lock
+	 * GuardedBy this.lock
 	 */
 	private void ensureTemplatingIsStarted() {
 		if (this.configDir == null) {

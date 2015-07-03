@@ -69,12 +69,6 @@
 			<scope>runtime</scope>
 		</dependency>
 		
-		<!-- Branding -->
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-karaf-branding-agent</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -84,7 +78,23 @@
 				<artifactId>karaf-maven-plugin</artifactId>
 				<configuration>
 					<bootFeatures>
-						<feature>standard</feature>
+						<!-- Karaf 4.x has split the "standard" features into many sub-features -->
+						<feature>shell-compat</feature>
+						<feature>feature</feature>
+						<feature>instance</feature>
+						<feature>jaas</feature>
+						<feature>diagnostic</feature>
+						<feature>log</feature>
+						<feature>service</feature>
+						<feature>webconsole</feature>
+						<feature>aries-blueprint</feature>
+						<feature>ssh</feature>
+						<feature>bundle</feature>
+						<feature>config</feature>
+						<feature>deployer</feature>
+						<feature>system</feature>
+						<feature>package</feature>
+
 						<feature>management</feature>
 						<feature>webconsole</feature>
 						<feature>ipojo-all</feature>
@@ -92,31 +102,6 @@
 						<feature>roboconf-agent</feature>
 					</bootFeatures>
 				</configuration>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>copy</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>copy</goal>
-						</goals>
-						<configuration>
-							<artifactItems>
-								<artifactItem>
-									<groupId>net.roboconf</groupId>
-									<artifactId>roboconf-karaf-branding-agent</artifactId>
-									<version>${project.version}</version>
-									<outputDirectory>target/assembly/lib</outputDirectory>
-									<destFileName>branding.jar</destFileName>
-								</artifactItem>
-							</artifactItems>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 			
 			<plugin>
@@ -132,7 +117,10 @@
 						<configuration>
 							<target>
 								<copy todir="target/assembly/etc" overwrite="true">
-									<fileset dir="${basedir}/karaf-resources" includes="**/*.cfg" />
+									<fileset dir="${basedir}/karaf-resources">
+										<include name="**/*.cfg"/>
+										<include name="**/*.properties"/>
+									</fileset>
 								</copy>
 							</target>
 						</configuration>

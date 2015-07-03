@@ -67,7 +67,7 @@ import net.roboconf.plugin.api.PluginInterface;
  * have the running state to RUNNING or to STOPPED.
  * </p>
  * <p>
- * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br />
+ * The action is one of "deploy", "start", "stop", "undeploy" and "update".<br>
  * Let's take an example with the "start" action to understand the way this plug-in works.
  * </p>
  * <ul>
@@ -403,7 +403,7 @@ public class PluginPuppet implements PluginInterface {
 	/**
 	 * Returns a String representing all the exported variables and their value.
 	 * <p>
-	 * Must be that way:<br />
+	 * Must be that way:<br>
 	 * {@code varName1 => 'varValue1', varName2 => undef, varName3 => 'varValue3'}
 	 * </p>
 	 * <p>
@@ -411,8 +411,8 @@ public class PluginPuppet implements PluginInterface {
 	 * is not required.
 	 * </p>
 	 * <p>
-	 * As an example...<br />
-	 * Export "Redis.port = 4040" will generate "port => 4040".<br />
+	 * As an example...<br>
+	 * Export "Redis.port = 4040" will generate "port => 4040".<br>
 	 * Export "Redis.port = null" will generate "port => undef".
 	 * </p>
 	 *

@@ -36,7 +36,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 /**
  * A message processor is in charge of (guess what) processing messages.
  * <p>
- * The DM is supposed to have only one message processor running.<br />
+ * The DM is supposed to have only one message processor running.<br>
  * Same thing for an agent. When the DM or an agent stops, the processor thread should be stopped.
  * </p>
  * <p>

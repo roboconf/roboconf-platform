@@ -45,7 +45,7 @@ import net.roboconf.core.utils.Utils;
  * Rather than blocking a thread, this class provides a timer to schedule configuration steps.
  * </p>
  * <p>
- * To use this class, just extend it and implement {@link MachineConfigurator}.<br />
+ * To use this class, just extend it and implement {@link MachineConfigurator}.<br>
  * A machine configurator is in charge of configuring a machine. There will be one instance per
  * VM instance. This instance will be invoked periodically until the machine configuration is completed.
  * </p>

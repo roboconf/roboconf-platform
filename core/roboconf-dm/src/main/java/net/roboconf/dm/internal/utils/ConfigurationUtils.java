@@ -90,7 +90,6 @@ public final class ConfigurationUtils {
 	 * Saves the instances into a file.
 	 * @param ma the application (not null)
 	 * @param configurationDirectory the configuration directory
-	 * @throws IOException if something went wrong
 	 */
 	public static void saveInstances( ManagedApplication ma, File configurationDirectory ) {
 

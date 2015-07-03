@@ -107,7 +107,7 @@ public final class UriUtils {
 	 * with respect to the URI.
 	 * </p>
 	 * <p>
-	 * If the suffix is already an URL, its is returned.<br />
+	 * If the suffix is already an URL, its is returned.<br>
 	 * If the suffix is a relative file path and cannot be resolved, an exception is thrown.
 	 * </p>
 	 * <p>

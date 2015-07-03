@@ -58,7 +58,7 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
 /**
  * Checks delayed initialization.
  * <p>
- * Configure an agent correctly and the DM incorrectly.<br />
+ * Configure an agent correctly and the DM incorrectly.<br>
  * Wait a little bit and reconfigure the DM with the right messaging
  * credentials. Make sure the agent's model is initialized correctly.
  * </p>
@@ -183,6 +183,9 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// Update the manager.
 		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
 		this.manager.reconfigure();
+
+		// Sleep for a while, to let the RabbitMQ client factory arrive.
+		Thread.sleep(1000);
 
 		// Artificially closes the DM-side client, to prevent Agent <-> DM exchanges.
 		this.manager.getMessagingClient().closeConnection();
