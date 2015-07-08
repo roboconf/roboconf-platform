@@ -242,6 +242,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 			// Start the build.
 			// This will block the current thread until the creation is complete.
+			this.logger.fine( "Asking Docker to build the image from our Dockerfile." );
 			response = this.dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
 
 			// Reading the stream does not take time as everything is sent at once by Docker.
@@ -254,7 +255,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 			// No need to get the real image ID... Docker has it.
 			// Besides, we search images by both IDs and tags.
-
 
 		} catch( Exception e ) {
 			throw new TargetException( e );
