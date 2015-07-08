@@ -271,10 +271,9 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			dockerfile = gen.generateDockerfile();
 			response = this.dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
 
-			// Creating an image can take time, as system commands may be executed (apt-get...).
-			// Copying the output makes the thread last longer. Therefore, given the way the threaded
-			// target handler is implemented, other Docker creations/configurations will be delayed.
-			// This is why we check whether getting the output is really necessary.
+			// The previous REST invocation is blocking.
+			// Reading the stream does not take time as everything is sent at once
+			// by Docker.
 			if( this.logger.isLoggable( Level.FINE )) {
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				Utils.copyStream(response, out);
