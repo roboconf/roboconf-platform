@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.services.internal.cors;
+package net.roboconf.dm.rest.services.cors;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;

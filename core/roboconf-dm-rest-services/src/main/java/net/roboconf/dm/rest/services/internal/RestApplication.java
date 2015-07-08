@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.services.internal.cors.ResponseCorsFilter;
+import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
