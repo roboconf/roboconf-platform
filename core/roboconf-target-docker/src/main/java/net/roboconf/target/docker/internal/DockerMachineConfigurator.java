@@ -259,13 +259,24 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 				throw new TargetException( "Base image '" + baseImageRef + "' was not found. Image generation is not possible." );
 		}
 
+		// Build the packages list.
+		String packages = this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES );
+		final String additionalPackages = this.targetProperties.get( DockerHandler.ADDITIONAL_PACKAGES );
+		if (!Utils.isEmptyOrWhitespaces(additionalPackages)) {
+			if (Utils.isEmptyOrWhitespaces(packages)) {
+				// Sets to the default here, so we do not override the JRE package.
+				packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
+			}
+			packages = packages + ' ' + additionalPackages;
+		}
+
 		// Create the image
 		InputStream response = null;
 		File dockerfile = null;
 		try {
 			DockerfileGenerator gen = new DockerfileGenerator(
 					this.targetProperties.get( DockerHandler.AGENT_PACKAGE ),
-					this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES ),
+					packages,
 					baseImageRef );
 
 			dockerfile = gen.generateDockerfile();
