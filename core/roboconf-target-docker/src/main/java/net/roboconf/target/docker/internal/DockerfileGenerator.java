@@ -47,7 +47,7 @@ public class DockerfileGenerator {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String agentPackURL;
 
-	private String packages = "openjdk-7-jre-headless";
+	private String packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
 	private boolean isTar = true;
 	private String baseImageName = "ubuntu";
 
