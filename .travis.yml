@@ -1,4 +1,5 @@
 language: java
+sudo: false
 
 # Test several JDK
 jdk:
@@ -11,10 +12,13 @@ services:
   - rabbitmq
 
 # Install Puppet to test the Puppet plugin.
-# Do not use "sudo gem install", it alters the system path.
+addons:
+  apt:
+    packages:
+    - wget
+    - rubygems
+
 before_script:
-  - sudo apt-get update -y
-  - sudo apt-get install rubygems
   - gem install puppet
   - npm install -g gulp
 
