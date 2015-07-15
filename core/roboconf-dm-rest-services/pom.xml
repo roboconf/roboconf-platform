@@ -198,6 +198,7 @@
 							javax.servlet.http,
 							*
 						</Import-Package>
+						<Export-Package>net.roboconf.dm.rest.services.cors;version="${project.version}"</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>

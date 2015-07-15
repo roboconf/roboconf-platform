@@ -73,13 +73,12 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * @param registry the {@code MessagingClientFactoryRegistry} for this client.
 	 */
 	public synchronized void setRegistry(MessagingClientFactoryRegistry registry) {
-		if (this.registry != null) {
+		if (this.registry != null)
 			this.registry.removeListener(this);
-		}
+
 		this.registry = registry;
-		if (registry != null) {
+		if (registry != null)
 			registry.addListener(this);
-		}
 	}
 
 	/**
@@ -92,20 +91,33 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * found, or if there is no OSGi execution context.
 	 */
 	public static MessagingClientFactoryRegistry lookupMessagingClientFactoryRegistryService() {
+
 		MessagingClientFactoryRegistry result = null;
 		final Bundle bundle = FrameworkUtil.getBundle(ReconfigurableClient.class);
-		if (bundle != null) {
+		final Logger logger = Logger.getLogger( ReconfigurableClient.class.getName());
+
+		if( bundle != null ) {
+			logger.info( "The messaging registry is used in an OSGi environment." );
 			final BundleContext bundleContext = bundle.getBundleContext();
+
 			if (bundleContext != null) {
+				logger.fine( "The bundle context was found." );
+
 				// There must be only *one* MessagingClientFactoryRegistry service.
 				final ServiceReference<MessagingClientFactoryRegistry> reference =
 						bundleContext.getServiceReference(MessagingClientFactoryRegistry.class);
+
+				// The service will be unget when this bundle stops. No need to worry!
 				if (reference != null) {
+					logger.fine( "The service reference was found." );
 					result = bundleContext.getService(reference);
-					// The service will be unget when this bundle stops. No need to worry!
 				}
 			}
+
+		} else {
+			logger.info( "The messaging registry is NOT used in an OSGi environment." );
 		}
+
 		return result;
 	}
 
@@ -320,5 +332,4 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 			}
 		}
 	}
-
 }
