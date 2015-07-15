@@ -164,24 +164,33 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		if( useCommand ) {
 			// Add the command
 			String command = this.targetProperties.get( DockerHandler.COMMAND );
-			if( Utils.isEmptyOrWhitespaces( command ))
+			if( Utils.isEmptyOrWhitespaces( command )) {
+
+				// No command is specified: we start the agent.
 				command = "/usr/local/roboconf-agent/start.sh";
 
-			args.add( command );
+				args.add( command );
 
-			// Pass the name of the configuration file for the messaging.
-			// By convention, we will pass it as the first command argument.
-			String messagingType = this.messagingConfiguration.get( "net.roboconf.messaging.type" );
-			args.add( "etc/net.roboconf.messaging." + messagingType + ".cfg" );
+				// Pass the name of the configuration file for the messaging.
+				// By convention, we will pass it as the first command argument.
+				String messagingType = this.messagingConfiguration.get( "net.roboconf.messaging.type" );
+				args.add( "etc/net.roboconf.messaging." + messagingType + ".cfg" );
 
-			// Agent configuration is prefixed with 'agent.'
-			args.add( "agent.application-name=" + this.applicationName );
-			args.add( "agent.scoped-instance-path=" + this.scopedInstancePath );
-			args.add( "agent.messaging-type=" + messagingType );
+				// Agent configuration is prefixed with 'agent.'
+				args.add( "agent.application-name=" + this.applicationName );
+				args.add( "agent.scoped-instance-path=" + this.scopedInstancePath );
+				args.add( "agent.messaging-type=" + messagingType );
 
-			// Messaging parameters are prefixed with 'msg.'
-			for( Map.Entry<String,String> e : this.messagingConfiguration.entrySet())
-				args.add( "msg." + e.getKey() + '=' + e.getValue());
+				// Messaging parameters are prefixed with 'msg.'
+				for( Map.Entry<String,String> e : this.messagingConfiguration.entrySet())
+					args.add( "msg." + e.getKey() + '=' + e.getValue());
+
+			} else {
+				// A command has been specified... Split it!
+				for (String arg : command.split("\\s+")) {
+					args.add(arg);
+				}
+			}
 		}
 
 		// Deal with the options.
