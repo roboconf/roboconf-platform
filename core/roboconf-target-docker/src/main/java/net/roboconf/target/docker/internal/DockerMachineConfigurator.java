@@ -30,6 +30,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
@@ -53,6 +57,7 @@ import com.github.dockerjava.api.model.Image;
 public class DockerMachineConfigurator implements MachineConfigurator {
 
 	private static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
+	private static Gson GSON = new Gson();
 
 	/**
 	 * The various states this class instances may have.
@@ -152,22 +157,28 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	void createContainer( String imageId ) throws TargetException {
 		this.logger.info( "Creating container " + this.machineId + " from image " + imageId );
 
-		// Build the command line, passing the messaging configuration.
-		List<String> args = new ArrayList<> ();
-
 		// We do not have to execute our command. A default command may have been set into the Dockerfile.
 		// In this case, it means the user does not want the DM to pass dynamic parameters in the command.
 		// We at least use it in tests (do not launch a real Roboconf agent, just an empty container).
 		String useCommandAS = this.targetProperties.get( DockerHandler.USE_COMMAND );
 		boolean useCommand = useCommandAS == null ? true : Boolean.valueOf( useCommandAS );
 
+		// Get the command line to run for the created container.
+		List<String> args;
 		if( useCommand ) {
-			// Add the command
-			String command = this.targetProperties.get( DockerHandler.COMMAND );
-			if( Utils.isEmptyOrWhitespaces( command )) {
+			// First get the custom docker.run.exec property.
+			args = parseRunExecLine(this.targetProperties.get(DockerHandler.RUN_EXEC));
 
-				// No command is specified: we start the agent.
-				command = "/usr/local/roboconf-agent/start.sh";
+			if (args == null) {
+
+				// No docker.run.exec property (or invalid), fall back to the default command line.
+				// Build the command line, passing the agent & messaging configuration.
+				args = new ArrayList<> ();
+
+				// Add the command
+				String command = this.targetProperties.get( DockerHandler.COMMAND );
+				if( Utils.isEmptyOrWhitespaces( command ))
+					command = "/usr/local/roboconf-agent/start.sh";
 
 				args.add( command );
 
@@ -184,13 +195,12 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 				// Messaging parameters are prefixed with 'msg.'
 				for( Map.Entry<String,String> e : this.messagingConfiguration.entrySet())
 					args.add( "msg." + e.getKey() + '=' + e.getValue());
-
-			} else {
-				// A command has been specified... Split it!
-				for (String arg : command.split("\\s+")) {
-					args.add(arg);
-				}
 			}
+
+		} else {
+
+			// We don't use any command line. the Dockerfile should contain a RUN command.
+			args = Collections.emptyList();
 		}
 
 		// Deal with the options.
@@ -323,5 +333,23 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 */
 	private String fixImageId( String imageId ) {
 		return Utils.isEmptyOrWhitespaces( imageId ) ? DEFAULT_IMG_NAME : imageId;
+	}
+
+	/**
+	 * Parse the given {@code docker.run.exec} property value.
+	 * @param runExecLine the {@code docker.run.exec} property value.
+	 * @return the {@code docker.run.exec} command + arguments array.
+	 */
+	private List<String> parseRunExecLine( String runExecLine ) {
+		List<String> result = null;
+		if ( ! Utils.isEmptyOrWhitespaces(runExecLine) ) {
+			try {
+				result = Arrays.asList( GSON.fromJson(runExecLine, String[].class) );
+			} catch (final JsonSyntaxException e) {
+				this.logger.warning("Cannot parse property " + DockerHandler.RUN_EXEC + ": " + runExecLine);
+				Utils.logException(this.logger, e);
+			}
+		}
+		return result;
 	}
 }
