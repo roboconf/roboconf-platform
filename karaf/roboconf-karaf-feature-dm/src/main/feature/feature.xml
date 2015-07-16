@@ -19,7 +19,7 @@
 		<bundle>mvn:net.roboconf/roboconf-messaging-rabbitmq/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-rest-commons/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-rest-services/${project.version}</bundle>
-		<bundle>mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
+		<bundle start-level="85">mvn:net.roboconf/roboconf-dm/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}/war</bundle>
 		<bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-dm-templating/${project.version}</bundle>

@@ -185,7 +185,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 		this.manager.reconfigure();
 
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
-		Thread.sleep(1000);
+		Thread.sleep(2000);
 
 		// Artificially closes the DM-side client, to prevent Agent <-> DM exchanges.
 		this.manager.getMessagingClient().closeConnection();

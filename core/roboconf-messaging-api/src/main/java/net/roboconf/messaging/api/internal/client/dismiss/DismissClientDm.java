@@ -49,51 +49,51 @@ public class DismissClientDm implements IDmClient {
 
 	@Override
 	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public boolean isConnected() {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 		return false;
 	}
 
 
 	@Override
 	public void openConnection() throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void closeConnection() throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void sendMessageToAgent( Application application, Instance instance, Message message )
 	throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void listenToAgentMessages( Application application, ListenerCommand command )
 	throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 	@Override
 	public void sendMessageToTheDm( Message msg ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void listenToTheDm( ListenerCommand command ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 	@Override
@@ -111,12 +111,12 @@ public class DismissClientDm implements IDmClient {
 	@Override
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void propagateAgentTermination( Application application, Instance rootInstance ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 }

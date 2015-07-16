@@ -207,6 +207,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 
 		@Override
 		public void run() {
+			this.logger.finest( "Periodic check is running." );
 
 			// Deal with cancelled configurations
 			for( String machineId : this.cancelledMachineIds.removeSnapshot()) {

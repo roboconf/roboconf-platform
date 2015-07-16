@@ -101,8 +101,16 @@ public class DockerfileGenerator {
 		URLConnection uc = u.openConnection();
 		InputStream in = null;
 		try {
+			this.logger.fine( "Downloading the agent package from " + this.agentPackURL );
 			in = new BufferedInputStream( uc.getInputStream());
 			Utils.copyStream(in, tmpPack);
+			this.logger.fine( "The agent package was successfully downloaded." );
+
+		} catch( IOException e ) {
+			this.logger.fine( "The agent package could not be downloaded." );
+			Utils.logException( this.logger, e );
+			throw e;
+
 		} finally {
 			Utils.closeQuietly(in);
 		}
@@ -135,7 +143,8 @@ public class DockerfileGenerator {
 			out.println("COPY start.sh /usr/local/roboconf-agent/");
 
 		} finally {
-			Utils.closeQuietly(out);
+			Utils.closeQuietly( out );
+			this.logger.fine( "The Dockerfile was generated." );
 		}
 
 		// Copy resources in the Dockerfile
@@ -150,6 +159,7 @@ public class DockerfileGenerator {
 
 			} finally {
 				Utils.closeQuietly( in );
+				this.logger.fine( s + " was copied within the Dockerfile's directory." );
 			}
 		}
 

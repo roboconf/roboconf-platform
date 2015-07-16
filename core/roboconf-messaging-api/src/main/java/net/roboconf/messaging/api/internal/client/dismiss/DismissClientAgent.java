@@ -47,86 +47,86 @@ public class DismissClientAgent implements IAgentClient {
 
 	@Override
 	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public boolean isConnected() {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 		return false;
 	}
 
 
 	@Override
 	public void openConnection() throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void closeConnection() throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void setApplicationName( String applicationName ) {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void setScopedInstancePath( String scopedInstancePath ) {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void publishExports( Instance instance ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void publishExports( Instance instance, String facetOrComponentName ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void unpublishExports( Instance instance ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void listenToRequestsFromOtherAgents( ListenerCommand command, Instance instance ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void requestExportsFromOtherAgents( Instance instance ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void listenToExportsFromOtherAgents( ListenerCommand command, Instance instance ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void sendMessageToTheDm( Message message ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void listenToTheDm( ListenerCommand command ) throws IOException {
-		this.logger.info( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}
 
 
@@ -142,5 +142,4 @@ public class DismissClientAgent implements IAgentClient {
 		// Dismiss client has no configuration.
 		return Collections.emptyMap();
 	}
-
 }

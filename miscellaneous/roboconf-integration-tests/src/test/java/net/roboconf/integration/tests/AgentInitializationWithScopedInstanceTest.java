@@ -143,7 +143,7 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 		this.manager.reconfigure();
 
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
-		Thread.sleep(1000);
+		Thread.sleep(2000);
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );

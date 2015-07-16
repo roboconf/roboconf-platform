@@ -54,21 +54,26 @@ public class ManifestUtilsTest {
 
 
 	@Test
-	public void testFindRoboconfVersion() {
+	public void testFindMavenVersion() {
 
-		Assert.assertEquals( "0.4", ManifestUtils.findRoboconfVersion( "0.4" ));
-		Assert.assertEquals( "0.4", ManifestUtils.findRoboconfVersion( "0.4.0" ));
-		Assert.assertEquals( "0.4.1", ManifestUtils.findRoboconfVersion( "0.4.1" ));
-		Assert.assertEquals( "0.4-SNAPSHOT", ManifestUtils.findRoboconfVersion( "0.4.0-SNAPSHOT" ));
-		Assert.assertEquals( "0.4.1-SNAPSHOT", ManifestUtils.findRoboconfVersion( "0.4.1-SNAPSHOT" ));
-		Assert.assertEquals( "12.52", ManifestUtils.findRoboconfVersion( "12.52.0" ));
-		Assert.assertEquals( "12.52-SNAPSHOT", ManifestUtils.findRoboconfVersion( "12.52.0-SNAPSHOT" ));
-		Assert.assertEquals( "12.52.1-SNAPSHOT", ManifestUtils.findRoboconfVersion( "12.52.1-SNAPSHOT" ));
-		Assert.assertEquals( "12.52.1-snapshoT", ManifestUtils.findRoboconfVersion( "12.52.1-snapshoT" ));
+		Assert.assertEquals( "0.4", ManifestUtils.findMavenVersion( "0.4" ));
+		Assert.assertEquals( "0.4", ManifestUtils.findMavenVersion( "0.4.0" ));
+		Assert.assertEquals( "0.4.1", ManifestUtils.findMavenVersion( "0.4.1" ));
+		Assert.assertEquals( "0.4-SNAPSHOT", ManifestUtils.findMavenVersion( "0.4.0-SNAPSHOT" ));
+		Assert.assertEquals( "0.4.1-SNAPSHOT", ManifestUtils.findMavenVersion( "0.4.1-SNAPSHOT" ));
 
-		Assert.assertEquals( "0.4.0.1", ManifestUtils.findRoboconfVersion( "0.4.0.1" ));
-		Assert.assertEquals( "whatever", ManifestUtils.findRoboconfVersion( "whatever" ));
-		Assert.assertEquals( "", ManifestUtils.findRoboconfVersion( "" ));
-		Assert.assertNull( ManifestUtils.findRoboconfVersion( null ));
+		Assert.assertEquals( "0.4-SNAPSHOT", ManifestUtils.findMavenVersion( "0.4.SNAPSHOT" ));
+		Assert.assertEquals( "0.4-SNAPSHOT", ManifestUtils.findMavenVersion( "0.4.0.SNAPSHOT" ));
+		Assert.assertEquals( "0.4.1-SNAPSHOT", ManifestUtils.findMavenVersion( "0.4.1.SNAPSHOT" ));
+
+		Assert.assertEquals( "12.52", ManifestUtils.findMavenVersion( "12.52.0" ));
+		Assert.assertEquals( "12.52-SNAPSHOT", ManifestUtils.findMavenVersion( "12.52.0-SNAPSHOT" ));
+		Assert.assertEquals( "12.52.1-SNAPSHOT", ManifestUtils.findMavenVersion( "12.52.1-SNAPSHOT" ));
+		Assert.assertEquals( "12.52.1-SNAPSHOT", ManifestUtils.findMavenVersion( "12.52.1-snapshoT" ));
+
+		Assert.assertEquals( "0.4.0.1", ManifestUtils.findMavenVersion( "0.4.0.1" ));
+		Assert.assertEquals( "whatever", ManifestUtils.findMavenVersion( "whatever" ));
+		Assert.assertEquals( "", ManifestUtils.findMavenVersion( "" ));
+		Assert.assertNull( ManifestUtils.findMavenVersion( null ));
 	}
 }

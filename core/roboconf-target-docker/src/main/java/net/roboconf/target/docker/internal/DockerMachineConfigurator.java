@@ -59,23 +59,13 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	private static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
 	private static Gson GSON = new Gson();
 
-	/**
-	 * The various states this class instances may have.
-	 * @author Vincent Zurczak - Linagora
-	 */
-	enum State {
-		NO_IMAGE, IMAGE_UNDER_CREATION, HAS_IMAGE, DONE
-	}
-
 	DockerClient dockerClient;
-	private State state = State.NO_IMAGE;
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private final Instance scopedInstance;
 	private final Map<String,String> targetProperties;
 	private final Map<String,String> messagingConfiguration;
 	private final String machineId, scopedInstancePath, applicationName;
-	private final ConcurrentHashMap<String,String> imagesInCreation;
 
 
 
@@ -86,7 +76,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @param machineId the ID machine of the machine to configure
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the path of the scoped/root instance
-	 * @param imagesInCreation the images in creation (not null)
 	 * @param scopedInstance the scoped instance
 	 */
 	public DockerMachineConfigurator(
@@ -103,7 +92,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		this.applicationName = applicationName;
 		this.scopedInstancePath = scopedInstancePath;
 		this.machineId = machineId;
-		this.imagesInCreation = imagesInCreation;
 		this.scopedInstance = scopedInstance;
 	}
 
@@ -124,28 +112,20 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	@Override
 	public boolean configure() throws TargetException {
 
-		if( this.dockerClient == null )
-			this.dockerClient = DockerUtils.createDockerClient( this.targetProperties );
+		// Creating a container is almost immediate.
+		// And building an image with the REST API is blocking the thread until the creation is complete.
+		// So, this is not asynchronous configuration.
 
+		this.dockerClient = DockerUtils.createDockerClient( this.targetProperties );
 		String imageId = this.targetProperties.get( DockerHandler.IMAGE_ID );
 		String fixedImageId = fixImageId( imageId );
+
 		Image image = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
-
-		if( image != null ) {
-			this.logger.fine( "Image " + fixedImageId + " was found." );
-			this.state = State.HAS_IMAGE;
-
-		} else if( this.state == State.NO_IMAGE ) {
+		if( image == null )
 			createImage( fixedImageId );
-		}
-		// else: the image is under creation...
 
-		if( this.state == State.HAS_IMAGE ) {
-			this.imagesInCreation.remove( fixedImageId );
-			createContainer( fixedImageId );
-		}
-
-		return this.state == State.DONE;
+		createContainer( fixedImageId );
+		return true;
 	}
 
 
@@ -240,7 +220,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 			// We're done here!
 			this.logger.fine( "Container " + this.machineId + " was succesfully created as " + container.getId());
-			this.state = State.DONE;
 
 			// We replace the machine ID in the instance.
 			// The configurator will be stopped anyway.
@@ -258,17 +237,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @throws TargetException if something went wrong
 	 */
 	void createImage( String imageId ) throws TargetException {
-
-		// Acquire a lock for the image ID. This prevent concurrent insertions.
-		// The configurator that inserted the value is in charge of creating the image.
-		this.logger.fine( "Trying to create image " + imageId + "..." );
-		if( this.imagesInCreation.putIfAbsent( imageId, "anything" ) != null ) {
-			this.logger.fine( "Image " + imageId + " is already under creation." );
-			return;
-		}
-
-		this.state = State.IMAGE_UNDER_CREATION;
-		this.logger.info( "Creating image " + imageId + " from a generated Dockerfile." );
+		this.logger.fine( "Trying to create image " + imageId + " from a generated Dockerfile." );
 
 		// Verify the base image exists, if any
 		String baseImageRef = this.targetProperties.get( DockerHandler.BASE_IMAGE );
@@ -293,18 +262,20 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		InputStream response = null;
 		File dockerfile = null;
 		try {
+			// Generate a Dockerfile
 			DockerfileGenerator gen = new DockerfileGenerator(
 					this.targetProperties.get( DockerHandler.AGENT_PACKAGE ),
 					packages,
 					baseImageRef );
 
 			dockerfile = gen.generateDockerfile();
+
+			// Start the build.
+			// This will block the current thread until the creation is complete.
+			this.logger.fine( "Asking Docker to build the image from our Dockerfile." );
 			response = this.dockerClient.buildImageCmd( dockerfile ).withTag( imageId ).exec();
 
-			// Creating an image can take time, as system commands may be executed (apt-get...).
-			// Copying the output makes the thread last longer. Therefore, given the way the threaded
-			// target handler is implemented, other Docker creations/configurations will be delayed.
-			// This is why we check whether getting the output is really necessary.
+			// Reading the stream does not take time as everything is sent at once by Docker.
 			if( this.logger.isLoggable( Level.FINE )) {
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				Utils.copyStream(response, out);
@@ -316,8 +287,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// Besides, we search images by both IDs and tags.
 
 		} catch( Exception e ) {
-			// Release the lock so that we can try again (e.g. if the base image was not already there).
-			this.imagesInCreation.remove( imageId );
 			throw new TargetException( e );
 
 		} finally {
