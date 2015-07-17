@@ -248,7 +248,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 				StringBuilder sb = new StringBuilder();
 				sb.append( "The following warnings have been found.\n" );
 				for( String s : container.getWarnings())
-					sb.append( s + "\n" );
+					sb.append( s ).append( '\n' );
 
 				this.logger.fine( sb.toString().trim());
 			}

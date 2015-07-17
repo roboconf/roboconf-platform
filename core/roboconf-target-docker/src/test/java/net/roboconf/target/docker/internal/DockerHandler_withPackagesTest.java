@@ -61,7 +61,6 @@ import org.junit.rules.TemporaryFolder;
  * Test correct Docker image generation and container configuration.
  * <p>
  * WARNING: these tests may last very long....
- *
  * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerHandler_withPackagesTest {
@@ -93,13 +92,6 @@ public class DockerHandler_withPackagesTest {
 	 */
 	private static final Map<String, String> MESSAGING_CONFIGURATION = Collections.unmodifiableMap(
 			new MessagingConfigurationMap());
-
-	/**
-	 * The maximum time we allow the docker handler to take to configure a machine.
-	 * <p>
-	 * Installing packages may take a while... So this value is quite large!
-	 */
-	private static long DOCKER_CONFIGURE_TIMEOUT = 300000L;
 
 	/**
 	 * The location of the Roboconf fake agent's file.
@@ -358,7 +350,7 @@ public class DockerHandler_withPackagesTest {
 		Assert.assertNull(this.instance.data.get(Instance.MACHINE_ID));
 
 		// Configure the machine.
-		dockerHandler.configureMachine(
+		this.dockerHandler.configureMachine(
 				this.targetProperties,
 				MESSAGING_CONFIGURATION,
 				machineId,
@@ -367,20 +359,14 @@ public class DockerHandler_withPackagesTest {
 				this.instance);
 
 		// Now wait until the Docker target updates the machine id, or the timeout expires...
-		long deadLine = System.currentTimeMillis() + DOCKER_CONFIGURE_TIMEOUT;
-		String containerId;
-		do {
-			containerId = this.instance.data.get(Instance.MACHINE_ID);
-			if (containerId != null && !containerId.equals(machineId)) {
-				break;
-			}
-			Thread.sleep(1000);
-		} while (System.currentTimeMillis() < deadLine);
-		Assert.assertNotNull(containerId);
-		this.dockerContainerId = containerId;
+		this.dockerContainerId = DockerTestUtils.waitForMachineId(
+				machineId,
+				this.instance.data,
+				DockerTestUtils.DOCKER_CONFIGURE_TIMEOUT);
+		Assert.assertNotNull(this.dockerContainerId);
 
-		// Check the machine is running
-		Assert.assertTrue(this.dockerHandler.isMachineRunning(this.targetProperties, containerId));
+		// Ensure the machine is running
+		Assert.assertTrue(this.dockerHandler.isMachineRunning(this.targetProperties, this.dockerContainerId));
 
 		// Now perform the tests...
 		checkAgentIsUnpacked();
@@ -389,8 +375,8 @@ public class DockerHandler_withPackagesTest {
 		}
 
 		// Terminate the container.
-		this.dockerHandler.terminateMachine(this.targetProperties, containerId);
-		Assert.assertFalse(this.dockerHandler.isMachineRunning(this.targetProperties, containerId));
+		this.dockerHandler.terminateMachine(this.targetProperties, this.dockerContainerId);
+		Assert.assertFalse(this.dockerHandler.isMachineRunning(this.targetProperties, this.dockerContainerId));
 	}
 
 	private void checkAgentIsUnpacked() throws Exception {

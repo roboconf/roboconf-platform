@@ -271,11 +271,13 @@ public class DockerHandler_withContainerTest {
 			// once when the image already exists. However, we must wait for the thread pool
 			// executor to pick up the configurator.
 			target.configureMachine( targetProperties, this.msgCfg, containerId, path, "roboconf", scopedInstance );
-			Thread.sleep( 3000 );
 
 			// Be careful, the Docker target changes the machine ID
-			Assert.assertNotNull( scopedInstance.data.get( Instance.MACHINE_ID ));
-			containerId = scopedInstance.data.get( Instance.MACHINE_ID );
+			containerId = DockerTestUtils.waitForMachineId(
+					containerId,
+					scopedInstance.data,
+					DockerTestUtils.DOCKER_CONFIGURE_TIMEOUT);
+			Assert.assertNotNull(containerId );
 
 			// Check the machine is running
 			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
