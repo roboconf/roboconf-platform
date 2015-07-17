@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
@@ -59,6 +58,7 @@ import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerHandler_withContainerTest {
 
@@ -151,9 +151,7 @@ public class DockerHandler_withContainerTest {
 		targetProperties.put( DockerHandler.BASE_IMAGE, "oops81:unknown" );
 
 		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
-				targetProperties, this.msgCfg, "656sdf6sd", "/test", "app",
-				new ConcurrentHashMap<String,String> (),
-				new Instance());
+				targetProperties, this.msgCfg, "656sdf6sd", "/test", "app",	new Instance());
 
 		try {
 			configurator.dockerClient = this.docker;

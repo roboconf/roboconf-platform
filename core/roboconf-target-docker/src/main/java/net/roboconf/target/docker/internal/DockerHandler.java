@@ -27,7 +27,6 @@ package net.roboconf.target.docker.internal;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
@@ -46,7 +45,6 @@ import com.github.dockerjava.api.model.Container;
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "docker";
-	static final String DOCKER_CONFIG_ID = "docker.config.id";
 
 	static final String IMAGE_ID = "docker.image";
 	static final String BASE_IMAGE = "docker.base.image";
@@ -59,8 +57,6 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 	static final String AGENT_JRE_AND_PACKAGES_DEFAULT = "openjdk-7-jre-headless";
 	static final String ADDITIONAL_PACKAGES = "docker.additional.packages";
-	static final String COMMAND = "docker.command.line";
-	static final String USE_COMMAND = "docker.command.use";
 	static final String RUN_EXEC = "docker.run.exec";
 
 	// Docker exec markers for Roboconf configuration injection.
@@ -73,7 +69,6 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final ConcurrentHashMap<String,String> imagesInCreation = new ConcurrentHashMap<> ();
 
 
 	/**
@@ -140,7 +135,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		// It is the name of the container we will create.
 		return new DockerMachineConfigurator(
 				targetProperties, messagingConfiguration, machineId,
-				scopedInstancePath, applicationName, this.imagesInCreation, scopedInstance );
+				scopedInstancePath, applicationName, scopedInstance );
 	}
 
 

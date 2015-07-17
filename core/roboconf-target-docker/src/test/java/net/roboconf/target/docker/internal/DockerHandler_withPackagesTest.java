@@ -205,7 +205,6 @@ public class DockerHandler_withPackagesTest {
 
 		// Add a infinite loop command, so the container stays while we test it.
 		this.targetProperties.put(DockerHandler.RUN_EXEC, "[ \"tail\", \"-f\", \"/dev/null\" ]");
-		this.targetProperties.put(DockerHandler.USE_COMMAND, "true");
 
 		// Generated a unique Docker image id.
 		this.dockerImageId = "roboconf.test.generated." + UUID.randomUUID().toString().replace('-', '.');
