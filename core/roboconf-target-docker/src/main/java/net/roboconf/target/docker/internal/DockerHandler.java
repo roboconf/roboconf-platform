@@ -41,6 +41,7 @@ import com.github.dockerjava.api.model.Container;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
@@ -61,6 +62,12 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String COMMAND = "docker.command.line";
 	static final String USE_COMMAND = "docker.command.use";
 	static final String RUN_EXEC = "docker.run.exec";
+
+	// Docker exec markers for Roboconf configuration injection.
+	static final String MESSAGING_CONFIGURATION_MARKER = "$msgConfig$";
+	static final String APPLICATION_NAME_MARKER = "$applicationName$";
+	static final String INSTANCE_PATH_MARKER = "$instancePath$";
+	static final String MESSAGING_TYPE_MARKER = "$messagingType$";
 
 	static final String OPTION_PREFIX = "docker.option.";
 	static final String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";
