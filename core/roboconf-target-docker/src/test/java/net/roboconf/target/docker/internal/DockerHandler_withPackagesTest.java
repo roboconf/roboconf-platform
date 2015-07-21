@@ -292,7 +292,7 @@ public class DockerHandler_withPackagesTest {
 		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentTarGz.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
-		runAndTestDockerContainer(DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "vim", "net-tools");
+		runAndTestDockerContainer(Collections.<String>emptyList(), DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "vim", "net-tools");
 	}
 
 	@Test
@@ -304,7 +304,7 @@ public class DockerHandler_withPackagesTest {
 		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentZip.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
-		runAndTestDockerContainer(DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "unzip", "vim", "net-tools");
+		runAndTestDockerContainer(Collections.<String>emptyList(), DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "unzip", "vim", "net-tools");
 	}
 
 	@Test
@@ -316,7 +316,7 @@ public class DockerHandler_withPackagesTest {
 		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentTarGz.getAbsolutePath());
 		this.targetProperties.put(DockerHandler.AGENT_JRE_AND_PACKAGES, "icedtea-7-jre-jamvm");
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
-		runAndTestDockerContainer("icedtea-7-jre-jamvm", "vim", "net-tools");
+		runAndTestDockerContainer(Collections.<String>emptyList(), "icedtea-7-jre-jamvm", "vim", "net-tools");
 	}
 
 	@Test
@@ -328,16 +328,37 @@ public class DockerHandler_withPackagesTest {
 		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentZip.getAbsolutePath());
 		this.targetProperties.put(DockerHandler.AGENT_JRE_AND_PACKAGES, "icedtea-7-jre-jamvm");
 		this.targetProperties.remove(DockerHandler.ADDITIONAL_PACKAGES);
-		runAndTestDockerContainer("icedtea-7-jre-jamvm");
+		runAndTestDockerContainer(Collections.<String>emptyList(), "icedtea-7-jre-jamvm");
+	}
+
+	@Test
+	public void testAgentZip_withAdditionalDeploys() throws Exception {
+		// Configure the container:
+		// - we use the Zip agent archive,
+		// - we clear the JRE packages property, so the default is used.
+		// - we use no additional packages.
+		// - we two additional deploy URLs, that will be copied in the (container's) Karaf deploy directory.
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentZip.getAbsolutePath());
+		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
+		this.targetProperties.remove(DockerHandler.ADDITIONAL_PACKAGES);
+		this.targetProperties.put(DockerHandler.ADDITIONAL_DEPLOY,
+				"http://www.apache.org/licenses/LICENSE-2.0.txt http://www.nyan.cat/cats/original.gif");
+		runAndTestDockerContainer(new ArrayList<String>() {
+			{
+				add("/usr/local/roboconf-agent/deploy/LICENSE-2.0.txt");
+				add("/usr/local/roboconf-agent/deploy/original.gif");
+			}
+		});
 	}
 
 	/**
 	 * Creates, configures, runs and tests a Docker container.
 	 *
+	 * @param filesToCheck a list of files that must be present on the Docker container.
 	 * @param packages the packages that must be installed on the Docker container.
 	 * @throws Exception if anything bad happens during the run & tests.
 	 */
-	private void runAndTestDockerContainer( final String... packages ) throws Exception {
+	private void runAndTestDockerContainer( final List<String> filesToCheck, final String... packages ) throws Exception {
 
 
 		// Create the machine.
@@ -370,9 +391,10 @@ public class DockerHandler_withPackagesTest {
 
 		// Now perform the tests...
 		checkAgentIsUnpacked();
-		for (final String p : packages) {
+		for (final String file : filesToCheck)
+			checkFileIsPresent(file);
+		for (final String p : packages)
 			checkPackageIsInstalled(p);
-		}
 
 		// Terminate the container.
 		this.dockerHandler.terminateMachine(this.targetProperties, this.dockerContainerId);
@@ -399,6 +421,23 @@ public class DockerHandler_withPackagesTest {
 				0,
 				execDockerCommand(
 						"bash", "-c", "dpkg --get-selections | grep ^" + packageName + " "
+				).exitCode);
+	}
+
+	/**
+	 * Check that a given file is present on the given Docker container.
+	 *
+	 * @param path the path of the file to check.
+	 * @throws TargetException if the container cannot be reached.
+	 */
+	private void checkFileIsPresent( String path ) throws Exception {
+
+		// Execute the package checker command.
+		// As we use pipes, we need to bash -c the whole quoted command.
+		Assert.assertEquals("file '" + path + "' is not present on container " + this.dockerContainerId,
+				0,
+				execDockerCommand(
+						"test", "-f", path
 				).exitCode);
 	}
 

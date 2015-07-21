@@ -27,6 +27,7 @@ package net.roboconf.target.docker.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import junit.framework.Assert;
 import net.roboconf.core.utils.Utils;
@@ -129,6 +130,21 @@ public class DockerfileGeneratorTest {
 		} finally {
 			Utils.deleteFilesRecursively(dockerfile);
 		}
+	}
+
+	@Test
+	public void testDockerfileWithAdditionalDeploys() throws Exception {
+
+		File agentPackZip = this.folder.newFile( "dockertest.zip" );
+		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null, new ArrayList<String>(){
+			{
+				add("toto");
+				add("tutu");
+			}
+		}, null);
+		Assert.assertEquals( 2, gen.getDeployList().size());
+		Assert.assertEquals( "toto", gen.getDeployList().get(0));
+		Assert.assertEquals("tutu", gen.getDeployList().get(1));
 	}
 
 
