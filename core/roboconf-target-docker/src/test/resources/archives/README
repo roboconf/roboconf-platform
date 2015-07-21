@@ -1,0 +1,8 @@
+This folder contains fake Roboconf agent archives, needed to run some of the
+Docker target handler tests. Both archives have exactly the same layout and
+content, one text file:
+
+  roboconf-fake-agent/roboconf-fake-agent.txt
+
+whose content is just one line: "INSTALLED!".
+

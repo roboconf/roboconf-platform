@@ -41,13 +41,14 @@ import net.roboconf.core.utils.Utils;
 /**
  * Generate a Dockerfile directory with all necessary stuff to setup a Roboconf agent.
  * @author Pierre-Yves Gibello - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerfileGenerator {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String agentPackURL;
 
-	private String packages = "openjdk-7-jre-headless";
+	private String packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
 	private boolean isTar = true;
 	private String baseImageName = "ubuntu";
 
@@ -121,13 +122,14 @@ public class DockerfileGenerator {
 		try {
 			out = new PrintWriter( generated, "UTF-8" );
 			out.println("FROM " + this.baseImageName);
-			out.println("COPY " + agentFilename + " /usr/local/");
-			out.println("RUN apt-get update");
 
+			String actualPackages = this.packages;
 			if( ! this.isTar )
-				out.println("RUN apt-get -y install unzip");
+				actualPackages = "unzip " + actualPackages;
+			out.println("RUN apt-get update && apt-get install -y "+ actualPackages + " && rm -rf /var/lib/apt/lists/*");
 
-			out.println("RUN apt-get -y install " + this.packages);
+			// Copy and unzip the agent archive.
+			out.println("COPY " + agentFilename + " /usr/local/");
 			out.println("RUN cd /usr/local; " + (this.isTar ? "tar xvzf " : "unzip ") + agentFilename);
 
 			// We used to assume the name of the extracted directory was the name of the ZIP file

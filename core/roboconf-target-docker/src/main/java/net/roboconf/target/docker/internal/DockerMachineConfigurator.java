@@ -30,13 +30,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
@@ -49,10 +51,12 @@ import com.github.dockerjava.api.model.Image;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerMachineConfigurator implements MachineConfigurator {
 
 	private static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
+	private static Gson GSON = new Gson();
 
 	DockerClient dockerClient;
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -79,7 +83,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			String machineId,
 			String scopedInstancePath,
 			String applicationName,
-			ConcurrentHashMap<String,String> imagesInCreation,
 			Instance scopedInstance ) {
 
 		this.targetProperties = targetProperties;
@@ -132,39 +135,93 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	void createContainer( String imageId ) throws TargetException {
 		this.logger.info( "Creating container " + this.machineId + " from image " + imageId );
 
-		// Build the command line, passing the messaging configuration.
-		List<String> args = new ArrayList<> ();
+		// We get the custom command line (docker.run.exec property) to run and:
+		// - If nothing/invalid is specified (args == null), we use the standard agent start command
+		// - If an empty command is explicitly specified (args.isEmpty()), there must be a RUN line in the Dockerfile.
+		// - Else we use the provided command line. We may need to inject agent & messaging configuration.
+		List<String> args = parseRunExecLine(this.targetProperties.get(DockerHandler.RUN_EXEC));
 
-		// We do not have to execute our command. A default command may have been set into the Dockerfile.
-		// In this case, it means the user does not want the DM to pass dynamic parameters in the command.
-		// We at least use it in tests (do not launch a real Roboconf agent, just an empty container).
-		String useCommandAS = this.targetProperties.get( DockerHandler.USE_COMMAND );
-		boolean useCommand = useCommandAS == null ? true : Boolean.valueOf( useCommandAS );
+		if (args == null) {
 
-		if( useCommand ) {
-			// Add the command
-			String command = this.targetProperties.get( DockerHandler.COMMAND );
-			if( Utils.isEmptyOrWhitespaces( command ))
-				command = "/usr/local/roboconf-agent/start.sh";
-
-			args.add( command );
-
-			// Pass the name of the configuration file for the messaging.
-			// By convention, we will pass it as the first command argument.
-			String messagingType = this.messagingConfiguration.get( "net.roboconf.messaging.type" );
-			args.add( "etc/net.roboconf.messaging." + messagingType + ".cfg" );
-
-			// Agent configuration is prefixed with 'agent.'
-			args.add( "agent.application-name=" + this.applicationName );
-			args.add( "agent.scoped-instance-path=" + this.scopedInstancePath );
-			args.add( "agent.messaging-type=" + messagingType );
-
-			// Messaging parameters are prefixed with 'msg.'
-			for( Map.Entry<String,String> e : this.messagingConfiguration.entrySet())
-				args.add( "msg." + e.getKey() + '=' + e.getValue());
+			// No docker.run.exec property (or invalid), fall back to the default command line.
+			// Build the command line, passing the agent & messaging configuration.
+			// Command line is:
+			// - Agent's start.sh script
+			// - messaging provider-specific configuration file,
+			// - agent.application-name=<<name of the application>>
+			// - agent.scoped-instance-path=<<path of the scoped instance>>
+			// - agent.messaging-type=<<type of messaging>>
+			// - each of the messaging configuration properties, prefixed by "msg."
+			args = new ArrayList<> ();
+			args.add("/usr/local/roboconf-agent/start.sh");
+			args.add( "etc/net.roboconf.messaging." + DockerHandler.MESSAGING_TYPE_MARKER + ".cfg");
+			args.add( "agent.application-name=" + DockerHandler.APPLICATION_NAME_MARKER );
+			args.add( "agent.scoped-instance-path=" + DockerHandler.INSTANCE_PATH_MARKER );
+			args.add( "agent.messaging-type=" + DockerHandler.MESSAGING_TYPE_MARKER );
+			args.add( DockerHandler.MESSAGING_CONFIGURATION_MARKER );
 		}
 
-		// Deal with the options.
+		// Now proceed to argument substitution, using the special markers.
+		int i = 0;
+		while (i < args.size()) {
+
+			// The current argument, that may be substituted.
+			String arg = args.get(i);
+
+			// The string to substitute to the marker, or null if nothing to substitute.
+			final String s;
+
+			// The index (in arg) and length of the marker to replace.
+			final int j, l;
+
+			if (arg.contains(DockerHandler.MESSAGING_TYPE_MARKER)) {
+				j = args.indexOf(DockerHandler.MESSAGING_TYPE_MARKER);
+				l = DockerHandler.MESSAGING_TYPE_MARKER.length();
+				s = this.messagingConfiguration.get("net.roboconf.messaging.type");
+
+			} else if (arg.contains(DockerHandler.APPLICATION_NAME_MARKER)) {
+				j = args.indexOf(DockerHandler.APPLICATION_NAME_MARKER);
+				l = DockerHandler.APPLICATION_NAME_MARKER.length();
+				s = this.applicationName;
+
+			} else if (arg.contains(DockerHandler.INSTANCE_PATH_MARKER)) {
+				j = args.indexOf(DockerHandler.INSTANCE_PATH_MARKER);
+				l = DockerHandler.INSTANCE_PATH_MARKER.length();
+				s = this.scopedInstancePath;
+
+			} else {
+
+				if (arg.equals(DockerHandler.MESSAGING_CONFIGURATION_MARKER)) {
+
+					// A bit more special: remove the whole argument and appends all the messaging configuration, prefixed
+					// by "msg.".
+					args.remove(i);
+					for (Map.Entry<String, String> e : this.messagingConfiguration.entrySet()) {
+						args.add(i, "msg." + e.getKey() + '=' + e.getValue());
+						i++;
+					}
+
+					// We've gone one position to far...
+					i--;
+				}
+
+				// No in-string substitution.
+				j = -1;
+				l = 0;
+				s = null;
+			}
+
+			// Proceed to in-string substitution.
+			if (s != null) {
+				arg = arg.substring(0, j - 1) + s + arg.substring(j + l, arg.length());
+				args.set(i, arg);
+			}
+
+			// Goto next argument.
+			i++;
+		}
+
+		// Deal with the Docker run options.
 		Map<String,String> options = new HashMap<> ();
 		for( Map.Entry<String,String> entry : this.targetProperties.entrySet()) {
 			if( entry.getKey().toLowerCase().startsWith( DockerHandler.OPTION_PREFIX_RUN )) {
@@ -191,7 +248,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 				StringBuilder sb = new StringBuilder();
 				sb.append( "The following warnings have been found.\n" );
 				for( String s : container.getWarnings())
-					sb.append( s + "\n" );
+					sb.append( s ).append( '\n' );
 
 				this.logger.fine( sb.toString().trim());
 			}
@@ -228,6 +285,17 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 				throw new TargetException( "Base image '" + baseImageRef + "' was not found. Image generation is not possible." );
 		}
 
+		// Build the packages list.
+		String packages = this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES );
+		final String additionalPackages = this.targetProperties.get( DockerHandler.ADDITIONAL_PACKAGES );
+		if (!Utils.isEmptyOrWhitespaces(additionalPackages)) {
+			if (Utils.isEmptyOrWhitespaces(packages)) {
+				// Sets to the default here, so we do not override the JRE package.
+				packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
+			}
+			packages = packages + ' ' + additionalPackages;
+		}
+
 		// Create the image
 		InputStream response = null;
 		File dockerfile = null;
@@ -235,7 +303,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// Generate a Dockerfile
 			DockerfileGenerator gen = new DockerfileGenerator(
 					this.targetProperties.get( DockerHandler.AGENT_PACKAGE ),
-					this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES ),
+					packages,
 					baseImageRef );
 
 			dockerfile = gen.generateDockerfile();
@@ -272,5 +340,23 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 */
 	private String fixImageId( String imageId ) {
 		return Utils.isEmptyOrWhitespaces( imageId ) ? DEFAULT_IMG_NAME : imageId;
+	}
+
+	/**
+	 * Parse the given {@code docker.run.exec} property value.
+	 * @param runExecLine the {@code docker.run.exec} property value.
+	 * @return the {@code docker.run.exec} command + arguments array.
+	 */
+	private List<String> parseRunExecLine( String runExecLine ) {
+		List<String> result = null;
+		if ( ! Utils.isEmptyOrWhitespaces(runExecLine) ) {
+			try {
+				result = Arrays.asList( GSON.fromJson(runExecLine, String[].class) );
+			} catch (final JsonSyntaxException e) {
+				this.logger.warning("Cannot parse property " + DockerHandler.RUN_EXEC + ": " + runExecLine);
+				Utils.logException(this.logger, e);
+			}
+		}
+		return result;
 	}
 }

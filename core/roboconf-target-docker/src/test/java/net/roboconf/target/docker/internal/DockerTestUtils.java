@@ -34,19 +34,28 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
  * @author Pierre-Yves Gibello - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public final class DockerTestUtils {
 
 	public static final String DOCKER_TCP_PORT = "4243";
+	/**
+	 * The maximum time we allow the docker handler to take to configure a machine.
+	 * <p>
+	 * Installing packages may take a while... So this value is quite large!
+	 */
+	public static long DOCKER_CONFIGURE_TIMEOUT = 150000L;
 
 
 	/**
@@ -132,5 +141,28 @@ public final class DockerTestUtils {
 			int exitCode = ProgramUtils.executeCommand( logger, command, null, null );
 			Assert.assertEquals( 0, exitCode );
 		}
+	}
+
+	/**
+	 * Wait until the Docker target updates its machine id, or the timeout expires...
+	 * @param machineId the current machine id.
+	 * @param instanceData the instance data to pull for updates.
+	 * @param timeOut the time period to wait before abandoning.
+	 * @return the updated Docker machine id, or {@code null} if the timeout has expired.
+	 * @throws InterruptedException if interrupted while waiting for update.
+	 */
+	public static String waitForMachineId( final String machineId,
+										   final Map<String, String> instanceData,
+										   long timeOut ) throws InterruptedException {
+		long deadLine = System.currentTimeMillis() + timeOut;
+		String containerId;
+		do {
+			containerId = instanceData.get(Instance.MACHINE_ID);
+			if (containerId != null && !containerId.equals(machineId)) {
+				break;
+			}
+			Thread.sleep(1000);
+		} while (System.currentTimeMillis() < deadLine);
+		return !machineId.equals(containerId) ? containerId : null;
 	}
 }

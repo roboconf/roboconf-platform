@@ -46,7 +46,7 @@ public class DockerUtilsTest {
 	@Test( expected = TargetException.class )
 	public void testInvalidConfiguration_noImage_noPackage() throws Exception {
 
-		Map<String,String> map = new HashMap<String,String> ();
+		Map<String,String> map = new HashMap<> ();
 		map.put( DockerHandler.ENDPOINT, "whatever" );
 		DockerUtils.createDockerClient( map );
 	}
@@ -55,7 +55,7 @@ public class DockerUtilsTest {
 	@Test
 	public void testIncompleteConfiguration_noEndpoint_withImage() throws Exception {
 
-		Map<String,String> map = new HashMap<String,String> ();
+		Map<String,String> map = new HashMap<> ();
 		map.put( DockerHandler.IMAGE_ID, "whatever" );
 		DockerClient client = DockerUtils.createDockerClient( map );
 		Assert.assertNotNull( client );
@@ -65,7 +65,7 @@ public class DockerUtilsTest {
 	@Test
 	public void testIncompleteConfiguration_noEndpoint_withPackage() throws Exception {
 
-		Map<String,String> map = new HashMap<String,String> ();
+		Map<String,String> map = new HashMap<> ();
 		map.put( DockerHandler.AGENT_PACKAGE, "whatever" );
 		DockerClient client = DockerUtils.createDockerClient( map );
 		Assert.assertNotNull( client );
