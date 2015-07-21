@@ -34,6 +34,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
@@ -49,6 +50,7 @@ public class DockerfileGenerator {
 	private final String agentPackURL;
 
 	private String packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
+	private List<String> deployList;
 	private boolean isTar = true;
 	private String baseImageName = "ubuntu";
 
@@ -60,7 +62,7 @@ public class DockerfileGenerator {
 	 * <p>
 	 * Set to "openjdk-7-jre-headless" if null.
 	 * </p>
-	 *
+	 * @param deployList a list of URLs of additional resources to deploy.
 	 * @param baseImageName the name of the base image used to create a new image
 	 * <p>
 	 * This parameter can be null.<br>
@@ -68,7 +70,7 @@ public class DockerfileGenerator {
 	 * base image name (<code>FROM ubuntu</code>).
 	 * </p>
 	 */
-	public DockerfileGenerator( String agentPackURL, String packages, String baseImageName ) {
+	public DockerfileGenerator( String agentPackURL, String packages, List<String> deployList, String baseImageName ) {
 		File test = new File(agentPackURL);
 		this.agentPackURL = (test.exists() ? "file://" : "") + agentPackURL;
 
@@ -80,6 +82,8 @@ public class DockerfileGenerator {
 
 		if(agentPackURL.toLowerCase().endsWith("zip"))
 			this.isTar = false;
+
+		this.deployList = deployList;
 	}
 
 
@@ -144,6 +148,13 @@ public class DockerfileGenerator {
 			out.println("COPY rc.local /etc/");
 			out.println("COPY start.sh /usr/local/roboconf-agent/");
 
+			// Copy additional resources in the Karaf deploy directory if needed.
+			// We use the Docker ADD command that accepts remote URLs.
+			if ( this.deployList != null && !this.deployList.isEmpty() ) {
+				for ( final String deploy : this.deployList )
+					out.println("ADD " + deploy + " /usr/local/roboconf-agent/deploy/");
+				// Dump Dockerfile to the fucking stdout
+			}
 		} finally {
 			Utils.closeQuietly( out );
 			this.logger.fine( "The Dockerfile was generated." );
@@ -194,6 +205,12 @@ public class DockerfileGenerator {
 		return this.baseImageName;
 	}
 
+	/**
+	 * @return the deployList
+	 */
+	public List<String> getDeployList() {
+		return this.deployList;
+	}
 
 	/**
 	 * Finds the name of the agent file.

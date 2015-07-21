@@ -48,13 +48,13 @@ public class DockerfileGeneratorTest {
 	public void testNewFileGenerator() throws Exception {
 
 		File agentPackZip = this.folder.newFile( "dockertest.zip" );
-		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null, null);
+		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null, null, null);
 		Assert.assertEquals( "openjdk-7-jre-headless", gen.getPackages());
 		Assert.assertEquals( "ubuntu", gen.getBaseImageName());
 		Assert.assertFalse( gen.isTar());
 
 		File agentPackTgz = this.folder.newFile( "dockertest.tar.gz" );
-		gen = new DockerfileGenerator( agentPackTgz.getAbsolutePath(), "pack1 pack2", "ubuntu:15.1" );
+		gen = new DockerfileGenerator( agentPackTgz.getAbsolutePath(), "pack1 pack2", null, "ubuntu:15.1" );
 		Assert.assertEquals( "pack1 pack2", gen.getPackages());
 		Assert.assertEquals( "ubuntu:15.1", gen.getBaseImageName());
 		Assert.assertTrue( gen.isTar());
@@ -72,7 +72,7 @@ public class DockerfileGeneratorTest {
 
 		for( File file : files ) {
 			try {
-				DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null, null );
+				DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null, null, null );
 				dockerfile = gen.generateDockerfile();
 				Assert.assertTrue( file.getName(), dockerfile.isDirectory());
 
@@ -115,7 +115,7 @@ public class DockerfileGeneratorTest {
 		File file = this.folder.newFile( "dockertest.tar.gz" );
 
 		try {
-			DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null, "titi:21" );
+			DockerfileGenerator gen = new DockerfileGenerator( file.getAbsolutePath(), null, null, "titi:21" );
 			dockerfile = gen.generateDockerfile();
 			Assert.assertTrue( file.getName(), dockerfile.isDirectory());
 

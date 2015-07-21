@@ -57,6 +57,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 	static final String AGENT_JRE_AND_PACKAGES_DEFAULT = "openjdk-7-jre-headless";
 	static final String ADDITIONAL_PACKAGES = "docker.additional.packages";
+	static final String ADDITIONAL_DEPLOY = "docker.additional.deploy";
 	static final String RUN_EXEC = "docker.run.exec";
 
 	// Docker exec markers for Roboconf configuration injection.
