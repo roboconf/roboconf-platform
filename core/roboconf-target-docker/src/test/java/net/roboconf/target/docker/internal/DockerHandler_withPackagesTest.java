@@ -440,11 +440,8 @@ public class DockerHandler_withPackagesTest {
 
 		// Execute the package checker command.
 		// As we use pipes, we need to bash -c the whole quoted command.
-		Assert.assertEquals("file '" + path + "' is not present on container " + this.dockerContainerId,
-				0,
-				execDockerCommand(
-						"test", "-f", path
-				).exitCode);
+		Assert.assertEquals( "file '" + path + "' is not present on container " + this.dockerContainerId, 0,
+				execDockerCommand( "test", "-f", path ).exitCode );
 	}
 
 	/**
