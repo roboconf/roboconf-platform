@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -296,6 +297,15 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			packages = packages + ' ' + additionalPackages;
 		}
 
+		// Build the additional URLs-to-deploy list.
+		final String deploy = this.targetProperties.get( DockerHandler.ADDITIONAL_DEPLOY );
+		List<String> deployList;
+		if ( Utils.isEmptyOrWhitespaces(deploy) )
+			deployList = Collections.emptyList();
+		else {
+			deployList = Utils.splitNicely( deploy, " " );
+		}
+
 		// Create the image
 		InputStream response = null;
 		File dockerfile = null;
@@ -303,7 +313,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// Generate a Dockerfile
 			DockerfileGenerator gen = new DockerfileGenerator(
 					this.targetProperties.get( DockerHandler.AGENT_PACKAGE ),
-					packages,
+					packages, deployList,
 					baseImageRef );
 
 			dockerfile = gen.generateDockerfile();
