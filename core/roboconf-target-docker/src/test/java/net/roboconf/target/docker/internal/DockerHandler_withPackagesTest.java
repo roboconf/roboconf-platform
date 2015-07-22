@@ -333,20 +333,26 @@ public class DockerHandler_withPackagesTest {
 
 	@Test
 	public void testAgentZip_withAdditionalDeploys() throws Exception {
+		// Create a dummy file in the tmp folder.
+		final File dummy = this.tmpFolder.newFile("DUMMY.TXT");
+
 		// Configure the container:
 		// - we use the Zip agent archive,
 		// - we clear the JRE packages property, so the default is used.
 		// - we use no additional packages.
-		// - we two additional deploy URLs, that will be copied in the (container's) Karaf deploy directory.
+		// - we two additional deploy URLs, that will be copied in the (container's) Karaf deploy directory:
+		//    - a remote URL (Apache license v2: LICENSE-2.0.txt)
+		//    - a local file (DUMMY.TXT)
 		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentZip.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.remove(DockerHandler.ADDITIONAL_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_DEPLOY,
-				"http://www.apache.org/licenses/LICENSE-2.0.txt http://www.nyan.cat/cats/original.gif");
+				"http://www.apache.org/licenses/LICENSE-2.0.txt " + dummy.toURI());
+
 		runAndTestDockerContainer(new ArrayList<String>() {
 			{
 				add("/usr/local/roboconf-agent/deploy/LICENSE-2.0.txt");
-				add("/usr/local/roboconf-agent/deploy/original.gif");
+				add("/usr/local/roboconf-agent/deploy/DUMMY.TXT");
 			}
 		});
 	}

@@ -30,10 +30,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -45,6 +49,8 @@ import net.roboconf.core.utils.Utils;
  * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerfileGenerator {
+
+	private static final String[] RESOURCES_TO_COPY = { "start.sh", "rename.sh", "rc.local" };
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String agentPackURL;
@@ -123,6 +129,7 @@ public class DockerfileGenerator {
 		this.logger.fine( "Generating a Dockerfile." );
 		File generated = new File(dockerfile.toFile(), "Dockerfile");
 		PrintWriter out = null;
+		final List<URL> localDeploys = new ArrayList<>();
 		try {
 			out = new PrintWriter( generated, "UTF-8" );
 			out.println("FROM " + this.baseImageName);
@@ -151,18 +158,42 @@ public class DockerfileGenerator {
 			// Copy additional resources in the Karaf deploy directory if needed.
 			// We use the Docker ADD command that accepts remote URLs.
 			if ( this.deployList != null && !this.deployList.isEmpty() ) {
-				for ( final String deploy : this.deployList )
-					out.println("ADD " + deploy + " /usr/local/roboconf-agent/deploy/");
-				// Dump Dockerfile to the fucking stdout
+				for ( final String deploy : this.deployList ) {
+
+					// We need to be a bit selective here, because:
+					// - URL might be a local resource (file://)
+					// - Docker's ADD command does not accept:
+					//    - file URLs
+					//    - path of resources outside the Docker context directory (where the Dockerfile is)
+					// So if the URL is a "file:" URL, we add it in the "resourcesToCopy" list, that will be processed
+					// just a bit later.
+					final URI uri;
+					try {
+						uri = new URI(deploy);
+						if (!"file".equals(uri.getScheme())) {
+
+							// Remote resource URL. No special treatment.
+							out.println("ADD " + deploy + " /usr/local/roboconf-agent/deploy/");
+						} else {
+
+							// Add the URL to the toCopy list, and add the modified ADD Docker command.
+							final URL url = uri.toURL();
+							localDeploys.add(url);
+							out.println("ADD " + getFileNameFromFileUrl(url) + " /usr/local/roboconf-agent/deploy/");
+						}
+					} catch (URISyntaxException | IllegalArgumentException | MalformedURLException e) {
+						this.logger.warning("Invalid deploy resource URL: " + deploy);
+						Utils.logException( this.logger, e );
+					}
+				}
 			}
 		} finally {
 			Utils.closeQuietly( out );
 			this.logger.fine( "The Dockerfile was generated." );
 		}
 
-		// Copy resources in the Dockerfile
-		String[] toCopy = { "start.sh", "rename.sh", "rc.local" };
-		for( String s : toCopy ) {
+		// Copy essential resources in the Dockerfile
+		for( final String s : RESOURCES_TO_COPY ) {
 			this.logger.fine( "Copying " + s + "..." );
 			generated = new File( dockerfile.toFile(), s );
 			try {
@@ -173,6 +204,20 @@ public class DockerfileGenerator {
 			} finally {
 				Utils.closeQuietly( in );
 				this.logger.fine( s + " was copied within the Dockerfile's directory." );
+			}
+		}
+
+		// Copy additional deploy resources in the Docker context directory.
+		for (final URL s : localDeploys) {
+
+			this.logger.fine( "Copying " + s + "..." );
+			final File target = new File(dockerfile.toFile(), getFileNameFromFileUrl(s));
+			try {
+				in = s.openStream();
+				Utils.copyStream(in, target);
+			} finally {
+				Utils.closeQuietly( in );
+				this.logger.fine( s + " was copied within the Dockerfile's directory. (" + target + ")" );
 			}
 		}
 
@@ -230,5 +275,15 @@ public class DockerfileGenerator {
 			agentFilename = "roboconf-agent" + (isTar ? ".tar.gz" : ".zip");
 
 		return agentFilename;
+	}
+
+	/**
+	 * Get the file name from a "file:" URL.
+	 * @param url the URL of the file.
+	 * @return the file name.
+	 */
+	static String getFileNameFromFileUrl( final URL url ) {
+		final String path = url.getPath();
+		return path.substring(path.lastIndexOf('/') + 1, path.length());
 	}
 }
