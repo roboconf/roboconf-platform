@@ -57,6 +57,13 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo</artifactId>
+			<version>${ipojo.version}</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>com.github.jknack</groupId>
@@ -109,13 +116,6 @@
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-target-api</artifactId>
 			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.ipojo</artifactId>
-			<version>${ipojo.version}</version>
 			<scope>test</scope>
 		</dependency>
 
