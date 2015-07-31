@@ -42,6 +42,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
@@ -64,6 +65,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -91,6 +93,9 @@ public class Manager_BasicsTest {
 		this.manager.setConfigurationDirectoryLocation( directory.getAbsolutePath());
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.start();
+
+		// Register mocked listeners - mainly for code coverage reasons
+		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
 
 		// Reconfigure with the messaging client factory registry set.
 		this.manager.getMessagingClient().setRegistry(this.registry);
@@ -153,20 +158,6 @@ public class Manager_BasicsTest {
 			MsgEcho echo = (MsgEcho) message;
 			Assert.assertEquals( "PING:TEST " + i.getName(), echo.getContent() );
 		}
-	}
-
-
-	@Test
-	public void testSaveConfiguration() {
-
-		TestApplication app = new TestApplication();
-		File instancesFile = new File(
-				this.manager.configurationDirectory,
-				ConfigurationUtils.findInstancesRelativeLocation( app.getName()));
-
-		Assert.assertFalse( instancesFile.exists());
-		this.manager.saveConfiguration( new ManagedApplication( app ));
-		Assert.assertTrue( instancesFile.exists());
 	}
 
 
@@ -848,7 +839,7 @@ public class Manager_BasicsTest {
 
 
 	@Test
-	public void testExtensibilityNotifications() {
+	public void testExtensibilityNotifications_targets() {
 
 		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
 		this.manager.targetAppears( null );
@@ -866,11 +857,39 @@ public class Manager_BasicsTest {
 
 		this.manager.targetAppears( new TargetHandlerMock( "oops" ));
 		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
-		this.manager.targetWasModified( new TargetHandlerMock( "oops" ));
-		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
 
 		this.manager.targetAppears( new TargetHandlerMock( "new_oops" ));
 		Assert.assertEquals( 2, this.manager.getTargetHandlers().size());
+	}
+
+
+	@Test
+	public void testExtensibilityNotifications_listeners() {
+		this.manager.dmListeners.clear();
+
+		Assert.assertEquals( 0, this.manager.getDmListeners().size());
+		this.manager.listenerAppears( null );
+		Assert.assertEquals( 0, this.manager.getDmListeners().size());
+
+		IDmListener mock1 = Mockito.mock( IDmListener.class );
+		Mockito.when( mock1.getId()).thenReturn( "mock1" );
+
+		this.manager.listenerAppears( mock1 );
+		Assert.assertEquals( 1, this.manager.getDmListeners().size());
+		this.manager.listenerDisappears( mock1 );
+		Assert.assertEquals( 0, this.manager.getDmListeners().size());
+
+		this.manager.listenerDisappears( Mockito.mock( IDmListener.class ));
+		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
+
+		this.manager.listenerDisappears( null );
+		Assert.assertEquals( 0, this.manager.getDmListeners().size());
+
+		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
+		Assert.assertEquals( 1, this.manager.getDmListeners().size());
+
+		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
+		Assert.assertEquals( 2, this.manager.getDmListeners().size());
 	}
 
 

@@ -1,0 +1,3 @@
+{{#all Whatever}}
+- {{path}}
+{{/all}}

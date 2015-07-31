@@ -56,6 +56,9 @@ import net.roboconf.dm.internal.environment.messaging.RCDm;
 import net.roboconf.dm.internal.tasks.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.tasks.CheckerMessagesTask;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.internal.utils.ManagerUtils;
+import net.roboconf.dm.management.events.EventType;
+import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
@@ -107,12 +110,9 @@ public class Manager {
 	private static final long TIMER_PERIOD = 6000;
 
 	// Injected by iPojo or Admin Config
+	protected final List<IDmListener> dmListeners = new ArrayList<> ();
 	protected final List<TargetHandler> targetHandlers = new ArrayList<> ();
 	protected String configurationDirectoryLocation, messagingType;
-
-	// Monitoring manager optional dependency. May be null.
-	// @GuardedBy this
-	private TemplatingManagerService templatingManager;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
@@ -194,80 +194,27 @@ public class Manager {
 			}
 		}
 
-		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
-			// Stop the templating.
-			// May be called before the unbindMonitoringManager() method.
-			synchronized (this) {
-				if (this.templatingManager != null) {
-					this.logger.fine( "Stopping templating manager..." );
-					// Disable the templating manager.
-					this.templatingManager.stopTemplating();
-					this.templatingManager = null;
-					this.logger.fine( "Templating manager stopped!" );
-				}
-			}
-
-			saveConfiguration( ma );
-		}
-
 		this.logger.info( "The DM was stopped." );
 	}
 
 
 	/**
-	 * Binds to the {@code TemplatingManagerService}.
-	 * @param templatingManager the {@code MonitoringManagerService}
-	 */
-	public synchronized void bindTemplatingManager( TemplatingManagerService templatingManager ) {
-
-		this.logger.fine( "Binding to templating manager service..." );
-		if (this.configurationDirectory != null) {
-			// We only start the templating if the configuration directory is configured.
-			// If not, the templating will be started in the reconfigure() method.
-			templatingManager.startTemplating( this.configurationDirectory );
-
-			// Register the applications in the templating manager.
-			for (ManagedApplication app : this.appManager.getManagedApplications())
-				templatingManager.addApplication( app.getApplication());
-
-			this.templatingManager = templatingManager;
-		}
-		this.logger.fine( "Now bound to templating manager service!" );
-	}
-
-
-	/**
-	 * Unbinds from the {@code MonitoringManagerService}.
-	 * @param templatingManager the {@code MonitoringManagerService}
-	 */
-	public synchronized void unbindTemplatingManager( TemplatingManagerService templatingManager ) {
-
-		// May be called after the stop method.
-		if (this.templatingManager != null) {
-			this.logger.fine( "Unbinding from templating manager service..." );
-			templatingManager.stopTemplating();
-			this.templatingManager = null;
-			this.logger.fine( "Unbound from templating manager service!" );
-		}
-	}
-
-
-	/**
 	 * This method is invoked by iPojo every time a new target handler appears.
-	 * @param targetItf the appearing target handler.
+	 * @param targetItf the appearing target handler
 	 */
 	public void targetAppears( TargetHandler targetItf ) {
+
 		if( targetItf != null ) {
 			this.logger.info( "Target handler '" + targetItf.getTargetId() + "' is now available in Roboconf's DM." );
 			this.targetHandlers.add( targetItf );
-			listTargets();
+			ManagerUtils.listTargets( this.targetHandlers, this.logger );
 		}
 	}
 
 
 	/**
 	 * This method is invoked by iPojo every time a target handler disappears.
-	 * @param targetItf the disappearing target handler.ers
+	 * @param targetItf the disappearing target handler
 	 */
 	public void targetDisappears( TargetHandler targetItf ) {
 
@@ -280,39 +227,47 @@ public class Manager {
 			this.logger.info( "Target handler '" + targetItf.getTargetId() + "' is not available anymore in Roboconf's DM." );
 		}
 
-		listTargets();
+		ManagerUtils.listTargets( this.targetHandlers, this.logger );
 	}
 
 
 	/**
-	 * This method is invoked by iPojo every time a target is modified.
-	 * @param targetItf the modified target handler.
+	 * This method is invoked by iPojo every time a DM listener appears.
+	 * @param targetItf the appearing listener
 	 */
-	public void targetWasModified( TargetHandler targetItf ) {
-		this.logger.info( "Target handler '" + targetItf.getTargetId() + "' was modified in Roboconf's DM." );
-		listTargets();
-	}
+	public void listenerAppears( IDmListener listener ) {
 
-
-	/**
-	 * This method lists the available target and logs it.
-	 */
-	public void listTargets() {
-
-		if( this.targetHandlers.isEmpty()) {
-			this.logger.info( "No target was found for Roboconf's DM." );
-
-		} else {
-			StringBuilder sb = new StringBuilder( "Available target in Roboconf's DM: " );
-			for( Iterator<TargetHandler> it = this.targetHandlers.iterator(); it.hasNext(); ) {
-				sb.append( it.next().getTargetId());
-				if( it.hasNext())
-					sb.append( ", " );
+		if( listener != null ) {
+			this.logger.info( "A new listener '" + listener.getId() + "' is now available in Roboconf's DM." );
+			synchronized( this.dmListeners ) {
+				this.dmListeners.add( listener );
 			}
 
-			sb.append( "." );
-			this.logger.info( sb.toString());
+			ManagerUtils.listListeners( this.dmListeners, this.logger );
 		}
+	}
+
+
+	/**
+	 * This method is invoked by iPojo every time a DM listener disappears.
+	 * @param listener the disappearing listener
+	 */
+	public void listenerDisappears( IDmListener listener ) {
+
+		// May happen if a target could not be instantiated
+		// (iPojo uses proxies). In this case, it results in a NPE here.
+		if( listener == null ) {
+			this.logger.info( "An invalid listener is removed." );
+
+		} else {
+			synchronized( this.dmListeners ) {
+				this.dmListeners.remove( listener );
+			}
+
+			this.logger.info( "The listener '" + listener.getId() + "' is not available anymore in Roboconf's DM." );
+		}
+
+		ManagerUtils.listListeners( this.dmListeners, this.logger );
 	}
 
 
@@ -325,10 +280,18 @@ public class Manager {
 
 
 	/**
-	 * @return the targetHandlers
+	 * @return the target handlers
 	 */
 	public List<TargetHandler> getTargetHandlers() {
 		return Collections.unmodifiableList( this.targetHandlers );
+	}
+
+
+	/**
+	 * @return the DM listeners
+	 */
+	public List<IDmListener> getDmListeners() {
+		return Collections.unmodifiableList( this.dmListeners );
 	}
 
 
@@ -359,7 +322,7 @@ public class Manager {
 
 		// Backup the current
 		for( ManagedApplication ma : this.appManager.getManagedApplications())
-			saveConfiguration( ma );
+			ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
 
 		// Update the configuration directory
 		File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
@@ -379,13 +342,16 @@ public class Manager {
 		}
 
 		// Restart the templating, using the new configuration directory.
-		synchronized (this) {
-			if( this.templatingManager != null ) {
-				this.templatingManager.stopTemplating();
-				this.templatingManager.startTemplating( this.configurationDirectory );
-				// Applications are re-added as they are reloaded, in the restoreApplications() method.
-			}
-		}
+		// FIXME: will be removed once we implement #394
+		// Applications will not be impacted by reconfigurations then.
+		// => same thing for listeners.
+//		synchronized (this) {
+//			if( this.templatingManager != null ) {
+//				this.templatingManager.stopTemplating();
+//				this.templatingManager.startTemplating( this.configurationDirectory );
+//				// Applications are re-added as they are reloaded, in the restoreApplications() method.
+//			}
+//		}
 
 		// Update the messaging client
 		if( this.messagingClient != null ) {
@@ -419,21 +385,6 @@ public class Manager {
 	 */
 	public Application findApplicationByName( String applicationName ) {
 		return this.appManager.findApplicationByName( applicationName );
-	}
-
-
-	/**
-	 * Saves the configuration (instances).
-	 * @param ma a non-null managed application
-	 */
-	public void saveConfiguration( ManagedApplication ma ) {
-		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
-
-		synchronized( this ) {
-			if( this.templatingManager != null ) {
-				this.templatingManager.updateApplication( ma.getApplication());
-			}
-		}
 	}
 
 
@@ -495,7 +446,14 @@ public class Manager {
 	throws AlreadyExistingException, InvalidApplicationException, IOException {
 
 		checkConfiguration();
-		return this.templateManager.loadApplicationTemplate( applicationFilesDirectory, this.configurationDirectory );
+		ApplicationTemplate tpl = this.templateManager.loadApplicationTemplate( applicationFilesDirectory, this.configurationDirectory );
+
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.applicationTemplate( tpl, EventType.CREATED );
+		}
+
+		return tpl;
 	}
 
 
@@ -518,10 +476,16 @@ public class Manager {
 		if( tpl == null )
 			throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
-		if( this.appManager.isTemplateUsed( tpl ))
+		if( this.appManager.isTemplateUsed( tpl )) {
 			throw new UnauthorizedActionException( tplName + " (" + tplQualifier + ") is still used by applications. It cannot be deleted." );
-		else
+
+		} else {
 			this.templateManager.deleteApplicationTemplate( tpl, this.configurationDirectory );
+			synchronized( this.dmListeners ) {
+				for( IDmListener listener : this.dmListeners )
+					listener.applicationTemplate( tpl, EventType.DELETED );
+			}
+		}
 	}
 
 
@@ -565,11 +529,10 @@ public class Manager {
 		// Start listening to messages
 		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 
-		// Start the templating of the application.
-		synchronized (this) {
-			if (this.templatingManager != null) {
-				this.templatingManager.addApplication( ma.getApplication());
-			}
+		// Notify listeners
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.application( ma.getApplication(), EventType.CREATED );
 		}
 
 		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
@@ -584,8 +547,17 @@ public class Manager {
 	 * @throws IOException
 	 */
 	public void updateApplication( ManagedApplication ma, String newDesc ) throws IOException {
+
+		// Basic checks
 		checkConfiguration();
 		this.appManager.updateApplication( ma.getApplication(), newDesc );
+
+		// Notify listeners
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.application( ma.getApplication(), EventType.CHANGED );
+		}
+
 		this.logger.fine( "The description of application " + ma.getApplication().getName() + " was successfully updated." );
 	}
 
@@ -617,11 +589,10 @@ public class Manager {
 			Utils.logException( this.logger, e );
 		}
 
-		// Stop the templating of the outgoing application.
-		synchronized (this) {
-			if (this.templatingManager != null) {
-				this.templatingManager.removeApplication( ma.getApplication());
-			}
+		// Notify listeners
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.application( ma.getApplication(), EventType.DELETED );
 		}
 
 		// Delete artifacts
@@ -638,7 +609,28 @@ public class Manager {
 
 		checkConfiguration();
 		this.instanceManager.addInstance( ma, parentInstance, instance );
-		saveConfiguration( ma );
+		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
+
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.instance( instance, ma.getApplication(), EventType.CREATED );
+		}
+	}
+
+
+	/**
+	 * Invoked when an instance was modified and that we need to propagate these changes outside the DM.
+	 * @param instance an instance (not null)
+	 * @param ma the associated application
+	 */
+	public void instanceWasUpdated( Instance instance, ManagedApplication ma ) {
+
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.instance( instance, ma.getApplication(), EventType.CHANGED );
+		}
+
+		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
 	}
 
 
@@ -651,7 +643,12 @@ public class Manager {
 
 		checkConfiguration();
 		this.instanceManager.removeInstance( ma, instance );
-		saveConfiguration( ma );
+		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
+
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.instance( instance, ma.getApplication(), EventType.DELETED );
+		}
 	}
 
 

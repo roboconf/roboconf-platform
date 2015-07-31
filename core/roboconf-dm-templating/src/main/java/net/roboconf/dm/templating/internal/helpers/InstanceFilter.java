@@ -23,12 +23,18 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.helpers;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Logger;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.templating.internal.contexts.InstanceContextBean;
 
 /**
  * An instance filter based on a component path and/or an installer name.
@@ -40,51 +46,88 @@ import java.util.LinkedList;
  */
 public final class InstanceFilter {
 
-	/**
-	 * The joker character, matching any component.
-	 */
 	public static final String JOKER = "*";
-
-	/**
-	 * The separator for instance filters.
-	 */
 	public static final String PATH_SEPARATOR = "/";
+	public static final String ALTERNATIVE = "|";
 
-	/**
-	 * The path of this filter, exactly as requested at creation time.
-	 */
 	private final String path;
-
-	/**
-	 * The root node of this filter.
-	 */
 	private final Node rootNode;
+	private final String installerName;
+
 
 	/**
 	 * Private constructor.
-	 *
-	 * @param path     component path.
-	 * @param rootNode the root node.
+	 * @param path component path
+	 * @param rootNode the root node
+	 * @param installerName the installer name (can be null)
 	 */
-	private InstanceFilter( String path, Node rootNode ) {
+	private InstanceFilter( String path, Node rootNode, String installerName ) {
 		this.path = path;
 		this.rootNode = rootNode;
+		this.installerName = installerName;
 	}
+
 
 	/**
 	 * Factory for {@code Filter}s.
 	 *
-	 * @param path component path for the filter to be created.
-	 * @return the created filter.
-	 * @throws IllegalArgumentException if {@code path} is an illegal component path.
+	 * @param path component path for the filter to be created (neither null, nor empty)
+	 * @param installerName
+	 * @return the created filter
+	 * @throws IllegalArgumentException if {@code path} is an illegal component path
 	 */
-	public static InstanceFilter createFilter( final String path ) {
-		// Split the path.
+	public static InstanceFilter createFilter( final String path, String installerName ) {
+
+		List<String> types = Utils.splitNicely( path, ALTERNATIVE );
+		OrNode rootNode = new OrNode();
+		for( String type : types ) {
+			Node node = buildNodeForPath( type );
+			rootNode.delegates.add( node );
+		}
+
+		return new InstanceFilter( path, rootNode, installerName );
+	}
+
+
+	/**
+	 * Applies this filter to the given instances.
+	 *
+	 * @param instances the collection of instances to which this filter has to be applied.
+	 * @return the instances of the provided collection that matches this filter.
+	 */
+	public Collection<InstanceContextBean> apply( Collection<InstanceContextBean> instances ) {
+
+		final ArrayList<InstanceContextBean> result = new ArrayList<InstanceContextBean> ();
+		for( InstanceContextBean instance : instances ) {
+			boolean installerMatches = this.installerName == null || this.installerName.equalsIgnoreCase( instance.getInstaller());
+			if( installerMatches && this.rootNode.isMatching( instance ))
+				result.add( instance );
+		}
+
+		result.trimToSize();
+		return Collections.unmodifiableCollection(result);
+	}
+
+
+	/**
+	 * Gets the path string of this filter.
+	 * @return the path string of this filter.
+	 */
+	public String getPath() {
+		return this.path;
+	}
+
+
+	/**
+	 * Builds a node for a single type (meaning no '|' in the path).
+	 * @param path a non-null type
+	 * @return a non-null node
+	 */
+	private static Node buildNodeForPath( String path ) {
+
+		// The path cannot be empty, guaranteed by AllHelper
 		final String[] elements = path.split(PATH_SEPARATOR, -1);
 		final int last = elements.length - 1;
-		if (last == -1) {
-			throw new IllegalArgumentException("Empty component path");
-		}
 
 		// Iterate in reverse order, as the instances we want are those on the right side of the path.
 		AndNode rootNode = null;
@@ -93,17 +136,20 @@ public final class InstanceFilter {
 			final String element = elements[i];
 
 			// Sanity checks
-			if (element.isEmpty() || element.contains(JOKER) && element.length() != JOKER.length()) {
-				throw new IllegalArgumentException("Empty component path: " + path);
+			if( element.isEmpty()) {
+				Logger logger = Logger.getLogger( InstanceFilter.class.getName());
+				logger.warning( "An invalid component path was found in templates. Wrong part is: '" + path + "'." );
+
+				rootNode = null;
+				break;
 			}
 
 			// Node for the current element.
 			final AndNode currentNode = new AndNode();
 
 			// Type name filter
-			if (!JOKER.equals(element)) {
+			if (!JOKER.equals(element))
 				currentNode.delegates.add(new TypeNode(element));
-			}
 
 			// Special handling if the path begins with a leading '/'.
 			// It means that the instance must be a root instance.
@@ -129,46 +175,17 @@ public final class InstanceFilter {
 			parentNode = currentNode;
 		}
 
-		return new InstanceFilter(path, rootNode);
+		return rootNode != null ? rootNode : new ErrorNode();
 	}
 
-	/**
-	 * Apply this filter to the given instances.
-	 *
-	 * @param instances the collection of instances to which this filter has to be applied.
-	 * @return the instances of the provided collection that matches this filter.
-	 */
-	public Collection<InstanceContextBean> apply( Collection<InstanceContextBean> instances ) {
-		final ArrayList<InstanceContextBean> result = new ArrayList<InstanceContextBean>();
-		for (InstanceContextBean instance : instances) {
-			if (this.rootNode.isMatching(instance)) {
-				result.add(instance);
-			}
-		}
-		result.trimToSize();
-		return Collections.unmodifiableCollection(result);
-	}
-
-	/**
-	 * Get the path string of this filter.
-	 *
-	 * @return the path string of this filter.
-	 */
-	public String getPath() {
-		return this.path;
-	}
-
-	@Override
-	public String toString() {
-		return super.toString() + "[path=" + this.path + ']';
-	}
 
 	/**
 	 * Basic element of an instance filter.
 	 */
 	private static abstract class Node {
+
 		/**
-		 * Test if an instance matches this instance filter node.
+		 * Tests if an instance matches this instance filter node.
 		 *
 		 * @param instance the instance to test.
 		 * @return {@code true} if and only if the given instance matches this instance filter node.
@@ -176,69 +193,109 @@ public final class InstanceFilter {
 		abstract boolean isMatching( InstanceContextBean instance );
 	}
 
+
+
+	/**
+	 * A node indicating an error was encountered while processing this path.
+	 */
+	private static class ErrorNode extends Node {
+
+		@Override
+		boolean isMatching( InstanceContextBean instance ) {
+			return false;
+		}
+	}
+
+
 	/**
 	 * And-combination of several nodes.
 	 * <p>
 	 * As a corner-case property, an {@code AndNode} without delegates matches any instance. It is used to handle the
-	 * special {@value #JOKER} path element.
+	 * special {@value #JOKER} in a path element.
 	 * </p>
 	 */
 	private static class AndNode extends Node {
-		/**
-		 * The delegate nodes.
-		 */
 		final LinkedList<Node> delegates = new LinkedList<Node>();
 
 		@Override
 		boolean isMatching( final InstanceContextBean instance ) {
-			boolean result = true;
-			for (Node n : this.delegates) {
-				if (!n.isMatching(instance)) {
-					result = false;
-					break;
-				}
-			}
-			return result;
+
+			boolean matching = true;
+			for( Iterator<Node> it = this.delegates.iterator(); it.hasNext() && matching; )
+				matching = it.next().isMatching( instance );
+
+			return matching;
 		}
 	}
+
+
+	/**
+	 * Or-combination of several nodes.
+	 * <p>
+	 * As a corner-case property, an {@code OrNode} is used to handle the
+	 * special {@value #ALTERNATIVE} in a path element.
+	 * </p>
+	 */
+	private static class OrNode extends Node {
+		final LinkedList<Node> delegates = new LinkedList<Node>();
+
+		@Override
+		boolean isMatching( final InstanceContextBean instance ) {
+
+			boolean matching = false;
+			for( Iterator<Node> it = this.delegates.iterator(); it.hasNext() && ! matching; )
+				matching = it.next().isMatching( instance );
+
+			return matching;
+		}
+	}
+
 
 	/**
 	 * A node that only matches instances of a given type.
 	 */
 	private static class TypeNode extends Node {
-		/**
-		 * The name of the matching component.
-		 */
 		final String typeName;
 
 		/**
-		 * Create a {@code TypeNode} that matches instances of the type with the given name.
-		 *
-		 * @param typeName the name of the type to match.
+		 * Constructor.
+		 * @param typeName the type name
 		 */
-		TypeNode( final String typeName ) {
+		TypeNode( String typeName ) {
 			this.typeName = typeName;
 		}
 
 		@Override
-		boolean isMatching( final InstanceContextBean instance ) {
-			return instance.types.contains(this.typeName);
+		boolean isMatching( InstanceContextBean instance ) {
+
+			// Find the exact reference.
+			boolean matching = instance.getTypes().contains( this.typeName );
+
+			// Or maybe it is a pattern...
+			if( ! matching && this.typeName.contains( JOKER )) {
+				String pattern = this.typeName.replace( JOKER, ".*" );
+				for( String type : instance.getTypes()) {
+
+					if( type.matches( pattern )) {
+						matching = true;
+						break;
+					}
+				}
+			}
+
+			return matching;
 		}
 	}
+
 
 	/**
 	 * A node that matches instances based on their parent.
 	 */
 	private static class ParentInstanceNode extends Node {
-		/**
-		 * The node that test the parent instances.
-		 */
 		final Node parentInstanceNode;
 
 		/**
-		 * Create a {@code ParentInstanceNode} that matches instances whose parent matches the given parent instance
-		 * node.
-		 *
+		 * Constructor.
 		 * @param parentInstanceNode the node that test the parent instances.
 		 */
 		ParentInstanceNode( final Node parentInstanceNode ) {
@@ -247,10 +304,11 @@ public final class InstanceFilter {
 
 		@Override
 		boolean isMatching( final InstanceContextBean instance ) {
-			return instance.parent != null && this.parentInstanceNode.isMatching(instance.parent);
+			return instance.getParent() != null
+					&& this.parentInstanceNode.isMatching(instance.getParent());
 		}
-
 	}
+
 
 	/**
 	 * A node that only matches root instances.
@@ -258,7 +316,7 @@ public final class InstanceFilter {
 	private static class RootInstanceNode extends Node {
 		@Override
 		boolean isMatching( final InstanceContextBean instance ) {
-			return instance.parent == null;
+			return instance.getParent() == null;
 		}
 	}
 }

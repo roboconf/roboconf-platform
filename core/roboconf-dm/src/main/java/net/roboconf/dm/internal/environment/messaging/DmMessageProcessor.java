@@ -169,7 +169,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			if( scopedInstance.data.get( Instance.IP_ADDRESS ) == null ) {
 				this.logger.fine( scopedInstancePath + " @ " + ipAddress + " is up and running." );
 				scopedInstance.data.put( Instance.IP_ADDRESS, ipAddress );
-				this.manager.saveConfiguration( ma );
+				this.manager.instanceWasUpdated( scopedInstance, ma );
 			}
 
 			ma.acknowledgeHeartBeat( scopedInstance );
@@ -193,7 +193,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifInstanceChanged( MsgNotifInstanceChanged message ) {
 
 		String instancePath = message.getInstancePath();
-		Application app = this.appManager.findApplicationByName( message.getApplicationName());
+		ManagedApplication ma = this.appManager.findManagedApplicationByName( message.getApplicationName());
+		Application app = ma == null ? null : ma.getApplication();
 		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -230,6 +231,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( instancePath );
 			sb.append( ". Imports were updated too." );
 			this.logger.fine( sb.toString());
+
+			// Notify the changes!
+			this.manager.instanceWasUpdated( instance, ma );
 		}
 	}
 

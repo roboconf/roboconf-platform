@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.contexts;
 
 import static net.roboconf.core.model.helpers.InstanceHelpers.computeInstancePath;
 
@@ -43,52 +43,25 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
-import com.github.jknack.handlebars.Context;
-
 /**
- * An application being monitored.
- * @author Pierre Bourret - Université Joseph Fourier
+ * @author Vincent Zurczak - Linagora
  */
-public class MonitoredApplication {
+public final class ContextUtils {
 
 	/**
-	 * The application's model.
+	 * Constructor.
 	 */
-	private final Application model;
-
-
-	/**
-	 * Creates an application entry.
-	 * @param model the application's model.
-	 */
-	public MonitoredApplication( final Application model ) {
-		this.model = model;
+	private ContextUtils() {
+		// nothing
 	}
 
 
 	/**
-	 * Gets the Roboconf model of this monitored application.
-	 * @return the model of this application.
+	 * @param app
+	 * @return
 	 */
-	public Application getModel() {
-		return this.model;
-	}
+	public static ApplicationContextBean toContext( Application app ) {
 
-
-	/**
-	 * Computes the current templating context of this application.
-	 * @return the current templating context of the application.
-	 */
-	public Context getCurrentContext() {
-		return Context.newBuilder(applicationContext(this.model)).build();
-	}
-
-
-	/**
-	 * Computes the templating context of an application.
-	 * @return the application's templating context.
-	 */
-	public static ApplicationContextBean applicationContext( final Application app ) {
 		final ApplicationContextBean context = new ApplicationContextBean();
 
 		// Model timestamp.

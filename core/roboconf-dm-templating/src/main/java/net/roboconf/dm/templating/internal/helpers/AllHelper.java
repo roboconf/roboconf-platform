@@ -23,11 +23,16 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.helpers;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.logging.Logger;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.templating.internal.contexts.ApplicationContextBean;
+import net.roboconf.dm.templating.internal.contexts.InstanceContextBean;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,15 +46,8 @@ import com.github.jknack.handlebars.Options;
  */
 public class AllHelper implements Helper<Object> {
 
-	/**
-	 * The name of this helper.
-	 */
 	public static final String NAME = "all";
-
-	/**
-	 * A singleton instance of this helper.
-	 */
-	public static final Helper<Object> INSTANCE = new AllHelper();
+	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
 	/**
@@ -62,29 +60,73 @@ public class AllHelper implements Helper<Object> {
 	 * </pre>
 	 */
 	@Override
-	public CharSequence apply( final Object context, final Options options ) throws IOException {
+	public CharSequence apply( final Object computedContext, final Options options ) throws IOException {
 
+		// Get parameters
+		Object context = options.context.model();
+		String componentPath = null;
+		if( computedContext instanceof String )
+			componentPath = (String) computedContext;
+
+		if( Utils.isEmptyOrWhitespaces( componentPath ))
+			componentPath = InstanceFilter.JOKER;
+
+		// Process them
 		CharSequence result = StringUtils.EMPTY;
 		if (context instanceof ApplicationContextBean) {
 			// Implicit: all instances of the application.
-			result = safeApply( ((ApplicationContextBean) context).instances, options );
+			result = safeApply(((ApplicationContextBean) context).getInstances(), options, componentPath );
 
 		} else if (context instanceof InstanceContextBean) {
 			// Implicit: all descendants of the instance.
-			result = safeApply( descendantInstances((InstanceContextBean) context), options );
+			result = safeApply( descendantInstances((InstanceContextBean) context), options, componentPath );
 
-		} else if (context instanceof Collection<?>) {
-			// Collection of instances. We must ensure type-safety.
-			final Collection<InstanceContextBean> safeContext = new ArrayList<InstanceContextBean>();
-			for (final Object element : (Collection<?>) context) {
-				if (element instanceof InstanceContextBean)
-					safeContext.add( (InstanceContextBean) element );
-			}
-
-			result = safeApply( safeContext, options );
+		} else {
+			this.logger.warning( "An unexpected context was received: " + (context == null ? null : context.getClass()));
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Same as above, but with type-safe arguments.
+	 *
+	 * @param instances the instances to which this helper is applied.
+	 * @param options   the options of this helper invocation.
+	 * @return a string result.
+	 * @throws IOException if a template cannot be loaded.
+	 */
+	private String safeApply( Collection<InstanceContextBean> instances, Options options, String componentPath )
+	throws IOException {
+
+		// Parse the filter.
+		String installerName = (String) options.hash.get( "installer" );
+		final InstanceFilter filter = InstanceFilter.createFilter( componentPath, installerName );
+
+		// Apply the filter.
+		final Collection<InstanceContextBean> selectedInstances = filter.apply( instances );
+
+		// Apply the content template of the helper to each selected instance.
+		final StringBuilder buffer = new StringBuilder();
+		final Context parent = options.context;
+		int index = 0;
+		final int last = selectedInstances.size() - 1;
+
+		for( final InstanceContextBean instance : selectedInstances ) {
+			final Context current = Context.newBuilder( parent, instance )
+					.combine( "@index", index )
+					.combine( "@first", index == 0 ? "first" : "" )
+					.combine( "@last", index == last ? "last" : "" )
+					.combine( "@odd", index % 2 == 0 ? "" : "odd" )
+					.combine( "@even", index % 2 == 0 ? "even" : "" )
+					.build();
+
+			index++;
+			buffer.append( options.fn( current ));
+		}
+
+		return buffer.toString();
 	}
 
 
@@ -96,48 +138,11 @@ public class AllHelper implements Helper<Object> {
 	private static Collection<InstanceContextBean> descendantInstances( final InstanceContextBean instance ) {
 
 		final Collection<InstanceContextBean> result = new ArrayList<InstanceContextBean>();
-		for (final InstanceContextBean child : instance.children) {
+		for (final InstanceContextBean child : instance.getChildren()) {
 			result.add( child );
 			result.addAll( descendantInstances( child ) );
 		}
 
 		return result;
-	}
-
-	/**
-	 * Same as above, but with type-safe arguments.
-	 *
-	 * @param instances the instances to which this helper is applied.
-	 * @param options   the options of this helper invocation.
-	 * @return a string result.
-	 * @throws IOException if a template cannot be loaded.
-	 */
-	private String safeApply( final Collection<InstanceContextBean> instances, final Options options ) throws IOException {
-		final String path = options.param( 0, InstanceFilter.JOKER );
-
-		// Parse the filter.
-		final InstanceFilter filter = InstanceFilter.createFilter( path );
-
-		// Apply the filter.
-		final Collection<InstanceContextBean> selectedInstances = filter.apply( instances );
-
-		// Apply the content template of the helper to each selected instance.
-		final StringBuilder buffer = new StringBuilder();
-		final Context parent = options.context;
-		int index = 0;
-		final int last = selectedInstances.size() - 1;
-		for (final InstanceContextBean instance : selectedInstances) {
-			final Context current = Context.newBuilder( parent, instance )
-					.combine( "@index", index )
-					.combine( "@first", index == 0 ? "first" : "" )
-					.combine( "@last", index == last ? "last" : "" )
-					.combine( "@odd", index % 2 == 0 ? "" : "odd" )
-					.combine( "@even", index % 2 == 0 ? "even" : "" )
-					.build();
-			index++;
-			buffer.append( options.fn( current ) );
-		}
-
-		return buffer.toString();
 	}
 }

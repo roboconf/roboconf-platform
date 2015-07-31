@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,26 +23,43 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.helpers;
+
+import java.io.IOException;
+import java.util.Objects;
+
+import net.roboconf.dm.templating.internal.contexts.VariableContextBean;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.jknack.handlebars.Helper;
+import com.github.jknack.handlebars.Options;
 
 /**
- * Context bean for an imported/exported variable.
- * @author Pierre Bourret - Université Joseph Fourier
+ * @author Vincent Zurczak - Linagora
  */
-public class VariableContextBean {
-	String name;
-	String value;
+public class IsKeyHelper implements Helper<String> {
 
-	public String getName() {
-		return this.name;
-	}
+	public static final String NAME = "is-key";
 
-	public String getValue() {
-		return this.value;
-	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see com.github.jknack.handlebars.Helper
+	 * #apply(java.lang.Object, com.github.jknack.handlebars.Options)
+	 */
 	@Override
-	public String toString() {
-		return this.name + '=' + this.value;
+	public CharSequence apply( String context, Options options )
+	throws IOException {
+
+		CharSequence result = StringUtils.EMPTY;
+		Object model = options.context.model();
+		if( model instanceof VariableContextBean ) {
+			String name = ((VariableContextBean) model).getName();
+			if( Objects.equals( name, context ))
+				result = ((VariableContextBean) model).getValue();
+		}
+
+		return result;
 	}
 }

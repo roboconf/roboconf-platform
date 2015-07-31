@@ -33,7 +33,7 @@ MySql {
 
 Apache {
 	facets: NetworkService;
-	installer: script;
+	installer: docker;
 	imports: Tomcat.ip, Tomcat.ajpPort;
 }
 

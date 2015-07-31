@@ -1,0 +1,6 @@
+- /MySqlVm
+- /ApacheVm
+- /TomcatVm1
+- /TomcatVm1/Tomcat/WebApp
+- /TomcatVm2
+- /TomcatVm2/Tomcat/WebApp

@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,220 +25,208 @@
 
 package net.roboconf.dm.templating.internal;
 
-import static net.roboconf.dm.templating.TemplatingService.TARGET_DIRECTORY;
-import static net.roboconf.dm.templating.TemplatingService.TEMPLATE_DIRECTORY;
-import static net.roboconf.dm.templating.internal.TemplatingTestUtils.addStringTemplate;
-import static net.roboconf.dm.templating.internal.TemplatingTestUtils.hasContent;
-import static org.fest.assertions.Assertions.assertThat;
-
 import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
-import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.events.EventType;
+import net.roboconf.dm.templating.internal.templates.TemplateEntry;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 /**
- * Test the {@link net.roboconf.dm.templating.internal.TemplatingManager} component.
- * @author Pierre Bourret - Université Joseph Fourier
+ * @author Vincent Zurczak - Linagora
  */
 public class TemplatingManagerTest {
 
-	/**
-	 * The template watcher poll interval.
-	 * <p>
-	 * If some tests fail erratically, this interval should be increased.
-	 * </p>
-	 */
-	private static long POLL_INTERVAL = 250L;
-
 	@Rule
-	public final TemporaryFolder tmpDir = new TemporaryFolder();
-
-	/**
-	 * The tested {@code TemplatingManager} component.
-	 */
-	private TemplatingManager manager;
-
-	/**
-	 * The templating manager's directory.
-	 */
-	private File templateDir;
-
-	/**
-	 * The templating manager's target directory.
-	 */
-	private File targetDir;
-
-	/**
-	 * A sample application.
-	 */
-	private final Application app1 = new Application( "test-app-1", new TestApplicationTemplate()).description("An application being tested");
-
-	/**
-	 * Another sample application.
-	 */
-	private final Application app2 = new Application( "test-app-2", new TestApplicationTemplate()).description("Another application being tested");
+	public TemporaryFolder folder = new TemporaryFolder();
 
 
-	@Before
-	public void before() throws IOException {
-		// Create the configuration directory.
-		final File configDir = this.tmpDir.newFolder();
-		this.templateDir = new File(configDir, TEMPLATE_DIRECTORY);
-		this.targetDir = new File(configDir, TARGET_DIRECTORY);
+	@Test
+	public void testBasics() {
 
-		// Create & configure the templating manager component.
-		this.manager = new TemplatingManager();
-		this.manager.setPollInterval(POLL_INTERVAL);
-		this.manager.start();
-		this.manager.startTemplating(configDir);
+		TemplatingManager mngr = new TemplatingManager();
+		Assert.assertEquals( TemplatingManager.ID, mngr.getId());
 
-		// Add the applications
-		this.manager.addApplication(this.app1);
-		this.manager.addApplication(this.app2);
-	}
+		// Empty methods
+		mngr.enableNotifications();
+		mngr.disableNotifications();
+		mngr.raw( "whatever" );
+		mngr.applicationTemplate( null, EventType.CHANGED );
 
-
-	@After
-	public void after() throws IOException {
-		// Remove the applications
-		this.manager.removeApplication(this.app1);
-		this.manager.removeApplication(this.app2);
-
-		this.manager.stopTemplating();
-		this.manager.stop();
+		// Binding and unbinding the DM
+		Assert.assertNull( mngr.dm );
+		mngr.bindManager( new Manager());
+		Assert.assertNotNull( mngr.dm );
+		mngr.unbindManager( null );
+		Assert.assertNull( mngr.dm );
 	}
 
 
 	@Test
-	public void testRootDirectoriesAreCreated() {
-		assertThat(this.templateDir).exists().isDirectory();
-		assertThat(this.targetDir).exists().isDirectory();
+	public void testWatchingScenario() throws Exception {
+
+		// Configure before starting
+		TemplatingManager mngr = new TemplatingManager();
+		File templatesDirectory = this.folder.newFolder();
+		File outputDirectory = this.folder.newFolder();
+
+		mngr.setTemplatesDirectory( templatesDirectory.getAbsolutePath());
+		mngr.setOutputDirectory( outputDirectory.getAbsolutePath());
+		mngr.setPollInterval( 300 );
+
+		Manager dm = new Manager();
+		mngr.bindManager( dm );
+
+		// Start
+		Assert.assertNull( mngr.templateWatcher );
+		mngr.start();
+		Assert.assertNotNull( mngr.templateWatcher );
+
+		// Copy a template
+		File tplFile = new File( templatesDirectory, "basic.txt.tpl" );
+		InputStream in = getClass().getResourceAsStream( "/templates/basic.txt.tpl" );
+		try {
+			Utils.copyStream( in, tplFile );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		// Wait few seconds
+		Thread.sleep( 700 );
+		Assert.assertEquals( 0, outputDirectory.listFiles().length );
+
+		// Create a new application
+		TestApplication app = new TestApplication();
+		dm.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+
+		mngr.application( app, EventType.CREATED );
+		Thread.sleep( 700 );
+
+		File expectedFile = new File( outputDirectory, app.getName() + "/basic.txt" );
+		Assert.assertTrue( expectedFile.exists());
+
+		// Reconfigure the poll interval and templates directory
+		templatesDirectory = this.folder.newFolder();
+		mngr.setTemplatesDirectory( templatesDirectory.getAbsolutePath());
+		mngr.setPollInterval( 200 );
+
+		// Already output files are still there
+		Thread.sleep( 500 );
+		Assert.assertTrue( expectedFile.exists());
+
+		// The application changes.
+		// There is no template => no output should appear.
+		Utils.deleteFilesRecursively( expectedFile.getParentFile());
+		Assert.assertFalse( expectedFile.exists());
+
+		mngr.instance( app.getMySql(), app, EventType.CHANGED );
+		Thread.sleep( 500 );
+		Assert.assertFalse( expectedFile.exists());
+
+		// Change the output directory
+		outputDirectory = this.folder.newFolder();
+		mngr.setOutputDirectory( outputDirectory.getAbsolutePath());
+
+		// Still no template => no output
+		Thread.sleep( 500 );
+		Assert.assertFalse( expectedFile.exists());
+
+		// Copy the template and verify a new file is generated
+		tplFile = new File( templatesDirectory, "basic.txt.tpl" );
+		in = getClass().getResourceAsStream( "/templates/basic.txt.tpl" );
+		try {
+			Utils.copyStream( in, tplFile );
+
+		} finally {
+			Utils.closeQuietly( in );
+		}
+
+		Thread.sleep( 500 );
+		expectedFile = new File( outputDirectory, app.getName() + "/basic.txt" );
+		Assert.assertTrue( expectedFile.exists());
+
+		// Delete the application => generated files are deleted.
+		mngr.application( app, EventType.DELETED );
+		Assert.assertFalse( expectedFile.getParentFile().exists());
+
+		// Templates are still there.
+		Assert.assertTrue( tplFile.exists());
+
+		// Stop the templating manager.
+		Assert.assertNotNull( mngr.templateWatcher );
+		mngr.stop();
+		Assert.assertNull( mngr.templateWatcher );
 	}
 
 
 	@Test
-	public void testGlobalAndSpecificTemplates() throws IOException, InterruptedException {
-		// Add global & local (app-specific) templates.
-		addStringTemplate(this.manager, null, "global.test", "global:{{name}}");
-		addStringTemplate(this.manager, this.app1, "local1.test", "app1:{{name}}");
-		addStringTemplate(this.manager, this.app2, "local2.test", "app2:{{name}}");
+	public void test_invalidDirectories() throws Exception {
 
-		// Check the templates are here.
-		assertThat(this.manager.listTemplates(null)).containsOnly("global.test");
-		assertThat(this.manager.listTemplates(this.app1)).containsOnly("local1.test");
-		assertThat(this.manager.listTemplates(this.app2)).containsOnly("local2.test");
+		// Both directories are invalid
+		TemplatingManager mngr = new TemplatingManager();
+		mngr.setOutputDirectory( null );
+		mngr.setTemplatesDirectory( null );
 
-		// Wait for a while, so the reports are generated.
-		Thread.sleep(3 * POLL_INTERVAL);
+		Assert.assertNull( mngr.templatesDIR );
+		Assert.assertNull( mngr.outputDIR );
 
-		// Check the presence and the content of the global reports.
-		assertThat(new File(this.targetDir, "test-app-1.global.test"))
-				.exists()
-				.isFile()
-				.satisfies(hasContent("global:test-app-1"));
-		assertThat(new File(this.targetDir, "test-app-2.global.test"))
-				.exists()
-				.isFile()
-				.satisfies(hasContent("global:test-app-2"));
+		mngr.start();
+		Assert.assertNull( mngr.templateWatcher );
 
-		// Check the presence and the content of the local reports.
-		assertThat(new File(this.targetDir, "test-app-1" + File.separatorChar + "local1.test"))
-				.exists()
-				.isFile()
-				.satisfies(hasContent("app1:test-app-1"));
-		assertThat(new File(this.targetDir, "test-app-2" + File.separatorChar + "local2.test"))
-				.exists()
-				.isFile()
-				.satisfies(hasContent("app2:test-app-2"));
+		// Set the templates directory
+		mngr.setTemplatesDirectory( this.folder.newFolder().getAbsolutePath());
+		Assert.assertNotNull( mngr.templatesDIR );
+		Assert.assertNull( mngr.outputDIR );
 
-		// Remove the applications
-		this.manager.removeApplication(this.app1);
-		this.manager.removeApplication(this.app2);
+		mngr.start();
+		Assert.assertNull( mngr.templateWatcher );
+		mngr.stop();
+
+		// For code coverage...
+		// No exception
+		mngr.application( new TestApplication(), EventType.CHANGED );
+		mngr.processNewTemplates( new ArrayList<TemplateEntry>( 0 ));
+		mngr.generate( new TestApplication());
 	}
 
 
 	@Test
-	public void testUpdateApplication() throws IOException, InterruptedException {
-		// Add global & local (app-specific) templates.
-		addStringTemplate(this.manager, null, "global.test", "global:{{description}}");
-		addStringTemplate(this.manager, this.app1, "local1.test", "app1:{{description}}");
+	public void testLoggingInGenerate_ioException() throws Exception {
 
-		final File global = new File(this.targetDir, "test-app-1.global.test");
-		final File local = new File(this.targetDir, "test-app-1" + File.separatorChar + "local1.test");
+		TemplatingManager mngr = new TemplatingManager();
+		mngr.setOutputDirectory( this.folder.newFile().getAbsolutePath());
 
-		// Wait for a while, so the reports are generated.
-		Thread.sleep(3 * POLL_INTERVAL);
+		TemplateEntry te = new TemplateEntry( new File( "inexisting.tpl" ), null, null );
+		Application app = new Application( "test", null );
 
-		// Check the presence and the content of the global reports.
-		assertThat(global).exists().isFile().satisfies(hasContent("global:An application being tested"));
-
-		// Check the presence and the content of the local reports.
-		assertThat(local).exists().isFile().satisfies(hasContent("app1:An application being tested"));
-
-		// Change the application, check, update, and recheck!
-		this.app1.setDescription("CHANGED!");
-
-		// Wait for a while... just in case an (unwanted) update occurs.
-		Thread.sleep(3 * POLL_INTERVAL);
-
-		// Should not have changed!
-		assertThat(global).satisfies(hasContent("global:An application being tested"));
-		assertThat(local).satisfies(hasContent("app1:An application being tested"));
-
-		// Update the application, the reports should be updated synchronously.
-		this.manager.updateApplication(this.app1);
-		assertThat(global).satisfies(hasContent("global:CHANGED!"));
-		assertThat(local).satisfies(hasContent("app1:CHANGED!"));
+		mngr.generate( app, Collections.singleton( te ));
+		// No exception thrown while we try to write a file under another file.
 	}
 
 
 	@Test
-	public void testRemoveApplication() throws IOException, InterruptedException {
-		// Add global & local (app-specific) templates.
-		addStringTemplate(this.manager, null, "global.test", "global:{{description}}");
-		addStringTemplate(this.manager, this.app1, "local.test", "local:{{description}}");
+	public void testLoggingInGenerate_npe() throws Exception {
 
-		final File global = new File(this.targetDir, "test-app-1.global.test");
-		final File local = new File(this.targetDir, "test-app-1" + File.separatorChar + "local.test");
+		TemplatingManager mngr = new TemplatingManager();
 
-		// Wait for a while, so the reports are generated.
-		Thread.sleep(3 * POLL_INTERVAL);
+		Application app = new Application( "test", null );
+		Collection<TemplateEntry> te = new ArrayList<> ();
+		te.add( null );
 
-		// Check the presence and the content of reports.
-		assertThat(global).exists().isFile().satisfies(hasContent("global:An application being tested"));
-		assertThat(local).exists().isFile().satisfies(hasContent("local:An application being tested"));
-
-		// Remove the application.
-		this.manager.removeApplication(this.app1);
-
-		// Update the app which has just been removed, so nothing should happen.
-		this.app1.setDescription("CHANGED!");
-		this.manager.updateApplication(this.app1);
-
-		// Wait for a while... just in case an (unwanted) update occurs.
-		Thread.sleep(3 * POLL_INTERVAL);
-
-		// Generated reports should not have changed!
-		assertThat(global).satisfies(hasContent("global:An application being tested"));
-		assertThat(local).satisfies(hasContent("local:An application being tested"));
-
-		// Add additional templates.
-		addStringTemplate(this.manager, null, "global2.test", "global2:{{description}}");
-		addStringTemplate(this.manager, this.app1, "local2.test", "local2:{{description}}");
-
-		// Wait for a while... just in case an (unwanted) report generation occurs.
-		Thread.sleep(3 * POLL_INTERVAL);
-
-		// Update the application, the reports should be updated synchronously.
-		this.manager.updateApplication(this.app1);
-		assertThat(new File(this.targetDir, "test-app-1.global2.test")).doesNotExist();
-		assertThat(new File(this.targetDir, "test-app-1" + File.separatorChar + "local2.test")).doesNotExist();
+		mngr.generate( app, te );
+		// No exception thrown while we will get a NPE while iterating on the templates.
 	}
 }

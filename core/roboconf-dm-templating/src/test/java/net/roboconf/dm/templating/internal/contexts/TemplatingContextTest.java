@@ -23,11 +23,11 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.contexts;
 
 import static net.roboconf.core.model.beans.Instance.InstanceStatus.NOT_DEPLOYED;
-import static net.roboconf.dm.templating.internal.TemplatingTestUtils.instancesByPath;
-import static net.roboconf.dm.templating.internal.TemplatingTestUtils.variableMapOf;
+import static net.roboconf.dm.templating.testutils.TemplatingTestUtils.instancesByPath;
+import static net.roboconf.dm.templating.testutils.TemplatingTestUtils.variableMapOf;
 import static org.fest.assertions.Assertions.assertThat;
 
 import java.io.File;
@@ -44,6 +44,11 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.ImportHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.templating.internal.TemplatingManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -70,6 +75,7 @@ public class TemplatingContextTest {
 	private Map<String, InstanceContextBean> instanceContexts = new LinkedHashMap<String, InstanceContextBean>();
 
 
+
 	@Before
 	public void before() throws IOException, URISyntaxException {
 
@@ -78,18 +84,34 @@ public class TemplatingContextTest {
 		Assert.assertTrue( dir.exists());
 
 		final ApplicationLoadResult result = RuntimeModelIo.loadApplication( dir );
-		assertThat(result.getApplicationTemplate()).isNotNull();
+		assertThat( result.getApplicationTemplate()).isNotNull();
 
+		// Create and patch an application to verify contexts are correctly generated
 		Application app = new Application( "test-app", result.getApplicationTemplate()).description( "An example application" );
-		this.context = MonitoredApplication.applicationContext( app );
+		Instance apacheVm = InstanceHelpers.findInstanceByPath( app, "/ApacheVm" );
+		assertThat( apacheVm ).isNotNull();
+
+		apacheVm.overriddenExports.put( "apacheVm.extra", "bonus" );
+
+		for( Instance rootInstance : app.getRootInstances()) {
+			if( rootInstance.equals( apacheVm ))
+				continue;
+
+			rootInstance.data.put( Instance.APPLICATION_NAME, app.getName());
+			rootInstance.data.put( Instance.MACHINE_ID, "ds4sd14sdsfkdf" );
+			ImportHelpers.addImport( rootInstance, "test", new Import( apacheVm ));
+		}
+
+		// Create a context
+		this.context = ContextUtils.toContext( app );
 		this.instanceContexts = instancesByPath(this.context.getInstances());
 
 		// We need to re-arrange the data for easier further access.
 		for (final Entry<String, Set<InstanceContextBean>> entry : this.context.getInstancesByType().entrySet()) {
 			final Set<String> instancesOfType = new LinkedHashSet<String>();
-			for (final InstanceContextBean i : entry.getValue()) {
+			for (final InstanceContextBean i : entry.getValue())
 				instancesOfType.add(i.getPath());
-			}
+
 			this.instancesOf.put(entry.getKey(), instancesOfType);
 		}
 	}
@@ -115,26 +137,29 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testInstancesByType() {
+
 		assertThat(this.instancesOf.get("Vm"))
 				.containsOnly("/MySqlVm", "/ApacheVm", "/TomcatVm1", "/TomcatVm2");
+
 		assertThat(this.instancesOf.get("Virtual"))
 				.containsOnly("/MySqlVm", "/ApacheVm", "/TomcatVm1", "/TomcatVm2");
+
 		assertThat(this.instancesOf.get("Machine"))
 				.containsOnly("/MySqlVm", "/ApacheVm", "/TomcatVm1", "/TomcatVm2");
 
-		assertThat(this.instancesOf.get("MySql"))
-				.containsOnly("/MySqlVm/MySql");
-		assertThat(this.instancesOf.get("Apache"))
-				.containsOnly("/ApacheVm/Apache");
-		assertThat(this.instancesOf.get("Tomcat"))
-				.containsOnly("/TomcatVm1/Tomcat", "/TomcatVm2/Tomcat");
+		assertThat(this.instancesOf.get("MySql")).containsOnly("/MySqlVm/MySql");
+		assertThat(this.instancesOf.get("Apache")).containsOnly("/ApacheVm/Apache");
+		assertThat(this.instancesOf.get("Tomcat")).containsOnly("/TomcatVm1/Tomcat", "/TomcatVm2/Tomcat");
+
 		assertThat(this.instancesOf.get("Service"))
 				.containsOnly("/MySqlVm/MySql", "/ApacheVm/Apache", "/TomcatVm1/Tomcat", "/TomcatVm2/Tomcat");
+
 		assertThat(this.instancesOf.get("NetworkService"))
 				.containsOnly("/MySqlVm/MySql", "/ApacheVm/Apache", "/TomcatVm1/Tomcat", "/TomcatVm2/Tomcat");
 
 		assertThat(this.instancesOf.get("War"))
 				.containsOnly("/TomcatVm1/Tomcat/WebApp", "/TomcatVm2/Tomcat/WebApp");
+
 		assertThat(this.instancesOf.get("Application"))
 				.containsOnly("/TomcatVm1/Tomcat/WebApp", "/TomcatVm2/Tomcat/WebApp");
 	}
@@ -142,6 +167,7 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testMySqlVmInstance() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/MySqlVm");
 		assertThat(instance.getName()).isEqualTo("MySqlVm");
 		assertThat(instance.getPath()).isEqualTo("/MySqlVm");
@@ -154,13 +180,14 @@ public class TemplatingContextTest {
 		assertThat(instance.getIp()).isNull();
 		assertThat(instance.getInstaller()).isEqualTo("target");
 		assertThat(instance.getExports()).isEmpty();
-		assertThat(instance.getImports()).isEmpty();
-		assertThat(instance.getData()).isEmpty();
+		assertThat(instance.getImports()).isNotEmpty();
+		assertThat(instance.getData()).isNotEmpty();
 	}
 
 
 	@Test
 	public void testApacheVmInstance() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/ApacheVm");
 		assertThat(instance.getName()).isEqualTo("ApacheVm");
 		assertThat(instance.getPath()).isEqualTo("/ApacheVm");
@@ -172,7 +199,7 @@ public class TemplatingContextTest {
 		assertThat(instance.getChildren()).containsOnly(this.instanceContexts.get("/ApacheVm/Apache"));
 		assertThat(instance.getIp()).isNull();
 		assertThat(instance.getInstaller()).isEqualTo("target");
-		assertThat(instance.getExports()).isEmpty();
+		assertThat(instance.getExports()).isNotEmpty();
 		assertThat(instance.getImports()).isEmpty();
 		assertThat(instance.getData()).isEmpty();
 	}
@@ -180,6 +207,7 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testTomcatVmInstance1() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/TomcatVm1");
 		assertThat(instance.getName()).isEqualTo("TomcatVm1");
 		assertThat(instance.getPath()).isEqualTo("/TomcatVm1");
@@ -192,13 +220,14 @@ public class TemplatingContextTest {
 		assertThat(instance.getIp()).isNull();
 		assertThat(instance.getInstaller()).isEqualTo("target");
 		assertThat(instance.getExports()).isEmpty();
-		assertThat(instance.getImports()).isEmpty();
-		assertThat(instance.getData()).isEmpty();
+		assertThat(instance.getImports()).isNotEmpty();
+		assertThat(instance.getData()).isNotEmpty();
 	}
 
 
 	@Test
 	public void testTomcatVmInstance2() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/TomcatVm2");
 		assertThat(instance.getName()).isEqualTo("TomcatVm2");
 		assertThat(instance.getPath()).isEqualTo("/TomcatVm2");
@@ -211,13 +240,14 @@ public class TemplatingContextTest {
 		assertThat(instance.getIp()).isNull();
 		assertThat(instance.getInstaller()).isEqualTo("target");
 		assertThat(instance.getExports()).isEmpty();
-		assertThat(instance.getImports()).isEmpty();
-		assertThat(instance.getData()).isEmpty();
+		assertThat(instance.getImports()).isNotEmpty();
+		assertThat(instance.getData()).isNotEmpty();
 	}
 
 
 	@Test
 	public void testMySqlInstance() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/MySqlVm/MySql");
 		assertThat(instance.getName()).isEqualTo("MySql");
 		assertThat(instance.getPath()).isEqualTo("/MySqlVm/MySql");
@@ -229,6 +259,7 @@ public class TemplatingContextTest {
 		assertThat(instance.getChildren()).isEmpty();
 		assertThat(instance.getIp()).isNull();
 		assertThat(instance.getInstaller()).isEqualTo("puppet");
+
 		final Map<String, String> exports = variableMapOf(instance.getExports());
 		assertThat(exports).hasSize(2);
 		assertThat(exports.get("MySql.ip")).isNull();
@@ -240,6 +271,7 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testApacheInstance() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/ApacheVm/Apache");
 		assertThat(instance.getName()).isEqualTo("Apache");
 		assertThat(instance.getPath()).isEqualTo("/ApacheVm/Apache");
@@ -250,7 +282,7 @@ public class TemplatingContextTest {
 		assertThat(instance.getParent()).isSameAs(this.instanceContexts.get("/ApacheVm"));
 		assertThat(instance.getChildren()).isEmpty();
 		assertThat(instance.getIp()).isNull();
-		assertThat(instance.getInstaller()).isEqualTo("script");
+		assertThat(instance.getInstaller()).isEqualTo("docker");
 		assertThat(instance.getExports()).isEmpty();
 		assertThat(instance.getImports()).isEmpty();
 		assertThat(instance.getData()).isEmpty();
@@ -259,6 +291,7 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testTomcatInstance1() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/TomcatVm1/Tomcat");
 		assertThat(instance.getName()).isEqualTo("Tomcat");
 		assertThat(instance.getPath()).isEqualTo("/TomcatVm1/Tomcat");
@@ -270,6 +303,7 @@ public class TemplatingContextTest {
 		assertThat(instance.getChildren()).containsOnly(this.instanceContexts.get("/TomcatVm1/Tomcat/WebApp"));
 		assertThat(instance.getIp()).isNull();
 		assertThat(instance.getInstaller()).isEqualTo("docker");
+
 		final Map<String, String> exports = variableMapOf(instance.getExports());
 		assertThat(exports).hasSize(2);
 		assertThat(exports.get("Tomcat.ip")).isNull();
@@ -281,6 +315,7 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testTomcatInstance2() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/TomcatVm2/Tomcat");
 		assertThat(instance.getName()).isEqualTo("Tomcat");
 		assertThat(instance.getPath()).isEqualTo("/TomcatVm2/Tomcat");
@@ -292,6 +327,7 @@ public class TemplatingContextTest {
 		assertThat(instance.getChildren()).containsOnly(this.instanceContexts.get("/TomcatVm2/Tomcat/WebApp"));
 		assertThat(instance.getIp()).isNull();
 		assertThat(instance.getInstaller()).isEqualTo("docker");
+
 		final Map<String, String> exports = variableMapOf(instance.getExports());
 		assertThat(exports).hasSize(2);
 		assertThat(exports.get("Tomcat.ip")).isNull();
@@ -303,6 +339,7 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testWebAppInstance1() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/TomcatVm1/Tomcat/WebApp");
 		assertThat(instance.getName()).isEqualTo("WebApp");
 		assertThat(instance.getPath()).isEqualTo("/TomcatVm1/Tomcat/WebApp");
@@ -322,6 +359,7 @@ public class TemplatingContextTest {
 
 	@Test
 	public void testWebAppInstance2() {
+
 		final InstanceContextBean instance = this.instanceContexts.get("/TomcatVm2/Tomcat/WebApp");
 		assertThat(instance.getName()).isEqualTo("WebApp");
 		assertThat(instance.getPath()).isEqualTo("/TomcatVm2/Tomcat/WebApp");
