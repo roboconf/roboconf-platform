@@ -36,7 +36,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
@@ -59,6 +58,7 @@ import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public class DockerHandler_withContainerTest {
 
@@ -151,9 +151,7 @@ public class DockerHandler_withContainerTest {
 		targetProperties.put( DockerHandler.BASE_IMAGE, "oops81:unknown" );
 
 		DockerMachineConfigurator configurator = new DockerMachineConfigurator(
-				targetProperties, this.msgCfg, "656sdf6sd", "/test", "app",
-				new ConcurrentHashMap<String,String> (),
-				new Instance());
+				targetProperties, this.msgCfg, "656sdf6sd", "/test", "app",	new Instance());
 
 		try {
 			configurator.dockerClient = this.docker;
@@ -273,11 +271,13 @@ public class DockerHandler_withContainerTest {
 			// once when the image already exists. However, we must wait for the thread pool
 			// executor to pick up the configurator.
 			target.configureMachine( targetProperties, this.msgCfg, containerId, path, "roboconf", scopedInstance );
-			Thread.sleep( 3000 );
 
 			// Be careful, the Docker target changes the machine ID
-			Assert.assertNotNull( scopedInstance.data.get( Instance.MACHINE_ID ));
-			containerId = scopedInstance.data.get( Instance.MACHINE_ID );
+			containerId = DockerTestUtils.waitForMachineId(
+					containerId,
+					scopedInstance.data,
+					DockerTestUtils.DOCKER_CONFIGURE_TIMEOUT);
+			Assert.assertNotNull(containerId );
 
 			// Check the machine is running
 			Assert.assertTrue( target.isMachineRunning( targetProperties, containerId ));
