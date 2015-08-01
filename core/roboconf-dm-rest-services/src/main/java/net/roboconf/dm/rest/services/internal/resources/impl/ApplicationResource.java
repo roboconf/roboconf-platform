@@ -229,7 +229,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		// Log
 		if( instancePath == null )
-			this.logger.fine( "Request: list " + (allChildren ? "all" : "root") + " instances for " + applicationName + "." );
+			this.logger.finer( "Request: list " + (allChildren ? "all" : "root") + " instances for " + applicationName + "." );
 		else
 			this.logger.fine( "Request: list " + (allChildren ? "all" : "direct") + " children instances for " + instancePath + " in " + applicationName + "." );
 
