@@ -45,6 +45,7 @@ import com.github.dockerjava.api.model.Container;
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "docker";
+	static final String MESSAGING_TYPE = "net.roboconf.messaging.type";
 
 	static final String IMAGE_ID = "docker.image";
 	static final String BASE_IMAGE = "docker.base.image";
@@ -61,10 +62,10 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String RUN_EXEC = "docker.run.exec";
 
 	// Docker exec markers for Roboconf configuration injection.
-	static final String MESSAGING_CONFIGURATION_MARKER = "$msgConfig$";
-	static final String APPLICATION_NAME_MARKER = "$applicationName$";
-	static final String INSTANCE_PATH_MARKER = "$instancePath$";
-	static final String MESSAGING_TYPE_MARKER = "$messagingType$";
+	static final String MARKER_MESSAGING_CONFIGURATION = "$msgConfig$";
+	static final String MARKER_APPLICATION_NAME = "$applicationName$";
+	static final String MARKER_INSTANCE_PATH = "$instancePath$";
+	static final String MARKER_MESSAGING_TYPE = "$messagingType$";
 
 	static final String OPTION_PREFIX = "docker.option.";
 	static final String OPTION_PREFIX_RUN = OPTION_PREFIX + "run.";

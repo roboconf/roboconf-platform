@@ -29,8 +29,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,8 +36,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
@@ -57,11 +53,9 @@ import com.github.dockerjava.api.model.Image;
 public class DockerMachineConfigurator implements MachineConfigurator {
 
 	private static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
-	private static Gson GSON = new Gson();
-
 	DockerClient dockerClient;
-	private final Logger logger = Logger.getLogger( getClass().getName());
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Instance scopedInstance;
 	private final Map<String,String> targetProperties;
 	private final Map<String,String> messagingConfiguration;
@@ -134,95 +128,14 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 * @throws TargetException if something went wrong
 	 */
 	void createContainer( String imageId ) throws TargetException {
+
+		// Get the command to pass to the container
 		this.logger.info( "Creating container " + this.machineId + " from image " + imageId );
+		List<String> args = DockerUtils.buildRunCommand(
+				this.targetProperties.get( DockerHandler.RUN_EXEC ),
+				this.messagingConfiguration , this.applicationName, this.scopedInstancePath );
 
-		// We get the custom command line (docker.run.exec property) to run and:
-		// - If nothing/invalid is specified (args == null), we use the standard agent start command
-		// - If an empty command is explicitly specified (args.isEmpty()), there must be a RUN line in the Dockerfile.
-		// - Else we use the provided command line. We may need to inject agent & messaging configuration.
-		List<String> args = parseRunExecLine(this.targetProperties.get(DockerHandler.RUN_EXEC));
-
-		if (args == null) {
-
-			// No docker.run.exec property (or invalid), fall back to the default command line.
-			// Build the command line, passing the agent & messaging configuration.
-			// Command line is:
-			// - Agent's start.sh script
-			// - messaging provider-specific configuration file,
-			// - agent.application-name=<<name of the application>>
-			// - agent.scoped-instance-path=<<path of the scoped instance>>
-			// - agent.messaging-type=<<type of messaging>>
-			// - each of the messaging configuration properties, prefixed by "msg."
-			args = new ArrayList<> ();
-			args.add("/usr/local/roboconf-agent/start.sh");
-			args.add( "etc/net.roboconf.messaging." + DockerHandler.MESSAGING_TYPE_MARKER + ".cfg");
-			args.add( "agent.application-name=" + DockerHandler.APPLICATION_NAME_MARKER );
-			args.add( "agent.scoped-instance-path=" + DockerHandler.INSTANCE_PATH_MARKER );
-			args.add( "agent.messaging-type=" + DockerHandler.MESSAGING_TYPE_MARKER );
-			args.add( DockerHandler.MESSAGING_CONFIGURATION_MARKER );
-		}
-
-		// Now proceed to argument substitution, using the special markers.
-		int i = 0;
-		while (i < args.size()) {
-
-			// The current argument, that may be substituted.
-			String arg = args.get(i);
-
-			// The string to substitute to the marker, or null if nothing to substitute.
-			final String s;
-
-			// The index (in arg) and length of the marker to replace.
-			final int j, l;
-
-			if (arg.contains(DockerHandler.MESSAGING_TYPE_MARKER)) {
-				j = args.indexOf(DockerHandler.MESSAGING_TYPE_MARKER);
-				l = DockerHandler.MESSAGING_TYPE_MARKER.length();
-				s = this.messagingConfiguration.get("net.roboconf.messaging.type");
-
-			} else if (arg.contains(DockerHandler.APPLICATION_NAME_MARKER)) {
-				j = args.indexOf(DockerHandler.APPLICATION_NAME_MARKER);
-				l = DockerHandler.APPLICATION_NAME_MARKER.length();
-				s = this.applicationName;
-
-			} else if (arg.contains(DockerHandler.INSTANCE_PATH_MARKER)) {
-				j = args.indexOf(DockerHandler.INSTANCE_PATH_MARKER);
-				l = DockerHandler.INSTANCE_PATH_MARKER.length();
-				s = this.scopedInstancePath;
-
-			} else {
-
-				if (arg.equals(DockerHandler.MESSAGING_CONFIGURATION_MARKER)) {
-
-					// A bit more special: remove the whole argument and appends all the messaging configuration, prefixed
-					// by "msg.".
-					args.remove(i);
-					for (Map.Entry<String, String> e : this.messagingConfiguration.entrySet()) {
-						args.add(i, "msg." + e.getKey() + '=' + e.getValue());
-						i++;
-					}
-
-					// We've gone one position to far...
-					i--;
-				}
-
-				// No in-string substitution.
-				j = -1;
-				l = 0;
-				s = null;
-			}
-
-			// Proceed to in-string substitution.
-			if (s != null) {
-				arg = arg.substring(0, j - 1) + s + arg.substring(j + l, arg.length());
-				args.set(i, arg);
-			}
-
-			// Goto next argument.
-			i++;
-		}
-
-		// Deal with the Docker run options.
+		// Deal with the Docker run options
 		Map<String,String> options = new HashMap<> ();
 		for( Map.Entry<String,String> entry : this.targetProperties.entrySet()) {
 			if( entry.getKey().toLowerCase().startsWith( DockerHandler.OPTION_PREFIX_RUN )) {
@@ -290,21 +203,21 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		String packages = this.targetProperties.get( DockerHandler.AGENT_JRE_AND_PACKAGES );
 		final String additionalPackages = this.targetProperties.get( DockerHandler.ADDITIONAL_PACKAGES );
 		if (!Utils.isEmptyOrWhitespaces(additionalPackages)) {
-			if (Utils.isEmptyOrWhitespaces(packages)) {
-				// Sets to the default here, so we do not override the JRE package.
+
+			// Sets to the default here, so we do not override the JRE package.
+			if (Utils.isEmptyOrWhitespaces(packages))
 				packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
-			}
+
 			packages = packages + ' ' + additionalPackages;
 		}
 
 		// Build the additional URLs-to-deploy list.
 		final String deploy = this.targetProperties.get( DockerHandler.ADDITIONAL_DEPLOY );
 		List<String> deployList;
-		if ( Utils.isEmptyOrWhitespaces(deploy) )
+		if( Utils.isEmptyOrWhitespaces( deploy ))
 			deployList = Collections.emptyList();
-		else {
+		else
 			deployList = Utils.splitNicely( deploy, " " );
-		}
 
 		// Create the image
 		InputStream response = null;
@@ -350,23 +263,5 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	 */
 	private String fixImageId( String imageId ) {
 		return Utils.isEmptyOrWhitespaces( imageId ) ? DEFAULT_IMG_NAME : imageId;
-	}
-
-	/**
-	 * Parse the given {@code docker.run.exec} property value.
-	 * @param runExecLine the {@code docker.run.exec} property value.
-	 * @return the {@code docker.run.exec} command + arguments array.
-	 */
-	private List<String> parseRunExecLine( String runExecLine ) {
-		List<String> result = null;
-		if ( ! Utils.isEmptyOrWhitespaces(runExecLine) ) {
-			try {
-				result = Arrays.asList( GSON.fromJson(runExecLine, String[].class) );
-			} catch (final JsonSyntaxException e) {
-				this.logger.warning("Cannot parse property " + DockerHandler.RUN_EXEC + ": " + runExecLine);
-				Utils.logException(this.logger, e);
-			}
-		}
-		return result;
 	}
 }

@@ -56,7 +56,7 @@ public class DockerfileGenerator {
 	private final String agentPackURL;
 
 	private String packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
-	private List<String> deployList;
+	private final List<String> deployList;
 	private boolean isTar = true;
 	private String baseImageName = "ubuntu";
 
@@ -157,7 +157,7 @@ public class DockerfileGenerator {
 
 			// Copy additional resources in the Karaf deploy directory if needed.
 			// We use the Docker ADD command that accepts remote URLs.
-			if ( this.deployList != null && !this.deployList.isEmpty() ) {
+			if ( this.deployList != null ) {
 				for ( final String deploy : this.deployList ) {
 
 					// We need to be a bit selective here, because:
@@ -171,11 +171,10 @@ public class DockerfileGenerator {
 					try {
 						uri = new URI(deploy);
 						if (!"file".equals(uri.getScheme())) {
-
 							// Remote resource URL. No special treatment.
 							out.println("ADD " + deploy + " /usr/local/roboconf-agent/deploy/");
-						} else {
 
+						} else {
 							// Add the URL to the toCopy list, and add the modified ADD Docker command.
 							final URL url = uri.toURL();
 							localDeploys.add(url);
@@ -187,6 +186,7 @@ public class DockerfileGenerator {
 					}
 				}
 			}
+
 		} finally {
 			Utils.closeQuietly( out );
 			this.logger.fine( "The Dockerfile was generated." );
@@ -277,13 +277,19 @@ public class DockerfileGenerator {
 		return agentFilename;
 	}
 
+
 	/**
 	 * Get the file name from a "file:" URL.
 	 * @param url the URL of the file.
 	 * @return the file name.
 	 */
 	static String getFileNameFromFileUrl( final URL url ) {
+
 		final String path = url.getPath();
-		return path.substring(path.lastIndexOf('/') + 1, path.length());
+		String name = path.substring( path.lastIndexOf('/') + 1 );
+		if( Utils.isEmptyOrWhitespaces( name ))
+			name = url.getQuery();
+
+		return name.replaceAll( "[^\\w.-]", "_" );
 	}
 }

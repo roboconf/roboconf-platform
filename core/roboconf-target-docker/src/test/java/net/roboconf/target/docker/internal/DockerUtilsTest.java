@@ -27,6 +27,8 @@ package net.roboconf.target.docker.internal;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -225,5 +227,128 @@ public class DockerUtilsTest {
 		Assert.assertTrue( Arrays.deepEquals(
 				new Capability[] { Capability.SYS_NICE },
 				cmd.getCapDrop()));
+	}
+
+
+	@Test
+	public void testParseRunExecLine() {
+
+		Assert.assertNull( DockerUtils.parseRunExecLine( null ));
+		Assert.assertNull( DockerUtils.parseRunExecLine( "" ));
+		Assert.assertNull( DockerUtils.parseRunExecLine( "   " ));
+
+		List<String> args = DockerUtils.parseRunExecLine( "[ toto, titi" );
+		Assert.assertNull( args );
+
+		args = DockerUtils.parseRunExecLine( "[ toto, titi ]" );
+		Assert.assertEquals( 2, args.size());
+		Assert.assertTrue( args.contains( "toto" ));
+		Assert.assertTrue( args.contains( "titi" ));
+
+		args = DockerUtils.parseRunExecLine( "[ \"toto\", \"titi\" ]" );
+		Assert.assertEquals( 2, args.size());
+		Assert.assertTrue( args.contains( "toto" ));
+		Assert.assertTrue( args.contains( "titi" ));
+	}
+
+
+	@Test
+	public void testBuildRunCommand_defaultValue_emptyMessaging() {
+
+		List<String> args = DockerUtils.buildRunCommand( null, new HashMap<String,String>( 0 ), "app", "/root" );
+		Assert.assertEquals( 5, args.size());
+		Assert.assertTrue( args.get( 0 ).endsWith( "/start.sh" ));
+		Assert.assertEquals( "etc/net.roboconf.messaging..cfg", args.get( 1 ));
+		Assert.assertEquals( "agent.application-name=app", args.get( 2 ));
+		Assert.assertEquals( "agent.scoped-instance-path=/root", args.get( 3 ));
+		Assert.assertEquals( "agent.messaging-type=", args.get( 4 ));
+
+		// No messaging parameter, so no sixth argument
+	}
+
+
+	@Test
+	public void testBuildRunCommand_defaultValue_withMessaging() {
+
+		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
+		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
+		messagingConfiguration.put( "paper", "with somethig written on it" );
+		messagingConfiguration.put( "pen", "to write the answer" );
+
+		List<String> args = DockerUtils.buildRunCommand( null, messagingConfiguration, "app", "/root" );
+		Assert.assertEquals( 7, args.size());
+		Assert.assertTrue( args.get( 0 ).endsWith( "/start.sh" ));
+		Assert.assertEquals( "etc/net.roboconf.messaging.bird.cfg", args.get( 1 ));
+		Assert.assertEquals( "agent.application-name=app", args.get( 2 ));
+		Assert.assertEquals( "agent.scoped-instance-path=/root", args.get( 3 ));
+		Assert.assertEquals( "agent.messaging-type=bird", args.get( 4 ));
+		Assert.assertEquals( "msg.paper=with somethig written on it", args.get( 5 ));
+		Assert.assertEquals( "msg.pen=to write the answer", args.get( 6 ));
+	}
+
+
+	@Test
+	public void testBuildRunCommand_overriding_noCommand() {
+
+		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
+		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
+		messagingConfiguration.put( "paper", "with somethig written on it" );
+		messagingConfiguration.put( "pen", "to write the answer" );
+
+		List<String> args = DockerUtils.buildRunCommand( "[]", messagingConfiguration, "app", "/root" );
+		Assert.assertEquals( 0, args.size());
+	}
+
+
+	@Test
+	public void testBuildRunCommand_overriding_extraCommand() {
+
+		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
+		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
+		messagingConfiguration.put( "paper", "with somethig written on it" );
+		messagingConfiguration.put( "pen", "to write the answer" );
+
+		List<String> args = DockerUtils.buildRunCommand( "[ start.sh ]", messagingConfiguration, "app", "/root" );
+		Assert.assertEquals( 1, args.size());
+		Assert.assertEquals( "start.sh", args.get( 0 ));
+	}
+
+
+	@Test
+	public void testBuildRunCommand_overriding_mixCommand() {
+
+		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
+		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
+		messagingConfiguration.put( "paper", "with somethig written on it" );
+		messagingConfiguration.put( "pen", "to write the answer" );
+
+		List<String> args = DockerUtils.buildRunCommand(
+				"[ \"agent.application-name=$applicationName$\", \"start.sh\", \"$messagingType$\" ]",
+				messagingConfiguration, "app", "/root" );
+
+		Assert.assertEquals( 3, args.size());
+		Assert.assertEquals( "agent.application-name=app", args.get( 0 ));
+		Assert.assertEquals( "start.sh", args.get( 1 ));
+		Assert.assertEquals( "bird", args.get( 2 ));
+	}
+
+
+	@Test
+	public void testBuildRunCommand_overriding_mixCommandAndMessaging() {
+
+		Map<String,String> messagingConfiguration = new LinkedHashMap<> ();
+		messagingConfiguration.put( DockerHandler.MESSAGING_TYPE, "bird" );
+		messagingConfiguration.put( "paper", "with somethig written on it" );
+		messagingConfiguration.put( "pen", "to write the answer" );
+
+		List<String> args = DockerUtils.buildRunCommand(
+				"[ \"$msgConfig$\", \"start.sh\", \"etc/net.roboconf.messaging.$messagingType$.cfg\" ]",
+				messagingConfiguration, "app", "/root" );
+
+		Assert.assertEquals( 4, args.size());
+		Assert.assertEquals( "msg.paper=with somethig written on it", args.get( 0 ));
+		Assert.assertEquals( "msg.pen=to write the answer", args.get( 1 ));
+		Assert.assertEquals( "start.sh", args.get( 2 ));
+		Assert.assertEquals( "etc/net.roboconf.messaging.bird.cfg", args.get( 3 ));
 	}
 }
