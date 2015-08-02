@@ -12,7 +12,7 @@
 [![Issue Stats](http://issuestats.com/github/roboconf/roboconf-platform/badge/pr)](http://issuestats.com/github/roboconf/roboconf-platform)
 
 This repository contains the source code for the Roboconf platform.  
-This includes the **Deployment Manager**, the **Agents**, their default distributions, the tooling core and the Maven plugin.
+This includes the manager, the agent, their default distributions, the tooling core and the Maven plugin.
 
 Roboconf is a solution for asynchronous and multi-target deployments.  
 It allows to deploy distributed applications over several machines (VM, connected objects, IoT) or
@@ -20,4 +20,4 @@ groups of machines (public clouds, hybrid clouds...). Transposing the concepts o
 Roboconf can install and also reconfigure dynamically a topology of applications.
 
 More information and tutorials are available on the [website](http://roboconf.net).  
-Roboconf is licensed under the terms of the **Apache License v2*.**
+Roboconf is licensed under the terms of the **Apache License v2**.
