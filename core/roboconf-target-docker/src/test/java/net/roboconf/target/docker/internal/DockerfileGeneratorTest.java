@@ -27,6 +27,7 @@ package net.roboconf.target.docker.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import junit.framework.Assert;
@@ -174,5 +175,25 @@ public class DockerfileGeneratorTest {
 		Assert.assertEquals(
 				"roboconf-agent.zip",
 				DockerfileGenerator.findAgentFileName( "https://oss.sonatype.org/.../redirect?a=roboconf-karaf-dist-agent&v=0.4&p=zip", false ));
+	}
+
+
+	@Test
+	public void testGetFileNameFromFileUrl() throws Exception {
+
+		URL url = new URL( "http://host.com/test.html" );
+		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
+
+		url = new URL( "http://host.com/path/test.html" );
+		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
+
+		url = new URL( "file://dir1/dir2/test.html" );
+		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
+
+		url = new URL( "file://host.com/dir/dir?name=test.html" );
+		Assert.assertEquals( "dir", DockerfileGenerator.getFileNameFromFileUrl( url ));
+
+		url = new URL( "file://host.com/dir/?test.html" );
+		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
 	}
 }

@@ -55,7 +55,7 @@ public final class DockerTestUtils {
 	 * <p>
 	 * Installing packages may take a while... So this value is quite large!
 	 */
-	public static long DOCKER_CONFIGURE_TIMEOUT = 150000L;
+	public static final long DOCKER_CONFIGURE_TIMEOUT = 150000L;
 
 
 	/**

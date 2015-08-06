@@ -49,6 +49,8 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -340,6 +342,136 @@ public final class DockerUtils {
 		// Default: keep the string
 		else
 			result = rawValue;
+
+		return result;
+	}
+
+
+	/**
+	 * Builds the command to pass to a new Docker container.
+	 * @param cmd the value of the docker.run.command property
+	 * @param messagingConfiguration the messaging configuration (not null)
+	 * @param applicationName the application's name
+	 * @param scopedInstancePath the scoped instance's path
+	 * @return a non-null list of arguments
+	 */
+	public static List<String> buildRunCommand(
+			String cmd,
+			Map<String,String> messagingConfiguration,
+			String applicationName,
+			String scopedInstancePath ) {
+
+		// We get the custom command line (docker.run.exec property) to run and:
+		// - If nothing/invalid is specified (args == null), we use the standard agent start command
+		// - If an empty command is explicitly specified (args.isEmpty()), there must be a RUN line in the Dockerfile.
+		// - Else we use the provided command line. We may need to inject agent & messaging configuration.
+		List<String> args = parseRunExecLine( cmd );
+		if( args == null ) {
+
+			// No docker.run.exec property (or invalid), fall back to the default command line.
+			// Build the command line, passing the agent & messaging configuration.
+			// Command line is:
+			// - Agent's start.sh script
+			// - messaging provider-specific configuration file,
+			// - agent.application-name=<<name of the application>>
+			// - agent.scoped-instance-path=<<path of the scoped instance>>
+			// - agent.messaging-type=<<type of messaging>>
+			// - each of the messaging configuration properties, prefixed by "msg."
+			args = new ArrayList<> ();
+			args.add("/usr/local/roboconf-agent/start.sh");
+			args.add( "etc/net.roboconf.messaging." + DockerHandler.MARKER_MESSAGING_TYPE + ".cfg");
+			args.add( "agent.application-name=" + DockerHandler.MARKER_APPLICATION_NAME );
+			args.add( "agent.scoped-instance-path=" + DockerHandler.MARKER_INSTANCE_PATH );
+			args.add( "agent.messaging-type=" + DockerHandler.MARKER_MESSAGING_TYPE );
+			args.add( DockerHandler.MARKER_MESSAGING_CONFIGURATION );
+		}
+
+		// Now proceed to argument substitution, using the special markers.
+		for( int i=0; i<args.size(); i++ ) {
+
+			// The current argument, that may be substituted.
+			String arg = args.get( i );
+
+			// The string to substitute to the marker, or null if nothing to substitute.
+			final String s;
+
+			// The index (in arg) and length of the marker to replace.
+			final int j, l;
+
+			if( arg.contains( DockerHandler.MARKER_MESSAGING_TYPE )) {
+				j = arg.indexOf(DockerHandler.MARKER_MESSAGING_TYPE);
+				l = DockerHandler.MARKER_MESSAGING_TYPE.length();
+				s = messagingConfiguration.containsKey( DockerHandler.MESSAGING_TYPE )
+					? messagingConfiguration.get( DockerHandler.MESSAGING_TYPE ) : "";
+
+			} else if( arg.contains( DockerHandler.MARKER_APPLICATION_NAME )) {
+				j = arg.indexOf(DockerHandler.MARKER_APPLICATION_NAME);
+				l = DockerHandler.MARKER_APPLICATION_NAME.length();
+				s = applicationName;
+
+			} else if( arg.contains( DockerHandler.MARKER_INSTANCE_PATH )) {
+				j = arg.indexOf(DockerHandler.MARKER_INSTANCE_PATH);
+				l = DockerHandler.MARKER_INSTANCE_PATH.length();
+				s = scopedInstancePath;
+
+			} else {
+				if( arg.equals(DockerHandler.MARKER_MESSAGING_CONFIGURATION )) {
+
+					// A bit more special: remove the whole argument and appends all
+					// the messaging configuration, prefixed by "msg.".
+					args.remove( i );
+					for( Map.Entry<String,String> e : messagingConfiguration.entrySet()) {
+						if( DockerHandler.MESSAGING_TYPE.equals( e.getKey()))
+							continue;
+
+						args.add(i, "msg." + e.getKey() + '=' + e.getValue());
+						i++;
+					}
+
+					// We've gone one position to far...
+					i--;
+				}
+
+				// No in-string substitution.
+				j = -1;
+				l = 0;
+				s = null;
+			}
+
+			// Proceed to in-string substitution.
+			if( s != null ) {
+				arg = arg.substring(0, j) + s + arg.substring(j + l, arg.length());
+				args.set(i, arg);
+			}
+		}
+
+		return args;
+	}
+
+
+	/**
+	 * Parses the given {@code docker.run.exec} property value.
+	 * @param runExecLine the {@code docker.run.exec} property value.
+	 * @return the {@code docker.run.exec} command + arguments array.
+	 */
+	public static List<String> parseRunExecLine( String runExecLine ) {
+
+		List<String> result = null;
+		if( ! Utils.isEmptyOrWhitespaces( runExecLine )) {
+			try {
+				Gson gson = new Gson();
+				String[] array = gson.fromJson(runExecLine, String[].class);
+
+				// The returned collection must support the remove operation!
+				// Array.asList() returns an unmodifiable collection.
+				result = new ArrayList<>( Arrays.asList( array ));
+
+			} catch( JsonSyntaxException e ) {
+				Logger logger = Logger.getLogger( DockerUtils.class.getName());
+				logger.warning("Cannot parse property " + DockerHandler.RUN_EXEC + ": " + runExecLine);
+				Utils.logException( logger, e );
+			}
+		}
 
 		return result;
 	}

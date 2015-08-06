@@ -28,7 +28,6 @@ package net.roboconf.target.docker.internal;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,157 +39,91 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
+
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
-import junit.framework.Assert;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * Test correct Docker image generation and container configuration.
  * <p>
  * WARNING: these tests may last very long....
+ * </p>
+ *
  * @author Pierre Bourret - Université Joseph Fourier
  */
+@Ignore
 public class DockerHandler_withPackagesTest {
 
-	/**
-	 * The logger.
-	 */
 	private static final Logger LOGGER = Logger.getLogger(DockerHandler_withPackagesTest.class.getName());
-
-	/**
-	 * The messaging configuration map.
-	 */
-	private static class MessagingConfigurationMap extends HashMap<String, String> {
-		// Instance initializer block.
-		{
-			put("net.roboconf.messaging.type", "telepathy");
-			put("mindControl", "false");
-			put("psychosisProtection", "active");
-		}
-	}
-
-	/**
-	 * The name of the test application.
-	 */
 	private static final String APPLICATION_NAME = "roboconf_test";
-
-	/**
-	 * The constant messaging configuration map.
-	 */
-	private static final Map<String, String> MESSAGING_CONFIGURATION = Collections.unmodifiableMap(
-			new MessagingConfigurationMap());
-
-	/**
-	 * The location of the Roboconf fake agent's file.
-	 */
 	private static final String FAKE_AGENT_LOCATION = "/usr/local/roboconf-agent/roboconf-fake-agent.txt";
-
-	/**
-	 * The content of the Roboconf fake agent's file.
-	 */
 	private static final String FAKE_AGENT_CONTENT = "INSTALLED!";
 
-	/**
-	 * The folder where Docker image is built.
-	 */
+	private static final Map<String,String> MESSAGING_CONFIGURATION;
+	static {
+		Map<String,String> basis = new HashMap<> ();
+		basis.put("net.roboconf.messaging.type", "telepathy");
+		basis.put("mindControl", "false");
+		basis.put("psychosisProtection", "active");
+
+		MESSAGING_CONFIGURATION = Collections.unmodifiableMap( basis );
+	}
+
 	@Rule
 	public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
-	/**
-	 * The (fake) Roboconf agent TAR GZ archive.
-	 */
-	private final File agentTarGz = loadTestResourceFile("archives/roboconf-fake-agent.tar.gz");
-
-	/**
-	 * The (fake) Roboconf agent ZIP archive.
-	 */
-	private final File agentZip = loadTestResourceFile("archives/roboconf-fake-agent.zip");
-
-	/**
-	 * The Docker target properties, pre-provisioned from the "conf/docker.properties" test resource.
-	 */
-	private final Map<String, String> targetProperties = new LinkedHashMap<>();
-
-	/**
-	 * The Docker client.
-	 */
-	private DockerClient dockerClient;
-
-	/**
-	 * The Docker handler.
-	 */
+	private final Map<String,String> targetProperties = new LinkedHashMap<> ();
 	private final DockerHandler dockerHandler = new DockerHandler();
-
-	/**
-	 * The tested instance.
-	 */
 	private final Instance instance = new Instance("test-" + UUID.randomUUID().toString());
-
-	/**
-	 * The path of the tested instance.
-	 */
 	private final String instancePath = InstanceHelpers.computeInstancePath(this.instance);
 
-	/**
-	 * The built Docker image id, if any.
-	 */
-	private String dockerImageId;
+	private DockerClient dockerClient;
+	private String dockerImageId, dockerContainerId;
+	private File agentTarGz, agentZip;
+
 
 	/**
-	 * The created Docker container id, if any.
-	 */
-	private String dockerContainerId;
-
-	/**
-	 * Load a test resources file.
-	 *
-	 * @param name the name of the resource to load.
-	 * @return the loaded resource file, or {@code null} if the resource cannot be loaded.
-	 */
-	private static File loadTestResourceFile( final String name ) {
-		final URL url = Thread.currentThread()
-				.getContextClassLoader()
-				.getResource(name);
-		final File result;
-		if (url != null) {
-			result = new File(url.getFile());
-		} else {
-			result = null;
-		}
-		return result;
-	}
-
-	/**
-	 * Initialize the test environment.
-	 *
+	 * Initializes the test environment.
 	 * @throws Exception if something bad happened.
 	 */
 	@Before
 	public void initDockerClient() throws Exception {
+
+		LOGGER.warning( "This test may take quite A LOT of TIME!!!!" );
+
 		// Checks Docker is installed.
 		try {
 			DockerTestUtils.checkDockerIsInstalled();
+
 		} catch (Exception e) {
 			LOGGER.warning("Tests are skipped because Docker is not installed.");
 			Utils.logException(LOGGER, e);
 			Assume.assumeNoException(e);
 		}
 
+		// Load test files
+		this.agentTarGz = TestUtils.findTestFile( "/archives/roboconf-fake-agent.tar.gz" );
+		this.agentZip = TestUtils.findTestFile( "/archives/roboconf-fake-agent.zip" );
+
 		// Load the Docker target properties.
-		final Properties targetProperties = Utils.readPropertiesFile(loadTestResourceFile("conf/docker.properties"));
+		final Properties targetProperties = Utils.readPropertiesFile( TestUtils.findTestFile( "/conf/docker.properties" ));
 		for (final Map.Entry<Object, Object> e : targetProperties.entrySet()) {
 			this.targetProperties.put(e.getKey().toString(), e.getValue().toString());
 		}
@@ -219,17 +152,18 @@ public class DockerHandler_withPackagesTest {
 		this.dockerHandler.start();
 	}
 
+
 	/**
 	 * Cleanup the test environment.
 	 */
 	@After
 	public void cleanupDocker() throws Exception {
-
 		final List<Exception> exceptions = new ArrayList<>();
 
 		// Stop the docker target handler.
 		try {
 			this.dockerHandler.stop();
+
 		} catch (final Exception e) {
 			// We must keep going on, save the exception and continue.
 			exceptions.add(e);
@@ -239,14 +173,13 @@ public class DockerHandler_withPackagesTest {
 
 			// Kill the container, if any.
 			if (this.dockerContainerId != null) {
-				final InspectContainerResponse.ContainerState state = DockerUtils.getContainerState(
-						this.dockerContainerId,
-						this.dockerClient);
+				final InspectContainerResponse.ContainerState state =
+						DockerUtils.getContainerState( this.dockerContainerId, this.dockerClient);
+
 				if (state != null && (state.isRunning() || state.isPaused())) {
 					try {
-						this.dockerClient
-								.killContainerCmd(this.dockerContainerId)
-								.exec();
+						this.dockerClient.killContainerCmd(this.dockerContainerId) .exec();
+
 					} catch (final Exception e) {
 						// We must keep going on, save the exception and continue.
 						exceptions.add(e);
@@ -283,17 +216,19 @@ public class DockerHandler_withPackagesTest {
 		}
 	}
 
+
 	@Test
 	public void testAgentTarGz_withAdditionalPackagesOnly() throws Exception {
 		// Configure the container:
 		// - we use the TarGz agent archive,
 		// - we clear the JRE packages property, so the default is used.
 		// - we add additional packages: vim & net-tools.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentTarGz.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentTarGz.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
 		runAndTestDockerContainer(Collections.<String>emptyList(), DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "vim", "net-tools");
 	}
+
 
 	@Test
 	public void testAgentZip_withAdditionalPackagesOnly() throws Exception {
@@ -301,11 +236,12 @@ public class DockerHandler_withPackagesTest {
 		// - we use the Zip agent archive,
 		// - we clear the JRE packages property, so the default is used.
 		// - we add additional packages: vim & net-tools.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentZip.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentZip.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
 		runAndTestDockerContainer(Collections.<String>emptyList(), DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "unzip", "vim", "net-tools");
 	}
+
 
 	@Test
 	public void testAgentTarGz_withAlternateJreAndAdditionalPackages() throws Exception {
@@ -313,11 +249,12 @@ public class DockerHandler_withPackagesTest {
 		// - we use the TarGz agent archive,
 		// - we set the JRE packages property to use JamVM.
 		// - we add additional packages: vim & net-tools.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentTarGz.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentTarGz.getAbsolutePath());
 		this.targetProperties.put(DockerHandler.AGENT_JRE_AND_PACKAGES, "icedtea-7-jre-jamvm");
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
 		runAndTestDockerContainer(Collections.<String>emptyList(), "icedtea-7-jre-jamvm", "vim", "net-tools");
 	}
+
 
 	@Test
 	public void testAgentZip_withAlternateJreOnly() throws Exception {
@@ -325,11 +262,12 @@ public class DockerHandler_withPackagesTest {
 		// - we use the Zip agent archive,
 		// - we set the JRE packages property to use JamVM.
 		// - we use no additional packages.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentZip.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentZip.getAbsolutePath());
 		this.targetProperties.put(DockerHandler.AGENT_JRE_AND_PACKAGES, "icedtea-7-jre-jamvm");
 		this.targetProperties.remove(DockerHandler.ADDITIONAL_PACKAGES);
 		runAndTestDockerContainer(Collections.<String>emptyList(), "icedtea-7-jre-jamvm");
 	}
+
 
 	@Test
 	public void testAgentZip_withAdditionalDeploys() throws Exception {
@@ -343,7 +281,7 @@ public class DockerHandler_withPackagesTest {
 		// - we two additional deploy URLs, that will be copied in the (container's) Karaf deploy directory:
 		//    - a remote URL (Apache license v2: LICENSE-2.0.txt)
 		//    - a local file (DUMMY.TXT)
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, agentZip.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentZip.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.remove(DockerHandler.ADDITIONAL_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_DEPLOY,
@@ -356,6 +294,7 @@ public class DockerHandler_withPackagesTest {
 			}
 		});
 	}
+
 
 	/**
 	 * Creates, configures, runs and tests a Docker container.
@@ -407,11 +346,13 @@ public class DockerHandler_withPackagesTest {
 		Assert.assertFalse(this.dockerHandler.isMachineRunning(this.targetProperties, this.dockerContainerId));
 	}
 
+
 	private void checkAgentIsUnpacked() throws Exception {
 		final CommandResult result = execDockerCommand("cat", FAKE_AGENT_LOCATION);
 		Assert.assertEquals("Fake agent is not installed", 0, result.exitCode);
 		Assert.assertTrue("Fake agent is not installed", result.output.contains(FAKE_AGENT_CONTENT));
 	}
+
 
 	/**
 	 * Check that a given Debian package is installed on the given Docker container.
@@ -430,6 +371,7 @@ public class DockerHandler_withPackagesTest {
 				).exitCode);
 	}
 
+
 	/**
 	 * Check that a given file is present on the given Docker container.
 	 *
@@ -444,6 +386,7 @@ public class DockerHandler_withPackagesTest {
 				execDockerCommand( "test", "-f", path ).exitCode );
 	}
 
+
 	/**
 	 * The result of a Docker exec.
 	 */
@@ -457,6 +400,7 @@ public class DockerHandler_withPackagesTest {
 		}
 	}
 
+
 	/**
 	 * Execute a command on the tested docker container.
 	 * TODO refactor & put that method in DockerUtils.
@@ -467,6 +411,7 @@ public class DockerHandler_withPackagesTest {
 	 *                   (excluding the command itself, see {@code result}).
 	 */
 	private CommandResult execDockerCommand( String... commandLine ) throws Exception {
+
 		// Create the command and get its execId (execCreateCmd)
 		final String execId = this.dockerClient.execCreateCmd(this.dockerContainerId)
 				.withCmd(commandLine)
@@ -482,23 +427,17 @@ public class DockerHandler_withPackagesTest {
 		// Wait until the command has finished...
 		InspectExecResponse cmd;
 		do {
-			cmd = this.dockerClient.inspectExecCmd(execId)
-					.exec();
+			cmd = this.dockerClient.inspectExecCmd(execId).exec();
+
 		} while (cmd.isRunning());
 
 		// Put the command output into a string.
-		// TODO put that code in Utils!
 		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		final byte[] buffer = new byte[1024];
-		int length;
-		while ((length = in.read(buffer)) != -1) {
-			out.write(buffer, 0, length);
-		}
+		Utils.copyStream( in, out );
 
 		// Now return...
 		return new CommandResult(
 				cmd.getExitCode(),
 				out.toString("UTF-8"));
 	}
-
 }
