@@ -9,11 +9,11 @@
 		<requires aggregate="true" optional="true">
 			<callback type="bind" method="targetAppears" />
 			<callback type="unbind" method="targetDisappears" />
-			<callback type="modified" method="targetWasModified" />
 		</requires>
-		<requires optional="true">
-			<callback type="bind" method="bindTemplatingManager" />
-			<callback type="unbind" method="unbindTemplatingManager" />
+		
+		<requires aggregate="true" optional="true">
+			<callback type="bind" method="listenerAppears" />
+			<callback type="unbind" method="listenerDisappears" />
 		</requires>
 		
 		<callback transition="validate" method="start" />

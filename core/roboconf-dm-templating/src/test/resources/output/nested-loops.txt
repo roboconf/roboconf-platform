@@ -1,0 +1,12 @@
+name = "MySqlVm"
+name = "ApacheVm"
+name = "TomcatVm1"
+
+	name = "Tomcat"
+	path = /TomcatVm1/Tomcat
+
+name = "TomcatVm2"
+
+	name = "Tomcat"
+	path = /TomcatVm2/Tomcat
+

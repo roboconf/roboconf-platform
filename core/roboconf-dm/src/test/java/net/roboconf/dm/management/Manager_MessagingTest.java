@@ -26,6 +26,7 @@
 package net.roboconf.dm.management;
 
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -47,6 +48,7 @@ public class Manager_MessagingTest {
 			manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 			manager.setMessagingType(RabbitMqConstants.RABBITMQ_FACTORY_TYPE);
 			manager.start();
+			// No exception
 
 		} finally {
 			manager.stop();

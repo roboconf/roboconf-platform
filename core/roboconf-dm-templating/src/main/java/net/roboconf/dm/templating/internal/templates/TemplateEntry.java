@@ -23,45 +23,54 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.templates;
 
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.io.File;
+
+import com.github.jknack.handlebars.Template;
 
 /**
- * Context bean for an imported variable.
- *
+ * Entry for a template being watched by the {@link TemplateWatcher}.
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class ImportContextBean {
+public final class TemplateEntry {
 
-	String component;
-	InstanceContextBean instance;
-	final Set<VariableContextBean> variables = new LinkedHashSet<VariableContextBean>();
+	final File file;
+	final String appName;
+	final Template template;
 
-	public String getComponent() {
-		return this.component;
+
+	/**
+	 * Constructor.
+	 * @param file the template file
+	 * @param appName the name of the application scoped by this template, or {@code null} for a global template entry
+	 * @param template the compiled Handlebars template
+	 * @param root true if the template is in the root directory, false if it is in a child directory
+	 */
+	public TemplateEntry( File file, Template template, String appName ) {
+		this.file = file;
+		this.appName = appName;
+		this.template = template;
 	}
 
-	public InstanceContextBean getInstance() {
-		return this.instance;
+	/**
+	 * @return the file
+	 */
+	public File getFile() {
+		return this.file;
 	}
 
-	public Set<VariableContextBean> getVariables() {
-		return this.variables;
+	/**
+	 * @return the appName
+	 */
+	public String getAppName() {
+		return this.appName;
 	}
 
-	@Override
-	public String toString() {
-		final StringBuilder sb = new StringBuilder("import from " + this.instance.path + ':');
-		for (final Iterator<VariableContextBean> i = this.variables.iterator(); i.hasNext(); ) {
-			sb.append(i.next());
-			if (i.hasNext()) {
-				sb.append(", ");
-			}
-		}
-
-		return sb.toString();
+	/**
+	 * @return the template
+	 */
+	public Template getTemplate() {
+		return this.template;
 	}
 }

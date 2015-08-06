@@ -34,6 +34,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.test.TestTargetResolver;
+import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
@@ -50,6 +51,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -75,6 +77,9 @@ public class Manager_LifeCycleTest {
 		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.start();
+
+		// Register mocked listeners - mainly for code coverage reasons
+		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
 
 		// Reconfigure with the messaging client factory registry set.
 		this.manager.getMessagingClient().setRegistry(this.registry);

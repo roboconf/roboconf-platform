@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<!-- A component for the DM's templating -->
+	<component classname="net.roboconf.dm.templating.internal.TemplatingManager" name="roboconf-dm-templating" public="false">
+		<requires optional="false">
+			<callback type="bind" method="bindManager" />
+			<callback type="unbind" method="unbindManager" />
+		</requires>
+		
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
+		<provides />
+		
+		<properties pid="net.roboconf.dm.templating.configuration">
+			<property name="poll-interval" method="setPollInterval" value="1000" />
+			<property name="templates-directory-location" method="setTemplatesDirectory" />
+			<property name="output-directory-location" method="setOutputDirectory" />
+		</properties>
+	</component>
+	
+	<!-- And the instance... -->
+	<instance component="roboconf-dm-templating" name="Roboconf DM's Templating" />
+</ipojo>

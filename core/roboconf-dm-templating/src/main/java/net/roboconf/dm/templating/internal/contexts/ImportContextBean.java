@@ -23,54 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.contexts;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
- * Context bean for a Roboconf application.
+ * Context bean for an imported variable.
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class ApplicationContextBean {
+public class ImportContextBean {
 
-	String name;
-	String description;
-	Date lastModified;
-	final Set<InstanceContextBean> instances = new LinkedHashSet<InstanceContextBean>();
-	final Set<String> components = new LinkedHashSet<String>();
-	final Map<String, Set<InstanceContextBean>> instancesByType = new LinkedHashMap<String, Set<InstanceContextBean>>();
+	String component;
+	InstanceContextBean instance;
+	final Set<VariableContextBean> variables = new LinkedHashSet<VariableContextBean>();
 
-	public String getName() {
-		return this.name;
+	public String getComponent() {
+		return this.component;
 	}
 
-	public String getDescription() {
-		return this.description;
+	public InstanceContextBean getInstance() {
+		return this.instance;
 	}
 
-	public Date getLastModified() {
-		return this.lastModified;
-	}
-
-	public Collection<InstanceContextBean> getInstances() {
-		return this.instances;
-	}
-
-	public Collection<String> getComponents() {
-		return this.components;
-	}
-
-	public Map<String, Set<InstanceContextBean>> getInstancesByType() {
-		return this.instancesByType;
+	public Set<VariableContextBean> getVariables() {
+		return this.variables;
 	}
 
 	@Override
 	public String toString() {
-		return this.name;
+		return "instance = " + String.valueOf( this.instance );
 	}
 }

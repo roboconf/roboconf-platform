@@ -1,0 +1,13 @@
+- MySqlVm
+	instance = /ApacheVm
+	variables = 
+		apacheVm.extra = bonus
+- ApacheVm
+- TomcatVm1
+	instance = /ApacheVm
+	variables = 
+		apacheVm.extra = bonus
+- TomcatVm2
+	instance = /ApacheVm
+	variables = 
+		apacheVm.extra = bonus

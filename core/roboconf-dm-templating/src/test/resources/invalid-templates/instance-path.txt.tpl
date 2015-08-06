@@ -1,0 +1,3 @@
+{{#all '/ApacheVm/*' }}
+- {{path}}
+{{/all}}

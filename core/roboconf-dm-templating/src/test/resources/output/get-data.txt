@@ -1,0 +1,10 @@
+- MySqlVm
+application.name = test-app
+machine.id = ds4sd14sdsfkdf
+- ApacheVm
+- TomcatVm1
+application.name = test-app
+machine.id = ds4sd14sdsfkdf
+- TomcatVm2
+application.name = test-app
+machine.id = ds4sd14sdsfkdf

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.templating.internal;
+package net.roboconf.dm.templating.internal.contexts;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -41,14 +41,18 @@ public class InstanceContextBean {
 	Instance.InstanceStatus status;
 	boolean statusIsStable;
 	String component;
-	final Set<String> types = new LinkedHashSet<String>();
-	InstanceContextBean parent;
-	final Set<InstanceContextBean> children = new LinkedHashSet<InstanceContextBean>();
 	String ip;
 	String installer;
+
+	final Set<String> types = new LinkedHashSet<String>();
+	final Set<InstanceContextBean> children = new LinkedHashSet<InstanceContextBean>();
+
+	InstanceContextBean parent;
+
 	final Set<VariableContextBean> exports = new LinkedHashSet<VariableContextBean>();
 	final Set<ImportContextBean> imports = new LinkedHashSet<ImportContextBean>();
 	final Set<VariableContextBean> data = new LinkedHashSet<VariableContextBean>();
+
 
 	public String getName() {
 		return this.name;
@@ -104,6 +108,6 @@ public class InstanceContextBean {
 
 	@Override
 	public String toString() {
-		return this.path;
+		return this.name;
 	}
 }
