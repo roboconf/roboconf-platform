@@ -8,9 +8,6 @@
 [![Snapshots](https://img.shields.io/badge/Snapshots%20on-Sonatype-orange.svg)](https://oss.sonatype.org/content/repositories/snapshots/net/roboconf/)
 [![Maven Central](https://img.shields.io/badge/Releases%20on-Maven%20Central-yellow.svg)](http://repo1.maven.org/maven2/net/roboconf/)
 
-[![Issue Stats](http://issuestats.com/github/roboconf/roboconf-platform/badge/issue)](http://issuestats.com/github/roboconf/roboconf-platform)
-[![Issue Stats](http://issuestats.com/github/roboconf/roboconf-platform/badge/pr)](http://issuestats.com/github/roboconf/roboconf-platform)
-
 This repository contains the source code for the Roboconf platform.  
 This includes the manager, the agent, their default distributions, the tooling core and the Maven plugin.
 
