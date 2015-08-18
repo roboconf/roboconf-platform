@@ -216,13 +216,13 @@ public class Manager {
 	public void initializeDirectory() {
 
 		// Find the configuration directory
-		String karafEtc = System.getProperty( "karaf.etc" );
+		String karafData = System.getProperty( "karaf.data" );
 		if( ! Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation ))
 			this.configurationDirectory = new File( this.configurationDirectoryLocation );
-		else if( Utils.isEmptyOrWhitespaces( karafEtc ))
+		else if( Utils.isEmptyOrWhitespaces( karafData ))
 			this.configurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
 		else
-			this.configurationDirectory = new File( karafEtc, "roboconf" );
+			this.configurationDirectory = new File( karafData, "roboconf" );
 
 		try {
 			// Create the directory, if necessary
