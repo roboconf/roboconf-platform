@@ -106,7 +106,6 @@ public abstract class DmWithAgentInMemoryTest extends AbstractTest {
 	 */
 	protected void configureManagerForInMemoryUsage() throws IOException, InterruptedException {
 
-		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
 		this.manager.setTargetResolver( new InMemoryTargetResolver( this.inMemoryIaas ));
 		this.manager.reconfigure();
 		// Sleep for a while, to let the RabbitMQ client factory arrive.

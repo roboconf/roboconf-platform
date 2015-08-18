@@ -180,10 +180,6 @@ public class DelayedAgentInitializationTest extends DmTest {
 	@Test
 	public void run() throws Exception {
 
-		// Update the manager.
-		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
-		this.manager.reconfigure();
-
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
 		Thread.sleep(2000);
 
