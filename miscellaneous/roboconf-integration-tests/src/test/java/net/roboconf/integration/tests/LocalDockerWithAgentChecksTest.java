@@ -126,15 +126,7 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		String appLocation = resourcesDirectory.getAbsolutePath();
 		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
 
-		// Configure the DM
-		File dir = newFolder();
-		options.add( systemProperty( DM_DIR ).value( dir.getCanonicalPath()));
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				"configuration-directory-location",
-				dir.getCanonicalPath()));
-
-		// Configure the messaging
+		// Configure the DM's messaging
 		String ipAddress = findIpAddress();
 		logger.info( "Configuring the DM with IP " + ipAddress );
 		options.add( editConfigurationFilePut(

@@ -128,10 +128,6 @@ public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmTest {
 				break;
 		}
 
-		// Update the manager
-		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
-		this.manager.reconfigure();
-
 		// Load the application template
 		String appLocation = System.getProperty( APP_LOCATION );
 		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));

@@ -137,8 +137,6 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 
 		// Update the manager
 		MyTargetResolver myResolver = new MyTargetResolver();
-
-		this.manager.setConfigurationDirectoryLocation( newFolder().getAbsolutePath());
 		this.manager.setTargetResolver( myResolver );
 		this.manager.reconfigure();
 

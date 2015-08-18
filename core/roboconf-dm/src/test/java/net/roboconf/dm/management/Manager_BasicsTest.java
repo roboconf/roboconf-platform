@@ -598,10 +598,10 @@ public class Manager_BasicsTest {
 
 
 	@Test
-	public void testReconfigure_noDirectory() {
+	public void testInitializeDirectory_noDirectory() {
 
 		this.manager = new Manager();
-		this.manager.reconfigure();
+		this.manager.initializeDirectory();
 
 		File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
 		Assert.assertEquals( defaultConfigurationDirectory, this.manager.configurationDirectory );
@@ -629,14 +629,6 @@ public class Manager_BasicsTest {
 
 		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication()))
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, inst.getStatus());
-
-		// Change the configuration's directory => no more application in the manager
-		File newDirectory = this.folder.newFolder();
-		this.manager.setConfigurationDirectoryLocation( newDirectory.getAbsolutePath());
-		this.manager.reconfigure();
-		this.manager.checkConfiguration();
-		Assert.assertEquals( newDirectory, this.manager.configurationDirectory );
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
 	}
 
 
