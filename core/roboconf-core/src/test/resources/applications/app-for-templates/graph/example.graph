@@ -23,6 +23,7 @@ facet NetworkService {
 Vm {
 	facets: VirtualMachine;
 	installer: target;
+	children: Service;
 }
 
 MySql {
@@ -42,6 +43,7 @@ Tomcat {
 	installer: docker;
 	exports: ip, ajpPort = 8009;
 	imports: MySql.ip, MySql.port;
+	children: Application;
 }
 
 War {
