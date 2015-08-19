@@ -112,13 +112,14 @@ public class Manager {
 	// Injected by iPojo or Admin Config
 	protected final List<IDmListener> dmListeners = new ArrayList<> ();
 	protected final List<TargetHandler> targetHandlers = new ArrayList<> ();
-	protected String configurationDirectoryLocation, messagingType;
+	protected String messagingType;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected final ApplicationTemplateMngrDelegate templateManager;
 	protected final ApplicationMngrDelegate appManager;
 	protected final InstanceMngrDelegate instanceManager;
+	protected String configurationDirectoryLocation;
 	protected Timer timer;
 
 	private final List<MsgEcho> echoMessages = new ArrayList<>();
@@ -147,14 +148,20 @@ public class Manager {
 
 		this.logger.info( "The DM is about to be launched." );
 
+		// Start the messaging
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this, this.appManager );
 		this.messagingClient = new RCDm( this.appManager );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
 
+		// Run the timer
 		this.timer = new Timer( "Roboconf's Management Timer", false );
 		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.appManager, this.messagingClient ), 0, TIMER_PERIOD );
 		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.appManager ), 0, Constants.HEARTBEAT_PERIOD );
 
+		// Initialize the directory configuration
+		initializeDirectory();
+
+		// Configure the messaging
 		reconfigure();
 		this.logger.info( "The DM was launched." );
 	}
@@ -195,6 +202,40 @@ public class Manager {
 		}
 
 		this.logger.info( "The DM was stopped." );
+	}
+
+
+	/**
+	 * A method that initializes the DM's internal directory.
+	 * <p>
+	 * This method is invoked in {@link #start()}. However, it can be better to invoke
+	 * this method directly in tests. Indeed, {@link #start()} also starts timers, while this
+	 * method does not.
+	 * </p>
+	 */
+	public void initializeDirectory() {
+
+		// Find the configuration directory
+		String karafData = System.getProperty( "karaf.data" );
+		if( ! Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation ))
+			this.configurationDirectory = new File( this.configurationDirectoryLocation );
+		else if( Utils.isEmptyOrWhitespaces( karafData ))
+			this.configurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
+		else
+			this.configurationDirectory = new File( karafData, "roboconf" );
+
+		try {
+			// Create the directory, if necessary
+			Utils.createDirectory( this.configurationDirectory );
+
+			// Restore applications
+			this.templateManager.restoreTemplates( this.configurationDirectory );
+			this.appManager.restoreApplications( this.configurationDirectory, this.templateManager );
+
+		} catch( IOException e ) {
+			this.logger.severe( "The DM's configuration directory could not be found and/or created." );
+			Utils.logException( this.logger, e );
+		}
 	}
 
 
@@ -320,39 +361,6 @@ public class Manager {
 	 */
 	public void reconfigure() {
 
-		// Backup the current
-		for( ManagedApplication ma : this.appManager.getManagedApplications())
-			ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
-
-		// Update the configuration directory
-		File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
-		if( Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation )) {
-			this.logger.warning( "Invalid location for the configuration directory (empty or null). Switching to " + defaultConfigurationDirectory );
-			this.configurationDirectory = defaultConfigurationDirectory;
-
-		} else {
-			this.configurationDirectory = new File( this.configurationDirectoryLocation );
-			try {
-				Utils.createDirectory( this.configurationDirectory );
-
-			} catch( IOException e ) {
-				this.logger.warning( "Could not create " + this.configurationDirectory + ". Switching to " + defaultConfigurationDirectory );
-				this.configurationDirectory = defaultConfigurationDirectory;
-			}
-		}
-
-		// Restart the templating, using the new configuration directory.
-		// FIXME: will be removed once we implement #394
-		// Applications will not be impacted by reconfigurations then.
-		// => same thing for listeners.
-//		synchronized (this) {
-//			if( this.templatingManager != null ) {
-//				this.templatingManager.stopTemplating();
-//				this.templatingManager.startTemplating( this.configurationDirectory );
-//				// Applications are re-added as they are reloaded, in the restoreApplications() method.
-//			}
-//		}
-
 		// Update the messaging client
 		if( this.messagingClient != null ) {
 			this.messagingClient.switchMessagingType(this.messagingType);
@@ -365,12 +373,7 @@ public class Manager {
 			}
 		}
 
-
-		// Reset and restore applications.
-		// We ALWAYS do it, because we must also reconfigure the new client with respect
-		// to what we already deployed.
-		this.templateManager.restoreTemplates( this.configurationDirectory );
-		this.appManager.restoreApplications( this.configurationDirectory, this.templateManager );
+		// We must update instance states after we switched the messaging configuration.
 		for( ManagedApplication ma : this.appManager.getManagedApplications())
 			this.instanceManager.restoreInstanceStates( ma );
 

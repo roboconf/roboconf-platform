@@ -22,7 +22,6 @@
 		
 		<properties updated="reconfigure" pid="net.roboconf.dm.configuration">
 			<property name="messaging-type" method="setMessagingType" />
-			<property name="configuration-directory-location" method="setConfigurationDirectoryLocation" />
 		</properties>
 	</component>
 	

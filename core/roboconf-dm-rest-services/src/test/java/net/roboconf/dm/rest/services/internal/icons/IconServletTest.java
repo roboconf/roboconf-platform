@@ -62,7 +62,7 @@ public class IconServletTest {
 
 		Manager manager = new Manager();
 		manager.setConfigurationDirectoryLocation( configurationDirectory.getAbsolutePath());
-		manager.reconfigure();
+		manager.initializeDirectory();
 
 		File appDir = ConfigurationUtils.findApplicationDirectory( "app", configurationDirectory );
 		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
