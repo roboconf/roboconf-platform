@@ -46,8 +46,8 @@ import net.roboconf.dm.management.Manager;
 public class IconServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -5151659440091869460L;
-	private final Manager manager;
-	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final transient Manager manager;
+	private final transient Logger logger = Logger.getLogger( getClass().getName());
 
 
 	/**

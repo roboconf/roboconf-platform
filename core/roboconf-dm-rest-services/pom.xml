@@ -47,6 +47,13 @@
 			<version>${jackson.stack.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.stack.version}</version>
+			<scope>provided</scope>
+		</dependency>
 	
 		<dependency>
   			<groupId>net.roboconf</groupId>
@@ -101,6 +108,20 @@
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.osgi.core</artifactId>
 			<version>1.4.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>websocket-api</artifactId>
+			<version>9.2.10.v20150310</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>websocket-servlet</artifactId>
+			<version>9.2.10.v20150310</version>
 			<scope>provided</scope>
 		</dependency>
 		
