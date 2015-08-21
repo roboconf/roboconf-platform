@@ -283,6 +283,10 @@ public class ApplicationResource implements IApplicationResource {
 				if( instance.getComponent() != null )
 					componentName = instance.getComponent().getName();
 
+				// The deserialized instance is not the real one, but just hints
+				// (eg. only the component name is pertinent, and all the exports - included overridden ones - are
+				// serialized in the same map...)
+				// Now let's make this "fictive" instance real (fix it) !
 				Component realComponent;
 				if( componentName == null ) {
 					response = Response.status( Status.NOT_FOUND ).entity( "No component was specified for the instance." ).build();
@@ -292,6 +296,8 @@ public class ApplicationResource implements IApplicationResource {
 
 				} else {
 					instance.setComponent( realComponent );
+					InstanceHelpers.fixOverriddenExports( instance );
+					
 					Instance parentInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), parentInstancePath );
 					this.manager.addInstance( ma, parentInstance, instance );
 					response = Response.ok().build();
