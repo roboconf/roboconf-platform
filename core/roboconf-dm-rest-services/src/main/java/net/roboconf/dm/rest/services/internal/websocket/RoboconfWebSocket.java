@@ -36,7 +36,7 @@ import org.eclipse.jetty.websocket.api.WebSocketListener;
 public class RoboconfWebSocket implements WebSocketListener {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private Session session;
+	Session session;
 
 
 	@Override

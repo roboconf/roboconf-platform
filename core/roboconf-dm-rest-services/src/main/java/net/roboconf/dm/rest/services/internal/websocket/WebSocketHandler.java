@@ -27,6 +27,7 @@ package net.roboconf.dm.rest.services.internal.websocket;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,6 +71,16 @@ public class WebSocketHandler implements IDmListener {
 		}
 	}
 
+	static Set<Session> getSessions() {
+
+		Set<Session> result;
+		synchronized( SESSIONS ) {
+			result = Collections.unmodifiableSet( SESSIONS );
+		}
+
+		return result;
+	}
+
 
 	// IDmListener
 
@@ -93,40 +104,22 @@ public class WebSocketHandler implements IDmListener {
 
 	@Override
 	public void application( Application application, EventType eventType ) {
-		try {
-			String msg = asJson( " app ", application, eventType );
-			send( msg );
-
-		} catch( IOException e ) {
-			this.logger.severe( "A notification could not be prepared (application). It will not be sent. " + e.getMessage());
-			Utils.logException( this.logger, e );
-		}
+		String msg = asJson( " app ", application, eventType );
+		send( msg );
 	}
 
 
 	@Override
 	public void applicationTemplate( ApplicationTemplate tpl, EventType eventType ) {
-		try {
-			String msg = asJson( " tpl ", tpl, eventType );
-			send( msg );
-
-		} catch( IOException e ) {
-			this.logger.severe( "A notification could not be prepared (application template). It will not be sent. " + e.getMessage());
-			Utils.logException( this.logger, e );
-		}
+		String msg = asJson( " tpl ", tpl, eventType );
+		send( msg );
 	}
 
 
 	@Override
 	public void instance( Instance instance, Application application, EventType eventType ) {
-		try {
-			String msg = asJson( " instance ", instance, eventType ) + " in " + application;
-			send( msg );
-
-		} catch( IOException e ) {
-			this.logger.severe( "A notification could not be prepared (instance). It will not be sent. " + e.getMessage());
-			Utils.logException( this.logger, e );
-		}
+		String msg = asJson( " instance ", instance, eventType ) + " IN " + application;
+		send( msg );
 	}
 
 
@@ -136,21 +129,29 @@ public class WebSocketHandler implements IDmListener {
 	}
 
 
-	/**
+	/**try {
+
 	 * Creates a JSon/string representation from an object.
 	 * @param prefix
 	 * @param o
 	 * @param eventType
 	 * @return a non-null string
-	 * @throws IOException
 	 */
-	private String asJson( String prefix, Object o, EventType eventType ) throws IOException {
+	String asJson( String prefix, Object o, EventType eventType ) {
 
-		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
-		StringWriter writer = new StringWriter();
-		mapper.writeValue( writer, o );
+		String result = null;
+		try {
+			ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+			StringWriter writer = new StringWriter();
+			mapper.writeValue( writer, o );
+			result = eventType + prefix + writer.toString();
 
-		return eventType + prefix + writer.toString();
+		} catch( IOException e ) {
+			this.logger.severe( "A notification could not be prepared (" + o.getClass().getSimpleName() + "). It will not be sent. " + e.getMessage());
+			Utils.logException( this.logger, e );
+		}
+
+		return result;
 	}
 
 
@@ -160,7 +161,7 @@ public class WebSocketHandler implements IDmListener {
 	 */
 	private void send( String message ) {
 
-		if( this.enabled.get()) {
+		if( this.enabled.get() && message != null ) {
 			synchronized( SESSIONS ) {
 				for( Session session : SESSIONS ) {
 					try {
