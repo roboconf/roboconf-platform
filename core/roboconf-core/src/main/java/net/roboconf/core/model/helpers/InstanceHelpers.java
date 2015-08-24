@@ -542,7 +542,7 @@ public final class InstanceHelpers {
 	}
 
 	/**
-	 * The given instance is supposed to have a correct components, but may have
+	 * The given instance is supposed to have a correct component, but may have
 	 * duplicates in overridden exports (eg. the same exports as in the component, left
 	 * unchanged). This method will fix it.
 	 * @param instance The instance to fix

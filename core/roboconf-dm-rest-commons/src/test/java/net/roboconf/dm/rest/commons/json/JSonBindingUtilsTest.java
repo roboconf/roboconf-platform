@@ -442,8 +442,7 @@ public class JSonBindingUtilsTest {
 		Instance readInst = mapper.readValue( result, Instance.class);
 		Map<String, String> exports = InstanceHelpers.findAllExportedVariables(inst);
 		Map<String, String> readExports = InstanceHelpers.findAllExportedVariables(readInst);
-		Assert.assertEquals(exports.size(), readExports.size());
-		for (String key: exports.keySet()) Assert.assertEquals(exports.get(key), readExports.get(key));
+		Assert.assertEquals(exports, readExports); // Works on maps with non-mutable keys (here, String is fine)
 	}
 
 	@Test
