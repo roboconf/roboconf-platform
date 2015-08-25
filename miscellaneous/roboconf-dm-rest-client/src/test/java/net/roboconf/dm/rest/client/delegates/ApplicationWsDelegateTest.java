@@ -378,7 +378,10 @@ public class ApplicationWsDelegateTest {
 	public void testAddInstance_child_success() throws Exception {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
-
+		// Override/declare more exports
+		newMysql.overriddenExports.put("mysql.port", "3307");
+		newMysql.overriddenExports.put("test", "test");
+		
 		Assert.assertEquals( 1, this.app.getTomcatVm().getChildren().size());
 		Assert.assertFalse( this.app.getTomcatVm().getChildren().contains( newMysql ));
 

@@ -26,6 +26,7 @@
 package net.roboconf.dm.rest.commons.json;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import net.roboconf.core.model.beans.Application;
@@ -43,6 +44,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -74,6 +76,7 @@ public final class JSonBindingUtils {
 	private static final String INST_CHANNELS = "channels";
 	private static final String INST_COMPONENT = "component";
 	private static final String INST_STATUS = "status";
+	public static final String INST_EXPORTS = "exports";
 	private static final String INST_DATA = "data";
 
 	private static final String COMP_NAME = "name";
@@ -433,6 +436,18 @@ public final class JSonBindingUtils {
 
 				generator.writeEndArray();
 			}
+			
+			// All exports are serialized in the same object (overridden or not).
+			// Will be necessary in external apps, like web console (eg. to edit exports).
+			Map<String, String> exports = InstanceHelpers.findAllExportedVariables(instance);
+			if( ! exports.isEmpty()) {
+				generator.writeFieldName( INST_EXPORTS );
+				generator.writeStartObject();
+				for( Map.Entry<String,String> entry : exports.entrySet())
+					generator.writeObjectField( entry.getKey(), entry.getValue());
+
+				generator.writeEndObject();
+			}
 
 			// Write some meta-data (useful for web clients).
 			// De-serializing this information is useless for the moment.
@@ -475,9 +490,17 @@ public final class JSonBindingUtils {
 	        	for( JsonNode arrayNodeItem : n )
 	        		instance.channels.add( arrayNodeItem.textValue());
 	        }
+	        
+	        ObjectMapper mapper = createObjectMapper();
+	        
+	        // Consider all exports as overridden. This will be fixed later
+	        // (eg. by comparison with component exports).
+	        if(( n = node.get( INST_EXPORTS )) != null ) {
+	        	Map<String, String> exports = mapper.readValue(n.toString(), new TypeReference<HashMap<String,String>>(){});
+	        	instance.overriddenExports.putAll(exports);
+	        }
 
 	        if(( n = node.get( INST_COMPONENT )) != null ) {
-	        	ObjectMapper mapper = createObjectMapper();
 	        	Component instanceComponent = mapper.readValue( n.toString(), Component.class );
 	        	instance.setComponent( instanceComponent );
 	        }
