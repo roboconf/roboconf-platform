@@ -26,6 +26,7 @@
 package net.roboconf.dm.rest.commons.json;
 
 import java.io.StringWriter;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
@@ -418,6 +419,31 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( inst.getComponent().getName(), readInst.getComponent().getName());
 	}
 
+	@Test
+	public void testInstanceBinding_7() throws Exception {
+
+		final String result = "{\"name\":\"instance\",\"path\":\"/instance\",\"status\":\"NOT_DEPLOYED\",\"component\":{\"name\":\"component1\"},\"exports\":{\"component1.ip\":\"127.0.0.1\",\"any field\":\"some value\",\"component1.test\":\"test\"}}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Component comp = new Component("component1");
+		comp.exportedVariables.put("test", "test");
+		Instance inst = new Instance( "instance" ).component(comp);
+		inst.overriddenExports.put("component1.ip", "127.0.0.1");
+		inst.overriddenExports.put("any field", "some value");
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, inst );
+		String s = writer.toString();
+
+		// May this fail due to export fields ordering ? Works by now...
+		// Just remove line below if it happens to fail.
+		Assert.assertEquals( result, s );
+
+		Instance readInst = mapper.readValue( result, Instance.class);
+		Map<String, String> exports = InstanceHelpers.findAllExportedVariables(inst);
+		Map<String, String> readExports = InstanceHelpers.findAllExportedVariables(readInst);
+		Assert.assertEquals(exports, readExports); // Works on maps with non-mutable keys (here, String is fine)
+	}
 
 	@Test
 	public void testDiagnosticBinding_1() throws Exception {

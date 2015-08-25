@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -539,4 +540,29 @@ public final class InstanceHelpers {
 
 		return result;
 	}
+
+	/**
+	 * The given instance is supposed to have a correct component, but may have
+	 * duplicates in overridden exports (eg. the same exports as in the component, left
+	 * unchanged). This method will fix it.
+	 * @param instance The instance to fix
+	 */
+	public static void fixOverriddenExports(Instance instance) {
+		if(! instance.overriddenExports.isEmpty()) {
+			
+			Map<String,String> componentExports = ComponentHelpers.findAllExportedVariables(instance.getComponent());
+
+			Iterator<Map.Entry<String,String>> iter = instance.overriddenExports.entrySet().iterator();
+			while (iter.hasNext()) {
+				// Does export exist in component... with the same value as in overridden exports ?
+				// If so, remove from overridden exports (because it is not overridden at all !)
+				Map.Entry<String,String> entry = iter.next();
+				String value = componentExports.get(entry.getKey());
+				if(value != null && value.equals(entry.getValue())) {
+					iter.remove();
+				}
+			}
+		}
+	}
+
 }
