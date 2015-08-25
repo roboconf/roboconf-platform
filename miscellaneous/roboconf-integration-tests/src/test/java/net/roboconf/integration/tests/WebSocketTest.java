@@ -32,7 +32,6 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
-import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
@@ -42,13 +41,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@RunWith( RoboconfPaxRunner.class )
+@RunWith( PaxExam.class )
 @ExamReactorStrategy( PerMethod.class )
 public class WebSocketTest extends DmTest {
 
