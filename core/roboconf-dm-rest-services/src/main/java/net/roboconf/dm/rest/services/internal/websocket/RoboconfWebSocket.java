@@ -63,7 +63,6 @@ public class RoboconfWebSocket implements WebSocketListener {
 		// nothing else, we do not expect requests on the web socket
 	}
 
-
 	@Override
 	public void onWebSocketBinary( byte[] payload, int offset, int len ) {
 		this.logger.finest( "An unexpected binary message was received on the web socket. Session origin: " + this.session.getRemoteAddress());

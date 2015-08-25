@@ -34,6 +34,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
@@ -47,6 +48,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -124,13 +126,14 @@ public class DmMessageProcessorTest {
 	@Test
 	public void testEchoReception() {
 
-		Assert.assertEquals( 0, this.manager.getEchoMessages().size());
+		IDmListener listener = Mockito.mock( IDmListener.class );
+		this.manager.listenerAppears( listener );
+		Mockito.verify( listener, Mockito.never()).raw( Mockito.anyString());
 
-		MsgEcho msg = new MsgEcho( "hey!", 4L );
+		MsgEcho msg = new MsgEcho( "hey!" );
 		this.processor.processMessage( msg );
 
-		Assert.assertEquals( 1, this.manager.getEchoMessages().size());
-		Assert.assertEquals( "hey!", this.manager.getEchoMessages().get( 0 ).getContent());
+		Mockito.verify( listener ).raw( "hey!" );
 	}
 
 

@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -94,14 +93,12 @@ public interface IDebugResource {
 	 * </li>
 	 * </ol>
 	 *
-	 * @param message a customized message content.
-	 * @param timeout the timeout in milliseconds (ms) to wait before considering the message is lost.
-	 * @return the response to the messaging server connection check.
+	 * @param message a customized message content (not null)
+	 * @return the response to the messaging server connection check
 	 */
 	@GET
 	@Path("/check-dm")
-	Response checkMessagingConnectionForTheDm( @QueryParam("message") @DefaultValue("") String message,
-	                                           @QueryParam("timeout") @DefaultValue("1000") long timeout );
+	Response checkMessagingConnectionForTheDm( @QueryParam("message") String message );
 
 
 	/**
@@ -123,18 +120,16 @@ public interface IDebugResource {
 	 * </li>
 	 * </ol>
 	 *
-	 * @param applicationName  the name of the application holding the targeted agent.
-	 * @param rootInstanceName the identifier of the targeted agent.
-	 * @param message          a customized message content.
-	 * @param timeout          the timeout in milliseconds (ms) to wait before considering the message is lost.
-	 * @return the response to the agent connection check.
+	 * @param applicationName  the name of the application holding the targeted agent
+	 * @param scopedInstanceName the identifier of the targeted agent
+	 * @param message a customized message content (not null)
+	 * @return the response to the agent connection check
 	 */
 	@GET
 	@Path("/check-agent")
 	Response checkMessagingConnectionWithAgent( @QueryParam("application-name") String applicationName,
-	                                            @QueryParam("root-instance-name") String rootInstanceName,
-	                                            @QueryParam("message") @DefaultValue("") String message,
-	                                            @QueryParam("timeout") @DefaultValue("1000") long timeout );
+	                                            @QueryParam("scoped-instance-path") String scopedInstancePath,
+	                                            @QueryParam("message") String message );
 
 
 	/**

@@ -213,10 +213,10 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_msgEcho() throws Exception {
 
-		MsgEcho msg = new MsgEcho( "coucou", 4L );
+		MsgEcho msg = new MsgEcho( "coucou", UUID.randomUUID());
 		checkBasics( msg, MsgEcho.class );
 
-		msg = new MsgEcho( "hey!", 4L, UUID.randomUUID());
+		msg = new MsgEcho( "hello" );
 		checkBasics( msg, MsgEcho.class );
 	}
 

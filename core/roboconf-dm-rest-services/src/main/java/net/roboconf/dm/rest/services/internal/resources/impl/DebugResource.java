@@ -74,7 +74,6 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 @Path( IDebugResource.PATH )
 public class DebugResource implements IDebugResource {
 
-	public static final long MAXIMUM_TIMEOUT = 10000L;
 	static final String ROOT_COMPONENT_NAME = "Machine";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -157,36 +156,22 @@ public class DebugResource implements IDebugResource {
 	}
 
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IDebugResource
-	 * #checkMessagingConnectionForTheDm()
+	 * #checkMessagingConnectionForTheDm(java.lang.String)
 	 */
 	@Override
-	public Response checkMessagingConnectionForTheDm( String message, long timeout ) {
+	public Response checkMessagingConnectionForTheDm( String message ) {
 
-		if ( message == null )
-			message = "ECHO " + UUID.randomUUID();
-
-		if ( timeout > MAXIMUM_TIMEOUT ) {
-			this.logger.warning( "Timeout " + timeout + " ms is above maximum limit " + MAXIMUM_TIMEOUT + " ms. Normalizing" );
-			timeout = MAXIMUM_TIMEOUT;
-		}
-
-		this.logger.fine( "Checking connection to the message queue. message=" + message + ", timeout=" + timeout + "ms" );
+		this.logger.fine( "Checking connection to the message queue. message=" + message );
 		Response response;
-		String responseMessage;
 		try {
-			if ( this.manager.pingMessageQueue( message, timeout ))
-				response = Response.status( Status.OK ).entity( "Has received Echo message " + message ).build();
-			else
-				response = Response.status( 408 ).entity( "Did not receive Echo message " + message + " before timeout (" + timeout + "ms)" ).build();
+			this.manager.pingMessageQueue( message );
+			response = Response.status( Status.OK ).entity( "An Echo message (" + message + ") was sent. Wait for the echo on websocket." ).build();
 
 		} catch ( IOException e ) {
-			responseMessage = "Unable to send Echo message " + message;
-			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
-
-		} catch ( InterruptedException e ) {
-			responseMessage = "Interrupted while waiting for Echo message " + message;
+			String responseMessage = "Unable to send Echo message " + message;
 			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
 		}
 
@@ -194,45 +179,31 @@ public class DebugResource implements IDebugResource {
 	}
 
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.IDebugResource
-	 * #checkMessagingConnectionWithAgent(java.lang.String)
+	 * #checkMessagingConnectionWithAgent(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public Response checkMessagingConnectionWithAgent(
 			String applicationName,
-			String rootInstanceName,
-			String message,
-			long timeout ) {
+			String scopedInstancePath,
+			String message ) {
 
-		if ( message == null )
-			message = UUID.randomUUID().toString();
-
-		if ( timeout > MAXIMUM_TIMEOUT ) {
-			this.logger.warning( "Timeout " + timeout + "ms is above maximum limit " + MAXIMUM_TIMEOUT + "ms. Normalizing" );
-			timeout = MAXIMUM_TIMEOUT;
-		}
-
-		Response response;
+		Response response = Response.status( Status.OK ).entity( "An Echo message (" + message + ") was sent. Wait for the echo on websocket." ).build();
 		String responseMessage;
 		try {
 			final Application application = this.manager.findApplicationByName( applicationName );
 			final Instance instance;
 			if( application == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
-			else if(( instance = InstanceHelpers.findInstanceByPath( application, "/" + rootInstanceName )) == null )
-				response = Response .status( Status.NOT_FOUND ).entity( "Instance " + rootInstanceName + " was not found in application " + applicationName ).build();
-			else if( this.manager.pingAgent( application, instance, message, timeout ))
-				response = Response.status( Status.OK ).entity( "Has received ping response " + message + " from agent " + rootInstanceName ).build();
+			else if(( instance = InstanceHelpers.findInstanceByPath( application, scopedInstancePath )) == null )
+				response = Response .status( Status.NOT_FOUND ).entity( "Instance " + scopedInstancePath + " was not found in application " + applicationName ).build();
 			else
-				response = Response.status( 408 ).entity( "Did not receive ping response " + message + " from agent " + rootInstanceName + " before timeout (" + timeout + "ms)" ).build();
+				this.manager.pingAgent( application, instance, message );
 
 		} catch ( IOException e ) {
-			responseMessage = "Unable to ping agent " + rootInstanceName + " with message " + message;
-			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
-
-		} catch ( InterruptedException e ) {
-			responseMessage = "Interrupted while waiting for ping response from agent " + rootInstanceName + " message " + message;
+			responseMessage = "Unable to ping agent " + scopedInstancePath + " with message " + message;
 			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, responseMessage, e ).build();
 		}
 

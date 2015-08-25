@@ -58,7 +58,7 @@ public class DebugWsDelegate {
 	 */
 	public DebugWsDelegate( WebResource resource ) {
 		this.resource = resource;
-		this.logger = Logger.getLogger( getClass().getName() );
+		this.logger = Logger.getLogger( getClass().getName());
 	}
 
 
@@ -91,29 +91,26 @@ public class DebugWsDelegate {
 
 	/**
 	 * Checks the DM is correctly connected with the messaging server.
-	 *
-	 * @param message a customized message content.
-	 * @param timeout the timeout in milliseconds (ms) to wait before considering the message is lost.
-	 * @return the content of the reponse.
+	 * @param message a customized message content
+	 * @return the content of the response
 	 */
-	public String checkMessagingConnectionForTheDm( String message, long timeout )
+	public String checkMessagingConnectionForTheDm( String message )
 	throws DebugException {
 
-		this.logger.finer( "Checking messaging connection with the DM: message=" + message + ", timeout=" + timeout );
+		this.logger.finer( "Checking messaging connection with the DM: message=" + message );
 
 		WebResource path = this.resource.path( UrlConstants.DEBUG ).path( "check-dm" );
-		if ( message != null )
+		if( message != null )
 			path = path.queryParam( "message", message );
-		path = path.queryParam( "timeout", Long.toString( timeout ) );
 
 		ClientResponse response = path.get( ClientResponse.class );
-		if ( Family.SUCCESSFUL != response.getStatusInfo().getFamily() ) {
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
 			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
 		}
 
-		this.logger.finer( String.valueOf( response.getStatusInfo() ) );
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
 		return response.getEntity( String.class );
 	}
 
@@ -121,37 +118,31 @@ public class DebugWsDelegate {
 	/**
 	 * Checks the DM can correctly exchange with an agent through the messaging server.
 	 *
-	 * @param applicationName  the name of the application holding the targeted agent.
-	 * @param rootInstanceName the identifier of the targeted agent.
-	 * @param message          a customized message content.
-	 * @param timeout          the timeout in milliseconds (ms) to wait before considering the message is lost.
-	 * @return the response to the agent connection check.
+	 * @param applicationName  the name of the application holding the targeted agent
+	 * @param scopedInstancePath the identifier of the targeted agent
+	 * @param message          a customized message content
+	 * @return the response to the agent connection check
 	 */
-	public String checkMessagingConnectionWithAgent(
-			String applicationName,
-			String rootInstanceName,
-			String message,
-			long timeout )
+	public String checkMessagingConnectionWithAgent( String applicationName, String scopedInstancePath, String message )
 	throws DebugException {
 
 		this.logger.finer( "Checking messaging connection with agent: applicationName=" + applicationName +
-				", rootInstanceName=" + rootInstanceName + ", message=" + message + ", timeout=" + timeout );
+				", scoped instance path=" + scopedInstancePath + ", message=" + message );
 
 		WebResource path = this.resource.path( UrlConstants.DEBUG ).path( "check-agent" );
 		path = path.queryParam( "application-name", applicationName );
-		path = path.queryParam( "root-instance-name", rootInstanceName );
-		if ( message != null )
+		path = path.queryParam( "scoped-instance-path", scopedInstancePath );
+		if( message != null )
 			path = path.queryParam( "message", message );
-		path = path.queryParam( "timeout", Long.toString( timeout ) );
 
 		ClientResponse response = path.get( ClientResponse.class );
-		if ( Family.SUCCESSFUL != response.getStatusInfo().getFamily() ) {
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
 			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
 		}
 
-		this.logger.finer( String.valueOf( response.getStatusInfo() ) );
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
 		return response.getEntity( String.class );
 	}
 
@@ -171,13 +162,13 @@ public class DebugWsDelegate {
 		path = path.queryParam( "instance-path", instancePath );
 
 		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).get( ClientResponse.class );
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily() ) {
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
 			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
 		}
 
-		this.logger.finer( String.valueOf( response.getStatusInfo() ) );
+		this.logger.finer( String.valueOf( response.getStatusInfo()));
 		return response.getEntity( Diagnostic.class );
 	}
 

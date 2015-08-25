@@ -27,10 +27,10 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -38,6 +38,7 @@ import javax.ws.rs.core.Response.Status;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -55,7 +56,10 @@ import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.test.TestClientDm;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.After;
 import org.junit.Before;
@@ -73,12 +77,13 @@ public class DebugResourceTest {
 	public TemporaryFolder folder = new TemporaryFolder();
 
 	private Manager manager;
+	private TestClientDm msgClient;
 	private DebugResource resource;
 	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
-	public void initializeDm() throws IOException {
+	public void initializeDm() throws Exception {
 		this.registry.addMessagingClientFactory(new TestClientFactory());
 
 		this.manager = new Manager();
@@ -91,6 +96,11 @@ public class DebugResourceTest {
 		this.manager.getMessagingClient().setRegistry(this.registry);
 		this.manager.reconfigure();
 
+		// Get the internal client
+		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		this.msgClient.sentMessages.clear();
+
+		// Register the REST resource
 		this.resource = new DebugResource( this.manager );
 	}
 
@@ -322,5 +332,108 @@ public class DebugResourceTest {
 		Assert.assertNotNull( diag );
 		Assert.assertEquals( path, diag.getInstancePath());
 		Assert.assertEquals( 1, diag.getDependenciesInformation().size());
+	}
+
+
+	@Test
+	public void testCheckMessagingConnectionForTheDm_success() {
+
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		UUID uuid = UUID.randomUUID();
+		Response resp = this.resource.checkMessagingConnectionForTheDm( uuid.toString());
+
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+
+		Message msg = this.msgClient.sentMessages.get( 0 );
+		Assert.assertEquals( MsgEcho.class, msg.getClass());
+		Assert.assertEquals( uuid.toString(), ((MsgEcho) msg).getContent());
+	}
+
+
+	@Test
+	public void testCheckMessagingConnectionForTheDm_ioException() {
+
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		this.msgClient.failMessageSending.set( true );
+
+		Response resp = this.resource.checkMessagingConnectionForTheDm( UUID.randomUUID().toString());
+
+		Assert.assertEquals( Status.INTERNAL_SERVER_ERROR.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+	}
+
+
+	@Test
+	public void testCheckMessagingConnectionWithAgent_success() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		UUID uuid = UUID.randomUUID();
+		String path = "/" + app.getMySqlVm().getName();
+
+		Response resp = this.resource.checkMessagingConnectionWithAgent( app.getName(), path, uuid.toString());
+
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+
+		Message msg = this.msgClient.sentMessages.get( 0 );
+		Assert.assertEquals( MsgEcho.class, msg.getClass());
+		Assert.assertEquals( "PING:" + uuid.toString(), ((MsgEcho) msg).getContent());
+	}
+
+
+	@Test
+	public void testCheckMessagingConnectionWithAgent_ioException() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		this.msgClient.failMessageSending.set( true );
+
+		UUID uuid = UUID.randomUUID();
+		String path = "/" + app.getMySqlVm().getName();
+
+		Response resp = this.resource.checkMessagingConnectionWithAgent( app.getName(), path, uuid.toString());
+		Assert.assertEquals( Status.INTERNAL_SERVER_ERROR.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+	}
+
+
+	@Test
+	public void testCheckMessagingConnectionWithAgent_invalidApplication() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		UUID uuid = UUID.randomUUID();
+		String path = "/" + app.getMySqlVm().getName();
+
+		Response resp = this.resource.checkMessagingConnectionWithAgent( "whatever", path, uuid.toString());
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+	}
+
+
+	@Test
+	public void testCheckMessagingConnectionWithAgent_invalidInstance() {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		UUID uuid = UUID.randomUUID();
+
+		Response resp = this.resource.checkMessagingConnectionWithAgent( app.getName(), "oops", uuid.toString());
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 	}
 }

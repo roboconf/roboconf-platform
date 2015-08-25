@@ -49,6 +49,16 @@ import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 public abstract class AbstractTest {
 
 	public static final long PLATFORM_TIMEOUT = 30000;
+	private static final String[] LOGGERS = {
+		// Loggers configured in our custom distributions
+		"net.roboconf",
+		"net.roboconf.dm.internal.tasks.CheckerMessagesTask",
+		"net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource",
+		"net.roboconf.target.api.AbstractThreadedTargetHandler$CheckingRunnable",
+		"net.roboconf.dm.internal.environment.messaging.DmMessageProcessor"
+	};
+
+
 	protected boolean showLogs = false;
 
 
@@ -77,10 +87,12 @@ public abstract class AbstractTest {
 		if( ! this.showLogs ) {
 			// Override the log configuration in Karaf
 			options.add( logLevel( LogLevel.ERROR ));
-			options.add( editConfigurationFilePut(
-					  "etc/org.ops4j.pax.logging.cfg",
-					  "log4j.logger.net.roboconf",
-					  "ERROR, roboconf" ));
+			for( String loggerName : LOGGERS ) {
+				options.add( editConfigurationFilePut(
+						  "etc/org.ops4j.pax.logging.cfg",
+						  "log4j.logger." + loggerName,
+						  "ERROR, roboconf" ));
+			}
 
 			// Do not show the Karaf console in the logs
 			options.add( configureConsole().ignoreLocalConsole());

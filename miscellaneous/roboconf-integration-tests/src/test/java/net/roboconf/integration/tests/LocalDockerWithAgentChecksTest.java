@@ -96,11 +96,6 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 	protected Manager manager;
 
 
-	public LocalDockerWithAgentChecksTest() {
-		this.showLogs = true;
-	}
-
-
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
 

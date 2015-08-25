@@ -66,6 +66,7 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
+ * This test verifies that a client can connect to the DM's websocket.
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
@@ -226,18 +227,14 @@ public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 		// Test the debug resources.
 		// Check the connection between the DM and the MQ.
-		Assert.assertEquals(
-				"Has received Echo message TEST",
-				this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST", 30000L ));
+		Assert.assertNotNull( this.client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST" ));
 
 		// Deploy and start the "Apache VM" root instance.
 		this.client.getApplicationDelegate().deployAndStartAll( "app1", "/Apache VM" );
 		Thread.sleep( 1000L );
 
 		// Ping the "Apache VM" root instance.
-		Assert.assertEquals(
-				"Has received ping response TEST from agent Apache VM",
-				this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "app1", "Apache VM", "TEST", 30000L ));
+		Assert.assertNotNull( this.client.getDebugDelegate().checkMessagingConnectionWithAgent( "app1", "/Apache VM", "TEST" ));
 
 		// Diagnose the "Legacy LAMP" application.
 		List<Instance> allInstances = this.client.getApplicationDelegate().listChildrenInstances( "app1", null, true );

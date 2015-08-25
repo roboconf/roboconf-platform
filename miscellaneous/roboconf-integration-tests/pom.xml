@@ -164,6 +164,22 @@
 			<scope>test</scope>
 		</dependency>
 		
+		<!-- websockets -->
+		
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>websocket-api</artifactId>
+			<version>${websocket.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.jetty.websocket</groupId>
+			<artifactId>websocket-client</artifactId>
+			<version>${websocket.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
 		<!-- Miscellaneous dependencies -->
 		
 		<dependency>
@@ -194,6 +210,7 @@
 		</dependency>
 		
 		<!-- Dependencies for pax exam karaf container -->
+		
 		<dependency>
 			<groupId>org.ops4j.pax.exam</groupId>
 			<artifactId>pax-exam-container-karaf</artifactId>

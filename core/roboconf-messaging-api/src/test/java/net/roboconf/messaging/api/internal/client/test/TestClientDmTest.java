@@ -97,10 +97,10 @@ public class TestClientDmTest {
 		TestClientDm client = new TestClientDm();
 		Assert.assertEquals( 0, client.sentMessages.size());
 
-		client.sendMessageToTheDm( new MsgEcho( "hello", 4L ));
+		client.sendMessageToTheDm( new MsgEcho( "hello" ));
 		Assert.assertEquals( 1, client.sentMessages.size());
 
-		client.sendMessageToTheDm( new MsgEcho( "hello 2", 1L ));
+		client.sendMessageToTheDm( new MsgEcho( "hello 2" ));
 		Assert.assertEquals( 2, client.sentMessages.size());
 	}
 
@@ -110,7 +110,7 @@ public class TestClientDmTest {
 
 		TestClientDm client = new TestClientDm();
 		client.failMessageSending.set( true );
-		client.sendMessageToTheDm( new MsgEcho( "hello", 4L ));
+		client.sendMessageToTheDm( new MsgEcho( "hello" ));
 	}
 
 
