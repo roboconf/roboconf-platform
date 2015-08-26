@@ -132,9 +132,15 @@ public final class ItUtils {
 		// The most simple solution is to wait for the applications listing to work.
 
 		URI targetUri = UriUtils.urlToUri( "http://localhost:8181/applications" );
-		for( int i=0; i<15; i++ ) {
+		for( int i=0; i<20; i++ ) {
 			Thread.sleep( 1000 );
-			String s = TestUtils.readUriContent( targetUri );
+			String s = "";
+			try {
+				s = TestUtils.readUriContent( targetUri );
+			} catch( Exception e ) {
+				// nothing
+			}
+
 			if( "[]".equals( s ))
 				break;
 		}
