@@ -23,12 +23,14 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests;
+package net.roboconf.integration.tests.paxrunner;
 
 import static org.ops4j.pax.exam.CoreOptions.jarProbe;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -40,8 +42,8 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
+import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
@@ -97,7 +99,6 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// We need to specify the classes we need
 		// and that come from external modules.
-		probe.addTest( AbstractTest.class );
 		probe.addTest( DmTest.class );
 		probe.addTest( TestApplicationTemplate.class );
 		probe.addTest( TestApplication.class );
@@ -111,16 +112,15 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 	@Override
 	@Configuration
-	public Option[] config() {
+	public Option[] config() throws Exception {
 
-		List<Option> options = getBaseOptions();
+		List<Option> options = new ArrayList<> ();
+		options.addAll( Arrays.asList( super.config()));
 
 		// Create a custom probe to prevent class conflicts.
 		// Using a probe configuration is not enough, we do not want all the
 		// tests classes from this project to be part of the probe.
-		options.add( jarProbe().classes(
-				DelayedAgentInitializationTest.class
-		));
+		options.add( jarProbe().classes( getClass()));
 
 		// Generic messaging update note:
 		//
@@ -131,7 +131,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// close the DM client's connection.
 
 		// Add the configuration for the agent
-				TestApplication app = new TestApplication();
+		TestApplication app = new TestApplication();
 		options.add( editConfigurationFilePut(
 				  "etc/net.roboconf.agent.configuration.cfg",
 				  "application-name",
@@ -154,29 +154,29 @@ public class DelayedAgentInitializationTest extends DmTest {
 				  "invalid" ));
 
 		// Deploy the agent's bundles
+		String roboconfVersion = ItUtils.findRoboconfVersion();
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-plugin-api" )
-				.version( getRoboconfVersion())
+				.version( roboconfVersion )
 				.start());
 
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-agent" )
-				.version( getRoboconfVersion())
+				.version( roboconfVersion )
 				.start());
 
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-agent-default" )
-				.version( getRoboconfVersion())
+				.version( roboconfVersion )
 				.start());
 
 		return options.toArray( new Option[ options.size()]);
 	}
 
 
-	@Override
 	@Test
 	public void run() throws Exception {
 

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests;
+package net.roboconf.integration.tests.paxrunner;
 
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
@@ -33,6 +33,8 @@ import java.io.File;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Logger;
@@ -48,8 +50,8 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
+import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunnerWithDocker;
 import net.roboconf.target.docker.internal.DockerTestUtils;
 
@@ -101,7 +103,6 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 
 		// We need to specify the classes we need
 		// and that come from external modules.
-		probe.addTest( AbstractTest.class );
 		probe.addTest( DmTest.class );
 		probe.addTest( TestUtils.class );
 
@@ -113,7 +114,8 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		List<Option> options = getBaseOptions();
+		List<Option> options = new ArrayList<> ();
+		options.addAll( Arrays.asList( super.config()));
 		Logger logger = Logger.getLogger( getClass().getName());
 
 		// Indicate the location of the application to deploy
@@ -140,7 +142,7 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 				RoboconfPaxRunnerWithDocker.RBCF ));
 
 		// Install Docker support
-		String roboconfVersion = getRoboconfVersion();
+		String roboconfVersion = ItUtils.findRoboconfVersion();
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-target-docker" )
@@ -162,7 +164,6 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 	}
 
 
-	@Override
 	@Test
 	public void run() throws Exception {
 

@@ -25,29 +25,20 @@
 
 package net.roboconf.integration.probes;
 
-import java.util.List;
+import net.roboconf.integration.tests.internal.ItUtils;
 
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
 /**
+ * A base class to run the agent's distribution.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AgentTest extends AbstractTest {
-
-	@Override
-	protected String getArtifactId() {
-		return "roboconf-karaf-dist-agent";
-	}
-
-	@Override
-	protected String getDirectorySuffix() {
-		return "agent";
-	}
+public abstract class AgentTest {
 
 	@Configuration
 	public Option[] config() throws Exception {
-		List<Option> options = getBaseOptions();
-		return options.toArray( new Option[ options.size()]);
+		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-agent", "agent" );
+		return ItUtils.getBaseOptions( bean );
 	}
 }

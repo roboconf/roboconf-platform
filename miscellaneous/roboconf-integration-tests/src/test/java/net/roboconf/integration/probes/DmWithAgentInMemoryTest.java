@@ -37,6 +37,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -46,9 +47,10 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.util.Filter;
 
 /**
+ * A base test for PAX-runner tests with the DM's distribution and agents in-memory.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class DmWithAgentInMemoryTest extends AbstractTest {
+public abstract class DmWithAgentInMemoryTest {
 
 	@Inject
 	protected Manager manager;
@@ -58,38 +60,28 @@ public abstract class DmWithAgentInMemoryTest extends AbstractTest {
 	private TargetHandler inMemoryIaas;
 
 
-	@Override
-	protected String getArtifactId() {
-		return "roboconf-karaf-dist-dm";
-	}
-
-
-	@Override
-	protected String getDirectorySuffix() {
-		return "dm-with-agent-in-memory";
-	}
-
-
 	@Configuration
 	public Option[] config() throws Exception {
 
-		List<Option> options = getBaseOptions();
+		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm-with-agent-in-memory" );
+		List<Option> options = ItUtils.getBaseOptionsAsList( bean );
+		String roboconfVersion = ItUtils.findRoboconfVersion();
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-plugin-api" )
-				.version( getRoboconfVersion())
+				.version( roboconfVersion )
 				.start());
 
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-agent" )
-				.version( getRoboconfVersion())
+				.version( roboconfVersion )
 				.start());
 
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-target-in-memory" )
-				.version( getRoboconfVersion())
+				.version( roboconfVersion )
 				.start());
 
 		options.add( editConfigurationFilePut(

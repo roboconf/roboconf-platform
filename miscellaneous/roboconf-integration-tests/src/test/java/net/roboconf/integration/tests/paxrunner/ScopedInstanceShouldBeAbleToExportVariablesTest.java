@@ -23,58 +23,53 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests;
+package net.roboconf.integration.tests.paxrunner;
 
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import javax.inject.Inject;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.integration.probes.AbstractTest;
-import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.integration.probes.DmTest;
+import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
-import org.apache.felix.ipojo.ComponentInstance;
-import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
-import org.ops4j.pax.exam.util.Filter;
 
 /**
- * A set of tests for the "in-memory" target.
- * <p>
- * We launch a Karaf installation with an agent in-memory. We load
- * an application and instantiates a root instance. An iPojo component
- * is created (and associated with an in-memory agent).
- * </p>
- *
+ * A scoped instance MUST be able to export variables.
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerMethod.class )
-public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
+public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmTest {
 
 	private static final String APP_LOCATION = "my.app.location";
 
 	@Inject
-	@Filter( "(factory.name=roboconf-agent-in-memory)" )
-	private Factory agentFactory;
+	protected Manager manager;
 
 
 	@ProbeBuilder
@@ -82,9 +77,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 		// We need to specify the classes we need
 		// and that come from external modules.
-		probe.addTest( AbstractTest.class );
-		probe.addTest( DmWithAgentInMemoryTest.class );
-		probe.addTest( InMemoryTargetResolver.class );
+		probe.addTest( DmTest.class );
 		probe.addTest( TestUtils.class );
 
 		return probe;
@@ -95,51 +88,82 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		File resourcesDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		List<Option> options = new ArrayList<> ();
+		options.addAll( Arrays.asList( super.config()));
+
+		// Store the application's location
+		File resourcesDirectory = TestUtils.findApplicationDirectory( "root-exporting-variables" );
 		String appLocation = resourcesDirectory.getAbsolutePath();
-		return OptionUtils.combine(
-				super.config(),
-				systemProperty( APP_LOCATION ).value( appLocation ));
+		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
+
+		// Deploy the agent's bundles
+		String roboconfVersion = ItUtils.findRoboconfVersion();
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-plugin-api" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-agent" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-target-in-memory" )
+				.version( roboconfVersion )
+				.start());
+
+		return options.toArray( new Option[ options.size()]);
 	}
 
 
-	@Override
 	@Test
 	public void run() throws Exception {
 
-		// Prepare everything
-		configureManagerForInMemoryUsage();
-		String appLocation = System.getProperty( APP_LOCATION );
+		// Wait for the in-memory target to be available
+		for( int i=0; i<5; i++ ) {
+			if( this.manager.getTargetHandlers().isEmpty())
+				Thread.sleep(300);
+			else
+				break;
+		}
 
-		// Load the application
+		// Load the application template
+		String appLocation = System.getProperty( APP_LOCATION );
 		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
+
+		// Create an application
 		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
 
-		// There is no agent yet (no root instance was deployed)
-		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
+		// Instantiate a new scoped instance
+		Instance scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/vm1" );
+		Assert.assertNotNull( scopedInstance );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, scopedInstance.getStatus());
 
-		// Instantiate a new root instance
-		Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
-		Assert.assertNotNull( rootInstance );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
+		Instance childInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/vm1/app" );
+		Assert.assertNotNull( childInstance );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, childInstance.getStatus());
 
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
-		Thread.sleep( 3000 );
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
+		this.manager.changeInstanceState( ma, scopedInstance, InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 800 );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, scopedInstance.getStatus());
 
-		// A new agent must have been created
-		List<ComponentInstance> instances = this.agentFactory.getInstances();
-		Assert.assertEquals( 1, instances.size());
+		// Verify that the child instance has resolved its dependencies and that it is started
+		this.manager.changeInstanceState( ma, childInstance, InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 800 );
 
-		ComponentInstance instance = instances.get( 0 );
-		Assert.assertEquals( "/MySQL VM @ test", instance.getInstanceName());
-		Assert.assertEquals( ComponentInstance.VALID, instance.getState());
-		Assert.assertTrue( instance.isStarted());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, childInstance.getStatus());
+		Collection<Import> resolvedImports = childInstance.getImports().get( "VM" );
+		Assert.assertEquals( 1, resolvedImports.size());
 
-		// Undeploy
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
-		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
+		Import imp = resolvedImports.iterator().next();
+		Assert.assertEquals( "/vm1", imp.getInstancePath());
+		Assert.assertEquals( "VM", imp.getComponentName());
+		Assert.assertEquals( "test", imp.getExportedVars().get( "VM.config" ));
 	}
 }

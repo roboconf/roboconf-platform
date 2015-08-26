@@ -101,8 +101,8 @@ public class ManagementWsDelegate {
 
 
 	/**
-	 * Loads an application template from a file which was already uploaded on the DM's machine.
-	 * @param remoteFilePath the file path of the ZIP file on the DM's machine
+	 * Loads an application template from a file which was already uploaded (and unzipped) on the DM's machine.
+	 * @param remoteFilePath the file path of a directory containing the application on the DM's machine
 	 * @throws ManagementException if a problem occurred with the applications management
 	 */
 	public void loadApplicationTemplate( String remoteFilePath ) throws ManagementException {

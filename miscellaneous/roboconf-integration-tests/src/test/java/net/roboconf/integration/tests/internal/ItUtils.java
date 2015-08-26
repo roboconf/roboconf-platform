@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.probes;
+package net.roboconf.integration.tests.internal;
 
 import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
 import static org.ops4j.pax.exam.CoreOptions.maven;
@@ -35,8 +35,13 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRunti
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.UriUtils;
+import net.roboconf.integration.probes.ItConfigurationBean;
 
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
@@ -46,7 +51,15 @@ import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AbstractTest {
+public final class ItUtils {
+
+	/**
+	 * Private empty constructor.
+	 */
+	private ItUtils() {
+		// nothing
+	}
+
 
 	public static final long PLATFORM_TIMEOUT = 30000;
 	private static final String[] LOGGERS = {
@@ -59,32 +72,30 @@ public abstract class AbstractTest {
 	};
 
 
-	protected boolean showLogs = false;
-
-
 	/**
 	 * @return a non-null list of options to run Karaf from this test
 	 */
-	public final List<Option> getBaseOptions() {
+	public static List<Option> getBaseOptionsAsList( ItConfigurationBean bean ) {
 
 		MavenArtifactUrlReference karafUrl = maven()
-				.groupId( getGroupId())
-				.artifactId( getArtifactId())
-				.version( getRoboconfVersion())
+				.groupId( bean.getGroupId())
+				.artifactId( bean.getArtifactId())
+				.version( bean.getVersion())
 				.type( "tar.gz" );
 
 		// Configure the platform
 		List<Option> options = new ArrayList<Option> ();
 		options.add( karafDistributionConfiguration()
 				.frameworkUrl( karafUrl )
-				.unpackDirectory( new File( "target/exam-" + getDirectorySuffix()))
+				.unpackDirectory( new File( "target/exam-" + bean.getDirectoryName()))
 				.useDeployFolder( false ));
 
 		options.add( cleanCaches( true ));
 		options.add( keepRuntimeFolder());
 		options.add( systemTimeout( PLATFORM_TIMEOUT ));
 
-		if( ! this.showLogs ) {
+		// Logs management
+		if( bean.areLogsHidden()) {
 			// Override the log configuration in Karaf
 			options.add( logLevel( LogLevel.ERROR ));
 			for( String loggerName : LOGGERS ) {
@@ -102,21 +113,49 @@ public abstract class AbstractTest {
 	}
 
 
-	protected abstract String getArtifactId();
-	protected abstract String getDirectorySuffix();
-
 	/**
-	 * The test run method.
-	 * @throws Exception
+	 * @return a non-null array of options to run Karaf from this test
 	 */
-	protected abstract void run() throws Exception;
-
-
-	protected String getGroupId() {
-		return "net.roboconf";
+	public static Option[] getBaseOptions( ItConfigurationBean bean ) {
+		return asArray( getBaseOptionsAsList( bean ));
 	}
 
-	protected final String getRoboconfVersion() {
+
+	/**
+	 * Waits for the DM's REST services to be online.
+	 * @throws Exception
+	 */
+	public static void waitForDmRestServices() throws Exception {
+
+		// By default, PAX (runner) tests only wait for the manager to be available.
+		// For some tests however, we must also be sure that the REST services are online.
+		// The most simple solution is to wait for the applications listing to work.
+
+		URI targetUri = UriUtils.urlToUri( "http://localhost:8181/applications" );
+		for( int i=0; i<15; i++ ) {
+			Thread.sleep( 1000 );
+			String s = TestUtils.readUriContent( targetUri );
+			if( "[]".equals( s ))
+				break;
+		}
+	}
+
+
+	/**
+	 * Converts a list of options to an array of options.
+	 * @param options a non-null list of options
+	 * @return a non-null array of options
+	 */
+	public static Option[] asArray( List<Option> options ) {
+		Option[] result = new Option[ options.size()];
+		return options.toArray( result );
+	}
+
+
+	/**
+	 * @return the Roboconf version (found in the manifest of roboconf-core)
+	 */
+	public static String findRoboconfVersion() {
 		return MavenUtils.getArtifactVersion( "net.roboconf", "roboconf-core" );
 	}
 }

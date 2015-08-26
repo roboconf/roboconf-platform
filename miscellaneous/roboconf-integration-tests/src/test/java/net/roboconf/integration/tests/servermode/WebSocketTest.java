@@ -23,80 +23,65 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests;
+package net.roboconf.integration.tests.servermode;
 
 import java.net.URI;
 
 import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.utils.UriUtils;
-import net.roboconf.integration.probes.AbstractTest;
 import net.roboconf.integration.probes.DmTest;
+import net.roboconf.integration.tests.internal.ItUtils;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.ProbeBuilder;
-import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.junit.PaxExam;
-import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerMethod;
+import org.ops4j.pax.exam.ExamSystem;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.TestContainer;
+import org.ops4j.pax.exam.karaf.container.internal.KarafTestContainer;
+import org.ops4j.pax.exam.spi.PaxExamRuntime;
 
 /**
+ * This test verifies that a client can interact with the DM's websocket.
  * @author Vincent Zurczak - Linagora
  */
-@RunWith( PaxExam.class )
-@ExamReactorStrategy( PerMethod.class )
 public class WebSocketTest extends DmTest {
 
-	@ProbeBuilder
-	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
-
-		// We need to specify the classes we need
-		// and that come from external modules.
-		probe.addTest( AbstractTest.class );
-		probe.addTest( DmTest.class );
-		probe.addTest( TestUtils.class );
-
-		return probe;
-	}
-
-
-	@Override
 	@Test
 	public void run() throws Exception {
 
-		// Wait for the REST services to be online.
-		// By default, these tests only wait for the manager to be available. We must in addition,
-		// be sure that the REST services are online. The most simple solution is to wait for the
-		// applications listing to work.
-		URI targetUri = UriUtils.urlToUri( "http://localhost:8181/applications" );
-		for( int i=0; i<10; i++ ) {
-			Thread.sleep( 1000 );
-			String s = TestUtils.readUriContent( targetUri );
-			if( "[]".equals( s ))
-				break;
-		}
+		// Prepare to run an agent distribution
+		Option[] options = super.config();
+		ExamSystem system = PaxExamRuntime.createServerSystem( options );
+		TestContainer container = PaxExamRuntime.createContainer( system );
+		Assert.assertEquals( KarafTestContainer.class, container.getClass());
 
-		// Try to connect to our web socket.
-		WebSocketClient client = new WebSocketClient();
-		TestWebsocket socket = new TestWebsocket();
-        try {
-            client.start();
-            URI echoUri = new URI( "ws://localhost:8181/roboconf-dm-websocket" );
-            ClientUpgradeRequest request = new ClientUpgradeRequest();
-            client.connect( socket, echoUri, request );
-            Thread.sleep( 2000 );
+		try {
+			// Start the agent's distribution... and wait... :(
+			container.start();
+			ItUtils.waitForDmRestServices();
+
+			// Try to connect to our web socket.
+			WebSocketClient client = new WebSocketClient();
+			TestWebsocket socket = new TestWebsocket();
+			try {
+				client.start();
+				URI echoUri = new URI( "ws://localhost:8181/roboconf-dm-websocket" );
+				ClientUpgradeRequest request = new ClientUpgradeRequest();
+				client.connect( socket, echoUri, request );
+				Thread.sleep( 2000 );
+
+			} finally {
+				client.stop();
+			}
+
+			// Did the connection work?
+			Assert.assertTrue( socket.wasConnected );
 
 		} finally {
-			client.stop();
+			container.stop();
 		}
-
-        // Did the connection work?
-        Assert.assertTrue( socket.wasConnected());
 	}
 
 
@@ -110,9 +95,5 @@ public class WebSocketTest extends DmTest {
     	public void onWebSocketConnect( Session sess ) {
     		this.wasConnected = true;
     	}
-
-		public boolean wasConnected() {
-			return this.wasConnected;
-		}
     }
 }
