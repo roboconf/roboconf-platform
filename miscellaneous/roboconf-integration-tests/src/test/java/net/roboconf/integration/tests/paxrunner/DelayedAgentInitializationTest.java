@@ -215,6 +215,10 @@ public class DelayedAgentInitializationTest extends DmTest {
 		this.agentItf.forceHeartbeatSending();
 		Thread.sleep( 400 );
 
+		// Travis containers are sometimes very slow
+		if( this.agentItf.getScopedInstance() == null )
+			Thread.sleep( 400 );
+
 		// The agent should now be configured.
 		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
 		Assert.assertNotNull( this.agentItf.getMessagingClient());
