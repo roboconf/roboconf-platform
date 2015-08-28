@@ -38,68 +38,51 @@ public class MsgEcho extends Message {
 
 	private static final long serialVersionUID = 3568910235669142258L;
 
-	// The content of the message
 	private final String content;
-
-	// The expiration time of this message.
-	private final long expirationTime;
-
-	// The message UUID. May be manually set to identity a message session (e.g. ping response)
+	private final long creationTime;
 	private final UUID uuid;
 
-	/**
-	 * Constructs an Echo message with the given content.
-	 *
-	 * @param content the content of the Echo message.
-	 * @param expirationTime the expiration time of the message, e.g. {@code System.currentTimeMillis() + timeout}.
-	 * @throws java.lang.NullPointerException if {@code content} is {@code null}.
-	 */
-	public MsgEcho( String content, long expirationTime ) {
-		Objects.requireNonNull( content, "content is null" );
-		this.content = content;
-		this.expirationTime = expirationTime;
-		this.uuid = UUID.randomUUID();
-	}
 
 	/**
 	 * Constructs an Echo message with the given content.
 	 *
 	 * @param content the content of the Echo message.
-	 * @param expirationTime the expiration time of the message, e.g. {@code System.currentTimeMillis() + timeout}.
-	 * @param uuid the manually fixed UUID.
-	 * @throws java.lang.NullPointerException if {@code content} or {@code uuid} is {@code null}.
+	 * @param uuid a UUID
+	 * @throws java.lang.NullPointerException if {@code content} is {@code null}
 	 */
-	public MsgEcho( String content, long expirationTime, UUID uuid ) {
+	public MsgEcho( String content, UUID uuid ) {
 		Objects.requireNonNull( content, "content is null" );
-		Objects.requireNonNull( uuid, "uuid is null" );
 		this.content = content;
-		this.expirationTime = expirationTime;
 		this.uuid = uuid;
+		this.creationTime = System.currentTimeMillis();
 	}
 
 	/**
-	 * @return the content of this message.
+	 * Constructs an Echo message with the given content.
+	 * <p>Equivalent to <code>new MsgEcho( content, UUID.randomUUID())</code></p>
+	 */
+	public MsgEcho( String content ) {
+		this( content, UUID.randomUUID());
+	}
+
+	/**
+	 * @return the content of this message
 	 */
 	public final String getContent() {
 		return this.content;
 	}
 
 	/**
-	 * @return the expiration time of this message.
+	 * @return the creation time (~ sending time, useful only for debug)
 	 */
-	public final long getExpirationTime() {
-		return this.expirationTime;
+	public final long getCreationTime() {
+		return this.creationTime;
 	}
 
 	/**
-	 * @return the content of this message.
+	 * @return the content of this message
 	 */
 	public final UUID getUuid() {
 		return this.uuid;
-	}
-
-	@Override
-	public String toString() {
-		return this.content;
 	}
 }

@@ -123,7 +123,7 @@ public class Manager_BasicsTest {
 	@Test
 	public void testSendPingMessageQueue() throws Exception {
 
-		this.manager.pingMessageQueue( "TEST", 0L ); // false because there is no MQ
+		this.manager.pingMessageQueue( "TEST" ); // false because there is no MQ
 		List<Message> sentMessages = this.msgClient.sentMessages;
 		Assert.assertEquals( 1, sentMessages.size());
 
@@ -131,7 +131,7 @@ public class Manager_BasicsTest {
 		Assert.assertTrue( message instanceof MsgEcho );
 
 		MsgEcho echo = (MsgEcho) message;
-		Assert.assertEquals( "TEST", echo.getContent() );
+		Assert.assertEquals( "TEST", echo.getContent());
 	}
 
 
@@ -145,7 +145,7 @@ public class Manager_BasicsTest {
 
 		// Ping all the root instances.
 		for (Instance i : app.getRootInstances()) {
-			this.manager.pingAgent( app, i, "TEST " + i.getName(), 0L ); // false because there is no MQ
+			this.manager.pingAgent( app, i, "TEST " + i.getName()); // false because there is no MQ
 		}
 
 		List<Message> sentMessages = this.msgClient.sentMessages;

@@ -23,21 +23,24 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.messages.from_dm_to_dm;
+package net.roboconf.dm.rest.services.internal.websocket;
 
-import junit.framework.Assert;
-
+import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class MsgEchoTest {
+public class RoboconfWebSocketServletTest {
 
 	@Test
-	public void testToString() {
+	public void testFactoryConfiguration() {
 
-		MsgEcho echo = new MsgEcho( "oops", 1L );
-		Assert.assertEquals( "oops", echo.toString());
+		RoboconfWebSocketServlet servlet = new RoboconfWebSocketServlet();
+		WebSocketServletFactory factory = Mockito.mock( WebSocketServletFactory.class );
+
+		servlet.configure( factory );
+		Mockito.verify( factory ).register( RoboconfWebSocket.class );
 	}
 }

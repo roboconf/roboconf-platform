@@ -655,20 +655,25 @@ public class InstanceHelpersTest {
 		Assert.assertTrue( instances.contains( server ));
 		Assert.assertTrue( instances.contains( app2 ));
 	}
-	
+
 	@Test
 	public void testFixOverriddenExports() {
+
 		Component comp = new Component("comp");
 		comp.exportedVariables.put("comp.export1", "c1");
 		comp.exportedVariables.put("comp.export2", "c2");
 		comp.exportedVariables.put("comp.export3", "c3");
+
 		Instance inst = new Instance("inst").component(comp);
+		Assert.assertEquals( 0, inst.overriddenExports.size());
+		InstanceHelpers.fixOverriddenExports(inst);
+		Assert.assertEquals( 0, inst.overriddenExports.size());
+
 		inst.overriddenExports.put("inst.export1", "i1"); // New (instance export)
 		inst.overriddenExports.put("comp.export2", "c2"); // Unchanged component export
 		inst.overriddenExports.put("comp.export3", "i3"); // Overridden component export
-		
 		InstanceHelpers.fixOverriddenExports(inst);
-	
+
 		// Check component exports (no change expected).
 		Assert.assertEquals(comp.exportedVariables.size(), 3);
 		Assert.assertEquals(comp.exportedVariables.get("comp.export1"), "c1");

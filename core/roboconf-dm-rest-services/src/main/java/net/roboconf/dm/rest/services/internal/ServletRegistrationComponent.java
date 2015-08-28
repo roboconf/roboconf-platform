@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.icons.IconServlet;
+import net.roboconf.dm.rest.services.internal.websocket.RoboconfWebSocketServlet;
 
 import org.osgi.service.http.HttpService;
 
@@ -49,6 +50,7 @@ public class ServletRegistrationComponent {
 
 	// Constants
 	static final String REST_CONTEXT = "/roboconf-dm";
+	static final String WEBSOCKET_CONTEXT = "/roboconf-dm-websocket";
 	static final String ICONS_CONTEXT = "/roboconf-icons";
 
 	// Injected by iPojo
@@ -85,6 +87,13 @@ public class ServletRegistrationComponent {
 
 		IconServlet iconServlet = new IconServlet( this.manager );
 		this.httpService.registerServlet( ICONS_CONTEXT, iconServlet, initParams, null );
+
+		// Register the web socket
+		initParams = new Hashtable<String,String> ();
+		initParams.put( "servlet-name", "Roboconf DM (websocket)" );
+
+		RoboconfWebSocketServlet websocketServlet = new RoboconfWebSocketServlet();
+		this.httpService.registerServlet( WEBSOCKET_CONTEXT, websocketServlet, initParams, null );
 	}
 
 
@@ -98,6 +107,7 @@ public class ServletRegistrationComponent {
 		if( this.httpService != null ) {
 			this.httpService.unregister( REST_CONTEXT );
 			this.httpService.unregister( ICONS_CONTEXT );
+			this.httpService.unregister( WEBSOCKET_CONTEXT );
 
 		} else {
 			this.logger.fine( "The HTTP service is gone. The servlets were already unregistered." );

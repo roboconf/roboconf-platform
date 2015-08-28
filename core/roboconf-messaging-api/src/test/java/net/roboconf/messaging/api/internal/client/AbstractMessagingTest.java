@@ -783,13 +783,13 @@ public abstract class AbstractMessagingTest {
 		dmClient.switchMessagingType(getMessagingType());
 		this.clients.add( dmClient );
 
-		dmClient.sendMessageToTheDm( new MsgEcho( "hey 1", 4L ));
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey 1" ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 0, dmMessages.size());
 
 		dmClient.listenToTheDm( ListenerCommand.START );
-		dmClient.sendMessageToTheDm( new MsgEcho( "hey 2", 4L ));
-		dmClient.sendMessageToTheDm( new MsgEcho( "hey 3", 4L ));
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey 2" ));
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey 3" ));
 		Thread.sleep( DELAY );
 
 		Assert.assertEquals( 2, dmMessages.size());
@@ -799,7 +799,7 @@ public abstract class AbstractMessagingTest {
 		Assert.assertEquals( "hey 3", ((MsgEcho) dmMessages.get( 1 )).getContent());
 
 		dmClient.listenToTheDm( ListenerCommand.STOP );
-		dmClient.sendMessageToTheDm( new MsgEcho( "hey again", 4L ));
+		dmClient.sendMessageToTheDm( new MsgEcho( "hey again" ));
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 2, dmMessages.size());
 	}

@@ -29,12 +29,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -122,7 +120,6 @@ public class Manager {
 	protected String configurationDirectoryLocation;
 	protected Timer timer;
 
-	private final List<MsgEcho> echoMessages = new ArrayList<>();
 	private RCDm messagingClient;
 	File configurationDirectory;
 
@@ -461,14 +458,6 @@ public class Manager {
 
 
 	/**
-	 * @return the echo messages
-	 */
-	public List<MsgEcho> getEchoMessages() {
-		return this.echoMessages;
-	}
-
-
-	/**
 	 * Deletes an application template.
 	 */
 	public void deleteApplicationTemplate( String tplName, String tplQualifier )
@@ -773,120 +762,44 @@ public class Manager {
 	}
 
 
-	// TODO: move the ping methods in its own delegate
-
-
 	/**
 	 * Pings the DM through the messaging queue.
-	 *
-	 * @param message the content of the Echo message to send.
-	 * @param timeout the timeout in milliseconds (ms) to wait before considering the Echo message is lost.
-	 * @return {@code true} if the sent Echo message has been received before the {@code timeout}, {@code false}
-	 * otherwise.
-	 * @throws java.lang.InterruptedException if interrupted while waiting for the Echo message.
-	 * @throws java.io.IOException if something bad happened.
+	 * @param message the content of the Echo message to send
+	 * @throws java.io.IOException if something bad happened
 	 */
-	public boolean pingMessageQueue( String message, long timeout )
-	throws InterruptedException, IOException {
+	public void pingMessageQueue( String message ) throws IOException {
 
-		// Step 1. Send the Echo message.
-		final long deadline = System.currentTimeMillis() + timeout;
-		final MsgEcho sentMessage = new MsgEcho( message, deadline );
+		final MsgEcho sentMessage = new MsgEcho( message );
 		this.messagingClient.sendMessageToTheDm( sentMessage );
-		this.logger.fine( "Sent Echo message on debug queue. Message=" + message + ", timeout=" + timeout + "ms, UUID=" + sentMessage.getUuid());
-
-		// Step 2. Wait for the Echo message to be received.
-		return waitForEchoMessage( sentMessage.getUuid(), deadline ) != null;
+		this.logger.fine( "Sent Echo message on debug queue. Message=" + message + ", UUID=" + sentMessage.getUuid());
 	}
 
 
 	/**
 	 * Pings an agent.
-	 *
 	 * @param app the application
-	 * @param rootInstance the root instance name
+	 * @param scopedInstance the scoped instance
 	 * @param message the echo messages's content
-	 * @param timeout the timeout in milliseconds (ms) to wait before considering the Echo message is lost
-	 * @return {@code true} if the sent Echo message has been received before the {@code timeout}, {@code false} otherwise
-	 * @throws java.lang.InterruptedException if interrupted while waiting for the ping
 	 * @throws java.io.IOException if something bad happened
 	 */
-	public boolean pingAgent( Application app, Instance rootInstance, String message, long timeout )
-	throws InterruptedException, IOException {
+	public void pingAgent( Application app, Instance scopedInstance, String message ) throws IOException {
 
-		// Step 1. Send the PING request message.
-		final long deadline = System.currentTimeMillis() + timeout;
-		MsgEcho ping = new MsgEcho( "PING:" + message, deadline );
-		this.messagingClient.sendMessageToAgent( app, rootInstance, ping );
-		this.logger.fine( "Sent PING request message=" + message + "timeout=" + timeout + "ms to application="
-				+ app + ", agent=" + rootInstance.getName());
-
-		// Step 2. Wait for the PONG response from the agent.
-		return waitForEchoMessage( ping.getUuid(), deadline ) != null;
+		MsgEcho ping = new MsgEcho( "PING:" + message );
+		this.messagingClient.sendMessageToAgent( app, scopedInstance, ping );
+		this.logger.fine( "Sent PING request message=" + message + " to application=" + app + ", agent=" + scopedInstance );
 	}
 
 
 	/**
-	 * Notifies the DM that an Echo message has been received.
-	 * @param message the received message.
+	 * Invokes when an ECHO message was received.
+	 * @param message an ECHO message
 	 */
 	public void notifyMsgEchoReceived( MsgEcho message ) {
-		synchronized ( this.echoMessages ) {
-			this.echoMessages.add( message );
-			this.echoMessages.notifyAll();
+
+		synchronized( this.dmListeners ) {
+			for( IDmListener listener : this.dmListeners )
+				listener.raw( message.getContent());
 		}
-	}
-
-
-	/**
-	 * Waits for an Echo message with the specified UUID to be received.
-	 * <p>
-	 * This method also removes expired echo messages (i.e whose expiration time is lower than
-	 * {@code System.currentTimeMillis()}. This cleaning has low priority, and is interrupted as soon as the expected
-	 * message is received, or the given deadline is passed.
-	 * </p>
-	 *
-	 * @param uuid the UUID of the expected Echo message to wait for
-	 * @param deadline the expiration time, after which this method returns {@code null}
-	 * @return the received message, if it has the expected UUID <em>and</em> has been received <em>before</em> the
-	 * expiration of the given deadline, {@code null} otherwise
-	 * @throws java.lang.InterruptedException if interrupted while waiting for the expected message
-	 */
-	private MsgEcho waitForEchoMessage( final UUID uuid, final long deadline )
-	throws InterruptedException {
-
-		MsgEcho foundMessage = null;
-		while( true ) {
-			synchronized ( this.echoMessages ) {
-				// Check all the Echo messages to find ours.
-				for (Iterator<MsgEcho> i = this.echoMessages.iterator(); i.hasNext(); ) {
-					final MsgEcho m = i.next();
-					final long now = System.currentTimeMillis();
-					if (now > deadline) {
-						// Too late!
-						break;
-					} else if ( m.getExpirationTime() <= now ) {
-						// Message has expired => remove it from the list.
-						i.remove();
-					} else if (uuid.equals( m.getUuid())) {
-						// This is the message we are waiting for!
-						foundMessage = m;
-						i.remove();
-						break;
-					}
-				}
-
-				final long timeout = deadline - System.currentTimeMillis();
-				if ( foundMessage != null || timeout <= 0 ) {
-					// Message found, or deadline reached => exit the loop
-					break;
-				}
-				// Wait for an Echo message notification!
-				this.echoMessages.wait( timeout );
-			}
-		}
-
-		return foundMessage;
 	}
 
 

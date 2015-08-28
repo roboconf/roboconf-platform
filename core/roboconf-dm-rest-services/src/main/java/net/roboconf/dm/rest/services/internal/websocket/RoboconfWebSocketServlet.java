@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,22 +23,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.probes;
+package net.roboconf.dm.rest.services.internal.websocket;
 
-import net.roboconf.integration.tests.internal.ItUtils;
-
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
+import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
+import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
 /**
- * A base class to run the agent's distribution.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AgentTest {
+public class RoboconfWebSocketServlet extends WebSocketServlet {
 
-	@Configuration
-	public Option[] config() throws Exception {
-		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-agent", "agent" );
-		return ItUtils.getBaseOptions( bean );
+	private static final long serialVersionUID = -7884557309181572831L;
+
+
+	@Override
+	public void configure( WebSocketServletFactory factory ) {
+		factory.register( RoboconfWebSocket.class );
 	}
 }

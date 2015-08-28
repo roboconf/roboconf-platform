@@ -104,13 +104,16 @@ public class ServletRegistrationComponentTest {
 
 		Assert.assertEquals( 0, httpService.pathToServlet.size());
 		register.starting();
-		Assert.assertEquals( 2, httpService.pathToServlet.size());
+		Assert.assertEquals( 3, httpService.pathToServlet.size());
 
 		ServletContainer jerseyServlet = (ServletContainer) httpService.pathToServlet.get( ServletRegistrationComponent.REST_CONTEXT );
 		Assert.assertNotNull( jerseyServlet );
 
 		HttpServlet iconsServlet = (HttpServlet) httpService.pathToServlet.get( ServletRegistrationComponent.ICONS_CONTEXT );
 		Assert.assertNotNull( iconsServlet );
+
+		HttpServlet websocketServlet = (HttpServlet) httpService.pathToServlet.get( ServletRegistrationComponent.WEBSOCKET_CONTEXT );
+		Assert.assertNotNull( websocketServlet );
 
 		register.stopping();
 		Assert.assertEquals( 0, httpService.pathToServlet.size());
