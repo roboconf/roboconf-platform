@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.UUID;
 
 import junit.framework.Assert;
+import net.roboconf.core.utils.Utils;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,6 +67,25 @@ public class ApplicationTemplateDescriptorTest {
 
 		desc1.setInstanceEntryPoint( UUID.randomUUID().toString());
 		saveAndCompare( desc1 );
+
+		desc1.externalExports.put( "Test.to", "to" );
+		saveAndCompare( desc1 );
+
+		desc1.externalExports.put( "Test2.to", "too" );
+		saveAndCompare( desc1 );
+	}
+
+
+	@Test
+	public void testInvalidExternalExports() throws Exception {
+
+		File f = this.folder.newFile();
+		Utils.writeStringInto( "exports = toto IS titi", f );
+
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( f );
+		Assert.assertEquals( 0, desc.externalExports.size());
+		Assert.assertEquals( 1, desc.invalidExternalExports.size());
+		Assert.assertEquals( "toto IS titi", desc.invalidExternalExports.iterator().next());
 	}
 
 
@@ -82,5 +102,7 @@ public class ApplicationTemplateDescriptorTest {
 		Assert.assertEquals( desc1.getDslId(), desc2.getDslId());
 		Assert.assertEquals( desc1.getGraphEntryPoint(), desc2.getGraphEntryPoint());
 		Assert.assertEquals( desc1.getInstanceEntryPoint(), desc2.getInstanceEntryPoint());
+		Assert.assertEquals( desc1.externalExports, desc2.externalExports );
+		Assert.assertEquals( desc1.invalidExternalExports, desc2.invalidExternalExports );
 	}
 }

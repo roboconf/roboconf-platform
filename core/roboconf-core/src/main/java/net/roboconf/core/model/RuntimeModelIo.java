@@ -103,6 +103,7 @@ public final class RuntimeModelIo {
 				app.setDescription( appDescriptor.getDescription());
 				app.setQualifier( appDescriptor.getQualifier());
 				app.setDslId( appDescriptor.getDslId());
+				app.externalExports.putAll( appDescriptor.externalExports );
 
 				Collection<ModelError> errors = RuntimeModelValidator.validate( appDescriptor );
 				result.loadErrors.addAll( errors );

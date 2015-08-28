@@ -240,7 +240,11 @@ public class FromGraphDefinition {
 				if( optional )
 					s = s.substring( 0, s.length() - ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length()).trim();
 
-				data.object.addImportedVariable( new ImportedVariable( s, optional, false ));
+				Boolean external = s.toLowerCase().startsWith( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT );
+				if( external )
+					s = s.substring( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT.length()).trim();
+
+				data.object.addImportedVariable( new ImportedVariable( s, optional, external ));
 			}
 
 			data.extendedComponentName = ModelUtils.getPropertyValue( block, ParsingConstants.PROPERTY_GRAPH_EXTENDS );

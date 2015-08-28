@@ -437,6 +437,35 @@ public class RuntimeModelValidatorTest {
 		Component comp = new Component( "root" ).installerName( Constants.TARGET_INSTALLER );
 		app.getGraphs().getRootComponents().add( comp );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
+
+		app.externalExports.put( "comp.!nvalid", "ko" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		app.externalExports.remove( "comp.!nvalid" );
+		app.externalExports.put( "comp.valid", "!invalid" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		app.externalExports.put( "comp.valid", "ok" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+		app.externalExports.remove( "comp.valid" );
+
+		comp.exportedVariables.put( "test", "default" );
+		app.externalExports.put( "root.test", "alias" );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
+
+		comp.exportedVariables.put( "test-bis", "default" );
+		app.externalExports.put( "root.test-bis", "alias" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_ALREADY_DEFINED_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
 	}
 
 
@@ -471,6 +500,26 @@ public class RuntimeModelValidatorTest {
 
 		desc.setGraphEntryPoint( "graph.graph" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( desc ).size());
+
+		desc.invalidExternalExports.add( "oops" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.PROJ_INVALID_EXTERNAL_EXPORTS, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		desc.invalidExternalExports.clear();
+		desc.externalExports.put( "comp.valid", "ok" );
+		desc.externalExports.put( "comp.!nvalid", "ko" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		desc.externalExports.remove( "comp.!nvalid" );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( desc ).size());
+
+		desc.externalExports.put( "comp.valid", "!nvalid" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
 	}
 
 

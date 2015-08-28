@@ -98,6 +98,11 @@ public interface ParsingConstants {
 	/**
 	 * Keyword for component property.
 	 */
+	String PROPERTY_COMPONENT_EXTERNAL_IMPORT = "external";
+
+	/**
+	 * Keyword for component property.
+	 */
 	String PROPERTY_COMPONENT_INSTALLER = "installer";
 
 

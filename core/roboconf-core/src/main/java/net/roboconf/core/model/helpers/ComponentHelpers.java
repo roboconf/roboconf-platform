@@ -183,6 +183,21 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds all the exported variables for a given application / graph(s).
+	 * @param graphs a non-null graph(s)
+	 * @return a non-null map of exported variables (key = variable name, value = variable value).
+	 */
+	public static Map<String,String> findAllExportedVariables( Graphs graphs ) {
+
+		Map<String,String> result = new HashMap<> ();
+		for( Component c : findAllComponents( graphs ))
+			result.putAll( findAllExportedVariables( c ));
+
+		return result;
+	}
+
+
+	/**
 	 * Finds all the exported variables of a facet.
 	 * <p>
 	 * This method also fixes the name of the exported variables (set the right prefixes, if required).

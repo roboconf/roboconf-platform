@@ -28,7 +28,14 @@ package net.roboconf.core.model;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.utils.Utils;
 
@@ -44,8 +51,12 @@ public class ApplicationTemplateDescriptor {
 	public static final String APPLICATION_DSL_ID = "application-dsl-id";
 	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
 	public static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
+	public static final String APPLICATION_EXTERNAL_EXPORTS = "exports";
+	public static final String APPLICATION_EXTERNAL_EXPORTS_AS = "as";
 
 	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId;
+	public final Map<String,String> externalExports = new HashMap<> ();
+	public final Set<String> invalidExternalExports = new HashSet<> ();
 
 
 	/**
@@ -148,6 +159,19 @@ public class ApplicationTemplateDescriptor {
 		result.instanceEntryPoint = properties.getProperty( APPLICATION_INSTANCES_EP, null );
 		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
 
+		final Pattern pattern = Pattern.compile(
+				"(\\S+)\\s+" + APPLICATION_EXTERNAL_EXPORTS_AS + "\\s+(\\S+)",
+				Pattern.CASE_INSENSITIVE );
+
+		String rawExports = properties.getProperty( APPLICATION_EXTERNAL_EXPORTS, "" );
+		for( String rawExport : Utils.splitNicely( rawExports, "," )) {
+			Matcher m = pattern.matcher( rawExport );
+			if( m.find())
+				result.externalExports.put( m.group( 1 ), m.group( 2 ));
+			else
+				result.invalidExternalExports.add( rawExport );
+		}
+
 		return result;
 	}
 
@@ -194,6 +218,21 @@ public class ApplicationTemplateDescriptor {
 
 		if( descriptor.instanceEntryPoint != null )
 			properties.setProperty( APPLICATION_INSTANCES_EP, descriptor.instanceEntryPoint );
+
+		StringBuilder sb = new StringBuilder();
+		for( Iterator<Map.Entry<String,String>> it = descriptor.externalExports.entrySet().iterator(); it.hasNext(); ) {
+			Map.Entry<String,String> entry = it.next();
+			sb.append( entry.getKey());
+			sb.append( " " );
+			sb.append( APPLICATION_EXTERNAL_EXPORTS_AS );
+			sb.append( " " );
+			sb.append( entry.getValue());
+			if( it.hasNext())
+				sb.append( ", " );
+		}
+
+		if( sb.length() > 0 )
+			properties.setProperty( APPLICATION_EXTERNAL_EXPORTS, sb.toString());
 
 		FileOutputStream fos = null;
 		try {

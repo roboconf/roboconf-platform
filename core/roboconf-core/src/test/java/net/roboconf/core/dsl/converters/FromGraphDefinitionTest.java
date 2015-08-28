@@ -315,4 +315,43 @@ public class FromGraphDefinitionTest {
 		ParsingError[] errors = fromDef.getErrors().toArray( new ParsingError[ 1 ]);
 		Assert.assertEquals( ErrorCode.CO_INEXISTING_COMPONENT, errors[ 0 ].getErrorCode());
 	}
+
+
+	@Test
+	public void testExternalImport() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/component-external-imports.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		Component componentA = ComponentHelpers.findComponent( graphs, "A" );
+		Assert.assertTrue( componentA.exportedVariables.containsKey( "port" ));
+		Assert.assertTrue( componentA.exportedVariables.containsKey( "ip" ));
+
+		Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( componentA );
+		Assert.assertTrue( exportedVariables.containsKey( "A.port" ));
+		Assert.assertTrue( exportedVariables.containsKey( "A.ip" ));
+
+		ImportedVariable var = componentA.importedVariables.get( "A.port" );
+		Assert.assertNotNull( var );
+		Assert.assertTrue( var.isOptional());
+		Assert.assertFalse( var.isExternal());
+
+		var = componentA.importedVariables.get( "A.ip" );
+		Assert.assertNotNull( var );
+		Assert.assertTrue( var.isOptional());
+		Assert.assertFalse( var.isExternal());
+
+		var = componentA.importedVariables.get( "App.toto" );
+		Assert.assertNotNull( var );
+		Assert.assertFalse( var.isOptional());
+		Assert.assertTrue( var.isExternal());
+
+		var = componentA.importedVariables.get( "App2.ip" );
+		Assert.assertNotNull( var );
+		Assert.assertTrue( var.isOptional());
+		Assert.assertTrue( var.isExternal());
+	}
 }

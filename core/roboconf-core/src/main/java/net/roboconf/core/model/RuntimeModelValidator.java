@@ -243,6 +243,12 @@ public final class RuntimeModelValidator {
 
 			// Process the variables
 			for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
+
+				// External are skipped
+				if( var.isExternal())
+					continue;
+
+				// Others are verified
 				String importedVariableName = var.getName();
 				if( ! importedVariableNameToExported.containsKey( importedVariableName ))
 					importedVariableNameToExported.put( importedVariableName, Boolean.FALSE );
@@ -423,6 +429,7 @@ public final class RuntimeModelValidator {
 	 */
 	public static Collection<ModelError> validate( ApplicationTemplate app ) {
 
+		// Graph validation
 		Collection<ModelError> errors = new ArrayList<ModelError> ();
 		if( Utils.isEmptyOrWhitespaces( app.getName()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_NAME, app ));
@@ -430,11 +437,35 @@ public final class RuntimeModelValidator {
 		if( Utils.isEmptyOrWhitespaces( app.getQualifier()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_QUALIFIER, app ));
 
-		if( app.getGraphs() == null )
+		Map<String,String> allExports;
+		if( app.getGraphs() == null ) {
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_GRAPHS, app ));
-		else
-			errors.addAll( validate( app.getGraphs()));
+			allExports = new HashMap<>( 0 );
 
+		} else {
+			errors.addAll( validate( app.getGraphs()));
+			allExports = ComponentHelpers.findAllExportedVariables( app.getGraphs());;
+		}
+
+		// Check external exports
+		Set<String> alreadySeen = new HashSet<> ();
+		for( Map.Entry<String,String> entry : app.externalExports.entrySet()) {
+			if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, app, "Variable name: " + entry.getKey()));
+
+			if( ! allExports.containsKey( entry.getKey()))
+				errors.add( new ModelError( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, app, "Variable name: " + entry.getKey()));
+
+			if( ! entry.getValue().matches( ParsingConstants.PATTERN_ID ))
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, app, "Variable name: " + entry.getValue()));
+
+			if( alreadySeen.contains( entry.getValue()))
+				errors.add( new ModelError( ErrorCode.RM_ALREADY_DEFINED_EXTERNAL_EXPORT, app, "Variable name: " + entry.getValue()));
+			else
+				alreadySeen.add( entry.getValue());
+		}
+
+		// Instances validation
 		errors.addAll( validate( InstanceHelpers.getAllInstances( app )));
 		return errors;
 	}
@@ -459,6 +490,17 @@ public final class RuntimeModelValidator {
 
 		if( Utils.isEmptyOrWhitespaces( descriptor.getGraphEntryPoint()))
 			errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_GEP, descriptor ));
+
+		if( ! descriptor.invalidExternalExports.isEmpty())
+			errors.add( new ModelError( ErrorCode.PROJ_INVALID_EXTERNAL_EXPORTS, descriptor ));
+
+		for( Map.Entry<String,String> entry : descriptor.externalExports.entrySet()) {
+			if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, descriptor, "Variable name: " + entry.getKey()));
+
+			if( ! entry.getValue().matches( ParsingConstants.PATTERN_ID ))
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, descriptor, "Variable name: " + entry.getValue()));
+		}
 
 		return errors;
 	}
