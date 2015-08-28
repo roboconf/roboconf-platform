@@ -42,6 +42,7 @@ import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.comparators.AbstractTypeComparator;
 import net.roboconf.core.model.comparators.InstanceComparator;
@@ -348,7 +349,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 			// Runtime
 			section.append( renderTitle3( this.messages.get( "runtime" ))); //$NON-NLS-1$
-			Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( comp );
+			Collection<ImportedVariable> imports = ComponentHelpers.findAllImportedVariables( comp ).values();
 			if( imports.isEmpty()) {
 				msg = MessageFormat.format( this.messages.get( "component.no.dep" ), comp ); //$NON-NLS-1$
 				section.append( renderParagraph( msg ));
@@ -619,16 +620,19 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 	/**
 	 * Converts imports to a human-readable text.
-	 * @param imports a non-null map of imports
+	 * @param importedVariables a non-null set of imported variables
 	 * @return a non-null list of string, one entry per import
 	 */
-	private List<String> convertImports( Map<String,Boolean> imports ) {
+	private List<String> convertImports( Collection<ImportedVariable> importedVariables ) {
 
 		List<String> result = new ArrayList<String> ();
-		for( Map.Entry<String,Boolean> entry : imports.entrySet()) {
-			String componentOrFacet = VariableHelpers.parseVariableName( entry.getKey()).getKey();
-			String s = applyLink( entry.getKey(), componentOrFacet );
-			s += entry.getValue() ? this.messages.get( "optional" ) : this.messages.get( "required" ); //$NON-NLS-1$ //$NON-NLS-2$
+		for( ImportedVariable var : importedVariables ) {
+			String componentOrFacet = VariableHelpers.parseVariableName( var.getName()).getKey();
+			String s = applyLink( var.getName(), componentOrFacet );
+			s += var.isOptional() ? this.messages.get( "optional" ) : this.messages.get( "required" ); //$NON-NLS-1$ //$NON-NLS-2$
+			if( var.isExternal())
+				s += this.messages.get( "external" ); //$NON-NLS-1$
+
 			result.add( s );
 		}
 

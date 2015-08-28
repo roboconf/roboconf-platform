@@ -29,6 +29,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -66,8 +67,8 @@ public class TestApplicationTemplate extends ApplicationTemplate {
 		Component warComponent = new Component( "war" ).installerName( "script" );
 		warComponent.exportedVariables.put( "war.port", "8080" );
 		warComponent.exportedVariables.put( "war.ip", null );
-		warComponent.importedVariables.put( "mysql.port", false );
-		warComponent.importedVariables.put( "mysql.ip", false );
+		warComponent.addImportedVariable( new ImportedVariable( "mysql.port", false, false ));
+		warComponent.addImportedVariable( new ImportedVariable( "mysql.ip", false, false ));
 		this.war = new Instance( "hello-world" ).component( warComponent );
 
 		// Make the glue

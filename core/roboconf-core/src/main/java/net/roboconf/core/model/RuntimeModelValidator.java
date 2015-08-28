@@ -42,6 +42,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -108,23 +109,23 @@ public final class RuntimeModelValidator {
 		// A component cannot import variables it exports unless these imports are optional.
 		// This covers cluster uses cases (where an element may want to know where are the similar nodes).
 		Map<String,String> allExportedVariables = ComponentHelpers.findAllExportedVariables( component );
-		for( Map.Entry<String,Boolean> entry : ComponentHelpers.findAllImportedVariables( component ).entrySet()) {
+		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
 
-			String var = entry.getKey();
+			String varName = var.getName();
 			String patternForImports = ParsingConstants.PATTERN_ID;
 			patternForImports += "(\\.\\*)?";
 
-			if( Utils.isEmptyOrWhitespaces( var ))
-				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, "Variable name: " + var ));
-			else if( ! var.matches( patternForImports ))
-				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, "Variable name: " + var ));
+			if( Utils.isEmptyOrWhitespaces( varName ))
+				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, "Variable name: " + varName ));
+			else if( ! varName.matches( patternForImports ))
+				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, "Variable name: " + varName ));
 
 			// If the import is optional...
-			if( entry.getValue())
+			if( var.isOptional())
 				continue;
 
-			if( allExportedVariables.containsKey( var ))
-				errors.add( new ModelError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, component, "Variable name: " + var ));
+			if( allExportedVariables.containsKey( varName ))
+				errors.add( new ModelError( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, component, "Variable name: " + varName ));
 		}
 
 		// No cycle in inheritance
@@ -241,7 +242,8 @@ public final class RuntimeModelValidator {
 				errors.addAll( validate( facet ));
 
 			// Process the variables
-			for( String importedVariableName : ComponentHelpers.findAllImportedVariables( component ).keySet()) {
+			for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
+				String importedVariableName = var.getName();
 				if( ! importedVariableNameToExported.containsKey( importedVariableName ))
 					importedVariableNameToExported.put( importedVariableName, Boolean.FALSE );
 

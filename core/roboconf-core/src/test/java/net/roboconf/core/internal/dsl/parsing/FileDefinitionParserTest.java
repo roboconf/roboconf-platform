@@ -53,6 +53,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
 
@@ -715,21 +716,28 @@ public class FileDefinitionParserTest {
 		Assert.assertTrue( children.contains( serverComponent ));
 		Assert.assertTrue( children.contains( myServerComponent ));
 
-		Assert.assertEquals( Boolean.TRUE, serverComponent.importedVariables.get( "db.ip" ));
-		Assert.assertEquals( Boolean.TRUE, serverComponent.importedVariables.get( "db.port" ));
+		Assert.assertNotNull( serverComponent.importedVariables.get( "db.ip" ));
+		Assert.assertTrue( serverComponent.importedVariables.get( "db.ip" ).isOptional());
+		Assert.assertNotNull( serverComponent.importedVariables.get( "db.port" ));
+		Assert.assertTrue( serverComponent.importedVariables.get( "db.port" ).isOptional());
 
-		Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( serverComponent );
+		Map<String,ImportedVariable> imports = ComponentHelpers.findAllImportedVariables( serverComponent );
 		Assert.assertEquals( 2, imports.size());
-		Assert.assertEquals( Boolean.TRUE, imports.get( "db.ip" ));
-		Assert.assertEquals( Boolean.TRUE, imports.get( "db.port" ));
+		Assert.assertNotNull( imports.get( "db.ip" ));
+		Assert.assertTrue( imports.get( "db.ip" ).isOptional());
+		Assert.assertNotNull( imports.get( "db.port" ));
+		Assert.assertTrue( imports.get( "db.port" ).isOptional());
 
-		Assert.assertEquals( Boolean.FALSE, myServerComponent.importedVariables.get( "db.ip" ));
+		Assert.assertNotNull( myServerComponent.importedVariables.get( "db.ip" ));
+		Assert.assertFalse( myServerComponent.importedVariables.get( "db.ip" ).isOptional());
 		Assert.assertNull( myServerComponent.importedVariables.get( "db.port" ));
 
 		imports = ComponentHelpers.findAllImportedVariables( myServerComponent );
 		Assert.assertEquals( 2, imports.size());
-		Assert.assertEquals( Boolean.FALSE, imports.get( "db.ip" ));
-		Assert.assertEquals( Boolean.TRUE, imports.get( "db.port" ));
+		Assert.assertNotNull( imports.get( "db.ip" ));
+		Assert.assertFalse( imports.get( "db.ip" ).isOptional());
+		Assert.assertNotNull( imports.get( "db.port" ));
+		Assert.assertTrue( imports.get( "db.port" ).isOptional());
 	}
 
 

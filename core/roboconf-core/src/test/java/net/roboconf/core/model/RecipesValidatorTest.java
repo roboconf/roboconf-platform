@@ -34,9 +34,11 @@ import junit.framework.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
+
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -145,7 +147,7 @@ public class RecipesValidatorTest {
 		File appDir = this.folder.newFolder();
 
 		Component comp = new Component( "toto" ).installerName( "puppet" );
-		comp.importedVariables.put( "Other.*", Boolean.TRUE );
+		comp.addImportedVariable( new ImportedVariable( "Other.*", true, false ));
 
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, "roboconf_toto" ).mkdirs());
@@ -272,9 +274,9 @@ public class RecipesValidatorTest {
 		File appDir = this.folder.newFolder();
 
 		Component comp = new Component( "toto" ).installerName( "puppet" );
-		comp.importedVariables.put( "Test.ip", Boolean.TRUE );
-		comp.importedVariables.put( "Test.port", Boolean.TRUE );
-		comp.importedVariables.put( "Oops.ip", Boolean.TRUE );
+		comp.addImportedVariable( new ImportedVariable( "Test.ip", true, false ));
+		comp.addImportedVariable( new ImportedVariable( "Test.port", true, false ));
+		comp.addImportedVariable( new ImportedVariable( "Oops.ip", true, false ));
 
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, "roboconf_toto/manifests" ).mkdirs());
@@ -299,9 +301,9 @@ public class RecipesValidatorTest {
 		File appDir = this.folder.newFolder();
 
 		Component comp = new Component( "toto" ).installerName( "puppet" );
-		comp.importedVariables.put( "Test.ip", Boolean.TRUE );
-		comp.importedVariables.put( "Test.port", Boolean.TRUE );
-		comp.importedVariables.put( "Oops.ip", Boolean.TRUE );
+		comp.addImportedVariable( new ImportedVariable( "Test.ip", true, false ));
+		comp.addImportedVariable( new ImportedVariable( "Test.port", true, false ));
+		comp.addImportedVariable( new ImportedVariable( "Oops.ip", true, false ));
 
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, "roboconf_toto/manifests" ).mkdirs());
@@ -320,7 +322,7 @@ public class RecipesValidatorTest {
 		File appDir = this.folder.newFolder();
 
 		Component comp = new Component( "toto" ).installerName( "puppet" );
-		comp.importedVariables.put( "WithInit.value", Boolean.TRUE );
+		comp.addImportedVariable( new ImportedVariable( "WithInit.value", true, false ));
 
 		File directory = ResourceUtils.findInstanceResourcesDirectory( appDir, comp );
 		Assert.assertTrue( new File( directory, "roboconf_toto/manifests" ).mkdirs());

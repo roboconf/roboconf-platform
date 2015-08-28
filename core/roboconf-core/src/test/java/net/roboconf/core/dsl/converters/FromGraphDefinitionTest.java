@@ -38,6 +38,7 @@ import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 
 import org.junit.Test;
@@ -209,11 +210,13 @@ public class FromGraphDefinitionTest {
 		Assert.assertTrue( exportedVariables.containsKey( "A.port" ));
 		Assert.assertTrue( exportedVariables.containsKey( "A.ip" ));
 
-		Assert.assertTrue( componentA.importedVariables.containsKey( "A.port" ));
-		Assert.assertTrue( componentA.importedVariables.containsKey( "A.ip" ));
+		ImportedVariable var = componentA.importedVariables.get( "A.port" );
+		Assert.assertNotNull( var );
+		Assert.assertTrue( var.isOptional());
 
-		Assert.assertTrue( componentA.importedVariables.get( "A.port" ));
-		Assert.assertTrue( componentA.importedVariables.get( "A.ip" ));
+		var = componentA.importedVariables.get( "A.ip" );
+		Assert.assertNotNull( var );
+		Assert.assertTrue( var.isOptional());
 	}
 
 

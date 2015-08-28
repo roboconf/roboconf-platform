@@ -50,6 +50,7 @@ import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.ModelUtils;
@@ -239,7 +240,7 @@ public class FromGraphDefinition {
 				if( optional )
 					s = s.substring( 0, s.length() - ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length()).trim();
 
-				data.object.importedVariables.put( s, optional );
+				data.object.addImportedVariable( new ImportedVariable( s, optional, false ));
 			}
 
 			data.extendedComponentName = ModelUtils.getPropertyValue( block, ParsingConstants.PROPERTY_GRAPH_EXTENDS );

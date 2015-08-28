@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 
@@ -51,8 +52,8 @@ public class ImportHelpersTest {
 	public void testHasAllRequiredImports_optional() throws Exception {
 
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
-		clusterNodeComponent.importedVariables.put( "cluster.ip", Boolean.TRUE );
-		clusterNodeComponent.importedVariables.put( "cluster.port", Boolean.TRUE );
+		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.ip", true, false ));
+		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.port", true, false ));
 		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
 		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
@@ -90,9 +91,9 @@ public class ImportHelpersTest {
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
 		appServerComponent.exportedVariables.put( "app-server.ip", null );
 		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
-		appServerComponent.importedVariables.put( "database.ip", Boolean.FALSE );
-		appServerComponent.importedVariables.put( "database.port", Boolean.FALSE );
-		appServerComponent.importedVariables.put( "database.collection", Boolean.TRUE );
+		appServerComponent.addImportedVariable( new ImportedVariable( "database.ip", false, false ));
+		appServerComponent.addImportedVariable( new ImportedVariable( "database.port", false, false ));
+		appServerComponent.addImportedVariable( new ImportedVariable( "database.collection", true, false ));
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
 		appServer.overriddenExports.put( "app-server.ip", "192.168.1.15" );
@@ -126,7 +127,7 @@ public class ImportHelpersTest {
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
 		appServerComponent.exportedVariables.put( "app-server.ip", null );
 		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
-		appServerComponent.importedVariables.put( "database.*", Boolean.FALSE );
+		appServerComponent.addImportedVariable( new ImportedVariable( "database.*", false, false ));
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
 		appServer.overriddenExports.put( "app-server.ip", "192.168.1.15" );
@@ -214,9 +215,9 @@ public class ImportHelpersTest {
 
 		String instancePath = "/whatever/this/is/a-test";
 		Component comp = new Component( "comp" );
-		comp.importedVariables.put( "comp1.port", Boolean.FALSE );
-		comp.importedVariables.put( "comp1.ip", Boolean.FALSE );
-		comp.importedVariables.put( "comp2.option", Boolean.TRUE );
+		comp.addImportedVariable( new ImportedVariable( "comp1.port", false, false ));
+		comp.addImportedVariable( new ImportedVariable( "comp1.ip", false, false ));
+		comp.addImportedVariable( new ImportedVariable( "comp2.option", true, false ));
 
 		Instance inst = new Instance( "inst" ).component( comp );
 
@@ -251,8 +252,8 @@ public class ImportHelpersTest {
 
 		String instancePath = "/whatever/this/is/a-test";
 		Component comp = new Component( "comp" );
-		comp.importedVariables.put( "comp1.*", Boolean.FALSE );
-		comp.importedVariables.put( "comp2.option", Boolean.TRUE );
+		comp.addImportedVariable( new ImportedVariable( "comp1.*", false, false ));
+		comp.addImportedVariable( new ImportedVariable( "comp2.option", true, false ));
 
 		Instance inst = new Instance( "inst" ).component( comp );
 

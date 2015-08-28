@@ -42,6 +42,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 
 import org.junit.Rule;
@@ -66,8 +67,8 @@ public class FromGraphsTest {
 
 		cA.exportedVariables.put( "A.port", "9000" );
 		cA.exportedVariables.put( "A.ip", null );
-		cA.importedVariables.put( "B.port", Boolean.FALSE );
-		cA.importedVariables.put( "B.ip", Boolean.TRUE );
+		cA.addImportedVariable( new ImportedVariable( "B.port", false, false ));
+		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
 
 		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
@@ -85,12 +86,12 @@ public class FromGraphsTest {
 
 		Component cA = new Component( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
-		cA.importedVariables.put( "facetF.props", Boolean.FALSE );
+		cA.addImportedVariable( new ImportedVariable( "facetF.props", false, false ));
 
 		cA.exportedVariables.put( "A.port", "9000" );
 		cA.exportedVariables.put( "A.ip", null );
-		cA.importedVariables.put( "B.port", Boolean.TRUE );
-		cA.importedVariables.put( "B.ip", Boolean.TRUE );
+		cA.addImportedVariable( new ImportedVariable( "B.port", true, false ));
+		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
 
 		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
@@ -120,9 +121,9 @@ public class FromGraphsTest {
 		cA.exportedVariables.put( "A.port", "9000" );
 		cA.exportedVariables.put( "A.ip", null );
 
-		cA.importedVariables.put( "B.port", Boolean.TRUE );
-		cA.importedVariables.put( "B.ip", Boolean.TRUE );
-		cA.importedVariables.put( "facetF.props", Boolean.FALSE );
+		cA.addImportedVariable( new ImportedVariable( "B.port", true, false ));
+		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
+		cA.addImportedVariable( new ImportedVariable( "facetF.props", false, false ));
 
 		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
@@ -164,8 +165,8 @@ public class FromGraphsTest {
 		cA.exportedVariables.put( "A.port", "9000" );
 		cA.exportedVariables.put( "A.ip", null );
 
-		cA.importedVariables.put( "B.ip", Boolean.TRUE );
-		cA.importedVariables.put( "facetF.props", Boolean.FALSE );
+		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
+		cA.addImportedVariable( new ImportedVariable( "facetF.props", false, false ));
 
 		Component cB = new Component( "B" ).installerName( "installer B" );
 		cB.exportedVariables.put( "B.port", "9000" );
@@ -257,10 +258,12 @@ public class FromGraphsTest {
 				Assert.assertEquals( readComponent.getName(), entry.getValue(), value );
 			}
 
-			for( Map.Entry<String,Boolean> entry : readComponent.importedVariables.entrySet()) {
-				Assert.assertTrue( originalComponent.importedVariables.containsKey( entry.getKey()));
-				Boolean value = originalComponent.importedVariables.get( entry.getKey());
-				Assert.assertEquals( readComponent.getName(), entry.getValue(), value );
+			for( ImportedVariable var : readComponent.importedVariables.values()) {
+				String junitMsg = readComponent.getName() + " :: " + var;
+				ImportedVariable originalVar = originalComponent.importedVariables.get( var.getName());
+				Assert.assertNotNull( "Imports did not match for " + junitMsg, originalVar );
+				Assert.assertEquals( junitMsg, originalVar.isOptional(), var.isOptional());
+				Assert.assertEquals( junitMsg, originalVar.isExternal(), var.isExternal());
 			}
 		}
 	}

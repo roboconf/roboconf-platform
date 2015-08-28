@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -42,6 +41,7 @@ import java.util.regex.Pattern;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
@@ -126,8 +126,8 @@ public final class RecipesValidator {
 		List<ModelError> result = new ArrayList<ModelError> ();
 
 		// Check imports
-		for( Map.Entry<String,Boolean> entry : ComponentHelpers.findAllImportedVariables( component ).entrySet()) {
-			if( entry.getKey().endsWith( "." + Constants.WILDCARD )) {
+		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
+			if( var.getName().endsWith( "." + Constants.WILDCARD )) {
 				result.add( new ModelError( ErrorCode.REC_PUPPET_DISLIKES_WILDCARD_IMPORTS, component, "Component: " + component ));
 				break;
 			}

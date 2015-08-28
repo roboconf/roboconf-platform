@@ -33,6 +33,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -279,8 +280,8 @@ public abstract class AbstractMessagingTest {
 		Component tomcatComponent = new Component( "Tomcat" );
 		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
-		tomcatComponent.importedVariables.put( "MySQL.port", Boolean.FALSE );
-		tomcatComponent.importedVariables.put( "MySQL.ip", Boolean.FALSE );
+		tomcatComponent.addImportedVariable( new ImportedVariable( "MySQL.port", false, false ));
+		tomcatComponent.addImportedVariable( new ImportedVariable( "MySQL.ip", false, false ));
 		Instance tomcat = new Instance( "tomcat" ).component( tomcatComponent );
 
 		Component mysqlComponent = new Component( "MySQL" );
@@ -290,16 +291,16 @@ public abstract class AbstractMessagingTest {
 
 		Component apacheComponent = new Component( "Apache" );
 		apacheComponent.exportedVariables.put( "Apache.ip", "apache.roboconf.net" );
-		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.port", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.ip", false, false ));
 		Instance apache = new Instance( "apache" ).component( apacheComponent );
 
 		// This one is a good candidate to receive something when others publish something.
 		// Except it is not in the same application.
 		Component otherComponent = new Component( "other" );
-		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Mongo.ip", Boolean.FALSE );
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.port", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.ip", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Mongo.ip", false, false ));
 		mysqlComponent.exportedVariables.put( "MySQL.port", "3306" );
 		mysqlComponent.exportedVariables.put( "MySQL.ip", "192.168.1.15" );
 		Instance other = new Instance( "other" ).component( otherComponent );
@@ -470,8 +471,8 @@ public abstract class AbstractMessagingTest {
 		Component tomcatComponent = new Component( "Tomcat" );
 		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
-		tomcatComponent.importedVariables.put( "MySQL.port", Boolean.FALSE );
-		tomcatComponent.importedVariables.put( "MySQL.ip", Boolean.FALSE );
+		tomcatComponent.addImportedVariable( new ImportedVariable( "MySQL.port", false, false ));
+		tomcatComponent.addImportedVariable( new ImportedVariable( "MySQL.ip", false, false ));
 		Instance tomcat = new Instance( "tomcat" ).component( tomcatComponent );
 
 		Component mysqlComponent = new Component( "MySQL" );
@@ -481,16 +482,16 @@ public abstract class AbstractMessagingTest {
 
 		Component apacheComponent = new Component( "Apache" );
 		apacheComponent.exportedVariables.put( "Apache.ip", "apache.roboconf.net" );
-		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.port", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.ip", false, false ));
 		Instance apache = new Instance( "apache" ).component( apacheComponent );
 
 		// This one is a good candidate to receive something when others publish something.
 		// Except it is not in the same application.
 		Component otherComponent = new Component( "other" );
-		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Mongo.ip", Boolean.FALSE );
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.port", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.ip", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Mongo.ip", false, false ));
 		mysqlComponent.exportedVariables.put( "MySQL.port", "3306" );
 		mysqlComponent.exportedVariables.put( "MySQL.ip", "192.168.1.15" );
 		Instance other = new Instance( "other" ).component( otherComponent );
@@ -595,9 +596,9 @@ public abstract class AbstractMessagingTest {
 		component.exportedVariables.put( "Component.ip", "localhost" );
 		component.exportedVariables.put( "Component.port", "8080" );
 
-		component.importedVariables.put( "Component.port", Boolean.TRUE );
-		component.importedVariables.put( "Component.ip", Boolean.TRUE );
-		component.importedVariables.put( "facet.data", Boolean.TRUE );
+		component.addImportedVariable( new ImportedVariable( "Component.port", true, false ));
+		component.addImportedVariable( new ImportedVariable( "Component.ip", true, false ));
+		component.addImportedVariable( new ImportedVariable( "facet.data", true, false ));
 
 		Instance instance1 = new Instance( "instance1" ).component( component );
 		Instance instance2 = new Instance( "instance2" ).component( component );
@@ -678,8 +679,8 @@ public abstract class AbstractMessagingTest {
 		Component tomcatComponent = new Component( "Tomcat" );
 		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );
 		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
-		tomcatComponent.importedVariables.put( "MySQL.port", Boolean.FALSE );
-		tomcatComponent.importedVariables.put( "MySQL.ip", Boolean.FALSE );
+		tomcatComponent.addImportedVariable( new ImportedVariable( "MySQL.port", false, false ));
+		tomcatComponent.addImportedVariable( new ImportedVariable( "MySQL.ip", false, false ));
 		Instance tomcat = new Instance( "tomcat" ).component( tomcatComponent );
 
 		Component mysqlComponent = new Component( "MySQL" );
@@ -689,8 +690,8 @@ public abstract class AbstractMessagingTest {
 
 		Component apacheComponent = new Component( "Apache" );
 		apacheComponent.exportedVariables.put( "Apache.ip", "apache.roboconf.net" );
-		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.port", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.ip", false, false ));
 		Instance apache = new Instance( "apache" ).component( apacheComponent );
 
 		// This one is a good candidate to receive something when others publish something.
@@ -703,9 +704,9 @@ public abstract class AbstractMessagingTest {
 		this.clients.add( dmClient );
 
 		Component otherComponent = new Component( "other" );
-		apacheComponent.importedVariables.put( "Tomcat.port", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Tomcat.ip", Boolean.FALSE );
-		apacheComponent.importedVariables.put( "Mongo.ip", Boolean.FALSE );
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.port", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Tomcat.ip", false, false ));
+		apacheComponent.addImportedVariable( new ImportedVariable( "Mongo.ip", false, false ));
 		mysqlComponent.exportedVariables.put( "MySQL.port", "3306" );
 		mysqlComponent.exportedVariables.put( "MySQL.ip", "192.168.1.15" );
 		Instance other = new Instance( "other" ).component( otherComponent );
