@@ -32,7 +32,7 @@ import java.lang.reflect.Field;
 
 import junit.framework.Assert;
 
-import org.apache.felix.service.command.CommandSession;
+import org.apache.karaf.shell.api.console.Session;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -42,32 +42,32 @@ import org.mockito.Mockito;
 public class InstallTargetCommandTest {
 
 	@Test
-	public void testDoExecute_noTarget() throws Exception {
+	public void testExecute_noTarget() throws Exception {
 
 		InstallTargetCommand itc = new InstallTargetCommand();
 		OutputStream os = new ByteArrayOutputStream();
 		itc.out = new PrintStream( os );
 
-		itc.doExecute();
+		itc.execute();
 		Assert.assertTrue( os.toString().contains( "Unknown target" ));
 	}
 
 
 	@Test
-	public void testDoExecute_noRoboconfVersion() throws Exception {
+	public void testExecute_noRoboconfVersion() throws Exception {
 
 		InstallTargetCommand itc = new InstallTargetCommand();
 		OutputStream os = new ByteArrayOutputStream();
 		itc.out = new PrintStream( os );
 		itc.targetName = "openstack";
 
-		itc.doExecute();
+		itc.execute();
 		Assert.assertTrue( os.toString().contains( "the Roboconf version" ));
 	}
 
 
 	@Test
-	public void testDoExecute_valid() throws Exception {
+	public void testExecute_valid() throws Exception {
 
 		// Prepare the command
 		InstallTargetCommand itc = new InstallTargetCommand();
@@ -78,7 +78,7 @@ public class InstallTargetCommandTest {
 
 		// Mock the session
 		final String expected = "bundle:install --start mvn:net.roboconf/roboconf-target-docker/0.5";
-		CommandSession session = Mockito.mock( CommandSession.class );
+		Session session = Mockito.mock( Session.class );
 		Mockito.when( session.execute( expected )).thenReturn( null );
 
 		// Inject the session
@@ -94,7 +94,7 @@ public class InstallTargetCommandTest {
 		}
 
 		// Verify the execution
-		itc.doExecute();
+		itc.execute();
 		Assert.assertFalse( os.toString().contains( "the Roboconf version" ));
 		Assert.assertFalse( os.toString().contains( "Unknown target" ));
 		Mockito.verify( session ).execute( expected );

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.dm.targets;
+package net.roboconf.core.utils;
 
 import java.util.Properties;
 

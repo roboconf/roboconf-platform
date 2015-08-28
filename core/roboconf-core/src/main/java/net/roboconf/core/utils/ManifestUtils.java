@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.dm.targets;
+package net.roboconf.core.utils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,8 +32,6 @@ import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.sshd.common.util.IoUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -102,7 +100,7 @@ public final class ManifestUtils {
 			logger.warning( "Could not read the bundle info. " + e.getMessage());
 
 		} finally {
-			IoUtils.closeQuietly( is );
+			Utils.closeQuietly( is );
 		}
 
 		return result;

@@ -27,24 +27,24 @@ package net.roboconf.karaf.commands.dm.targets;
 
 import java.util.List;
 
-import org.apache.karaf.shell.console.Completer;
-import org.apache.karaf.shell.console.completer.StringsCompleter;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.api.console.CommandLine;
+import org.apache.karaf.shell.api.console.Completer;
+import org.apache.karaf.shell.api.console.Session;
+import org.apache.karaf.shell.support.completers.StringsCompleter;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
+@Service
 public class TargetCompleter implements Completer {
 
-	/* (non-Javadoc)
-	 * @see org.apache.karaf.shell.console.Completer
-	 * #complete(java.lang.String, int, java.util.List)
-	 */
 	@Override
-	public int complete( String buffer, int cursor, List<String> candidates ) {
+	public int complete( Session session, CommandLine commandLine, List<String> candidates ) {
 
 		StringsCompleter delegate = new StringsCompleter( false );
 		delegate.getStrings().addAll( SupportedTarget.allString());
 
-		return delegate.complete( buffer, cursor, candidates );
+		return delegate.complete( session, commandLine, candidates );
 	}
 }
