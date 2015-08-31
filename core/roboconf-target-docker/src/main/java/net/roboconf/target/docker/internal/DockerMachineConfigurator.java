@@ -37,6 +37,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.ManifestUtils;
+import net.roboconf.core.utils.MavenUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
@@ -108,13 +110,15 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		// Creating a container is almost immediate.
 		// And building an image with the REST API is blocking the thread until the creation is complete.
 		// So, this is not asynchronous configuration.
+		// Said differently, this method will be invoked only once!
 
 		this.dockerClient = DockerUtils.createDockerClient( this.targetProperties );
 		String imageId = this.targetProperties.get( DockerHandler.IMAGE_ID );
 		String fixedImageId = fixImageId( imageId );
 
-		Image image = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
-		if( image == null )
+		String generateAS = this.targetProperties.get( DockerHandler.GENERATE_IMAGE );
+		boolean generate = Boolean.parseBoolean( generateAS );
+		if( generate )
 			createImage( fixedImageId );
 
 		createContainer( fixedImageId );
@@ -191,6 +195,28 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 	void createImage( String imageId ) throws TargetException {
 		this.logger.fine( "Trying to create image " + imageId + " from a generated Dockerfile." );
 
+		// Find the agent's package URL
+		String agentPackageUrl = this.targetProperties.get( DockerHandler.AGENT_PACKAGE_URL );
+		if( Utils.isEmptyOrWhitespaces( agentPackageUrl )) {
+			String bundleVersion = ManifestUtils.findBundleVersion();
+			String mavenVersion = ManifestUtils.findMavenVersion( bundleVersion );
+			if( bundleVersion == null )
+				throw new TargetException( "Roboconf's version could not be determined (guessing the agent package URL failed)." );
+
+			IOException exception = null;
+			try {
+				agentPackageUrl = MavenUtils.findMavenUrl( "net.roboconf", "roboconf-karaf-dist-agent", mavenVersion, "tar.gz" );
+			} catch( IOException e ) {
+				exception = e;
+			}
+
+			if( Utils.isEmptyOrWhitespaces( agentPackageUrl )) {
+				throw new TargetException(
+						"No Maven package was found for the agent distribution "
+						+ mavenVersion + " (guessing the agent package URL failed).", exception );
+			}
+		}
+
 		// Verify the base image exists, if any
 		String baseImageRef = this.targetProperties.get( DockerHandler.BASE_IMAGE );
 		if( ! Utils.isEmptyOrWhitespaces( baseImageRef )) {
@@ -224,11 +250,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 		File dockerfile = null;
 		try {
 			// Generate a Dockerfile
-			DockerfileGenerator gen = new DockerfileGenerator(
-					this.targetProperties.get( DockerHandler.AGENT_PACKAGE ),
-					packages, deployList,
-					baseImageRef );
-
+			DockerfileGenerator gen = new DockerfileGenerator( agentPackageUrl, packages, deployList, baseImageRef );
 			dockerfile = gen.generateDockerfile();
 
 			// Start the build.

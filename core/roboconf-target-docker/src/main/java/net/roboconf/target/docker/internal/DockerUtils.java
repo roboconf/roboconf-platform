@@ -66,6 +66,20 @@ public final class DockerUtils {
 
 
 	/**
+	 * Verifies the Docker client configuration.
+	 * @param targetProperties the target properties
+	 * @throws TargetException if the configuration is invalid
+	 */
+	public static void verifyDockerClient( Map<String,String> targetProperties )  throws TargetException {
+
+		String imageId = targetProperties.get( DockerHandler.IMAGE_ID );
+		String generate = targetProperties.get( DockerHandler.GENERATE_IMAGE );
+		if( imageId == null && ! Boolean.parseBoolean( generate ))
+			throw new TargetException( "The " + DockerHandler.IMAGE_ID + " parameter was not specified, or enable image generation." );
+	}
+
+
+	/**
 	 * Creates a Docker client from target properties.
 	 * @param targetProperties a non-null map
 	 * @return a Docker client
@@ -76,9 +90,7 @@ public final class DockerUtils {
 		// Validate what needs to be validated.
 		Logger logger = Logger.getLogger( DockerHandler.class.getName());
 		logger.fine( "Setting the target properties." );
-		if( Utils.isEmptyOrWhitespaces( targetProperties.get( DockerHandler.IMAGE_ID ))
-				&& Utils.isEmptyOrWhitespaces( targetProperties.get( DockerHandler.AGENT_PACKAGE )))
-			throw new TargetException( DockerHandler.IMAGE_ID + " or " + DockerHandler.AGENT_PACKAGE + " is missing in the configuration." );
+		verifyDockerClient( targetProperties );
 
 		String edpt = targetProperties.get( DockerHandler.ENDPOINT );
 		if( Utils.isEmptyOrWhitespaces( edpt ))

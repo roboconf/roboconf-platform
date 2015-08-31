@@ -223,7 +223,7 @@ public class DockerHandler_withPackagesTest {
 		// - we use the TarGz agent archive,
 		// - we clear the JRE packages property, so the default is used.
 		// - we add additional packages: vim & net-tools.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentTarGz.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE_URL, this.agentTarGz.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
 		runAndTestDockerContainer(Collections.<String>emptyList(), DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "vim", "net-tools");
@@ -236,7 +236,7 @@ public class DockerHandler_withPackagesTest {
 		// - we use the Zip agent archive,
 		// - we clear the JRE packages property, so the default is used.
 		// - we add additional packages: vim & net-tools.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentZip.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE_URL, this.agentZip.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
 		runAndTestDockerContainer(Collections.<String>emptyList(), DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT, "unzip", "vim", "net-tools");
@@ -249,7 +249,7 @@ public class DockerHandler_withPackagesTest {
 		// - we use the TarGz agent archive,
 		// - we set the JRE packages property to use JamVM.
 		// - we add additional packages: vim & net-tools.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentTarGz.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE_URL, this.agentTarGz.getAbsolutePath());
 		this.targetProperties.put(DockerHandler.AGENT_JRE_AND_PACKAGES, "icedtea-7-jre-jamvm");
 		this.targetProperties.put(DockerHandler.ADDITIONAL_PACKAGES, "vim net-tools");
 		runAndTestDockerContainer(Collections.<String>emptyList(), "icedtea-7-jre-jamvm", "vim", "net-tools");
@@ -262,7 +262,7 @@ public class DockerHandler_withPackagesTest {
 		// - we use the Zip agent archive,
 		// - we set the JRE packages property to use JamVM.
 		// - we use no additional packages.
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentZip.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE_URL, this.agentZip.getAbsolutePath());
 		this.targetProperties.put(DockerHandler.AGENT_JRE_AND_PACKAGES, "icedtea-7-jre-jamvm");
 		this.targetProperties.remove(DockerHandler.ADDITIONAL_PACKAGES);
 		runAndTestDockerContainer(Collections.<String>emptyList(), "icedtea-7-jre-jamvm");
@@ -281,7 +281,7 @@ public class DockerHandler_withPackagesTest {
 		// - we two additional deploy URLs, that will be copied in the (container's) Karaf deploy directory:
 		//    - a remote URL (Apache license v2: LICENSE-2.0.txt)
 		//    - a local file (DUMMY.TXT)
-		this.targetProperties.put(DockerHandler.AGENT_PACKAGE, this.agentZip.getAbsolutePath());
+		this.targetProperties.put(DockerHandler.AGENT_PACKAGE_URL, this.agentZip.getAbsolutePath());
 		this.targetProperties.remove(DockerHandler.AGENT_JRE_AND_PACKAGES);
 		this.targetProperties.remove(DockerHandler.ADDITIONAL_PACKAGES);
 		this.targetProperties.put(DockerHandler.ADDITIONAL_DEPLOY,
