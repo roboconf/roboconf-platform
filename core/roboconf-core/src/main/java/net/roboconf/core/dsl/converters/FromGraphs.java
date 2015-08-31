@@ -136,6 +136,11 @@ public class FromGraphs {
 		for( Iterator<ImportedVariable> it=component.importedVariables.values().iterator(); it.hasNext(); ) {
 
 			ImportedVariable var = it.next();
+			if( var.isExternal()) {
+				sb.append( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT );
+				sb.append( " " );
+			}
+
 			sb.append( var.getName());
 			if( var.isOptional()) {
 				sb.append( " " );

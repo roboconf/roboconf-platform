@@ -215,6 +215,28 @@ public class FromGraphsTest {
 	}
 
 
+	@Test
+	public void testFromGraphs_withExternal() throws Exception {
+		Graphs graphs = new Graphs();
+
+		Component cA = new Component( "A" ).installerName( Constants.TARGET_INSTALLER );
+		graphs.getRootComponents().add( cA );
+
+		cA.exportedVariables.put( "A.port", "9000" );
+		cA.exportedVariables.put( "A.ip", null );
+		cA.addImportedVariable( new ImportedVariable( "B.port", false, true ));
+		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
+
+		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
+		graphs.getRootComponents().add( cB );
+
+		cB.exportedVariables.put( "B.port", "9000" );
+		cB.exportedVariables.put( "B.ip", null );
+
+		compareGraphs( graphs, false );
+	}
+
+
 	/**
 	 * Compares an in-memory graphs with its written/read version.
 	 * @param graphs a graphs
