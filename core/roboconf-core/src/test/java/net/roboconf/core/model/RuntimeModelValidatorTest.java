@@ -47,6 +47,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -124,21 +125,21 @@ public class RuntimeModelValidatorTest {
 
 		comp.exportedVariables.put( "comp.ip", null );
 		comp.exportedVariables.put( "comp.port", "9000" );
-		comp.importedVariables.put( "comp.ip", Boolean.FALSE );
+		comp.addImportedVariable( new ImportedVariable( "comp.ip", false, false ));
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_COMPONENT_IMPORTS_EXPORTS, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		comp.importedVariables.put( "comp.ip", Boolean.TRUE );
+		comp.addImportedVariable( new ImportedVariable( "comp.ip", true, false ));
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( comp ).size());
 
-		comp.importedVariables.put( "", Boolean.FALSE );
+		comp.addImportedVariable( new ImportedVariable( "", false, false ));
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_EMPTY_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 		comp.importedVariables.clear();
 
-		comp.importedVariables.put( "comp.inva!id", Boolean.FALSE );
+		comp.addImportedVariable( new ImportedVariable( "comp.inva!id", false, false ));
 		iterator = RuntimeModelValidator.validate( comp ).iterator();
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -283,12 +284,12 @@ public class RuntimeModelValidatorTest {
 		// Unresolvable variable
 		graphs.getRootComponents().clear();
 		graphs.getRootComponents().add( comp1 );
-		comp1.importedVariables.put( "tomcat.port", Boolean.FALSE );
+		comp1.addImportedVariable( new ImportedVariable( "tomcat.port", false, false ));
 		iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
-		comp1.importedVariables.put( "tomcat.port", Boolean.TRUE );
+		comp1.addImportedVariable( new ImportedVariable( "tomcat.port", true, false ));
 		iterator = RuntimeModelValidator.validate( graphs ).iterator();
 		Assert.assertEquals( ErrorCode.RM_UNRESOLVABLE_VARIABLE, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -436,6 +437,35 @@ public class RuntimeModelValidatorTest {
 		Component comp = new Component( "root" ).installerName( Constants.TARGET_INSTALLER );
 		app.getGraphs().getRootComponents().add( comp );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
+
+		app.externalExports.put( "comp.!nvalid", "ko" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		app.externalExports.remove( "comp.!nvalid" );
+		app.externalExports.put( "comp.valid", "!invalid" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		app.externalExports.put( "comp.valid", "ok" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+		app.externalExports.remove( "comp.valid" );
+
+		comp.exportedVariables.put( "test", "default" );
+		app.externalExports.put( "root.test", "alias" );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
+
+		comp.exportedVariables.put( "test-bis", "default" );
+		app.externalExports.put( "root.test-bis", "alias" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_ALREADY_DEFINED_EXTERNAL_EXPORT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
 	}
 
 
@@ -470,6 +500,26 @@ public class RuntimeModelValidatorTest {
 
 		desc.setGraphEntryPoint( "graph.graph" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( desc ).size());
+
+		desc.invalidExternalExports.add( "oops" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.PROJ_INVALID_EXTERNAL_EXPORTS, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		desc.invalidExternalExports.clear();
+		desc.externalExports.put( "comp.valid", "ok" );
+		desc.externalExports.put( "comp.!nvalid", "ko" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		desc.externalExports.remove( "comp.!nvalid" );
+		Assert.assertEquals( 0, RuntimeModelValidator.validate( desc ).size());
+
+		desc.externalExports.put( "comp.valid", "!nvalid" );
+		iterator = RuntimeModelValidator.validate( desc ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
 	}
 
 
@@ -749,10 +799,12 @@ public class RuntimeModelValidatorTest {
 		Assert.assertNull( exports.get( "app.ip" ));
 		Assert.assertEquals( "toto", exports.get( "app.port" ));
 
-		Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( component );
+		Map<String,ImportedVariable> imports = ComponentHelpers.findAllImportedVariables( component );
 		Assert.assertEquals( 2, imports.size());
-		Assert.assertEquals( Boolean.FALSE, imports.get( "database.*" ));
-		Assert.assertEquals( Boolean.FALSE, imports.get( "f-messaging-2.*" ));
+		Assert.assertNotNull( imports.get( "database.*" ));
+		Assert.assertFalse( imports.get( "database.*" ).isOptional());
+		Assert.assertNotNull( imports.get( "f-messaging-2.*" ));
+		Assert.assertFalse( imports.get( "f-messaging-2.*" ).isOptional());
 	}
 
 

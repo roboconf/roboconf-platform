@@ -32,6 +32,7 @@ import java.util.Set;
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;
@@ -137,10 +138,10 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForImportedVariables() {
 
 		Component component = new Component( "comp" );
-		component.importedVariables.put( "comp.ip", Boolean.FALSE );
-		component.importedVariables.put( "comp.split.property", Boolean.FALSE );
-		component.importedVariables.put( "comp.port", Boolean.FALSE );
-		component.importedVariables.put( "facet.desc", Boolean.FALSE );
+		component.addImportedVariable( new ImportedVariable( "comp.ip", false, false ));
+		component.addImportedVariable( new ImportedVariable( "comp.split.property", false, false ));
+		component.addImportedVariable( new ImportedVariable( "comp.port", false, false ));
+		component.addImportedVariable( new ImportedVariable( "facet.desc", false, false ));
 
 		Instance instance = new Instance( "inst" ).component( component );
 
@@ -159,12 +160,12 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForMandatoryImportedVariables() {
 
 		Component component = new Component( "comp" );
-		component.importedVariables.put( "comp.ip", Boolean.FALSE );
-		component.importedVariables.put( "comp.split.property", Boolean.FALSE );
-		component.importedVariables.put( "comp.port", Boolean.FALSE );
-		component.importedVariables.put( "facet.desc", Boolean.TRUE );
-		component.importedVariables.put( "facet-n.prop1", Boolean.TRUE );
-		component.importedVariables.put( "facet-n.prop2", Boolean.FALSE );
+		component.addImportedVariable( new ImportedVariable( "comp.ip", false, false ));
+		component.addImportedVariable( new ImportedVariable( "comp.split.property", false, false ));
+		component.addImportedVariable( new ImportedVariable( "comp.port", false, false ));
+		component.addImportedVariable( new ImportedVariable( "facet.desc", true, false ));
+		component.addImportedVariable( new ImportedVariable( "facet-n.prop1", true, false ));
+		component.addImportedVariable( new ImportedVariable( "facet-n.prop2", false, false ));
 
 		Instance instance = new Instance( "inst" ).component( component );
 

@@ -234,6 +234,9 @@ public final class ParsingModelValidator {
 				if( s.toLowerCase().endsWith( ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT ))
 					s = s.substring( 0, s.length() - ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT.length());
 
+				if( s.toLowerCase().startsWith( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT ))
+					s = s.substring( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT.length());
+
 				String patternForImports = ParsingConstants.PATTERN_ID;
 				patternForImports += "(\\.\\*)?";
 

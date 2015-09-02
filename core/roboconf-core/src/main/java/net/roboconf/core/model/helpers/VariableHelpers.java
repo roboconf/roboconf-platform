@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 
 /**
@@ -119,8 +120,8 @@ public final class VariableHelpers {
 	public static Set<String> findPrefixesForImportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
-		for( String variableName : ComponentHelpers.findAllImportedVariables( instance.getComponent()).keySet())
-			result.add( VariableHelpers.parseVariableName( variableName ).getKey());
+		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( instance.getComponent()).values())
+			result.add( VariableHelpers.parseVariableName( var.getName()).getKey());
 
 		return result;
 	}
@@ -138,10 +139,9 @@ public final class VariableHelpers {
 	public static Set<String> findPrefixesForMandatoryImportedVariables( Instance instance ) {
 		Set<String> result = new HashSet<String> ();
 
-		for( Map.Entry<String,Boolean> entry : ComponentHelpers.findAllImportedVariables( instance.getComponent()).entrySet()) {
-			String variableName = entry.getKey();
-			if( ! entry.getValue())
-				result.add( VariableHelpers.parseVariableName( variableName ).getKey());
+		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( instance.getComponent()).values()) {
+			if( ! var.isOptional())
+				result.add( VariableHelpers.parseVariableName( var.getName()).getKey());
 		}
 
 		return result;

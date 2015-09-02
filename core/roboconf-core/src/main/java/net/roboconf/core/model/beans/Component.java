@@ -40,14 +40,10 @@ public class Component extends AbstractType implements Serializable {
 
 	private static final long serialVersionUID = 5163458185512982868L;
 
-	/**
-	 * Key = imported variable name.
-	 * Value = true if the import is optional, false if it is required
-	 */
-	public final Map<String,Boolean> importedVariables = new HashMap<String,Boolean>( 0 );
-
 	private String installerName;
 	private Component extendedComponent;
+
+	public final Map<String,ImportedVariable> importedVariables = new HashMap<>( 0 );
 	private final Collection<Component> extendingComponents = new HashSet<Component>( 0 );
 	private final Collection<Facet> facets = new HashSet<Facet>( 0 );
 
@@ -147,5 +143,13 @@ public class Component extends AbstractType implements Serializable {
 	public void disassociateFacet( Facet facet ) {
 		this.facets.remove( facet );
 		facet.associatedComponents.remove( this );
+	}
+
+	/**
+	 * A convenience method to add an imported variable.
+	 * @param var a non-null variable
+	 */
+	public void addImportedVariable( ImportedVariable var ) {
+		this.importedVariables.put( var.getName(), var );
 	}
 }

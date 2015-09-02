@@ -42,6 +42,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.comparators.AbstractTypeComparator;
 
 /**
@@ -182,6 +183,21 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds all the exported variables for a given application / graph(s).
+	 * @param graphs a non-null graph(s)
+	 * @return a non-null map of exported variables (key = variable name, value = variable value).
+	 */
+	public static Map<String,String> findAllExportedVariables( Graphs graphs ) {
+
+		Map<String,String> result = new HashMap<> ();
+		for( Component c : findAllComponents( graphs ))
+			result.putAll( findAllExportedVariables( c ));
+
+		return result;
+	}
+
+
+	/**
 	 * Finds all the exported variables of a facet.
 	 * <p>
 	 * This method also fixes the name of the exported variables (set the right prefixes, if required).
@@ -250,12 +266,12 @@ public final class ComponentHelpers {
 	/**
 	 * Finds all the imported variables for a given component.
 	 * @param component a non-null component
-	 * @return a non-null map of imported variables (key = variable name, value = true if optional, false if required).
+	 * @return a non-null map of imported variables (key = variable name, value = imported variable bean)
 	 */
-	public static Map<String,Boolean> findAllImportedVariables( Component component ) {
+	public static Map<String,ImportedVariable> findAllImportedVariables( Component component ) {
 
 		// Process components from the ancestors to the children... => override
-		Map<String,Boolean> result = new HashMap<String,Boolean> ();
+		Map<String,ImportedVariable> result = new HashMap<> ();
 		List<Component> extendedComponents = findAllExtendedComponents( component );
 		Collections.reverse( extendedComponents );
 
@@ -563,11 +579,11 @@ public final class ComponentHelpers {
 	public static Map<String,Boolean> findComponentDependenciesFor( Component component ) {
 
 		Map<String,Boolean> map = new HashMap<String,Boolean> ();
-		for( Map.Entry<String,Boolean> entry : findAllImportedVariables( component ).entrySet()) {
-			String componentOrFacet = VariableHelpers.parseVariableName( entry.getKey()).getKey();
+		for( ImportedVariable var : findAllImportedVariables( component ).values()) {
+			String componentOrFacet = VariableHelpers.parseVariableName( var.getName()).getKey();
 			Boolean b = map.get( componentOrFacet );
 			if( b == null || b )
-				map.put( componentOrFacet, entry.getValue());
+				map.put( componentOrFacet, var.isOptional());
 		}
 
 		return map;

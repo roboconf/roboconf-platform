@@ -30,7 +30,6 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 
@@ -46,20 +45,24 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "docker";
 	static final String MESSAGING_TYPE = "net.roboconf.messaging.type";
+	static final String AGENT_JRE_AND_PACKAGES_DEFAULT = "openjdk-7-jre-headless";
 
+	// Container creation
 	static final String IMAGE_ID = "docker.image";
-	static final String BASE_IMAGE = "docker.base.image";
 	static final String ENDPOINT = "docker.endpoint";
 	static final String USER = "docker.user";
 	static final String PASSWORD = "docker.password";
 	static final String EMAIL = "docker.email";
 	static final String VERSION = "docker.version";
-	static final String AGENT_PACKAGE = "docker.agent.package";
+	static final String RUN_EXEC = "docker.run.exec";
+
+	// Image generation
+	static final String GENERATE_IMAGE = "docker.generate.image";
+	static final String BASE_IMAGE = "docker.base.image";
+	static final String AGENT_PACKAGE_URL = "docker.agent.package.url";
 	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
-	static final String AGENT_JRE_AND_PACKAGES_DEFAULT = "openjdk-7-jre-headless";
 	static final String ADDITIONAL_PACKAGES = "docker.additional.packages";
 	static final String ADDITIONAL_DEPLOY = "docker.additional.deploy";
-	static final String RUN_EXEC = "docker.run.exec";
 
 	// Docker exec markers for Roboconf configuration injection.
 	static final String MARKER_MESSAGING_CONFIGURATION = "$msgConfig$";
@@ -108,10 +111,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 		this.logger.fine( "Creating a new machine." );
 
 		// Search an existing image in the local Docker repository
-		String imageId = targetProperties.get( IMAGE_ID );
-		String pack = targetProperties.get( AGENT_PACKAGE );
-		if( imageId == null && Utils.isEmptyOrWhitespaces( pack ))
-			throw new TargetException("Neither " + IMAGE_ID + " nor " + AGENT_PACKAGE + " were specified.");
+		DockerUtils.verifyDockerClient( targetProperties );
 
 		// We do not do anything else here.
 		// We return a UUID.

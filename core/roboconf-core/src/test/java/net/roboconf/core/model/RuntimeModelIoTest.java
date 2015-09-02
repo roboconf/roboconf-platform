@@ -48,6 +48,7 @@ import net.roboconf.core.model.RuntimeModelIo.GraphFileFilter;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -94,7 +95,7 @@ public class RuntimeModelIoTest {
 
 		for( Component childComponent : ComponentHelpers.findAllChildren( vmComponent )) {
 			Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( childComponent );
-			Map<String,Boolean> importedVariables = ComponentHelpers.findAllImportedVariables( childComponent );
+			Map<String,ImportedVariable> importedVariables = ComponentHelpers.findAllImportedVariables( childComponent );
 			Collection<Component> children = ComponentHelpers.findAllChildren( childComponent );
 
 			if( "Tomcat".equals( childComponent.getName())) {
@@ -106,8 +107,10 @@ public class RuntimeModelIoTest {
 				Assert.assertEquals( "8009", exportedVariables.get( "Tomcat.portAJP" ));
 
 				Assert.assertEquals( 2, importedVariables.size());
-				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "MySQL.ip" ));
-				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "MySQL.port" ));
+				Assert.assertFalse( importedVariables.get( "MySQL.ip" ).isOptional());
+				Assert.assertFalse( importedVariables.get( "MySQL.ip" ).isExternal());
+				Assert.assertFalse( importedVariables.get( "MySQL.port" ).isOptional());
+				Assert.assertFalse( importedVariables.get( "MySQL.port" ).isExternal());
 
 				SourceReference sr = result.getObjectToSource().get( childComponent );
 				Assert.assertNotNull( sr );
@@ -134,8 +137,10 @@ public class RuntimeModelIoTest {
 				Assert.assertEquals( 0, exportedVariables.size());
 
 				Assert.assertEquals( 2, childComponent.importedVariables.size());
-				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "Tomcat.ip" ));
-				Assert.assertEquals( Boolean.FALSE, importedVariables.get( "Tomcat.portAJP" ));
+				Assert.assertFalse( importedVariables.get( "Tomcat.ip" ).isOptional());
+				Assert.assertFalse( importedVariables.get( "Tomcat.ip" ).isExternal());
+				Assert.assertFalse( importedVariables.get( "Tomcat.portAJP" ).isOptional());
+				Assert.assertFalse( importedVariables.get( "Tomcat.portAJP" ).isExternal());
 
 				SourceReference sr = result.getObjectToSource().get( childComponent );
 				Assert.assertNotNull( sr );
@@ -225,7 +230,7 @@ public class RuntimeModelIoTest {
 
 			for( Component childComponent : ComponentHelpers.findAllChildren( c )) {
 				Map<String,String> exportedVariables = ComponentHelpers.findAllExportedVariables( childComponent );
-				Map<String,Boolean> importedVariables = ComponentHelpers.findAllImportedVariables( childComponent );
+				Map<String,ImportedVariable> importedVariables = ComponentHelpers.findAllImportedVariables( childComponent );
 				Collection<Component> children = ComponentHelpers.findAllChildren( childComponent );
 
 				if( "Tomcat".equals( childComponent.getName())) {
@@ -240,8 +245,10 @@ public class RuntimeModelIoTest {
 					Assert.assertEquals( "8009", exportedVariables.get( "Tomcat.portAJP" ));
 
 					Assert.assertEquals( 2, importedVariables.size());
-					Assert.assertEquals( Boolean.FALSE, importedVariables.get( "MySQL.ip" ));
-					Assert.assertEquals( Boolean.FALSE, importedVariables.get( "MySQL.port" ));
+					Assert.assertFalse( importedVariables.get( "MySQL.ip" ).isOptional());
+					Assert.assertFalse( importedVariables.get( "MySQL.ip" ).isExternal());
+					Assert.assertFalse( importedVariables.get( "MySQL.port" ).isOptional());
+					Assert.assertFalse( importedVariables.get( "MySQL.port" ).isExternal());
 
 				} else if( "MySQL".equals( childComponent.getName())) {
 					Assert.assertEquals( "puppet", childComponent.getInstallerName());
@@ -264,8 +271,10 @@ public class RuntimeModelIoTest {
 					Assert.assertEquals( "deployable", childComponent.getFacets().iterator().next().getName());
 
 					Assert.assertEquals( 2, importedVariables.size());
-					Assert.assertEquals( Boolean.FALSE, importedVariables.get( "Tomcat.ip" ));
-					Assert.assertEquals( Boolean.FALSE, importedVariables.get( "Tomcat.portAJP" ));
+					Assert.assertFalse( importedVariables.get( "Tomcat.ip" ).isOptional());
+					Assert.assertFalse( importedVariables.get( "Tomcat.ip" ).isExternal());
+					Assert.assertFalse( importedVariables.get( "Tomcat.portAJP" ).isOptional());
+					Assert.assertFalse( importedVariables.get( "Tomcat.portAJP" ).isExternal());
 
 				} else {
 					Assert.fail( "Unrecognized child." );
@@ -347,6 +356,8 @@ public class RuntimeModelIoTest {
 		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
 		Assert.assertNotNull( result );
 		Assert.assertNotNull( result.applicationTemplate );
+		Assert.assertEquals( 0, result.applicationTemplate.externalExports.size());
+
 		Assert.assertEquals( 2, result.loadErrors.size());
 		for( RoboconfError error : result.loadErrors )
 			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
@@ -375,6 +386,55 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( 2, childComponent.importedVariables.size());
 		Assert.assertTrue( childComponent.importedVariables.containsKey( "Mongo.ip" ));
 		Assert.assertTrue( childComponent.importedVariables.containsKey( "Mongo.port" ));
+	}
+
+
+	@Test
+	public void testLoadApplication_AppWithExternalDependencies() throws Exception {
+
+		File directory = TestUtils.findTestFile( "/applications/app-with-external-dependencies" );
+		ApplicationLoadResult result = RuntimeModelIo.loadApplication( directory );
+		Assert.assertNotNull( result );
+		Assert.assertNotNull( result.applicationTemplate );
+
+		Assert.assertEquals( 2, result.applicationTemplate.externalExports.size());
+		Assert.assertEquals( "c", result.applicationTemplate.externalExports.get( "VM.config" ));
+		Assert.assertEquals( "ip", result.applicationTemplate.externalExports.get( "App.ip" ));
+
+		Assert.assertEquals( 2, result.loadErrors.size());
+		for( RoboconfError error : result.loadErrors )
+			Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, error.getErrorCode());
+
+		Assert.assertEquals( "app-with-dep", result.applicationTemplate.getName());
+		Assert.assertNotNull( result.applicationTemplate.getGraphs());
+		Graphs g = result.applicationTemplate.getGraphs();
+		Assert.assertEquals( 1, g.getRootComponents().size());
+
+		Component vmComponent = g.getRootComponents().iterator().next();
+		Assert.assertEquals( "VM", vmComponent.getName());
+		Assert.assertEquals( "target", vmComponent.getInstallerName());
+		Assert.assertEquals( 0, vmComponent.getFacets().size());
+
+		Collection<Component> children = ComponentHelpers.findAllChildren( vmComponent );
+		Assert.assertEquals( 1, children.size());
+
+		Component childComponent = children.iterator().next();
+		Assert.assertEquals( "App", childComponent.getName());
+		Assert.assertEquals( "logger", childComponent.getInstallerName());
+		Assert.assertEquals( 0, childComponent.getChildren().size());
+
+		Assert.assertEquals( 1, childComponent.exportedVariables.size());
+		Assert.assertNull( childComponent.exportedVariables.get( "App.ip" ));
+
+		Assert.assertEquals( 2, childComponent.importedVariables.size());
+		Assert.assertTrue( childComponent.importedVariables.containsKey( "VM.config" ));
+		Assert.assertFalse( childComponent.importedVariables.get( "VM.config" ).isOptional());
+		Assert.assertFalse( childComponent.importedVariables.get( "VM.config" ).isExternal());
+
+		Assert.assertTrue( childComponent.importedVariables.containsKey( "App1.test" ));
+		Assert.assertFalse( childComponent.importedVariables.get( "App1.test" ).isOptional());
+		Assert.assertTrue( childComponent.importedVariables.get( "App1.test" ).isExternal());
+
 	}
 
 

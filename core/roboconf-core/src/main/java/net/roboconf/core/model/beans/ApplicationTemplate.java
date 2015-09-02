@@ -29,7 +29,9 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -46,6 +48,20 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	// We use a list because an application's attributes may be modified.
 	// With a set, this could result in unpredictable behaviors.
 	private final List<Application> associatedApplications = new ArrayList<> ();
+
+	/**
+	 * External exports.
+	 * <p>
+	 * Key = internal (graph) variable.<br />
+	 * Value = name (with no prefix) of the variable, seen from outside.
+	 * </p>
+	 * <p>
+	 * Example: <code>exports: Toto.ip as test</code> will result in an entry
+	 * whose key is <code>Toto.ip</code> and whose value is<code>test</code>.
+	 * </p>
+	 */
+	public final Map<String,String> externalExports = new HashMap<> ();
+
 
 
 	/**

@@ -54,20 +54,20 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	private static final String PROVIDER_NOVA = "openstack-nova";
 	private static final String PROVIDER_NEUTRON = "openstack-neutron";
 
-	static String IMAGE_NAME = "openstack.image-name";
-	static String TENANT_NAME = "openstack.tenant-name";
-	static String KEY_PAIR = "openstack.key-pair";
-	static String FLAVOR_NAME = "openstack.flavor-name";
-	static String SECURITY_GROUP = "openstack.security-group";
-	static String API_URL = "openstack.nova-url";
-	static String USER = "openstack.user";
-	static String PASSWORD = "openstack.password";
+	static final String IMAGE_NAME = "openstack.image-name";
+	static final String TENANT_NAME = "openstack.tenant-name";
+	static final String KEY_PAIR = "openstack.key-pair";
+	static final String FLAVOR_NAME = "openstack.flavor-name";
+	static final String SECURITY_GROUP = "openstack.security-group";
+	static final String API_URL = "openstack.keystone-url";
+	static final String USER = "openstack.user";
+	static final String PASSWORD = "openstack.password";
 
-	static String FLOATING_IP_POOL = "openstack.floating-ip-pool";
-	static String NETWORK_ID = "openstack.network-id";
-	// static String VOLUME_ID = "openstack.volumeId";
-	// static String VOLUME_MOUNT_POINT = "openstack.volumeMountPoint";
-	// static String VOLUME_SIZE_GB = "openstack.volumeSizeGb";
+	static final String FLOATING_IP_POOL = "openstack.floating-ip-pool";
+	static final String NETWORK_ID = "openstack.network-id";
+	// static final String VOLUME_ID = "openstack.volumeId";
+	// static final String VOLUME_MOUNT_POINT = "openstack.volumeMountPoint";
+	// static final String VOLUME_SIZE_GB = "openstack.volumeSizeGb";
 
 
 

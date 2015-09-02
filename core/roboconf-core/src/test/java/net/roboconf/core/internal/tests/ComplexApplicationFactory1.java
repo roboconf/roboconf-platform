@@ -31,6 +31,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -127,14 +128,14 @@ public class ComplexApplicationFactory1 {
 
 		// Applications
 		Component app1 = new Component( APP_1 ).installerName( "file" );
-		app1.importedVariables.put( "Database.port", true );
+		app1.addImportedVariable( new ImportedVariable( "Database.port", true, false ));
 		tomcat.addChild( app1 );
 
 		Component app2 = new Component( APP_2 ).installerName( "file" );
-		app2.importedVariables.put( "MySql.ip", false );
-		app2.importedVariables.put( "MySql.port", true );
-		app2.importedVariables.put( "MongoDB.ip", true );
-		app2.importedVariables.put( "MongoDB.port", true );
+		app2.addImportedVariable( new ImportedVariable( "MySql.ip", false, false ));
+		app2.addImportedVariable( new ImportedVariable( "MySql.port", true, false ));
+		app2.addImportedVariable( new ImportedVariable( "MongoDB.ip", true, false ));
+		app2.addImportedVariable( new ImportedVariable( "MongoDB.port", true, false ));
 		tomcat.addChild( app2 );
 
 		Component app3 = new Component( APP_3 ).installerName( "file" );

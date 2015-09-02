@@ -23,28 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.dm.targets;
+package net.roboconf.core.model.beans;
 
-import java.util.List;
+import java.util.HashSet;
 
-import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.apache.karaf.shell.api.console.CommandLine;
-import org.apache.karaf.shell.api.console.Completer;
-import org.apache.karaf.shell.api.console.Session;
-import org.apache.karaf.shell.support.completers.StringsCompleter;
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Service
-public class TargetCompleter implements Completer {
+public class ImportedVariableTest {
 
-	@Override
-	public int complete( Session session, CommandLine commandLine, List<String> candidates ) {
+	@Test
+	public void testEqualsAndHashCode() {
 
-		StringsCompleter delegate = new StringsCompleter( false );
-		delegate.getStrings().addAll( SupportedTarget.allString());
+		ImportedVariable var1 = new ImportedVariable( "test", false, false );
+		ImportedVariable var2 = new ImportedVariable( "test", true, true );
 
-		return delegate.complete( session, commandLine, candidates );
+		HashSet<ImportedVariable> set = new HashSet<>( 2 );
+		set.add( var1 );
+		set.add( var2 );
+		Assert.assertEquals( 1, set.size());
+	}
+
+
+	@Test
+	public void testToString() {
+		ImportedVariable var = new ImportedVariable( "test", false, false );
+		Assert.assertEquals( "test", var.toString());
 	}
 }

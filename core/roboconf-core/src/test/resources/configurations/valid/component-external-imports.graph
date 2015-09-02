@@ -1,0 +1,5 @@
+A {
+	installer: bash;
+	exports: port, ip;
+	imports: A.port (optional), A.ip (optional), external App.toto, exTernal App2.ip (optional);
+}

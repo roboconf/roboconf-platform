@@ -40,6 +40,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 
 import org.junit.Test;
 
@@ -560,15 +561,15 @@ public class ComponentHelpersTest {
 		root.addChild( serverWithAnotherApp );
 		root.addChild( serverWithApp );
 
-		serverWithApp.importedVariables.put( "database.ip", false );
-		serverWithApp.importedVariables.put( "database.port", true );
+		serverWithApp.addImportedVariable( new ImportedVariable( "database.ip", false, false ));
+		serverWithApp.addImportedVariable( new ImportedVariable( "database.port", true, false ));
 		serverWithApp.exportedVariables.put( "url", "something" );
 
 		serverWithAnotherApp.extendComponent( serverWithApp );
 
 		// Override the optional or mandatory aspect of an imported variable
-		serverWithAnotherApp.importedVariables.put( "database.port", false );
-		serverWithAnotherApp.importedVariables.put( "whatever", false );
+		serverWithAnotherApp.addImportedVariable( new ImportedVariable( "database.port", false, false ));
+		serverWithAnotherApp.addImportedVariable( new ImportedVariable( "whatever", false, false ));
 
 		db.exportedVariables.put( "ip", null );
 		db.exportedVariables.put( "port", "3306" );
@@ -576,21 +577,21 @@ public class ComponentHelpersTest {
 		Assert.assertEquals( 0, ComponentHelpers.findAllImportedVariables( db ).size());
 		Assert.assertEquals( 0, ComponentHelpers.findAllImportedVariables( root ).size());
 
-		Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( serverWithApp );
+		Map<String,ImportedVariable> imports = ComponentHelpers.findAllImportedVariables( serverWithApp );
 		Assert.assertEquals( 2, imports.size());
 		Assert.assertTrue( imports.containsKey( "database.ip" ));
 		Assert.assertTrue( imports.containsKey( "database.port" ));
-		Assert.assertEquals( Boolean.TRUE, imports.get( "database.port" ));
-		Assert.assertEquals( Boolean.FALSE, imports.get( "database.ip" ));
+		Assert.assertTrue( imports.get( "database.port" ).isOptional());
+		Assert.assertFalse( imports.get( "database.ip" ).isOptional());
 
 		imports = ComponentHelpers.findAllImportedVariables( serverWithAnotherApp );
 		Assert.assertEquals( 3, imports.size());
 		Assert.assertTrue( imports.containsKey( "database.ip" ));
 		Assert.assertTrue( imports.containsKey( "database.port" ));
 		Assert.assertTrue( imports.containsKey( "whatever" ));
-		Assert.assertEquals( Boolean.FALSE, imports.get( "database.port" ));
-		Assert.assertEquals( Boolean.FALSE, imports.get( "database.ip" ));
-		Assert.assertEquals( Boolean.FALSE, imports.get( "whatever" ));
+		Assert.assertFalse( imports.get( "database.ip" ).isOptional());
+		Assert.assertFalse( imports.get( "database.port" ).isOptional());
+		Assert.assertFalse( imports.get( "whatever" ).isOptional());
 	}
 
 

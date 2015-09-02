@@ -31,7 +31,9 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 
@@ -104,11 +106,13 @@ public final class ImportHelpers {
 
 		Import imp = new Import( exportingInstancePath, exportingInstanceComponent );
 		if( exportedVariables != null && ! exportedVariables.isEmpty()) {
-			Map<String,Boolean> imports = ComponentHelpers.findAllImportedVariables( instanceThatUseTheImport.getComponent());
-			for( String importedVariable : imports.keySet()) {
+
+			Component comp = instanceThatUseTheImport.getComponent();
+			for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( comp ).values()) {
+				String importedVariable = var.getName();
 
 				// Deal with imports
-				if( importedVariable.endsWith( "." + Constants.WILDCARD )) {
+				if( var.getName().endsWith( "." + Constants.WILDCARD )) {
 					String prefix = VariableHelpers.parseVariableName( importedVariable ).getKey();
 					for( Map.Entry<String,String> entry : exportedVariables.entrySet()) {
 						String exportedVariable = entry.getKey();

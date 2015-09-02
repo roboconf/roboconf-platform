@@ -30,7 +30,10 @@ import java.util.List;
 
 import junit.framework.Assert;
 
+import org.apache.karaf.shell.api.console.CommandLine;
+import org.apache.karaf.shell.api.console.Session;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -40,34 +43,46 @@ public class TargetCompleterTest {
 	@Test
 	public void testComplete() {
 
+		// Mock what is required
+		Session session = Mockito.mock( Session.class );
+		CommandLine commandLine = Mockito.mock( CommandLine.class );
+		Mockito.when( commandLine.getCursorArgument()).thenReturn( "" );
+		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 0 );
+
 		// Nothing typed in yet
 		TargetCompleter completer = new TargetCompleter();
 		List<String> candidates = new ArrayList<> ();
 
 		Assert.assertEquals( 0, candidates.size());
-		Assert.assertEquals( 0, completer.complete( "", 0, candidates ));
+		Assert.assertEquals( 0, completer.complete( session, commandLine, candidates ));
 		Assert.assertEquals( SupportedTarget.allString().size(), candidates.size());
 
 		// Complete "opens"
 		candidates = new ArrayList<> ();
+		Mockito.when( commandLine.getCursorArgument()).thenReturn( "opens" );
+		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 5 ); // "opens".length()
 
 		Assert.assertEquals( 0, candidates.size());
-		Assert.assertEquals( 0, completer.complete( "opens", 0, candidates ));
+		Assert.assertEquals( -5, completer.complete( session, commandLine, candidates ));
 		Assert.assertEquals( 1, candidates.size());
 		Assert.assertEquals( SupportedTarget.OPENSTACK.toString().toLowerCase(), candidates.get( 0 ).trim());
 
 		// Complete "opeNs" (case insensitive)
 		candidates = new ArrayList<> ();
+		Mockito.when( commandLine.getCursorArgument()).thenReturn( "opeNs" );
+		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 5 ); // "opeNs".length()
 
 		Assert.assertEquals( 0, candidates.size());
-		Assert.assertEquals( 0, completer.complete( "opeNs", 0, candidates ));
+		Assert.assertEquals( -5, completer.complete( session, commandLine, candidates ));
 		Assert.assertEquals( 1, candidates.size());
 		Assert.assertEquals( SupportedTarget.OPENSTACK.toString().toLowerCase(), candidates.get( 0 ).trim());
 
 		// Unknown
 		candidates = new ArrayList<> ();
+		Mockito.when( commandLine.getCursorArgument()).thenReturn( "unknown" );
+		Mockito.when( commandLine.getArgumentPosition()).thenReturn( "unknown".length());
 
 		Assert.assertEquals( 0, candidates.size());
-		Assert.assertEquals( -1, completer.complete( "Unknown", 0, candidates ));
+		Assert.assertEquals( -1, completer.complete( session, commandLine, candidates ));
 	}
 }

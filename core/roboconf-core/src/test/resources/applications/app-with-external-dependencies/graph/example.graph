@@ -1,0 +1,13 @@
+# This example shows a root/scoped instance
+# whose variables are imported by another component.
+VM {
+	exports: config = test;
+	children: App;
+	installer: target;
+}
+
+App {
+	imports: VM.config, external App1.test;
+	installer: logger;
+	exports: ip;
+}

@@ -37,6 +37,7 @@ import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -290,8 +291,8 @@ public class AgentMessageProcessor_ImportsTest {
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
-		clusterNodeComponent.importedVariables.put( "cluster.ip", Boolean.TRUE );
-		clusterNodeComponent.importedVariables.put( "cluster.port", Boolean.TRUE );
+		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.ip", true, false ));
+		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.port", true, false ));
 		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
 		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 

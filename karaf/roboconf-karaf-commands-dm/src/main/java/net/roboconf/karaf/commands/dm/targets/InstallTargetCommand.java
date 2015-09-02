@@ -28,18 +28,29 @@ package net.roboconf.karaf.commands.dm.targets;
 import java.io.PrintStream;
 import java.util.logging.Logger;
 
-import org.apache.karaf.shell.commands.Argument;
-import org.apache.karaf.shell.commands.Command;
-import org.apache.karaf.shell.console.OsgiCommandSupport;
+import net.roboconf.core.utils.ManifestUtils;
+
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.api.console.Session;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 @Command( scope = "roboconf", name = "target", description="Installs a target when necessary" )
-public class InstallTargetCommand extends OsgiCommandSupport {
+@Service
+public class InstallTargetCommand implements Action {
 
 	@Argument( index = 0, name = "target", description = "The target's name.", required = true, multiValued = false )
+	@Completion( TargetCompleter.class )
     String targetName = null;
+
+	@Reference
+    private Session session;
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	String roboconfVersion;
@@ -56,7 +67,7 @@ public class InstallTargetCommand extends OsgiCommandSupport {
 
 
     @Override
-    protected Object doExecute() throws Exception {
+    public Object execute() throws Exception {
 
     	SupportedTarget st = SupportedTarget.which( this.targetName );
     	if( st == null ) {

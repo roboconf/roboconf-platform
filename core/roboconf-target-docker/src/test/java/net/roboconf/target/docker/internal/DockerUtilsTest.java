@@ -46,7 +46,7 @@ import com.github.dockerjava.api.model.Capability;
 public class DockerUtilsTest {
 
 	@Test( expected = TargetException.class )
-	public void testInvalidConfiguration_noImage_noPackage() throws Exception {
+	public void testInvalidConfiguration_noImage_noGeneration() throws Exception {
 
 		Map<String,String> map = new HashMap<> ();
 		map.put( DockerHandler.ENDPOINT, "whatever" );
@@ -65,10 +65,10 @@ public class DockerUtilsTest {
 
 
 	@Test
-	public void testIncompleteConfiguration_noEndpoint_withPackage() throws Exception {
+	public void testIncompleteConfiguration_noEndpoint_withGeneration() throws Exception {
 
 		Map<String,String> map = new HashMap<> ();
-		map.put( DockerHandler.AGENT_PACKAGE, "whatever" );
+		map.put( DockerHandler.GENERATE_IMAGE, "true" );
 		DockerClient client = DockerUtils.createDockerClient( map );
 		Assert.assertNotNull( client );
 	}

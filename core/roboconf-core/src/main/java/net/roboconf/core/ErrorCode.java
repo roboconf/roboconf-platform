@@ -119,7 +119,9 @@ public enum ErrorCode {
 	RM_INVALID_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid variable name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but was not defined in its component." ),
 	RM_MISSING_VARIABLE_VALUE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "All the variables (except network ones, such as IP) must have a value." ),
-	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but could not be resolved in its component." ),
+	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but is ambiguously resolved in its component." ),
+	RM_INVALID_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable that does not exist in the graph." ),
+	RM_ALREADY_DEFINED_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable more than once. This is probably a copy/paste error." ),
 
 	RM_CYCLE_IN_COMPONENTS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A cycle was detected in the graph(s)." ),
 	RM_CYCLE_IN_COMPONENTS_INHERITANCE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component directly or indirectly extends itself. Such a cycle is forbidden." ),
@@ -145,6 +147,7 @@ public enum ErrorCode {
 	PROJ_EXTRACT_ZIP( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Roboconf failed to extract the ZIP archive (ZIP reading)." ),
 	PROJ_DELETE_TEMP( ErrorLevel.WARNING, ErrorCategory.PROJECT, "Roboconf failed to delete a temporary directory." ),
 	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
+	PROJ_INVALID_EXTERNAL_EXPORTS( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Invalid external exports were found in the application's descriptor." ),
 	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource (recipe) directory." ),
 	PROJ_NO_TARGET_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A root component does not have a target.properties file in its resources." ),
 	PROJ_APPLICATION_TEMPLATE_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application template was not found." ),

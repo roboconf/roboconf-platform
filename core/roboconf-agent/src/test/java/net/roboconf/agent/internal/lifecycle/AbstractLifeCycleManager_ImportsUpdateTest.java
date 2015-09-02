@@ -32,6 +32,7 @@ import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
@@ -51,8 +52,8 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		// The model
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
-		clusterNodeComponent.importedVariables.put( "cluster.ip", Boolean.TRUE );
-		clusterNodeComponent.importedVariables.put( "cluster.port", Boolean.TRUE );
+		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.ip", true, false ));
+		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.port", true, false ));
 		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
 		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
 
@@ -110,8 +111,8 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
 		appServerComponent.exportedVariables.put( "app-server.ip", null );
 		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
-		appServerComponent.importedVariables.put( "database.ip", Boolean.FALSE );
-		appServerComponent.importedVariables.put( "database.port", Boolean.FALSE );
+		appServerComponent.addImportedVariable( new ImportedVariable( "database.ip", false, false ));
+		appServerComponent.addImportedVariable( new ImportedVariable( "database.port", false, false ));
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );
 		appServer.overriddenExports.put( "app-server.ip", "192.168.1.15" );

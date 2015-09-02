@@ -45,6 +45,7 @@ import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
 
@@ -132,11 +133,16 @@ public class FromGraphs {
 
 		// Imported Variables
 		StringBuilder sb = new StringBuilder();
-		for( Iterator<Map.Entry<String,Boolean>> it=component.importedVariables.entrySet().iterator(); it.hasNext(); ) {
+		for( Iterator<ImportedVariable> it=component.importedVariables.values().iterator(); it.hasNext(); ) {
 
-			Map.Entry<String,Boolean> entry = it.next();
-			sb.append( entry.getKey());
-			if( entry.getValue()) {
+			ImportedVariable var = it.next();
+			if( var.isExternal()) {
+				sb.append( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT );
+				sb.append( " " );
+			}
+
+			sb.append( var.getName());
+			if( var.isOptional()) {
 				sb.append( " " );
 				sb.append( ParsingConstants.PROPERTY_COMPONENT_OPTIONAL_IMPORT );
 			}
