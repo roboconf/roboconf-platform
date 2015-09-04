@@ -13,5 +13,5 @@ VER=`java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q'`
 if [[ $VER == "17" ]] && [[ $WHOLE_VER == *OpenJDK* ]]; then
 	mvn clean cobertura:cobertura install coveralls:report -q
 else
-	mvn clean install -q
+	mvn clean install -q -Droboconf.javadoc.check
 fi
