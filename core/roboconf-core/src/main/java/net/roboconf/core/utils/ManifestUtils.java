@@ -55,11 +55,11 @@ public final class ManifestUtils {
 	 * If the third digit in the version is 0, then we remove it.
 	 * </p>
 	 * <p>
-	 * Bundle-version = 0.4.0 => 0.4
+	 * Bundle-version = 0.4.0 =&gt; 0.4
 	 * <br />
-	 * Bundle-version = 0.4.0-SNAPSHOT => 0.4-SNAPSHOT
+	 * Bundle-version = 0.4.0-SNAPSHOT =&gt; 0.4-SNAPSHOT
 	 * <br />
-	 * Bundle-version = 0.4.1 => 0.4.1
+	 * Bundle-version = 0.4.1 =&gt; 0.4.1
 	 * </p>
 	 *
 	 * @param bundleVersion the bundle version (can be null)
