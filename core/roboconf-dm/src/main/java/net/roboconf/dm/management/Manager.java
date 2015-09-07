@@ -825,4 +825,19 @@ public class Manager {
 		Map.Entry<String,String> entry = IconUtils.decodeIconUrl( urlPath );
 		return ConfigurationUtils.findIcon( entry.getKey(), entry.getValue(), this.configurationDirectory );
 	}
+
+	/**
+	 * Finds a template.
+	 * <p>
+	 * A template is identified by its name and its qualifier.
+	 * </p>
+	 *
+	 * @param name the template's name
+	 * @param qualifier the template's qualifier
+	 * @return an application template, or null if none was found
+	 */
+	public ApplicationTemplate findTemplate(String name, String qualifier) {
+		return this.templateManager.findTemplate(name, qualifier);
+	}
+
 }
