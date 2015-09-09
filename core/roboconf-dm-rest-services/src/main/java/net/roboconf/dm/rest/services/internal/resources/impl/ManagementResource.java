@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
@@ -350,7 +351,7 @@ public class ManagementResource implements IManagementResource {
 			if (template == null) {
 				throw new NoSuchElementException("Cannot find template: " + name + '/' + qualifier);
 			}
-			targetDir = template.getDirectory();
+			targetDir = new File(template.getDirectory(), Constants.PROJECT_DIR_DESC);
 		} else {
 
 			// Get the application directory.
@@ -359,7 +360,7 @@ public class ManagementResource implements IManagementResource {
 			if (application == null) {
 				throw new NoSuchElementException("Cannot find application: " + name);
 			}
-			targetDir = application.getDirectory();
+			targetDir = new File(application.getDirectory(), Constants.PROJECT_DIR_DESC);
 		}
 
 		// First clean the previous "application.*" images, as they may be chosen instead of the one we're uploading.

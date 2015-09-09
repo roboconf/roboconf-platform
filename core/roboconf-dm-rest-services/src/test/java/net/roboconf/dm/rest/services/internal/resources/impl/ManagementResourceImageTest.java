@@ -35,6 +35,7 @@ import java.net.URISyntaxException;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
@@ -145,7 +146,7 @@ public class ManagementResourceImageTest {
 
 
 	private File getApplicationIcon( final AbstractApplication app, final String extension ) {
-		return new File(app.getDirectory(), "application." + extension);
+		return new File(app.getDirectory(), Constants.PROJECT_DIR_DESC + "/application." + extension);
 	}
 
 
