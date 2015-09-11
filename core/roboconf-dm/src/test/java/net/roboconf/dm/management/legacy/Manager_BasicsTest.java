@@ -23,41 +23,40 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management;
+package net.roboconf.dm.management.legacy;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.test.TargetHandlerMock;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
-import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
-import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.After;
@@ -75,37 +74,38 @@ public class Manager_BasicsTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private TestClientDm msgClient;
 	private TestTargetResolver targetResolver;
-	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
-		this.registry.addMessagingClientFactory( new TestClientFactory());
 
 		File directory = this.folder.newFolder();
 		this.targetResolver = new TestTargetResolver();
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( this.targetResolver );
-		this.manager.setConfigurationDirectoryLocation( directory.getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( directory );
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.start();
 
 		// Register mocked listeners - mainly for code coverage reasons
 		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
 		this.msgClient.sentMessages.clear();
 
 		// Disable the messages timer for predictability
-		this.manager.timer.cancel();
+		TestUtils.getInternalField( this.manager, "timer", Timer.class ).cancel();
 	}
 
 
@@ -121,55 +121,17 @@ public class Manager_BasicsTest {
 
 
 	@Test
-	public void testSendPingMessageQueue() throws Exception {
-
-		this.manager.pingMessageQueue( "TEST" ); // false because there is no MQ
-		List<Message> sentMessages = this.msgClient.sentMessages;
-		Assert.assertEquals( 1, sentMessages.size());
-
-		Message message = sentMessages.get( 0 );
-		Assert.assertTrue( message instanceof MsgEcho );
-
-		MsgEcho echo = (MsgEcho) message;
-		Assert.assertEquals( "TEST", echo.getContent());
-	}
-
-
-	@Test
-	public void testSendPingAgent() throws Exception {
-
-		TestApplication app = new TestApplication();
-		app.setDirectory( this.folder.newFolder());
-		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-
-		// Ping all the root instances.
-		for (Instance i : app.getRootInstances()) {
-			this.manager.pingAgent( app, i, "TEST " + i.getName()); // false because there is no MQ
-		}
-
-		List<Message> sentMessages = this.msgClient.sentMessages;
-		// Now check the DM has sent a ping every agent.
-		Assert.assertTrue( sentMessages.size() == app.getRootInstances().size() );
-		int index = 0;
-		for (Instance i : app.getRootInstances()) {
-			Message message = sentMessages.get( index++ );
-			Assert.assertTrue( message instanceof MsgEcho );
-			MsgEcho echo = (MsgEcho) message;
-			Assert.assertEquals( "PING:TEST " + i.getName(), echo.getContent() );
-		}
-	}
-
-
-	@Test
 	public void testStop() throws Exception {
 
-		Assert.assertNotNull( this.manager.timer );
+		Timer timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
+		Assert.assertNotNull( timer );
 		this.manager.stop();
-		Assert.assertNull( this.manager.timer );
+
+		timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
+		Assert.assertNull( timer );
 
 		this.manager.stop();
-		Assert.assertNull( this.manager.timer );
+		Assert.assertNull( timer );
 	}
 
 
@@ -177,10 +139,14 @@ public class Manager_BasicsTest {
 	public void testStop_invalidConfiguration() throws Exception {
 
 		this.manager = new Manager();
+		this.managerWrapper = new TestManagerWrapper( this.manager );
 
-		Assert.assertNull( this.manager.timer );
+		Timer timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
+		Assert.assertNull( timer );
+
 		this.manager.stop();
-		Assert.assertNull( this.manager.timer );
+		timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
+		Assert.assertNull( timer );
 	}
 
 
@@ -190,35 +156,12 @@ public class Manager_BasicsTest {
 		this.msgClient.failListeningToTheDm.set( true );
 		this.msgClient.failClosingConnection.set( true );
 
-		Assert.assertNotNull( this.manager.timer );
+		Timer timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
+		Assert.assertNotNull( timer );
+
 		this.manager.stop();
-		Assert.assertNull( this.manager.timer );
-	}
-
-
-	@Test( expected = UnauthorizedActionException.class )
-	public void testDeleteApplication_unauthorized() throws Exception {
-
-		TestApplication app = new TestApplication();
-		app.setDirectory( this.folder.newFolder());
-		ManagedApplication ma = new ManagedApplication( app );
-
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.manager.deleteApplication( ma );
-	}
-
-
-	@Test
-	public void testDeleteApplication_success() throws Exception {
-
-		TestApplication app = new TestApplication();
-		app.setDirectory( this.folder.newFolder());
-		ManagedApplication ma = new ManagedApplication( app );
-
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.deleteApplication( ma );
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
+		timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
+		Assert.assertNull( timer );
 	}
 
 
@@ -229,10 +172,10 @@ public class Manager_BasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		String existingInstanceName = app.getMySqlVm().getName();
-		this.manager.addInstance( ma, null, new Instance( existingInstanceName ));
+		this.manager.instancesMngr().addInstance( ma, null, new Instance( existingInstanceName ));
 	}
 
 
@@ -243,10 +186,10 @@ public class Manager_BasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		String existingInstanceName = app.getMySql().getName();
-		this.manager.addInstance( ma, app.getMySqlVm(), new Instance( existingInstanceName ));
+		this.manager.instancesMngr().addInstance( ma, app.getMySqlVm(), new Instance( existingInstanceName ));
 	}
 
 
@@ -257,12 +200,12 @@ public class Manager_BasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Instance newInstance = new Instance( "mail-vm" ).component( app.getMySqlVm().getComponent());
 
-		this.manager.addInstance( ma, null, newInstance );
+		this.manager.instancesMngr().addInstance( ma, null, newInstance );
 		Assert.assertEquals( 3, app.getRootInstances().size());
 		Assert.assertTrue( app.getRootInstances().contains( newInstance ));
 	}
@@ -279,8 +222,10 @@ public class Manager_BasicsTest {
 		Instance newInstance = new Instance( "mail-vm" ).component( app.getMySqlVm().getComponent());
 
 		this.manager = new Manager();
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.addInstance( ma, null, newInstance );
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.manager.instancesMngr().addInstance( ma, null, newInstance );
 	}
 
 
@@ -291,13 +236,13 @@ public class Manager_BasicsTest {
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		// Insert a MySQL instance under the Tomcat VM
 		Assert.assertEquals( 1, app.getTomcatVm().getChildren().size());
 		Instance newInstance = new Instance( app.getMySql().getName()).component( app.getMySql().getComponent());
 
-		this.manager.addInstance( ma, app.getTomcatVm(), newInstance );
+		this.manager.instancesMngr().addInstance( ma, app.getTomcatVm(), newInstance );
 		Assert.assertEquals( 2, app.getTomcatVm().getChildren().size());
 		Assert.assertTrue( app.getTomcatVm().getChildren().contains( newInstance ));
 	}
@@ -308,10 +253,10 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		app.getMySql().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.manager.removeInstance( ma, app.getMySqlVm());
+		this.manager.instancesMngr().removeInstance( ma, app.getMySqlVm());
 	}
 
 
@@ -320,12 +265,12 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		this.manager.removeInstance( ma, app.getTomcatVm());
+		this.manager.instancesMngr().removeInstance( ma, app.getTomcatVm());
 
 		Assert.assertEquals( 1, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
@@ -345,13 +290,13 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		this.manager.removeInstance( ma, app.getTomcat());
+		this.manager.instancesMngr().removeInstance( ma, app.getTomcat());
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
@@ -374,8 +319,10 @@ public class Manager_BasicsTest {
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager = new Manager();
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-		this.manager.removeInstance( ma, app.getTomcat());
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		this.manager.instancesMngr().removeInstance( ma, app.getTomcat());
 	}
 
 
@@ -384,21 +331,21 @@ public class Manager_BasicsTest {
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
-		Assert.assertEquals( 0, this.manager.getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( directory );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
 		Assert.assertNotNull( tpl );
-		Assert.assertEquals( 1, this.manager.getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
-		ManagedApplication ma = this.manager.createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
+		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
 
 		Assert.assertEquals( ma.getDirectory().getName(), ma.getName());
 		Assert.assertEquals( "toto", ma.getName());
 
-		File expected = new File( this.manager.configurationDirectory, ConfigurationUtils.APPLICATIONS );
+		File expected = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.APPLICATIONS );
 		Assert.assertEquals( expected, ma.getDirectory().getParentFile());
 	}
 
@@ -408,99 +355,18 @@ public class Manager_BasicsTest {
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
-		Assert.assertEquals( 0, this.manager.getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( directory );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
 		Assert.assertNotNull( tpl );
-		Assert.assertEquals( 1, this.manager.getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
-		ManagedApplication ma = this.manager.createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
+		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "toto", "desc", tpl.getName(), tpl.getQualifier());
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
 
-		this.manager.createApplication( "toto", "desc", tpl );
-	}
-
-
-	@Test
-	public void testUpdateApplication_success() throws Exception {
-
-		TestApplication app = new TestApplication();
-		app.setDirectory( this.folder.newFolder());
-
-		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-
-		String newDesc = "new description";
-		Assert.assertEquals( 0, app.getDirectory().listFiles().length );
-		Assert.assertFalse( newDesc.equals( app.getDescription()));
-
-		this.manager.updateApplication( ma, newDesc );
-		Assert.assertEquals( newDesc, app.getDescription());
-		Assert.assertEquals( 1, app.getDirectory().listFiles().length );
-	}
-
-
-	@Test( expected = IOException.class )
-	public void testUpdateApplication_saveFailure() throws Exception {
-
-		TestApplication app = new TestApplication();
-		app.setDirectory( this.folder.newFile());
-
-		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-
-		String newDesc = "new description";
-		this.manager.updateApplication( ma, newDesc );
-	}
-
-
-	@Test( expected = InvalidApplicationException.class )
-	public void testCreateApplication_invalidTemplate() throws Exception {
-
-		this.manager.createApplication( "toto", "desc", "whatever", null );
-	}
-
-
-	@Test( expected = InvalidApplicationException.class )
-	public void testDeleteApplicationTemplate_inexisting() throws Exception {
-
-		this.manager.deleteApplicationTemplate( "whatever", "version" );
-	}
-
-
-	@Test
-	public void testDeleteApplicationTemplate_success() throws Exception {
-
-		File directory = TestUtils.findApplicationDirectory( "lamp" );
-		Assert.assertTrue( directory.exists());
-		Assert.assertEquals( 0, this.manager.getApplicationTemplates().size());
-
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( directory );
-		Assert.assertNotNull( tpl );
-		Assert.assertEquals( 1, this.manager.getApplicationTemplates().size());
-
-		this.manager.deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
-		Assert.assertEquals( 0, this.manager.getApplicationTemplates().size());
-	}
-
-
-	@Test( expected = UnauthorizedActionException.class )
-	public void testDeleteApplicationTemplate_unauthorized() throws Exception {
-
-		File directory = TestUtils.findApplicationDirectory( "lamp" );
-		Assert.assertTrue( directory.exists());
-		Assert.assertEquals( 0, this.manager.getApplicationTemplates().size());
-
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( directory );
-		Assert.assertNotNull( tpl );
-		Assert.assertEquals( 1, this.manager.getApplicationTemplates().size());
-
-		Application app = new Application( "test", tpl );
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
-
-		this.manager.deleteApplicationTemplate( tpl.getName(), tpl.getQualifier());
+		this.manager.applicationMngr().createApplication( "toto", "desc", tpl );
 	}
 
 
@@ -509,102 +375,93 @@ public class Manager_BasicsTest {
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
-		Assert.assertEquals( 0, this.manager.getApplicationTemplates().size());
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( directory );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
 		Assert.assertNotNull( tpl );
-		Assert.assertEquals( 1, this.manager.getApplicationTemplates().size());
+		Assert.assertEquals( 1, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
 
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
-		ManagedApplication ma = this.manager.createApplication( "toto", "desc", tpl );
+		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "toto", "desc", tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
 
 		Assert.assertEquals( ma.getDirectory().getName(), ma.getName());
 		Assert.assertEquals( "toto", ma.getApplication().getName());
 
-		File expected = new File( this.manager.configurationDirectory, ConfigurationUtils.APPLICATIONS );
+		File expected = new File( this.manager.configurationMngr().getWorkingDirectory(), ConfigurationUtils.APPLICATIONS );
 		Assert.assertEquals( expected, ma.getDirectory().getParentFile());
 	}
 
 
-	@Test( expected = AlreadyExistingException.class )
-	public void testLoadApplicationTemplate_conflict() throws Exception {
+	@Test
+	public void testLoadApplicationTemplate_invalidConfiguration() throws Exception {
+		this.manager = new Manager();
+		this.managerWrapper = new TestManagerWrapper( this.manager );
 
-		File directory = TestUtils.findApplicationDirectory( "lamp" );
-		Assert.assertTrue( directory.exists());
+		// No messaging is configured
 		try {
-			this.manager.loadApplicationTemplate( directory );
+			this.manager.messagingMngr().checkMessagingConfiguration();
+			Assert.fail( "The configuration is supposed to be invalid." );
 
-		} catch( Exception e ) {
-			Assert.fail( "Loading the application the first time should not fail." );
+		} catch( IOException e ) {
+			// nothing
 		}
 
-		this.manager.loadApplicationTemplate( directory );
-	}
-
-
-	@Test( expected = IOException.class )
-	public void testLoadApplicationTemplate_invalidDirectory() throws Exception {
-
-		File source = TestUtils.findApplicationDirectory( "lamp" );
-		Assert.assertTrue( source.exists());
-
-		File apps = new File( this.manager.configurationDirectory, ConfigurationUtils.TEMPLATES );
-		File target = new File( apps, "Legacy LAMP - sample/sub/dir" );
-		Utils.copyDirectory( source, target );
-		this.manager.loadApplicationTemplate( target );
-	}
-
-
-	@Test( expected = IOException.class )
-	public void testLoadApplicationTemplate_invalidConfiguration() throws Exception {
-
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
-
-		this.manager = new Manager();
-		this.manager.loadApplicationTemplate( directory );
-	}
-
-
-	@Test( expected = InvalidApplicationException.class )
-	public void testApplicationTemplate_invalidTemplate() throws Exception {
-		this.manager.loadApplicationTemplate( this.folder.newFolder());
+		this.manager.applicationTemplateMngr().loadApplicationTemplate( directory );
 	}
 
 
 	@Test( expected = IOException.class )
-	public void testCheckConfiguration_noConfiguration() throws Exception {
+	public void testCheckMessagingConfiguration_noConfiguration() throws Exception {
 
 		this.manager = new Manager();
-		this.manager.checkConfiguration();
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.manager.messagingMngr().checkMessagingConfiguration();
 	}
 
 
 	@Test( expected = IOException.class )
-	public void testCheckConfiguration_invalidConfiguration() throws Exception {
+	public void testCheckMessagingConfiguration_invalidConfiguration() throws Exception {
 
 		this.manager.setMessagingType("whatever");
 		this.manager.reconfigure();
-		this.manager.checkConfiguration();
+		this.manager.messagingMngr().checkMessagingConfiguration();
 	}
 
 
 	@Test
-	public void testCheckConfiguration() throws Exception {
-		this.manager.checkConfiguration();
+	public void testCheckMessagingConfiguration() throws Exception {
+		this.manager.messagingMngr().checkMessagingConfiguration();
 	}
 
 
 	@Test
-	public void testInitializeDirectory_noDirectory() {
+	public void testSendMessageToTheDm_notConnected() throws Exception {
 
-		this.manager = new Manager();
-		this.manager.initializeDirectory();
+		this.msgClient.closeConnection();
+		this.manager.messagingMngr().sendMessage( new MsgCmdRemoveInstance( "/" ));
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+	}
 
-		File defaultConfigurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
-		Assert.assertEquals( defaultConfigurationDirectory, this.manager.configurationDirectory );
+
+	@Test
+	public void testSendMessageToTheDm_connected() throws Exception {
+
+		this.manager.messagingMngr().sendMessage( new MsgCmdRemoveInstance( "/" ));
+		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, this.msgClient.sentMessages.iterator().next().getClass());
+	}
+
+
+	@Test
+	public void testSendMessageToTheDm_exception() throws Exception {
+
+		this.msgClient.failMessageSending.set( true );
+		this.manager.messagingMngr().sendMessage( new MsgCmdRemoveInstance( "/" ));
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 	}
 
 
@@ -613,16 +470,16 @@ public class Manager_BasicsTest {
 
 		// Copy an application in the configuration
 		File source = TestUtils.findApplicationDirectory( "lamp" );
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( source );
-		this.manager.createApplication( "lamp3", "test", tpl );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( source );
+		this.manager.applicationMngr().createApplication( "lamp3", "test", tpl );
 
 		// Reset the manager's configuration (simply reload it)
 		this.manager.reconfigure();
-		this.manager.checkConfiguration();
+		this.manager.messagingMngr().checkMessagingConfiguration();
 
 		// Check there is an application
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
-		ManagedApplication ma = this.manager.getNameToManagedApplication().get( "lamp3" );
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
+		ManagedApplication ma = this.managerWrapper.getNameToManagedApplication().get( "lamp3" );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
 		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
@@ -637,19 +494,20 @@ public class Manager_BasicsTest {
 
 		// Copy an application in the configuration
 		File source = TestUtils.findApplicationDirectory( "lamp" );
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( source );
-		ManagedApplication ma = this.manager.createApplication( "lamp", "test", tpl );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( source );
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "lamp", "test", tpl );
 		Instance apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
 		Assert.assertNotNull( apache );
+		String path = InstanceHelpers.computeInstancePath( apache );
 
 		// Make sure the VM is considered as deployed in the pseudo-IaaS
-		TargetHandler th = this.targetResolver.findTargetHandler( null, ma, apache ).getHandler();
+		TargetHandler th = this.targetResolver.findTargetHandler( new HashMap<String,String>( 0 ));
 		Assert.assertNotNull( th );
-		th.createMachine( null, null, apache.getName(), ma.getName());
+		th.createMachine( null, null, path, ma.getName());
 
 		// Update the instances
 		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
-		apache.data.put( Instance.MACHINE_ID, "my id" );
+		apache.data.put( Instance.MACHINE_ID, path );
 		apache.data.put( "whatever", "something" );
 		apache.setStatus( InstanceStatus.PROBLEM );
 
@@ -660,8 +518,8 @@ public class Manager_BasicsTest {
 		this.manager.reconfigure();
 
 		// Check there is the right application
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
-		ma = this.manager.getNameToManagedApplication().get( "lamp" );
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
+		ma = this.managerWrapper.getNameToManagedApplication().get( "lamp" );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
 		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
@@ -673,7 +531,7 @@ public class Manager_BasicsTest {
 
 		apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
 		Assert.assertEquals( "192.168.1.23", apache.data.get( Instance.IP_ADDRESS ));
-		Assert.assertEquals( "my id", apache.data.get( Instance.MACHINE_ID ));
+		Assert.assertEquals( path, apache.data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( "something", apache.data.get( "whatever" ));
 		Assert.assertEquals( ma.getName(), apache.data.get( Instance.APPLICATION_NAME ));
 
@@ -688,19 +546,20 @@ public class Manager_BasicsTest {
 
 		// Copy an application in the configuration
 		File source = TestUtils.findApplicationDirectory( "lamp" );
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( source );
-		ManagedApplication ma = this.manager.createApplication( "lamp2", "test", tpl );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( source );
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "lamp2", "test", tpl );
 		Instance apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
 		Assert.assertNotNull( apache );
+		String path = InstanceHelpers.computeInstancePath( apache );
 
 		// Make sure the VM is considered as deployed in the pseudo-IaaS
-		TargetHandler th = this.targetResolver.findTargetHandler( null, ma, apache ).getHandler();
+		TargetHandler th = this.targetResolver.findTargetHandler( new HashMap<String,String>( 0 ));
 		Assert.assertNotNull( th );
-		String machineId = th.createMachine( null, null, apache.getName(), ma.getName());
+		String machineId = th.createMachine( null, null, path, ma.getName());
 
 		// Update the instances
 		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
-		apache.data.put( Instance.MACHINE_ID, "my id" );
+		apache.data.put( Instance.MACHINE_ID, path );
 		apache.data.put( "whatever", "something" );
 		apache.setStatus( InstanceStatus.PROBLEM );
 
@@ -709,7 +568,7 @@ public class Manager_BasicsTest {
 
 		//
 		// Here is the difference with #testConfigurationChanged_andShutdown_withApps_withInstances
-		// We simulate the fact that the VM was killed why the DM was stopped.
+		// We simulate the fact that the VM was killed while the DM was stopped.
 		//
 		th.terminateMachine( null, machineId );
 
@@ -717,8 +576,8 @@ public class Manager_BasicsTest {
 		this.manager.reconfigure();
 
 		// Check there is the right application
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
-		ma = this.manager.getNameToManagedApplication().get( "lamp2" );
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
+		ma = this.managerWrapper.getNameToManagedApplication().get( "lamp2" );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
 		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
@@ -745,13 +604,13 @@ public class Manager_BasicsTest {
 
 		ManagedApplication ma = new ManagedApplication( new TestApplication());
 
-		this.manager.getMessagingClient().closeConnection();
-		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
+		this.managerWrapper.getMessagingClient().closeConnection();
+		this.manager.messagingMngr().sendMessage( ma, new Instance(), new MsgCmdSendInstances());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		this.manager.stop();
-		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
+		this.manager.messagingMngr().sendMessage( ma, new Instance(), new MsgCmdSendInstances());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 	}
@@ -760,9 +619,12 @@ public class Manager_BasicsTest {
 	@Test
 	public void testSendWhenInvalidConfiguration() throws Exception {
 
-		ManagedApplication ma = new ManagedApplication( new TestApplication());
 		this.manager = new Manager();
-		this.manager.send( ma, new MsgCmdSendInstances(), new Instance());
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+
+		ManagedApplication ma = new ManagedApplication( new TestApplication());
+		this.manager.messagingMngr().sendMessage( ma, new Instance(), new MsgCmdSendInstances());
+		// No exception
 	}
 
 
@@ -775,7 +637,7 @@ public class Manager_BasicsTest {
 
 		this.msgClient.connected.set( true );
 		this.msgClient.failMessageSending.set( true );
-		this.manager.send( ma, new MsgCmdSendInstances(), app.getMySqlVm());
+		this.manager.messagingMngr().sendMessage( ma, app.getMySqlVm(), new MsgCmdSendInstances());
 	}
 
 
@@ -785,18 +647,18 @@ public class Manager_BasicsTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.manager.resynchronizeAgents( ma );
+		this.manager.instancesMngr().resynchronizeAgents( ma );
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
-		this.manager.resynchronizeAgents( ma );
+		this.manager.instancesMngr().resynchronizeAgents( ma );
 		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
 		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.sentMessages.get( 0 ).getClass());
 
 		this.msgClient.sentMessages.clear();
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.manager.resynchronizeAgents( ma );
+		this.manager.instancesMngr().resynchronizeAgents( ma );
 		Assert.assertEquals( 2, this.msgClient.sentMessages.size());
 		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.sentMessages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.sentMessages.get( 1 ).getClass());
@@ -809,11 +671,11 @@ public class Manager_BasicsTest {
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 
-		this.manager.getMessagingClient().closeConnection();
+		this.managerWrapper.getMessagingClient().closeConnection();
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		this.manager.resynchronizeAgents( ma );
+		this.manager.instancesMngr().resynchronizeAgents( ma );
 	}
 
 
@@ -826,62 +688,8 @@ public class Manager_BasicsTest {
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		this.manager = new Manager();
-		this.manager.resynchronizeAgents( ma );
-	}
-
-
-	@Test
-	public void testExtensibilityNotifications_targets() {
-
-		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
-		this.manager.targetAppears( null );
-		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
-		this.manager.targetAppears( new TargetHandlerMock( "hey" ));
-		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
-		this.manager.targetDisappears( new TargetHandlerMock( "hey" ));
-		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
-
-		this.manager.targetDisappears( new TargetHandlerMock( "ho" ));
-		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
-
-		this.manager.targetDisappears( null );
-		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
-
-		this.manager.targetAppears( new TargetHandlerMock( "oops" ));
-		Assert.assertEquals( 1, this.manager.getTargetHandlers().size());
-
-		this.manager.targetAppears( new TargetHandlerMock( "new_oops" ));
-		Assert.assertEquals( 2, this.manager.getTargetHandlers().size());
-	}
-
-
-	@Test
-	public void testExtensibilityNotifications_listeners() {
-		this.manager.dmListeners.clear();
-
-		Assert.assertEquals( 0, this.manager.getDmListeners().size());
-		this.manager.listenerAppears( null );
-		Assert.assertEquals( 0, this.manager.getDmListeners().size());
-
-		IDmListener mock1 = Mockito.mock( IDmListener.class );
-		Mockito.when( mock1.getId()).thenReturn( "mock1" );
-
-		this.manager.listenerAppears( mock1 );
-		Assert.assertEquals( 1, this.manager.getDmListeners().size());
-		this.manager.listenerDisappears( mock1 );
-		Assert.assertEquals( 0, this.manager.getDmListeners().size());
-
-		this.manager.listenerDisappears( Mockito.mock( IDmListener.class ));
-		Assert.assertEquals( 0, this.manager.getTargetHandlers().size());
-
-		this.manager.listenerDisappears( null );
-		Assert.assertEquals( 0, this.manager.getDmListeners().size());
-
-		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
-		Assert.assertEquals( 1, this.manager.getDmListeners().size());
-
-		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
-		Assert.assertEquals( 2, this.manager.getDmListeners().size());
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.manager.instancesMngr().resynchronizeAgents( ma );
 	}
 
 
@@ -890,7 +698,7 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		this.msgClient.sentMessages.clear();
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
@@ -898,7 +706,7 @@ public class Manager_BasicsTest {
 		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( app.getName(), app.getMySqlVm(), "192.168.1.45" );
 		msg.setModelRequired( true );
 
-		this.manager.getMessagingClient().getMessageProcessor().storeMessage( msg );
+		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
 		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
 
@@ -913,7 +721,7 @@ public class Manager_BasicsTest {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		this.msgClient.sentMessages.clear();
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
@@ -922,14 +730,14 @@ public class Manager_BasicsTest {
 		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( app.getName(), app.getWar(), "192.168.1.45" );
 		msg.setModelRequired( true );
 
-		this.manager.getMessagingClient().getMessageProcessor().storeMessage( msg );
+		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		// Let's try again, but we change the WAR installer
 		app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
 
-		this.manager.getMessagingClient().getMessageProcessor().storeMessage( msg );
+		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
 		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
 
@@ -943,57 +751,39 @@ public class Manager_BasicsTest {
 	public void applicationsShouldBeDeletedEvenWhenNoMessagingServer() throws Exception {
 
 		this.manager = new Manager();
+		this.managerWrapper = new TestManagerWrapper( this.manager );
 
 		TestApplication app = new TestApplication();
 		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
 
 		try {
-			this.manager.checkConfiguration();
+			this.manager.messagingMngr().checkMessagingConfiguration();
 			Assert.fail( "An exception should have been thrown, there is no messaging server in this test!" );
 
 		} catch( Exception e ) {
 			// ignore
 		}
 
-		this.manager.deleteApplication( ma );
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
+		this.manager.applicationMngr().deleteApplication( ma );
+		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
 	}
 
 
 	@Test
 	public void testSomeGetters() throws Exception {
 
-		Assert.assertEquals( 0, this.manager.getRawApplicationTemplates().size());
-		Assert.assertNull( this.manager.findApplicationByName( "invalid" ));
+		Assert.assertEquals( 0, this.manager.applicationTemplateMngr().getApplicationTemplates().size());
+		Assert.assertNull( this.manager.applicationMngr().findApplicationByName( "invalid" ));
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		Assert.assertEquals( app, this.manager.findApplicationByName( app.getName()));
-	}
-
-
-	@Test
-	public void testFindIconFromPath() throws Exception {
-
-		File appDir = ConfigurationUtils.findApplicationDirectory( "app", this.manager.configurationDirectory );
-		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
-		Assert.assertTrue( descDir.mkdirs());
-
-		File trickFile = new File( descDir, "directory.jpg" );
-		Assert.assertTrue( trickFile.mkdirs());
-		Assert.assertNull( this.manager.findIconFromPath( "/app/whatever.jpg" ));
-
-		File singleJpgFile = new File( descDir, "whatever.jpg" );
-		Assert.assertTrue( singleJpgFile.createNewFile());
-		Assert.assertEquals( singleJpgFile, this.manager.findIconFromPath( "/app/whatever.jpg" ));
-		Assert.assertEquals( singleJpgFile, this.manager.findIconFromPath( "/app/whatever.png" ));
-		Assert.assertEquals( singleJpgFile, this.manager.findIconFromPath( "/app/whatever.cool" ));
+		Assert.assertEquals( app, this.manager.applicationMngr().findApplicationByName( app.getName()));
 	}
 }

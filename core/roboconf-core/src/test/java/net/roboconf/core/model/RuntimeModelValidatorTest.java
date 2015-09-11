@@ -673,10 +673,11 @@ public class RuntimeModelValidatorTest {
 		File componentDir = new File( appDir, Constants.PROJECT_DIR_GRAPH + "/VM" );
 		Assert.assertTrue( componentDir.mkdirs());
 
+		// No target.properties => no error
 		errors = RuntimeModelValidator.validate( graphs, appDir );
-		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.PROJ_NO_TARGET_PROPERTIES, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( 0, errors.size());
 
+		// A target.properties is present => no error
 		File targetPropertiesFile = new File( componentDir, Constants.TARGET_PROPERTIES_FILE_NAME );
 		Assert.assertTrue( targetPropertiesFile.createNewFile());
 		errors = RuntimeModelValidator.validate( graphs, appDir );

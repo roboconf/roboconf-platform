@@ -64,7 +64,7 @@ public class IconServlet extends HttpServlet {
 	throws ServletException, IOException {
 
 		this.logger.finer( "An icon was requested for " + req.getPathInfo());
-		File f = this.manager.findIconFromPath( req.getPathInfo());
+		File f = this.manager.configurationMngr().findIconFromPath( req.getPathInfo());
 		if( f == null ) {
 			resp.setStatus( HttpServletResponse.SC_NOT_FOUND );
 

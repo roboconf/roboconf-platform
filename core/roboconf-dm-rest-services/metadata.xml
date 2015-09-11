@@ -6,8 +6,8 @@
 
 	<!-- Servlets registration -->
 	<component classname="net.roboconf.dm.rest.services.internal.ServletRegistrationComponent" name="roboconf-dm-rest-component" immediate="true" public="false">
-		<requires field="manager" />
-		<requires field="httpService" />
+		<requires field="manager" optional="false" />
+		<requires field="httpService" optional="false" />
 		<callback transition="validate" method="starting" />
 		<callback transition="invalidate" method="stopping" />
 	</component>

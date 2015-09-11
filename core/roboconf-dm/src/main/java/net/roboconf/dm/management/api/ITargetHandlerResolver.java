@@ -23,53 +23,37 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management;
+package net.roboconf.dm.management.api;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 /**
- * An interface to define how we resolve deployment targetHandlers handlers.
+ * An interface to define how we resolve deployment handlers.
+ * <p>
+ * This interface was defined to easily mock targets (e.g. cloud infrastructures)
+ * for tests. We can thus easily inject any target handler.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-public interface ITargetResolver {
+public interface ITargetHandlerResolver {
 
 	/**
-	 * Finds the right target handler for a given instance.
-	 * @param targetHandlers the list of available target handlers (can be null)
-	 * @param ma the managed application
-	 * @param instance the (root) instance associated with a deployment target
+	 * Finds the right target handler based on properties.
+	 * @param targetProperties a non-null map of target properties
 	 * @return a handler for a deployment target
 	 * @throws TargetException if no handler was found
 	 */
-	Target findTargetHandler( List<TargetHandler> targetHandlers, ManagedApplication ma, Instance instance )
-	throws TargetException;
+	TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException;
 
 
 	/**
-	 * @author Vincent Zurczak - Linagora
+	 * Finds a target handler by its ID.
+	 * @param id a string (can be null)
+	 * @return a target handler, or null if none was found
 	 */
-	public static class Target {
-		private final TargetHandler targetHandler;
-		private final Map<String,String> targetProperties = new HashMap<String,String>( 0 );
-
-		public Target( TargetHandler targetHandler, Map<String,String> targetProperties ) {
-			this.targetHandler = targetHandler;
-			if( targetProperties != null )
-				this.targetProperties.putAll( targetProperties );
-		}
-
-		public TargetHandler getHandler() {
-			return targetHandler;
-		}
-
-		public Map<String,String> getProperties() {
-			return targetProperties;
-		}
-	}
+	TargetHandler findTargetHandlerById( String id );
 }

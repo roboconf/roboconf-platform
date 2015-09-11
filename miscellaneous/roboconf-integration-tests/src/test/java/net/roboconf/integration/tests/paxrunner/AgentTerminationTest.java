@@ -102,22 +102,22 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
-		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
 		Instance app = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/App VM/App" );
 		Assert.assertNotNull( mysql );
 		Assert.assertNotNull( app );
 
-		this.manager.changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
-		this.manager.changeInstanceState( ma, app.getParent(), InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, app.getParent(), InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 800 );
 
-		this.manager.changeInstanceState( ma, mysql, InstanceStatus.DEPLOYED_STARTED );
-		this.manager.changeInstanceState( ma, app, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, mysql, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, app, InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 300 );
 
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
@@ -126,7 +126,7 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getStatus());
 
 		// Kill the VM of MySQL. The App should be "unresolved" because one of its dependencies is missing.
-		this.manager.changeInstanceState( ma, mysql.getParent(), InstanceStatus.NOT_DEPLOYED );
+		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.NOT_DEPLOYED );
 		Thread.sleep( 300 );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getStatus());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getParent().getStatus());
@@ -134,7 +134,7 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getStatus());
 
 		// Undeploy them all
-		this.manager.undeployAll( ma, null );
+		this.manager.instancesMngr().undeployAll( ma, null );
 		Thread.sleep( 300 );
 		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication()))
 			Assert.assertEquals( inst.getName(), InstanceStatus.NOT_DEPLOYED, inst.getStatus());

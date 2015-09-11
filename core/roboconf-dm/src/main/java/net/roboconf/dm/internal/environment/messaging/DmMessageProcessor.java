@@ -35,7 +35,6 @@ import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.api.client.IDmClient;
@@ -61,7 +60,6 @@ import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
-	private final ApplicationMngrDelegate appManager;
 	private final Manager manager;
 	private final RuleBasedEventHandler ruleBasedHandler;
 
@@ -69,11 +67,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	/**
 	 * Constructor.
 	 * @param manager
-	 * @param appManager
 	 */
-	public DmMessageProcessor( Manager manager, ApplicationMngrDelegate appManager ) {
+	public DmMessageProcessor( Manager manager ) {
 		super( "Roboconf DM - Message Processor" );
-		this.appManager = appManager;
 		this.manager = manager;
 		this.ruleBasedHandler = new RuleBasedEventHandler( this.manager );
 	}
@@ -103,7 +99,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			processMsgMonitoringEvent((MsgNotifAutonomic) message );
 
 		else if( message instanceof MsgEcho )
-			this.manager.notifyMsgEchoReceived((MsgEcho) message );
+			this.manager.debugMngr().notifyMsgEchoReceived((MsgEcho) message );
 
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
@@ -113,7 +109,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifMachineDown( MsgNotifMachineDown message ) {
 
 		String scopedInstancePath = message.getScopedInstancePath();
-		Application app = this.appManager.findApplicationByName( message.getApplicationName());
+		Application app = this.manager.applicationMngr().findApplicationByName( message.getApplicationName());
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( app, scopedInstancePath );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -140,7 +136,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifHeartbeat( MsgNotifHeartbeat message ) {
 
 		String scopedInstancePath = message.getScopedInstancePath();
-		ManagedApplication ma = this.appManager.findManagedApplicationByName( message.getApplicationName());
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( message.getApplicationName());
 		Application app = ma == null ? null : ma.getApplication();
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( app, scopedInstancePath );
 
@@ -169,7 +165,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			if( scopedInstance.data.get( Instance.IP_ADDRESS ) == null ) {
 				this.logger.fine( scopedInstancePath + " @ " + ipAddress + " is up and running." );
 				scopedInstance.data.put( Instance.IP_ADDRESS, ipAddress );
-				this.manager.instanceWasUpdated( scopedInstance, ma );
+				this.manager.instancesMngr().instanceWasUpdated( scopedInstance, ma );
 			}
 
 			ma.acknowledgeHeartBeat( scopedInstance );
@@ -193,7 +189,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifInstanceChanged( MsgNotifInstanceChanged message ) {
 
 		String instancePath = message.getInstancePath();
-		ManagedApplication ma = this.appManager.findManagedApplicationByName( message.getApplicationName());
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( message.getApplicationName());
 		Application app = ma == null ? null : ma.getApplication();
 		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
 
@@ -233,7 +229,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			this.logger.fine( sb.toString());
 
 			// Notify the changes!
-			this.manager.instanceWasUpdated( instance, ma );
+			this.manager.instancesMngr().instanceWasUpdated( instance, ma );
 		}
 	}
 
@@ -241,7 +237,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private void processMsgNotifInstanceRemoved( MsgNotifInstanceRemoved message ) {
 
 		String instancePath = message.getInstancePath();
-		Application app = this.appManager.findApplicationByName( message.getApplicationName());
+		Application app = this.manager.applicationMngr().findApplicationByName( message.getApplicationName());
 		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
 
 		// If 'app' is null, then 'instance' is also null.
@@ -267,7 +263,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private void processMsgMonitoringEvent( MsgNotifAutonomic message ) {
 
-		Application app = this.appManager.findApplicationByName( message.getApplicationName());
+		Application app = this.manager.applicationMngr().findApplicationByName( message.getApplicationName());
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( app, message.getScopedInstancePath());
 
 		// If 'app' is null, then 'instance' is also null.
@@ -281,7 +277,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			this.logger.warning( sb.toString());
 
 		} else {
-			ManagedApplication ma = this.appManager.findManagedApplicationByName( app.getName());
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app.getName());
 			this.ruleBasedHandler.handleEvent( ma, message );
 		}
 	}

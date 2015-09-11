@@ -86,14 +86,14 @@ public class ApplicationResource implements IApplicationResource {
 			if( ! InstanceStatus.isValidState( newState ))
 				response = Response.status( Status.FORBIDDEN ).entity( "Status '" + newState + "' does not exist." ).build();
 
-			else if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null )
+			else if(( ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName )) == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
 
 			else
-				this.manager.changeInstanceState( ma, instance, InstanceStatus.whichStatus( newState ));
+				this.manager.instancesMngr().changeInstanceState( ma, instance, InstanceStatus.whichStatus( newState ));
 
 		} catch( IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
@@ -119,13 +119,12 @@ public class ApplicationResource implements IApplicationResource {
 
 		this.logger.fine( "Request: changing the description of " + applicationName + "." );
 		Response response = Response.ok().build();
-		ManagedApplication ma;
-
 		try {
-			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null )
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 			else
-				this.manager.updateApplication( ma, desc );
+				this.manager.applicationMngr().updateApplication( ma, desc );
 
 		} catch( IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
@@ -145,12 +144,13 @@ public class ApplicationResource implements IApplicationResource {
 
 		this.logger.fine( "Request: deploy and start instances in " + applicationName + ", from instance = " + instancePath + "." );
 		Response response;
-		ManagedApplication ma;
 		try {
-			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null ) {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 			} else {
-				this.manager.deployAndStartAll( ma, InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath ));
+				Instance instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath );
+				this.manager.instancesMngr().deployAndStartAll( ma, instance );
 				response = Response.ok().build();
 			}
 
@@ -172,12 +172,13 @@ public class ApplicationResource implements IApplicationResource {
 
 		this.logger.fine( "Request: stop instances in " + applicationName + ", from instance = " + instancePath + "." );
 		Response response;
-		ManagedApplication ma;
 		try {
-			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null ) {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 			} else {
-				this.manager.stopAll( ma, InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath ));
+				Instance instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath );
+				this.manager.instancesMngr().stopAll( ma, instance );
 				response = Response.ok().build();
 			}
 
@@ -199,12 +200,13 @@ public class ApplicationResource implements IApplicationResource {
 
 		this.logger.fine( "Request: deploy and start instances in " + applicationName + ", from instance = " + instancePath + "." );
 		Response response;
-		ManagedApplication ma;
 		try {
-			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null ) {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 			} else {
-				this.manager.undeployAll( ma, InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath ));
+				Instance instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath );
+				this.manager.instancesMngr().undeployAll( ma, instance );
 				response = Response.ok().build();
 			}
 
@@ -225,7 +227,7 @@ public class ApplicationResource implements IApplicationResource {
 	public List<Instance> listChildrenInstances( String applicationName, String instancePath, boolean allChildren ) {
 
 		List<Instance> result = new ArrayList<Instance> ();
-		Application app = this.manager.findApplicationByName( applicationName );
+		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 
 		// Log
 		if( instancePath == null )
@@ -273,8 +275,8 @@ public class ApplicationResource implements IApplicationResource {
 
 		Response response;
 		try {
-			ManagedApplication ma;
-			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null ) {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			} else {
@@ -297,9 +299,9 @@ public class ApplicationResource implements IApplicationResource {
 				} else {
 					instance.setComponent( realComponent );
 					InstanceHelpers.fixOverriddenExports( instance );
-					
+
 					Instance parentInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), parentInstancePath );
-					this.manager.addInstance( ma, parentInstance, instance );
+					this.manager.instancesMngr().addInstance( ma, parentInstance, instance );
 					response = Response.ok().build();
 				}
 			}
@@ -327,15 +329,15 @@ public class ApplicationResource implements IApplicationResource {
 		Response response = Response.ok().build();
 		Instance instance;
 		try {
-			ManagedApplication ma;
-			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null )
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " was not found." ).build();
 
 			else
-				this.manager.removeInstance( ma, instance );
+				this.manager.instancesMngr().removeInstance( ma, instance );
 
 		} catch( UnauthorizedActionException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
@@ -359,11 +361,11 @@ public class ApplicationResource implements IApplicationResource {
 		this.logger.fine( "Request: resynchronize all the agents." );
 		Response response = Response.ok().build();
 		try {
-			ManagedApplication ma;
-			if(( ma = this.manager.getNameToManagedApplication().get( applicationName )) == null )
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 			else
-				this.manager.resynchronizeAgents( ma );
+				this.manager.instancesMngr().resynchronizeAgents( ma );
 
 		} catch( IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.NOT_ACCEPTABLE, null, e ).build();
@@ -383,7 +385,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		this.logger.fine( "Request: list components for the application " + applicationName + "." );
 		List<Component> result = new ArrayList<Component> ();
-		Application app = this.manager.findApplicationByName( applicationName );
+		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( app != null )
 			result.addAll( ComponentHelpers.findAllComponents( app ));
 
@@ -405,7 +407,7 @@ public class ApplicationResource implements IApplicationResource {
 			this.logger.fine( "Request: find components that can be deployed under a " + componentName + " component in " + applicationName + "." );
 
 		List<Component> result = new ArrayList<Component> ();
-		Application app = this.manager.findApplicationByName( applicationName );
+		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( app != null ) {
 			Component comp;
 			if( componentName == null )
@@ -431,7 +433,7 @@ public class ApplicationResource implements IApplicationResource {
 		this.logger.fine( "Request: find components where a " + componentName + " component could be deployed on, in " + applicationName + "." );
 		List<Component> result = new ArrayList<Component> ();
 
-		Application app = this.manager.findApplicationByName( applicationName );
+		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( app != null ) {
 			Component comp = ComponentHelpers.findComponent( app.getTemplate().getGraphs(), componentName );
 			if( comp != null )

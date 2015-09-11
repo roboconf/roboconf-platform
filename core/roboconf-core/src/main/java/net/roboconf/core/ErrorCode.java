@@ -149,7 +149,6 @@ public enum ErrorCode {
 	PROJ_READ_DESC_FILE( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application's descriptor could not be read." ),
 	PROJ_INVALID_EXTERNAL_EXPORTS( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Invalid external exports were found in the application's descriptor." ),
 	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource (recipe) directory." ),
-	PROJ_NO_TARGET_PROPERTIES( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A root component does not have a target.properties file in its resources." ),
 	PROJ_APPLICATION_TEMPLATE_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application template was not found." ),
 
 	// Recipes Errors

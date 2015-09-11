@@ -96,7 +96,7 @@ public class DebugResource implements IDebugResource {
 	public Response createTestForTargetProperties( InputStream uploadedInputStream, FormDataContentDisposition fileDetail ) {
 
 		this.logger.fine( "Creating a fake application to test a target.properties file." );
-		ManagedApplication ma = this.manager.getNameToManagedApplication().get( FAKE_APP_NAME );
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( FAKE_APP_NAME );
 		Response response = null;
 		File tmpDir = null;
 		String fileContent = null;
@@ -112,8 +112,8 @@ public class DebugResource implements IDebugResource {
 				tmpDir = new File( System.getProperty( "java.io.tmpdir" ), UUID.randomUUID().toString());
 				Utils.createDirectory( tmpDir );
 				createApplication( tmpDir, fileContent );
-				ApplicationTemplate tpl = this.manager.loadApplicationTemplate( tmpDir );
-				this.manager.createApplication( FAKE_APP_NAME, tpl.getDescription(), tpl );
+				ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( tmpDir );
+				this.manager.applicationMngr().createApplication( FAKE_APP_NAME, tpl.getDescription(), tpl );
 			}
 
 			// Is this our application?
@@ -167,7 +167,7 @@ public class DebugResource implements IDebugResource {
 		this.logger.fine( "Checking connection to the message queue. message=" + message );
 		Response response;
 		try {
-			this.manager.pingMessageQueue( message );
+			this.manager.debugMngr().pingMessageQueue( message );
 			response = Response.status( Status.OK ).entity( "An Echo message (" + message + ") was sent. Wait for the echo on websocket." ).build();
 
 		} catch ( IOException e ) {
@@ -193,14 +193,14 @@ public class DebugResource implements IDebugResource {
 		Response response = Response.status( Status.OK ).entity( "An Echo message (" + message + ") was sent. Wait for the echo on websocket." ).build();
 		String responseMessage;
 		try {
-			final Application application = this.manager.findApplicationByName( applicationName );
+			final ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			final Instance instance;
-			if( application == null )
+			if( ma == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "No application called " + applicationName + " was found." ).build();
-			else if(( instance = InstanceHelpers.findInstanceByPath( application, scopedInstancePath )) == null )
+			else if(( instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), scopedInstancePath )) == null )
 				response = Response .status( Status.NOT_FOUND ).entity( "Instance " + scopedInstancePath + " was not found in application " + applicationName ).build();
 			else
-				this.manager.pingAgent( application, instance, message );
+				this.manager.debugMngr().pingAgent( ma, instance, message );
 
 		} catch ( IOException e ) {
 			responseMessage = "Unable to ping agent " + scopedInstancePath + " with message " + message;
@@ -219,7 +219,7 @@ public class DebugResource implements IDebugResource {
 	public Response diagnoseInstance( String applicationName, String instancePath ) {
 
 		this.logger.fine( "Creating a diagnostic for " + instancePath + " in application " + applicationName );
-		final Application application = this.manager.findApplicationByName( applicationName );
+		final Application application = this.manager.applicationMngr().findApplicationByName( applicationName );
 		final Instance instance;
 		final Response response;
 
@@ -244,7 +244,7 @@ public class DebugResource implements IDebugResource {
 
 		this.logger.fine( "Creating a diagnostic for the application called " + applicationName + "." );
 		List<Diagnostic> result = new ArrayList<Diagnostic> ();
-		final Application application = this.manager.findApplicationByName( applicationName );
+		final Application application = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( application != null ) {
 			for( Instance inst : InstanceHelpers.getAllInstances( application ))
 				result.add( createDiagnostic( inst ));

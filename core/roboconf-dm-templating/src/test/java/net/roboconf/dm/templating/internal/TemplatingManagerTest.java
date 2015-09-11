@@ -35,6 +35,7 @@ import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.EventType;
@@ -110,7 +111,8 @@ public class TemplatingManagerTest {
 
 		// Create a new application
 		TestApplication app = new TestApplication();
-		dm.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		TestManagerWrapper managerWrapper = new TestManagerWrapper( dm );
+		managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 
 		mngr.application( app, EventType.CREATED );
 		Thread.sleep( 700 );

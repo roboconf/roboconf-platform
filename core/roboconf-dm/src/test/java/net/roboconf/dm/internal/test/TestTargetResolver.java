@@ -26,30 +26,28 @@
 package net.roboconf.dm.internal.test;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.dm.internal.environment.target.TargetResolver;
-import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TestTargetResolver extends TargetResolver {
+public class TestTargetResolver extends TargetHandlerResolverImpl {
 
-	public final Map<Instance,Boolean> instanceToRunningStatus = new HashMap<> ();
-	public final Map<Instance,Integer> instanceToRequestsCount = new HashMap<> ();
+	public final Map<String,Boolean> instancePathToRunningStatus = new HashMap<> ();
+	public final Map<String,Integer> instancePathToRequestsCount = new HashMap<> ();
 
 
 	@Override
-	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, final Instance instance )
+	public TargetHandler findTargetHandler( Map<String,String> targetProperties )
 	throws TargetException {
 
 		TargetHandler handler = new TargetHandler() {
-
 			@Override
 			public String getTargetId() {
 				return "test";
@@ -59,17 +57,17 @@ public class TestTargetResolver extends TargetResolver {
 			public String createMachine(
 					Map<String,String> targetProperties,
 					Map<String,String> messagingConfiguration,
-					String rootInstanceName,
+					String scopedInstancePath,
 					String applicationName )
 			throws TargetException {
 
-				TestTargetResolver.this.instanceToRunningStatus.put( instance, Boolean.TRUE );
-				Integer cpt = TestTargetResolver.this.instanceToRequestsCount.get( instance );
+				TestTargetResolver.this.instancePathToRunningStatus.put( scopedInstancePath, Boolean.TRUE );
+				Integer cpt = TestTargetResolver.this.instancePathToRequestsCount.get( scopedInstancePath );
 				if( cpt == null )
 					cpt = 0;
 
-				TestTargetResolver.this.instanceToRequestsCount.put( instance, ++ cpt );
-				return "generated machine id for " + rootInstanceName;
+				TestTargetResolver.this.instancePathToRequestsCount.put( scopedInstancePath, ++ cpt );
+				return scopedInstancePath;
 			}
 
 
@@ -90,18 +88,32 @@ public class TestTargetResolver extends TargetResolver {
 			public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
 			throws TargetException {
 
-				Boolean running = TestTargetResolver.this.instanceToRunningStatus.get( instance );
-				return running != null && running;
+				// In this handler, the machine ID is the scoped instance's path
+				Boolean running = TestTargetResolver.this.instancePathToRunningStatus.get( machineId );
+				return running != null && running.booleanValue();
 			}
 
 			@Override
 			public void terminateMachine( Map<String,String> targetProperties, String machineId )
 			throws TargetException {
 
-				TestTargetResolver.this.instanceToRunningStatus.put( instance, Boolean.FALSE );
+				// In this handler, the machine ID is the scoped instance's path
+				TestTargetResolver.this.instancePathToRunningStatus.put( machineId, Boolean.FALSE );
 			}
 		};
 
-		return new Target( handler, new HashMap<String,String>( 0 ));
+		return handler;
+	}
+
+
+	public Boolean isRunning( Instance inst ) {
+		String path = InstanceHelpers.computeInstancePath( inst );
+		return this.instancePathToRunningStatus.get( path );
+	}
+
+
+	public Integer count( Instance inst ) {
+		String path = InstanceHelpers.computeInstancePath( inst );
+		return this.instancePathToRequestsCount.get( path );
 	}
 }

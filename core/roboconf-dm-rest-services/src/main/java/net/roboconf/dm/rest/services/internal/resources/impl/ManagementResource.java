@@ -122,7 +122,7 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: load application from " + localFilePath + "." );
 		Response response;
 		try {
-			ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( localFilePath ));
+			ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( localFilePath ));
 			response = Response.ok().entity( tpl ).build();
 
 		} catch( AlreadyExistingException e ) {
@@ -149,7 +149,7 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: list all the application templates." );
 
 		List<ApplicationTemplate> result = new ArrayList<ApplicationTemplate> ();
-		result.addAll( this.manager.getApplicationTemplates());
+		result.addAll( this.manager.applicationTemplateMngr().getApplicationTemplates());
 
 		return result;
 	}
@@ -167,7 +167,7 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: delete application template " + id + "." );
 		Response result = Response.ok().build();
 		try {
-			this.manager.deleteApplicationTemplate( tplName, tplQualifier );
+			this.manager.applicationTemplateMngr().deleteApplicationTemplate( tplName, tplQualifier );
 
 		} catch( InvalidApplicationException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, "Application template " + id + " was not found.", e ).build();
@@ -196,7 +196,7 @@ public class ManagementResource implements IManagementResource {
 		try {
 			String tplName = app.getTemplate() == null ? null : app.getTemplate().getName();
 			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getQualifier();
-			ManagedApplication ma = this.manager.createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
+			ManagedApplication ma = this.manager.applicationMngr().createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
 			result = Response.ok().entity( ma.getApplication()).build();
 
 		} catch( InvalidApplicationException e ) {
@@ -222,7 +222,7 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: list all the applications." );
 
 		List<Application> result = new ArrayList<Application> ();
-		for( ManagedApplication ma : this.manager.getNameToManagedApplication().values())
+		for( ManagedApplication ma : this.manager.applicationMngr().getManagedApplications())
 			result.add( ma.getApplication());
 
 		return result;
@@ -239,11 +239,11 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: delete application " + applicationName + "." );
 		Response result = Response.ok().build();
 		try {
-			ManagedApplication ma = this.manager.getNameToManagedApplication().get( applicationName );
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null )
 				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
 			else
-				this.manager.deleteApplication( ma );
+				this.manager.applicationMngr().deleteApplication( ma );
 
 		} catch( UnauthorizedActionException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be deleted.", e ).build();
@@ -267,11 +267,11 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: shutdown application " + applicationName + "." );
 		Response result = Response.ok().build();
 		try {
-			ManagedApplication ma = this.manager.getNameToManagedApplication().get( applicationName );
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null )
 				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
 			else
-				this.manager.undeployAll( ma, null );
+				this.manager.instancesMngr().undeployAll( ma, null );
 
 		} catch( Exception e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be shutdown.", e ).build();

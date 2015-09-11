@@ -27,8 +27,8 @@ package net.roboconf.dm.internal.environment.messaging;
 
 import java.io.IOException;
 
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
@@ -38,16 +38,16 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
  */
 public class RCDm extends ReconfigurableClientDm {
 
-	private final ApplicationMngrDelegate appManager;
+	private final IApplicationMngr applicationMngr;
 
 
 	/**
 	 * Constructor.
 	 * @param appManager
 	 */
-	public RCDm( ApplicationMngrDelegate appManager ) {
+	public RCDm( IApplicationMngr applicationMngr ) {
 		super();
-		this.appManager = appManager;
+		this.applicationMngr = applicationMngr;
 	}
 
 
@@ -59,7 +59,7 @@ public class RCDm extends ReconfigurableClientDm {
 	@Override
 	protected void openConnection( IDmClient newMessagingClient ) throws IOException {
 		super.openConnection( newMessagingClient );
-		for( ManagedApplication ma : this.appManager.getManagedApplications())
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
 			newMessagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 	}
 }

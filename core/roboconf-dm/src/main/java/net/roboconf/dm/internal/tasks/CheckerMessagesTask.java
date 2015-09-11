@@ -33,8 +33,8 @@ import java.util.logging.Logger;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
 
@@ -45,7 +45,7 @@ public class CheckerMessagesTask extends TimerTask {
 
 	private final Logger logger;
 	private final IDmClient messagingClient;
-	private final ApplicationMngrDelegate appManager;
+	private final IApplicationMngr appManager;
 
 
 	/**
@@ -53,7 +53,7 @@ public class CheckerMessagesTask extends TimerTask {
 	 * @param appManager
 	 * @param messagingClient
 	 */
-	public CheckerMessagesTask( ApplicationMngrDelegate appManager, IDmClient messagingClient ) {
+	public CheckerMessagesTask( IApplicationMngr appManager, IDmClient messagingClient ) {
 		this.appManager = appManager;
 		this.messagingClient = messagingClient;
 		this.logger = Logger.getLogger( getClass().getName());

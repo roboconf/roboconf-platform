@@ -112,7 +112,7 @@ public class TemplatingManager implements IDmListener {
 
 		// Generate the files
 		if( this.outputDIR != null && this.dm != null ) {
-			for( ManagedApplication ma : this.dm.getNameToManagedApplication().values())
+			for( ManagedApplication ma : this.dm.applicationMngr().getManagedApplications())
 				application( ma.getApplication(), EventType.CHANGED );
 		}
 	}
@@ -273,7 +273,7 @@ public class TemplatingManager implements IDmListener {
 	public void processNewTemplates( Collection<TemplateEntry> newTemplates ) {
 
 		if( this.dm != null ) {
-			for( ManagedApplication ma : this.dm.getNameToManagedApplication().values()) {
+			for( ManagedApplication ma : this.dm.applicationMngr().getManagedApplications()) {
 				Collection<TemplateEntry> filteredTemplates = TemplateUtils.findTemplatesForApplication( ma.getName(), newTemplates );
 				generate( ma.getApplication(), filteredTemplates );
 			}

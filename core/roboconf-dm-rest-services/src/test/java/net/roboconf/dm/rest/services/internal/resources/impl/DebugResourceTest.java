@@ -38,7 +38,6 @@ import javax.ws.rs.core.Response.Status;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -47,17 +46,16 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.environment.target.TargetHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
+import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
@@ -77,27 +75,28 @@ public class DebugResourceTest {
 	public TemporaryFolder folder = new TemporaryFolder();
 
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private TestClientDm msgClient;
 	private DebugResource resource;
-	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void initializeDm() throws Exception {
-		this.registry.addMessagingClientFactory(new TestClientFactory());
 
+		// Create the manager
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-		// Get the internal client
-		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		// Get the messaging client
+		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
 		this.msgClient.sentMessages.clear();
 
 		// Register the REST resource
@@ -133,13 +132,13 @@ public class DebugResourceTest {
 	@Test
 	public void testCreateTestForTargetProperties_successfulCreation() throws Exception {
 
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
 		InputStream in = new ByteArrayInputStream( "target.id = whatever".getBytes( "UTF-8" ));
 		Response resp = this.resource.createTestForTargetProperties( in, null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
-		ManagedApplication ma = this.manager.getNameToManagedApplication().get( IDebugResource.FAKE_APP_NAME );
+		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
+		ManagedApplication ma = this.managerWrapper.getNameToManagedApplication().get( IDebugResource.FAKE_APP_NAME );
 		Assert.assertNotNull( ma );
 
 		Assert.assertEquals( 1, ma.getApplication().getTemplate().getGraphs().getRootComponents().size());
@@ -157,8 +156,8 @@ public class DebugResourceTest {
 		Assert.assertEquals( 1, targetProperties.size());
 		Assert.assertEquals( "whatever", targetProperties.get( "target.id" ));
 
-		this.manager.deleteApplication( ma );
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
+		this.manager.applicationMngr().deleteApplication( ma );
+		Assert.assertEquals( 0, this.managerWrapper.getNameToManagedApplication().size());
 	}
 
 
@@ -166,13 +165,13 @@ public class DebugResourceTest {
 	public void testCreateTestForTargetProperties_successfulUpdate() throws Exception {
 
 		// Load an application once
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 0, this.manager.applicationMngr().getManagedApplications().size());
 		InputStream in = new ByteArrayInputStream( "target.id = whatever".getBytes( "UTF-8" ));
 		Response resp = this.resource.createTestForTargetProperties( in, null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
-		ManagedApplication ma = this.manager.getNameToManagedApplication().get( IDebugResource.FAKE_APP_NAME );
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( IDebugResource.FAKE_APP_NAME );
 		Instance rootInstance = ma.getApplication().getRootInstances().iterator().next();
 		Map<String,String> targetProperties = TargetHelpers.loadTargetProperties( ma.getTemplateDirectory(), rootInstance );
 
@@ -184,15 +183,15 @@ public class DebugResourceTest {
 		in = new ByteArrayInputStream( "target.id = something else".getBytes( "UTF-8" ));
 		resp = this.resource.createTestForTargetProperties( in, null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		targetProperties = TargetHelpers.loadTargetProperties( ma.getTemplateDirectory(), rootInstance );
 		Assert.assertNotNull( targetProperties );
 		Assert.assertEquals( 1, targetProperties.size());
 		Assert.assertEquals( "something else", targetProperties.get( "target.id" ));
 
-		this.manager.deleteApplication( ma );
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
+		this.manager.applicationMngr().deleteApplication( ma );
+		Assert.assertEquals( 0, this.manager.applicationMngr().getManagedApplications().size());
 	}
 
 
@@ -204,15 +203,15 @@ public class DebugResourceTest {
 		tpl.setGraphs( new Graphs());
 
 		Application app = new Application( IDebugResource.FAKE_APP_NAME, tpl );
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		InputStream in = new ByteArrayInputStream( "target.id = whatever".getBytes( "UTF-8" ));
 		Response resp = this.resource.createTestForTargetProperties( in, null );
 		Assert.assertEquals( Status.CONFLICT.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
-		ManagedApplication ma = this.manager.getNameToManagedApplication().get( IDebugResource.FAKE_APP_NAME );
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( IDebugResource.FAKE_APP_NAME );
 		Assert.assertEquals( 0, ma.getApplication().getRootInstances().size());
 	}
 
@@ -223,15 +222,15 @@ public class DebugResourceTest {
 		// Load a fake application - without a graph => NPE.
 		// Not supposed to happen at runtime because the validation runs first.
 		Application app = new Application( IDebugResource.FAKE_APP_NAME, new ApplicationTemplate());
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		InputStream in = new ByteArrayInputStream( "target.id = whatever".getBytes( "UTF-8" ));
 		Response resp = this.resource.createTestForTargetProperties( in, null );
 		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
-		ManagedApplication ma = this.manager.getNameToManagedApplication().get( IDebugResource.FAKE_APP_NAME );
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( IDebugResource.FAKE_APP_NAME );
 		Assert.assertEquals( 0, ma.getApplication().getRootInstances().size());
 	}
 
@@ -240,13 +239,13 @@ public class DebugResourceTest {
 	public void testCreateTestForTargetProperties_machineStillRunning() throws Exception {
 
 		// Load an application once
-		Assert.assertEquals( 0, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 0, this.manager.applicationMngr().getManagedApplications().size());
 		InputStream in = new ByteArrayInputStream( "target.id = whatever".getBytes( "UTF-8" ));
 		Response resp = this.resource.createTestForTargetProperties( in, null );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
-		ManagedApplication ma = this.manager.getNameToManagedApplication().get( IDebugResource.FAKE_APP_NAME );
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( IDebugResource.FAKE_APP_NAME );
 		Instance rootInstance = ma.getApplication().getRootInstances().iterator().next();
 
 		Map<String,String> targetProperties = TargetHelpers.loadTargetProperties(
@@ -258,7 +257,7 @@ public class DebugResourceTest {
 		Assert.assertEquals( "whatever", targetProperties.get( "target.id" ));
 
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYING, rootInstance.getStatus());
 
 		// Try to update the application - it should fail
@@ -272,7 +271,7 @@ public class DebugResourceTest {
 		Assert.assertEquals( "whatever", targetProperties.get( "target.id" ));
 
 		// Stop the root instance
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
+		this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
 		// Retry, it should work
@@ -288,11 +287,11 @@ public class DebugResourceTest {
 
 
 	@Test
-	public void testDiagnoseApplication() {
+	public void testDiagnoseApplication() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		List<Diagnostic> diags = this.resource.diagnoseApplication( "inexisting" );
 		Assert.assertEquals( 0, diags.size());
@@ -312,12 +311,12 @@ public class DebugResourceTest {
 
 
 	@Test
-	public void testDiagnoseInstance() {
+	public void testDiagnoseInstance() throws Exception {
 
 		TestApplication app = new TestApplication();
 		String path = InstanceHelpers.computeInstancePath( app.getWar());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Response resp = this.resource.diagnoseInstance( "inexisting", path );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
@@ -365,11 +364,11 @@ public class DebugResourceTest {
 
 
 	@Test
-	public void testCheckMessagingConnectionWithAgent_success() {
+	public void testCheckMessagingConnectionWithAgent_success() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		UUID uuid = UUID.randomUUID();
@@ -387,11 +386,11 @@ public class DebugResourceTest {
 
 
 	@Test
-	public void testCheckMessagingConnectionWithAgent_ioException() {
+	public void testCheckMessagingConnectionWithAgent_ioException() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		this.msgClient.failMessageSending.set( true );
@@ -406,11 +405,11 @@ public class DebugResourceTest {
 
 
 	@Test
-	public void testCheckMessagingConnectionWithAgent_invalidApplication() {
+	public void testCheckMessagingConnectionWithAgent_invalidApplication() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		UUID uuid = UUID.randomUUID();
@@ -423,11 +422,11 @@ public class DebugResourceTest {
 
 
 	@Test
-	public void testCheckMessagingConnectionWithAgent_invalidInstance() {
+	public void testCheckMessagingConnectionWithAgent_invalidInstance() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		UUID uuid = UUID.randomUUID();

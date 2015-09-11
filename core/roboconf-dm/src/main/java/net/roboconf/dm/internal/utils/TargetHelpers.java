@@ -23,12 +23,11 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.environment.target;
+package net.roboconf.dm.internal.utils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -38,13 +37,13 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.ITargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.ITargetHandlerResolver;
+import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
 
 /**
- * Utilities related to deployment targets.
+ * Utilities related to deployment targetsMngr.
  * @author Vincent Zurczak - Linagora
  */
 public final class TargetHelpers {
@@ -81,11 +80,14 @@ public final class TargetHelpers {
 
 	/**
 	 * Verifies that all the target handlers an application needs are installed.
-	 * @param targetResolver the DM's target resolver
+	 * @param targetHandlerResolver the DM's target resolver
 	 * @param ma a managed application
 	 * @param handlers a non-null list of handlers
 	 */
-	public static void verifyTargets( ITargetResolver targetResolver, ManagedApplication ma, List<TargetHandler> handlers ) {
+	public static void verifyTargets(
+			ITargetHandlerResolver targetHandlerResolver,
+			ManagedApplication ma,
+			ITargetsMngr targetsMngr ) {
 
 		Logger logger = Logger.getLogger( TargetHelpers.class.getName());
 		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication())) {
@@ -93,7 +95,9 @@ public final class TargetHelpers {
 				continue;
 
 			try {
-				targetResolver.findTargetHandler( handlers, ma, inst );
+				String path = InstanceHelpers.computeInstancePath( inst );
+				Map<String,String> targetProperties = targetsMngr.findTargetProperties( ma.getApplication(), path );
+				targetHandlerResolver.findTargetHandler( targetProperties );
 
 			} catch( TargetException e ) {
 				logger.warning( e.getMessage());

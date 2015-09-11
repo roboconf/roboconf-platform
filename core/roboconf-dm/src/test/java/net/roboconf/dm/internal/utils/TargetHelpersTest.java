@@ -23,17 +23,17 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.environment.target;
+package net.roboconf.dm.internal.utils;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -42,11 +42,15 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
+import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.ITargetsMngr;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -174,23 +178,22 @@ public class TargetHelpersTest {
 
 		// Test the validation. A log entry is created.
 		ManagedApplication ma = new ManagedApplication( app );
-		TargetHelpers.verifyTargets( new TargetResolver(), ma, null );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when(
+				targetsMngr.findTargetProperties(
+						Mockito.any( AbstractApplication.class ),
+						Mockito.any( String.class )))
+				.thenReturn( new HashMap<String,String>( 0 ));
+
+		TargetHelpers.verifyTargets( new TargetHandlerResolverImpl(), ma, targetsMngr );
 	}
 
 
 	private void writeProperty( File targetFile, String key, String value ) throws IOException {
 
-		OutputStream fos = null;
-		try {
-			Assert.assertTrue( targetFile.getParentFile().mkdirs());
-
-			fos = new FileOutputStream( targetFile );
-			Properties props = new Properties();
-			props.setProperty( key, value );
-			props.store( fos, null );
-
-		} finally {
-			Utils.closeQuietly( fos );
-		}
+		Assert.assertTrue( targetFile.getParentFile().mkdirs());
+		Properties props = new Properties();
+		props.setProperty( key, value );
+		Utils.writePropertiesFile( props, targetFile );
 	}
 }

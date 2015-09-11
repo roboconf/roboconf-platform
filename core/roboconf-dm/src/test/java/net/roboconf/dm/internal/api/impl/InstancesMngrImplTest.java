@@ -23,35 +23,36 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.delegates;
+package net.roboconf.dm.internal.api.impl;
 
-import junit.framework.Assert;
-import net.roboconf.core.model.beans.ApplicationTemplate;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ApplicationTemplateMngrDelegateTest {
+public class InstancesMngrImplTest {
 
 	@Test
-	public void testFindTemplate() {
+	public void testProcessExceptions_noException() throws Exception {
 
-		ApplicationTemplateMngrDelegate mngr = new ApplicationTemplateMngrDelegate();
-		Assert.assertNull( mngr.findTemplate( "lamp", null ));
+		Logger logger = Logger.getLogger( getClass().getName());
+		List<Exception> exceptions = new ArrayList<>( 0 );
+		InstancesMngrImpl.processExceptions( logger, exceptions, "whatever" );
+	}
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "lamp" );
-		mngr.templates.put( tpl, Boolean.TRUE );
-		Assert.assertEquals( tpl, mngr.findTemplate( "lamp", null ));
 
-		ApplicationTemplate tpl2 = new ApplicationTemplate( "lamp" ).qualifier( "v2" );
-		mngr.templates.put( tpl2, Boolean.TRUE );
+	@Test( expected = IOException.class )
+	public void testProcessExceptions_withException() throws Exception {
 
-		Assert.assertFalse( tpl.equals( tpl2 ));
-		Assert.assertEquals( tpl2, mngr.findTemplate( "lamp", "v2" ));
-		Assert.assertEquals( tpl, mngr.findTemplate( "lamp", null ));
-		Assert.assertNull( mngr.findTemplate( "lamp", "v3" ));
-		Assert.assertNull( mngr.findTemplate( "lamp2", null ));
+		Logger logger = Logger.getLogger( getClass().getName());
+		List<Exception> exceptions = new ArrayList<>( 1 );
+		exceptions.add( new Exception( "oops" ));
+
+		InstancesMngrImpl.processExceptions( logger, exceptions, "whatever" );
 	}
 }

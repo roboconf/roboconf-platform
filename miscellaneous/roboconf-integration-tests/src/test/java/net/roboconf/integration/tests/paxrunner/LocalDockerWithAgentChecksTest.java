@@ -174,10 +174,10 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
-		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Write Docker properties
 		File appDir = new File( dir, "application-templates/Legacy LAMP - sample/graph" );
@@ -229,14 +229,14 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		try {
 			// The image is generated once, on the first deployment.
 			// 30 seconds is enough is the internet speed connection is very good...
-			this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
+			this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
 			Thread.sleep( 1000 * 30 );
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 			logger.info( "The first root instance was sucessfully deployed." );
 
 			// The image is reused, so we only create a new container
 			logger.info( "About to deploy the second root instance." );
-			this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.DEPLOYED_STARTED );
+			this.manager.instancesMngr().changeInstanceState( ma, anotherRootInstance, InstanceStatus.DEPLOYED_STARTED );
 			Thread.sleep( 1000 * 10 );
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherRootInstance.getStatus());
 			Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
@@ -245,8 +245,8 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 		} finally {
 			// Undeploy them all
 			logger.info( "About to undeploy all the root instances." );
-			this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
-			this.manager.changeInstanceState( ma, anotherRootInstance, InstanceStatus.NOT_DEPLOYED );
+			this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
+			this.manager.instancesMngr().changeInstanceState( ma, anotherRootInstance, InstanceStatus.NOT_DEPLOYED );
 
 			Thread.sleep( 300 );
 			Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, anotherRootInstance.getStatus());

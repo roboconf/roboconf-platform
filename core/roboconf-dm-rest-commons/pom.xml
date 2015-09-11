@@ -49,6 +49,13 @@
 		</dependency>
 		
 		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm</artifactId>
+  			<version>${project.version}</version>
+  			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-core</artifactId>
 			<scope>provided</scope>

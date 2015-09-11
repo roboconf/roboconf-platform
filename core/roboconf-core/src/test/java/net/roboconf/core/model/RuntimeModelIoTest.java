@@ -458,14 +458,7 @@ public class RuntimeModelIoTest {
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_QUALIFIER, "snapshot" );
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_DSL_ID, "roboconf-1.0" );
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_GRAPH_EP, "main.graph" );
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
-			props.store( fos, null );
-
-		} finally {
-			Utils.closeQuietly( fos );
-		}
+		Utils.writePropertiesFile( props, new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
 
 		// Graph
 		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
@@ -502,14 +495,9 @@ public class RuntimeModelIoTest {
 		Collection<RoboconfError> errors = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors;
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
-		try {
-			fos = new FileOutputStream( new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
-			props.setProperty( ApplicationTemplateDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
-			props.store( fos, null );
-
-		} finally {
-			Utils.closeQuietly( fos );
-		}
+		
+		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
+		Utils.writePropertiesFile( props, new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
 
 		File instDir = new File( tempDirectory, Constants.PROJECT_DIR_INSTANCES );
 		if( ! instDir.mkdir())

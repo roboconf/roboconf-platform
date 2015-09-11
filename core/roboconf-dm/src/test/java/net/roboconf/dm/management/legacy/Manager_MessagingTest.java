@@ -23,9 +23,9 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management;
+package net.roboconf.dm.management.legacy;
 
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+import net.roboconf.dm.management.Manager;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,8 +45,8 @@ public class Manager_MessagingTest {
 
 		Manager manager = new Manager();
 		try {
-			manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
-			manager.setMessagingType(RabbitMqConstants.RABBITMQ_FACTORY_TYPE);
+			manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+			manager.setMessagingType( "unknown" );
 			manager.start();
 			// No exception
 

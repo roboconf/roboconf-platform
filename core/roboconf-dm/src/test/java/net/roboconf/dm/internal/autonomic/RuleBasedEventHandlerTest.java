@@ -26,7 +26,6 @@
 package net.roboconf.dm.internal.autonomic;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,14 +38,13 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.api.MessagingConstants;
 
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -66,40 +64,45 @@ public class RuleBasedEventHandlerTest {
 
 	private DmMessageProcessor processor;
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private RuleBasedEventHandler handler;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@Before
 	public void resetManager() throws Exception {
 
-		this.registry.addMessagingClientFactory(new TestClientFactory());
+		// Create the manager
 		File dir = this.folder.newFolder();
 
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
-		this.manager.setConfigurationDirectoryLocation( dir.getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( dir );
 		this.manager.start();
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-		this.handler = new RuleBasedEventHandler( this.manager );
+		// Reset the processor
 		if( this.processor != null )
 			this.processor.stopProcessor();
 
-		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
-		this.manager.getNameToManagedApplication().clear();
+		this.processor = (DmMessageProcessor) this.managerWrapper.getMessagingClient().getMessageProcessor();
+		this.managerWrapper.getNameToManagedApplication().clear();
 
+		// Create an application
 		this.app = new TestApplication();
 		File appDirectory = ConfigurationUtils.findApplicationDirectory( this.app.getName(), dir );
 		Assert.assertTrue( appDirectory.mkdirs());
 		this.app.setDirectory( appDirectory );
 
 		this.ma = new ManagedApplication( this.app );
-		this.manager.getNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
+
+		// Create the handler
+		this.handler = new RuleBasedEventHandler( this.manager );
 	}
 
 
@@ -219,15 +222,7 @@ public class RuleBasedEventHandlerTest {
 		Properties props = new Properties();
 		props.setProperty( "mail.to", "me@roboconf.net" );
 		props.setProperty( "mail.from", "me-again@roboconf.net" );
-
-		FileOutputStream out = null;
-		try {
-			out = new FileOutputStream( propFile );
-			props.store( out, null );
-
-		} finally {
-			Utils.closeQuietly( out );
-		}
+		Utils.writePropertiesFile( props, propFile );
 
 		// No mail server is configured, there will be error logs
 		this.handler.sendEmail( this.ma, "hello world!" );
@@ -245,15 +240,7 @@ public class RuleBasedEventHandlerTest {
 		Properties props = new Properties();
 		props.setProperty( "mail.to", "me@roboconf.net" );
 		props.setProperty( "mail.from", "me-again@roboconf.net" );
-
-		FileOutputStream out = null;
-		try {
-			out = new FileOutputStream( propFile );
-			props.store( out, null );
-
-		} finally {
-			Utils.closeQuietly( out );
-		}
+		Utils.writePropertiesFile( props, propFile );
 
 		// No mail server is configured, there will be error logs
 		this.handler.sendEmail( this.ma, "Subject: yo\nhello world!" );
@@ -272,15 +259,7 @@ public class RuleBasedEventHandlerTest {
 		props.setProperty( "mail.to", "me@roboconf.net" );
 		props.setProperty( "mail.smtp.auth", "True" );
 		props.setProperty( "mail.from", "me-again@roboconf.net" );
-
-		FileOutputStream out = null;
-		try {
-			out = new FileOutputStream( propFile );
-			props.store( out, null );
-
-		} finally {
-			Utils.closeQuietly( out );
-		}
+		Utils.writePropertiesFile( props, propFile );
 
 		// No mail server is configured, there will be error logs
 		this.handler.sendEmail( this.ma, "Subject: yo" );

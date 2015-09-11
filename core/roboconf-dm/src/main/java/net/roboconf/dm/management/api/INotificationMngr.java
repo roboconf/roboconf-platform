@@ -23,20 +23,14 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management;
+package net.roboconf.dm.management.api;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import net.roboconf.dm.management.events.IDmListener;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TargetTest {
+public interface INotificationMngr extends IDmListener {
 
-	@Test
-	public void testPropertiesAreNeverNull() {
-		ITargetResolver.Target t = new ITargetResolver.Target( null, null );
-		Assert.assertNotNull( t.getProperties());
-	}
+	// nothing
 }

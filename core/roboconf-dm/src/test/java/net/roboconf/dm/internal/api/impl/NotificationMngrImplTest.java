@@ -23,42 +23,25 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.delegates;
-
-import java.io.IOException;
+package net.roboconf.dm.internal.api.impl;
 
 import junit.framework.Assert;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.dm.management.ManagedApplication;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ApplicationMngrDelegateTest {
+public class NotificationMngrImplTest {
 
 	@Test
-	public void testIsTemplateUsed() {
+	public void testObvious() {
 
-		ApplicationMngrDelegate mngr = new ApplicationMngrDelegate();
-		ApplicationTemplate tpl = new ApplicationTemplate( "lamp" );
-		Assert.assertFalse( mngr.isTemplateUsed( tpl ));
+		NotificationMngrImpl mngr = new NotificationMngrImpl();
+		mngr.enableNotifications();
+		mngr.disableNotifications();
 
-		ManagedApplication ma = new ManagedApplication( new Application( "app", tpl ));
-		mngr.getNameToManagedApplication().put( "app", ma );
-		Assert.assertTrue( mngr.isTemplateUsed( tpl ));
-
-		ApplicationTemplate tpl2 = new ApplicationTemplate( "lamp" ).qualifier( "v2" );
-		Assert.assertFalse( mngr.isTemplateUsed( tpl2 ));
-	}
-
-
-	@Test( expected = IOException.class )
-	public void testInvalidApplicationName() throws Exception {
-
-		ApplicationMngrDelegate mngr = new ApplicationMngrDelegate();
-		mngr.createApplication( null, "desc", new ApplicationTemplate(), null );
+		Assert.assertNotNull( mngr.getId());
+		Assert.assertNotNull( mngr.getDmListeners());
 	}
 }

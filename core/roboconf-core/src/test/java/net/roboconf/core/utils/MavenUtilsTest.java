@@ -31,6 +31,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
+ * These tests are meant to be run by hand, for debug purpose.
+ * <p>
+ * By default, they are ignored by the build.
+ * </p>
  * @author Vincent Zurczak - Linagora
  */
 @Ignore

@@ -41,15 +41,14 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
 
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -67,9 +66,9 @@ public class ManagementResourceTest {
 	public TemporaryFolder folder = new TemporaryFolder();
 
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private IManagementResource resource;
 	private TestClientDm msgClient;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@After
@@ -80,19 +79,22 @@ public class ManagementResourceTest {
 
 	@Before
 	public void before() throws Exception {
-		this.registry.addMessagingClientFactory(new TestClientFactory());
 
+		// Create the manager
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		// Get the messaging client
+		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
+		this.msgClient.sentMessages.clear();
 		this.resource = new ManagementResource( this.manager );
 	}
 
@@ -105,7 +107,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 0, apps.size());
 
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put(
+		this.managerWrapper.getNameToManagedApplication().put(
 				app.getName(),
 				new ManagedApplication( app ));
 
@@ -127,7 +129,7 @@ public class ManagementResourceTest {
 		Assert.assertEquals( 0, templates.size());
 
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
-		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
+		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
 		templates = this.resource.listApplicationTemplates();
 		Assert.assertNotNull( templates );
@@ -153,7 +155,7 @@ public class ManagementResourceTest {
 
 		this.msgClient.connected.set( false );
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 		Assert.assertEquals(
 				Status.FORBIDDEN.getStatusCode(),
 				this.resource.shutdownApplication( app.getName()).getStatus());
@@ -164,7 +166,7 @@ public class ManagementResourceTest {
 	public void testShutdownApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 		Assert.assertEquals(
 				Status.OK.getStatusCode(),
 				this.resource.shutdownApplication( app.getName()).getStatus());
@@ -183,7 +185,7 @@ public class ManagementResourceTest {
 	public void testDeleteApplication_unauthorized() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		Assert.assertEquals( 1, this.resource.listApplications().size());
@@ -199,7 +201,7 @@ public class ManagementResourceTest {
 	public void testDeleteApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 
 		Assert.assertEquals( 1, this.resource.listApplications().size());
 		Assert.assertEquals(
@@ -229,7 +231,7 @@ public class ManagementResourceTest {
 	public void testLoadApplicationTemplate_localPath_alreadyExisting() throws Exception {
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
-		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
+		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 
 		Assert.assertEquals( 1, this.resource.listApplicationTemplates().size());

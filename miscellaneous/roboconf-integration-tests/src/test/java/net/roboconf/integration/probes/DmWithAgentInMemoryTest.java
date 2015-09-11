@@ -30,13 +30,12 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.dm.management.ITargetResolver;
-import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.target.api.TargetException;
@@ -108,7 +107,7 @@ public abstract class DmWithAgentInMemoryTest {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	public static final class InMemoryTargetResolver implements ITargetResolver {
+	public static final class InMemoryTargetResolver implements ITargetHandlerResolver {
 		private final TargetHandler inMemoryIaas;
 
 
@@ -117,9 +116,14 @@ public abstract class DmWithAgentInMemoryTest {
 		}
 
 		@Override
-		public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+		public TargetHandler findTargetHandler( Map<String,String> targetProperties )
 		throws TargetException {
-			return new Target( this.inMemoryIaas, null );
+			return this.inMemoryIaas;
+		}
+
+		@Override
+		public TargetHandler findTargetHandlerById( String id ) {
+			return this.inMemoryIaas;
 		}
 	}
 }

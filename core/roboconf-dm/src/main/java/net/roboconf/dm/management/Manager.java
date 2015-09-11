@@ -25,62 +25,41 @@
 
 package net.roboconf.dm.management;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
-import net.roboconf.dm.internal.delegates.ApplicationTemplateMngrDelegate;
-import net.roboconf.dm.internal.delegates.InstanceMngrDelegate;
+import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
+import net.roboconf.dm.internal.api.impl.ApplicationTemplateMngrImpl;
+import net.roboconf.dm.internal.api.impl.ConfigurationMngrImpl;
+import net.roboconf.dm.internal.api.impl.DebugMngrImpl;
+import net.roboconf.dm.internal.api.impl.InstancesMngrImpl;
+import net.roboconf.dm.internal.api.impl.MessagingMngrImpl;
+import net.roboconf.dm.internal.api.impl.NotificationMngrImpl;
+import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
+import net.roboconf.dm.internal.api.impl.TargetsMngrImpl;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.environment.messaging.RCDm;
 import net.roboconf.dm.internal.tasks.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.tasks.CheckerMessagesTask;
-import net.roboconf.dm.internal.utils.ConfigurationUtils;
-import net.roboconf.dm.internal.utils.ManagerUtils;
-import net.roboconf.dm.management.events.EventType;
+import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.IApplicationTemplateMngr;
+import net.roboconf.dm.management.api.IConfigurationMngr;
+import net.roboconf.dm.management.api.IDebugMngr;
+import net.roboconf.dm.management.api.IInstancesMngr;
+import net.roboconf.dm.management.api.IMessagingMngr;
+import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetHandlerResolver;
+import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.IDmListener;
-import net.roboconf.dm.management.exceptions.AlreadyExistingException;
-import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
-import net.roboconf.dm.management.exceptions.InvalidApplicationException;
-import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.client.ListenerCommand;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
-import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 /**
- * A class to manage a collection of applications.
- * <p>
- * This class acts as an interface to communicate with the agents.
- * It does not manage anything real (like life cycles). It only
- * handles some kind of cache (cache for application files, cache for
- * instance states).
- * </p>
- * <p>
- * The agents are the most well-placed to manage life cycles and the states
- * of instances. Therefore, the DM does the minimal set of actions on instances.
- * </p>
+ * This class acts as a front-end to access the various features of the DM.
  * <p>
  * This class is designed to work with OSGi, iPojo and Admin Config.<br>
  * But it can also be used programmatically.
@@ -90,7 +69,7 @@ import net.roboconf.target.api.TargetHandler;
  * Manager manager = new Manager();
  * manager.setMessagingType( "rabbitmq" );
  *
- * // Change the way we resolve handlers for deployment targets
+ * // Change the way we resolve handlers for deployment targetsMngr
  * manager.setTargetResolver( ... );
  *
  * // Connect to the messaging server
@@ -108,20 +87,26 @@ public class Manager {
 	private static final long TIMER_PERIOD = 6000;
 
 	// Injected by iPojo or Admin Config
-	protected final List<IDmListener> dmListeners = new ArrayList<> ();
-	protected final List<TargetHandler> targetHandlers = new ArrayList<> ();
 	protected String messagingType;
 
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
-	protected final ApplicationTemplateMngrDelegate templateManager;
-	protected final ApplicationMngrDelegate appManager;
-	protected final InstanceMngrDelegate instanceManager;
-	protected String configurationDirectoryLocation;
 	protected Timer timer;
-
 	private RCDm messagingClient;
-	File configurationDirectory;
+
+	// API access
+	private final NotificationMngrImpl notificationMngr;
+	private final MessagingMngrImpl messagingMngr;
+	private final ApplicationMngrImpl applicationMngr;
+	private final InstancesMngrImpl instancesMngr;
+
+	private final IConfigurationMngr configurationMngr;
+	private final IApplicationTemplateMngr applicationTemplateMngr;
+	private final ITargetsMngr targetsMngr;
+	private final IDebugMngr debugMngr;
+
+	private ITargetHandlerResolver targetHandlerResolver;
+	private final TargetHandlerResolverImpl defaultTargetHandlerResolver;
 
 
 	/**
@@ -129,10 +114,26 @@ public class Manager {
 	 */
 	public Manager() {
 		super();
-		this.templateManager = new ApplicationTemplateMngrDelegate();
-		this.appManager = new ApplicationMngrDelegate();
-		this.instanceManager = new InstanceMngrDelegate( this );
+
+		// Home-made DI.
+		// We do not want to mix N frameworks.
+		this.notificationMngr = new NotificationMngrImpl();
+		this.configurationMngr = new ConfigurationMngrImpl();
+		this.messagingMngr = new MessagingMngrImpl();
+		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
+		this.targetsMngr = new TargetsMngrImpl( this.configurationMngr );
+		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
+
+		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.messagingMngr );
+		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
+		this.applicationMngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
+
+		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.configurationMngr, this.notificationMngr, this.targetsMngr );
+		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 	}
+
+
+	// iPojo stuff
 
 
 	/**
@@ -142,24 +143,26 @@ public class Manager {
 	 * </p>
 	 */
 	public void start() {
-
 		this.logger.info( "The DM is about to be launched." );
 
 		// Start the messaging
-		DmMessageProcessor messageProcessor = new DmMessageProcessor( this, this.appManager );
-		this.messagingClient = new RCDm( this.appManager );
+		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
+		this.messagingClient = new RCDm( this.applicationMngr );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
+		this.messagingMngr.setMessagingClient( this.messagingClient );
 
 		// Run the timer
 		this.timer = new Timer( "Roboconf's Management Timer", false );
-		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.appManager, this.messagingClient ), 0, TIMER_PERIOD );
-		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.appManager ), 0, Constants.HEARTBEAT_PERIOD );
-
-		// Initialize the directory configuration
-		initializeDirectory();
+		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.applicationMngr, this.messagingClient ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.applicationMngr ), 0, Constants.HEARTBEAT_PERIOD );
 
 		// Configure the messaging
 		reconfigure();
+
+		// Restore what is necessary
+		this.applicationTemplateMngr.restoreTemplates();
+		this.applicationMngr.restoreApplications();
+
 		this.logger.info( "The DM was launched." );
 	}
 
@@ -203,50 +206,11 @@ public class Manager {
 
 
 	/**
-	 * A method that initializes the DM's internal directory.
-	 * <p>
-	 * This method is invoked in {@link #start()}. However, it can be better to invoke
-	 * this method directly in tests. Indeed, {@link #start()} also starts timers, while this
-	 * method does not.
-	 * </p>
-	 */
-	public void initializeDirectory() {
-
-		// Find the configuration directory
-		String karafData = System.getProperty( "karaf.data" );
-		if( ! Utils.isEmptyOrWhitespaces( this.configurationDirectoryLocation ))
-			this.configurationDirectory = new File( this.configurationDirectoryLocation );
-		else if( Utils.isEmptyOrWhitespaces( karafData ))
-			this.configurationDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
-		else
-			this.configurationDirectory = new File( karafData, "roboconf" );
-
-		try {
-			// Create the directory, if necessary
-			Utils.createDirectory( this.configurationDirectory );
-
-			// Restore applications
-			this.templateManager.restoreTemplates( this.configurationDirectory );
-			this.appManager.restoreApplications( this.configurationDirectory, this.templateManager );
-
-		} catch( IOException e ) {
-			this.logger.severe( "The DM's configuration directory could not be found and/or created." );
-			Utils.logException( this.logger, e );
-		}
-	}
-
-
-	/**
 	 * This method is invoked by iPojo every time a new target handler appears.
 	 * @param targetItf the appearing target handler
 	 */
 	public void targetAppears( TargetHandler targetItf ) {
-
-		if( targetItf != null ) {
-			this.logger.info( "Target handler '" + targetItf.getTargetId() + "' is now available in Roboconf's DM." );
-			this.targetHandlers.add( targetItf );
-			ManagerUtils.listTargets( this.targetHandlers, this.logger );
-		}
+		this.defaultTargetHandlerResolver.addTargetHandler( targetItf );
 	}
 
 
@@ -255,17 +219,7 @@ public class Manager {
 	 * @param targetItf the disappearing target handler
 	 */
 	public void targetDisappears( TargetHandler targetItf ) {
-
-		// May happen if a target could not be instantiated
-		// (iPojo uses proxies). In this case, it results in a NPE here.
-		if( targetItf == null ) {
-			this.logger.info( "An invalid target handler is removed." );
-		} else {
-			this.targetHandlers.remove( targetItf );
-			this.logger.info( "Target handler '" + targetItf.getTargetId() + "' is not available anymore in Roboconf's DM." );
-		}
-
-		ManagerUtils.listTargets( this.targetHandlers, this.logger );
+		this.defaultTargetHandlerResolver.removeTargetHandler( targetItf );
 	}
 
 
@@ -274,15 +228,7 @@ public class Manager {
 	 * @param targetItf the appearing listener
 	 */
 	public void listenerAppears( IDmListener listener ) {
-
-		if( listener != null ) {
-			this.logger.info( "A new listener '" + listener.getId() + "' is now available in Roboconf's DM." );
-			synchronized( this.dmListeners ) {
-				this.dmListeners.add( listener );
-			}
-
-			ManagerUtils.listListeners( this.dmListeners, this.logger );
-		}
+		this.notificationMngr.addListener( listener );
 	}
 
 
@@ -291,61 +237,7 @@ public class Manager {
 	 * @param listener the disappearing listener
 	 */
 	public void listenerDisappears( IDmListener listener ) {
-
-		// May happen if a target could not be instantiated
-		// (iPojo uses proxies). In this case, it results in a NPE here.
-		if( listener == null ) {
-			this.logger.info( "An invalid listener is removed." );
-
-		} else {
-			synchronized( this.dmListeners ) {
-				this.dmListeners.remove( listener );
-			}
-
-			this.logger.info( "The listener '" + listener.getId() + "' is not available anymore in Roboconf's DM." );
-		}
-
-		ManagerUtils.listListeners( this.dmListeners, this.logger );
-	}
-
-
-	/**
-	 * @param configurationDirectoryLocation the configurationDirectoryLocation to set
-	 */
-	public void setConfigurationDirectoryLocation( String configurationDirectoryLocation ) {
-		this.configurationDirectoryLocation = configurationDirectoryLocation;
-	}
-
-
-	/**
-	 * @return the target handlers
-	 */
-	public List<TargetHandler> getTargetHandlers() {
-		return Collections.unmodifiableList( this.targetHandlers );
-	}
-
-
-	/**
-	 * @return the DM listeners
-	 */
-	public List<IDmListener> getDmListeners() {
-		return Collections.unmodifiableList( this.dmListeners );
-	}
-
-
-	/**
-	 * @param messagingType the messagingType to set
-	 */
-	public void setMessagingType( String messagingType ) {
-		this.messagingType = messagingType;
-	}
-
-
-	/**
-	 * @return the configurationDirectoryLocation
-	 */
-	public String getConfigurationDirectoryLocation() {
-		return this.configurationDirectoryLocation;
+		this.notificationMngr.removeListener( listener );
 	}
 
 
@@ -371,458 +263,60 @@ public class Manager {
 		}
 
 		// We must update instance states after we switched the messaging configuration.
-		for( ManagedApplication ma : this.appManager.getManagedApplications())
-			this.instanceManager.restoreInstanceStates( ma );
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
+			this.instancesMngr.restoreInstanceStates( ma );
 
 		this.logger.info( "The DM was successfully (re)configured." );
 	}
 
 
-	/**
-	 * Finds an application by name.
-	 * @param applicationName an application name (not null)
-	 * @return the associated application, or null if it was not found
-	 */
-	public Application findApplicationByName( String applicationName ) {
-		return this.appManager.findApplicationByName( applicationName );
+	// Setters
+
+	public void setMessagingType( String messagingType ) {
+		this.messagingType = messagingType;
+	}
+
+	public void setTargetResolver( ITargetHandlerResolver targetHandlerResolver ) {
+		this.targetHandlerResolver = targetHandlerResolver;
+		this.instancesMngr.setTargetHandlerResolver( targetHandlerResolver());
 	}
 
 
-	/**
-	 * @return a non-null map (key = application name, value = managed application)
-	 */
-	public Map<String,ManagedApplication> getNameToManagedApplication() {
-		return this.appManager.getNameToManagedApplication();
+	// Getters
+
+	public INotificationMngr notificationMngr() {
+		return this.notificationMngr;
 	}
 
-
-	/**
-	 * @return a non-null set of all the application templates
-	 */
-	public Set<ApplicationTemplate> getApplicationTemplates() {
-		return this.templateManager.getAllTemplates();
+	public IMessagingMngr messagingMngr() {
+		return this.messagingMngr;
 	}
 
-
-	/**
-	 * @return the raw templates (never null)
-	 */
-	public Map<ApplicationTemplate,Boolean> getRawApplicationTemplates() {
-		return this.templateManager.getRawTemplates();
+	public IApplicationMngr applicationMngr() {
+		return this.applicationMngr;
 	}
 
-
-	/**
-	 * @throws IOException if the configuration is invalid
-	 */
-	public void checkConfiguration() throws IOException {
-
-		String msg = null;
-		if( this.messagingClient == null )
-			msg = "The DM was not started.";
-		else if( ! this.messagingClient.hasValidClient())
-			msg = "The DM's configuration is invalid. Please, review the messaging settings.";
-
-		if( msg != null ) {
-			this.logger.warning( msg );
-			throw new IOException( msg );
-		}
+	public IInstancesMngr instancesMngr() {
+		return this.instancesMngr;
 	}
 
-
-	/**
-	 * @return the messagingClient
-	 */
-	public ReconfigurableClientDm getMessagingClient() {
-		return this.messagingClient;
+	public IConfigurationMngr configurationMngr() {
+		return this.configurationMngr;
 	}
 
-
-	/**
-	 * Loads a new application template.
-	 * @see ApplicationTemplateMngrDelegate#loadApplicationTemplate(File, File)
-	 */
-	public ApplicationTemplate loadApplicationTemplate( File applicationFilesDirectory )
-	throws AlreadyExistingException, InvalidApplicationException, IOException {
-
-		checkConfiguration();
-		ApplicationTemplate tpl = this.templateManager.loadApplicationTemplate( applicationFilesDirectory, this.configurationDirectory );
-
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.applicationTemplate( tpl, EventType.CREATED );
-		}
-
-		return tpl;
+	public IApplicationTemplateMngr applicationTemplateMngr() {
+		return this.applicationTemplateMngr;
 	}
 
-
-	/**
-	 * Deletes an application template.
-	 */
-	public void deleteApplicationTemplate( String tplName, String tplQualifier )
-	throws UnauthorizedActionException, InvalidApplicationException, IOException {
-
-		checkConfiguration();
-		ApplicationTemplate tpl = this.templateManager.findTemplate( tplName, tplQualifier );
-		if( tpl == null )
-			throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
-
-		if( this.appManager.isTemplateUsed( tpl )) {
-			throw new UnauthorizedActionException( tplName + " (" + tplQualifier + ") is still used by applications. It cannot be deleted." );
-
-		} else {
-			this.templateManager.deleteApplicationTemplate( tpl, this.configurationDirectory );
-			synchronized( this.dmListeners ) {
-				for( IDmListener listener : this.dmListeners )
-					listener.applicationTemplate( tpl, EventType.DELETED );
-			}
-		}
+	public ITargetsMngr targetsMngr() {
+		return this.targetsMngr;
 	}
 
-
-	/**
-	 * Creates a new application from a template.
-	 * @return a managed application (never null)
-	 * @throws IOException
-	 * @throws AlreadyExistingException
-	 * @throws InvalidApplicationException
-	 */
-	public ManagedApplication createApplication( String name, String description, String tplName, String tplQualifier )
-	throws IOException, AlreadyExistingException, InvalidApplicationException {
-
-		// Always verify the configuration first
-		checkConfiguration();
-
-		// Create the application
-		ApplicationTemplate tpl = this.templateManager.findTemplate( tplName, tplQualifier );
-		if( tpl == null )
-			throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
-
-		return createApplication( name, description, tpl );
+	public IDebugMngr debugMngr() {
+		return this.debugMngr;
 	}
 
-
-	/**
-	 * Creates a new application from a template.
-	 * @return a managed application (never null)
-	 * @throws IOException
-	 * @throws AlreadyExistingException
-	 */
-	public ManagedApplication createApplication( String name, String description, ApplicationTemplate tpl )
-	throws IOException, AlreadyExistingException {
-
-		// Always verify the configuration first
-		checkConfiguration();
-
-		// Create the application
-		ManagedApplication ma = this.appManager.createApplication( name, description, tpl, this.configurationDirectory );
-
-		// Start listening to messages
-		this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
-
-		// Notify listeners
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.application( ma.getApplication(), EventType.CREATED );
-		}
-
-		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
-		return ma;
-	}
-
-
-	/**
-	 * Updates an application with a new description.
-	 * @param app the application to update
-	 * @param newDesc the new description
-	 * @throws IOException
-	 */
-	public void updateApplication( ManagedApplication ma, String newDesc ) throws IOException {
-
-		// Basic checks
-		checkConfiguration();
-		this.appManager.updateApplication( ma.getApplication(), newDesc );
-
-		// Notify listeners
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.application( ma.getApplication(), EventType.CHANGED );
-		}
-
-		this.logger.fine( "The description of application " + ma.getApplication().getName() + " was successfully updated." );
-	}
-
-
-	/**
-	 * Deletes an application.
-	 * @param ma the managed application
-	 * @throws UnauthorizedActionException if parts of the application are still running
-	 * @throws IOException if errors occurred with the messaging or the removal of resources
-	 */
-	public void deleteApplication( ManagedApplication ma )
-	throws UnauthorizedActionException, IOException {
-
-		// What really matters is that there is no agent running.
-		// If all the root instances are not deployed, then nothing is deployed at all.
-		String applicationName = ma.getApplication().getName();
-		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-			if( rootInstance.getStatus() != InstanceStatus.NOT_DEPLOYED )
-				throw new UnauthorizedActionException( applicationName + " contains instances that are still deployed." );
-		}
-
-		// Stop listening to messages first
-		try {
-			checkConfiguration();
-			this.messagingClient.listenToAgentMessages( ma.getApplication(), ListenerCommand.STOP );
-			this.messagingClient.deleteMessagingServerArtifacts( ma.getApplication());
-
-		} catch( IOException e ) {
-			Utils.logException( this.logger, e );
-		}
-
-		// Notify listeners
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.application( ma.getApplication(), EventType.DELETED );
-		}
-
-		// Delete artifacts
-		this.appManager.deleteApplication( ma.getApplication(), this.configurationDirectory );
-	}
-
-
-	/**
-	 * Adds an instance.
-	 * @see InstanceMngrDelegate#addInstance(ManagedApplication, Instance, Instance)
-	 */
-	public void addInstance( ManagedApplication ma, Instance parentInstance, Instance instance )
-	throws ImpossibleInsertionException, IOException {
-
-		checkConfiguration();
-		this.instanceManager.addInstance( ma, parentInstance, instance );
-		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
-
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.instance( instance, ma.getApplication(), EventType.CREATED );
-		}
-	}
-
-
-	/**
-	 * Invoked when an instance was modified and that we need to propagate these changes outside the DM.
-	 * @param instance an instance (not null)
-	 * @param ma the associated application
-	 */
-	public void instanceWasUpdated( Instance instance, ManagedApplication ma ) {
-
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.instance( instance, ma.getApplication(), EventType.CHANGED );
-		}
-
-		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
-	}
-
-
-	/**
-	 * Removes an instance.
-	 * @see InstanceMngrDelegate#removeInstance(ManagedApplication, Instance)
-	 */
-	public void removeInstance( ManagedApplication ma, Instance instance )
-	throws UnauthorizedActionException, IOException {
-
-		checkConfiguration();
-		this.instanceManager.removeInstance( ma, instance );
-		ConfigurationUtils.saveInstances( ma, this.configurationDirectory );
-
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.instance( instance, ma.getApplication(), EventType.DELETED );
-		}
-	}
-
-
-	/**
-	 * Notifies all the agents they must re-export their variables.
-	 * <p>
-	 * Such an operation can be used when the messaging server was down and
-	 * that messages were lost.
-	 * </p>
-	 * @throws IOException
-	 */
-	public void resynchronizeAgents( ManagedApplication ma ) throws IOException {
-
-		checkConfiguration();
-		this.logger.fine( "Resynchronizing agents in " + ma.getName() + "..." );
-		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-			if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED )
-				send ( ma, new MsgCmdResynchronize(), rootInstance );
-		}
-
-		this.logger.fine( "Requests were sent to resynchronize agents in " + ma.getName() + "." );
-	}
-
-
-	/**
-	 * Changes the state of an instance.
-	 * @see InstanceMngrDelegate#changeInstanceState(ManagedApplication, Instance, InstanceStatus)
-	 */
-	public void changeInstanceState( ManagedApplication ma, Instance instance, InstanceStatus newStatus )
-	throws IOException, TargetException {
-
-		checkConfiguration();
-		this.instanceManager.changeInstanceState( ma, instance, newStatus );
-	}
-
-
-	/**
-	 * Deploys and starts all the instances of an application.
-	 * @see InstanceMngrDelegate#deployAndStartAll(ManagedApplication, Instance)
-	 */
-	public void deployAndStartAll( ManagedApplication ma, Instance instance ) throws IOException {
-
-		checkConfiguration();
-		this.instanceManager.deployAndStartAll( ma, instance );
-	}
-
-
-	/**
-	 * Stops all the started instances of an application.
-	 * @see InstanceMngrDelegate#stopAll(ManagedApplication, Instance)
-	 */
-	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException {
-
-		checkConfiguration();
-		this.instanceManager.stopAll( ma, instance );
-	}
-
-
-	/**
-	 * Undeploys all the instances of an application.
-	 * @see InstanceMngrDelegate#undeployAll(ManagedApplication, Instance)
-	 */
-	public void undeployAll( ManagedApplication ma, Instance instance ) throws IOException {
-
-		checkConfiguration();
-		this.instanceManager.undeployAll( ma, instance );
-	}
-
-
-	/**
-	 * Sends a message, or stores it if the targetHandlers machine is not yet online.
-	 * @param ma the managed application
-	 * @param message the message to send (or store)
-	 * @param instance the targetHandlers instance
-	 * @throws IOException if an error occurred with the messaging
-	 */
-	public void send( ManagedApplication ma, Message message, Instance instance ) throws IOException {
-
-		if( this.messagingClient != null
-				&& this.messagingClient.isConnected()) {
-
-			// We do NOT send directly a message!
-			ma.storeAwaitingMessage( instance, message );
-
-			// If the message has been stored, let's try to send all the stored messages.
-			// This preserves message ordering (FIFO).
-
-			// If the VM is online, process awaiting messages to prevent waiting.
-			// This can work concurrently with the messages timer.
-			Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
-			if( scopedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
-
-				List<Message> messages = ma.removeAwaitingMessages( instance );
-				String path = InstanceHelpers.computeInstancePath( scopedInstance );
-				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + path + "." );
-
-				for( Message msg : messages ) {
-					try {
-						this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
-
-					} catch( IOException e ) {
-						this.logger.severe( "Error while sending a stored message. " + e.getMessage());
-						Utils.logException( this.logger, e );
-					}
-				}
-			}
-
-		} else {
-			this.logger.severe( "The connection with the messaging server was badly initialized. Message dropped." );
-		}
-	}
-
-
-	/**
-	 * @param targetResolver the target resolver to set
-	 */
-	public void setTargetResolver( ITargetResolver targetResolver ) {
-		this.instanceManager.setTargetResolver( targetResolver );
-	}
-
-
-	/**
-	 * Pings the DM through the messaging queue.
-	 * @param message the content of the Echo message to send
-	 * @throws java.io.IOException if something bad happened
-	 */
-	public void pingMessageQueue( String message ) throws IOException {
-
-		final MsgEcho sentMessage = new MsgEcho( message );
-		this.messagingClient.sendMessageToTheDm( sentMessage );
-		this.logger.fine( "Sent Echo message on debug queue. Message=" + message + ", UUID=" + sentMessage.getUuid());
-	}
-
-
-	/**
-	 * Pings an agent.
-	 * @param app the application
-	 * @param scopedInstance the scoped instance
-	 * @param message the echo messages's content
-	 * @throws java.io.IOException if something bad happened
-	 */
-	public void pingAgent( Application app, Instance scopedInstance, String message ) throws IOException {
-
-		MsgEcho ping = new MsgEcho( "PING:" + message );
-		this.messagingClient.sendMessageToAgent( app, scopedInstance, ping );
-		this.logger.fine( "Sent PING request message=" + message + " to application=" + app + ", agent=" + scopedInstance );
-	}
-
-
-	/**
-	 * Invokes when an ECHO message was received.
-	 * @param message an ECHO message
-	 */
-	public void notifyMsgEchoReceived( MsgEcho message ) {
-
-		synchronized( this.dmListeners ) {
-			for( IDmListener listener : this.dmListeners )
-				listener.raw( message.getContent());
-		}
-	}
-
-
-	/**
-	 * @return the messaging configuration
-	 */
-	public Map<String,String> getMessagingConfiguration() {
-		return this.messagingClient.getConfiguration();
-	}
-
-
-	/**
-	 * Finds an icon from an URL path.
-	 * <p>
-	 * Notice that this method may fail to return a result during
-	 * reconfigurations.
-	 * </p>
-	 *
-	 * @param urlPath an icon path
-	 * @return an existing image file, or null if none was found
-	 */
-	public File findIconFromPath( String urlPath ) {
-		Map.Entry<String,String> entry = IconUtils.decodeIconUrl( urlPath );
-		return ConfigurationUtils.findIcon( entry.getKey(), entry.getValue(), this.configurationDirectory );
+	public ITargetHandlerResolver targetHandlerResolver() {
+		return this.targetHandlerResolver == null ? this.defaultTargetHandlerResolver : this.targetHandlerResolver;
 	}
 }

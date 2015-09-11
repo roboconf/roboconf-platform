@@ -39,6 +39,7 @@ import javax.ws.rs.core.UriBuilder;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
@@ -65,7 +66,9 @@ public class ServletRegistrationComponentTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private TestApplication app;
 
 
@@ -73,11 +76,12 @@ public class ServletRegistrationComponentTest {
 	public void initializeManager() throws Exception {
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
 		this.app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 	}
 
 
@@ -186,6 +190,7 @@ public class ServletRegistrationComponentTest {
 		Map<String,Servlet> pathToServlet = new HashMap<String,Servlet> ();
 
 		@Override
+		@SuppressWarnings( "rawtypes" )
 		public void registerServlet( String alias, Servlet servlet, Dictionary initparams, HttpContext context )
 		throws ServletException, NamespaceException {
 			this.pathToServlet.put( alias, servlet );

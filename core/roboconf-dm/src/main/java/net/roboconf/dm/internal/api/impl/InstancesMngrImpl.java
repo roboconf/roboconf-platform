@@ -23,13 +23,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.internal.delegates;
+package net.roboconf.dm.internal.api.impl;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -39,50 +39,77 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.environment.target.TargetResolver;
-import net.roboconf.dm.management.ITargetResolver;
-import net.roboconf.dm.management.ITargetResolver.Target;
+import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IConfigurationMngr;
+import net.roboconf.dm.management.api.IInstancesMngr;
+import net.roboconf.dm.management.api.IMessagingMngr;
+import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetHandlerResolver;
+import net.roboconf.dm.management.api.ITargetsMngr;
+import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandler;
 
 /**
+ * @author Noël - LIG
+ * @author Pierre-Yves Gibello - Linagora
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
-public class InstanceMngrDelegate {
+public class InstancesMngrImpl implements IInstancesMngr {
 
 	private static final Object LOCK = new Object();
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final Manager manager;
-	ITargetResolver targetResolver;
+
+	private final IMessagingMngr messagingMngr;
+	private final IConfigurationMngr configurationMngr;
+	private final INotificationMngr notificationMngr;
+	private final ITargetsMngr targetsMngr;
+
+	private ITargetHandlerResolver targetHandlerResolver;
 
 
 	/**
 	 * Constructor.
-	 * @param manager the DM.
+	 * @param targetsMngr
+	 * @param messagingMngr
+	 * @param configurationMngr
+	 * @param notificationMngr
 	 */
-	public InstanceMngrDelegate( Manager manager ) {
-		this.manager = manager;
-		this.targetResolver = new TargetResolver();
+	public InstancesMngrImpl(
+			IMessagingMngr messagingMngr,
+			IConfigurationMngr configurationMngr,
+			INotificationMngr notificationMngr,
+			ITargetsMngr targetsMngr ) {
+
+		this.targetsMngr = targetsMngr;
+		this.messagingMngr = messagingMngr;
+		this.configurationMngr = configurationMngr;
+		this.notificationMngr = notificationMngr;
 	}
 
 
 	/**
-	 * Adds an instance.
-	 * @param ma the managed application
-	 * @param parentInstance the parent instance
-	 * @param instance the instance to insert (not null)
-	 * @throws ImpossibleInsertionException if the instance could not be added
+	 * @param targetHandlerResolver the targetHandlerResolver to set
 	 */
+	public void setTargetHandlerResolver( ITargetHandlerResolver targetHandlerResolver ) {
+		this.targetHandlerResolver = targetHandlerResolver;
+	}
+
+
+	@Override
 	public void addInstance( ManagedApplication ma, Instance parentInstance, Instance instance )
 	throws ImpossibleInsertionException, IOException {
 
+		this.messagingMngr.checkMessagingConfiguration();
 		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
 			throw new ImpossibleInsertionException( instance.getName());
 
@@ -91,18 +118,25 @@ public class InstanceMngrDelegate {
 
 		// Store the message because we want to make sure the message is not lost
 		ma.storeAwaitingMessage( instance, new MsgCmdSetScopedInstance( scopedInstance ));
+
+		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
+		this.notificationMngr.instance( instance, ma.getApplication(), EventType.CREATED );
 	}
 
 
-	/**
-	 * Removes an instance.
-	 * @param ma the managed application
-	 * @param instance the instance to remove (not null)
-	 * @throws UnauthorizedActionException if we try to remove an instance that seems to be running
-	 * @throws IOException if an error occurred with the messaging
-	 */
-	public void removeInstance( ManagedApplication ma, Instance instance ) throws UnauthorizedActionException, IOException {
+	@Override
+	public void instanceWasUpdated( Instance instance, ManagedApplication ma ) {
 
+		this.notificationMngr.instance( instance, ma.getApplication(), EventType.CHANGED );
+		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
+	}
+
+
+	@Override
+	public void removeInstance( ManagedApplication ma, Instance instance )
+	throws UnauthorizedActionException, IOException {
+
+		this.messagingMngr.checkMessagingConfiguration();
 		for( Instance i : InstanceHelpers.buildHierarchicalList( instance )) {
 			if( i.getStatus() != InstanceStatus.NOT_DEPLOYED )
 				throw new UnauthorizedActionException( "Instances are still deployed or running. They cannot be removed in " + ma.getName() + "." );
@@ -110,7 +144,7 @@ public class InstanceMngrDelegate {
 
 		// Whatever is the state of the agent, we try to send a message.
 		MsgCmdRemoveInstance message = new MsgCmdRemoveInstance( instance );
-		this.manager.send( ma, message, instance );
+		this.messagingMngr.sendMessage( ma, instance, message );
 
 		if( instance.getParent() == null )
 			ma.getApplication().getRootInstances().remove( instance );
@@ -118,20 +152,68 @@ public class InstanceMngrDelegate {
 			instance.getParent().getChildren().remove( instance );
 
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
+		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
+		this.notificationMngr.instance( instance, ma.getApplication(), EventType.DELETED );
 	}
 
 
-	/**
-	 * Changes the state of an instance.
-	 * @param ma the managed application
-	 * @param instance the instance whose state must be updated
-	 * @param newStatus the new status
-	 * @throws IOException if an error occurred with the messaging
-	 * @throws TargetException if an error occurred with a target
-	 */
+	@Override
+	public void restoreInstanceStates( ManagedApplication ma ) {
+
+		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
+			try {
+				// Not associated with a VM? => Everything must be not deployed.
+				String machineId = scopedInstance.data.get( Instance.MACHINE_ID );
+				if( machineId == null ) {
+					markScopedInstanceAsNotDeployed( scopedInstance );
+					continue;
+				}
+
+				// Find the target handler
+				String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+				Map<String,String> targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
+				targetProperties.putAll( scopedInstance.data );
+
+				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+
+				// Not a running VM? => Everything must be not deployed.
+				if( ! targetHandler.isMachineRunning( targetProperties, machineId )) {
+					markScopedInstanceAsNotDeployed( scopedInstance );
+				}
+
+				// Otherwise, ask the agent to resent the states under this scoped instance
+				else {
+					scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+					this.messagingMngr.sendMessage( ma, scopedInstance, new MsgCmdSendInstances());
+				}
+
+			} catch( Exception e ) {
+				this.logger.severe( "Could not request states for agent " + scopedInstance.getName() + " (I/O exception)." );
+				Utils.logException( this.logger, e );
+			}
+		}
+	}
+
+
+	@Override
+	public void resynchronizeAgents( ManagedApplication ma ) throws IOException {
+
+		this.messagingMngr.checkMessagingConfiguration();
+		this.logger.fine( "Resynchronizing agents in " + ma.getName() + "..." );
+		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
+			if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED )
+				this.messagingMngr.sendMessage( ma, rootInstance, new MsgCmdResynchronize());
+		}
+
+		this.logger.fine( "Requests were sent to resynchronize agents in " + ma.getName() + "." );
+	}
+
+
+	@Override
 	public void changeInstanceState( ManagedApplication ma, Instance instance, InstanceStatus newStatus )
 	throws IOException, TargetException {
 
+		this.messagingMngr.checkMessagingConfiguration();
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
 		this.logger.fine( "Trying to change the state of " + instancePath + " to " + newStatus + " in " + ma.getName() + "..." );
 
@@ -160,64 +242,45 @@ public class InstanceMngrDelegate {
 				instanceResources = ResourceUtils.storeInstanceResources( ma.getTemplateDirectory(), instance );
 
 			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, newStatus, instanceResources );
-			this.manager.send( ma, message, instance );
+			this.messagingMngr.sendMessage( ma, instance, message );
 			this.logger.fine( "A message was (or will be) sent to the agent to change the state of " + instancePath + " in " + ma.getName() + "." );
 		}
 	}
 
 
-	/**
-	 * Deploys and starts all the instances of an application.
-	 * @param ma an application
-	 * @param instance the instance from which we deploy and start (can be null)
-	 * <p>
-	 * This instance and all its children will be deployed and started.
-	 * If null, then all the application instances are considered.
-	 * </p>
-	 *
-	 * @throws IOException if a problem occurred with the messaging
-	 */
+	@Override
 	public void deployAndStartAll( ManagedApplication ma, Instance instance ) throws IOException {
 
+		this.messagingMngr.checkMessagingConfiguration();
 		Collection<Instance> initialInstances;
 		if( instance != null )
 			initialInstances = Collections.singletonList(instance);
 		else
 			initialInstances = ma.getApplication().getRootInstances();
 
-		boolean gotExceptions = false;
+		List<Exception> exceptions = new ArrayList<> ();
 		for( Instance initialInstance : initialInstances ) {
 			for( Instance i : InstanceHelpers.buildHierarchicalList( initialInstance )) {
 				try {
 					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STARTED );
 
 				} catch( Exception e ) {
-					Utils.logException( this.logger, e );
-					gotExceptions = true;
+					exceptions.add( e );
 				}
 			}
 		}
 
-		if( gotExceptions ) {
-			this.logger.info( "One or several errors occurred while deploying and starting instances." );
-			throw new IOException( "One or several errors occurred while deploying and starting instances." );
-		}
+		processExceptions( this.logger, exceptions, "One or several errors occurred while deploying and starting instances." );
 	}
 
 
-	/**
-	 * Stops all the started instances of an application.
-	 * @param ma an application
-	 * @param instance the instance from which we stop (can be null)
-	 * <p>
-	 * This instance and all its children will be stopped.
-	 * If null, then all the application instances are considered.
-	 * </p>
-	 *
-	 * @throws IOException if a problem occurred with the messaging
-	 */
+
+
+
+	@Override
 	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException {
 
+		this.messagingMngr.checkMessagingConfiguration();
 		Collection<Instance> initialInstances;
 		if( instance != null )
 			initialInstances = Collections.singletonList(instance);
@@ -225,8 +288,8 @@ public class InstanceMngrDelegate {
 			initialInstances = ma.getApplication().getRootInstances();
 
 		// We do not need to stop all the instances, just the first children.
-		// Stop does not mean anything for targets.
-		boolean gotExceptions = false;
+		// Stop does not mean anything for targetsMngr.
+		List<Exception> exceptions = new ArrayList<> ();
 		for( Instance initialInstance : initialInstances ) {
 			try {
 				if( ! InstanceHelpers.isTarget( initialInstance ))
@@ -235,31 +298,18 @@ public class InstanceMngrDelegate {
 					changeInstanceState( ma, i, InstanceStatus.DEPLOYED_STOPPED );
 
 			} catch( Exception e ) {
-				Utils.logException( this.logger, e );
-				gotExceptions = true;
+				exceptions.add( e );
 			}
 		}
 
-		if( gotExceptions ) {
-			this.logger.info( "One or several errors occurred while stopping instances." );
-			throw new IOException( "One or several errors occurred while stopping instances." );
-		}
+		processExceptions( this.logger, exceptions, "One or several errors occurred while stopping instances." );
 	}
 
 
-	/**
-	 * Undeploys all the instances of an application.
-	 * @param ma an application
-	 * @param instance the instance from which we undeploy (can be null)
-	 * <p>
-	 * This instance and all its children will be undeployed.
-	 * If null, then all the application instances are considered.
-	 * </p>
-	 *
-	 * @throws IOException if a problem occurred with the messaging
-	 */
+	@Override
 	public void undeployAll( ManagedApplication ma, Instance instance ) throws IOException {
 
+		this.messagingMngr.checkMessagingConfiguration();
 		Collection<Instance> initialInstances;
 		if( instance != null )
 			initialInstances = Collections.singletonList(instance);
@@ -267,75 +317,17 @@ public class InstanceMngrDelegate {
 			initialInstances = ma.getApplication().getRootInstances();
 
 		// We do not need to undeploy all the instances, just the first instance
-		boolean gotExceptions = false;
+		List<Exception> exceptions = new ArrayList<> ();
 		for( Instance initialInstance : initialInstances ) {
 			try {
 				changeInstanceState( ma, initialInstance, InstanceStatus.NOT_DEPLOYED );
 
 			} catch( Exception e ) {
-				Utils.logException( this.logger, e );
-				gotExceptions = true;
+				exceptions.add( e );
 			}
 		}
 
-		if( gotExceptions ) {
-			this.logger.info( "One or several errors occurred while undeploying instances." );
-			throw new IOException( "One or several errors occurred while undeploying instances." );
-		}
-	}
-
-
-	/**
-	 * Restores instances states for a given application.
-	 * @param ma a managed application (not null)
-	 */
-	public void restoreInstanceStates( ManagedApplication ma ) {
-
-		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-			try {
-				// Not associated with a VM? => Everything must be not deployed.
-				String machineId = rootInstance.data.get( Instance.MACHINE_ID );
-				if( machineId == null ) {
-					rootInstance.data.remove( Instance.IP_ADDRESS );
-					rootInstance.data.remove( Instance.TARGET_ACQUIRED );
-					for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
-						i.setStatus( InstanceStatus.NOT_DEPLOYED );
-
-					continue;
-				}
-
-				// Not a running VM? => Everything must be not deployed.
-				Target target = this.targetResolver.findTargetHandler( this.manager.getTargetHandlers(), ma, rootInstance );
-				Map<String,String> targetProperties = new HashMap<>( target.getProperties());
-				targetProperties.putAll( rootInstance.data );
-
-				if( ! target.getHandler().isMachineRunning( targetProperties, machineId )) {
-					rootInstance.data.remove( Instance.IP_ADDRESS );
-					rootInstance.data.remove( Instance.MACHINE_ID );
-					rootInstance.data.remove( Instance.TARGET_ACQUIRED );
-					for( Instance i : InstanceHelpers.buildHierarchicalList( rootInstance ))
-						i.setStatus( InstanceStatus.NOT_DEPLOYED );
-				}
-
-				// Otherwise, ask the agent to resent the states
-				else {
-					rootInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-					this.manager.getMessagingClient().sendMessageToAgent( ma.getApplication(), rootInstance, new MsgCmdSendInstances());
-				}
-
-			} catch( Exception e ) {
-				this.logger.severe( "Could not request states for agent " + rootInstance.getName() + " (I/O exception)." );
-				Utils.logException( this.logger, e );
-			}
-		}
-	}
-
-
-	/**
-	 * @param targetResolver the target resolver to set
-	 */
-	public void setTargetResolver( ITargetResolver targetResolver ) {
-		this.targetResolver = targetResolver;
+		processExceptions( this.logger, exceptions, "One or several errors occurred while undeploying instances." );
 	}
 
 
@@ -374,24 +366,27 @@ public class InstanceMngrDelegate {
 		try {
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
 			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( scopedInstance );
-			this.manager.send( ma, msg, scopedInstance );
-
-			Target target = this.targetResolver.findTargetHandler( this.manager.getTargetHandlers(), ma, scopedInstance );
-			Map<String,String> targetProperties = new HashMap<>( target.getProperties());
-			targetProperties.putAll( scopedInstance.data );
+			this.messagingMngr.sendMessage( ma, scopedInstance, msg );
 
 			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-			machineId = target.getHandler().createMachine(
-					targetProperties,
-					this.manager.getMessagingConfiguration(),
-					scopedInstancePath, ma.getName());
+			Map<String,String> targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
+			targetProperties.putAll( scopedInstance.data );
+
+			TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+			Map<String,String> messagingConfiguration = this.messagingMngr.getMessagingClient().getConfiguration();
+			machineId = targetHandler.createMachine( targetProperties, messagingConfiguration, scopedInstancePath, ma.getName());
+
+			// FIXME: there might be concurrency issues.
+			// We may have to use a lock on targetsMngr.
+			this.targetsMngr.markTargetAs(
+					targetProperties.get( ITargetsMngr.ID ),
+					ma.getApplication(), scopedInstancePath, true );
 
 			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Scoped instance " + path + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
-			target.getHandler().configureMachine(
-					targetProperties,
-					this.manager.getMessagingConfiguration(),
+			targetHandler.configureMachine(
+					targetProperties, messagingConfiguration,
 					machineId, scopedInstancePath, ma.getName(), scopedInstance );
 
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
@@ -424,18 +419,25 @@ public class InstanceMngrDelegate {
 		String path = InstanceHelpers.computeInstancePath( scopedInstance );
 		this.logger.fine( "Undeploying scoped instance '" + path + "' in " + ma.getName() + "..." );
 		InstanceStatus initialStatus = scopedInstance.getStatus();
+		String machineId = scopedInstance.data.remove( Instance.MACHINE_ID );
 		try {
 			// Terminate the machine...
 			// ...  and notify other agents this agent was killed.
 			this.logger.fine( "Agent '" + path + "' is about to be deleted in " + ma.getName() + "." );
-			Target target = this.targetResolver.findTargetHandler( this.manager.getTargetHandlers(), ma, scopedInstance );
-			String machineId = scopedInstance.data.remove( Instance.MACHINE_ID );
 			if( machineId != null ) {
-				Map<String,String> targetProperties = new HashMap<String,String>( target.getProperties());
+				String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+				Map<String,String> targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
-				target.getHandler().terminateMachine( targetProperties, machineId );
-				this.manager.getMessagingClient().propagateAgentTermination( ma.getApplication(), scopedInstance );
+				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+				targetHandler.terminateMachine( targetProperties, machineId );
+
+				this.targetsMngr.markTargetAs(
+						targetProperties.get( ITargetsMngr.ID ),
+						ma.getApplication(),
+						scopedInstancePath, true );
+
+				this.messagingMngr.getMessagingClient().propagateAgentTermination( ma.getApplication(), scopedInstance );
 			}
 
 			this.logger.fine( "Agent '" + path + "' was successfully deleted in " + ma.getName() + "." );
@@ -452,6 +454,8 @@ public class InstanceMngrDelegate {
 
 		} catch( TargetException | IOException e ) {
 			scopedInstance.setStatus( initialStatus );
+			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
+
 			this.logger.severe( "Failed to undeploy scoped instance '" + path + "' in " + ma.getName() + ". " + e.getMessage());
 			Utils.logException( this.logger, e );
 			throw e;
@@ -459,5 +463,42 @@ public class InstanceMngrDelegate {
 		} finally {
 			ma.removeAwaitingMessages( scopedInstance );
 		}
+	}
+
+
+	/**
+	 * Reports a set of collections (for bulk actions).
+	 * @param logger
+	 * @param exceptions
+	 * @param msg
+	 * @throws IOException
+	 */
+	static void processExceptions( Logger logger, List<Exception> exceptions, String msg ) throws IOException {
+
+		for( Exception e : exceptions )
+			Utils.logException( logger, e );
+
+		if( exceptions.size() > 0 ) {
+			logger.info( msg );
+			throw new IOException( msg );
+		}
+	}
+
+
+	/**
+	 * Updates a scoped instance to be marked as not deployed.
+	 * <p>
+	 * This includes its children.
+	 * </p>
+	 *
+	 * @param scopedInstance a non-null scoped instance
+	 */
+	private void markScopedInstanceAsNotDeployed( Instance scopedInstance ) {
+
+		scopedInstance.data.remove( Instance.IP_ADDRESS );
+		scopedInstance.data.remove( Instance.MACHINE_ID );
+		scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+		for( Instance i : InstanceHelpers.buildHierarchicalList( scopedInstance ))
+			i.setStatus( InstanceStatus.NOT_DEPLOYED );
 	}
 }

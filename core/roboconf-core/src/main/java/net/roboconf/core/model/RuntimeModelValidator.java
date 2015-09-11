@@ -198,13 +198,6 @@ public final class RuntimeModelValidator {
 				error.setDetails( "Component name: " + c.getName());
 				result.add( error );
 
-			} else if( Constants.TARGET_INSTALLER.equalsIgnoreCase( c.getInstallerName())) {
-				File targetPropertiesFile = new File( componentDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
-				if( ! targetPropertiesFile.exists()) {
-					ModelError error = new ModelError( ErrorCode.PROJ_NO_TARGET_PROPERTIES, c, "Component name: " + c.getName());
-					result.add( error );
-				}
-
 			} else {
 				result.addAll( RecipesValidator.validateComponentRecipes( projectDirectory, c ));
 			}

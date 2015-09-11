@@ -344,6 +344,25 @@ public final class Utils {
 
 
 	/**
+	 * Writes Java properties into a file.
+	 * @param properties non-null properties
+	 * @param file a properties file
+	 * @throws IOException if writing failed
+	 */
+	public static void writePropertiesFile( Properties properties, File file ) throws IOException {
+
+		OutputStream out = null;
+		try {
+			out = new FileOutputStream( file );
+			properties.store( out, "" );
+
+		} finally {
+			closeQuietly( out );
+		}
+	}
+
+
+	/**
 	 * Creates a directory if it does not exist.
 	 * @param directory the directory to create
 	 * @throws IOException if it did not exist and that it could not be created

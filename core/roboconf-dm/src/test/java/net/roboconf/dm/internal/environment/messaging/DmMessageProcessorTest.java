@@ -31,6 +31,7 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -61,24 +62,32 @@ public class DmMessageProcessorTest {
 	private TestApplication app;
 	private DmMessageProcessor processor;
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 
 
 	@Before
 	public void resetManager() throws Exception {
 
+		// Create the manager
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
-		this.app = new TestApplication();
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+
+		// Reset the processor
 		if( this.processor != null )
 			this.processor.stopProcessor();
 
-		this.processor = (DmMessageProcessor) this.manager.getMessagingClient().getMessageProcessor();
-		this.manager.getNameToManagedApplication().clear();
-		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		this.processor = (DmMessageProcessor) this.managerWrapper.getMessagingClient().getMessageProcessor();
+
+		// Create an application
+		this.app = new TestApplication();
+		this.managerWrapper.getNameToManagedApplication().clear();
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 	}
 
 
@@ -163,9 +172,9 @@ public class DmMessageProcessorTest {
 
 
 	@Test
-	public void testProcessMsgNotifInstanceChanged_invalidInstance() {
+	public void testProcessMsgNotifInstanceChanged_invalidInstance() throws Exception {
 
-		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), new Instance( "invalid instance" ));
@@ -178,9 +187,9 @@ public class DmMessageProcessorTest {
 
 
 	@Test
-	public void testProcessMsgNotifInstanceChanged_rootIsNotDeployed() {
+	public void testProcessMsgNotifInstanceChanged_rootIsNotDeployed() throws Exception {
 
-		this.manager.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
 		this.app.getMySqlVm().setStatus( InstanceStatus.NOT_DEPLOYED );
 
 		MsgNotifInstanceChanged msg = new MsgNotifInstanceChanged( this.app.getName(), this.app.getMySql());
