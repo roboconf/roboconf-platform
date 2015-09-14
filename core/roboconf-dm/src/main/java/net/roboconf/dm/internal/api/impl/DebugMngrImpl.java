@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IDebugMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
@@ -60,20 +62,47 @@ public class DebugMngrImpl implements IDebugMngr {
 
 
 	@Override
-	public void pingMessageQueue( String message ) throws IOException {
+	public boolean pingMessageQueue( String message ) {
 
+		boolean sent = false;
 		final MsgEcho sentMessage = new MsgEcho( message );
-		this.messagingMngr.sendMessage( sentMessage );
-		this.logger.fine( "Sent Echo message on debug queue. Message=" + message + ", UUID=" + sentMessage.getUuid());
+		try {
+			this.messagingMngr.sendMessageToTheDm( sentMessage );
+			sent = true;
+			this.logger.fine( "Sent Echo message on debug queue. Message=" + message + ", UUID=" + sentMessage.getUuid());
+
+		} catch( IOException e ) {
+			this.logger.fine( "No Echo message was sent on debug queue. An error occurred with the messaging." );
+			Utils.logException( this.logger, e );
+		}
+
+		return sent;
 	}
 
 
 	@Override
-	public void pingAgent( ManagedApplication app, Instance scopedInstance, String message ) throws IOException {
+	public int pingAgent( ManagedApplication app, Instance scopedInstance, String message ) {
 
+		int result;
 		MsgEcho ping = new MsgEcho( "PING:" + message );
-		this.messagingMngr.sendMessage( app, scopedInstance, ping );
-		this.logger.fine( "Sent PING request message=" + message + " to application=" + app + ", agent=" + scopedInstance );
+		try {
+			if( scopedInstance.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
+				this.messagingMngr.sendMessageDirectly( app, scopedInstance, ping );
+				this.logger.fine( "Sent PING request message=" + message + " to application=" + app + ", agent=" + scopedInstance );
+				result = 0;
+
+			} else {
+				this.logger.fine( "No PING request was sent to application=" + app + ", agent=" + scopedInstance + ". The agent was not started." );
+				result = 1;
+			}
+
+		} catch( IOException e ) {
+			this.logger.fine( "No PING request was sent to application=" + app + ", agent=" + scopedInstance + ". An error occurred with the messaging." );
+			Utils.logException( this.logger, e );
+			result = 2;
+		}
+
+		return result;
 	}
 
 

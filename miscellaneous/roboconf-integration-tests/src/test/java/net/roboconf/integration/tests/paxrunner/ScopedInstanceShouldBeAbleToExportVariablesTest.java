@@ -25,7 +25,6 @@
 
 package net.roboconf.integration.tests.paxrunner;
 
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
@@ -44,10 +43,8 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.integration.probes.DmTest;
-import net.roboconf.integration.tests.internal.ItUtils;
+import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
-import net.roboconf.target.api.TargetHandler;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -65,7 +62,7 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
  */
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerMethod.class )
-public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmTest {
+public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
 
@@ -78,7 +75,7 @@ public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmTest {
 
 		// We need to specify the classes we need
 		// and that come from external modules.
-		probe.addTest( DmTest.class );
+		probe.addTest( DmWithAgentInMemoryTest.class );
 		probe.addTest( TestUtils.class );
 
 		return probe;
@@ -97,42 +94,12 @@ public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmTest {
 		String appLocation = resourcesDirectory.getAbsolutePath();
 		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
 
-		// Deploy the agent's bundles
-		String roboconfVersion = ItUtils.findRoboconfVersion();
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-plugin-api" )
-				.version( roboconfVersion )
-				.start());
-
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-agent" )
-				.version( roboconfVersion )
-				.start());
-
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-target-in-memory" )
-				.version( roboconfVersion )
-				.start());
-
 		return options.toArray( new Option[ options.size()]);
 	}
 
 
 	@Test
 	public void run() throws Exception {
-
-		// Wait for the in-memory target to be available
-		String targetHandlerId = "in-memory";
-		for( int i=0; i<5; i++ ) {
-			TargetHandler handler = this.manager.targetHandlerResolver().findTargetHandlerById( targetHandlerId );
-			if( handler == null )
-				Thread.sleep(300);
-			else
-				break;
-		}
 
 		// Load the application template
 		String appLocation = System.getProperty( APP_LOCATION );
@@ -142,6 +109,10 @@ public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmTest {
 		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
+
+		// Associate a target with it
+		String targetId = this.manager.targetsMngr().createTarget( "target.id = in-memory" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/vm1" );
 
 		// Instantiate a new scoped instance
 		Instance scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/vm1" );

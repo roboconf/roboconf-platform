@@ -105,7 +105,6 @@ public class Manager {
 	private final ITargetsMngr targetsMngr;
 	private final IDebugMngr debugMngr;
 
-	private ITargetHandlerResolver targetHandlerResolver;
 	private final TargetHandlerResolverImpl defaultTargetHandlerResolver;
 
 
@@ -153,7 +152,7 @@ public class Manager {
 
 		// Run the timer
 		this.timer = new Timer( "Roboconf's Management Timer", false );
-		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.applicationMngr, this.messagingClient ), 0, TIMER_PERIOD );
+		this.timer.scheduleAtFixedRate( new CheckerMessagesTask( this.applicationMngr, this.messagingMngr ), 0, TIMER_PERIOD );
 		this.timer.scheduleAtFixedRate( new CheckerHeartbeatsTask( this.applicationMngr ), 0, Constants.HEARTBEAT_PERIOD );
 
 		// Configure the messaging
@@ -277,8 +276,11 @@ public class Manager {
 	}
 
 	public void setTargetResolver( ITargetHandlerResolver targetHandlerResolver ) {
-		this.targetHandlerResolver = targetHandlerResolver;
-		this.instancesMngr.setTargetHandlerResolver( targetHandlerResolver());
+
+		if( targetHandlerResolver == null )
+			this.instancesMngr.setTargetHandlerResolver( targetHandlerResolver );
+		else
+			this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 	}
 
 
@@ -314,9 +316,5 @@ public class Manager {
 
 	public IDebugMngr debugMngr() {
 		return this.debugMngr;
-	}
-
-	public ITargetHandlerResolver targetHandlerResolver() {
-		return this.targetHandlerResolver == null ? this.defaultTargetHandlerResolver : this.targetHandlerResolver;
 	}
 }

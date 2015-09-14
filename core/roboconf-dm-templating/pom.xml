@@ -101,7 +101,15 @@
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-core</artifactId>
 			<type>test-jar</type>
-			<version>0.5-SNAPSHOT</version>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-dm</artifactId>
+			<type>test-jar</type>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 		

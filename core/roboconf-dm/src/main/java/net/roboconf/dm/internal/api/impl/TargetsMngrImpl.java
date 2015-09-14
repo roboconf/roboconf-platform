@@ -59,7 +59,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 	@Override
 	public String createTarget( String targetContent ) throws IOException {
-		File targetFile = findTargetFile( -1 );
+		File targetFile = findTargetFile( null );
 		Utils.writeStringInto( targetContent, targetFile );
 		return targetFile.getName();
 	}
@@ -67,28 +67,28 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 	@Override
 	public String createTarget( File targetPropertiesFile ) throws IOException {
-		File targetFile = findTargetFile( -1 );
+		File targetFile = findTargetFile( null );
 		Utils.copyStream( targetPropertiesFile, targetFile );
 		return targetFile.getName();
 	}
 
 
 	@Override
-	public void updateTarget( int targetId, String newTargetContent ) throws IOException {
-		File targetFile = findTargetFile( -1 );
+	public void updateTarget( String targetId, String newTargetContent ) throws IOException {
+		File targetFile = findTargetFile( targetId );
 		Utils.writeStringInto( newTargetContent, targetFile );
 	}
 
 
 	@Override
-	public void deleteTarget( int targetId ) throws IOException {
-		File targetFile = findTargetFile( -1 );
+	public void deleteTarget( String targetId ) throws IOException {
+		File targetFile = findTargetFile( targetId );
 		Utils.deleteFilesRecursively( targetFile );
 	}
 
 
 	@Override
-	public void associateTargetWithScopedInstance( int targetId, AbstractApplication app, String instancePath )
+	public void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath )
 	throws IOException {
 
 		File dir = findDirectory( app );
@@ -97,7 +97,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public void dissociateTargetFromScopedInstance( int targetId, AbstractApplication app, String instancePath )
+	public void dissociateTargetFromScopedInstance( String targetId, AbstractApplication app, String instancePath )
 	throws IOException {
 
 		File dir = findDirectory( app );
@@ -143,7 +143,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	}
 
 
-	private void saveAssociation( File appOrTplDirectory, int targetId, String instancePath, boolean add )
+	private void saveAssociation( File appOrTplDirectory, String targetId, String instancePath, boolean add )
 	throws IOException {
 
 		Properties props = new Properties();
@@ -175,12 +175,12 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	}
 
 
-	private File findTargetFile( int targetId ) throws IOException {
+	private File findTargetFile( String targetId ) throws IOException {
 
 		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
 		Utils.createDirectory( dir );
 		File result;
-		if( targetId > 0 ) {
+		if( targetId != null ) {
 			result = new File( dir, String.valueOf( targetId ));
 
 		} else for( int i=0; ; i++ ) {

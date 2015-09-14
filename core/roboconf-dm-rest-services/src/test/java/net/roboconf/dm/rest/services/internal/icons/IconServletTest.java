@@ -70,8 +70,7 @@ public class IconServletTest {
 		File configurationDirectory = this.folder.newFolder();
 
 		this.manager = new Manager();
-		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.manager.start();
+		this.manager.configurationMngr().setWorkingDirectory( configurationDirectory );
 
 		File appDir = ConfigurationUtils.findApplicationDirectory( "app", configurationDirectory );
 		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );

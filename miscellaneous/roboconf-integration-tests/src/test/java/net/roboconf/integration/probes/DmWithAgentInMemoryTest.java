@@ -99,6 +99,7 @@ public abstract class DmWithAgentInMemoryTest {
 
 		this.manager.setTargetResolver( new InMemoryTargetResolver( this.inMemoryIaas ));
 		this.manager.reconfigure();
+
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
 		Thread.sleep(1000);
 	}

@@ -63,14 +63,14 @@ public interface ITargetsMngr {
 	 * @param newTargetContent the new content of the target.properties file
 	 * @throws IOException if something went wrong
 	 */
-	void updateTarget( int targetId, String newTargetContent ) throws IOException;
+	void updateTarget( String targetId, String newTargetContent ) throws IOException;
 
 	/**
 	 * Deletes a target.
 	 * @param targetId the target's ID
 	 * @throws IOException if something went wrong or if the target is being used
 	 */
-	void deleteTarget( int targetId ) throws IOException;
+	void deleteTarget( String targetId ) throws IOException;
 
 	/**
 	 * Associates a target and a scoped instance within an application or application template.
@@ -79,7 +79,7 @@ public interface ITargetsMngr {
 	 * @param instancePath an instance path
 	 * @throws IOException if something went wrong or if the association is not possible (e.g. instance is already deployed)
 	 */
-	void associateTargetWithScopedInstance( int targetId, AbstractApplication app, String instancePath ) throws IOException;
+	void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath ) throws IOException;
 
 	/**
 	 * Dissociates a target and a scoped instance within an application or application template.
@@ -88,7 +88,7 @@ public interface ITargetsMngr {
 	 * @param instancePath an instance path
 	 * @throws IOException if something went wrong or if dissociation is not possible (e.g. instance is already deployed)
 	 */
-	void dissociateTargetFromScopedInstance( int targetId, AbstractApplication app, String instancePath ) throws IOException;
+	void dissociateTargetFromScopedInstance( String targetId, AbstractApplication app, String instancePath ) throws IOException;
 
 	/**
 	 * Finds the target properties of a scoped instance within an application or an application template.

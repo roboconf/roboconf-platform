@@ -25,8 +25,6 @@
 
 package net.roboconf.dm.management.api;
 
-import java.io.IOException;
-
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
@@ -39,18 +37,18 @@ public interface IDebugMngr {
 	/**
 	 * Pings the DM through the messaging queue.
 	 * @param message the content of the Echo message to send
-	 * @throws IOException if something bad happened
+	 * @return true if a ping could be sent, false it was considered useless (e.g. no messaging)
 	 */
-	void pingMessageQueue( String message ) throws IOException;
+	boolean pingMessageQueue( String message );
 
 	/**
 	 * Pings an agent through the messaging queue.
 	 * @param app the application
 	 * @param scopedInstance the scoped instance
 	 * @param message the echo messages's content
-	 * @throws IOException if something bad happened
+	 * @return 0 if a ping could be sent, 1 if the agent is not started, or 2 if the messaging was not ready
 	 */
-	void pingAgent( ManagedApplication app, Instance scopedInstance, String message ) throws IOException;
+	int pingAgent( ManagedApplication app, Instance scopedInstance, String message );
 
 	/**
 	 * Invokes when an ECHO message was received.

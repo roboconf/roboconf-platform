@@ -144,7 +144,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 		// Whatever is the state of the agent, we try to send a message.
 		MsgCmdRemoveInstance message = new MsgCmdRemoveInstance( instance );
-		this.messagingMngr.sendMessage( ma, instance, message );
+		this.messagingMngr.sendMessageSafely( ma, instance, message );
 
 		if( instance.getParent() == null )
 			ma.getApplication().getRootInstances().remove( instance );
@@ -184,7 +184,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				// Otherwise, ask the agent to resent the states under this scoped instance
 				else {
 					scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
-					this.messagingMngr.sendMessage( ma, scopedInstance, new MsgCmdSendInstances());
+					this.messagingMngr.sendMessageDirectly( ma, scopedInstance, new MsgCmdSendInstances());
 				}
 
 			} catch( Exception e ) {
@@ -202,7 +202,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		this.logger.fine( "Resynchronizing agents in " + ma.getName() + "..." );
 		for( Instance rootInstance : ma.getApplication().getRootInstances()) {
 			if( rootInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED )
-				this.messagingMngr.sendMessage( ma, rootInstance, new MsgCmdResynchronize());
+				this.messagingMngr.sendMessageDirectly( ma, rootInstance, new MsgCmdResynchronize());
 		}
 
 		this.logger.fine( "Requests were sent to resynchronize agents in " + ma.getName() + "." );
@@ -242,7 +242,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				instanceResources = ResourceUtils.storeInstanceResources( ma.getTemplateDirectory(), instance );
 
 			MsgCmdChangeInstanceState message = new MsgCmdChangeInstanceState( instance, newStatus, instanceResources );
-			this.messagingMngr.sendMessage( ma, instance, message );
+			this.messagingMngr.sendMessageSafely( ma, instance, message );
 			this.logger.fine( "A message was (or will be) sent to the agent to change the state of " + instancePath + " in " + ma.getName() + "." );
 		}
 	}
@@ -366,7 +366,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		try {
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
 			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( scopedInstance );
-			this.messagingMngr.sendMessage( ma, scopedInstance, msg );
+			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msg );
 
 			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 			Map<String,String> targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );

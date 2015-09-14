@@ -33,17 +33,14 @@ import java.util.Properties;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.AbstractApplication;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
-import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.ITargetsMngr;
 
@@ -159,25 +156,7 @@ public class TargetHelpersTest {
 	@Test
 	public void testVerifyTargets_targetException() throws Exception {
 
-		// Create an application
-		Component comp = new Component( "comp" ).installerName( Constants.TARGET_INSTALLER );
-		Graphs graph = new Graphs();
-		graph.getRootComponents().add( comp );
-
-		Component child = new Component( "child" );
-		comp.addChild( child );
-
-		ApplicationTemplate tpl = new ApplicationTemplate( "test" ).graphs( graph );
-		Application app = new Application( "test", tpl );
-
-		Instance rootInstance = new Instance( "root" ).component( comp );
-		Instance childInstance = new Instance( "child" ).component( child );
-		InstanceHelpers.insertChild( rootInstance, childInstance );
-
-		app.getRootInstances().add( rootInstance );
-
-		// Test the validation. A log entry is created.
-		ManagedApplication ma = new ManagedApplication( app );
+		ManagedApplication ma = new ManagedApplication( new TestApplication());
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		Mockito.when(
 				targetsMngr.findTargetProperties(

@@ -55,7 +55,6 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.target.api.TargetHandler;
 
@@ -414,57 +413,6 @@ public class Manager_BasicsTest {
 	}
 
 
-	@Test( expected = IOException.class )
-	public void testCheckMessagingConfiguration_noConfiguration() throws Exception {
-
-		this.manager = new Manager();
-		this.managerWrapper = new TestManagerWrapper( this.manager );
-		this.manager.messagingMngr().checkMessagingConfiguration();
-	}
-
-
-	@Test( expected = IOException.class )
-	public void testCheckMessagingConfiguration_invalidConfiguration() throws Exception {
-
-		this.manager.setMessagingType("whatever");
-		this.manager.reconfigure();
-		this.manager.messagingMngr().checkMessagingConfiguration();
-	}
-
-
-	@Test
-	public void testCheckMessagingConfiguration() throws Exception {
-		this.manager.messagingMngr().checkMessagingConfiguration();
-	}
-
-
-	@Test
-	public void testSendMessageToTheDm_notConnected() throws Exception {
-
-		this.msgClient.closeConnection();
-		this.manager.messagingMngr().sendMessage( new MsgCmdRemoveInstance( "/" ));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-	}
-
-
-	@Test
-	public void testSendMessageToTheDm_connected() throws Exception {
-
-		this.manager.messagingMngr().sendMessage( new MsgCmdRemoveInstance( "/" ));
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
-		Assert.assertEquals( MsgCmdRemoveInstance.class, this.msgClient.sentMessages.iterator().next().getClass());
-	}
-
-
-	@Test
-	public void testSendMessageToTheDm_exception() throws Exception {
-
-		this.msgClient.failMessageSending.set( true );
-		this.manager.messagingMngr().sendMessage( new MsgCmdRemoveInstance( "/" ));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-	}
-
-
 	@Test
 	public void testConfigurationChanged_withApps_noInstanceDeployed() throws Exception {
 
@@ -596,48 +544,6 @@ public class Manager_BasicsTest {
 		// The VM was killed outside the DM. Upon restoration, the DM
 		// contacts the IaaS and sets the NOT_DEPLOYED status.
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, apache.getStatus());
-	}
-
-
-	@Test
-	public void testSendWhenNoConnection() throws Exception {
-
-		ManagedApplication ma = new ManagedApplication( new TestApplication());
-
-		this.managerWrapper.getMessagingClient().closeConnection();
-		this.manager.messagingMngr().sendMessage( ma, new Instance(), new MsgCmdSendInstances());
-		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-
-		this.manager.stop();
-		this.manager.messagingMngr().sendMessage( ma, new Instance(), new MsgCmdSendInstances());
-		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
-	}
-
-
-	@Test
-	public void testSendWhenInvalidConfiguration() throws Exception {
-
-		this.manager = new Manager();
-		this.managerWrapper = new TestManagerWrapper( this.manager );
-
-		ManagedApplication ma = new ManagedApplication( new TestApplication());
-		this.manager.messagingMngr().sendMessage( ma, new Instance(), new MsgCmdSendInstances());
-		// No exception
-	}
-
-
-	@Test
-	public void testSendWhenRabbitIsDown() throws Exception {
-
-		TestApplication app = new TestApplication();
-		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		ManagedApplication ma = new ManagedApplication( app );
-
-		this.msgClient.connected.set( true );
-		this.msgClient.failMessageSending.set( true );
-		this.manager.messagingMngr().sendMessage( ma, app.getMySqlVm(), new MsgCmdSendInstances());
 	}
 
 

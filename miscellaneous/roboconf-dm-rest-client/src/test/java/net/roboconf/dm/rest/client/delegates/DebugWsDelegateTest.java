@@ -25,7 +25,6 @@
 
 package net.roboconf.dm.rest.client.delegates;
 
-import java.io.File;
 import java.net.URI;
 import java.util.List;
 import java.util.Timer;
@@ -35,7 +34,6 @@ import javax.ws.rs.core.UriBuilder;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
@@ -47,7 +45,6 @@ import net.roboconf.dm.rest.client.exceptions.DebugException;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.services.internal.RestApplication;
-import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.messaging.api.MessagingConstants;
 
 import org.glassfish.grizzly.http.server.HttpServer;
@@ -171,29 +168,5 @@ public class DebugWsDelegateTest {
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		this.client.getDebugDelegate().diagnoseInstance( "inexisting", path );
-	}
-
-
-	@Test
-	public void testCreateTestForTargetProperties_success() throws Exception {
-
-		File propertiesFile = this.folder.newFile();
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		this.client.getDebugDelegate().createTestForTargetProperties( propertiesFile );
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
-	}
-
-
-	@Test( expected = DebugException.class )
-	public void testCreateTestForTargetProperties_conflict() throws Exception {
-
-		ApplicationTemplate tpl = new ApplicationTemplate( IDebugResource.FAKE_APP_NAME ).qualifier( "DEBUG" );
-		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
-
-		File propertiesFile = this.folder.newFile();
-		this.client.getDebugDelegate().createTestForTargetProperties( propertiesFile );
 	}
 }

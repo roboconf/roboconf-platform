@@ -117,4 +117,18 @@ public class ManagerTest {
 		this.manager.listenerAppears( Mockito.mock( IDmListener.class ));
 		Assert.assertEquals( 2, listeners.size());
 	}
+
+
+	@Test
+	public void verifyApis() {
+
+		Assert.assertNotNull( this.manager.applicationMngr());
+		Assert.assertNotNull( this.manager.applicationTemplateMngr());
+		Assert.assertNotNull( this.manager.configurationMngr());
+		Assert.assertNotNull( this.manager.debugMngr());
+		Assert.assertNotNull( this.manager.instancesMngr());
+		Assert.assertNotNull( this.manager.messagingMngr());
+		Assert.assertNotNull( this.manager.notificationMngr());
+		Assert.assertNotNull( this.manager.targetsMngr());
+	}
 }

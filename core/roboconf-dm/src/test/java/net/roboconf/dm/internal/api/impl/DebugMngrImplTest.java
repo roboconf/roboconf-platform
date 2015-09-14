@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl;
 
+import java.io.IOException;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -63,13 +64,13 @@ public class DebugMngrImplTest {
 
 
 	@Test
-	public void testSendPingMessageQueue() throws Exception {
+	public void testSendPingMessageQueue_normal() throws Exception {
 
 		Mockito.verifyZeroInteractions( this.messagingMngr );
-		this.mngr.pingMessageQueue( "TEST" );
+		Assert.assertTrue( this.mngr.pingMessageQueue( "TEST" ));
 
 		ArgumentCaptor<Message> argument = ArgumentCaptor.forClass( Message.class );
-		Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendMessage( argument.capture());
+		Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendMessageToTheDm( argument.capture());
 
 		Message message = argument.getValue();
 		Assert.assertTrue( message instanceof MsgEcho );
@@ -80,23 +81,38 @@ public class DebugMngrImplTest {
 
 
 	@Test
-	public void testSendPingAgent() throws Exception {
+	public void testSendPingMessageQueue_messagingException() throws Exception {
+
+		Mockito.doThrow( new IOException( "for test" ) ).when( this.messagingMngr ).sendMessageToTheDm( Mockito.any( Message.class  ));
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+		Assert.assertFalse( this.mngr.pingMessageQueue( "TEST" ));
+		Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendMessageToTheDm( Mockito.any( Message.class ));
+	}
+
+
+	@Test
+	public void testSendPingAgent_normal_rootsAreDeployed() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
 		Mockito.verifyZeroInteractions( this.messagingMngr );
 
 		// Ping all the root instances.
-		for (Instance i : app.getRootInstances()) {
-			i.setStatus( InstanceStatus.DEPLOYED_STARTED );
-			this.mngr.pingAgent( ma, i, "TEST " + i.getName());
-		}
+		// None of them is not deployed.
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getTomcatVm().setStatus( InstanceStatus.PROBLEM );
 
-		// Now check the DM has sent a ping every agent.
+		for( Instance i : app.getRootInstances())
+			Assert.assertEquals( 0, this.mngr.pingAgent( ma, i, "TEST " + i.getName()));
+
+		// Now check the DM has sent a ping to every agent.
 		int inv = app.getRootInstances().size();
 		ArgumentCaptor<Message> argMsg = ArgumentCaptor.forClass( Message.class );
 		ArgumentCaptor<ManagedApplication> argApp = ArgumentCaptor.forClass( ManagedApplication.class );
-		Mockito.verify( this.messagingMngr, Mockito.times( inv )).sendMessage( argApp.capture(), Mockito.any( Instance.class ), argMsg.capture());
+		Mockito.verify( this.messagingMngr, Mockito.times( inv )).sendMessageDirectly(
+				argApp.capture(),
+				Mockito.any( Instance.class ),
+				argMsg.capture());
 
 		List<Message> sentMessages = argMsg.getAllValues();
 		Assert.assertEquals( app.getRootInstances().size(), sentMessages.size());
@@ -111,5 +127,53 @@ public class DebugMngrImplTest {
 		for( ManagedApplication t : argApp.getAllValues()) {
 			Assert.assertEquals( ma, t );
 		}
+	}
+
+
+	@Test
+	public void testSendPingAgent_normal_rootsAreNotDeployed() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+
+		// Ping all the root instances.
+		for (Instance i : app.getRootInstances()) {
+			i.setStatus( InstanceStatus.NOT_DEPLOYED );
+			Assert.assertEquals( 1, this.mngr.pingAgent( ma, i, "TEST " + i.getName()));
+		}
+
+		// Now check the DM has tried to send a ping to every agent.
+		Mockito.verify( this.messagingMngr, Mockito.times( 0 )).sendMessageDirectly(
+				Mockito.any( ManagedApplication.class ),
+				Mockito.any( Instance.class ),
+				Mockito.any( Message.class ));
+	}
+
+
+	@Test
+	public void testSendPingAgent_normal_rootsAreDeployed_messagingError() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+
+		Mockito.doThrow( new IOException( "for test" ) ).when( this.messagingMngr ).sendMessageDirectly(
+				Mockito.any( ManagedApplication.class ),
+				Mockito.any( Instance.class ),
+				Mockito.any( Message.class ));
+
+		// Ping all the root instances.
+		for( Instance i : app.getRootInstances()) {
+			i.setStatus( InstanceStatus.DEPLOYED_STARTED );
+			Assert.assertEquals( 2, this.mngr.pingAgent( ma, i, "TEST " + i.getName()));
+		}
+
+		// Now check the DM has tried to send a ping to every agent.
+		int inv = app.getRootInstances().size();
+		Mockito.verify( this.messagingMngr, Mockito.times( inv )).sendMessageDirectly(
+				Mockito.any( ManagedApplication.class ),
+				Mockito.any( Instance.class ),
+				Mockito.any( Message.class ));
 	}
 }

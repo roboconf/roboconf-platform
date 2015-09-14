@@ -25,7 +25,6 @@
 
 package net.roboconf.dm.rest.client.delegates;
 
-import java.io.File;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -39,8 +38,6 @@ import net.roboconf.dm.rest.commons.UrlConstants;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.multipart.FormDataMultiPart;
-import com.sun.jersey.multipart.file.FileDataBodyPart;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -59,33 +56,6 @@ public class DebugWsDelegate {
 	public DebugWsDelegate( WebResource resource ) {
 		this.resource = resource;
 		this.logger = Logger.getLogger( getClass().getName());
-	}
-
-
-	/**
-	 * Creates a test application to verify a target.properties file is correct.
-	 * @param targetPropertiesFile a properties file
-	 * @throws DebugException if the application could be created or updated
-	 */
-	public void createTestForTargetProperties( File targetPropertiesFile ) throws DebugException {
-
-		this.logger.finer( "Creating a test application to evaluate " + targetPropertiesFile + "..." );
-
-		FormDataMultiPart part = new FormDataMultiPart();
-		part.bodyPart( new FileDataBodyPart( "file", targetPropertiesFile, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-
-		ClientResponse response = this.resource
-				.path( UrlConstants.DEBUG ).path( "test-target" )
-				.type( MediaType.MULTIPART_FORM_DATA_TYPE )
-				.post( ClientResponse.class, part );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
 

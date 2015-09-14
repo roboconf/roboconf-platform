@@ -313,12 +313,12 @@ public class ManagementResourceTest {
 
 
 	@Test
-	public void testLoadApplicationTemplate_zip_IOException() throws Exception {
+	public void testLoadApplicationTemplate_zip_failure() throws Exception {
 
 		this.msgClient.connected.set( false );
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());
 		Assert.assertEquals(
-				Status.UNAUTHORIZED.getStatusCode(),
+				Status.NOT_ACCEPTABLE.getStatusCode(),
 				this.resource.loadApplicationTemplate( "some-file" ).getStatus());
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());

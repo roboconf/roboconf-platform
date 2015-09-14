@@ -60,16 +60,27 @@ public class MessagingMngrImpl implements IMessagingMngr {
 
 
 	@Override
-	public void sendMessage( ManagedApplication ma, Instance instance, Message message )
+	public void sendMessageSafely( ManagedApplication ma, Instance instance, Message message ) {
+
+		// We do NOT send directly a message!
+		ma.storeAwaitingMessage( instance, message );
+
+		// If the message has been stored, let's try to send all the stored messages.
+		sendStoredMessages( ma, instance );
+	}
+
+
+	@Override
+	public void sendMessageDirectly( ManagedApplication ma, Instance scopedInstance, Message message )
 	throws IOException {
+		this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, message );
+	}
+
+
+	@Override
+	public void sendStoredMessages( ManagedApplication ma, Instance instance ) {
 
 		if( messagingIsReady()) {
-
-			// We do NOT send directly a message!
-			ma.storeAwaitingMessage( instance, message );
-
-			// If the message has been stored, let's try to send all the stored messages.
-			// This preserves message ordering (FIFO).
 
 			// If the VM is online, process awaiting messages to prevent waiting.
 			// This can work concurrently with the messages timer.
@@ -77,15 +88,22 @@ public class MessagingMngrImpl implements IMessagingMngr {
 			if( scopedInstance.getStatus() == InstanceStatus.DEPLOYED_STARTED ) {
 
 				List<Message> messages = ma.removeAwaitingMessages( instance );
+				if( messages.isEmpty())
+					return;
+
 				String path = InstanceHelpers.computeInstancePath( scopedInstance );
 				this.logger.fine( "Forcing the sending of " + messages.size() + " awaiting message(s) for " + path + "." );
 
 				for( Message msg : messages ) {
 					try {
-						this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
+						sendMessageDirectly( ma, scopedInstance, msg );
 
 					} catch( IOException e ) {
-						this.logger.severe( "Error while sending a stored message. " + e.getMessage());
+
+						// If the message could not be send, plan a retry.
+						// This preserves message ordering (FIFO).
+						ma.storeAwaitingMessage( scopedInstance, msg );
+						this.logger.severe( "Error while sending a stored message. A retry is planned. " + e.getMessage());
 						Utils.logException( this.logger, e );
 					}
 				}
@@ -95,17 +113,8 @@ public class MessagingMngrImpl implements IMessagingMngr {
 
 
 	@Override
-	public void sendMessage( Message message ) throws IOException {
-
-		if( messagingIsReady()) {
-			try {
-				this.messagingClient.sendMessageToTheDm( message );
-
-			} catch( IOException e ) {
-				this.logger.severe( "Error while sending a stored message. " + e.getMessage());
-				Utils.logException( this.logger, e );
-			}
-		}
+	public void sendMessageToTheDm( Message message ) throws IOException {
+		this.messagingClient.sendMessageToTheDm( message );
 	}
 
 
