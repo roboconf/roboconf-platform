@@ -161,6 +161,9 @@ public class ApplicationResourceTest {
 		TestTargetResolver iaasResolver = new TestTargetResolver();
 		this.manager.setTargetResolver( iaasResolver );
 
+		String targetId = this.manager.targetsMngr().createTarget( "handler: test" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+
 		Assert.assertEquals( 0, iaasResolver.instancePathToRunningStatus.size());
 		Response resp = this.resource.changeInstanceState(
 				this.app.getName(),

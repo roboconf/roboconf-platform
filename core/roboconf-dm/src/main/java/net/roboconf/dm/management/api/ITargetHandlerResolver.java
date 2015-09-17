@@ -48,12 +48,4 @@ public interface ITargetHandlerResolver {
 	 * @throws TargetException if no handler was found
 	 */
 	TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException;
-
-
-	/**
-	 * Finds a target handler by its ID.
-	 * @param id a string (can be null)
-	 * @return a target handler, or null if none was found
-	 */
-	TargetHandler findTargetHandlerById( String id );
 }

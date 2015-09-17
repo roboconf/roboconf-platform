@@ -111,7 +111,7 @@ public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmWithAgent
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Associate a target with it
-		String targetId = this.manager.targetsMngr().createTarget( "target.id = in-memory" );
+		String targetId = this.manager.targetsMngr().createTarget( "handler = in-memory" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/vm1" );
 
 		// Instantiate a new scoped instance

@@ -106,7 +106,7 @@ public class ResolveMojo extends AbstractMojo {
 				throw new MojoExecutionException( "The ZIP archive for artifact " + art.getArtifactId() + " could not be extracted.", e );
 
 			} finally {
-				Utils.deleteFilesRecursivelyAndQuitely( temporaryDirectory );
+				Utils.deleteFilesRecursivelyAndQuietly( temporaryDirectory );
 			}
 		}
 	}

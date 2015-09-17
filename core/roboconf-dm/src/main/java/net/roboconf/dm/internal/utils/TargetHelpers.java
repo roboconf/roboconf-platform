@@ -25,8 +25,6 @@
 
 package net.roboconf.dm.internal.utils;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -35,7 +33,6 @@ import java.util.logging.Logger;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
@@ -57,28 +54,6 @@ public final class TargetHelpers {
 
 
 	/**
-	 * Loads the targetHandlers properties.
-	 * @param applicationFilesDirectory the directory where application resources are stored
-	 * @param scopedInstance the scoped instance to find the targetHandlers properties
-	 * @return a non-null properties
-	 * @throws IOException if the targetHandlers properties file was not found
-	 */
-	public static Map<String,String> loadTargetProperties( File applicationFilesDirectory, Instance scopedInstance ) throws IOException {
-
-		File f = ResourceUtils.findInstanceResourcesDirectory( applicationFilesDirectory, scopedInstance );
-		f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
-
-		Map<String,String> result = new HashMap<String,String>();
-		Properties p = Utils.readPropertiesFile( f );
-		for( Map.Entry<Object,Object> entry : p.entrySet()) {
-			result.put( entry.getKey().toString(), entry.getValue().toString());
-		}
-
-		return expandProperties( scopedInstance, result );
-	}
-
-
-	/**
 	 * Verifies that all the target handlers an application needs are installed.
 	 * @param targetHandlerResolver the DM's target resolver
 	 * @param ma a managed application
@@ -96,7 +71,7 @@ public final class TargetHelpers {
 
 			try {
 				String path = InstanceHelpers.computeInstancePath( inst );
-				Map<String,String> targetProperties = targetsMngr.findTargetProperties( ma.getApplication(), path );
+				Map<String,String> targetProperties = targetsMngr.findRawTargetProperties( ma.getApplication(), path );
 				targetHandlerResolver.findTargetHandler( targetProperties );
 
 			} catch( TargetException e ) {
@@ -121,8 +96,10 @@ public final class TargetHelpers {
 	public static Map<String,String> expandProperties( Instance scopedInstance, Map<String,String> targetProperties ) {
 
 		Logger logger = Logger.getLogger( TargetHelpers.class.getName());
-		Instance rootInstance = InstanceHelpers.findRootInstance( scopedInstance );
-		String ipAddress = rootInstance.data.get( Instance.IP_ADDRESS );
+		String ipAddress = scopedInstance.data.get( Instance.IP_ADDRESS );
+		if( ipAddress == null )
+			ipAddress = InstanceHelpers.findRootInstance( scopedInstance ).data.get( Instance.IP_ADDRESS );
+
 		if( ipAddress == null )
 			ipAddress = "";
 

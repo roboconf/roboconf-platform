@@ -216,7 +216,7 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 				this.logger.fine( "Registering target from component " + c + " in application template " + tpl );
 				String targetId = this.targetsMngr.createTarget( f );
 				this.targetsMngr.addHint( targetId, tpl );
-				Utils.deleteFilesRecursivelyAndQuitely( f.getParentFile());
+				Utils.deleteFilesRecursivelyAndQuietly( f.getParentFile());
 			}
 		}
 	}

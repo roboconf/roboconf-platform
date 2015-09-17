@@ -274,7 +274,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		} finally {
 			Utils.closeQuietly( response );
-			Utils.deleteFilesRecursivelyAndQuitely( dockerfile );
+			Utils.deleteFilesRecursivelyAndQuietly( dockerfile );
 		}
 	}
 

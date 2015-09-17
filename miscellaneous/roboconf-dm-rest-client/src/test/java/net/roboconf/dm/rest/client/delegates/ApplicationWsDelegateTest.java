@@ -160,6 +160,9 @@ public class ApplicationWsDelegateTest {
 		TestTargetResolver iaasResolver = new TestTargetResolver();
 		this.manager.setTargetResolver( iaasResolver );
 
+		String targetId = this.manager.targetsMngr().createTarget( "handler: test" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+
 		Assert.assertEquals( 0, iaasResolver.instancePathToRunningStatus.size());
 		this.client.getApplicationDelegate().changeInstanceState(
 				this.app.getName(),

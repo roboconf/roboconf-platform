@@ -121,10 +121,5 @@ public abstract class DmWithAgentInMemoryTest {
 		throws TargetException {
 			return this.inMemoryIaas;
 		}
-
-		@Override
-		public TargetHandler findTargetHandlerById( String id ) {
-			return this.inMemoryIaas;
-		}
 	}
 }

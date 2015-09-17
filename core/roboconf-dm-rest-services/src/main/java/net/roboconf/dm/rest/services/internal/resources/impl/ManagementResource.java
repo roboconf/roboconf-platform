@@ -101,8 +101,8 @@ public class ManagementResource implements IManagementResource {
 
 			// We do not need the extracted application anymore.
 			// In case of success, it was copied in the DM's configuration.
-			Utils.deleteFilesRecursivelyAndQuitely( dir );
-			Utils.deleteFilesRecursivelyAndQuitely( tempZipFile );
+			Utils.deleteFilesRecursivelyAndQuietly( dir );
+			Utils.deleteFilesRecursivelyAndQuietly( tempZipFile );
 		}
 
 		return response;

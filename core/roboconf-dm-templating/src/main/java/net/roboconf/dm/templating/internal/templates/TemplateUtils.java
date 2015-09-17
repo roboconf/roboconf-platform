@@ -141,7 +141,7 @@ public final class TemplateUtils {
 	public static void deleteGeneratedFiles( Application app, File outputDirectory ) {
 
 		File target = new File( outputDirectory, app.getName());
-		Utils.deleteFilesRecursivelyAndQuitely( target );
+		Utils.deleteFilesRecursivelyAndQuietly( target );
 	}
 
 

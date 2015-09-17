@@ -278,9 +278,9 @@ public class Manager {
 	public void setTargetResolver( ITargetHandlerResolver targetHandlerResolver ) {
 
 		if( targetHandlerResolver == null )
-			this.instancesMngr.setTargetHandlerResolver( targetHandlerResolver );
-		else
 			this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
+		else
+			this.instancesMngr.setTargetHandlerResolver( targetHandlerResolver );
 	}
 
 

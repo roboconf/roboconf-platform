@@ -107,6 +107,11 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
+		// Associate a default target for this application
+		String targetId = this.manager.targetsMngr().createTarget( "handler: in-memory" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
+
+		// Change the instances states
 		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
 		Instance app = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/App VM/App" );
 		Assert.assertNotNull( mysql );

@@ -114,6 +114,10 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
+		// Associate a default target for this application
+		String targetId = this.manager.targetsMngr().createTarget( "handler: in-memory" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
+
 		// There is no agent yet (no root instance was deployed)
 		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
 

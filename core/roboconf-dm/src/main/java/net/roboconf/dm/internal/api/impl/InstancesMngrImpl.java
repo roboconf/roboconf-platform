@@ -171,7 +171,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 				// Find the target handler
 				String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-				Map<String,String> targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
+				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
 				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
@@ -368,23 +368,28 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( scopedInstance );
 			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msg );
 
-			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-			Map<String,String> targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
+			Map<String,String> targetProperties = this.targetsMngr.lockAndGetTarget( ma.getApplication(), scopedInstance );
 			targetProperties.putAll( scopedInstance.data );
 
 			TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
 			Map<String,String> messagingConfiguration = this.messagingMngr.getMessagingClient().getConfiguration();
-			machineId = targetHandler.createMachine( targetProperties, messagingConfiguration, scopedInstancePath, ma.getName());
+			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 
-			// FIXME: there might be concurrency issues.
-			// We may have to use a lock on targetsMngr.
-			this.targetsMngr.markTargetAs(
-					targetProperties.get( ITargetsMngr.ID ),
-					ma.getApplication(), scopedInstancePath, true );
+			// FIXME: there can be many problems here.
+			// Not sure we handle all the possible problems correctly.
+			try {
+				machineId = targetHandler.createMachine( targetProperties, messagingConfiguration, scopedInstancePath, ma.getName());
+
+			} catch( TargetException e ) {
+				this.targetsMngr.unlockTarget( ma.getApplication(), scopedInstance );
+				throw e;
+			}
 
 			scopedInstance.data.put( Instance.MACHINE_ID, machineId );
 			this.logger.fine( "Scoped instance " + path + "'s deployment was successfully requested in " + ma.getName() + ". Machine ID: " + machineId );
 
+			// If the configuration fails, keep the lock on the target.
+			// This will prevent us from having ghost VMs with no target.
 			targetHandler.configureMachine(
 					targetProperties, messagingConfiguration,
 					machineId, scopedInstancePath, ma.getName(), scopedInstance );
@@ -426,17 +431,13 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			this.logger.fine( "Agent '" + path + "' is about to be deleted in " + ma.getName() + "." );
 			if( machineId != null ) {
 				String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-				Map<String,String> targetProperties = this.targetsMngr.findTargetProperties( ma.getApplication(), scopedInstancePath );
+				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
 				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
 				targetHandler.terminateMachine( targetProperties, machineId );
 
-				this.targetsMngr.markTargetAs(
-						targetProperties.get( ITargetsMngr.ID ),
-						ma.getApplication(),
-						scopedInstancePath, true );
-
+				this.targetsMngr.unlockTarget( ma.getApplication(), scopedInstance );
 				this.messagingMngr.getMessagingClient().propagateAgentTermination( ma.getApplication(), scopedInstance );
 			}
 

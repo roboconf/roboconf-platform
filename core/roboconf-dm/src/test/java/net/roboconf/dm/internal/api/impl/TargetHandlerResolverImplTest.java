@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -54,10 +55,10 @@ public class TargetHandlerResolverImplTest {
 		mngr.addTargetHandler( th2 );
 
 		Map<String,String> targetProperties = new HashMap<>();
-		targetProperties.put( TargetHandlerResolverImpl.TARGET_HANDLER_ID, "t2" );
+		targetProperties.put( Constants.TARGET_PROPERTY_HANDLER, "t2" );
 		Assert.assertEquals( th2, mngr.findTargetHandler( targetProperties ));
 
-		targetProperties.put( TargetHandlerResolverImpl.TARGET_HANDLER_ID, "t1" );
+		targetProperties.put( Constants.TARGET_PROPERTY_HANDLER, "t1" );
 		Assert.assertEquals( th1, mngr.findTargetHandler( targetProperties ));
 	}
 
@@ -66,7 +67,7 @@ public class TargetHandlerResolverImplTest {
 	public void testFindTargetHandler_exception() throws Exception {
 
 		Map<String,String> targetProperties = new HashMap<>();
-		targetProperties.put( TargetHandlerResolverImpl.TARGET_HANDLER_ID, "t2" );
+		targetProperties.put( Constants.TARGET_PROPERTY_HANDLER, "t2" );
 
 		TargetHandlerResolverImpl mngr = new TargetHandlerResolverImpl();
 		mngr.findTargetHandler( targetProperties );

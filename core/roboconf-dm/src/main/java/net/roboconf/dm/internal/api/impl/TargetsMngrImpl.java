@@ -27,25 +27,60 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 
 /**
+ * Here is the way this class stores information.
+ * <p>
+ * Each target has an ID, which is an integer. And each target has its
+ * own directory, located under the DM's configuration directory.
+ * </p>
+ * <p>
+ * Each target may contain...
+ * </p>
+ * <ul>
+ * 		<li>target.properties (mandatory)</li>
+ * 		<li>{@value #TARGETS_ASSOC_FILE} (mapping between this target and application instances)</li>
+ * 		<li>{@value #TARGETS_HINTS_FILE} (user preferences to show or hide targets for a given application)</li>
+ * 		<li>{@value #TARGETS_USAGE_FILE} (mapping indicating which instances have deployed things with this target)</li>
+ * </ul>
+ *
  * @author Vincent Zurczak - Linagora
  */
 public class TargetsMngrImpl implements ITargetsMngr {
 
+	private static final String TARGETS_ASSOC_FILE = "associations.properties";
+	private static final String TARGETS_HINTS_FILE = "hints.properties";
+	private static final String TARGETS_USAGE_FILE = "usage.properties";
+
+	private static final Object LOCK = new Object();
+	private static final String DEFAULT = "default";
+
 	private final IConfigurationMngr configurationMngr;
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Map<String,String> instanceToCachedId;
+	private final AtomicInteger id = new AtomicInteger();
 
 
 	/**
@@ -54,141 +89,412 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	 */
 	public TargetsMngrImpl( IConfigurationMngr configurationMngr ) {
 		this.configurationMngr = configurationMngr;
+		this.instanceToCachedId = new ConcurrentHashMap<> ();
+
+		// Restore the cache
+		restoreAssociationsCache();
 	}
+
+
+	// CRUD operations on targets
 
 
 	@Override
 	public String createTarget( String targetContent ) throws IOException {
-		File targetFile = findTargetFile( null );
+
+		File targetFile = new File( findTargetDirectory( null ), Constants.TARGET_PROPERTIES_FILE_NAME );
+		Utils.createDirectory( targetFile.getParentFile());
 		Utils.writeStringInto( targetContent, targetFile );
-		return targetFile.getName();
+
+		return targetFile.getParentFile().getName();
 	}
 
 
 	@Override
 	public String createTarget( File targetPropertiesFile ) throws IOException {
-		File targetFile = findTargetFile( null );
+
+		File targetFile = new File( findTargetDirectory( null ), Constants.TARGET_PROPERTIES_FILE_NAME );
+		Utils.createDirectory( targetFile.getParentFile());
 		Utils.copyStream( targetPropertiesFile, targetFile );
-		return targetFile.getName();
+
+		return targetFile.getParentFile().getName();
 	}
 
 
 	@Override
 	public void updateTarget( String targetId, String newTargetContent ) throws IOException {
-		File targetFile = findTargetFile( targetId );
+
+		File targetFile = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
+		if( ! targetFile.getParentFile().exists())
+			throw new IOException( "Target " + targetId + " does not exist." );
+
 		Utils.writeStringInto( newTargetContent, targetFile );
 	}
 
 
 	@Override
 	public void deleteTarget( String targetId ) throws IOException {
-		File targetFile = findTargetFile( targetId );
-		Utils.deleteFilesRecursively( targetFile );
+
+		// No machine using this target can be running.
+		boolean used = false;
+		synchronized( LOCK ) {
+			used = isTargetUsed( targetId );
+		}
+
+		if( used )
+			throw new IOException( "Deletion is not permitted." );
+
+		// Delete the files related to this target
+		File targetDirectory = findTargetDirectory( targetId );
+		Utils.deleteFilesRecursively( targetDirectory );
 	}
+
+
+	// Associating targets and application instances
 
 
 	@Override
 	public void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath )
 	throws IOException {
-
-		File dir = findDirectory( app );
-		saveAssociation( dir, targetId, instancePath, true );
+		saveAssociation( app, targetId, instancePath, true );
 	}
 
 
 	@Override
-	public void dissociateTargetFromScopedInstance( String targetId, AbstractApplication app, String instancePath )
+	public void dissociateTargetFromScopedInstance( AbstractApplication app, String instancePath )
 	throws IOException {
-
-		File dir = findDirectory( app );
-		saveAssociation( dir, targetId, instancePath, false );
+		saveAssociation( app, null, instancePath, false );
 	}
 
 
 	@Override
-	public Map<String,String> findTargetProperties( AbstractApplication app, String instancePath ) {
+	public void copyOriginalMapping( Application app ) throws IOException {
 
-		Map<String,String> result = new HashMap<String,String>( 0 );
+		List<String> paths = new ArrayList<> ();
+
+		// Null <=> The default for the application
+		paths.add( null );
+
+		// We can search defaults only for the existing instances
+		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app ))
+			paths.add( InstanceHelpers.computeInstancePath( scopedInstance ));
+
+		// Copy the associations when they exist for the template
+		for( String path : paths ) {
+			String suffix = path == null ? DEFAULT : path;
+			String key = app.getTemplate().getName() + "__" + suffix;
+			String targetId = this.instanceToCachedId.get( key );
+			if( targetId != null )
+				associateTargetWithScopedInstance( targetId, app, path );
+		}
+	}
+
+
+	// Finding targets
+
+
+	@Override
+	public Map<String,String> findRawTargetProperties( AbstractApplication app, String instancePath ) {
+
+		Map<String,String> result = new HashMap<> ();
+		String targetId = findTargetId( app, instancePath );
+		if( targetId != null )
+			result.putAll( findRawTargetProperties( targetId ));
 
 		return result;
 	}
 
 
 	@Override
-	public List<TargetBean> findTargets( AbstractApplication app ) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	public Map<String,String> findRawTargetProperties( String targetId ) {
 
+		Map<String,String> result = new HashMap<> ();
+		File f = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
+		try {
+			for( Map.Entry<Object,Object> entry : Utils.readPropertiesFile( f ).entrySet()) {
+				result.put( entry.getKey().toString(), entry.getValue().toString());
+			}
 
-	@Override
-	public void addHint( String targetId, AbstractApplication app ) {
-		// TODO Auto-generated method stub
-
-	}
-
-
-	@Override
-	public void removeHint( String targetId, AbstractApplication app ) {
-		// TODO Auto-generated method stub
-
-	}
-
-
-	@Override
-	public void markTargetAs( String targetId, Application app,
-			String instancePath, boolean used ) {
-		// TODO Auto-generated method stub
-
-	}
-
-
-	private void saveAssociation( File appOrTplDirectory, String targetId, String instancePath, boolean add )
-	throws IOException {
-
-		Properties props = new Properties();
-		File f = new File( appOrTplDirectory, ConfigurationUtils.TARGETS_ASSOC_FILE );
-		if( f.exists())
-			props = Utils.readPropertiesFile( f );
-
-		if( add )
-			props.setProperty( instancePath, String.valueOf( targetId ));
-		else
-			props.remove( instancePath );
-
-		if( props.isEmpty())
-			Utils.deleteFilesRecursivelyAndQuitely( f );
-		else
-			Utils.writePropertiesFile( props, f );
-	}
-
-
-	private File findDirectory( AbstractApplication app ) {
-
-		File dir;
-		if( app instanceof Application )
-			dir = ConfigurationUtils.findApplicationDirectory( app.getName(), this.configurationMngr.getWorkingDirectory());
-		else
-			dir = ConfigurationUtils.findTemplateDirectory((ApplicationTemplate) app, this.configurationMngr.getWorkingDirectory());
-
-		return dir;
-	}
-
-
-	private File findTargetFile( String targetId ) throws IOException {
-
-		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
-		Utils.createDirectory( dir );
-		File result;
-		if( targetId != null ) {
-			result = new File( dir, String.valueOf( targetId ));
-
-		} else for( int i=0; ; i++ ) {
-			result = new File( dir, String.valueOf( i ));
-			if( ! result.exists())
-				break;
+		} catch( IOException e ) {
+			this.logger.severe( "Raw properties could not be read for target " + targetId );
+			Utils.logException( this.logger, e );
 		}
 
 		return result;
+	}
+
+
+	@Override
+	public String findTargetId( AbstractApplication app, String instancePath ) {
+
+		String key = app.getName() + "__" + instancePath;
+		String targetId = this.instanceToCachedId.get( key );
+		if( targetId == null )
+			key = app.getName() + "__" + DEFAULT;
+
+		targetId = this.instanceToCachedId.get( key );
+		return targetId;
+	}
+
+
+	@Override
+	public List<TargetBean> listAllTargets() {
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
+		List<File> targetDirectories = Utils.listDirectories( dir );
+
+		return buildList( targetDirectories, null );
+	}
+
+
+	// In relation with hints
+
+
+	@Override
+	public List<TargetBean> listPossibleTargets( AbstractApplication app ) {
+
+		// Find the matching targets based on registered hints
+		List<File> targetDirectories = new ArrayList<> ();
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
+		for( File f : Utils.listDirectories( dir )) {
+
+			// If there is no hint for this target, then it is global.
+			// We can list it.
+			File hintsFile = new File( f, TARGETS_HINTS_FILE );
+			if( ! hintsFile.exists()) {
+				targetDirectories.add( f );
+				continue;
+			}
+
+			Properties props = Utils.readPropertiesFileQuietly( hintsFile, this.logger );
+
+			// Application?
+			ApplicationTemplate tpl;
+			if( app instanceof Application ) {
+				if( "".equals( props.getProperty( app.getName()))) {
+					targetDirectories.add( f );
+					continue;
+				}
+
+				tpl = ((Application) app).getTemplate();
+
+			} else {
+				tpl = (ApplicationTemplate) app;
+			}
+
+			// Application template
+			if( Objects.equals( tpl.getQualifier(), props.getProperty( tpl.getName())))
+				targetDirectories.add( f );
+		}
+
+		// Build the result
+		return buildList( targetDirectories, app );
+	}
+
+
+	@Override
+	public void addHint( String targetId, AbstractApplication app ) throws IOException {
+		saveHint( targetId, app, true );
+	}
+
+
+	@Override
+	public void removeHint( String targetId, AbstractApplication app ) throws IOException {
+		saveHint( targetId, app, false );
+	}
+
+
+	// Atomic operations...
+
+
+	@Override
+	public Map<String,String> lockAndGetTarget( Application app, Instance scopedInstance )
+	throws IOException {
+
+		String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+		String targetId = findTargetId( app, instancePath );
+		if( targetId == null )
+			throw new IOException( "No target was found for " + app + " :: " + instancePath );
+
+		synchronized( LOCK ) {
+			saveUsage( app, targetId, instancePath, true );
+		}
+
+		Map<String,String> result = findRawTargetProperties( app, instancePath );
+		return TargetHelpers.expandProperties( scopedInstance, result );
+	}
+
+
+	@Override
+	public void unlockTarget( Application app, Instance scopedInstance )
+	throws IOException {
+
+		String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+		String targetId = findTargetId( app, instancePath );
+
+		synchronized( LOCK ) {
+			saveUsage( app, targetId, instancePath, false );
+		}
+	}
+
+
+	// Package methods
+
+
+	List<TargetBean> buildList( List<File> targetDirectories, AbstractApplication app ) {
+
+		List<TargetBean> result = new ArrayList<> ();
+		for( File targetDirectory : targetDirectories ) {
+
+			File associationFile = new File( targetDirectory, TARGETS_ASSOC_FILE );
+			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
+			boolean isDefault = false;
+			if( app != null )
+				isDefault = props.containsKey( app.getName() + "__" + DEFAULT );
+
+			File targetPropertiesFile = new File( targetDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
+			try {
+				props = Utils.readPropertiesFile( targetPropertiesFile );
+				TargetBean tb = new TargetBean();
+				result.add( tb );
+
+				tb.id = targetDirectory.getName();
+				tb.name = props.getProperty( Constants.TARGET_PROPERTY_NAME );
+				tb.description = props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION );
+				tb.handler = props.getProperty( Constants.TARGET_PROPERTY_HANDLER );
+				tb.isDefault = isDefault;
+
+			} catch( IOException e ) {
+				this.logger.severe( "Properties of the target #" + targetDirectory.getName() + " could not be read." );
+				Utils.logException( this.logger, e );
+			}
+		}
+
+		return result;
+	}
+
+
+	// Private methods
+
+
+	private void saveAssociation( AbstractApplication app, String targetId, String instancePath, boolean add )
+	throws IOException {
+
+		// Association means an exact mapping between an application instance
+		// and a target ID.
+		String key = app.getName() + "__";
+		key += instancePath == null ? DEFAULT : instancePath;
+
+		// Remove the old association, always.
+		if( instancePath != null ) {
+			String oldTargetId = this.instanceToCachedId.get( key );
+			if( oldTargetId != null ) {
+				File associationFile = new File( findTargetDirectory( oldTargetId ), TARGETS_ASSOC_FILE );
+				Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
+				props.remove( key );
+				writeProperties( props, associationFile );
+			}
+		}
+
+		// Register a potential new association and update the cache.
+		if( add ) {
+			File associationFile = new File( findTargetDirectory( targetId ), TARGETS_ASSOC_FILE );
+			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
+			props.setProperty( key, "" );
+			writeProperties( props, associationFile );
+
+			this.instanceToCachedId.put( key, targetId );
+
+		} else if( instancePath != null ) {
+			this.instanceToCachedId.remove( key );
+		}
+	}
+
+
+	private void restoreAssociationsCache() {
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
+		for( File f : Utils.listDirectories( dir )) {
+
+			// Update the global ID
+			Integer targetId = Integer.valueOf( f.getName());
+			if( targetId > this.id.get())
+				this.id.set( targetId );
+
+			// Cache associations for quicker access
+			File associationFile = new File( f, TARGETS_ASSOC_FILE );
+			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
+			for( Map.Entry<Object,Object> entry : props.entrySet()) {
+				this.instanceToCachedId.put( entry.getKey().toString(), f.getName());
+			}
+		}
+	}
+
+
+	private void saveUsage( Application app, String targetId, String instancePath, boolean add )
+	throws IOException {
+
+		// Usage means the target has been used to create a real machine.
+		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
+		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
+
+		String key = app.getName() + "__" + instancePath;
+		if( add )
+			props.setProperty( key, targetId );
+		else
+			props.remove( key );
+
+		writeProperties( props, usageFile );
+	}
+
+
+	private boolean isTargetUsed( String targetId ) {
+
+		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
+		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
+
+		boolean found = false;
+		for( Iterator<Object> it = props.values().iterator(); it.hasNext() && ! found; ) {
+			found = it.next().equals( targetId );
+		}
+
+		return found;
+	}
+
+
+	private void saveHint( String targetId, AbstractApplication app, boolean add ) throws IOException {
+
+		// A hint is just a preference (some kind of scope for a target).
+		// If a hint is not respected, no exception will be thrown.
+		File hintsFile = new File( findTargetDirectory( targetId ), TARGETS_HINTS_FILE );
+		Properties props = Utils.readPropertiesFileQuietly( hintsFile, this.logger );
+
+		if( add ) {
+			String qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getQualifier() : "";
+			props.setProperty( app.getName(), qualifier );
+		} else {
+			props.remove( app.getName());
+		}
+
+		writeProperties( props, hintsFile );
+	}
+
+
+	private void writeProperties( Properties props, File file ) throws IOException {
+
+		if( props.isEmpty())
+			Utils.deleteFilesRecursivelyAndQuietly( file );
+		else
+			Utils.writePropertiesFile( props, file );
+	}
+
+
+	private File findTargetDirectory( String targetId ) {
+
+		if( targetId == null )
+			targetId = String.valueOf( this.id.incrementAndGet());
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
+		return new File( dir, targetId );
 	}
 }

@@ -344,6 +344,27 @@ public final class Utils {
 
 
 	/**
+	 * Reads properties from a file but does not throw any error in case of problem.
+	 * @param file a properties file
+	 * @param logger a logger (not null)
+	 * @return a {@link Properties} instance (never null)
+	 */
+	public static Properties readPropertiesFileQuietly( File file, Logger logger ) {
+
+		Properties result = new Properties();
+		try {
+			if( file.exists() )
+				result = readPropertiesFile( file );
+
+		} catch( Exception e ) {
+			logger.severe( "Properties file " + file + " could not be read." );
+			logException( logger, e );
+		}
+		return result;
+	}
+
+
+	/**
 	 * Writes Java properties into a file.
 	 * @param properties non-null properties
 	 * @param file a properties file
@@ -655,7 +676,7 @@ public final class Utils {
 	 * Deletes files recursively and remains quiet even if an exception is thrown.
 	 * @param files the files to delete
 	 */
-	public static void deleteFilesRecursivelyAndQuitely( File... files ) {
+	public static void deleteFilesRecursivelyAndQuietly( File... files ) {
 
 		try {
 			deleteFilesRecursively( files );

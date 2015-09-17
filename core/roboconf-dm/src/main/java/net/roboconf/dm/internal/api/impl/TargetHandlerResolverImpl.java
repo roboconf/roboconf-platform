@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -39,8 +40,6 @@ import net.roboconf.target.api.TargetHandler;
  * @author Vincent Zurczak - Linagora
  */
 public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
-
-	static final String TARGET_HANDLER_ID = "target.id";
 
 	private final List<TargetHandler> targetHandlers = new ArrayList<> ();
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -83,18 +82,7 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 	public TargetHandler findTargetHandler( Map<String,String> targetProperties )
 	throws TargetException {
 
-		String targetId = targetProperties.get( TARGET_HANDLER_ID );
-		TargetHandler result = findTargetHandlerById( targetId );
-		if( result == null )
-			throw new TargetException( "No deployment handler was found for handler named " + targetId );
-
-		return result;
-	}
-
-
-	@Override
-	public TargetHandler findTargetHandlerById( String targetId ) {
-
+		String targetId = targetProperties.get( Constants.TARGET_PROPERTY_HANDLER );
 		TargetHandler result = null;
 		if( targetId != null ) {
 			for( TargetHandler itf : this.targetHandlers ) {
@@ -104,6 +92,9 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 				}
 			}
 		}
+
+		if( result == null )
+			throw new TargetException( "No deployment handler was found for handler named " + targetId );
 
 		return result;
 	}
