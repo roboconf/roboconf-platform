@@ -35,6 +35,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 
@@ -551,5 +552,54 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( info.getDependencyName(), readInfo.getDependencyName());
 		Assert.assertEquals( info.isOptional(), readInfo.isOptional());
 		Assert.assertEquals( info.isResolved(), readInfo.isResolved());
+	}
+
+
+	@Test
+	public void testTargetWDBinding_1() throws Exception {
+
+		final String result = "{}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, twd );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+
+		twd = mapper.readValue( result, TargetWrapperDescriptor.class );
+		Assert.assertNull( twd.getId());
+		Assert.assertNull( twd.getName());
+		Assert.assertNull( twd.getDescription());
+		Assert.assertNull( twd.getHandler());
+		Assert.assertFalse( twd.isDefault());
+	}
+
+
+	@Test
+	public void testTargetWDBinding_2() throws Exception {
+
+		final String result = "{\"id\":\"1\",\"name\":\"target 1\",\"handler\":\"aws\",\"desc\":\"my target\",\"default\":\"true\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
+		twd.setId( "1" );
+		twd.setName( "target 1" );
+		twd.setDescription( "my target" );
+		twd.setHandler( "aws" );
+		twd.setDefault( true );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, twd );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+
+		TargetWrapperDescriptor readTwd = mapper.readValue( result, TargetWrapperDescriptor.class );
+		Assert.assertEquals( twd.getId(), readTwd.getId());
+		Assert.assertEquals( twd.getName(), readTwd.getName());
+		Assert.assertEquals( twd.getDescription(), readTwd.getDescription());
+		Assert.assertEquals( twd.getHandler(), readTwd.getHandler());
 	}
 }

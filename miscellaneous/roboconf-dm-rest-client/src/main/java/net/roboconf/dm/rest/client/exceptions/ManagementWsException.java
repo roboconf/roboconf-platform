@@ -29,10 +29,10 @@ package net.roboconf.dm.rest.client.exceptions;
  * The exception related to the management of applications.
  * @author Vincent Zurczak - Linagora
  */
-public class ManagementException extends RestException {
+public class ManagementWsException extends RestException {
 	private static final long serialVersionUID = 9148345461706336450L;
 
-	public ManagementException( int responseStatus, String responseMessage ) {
+	public ManagementWsException( int responseStatus, String responseMessage ) {
 		super( responseStatus, responseMessage );
 	}
 }

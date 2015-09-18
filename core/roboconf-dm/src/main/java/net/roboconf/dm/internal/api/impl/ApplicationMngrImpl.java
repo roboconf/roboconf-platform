@@ -52,6 +52,7 @@ import net.roboconf.dm.management.api.IApplicationTemplateMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
@@ -69,6 +70,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final INotificationMngr notificationMngr;
 	private final IConfigurationMngr configurationMngr;
+	private final ITargetsMngr targetMngr;
 	private final IMessagingMngr messagingMngr;
 	private final Map<String,ManagedApplication> nameToManagedApplication;
 
@@ -80,16 +82,19 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	 * @param notificationMngr
 	 * @param configurationMngr
 	 * @param messagingMngr
+	 * @param targetMngr
 	 */
 	public ApplicationMngrImpl(
 			INotificationMngr notificationMngr,
 			IConfigurationMngr configurationMngr,
+			ITargetsMngr targetMngr,
 			IMessagingMngr messagingMngr ) {
 		this.nameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
 
 		this.notificationMngr = notificationMngr;
 		this.configurationMngr = configurationMngr;
 		this.messagingMngr = messagingMngr;
+		this.targetMngr = targetMngr;
 	}
 
 
@@ -145,6 +150,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 
 		// Create the application
 		ManagedApplication ma = createApplication( name, description, tpl, this.configurationMngr.getWorkingDirectory());
+
+		// Copy the target settings, if any
+		this.targetMngr.copyOriginalMapping( ma.getApplication());
 
 		// Start listening to messages
 		this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );

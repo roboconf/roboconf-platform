@@ -29,11 +29,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.targets.TargetWrapperDescriptor;
+import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -64,9 +65,10 @@ public interface ITargetsMngr {
 	 * Updates an existing target.
 	 * @param targetId the target's ID
 	 * @param newTargetContent the new content of the target.properties file
-	 * @throws IOException if the target does not exist or if the update failed
+	 * @throws IOException if the update failed
+	 * @throws UnauthorizedActionException if the target does not exist
 	 */
-	void updateTarget( String targetId, String newTargetContent ) throws IOException;
+	void updateTarget( String targetId, String newTargetContent ) throws IOException, UnauthorizedActionException;
 
 	/**
 	 * Deletes a target.
@@ -75,11 +77,12 @@ public interface ITargetsMngr {
 	 * </p>
 	 *
 	 * @param targetId the target's ID
-	 * @throws IOException if something went wrong or if the target is being used
+	 * @throws IOException if something went wrong
+	 * @throws UnauthorizedActionException if the target is being used
 	 * @see #lockAndGetTarget(AbstractApplication, String)
 	 * @see #unlockTarget(AbstractApplication, String)
 	 */
-	void deleteTarget( String targetId ) throws IOException;
+	void deleteTarget( String targetId ) throws IOException, UnauthorizedActionException;
 
 
 	// Associating targets and application instances
@@ -96,10 +99,12 @@ public interface ITargetsMngr {
 	 *
 	 * @param targetId a target ID
 	 * @param app an application or an application template
-	 * @param instancePath an instance path
-	 * @throws IOException if something went wrong or if the association is not possible (e.g. instance is already deployed)
+	 * @param instancePath an instance path (null to set the default for the application)
+	 * @throws IOException if something went wrong
+	 * @throws UnauthorizedActionException if the instance is already deployed with another target
 	 */
-	void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath ) throws IOException;
+	void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath )
+	throws IOException, UnauthorizedActionException;
 
 	/**
 	 * Dissociates a target and a scoped instance within an application or application template.
@@ -110,9 +115,11 @@ public interface ITargetsMngr {
 	 *
 	 * @param app an application or application template
 	 * @param instancePath an instance path
-	 * @throws IOException if something went wrong or if dissociation is not possible (e.g. instance is already deployed)
+	 * @throws IOException if something went wrong
+	 * @throws UnauthorizedActionException if the instance is already deployed with another target
 	 */
-	void dissociateTargetFromScopedInstance( AbstractApplication app, String instancePath ) throws IOException;
+	void dissociateTargetFromScopedInstance( AbstractApplication app, String instancePath )
+	throws IOException, UnauthorizedActionException;
 
 	/**
 	 * Copies the target mapping of the application template to the application.
@@ -152,9 +159,9 @@ public interface ITargetsMngr {
 	 * </p>
 	 *
 	 * @param targetId the target ID
-	 * @return a non-null map of properties (empty if the file was not found)
+	 * @return a string with the target properties as a string (null if the file was not found)
 	 */
-	Map<String,String> findRawTargetProperties( String targetId );
+	String findRawTargetProperties( String targetId );
 
 	/**
 	 * Finds the target ID for a scoped instance within an application or an application template.
@@ -167,7 +174,7 @@ public interface ITargetsMngr {
 	/**
 	 * @return a non-null list of targets
 	 */
-	List<TargetBean> listAllTargets();
+	List<TargetWrapperDescriptor> listAllTargets();
 
 
 	// Defining and in relation with hints (contextual help to reduce the number of choices when associating
@@ -192,7 +199,7 @@ public interface ITargetsMngr {
 	 * @see #addHint(int, AbstractApplication)
 	 * @see #removeHint(int, AbstractApplication)
 	 */
-	List<TargetBean> listPossibleTargets( AbstractApplication app );
+	List<TargetWrapperDescriptor> listPossibleTargets( AbstractApplication app );
 
 	/**
 	 * Adds a hint to a target ID.
@@ -274,25 +281,4 @@ public interface ITargetsMngr {
 	 * @throws IOException if the target could not be unlocked
 	 */
 	void unlockTarget( Application app, Instance scopedInstance ) throws IOException;
-
-
-	/**
-	 * An informative bean that contains significant information to manage targetsMngr.
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public static class TargetBean {
-		public String id, name, description, handler;
-		public boolean isDefault = false;
-
-		@Override
-		public boolean equals( Object obj ) {
-			return obj instanceof TargetBean
-					&& Objects.equals( id, ((TargetBean) obj).id );
-		}
-
-		@Override
-		public int hashCode() {
-			return id == null ? 37 : id.hashCode();
-		}
-	}
 }

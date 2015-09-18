@@ -36,6 +36,7 @@ import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetsMngr;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -59,8 +60,9 @@ public class CheckerHeartbeatsTaskTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 
-		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, messagingMngr );
+		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, messagingMngr );
 		this.nameToManagedApplication = TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class );
 	}
 

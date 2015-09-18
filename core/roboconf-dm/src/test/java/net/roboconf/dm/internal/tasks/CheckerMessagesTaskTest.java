@@ -36,6 +36,7 @@ import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetsMngr;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -57,9 +58,10 @@ public class CheckerMessagesTaskTest {
 		// ... as well as the managed applications themselves.
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 
 		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
-		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, this.messagingMngr );
+		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, this.messagingMngr );
 	}
 
 

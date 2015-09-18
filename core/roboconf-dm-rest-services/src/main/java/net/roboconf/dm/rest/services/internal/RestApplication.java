@@ -33,9 +33,11 @@ import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
+import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ManagementResource;
+import net.roboconf.dm.rest.services.internal.resources.impl.TargetResource;
 
 import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
@@ -48,6 +50,7 @@ public class RestApplication extends DefaultResourceConfig {
 	private final IApplicationResource applicationResource;
 	private final IManagementResource managementResource;
 	private final IDebugResource debugResource;
+	private final ITargetResource targetResource;
 
 
 	/**
@@ -56,9 +59,11 @@ public class RestApplication extends DefaultResourceConfig {
 	 */
 	public RestApplication( Manager manager ) {
 		super();
+
 		this.applicationResource = new ApplicationResource( manager );
 		this.managementResource = new ManagementResource( manager );
 		this.debugResource = new DebugResource( manager );
+		this.targetResource = new TargetResource( manager );
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
@@ -85,6 +90,7 @@ public class RestApplication extends DefaultResourceConfig {
 		set.add( this.applicationResource );
 		set.add( this.managementResource );
 		set.add( this.debugResource );
+		set.add( this.targetResource );
 
 		return set;
 	}

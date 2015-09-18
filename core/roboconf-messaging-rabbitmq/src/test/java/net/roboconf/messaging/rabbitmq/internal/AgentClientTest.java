@@ -40,6 +40,7 @@ import com.rabbitmq.client.Channel;
  * @author Vincent Zurczak - Linagora
  */
 public class AgentClientTest {
+
 	private static boolean rabbitMqIsRunning = false;
 
 	@BeforeClass

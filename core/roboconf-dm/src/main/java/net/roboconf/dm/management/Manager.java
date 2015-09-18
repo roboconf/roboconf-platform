@@ -123,7 +123,7 @@ public class Manager {
 		this.targetsMngr = new TargetsMngrImpl( this.configurationMngr );
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
 
-		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.messagingMngr );
+		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr );
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
 		this.applicationMngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 

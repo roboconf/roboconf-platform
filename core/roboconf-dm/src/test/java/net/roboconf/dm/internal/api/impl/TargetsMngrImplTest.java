@@ -26,7 +26,6 @@
 package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,11 +35,13 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
-import net.roboconf.dm.management.api.ITargetsMngr.TargetBean;
+import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -73,29 +74,25 @@ public class TargetsMngrImplTest {
 	@Test
 	public void testNormalCrudScenarios() throws Exception {
 
-		Assert.assertEquals( 0, this.mngr.findRawTargetProperties( "whatever" ).size());
+		Assert.assertNull( this.mngr.findRawTargetProperties( "whatever" ));
 		String targetId = this.mngr.createTarget( "prop: ok" );
 		Assert.assertNotNull( targetId );
 
 		String newTargetId = this.mngr.createTarget( "ok: ok" );
 		Assert.assertNotNull( newTargetId );
 
-		Map<String,String> props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( 1, props.size());
-		Assert.assertEquals( "ok", props.get( "prop" ));
+		String props = this.mngr.findRawTargetProperties( targetId );
+		Assert.assertEquals( "prop: ok", props );
 
 		props = this.mngr.findRawTargetProperties( newTargetId );
-		Assert.assertEquals( 1, props.size());
-		Assert.assertEquals( "ok", props.get( "ok" ));
+		Assert.assertEquals( "ok: ok", props );
 
 		this.mngr.updateTarget( targetId, "prop2: ko\nprop1: done" );
 		props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( 2, props.size());
-		Assert.assertEquals( "done", props.get( "prop1" ));
-		Assert.assertEquals( "ko", props.get( "prop2" ));
+		Assert.assertEquals( "prop2: ko\nprop1: done", props );
 
 		this.mngr.deleteTarget( targetId );
-		Assert.assertEquals( 0, this.mngr.findRawTargetProperties( targetId ).size());
+		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
 	}
 
 
@@ -108,16 +105,15 @@ public class TargetsMngrImplTest {
 		String targetId = this.mngr.createTarget( f );
 		Assert.assertNotNull( targetId );
 
-		Map<String,String> props = this.mngr.findRawTargetProperties( targetId );
-		Assert.assertEquals( 1, props.size());
-		Assert.assertEquals( "value", props.get( "prop" ));
+		String props = this.mngr.findRawTargetProperties( targetId );
+		Assert.assertEquals( "prop: value", props );
 
 		this.mngr.deleteTarget( targetId );
-		Assert.assertEquals( 0, this.mngr.findRawTargetProperties( targetId ).size());
+		Assert.assertNull( this.mngr.findRawTargetProperties( targetId ));
 	}
 
 
-	@Test( expected = IOException.class )
+	@Test( expected = UnauthorizedActionException.class )
 	public void testUpdateTarget_whenTargetDoesNotExist() throws Exception {
 
 		this.mngr.updateTarget( "inexisting", "prop: ok" );
@@ -171,6 +167,29 @@ public class TargetsMngrImplTest {
 	}
 
 
+	@Test( expected = UnauthorizedActionException.class )
+	public void testAssociations_onADeployedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		String targetId = this.mngr.createTarget( "prop: ok" );
+		this.mngr.associateTargetWithScopedInstance( targetId, app, instancePath );
+	}
+
+
+	@Test( expected = UnauthorizedActionException.class )
+	public void testDisssociations_onADeployedInstance() throws Exception {
+
+		TestApplication app = new TestApplication();
+		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		this.mngr.dissociateTargetFromScopedInstance( app, instancePath );
+	}
+
+
 	@Test
 	public void testHints_noHint() throws Exception {
 
@@ -182,22 +201,22 @@ public class TargetsMngrImplTest {
 		String t1 = this.mngr.createTarget( "prop: ok\nname: target 1\ndescription: t1's target" );
 		String t2 = this.mngr.createTarget( "prop: ok\nhandler: docker" );
 
-		List<TargetBean> beans = this.mngr.listPossibleTargets( app1 );
+		List<TargetWrapperDescriptor> beans = this.mngr.listPossibleTargets( app1 );
 		Assert.assertEquals( 2, beans.size());
 
-		TargetBean b1 = beans.get( 0 );
-		Assert.assertEquals( t1, b1.id );
-		Assert.assertEquals( "target 1", b1.name );
-		Assert.assertEquals( "t1's target", b1.description );
-		Assert.assertNull( b1.handler );
-		Assert.assertFalse( b1.isDefault );
+		TargetWrapperDescriptor b1 = beans.get( 0 );
+		Assert.assertEquals( t1, b1.getId());
+		Assert.assertEquals( "target 1", b1.getName());
+		Assert.assertEquals( "t1's target", b1.getDescription());
+		Assert.assertNull( b1.getHandler());
+		Assert.assertFalse( b1.isDefault());
 
-		TargetBean b2 = beans.get( 1 );
-		Assert.assertEquals( t2, b2.id );
-		Assert.assertEquals( "docker", b2.handler );
-		Assert.assertNull( b2.name );
-		Assert.assertNull( b2.description );
-		Assert.assertFalse( b2.isDefault );
+		TargetWrapperDescriptor b2 = beans.get( 1 );
+		Assert.assertEquals( t2, b2.getId());
+		Assert.assertEquals( "docker", b2.getHandler());
+		Assert.assertNull( b2.getName() );
+		Assert.assertNull( b2.getDescription());
+		Assert.assertFalse( b2.isDefault());
 
 		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app2 ).size());
 	}
@@ -219,32 +238,32 @@ public class TargetsMngrImplTest {
 		// Therefore, t1 should not be listed for app2 (not in the scope).
 		this.mngr.addHint( t1, app1 );
 
-		List<TargetBean> beans = this.mngr.listPossibleTargets( app1 );
+		List<TargetWrapperDescriptor> beans = this.mngr.listPossibleTargets( app1 );
 		Assert.assertEquals( 2, beans.size());
 
-		TargetBean b1 = beans.get( 0 );
-		Assert.assertEquals( t1, b1.id );
-		Assert.assertEquals( "target 1", b1.name );
-		Assert.assertEquals( "t1's target", b1.description );
-		Assert.assertNull( b1.handler );
-		Assert.assertFalse( b1.isDefault );
+		TargetWrapperDescriptor b1 = beans.get( 0 );
+		Assert.assertEquals( t1, b1.getId());
+		Assert.assertEquals( "target 1", b1.getName());
+		Assert.assertEquals( "t1's target", b1.getDescription());
+		Assert.assertNull( b1.getHandler());
+		Assert.assertFalse( b1.isDefault());
 
-		TargetBean b2 = beans.get( 1 );
-		Assert.assertEquals( t2, b2.id );
-		Assert.assertEquals( "docker", b2.handler );
-		Assert.assertNull( b2.name );
-		Assert.assertNull( b2.description );
-		Assert.assertFalse( b2.isDefault );
+		TargetWrapperDescriptor b2 = beans.get( 1 );
+		Assert.assertEquals( t2, b2.getId());
+		Assert.assertEquals( "docker", b2.getHandler());
+		Assert.assertNull( b2.getName());
+		Assert.assertNull( b2.getDescription());
+		Assert.assertFalse( b2.isDefault());
 
 		beans = this.mngr.listPossibleTargets( app2 );
 		Assert.assertEquals( 1, beans.size());
 
 		b2 = beans.get( 0 );
-		Assert.assertEquals( t2, b2.id );
-		Assert.assertEquals( "docker", b2.handler );
-		Assert.assertNull( b2.name );
-		Assert.assertNull( b2.description );
-		Assert.assertFalse( b2.isDefault );
+		Assert.assertEquals( t2, b2.getId());
+		Assert.assertEquals( "docker", b2.getHandler());
+		Assert.assertNull( b2.getName());
+		Assert.assertNull( b2.getDescription());
+		Assert.assertFalse( b2.isDefault());
 	}
 
 
@@ -264,7 +283,7 @@ public class TargetsMngrImplTest {
 		// Therefore, t1 should not be listed for app2 (not in the scope).
 		this.mngr.addHint( t1, app1 );
 
-		List<TargetBean> beans = this.mngr.listPossibleTargets( app1 );
+		List<TargetWrapperDescriptor> beans = this.mngr.listPossibleTargets( app1 );
 		Assert.assertEquals( 2, beans.size());
 
 		beans = this.mngr.listPossibleTargets( app2 );
@@ -316,24 +335,24 @@ public class TargetsMngrImplTest {
 		// Therefore, t1 should not be listed for app3 (not in the scope).
 		this.mngr.addHint( t1, app1.getTemplate());
 
-		List<TargetBean> beans = this.mngr.listPossibleTargets( app1 );
+		List<TargetWrapperDescriptor> beans = this.mngr.listPossibleTargets( app1 );
 		Assert.assertEquals( 2, beans.size());
 
-		TargetBean b1 = beans.get( 0 );
-		Assert.assertEquals( t1, b1.id );
-		Assert.assertEquals( "target 1", b1.name );
-		Assert.assertEquals( "t1's target", b1.description );
-		Assert.assertNull( b1.handler );
-		Assert.assertFalse( b1.isDefault );
+		TargetWrapperDescriptor b1 = beans.get( 0 );
+		Assert.assertEquals( t1, b1.getId());
+		Assert.assertEquals( "target 1", b1.getName());
+		Assert.assertEquals( "t1's target", b1.getDescription());
+		Assert.assertNull( b1.getHandler());
+		Assert.assertFalse( b1.isDefault());
 
-		TargetBean b2 = beans.get( 1 );
-		Assert.assertEquals( t2, b2.id );
-		Assert.assertEquals( "docker", b2.handler );
-		Assert.assertNull( b2.name );
-		Assert.assertNull( b2.description );
-		Assert.assertFalse( b2.isDefault );
+		TargetWrapperDescriptor b2 = beans.get( 1 );
+		Assert.assertEquals( t2, b2.getId());
+		Assert.assertEquals( "docker", b2.getHandler());
+		Assert.assertNull( b2.getName());
+		Assert.assertNull( b2.getDescription());
+		Assert.assertFalse( b2.isDefault());
 
-		List<TargetBean> otherBeans = this.mngr.listPossibleTargets( app2 );
+		List<TargetWrapperDescriptor> otherBeans = this.mngr.listPossibleTargets( app2 );
 		Assert.assertEquals( beans, otherBeans );
 
 		otherBeans = this.mngr.listPossibleTargets( app2.getTemplate());
@@ -343,11 +362,11 @@ public class TargetsMngrImplTest {
 		Assert.assertEquals( 1, beans.size());
 
 		b2 = beans.get( 0 );
-		Assert.assertEquals( t2, b2.id );
-		Assert.assertEquals( "docker", b2.handler );
-		Assert.assertNull( b2.name );
-		Assert.assertNull( b2.description );
-		Assert.assertFalse( b2.isDefault );
+		Assert.assertEquals( t2, b2.getId());
+		Assert.assertEquals( "docker", b2.getHandler());
+		Assert.assertNull( b2.getName());
+		Assert.assertNull( b2.getDescription());
+		Assert.assertFalse( b2.isDefault());
 	}
 
 
@@ -424,7 +443,7 @@ public class TargetsMngrImplTest {
 			this.mngr.deleteTarget( targetId );
 			Assert.fail( "A target is locked <=> We cannot delete it." );
 
-		} catch( IOException e ) {
+		} catch( UnauthorizedActionException e ) {
 			// nothing
 		}
 
@@ -460,7 +479,7 @@ public class TargetsMngrImplTest {
 			this.mngr.deleteTarget( targetId );
 			Assert.fail( "A target is locked <=> We cannot delete it." );
 
-		} catch( IOException e ) {
+		} catch( UnauthorizedActionException e ) {
 			// nothing
 		}
 
@@ -471,7 +490,7 @@ public class TargetsMngrImplTest {
 			this.mngr.deleteTarget( targetId );
 			Assert.fail( "A target is locked <=> We cannot delete it." );
 
-		} catch( IOException e ) {
+		} catch( UnauthorizedActionException e ) {
 			// nothing
 		}
 
@@ -526,6 +545,39 @@ public class TargetsMngrImplTest {
 
 
 	@Test
+	public void testCopyOriginalMapping_withException() throws Exception {
+
+		// Check that when the association fails for one instance,
+		// it does not prevent others from being processed.
+
+		TestApplication app = new TestApplication();
+		String instancePath = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+		String tomcatPath = InstanceHelpers.computeInstancePath( app.getTomcatVm());
+
+		String t1 = this.mngr.createTarget( "prop: ok" );
+		String t2 = this.mngr.createTarget( "prop: ok" );
+
+		// Association is on the template
+		Assert.assertNull( this.mngr.findTargetId( app, instancePath ));
+		this.mngr.associateTargetWithScopedInstance( t1, app.getTemplate(), instancePath );
+		this.mngr.associateTargetWithScopedInstance( t1, app.getTemplate(), tomcatPath );
+
+		// Set a new default for the application
+		this.mngr.associateTargetWithScopedInstance( t2, app, null );
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, tomcatPath ));
+
+		// Change the state
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// The mapping won't be overwritten for the running instance
+		this.mngr.copyOriginalMapping( app );
+		Assert.assertEquals( t2, this.mngr.findTargetId( app, instancePath ));
+		Assert.assertEquals( t1, this.mngr.findTargetId( app, tomcatPath ));
+	}
+
+
+	@Test
 	public void testBuildList_exception() throws Exception {
 
 		// Two targets, but only one with valid properties.
@@ -538,8 +590,8 @@ public class TargetsMngrImplTest {
 		targetDirectories.add( dir1 );
 		targetDirectories.add( dir2 );
 
-		List<TargetBean> beans = ((TargetsMngrImpl) this.mngr).buildList( targetDirectories, null );
+		List<TargetWrapperDescriptor> beans = ((TargetsMngrImpl) this.mngr).buildList( targetDirectories, null );
 		Assert.assertEquals( 1, beans.size());
-		Assert.assertEquals( dir1.getName(), beans.get( 0 ).id );
+		Assert.assertEquals( dir1.getName(), beans.get( 0 ).getId());
 	}
 }

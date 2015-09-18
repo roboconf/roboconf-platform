@@ -117,7 +117,7 @@ public class ApplicationResource implements IApplicationResource {
 	@Override
 	public Response setDescription( String applicationName, String desc ) {
 
-		this.logger.fine( "Request: changing the description of " + applicationName + "." );
+		this.logger.fine( "Request: change the description of " + applicationName + "." );
 		Response response = Response.ok().build();
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );

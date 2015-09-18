@@ -53,10 +53,9 @@ import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 @Path( IDebugResource.PATH )
 public class DebugResource implements IDebugResource {
 
-	static final String ROOT_COMPONENT_NAME = "Machine";
-
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;
+
 
 	/**
 	 * Constructor.
@@ -97,6 +96,7 @@ public class DebugResource implements IDebugResource {
 			String scopedInstancePath,
 			String message ) {
 
+		this.logger.fine( "Checking connection with agent " + applicationName + " :: " + scopedInstancePath + ". message=" + message );
 		final ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 		Response response;
 		int pingResult;

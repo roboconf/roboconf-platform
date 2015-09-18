@@ -43,12 +43,15 @@ import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
+import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
 /**
  * Here is the way this class stores information.
@@ -76,6 +79,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 	private static final Object LOCK = new Object();
 	private static final String DEFAULT = "default";
+	private static final String SEP = "__";
 
 	private final IConfigurationMngr configurationMngr;
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -122,18 +126,18 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public void updateTarget( String targetId, String newTargetContent ) throws IOException {
+	public void updateTarget( String targetId, String newTargetContent ) throws IOException, UnauthorizedActionException {
 
 		File targetFile = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
 		if( ! targetFile.getParentFile().exists())
-			throw new IOException( "Target " + targetId + " does not exist." );
+			throw new UnauthorizedActionException( "Target " + targetId + " does not exist." );
 
 		Utils.writeStringInto( newTargetContent, targetFile );
 	}
 
 
 	@Override
-	public void deleteTarget( String targetId ) throws IOException {
+	public void deleteTarget( String targetId ) throws IOException, UnauthorizedActionException {
 
 		// No machine using this target can be running.
 		boolean used = false;
@@ -142,7 +146,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		}
 
 		if( used )
-			throw new IOException( "Deletion is not permitted." );
+			throw new UnauthorizedActionException( "Deletion is not permitted." );
 
 		// Delete the files related to this target
 		File targetDirectory = findTargetDirectory( targetId );
@@ -155,14 +159,24 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 	@Override
 	public void associateTargetWithScopedInstance( String targetId, AbstractApplication app, String instancePath )
-	throws IOException {
+	throws IOException, UnauthorizedActionException {
+
+		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
+		if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+			throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePath + " should be not deployed." );
+
 		saveAssociation( app, targetId, instancePath, true );
 	}
 
 
 	@Override
 	public void dissociateTargetFromScopedInstance( AbstractApplication app, String instancePath )
-	throws IOException {
+	throws IOException, UnauthorizedActionException {
+
+		Instance instance = InstanceHelpers.findInstanceByPath( app, instancePath );
+		if( instance != null && instance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+			throw new UnauthorizedActionException( "Operation not allowed: " + app + " :: " + instancePath + " should be not deployed." );
+
 		saveAssociation( app, null, instancePath, false );
 	}
 
@@ -182,10 +196,20 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		// Copy the associations when they exist for the template
 		for( String path : paths ) {
 			String suffix = path == null ? DEFAULT : path;
-			String key = app.getTemplate().getName() + "__" + suffix;
+			String key = app.getTemplate().getName() + SEP + suffix;
 			String targetId = this.instanceToCachedId.get( key );
-			if( targetId != null )
-				associateTargetWithScopedInstance( targetId, app, path );
+			try {
+				if( targetId != null )
+					associateTargetWithScopedInstance( targetId, app, path );
+
+			} catch( UnauthorizedActionException e ) {
+
+				// This method could be used to reset the mappings / associations.
+				// However, this is not possible if the current instance is already deployed.
+				// So, we just skip it.
+				this.logger.severe( e.getMessage());
+				Utils.logException( this.logger, e );
+			}
 		}
 	}
 
@@ -198,26 +222,11 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		Map<String,String> result = new HashMap<> ();
 		String targetId = findTargetId( app, instancePath );
-		if( targetId != null )
-			result.putAll( findRawTargetProperties( targetId ));
-
-		return result;
-	}
-
-
-	@Override
-	public Map<String,String> findRawTargetProperties( String targetId ) {
-
-		Map<String,String> result = new HashMap<> ();
-		File f = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
-		try {
-			for( Map.Entry<Object,Object> entry : Utils.readPropertiesFile( f ).entrySet()) {
-				result.put( entry.getKey().toString(), entry.getValue().toString());
+		if( targetId != null ) {
+			File f = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
+			for( Map.Entry<Object,Object> entry : Utils.readPropertiesFileQuietly( f, this.logger ).entrySet()) {
+				result.put((String) entry.getKey(), (String) entry.getValue());
 			}
-
-		} catch( IOException e ) {
-			this.logger.severe( "Raw properties could not be read for target " + targetId );
-			Utils.logException( this.logger, e );
 		}
 
 		return result;
@@ -225,12 +234,30 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
+	public String findRawTargetProperties( String targetId ) {
+
+		File f = new File( findTargetDirectory( targetId ), Constants.TARGET_PROPERTIES_FILE_NAME );
+		String content = null;
+		try {
+			if( f.exists())
+				content = Utils.readFileContent( f );
+
+		} catch( IOException e ) {
+			this.logger.severe( "Raw properties could not be read for target " + targetId );
+			Utils.logException( this.logger, e );
+		}
+
+		return content;
+	}
+
+
+	@Override
 	public String findTargetId( AbstractApplication app, String instancePath ) {
 
-		String key = app.getName() + "__" + instancePath;
+		String key = app.getName() + SEP + instancePath;
 		String targetId = this.instanceToCachedId.get( key );
 		if( targetId == null )
-			key = app.getName() + "__" + DEFAULT;
+			key = app.getName() + SEP + DEFAULT;
 
 		targetId = this.instanceToCachedId.get( key );
 		return targetId;
@@ -238,7 +265,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public List<TargetBean> listAllTargets() {
+	public List<TargetWrapperDescriptor> listAllTargets() {
 
 		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
 		List<File> targetDirectories = Utils.listDirectories( dir );
@@ -251,7 +278,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public List<TargetBean> listPossibleTargets( AbstractApplication app ) {
+	public List<TargetWrapperDescriptor> listPossibleTargets( AbstractApplication app ) {
 
 		// Find the matching targets based on registered hints
 		List<File> targetDirectories = new ArrayList<> ();
@@ -320,6 +347,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			saveUsage( app, targetId, instancePath, true );
 		}
 
+		this.logger.fine( "Target " + targetId + "'s lock was acquired for " + instancePath );
 		Map<String,String> result = findRawTargetProperties( app, instancePath );
 		return TargetHelpers.expandProperties( scopedInstance, result );
 	}
@@ -335,34 +363,36 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		synchronized( LOCK ) {
 			saveUsage( app, targetId, instancePath, false );
 		}
+
+		this.logger.fine( "Target " + targetId + "'s lock was released for " + instancePath );
 	}
 
 
 	// Package methods
 
 
-	List<TargetBean> buildList( List<File> targetDirectories, AbstractApplication app ) {
+	List<TargetWrapperDescriptor> buildList( List<File> targetDirectories, AbstractApplication app ) {
 
-		List<TargetBean> result = new ArrayList<> ();
+		List<TargetWrapperDescriptor> result = new ArrayList<> ();
 		for( File targetDirectory : targetDirectories ) {
 
 			File associationFile = new File( targetDirectory, TARGETS_ASSOC_FILE );
 			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
 			boolean isDefault = false;
 			if( app != null )
-				isDefault = props.containsKey( app.getName() + "__" + DEFAULT );
+				isDefault = props.containsKey( app.getName() + SEP + DEFAULT );
 
 			File targetPropertiesFile = new File( targetDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
 			try {
 				props = Utils.readPropertiesFile( targetPropertiesFile );
-				TargetBean tb = new TargetBean();
+				TargetWrapperDescriptor tb = new TargetWrapperDescriptor();
 				result.add( tb );
 
-				tb.id = targetDirectory.getName();
-				tb.name = props.getProperty( Constants.TARGET_PROPERTY_NAME );
-				tb.description = props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION );
-				tb.handler = props.getProperty( Constants.TARGET_PROPERTY_HANDLER );
-				tb.isDefault = isDefault;
+				tb.setId( targetDirectory.getName());
+				tb.setName( props.getProperty( Constants.TARGET_PROPERTY_NAME ));
+				tb.setDescription( props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION ));
+				tb.setHandler( props.getProperty( Constants.TARGET_PROPERTY_HANDLER ));
+				tb.setDefault( isDefault );
 
 			} catch( IOException e ) {
 				this.logger.severe( "Properties of the target #" + targetDirectory.getName() + " could not be read." );
@@ -382,7 +412,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		// Association means an exact mapping between an application instance
 		// and a target ID.
-		String key = app.getName() + "__";
+		String key = app.getName() + SEP;
 		key += instancePath == null ? DEFAULT : instancePath;
 
 		// Remove the old association, always.
@@ -438,7 +468,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
 		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
 
-		String key = app.getName() + "__" + instancePath;
+		String key = app.getName() + SEP + instancePath;
 		if( add )
 			props.setProperty( key, targetId );
 		else

@@ -29,15 +29,15 @@ import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
+import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /**
@@ -45,8 +45,6 @@ import org.mockito.Mockito;
  */
 public class ManagerTest {
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
 	private Manager manager;
 
 
@@ -130,5 +128,21 @@ public class ManagerTest {
 		Assert.assertNotNull( this.manager.messagingMngr());
 		Assert.assertNotNull( this.manager.notificationMngr());
 		Assert.assertNotNull( this.manager.targetsMngr());
+	}
+
+
+	@Test
+	public void verifyDefaultTargerResolverIsInjected() throws Exception {
+
+		ITargetHandlerResolver resolver = TestUtils.getInternalField( this.manager.instancesMngr(), "targetHandlerResolver", ITargetHandlerResolver.class );
+		Assert.assertEquals( TargetHandlerResolverImpl.class, resolver.getClass());
+
+		this.manager.setTargetResolver( new TestTargetResolver());
+		resolver = TestUtils.getInternalField( this.manager.instancesMngr(), "targetHandlerResolver", ITargetHandlerResolver.class );
+		Assert.assertEquals( TestTargetResolver.class, resolver.getClass());
+
+		this.manager.setTargetResolver( null );
+		resolver = TestUtils.getInternalField( this.manager.instancesMngr(), "targetHandlerResolver", ITargetHandlerResolver.class );
+		Assert.assertEquals( TargetHandlerResolverImpl.class, resolver.getClass());
 	}
 }

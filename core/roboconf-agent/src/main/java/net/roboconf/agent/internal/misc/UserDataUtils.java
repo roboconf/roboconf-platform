@@ -27,12 +27,12 @@ package net.roboconf.agent.internal.misc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -179,11 +179,12 @@ public final class UserDataUtils {
 			String fileName = "net.roboconf.messaging." + messagingType + ".cfg";
 			PrintWriter out = null;
 			try {
-				// Open file in overwrite mode (append=false)
-				out = new PrintWriter(new FileOutputStream(etcDir + File.separator + fileName), false);
-				for(Map.Entry<String, String> entry : msgData.entrySet()) {
-					out.println(entry.getKey() + ": " + entry.getValue());
-				}
+				Properties props = new Properties();
+				props.putAll( msgData );
+
+				File f = new File( etcDir, fileName );
+				Utils.writePropertiesFile( props, f );
+
 			} finally {
 				Utils.closeQuietly(out);
 			}

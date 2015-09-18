@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,16 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.client.exceptions;
+package net.roboconf.core.model.targets;
+
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
- * The exception related to the management of instances.
  * @author Vincent Zurczak - Linagora
  */
-public class DebugException extends RestException {
-	private static final long serialVersionUID = 9148245441406336450L;
+public class TargetBeanTest {
 
-	public DebugException( int responseStatus, String responseMessage ) {
-		super( responseStatus, responseMessage );
+	@Test
+	public void testEquals() {
+
+		TargetWrapperDescriptor b1 = new TargetWrapperDescriptor();
+		Assert.assertTrue( b1.hashCode() > 0 );
+
+		b1.setId( "test" );
+		TargetWrapperDescriptor b2 = new TargetWrapperDescriptor();
+		b2.setId( "test" );
+
+		TargetWrapperDescriptor b3 = new TargetWrapperDescriptor();
+		b3.setId( "other" );
+
+		Assert.assertEquals( b1, b2 );
+		Assert.assertFalse( b1.equals( b3 ));
+		Assert.assertFalse( b1.equals( new Object()));
+
+		Assert.assertEquals( b1.hashCode(), b2.hashCode());
+		Assert.assertTrue( b1.hashCode() != b3.hashCode());
 	}
 }

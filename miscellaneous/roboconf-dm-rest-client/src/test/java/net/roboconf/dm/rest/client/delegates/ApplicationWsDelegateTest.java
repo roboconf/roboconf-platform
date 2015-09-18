@@ -46,7 +46,7 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
-import net.roboconf.dm.rest.client.exceptions.ApplicationException;
+import net.roboconf.dm.rest.client.exceptions.ApplicationWsException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
@@ -130,25 +130,25 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_inexistingApplication() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( "inexisting", InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_inexistingInstance_null() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_inexistingInstance() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, "/bip/bip" );
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_invalidAction() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), null, null );
 	}
@@ -204,7 +204,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testSetDescription_noApp() throws Exception {
 		this.client.getApplicationDelegate().setDescription( "error", "new description" );
 	}
@@ -227,7 +227,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testStopAll_invalidApp() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
@@ -252,7 +252,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testUndeployAll_invalidApp() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
@@ -281,7 +281,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testDeployAndStartAll_invalidApp() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
@@ -366,7 +366,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_root_failure() throws Exception {
 
 		Assert.assertEquals( 2, this.app.getRootInstances().size());
@@ -422,7 +422,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_child_failure() throws Exception {
 
 		// We cannot deploy a WAR directly on a VM!
@@ -435,7 +435,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_inexstingApplication() throws Exception {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
@@ -443,7 +443,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_inexstingParentInstance() throws Exception {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
@@ -490,7 +490,7 @@ public class ApplicationWsDelegateTest {
 
 
 	@Test
-	public void testResynchronize_success() throws ApplicationException {
+	public void testResynchronize_success() throws ApplicationWsException {
 		final Collection<Instance> rootInstances = this.app.getRootInstances();
 
 		// Deploy & start everything.

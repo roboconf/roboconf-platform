@@ -26,7 +26,6 @@
 package net.roboconf.karaf.commands.dm.targets;
 
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 
@@ -45,11 +44,11 @@ public class InstallTargetCommandTest {
 	public void testExecute_noTarget() throws Exception {
 
 		InstallTargetCommand itc = new InstallTargetCommand();
-		OutputStream os = new ByteArrayOutputStream();
-		itc.out = new PrintStream( os );
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		itc.out = new PrintStream( os, true, "UTF-8" );
 
 		itc.execute();
-		Assert.assertTrue( os.toString().contains( "Unknown target" ));
+		Assert.assertTrue( os.toString( "UTF-8" ).contains( "Unknown target" ));
 	}
 
 
@@ -57,12 +56,12 @@ public class InstallTargetCommandTest {
 	public void testExecute_noRoboconfVersion() throws Exception {
 
 		InstallTargetCommand itc = new InstallTargetCommand();
-		OutputStream os = new ByteArrayOutputStream();
-		itc.out = new PrintStream( os );
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		itc.out = new PrintStream( os, true, "UTF-8" );
 		itc.targetName = "openstack";
 
 		itc.execute();
-		Assert.assertTrue( os.toString().contains( "the Roboconf version" ));
+		Assert.assertTrue( os.toString( "UTF-8" ).contains( "the Roboconf version" ));
 	}
 
 
@@ -71,8 +70,8 @@ public class InstallTargetCommandTest {
 
 		// Prepare the command
 		InstallTargetCommand itc = new InstallTargetCommand();
-		OutputStream os = new ByteArrayOutputStream();
-		itc.out = new PrintStream( os );
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		itc.out = new PrintStream( os, true, "UTF-8" );
 		itc.targetName = "docker";
 		itc.roboconfVersion = "0.5";
 
@@ -95,8 +94,9 @@ public class InstallTargetCommandTest {
 
 		// Verify the execution
 		itc.execute();
-		Assert.assertFalse( os.toString().contains( "the Roboconf version" ));
-		Assert.assertFalse( os.toString().contains( "Unknown target" ));
+		String s = os.toString( "UTF-8" );
+		Assert.assertFalse( s.contains( "the Roboconf version" ));
+		Assert.assertFalse( s.contains( "Unknown target" ));
 		Mockito.verify( session ).execute( expected );
 	}
 }

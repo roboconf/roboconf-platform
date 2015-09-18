@@ -35,12 +35,18 @@ import junit.framework.Assert;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
 public class UserDataUtilsTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@After
 	public void clearAgentDirectories() throws Exception {
@@ -50,19 +56,18 @@ public class UserDataUtilsTest {
 
 	@Test
 	public void testReconfigureMessaging() throws IOException {
-		String karafEtc =  System.getProperty("java.io.tmpdir") + File.separator + "roboconf_agent";
-		(new File(karafEtc)).mkdir();
-		
+		File karafEtc =  this.folder.newFolder();
+
 		Map<String, String> msgData = new HashMap<String, String>();
 		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
-		
-		UserDataUtils.reconfigureMessaging(karafEtc, msgData, "rabbitmq");
-		
-		File conf = new File(karafEtc + File.separator + "net.roboconf.messaging.rabbitmq.cfg");
+
+		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData, "rabbitmq");
+
+		File conf = new File(karafEtc, "net.roboconf.messaging.rabbitmq.cfg");
 		Assert.assertTrue(conf.exists());
-		
+
 		Properties p = Utils.readPropertiesFile(conf);
 		String val = p.getProperty("net.roboconf.messaging.rabbitmq.server.ip");
 		Assert.assertEquals(val, "rabbit-server");
@@ -72,10 +77,13 @@ public class UserDataUtilsTest {
 		Assert.assertEquals(val, "password1");
 	}
 
-	
+
 	@Test( expected = IOException.class )
 	public void testReconfigureMessaging_noKarafEtc() throws IOException {
-		UserDataUtils.reconfigureMessaging(File.separator + "this_is_a_wrong_path", new HashMap<String, String>(), "rabbitmq");
-	}
 
+		UserDataUtils.reconfigureMessaging(
+				File.separator + "this_is_a_wrong_path",
+				new HashMap<String,String>( 0 ),
+				"rabbitmq");
+	}
 }

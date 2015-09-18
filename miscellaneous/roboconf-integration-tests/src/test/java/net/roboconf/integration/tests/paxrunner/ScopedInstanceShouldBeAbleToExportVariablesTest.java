@@ -33,8 +33,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import javax.inject.Inject;
-
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Import;
@@ -42,7 +40,6 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
 
@@ -65,9 +62,6 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
 public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
-
-	@Inject
-	protected Manager manager;
 
 
 	@ProbeBuilder

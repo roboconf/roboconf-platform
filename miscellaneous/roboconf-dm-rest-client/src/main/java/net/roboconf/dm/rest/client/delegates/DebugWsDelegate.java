@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.dm.rest.client.exceptions.DebugException;
+import net.roboconf.dm.rest.client.exceptions.DebugWsException;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
@@ -65,7 +65,7 @@ public class DebugWsDelegate {
 	 * @return the content of the response
 	 */
 	public String checkMessagingConnectionForTheDm( String message )
-	throws DebugException {
+	throws DebugWsException {
 
 		this.logger.finer( "Checking messaging connection with the DM: message=" + message );
 
@@ -77,7 +77,7 @@ public class DebugWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
+			throw new DebugWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -94,7 +94,7 @@ public class DebugWsDelegate {
 	 * @return the response to the agent connection check
 	 */
 	public String checkMessagingConnectionWithAgent( String applicationName, String scopedInstancePath, String message )
-	throws DebugException {
+	throws DebugWsException {
 
 		this.logger.finer( "Checking messaging connection with agent: applicationName=" + applicationName +
 				", scoped instance path=" + scopedInstancePath + ", message=" + message );
@@ -109,7 +109,7 @@ public class DebugWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
+			throw new DebugWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -120,10 +120,10 @@ public class DebugWsDelegate {
 	/**
 	 * Runs a diagnostic for a given instance.
 	 * @return the instance
-	 * @throws DebugException
+	 * @throws DebugWsException
 	 */
 	public Diagnostic diagnoseInstance( String applicationName, String instancePath )
-	throws DebugException {
+	throws DebugWsException {
 
 		this.logger.finer( "Diagnosing instance " + instancePath + " in application " + applicationName );
 
@@ -135,7 +135,7 @@ public class DebugWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
+			throw new DebugWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));

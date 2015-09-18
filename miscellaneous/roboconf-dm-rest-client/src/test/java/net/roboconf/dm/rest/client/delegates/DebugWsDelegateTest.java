@@ -41,7 +41,7 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
-import net.roboconf.dm.rest.client.exceptions.DebugException;
+import net.roboconf.dm.rest.client.exceptions.DebugWsException;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.services.internal.RestApplication;
@@ -148,7 +148,7 @@ public class DebugWsDelegateTest {
 	}
 
 
-	@Test( expected = DebugException.class )
+	@Test( expected = DebugWsException.class )
 	public void testDiagnoseInstance_inexistingInstance() throws Exception {
 
 		TestApplication app = new TestApplication();
@@ -159,7 +159,7 @@ public class DebugWsDelegateTest {
 	}
 
 
-	@Test( expected = DebugException.class )
+	@Test( expected = DebugWsException.class )
 	public void testDiagnoseInstance_inexistingApplication() throws Exception {
 
 		TestApplication app = new TestApplication();

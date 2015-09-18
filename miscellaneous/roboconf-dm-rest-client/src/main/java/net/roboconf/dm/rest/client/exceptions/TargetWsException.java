@@ -23,15 +23,16 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.dm.rest.client.exceptions;
 
 /**
+ * The exception related to the management of instances.
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public class TargetWsException extends RestException {
+	private static final long serialVersionUID = 9148245441406336250L;
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
+	public TargetWsException( int responseStatus, String responseMessage ) {
+		super( responseStatus, responseMessage );
+	}
 }

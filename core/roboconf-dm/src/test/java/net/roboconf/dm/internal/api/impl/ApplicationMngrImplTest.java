@@ -49,6 +49,7 @@ import net.roboconf.dm.management.api.IApplicationTemplateMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -79,13 +80,14 @@ public class ApplicationMngrImplTest {
 	public void prepareTemplateManager() throws Exception {
 
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 
 		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( this.messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
 
 		this.configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		this.applicationTemplateMngr = Mockito.mock( IApplicationTemplateMngr.class );
-		this.mngr = new ApplicationMngrImpl( notificationMngr, this.configurationMngr, this.messagingMngr );
+		this.mngr = new ApplicationMngrImpl( notificationMngr, this.configurationMngr, targetsMngr, this.messagingMngr );
 		this.mngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 
 		this.dmDirectory = this.folder.newFolder();

@@ -39,20 +39,13 @@ import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.ITargetsMngr;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class TargetHelpersTest {
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
-
 
 	@Test
 	public void testExpandProperties_scopedInstanceIsNotRoot() throws Exception {

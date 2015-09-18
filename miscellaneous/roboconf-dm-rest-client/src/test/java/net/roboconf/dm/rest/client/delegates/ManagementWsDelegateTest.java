@@ -46,7 +46,7 @@ import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
-import net.roboconf.dm.rest.client.exceptions.ManagementException;
+import net.roboconf.dm.rest.client.exceptions.ManagementWsException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
 
@@ -152,7 +152,7 @@ public class ManagementWsDelegateTest {
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void testShutdownApplication_failure() throws Exception {
 		this.client.getManagementDelegate().shutdownApplication( "inexisting" );
 	}
@@ -167,7 +167,7 @@ public class ManagementWsDelegateTest {
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void testDeleteApplication_failure() throws Exception {
 		this.client.getManagementDelegate().deleteApplication( "inexisting" );
 	}
@@ -209,7 +209,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -226,7 +226,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -241,7 +241,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate((String) null);
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -257,7 +257,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( targetDirectory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -301,7 +301,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( targetFile );
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -337,7 +337,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( targetDirectory );
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -345,7 +345,7 @@ public class ManagementWsDelegateTest {
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void createApplication_IOException() throws Exception {
 		this.client.getManagementDelegate().createApplication( "app", null, null );
 	}
@@ -386,7 +386,7 @@ public class ManagementWsDelegateTest {
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void testDeleteApplicationTemplate_failure() throws Exception {
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
