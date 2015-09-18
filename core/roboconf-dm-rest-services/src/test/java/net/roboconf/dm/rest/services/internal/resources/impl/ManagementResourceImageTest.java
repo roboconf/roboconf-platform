@@ -86,8 +86,8 @@ public class ManagementResourceImageTest {
 
 			IMAGE_TOO_BIG = MFOLDER.newFile( "/smiley.tif" );
 			RandomAccessFile f = new RandomAccessFile( IMAGE_TOO_BIG.getAbsolutePath(), "rw" );
-            f.setLength( 2 * ManagementResource.MAX_IMAGE_SIZE );
-            f.close();
+			f.setLength( 2 * ManagementResource.MAX_IMAGE_SIZE );
+			f.close();
 
 		} catch( Exception e ) {
 			throw new AssertionError(e);
