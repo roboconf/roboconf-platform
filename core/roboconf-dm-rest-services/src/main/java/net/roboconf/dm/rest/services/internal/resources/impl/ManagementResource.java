@@ -29,13 +29,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
@@ -51,18 +56,34 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 
 /**
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 @Path( IManagementResource.PATH )
 public class ManagementResource implements IManagementResource {
+
+	private static final Set<String> SUPPORTED_EXTENSIONS;
+	static {
+		final Set<String> ex = new HashSet<>();
+		ex.add("jpg");
+		ex.add("jpeg");
+		ex.add("gif");
+		ex.add("png");
+		ex.add("svg");
+		SUPPORTED_EXTENSIONS = Collections.unmodifiableSet(ex);
+	}
+
+	/**
+	 * The maximum allowed image file size, in bytes (1MB).
+	 */
+	public static final long MAX_IMAGE_SIZE = 1024 * 1024;
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;
 
 
-
 	/**
 	 * Constructor.
-	 * @param manager
+	 * @param manager the Roboconf Deployment Manager.
 	 */
 	public ManagementResource( Manager manager ) {
 		this.manager = manager;
@@ -172,10 +193,7 @@ public class ManagementResource implements IManagementResource {
 		} catch( InvalidApplicationException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, "Application template " + id + " was not found.", e ).build();
 
-		} catch( UnauthorizedActionException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application template " + id + " could not be deleted.", e ).build();
-
-		} catch( IOException e ) {
+		} catch( UnauthorizedActionException | IOException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application template " + id + " could not be deleted.", e ).build();
 		}
 
@@ -245,10 +263,7 @@ public class ManagementResource implements IManagementResource {
 			else
 				this.manager.applicationMngr().deleteApplication( ma );
 
-		} catch( UnauthorizedActionException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be deleted.", e ).build();
-
-		} catch( IOException e ) {
+		} catch( UnauthorizedActionException | IOException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be deleted.", e ).build();
 		}
 
@@ -278,5 +293,98 @@ public class ManagementResource implements IManagementResource {
 		}
 
 		return result;
+	}
+
+
+	@Override
+	public Response setImage(final String name, final String qualifier, final InputStream image,
+							 final FormDataContentDisposition fileDetail) {
+
+		// Do set the image, and wrap exceptions in a HTTP response.
+		Response response;
+		try {
+			doSetImage(name, qualifier, image, fileDetail);
+			response = Response.noContent().build();
+		} catch (final NoSuchElementException | IllegalArgumentException e) {
+			response = RestServicesUtils.handleException(this.logger, Status.BAD_REQUEST, e.getMessage(), e)
+					.build();
+		} catch (final IOException e) {
+			response = RestServicesUtils.handleException(this.logger, Status.INTERNAL_SERVER_ERROR, e.getMessage(), e)
+					.build();
+		}
+		return response;
+	}
+
+
+	/**
+	 * Upload an image for a template/application.
+	 * <p>
+	 * If an image was already set, it is overridden by the new one.
+	 * </p>
+	 * @param name the name of the template/application.
+	 * @param qualifier the qualifier of the template, or {@code null} for an application.
+	 * @param image the uploaded image.
+	 * @param fileDetail the image details.
+	 * @throws IllegalArgumentException if the image is too large, or is not supported.
+	 * @throws NoSuchElementException if the application/template cannot be found.
+	 * @throws IOException if the image cannot be stored.
+	 */
+	private void doSetImage(final String name, final String qualifier, final InputStream image,
+							final FormDataContentDisposition fileDetail) throws IOException {
+
+		// Check image size and extension.
+		final long size = fileDetail.getSize();
+		final String extension = getFileExtension(fileDetail.getFileName());
+		if (size > MAX_IMAGE_SIZE) {
+			throw new IllegalArgumentException("Image is too large: " + size);
+		} else if (!SUPPORTED_EXTENSIONS.contains(extension)) {
+			throw new IllegalArgumentException("Unsupported image file extension: " + extension);
+		}
+
+		// Get the target directory.
+		File targetDir;
+		if (qualifier != null) {
+			this.logger.fine( "Request: set template image: " + name + '/' + qualifier + "." );
+			final ApplicationTemplate template = this.manager.applicationTemplateMngr().findTemplate(name, qualifier);
+			if (template == null)
+				throw new NoSuchElementException("Cannot find template: " + name + '/' + qualifier);
+
+			targetDir = new File(template.getDirectory(), Constants.PROJECT_DIR_DESC);
+
+		} else {
+			this.logger.fine( "Request: set application image: " + name + "." );
+			final Application application = this.manager.applicationMngr().findApplicationByName( name );
+			if (application == null)
+				throw new NoSuchElementException("Cannot find application: " + name);
+
+			targetDir = new File(application.getDirectory(), Constants.PROJECT_DIR_DESC);
+		}
+
+		// First clean the previous "application.*" images, as they may be chosen instead of the one we're uploading.
+		for (final String ext : SUPPORTED_EXTENSIONS) {
+			File f = new File(targetDir, "application." + ext);
+			Utils.deleteFilesRecursivelyAndQuietly( f );
+		}
+
+		// Now store the image: rename it to application.X, so we get sure it is chosen as THE app/template icon.
+		// (where X is the uploaded file extension).
+		Utils.copyStream(image, new File(targetDir, "application." + extension));
+	}
+
+
+	/**
+	 * Get the file name extension from its name.
+	 * @param filename the filename.
+	 * @return the file name extension.
+	 */
+	private static String getFileExtension(final String filename) {
+
+		String extension = "";
+		int i = filename.lastIndexOf('.');
+		int p = Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\'));
+		if (i > p)
+			extension = filename.substring(i+1);
+
+		return extension;
 	}
 }

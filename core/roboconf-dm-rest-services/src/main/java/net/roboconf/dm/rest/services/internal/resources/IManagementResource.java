@@ -54,6 +54,7 @@ import com.sun.jersey.multipart.FormDataParam;
  * </p>
  *
  * @author Vincent Zurczak - Linagora
+ * @author Pierre Bourret - Université Joseph Fourier
  */
 public interface IManagementResource {
 
@@ -168,4 +169,28 @@ public interface IManagementResource {
 	@Path("/{name}")
 	@Produces( MediaType.APPLICATION_JSON )
 	Response deleteApplication( @PathParam("name") String applicationName );
+
+
+
+	// Images
+
+
+	/**
+	 * Upload an image for a template/application.
+	 * <p>
+	 * If an image was already set, it is overridden by the new one.
+	 * </p>
+	 * @param name the name of the template/application.
+	 * @param qualifier the qualifier of the template, or {@code null} for an application.
+	 * @param image the uploaded image.
+	 * @param fileDetail the image details.
+	 * @return a response.
+	 */
+	@POST
+	@Path("/image")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	Response setImage(@QueryParam("name") String name, @QueryParam("qualifier") String qualifier,
+							  @FormDataParam("file") InputStream image,
+							  @FormDataParam("file") FormDataContentDisposition fileDetail);
+
 }
