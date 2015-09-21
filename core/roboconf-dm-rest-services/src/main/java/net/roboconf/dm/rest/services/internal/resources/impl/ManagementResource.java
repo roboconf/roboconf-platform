@@ -83,7 +83,7 @@ public class ManagementResource implements IManagementResource {
 
 	/**
 	 * Constructor.
-	 * @param manager the Roboconf Deployment Manager.
+	 * @param manager the manager
 	 */
 	public ManagementResource( Manager manager ) {
 		this.manager = manager;

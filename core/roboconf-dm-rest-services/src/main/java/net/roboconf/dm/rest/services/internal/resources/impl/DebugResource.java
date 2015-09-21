@@ -59,7 +59,7 @@ public class DebugResource implements IDebugResource {
 
 	/**
 	 * Constructor.
-	 * @param manager
+	 * @param manager the manager
 	 */
 	public DebugResource( Manager manager ) {
 		this.manager = manager;

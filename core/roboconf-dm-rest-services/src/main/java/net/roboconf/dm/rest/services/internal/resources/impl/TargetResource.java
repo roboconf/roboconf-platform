@@ -55,7 +55,7 @@ public class TargetResource implements ITargetResource {
 
 	/**
 	 * Constructor.
-	 * @param manager
+	 * @param manager the manager
 	 */
 	public TargetResource( Manager manager ) {
 		this.manager = manager;

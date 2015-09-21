@@ -68,7 +68,7 @@ public class ServletRegistrationComponent {
 	 * service are not null.
 	 * </p>
 	 *
-	 * @throws Exception
+	 * @throws Exception in case of critical error
 	 */
 	public void starting() throws Exception {
 		this.logger.fine( "iPojo registers REST and icons servlets related to Roboconf's DM." );
@@ -99,7 +99,7 @@ public class ServletRegistrationComponent {
 
 	/**
 	 * The method to use when dependencies are invalidated.
-	 * @throws Exception
+	 * @throws Exception in case of critical error
 	 */
 	public void stopping() throws Exception {
 

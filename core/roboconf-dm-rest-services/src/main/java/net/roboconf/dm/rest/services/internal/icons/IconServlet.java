@@ -52,7 +52,7 @@ public class IconServlet extends HttpServlet {
 
 	/**
 	 * Constructor.
-	 * @param manager
+	 * @param manager the manager
 	 */
 	public IconServlet( Manager manager ) {
 		this.manager = manager;

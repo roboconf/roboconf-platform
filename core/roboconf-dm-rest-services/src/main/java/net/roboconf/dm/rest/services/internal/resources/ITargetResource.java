@@ -79,7 +79,7 @@ public interface ITargetResource {
 	/**
 	 * Creates or updates a target.
 	 * @param rawProperties the target's properties
-	 * @param targetId an optional target ID (not specified => will be created)
+	 * @param targetId an optional target ID (not specified =&gt; will be created)
 	 * @return a response
 	 */
 	@POST

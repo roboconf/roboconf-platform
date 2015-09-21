@@ -63,7 +63,7 @@ public class ApplicationResource implements IApplicationResource {
 
 	/**
 	 * Constructor.
-	 * @param manager
+	 * @param manager the manager
 	 */
 	public ApplicationResource( Manager manager ) {
 		this.manager = manager;
