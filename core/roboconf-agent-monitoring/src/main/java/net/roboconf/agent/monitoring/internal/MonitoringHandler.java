@@ -25,10 +25,26 @@
 
 package net.roboconf.agent.monitoring.internal;
 
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
- * Handler invoked to deal with a monitoring solution.
+ * A handler invoked to deal with a monitoring solution.
+ * <p>
+ * Handlers are created on the fly and every time a monitoring rule has to
+ * be verified. Every handler is associated with one instance, the one
+ * that "owns" the monitoring rule.
+ * </p>
+ * <p>
+ * A monitoring handler is created if and only if its associated instance is
+ * {@value InstanceStatus#DEPLOYED_STARTED} and if it has monitoring rules associated with this handler name.
+ * </p>
+ * <p>
+ * If a handler needs to deal with states, the best thing is to put them in a separate class.
+ * A singleton, static fields and/or a custom iPojo component can then be used to implement it.
+ * </p>
+ *
  * @author Pierre-Yves Gibello - Linagora
  */
 public abstract class MonitoringHandler {
@@ -36,17 +52,31 @@ public abstract class MonitoringHandler {
 	protected String eventId;
 	protected String applicationName;
 	protected String scopedInstancePath;
+	protected Instance associatedInstance;
+
 
 	/**
 	 * Create a new monitoring handler.
+	 * <p>
+	 * The constructor parameters include the application name and the
+	 * scoped instance path, which are the identifiers of the agent.
+	 * </p>
+	 *
 	 * @param eventName the event ID
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the scoped' instance path (associated with the agent)
+	 * @param associatedInstance the model object associated with the current run
 	 */
-	public MonitoringHandler( String eventName, String applicationName, String scopedInstancePath ) {
+	public MonitoringHandler(
+			String eventName,
+			String applicationName,
+			String scopedInstancePath,
+			Instance associatedInstance ) {
+
 		this.eventId = eventName;
 		this.applicationName = applicationName;
 		this.scopedInstancePath = scopedInstancePath;
+		this.associatedInstance = associatedInstance;
 	}
 
 	/**
@@ -58,8 +88,8 @@ public abstract class MonitoringHandler {
 	}
 
 	/**
-	 * Process and fire event if needed.
-	 * @return A notification to be sent to the manager, or null if nothing to send.
+	 * Processes and fires events if needed.
+	 * @return a notification to be sent to the manager, or null if nothing to send.
 	 */
 	public abstract MsgNotifAutonomic process();
 }

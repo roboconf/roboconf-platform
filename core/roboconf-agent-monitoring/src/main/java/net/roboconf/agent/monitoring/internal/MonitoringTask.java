@@ -177,7 +177,7 @@ public class MonitoringTask extends TimerTask {
 			if( handler != null )
 				result.add( handler );
 			else
-				this.logger.warning( "No monitoring handler matched parser ID '" + m.group( 1 ) + "' in " + file + "." );
+				this.logger.warning( "No monitoring handler matched the '" + m.group( 1 ) + "' parser ID in " + file + "." );
 		}
 
 		return result;
@@ -188,7 +188,6 @@ public class MonitoringTask extends TimerTask {
 		if( ! Utils.isEmptyOrWhitespaces( section ))
 			sections.add(section);
 	}
-
 
 
 	/**

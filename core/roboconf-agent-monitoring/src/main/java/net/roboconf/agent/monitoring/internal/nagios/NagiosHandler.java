@@ -55,7 +55,7 @@ public class NagiosHandler extends MonitoringHandler {
 	 * @param fileContent
 	 */
 	public NagiosHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName );
+		super( eventName, applicationName, vmInstanceName, null );
 
 		this.nagiosInstructions = fileContent.trim();
 		if( this.nagiosInstructions.toLowerCase().startsWith( NAGIOS_CONFIG )) {

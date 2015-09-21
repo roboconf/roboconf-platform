@@ -73,7 +73,7 @@ public class RestHandler extends MonitoringHandler {
 	 * @param fileContent
 	 */
 	public RestHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName );
+		super( eventName, applicationName, vmInstanceName, null );
 
 		Matcher m = Pattern.compile( WHOLE_PATTERN, Pattern.CASE_INSENSITIVE ).matcher( fileContent );
 		if( m .find()) {

@@ -56,7 +56,7 @@ public class FileHandler extends MonitoringHandler {
 	 * @param fileContent
 	 */
 	public FileHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName );
+		super( eventName, applicationName, vmInstanceName, null );
 
 		// We expect a single line / file, and that's it for now...
 		fileContent = fileContent.trim();
