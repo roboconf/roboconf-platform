@@ -38,6 +38,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
@@ -238,9 +239,9 @@ public class MonitoringTaskTest {
 
 
 	@Test
-	public void testWholeChain() throws Exception {
+	public void testWholeChain_instancesStarted() throws Exception {
 
-		testTheCommonChain();
+		testTheCommonChain( InstanceStatus.DEPLOYED_STARTED );
 
 		Assert.assertEquals( 1, this.messagingClient.messagesForTheDm.size());
 		Assert.assertEquals( MsgNotifAutonomic.class, this.messagingClient.messagesForTheDm.get( 0 ).getClass());
@@ -254,10 +255,18 @@ public class MonitoringTaskTest {
 
 
 	@Test
+	public void testWholeChain_instancesNotStarted() throws Exception {
+
+		testTheCommonChain( InstanceStatus.DEPLOYED_STOPPED );
+		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
+	}
+
+
+	@Test
 	public void testWholeChain_messagingError() throws Exception {
 
 		this.messagingClient.failMessageSending.set( true );
-		testTheCommonChain();
+		testTheCommonChain( InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
 	}
 
@@ -272,13 +281,16 @@ public class MonitoringTaskTest {
 	}
 
 
-	private void testTheCommonChain() throws Exception {
+	private void testTheCommonChain( InstanceStatus status ) throws Exception {
 
 		// Create a model
 		Instance rootInstance = new Instance( "root" ).component( new Component( "Root" ).installerName( Constants.TARGET_INSTALLER ));
 		Instance childInstance = new Instance( "child" ).component( new Component( "Child" ).installerName( "whatever" ));
 		InstanceHelpers.insertChild( rootInstance, childInstance );
 		this.agentInterface.setScopedInstance( rootInstance );
+
+		rootInstance.setStatus( status );
+		childInstance.setStatus( status );
 
 		// Create the resources
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( childInstance );

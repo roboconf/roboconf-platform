@@ -41,6 +41,7 @@ import net.roboconf.agent.monitoring.internal.file.FileHandler;
 import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.Message;
@@ -86,6 +87,9 @@ public class MonitoringTask extends TimerTask {
 
 		// Otherwise, check all the instances
 		for( Instance inst : InstanceHelpers.buildHierarchicalList( this.agentInterface.getScopedInstance())) {
+
+			if( inst.getStatus() != InstanceStatus.DEPLOYED_STARTED )
+				continue;
 
 			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( inst );
 			File measureFile = new File( dir, inst.getComponent().getName() + ".measures" );
