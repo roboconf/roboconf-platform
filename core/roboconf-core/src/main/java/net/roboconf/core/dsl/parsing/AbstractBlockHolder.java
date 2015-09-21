@@ -89,7 +89,7 @@ public abstract class AbstractBlockHolder extends AbstractBlock {
 	/**
 	 * Finds a property by its name among the ones this instance owns.
 	 * @param propertyName not null
-	 * @return the associated property, or null if it was not found
+	 * @return the property, or null if it was not found
 	 */
 	public BlockProperty findPropertyBlockByName( String propertyName ) {
 
@@ -97,8 +97,28 @@ public abstract class AbstractBlockHolder extends AbstractBlock {
 		for( AbstractBlock region : this.innerBlocks ) {
 			if( region.getInstructionType() == PROPERTY
 					&& propertyName.equals(((BlockProperty) region).getName())) {
+
 				result = (BlockProperty) region;
 				break;
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Finds properties by name among the ones this instance owns.
+	 * @param propertyName not null
+	 * @return a non-null list of properties associated with this property name
+	 */
+	public List<BlockProperty> findPropertiesBlockByName( String propertyName ) {
+
+		List<BlockProperty> result = new ArrayList<> ();
+		for( AbstractBlock region : this.innerBlocks ) {
+			if( region.getInstructionType() == PROPERTY
+					&& propertyName.equals(((BlockProperty) region).getName())) {
+
+				result.add((BlockProperty) region);
 			}
 		}
 

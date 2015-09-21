@@ -27,7 +27,6 @@ package net.roboconf.core.model;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -145,7 +144,7 @@ public class RuntimeModelIoTest {
 				SourceReference sr = result.getObjectToSource().get( childComponent );
 				Assert.assertNotNull( sr );
 				Assert.assertEquals( new File( directory, "graph/lamp.graph" ), sr.getSourceFile());
-				Assert.assertEquals( 29, sr.getLine());
+				Assert.assertEquals( 30, sr.getLine());
 
 			} else {
 				Assert.fail( "Unrecognized child." );
@@ -495,7 +494,7 @@ public class RuntimeModelIoTest {
 		Collection<RoboconfError> errors = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors;
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, errors.iterator().next().getErrorCode());
-		
+
 		props.setProperty( ApplicationTemplateDescriptor.APPLICATION_INSTANCES_EP, "init.instances" );
 		Utils.writePropertiesFile( props, new File( appDir, Constants.PROJECT_FILE_DESCRIPTOR ));
 

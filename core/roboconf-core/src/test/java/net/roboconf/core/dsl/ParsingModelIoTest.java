@@ -59,6 +59,8 @@ public class ParsingModelIoTest {
 		fileNameToFileType.put( "commented-import-3.graph", FileDefinition.AGGREGATOR );
 
 		fileNameToFileType.put( "only-component-3.graph", FileDefinition.GRAPH );
+		fileNameToFileType.put( "only-component-4.graph", FileDefinition.GRAPH );
+
 		fileNameToFileType.put( "real-lamp-all-in-one.graph", FileDefinition.GRAPH );
 		fileNameToFileType.put( "real-lamp-all-in-one-flex.graph", FileDefinition.GRAPH );
 		fileNameToFileType.put( "real-lamp-components.graph", FileDefinition.GRAPH );

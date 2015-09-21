@@ -354,4 +354,32 @@ public class FromGraphDefinitionTest {
 		Assert.assertTrue( var.isOptional());
 		Assert.assertTrue( var.isExternal());
 	}
+
+
+	@Test
+	public void testExplodedExportsAndImports() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/only-component-4.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs g = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		Component tomcat = ComponentHelpers.findComponent( g, "tomcat" );
+		Assert.assertNotNull( tomcat );
+
+		Assert.assertEquals( 2, tomcat.exportedVariables.size());
+		Assert.assertEquals( "8080", tomcat.exportedVariables.get( "db.port" ));
+		Assert.assertNull( tomcat.exportedVariables.get( "db.ip" ));
+
+		Component apache = ComponentHelpers.findComponent( g, "apache" );
+		Assert.assertNotNull( apache );
+
+		Assert.assertEquals( 2, apache.importedVariables.size());
+		Assert.assertNotNull( apache.importedVariables.get( "tomcat.port" ));
+		Assert.assertTrue( apache.importedVariables.get( "tomcat.port" ).isOptional());
+
+		Assert.assertNotNull( apache.importedVariables.get( "tomcat.ip" ));
+		Assert.assertFalse( apache.importedVariables.get( "tomcat.ip" ).isOptional());
+	}
 }
