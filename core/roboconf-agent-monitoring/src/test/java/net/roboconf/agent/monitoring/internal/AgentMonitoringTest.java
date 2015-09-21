@@ -25,9 +25,20 @@
 
 package net.roboconf.agent.monitoring.internal;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import junit.framework.Assert;
+import net.roboconf.agent.monitoring.api.IMonitoringHandler;
+import net.roboconf.agent.monitoring.internal.file.FileHandler;
+import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
+import net.roboconf.agent.monitoring.internal.rest.RestHandler;
 import net.roboconf.agent.monitoring.internal.tests.MyAgentInterface;
+import net.roboconf.core.internal.tests.TestUtils;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -43,5 +54,67 @@ public class AgentMonitoringTest {
 		am.start();
 		am.start();
 		am.stop();
+	}
+
+
+	@Test
+	@SuppressWarnings( "unchecked" )
+	public void testExtensibilityNotifications_defaultHandlers() throws Exception {
+
+		AgentMonitoring am = new AgentMonitoring();
+		am.setAgentInterface( new MyAgentInterface( null ));
+
+		List<IMonitoringHandler> handlers = TestUtils.getInternalField( am, "handlers", List.class );
+		Assert.assertEquals( 3, handlers.size());
+		Assert.assertEquals( FileHandler.class, handlers.get( 0 ).getClass());
+		Assert.assertEquals( NagiosHandler.class, handlers.get( 1 ).getClass());
+		Assert.assertEquals( RestHandler.class, handlers.get( 2 ).getClass());
+	}
+
+
+	@Test
+	@SuppressWarnings( "unchecked" )
+	public void testExtensibilityNotifications_handlers() throws Exception {
+
+		AgentMonitoring am = new AgentMonitoring();
+		am.setAgentInterface( new MyAgentInterface( null ));
+
+		List<IMonitoringHandler> handlers = TestUtils.getInternalField( am, "handlers", List.class );
+		handlers.clear();
+
+		Assert.assertEquals( 0, handlers.size());
+		am.handlerAppears( null );
+		Assert.assertEquals( 0, handlers.size());
+		am.handlerAppears( newMock( "hey" ));
+		Assert.assertEquals( 1, handlers.size());
+		am.handlerDisappears( newMock( "hey" ));
+		Assert.assertEquals( 0, handlers.size());
+
+		am.handlerDisappears( newMock( "ho" ));
+		Assert.assertEquals( 0, handlers.size());
+
+		am.handlerDisappears( null );
+		Assert.assertEquals( 0, handlers.size());
+
+		am.handlerAppears( newMock( "oops" ));
+		Assert.assertEquals( 1, handlers.size());
+
+		am.handlerAppears( newMock( "new_oops" ));
+		Assert.assertEquals( 2, handlers.size());
+	}
+
+
+	private final Map<String,IMonitoringHandler> nameToMock = new HashMap<> ();
+	private IMonitoringHandler newMock( String name ) {
+
+		IMonitoringHandler result = this.nameToMock.get( name );
+
+		if( result == null ) {
+			result = Mockito.mock( IMonitoringHandler.class );
+			Mockito.when( result.getName()).thenReturn( name );
+			this.nameToMock.put( name, result );
+		}
+
+		return result;
 	}
 }

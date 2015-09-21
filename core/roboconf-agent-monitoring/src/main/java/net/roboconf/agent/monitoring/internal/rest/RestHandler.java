@@ -45,7 +45,8 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import net.roboconf.agent.monitoring.internal.MonitoringHandler;
+import net.roboconf.agent.monitoring.api.IMonitoringHandler;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
@@ -53,7 +54,9 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
  * Handler to check the value returned by a REST call on a URL.
  * @author Pierre-Yves Gibello - Linagora
  */
-public class RestHandler extends MonitoringHandler {
+public class RestHandler implements IMonitoringHandler {
+
+	static final String HANDLER_NAME = "rest";
 
 	private static final String USER_AGENT = "Mozilla/34.0";
 	private static final String CHECK = "check";
@@ -62,20 +65,29 @@ public class RestHandler extends MonitoringHandler {
 	private static final String WHOLE_PATTERN = CHECK + "\\s+(\\S+)\\s+" + THAT + "\\s+" + CONDITION_PATTERN;
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
-	private String url, conditionParameter, conditionOperator, conditionThreshold;
+	private String applicationName, scopedInstancePath, eventId;
+	String url, conditionParameter, conditionOperator, conditionThreshold;
 
 
-	/**
-	 * Constructor.
-	 * @param eventName
-	 * @param applicationName
-	 * @param vmInstanceName
-	 * @param fileContent
-	 */
-	public RestHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName, null );
 
-		Matcher m = Pattern.compile( WHOLE_PATTERN, Pattern.CASE_INSENSITIVE ).matcher( fileContent );
+	@Override
+	public String getName() {
+		return HANDLER_NAME;
+	}
+
+
+	@Override
+	public void setAgentId( String applicationName, String scopedInstancePath ) {
+		this.applicationName = applicationName;
+		this.scopedInstancePath = scopedInstancePath;
+	}
+
+
+	@Override
+	public void reset( Instance associatedInstance, String eventId, String rawRulesText ) {
+		this.eventId = eventId;
+
+		Matcher m = Pattern.compile( WHOLE_PATTERN, Pattern.CASE_INSENSITIVE ).matcher( rawRulesText );
 		if( m .find()) {
 			this.url = m.group( 1 );
 			this.conditionParameter = m.group( 2 );
@@ -88,44 +100,6 @@ public class RestHandler extends MonitoringHandler {
 	}
 
 
-	/**
-	 * Get the REST URL.
-	 * @return The REST url
-	 */
-	public String getUrl() {
-		return this.url;
-	}
-
-
-	/**
-	 * @return the conditionParameter
-	 */
-	public String getConditionParameter() {
-		return this.conditionParameter;
-	}
-
-
-	/**
-	 * @return the conditionOperator
-	 */
-	public String getConditionOperator() {
-		return this.conditionOperator;
-	}
-
-
-	/**
-	 * @return the conditionThreshold
-	 */
-	public String getConditionThreshold() {
-		return this.conditionThreshold;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.agent.monitoring.internal.MonitoringHandler
-	 * #process()
-	 */
 	@Override
 	public MsgNotifAutonomic process() {
 

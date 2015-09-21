@@ -64,74 +64,104 @@ public class RestHandlerTest {
 		final String query = "check " + url + " that ";
 
 		String filter = "lag = 0";
-		RestHandler handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertEquals( url, handler.getUrl());
-		Assert.assertEquals( "lag", handler.getConditionParameter());
-		Assert.assertEquals( "0", handler.getConditionThreshold());
-		Assert.assertEquals( "=", handler.getConditionOperator());
+		RestHandler handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertEquals( url, handler.url );
+		Assert.assertEquals( "lag", handler.conditionParameter );
+		Assert.assertEquals( "0", handler.conditionThreshold );
+		Assert.assertEquals( "=", handler.conditionOperator );
 
 		filter = "lag == 0";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertEquals( url, handler.getUrl());
-		Assert.assertEquals( "lag", handler.getConditionParameter());
-		Assert.assertEquals( "0", handler.getConditionThreshold());
-		Assert.assertEquals( "==", handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertEquals( url, handler.url );
+		Assert.assertEquals( "lag", handler.conditionParameter );
+		Assert.assertEquals( "0", handler.conditionThreshold );
+		Assert.assertEquals( "==", handler.conditionOperator );
 
 		filter = "toto >= 10.0";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertEquals( url, handler.getUrl());
-		Assert.assertEquals( "toto", handler.getConditionParameter());
-		Assert.assertEquals( "10.0", handler.getConditionThreshold());
-		Assert.assertEquals( ">=", handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertEquals( url, handler.url );
+		Assert.assertEquals( "toto", handler.conditionParameter );
+		Assert.assertEquals( "10.0", handler.conditionThreshold );
+		Assert.assertEquals( ">=", handler.conditionOperator );
 
 		filter = " titi < 	toto ";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertEquals( url, handler.getUrl());
-		Assert.assertEquals( "titi", handler.getConditionParameter());
-		Assert.assertEquals( "toto", handler.getConditionThreshold());
-		Assert.assertEquals( "<", handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertEquals( url, handler.url );
+		Assert.assertEquals( "titi", handler.conditionParameter );
+		Assert.assertEquals( "toto", handler.conditionThreshold );
+		Assert.assertEquals( "<", handler.conditionOperator );
 
 		filter = "something == 'this'";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertEquals( url, handler.getUrl());
-		Assert.assertEquals( "something", handler.getConditionParameter());
-		Assert.assertEquals( "'this'", handler.getConditionThreshold());
-		Assert.assertEquals( "==", handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertEquals( url, handler.url );
+		Assert.assertEquals( "something", handler.conditionParameter );
+		Assert.assertEquals( "'this'", handler.conditionThreshold );
+		Assert.assertEquals( "==", handler.conditionOperator );
 
 		filter = "lag <= 0";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertEquals( url, handler.getUrl());
-		Assert.assertEquals( "lag", handler.getConditionParameter());
-		Assert.assertEquals( "0", handler.getConditionThreshold());
-		Assert.assertEquals( "<=", handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertEquals( url, handler.url );
+		Assert.assertEquals( "lag", handler.conditionParameter );
+		Assert.assertEquals( "0", handler.conditionThreshold );
+		Assert.assertEquals( "<=", handler.conditionOperator );
 
 		filter = "toto > 11235";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertEquals( url, handler.getUrl());
-		Assert.assertEquals( "toto", handler.getConditionParameter());
-		Assert.assertEquals( "11235", handler.getConditionThreshold());
-		Assert.assertEquals( ">", handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertEquals( url, handler.url );
+		Assert.assertEquals( "toto", handler.conditionParameter );
+		Assert.assertEquals( "11235", handler.conditionThreshold );
+		Assert.assertEquals( ">", handler.conditionOperator );
 
 		filter = "toto >== 11235";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertNull( handler.getUrl());
-		Assert.assertNull( handler.getConditionParameter());
-		Assert.assertNull( handler.getConditionThreshold());
-		Assert.assertNull( handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertNull( handler.url );
+		Assert.assertNull( handler.conditionParameter );
+		Assert.assertNull( handler.conditionThreshold );
+		Assert.assertNull( handler.conditionOperator );
 
 		filter = "toto>11235";
-		handler = new RestHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query + filter );
-		Assert.assertNull( handler.getUrl());
-		Assert.assertNull( handler.getConditionParameter());
-		Assert.assertNull( handler.getConditionThreshold());
-		Assert.assertNull( handler.getConditionOperator());
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query + filter );
+
+		Assert.assertNull( handler.url );
+		Assert.assertNull( handler.conditionParameter );
+		Assert.assertNull( handler.conditionThreshold );
+		Assert.assertNull( handler.conditionOperator );
 	}
 
 
 	@Test
 	public void testEvalCondition() throws Exception {
 
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag = 0");
+		RestHandler handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag = 0" );
+
 		Map<String,String> map = new HashMap<String,String> ();
 		Assert.assertFalse( handler.evalCondition( map ));
 
@@ -155,7 +185,11 @@ public class RestHandlerTest {
 		Assert.assertTrue( handler.evalCondition( map ));
 		map.clear();
 
-		handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag >= 0");
+
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag >= 0" );
+
 		map.put( "lag", "1.0" );
 		Assert.assertTrue( handler.evalCondition( map ));
 		map.clear();
@@ -168,7 +202,10 @@ public class RestHandlerTest {
 		Assert.assertTrue( handler.evalCondition( map ));
 		map.clear();
 
-		handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag == 0");
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag == 0" );
+
 		map.put( "lag", "1.0" );
 		Assert.assertFalse( handler.evalCondition( map ));
 		map.clear();
@@ -185,7 +222,10 @@ public class RestHandlerTest {
 		Assert.assertTrue( handler.evalCondition( map ));
 		map.clear();
 
-		handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag > 0");
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag > 0" );
+
 		map.put( "lag", "1.0" );
 		Assert.assertTrue( handler.evalCondition( map ));
 		map.clear();
@@ -198,7 +238,10 @@ public class RestHandlerTest {
 		Assert.assertFalse( handler.evalCondition( map ));
 		map.clear();
 
-		handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag <= 0");
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag <= 0" );
+
 		map.put( "lag", "1.0" );
 		Assert.assertFalse( handler.evalCondition( map ));
 		map.clear();
@@ -211,30 +254,16 @@ public class RestHandlerTest {
 		Assert.assertTrue( handler.evalCondition( map ));
 		map.clear();
 
-		handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag < 0");
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag < 0" );
+
 		map.put( "lag", "1.0" );
 		Assert.assertFalse( handler.evalCondition( map ));
 		map.clear();
 
 		map.put( "lag", "-1.0" );
 		Assert.assertTrue( handler.evalCondition( map ));
-		map.clear();
-
-		map.put( "lag", "0.0" );
-		Assert.assertFalse( handler.evalCondition( map ));
-		map.clear();
-
-		map.put( "lag", "yes" );
-		Assert.assertFalse( handler.evalCondition( map ));
-		map.clear();
-
-		handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag == yes");
-		map.put( "lag", "1.0" );
-		Assert.assertFalse( handler.evalCondition( map ));
-		map.clear();
-
-		map.put( "lag", "-1.0" );
-		Assert.assertFalse( handler.evalCondition( map ));
 		map.clear();
 
 		map.put( "lag", "0.0" );
@@ -242,9 +271,32 @@ public class RestHandlerTest {
 		map.clear();
 
 		map.put( "lag", "yes" );
+		Assert.assertFalse( handler.evalCondition( map ));
+		map.clear();
+
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag == yes" );
+
+		map.put( "lag", "1.0" );
+		Assert.assertFalse( handler.evalCondition( map ));
+		map.clear();
+
+		map.put( "lag", "-1.0" );
+		Assert.assertFalse( handler.evalCondition( map ));
+		map.clear();
+
+		map.put( "lag", "0.0" );
+		Assert.assertFalse( handler.evalCondition( map ));
+		map.clear();
+
+		map.put( "lag", "yes" );
 		Assert.assertTrue( handler.evalCondition( map ));
 
-		handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "check url that lag =       yes");
+		handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "check url that lag =       yes" );
+
 		map.put( "lag", "1.0" );
 		Assert.assertFalse( handler.evalCondition( map ));
 		map.clear();
@@ -306,7 +358,11 @@ public class RestHandlerTest {
 	public void testProcess_invalidHttp() throws Exception {
 
 		final String query = "Check http://localhost:8985 that lag = 0";
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query);
+
+		RestHandler handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query );
+
 		Assert.assertNull( handler.process());
 	}
 
@@ -315,7 +371,11 @@ public class RestHandlerTest {
 	public void testProcess_invalidHttps() throws Exception {
 
 		final String query = "Check https://localhost:8985 that lag = 0";
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query);
+
+		RestHandler handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query );
+
 		Assert.assertNull( handler.process());
 	}
 
@@ -324,7 +384,11 @@ public class RestHandlerTest {
 	public void testProcess_invalidQuery() throws Exception {
 
 		final String query = "Check https://localhost:8985 that lag";
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query);
+
+		RestHandler handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query );
+
 		Assert.assertNull( handler.process());
 	}
 
@@ -343,7 +407,10 @@ public class RestHandlerTest {
 		Thread.sleep( 500 );
 
 		// Then, prepare our client.
-		RestHandler handler = new RestHandler(EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query);
+		RestHandler handler = new RestHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query );
+
 		MsgNotifAutonomic msg = handler.process();
 
 		// Wait for the server to die.

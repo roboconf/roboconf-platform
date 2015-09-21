@@ -25,10 +25,17 @@
 
 package net.roboconf.agent.monitoring.internal;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Timer;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
+import net.roboconf.agent.monitoring.api.IMonitoringHandler;
+import net.roboconf.agent.monitoring.internal.file.FileHandler;
+import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
+import net.roboconf.agent.monitoring.internal.rest.RestHandler;
 
 /**
  * The agent monitoring service.
@@ -38,9 +45,23 @@ public class AgentMonitoring {
 
 	// Injected by iPojo
 	private AgentMessagingInterface agentInterface;
+	private final List<IMonitoringHandler> handlers = new ArrayList<> ();
 
+	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private Timer timer;
+
+
+	/**
+	 * Constructor.
+	 */
+	public AgentMonitoring() {
+
+		// Register predefined monitoring handlers
+		handlerAppears( new FileHandler());
+		handlerAppears( new NagiosHandler());
+		handlerAppears( new RestHandler());
+	}
 
 
 	/**
@@ -51,7 +72,10 @@ public class AgentMonitoring {
 		if( this.timer == null ) {
 			this.logger.fine( "Agent Monitoring is being started." );
 			this.timer = new Timer( "Monitoring Timer @ Agent", true );
-			this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface ), 0, 10000 );
+
+			// FIXME: not sure "scheduleAtFixedRate" is the right choice.
+			// What happens when one "polling raw" takes more than 10 seconds?
+			this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface, this.handlers ), 0, 10000 );
 		}
 	}
 
@@ -70,10 +94,65 @@ public class AgentMonitoring {
 
 
 	/**
+	 * This method is invoked by iPojo every time a new monitoring handler appears.
+	 * @param handler the appearing monitoring handler
+	 */
+	public void handlerAppears( IMonitoringHandler handler ) {
+
+		if( handler != null ) {
+			this.logger.info( "Monitoring handler '" + handler.getName() + "' is now available." );
+			this.handlers.add( handler );
+			listHandlers( this.handlers, this.logger );
+		}
+	}
+
+
+	/**
+	 * This method is invoked by iPojo every time a monitoring handler disappears.
+	 * @param handler the disappearing monitoring handler
+	 */
+	public void handlerDisappears( IMonitoringHandler handler ) {
+
+		// May happen if a target could not be instantiated
+		// (iPojo uses proxies). In this case, it results in a NPE here.
+		if( handler == null ) {
+			this.logger.info( "An invalid monitoring handler is removed." );
+		} else {
+			this.handlers.remove( handler );
+			this.logger.info( "Monitoring handler '" + handler.getName() + "' is not available anymore." );
+		}
+
+		listHandlers( this.handlers, this.logger );
+	}
+
+
+	/**
 	 * Force injection of agentInterface field (for tests: normally injected by iPojo).
 	 * @param agentInterface
 	 */
 	public void setAgentInterface( AgentMessagingInterface agentInterface ) {
 		this.agentInterface = agentInterface;
+	}
+
+
+	/**
+	 * This method lists the available handlers and logs them.
+	 */
+	public static void listHandlers( List<IMonitoringHandler> handlers, Logger logger ) {
+
+		if( handlers.isEmpty()) {
+			logger.info( "No monitoring handler was found." );
+
+		} else {
+			StringBuilder sb = new StringBuilder( "Available monitoring handlers: " );
+			for( Iterator<IMonitoringHandler> it = handlers.iterator(); it.hasNext(); ) {
+				sb.append( it.next().getName());
+				if( it.hasNext())
+					sb.append( ", " );
+			}
+
+			sb.append( "." );
+			logger.info( sb.toString());
+		}
 	}
 }

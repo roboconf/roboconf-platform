@@ -40,6 +40,7 @@
 		<module>core/roboconf-target-api</module>
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-messaging-api</module>
+		<module>core/roboconf-agent-monitoring-api</module>
 
 		<!-- Messaging providers -->
 		<module>core/roboconf-messaging-rabbitmq</module>

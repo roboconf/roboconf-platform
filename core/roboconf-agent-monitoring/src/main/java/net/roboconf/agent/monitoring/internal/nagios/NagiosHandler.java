@@ -30,7 +30,8 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.agent.monitoring.internal.MonitoringHandler;
+import net.roboconf.agent.monitoring.api.IMonitoringHandler;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
@@ -38,24 +39,35 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
  * Handler to check Nagios (polling).
  * @author Pierre-Yves Gibello - Linagora
  */
-public class NagiosHandler extends MonitoringHandler {
+public class NagiosHandler implements IMonitoringHandler {
 
+	static final String HANDLER_NAME = "nagios";
 	static final String NAGIOS_CONFIG = "nagios configuration at";
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
-	private String nagiosInstructions, host;
-	private int port = -1;
+	private String applicationName, scopedInstancePath, eventId;
+	String nagiosInstructions, host;
+	int port = -1;
 
 
-	/**
-	 * Constructor.
-	 * @param eventName
-	 * @param applicationName
-	 * @param vmInstanceName
-	 * @param fileContent
-	 */
-	public NagiosHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName, null );
+
+	@Override
+	public String getName() {
+		return HANDLER_NAME;
+	}
+
+
+	@Override
+	public void setAgentId( String applicationName, String scopedInstancePath ) {
+		this.applicationName = applicationName;
+		this.scopedInstancePath = scopedInstancePath;
+	}
+
+
+	@Override
+	public void reset( Instance associatedInstance, String eventId, String fileContent ) {
+		this.eventId = eventId;
 
 		this.nagiosInstructions = fileContent.trim();
 		if( this.nagiosInstructions.toLowerCase().startsWith( NAGIOS_CONFIG )) {
@@ -76,11 +88,6 @@ public class NagiosHandler extends MonitoringHandler {
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.agent.monitoring.internal.MonitoringHandler
-	 * #process()
-	 */
 	@Override
 	public MsgNotifAutonomic process() {
 
@@ -104,41 +111,5 @@ public class NagiosHandler extends MonitoringHandler {
 		}
 
 		return result;
-	}
-
-
-	/**
-	 * @return the nagiosInstructions
-	 */
-	public String getNagiosInstructions() {
-		return this.nagiosInstructions;
-	}
-
-	/**
-	 * @return the host
-	 */
-	public String getHost() {
-		return this.host;
-	}
-
-	/**
-	 * @return the port
-	 */
-	public int getPort() {
-		return this.port;
-	}
-
-	/**
-	 * @param host the host to set
-	 */
-	void setHost( String host ) {
-		this.host = host;
-	}
-
-	/**
-	 * @param port the port to set
-	 */
-	void setPort( int port ) {
-		this.port = port;
 	}
 }

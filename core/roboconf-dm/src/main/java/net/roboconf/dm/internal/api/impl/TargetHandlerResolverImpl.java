@@ -101,7 +101,7 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 
 
 	/**
-	 * This method lists the available target and logs it.
+	 * This method lists the available target and logs them.
 	 */
 	public static void listTargets( List<TargetHandler> targetHandlers, Logger logger ) {
 
