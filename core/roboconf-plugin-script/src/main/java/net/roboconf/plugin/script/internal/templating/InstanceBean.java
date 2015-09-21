@@ -23,29 +23,38 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.api.internal.template;
+package net.roboconf.plugin.script.internal.templating;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
 
 /**
- * Bean used to inject an data into a {@link Import} template.
+ * Bean used to inject an data into a {@link Instance} template.
  * @author gcrosmarie - Linagora
  */
-public class ImportBean {
+public class InstanceBean {
 
-	private final Import imprt;
+	private final Instance instance;
 
-	public ImportBean(Import imprt) {
-		this.imprt = imprt;
+	public InstanceBean(Instance instance) {
+		this.instance = instance;
 	}
 
-	public List<Var> getExportedVars() {
-		List<Var> result = new ArrayList<ImportBean.Var> ();
-		for(String name : this.imprt.getExportedVars().keySet())
-			result.add(new Var(name, this.imprt.getExportedVars().get(name)));
+	public List<ImportListBean> getImportLists() {
+
+		List<ImportListBean> result = new ArrayList<InstanceBean.ImportListBean>();
+		for(String prefix : this.instance.getImports().keySet()) {
+
+			List<ImportBean> importbeans = new ArrayList<ImportBean>();
+			for(Import imprt : this.instance.getImports().get(prefix))
+				importbeans.add(new ImportBean(imprt));
+
+			result.add(new ImportListBean(prefix, importbeans));
+		}
 
 		return result;
 	}
@@ -54,20 +63,21 @@ public class ImportBean {
 	/**
 	 * @author gcrosmarie - Linagora
 	 */
-	public static class Var {
-		private final String name, value;
+	static class ImportListBean {
+		private final String prefix;
+		private final Collection<ImportBean> imports;
 
-		Var( String name, String value ) {
-			this.name = name;
-			this.value = value;
+		ImportListBean(String prefix, Collection<ImportBean> imports) {
+			this.prefix = prefix;
+			this.imports = imports;
 		}
 
-		public String getValue() {
-			return this.value;
+		public String getPrefix() {
+			return this.prefix;
 		}
 
-		public String getName() {
-			return this.name;
+		public Collection<ImportBean> getImports() {
+			return this.imports;
 		}
 	}
 }

@@ -55,12 +55,6 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>com.github.spullara.mustache.java</groupId>
-			<artifactId>compiler</artifactId>
-			<version>0.8.14</version>
-		</dependency>
-		
-		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
   			<version>${project.version}</version>
@@ -78,7 +72,6 @@
 					<instructions>
 						<Import-Package>net.roboconf.core.*</Import-Package>
 						<Export-Package>
-							!net.roboconf.plugin.api.internal.*,
 							net.roboconf.plugin.api.*
 						</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>

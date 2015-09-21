@@ -23,38 +23,29 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.api.internal.template;
+package net.roboconf.plugin.script.internal.templating;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import net.roboconf.core.model.beans.Import;
-import net.roboconf.core.model.beans.Instance;
 
 /**
- * Bean used to inject an data into a {@link Instance} template.
+ * Bean used to inject an data into a {@link Import} template.
  * @author gcrosmarie - Linagora
  */
-public class InstanceBean {
+public class ImportBean {
 
-	private final Instance instance;
+	private final Import imprt;
 
-	public InstanceBean(Instance instance) {
-		this.instance = instance;
+	public ImportBean(Import imprt) {
+		this.imprt = imprt;
 	}
 
-	public List<ImportListBean> getImportLists() {
-
-		List<ImportListBean> result = new ArrayList<InstanceBean.ImportListBean>();
-		for(String prefix : this.instance.getImports().keySet()) {
-
-			List<ImportBean> importbeans = new ArrayList<ImportBean>();
-			for(Import imprt : this.instance.getImports().get(prefix))
-				importbeans.add(new ImportBean(imprt));
-
-			result.add(new ImportListBean(prefix, importbeans));
-		}
+	public List<Var> getExportedVars() {
+		List<Var> result = new ArrayList<ImportBean.Var> ();
+		for(String name : this.imprt.getExportedVars().keySet())
+			result.add(new Var(name, this.imprt.getExportedVars().get(name)));
 
 		return result;
 	}
@@ -63,21 +54,20 @@ public class InstanceBean {
 	/**
 	 * @author gcrosmarie - Linagora
 	 */
-	static class ImportListBean {
-		private final String prefix;
-		private final Collection<ImportBean> imports;
+	public static class Var {
+		private final String name, value;
 
-		ImportListBean(String prefix, Collection<ImportBean> imports) {
-			this.prefix = prefix;
-			this.imports = imports;
+		Var( String name, String value ) {
+			this.name = name;
+			this.value = value;
 		}
 
-		public String getPrefix() {
-			return this.prefix;
+		public String getValue() {
+			return this.value;
 		}
 
-		public Collection<ImportBean> getImports() {
-			return this.imports;
+		public String getName() {
+			return this.name;
 		}
 	}
 }
