@@ -176,6 +176,12 @@ public interface ITargetsMngr {
 	 */
 	List<TargetWrapperDescriptor> listAllTargets();
 
+	/**
+	 * @param targetId a non-null target ID
+	 * @return a wrapper describing the given target, or null if it was not found
+	 */
+	TargetWrapperDescriptor findTargetById( String targetId );
+
 
 	// Defining and in relation with hints (contextual help to reduce the number of choices when associating
 	// a target and an application instance). Indeed, some targets may be very specific

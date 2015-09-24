@@ -170,6 +170,26 @@ public class TargetResource implements ITargetResource {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
+	 * #findTargetById(java.lang.String)
+	 */
+	@Override
+	public Response findTargetById( String targetId ) {
+
+		this.logger.fine( "Request: get details about target " + targetId + "." );
+		TargetWrapperDescriptor twb = this.manager.targetsMngr().findTargetById( targetId );
+		Response response;
+		if( twb == null )
+			response = Response.status( Status.NOT_FOUND ).build();
+		else
+			response = Response.ok().entity( twb ).build();
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
 	 * #associateTarget(java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean)
 	 */
 	@Override

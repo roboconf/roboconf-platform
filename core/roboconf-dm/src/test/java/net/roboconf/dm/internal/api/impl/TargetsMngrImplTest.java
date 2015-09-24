@@ -39,6 +39,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -593,5 +594,22 @@ public class TargetsMngrImplTest {
 		List<TargetWrapperDescriptor> beans = ((TargetsMngrImpl) this.mngr).buildList( targetDirectories, null );
 		Assert.assertEquals( 1, beans.size());
 		Assert.assertEquals( dir1.getName(), beans.get( 0 ).getId());
+	}
+
+
+	@Test
+	public void testFindTargetById() throws Exception {
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/5" );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "prop: done\ntarget.id = test", new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME ));
+
+		TargetWrapperDescriptor twb = this.mngr.findTargetById( dir.getName());
+		Assert.assertNotNull( twb );
+		Assert.assertEquals( dir.getName(), twb.getId());
+		Assert.assertEquals( "test", twb.getHandler());
+		Assert.assertFalse( twb.isDefault());
+		Assert.assertNull( twb.getName());
+		Assert.assertNull( twb.getDescription());
 	}
 }

@@ -106,6 +106,16 @@ public interface ITargetResource {
 	Response getTargetProperties( @PathParam("target-id") String targetId );
 
 
+	/**
+	 * Gets general information about a target.
+	 * @param targetId a non-null target ID
+	 * @return a response
+	 */
+	@GET
+	@Path( "{target-id}/details" )
+	Response findTargetById( @PathParam("target-id") String targetId );
+
+
 	// Association targets with instances
 
 

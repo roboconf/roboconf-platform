@@ -274,6 +274,16 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	}
 
 
+	@Override
+	public TargetWrapperDescriptor findTargetById( String targetId ) {
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
+		File targetDirectory = new File( dir, targetId );
+
+		return build( targetDirectory );
+	}
+
+
 	// In relation with hints
 
 
@@ -382,27 +392,38 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			if( app != null )
 				isDefault = props.containsKey( app.getName() + SEP + DEFAULT );
 
-			File targetPropertiesFile = new File( targetDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
-			try {
-				props = Utils.readPropertiesFile( targetPropertiesFile );
-				TargetWrapperDescriptor tb = new TargetWrapperDescriptor();
-				result.add( tb );
-
-				tb.setId( targetDirectory.getName());
-				tb.setName( props.getProperty( Constants.TARGET_PROPERTY_NAME ));
-				tb.setDescription( props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION ));
+			TargetWrapperDescriptor tb = build( targetDirectory );
+			if( tb != null ) {
 				tb.setDefault( isDefault );
-
-				String handler = TargetHelpers.findTargetHandlerName( props );
-				tb.setHandler( handler );
-
-			} catch( IOException e ) {
-				this.logger.severe( "Properties of the target #" + targetDirectory.getName() + " could not be read." );
-				Utils.logException( this.logger, e );
+				result.add( tb );
 			}
 		}
 
 		return result;
+	}
+
+
+	TargetWrapperDescriptor build( File targetDirectory ) {
+
+		TargetWrapperDescriptor tb = null;
+		File targetPropertiesFile = new File( targetDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
+		try {
+			Properties props = Utils.readPropertiesFile( targetPropertiesFile );
+			tb = new TargetWrapperDescriptor();
+
+			tb.setId( targetDirectory.getName());
+			tb.setName( props.getProperty( Constants.TARGET_PROPERTY_NAME ));
+			tb.setDescription( props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION ));
+
+			String handler = TargetHelpers.findTargetHandlerName( props );
+			tb.setHandler( handler );
+
+		} catch( IOException e ) {
+			this.logger.severe( "Properties of the target #" + targetDirectory.getName() + " could not be read." );
+			Utils.logException( this.logger, e );
+		}
+
+		return tb;
 	}
 
 

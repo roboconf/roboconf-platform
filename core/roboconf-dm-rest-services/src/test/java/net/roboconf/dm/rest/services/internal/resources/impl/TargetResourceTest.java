@@ -35,6 +35,7 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
@@ -352,5 +353,23 @@ public class TargetResourceTest {
 
 		Response resp = this.resource.associateTarget( app.getName(), null, instancePath, targetId, true );
 		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testFindTargetById() throws Exception {
+
+		Response resp = this.resource.findTargetById( "2" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+
+		String t2 = (String) this.resource.createOrUpdateTarget( "description: we do not care", null ).getEntity();
+		resp = this.resource.findTargetById( t2 );
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		TargetWrapperDescriptor twd = (TargetWrapperDescriptor) resp.getEntity();
+		Assert.assertNotNull( twd );
+		Assert.assertEquals( t2, twd.getId());
+		Assert.assertEquals( "we do not care", twd.getDescription());
+		Assert.assertNull( twd.getName());
 	}
 }
