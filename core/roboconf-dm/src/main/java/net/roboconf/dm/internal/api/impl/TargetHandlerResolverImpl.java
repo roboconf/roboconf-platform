@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.Constants;
+import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -82,7 +82,7 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 	public TargetHandler findTargetHandler( Map<String,String> targetProperties )
 	throws TargetException {
 
-		String targetId = targetProperties.get( Constants.TARGET_PROPERTY_HANDLER );
+		String targetId = TargetHelpers.findTargetHandlerName( targetProperties );
 		TargetHandler result = null;
 		if( targetId != null ) {
 			for( TargetHandler itf : this.targetHandlers ) {

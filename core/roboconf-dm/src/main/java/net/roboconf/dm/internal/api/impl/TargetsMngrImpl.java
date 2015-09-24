@@ -391,8 +391,10 @@ public class TargetsMngrImpl implements ITargetsMngr {
 				tb.setId( targetDirectory.getName());
 				tb.setName( props.getProperty( Constants.TARGET_PROPERTY_NAME ));
 				tb.setDescription( props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION ));
-				tb.setHandler( props.getProperty( Constants.TARGET_PROPERTY_HANDLER ));
 				tb.setDefault( isDefault );
+
+				String handler = TargetHelpers.findTargetHandlerName( props );
+				tb.setHandler( handler );
 
 			} catch( IOException e ) {
 				this.logger.severe( "Properties of the target #" + targetDirectory.getName() + " could not be read." );
