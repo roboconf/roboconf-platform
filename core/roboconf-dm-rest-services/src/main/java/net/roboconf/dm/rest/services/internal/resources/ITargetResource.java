@@ -37,6 +37,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
@@ -124,7 +125,7 @@ public interface ITargetResource {
 	 * @param name an application name
 	 * @param qualifier a qualifier if the association implies an application template
 	 * @param instancePath an instance path (can be null)
-	 * @param targetId a target ID
+	 * @param targetId a target ID (useless when <code>bind</code> is false)
 	 * @param bind true if we should create the association, false to delete it
 	 * @return a response
 	 */
@@ -156,4 +157,11 @@ public interface ITargetResource {
 			@QueryParam("qualifier") String qualifier,
 			@PathParam( "target-id" ) String targetId,
 			@QueryParam("bind") boolean bind );
+
+
+	// Diagnostics
+
+	@GET
+	@Path( "{target-id}/usage" )
+	List<TargetUsageItem> findUsageStatistics( String targetId );
 }

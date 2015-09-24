@@ -35,6 +35,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
@@ -601,5 +602,53 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( twd.getName(), readTwd.getName());
 		Assert.assertEquals( twd.getDescription(), readTwd.getDescription());
 		Assert.assertEquals( twd.getHandler(), readTwd.getHandler());
+	}
+
+
+	@Test
+	public void testTargetUsageItemBinding_1() throws Exception {
+
+		TargetUsageItem item = new TargetUsageItem();
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, item );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{}", s );
+	}
+
+
+	@Test
+	public void testTargetUsageItemBinding_2() throws Exception {
+
+		TargetUsageItem item = new TargetUsageItem();
+		item.setName( "app" );
+		item.setQualifier( "v1" );
+		item.setReferencing( true );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, item );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"name\":\"app\",\"qualifier\":\"v1\",\"referencing\":\"true\"}", s );
+	}
+
+
+	@Test
+	public void testTargetUsageItemBinding_3() throws Exception {
+
+		TargetUsageItem item = new TargetUsageItem();
+		item.setName( "app1" );
+		item.setReferencing( true );
+		item.setUsing( true );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, item );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"name\":\"app1\",\"using\":\"true\",\"referencing\":\"true\"}", s );
 	}
 }

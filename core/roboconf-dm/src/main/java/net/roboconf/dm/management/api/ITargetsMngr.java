@@ -33,6 +33,7 @@ import java.util.Map;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
@@ -287,4 +288,15 @@ public interface ITargetsMngr {
 	 * @throws IOException if the target could not be unlocked
 	 */
 	void unlockTarget( Application app, Instance scopedInstance ) throws IOException;
+
+
+	// Diagnostics
+
+
+	/**
+	 * Finds usage statistics for a given target.
+	 * @param targetId a non-null target ID
+	 * @return a non-null list of usage item
+	 */
+	List<TargetUsageItem> findUsageStatistics( String targetId );
 }

@@ -36,6 +36,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.beans.AbstractApplication;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -250,6 +251,14 @@ public class TargetResource implements ITargetResource {
 		}
 
 		return response;
+	}
+
+
+	@Override
+	public List<TargetUsageItem> findUsageStatistics( String targetId ) {
+
+		this.logger.fine( "Request: list usage statistics for target " + targetId + "." );
+		return this.manager.targetsMngr().findUsageStatistics( targetId );
 	}
 
 

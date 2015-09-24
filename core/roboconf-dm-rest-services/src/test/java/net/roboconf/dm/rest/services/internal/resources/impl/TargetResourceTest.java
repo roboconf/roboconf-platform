@@ -26,6 +26,7 @@
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
 import java.io.IOException;
+import java.util.List;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -35,6 +36,7 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
@@ -371,5 +373,124 @@ public class TargetResourceTest {
 		Assert.assertEquals( t2, twd.getId());
 		Assert.assertEquals( "we do not care", twd.getDescription());
 		Assert.assertNull( twd.getName());
+	}
+
+
+	@Test
+	public void testFindUsageStatistics_inexistingTarget() throws Exception {
+
+		List<TargetUsageItem> items = this.resource.findUsageStatistics( "4" );
+		Assert.assertEquals( 0, items.size());
+	}
+
+
+	@Test
+	public void testFindUsageStatistics() throws Exception {
+
+		// Setup
+		String t1 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		Assert.assertNotNull( t1 );
+
+		String t2 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		Assert.assertNotNull( t2 );
+
+		String t3 = (String) this.resource.createOrUpdateTarget( "prop: ok", null ).getEntity();
+		Assert.assertNotNull( t3 );
+
+		TestApplication app = new TestApplication();
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+
+		this.resource.associateTarget( app.getName(), null, InstanceHelpers.computeInstancePath( app.getMySqlVm()), t1, true );
+		this.resource.associateTarget( app.getName(), null, null, t2, true );
+
+		// Checks
+		List<TargetUsageItem> items = this.resource.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		TargetUsageItem item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.resource.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.resource.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		// Mark one as used
+		this.manager.targetsMngr().lockAndGetTarget( app, app.getTomcatVm());
+
+		items = this.resource.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.resource.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		items = this.resource.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertTrue( item.isReferencing());
+
+		// The change is here!
+		Assert.assertTrue( item.isUsing());
+
+		// Release it
+		this.manager.targetsMngr().unlockTarget( app, app.getTomcatVm());
+
+		items = this.resource.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.resource.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.resource.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		// Remove the association for the named instance
+		this.resource.associateTarget( app.getName(), null, InstanceHelpers.computeInstancePath( app.getMySqlVm()), null, false );
+
+		items = this.resource.findUsageStatistics( t1 );
+		Assert.assertEquals( 0, items.size());
+
+		items = this.resource.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.resource.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
 	}
 }
