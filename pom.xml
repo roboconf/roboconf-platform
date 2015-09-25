@@ -40,6 +40,7 @@
 		<module>core/roboconf-target-api</module>
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-messaging-api</module>
+		<module>core/roboconf-agent-monitoring-api</module>
 
 		<!-- Messaging providers -->
 		<module>core/roboconf-messaging-rabbitmq</module>
@@ -96,6 +97,9 @@
 		<jclouds.version>1.8.1</jclouds.version>
 		<mockito.version>1.10.19</mockito.version>
 		<websocket.version>9.2.10.v20150310</websocket.version>
+		
+		<!-- To update on every release -->
+		<version.range>[${project.version},0.6)</version.range>
 	</properties>
 
 	<dependencyManagement>

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.api.template;
+package net.roboconf.plugin.script.internal.templating;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,7 +35,6 @@ import java.nio.charset.Charset;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.plugin.api.internal.template.InstanceBean;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;

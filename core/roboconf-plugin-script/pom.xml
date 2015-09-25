@@ -60,6 +60,12 @@
   			<version>${project.version}</version>
   			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.github.spullara.mustache.java</groupId>
+			<artifactId>compiler</artifactId>
+			<version>0.8.14</version>
+		</dependency>
 
 		<dependency>
 			<groupId>net.roboconf</groupId>
@@ -78,7 +84,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 						</Import-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

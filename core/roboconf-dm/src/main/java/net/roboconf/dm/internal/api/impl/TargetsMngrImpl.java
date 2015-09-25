@@ -45,8 +45,10 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.api.impl.beans.TargetMappingKey;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.internal.utils.TargetHelpers;
 import net.roboconf.dm.management.api.IConfigurationMngr;
@@ -78,13 +80,12 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	private static final String TARGETS_USAGE_FILE = "usage.properties";
 
 	private static final Object LOCK = new Object();
-	private static final String DEFAULT = "default";
-	private static final String SEP = "__";
+
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final AtomicInteger id = new AtomicInteger();
 
 	private final IConfigurationMngr configurationMngr;
-	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final Map<String,String> instanceToCachedId;
-	private final AtomicInteger id = new AtomicInteger();
+	private final Map<TargetMappingKey,String> instanceToCachedId;
 
 
 	/**
@@ -184,23 +185,21 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public void copyOriginalMapping( Application app ) throws IOException {
 
-		List<String> paths = new ArrayList<> ();
+		List<TargetMappingKey> keys = new ArrayList<> ();
 
 		// Null <=> The default for the application
-		paths.add( null );
+		keys.add( new TargetMappingKey( app.getTemplate(), (String) null ));
 
 		// We can search defaults only for the existing instances
 		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app ))
-			paths.add( InstanceHelpers.computeInstancePath( scopedInstance ));
+			keys.add( new TargetMappingKey( app.getTemplate(), scopedInstance ));
 
 		// Copy the associations when they exist for the template
-		for( String path : paths ) {
-			String suffix = path == null ? DEFAULT : path;
-			String key = app.getTemplate().getName() + SEP + suffix;
+		for( TargetMappingKey key : keys ) {
 			String targetId = this.instanceToCachedId.get( key );
 			try {
 				if( targetId != null )
-					associateTargetWithScopedInstance( targetId, app, path );
+					associateTargetWithScopedInstance( targetId, app, key.getInstancePath());
 
 			} catch( UnauthorizedActionException e ) {
 
@@ -254,10 +253,10 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	@Override
 	public String findTargetId( AbstractApplication app, String instancePath ) {
 
-		String key = app.getName() + SEP + instancePath;
+		TargetMappingKey key = new TargetMappingKey( app, instancePath );
 		String targetId = this.instanceToCachedId.get( key );
 		if( targetId == null )
-			key = app.getName() + SEP + DEFAULT;
+			key = new TargetMappingKey( app, (String) null );
 
 		targetId = this.instanceToCachedId.get( key );
 		return targetId;
@@ -271,6 +270,16 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		List<File> targetDirectories = Utils.listDirectories( dir );
 
 		return buildList( targetDirectories, null );
+	}
+
+
+	@Override
+	public TargetWrapperDescriptor findTargetById( String targetId ) {
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
+		File targetDirectory = new File( dir, targetId );
+
+		return build( targetDirectory );
 	}
 
 
@@ -343,8 +352,9 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		if( targetId == null )
 			throw new IOException( "No target was found for " + app + " :: " + instancePath );
 
+		TargetMappingKey mappingKey = new TargetMappingKey( app, instancePath );
 		synchronized( LOCK ) {
-			saveUsage( app, targetId, instancePath, true );
+			saveUsage( mappingKey, targetId, true );
 		}
 
 		this.logger.fine( "Target " + targetId + "'s lock was acquired for " + instancePath );
@@ -359,12 +369,45 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 		String targetId = findTargetId( app, instancePath );
+		TargetMappingKey mappingKey = new TargetMappingKey( app, instancePath );
 
 		synchronized( LOCK ) {
-			saveUsage( app, targetId, instancePath, false );
+			saveUsage( mappingKey, targetId, false );
 		}
 
 		this.logger.fine( "Target " + targetId + "'s lock was released for " + instancePath );
+	}
+
+
+	// Diagnostics
+
+
+	@Override
+	public List<TargetUsageItem> findUsageStatistics( String targetId ) {
+
+		// Get usage first
+		List<String> appNames;
+		synchronized( LOCK ) {
+			appNames = applicationsThatUse( targetId );
+		}
+
+		// Now, let's build the result
+		List<TargetUsageItem> result = new ArrayList<> ();
+		for( Map.Entry<TargetMappingKey,String> entry : this.instanceToCachedId.entrySet()) {
+			if( ! entry.getValue().equals( targetId ))
+				continue;
+
+			String appName = entry.getKey().getName();
+			TargetUsageItem item = new TargetUsageItem();
+			result.add( item );
+
+			item.setName( appName );
+			item.setQualifier( entry.getKey().getQualifier());
+			item.setReferencing( true );
+			item.setUsing( appNames.contains( appName ));
+		}
+
+		return result;
 	}
 
 
@@ -380,27 +423,40 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
 			boolean isDefault = false;
 			if( app != null )
-				isDefault = props.containsKey( app.getName() + SEP + DEFAULT );
+				isDefault = props.containsKey( new TargetMappingKey( app ).toString());
 
-			File targetPropertiesFile = new File( targetDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
-			try {
-				props = Utils.readPropertiesFile( targetPropertiesFile );
-				TargetWrapperDescriptor tb = new TargetWrapperDescriptor();
-				result.add( tb );
-
-				tb.setId( targetDirectory.getName());
-				tb.setName( props.getProperty( Constants.TARGET_PROPERTY_NAME ));
-				tb.setDescription( props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION ));
-				tb.setHandler( props.getProperty( Constants.TARGET_PROPERTY_HANDLER ));
+			TargetWrapperDescriptor tb = build( targetDirectory );
+			if( tb != null ) {
 				tb.setDefault( isDefault );
-
-			} catch( IOException e ) {
-				this.logger.severe( "Properties of the target #" + targetDirectory.getName() + " could not be read." );
-				Utils.logException( this.logger, e );
+				result.add( tb );
 			}
 		}
 
 		return result;
+	}
+
+
+	TargetWrapperDescriptor build( File targetDirectory ) {
+
+		TargetWrapperDescriptor tb = null;
+		File targetPropertiesFile = new File( targetDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
+		try {
+			Properties props = Utils.readPropertiesFile( targetPropertiesFile );
+			tb = new TargetWrapperDescriptor();
+
+			tb.setId( targetDirectory.getName());
+			tb.setName( props.getProperty( Constants.TARGET_PROPERTY_NAME ));
+			tb.setDescription( props.getProperty( Constants.TARGET_PROPERTY_DESCRIPTION ));
+
+			String handler = TargetHelpers.findTargetHandlerName( props );
+			tb.setHandler( handler );
+
+		} catch( IOException e ) {
+			this.logger.severe( "Properties of the target #" + targetDirectory.getName() + " could not be read." );
+			Utils.logException( this.logger, e );
+		}
+
+		return tb;
 	}
 
 
@@ -412,8 +468,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		// Association means an exact mapping between an application instance
 		// and a target ID.
-		String key = app.getName() + SEP;
-		key += instancePath == null ? DEFAULT : instancePath;
+		TargetMappingKey key = new TargetMappingKey( app, instancePath );
 
 		// Remove the old association, always.
 		if( instancePath != null ) {
@@ -430,7 +485,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		if( add ) {
 			File associationFile = new File( findTargetDirectory( targetId ), TARGETS_ASSOC_FILE );
 			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
-			props.setProperty( key, "" );
+			props.setProperty( key.toString(), "" );
 			writeProperties( props, associationFile );
 
 			this.instanceToCachedId.put( key, targetId );
@@ -455,20 +510,22 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			File associationFile = new File( f, TARGETS_ASSOC_FILE );
 			Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
 			for( Map.Entry<Object,Object> entry : props.entrySet()) {
-				this.instanceToCachedId.put( entry.getKey().toString(), f.getName());
+
+				TargetMappingKey key = TargetMappingKey.parse( entry.getKey().toString());
+				this.instanceToCachedId.put( key, f.getName());
 			}
 		}
 	}
 
 
-	private void saveUsage( Application app, String targetId, String instancePath, boolean add )
+	private void saveUsage( TargetMappingKey mappingKey, String targetId, boolean add )
 	throws IOException {
 
 		// Usage means the target has been used to create a real machine.
 		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
 		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
 
-		String key = app.getName() + SEP + instancePath;
+		String key = mappingKey.toString();
 		if( add )
 			props.setProperty( key, targetId );
 		else
@@ -489,6 +546,21 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		}
 
 		return found;
+	}
+
+
+	private List<String> applicationsThatUse( String targetId ) {
+
+		File usageFile = new File( findTargetDirectory( targetId ), TARGETS_USAGE_FILE );
+		Properties props = Utils.readPropertiesFileQuietly( usageFile, this.logger );
+
+		List<String> result = new ArrayList<> ();
+		for( Object o : props.keySet()) {
+			TargetMappingKey key = TargetMappingKey.parse((String) o);
+			result.add( key.getName());
+		}
+
+		return result;
 	}
 
 

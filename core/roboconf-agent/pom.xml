@@ -112,7 +112,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 							*
 						</Import-Package>
 						<Export-Package>net.roboconf.agent</Export-Package>

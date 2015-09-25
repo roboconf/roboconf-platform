@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,51 +23,70 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.api.internal.template;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.core.model.beans.Import;
+package net.roboconf.core.model.targets;
 
 /**
- * Bean used to inject an data into a {@link Import} template.
- * @author gcrosmarie - Linagora
+ * @author Vincent Zurczak - Linagora
  */
-public class ImportBean {
+public class TargetUsageItem {
 
-	private final Import imprt;
-
-	public ImportBean(Import imprt) {
-		this.imprt = imprt;
-	}
-
-	public List<Var> getExportedVars() {
-		List<Var> result = new ArrayList<ImportBean.Var> ();
-		for(String name : this.imprt.getExportedVars().keySet())
-			result.add(new Var(name, this.imprt.getExportedVars().get(name)));
-
-		return result;
-	}
+	private String name, qualifier;
+	private boolean isReferencing, isUsing;
 
 
 	/**
-	 * @author gcrosmarie - Linagora
+	 * @return the name
 	 */
-	public static class Var {
-		private final String name, value;
+	public String getName() {
+		return this.name;
+	}
 
-		Var( String name, String value ) {
-			this.name = name;
-			this.value = value;
-		}
+	/**
+	 * @param name the name to set
+	 */
+	public void setName( String name ) {
+		this.name = name;
+	}
 
-		public String getValue() {
-			return this.value;
-		}
+	/**
+	 * @return the qualifier
+	 */
+	public String getQualifier() {
+		return this.qualifier;
+	}
 
-		public String getName() {
-			return this.name;
-		}
+	/**
+	 * @param qualifier the qualifier to set
+	 */
+	public void setQualifier( String qualifier ) {
+		this.qualifier = qualifier;
+	}
+
+	/**
+	 * @return the isReferencing
+	 */
+	public boolean isReferencing() {
+		return this.isReferencing;
+	}
+
+	/**
+	 * @param isReferencing the isReferencing to set
+	 */
+	public void setReferencing( boolean isReferencing ) {
+		this.isReferencing = isReferencing;
+	}
+
+	/**
+	 * @return the isUsing
+	 */
+	public boolean isUsing() {
+		return this.isUsing;
+	}
+
+	/**
+	 * @param isUsing the isUsing to set
+	 */
+	public void setUsing( boolean isUsing ) {
+		this.isUsing = isUsing;
 	}
 }

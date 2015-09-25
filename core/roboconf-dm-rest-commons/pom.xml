@@ -89,7 +89,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 							com.fasterxml.jackson.*;version="${jackson.stack.version}",
 							com.sun.jersey.*;version="${jersey.stack.version}",
 							*

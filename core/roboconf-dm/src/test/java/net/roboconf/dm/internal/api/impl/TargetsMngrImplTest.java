@@ -37,8 +37,10 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -593,5 +595,135 @@ public class TargetsMngrImplTest {
 		List<TargetWrapperDescriptor> beans = ((TargetsMngrImpl) this.mngr).buildList( targetDirectories, null );
 		Assert.assertEquals( 1, beans.size());
 		Assert.assertEquals( dir1.getName(), beans.get( 0 ).getId());
+	}
+
+
+	@Test
+	public void testFindTargetById() throws Exception {
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/5" );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "prop: done\ntarget.id = test", new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME ));
+
+		TargetWrapperDescriptor twb = this.mngr.findTargetById( dir.getName());
+		Assert.assertNotNull( twb );
+		Assert.assertEquals( dir.getName(), twb.getId());
+		Assert.assertEquals( "test", twb.getHandler());
+		Assert.assertFalse( twb.isDefault());
+		Assert.assertNull( twb.getName());
+		Assert.assertNull( twb.getDescription());
+	}
+
+
+	@Test
+	public void testFindUsageStatistics_inexistingTarget() throws Exception {
+
+		List<TargetUsageItem> items = this.mngr.findUsageStatistics( "4" );
+		Assert.assertEquals( 0, items.size());
+	}
+
+
+	@Test
+	public void testFindUsageStatistics() throws Exception {
+
+		// Setup
+		TestApplication app = new TestApplication();
+
+		String t1 = this.mngr.createTarget( "prop: ok" );
+		String t2 = this.mngr.createTarget( "prop: ok" );
+		String t3 = this.mngr.createTarget( "prop: ok" );
+
+		this.mngr.associateTargetWithScopedInstance( t1, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		this.mngr.associateTargetWithScopedInstance( t2, app, null );
+
+		// Checks
+		List<TargetUsageItem> items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		TargetUsageItem item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		// Mark one as used
+		this.mngr.lockAndGetTarget( app, app.getTomcatVm());
+
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertTrue( item.isReferencing());
+
+		// The change is here!
+		Assert.assertTrue( item.isUsing());
+
+		// Release it
+		this.mngr.unlockTarget( app, app.getTomcatVm());
+
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		// Remove the association for the named instance
+		this.mngr.dissociateTargetFromScopedInstance( app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 0, items.size());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
 	}
 }

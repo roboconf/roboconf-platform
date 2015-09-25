@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.plugin.script.template;
+package net.roboconf.plugin.script.internal.templating;
 
 import java.io.File;
 import java.io.StringWriter;
@@ -38,8 +38,6 @@ import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.plugin.api.internal.template.ImportBean;
-import net.roboconf.plugin.api.template.InstanceTemplateHelper;
 
 import org.junit.Assert;
 import org.junit.Test;

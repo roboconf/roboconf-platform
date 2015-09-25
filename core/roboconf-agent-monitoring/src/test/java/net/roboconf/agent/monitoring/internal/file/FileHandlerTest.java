@@ -54,10 +54,13 @@ public class FileHandlerTest {
 		Assert.assertFalse( f.exists());
 
 		String content = f.getAbsolutePath();
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
-		Assert.assertEquals( content, handler.getFileLocation());
-		Assert.assertFalse( handler.isDeleteIfExists());
-		Assert.assertFalse( handler.isNotifyIfNotExists());
+		FileHandler handler = new FileHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, content );
+
+		Assert.assertEquals( content, handler.fileLocation );
+		Assert.assertFalse( handler.deleteIfExists );
+		Assert.assertFalse( handler.notifyIfNotExists );
 		Assert.assertNull( handler.process());
 	}
 
@@ -69,10 +72,13 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = f.getAbsolutePath();
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
-		Assert.assertEquals( content, handler.getFileLocation());
-		Assert.assertFalse( handler.isDeleteIfExists());
-		Assert.assertFalse( handler.isNotifyIfNotExists());
+		FileHandler handler = new FileHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, content );
+
+		Assert.assertEquals( content, handler.fileLocation );
+		Assert.assertFalse( handler.deleteIfExists );
+		Assert.assertFalse( handler.notifyIfNotExists );
 
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
@@ -92,10 +98,13 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = FileHandler.DELETE_IF_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
-		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
-		Assert.assertTrue( handler.isDeleteIfExists());
-		Assert.assertFalse( handler.isNotifyIfNotExists());
+		FileHandler handler = new FileHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, content );
+
+		Assert.assertEquals( f.getAbsolutePath(), handler.fileLocation );
+		Assert.assertTrue( handler.deleteIfExists );
+		Assert.assertFalse( handler.notifyIfNotExists );
 
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
@@ -115,10 +124,13 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = FileHandler.DELETE_IF_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
-		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
-		Assert.assertTrue( handler.isDeleteIfExists());
-		Assert.assertFalse( handler.isNotifyIfNotExists());
+		FileHandler handler = new FileHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, content );
+
+		Assert.assertEquals( f.getAbsolutePath(), handler.fileLocation );
+		Assert.assertTrue( handler.deleteIfExists );
+		Assert.assertFalse( handler.notifyIfNotExists );
 
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
@@ -135,10 +147,13 @@ public class FileHandlerTest {
 	public void testInvalidContent() throws Exception {
 
 		String content = "it does not matter, since there are \n several lines \n here, no message will be produced";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
-		Assert.assertNull( handler.getFileLocation());
-		Assert.assertFalse( handler.isDeleteIfExists());
-		Assert.assertFalse( handler.isNotifyIfNotExists());
+		FileHandler handler = new FileHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, content );
+
+		Assert.assertNull( handler.fileLocation );
+		Assert.assertFalse( handler.deleteIfExists );
+		Assert.assertFalse( handler.notifyIfNotExists );
 
 		Assert.assertNull( handler.process());
 	}
@@ -151,10 +166,13 @@ public class FileHandlerTest {
 		Assert.assertFalse( f.exists());
 
 		String content = FileHandler.NOTIFY_IF_NOT_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
-		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
-		Assert.assertFalse( handler.isDeleteIfExists());
-		Assert.assertTrue( handler.isNotifyIfNotExists());
+		FileHandler handler = new FileHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, content );
+
+		Assert.assertEquals( f.getAbsolutePath(), handler.fileLocation );
+		Assert.assertFalse( handler.deleteIfExists );
+		Assert.assertTrue( handler.notifyIfNotExists );
 
 		MsgNotifAutonomic msg = handler.process();
 		Assert.assertNotNull( msg );
@@ -174,10 +192,13 @@ public class FileHandlerTest {
 		Assert.assertTrue( f.exists());
 
 		String content = FileHandler.NOTIFY_IF_NOT_EXISTS.toUpperCase() + " \t " + f.getAbsolutePath() + "\t\n";
-		FileHandler handler = new FileHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, content );
-		Assert.assertEquals( f.getAbsolutePath(), handler.getFileLocation());
-		Assert.assertFalse( handler.isDeleteIfExists());
-		Assert.assertTrue( handler.isNotifyIfNotExists());
+		FileHandler handler = new FileHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, content );
+
+		Assert.assertEquals( f.getAbsolutePath(), handler.fileLocation );
+		Assert.assertFalse( handler.deleteIfExists );
+		Assert.assertTrue( handler.notifyIfNotExists );
 
 		Assert.assertNotNull( handler.process());
 	}

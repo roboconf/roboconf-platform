@@ -45,6 +45,9 @@ import net.roboconf.target.api.TargetException;
  */
 public final class TargetHelpers {
 
+	static final String LEGACY_HANDLER_PROPERTY = "target.id";
+
+
 	/**
 	 * Empty private constructor.
 	 */
@@ -116,5 +119,45 @@ public final class TargetHelpers {
 		}
 
 		return newTargetProperties;
+	}
+
+
+	/**
+	 * Finds the target handler name in properties.
+	 * <p>
+	 * This methods checks for the presence of the {@value Constants.TARGET_PROPERTY_HANDLER}
+	 * property, or for the old {@value LEGACY_HANDLER_PROPERTY} one.
+	 * </p>
+	 *
+	 * @param props non-null properties
+	 * @return a handler name, or null if none was specified
+	 */
+	public static String findTargetHandlerName( Properties props ) {
+
+		String handler = props.getProperty( Constants.TARGET_PROPERTY_HANDLER );
+		if( handler == null )
+			handler = props.getProperty( LEGACY_HANDLER_PROPERTY );
+
+		return handler;
+	}
+
+
+	/**
+	 * Finds the target handler name in properties.
+	 * <p>
+	 * This methods checks for the presence of the {@value Constants.TARGET_PROPERTY_HANDLER}
+	 * property, or for the old {@value LEGACY_HANDLER_PROPERTY} one.
+	 * </p>
+	 *
+	 * @param props non-null map
+	 * @return a handler name, or null if none was specified
+	 */
+	public static String findTargetHandlerName( Map<String,String> props ) {
+
+		String handler = props.get( Constants.TARGET_PROPERTY_HANDLER );
+		if( handler == null )
+			handler = props.get( LEGACY_HANDLER_PROPERTY );
+
+		return handler;
 	}
 }

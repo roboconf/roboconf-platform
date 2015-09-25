@@ -29,7 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import net.roboconf.agent.monitoring.internal.MonitoringHandler;
+import net.roboconf.agent.monitoring.api.IMonitoringHandler;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
@@ -37,26 +38,37 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
  * Handler to check the existence of a file or a directory (useful for tests and demonstrations).
  * @author Pierre-Yves Gibello - Linagora
  */
-public class FileHandler extends MonitoringHandler {
+public class FileHandler implements IMonitoringHandler {
 
+	static final String HANDLER_NAME = "file";
 	static final String DELETE_IF_EXISTS = "delete if exists";
 	static final String NOTIFY_IF_NOT_EXISTS = "notify if not exists";
+
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
-	private String fileLocation;
-	private boolean deleteIfExists = false;
-	private boolean notifyIfNotExists = false;
+	private String applicationName, scopedInstancePath, eventId;
+	String fileLocation;
+	boolean deleteIfExists = false;
+	boolean notifyIfNotExists = false;
 
 
-	/**
-	 * Constructor.
-	 * @param eventName
-	 * @param applicationName
-	 * @param vmInstanceName
-	 * @param fileContent
-	 */
-	public FileHandler( String eventName, String applicationName, String vmInstanceName, String fileContent ) {
-		super( eventName, applicationName, vmInstanceName );
+
+	@Override
+	public String getName() {
+		return HANDLER_NAME;
+	}
+
+
+	@Override
+	public void setAgentId( String applicationName, String scopedInstancePath ) {
+		this.applicationName = applicationName;
+		this.scopedInstancePath = scopedInstancePath;
+	}
+
+
+	@Override
+	public void reset( Instance associatedInstance, String eventId, String fileContent ) {
+		this.eventId = eventId;
 
 		// We expect a single line / file, and that's it for now...
 		fileContent = fileContent.trim();
@@ -78,11 +90,6 @@ public class FileHandler extends MonitoringHandler {
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.agent.monitoring.internal.MonitoringHandler
-	 * #process()
-	 */
 	@Override
 	public MsgNotifAutonomic process() {
 
@@ -115,27 +122,5 @@ public class FileHandler extends MonitoringHandler {
 		}
 
 		return result;
-	}
-
-
-	/**
-	 * @return the fileLocation
-	 */
-	public String getFileLocation() {
-		return this.fileLocation;
-	}
-
-	/**
-	 * @return the deleteIfExists
-	 */
-	public boolean isDeleteIfExists() {
-		return this.deleteIfExists;
-	}
-
-	/**
-	 * @return the notifyIfNotExists
-	 */
-	public boolean isNotifyIfNotExists() {
-		return this.notifyIfNotExists;
 	}
 }

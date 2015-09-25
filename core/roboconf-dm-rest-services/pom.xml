@@ -215,14 +215,14 @@
 					<instructions>
 						<Bundle-SymbolicName>${project.groupId}.${project.artifactId};singleton=true</Bundle-SymbolicName>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 							com.sun.jersey.*;version="${jersey.stack.version}",
 							javax.annotation,
 							javax.servlet,
 							javax.servlet.http,
 							*
 						</Import-Package>
-						<Export-Package>net.roboconf.dm.rest.services.cors;version="${project.version}"</Export-Package>
+						<Export-Package>net.roboconf.dm.rest.services.cors</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>

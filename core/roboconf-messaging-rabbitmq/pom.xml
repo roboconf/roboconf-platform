@@ -114,7 +114,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 							javax.net,
 							javax.net.ssl,
 							org.osgi.framework; version="[1.6,2.0)"

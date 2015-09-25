@@ -118,7 +118,9 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		String generateAS = this.targetProperties.get( DockerHandler.GENERATE_IMAGE );
 		boolean generate = Boolean.parseBoolean( generateAS );
-		if( generate )
+
+		Image img = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
+		if( generate && img == null )
 			createImage( fixedImageId );
 
 		createContainer( fixedImageId );

@@ -359,7 +359,12 @@ public final class ParsingModelValidator {
 
 			if( region.getInstructionType() == AbstractBlock.PROPERTY ) {
 				BlockProperty p = (BlockProperty) region;
-				if( foundProperties.contains( p.getName())) {
+
+				// Exports and imports can now appear more than once
+				if( ! ParsingConstants.PROPERTY_COMPONENT_IMPORTS.equalsIgnoreCase( p.getName())
+						&& ! ParsingConstants.PROPERTY_GRAPH_EXPORTS.equalsIgnoreCase( p.getName())
+						&& foundProperties.contains( p.getName())) {
+
 					ParsingError error = parsingError( ErrorCode.PM_DUPLICATE_PROPERTY, p );
 					error.setDetails( "Property name: " + p.getName());
 					result.add( error );

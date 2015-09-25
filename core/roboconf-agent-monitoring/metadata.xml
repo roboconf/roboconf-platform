@@ -5,9 +5,14 @@
 		xmlns="org.apache.felix.ipojo">
 
 	<component classname="net.roboconf.agent.monitoring.internal.AgentMonitoring" name="roboconf-agent-monitoring">
-		<requires field="agentInterface" optional="false" />
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />
+		
+		<requires field="agentInterface" optional="false" />
+		<requires aggregate="true" optional="true">
+			<callback type="bind" method="handlerAppears" />
+			<callback type="unbind" method="handlerDisappears" />
+		</requires>
 	</component>
 	
 	<instance name="Roboconf - Agent Monitoring" component="roboconf-agent-monitoring" />

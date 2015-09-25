@@ -167,7 +167,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 							com.sun.jersey.*;version="${jersey.stack.version}",
 							*
 						</Import-Package>

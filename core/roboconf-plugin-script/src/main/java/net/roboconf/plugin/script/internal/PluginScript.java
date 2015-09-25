@@ -43,7 +43,7 @@ import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
-import net.roboconf.plugin.api.template.InstanceTemplateHelper;
+import net.roboconf.plugin.script.internal.templating.InstanceTemplateHelper;
 
 /**
  * The plug-in invokes a script (eg. shell) on every life cycle change.

@@ -1,0 +1,7 @@
+\u001B[1mSYNOPSIS\u001B[0m
+    This bundle is part of the Roboconf project.
+
+\u001B[1mDESCRIPTION\u001B[0m
+    This bundle defines the API for extensions (or plugins) associated.
+    with monitoring on the agent's side. Such extensions are in charge of
+    verifying assertions on the agent's machine.

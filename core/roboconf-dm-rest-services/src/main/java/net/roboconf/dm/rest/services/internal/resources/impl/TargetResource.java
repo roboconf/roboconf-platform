@@ -36,6 +36,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.beans.AbstractApplication;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -170,6 +171,26 @@ public class TargetResource implements ITargetResource {
 	/*
 	 * (non-Javadoc)
 	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
+	 * #findTargetById(java.lang.String)
+	 */
+	@Override
+	public Response findTargetById( String targetId ) {
+
+		this.logger.fine( "Request: get details about target " + targetId + "." );
+		TargetWrapperDescriptor twb = this.manager.targetsMngr().findTargetById( targetId );
+		Response response;
+		if( twb == null )
+			response = Response.status( Status.NOT_FOUND ).build();
+		else
+			response = Response.ok().entity( twb ).build();
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
 	 * #associateTarget(java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean)
 	 */
 	@Override
@@ -230,6 +251,14 @@ public class TargetResource implements ITargetResource {
 		}
 
 		return response;
+	}
+
+
+	@Override
+	public List<TargetUsageItem> findUsageStatistics( String targetId ) {
+
+		this.logger.fine( "Request: list usage statistics for target " + targetId + "." );
+		return this.manager.targetsMngr().findUsageStatistics( targetId );
 	}
 
 
