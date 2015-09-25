@@ -171,6 +171,30 @@ public class IconUtilsTest {
 
 
 	@Test
+	public void testFindIconUrl() throws Exception {
+
+		// Create fake icons
+		ApplicationTemplate tpl = new ApplicationTemplate( "tpl" ).qualifier( "v1" ).directory( this.folder.newFolder());
+		File descDir = new File( tpl.getDirectory(), Constants.PROJECT_DIR_DESC );
+		Assert.assertTrue( descDir.mkdirs());
+		Assert.assertTrue( new File( descDir, "tp.jpg" ).createNewFile());
+
+		Application app = new Application( "app", tpl ).directory( this.folder.newFolder());
+		descDir = new File( app.getDirectory(), Constants.PROJECT_DIR_DESC );
+		Assert.assertTrue( descDir.mkdirs());
+		Assert.assertTrue( new File( descDir, "whatever.jpg" ).createNewFile());
+
+		// Check the URLs
+		Assert.assertEquals( "/tpl/v1/tp.jpg", IconUtils.findIconUrl( tpl ));
+		Assert.assertEquals( "/app/whatever.jpg", IconUtils.findIconUrl( app ));
+
+		// And we delete the icon
+		Utils.deleteFilesRecursively( descDir );
+		Assert.assertEquals( "", IconUtils.findIconUrl( app ));
+	}
+
+
+	@Test
 	public void testFindIcon_nullConfigDirectory() throws Exception {
 
 		// In case we try to get an icon while the DM is reconfigured

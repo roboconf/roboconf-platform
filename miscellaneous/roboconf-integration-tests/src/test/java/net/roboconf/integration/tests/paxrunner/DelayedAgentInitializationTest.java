@@ -38,8 +38,10 @@ import javax.inject.Inject;
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.DmTest;
@@ -102,6 +104,8 @@ public class DelayedAgentInitializationTest extends DmTest {
 		probe.addTest( DmTest.class );
 		probe.addTest( TestApplicationTemplate.class );
 		probe.addTest( TestApplication.class );
+		probe.addTest( TestManagerWrapper.class );
+		probe.addTest( TestUtils.class );
 
 		// Force the use of the AgentMessagingInterface from the agent's bundle.
 		probe.setHeader( "Import-Package", "net.roboconf.agent" );
@@ -183,18 +187,21 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
 		Thread.sleep(2000);
 
+		//
+		TestManagerWrapper managerWrapper = new TestManagerWrapper( this.manager );
+
 		// Artificially closes the DM-side client, to prevent Agent <-> DM exchanges.
-		this.manager.getMessagingClient().closeConnection();
+		managerWrapper.getMessagingClient().closeConnection();
 
 		// Make like if the DM had already deployed an application's part
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		// Check the DM
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
-		Assert.assertNotNull( this.manager.getMessagingClient());
-		Assert.assertFalse( this.manager.getMessagingClient().isConnected());
+		Assert.assertNotNull( managerWrapper.getMessagingClient());
+		Assert.assertFalse( managerWrapper.getMessagingClient().isConnected());
 
 		// Check the agent
 		Assert.assertEquals( app.getName(), this.agentItf.getApplicationName());
@@ -209,7 +216,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Manager#reconfigure() reloads all the applications from its configuration.
 		// Since we loaded one in-memory, we must restore it ourselves.
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		// Force the agent to send a heart beat message.
 		this.agentItf.forceHeartbeatSending();

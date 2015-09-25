@@ -25,7 +25,6 @@
 
 package net.roboconf.dm.rest.client.delegates;
 
-import java.io.File;
 import java.net.URI;
 import java.util.List;
 import java.util.Timer;
@@ -35,22 +34,19 @@ import javax.ws.rs.core.UriBuilder;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
-import net.roboconf.dm.rest.client.exceptions.DebugException;
+import net.roboconf.dm.rest.client.exceptions.DebugWsException;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 import net.roboconf.dm.rest.services.internal.RestApplication;
-import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.messaging.api.MessagingConstants;
 
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import org.junit.Before;
@@ -71,8 +67,8 @@ public class DebugWsDelegateTest {
 
 	private WsClient client;
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private HttpServer httpServer;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@After
@@ -89,16 +85,17 @@ public class DebugWsDelegateTest {
 
 	@Before
 	public void before() throws Exception {
-		this.registry.addMessagingClientFactory(new TestClientFactory());
 
+		// Create the manager
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
 		// Disable the messages timer for predictability
@@ -113,14 +110,14 @@ public class DebugWsDelegateTest {
 
 
 	@Test
-	public void testDiagnoseApplication() {
+	public void testDiagnoseApplication() throws Exception {
 
 		List<Diagnostic> diags = this.client.getDebugDelegate().diagnoseApplication( "invalid" );
 		Assert.assertEquals( 0, diags.size());
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		diags = this.client.getDebugDelegate().diagnoseApplication( app.getName());
 		Assert.assertEquals( InstanceHelpers.getAllInstances( app ).size(), diags.size());
@@ -142,7 +139,7 @@ public class DebugWsDelegateTest {
 		TestApplication app = new TestApplication();
 		String path = InstanceHelpers.computeInstancePath( app.getWar());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Diagnostic diag = this.client.getDebugDelegate().diagnoseInstance( app.getName(), path );
 		Assert.assertNotNull( diag );
@@ -151,49 +148,25 @@ public class DebugWsDelegateTest {
 	}
 
 
-	@Test( expected = DebugException.class )
+	@Test( expected = DebugWsException.class )
 	public void testDiagnoseInstance_inexistingInstance() throws Exception {
 
 		TestApplication app = new TestApplication();
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		this.client.getDebugDelegate().diagnoseInstance( app.getName(), "/inexisting" );
 	}
 
 
-	@Test( expected = DebugException.class )
+	@Test( expected = DebugWsException.class )
 	public void testDiagnoseInstance_inexistingApplication() throws Exception {
 
 		TestApplication app = new TestApplication();
 		String path = InstanceHelpers.computeInstancePath( app.getWar());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.manager.getNameToManagedApplication().put( app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		this.client.getDebugDelegate().diagnoseInstance( "inexisting", path );
-	}
-
-
-	@Test
-	public void testCreateTestForTargetProperties_success() throws Exception {
-
-		File propertiesFile = this.folder.newFile();
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
-		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
-		this.client.getDebugDelegate().createTestForTargetProperties( propertiesFile );
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
-	}
-
-
-	@Test( expected = DebugException.class )
-	public void testCreateTestForTargetProperties_conflict() throws Exception {
-
-		ApplicationTemplate tpl = new ApplicationTemplate( IDebugResource.FAKE_APP_NAME ).qualifier( "DEBUG" );
-		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
-		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
-
-		File propertiesFile = this.folder.newFile();
-		this.client.getDebugDelegate().createTestForTargetProperties( propertiesFile );
 	}
 }

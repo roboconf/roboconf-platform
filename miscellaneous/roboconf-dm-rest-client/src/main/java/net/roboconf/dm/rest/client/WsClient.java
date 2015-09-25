@@ -28,6 +28,7 @@ package net.roboconf.dm.rest.client;
 import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
 import net.roboconf.dm.rest.client.delegates.DebugWsDelegate;
 import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
+import net.roboconf.dm.rest.client.delegates.TargetWsDelegate;
 import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
@@ -74,6 +75,7 @@ public class WsClient {
 	private final ApplicationWsDelegate applicationDelegate;
 	private final ManagementWsDelegate managementDelegate;
 	private final DebugWsDelegate debugDelegate;
+	private final TargetWsDelegate targetWsDelegate;
 
 	private final Client client;
 
@@ -95,6 +97,7 @@ public class WsClient {
 		this.applicationDelegate = new ApplicationWsDelegate( resource );
 		this.managementDelegate = new ManagementWsDelegate( resource );
 		this.debugDelegate = new DebugWsDelegate( resource );
+		this.targetWsDelegate = new TargetWsDelegate( resource );
 	}
 
 
@@ -113,7 +116,6 @@ public class WsClient {
 		return this.applicationDelegate;
 	}
 
-
 	/**
 	 * @return the appManagementDelegate
 	 */
@@ -128,6 +130,12 @@ public class WsClient {
 		return this.debugDelegate;
 	}
 
+	/**
+	 * @return the targetWsDelegate
+	 */
+	public TargetWsDelegate getTargetWsDelegate() {
+		return this.targetWsDelegate;
+	}
 
 	/**
 	 * @return the Jersey client (useful to configure it)

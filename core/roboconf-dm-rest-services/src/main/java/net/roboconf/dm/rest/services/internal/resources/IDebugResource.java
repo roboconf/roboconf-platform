@@ -25,12 +25,9 @@
 
 package net.roboconf.dm.rest.services.internal.resources;
 
-import java.io.InputStream;
 import java.util.List;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -40,9 +37,6 @@ import javax.ws.rs.core.Response;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
-
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataParam;
 
 /**
  * The REST API to debug various things.
@@ -57,21 +51,6 @@ import com.sun.jersey.multipart.FormDataParam;
 public interface IDebugResource {
 
 	String PATH = "/" + UrlConstants.DEBUG;
-	String FAKE_APP_NAME = "Fake Application";
-
-
-	/**
-	 * Loads a target.properties file and creates a fake application to test it.
-	 * @param uploadedInputStream the uploaded file
-	 * @param fileDetail the file details
-	 * @return a response
-	 */
-	@POST
-	@Path("/test-target")
-	@Consumes( MediaType.MULTIPART_FORM_DATA )
-	Response createTestForTargetProperties(
-			@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail );
 
 
 	/**

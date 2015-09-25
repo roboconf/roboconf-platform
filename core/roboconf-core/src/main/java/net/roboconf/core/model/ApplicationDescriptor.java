@@ -26,7 +26,6 @@
 package net.roboconf.core.model;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -156,13 +155,6 @@ public class ApplicationDescriptor {
 				properties.setProperty( APPLICATION_TPL_QUALIFIER, app.getTemplate().getQualifier());
 		}
 
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream( f );
-			properties.store( fos, null );
-
-		} finally {
-			Utils.closeQuietly( fos );
-		}
+		Utils.writePropertiesFile( properties, f );
 	}
 }

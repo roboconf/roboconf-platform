@@ -109,10 +109,14 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		String appLocation = System.getProperty( APP_LOCATION );
 
 		// Load the application
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
-		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
+
+		// Associate a default target for this application
+		String targetId = this.manager.targetsMngr().createTarget( "handler: in-memory" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
 
 		// There is no agent yet (no root instance was deployed)
 		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
@@ -122,7 +126,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		Assert.assertNotNull( rootInstance );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 3000 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
@@ -136,7 +140,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 		Assert.assertTrue( instance.isStarted());
 
 		// Undeploy
-		this.manager.changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
+		this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( 0, this.agentFactory.getInstances().size());
 	}
 }

@@ -47,6 +47,21 @@ public interface Constants {
 	String TARGET_PROPERTIES_FILE_NAME = "target.properties";
 
 	/**
+	 * The {@value #TARGET_PROPERTY_HANDLER} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
+	 */
+	String TARGET_PROPERTY_HANDLER = "handler";
+
+	/**
+	 * The {@value #TARGET_PROPERTY_NAME} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
+	 */
+	String TARGET_PROPERTY_NAME = "name";
+
+	/**
+	 * The {@value #TARGET_PROPERTY_DESCRIPTION} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
+	 */
+	String TARGET_PROPERTY_DESCRIPTION = "description";
+
+	/**
 	 * The heart beat period (in milliseconds).
 	 */
 	long HEARTBEAT_PERIOD = 60000;

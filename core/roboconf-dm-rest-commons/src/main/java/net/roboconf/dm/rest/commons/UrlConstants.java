@@ -33,4 +33,5 @@ public interface UrlConstants {
 	String APPLICATIONS = "applications";
 	String APP = "app";
 	String DEBUG = "debug";
+	String TARGETS = "targets";
 }

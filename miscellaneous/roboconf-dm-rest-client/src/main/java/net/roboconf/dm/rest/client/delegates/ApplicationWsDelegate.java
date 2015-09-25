@@ -35,7 +35,7 @@ import javax.ws.rs.core.Response.Status.Family;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.dm.rest.client.exceptions.ApplicationException;
+import net.roboconf.dm.rest.client.exceptions.ApplicationWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import com.sun.jersey.api.client.ClientResponse;
@@ -72,10 +72,10 @@ public class ApplicationWsDelegate {
 	 * @param applicationName the application name
 	 * @param newStatus the new state of the instance
 	 * @param instancePath the instance path (not null)
-	 * @throws ApplicationException if something went wrong
+	 * @throws ApplicationWsException if something went wrong
 	 */
 	public void changeInstanceState( String applicationName, InstanceStatus newStatus, String instancePath )
-	throws ApplicationException {
+	throws ApplicationWsException {
 
 		this.logger.finer( "Changing state of " + instancePath + " to '" + newStatus + "' in " + applicationName + "."  );
 
@@ -90,7 +90,7 @@ public class ApplicationWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -101,10 +101,10 @@ public class ApplicationWsDelegate {
 	 * Changes the description of an application.
 	 * @param applicationName the application name
 	 * @param newDesc the new description to set
-	 * @throws ApplicationException if something went wrong
+	 * @throws ApplicationWsException if something went wrong
 	 */
 	public void setDescription( String applicationName, String newDesc )
-	throws ApplicationException {
+	throws ApplicationWsException {
 
 		this.logger.finer( "Updating the description of application " + applicationName + "." );
 
@@ -114,7 +114,7 @@ public class ApplicationWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -125,10 +125,10 @@ public class ApplicationWsDelegate {
 	 * Deploys and starts several instances at once.
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null for all the application instances)
-	 * @throws ApplicationException if something went wrong
+	 * @throws ApplicationWsException if something went wrong
 	 */
 	public void deployAndStartAll( String applicationName, String instancePath )
-	throws ApplicationException {
+	throws ApplicationWsException {
 
 		this.logger.finer( "Deploying and starting instances in " + applicationName + " from instance = " + instancePath  );
 
@@ -140,7 +140,7 @@ public class ApplicationWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -151,10 +151,10 @@ public class ApplicationWsDelegate {
 	 * Stops several instances at once.
 	 * @param applicationName the application name
 	 * @param instancePath the path of the instance to stop (null for all the application instances)
-	 * @throws ApplicationException if something went wrong
+	 * @throws ApplicationWsException if something went wrong
 	 */
 	public void stopAll( String applicationName, String instancePath )
-	throws ApplicationException {
+	throws ApplicationWsException {
 
 		this.logger.finer( "Stopping instances in " + applicationName + " from instance = " + instancePath  );
 
@@ -166,7 +166,7 @@ public class ApplicationWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -177,10 +177,10 @@ public class ApplicationWsDelegate {
 	 * Undeploys several instances at once.
 	 * @param applicationName the application name
 	 * @param instancePath the path of the instance to undeploy (null for all the application instances)
-	 * @throws ApplicationException if something went wrong
+	 * @throws ApplicationWsException if something went wrong
 	 */
 	public void undeployAll( String applicationName, String instancePath )
-	throws ApplicationException {
+	throws ApplicationWsException {
 
 		this.logger.finer( "Undeploying instances in " + applicationName + " from instance = " + instancePath  );
 
@@ -192,7 +192,7 @@ public class ApplicationWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -235,9 +235,9 @@ public class ApplicationWsDelegate {
 	 * @param applicationName the application name
 	 * @param parentInstancePath the path of the parent instance (null to create a root instance)
 	 * @param instance the instance to add
-	 * @throws ApplicationException if a problem occurred with the instance management
+	 * @throws ApplicationWsException if a problem occurred with the instance management
 	 */
-	public void addInstance( String applicationName, String parentInstancePath, Instance instance ) throws ApplicationException {
+	public void addInstance( String applicationName, String parentInstancePath, Instance instance ) throws ApplicationWsException {
 		this.logger.finer( "Adding an instance to the application " + applicationName + "..." );
 
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "instances" );
@@ -251,7 +251,7 @@ public class ApplicationWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationException( response.getStatusInfo().getStatusCode(), value );
+			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));

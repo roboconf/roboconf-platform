@@ -126,7 +126,7 @@ public class UtilsTest {
 			Assert.fail( "Inexisting files must be supported" );
 		}
 
-		Utils.deleteFilesRecursivelyAndQuitely( new File( "another-inexisting-file" ));
+		Utils.deleteFilesRecursivelyAndQuietly( new File( "another-inexisting-file" ));
 	}
 
 
@@ -834,5 +834,23 @@ public class UtilsTest {
 		List<File> directories = Utils.listDirectories( root );
 		Assert.assertEquals( 1, directories.size());
 		Assert.assertEquals( "dir", directories.get( 0 ).getName());
+	}
+
+
+	@Test
+	public void testReadPropertiesFileQuietly() throws Exception {
+
+		File f = this.folder.newFile();
+		Utils.writeStringInto( "prop: op", f );
+		Logger logger = Logger.getLogger( getClass().getName());
+
+		// Normal
+		Properties props = Utils.readPropertiesFileQuietly( f, logger );
+		Assert.assertEquals( 1, props.size());
+		Assert.assertEquals( "op", props.get( "prop" ));
+
+		// Inexisting file
+		props = Utils.readPropertiesFileQuietly( new File( "inexisting" ), logger );
+		Assert.assertEquals( 0, props.size());
 	}
 }

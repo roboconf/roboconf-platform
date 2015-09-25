@@ -35,6 +35,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.commons.Diagnostic;
@@ -89,6 +90,12 @@ public final class JSonBindingUtils {
 	private static final String DIAG_PATH = "path";
 	private static final String DIAG_DEPENDENCIES = "dependencies";
 
+	private static final String TARGET_ID = "id";
+	private static final String TARGET_NAME = "name";
+	private static final String TARGET_HANDLER = "handler";
+	private static final String TARGET_DESC = "desc";
+	private static final String TARGET_DEFAULT = "default";
+
 
 	/**
 	 * Private constructor.
@@ -127,8 +134,76 @@ public final class JSonBindingUtils {
 		module.addSerializer( DependencyInformation.class, new DependencyInformationSerializer());
 		module.addDeserializer( DependencyInformation.class, new DependencyInformationDeserializer());
 
+		module.addSerializer( TargetWrapperDescriptor.class, new TargetWDSerializer());
+		module.addDeserializer( TargetWrapperDescriptor.class, new TargetWDDeserializer());
+
 		mapper.registerModule( module );
 		return mapper;
+	}
+
+
+	/**
+	 * A JSon serializer for target descriptors.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class TargetWDSerializer extends JsonSerializer<TargetWrapperDescriptor> {
+
+		@Override
+		public void serialize(
+				TargetWrapperDescriptor twd,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( twd.getId() != null )
+				generator.writeStringField( TARGET_ID, twd.getId());
+
+			if( twd.getName() != null )
+				generator.writeStringField( TARGET_NAME, twd.getName());
+
+			if( twd.getHandler() != null )
+				generator.writeStringField( TARGET_HANDLER, twd.getHandler());
+
+			if( twd.getDescription() != null )
+				generator.writeStringField( TARGET_DESC, twd.getDescription());
+
+			if( twd.isDefault())
+				generator.writeStringField( TARGET_DEFAULT, "true" );
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for target descriptors.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class TargetWDDeserializer extends JsonDeserializer<TargetWrapperDescriptor> {
+
+		@Override
+		public TargetWrapperDescriptor deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
+
+	        JsonNode n;
+	        if(( n = node.get( TARGET_DESC )) != null )
+	        	twd.setDescription( n.textValue());
+
+	        if(( n = node.get( TARGET_HANDLER )) != null )
+	        	twd.setHandler( n.textValue());
+
+	        if(( n = node.get( TARGET_ID )) != null )
+	        	twd.setId( n.textValue());
+
+	        if(( n = node.get( TARGET_NAME )) != null )
+	        	twd.setName( n.textValue());
+
+			return twd;
+		}
 	}
 
 
@@ -436,7 +511,7 @@ public final class JSonBindingUtils {
 
 				generator.writeEndArray();
 			}
-			
+
 			// All exports are serialized in the same object (overridden or not).
 			// Will be necessary in external apps, like web console (eg. to edit exports).
 			Map<String, String> exports = InstanceHelpers.findAllExportedVariables(instance);
@@ -490,9 +565,9 @@ public final class JSonBindingUtils {
 	        	for( JsonNode arrayNodeItem : n )
 	        		instance.channels.add( arrayNodeItem.textValue());
 	        }
-	        
+
 	        ObjectMapper mapper = createObjectMapper();
-	        
+
 	        // Consider all exports as overridden. This will be fixed later
 	        // (eg. by comparison with component exports).
 	        if(( n = node.get( INST_EXPORTS )) != null ) {

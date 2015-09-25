@@ -25,9 +25,6 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +36,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Application;
@@ -71,18 +71,19 @@ public class ManagementResource implements IManagementResource {
 		ex.add("svg");
 		SUPPORTED_EXTENSIONS = Collections.unmodifiableSet(ex);
 	}
-	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final Manager manager;
 
 	/**
 	 * The maximum allowed image file size, in bytes (1MB).
 	 */
 	public static final long MAX_IMAGE_SIZE = 1024 * 1024;
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Manager manager;
+
 
 	/**
 	 * Constructor.
-	 * @param manager the Roboconf Deployment Manager.
+	 * @param manager the manager
 	 */
 	public ManagementResource( Manager manager ) {
 		this.manager = manager;
@@ -121,8 +122,8 @@ public class ManagementResource implements IManagementResource {
 
 			// We do not need the extracted application anymore.
 			// In case of success, it was copied in the DM's configuration.
-			Utils.deleteFilesRecursivelyAndQuitely( dir );
-			Utils.deleteFilesRecursivelyAndQuitely( tempZipFile );
+			Utils.deleteFilesRecursivelyAndQuietly( dir );
+			Utils.deleteFilesRecursivelyAndQuietly( tempZipFile );
 		}
 
 		return response;
@@ -142,7 +143,7 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: load application from " + localFilePath + "." );
 		Response response;
 		try {
-			ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( localFilePath ));
+			ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( localFilePath ));
 			response = Response.ok().entity( tpl ).build();
 
 		} catch( AlreadyExistingException e ) {
@@ -168,8 +169,8 @@ public class ManagementResource implements IManagementResource {
 	public List<ApplicationTemplate> listApplicationTemplates() {
 		this.logger.fine( "Request: list all the application templates." );
 
-		List<ApplicationTemplate> result = new ArrayList<> ();
-		result.addAll( this.manager.getApplicationTemplates());
+		List<ApplicationTemplate> result = new ArrayList<ApplicationTemplate> ();
+		result.addAll( this.manager.applicationTemplateMngr().getApplicationTemplates());
 
 		return result;
 	}
@@ -187,7 +188,7 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: delete application template " + id + "." );
 		Response result = Response.ok().build();
 		try {
-			this.manager.deleteApplicationTemplate( tplName, tplQualifier );
+			this.manager.applicationTemplateMngr().deleteApplicationTemplate( tplName, tplQualifier );
 
 		} catch( InvalidApplicationException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, "Application template " + id + " was not found.", e ).build();
@@ -213,7 +214,7 @@ public class ManagementResource implements IManagementResource {
 		try {
 			String tplName = app.getTemplate() == null ? null : app.getTemplate().getName();
 			String tplQualifier = app.getTemplate() == null ? null : app.getTemplate().getQualifier();
-			ManagedApplication ma = this.manager.createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
+			ManagedApplication ma = this.manager.applicationMngr().createApplication( app.getName(), app.getDescription(), tplName, tplQualifier );
 			result = Response.ok().entity( ma.getApplication()).build();
 
 		} catch( InvalidApplicationException e ) {
@@ -238,8 +239,8 @@ public class ManagementResource implements IManagementResource {
 	public List<Application> listApplications() {
 		this.logger.fine( "Request: list all the applications." );
 
-		List<Application> result = new ArrayList<> ();
-		for( ManagedApplication ma : this.manager.getNameToManagedApplication().values())
+		List<Application> result = new ArrayList<Application> ();
+		for( ManagedApplication ma : this.manager.applicationMngr().getManagedApplications())
 			result.add( ma.getApplication());
 
 		return result;
@@ -256,11 +257,11 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: delete application " + applicationName + "." );
 		Response result = Response.ok().build();
 		try {
-			ManagedApplication ma = this.manager.getNameToManagedApplication().get( applicationName );
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null )
 				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
 			else
-				this.manager.deleteApplication( ma );
+				this.manager.applicationMngr().deleteApplication( ma );
 
 		} catch( UnauthorizedActionException | IOException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be deleted.", e ).build();
@@ -281,11 +282,11 @@ public class ManagementResource implements IManagementResource {
 		this.logger.fine( "Request: shutdown application " + applicationName + "." );
 		Response result = Response.ok().build();
 		try {
-			ManagedApplication ma = this.manager.getNameToManagedApplication().get( applicationName );
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 			if( ma == null )
 				result = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " was not found." ).build();
 			else
-				this.manager.undeployAll( ma, null );
+				this.manager.instancesMngr().undeployAll( ma, null );
 
 		} catch( Exception e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + applicationName + " could not be shutdown.", e ).build();
@@ -343,30 +344,26 @@ public class ManagementResource implements IManagementResource {
 		// Get the target directory.
 		File targetDir;
 		if (qualifier != null) {
-
-			// Get the template directory.
 			this.logger.fine( "Request: set template image: " + name + '/' + qualifier + "." );
-			// TODO XXX !!!
-			final ApplicationTemplate template = this.manager.findTemplate(name, qualifier);
-			if (template == null) {
+			final ApplicationTemplate template = this.manager.applicationTemplateMngr().findTemplate(name, qualifier);
+			if (template == null)
 				throw new NoSuchElementException("Cannot find template: " + name + '/' + qualifier);
-			}
-			targetDir = new File(template.getDirectory(), Constants.PROJECT_DIR_DESC);
-		} else {
 
-			// Get the application directory.
+			targetDir = new File(template.getDirectory(), Constants.PROJECT_DIR_DESC);
+
+		} else {
 			this.logger.fine( "Request: set application image: " + name + "." );
-			final Application application = this.manager.findApplicationByName(name);
-			if (application == null) {
+			final Application application = this.manager.applicationMngr().findApplicationByName( name );
+			if (application == null)
 				throw new NoSuchElementException("Cannot find application: " + name);
-			}
+
 			targetDir = new File(application.getDirectory(), Constants.PROJECT_DIR_DESC);
 		}
 
 		// First clean the previous "application.*" images, as they may be chosen instead of the one we're uploading.
 		for (final String ext : SUPPORTED_EXTENSIONS) {
-			//noinspection ResultOfMethodCallIgnored
-			new File(targetDir, "application." + ext).delete();
+			File f = new File(targetDir, "application." + ext);
+			Utils.deleteFilesRecursivelyAndQuietly( f );
 		}
 
 		// Now store the image: rename it to application.X, so we get sure it is chosen as THE app/template icon.
@@ -381,14 +378,13 @@ public class ManagementResource implements IManagementResource {
 	 * @return the file name extension.
 	 */
 	private static String getFileExtension(final String filename) {
+
 		String extension = "";
 		int i = filename.lastIndexOf('.');
 		int p = Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\'));
-		if (i > p) {
+		if (i > p)
 			extension = filename.substring(i+1);
-		}
+
 		return extension;
 	}
-
-
 }

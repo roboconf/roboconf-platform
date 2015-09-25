@@ -36,7 +36,7 @@ import javax.ws.rs.core.Response.Status.Family;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.dm.rest.client.exceptions.ManagementException;
+import net.roboconf.dm.rest.client.exceptions.ManagementWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import com.sun.jersey.api.client.ClientResponse;
@@ -70,10 +70,10 @@ public class ManagementWsDelegate {
 	/**
 	 * Uploads a ZIP file and loads its application template.
 	 * @param applicationFile a ZIP archive file
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 * @throws IOException if the file was not found or is invalid
 	 */
-	public void loadApplicationTemplate( File applicationFile ) throws ManagementException, IOException {
+	public void loadApplicationTemplate( File applicationFile ) throws ManagementWsException, IOException {
 
 		if( applicationFile == null
 				|| ! applicationFile.exists()
@@ -93,7 +93,7 @@ public class ManagementWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), value );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -103,9 +103,9 @@ public class ManagementWsDelegate {
 	/**
 	 * Loads an application template from a file which was already uploaded (and unzipped) on the DM's machine.
 	 * @param remoteFilePath the file path of a directory containing the application on the DM's machine
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public void loadApplicationTemplate( String remoteFilePath ) throws ManagementException {
+	public void loadApplicationTemplate( String remoteFilePath ) throws ManagementWsException {
 		this.logger.finer( "Loading an already-uploaded application. " + remoteFilePath );
 
 		WebResource path = this.resource.path( UrlConstants.APPLICATIONS ).path( "templates" ).path( "local" );
@@ -116,7 +116,7 @@ public class ManagementWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), value );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -126,9 +126,9 @@ public class ManagementWsDelegate {
 	/**
 	 * Lists application templates.
 	 * @return a non-null list of application templates
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public List<ApplicationTemplate> listApplicationTemplates() throws ManagementException {
+	public List<ApplicationTemplate> listApplicationTemplates() throws ManagementWsException {
 		this.logger.finer( "Listing application templates..." );
 
 		List<ApplicationTemplate> result = this.resource
@@ -149,9 +149,9 @@ public class ManagementWsDelegate {
 	 * Deletes an application.
 	 * @param templateName the template name
 	 * @param templateQualifier the template qualifier
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public void deleteApplicationTemplate( String templateName, String templateQualifier ) throws ManagementException {
+	public void deleteApplicationTemplate( String templateName, String templateQualifier ) throws ManagementWsException {
 		this.logger.finer( "Removing application template " + templateName + "..." );
 
 		ClientResponse response = this.resource
@@ -162,7 +162,7 @@ public class ManagementWsDelegate {
 		String text = response.getEntity( String.class );
 		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), text );
 	}
 
 
@@ -174,10 +174,10 @@ public class ManagementWsDelegate {
 	 * @param applicationName the application name
 	 * @param templateName the template's name
 	 * @param templateQualifier the template's qualifier
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
 	public void createApplication( String applicationName, String templateName, String templateQualifier )
-	throws ManagementException {
+	throws ManagementWsException {
 
 		this.logger.finer( "Creating application " + applicationName + " from " + templateName + " - " + templateQualifier + "..." );
 		ApplicationTemplate tpl = new ApplicationTemplate( templateName ).qualifier( templateQualifier );
@@ -191,16 +191,16 @@ public class ManagementWsDelegate {
 		String text = response.getEntity( String.class );
 		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), text );
 	}
 
 
 	/**
 	 * Lists applications.
 	 * @return a non-null list of applications
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public List<Application> listApplications() throws ManagementException {
+	public List<Application> listApplications() throws ManagementWsException {
 		this.logger.finer( "Listing applications..." );
 
 		List<Application> result = this.resource
@@ -220,9 +220,9 @@ public class ManagementWsDelegate {
 	/**
 	 * Shutdowns an application.
 	 * @param applicationName the application name
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public void shutdownApplication( String applicationName ) throws ManagementException {
+	public void shutdownApplication( String applicationName ) throws ManagementWsException {
 		this.logger.finer( "Removing application " + applicationName + "..." );
 
 		ClientResponse response = this.resource
@@ -232,16 +232,16 @@ public class ManagementWsDelegate {
 		String text = response.getEntity( String.class );
 		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), text );
 	}
 
 
 	/**
 	 * Deletes an application.
 	 * @param applicationName the application name
-	 * @throws ManagementException if a problem occurred with the applications management
+	 * @throws ManagementWsException if a problem occurred with the applications management
 	 */
-	public void deleteApplication( String applicationName ) throws ManagementException {
+	public void deleteApplication( String applicationName ) throws ManagementWsException {
 		this.logger.finer( "Removing application " + applicationName + "..." );
 
 		ClientResponse response = this.resource
@@ -251,6 +251,6 @@ public class ManagementWsDelegate {
 		String text = response.getEntity( String.class );
 		this.logger.finer( text );
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily())
-			throw new ManagementException( response.getStatusInfo().getStatusCode(), text );
+			throw new ManagementWsException( response.getStatusInfo().getStatusCode(), text );
 	}
 }

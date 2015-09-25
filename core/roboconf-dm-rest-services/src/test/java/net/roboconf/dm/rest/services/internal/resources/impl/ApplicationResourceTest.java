@@ -28,6 +28,7 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 
 import javax.ws.rs.core.Response;
@@ -41,14 +42,13 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -73,8 +73,8 @@ public class ApplicationResourceTest {
 	private TestApplication app;
 	private ManagedApplication ma;
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private TestClientDm msgClient;
-	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@After
@@ -85,19 +85,21 @@ public class ApplicationResourceTest {
 
 	@Before
 	public void before() throws Exception {
-		this.registry.addMessagingClientFactory(new TestClientFactory());
 
+		// Create the manager
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		// Get the messaging client
+		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
 		this.msgClient.sentMessages.clear();
 
 		// Disable the messages timer for predictability
@@ -109,7 +111,7 @@ public class ApplicationResourceTest {
 		// Load an application
 		this.app = new TestApplication();
 		this.ma = new ManagedApplication( this.app );
-		this.manager.getNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
 	}
 
 
@@ -159,15 +161,19 @@ public class ApplicationResourceTest {
 		TestTargetResolver iaasResolver = new TestTargetResolver();
 		this.manager.setTargetResolver( iaasResolver );
 
-		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
+		String targetId = this.manager.targetsMngr().createTarget( "handler: test" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+
+		Assert.assertEquals( 0, iaasResolver.instancePathToRunningStatus.size());
 		Response resp = this.resource.changeInstanceState(
 				this.app.getName(),
 				InstanceStatus.DEPLOYED_STARTED.toString(),
 				InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
 
+		String path = InstanceHelpers.computeInstancePath( this.app.getMySqlVm());
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
+		Assert.assertEquals( 1, iaasResolver.instancePathToRunningStatus.size());
+		Assert.assertTrue( iaasResolver.instancePathToRunningStatus.get( path ));
 	}
 
 
@@ -194,7 +200,7 @@ public class ApplicationResourceTest {
 
 		TestTargetResolver newResolver = new TestTargetResolver() {
 			@Override
-			public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+			public TargetHandler findTargetHandler( Map<String,String> targetProperties )
 			throws TargetException {
 				throw new TargetException( "For test purpose!" );
 			}
@@ -262,14 +268,13 @@ public class ApplicationResourceTest {
 	@Test
 	public void testStopAll() throws Exception {
 
-		TestClientDm msgClient = getInternalClient();
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		Response resp = this.resource.stopAll( this.app.getName(), instancePath );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -300,14 +305,13 @@ public class ApplicationResourceTest {
 	@Test
 	public void testUndeployAll() throws Exception {
 
-		TestClientDm msgClient = getInternalClient();
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		Response resp = this.resource.undeployAll( this.app.getName(), instancePath );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -338,14 +342,13 @@ public class ApplicationResourceTest {
 	@Test
 	public void testDeployAndStartAll() throws Exception {
 
-		TestClientDm msgClient = getInternalClient();
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		Response resp = this.resource.deployAndStartAll( this.app.getName(), instancePath );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 2, messages.size());
@@ -680,10 +683,5 @@ public class ApplicationResourceTest {
 	public void testResynchronize_nonExistingApplication() {
 		Response resp = this.resource.resynchronize( "I-am-not-an-app" );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
-	}
-
-
-	private TestClientDm getInternalClient() throws IllegalAccessException {
-		return TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
 	}
 }

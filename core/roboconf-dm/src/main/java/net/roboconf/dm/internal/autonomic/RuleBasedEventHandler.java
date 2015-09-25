@@ -235,14 +235,14 @@ public class RuleBasedEventHandler {
 					instanceName = compToInstantiate.getName().toLowerCase();
 
 				Instance currentInstance = new Instance( instanceName ).component(compToInstantiate);
-				this.manager.addInstance( ma, previousInstance, currentInstance );
+				this.manager.instancesMngr().addInstance( ma, previousInstance, currentInstance );
 				previousInstance = currentInstance;
 			}
 
 			// Now, deploy and start all
 			Instance rootInstance = InstanceHelpers.findRootInstance( previousInstance );
 			rootInstance.data.put( AUTONOMIC_MARKER, "true" );
-			this.manager.deployAndStartAll( ma, rootInstance );
+			this.manager.instancesMngr().deployAndStartAll( ma, rootInstance );
 
 		} catch( Exception e ) {
 			this.logger.warning( "The creation of instances (autonomic context) failed. " + e.getMessage());
@@ -281,8 +281,8 @@ public class RuleBasedEventHandler {
 
 			// If there is one, delete it
 			if( instanceToRemove != null ) {
-				this.manager.undeployAll( ma, instanceToRemove );
-				this.manager.removeInstance( ma, instanceToRemove );
+				this.manager.instancesMngr().undeployAll( ma, instanceToRemove );
+				this.manager.instancesMngr().removeInstance( ma, instanceToRemove );
 			}
 
 		} catch( Exception e ) {

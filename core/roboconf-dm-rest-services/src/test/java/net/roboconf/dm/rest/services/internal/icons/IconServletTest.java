@@ -37,6 +37,7 @@ import net.roboconf.core.utils.IconUtils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.Manager;
 
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -52,6 +53,14 @@ public class IconServletTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+	private Manager manager;
+
+
+	@After
+	public void stopManager() {
+		if( this.manager != null )
+			this.manager.stop();
+	}
 
 
 	@Test
@@ -60,15 +69,14 @@ public class IconServletTest {
 		// Prepare the servlet
 		File configurationDirectory = this.folder.newFolder();
 
-		Manager manager = new Manager();
-		manager.setConfigurationDirectoryLocation( configurationDirectory.getAbsolutePath());
-		manager.initializeDirectory();
+		this.manager = new Manager();
+		this.manager.configurationMngr().setWorkingDirectory( configurationDirectory );
 
 		File appDir = ConfigurationUtils.findApplicationDirectory( "app", configurationDirectory );
 		File descDir = new File( appDir, Constants.PROJECT_DIR_DESC );
 		Assert.assertTrue( descDir.mkdirs());
 
-		IconServlet servlet = new IconServlet( manager );
+		IconServlet servlet = new IconServlet( this.manager );
 
 		// Add a fake file
 		File trickFile = new File( descDir, "directory.jpg" );

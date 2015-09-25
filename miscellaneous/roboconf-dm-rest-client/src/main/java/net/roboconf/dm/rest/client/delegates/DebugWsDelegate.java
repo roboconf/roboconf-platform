@@ -25,22 +25,19 @@
 
 package net.roboconf.dm.rest.client.delegates;
 
-import java.io.File;
 import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
-import net.roboconf.dm.rest.client.exceptions.DebugException;
+import net.roboconf.dm.rest.client.exceptions.DebugWsException;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.multipart.FormDataMultiPart;
-import com.sun.jersey.multipart.file.FileDataBodyPart;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -63,39 +60,12 @@ public class DebugWsDelegate {
 
 
 	/**
-	 * Creates a test application to verify a target.properties file is correct.
-	 * @param targetPropertiesFile a properties file
-	 * @throws DebugException if the application could be created or updated
-	 */
-	public void createTestForTargetProperties( File targetPropertiesFile ) throws DebugException {
-
-		this.logger.finer( "Creating a test application to evaluate " + targetPropertiesFile + "..." );
-
-		FormDataMultiPart part = new FormDataMultiPart();
-		part.bodyPart( new FileDataBodyPart( "file", targetPropertiesFile, MediaType.APPLICATION_OCTET_STREAM_TYPE));
-
-		ClientResponse response = this.resource
-				.path( UrlConstants.DEBUG ).path( "test-target" )
-				.type( MediaType.MULTIPART_FORM_DATA_TYPE )
-				.post( ClientResponse.class, part );
-
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
-		}
-
-		this.logger.finer( String.valueOf( response.getStatusInfo()));
-	}
-
-
-	/**
 	 * Checks the DM is correctly connected with the messaging server.
 	 * @param message a customized message content
 	 * @return the content of the response
 	 */
 	public String checkMessagingConnectionForTheDm( String message )
-	throws DebugException {
+	throws DebugWsException {
 
 		this.logger.finer( "Checking messaging connection with the DM: message=" + message );
 
@@ -107,7 +77,7 @@ public class DebugWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
+			throw new DebugWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -124,7 +94,7 @@ public class DebugWsDelegate {
 	 * @return the response to the agent connection check
 	 */
 	public String checkMessagingConnectionWithAgent( String applicationName, String scopedInstancePath, String message )
-	throws DebugException {
+	throws DebugWsException {
 
 		this.logger.finer( "Checking messaging connection with agent: applicationName=" + applicationName +
 				", scoped instance path=" + scopedInstancePath + ", message=" + message );
@@ -139,7 +109,7 @@ public class DebugWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
+			throw new DebugWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
@@ -150,10 +120,10 @@ public class DebugWsDelegate {
 	/**
 	 * Runs a diagnostic for a given instance.
 	 * @return the instance
-	 * @throws DebugException
+	 * @throws DebugWsException
 	 */
 	public Diagnostic diagnoseInstance( String applicationName, String instancePath )
-	throws DebugException {
+	throws DebugWsException {
 
 		this.logger.finer( "Diagnosing instance " + instancePath + " in application " + applicationName );
 
@@ -165,7 +135,7 @@ public class DebugWsDelegate {
 		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
 			String value = response.getEntity( String.class );
 			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new DebugException( response.getStatusInfo().getStatusCode(), value );
+			throw new DebugWsException( response.getStatusInfo().getStatusCode(), value );
 		}
 
 		this.logger.finer( String.valueOf( response.getStatusInfo()));

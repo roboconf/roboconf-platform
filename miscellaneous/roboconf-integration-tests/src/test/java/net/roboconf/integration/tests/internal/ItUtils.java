@@ -27,6 +27,7 @@ package net.roboconf.integration.tests.internal;
 
 import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
 import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureConsole;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
@@ -42,6 +43,7 @@ import java.util.List;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.integration.probes.ItConfigurationBean;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
@@ -118,6 +120,44 @@ public final class ItUtils {
 	 */
 	public static Option[] getBaseOptions( ItConfigurationBean bean ) {
 		return asArray( getBaseOptionsAsList( bean ));
+	}
+
+
+	/**
+	 * @param hideLogs true if logs should be hidden, false otherwise
+	 * @return a set of options to run agents in memory
+	 */
+	public static Option[] getOptionsForInMemory( boolean hideLogs ) {
+
+		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm-with-agent-in-memory" );
+		bean.hideLogs( hideLogs );
+
+		List<Option> options = ItUtils.getBaseOptionsAsList( bean );
+		String roboconfVersion = ItUtils.findRoboconfVersion();
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-plugin-api" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-agent" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-target-in-memory" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"messaging-type",
+				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
+
+		return options.toArray( new Option[ options.size()]);
 	}
 
 

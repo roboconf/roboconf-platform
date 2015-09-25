@@ -25,18 +25,14 @@
 
 package net.roboconf.dm.internal.tasks;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.IMessagingMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,52 +40,29 @@ import net.roboconf.messaging.api.messages.Message;
 public class CheckerMessagesTask extends TimerTask {
 
 	private final Logger logger;
-	private final IDmClient messagingClient;
-	private final ApplicationMngrDelegate appManager;
+	private final IMessagingMngr messagingMngr;
+	private final IApplicationMngr appManager;
 
 
 	/**
 	 * Constructor.
 	 * @param appManager
-	 * @param messagingClient
+	 * @param messagingMngr
 	 */
-	public CheckerMessagesTask( ApplicationMngrDelegate appManager, IDmClient messagingClient ) {
+	public CheckerMessagesTask( IApplicationMngr appManager, IMessagingMngr messagingMngr ) {
 		this.appManager = appManager;
-		this.messagingClient = messagingClient;
+		this.messagingMngr = messagingMngr;
 		this.logger = Logger.getLogger( getClass().getName());
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.util.TimerTask#run()
-	 */
 	@Override
 	public void run() {
 
 		this.logger.finer( "The messager checker task runs." );
 		for( ManagedApplication ma : this.appManager.getManagedApplications()) {
-			for( Instance rootInstance : ma.getApplication().getRootInstances()) {
-				if( rootInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED )
-					continue;
-
-				List<Message> messages = ma.removeAwaitingMessages( rootInstance );
-				if( ! messages.isEmpty())
-					this.logger.fine( "Sending " + messages.size() + " awaiting message(s) for " + rootInstance.getName() + "." );
-
-				for( Message msg : messages ) {
-					try {
-						this.messagingClient.sendMessageToAgent( ma.getApplication(), rootInstance, msg );
-
-					} catch( IOException e ) {
-
-						// If the message could not be send, plan a retry
-						ma.storeAwaitingMessage( rootInstance, msg );
-						this.logger.severe( "Error while sending a stored message. A retry is planned. " + e.getMessage());
-						Utils.logException( this.logger, e );
-					}
-				}
-			}
+			for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( ma.getApplication()))
+				this.messagingMngr.sendStoredMessages( ma, scopedInstance );
 		}
 	}
 }

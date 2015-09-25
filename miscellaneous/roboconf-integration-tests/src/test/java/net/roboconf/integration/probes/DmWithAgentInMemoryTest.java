@@ -25,20 +25,14 @@
 
 package net.roboconf.integration.probes;
 
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.dm.management.ITargetResolver;
-import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -62,34 +56,7 @@ public abstract class DmWithAgentInMemoryTest {
 
 	@Configuration
 	public Option[] config() throws Exception {
-
-		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm-with-agent-in-memory" );
-		List<Option> options = ItUtils.getBaseOptionsAsList( bean );
-		String roboconfVersion = ItUtils.findRoboconfVersion();
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-plugin-api" )
-				.version( roboconfVersion )
-				.start());
-
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-agent" )
-				.version( roboconfVersion )
-				.start());
-
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-target-in-memory" )
-				.version( roboconfVersion )
-				.start());
-
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
-				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
-
-		return options.toArray( new Option[ options.size()]);
+		return ItUtils.getOptionsForInMemory( true );
 	}
 
 
@@ -100,6 +67,7 @@ public abstract class DmWithAgentInMemoryTest {
 
 		this.manager.setTargetResolver( new InMemoryTargetResolver( this.inMemoryIaas ));
 		this.manager.reconfigure();
+
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
 		Thread.sleep(1000);
 	}
@@ -108,7 +76,7 @@ public abstract class DmWithAgentInMemoryTest {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	public static final class InMemoryTargetResolver implements ITargetResolver {
+	public static final class InMemoryTargetResolver implements ITargetHandlerResolver {
 		private final TargetHandler inMemoryIaas;
 
 
@@ -117,9 +85,9 @@ public abstract class DmWithAgentInMemoryTest {
 		}
 
 		@Override
-		public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+		public TargetHandler findTargetHandler( Map<String,String> targetProperties )
 		throws TargetException {
-			return new Target( this.inMemoryIaas, null );
+			return this.inMemoryIaas;
 		}
 	}
 }

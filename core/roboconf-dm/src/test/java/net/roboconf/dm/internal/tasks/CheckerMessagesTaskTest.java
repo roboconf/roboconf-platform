@@ -25,145 +25,85 @@
 
 package net.roboconf.dm.internal.tasks;
 
-import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
-import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
+import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.messaging.api.internal.client.test.TestClientDm;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
+import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.IConfigurationMngr;
+import net.roboconf.dm.management.api.IMessagingMngr;
+import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetsMngr;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class CheckerMessagesTaskTest {
 
-	private ApplicationMngrDelegate appManager;
-	private TestApplication app;
-	private ManagedApplication ma;
+	private IApplicationMngr appManager;
+	private IMessagingMngr messagingMngr;
 
 
 	@Before
 	public void resetManager() throws Exception {
 
-		this.app = new TestApplication();
-		this.ma = new ManagedApplication( this.app );
+		// These tests only use the internal map of managed applications...
+		// ... as well as the managed applications themselves.
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 
-		this.appManager = new ApplicationMngrDelegate();
-		this.appManager.getNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
+		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, this.messagingMngr );
 	}
 
 
 	@Test
 	public void testRun_noApplication() {
 
-		TestClientDm client = new TestClientDm();
-		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, client );
-		this.appManager.getNameToManagedApplication().clear();
-
-		Assert.assertEquals( 0, this.appManager.getNameToManagedApplication().size());
-		Assert.assertEquals( 0, client.sentMessages.size());
+		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, this.messagingMngr );
 		task.run();
-		Assert.assertEquals( 0, client.sentMessages.size());
+		Mockito.verifyZeroInteractions( this.messagingMngr );
 	}
 
 
 	@Test
-	public void testRun_ioException() {
+	@SuppressWarnings( "unchecked" )
+	public void testRun_appWithAllStates() throws Exception {
 
-		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+		TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class ).put( ma.getName(), ma );
 
-		TestClientDm client = new TestClientDm() {
-			@Override
-			public void sendMessageToAgent( Application application, Instance instance, Message message ) throws IOException {
-				throw new IOException( "For test purpose..." );
-			}
+		InstanceStatus[] statuses = new InstanceStatus[] {
+				InstanceStatus.NOT_DEPLOYED,
+				InstanceStatus.DEPLOYING,
+				InstanceStatus.DEPLOYED_STARTED,
+				InstanceStatus.DEPLOYED_STOPPED,
+				InstanceStatus.PROBLEM
 		};
 
-		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, client );
+		for( InstanceStatus status : statuses ) {
+			Mockito.reset( this.messagingMngr );
+			CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, this.messagingMngr );
+			app.getMySqlVm().setStatus( status );
 
-		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdSendInstances());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
+			Mockito.verifyZeroInteractions( this.messagingMngr );
+			task.run();
+			Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendStoredMessages(
+					Mockito.eq( ma ),
+					Mockito.eq( app.getMySqlVm()));
 
-		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
-		task.run();
-		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
-
-		List<Message> messages = this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm());
-		Assert.assertEquals( 2, messages.size());
-		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdRemoveInstance.class, messages.get( 1 ).getClass());
-	}
-
-
-	@Test
-	public void testRun_normal_rootIsStarted() {
-
-		TestClientDm client = new TestClientDm();
-		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, client );
-
-		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdSendInstances());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
-
-		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
-		task.run();
-		Assert.assertNull( this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()));
-		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
-	}
-
-
-	@Test
-	public void testRun_rootDeploying() {
-
-		TestClientDm client = new TestClientDm();
-		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, client );
-
-		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
-		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdSendInstances());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
-
-		// Messages are still there
-		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
-		task.run();
-		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
-	}
-
-
-	@Test
-	public void testRun_rootNotStarted() {
-
-		TestClientDm client = new TestClientDm();
-		CheckerMessagesTask task = new CheckerMessagesTask( this.appManager, client );
-
-		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
-		Assert.assertEquals( 0, this.ma.getScopedInstanceToAwaitingMessages().size());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdSendInstances());
-		this.ma.storeAwaitingMessage( this.app.getMySqlVm(), new MsgCmdRemoveInstance( "/whatever" ));
-
-		// Messages are still there
-		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
-		task.run();
-		Assert.assertEquals( 1, this.ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 2, this.ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
+			Mockito.verify( this.messagingMngr, Mockito.times( 1 )).sendStoredMessages(
+					Mockito.eq( ma ),
+					Mockito.eq( app.getTomcatVm()));
+		}
 	}
 }

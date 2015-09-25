@@ -41,16 +41,15 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
-import net.roboconf.dm.rest.client.exceptions.ManagementException;
+import net.roboconf.dm.rest.client.exceptions.ManagementWsException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
 
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
 import org.junit.Before;
@@ -71,8 +70,8 @@ public class ManagementWsDelegateTest {
 
 	private WsClient client;
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
 	private HttpServer httpServer;
-	private MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 
@@ -90,18 +89,20 @@ public class ManagementWsDelegateTest {
 
 	@Before
 	public void before() throws Exception {
-		this.registry.addMessagingClientFactory(new TestClientFactory());
 
+		// Create the manager
 		this.manager = new Manager();
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
+		// Prepare the client
 		URI uri = UriBuilder.fromUri( REST_URI ).build();
 		RestApplication restApp = new RestApplication( this.manager );
 		this.httpServer = GrizzlyServerFactory.createHttpServer( uri, restApp );
@@ -118,7 +119,7 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( 0, apps.size());
 
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( app.getName(), 	new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), 	new ManagedApplication( app ));
 
 		apps = this.client.getManagementDelegate().listApplications();
 		Assert.assertNotNull( apps );
@@ -138,7 +139,7 @@ public class ManagementWsDelegateTest {
 		Assert.assertEquals( 0, templates.size());
 
 		TestApplicationTemplate tpl = new TestApplicationTemplate();
-		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
+		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
 		templates = this.client.getManagementDelegate().listApplicationTemplates();
 		Assert.assertNotNull( templates );
@@ -151,7 +152,7 @@ public class ManagementWsDelegateTest {
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void testShutdownApplication_failure() throws Exception {
 		this.client.getManagementDelegate().shutdownApplication( "inexisting" );
 	}
@@ -161,12 +162,12 @@ public class ManagementWsDelegateTest {
 	public void testShutdownApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 		this.client.getManagementDelegate().shutdownApplication( app.getName());
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void testDeleteApplication_failure() throws Exception {
 		this.client.getManagementDelegate().deleteApplication( "inexisting" );
 	}
@@ -176,7 +177,7 @@ public class ManagementWsDelegateTest {
 	public void testDeleteApplication_success() throws Exception {
 
 		TestApplication app = new TestApplication();
-		this.manager.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
 
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
 		this.client.getManagementDelegate().deleteApplication( app.getName());
@@ -200,7 +201,7 @@ public class ManagementWsDelegateTest {
 	public void testLoadApplicationTemplate_localPath_alreadyExisting() throws Exception {
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
-		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
+		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 
 		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
@@ -208,7 +209,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -225,7 +226,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -240,7 +241,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate((String) null);
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -256,7 +257,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( targetDirectory.getAbsolutePath());
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -285,7 +286,7 @@ public class ManagementWsDelegateTest {
 	public void testLoadApplicationTemplate_zip_alreadyExisting() throws Exception {
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "Legacy LAMP" ).qualifier( "sample" );
-		this.manager.getRawApplicationTemplates().put( tpl, Boolean.TRUE );
+		this.managerWrapper.getApplicationTemplates().put( tpl, Boolean.TRUE );
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );
 		Assert.assertTrue( directory.exists());
@@ -300,7 +301,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( targetFile );
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -336,7 +337,7 @@ public class ManagementWsDelegateTest {
 			this.client.getManagementDelegate().loadApplicationTemplate( targetDirectory );
 			Assert.fail( "An exception was expected." );
 
-		} catch( ManagementException e ) {
+		} catch( ManagementWsException e ) {
 			Assert.assertEquals( Status.NOT_ACCEPTABLE.getStatusCode(), e.getResponseStatus());
 		}
 
@@ -344,7 +345,7 @@ public class ManagementWsDelegateTest {
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void createApplication_IOException() throws Exception {
 		this.client.getManagementDelegate().createApplication( "app", null, null );
 	}
@@ -385,7 +386,7 @@ public class ManagementWsDelegateTest {
 	}
 
 
-	@Test( expected = ManagementException.class )
+	@Test( expected = ManagementWsException.class )
 	public void testDeleteApplicationTemplate_failure() throws Exception {
 
 		File directory = TestUtils.findApplicationDirectory( "lamp" );

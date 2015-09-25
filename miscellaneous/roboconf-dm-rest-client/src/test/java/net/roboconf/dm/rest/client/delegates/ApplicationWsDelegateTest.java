@@ -41,16 +41,15 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.client.WsClient;
-import net.roboconf.dm.rest.client.exceptions.ApplicationException;
+import net.roboconf.dm.rest.client.exceptions.ApplicationWsException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -75,12 +74,13 @@ public class ApplicationWsDelegateTest {
 	private static final String REST_URI = "http://localhost:8090";
 
 	private TestApplication app;
-	private WsClient client;
 	private ManagedApplication ma;
 	private Manager manager;
+	private TestManagerWrapper managerWrapper;
+
+	private WsClient client;
 	private HttpServer httpServer;
 	private TestClientDm msgClient;
-	private final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 
 
 	@After
@@ -97,20 +97,21 @@ public class ApplicationWsDelegateTest {
 
 	@Before
 	public void before() throws Exception {
-		this.registry.addMessagingClientFactory(new TestClientFactory());
 
+		// Create the manager
 		this.manager = new Manager();
 		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setConfigurationDirectoryLocation( this.folder.newFolder().getAbsolutePath());
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
-		// Reconfigure with the messaging client factory registry set.
-		this.manager.getMessagingClient().setRegistry(this.registry);
+		// Create the wrapper and complete configuration
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-
-		this.msgClient = TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
+		// Get the messaging client
+		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
 		this.msgClient.sentMessages.clear();
 
 		// Disable the messages timer for predictability
@@ -123,31 +124,31 @@ public class ApplicationWsDelegateTest {
 		// Load an application
 		this.app = new TestApplication();
 		this.ma = new ManagedApplication( this.app );
-		this.manager.getNameToManagedApplication().put( this.app.getName(), this.ma );
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
 
 		this.client = new WsClient( REST_URI );
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_inexistingApplication() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( "inexisting", InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_inexistingInstance_null() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, null );
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_inexistingInstance() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STARTED, "/bip/bip" );
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testChangeState_invalidAction() throws Exception {
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), null, null );
 	}
@@ -159,27 +160,30 @@ public class ApplicationWsDelegateTest {
 		TestTargetResolver iaasResolver = new TestTargetResolver();
 		this.manager.setTargetResolver( iaasResolver );
 
-		Assert.assertEquals( 0, iaasResolver.instanceToRunningStatus.size());
+		String targetId = this.manager.targetsMngr().createTarget( "handler: test" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+
+		Assert.assertEquals( 0, iaasResolver.instancePathToRunningStatus.size());
 		this.client.getApplicationDelegate().changeInstanceState(
 				this.app.getName(),
 				InstanceStatus.DEPLOYED_STARTED,
 				InstanceHelpers.computeInstancePath( this.app.getMySqlVm()));
 
-		Assert.assertEquals( 1, iaasResolver.instanceToRunningStatus.size());
-		Assert.assertTrue( iaasResolver.instanceToRunningStatus.get( this.app.getMySqlVm()));
+		String path = InstanceHelpers.computeInstancePath( this.app.getMySqlVm());
+		Assert.assertEquals( 1, iaasResolver.instancePathToRunningStatus.size());
+		Assert.assertTrue( iaasResolver.instancePathToRunningStatus.get( path ));
 	}
 
 
 	@Test
 	public void testChangeState_deploy_success() throws Exception {
 
-		TestClientDm msgClient = getInternalClient();
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STOPPED, instancePath );
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -200,7 +204,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testSetDescription_noApp() throws Exception {
 		this.client.getApplicationDelegate().setDescription( "error", "new description" );
 	}
@@ -209,13 +213,12 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testStopAll() throws Exception {
 
-		TestClientDm msgClient = getInternalClient();
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().stopAll( this.app.getName(), instancePath );
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -224,7 +227,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testStopAll_invalidApp() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
@@ -235,13 +238,12 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testUndeployAll() throws Exception {
 
-		TestClientDm msgClient = getInternalClient();
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().undeployAll( this.app.getName(), instancePath );
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -250,7 +252,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testUndeployAll_invalidApp() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
@@ -261,13 +263,12 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testDeployAndStartAll() throws Exception {
 
-		TestClientDm msgClient = getInternalClient();
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().deployAndStartAll( this.app.getName(), instancePath );
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 2, messages.size());
@@ -280,7 +281,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testDeployAndStartAll_invalidApp() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
@@ -365,7 +366,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_root_failure() throws Exception {
 
 		Assert.assertEquals( 2, this.app.getRootInstances().size());
@@ -381,7 +382,7 @@ public class ApplicationWsDelegateTest {
 		// Override/declare more exports
 		newMysql.overriddenExports.put("mysql.port", "3307");
 		newMysql.overriddenExports.put("test", "test");
-		
+
 		Assert.assertEquals( 1, this.app.getTomcatVm().getChildren().size());
 		Assert.assertFalse( this.app.getTomcatVm().getChildren().contains( newMysql ));
 
@@ -421,7 +422,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_child_failure() throws Exception {
 
 		// We cannot deploy a WAR directly on a VM!
@@ -434,7 +435,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_inexstingApplication() throws Exception {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
@@ -442,7 +443,7 @@ public class ApplicationWsDelegateTest {
 	}
 
 
-	@Test( expected = ApplicationException.class )
+	@Test( expected = ApplicationWsException.class )
 	public void testAddInstance_inexstingParentInstance() throws Exception {
 
 		Instance newMysql = new Instance( "mysql-2" ).component( this.app.getMySql().getComponent());
@@ -489,7 +490,7 @@ public class ApplicationWsDelegateTest {
 
 
 	@Test
-	public void testResynchronize_success() throws ApplicationException {
+	public void testResynchronize_success() throws ApplicationWsException {
 		final Collection<Instance> rootInstances = this.app.getRootInstances();
 
 		// Deploy & start everything.
@@ -517,10 +518,5 @@ public class ApplicationWsDelegateTest {
 			// Not found!
 			Assert.assertEquals( 404, e.getResponse().getStatus() );
 		}
-	}
-
-
-	private TestClientDm getInternalClient() throws IllegalAccessException {
-		return TestUtils.getInternalField( this.manager.getMessagingClient(), "messagingClient", TestClientDm.class );
 	}
 }

@@ -45,7 +45,6 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.integration.probes.DmTest;
-import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.ItUtils;
 
 import org.junit.Assert;
@@ -72,7 +71,7 @@ public class RestServicesTest extends DmTest {
 		File appDirectory = TestUtils.findApplicationDirectory( "lamp" );
 
 		// Prepare to run an agent distribution
-		Option[] options = new DmWithAgentInMemoryTest() {}.config();
+		Option[] options = ItUtils.getOptionsForInMemory( true );
 		ExamSystem system = PaxExamRuntime.createServerSystem( options );
 		TestContainer container = PaxExamRuntime.createContainer( system );
 		Assert.assertEquals( KarafTestContainer.class, container.getClass());
@@ -112,9 +111,6 @@ public class RestServicesTest extends DmTest {
 		ApplicationTemplate tpl = templates.get( 0 );
 		Assert.assertEquals( "Legacy LAMP", tpl.getName());
 		Assert.assertEquals( "sample", tpl.getQualifier());
-
-		// Update the configuration of the application to use the in-memory handler...
-		overrideTargetProperties();
 
 		// Create an application
 		Assert.assertEquals( 0, client.getManagementDelegate().listApplications().size());
@@ -167,6 +163,15 @@ public class RestServicesTest extends DmTest {
 		// Check the connection between the DM and the MQ.
 		Assert.assertNotNull( client.getDebugDelegate().checkMessagingConnectionForTheDm( "TEST" ));
 
+		// Define a target and set it as the default for the application
+		Assert.assertEquals( 0, client.getTargetWsDelegate().listAllTargets().size());
+
+		String targetId = client.getTargetWsDelegate().createTarget( "handler: in-memory" );
+		Assert.assertNotNull( targetId );
+
+		Assert.assertEquals( 1, client.getTargetWsDelegate().listAllTargets().size());
+		client.getTargetWsDelegate().associateTarget( receivedApp, null, targetId, true );
+
 		// Deploy and start the "Apache VM" root instance.
 		client.getApplicationDelegate().deployAndStartAll( "app1", "/Apache VM" );
 		Thread.sleep( 1000L );
@@ -181,21 +186,6 @@ public class RestServicesTest extends DmTest {
 		List<Diagnostic> diags = client.getDebugDelegate().diagnoseApplication( "app1" );
 		Assert.assertNotNull( diags );
 		Assert.assertEquals( 6, diags.size());
-	}
-
-
-	private void overrideTargetProperties() throws IOException {
-
-		File rbcfDirectory = new File(
-				this.karafDirectory,
-				"data/roboconf/application-templates/Legacy LAMP - sample/graph" );
-
-		Assert.assertTrue( rbcfDirectory.exists());
-		rbcfDirectory = new File( rbcfDirectory, "VM" );
-		Assert.assertTrue( rbcfDirectory.mkdir());
-
-		File targetProperties = new File( rbcfDirectory, Constants.TARGET_PROPERTIES_FILE_NAME );
-		Utils.writeStringInto( "target.id = in-memory", targetProperties );
 	}
 
 

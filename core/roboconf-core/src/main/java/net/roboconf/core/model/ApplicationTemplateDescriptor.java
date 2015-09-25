@@ -26,7 +26,6 @@
 package net.roboconf.core.model;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -234,13 +233,6 @@ public class ApplicationTemplateDescriptor {
 		if( sb.length() > 0 )
 			properties.setProperty( APPLICATION_EXTERNAL_EXPORTS, sb.toString());
 
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream( f );
-			properties.store( fos, null );
-
-		} finally {
-			Utils.closeQuietly( fos );
-		}
+		Utils.writePropertiesFile( properties, f );
 	}
 }

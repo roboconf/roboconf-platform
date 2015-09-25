@@ -25,18 +25,16 @@
 
 package net.roboconf.integration.tests.internal;
 
-import java.util.List;
+import java.util.Map;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.dm.management.ITargetResolver;
-import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class MyTargetResolver implements ITargetResolver {
+public class MyTargetResolver implements ITargetHandlerResolver {
 
 	public final MyHandler handler;
 
@@ -57,8 +55,8 @@ public class MyTargetResolver implements ITargetResolver {
 	}
 
 	@Override
-	public Target findTargetHandler( List<TargetHandler> target, ManagedApplication ma, Instance instance )
+	public TargetHandler findTargetHandler( Map<String,String> targetProperties )
 	throws TargetException {
-		return new Target( this.handler, null );
+		return this.handler;
 	}
 }

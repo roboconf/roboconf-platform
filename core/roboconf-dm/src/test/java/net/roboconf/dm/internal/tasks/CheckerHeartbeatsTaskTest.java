@@ -25,25 +25,45 @@
 
 package net.roboconf.dm.internal.tasks;
 
+import java.util.Map;
+
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
+import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.IConfigurationMngr;
+import net.roboconf.dm.management.api.IMessagingMngr;
+import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.ITargetsMngr;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class CheckerHeartbeatsTaskTest {
 
-	private ApplicationMngrDelegate appManager;
+	private IApplicationMngr appManager;
+	private Map<String,ManagedApplication> nameToManagedApplication;
 
 
+	@SuppressWarnings( "unchecked" )
 	@Before
-	public void resetManager() {
-		this.appManager = new ApplicationMngrDelegate();
+	public void resetManager() throws Exception {
+
+		// These tests only use the internal map of managed applications...
+		// ... as well as the managed applications themselves.
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+
+		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, messagingMngr );
+		this.nameToManagedApplication = TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class );
 	}
 
 
@@ -60,7 +80,7 @@ public class CheckerHeartbeatsTaskTest {
 
 		Application app = new Application( "test", new TestApplicationTemplate());
 		ManagedApplication ma = new ManagedApplication( app );
-		this.appManager.getNameToManagedApplication().put( app.getName(), ma );
+		this.nameToManagedApplication.put( app.getName(), ma );
 
 		CheckerHeartbeatsTask task = new CheckerHeartbeatsTask( this.appManager );
 		task.run();

@@ -45,7 +45,12 @@ public final class ConfigurationUtils {
 
 	public static final String TEMPLATES = "application-templates";
 	public static final String APPLICATIONS = "applications";
+	public static final String TARGETS = "targets";
+
 	public static final String INSTANCES_FILE = "current.instances";
+	public static final String TARGETS_ASSOC_FILE = "targets-associations.properties";
+	public static final String TARGETS_HINTS_SUFFIX = ".hints.properties";
+	public static final String TARGETS_USAGE_SUFFIX = ".usage.properties";
 
 
 	/**

@@ -33,10 +33,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * These tests are meant to be run by hand, for debug purpose.
- * <p>
- * By default, they are ignored by the build.
- * </p>
  * @author Vincent Zurczak - Linagora
  */
 public final class MavenUtils {

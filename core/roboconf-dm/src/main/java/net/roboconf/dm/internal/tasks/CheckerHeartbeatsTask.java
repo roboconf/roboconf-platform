@@ -27,22 +27,22 @@ package net.roboconf.dm.internal.tasks;
 
 import java.util.TimerTask;
 
-import net.roboconf.dm.internal.delegates.ApplicationMngrDelegate;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.IApplicationMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class CheckerHeartbeatsTask extends TimerTask {
 
-	private final ApplicationMngrDelegate appManager;
+	private final IApplicationMngr appManager;
 
 
 	/**
 	 * Constructor.
 	 * @param appManager
 	 */
-	public CheckerHeartbeatsTask( ApplicationMngrDelegate appManager ) {
+	public CheckerHeartbeatsTask( IApplicationMngr appManager ) {
 		this.appManager = appManager;
 	}
 

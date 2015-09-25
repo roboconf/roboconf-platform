@@ -148,10 +148,14 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 
 		// Load the application
 		String appLocation = System.getProperty( APP_LOCATION );
-		ApplicationTemplate tpl = this.manager.loadApplicationTemplate( new File( appLocation ));
-		ManagedApplication ma = this.manager.createApplication( "test", null, tpl );
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
+		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
-		Assert.assertEquals( 1, this.manager.getNameToManagedApplication().size());
+		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
+
+		// Associate a default target for this application
+		String targetId = this.manager.targetsMngr().createTarget( "handler: in-memory" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
 
 		// There is no agent yet (no root instance was deployed)
 		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
@@ -163,7 +167,7 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 
 		scopedInstance.getComponent().installerName( Constants.TARGET_INSTALLER );
 
-		this.manager.changeInstanceState( ma, scopedInstance, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, scopedInstance, InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 800 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, scopedInstance.getStatus());
 
@@ -183,7 +187,7 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 
 		anotherScopedInstance.getComponent().installerName( Constants.TARGET_INSTALLER );
 
-		this.manager.changeInstanceState( ma, anotherScopedInstance, InstanceStatus.DEPLOYED_STARTED );
+		this.manager.instancesMngr().changeInstanceState( ma, anotherScopedInstance, InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 800 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, anotherScopedInstance.getStatus());
 
@@ -198,8 +202,8 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 		Assert.assertEquals( 1, InstanceHelpers.buildHierarchicalList( anotherAgent.getScopedInstance()).size());
 
 		// Undeploy them all
-		this.manager.changeInstanceState( ma, scopedInstance, InstanceStatus.NOT_DEPLOYED );
-		this.manager.changeInstanceState( ma, anotherScopedInstance, InstanceStatus.NOT_DEPLOYED );
+		this.manager.instancesMngr().changeInstanceState( ma, scopedInstance, InstanceStatus.NOT_DEPLOYED );
+		this.manager.instancesMngr().changeInstanceState( ma, anotherScopedInstance, InstanceStatus.NOT_DEPLOYED );
 		Thread.sleep( 300 );
 		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
 	}

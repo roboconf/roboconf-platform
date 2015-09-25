@@ -48,7 +48,8 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 	@Override
 	protected IDmClient createMessagingClient( String factoryName )
-			throws IOException {
+	throws IOException {
+
 		IDmClient client = null;
 		MessagingClientFactoryRegistry registry = getRegistry();
 		if (registry != null) {
