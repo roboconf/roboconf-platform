@@ -163,5 +163,5 @@ public interface ITargetResource {
 
 	@GET
 	@Path( "{target-id}/usage" )
-	List<TargetUsageItem> findUsageStatistics( String targetId );
+	List<TargetUsageItem> findUsageStatistics( @PathParam("target-id") String targetId );
 }

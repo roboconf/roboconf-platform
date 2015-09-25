@@ -82,7 +82,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.core.*;version="${project.version}",
+							net.roboconf.core.*;version="${version.range}",
 							org.apache.felix.service.command,
 							org.apache.karaf.shell.commands,
 							org.apache.karaf.shell.console,

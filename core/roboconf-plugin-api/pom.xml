@@ -70,7 +70,7 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Import-Package>net.roboconf.core.*</Import-Package>
+						<Import-Package>net.roboconf.core.*;version="${version.range}"</Import-Package>
 						<Export-Package>
 							net.roboconf.plugin.api.*
 						</Export-Package>

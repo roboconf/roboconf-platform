@@ -64,6 +64,9 @@
 				<configuration>
 					<instructions>
 						<Export-Package>net.roboconf.*</Export-Package>
+						<Import-Package>
+							net.roboconf.*;version="${version.range}"
+						</Import-Package>
 					</instructions>
 				</configuration>
 			</plugin>

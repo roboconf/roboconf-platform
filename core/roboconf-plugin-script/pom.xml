@@ -84,7 +84,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 						</Import-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

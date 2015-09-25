@@ -78,7 +78,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 							org.osgi.framework; version="[1.6,2.0)"
 						</Import-Package>
 						<Export-Package>
