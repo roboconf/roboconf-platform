@@ -160,7 +160,7 @@
 							org.osgi.framework; version="[1.6,2.0)",
 						</Import-Package>
 						<Export-Package>
-							net.roboconf.messaging.http; net.roboconf.messaging.http.cors; version="${project.version}"
+							net.roboconf.messaging.http; version="${project.version}"
 						</Export-Package>
 						<Private-Package>
 							net.roboconf.messaging.http.internal

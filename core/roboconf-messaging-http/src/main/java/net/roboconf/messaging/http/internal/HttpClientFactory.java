@@ -109,7 +109,8 @@ public class HttpClientFactory implements MessagingClientFactory {
 	 *
 	 * @throws Exception
 	 */
-	public void starting() throws Exception {
+	@Validate
+	public void start() throws Exception {
 		this.logger.fine( "iPojo registers messaging-http web socket servlet." );
 
 		// Register the web socket
@@ -121,15 +122,9 @@ public class HttpClientFactory implements MessagingClientFactory {
 		this.http.registerServlet( "/messaging-http/*", messagingServlet, initParams, null );
 	}
 
-	@Validate
-	public void start() {
-		this.logger.fine("HTTP messaging client factory is started.");
-	}
-
-
 	@Invalidate
 	public void stop() {
-		this.logger.fine("Stoppinclientsg HTTP messaging client factory stopping.");
+		this.logger.fine("Stopping HTTP messaging client factory.");
 		resetClients(true);
 	}
 
