@@ -43,6 +43,7 @@
 
 		<!-- Messaging providers -->
 		<module>core/roboconf-messaging-rabbitmq</module>
+		<module>core/roboconf-messaging-http</module>
 
 		<!-- Agent -->
 		<module>core/roboconf-agent</module>

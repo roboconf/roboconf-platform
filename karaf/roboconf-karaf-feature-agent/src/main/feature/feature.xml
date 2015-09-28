@@ -15,6 +15,7 @@
         <bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-messaging-api/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-messaging-rabbitmq/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-messaging-http/${project.version}</bundle>
         <bundle start-level="85">mvn:net.roboconf/roboconf-agent/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-agent-default/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-agent-monitoring/${project.version}</bundle>
