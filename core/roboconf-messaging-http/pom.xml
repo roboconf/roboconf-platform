@@ -64,13 +64,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-agent</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.ipojo.annotations</artifactId>
 			<version>${ipojo.version}</version>
@@ -160,10 +153,10 @@
 							org.osgi.framework; version="[1.6,2.0)",
 						</Import-Package>
 						<Export-Package>
-							net.roboconf.messaging.http; version="${project.version}"
+							net.roboconf.messaging-http; version="${project.version}"
 						</Export-Package>
 						<Private-Package>
-							net.roboconf.messaging.http.internal
+							net.roboconf.messaging-http.internal
 						</Private-Package>
 					</instructions>
 				</configuration>
