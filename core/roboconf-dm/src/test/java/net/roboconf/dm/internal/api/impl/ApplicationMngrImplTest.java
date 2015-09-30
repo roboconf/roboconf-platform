@@ -40,6 +40,7 @@ import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
@@ -54,11 +55,14 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 /**
@@ -365,5 +369,81 @@ public class ApplicationMngrImplTest {
 		errors.add( new RoboconfError( ErrorCode.RM_MISSING_APPLICATION_DSL_ID ));
 		ApplicationMngrImpl.checkErrors( errors, Logger.getLogger( getClass().getName()));
 		// No exception
+	}
+
+
+	@Test( expected = UnauthorizedActionException.class )
+	public void testBindApplication_invalidApplication() throws Exception {
+
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+
+		ManagedApplication ma = new ManagedApplication( app );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( app.getName(), ma );
+
+		this.mngr.bindApplication( ma, ma.getApplication().getTemplate().getName(), "invalid" );
+	}
+
+
+	@Test( expected = UnauthorizedActionException.class )
+	public void testBindApplication_invalidTemplate() throws Exception {
+
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma1 = new ManagedApplication( app );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		app = new TestApplication();
+		app.getTemplate().setName( "tpl-other" );
+		app.setName( "app-other" );
+
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma2 = new ManagedApplication( app );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		// ma1 and ma2 do not have the same template name
+		this.mngr.bindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName());
+	}
+
+
+	@Test
+	public void testBindApplication_success() throws Exception {
+
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma1 = new ManagedApplication( app );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		app = new TestApplication();
+		app.getTemplate().setName( "tpl-other" );
+		app.setName( "app-other" );
+
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma2 = new ManagedApplication( app );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+		this.mngr.bindApplication( ma1, ma2.getApplication().getTemplate().getName(), ma2.getName());
+
+		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
+		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );
+		ArgumentCaptor<Message> arg2 = ArgumentCaptor.forClass( Message.class );
+		Mockito.verify( this.messagingMngr, Mockito.times( 2 )).sendMessageSafely( arg0.capture(), arg1.capture(), arg2.capture());
+
+		for( ManagedApplication s : arg0.getAllValues()) {
+			Assert.assertEquals( ma1, s );
+		}
+
+		for( Message m : arg2.getAllValues()) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( ma2.getApplication().getTemplate().getName(), msg.getAppTempleName());
+			Assert.assertEquals( ma2.getName(), msg.getAppName());
+		}
+
+		List<Instance> instances = arg1.getAllValues();
+		Assert.assertTrue( instances.contains( app.getMySqlVm()));
+		Assert.assertTrue( instances.contains( app.getTomcatVm()));
 	}
 }

@@ -95,10 +95,7 @@ public class ApplicationResource implements IApplicationResource {
 			else
 				this.manager.instancesMngr().changeInstanceState( ma, instance, InstanceStatus.whichStatus( newState ));
 
-		} catch( IOException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
-
-		} catch( TargetException e ) {
+		} catch( IOException | TargetException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 
 		} catch( Exception e ) {
@@ -260,6 +257,27 @@ public class ApplicationResource implements IApplicationResource {
 		return result;
 	}
 
+	@Override
+	public Response bindApplication( String applicationName, String boundTplName, String boundApp ) {
+
+		Response response;
+		try {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			if( ma == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else {
+				this.manager.applicationMngr().bindApplication( ma, boundTplName, boundApp );
+				response = Response.ok().build();
+			}
+
+		} catch( UnauthorizedActionException | IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+		}
+
+		return response;
+	}
+
 
 	/* (non-Javadoc)
 	 * @see net.roboconf.dm.internal.rest.client.exceptions.server.IInstanceWs
@@ -306,10 +324,7 @@ public class ApplicationResource implements IApplicationResource {
 				}
 			}
 
-		} catch( ImpossibleInsertionException e ) {
-			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
-
-		} catch( IOException e ) {
+		} catch( ImpossibleInsertionException | IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
 		}
 

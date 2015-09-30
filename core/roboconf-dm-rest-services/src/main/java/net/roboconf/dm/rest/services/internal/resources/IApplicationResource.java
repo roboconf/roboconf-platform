@@ -148,6 +148,21 @@ public interface IApplicationResource {
 
 
 	/**
+	 * Binds an application for external exports.
+	 * @param applicationName the application name
+	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
+	 * @param boundApp the name of the application (instance of <code>tplName</code>)
+	 * @return a response
+	 */
+	@POST
+	@Path( "/bind" )
+	Response bindApplication(
+			@PathParam("name") String applicationName,
+			@QueryParam("bound-tpl") String boundTplName,
+			@QueryParam("bound-app") String boundApp );
+
+
+	/**
 	 * Lists the paths of the children of an instance.
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)

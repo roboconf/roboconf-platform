@@ -66,7 +66,7 @@ import org.junit.After;
  * supported by Roboconf.
  * </p>
  * <p>
- * So, we can consider this class a TCK for our messaging API.
+ * So, we can consider this class as a TCK for our messaging API.
  * Sub-class it. If all the tests go well, you can consider your Roboconf
  * messaging implementation is compliant with this API.
  * </p>

@@ -45,6 +45,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChan
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -154,6 +155,14 @@ public class SerializationUtilsTest {
 
 		MsgCmdResynchronize msg = new MsgCmdResynchronize();
 		checkBasics( msg, MsgCmdResynchronize.class );
+	}
+
+
+	@Test
+	public void testMessage_changeBinding() throws Exception {
+
+		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "tpl", "app" );
+		checkBasics( msg, MsgCmdChangeBinding.class );
 	}
 
 
