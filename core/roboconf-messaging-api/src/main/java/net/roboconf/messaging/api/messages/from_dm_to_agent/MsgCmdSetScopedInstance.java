@@ -44,21 +44,21 @@ public class MsgCmdSetScopedInstance extends Message {
 	/**
 	 * Constructor.
 	 * @param scopedInstance
+	 * @param externalExports
 	 */
-	public MsgCmdSetScopedInstance( Instance scopedInstance ) {
-		super();
+	public MsgCmdSetScopedInstance( Instance scopedInstance, Map<String,String> externalExports ) {
 		this.scopedInstance = scopedInstance;
 		this.externalExports = new HashMap<String,String> ();
+		if( externalExports != null )
+			this.externalExports.putAll( externalExports );
 	}
 
 	/**
 	 * Constructor.
 	 * @param scopedInstance
 	 */
-	public MsgCmdSetScopedInstance( Instance scopedInstance, Map<String,String> externalExports ) {
-		this( scopedInstance );
-		if( externalExports != null )
-			this.externalExports.putAll( externalExports );
+	public MsgCmdSetScopedInstance( Instance scopedInstance ) {
+		this( scopedInstance, null );
 	}
 
 	/**

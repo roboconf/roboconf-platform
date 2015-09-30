@@ -175,7 +175,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			try {
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
-					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, new MsgCmdSetScopedInstance( scopedInstance ));
+					Message msg = new MsgCmdSetScopedInstance( scopedInstance, app.getExternalExports());
+					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
 				}
 
 			} catch( IOException e ) {
