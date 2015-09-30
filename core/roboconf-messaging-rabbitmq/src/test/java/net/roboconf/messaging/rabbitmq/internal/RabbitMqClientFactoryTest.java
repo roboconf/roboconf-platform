@@ -36,6 +36,8 @@ import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -31,6 +31,7 @@ import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 import org.junit.Assume;
 import org.junit.BeforeClass;

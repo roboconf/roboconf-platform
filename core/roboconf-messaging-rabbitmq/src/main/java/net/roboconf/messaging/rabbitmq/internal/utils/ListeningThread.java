@@ -23,20 +23,50 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal;
+package net.roboconf.messaging.rabbitmq.internal.utils;
 
-import net.roboconf.messaging.rabbitmq.internal.DmReturnListener;
-import org.junit.Test;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
+
+import net.roboconf.messaging.api.messages.Message;
+
+import com.rabbitmq.client.QueueingConsumer;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmReturnListenerTest {
+public class ListeningThread extends Thread {
 
-	@Test
-	public void testDeserializationError() throws Exception {
+	private final Logger logger;
+	private final QueueingConsumer consumer;
+	private final LinkedBlockingQueue<Message> messageQueue;
+	private final String id;
 
-		DmReturnListener listener = new DmReturnListener();
-		listener.handleReturn( 0, "reply", "exchange", "routingKey", null, new byte[ 1 ]);
+
+	/**
+	 * Constructor.
+	 */
+	public ListeningThread(
+			String threadName,
+			Logger logger,
+			QueueingConsumer consumer,
+			LinkedBlockingQueue<Message> messageQueue,
+			String id ) {
+
+		super( threadName );
+		this.logger = logger;
+		this.consumer = consumer;
+		this.messageQueue = messageQueue;
+		this.id = id;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Thread#run()
+	 */
+	@Override
+	public void run() {
+		RabbitMqUtils.listenToRabbitMq( this.id, this.logger, this.consumer, this.messageQueue );
 	}
 }

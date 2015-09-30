@@ -65,6 +65,7 @@ public final class JSonBindingUtils {
 	private static final String NAME = "name";
 	private static final String QUALIFIER = "qualifier";
 	private static final String DESC = "desc";
+	private static final String S = "s";
 
 	private static final String APP_ICON = "icon";
 	private static final String APP_INFO = "info";
@@ -135,6 +136,10 @@ public final class JSonBindingUtils {
 
 		module.addSerializer( TargetWrapperDescriptor.class, new TargetWDSerializer());
 		module.addDeserializer( TargetWrapperDescriptor.class, new TargetWDDeserializer());
+
+		module.addSerializer( StringWrapper.class, new StringWrapperSerializer());
+		module.addDeserializer( StringWrapper.class, new StringWrapperDeserializer());
+
 		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
 
 		mapper.registerModule( module );
@@ -238,6 +243,50 @@ public final class JSonBindingUtils {
 	        	twd.setName( n.textValue());
 
 			return twd;
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for string wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class StringWrapperDeserializer extends JsonDeserializer<StringWrapper> {
+
+		@Override
+		public StringWrapper deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        String s = null;
+
+	        JsonNode n;
+	        if(( n = node.get( S )) != null )
+	        	s = n.textValue();
+
+			return new StringWrapper( s );
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for string wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class StringWrapperSerializer extends JsonSerializer<StringWrapper> {
+
+		@Override
+		public void serialize(
+				StringWrapper s,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( s != null )
+				generator.writeStringField( S, s.toString());
+
+			generator.writeEndObject();
 		}
 	}
 

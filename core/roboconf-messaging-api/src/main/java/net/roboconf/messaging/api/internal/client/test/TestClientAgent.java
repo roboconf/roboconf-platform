@@ -52,6 +52,7 @@ public class TestClientAgent implements IAgentClient {
 	// TODO(?) : May be a good idea to make the previous parameters configurable via setConfiguration().
 
 	private String applicationName, scopedInstancePath;
+	private Map<String,String> externalExports;
 
 
 	@Override
@@ -77,6 +78,11 @@ public class TestClientAgent implements IAgentClient {
 	@Override
 	public void setScopedInstancePath( String scopedInstancePath ) {
 		this.scopedInstancePath = scopedInstancePath;
+	}
+
+	@Override
+	public void setExternalMapping( Map<String,String> externalExports ) {
+		this.externalExports = externalExports;
 	}
 
 	@Override
@@ -168,5 +174,12 @@ public class TestClientAgent implements IAgentClient {
 	 */
 	public String getScopedInstancePath() {
 		return this.scopedInstancePath;
+	}
+
+	/**
+	 * @return the externalExports
+	 */
+	public Map<String,String> getExternalExports() {
+		return this.externalExports;
 	}
 }

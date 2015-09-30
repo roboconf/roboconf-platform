@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal;
+package net.roboconf.messaging.rabbitmq.internal.utils;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -33,6 +33,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
 
 import org.junit.Assume;
 import org.junit.BeforeClass;

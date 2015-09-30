@@ -107,7 +107,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_removeImport() throws Exception {
 
-		MsgCmdRemoveImport msg = new MsgCmdRemoveImport( "change-me", "anything" );
+		MsgCmdRemoveImport msg = new MsgCmdRemoveImport( "app", "change-me", "anything" );
 		checkBasics( msg, MsgCmdRemoveImport.class );
 	}
 
@@ -118,7 +118,7 @@ public class SerializationUtilsTest {
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( "yeah", "value" );
 
-		MsgCmdAddImport msg = new MsgCmdAddImport( "change-me", "anything", map );
+		MsgCmdAddImport msg = new MsgCmdAddImport( "app", "change-me", "anything", map );
 		checkBasics( msg, MsgCmdAddImport.class );
 	}
 
@@ -126,7 +126,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_requestImport() throws Exception {
 
-		MsgCmdRequestImport msg = new MsgCmdRequestImport( "dsf" );
+		MsgCmdRequestImport msg = new MsgCmdRequestImport( "app", "dsf" );
 		checkBasics( msg, MsgCmdRequestImport.class );
 	}
 
@@ -138,6 +138,13 @@ public class SerializationUtilsTest {
 	public void testMessage_setRootInstance() throws Exception {
 
 		MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ));
+		checkBasics( msg, MsgCmdSetScopedInstance.class );
+
+		Map<String,String> map = new HashMap<> ();
+		map.put( "test", "t1" );
+		map.put( "another", "t2" );
+
+		msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ), map );
 		checkBasics( msg, MsgCmdSetScopedInstance.class );
 	}
 

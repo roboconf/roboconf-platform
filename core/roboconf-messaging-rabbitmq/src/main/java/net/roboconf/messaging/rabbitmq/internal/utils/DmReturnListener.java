@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal;
+package net.roboconf.messaging.rabbitmq.internal.utils;
 
 import java.io.IOException;
 import java.util.logging.Level;

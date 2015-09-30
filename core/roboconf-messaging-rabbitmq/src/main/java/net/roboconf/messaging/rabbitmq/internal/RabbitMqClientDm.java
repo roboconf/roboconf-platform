@@ -41,6 +41,9 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.rabbitmq.internal.utils.DmReturnListener;
+import net.roboconf.messaging.rabbitmq.internal.utils.ListeningThread;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.ConnectionFactory;
@@ -59,13 +62,23 @@ public class RabbitMqClientDm extends RabbitMqClient implements IDmClient {
 	final Map<String,String> applicationNameToConsumerTag = new HashMap<>();
 	QueueingConsumer consumer;
 
+
+	/**
+	 * Constructor.
+	 * @param reconfigurable
+	 * @param ip
+	 * @param username
+	 * @param password
+	 */
 	public RabbitMqClientDm( final ReconfigurableClientDm reconfigurable, String ip, String username, String password ) {
 		super(reconfigurable, ip, username, password);
 	}
 
+
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.messaging.api.client.IClient#openConnection()
+	 * @see net.roboconf.messaging.api.client.IClient
+	 * #openConnection()
 	 */
 	@Override
 	public synchronized void openConnection() throws IOException {
@@ -289,8 +302,11 @@ public class RabbitMqClientDm extends RabbitMqClient implements IDmClient {
 			for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
 
 				MsgCmdRemoveImport message = new MsgCmdRemoveImport(
+						application.getName(),
 						facetOrComponentName,
 						InstanceHelpers.computeInstancePath( instance ));
+
+				// FIXME: deal with inter-app exchanges...
 
 				this.channel.basicPublish(
 						exchangeName,

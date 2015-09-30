@@ -42,6 +42,7 @@ import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.commons.json.StringWrapper;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 import net.roboconf.messaging.api.MessagingConstants;
 
@@ -111,19 +112,19 @@ public class TargetResourceTest {
 
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		String props = (String) resp.getEntity();
-		Assert.assertEquals( "prop: ok", props );
+		StringWrapper props = (StringWrapper) resp.getEntity();
+		Assert.assertEquals( "prop: ok", props.toString());
 
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		props = (String) resp.getEntity();
-		Assert.assertEquals( "prop: ok", props );
+		props = (StringWrapper) resp.getEntity();
+		Assert.assertEquals( "prop: ok", props.toString());
 
 		this.resource.createOrUpdateTarget( "prop2: ko\nprop1: done", targetId );
 		resp = this.resource.getTargetProperties( targetId );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		props = (String) resp.getEntity();
-		Assert.assertEquals( "prop2: ko\nprop1: done", props );
+		props = (StringWrapper) resp.getEntity();
+		Assert.assertEquals( "prop2: ko\nprop1: done", props.toString());
 
 		this.resource.deleteTarget( targetId );
 		Assert.assertEquals(

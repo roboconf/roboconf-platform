@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,50 +23,26 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal;
-
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
-
-import net.roboconf.messaging.api.messages.Message;
-
-import com.rabbitmq.client.QueueingConsumer;
+package net.roboconf.dm.rest.commons.json;
 
 /**
+ * A bean to wrap simple String as JSon.
  * @author Vincent Zurczak - Linagora
  */
-public class ListeningThread extends Thread {
+public class StringWrapper {
 
-	private final Logger logger;
-	private final QueueingConsumer consumer;
-	private final LinkedBlockingQueue<Message> messageQueue;
-	private final String id;
-
+	private final String s;
 
 	/**
 	 * Constructor.
+	 * @param s
 	 */
-	public ListeningThread(
-			String threadName,
-			Logger logger,
-			QueueingConsumer consumer,
-			LinkedBlockingQueue<Message> messageQueue,
-			String id ) {
-
-		super( threadName );
-		this.logger = logger;
-		this.consumer = consumer;
-		this.messageQueue = messageQueue;
-		this.id = id;
+	public StringWrapper( String s ) {
+		this.s = s;
 	}
 
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Thread#run()
-	 */
 	@Override
-	public void run() {
-		RabbitMqUtils.listenToRabbitMq( this.id, this.logger, this.consumer, this.messageQueue );
+	public String toString() {
+		return this.s;
 	}
 }

@@ -163,4 +163,16 @@ public class ApplicationTest {
 			Assert.assertFalse( inst == copiedInstance );
 		}
 	}
+
+
+	@Test
+	public void testExternalExports() {
+
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		Application app = new Application( tpl );
+		Assert.assertEquals( app.getExternalExports(), tpl.externalExports );
+
+		tpl.externalExports.put( "something", "here" );
+		Assert.assertEquals( app.getExternalExports(), tpl.externalExports );
+	}
 }

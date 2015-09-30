@@ -36,17 +36,20 @@ public class MsgCmdRemoveImport extends Message {
 
 	private final String componentOrFacetName;
 	private final String removedInstancePath;
+	private final String applicationOrContextName;
 
 
 	/**
 	 * Constructor.
+	 * @param applicationOrContextName
 	 * @param componentOrFacetName
 	 * @param removedInstancePath
 	 */
-	public MsgCmdRemoveImport( String componentOrFacetName, String removedInstancePath ) {
+	public MsgCmdRemoveImport( String applicationOrContextName, String componentOrFacetName, String removedInstancePath ) {
 		super();
 		this.componentOrFacetName = componentOrFacetName;
 		this.removedInstancePath = removedInstancePath;
+		this.applicationOrContextName = applicationOrContextName;
 	}
 
 	/**
@@ -61,5 +64,12 @@ public class MsgCmdRemoveImport extends Message {
 	 */
 	public String getRemovedInstancePath() {
 		return this.removedInstancePath;
+	}
+
+	/**
+	 * @return the applicationOrContextName
+	 */
+	public String getApplicationOrContextName() {
+		return this.applicationOrContextName;
 	}
 }
