@@ -107,7 +107,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_removeImport() throws Exception {
 
-		MsgCmdRemoveImport msg = new MsgCmdRemoveImport( "change-me", "anything" );
+		MsgCmdRemoveImport msg = new MsgCmdRemoveImport( "app", "change-me", "anything" );
 		checkBasics( msg, MsgCmdRemoveImport.class );
 	}
 
@@ -118,7 +118,7 @@ public class SerializationUtilsTest {
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( "yeah", "value" );
 
-		MsgCmdAddImport msg = new MsgCmdAddImport( "change-me", "anything", map );
+		MsgCmdAddImport msg = new MsgCmdAddImport( "app", "change-me", "anything", map );
 		checkBasics( msg, MsgCmdAddImport.class );
 	}
 
@@ -126,7 +126,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_requestImport() throws Exception {
 
-		MsgCmdRequestImport msg = new MsgCmdRequestImport( "dsf" );
+		MsgCmdRequestImport msg = new MsgCmdRequestImport( "app", "dsf" );
 		checkBasics( msg, MsgCmdRequestImport.class );
 	}
 

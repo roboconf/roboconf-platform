@@ -397,8 +397,8 @@ public class RuntimeModelIoTest {
 		Assert.assertNotNull( result.applicationTemplate );
 
 		Assert.assertEquals( 2, result.applicationTemplate.externalExports.size());
-		Assert.assertEquals( "c", result.applicationTemplate.externalExports.get( "VM.config" ));
-		Assert.assertEquals( "ip", result.applicationTemplate.externalExports.get( "App.ip" ));
+		Assert.assertEquals( "app-with-dep.c", result.applicationTemplate.externalExports.get( "VM.config" ));
+		Assert.assertEquals( "app-with-dep.ip", result.applicationTemplate.externalExports.get( "App.ip" ));
 
 		Assert.assertEquals( 2, result.loadErrors.size());
 		for( RoboconfError error : result.loadErrors )

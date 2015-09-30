@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -42,6 +43,9 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImpor
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.rabbitmq.internal.utils.ListeningThread;
+import net.roboconf.messaging.rabbitmq.internal.utils.MessagingContext;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
 
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
@@ -56,6 +60,7 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 	private static final String THOSE_THAT_EXPORT = "those.that.export.";
 	public static final String THOSE_THAT_IMPORT = "those.that.import.";
 
+	private final ConcurrentHashMap<String,String> externalExports = new ConcurrentHashMap<> ();
 	private String applicationName, scopedInstancePath;
 	String consumerTag;
 
@@ -80,6 +85,21 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 	@Override
 	public void setScopedInstancePath( String scopedInstancePath ) {
 		this.scopedInstancePath = scopedInstancePath;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.messaging.api.client.IAgentClient
+	 * #setExternalMapping(java.util.Map)
+	 */
+	@Override
+	public void setExternalMapping( Map<String,String> externalExports ) {
+
+		// Should be invoked only once, so...
+		this.externalExports.clear();
+		if( externalExports != null )
+			this.externalExports.putAll( externalExports );
 	}
 
 
@@ -192,23 +212,49 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 		this.logger.fine( "Agent '" + getAgentId() + "' is publishing its exports prefixed by " + facetOrComponentName + "." );
 
 		// Find the variables to export.
-		Map<String,String> toPublish = new HashMap<>();
+		Map<String,String> toPublishInternally = new HashMap<> ();
+		Map<String,String> toPublishExternally = new HashMap<> ();
+
 		Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
 		for( Map.Entry<String,String> entry : exports.entrySet()) {
-			if( entry.getKey().startsWith( facetOrComponentName + "." ))
-				toPublish.put( entry.getKey(), entry.getValue());
+			if( ! entry.getKey().startsWith( facetOrComponentName + "." ))
+				continue;
+
+			toPublishInternally.put( entry.getKey(), entry.getValue());
+			String alias = this.externalExports.get( entry.getKey());
+			if( alias != null )
+				toPublishExternally.put( alias, entry.getValue());
 		}
 
-		// Publish them
-		if( ! toPublish.isEmpty()) {
+		// Publish the internal exports
+		if( ! toPublishInternally.isEmpty()) {
 			MsgCmdAddImport message = new MsgCmdAddImport(
+					this.applicationName,
 					facetOrComponentName,
 					InstanceHelpers.computeInstancePath( instance ),
-					toPublish );
+					toPublishInternally );
 
 			this.channel.basicPublish(
 					RabbitMqUtils.buildExchangeName( this.applicationName, false ),
 					THOSE_THAT_IMPORT + facetOrComponentName,
+					null,
+					SerializationUtils.serializeObject( message ));
+		}
+
+		// Publish the external ones, if any
+		if( ! toPublishExternally.isEmpty()) {
+			String varName = toPublishExternally.keySet().iterator().next();
+			String appTplName = VariableHelpers.parseVariableName( varName ).getKey();
+
+			MsgCmdAddImport message = new MsgCmdAddImport(
+					this.applicationName,
+					appTplName,
+					InstanceHelpers.computeInstancePath( instance ),
+					toPublishExternally );
+
+			this.channel.basicPublish(
+					MessagingContext.INTER_APP,
+					THOSE_THAT_IMPORT + appTplName,
 					null,
 					SerializationUtils.serializeObject( message ));
 		}
@@ -225,19 +271,20 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 
 		// For all the exported variables...
 		// ... find the component or facet name...
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
+		for( MessagingContext ctx : MessagingContext.forExportedVariables( this.applicationName, instance, this.externalExports )) {
 
 			// Log here, for debug
-			this.logger.fine( "Agent '" + getAgentId() + "' is un-publishing its exports (" + facetOrComponentName + ")." );
+			this.logger.fine( "Agent '" + getAgentId() + "' is un-publishing its exports (" + ctx + ")." );
 
-			// Publish them
+			// Un-publish them
 			MsgCmdRemoveImport message = new MsgCmdRemoveImport(
-					facetOrComponentName,
+					this.applicationName,
+					ctx.getRoutingKeySuffix(),
 					InstanceHelpers.computeInstancePath( instance ));
 
 			this.channel.basicPublish(
-					RabbitMqUtils.buildExchangeName( this.applicationName, false ),
-					THOSE_THAT_IMPORT + facetOrComponentName,
+					ctx.getExchangeName(),
+					THOSE_THAT_IMPORT + ctx.getRoutingKeySuffix(),
 					null,
 					SerializationUtils.serializeObject( message ));
 		}
@@ -252,22 +299,21 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 	public synchronized void listenToRequestsFromOtherAgents( ListenerCommand command, Instance instance )
 	throws IOException {
 
+		String queueName = getQueueName();
+
 		// With RabbitMQ, and for agents, listening to others means
 		// create a binding between the "agents" exchange and the agent's queue.
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
+		for( MessagingContext ctx : MessagingContext.forExportedVariables( this.applicationName, instance, this.externalExports )) {
 
 			// On which routing key do request go? Those.that.export...
-			String routingKey = THOSE_THAT_EXPORT + facetOrComponentName;
-			String queueName = getQueueName();
-			String exchangeName = RabbitMqUtils.buildExchangeName( this.applicationName, false );
-
+			String routingKey = THOSE_THAT_EXPORT + ctx.getRoutingKeySuffix();
 			if( command == ListenerCommand.START ) {
-				this.logger.fine( "Agent '" + getAgentId() + "' starts listening requests from other agents (" + facetOrComponentName + ")." );
-				this.channel.queueBind( queueName, exchangeName, routingKey );
+				this.logger.fine( "Agent '" + getAgentId() + "' starts listening requests from other agents (" + ctx + ")." );
+				this.channel.queueBind( queueName, ctx.getExchangeName(), routingKey );
 
 			} else {
-				this.logger.fine( "Agent '" + getAgentId() + "' stops listening requests from other agents (" + facetOrComponentName + ")." );
-				this.channel.queueUnbind( queueName, exchangeName, routingKey );
+				this.logger.fine( "Agent '" + getAgentId() + "' stops listening requests from other agents (" + ctx + ")." );
+				this.channel.queueUnbind( queueName, ctx.getExchangeName(), routingKey );
 			}
 		}
 	}
@@ -283,17 +329,17 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 
 		// For all the imported variables...
 		// ... find the component or facet name...
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( instance )) {
+		for( MessagingContext ctx : MessagingContext.forImportedVariables( this.applicationName, instance )) {
 
 			// Log here, for debug
-			this.logger.fine( "Agent '" + getAgentId() + "' is requesting exports from other agents (" + facetOrComponentName + ")." );
+			this.logger.fine( "Agent '" + getAgentId() + "' is requesting exports from other agents (" + ctx + ")." );
 
 			// ... and ask to publish them.
 			// Grouping variable requests by prefix reduces the number of messages.
-			MsgCmdRequestImport message = new MsgCmdRequestImport( facetOrComponentName );
+			MsgCmdRequestImport message = new MsgCmdRequestImport( this.applicationName, ctx.getRoutingKeySuffix());
 			this.channel.basicPublish(
-					RabbitMqUtils.buildExchangeName( this.applicationName, false ),
-					THOSE_THAT_EXPORT + facetOrComponentName,
+					ctx.getExchangeName(),
+					THOSE_THAT_EXPORT + ctx.getRoutingKeySuffix(),
 					null,
 					SerializationUtils.serializeObject( message ));
 		}
@@ -306,23 +352,21 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 	 */
 	@Override
 	public synchronized void listenToExportsFromOtherAgents( ListenerCommand command, Instance instance ) throws IOException {
+		String queueName = getQueueName();
 
 		// With RabbitMQ, and for agents, listening to others means
 		// create a binding between the "agents" exchange and the agent's queue.
-		for( String facetOrComponentName : VariableHelpers.findPrefixesForImportedVariables( instance )) {
+		for( MessagingContext ctx : MessagingContext.forImportedVariables( this.applicationName, instance )) {
 
 			// On which routing key do export go? Those.that.import...
-			String routingKey = THOSE_THAT_IMPORT + facetOrComponentName;
-			String queueName = getQueueName();
-			String exchangeName = RabbitMqUtils.buildExchangeName( this.applicationName, false );
-
+			String routingKey = THOSE_THAT_IMPORT + ctx.getRoutingKeySuffix();
 			if( command == ListenerCommand.START ) {
-				this.logger.fine( "Agent '" + getAgentId() + "' starts listening exports from other agents (" + facetOrComponentName + ")." );
-				this.channel.queueBind( queueName, exchangeName, routingKey );
+				this.logger.fine( "Agent '" + getAgentId() + "' starts listening exports from other agents (" + ctx + ")." );
+				this.channel.queueBind( queueName, ctx.getExchangeName(), routingKey );
 
 			} else {
-				this.logger.fine( "Agent '" + getAgentId() + "' stops listening exports from other agents (" + facetOrComponentName + ")." );
-				this.channel.queueUnbind( queueName, exchangeName, routingKey );
+				this.logger.fine( "Agent '" + getAgentId() + "' stops listening exports from other agents (" + ctx + ")." );
+				this.channel.queueUnbind( queueName, ctx.getExchangeName(), routingKey );
 			}
 		}
 	}

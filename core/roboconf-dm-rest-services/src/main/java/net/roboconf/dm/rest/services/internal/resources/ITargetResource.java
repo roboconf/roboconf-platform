@@ -163,5 +163,6 @@ public interface ITargetResource {
 
 	@GET
 	@Path( "{target-id}/usage" )
+	@Produces( MediaType.APPLICATION_JSON )
 	List<TargetUsageItem> findUsageStatistics( @PathParam("target-id") String targetId );
 }

@@ -26,6 +26,7 @@
 package net.roboconf.messaging.api.reconfigurables;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Instance;
@@ -43,6 +44,7 @@ import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
  */
 public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient> implements IAgentClient {
 
+	private Map<String,String> externalExports;
 	private String applicationName, scopedInstancePath, ipAddress;
 	private boolean needsModel = false;
 
@@ -69,6 +71,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 		newMessagingClient.setApplicationName( this.applicationName );
 		newMessagingClient.setScopedInstancePath( this.scopedInstancePath );
+		newMessagingClient.setExternalMapping( this.externalExports );
 		newMessagingClient.openConnection();
 
 		newMessagingClient.listenToTheDm( ListenerCommand.START );
@@ -171,6 +174,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 	// Setter methods
 
+
 	@Override
 	public void setApplicationName( String applicationName ) {
 		this.applicationName = applicationName;
@@ -180,6 +184,16 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 	@Override
 	public void setScopedInstancePath( String scopedInstancePath ) {
 		this.scopedInstancePath = scopedInstancePath;
+	}
+
+
+	@Override
+	public void setExternalMapping( Map<String,String> externalExports ) {
+		this.externalExports = externalExports;
+
+		// Unlike other setters, this one is invoked by the agent AFTER
+		// the messaging was initialized (and after the first message was received).
+		getMessagingClient().setExternalMapping( externalExports );
 	}
 
 

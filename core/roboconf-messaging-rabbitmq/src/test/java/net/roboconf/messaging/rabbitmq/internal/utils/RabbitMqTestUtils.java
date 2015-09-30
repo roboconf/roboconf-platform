@@ -23,17 +23,20 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal;
+package net.roboconf.messaging.rabbitmq.internal.utils;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.rabbitmq.internal.RabbitMqClientAgent;
+import net.roboconf.messaging.rabbitmq.internal.RabbitMqClientDm;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConnectionFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -172,7 +175,7 @@ public abstract class RabbitMqTestUtils {
 	 * @throws IllegalAccessException if the internal messaging client could not be read.
 	 */
 	public static RabbitMqClientDm getMessagingClientDm( ReconfigurableClientDm reconfigurable )
-			throws IllegalAccessException {
+	throws IllegalAccessException {
 		return TestUtils.getInternalField(reconfigurable, "messagingClient", RabbitMqClientDm.class);
 	}
 
@@ -186,7 +189,7 @@ public abstract class RabbitMqTestUtils {
 	 * @throws IllegalAccessException if the internal messaging client could not be read.
 	 */
 	public static RabbitMqClientAgent getMessagingClientAgent( ReconfigurableClientAgent reconfigurable )
-			throws IllegalAccessException {
+	throws IllegalAccessException {
 		return TestUtils.getInternalField(reconfigurable, "messagingClient", RabbitMqClientAgent.class);
 	}
 }

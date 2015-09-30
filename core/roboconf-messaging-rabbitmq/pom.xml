@@ -123,7 +123,7 @@
 							net.roboconf.messaging.rabbitmq; version="${project.version}"
 						</Export-Package>
 						<Private-Package>
-							net.roboconf.messaging.rabbitmq.internal
+							net.roboconf.messaging.rabbitmq.internal.*
 						</Private-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

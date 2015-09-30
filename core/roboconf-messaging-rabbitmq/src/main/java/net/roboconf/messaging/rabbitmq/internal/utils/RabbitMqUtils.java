@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal;
+package net.roboconf.messaging.rabbitmq.internal.utils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -175,6 +175,10 @@ public final class RabbitMqUtils {
 
 		String agentExchangeName = buildExchangeName( applicationName, false );
 		channel.exchangeDeclare( agentExchangeName, "topic" );
+		// "topic" is a keyword for RabbitMQ.
+
+		// Also create the exchange for inter-application exchanges.
+		channel.exchangeDeclare( MessagingContext.INTER_APP, "topic" );
 		// "topic" is a keyword for RabbitMQ.
 	}
 

@@ -40,6 +40,7 @@ import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.dm.rest.commons.json.StringWrapper;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 
@@ -162,7 +163,7 @@ public class TargetResource implements ITargetResource {
 		if( content == null )
 			response = Response.status( Status.NOT_FOUND ).build();
 		else
-			response = Response.ok().entity( content ).build();
+			response = Response.ok().entity( new StringWrapper( content )).build();
 
 		return response;
 	}

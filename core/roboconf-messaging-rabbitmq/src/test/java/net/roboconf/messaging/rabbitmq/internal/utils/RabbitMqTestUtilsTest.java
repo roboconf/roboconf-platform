@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,43 +23,30 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.messages.from_agent_to_agent;
+package net.roboconf.messaging.rabbitmq.internal.utils;
 
-import net.roboconf.messaging.api.messages.Message;
+import junit.framework.Assert;
+
+import org.junit.Test;
 
 /**
- * A message to indicate we need an import.
- * @author Noël - LIG
+ * @author Vincent Zurczak - Linagora
  */
-public class MsgCmdRequestImport extends Message {
+public class RabbitMqTestUtilsTest {
 
-	private static final long serialVersionUID = 5366599037551758208L;
-	private final String componentOrFacetName;
-	private final String applicationOrContextName;
+	@Test
+	public void testIsVersionGreaterThanThreeDotTwo() {
 
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.2" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.2.1" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.3" ));
+		Assert.assertTrue( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "4.2" ));
 
-	/**
-	 * Constructor.
-	 * @param componentOrFacetName
-	 * @param applicationOrContextName
-	 */
-	public MsgCmdRequestImport( String applicationOrContextName, String componentOrFacetName ) {
-		super();
-		this.componentOrFacetName = componentOrFacetName;
-		this.applicationOrContextName = applicationOrContextName;
-	}
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.1" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.1.3" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "3.0" ));
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "2.1" ));
 
-	/**
-	 * @return the component or facet name
-	 */
-	public String getComponentOrFacetName() {
-		return this.componentOrFacetName;
-	}
-
-	/**
-	 * @return the applicationOrContextName
-	 */
-	public String getApplicationOrContextName() {
-		return this.applicationOrContextName;
+		Assert.assertFalse( RabbitMqTestUtils.isVersionGOEThreeDotTwo( "whatever" ));
 	}
 }

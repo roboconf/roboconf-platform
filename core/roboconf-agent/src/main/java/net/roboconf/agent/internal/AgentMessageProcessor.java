@@ -223,6 +223,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.agent.setScopedInstance( newScopedInstance );
 			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.scopedInstance ));
 
+			// Propagate the external mapping into the messaging
+			this.messagingClient.setExternalMapping( msg.getExternalExports());
+
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
 				this.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
