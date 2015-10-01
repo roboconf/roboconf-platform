@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -47,6 +48,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.dm.rest.commons.json.MapWrapper;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.target.api.TargetException;
@@ -257,6 +259,12 @@ public class ApplicationResource implements IApplicationResource {
 		return result;
 	}
 
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #bindApplication(java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
 	public Response bindApplication( String applicationName, String boundTplName, String boundApp ) {
 
@@ -273,6 +281,28 @@ public class ApplicationResource implements IApplicationResource {
 
 		} catch( UnauthorizedActionException | IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #getApplicationBindings(java.lang.String)
+	 */
+	@Override
+	public Response getApplicationBindings( String applicationName ) {
+
+		Response response;
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+		if( ma == null ) {
+			response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+		} else {
+			Map<String,String> map = ma.getApplication().getApplicationBindings();
+			response = Response.ok().entity( new MapWrapper( map )).build();
 		}
 
 		return response;

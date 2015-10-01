@@ -366,6 +366,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		if( ! app.getTemplate().getName().equals( applicationTemplateName ))
 			throw new UnauthorizedActionException( "Application " + applicationName + " is not associated with the " + applicationTemplateName + " template." );
 
+		app.getApplicationBindings().put( applicationTemplateName, applicationName );
+		// TODO: persist bindings
+
 		for( Instance inst : InstanceHelpers.findAllScopedInstances( app )) {
 			MsgCmdChangeBinding msg = new MsgCmdChangeBinding( app.getTemplate().getExternalExportsPrefix(), applicationName );
 			this.messagingMngr.sendMessageSafely( ma, inst, msg );

@@ -26,6 +26,8 @@
 package net.roboconf.dm.rest.commons.json;
 
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import junit.framework.Assert;
@@ -650,5 +652,81 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( "{\"name\":\"app1\",\"using\":\"true\",\"referencing\":\"true\"}", s );
+	}
+
+
+
+	@Test
+	public void testStringWrapperBinding_1() throws Exception {
+
+		StringWrapper obj = new StringWrapper( "test" );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, obj );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"s\":\"test\"}", s );
+		StringWrapper read = mapper.readValue( s, StringWrapper.class );
+		Assert.assertEquals( obj.toString(), read.toString());
+	}
+
+
+	@Test
+	public void testStringWrapperBinding_2() throws Exception {
+
+		StringWrapper obj = new StringWrapper( null );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, obj );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{}", s );
+		StringWrapper read = mapper.readValue( s, StringWrapper.class );
+		Assert.assertNull( read.toString());
+	}
+
+
+	@Test
+	public void testMapWrapperBinding_1() throws Exception {
+
+		Map<String,String> map = new LinkedHashMap<String,String>( 2 );
+		map.put( "key1", "value1" );
+		map.put( "key2", "value2" );
+		map.put( "key3", null );
+		map.put( null, "value4" );
+
+		MapWrapper obj = new MapWrapper( map );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, obj );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"key1\":\"value1\",\"key2\":\"value2\",\"key3\":\"\",\"\":\"value4\"}", s );
+		MapWrapper read = mapper.readValue( s, MapWrapper.class );
+
+		Assert.assertEquals( "value1", read.getMap().get( "key1" ));
+		Assert.assertEquals( "value2", read.getMap().get( "key2" ));
+		Assert.assertEquals( "", read.getMap().get( "key3" ));
+		Assert.assertEquals( "value4", read.getMap().get( "" ));
+	}
+
+
+	@Test
+	public void testMapWrapperBinding_2() throws Exception {
+
+		Map<String,String> map = new HashMap<String,String>( 0 );
+		MapWrapper obj = new MapWrapper( map );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, obj );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{}", s );
+		MapWrapper read = mapper.readValue( s, MapWrapper.class );
+		Assert.assertEquals( obj.getMap(), read.getMap());
 	}
 }

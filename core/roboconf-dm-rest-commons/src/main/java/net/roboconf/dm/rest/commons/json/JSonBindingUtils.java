@@ -27,6 +27,7 @@ package net.roboconf.dm.rest.commons.json;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import net.roboconf.core.model.beans.Application;
@@ -139,6 +140,9 @@ public final class JSonBindingUtils {
 
 		module.addSerializer( StringWrapper.class, new StringWrapperSerializer());
 		module.addDeserializer( StringWrapper.class, new StringWrapperDeserializer());
+
+		module.addSerializer( MapWrapper.class, new MapWrapperSerializer());
+		module.addDeserializer( MapWrapper.class, new MapWrapperDeserializer());
 
 		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
 
@@ -283,8 +287,56 @@ public final class JSonBindingUtils {
 		throws IOException {
 
 			generator.writeStartObject();
-			if( s != null )
+			if( s.toString() != null )
 				generator.writeStringField( S, s.toString());
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for map wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class MapWrapperDeserializer extends JsonDeserializer<MapWrapper> {
+
+		@Override
+		public MapWrapper deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        Map<String,String> map = new HashMap<> ();
+
+	        for( Iterator<Map.Entry<String,JsonNode>> it = node.fields(); it.hasNext(); ) {
+	        	Map.Entry<String,JsonNode> entry = it.next();
+	        	map.put( entry.getKey(), entry.getValue().textValue());
+	        }
+
+			return new MapWrapper( map );
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for map wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class MapWrapperSerializer extends JsonSerializer<MapWrapper> {
+
+		@Override
+		public void serialize(
+				MapWrapper m,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			for( Map.Entry<String,String> entry : m.getMap().entrySet()) {
+				generator.writeStringField(
+						entry.getKey() == null ? "" : entry.getKey(),
+						entry.getValue() == null ? "" : entry.getValue());
+			}
 
 			generator.writeEndObject();
 		}

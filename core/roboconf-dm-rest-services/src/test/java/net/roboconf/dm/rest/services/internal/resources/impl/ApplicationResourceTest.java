@@ -46,6 +46,7 @@ import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.commons.json.MapWrapper;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
@@ -754,5 +755,29 @@ public class ApplicationResourceTest {
 			Assert.assertEquals( app2.getTemplate().getName(), msg.getAppTempleName());
 			Assert.assertEquals( app2.getName(), msg.getAppName());
 		}
+	}
+
+
+	@Test
+	public void testGetApplicationBindings_inexistingApplication() throws Exception {
+
+		Response resp = this.resource.getApplicationBindings( "inexisting" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testGetApplicationBindings_success() throws Exception {
+
+		this.app.getApplicationBindings().put( "some", "value" );
+		this.app.getApplicationBindings().put( "another", "value" );
+
+		Response resp = this.resource.getApplicationBindings( this.app.getName());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		MapWrapper wrapper = (MapWrapper) resp.getEntity();
+		Assert.assertEquals( 2, wrapper.getMap().size());
+		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
+		Assert.assertEquals( "value", wrapper.getMap().get( "another" ));
 	}
 }

@@ -163,6 +163,16 @@ public interface IApplicationResource {
 
 
 	/**
+	 * Gets the application bindings (as a map).
+	 * @param applicationName the application name
+	 * @return a response
+	 */
+	@GET
+	@Path( "/bind" )
+	Response getApplicationBindings( @PathParam("name") String applicationName );
+
+
+	/**
 	 * Lists the paths of the children of an instance.
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)
