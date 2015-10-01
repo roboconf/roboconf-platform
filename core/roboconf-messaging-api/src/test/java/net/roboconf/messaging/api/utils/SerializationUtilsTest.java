@@ -215,6 +215,9 @@ public class SerializationUtilsTest {
 		msg = new MsgCmdChangeInstanceState((String) null, InstanceStatus.NOT_DEPLOYED );
 		checkBasics( msg, MsgCmdChangeInstanceState.class );
 
+		msg = new MsgCmdChangeInstanceState( new Instance( "test" ), InstanceStatus.NOT_DEPLOYED );
+		checkBasics( msg, MsgCmdChangeInstanceState.class );
+
 		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
 		fileNameToFileContent.put( "readme.txt", new byte[ 90 ]);
 

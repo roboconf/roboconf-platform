@@ -144,5 +144,10 @@ public class TestClientDmTest {
 
 		client.listenToTheDm( ListenerCommand.START );
 		client.listenToTheDm( ListenerCommand.STOP );
+
+		Assert.assertEquals( MessagingConstants.TEST_FACTORY_TYPE, client.getMessagingType());
+		Map<String,String> conf = client.getConfiguration();
+		Assert.assertEquals( 1, conf.size());
+		Assert.assertEquals( MessagingConstants.TEST_FACTORY_TYPE, conf.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
 	}
 }

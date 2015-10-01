@@ -31,6 +31,7 @@ import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 import org.junit.Assume;
@@ -57,6 +58,7 @@ public class DmClientTest {
 
 		RabbitMqClientDm dmClient = new RabbitMqClientDm(null, "localhost", "guest", "guest" );
 
+		Assert.assertEquals( RabbitMqConstants.RABBITMQ_FACTORY_TYPE, dmClient.getMessagingType());
 		Assert.assertFalse( dmClient.isConnected());
 		Assert.assertNull( dmClient.channel );
 

@@ -53,11 +53,12 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	 * External exports.
 	 * <p>
 	 * Key = internal (graph) variable.<br />
-	 * Value = name (with no prefix) of the variable, seen from outside.
+	 * Value = name of the variable, seen from outside.
 	 * </p>
 	 * <p>
-	 * Example: <code>exports: Toto.ip as test</code> will result in an entry
-	 * whose key is <code>Toto.ip</code> and whose value is<code>test</code>.
+	 * Example: <code>exports: Toto.ip as test</code> and that the application's prefix
+	 * is <b>APP</b> will result in an entry whose key is <code>Toto.ip</code>
+	 * and whose value is<code>APP.test</code>.
 	 * </p>
 	 */
 	public final Map<String,String> externalExports = new HashMap<> ();
