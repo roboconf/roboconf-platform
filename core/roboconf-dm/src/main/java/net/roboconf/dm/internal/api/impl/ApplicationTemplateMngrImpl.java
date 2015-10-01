@@ -27,6 +27,7 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -132,6 +133,15 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 		ApplicationTemplate tpl = lr.getApplicationTemplate();
 		if( this.templates.containsKey( tpl ))
 			throw new AlreadyExistingException( tpl.getName());
+
+		Set<String> externExportPrefixes = new HashSet<> ();
+		for( ApplicationTemplate otherTpl : this.templates.keySet()) {
+			if( otherTpl.getExternalExportsPrefix() != null )
+				externExportPrefixes.add( otherTpl.getExternalExportsPrefix());
+		}
+
+		if( externExportPrefixes.contains( tpl.getExternalExportsPrefix()))
+			throw new IOException( "The external exports prefix is already used by another template." );
 
 		File targetDirectory = ConfigurationUtils.findTemplateDirectory( tpl, this.configurationMngr.getWorkingDirectory());
 		if( ! applicationFilesDirectory.equals( targetDirectory )) {

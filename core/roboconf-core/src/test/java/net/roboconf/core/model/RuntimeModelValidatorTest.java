@@ -440,6 +440,7 @@ public class RuntimeModelValidatorTest {
 
 		app.externalExports.put( "comp.!nvalid", "ko" );
 		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
@@ -447,18 +448,30 @@ public class RuntimeModelValidatorTest {
 		app.externalExports.remove( "comp.!nvalid" );
 		app.externalExports.put( "comp.valid", "!invalid" );
 		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 
 		app.externalExports.put( "comp.valid", "ok" );
 		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.RM_INVALID_EXTERNAL_EXPORT, iterator.next().getErrorCode());
 		Assert.assertFalse( iterator.hasNext());
 		app.externalExports.remove( "comp.valid" );
 
 		comp.exportedVariables.put( "test", "default" );
 		app.externalExports.put( "root.test", "alias" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		app.setExternalExportsPrefix( "inval!d prefix" );
+		iterator = RuntimeModelValidator.validate( app ).iterator();
+		Assert.assertEquals( ErrorCode.RM_INVALID_APPLICATION_EXPORT_PREFIX, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		app.setExternalExportsPrefix( "prefix" );
 		Assert.assertEquals( 0, RuntimeModelValidator.validate( app ).size());
 
 		comp.exportedVariables.put( "test-bis", "default" );

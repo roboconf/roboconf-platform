@@ -42,7 +42,7 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 
 	private static final long serialVersionUID = -4753958407033243184L;
 
-	private String qualifier, dslId;
+	private String qualifier, dslId, externalExportsPrefix;
 	private Graphs graphs;
 
 	// We use a list because an application's attributes may be modified.
@@ -120,6 +120,20 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	 */
 	public void setGraphs( Graphs graphs ) {
 		this.graphs = graphs;
+	}
+
+	/**
+	 * @return the externalExportsPrefix
+	 */
+	public String getExternalExportsPrefix() {
+		return this.externalExportsPrefix;
+	}
+
+	/**
+	 * @param externalId the externalExportsPrefix to set
+	 */
+	public void setExternalExportsPrefix( String externalExportsPrefix ) {
+		this.externalExportsPrefix = externalExportsPrefix;
 	}
 
 	@Override

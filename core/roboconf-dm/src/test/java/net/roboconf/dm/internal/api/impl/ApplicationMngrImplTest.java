@@ -416,6 +416,7 @@ public class ApplicationMngrImplTest {
 
 		app = new TestApplication();
 		app.getTemplate().setName( "tpl-other" );
+		app.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
 		app.setName( "app-other" );
 
 		app.setDirectory( this.folder.newFolder());
@@ -438,7 +439,7 @@ public class ApplicationMngrImplTest {
 			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
 
 			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
-			Assert.assertEquals( ma2.getApplication().getTemplate().getName(), msg.getAppTempleName());
+			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getAppTempleName());
 			Assert.assertEquals( ma2.getName(), msg.getAppName());
 		}
 
