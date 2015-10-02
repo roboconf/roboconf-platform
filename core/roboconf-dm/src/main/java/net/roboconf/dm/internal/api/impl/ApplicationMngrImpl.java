@@ -346,6 +346,10 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		for( Instance rootInstance : app.getRootInstances())
 			rootInstance.data.put( Instance.APPLICATION_NAME, app.getName());
 
+		// Read application bindings.
+		// They are not supposed to exist for new applications, but let's be flexible about it.
+		ConfigurationUtils.loadApplicationBindings( app );
+
 		// Register the application
 		ManagedApplication ma = new ManagedApplication( app );
 		this.nameToManagedApplication.put( name, ma );
@@ -366,8 +370,8 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		if( ! app.getTemplate().getName().equals( applicationTemplateName ))
 			throw new UnauthorizedActionException( "Application " + applicationName + " is not associated with the " + applicationTemplateName + " template." );
 
-		app.getApplicationBindings().put( applicationTemplateName, applicationName );
-		// TODO: persist bindings
+		app.applicationBindings.put( applicationTemplateName, applicationName );
+		ConfigurationUtils.saveApplicationBindings( app );
 
 		for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
 			MsgCmdChangeBinding msg = new MsgCmdChangeBinding( app.getTemplate().getExternalExportsPrefix(), applicationName );

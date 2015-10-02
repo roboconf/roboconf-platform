@@ -301,7 +301,7 @@ public class ApplicationResource implements IApplicationResource {
 			response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 		} else {
-			Map<String,String> map = ma.getApplication().getApplicationBindings();
+			Map<String,String> map = ma.getApplication().applicationBindings;
 			response = Response.ok().entity( new MapWrapper( map )).build();
 		}
 

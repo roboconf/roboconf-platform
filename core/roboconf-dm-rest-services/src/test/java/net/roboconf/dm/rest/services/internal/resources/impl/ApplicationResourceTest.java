@@ -769,8 +769,8 @@ public class ApplicationResourceTest {
 	@Test
 	public void testGetApplicationBindings_success() throws Exception {
 
-		this.app.getApplicationBindings().put( "some", "value" );
-		this.app.getApplicationBindings().put( "another", "value" );
+		this.app.applicationBindings.put( "some", "value" );
+		this.app.applicationBindings.put( "another", "value" );
 
 		Response resp = this.resource.getApplicationBindings( this.app.getName());
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());

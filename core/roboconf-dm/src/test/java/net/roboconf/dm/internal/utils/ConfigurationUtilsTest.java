@@ -188,4 +188,26 @@ public class ConfigurationUtilsTest {
 		// In case we try to get an icon while the DM is reconfigured
 		Assert.assertNull( ConfigurationUtils.findIcon( "app", "v1", null ));
 	}
+
+
+	@Test
+	public void testLoadAndSaveApplicationBindings() throws Exception {
+
+		Application app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+
+		Assert.assertEquals( 0, app.applicationBindings.size());
+		ConfigurationUtils.loadApplicationBindings( app );
+		Assert.assertEquals( 0, app.applicationBindings.size());
+
+		app.applicationBindings.put( "a1", "v1" );
+		app.applicationBindings.put( "a2", "v2" );
+		ConfigurationUtils.saveApplicationBindings( app );
+
+		app.applicationBindings.clear();
+		ConfigurationUtils.loadApplicationBindings( app );
+		Assert.assertEquals( 2, app.applicationBindings.size());
+		Assert.assertEquals( "v1", app.applicationBindings.get( "a1" ));
+		Assert.assertEquals( "v2", app.applicationBindings.get( "a2" ));
+	}
 }

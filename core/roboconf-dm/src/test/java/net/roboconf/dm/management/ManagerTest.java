@@ -25,19 +25,25 @@
 
 package net.roboconf.dm.management;
 
+import java.io.File;
 import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.events.IDmListener;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
 /**
@@ -45,6 +51,8 @@ import org.mockito.Mockito;
  */
 public class ManagerTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 	private Manager manager;
 
 
@@ -144,5 +152,49 @@ public class ManagerTest {
 		this.manager.setTargetResolver( null );
 		resolver = TestUtils.getInternalField( this.manager.instancesMngr(), "targetHandlerResolver", ITargetHandlerResolver.class );
 		Assert.assertEquals( TargetHandlerResolverImpl.class, resolver.getClass());
+	}
+
+
+	@Test
+	public void testApplicationBindingsAreCorrectlySaved() throws Exception {
+
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		try {
+			this.manager.start();
+			TestManagerWrapper managerWrapper = new TestManagerWrapper( this.manager );
+			managerWrapper.configureMessagingForTest();
+			this.manager.reconfigure();
+
+			File dir = TestUtils.findApplicationDirectory( "lamp" );
+			Assert.assertTrue( dir.exists());
+
+			ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( dir );
+			Assert.assertNotNull( tpl );
+
+			ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
+			Assert.assertNotNull( ma );
+
+			// Create a binding between this application and itself.
+			// It does not make sense, but this is for test.
+			Assert.assertEquals( 0, ma.getApplication().applicationBindings.size());
+			this.manager.applicationMngr().bindApplication( ma, tpl.getName(), ma.getName());
+			Assert.assertEquals( 1, ma.getApplication().applicationBindings.size());
+
+			// Bindings must have been saved.
+			// Remove the application from the cache and restore it.
+			managerWrapper.getNameToManagedApplication().remove( ma.getName());
+			Assert.assertNull( this.manager.applicationMngr().findApplicationByName( ma.getName()));
+
+			this.manager.applicationMngr().restoreApplications();
+			ma = this.manager.applicationMngr().findManagedApplicationByName( ma.getName());
+			Assert.assertNotNull( ma );
+
+			Assert.assertEquals( 1, ma.getApplication().applicationBindings.size());
+			Assert.assertEquals( ma.getName(), ma.getApplication().applicationBindings.get( tpl.getName()));
+
+		} finally {
+			this.manager.stop();
+		}
 	}
 }

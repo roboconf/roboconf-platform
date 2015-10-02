@@ -42,7 +42,7 @@ public class Application extends AbstractApplication implements Serializable {
 	private static final long serialVersionUID = -4753958407033243184L;
 
 	private final ApplicationTemplate template;
-	private final Map<String,String> applicationBindings = new HashMap<String,String> ();
+	public final Map<String,String> applicationBindings = new HashMap<String,String> ();
 
 
 	/**
@@ -83,13 +83,6 @@ public class Application extends AbstractApplication implements Serializable {
 	 */
 	public Map<String,String> getExternalExports() {
 		return this.template != null ? this.template.externalExports : null;
-	}
-
-	/**
-	 * @return the application bindings (non-null map)
-	 */
-	public Map<String,String> getApplicationBindings() {
-		return this.applicationBindings;
 	}
 
 	@Override
