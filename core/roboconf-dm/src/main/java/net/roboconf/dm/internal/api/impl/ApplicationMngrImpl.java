@@ -369,7 +369,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		app.getApplicationBindings().put( applicationTemplateName, applicationName );
 		// TODO: persist bindings
 
-		for( Instance inst : InstanceHelpers.findAllScopedInstances( app )) {
+		for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
 			MsgCmdChangeBinding msg = new MsgCmdChangeBinding( app.getTemplate().getExternalExportsPrefix(), applicationName );
 			this.messagingMngr.sendMessageSafely( ma, inst, msg );
 		}

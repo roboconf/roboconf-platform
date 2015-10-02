@@ -409,18 +409,23 @@ public class ApplicationMngrImplTest {
 	@Test
 	public void testBindApplication_success() throws Exception {
 
-		TestApplication app = new TestApplication();
-		app.setDirectory( this.folder.newFolder());
-		ManagedApplication ma1 = new ManagedApplication( app );
+		TestApplication app1 = new TestApplication();
+		app1.setDirectory( this.folder.newFolder());
+		ManagedApplication ma1 = new ManagedApplication( app1 );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
 
-		app = new TestApplication();
-		app.getTemplate().setName( "tpl-other" );
-		app.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
-		app.setName( "app-other" );
+		TestApplication app2 = new TestApplication();
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
+		app2.setName( "app-other" );
 
-		app.setDirectory( this.folder.newFolder());
-		ManagedApplication ma2 = new ManagedApplication( app );
+		// Rename root instances in the second application.
+		// This is to make sure messages are sent to the right instances in the right application.
+		app2.getMySqlVm().setName( "other-mysql" );
+		app2.getTomcatVm().setName( "other-tomcat" );
+
+		app2.setDirectory( this.folder.newFolder());
+		ManagedApplication ma2 = new ManagedApplication( app2 );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
 		Mockito.verifyZeroInteractions( this.messagingMngr );
@@ -443,8 +448,9 @@ public class ApplicationMngrImplTest {
 			Assert.assertEquals( ma2.getName(), msg.getAppName());
 		}
 
+		// Messages must be sent to ma1!
 		List<Instance> instances = arg1.getAllValues();
-		Assert.assertTrue( instances.contains( app.getMySqlVm()));
-		Assert.assertTrue( instances.contains( app.getTomcatVm()));
+		Assert.assertTrue( instances.contains( app1.getMySqlVm()));
+		Assert.assertTrue( instances.contains( app1.getTomcatVm()));
 	}
 }

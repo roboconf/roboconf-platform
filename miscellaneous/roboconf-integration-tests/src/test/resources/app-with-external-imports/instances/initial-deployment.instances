@@ -1,0 +1,16 @@
+
+instance of VM {
+	name: VM;
+	
+	instance of Database {
+		name: database;
+	}
+	
+	instance of Petals {
+		name: petals;
+		
+		instance of SE-Activiti {
+			name: se;
+		}
+	}
+}

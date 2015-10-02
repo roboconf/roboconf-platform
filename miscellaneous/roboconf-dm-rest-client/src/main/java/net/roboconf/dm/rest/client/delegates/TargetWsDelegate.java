@@ -80,7 +80,7 @@ public class TargetWsDelegate {
 		else
 			this.logger.finer( "No target descriptor was found." );
 
-		return result != null ? result : new ArrayList<TargetWrapperDescriptor> ();
+		return result != null ? result : new ArrayList<TargetWrapperDescriptor>( 0 );
 	}
 
 
