@@ -38,6 +38,7 @@ import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -779,5 +780,24 @@ public class ApplicationResourceTest {
 		Assert.assertEquals( 2, wrapper.getMap().size());
 		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
 		Assert.assertEquals( "value", wrapper.getMap().get( "another" ));
+	}
+
+
+	@Test
+	public void testGetApplicationBindings_success_withUnresolvedMapping() throws Exception {
+
+		ImportedVariable var = new ImportedVariable( "ext.ip", false, true );
+		this.app.getWar().getComponent().importedVariables.put( var.getName(), var );
+
+		this.app.applicationBindings.put( "some", "value" );
+
+		Response resp = this.resource.getApplicationBindings( this.app.getName());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		MapWrapper wrapper = (MapWrapper) resp.getEntity();
+		Assert.assertEquals( 2, wrapper.getMap().size());
+		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
+		Assert.assertNull( wrapper.getMap().get( "ext" ));
+		Assert.assertTrue( wrapper.getMap().containsKey( "ext" ));
 	}
 }

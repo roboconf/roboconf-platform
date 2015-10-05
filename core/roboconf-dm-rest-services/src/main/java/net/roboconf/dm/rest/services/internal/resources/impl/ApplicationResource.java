@@ -28,6 +28,7 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -39,11 +40,13 @@ import javax.ws.rs.core.Response.Status;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
@@ -301,7 +304,20 @@ public class ApplicationResource implements IApplicationResource {
 			response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
 
 		} else {
-			Map<String,String> map = ma.getApplication().applicationBindings;
+			// Find all the external prefixes to resolve
+			Map<String,String> map = new HashMap<String,String> ();
+			for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication())) {
+				for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( inst.getComponent()).values()) {
+					if( ! var.isExternal())
+						continue;
+
+					String prefix = VariableHelpers.parseVariableName( var.getName()).getKey();
+					map.put( prefix, null );
+				}
+			}
+
+			// Override with the effective bindings
+			map.putAll( ma.getApplication().applicationBindings );
 			response = Response.ok().entity( new MapWrapper( map )).build();
 		}
 
