@@ -66,6 +66,8 @@ public final class JSonBindingUtils {
 	private static final String NAME = "name";
 	private static final String QUALIFIER = "qualifier";
 	private static final String DESC = "desc";
+	private static final String EEP = "eep";
+	private static final String EXT_VARS = "extVars";
 	private static final String S = "s";
 
 	private static final String APP_ICON = "icon";
@@ -73,6 +75,7 @@ public final class JSonBindingUtils {
 
 	private static final String APP_INST_TPL_NAME = "tplName";
 	private static final String APP_INST_TPL_QUALIFIER = "tplQualifier";
+	private static final String APP_INST_TPL_EEP = "tplEep";
 
 	private static final String APP_TPL_APPS = "apps";
 	private static final String COMP_INSTALLER = "installer";
@@ -366,12 +369,22 @@ public final class JSonBindingUtils {
 			if( app.getQualifier() != null )
 				generator.writeStringField( QUALIFIER, app.getQualifier());
 
+			if( app.getExternalExportsPrefix() != null )
+				generator.writeStringField( EEP, app.getExternalExportsPrefix());
+
+			// Read-only information.
+			// We do not expect it for deserialization
+			if( ! app.externalExports.isEmpty())
+				generator.writeObjectField( EXT_VARS, new MapWrapper( app.externalExports ));
+
 			// Read-only information.
 			// We do not expect it for deserialization
 			String iconLocation = IconUtils.findIconUrl( app );
 			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
 				generator.writeStringField( APP_ICON, iconLocation );
 
+			// Read-only information.
+			// We do not expect it for deserialization
 			generator.writeArrayFieldStart( APP_TPL_APPS );
 			for( Application associatedApp : app.getAssociatedApplications())
 				generator.writeObject( associatedApp.getName());
@@ -392,18 +405,21 @@ public final class JSonBindingUtils {
 		public ApplicationTemplate deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        ApplicationTemplate application = new ApplicationTemplate();
+			JsonNode node = oc.readTree( parser );
+			ApplicationTemplate application = new ApplicationTemplate();
 
-	        JsonNode n;
-	        if(( n = node.get( NAME )) != null )
-	        	application.setName( n.textValue());
+			JsonNode n;
+			if(( n = node.get( NAME )) != null )
+				application.setName( n.textValue());
 
-	        if(( n = node.get( DESC )) != null )
-	        	application.setDescription( n.textValue());
+			if(( n = node.get( DESC )) != null )
+				application.setDescription( n.textValue());
 
-	        if(( n = node.get( QUALIFIER )) != null )
-	        	application.setQualifier( n.textValue());
+			if(( n = node.get( QUALIFIER )) != null )
+				application.setQualifier( n.textValue());
+
+			if(( n = node.get( EEP )) != null )
+				application.setExternalExportsPrefix( n.textValue());
 
 			return application;
 		}
@@ -542,10 +558,19 @@ public final class JSonBindingUtils {
 
 			if( app.getTemplate() != null ) {
 				if( app.getTemplate().getName() != null )
-					generator.writeObjectField( APP_INST_TPL_NAME, app.getTemplate().getName());
+					generator.writeStringField( APP_INST_TPL_NAME, app.getTemplate().getName());
 
 				if( app.getTemplate().getQualifier() != null )
-					generator.writeObjectField( APP_INST_TPL_QUALIFIER, app.getTemplate().getQualifier());
+					generator.writeStringField( APP_INST_TPL_QUALIFIER, app.getTemplate().getQualifier());
+
+				if( app.getTemplate().getExternalExportsPrefix() != null )
+					generator.writeStringField( APP_INST_TPL_EEP, app.getTemplate().getExternalExportsPrefix());
+
+				// Read-only information.
+				// We do not expect it for deserialization
+				Map<String,String> externalExports = app.getTemplate().externalExports;
+				if( ! externalExports.isEmpty())
+					generator.writeObjectField( EXT_VARS, new MapWrapper( externalExports ));
 			}
 
 			// Read-only information.
@@ -597,6 +622,10 @@ public final class JSonBindingUtils {
 	        	n = node.get( APP_INST_TPL_QUALIFIER );
 	        	if( n != null )
 	        		appTemplate.setQualifier( n.textValue());
+
+	        	n = node.get( APP_INST_TPL_EEP );
+	        	if( n != null )
+	        		appTemplate.setExternalExportsPrefix( n.textValue());
 
 	        	application = new Application( appTemplate );
 

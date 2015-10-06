@@ -68,6 +68,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
 	}
 
 
@@ -91,6 +92,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
 	}
 
 
@@ -128,6 +130,43 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+	}
+
+
+	@Test
+	public void testApplicationTemplateBinding_5() throws Exception {
+
+		ApplicationTemplate app = new ApplicationTemplate( "my application" );
+		app.setExternalExportsPrefix( "test" );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		ApplicationTemplate readApp = mapper.readValue( s, ApplicationTemplate.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+	}
+
+
+	@Test
+	public void testApplicationTemplateBinding_6() throws Exception {
+
+		ApplicationTemplate app = new ApplicationTemplate( "my application" );
+		app.externalExports.put( "k1", "v1" );
+		app.externalExports.put( "k2", "v2" );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"name\":\"my application\",\"extVars\":{\"k1\":\"v1\",\"k2\":\"v2\"},\"apps\":[]}", s );
 	}
 
 
@@ -236,6 +275,7 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getTemplate(), readApp.getTemplate());
+		Assert.assertEquals( app.getTemplate().getExternalExportsPrefix(), readApp.getTemplate().getExternalExportsPrefix());
 	}
 
 
@@ -259,6 +299,51 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getName(), readApp.getName());
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getTemplate(), readApp.getTemplate());
+		Assert.assertEquals( app.getTemplate().getExternalExportsPrefix(), readApp.getTemplate().getExternalExportsPrefix());
+	}
+
+
+	@Test
+	public void testApplicationBinding_8() throws Exception {
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "" ).qualifier( "oops" );
+		tpl.externalExports.put( "k1", "v1" );
+		tpl.externalExports.put( "k2", "v2" );
+
+		Application app = new Application( "app1", tpl );
+		app.getRootInstances().add( new Instance( "r" ));
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"name\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\",\"extVars\":{\"k1\":\"v1\",\"k2\":\"v2\"}}", s );
+	}
+
+
+	@Test
+	public void testApplicationBinding_9() throws Exception {
+
+		ApplicationTemplate tpl = new ApplicationTemplate( "" ).qualifier( "oops" );
+		tpl.setExternalExportsPrefix( "toto" );
+
+		Application app = new Application( "app1", tpl );
+		app.getRootInstances().add( new Instance( "r" ));
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"name\":\"app1\",\"tplName\":\"\",\"tplQualifier\":\"oops\",\"tplEep\":\"toto\"}", s );
+
+		Application readApp = mapper.readValue( s, Application.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getTemplate(), readApp.getTemplate());
+		Assert.assertEquals( app.getTemplate().getExternalExportsPrefix(), readApp.getTemplate().getExternalExportsPrefix());
 	}
 
 
