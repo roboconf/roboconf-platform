@@ -170,6 +170,7 @@ public class ManagerTest {
 			Assert.assertTrue( dir.exists());
 
 			ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( dir );
+			tpl.setExternalExportsPrefix( "prefix" );
 			Assert.assertNotNull( tpl );
 
 			ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
@@ -178,7 +179,7 @@ public class ManagerTest {
 			// Create a binding between this application and itself.
 			// It does not make sense, but this is for test.
 			Assert.assertEquals( 0, ma.getApplication().applicationBindings.size());
-			this.manager.applicationMngr().bindApplication( ma, tpl.getName(), ma.getName());
+			this.manager.applicationMngr().bindApplication( ma, tpl.getExternalExportsPrefix(), ma.getName());
 			Assert.assertEquals( 1, ma.getApplication().applicationBindings.size());
 
 			// Bindings must have been saved.
@@ -191,7 +192,7 @@ public class ManagerTest {
 			Assert.assertNotNull( ma );
 
 			Assert.assertEquals( 1, ma.getApplication().applicationBindings.size());
-			Assert.assertEquals( ma.getName(), ma.getApplication().applicationBindings.get( tpl.getName()));
+			Assert.assertEquals( ma.getName(), ma.getApplication().applicationBindings.get( tpl.getExternalExportsPrefix()));
 
 		} finally {
 			this.manager.stop();

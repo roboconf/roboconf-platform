@@ -363,17 +363,17 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 
 
 	@Override
-	public void bindApplication( ManagedApplication ma, String applicationTemplateName, String applicationName )
+	public void bindApplication( ManagedApplication ma, String externalExportPrefix, String applicationName )
 	throws UnauthorizedActionException, IOException {
 
 		Application app = findApplicationByName( applicationName );
 		if( app == null )
 			throw new UnauthorizedActionException( "Application " + applicationName + " does not exist." );
 
-		if( ! app.getTemplate().getName().equals( applicationTemplateName ))
-			throw new UnauthorizedActionException( "Application " + applicationName + " is not associated with the " + applicationTemplateName + " template." );
+		if( ! externalExportPrefix.equals( app.getTemplate().getExternalExportsPrefix()))
+			throw new UnauthorizedActionException( "Application " + applicationName + "'s template does not have " + externalExportPrefix + " as external exports prefix." );
 
-		app.applicationBindings.put( applicationTemplateName, applicationName );
+		app.applicationBindings.put( externalExportPrefix, applicationName );
 		ConfigurationUtils.saveApplicationBindings( app );
 
 		for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
