@@ -197,4 +197,41 @@ public class ManagerTest {
 			this.manager.stop();
 		}
 	}
+
+
+	@Test
+	public void testApplicationInstancesAreCorrectlyRestored() throws Exception {
+
+		// To prevent #454 from happening again
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		try {
+			this.manager.start();
+			TestManagerWrapper managerWrapper = new TestManagerWrapper( this.manager );
+			managerWrapper.configureMessagingForTest();
+			this.manager.reconfigure();
+
+			File dir = TestUtils.findApplicationDirectory( "lamp" );
+			Assert.assertTrue( dir.exists());
+
+			ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( dir );
+			Assert.assertNotNull( tpl );
+
+			ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
+			Assert.assertNotNull( ma );
+
+			// Clear the applications and restore them.
+			// Even with no life cycle action, instances were saved and restored.
+			Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
+			managerWrapper.getNameToManagedApplication().clear();
+			this.manager.applicationMngr().restoreApplications();
+
+			ma = this.manager.applicationMngr().findManagedApplicationByName( "test" );
+			Assert.assertNotNull( ma );
+			Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
+
+		} finally {
+			this.manager.stop();
+		}
+	}
 }

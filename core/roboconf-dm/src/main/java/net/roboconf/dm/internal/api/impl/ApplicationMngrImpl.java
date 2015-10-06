@@ -354,6 +354,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.nameToManagedApplication.put( name, ma );
 
+		// Save the instances!
+		ConfigurationUtils.saveInstances( ma, configurationDirectory );
+
 		this.logger.info( "Application " + name + " was successfully created from the template " + tpl + "." );
 		return ma;
 	}
