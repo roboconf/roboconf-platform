@@ -1,0 +1,21 @@
+
+VM {
+	installer: target;
+	children: Petals, Database;
+}
+
+Petals {
+	installer: script;
+	children: SE-Activiti;
+}
+
+SE-Activiti {
+	installer: script;
+	imports: Database.ip, Database.port;
+	imports: external Lamp.lb-ip;
+}
+
+Database {
+	installer: script;
+	exports: ip, port = 3306;
+}

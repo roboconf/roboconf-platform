@@ -32,6 +32,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.ApplicationTemplateDescriptor;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -240,6 +241,74 @@ public class ApplicationTemplateMngrImplTest {
 		}
 
 		this.mngr.loadApplicationTemplate( directory );
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testLoadApplicationTemplate_externalExportsPrefixIsAlreadyUsed() throws Exception {
+
+		// We need to modify the descriptor, so work on a copy
+		File originalDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( originalDirectory.exists());
+
+		File directoryCopy = this.folder.newFolder();
+		Utils.copyDirectory( originalDirectory, directoryCopy );
+
+		// Update the external export ID
+		File descriptorFile = new File( directoryCopy, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( descriptorFile.exists());
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( descriptorFile );
+		desc.setExternalExportsPrefix( "for-test" );
+
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		try {
+			this.mngr.loadApplicationTemplate( directoryCopy );
+
+		} catch( Exception e ) {
+			Assert.fail( "Loading the application the first time should not fail." );
+		}
+
+		// Change the qualifier in the files
+		desc.setQualifier( "v33.2" );
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		this.mngr.loadApplicationTemplate( directoryCopy );
+	}
+
+
+	@Test
+	public void testLoadApplicationTemplate_externalExportsPrefixDoNotConflict() throws Exception {
+
+		// We need to modify the descriptor, so work on a copy
+		File originalDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( originalDirectory.exists());
+
+		File directoryCopy = this.folder.newFolder();
+		Utils.copyDirectory( originalDirectory, directoryCopy );
+
+		// Update the external export ID
+		File descriptorFile = new File( directoryCopy, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( descriptorFile.exists());
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( descriptorFile );
+		desc.setExternalExportsPrefix( "for-test" );
+
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		try {
+			this.mngr.loadApplicationTemplate( directoryCopy );
+
+		} catch( Exception e ) {
+			Assert.fail( "Loading the application the first time should not fail." );
+		}
+
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		// Change the qualifier in the files
+		desc.setQualifier( "v33.2" );
+		desc.setExternalExportsPrefix( null );
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		this.mngr.loadApplicationTemplate( directoryCopy );
+
+		Assert.assertEquals( 2, this.mngr.getApplicationTemplates().size());
 	}
 
 

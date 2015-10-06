@@ -66,7 +66,7 @@ import org.junit.After;
  * supported by Roboconf.
  * </p>
  * <p>
- * So, we can consider this class a TCK for our messaging API.
+ * So, we can consider this class as a TCK for our messaging API.
  * Sub-class it. If all the tests go well, you can consider your Roboconf
  * messaging implementation is compliant with this API.
  * </p>
@@ -693,8 +693,8 @@ public abstract class AbstractMessagingTest {
 
 		// 3 agents (tomcat, mysql, apache) for application app1 and 1 agent (root) for app2.
 		// This last one should not receive anything!
-		Application app1 = new Application( "app1", null );
-		Application app2 = new Application( "app2", null );
+		Application app1 = new Application( "app1", new ApplicationTemplate( "tpl1" ));
+		Application app2 = new Application( "app2", new ApplicationTemplate( "tpl2" ));
 
 		Component tomcatComponent = new Component( "Tomcat" );
 		tomcatComponent.exportedVariables.put( "Tomcat.ip", "localhost" );

@@ -103,9 +103,10 @@ public final class RuntimeModelIo {
 				app.setDescription( appDescriptor.getDescription());
 				app.setQualifier( appDescriptor.getQualifier());
 				app.setDslId( appDescriptor.getDslId());
+				app.setExternalExportsPrefix( appDescriptor.getExternalExportsPrefix());
 
 				for( Map.Entry<String,String> entry : appDescriptor.externalExports.entrySet())
-					app.externalExports.put( entry.getKey(), app.getName() + "." + entry.getValue());
+					app.externalExports.put( entry.getKey(), app.getExternalExportsPrefix() + "." + entry.getValue());
 
 				Collection<ModelError> errors = RuntimeModelValidator.validate( appDescriptor );
 				result.loadErrors.addAll( errors );

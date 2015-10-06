@@ -171,13 +171,16 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			ma.acknowledgeHeartBeat( scopedInstance );
 			this.logger.finest( "A heart beat was acknowledged for " + scopedInstancePath + " in the application " + ma + "." );
 
-			// A heart beat may also say whether the agent receive its model
 			try {
+				// A heart beat may also say whether the agent receive its model
 				if( message.isModelRequired()) {
 					this.logger.fine( "The DM is sending its model to agent " + scopedInstancePath + "." );
 					Message msg = new MsgCmdSetScopedInstance( scopedInstance, app.getExternalExports());
 					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
 				}
+
+				// Send stored messages after an acknowledgement
+				this.manager.messagingMngr().sendStoredMessages( ma, scopedInstance );
 
 			} catch( IOException e ) {
 				this.logger.warning( "Agent " + scopedInstancePath + " requested its model but an error occurred. " + e.getMessage());

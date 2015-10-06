@@ -34,7 +34,6 @@ import java.util.Map;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
@@ -43,6 +42,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.rabbitmq.internal.utils.DmReturnListener;
 import net.roboconf.messaging.rabbitmq.internal.utils.ListeningThread;
+import net.roboconf.messaging.rabbitmq.internal.utils.MessagingContext;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
@@ -289,28 +289,24 @@ public class RabbitMqClientDm extends RabbitMqClient implements IDmClient {
 
 		this.logger.fine( "The DM is propagating the termination of agent '" + rootInstance + "'." );
 
-		// The messages will go through JUST like if they were coming from other agents.
-		String exchangeName = RabbitMqUtils.buildExchangeName( application, false );
-
 		// Start with the deepest instances
 		List<Instance> instances = InstanceHelpers.buildHierarchicalList( rootInstance );
 		Collections.reverse( instances );
 
 		// Roughly, we unpublish all the variables for all the instances that were on the agent's machine.
 		// This code is VERY similar to ...ClientAgent#unpublishExports
+		// The messages will go through JUST like if they were coming from other agents.
 		for( Instance instance : instances ) {
-			for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
+			for( MessagingContext ctx : MessagingContext.forExportedVariables( application.getName(), instance, application.getExternalExports())) {
 
 				MsgCmdRemoveImport message = new MsgCmdRemoveImport(
 						application.getName(),
-						facetOrComponentName,
+						ctx.getRoutingKeySuffix(),
 						InstanceHelpers.computeInstancePath( instance ));
 
-				// FIXME: deal with inter-app exchanges...
-
 				this.channel.basicPublish(
-						exchangeName,
-						RabbitMqClientAgent.THOSE_THAT_IMPORT + facetOrComponentName,
+						ctx.getExchangeName(),
+						RabbitMqClientAgent.THOSE_THAT_IMPORT + ctx.getRoutingKeySuffix(),
 						null,
 						SerializationUtils.serializeObject( message ));
 			}

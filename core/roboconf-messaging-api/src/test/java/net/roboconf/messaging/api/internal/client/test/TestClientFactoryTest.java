@@ -23,41 +23,33 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.beans;
+package net.roboconf.messaging.api.internal.client.test;
 
-import java.util.HashSet;
+import java.util.HashMap;
 
 import junit.framework.Assert;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ImportedVariableTest {
+public class TestClientFactoryTest {
 
 	@Test
-	public void testEqualsAndHashCode() {
+	public void testBasics() {
 
-		ImportedVariable var1 = new ImportedVariable( "test", false, false );
-		ImportedVariable var2 = new ImportedVariable( "test", true, true );
+		TestClientFactory factory = new TestClientFactory();
+		Assert.assertEquals( MessagingConstants.TEST_FACTORY_TYPE, factory.getType());
+		factory.setConfiguration( new HashMap<String,String>( 0 ));
 
-		HashSet<ImportedVariable> set = new HashSet<>( 2 );
-		set.add( var1 );
-		set.add( var2 );
-		Assert.assertEquals( 1, set.size());
+		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
+		Assert.assertEquals( TestClientDm.class, factory.createDmClient( parentDm ).getClass());
 
-		Assert.assertEquals( var1, var2 );
-		Assert.assertFalse( var1.equals( new Object()));
-		Assert.assertFalse( var1.equals( new ImportedVariable( "test2", false, false )));
-
-		Assert.assertTrue( new ImportedVariable().hashCode() > 0 );
-	}
-
-
-	@Test
-	public void testToString() {
-		ImportedVariable var = new ImportedVariable( "test", false, false );
-		Assert.assertEquals( "test", var.toString());
+		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
+		Assert.assertEquals( TestClientAgent.class, factory.createAgentClient( parentAgent ).getClass());
 	}
 }

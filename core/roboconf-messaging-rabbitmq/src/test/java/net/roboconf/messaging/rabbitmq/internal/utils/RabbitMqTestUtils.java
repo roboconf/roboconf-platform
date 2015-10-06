@@ -26,12 +26,16 @@
 package net.roboconf.messaging.rabbitmq.internal.utils;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.RabbitMqClientAgent;
 import net.roboconf.messaging.rabbitmq.internal.RabbitMqClientDm;
 
@@ -191,5 +195,29 @@ public abstract class RabbitMqTestUtils {
 	public static RabbitMqClientAgent getMessagingClientAgent( ReconfigurableClientAgent reconfigurable )
 	throws IllegalAccessException {
 		return TestUtils.getInternalField(reconfigurable, "messagingClient", RabbitMqClientAgent.class);
+	}
+
+
+	/**
+	 * Returns a RabbitMQ messaging configuration for the given parameters.
+	 * @param ip the RabbitMQ server ip (or host). May be {@code null}.
+	 * @param username the RabbitMQ server username. May be {@code null}.
+	 * @param password the RabbitMQ server password. May be {@code null}.
+	 * @return the messaging configuration for the given parameters.
+	 */
+	public static Map<String, String> rabbitMqMessagingConfiguration(String ip, String username, String password) {
+
+		final Map<String,String> result = new LinkedHashMap<> ();
+		result.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, RabbitMqConstants.RABBITMQ_FACTORY_TYPE );
+		if (ip != null)
+			result.put( RabbitMqConstants.RABBITMQ_SERVER_IP, ip );
+
+		if (username != null)
+			result.put( RabbitMqConstants.RABBITMQ_SERVER_USERNAME, username );
+
+		if (password != null)
+			result.put( RabbitMqConstants.RABBITMQ_SERVER_PASSWORD, password );
+
+		return result;
 	}
 }

@@ -29,6 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import junit.framework.Assert;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 import org.junit.Assume;
@@ -58,6 +59,7 @@ public class AgentClientTest {
 		agentClient.setApplicationName( "app" );
 		agentClient.setScopedInstancePath( "/root" );
 
+		Assert.assertEquals( RabbitMqConstants.RABBITMQ_FACTORY_TYPE, agentClient.getMessagingType());
 		Assert.assertFalse( agentClient.isConnected());
 		Assert.assertNull( agentClient.channel );
 

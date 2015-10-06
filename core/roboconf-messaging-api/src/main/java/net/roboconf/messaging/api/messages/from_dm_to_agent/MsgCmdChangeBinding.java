@@ -23,41 +23,41 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.beans;
+package net.roboconf.messaging.api.messages.from_dm_to_agent;
 
-import java.util.HashSet;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
+ * A message that indicates a new binding for inter-application exchanges.
  * @author Vincent Zurczak - Linagora
  */
-public class ImportedVariableTest {
+public class MsgCmdChangeBinding extends Message {
 
-	@Test
-	public void testEqualsAndHashCode() {
+	private static final long serialVersionUID = -90811826628551779L;
+	private final String appTempleName, appName;
 
-		ImportedVariable var1 = new ImportedVariable( "test", false, false );
-		ImportedVariable var2 = new ImportedVariable( "test", true, true );
 
-		HashSet<ImportedVariable> set = new HashSet<>( 2 );
-		set.add( var1 );
-		set.add( var2 );
-		Assert.assertEquals( 1, set.size());
-
-		Assert.assertEquals( var1, var2 );
-		Assert.assertFalse( var1.equals( new Object()));
-		Assert.assertFalse( var1.equals( new ImportedVariable( "test2", false, false )));
-
-		Assert.assertTrue( new ImportedVariable().hashCode() > 0 );
+	/**
+	 * Constructor.
+	 * @param appTempleName
+	 * @param appName
+	 */
+	public MsgCmdChangeBinding( String appTempleName, String appName ) {
+		this.appTempleName = appTempleName;
+		this.appName = appName;
 	}
 
+	/**
+	 * @return the appTempleName
+	 */
+	public String getAppTempleName() {
+		return this.appTempleName;
+	}
 
-	@Test
-	public void testToString() {
-		ImportedVariable var = new ImportedVariable( "test", false, false );
-		Assert.assertEquals( "test", var.toString());
+	/**
+	 * @return the appName
+	 */
+	public String getAppName() {
+		return this.appName;
 	}
 }

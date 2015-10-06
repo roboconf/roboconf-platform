@@ -23,41 +23,30 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.beans;
+package net.roboconf.dm.rest.commons.json;
 
-import java.util.HashSet;
-
-import junit.framework.Assert;
-
-import org.junit.Test;
+import java.util.Map;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ImportedVariableTest {
+public class MapWrapper {
 
-	@Test
-	public void testEqualsAndHashCode() {
+	private final Map<String,String> map;
 
-		ImportedVariable var1 = new ImportedVariable( "test", false, false );
-		ImportedVariable var2 = new ImportedVariable( "test", true, true );
 
-		HashSet<ImportedVariable> set = new HashSet<>( 2 );
-		set.add( var1 );
-		set.add( var2 );
-		Assert.assertEquals( 1, set.size());
-
-		Assert.assertEquals( var1, var2 );
-		Assert.assertFalse( var1.equals( new Object()));
-		Assert.assertFalse( var1.equals( new ImportedVariable( "test2", false, false )));
-
-		Assert.assertTrue( new ImportedVariable().hashCode() > 0 );
+	/**
+	 * Constructor.
+	 * @param map
+	 */
+	public MapWrapper( Map<String,String> map ) {
+		this.map = map;
 	}
 
-
-	@Test
-	public void testToString() {
-		ImportedVariable var = new ImportedVariable( "test", false, false );
-		Assert.assertEquals( "test", var.toString());
+	/**
+	 * @return the map
+	 */
+	public Map<String,String> getMap() {
+		return this.map;
 	}
 }

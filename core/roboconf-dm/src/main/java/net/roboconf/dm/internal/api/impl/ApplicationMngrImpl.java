@@ -43,6 +43,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -58,6 +59,7 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 
 /**
  * @author Noël - LIG
@@ -344,11 +346,39 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		for( Instance rootInstance : app.getRootInstances())
 			rootInstance.data.put( Instance.APPLICATION_NAME, app.getName());
 
+		// Read application bindings.
+		// They are not supposed to exist for new applications, but let's be flexible about it.
+		ConfigurationUtils.loadApplicationBindings( app );
+
 		// Register the application
 		ManagedApplication ma = new ManagedApplication( app );
 		this.nameToManagedApplication.put( name, ma );
 
+		// Save the instances!
+		ConfigurationUtils.saveInstances( ma, configurationDirectory );
+
 		this.logger.info( "Application " + name + " was successfully created from the template " + tpl + "." );
 		return ma;
+	}
+
+
+	@Override
+	public void bindApplication( ManagedApplication ma, String applicationTemplateName, String applicationName )
+	throws UnauthorizedActionException, IOException {
+
+		Application app = findApplicationByName( applicationName );
+		if( app == null )
+			throw new UnauthorizedActionException( "Application " + applicationName + " does not exist." );
+
+		if( ! app.getTemplate().getName().equals( applicationTemplateName ))
+			throw new UnauthorizedActionException( "Application " + applicationName + " is not associated with the " + applicationTemplateName + " template." );
+
+		app.applicationBindings.put( applicationTemplateName, applicationName );
+		ConfigurationUtils.saveApplicationBindings( app );
+
+		for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
+			MsgCmdChangeBinding msg = new MsgCmdChangeBinding( app.getTemplate().getExternalExportsPrefix(), applicationName );
+			this.messagingMngr.sendMessageSafely( ma, inst, msg );
+		}
 	}
 }

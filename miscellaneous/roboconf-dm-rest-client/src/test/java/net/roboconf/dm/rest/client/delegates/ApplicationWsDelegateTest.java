@@ -51,6 +51,7 @@ import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 
@@ -511,12 +512,77 @@ public class ApplicationWsDelegateTest {
 
 	@Test
 	public void testResynchronize_nonExistingApplication() {
+
 		try {
 			this.client.getApplicationDelegate().resynchronize( "I-am-not-an-app" );
 			Assert.fail( "Expecting exception" );
+
 		} catch ( UniformInterfaceException e ) {
 			// Not found!
 			Assert.assertEquals( 404, e.getResponse().getStatus() );
+		}
+	}
+
+
+	@Test( expected = ApplicationWsException.class )
+	public void testBindApplication_inexistingApplication() throws Exception {
+
+		this.client.getApplicationDelegate().bindApplication( "inexisting", this.ma.getApplication().getTemplate().getName(), this.ma.getName());
+	}
+
+
+	@Test( expected = ApplicationWsException.class )
+	public void testBindApplication_invalidBoundApplication() throws Exception {
+
+		this.client.getApplicationDelegate().bindApplication( this.ma.getName(), this.ma.getApplication().getTemplate().getName(), "invalid" );
+	}
+
+
+	@Test( expected = ApplicationWsException.class )
+	public void testBindApplication_invalidBoundTemplate() throws Exception {
+
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.setName( "app-other" );
+
+		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// ma and app2 do not have the same template name
+		this.client.getApplicationDelegate().bindApplication( this.ma.getName(), this.ma.getApplication().getTemplate().getName(), app2.getName());
+	}
+
+
+	@Test
+	public void testBindApplication_success() throws Exception {
+
+		// Create a second application with a different template
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.setName( "app-other" );
+
+		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// Bind and check
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
+		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getMySqlVm()).size());
+
+		this.client.getApplicationDelegate().bindApplication( this.ma.getName(), app2.getTemplate().getName(), app2.getName());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+
+		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
+		Assert.assertEquals( 1, messages.size());
+		messages.addAll( this.ma.removeAwaitingMessages( this.app.getMySqlVm()));
+		Assert.assertEquals( 2, messages.size());
+
+		for( Message m : this.msgClient.sentMessages ) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( app2.getTemplate().getName(), msg.getAppTempleName());
+			Assert.assertEquals( app2.getName(), msg.getAppName());
 		}
 	}
 }

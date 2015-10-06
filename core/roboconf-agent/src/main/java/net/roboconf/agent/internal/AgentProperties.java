@@ -39,10 +39,18 @@ import net.roboconf.messaging.api.MessagingConstants;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentProperties {
+public final class AgentProperties {
 
 	private String applicationName, ipAddress, scopedInstancePath;
-	private Map<String, String> messagingConfiguration;
+	private Map<String,String> messagingConfiguration;
+
+
+	/**
+	 * Constructor.
+	 */
+	AgentProperties() {
+		// nothing
+	}
 
 
 	/**
@@ -97,7 +105,7 @@ public class AgentProperties {
 	 * @return the messaging configuration.
 	 */
 	public Map<String, String> getMessagingConfiguration() {
-		return messagingConfiguration;
+		return this.messagingConfiguration;
 	}
 
 	/**
@@ -157,15 +165,15 @@ public class AgentProperties {
 		result.setApplicationName( updatedField( props, DataHelpers.APPLICATION_NAME ));
 		result.setScopedInstancePath( updatedField( props, DataHelpers.SCOPED_INSTANCE_PATH ));
 
-		final Map<String, String> messagingConfiguration = new LinkedHashMap<>();
+		final Map<String, String> messagingConfiguration = new LinkedHashMap<> ();
 		for (String k : props.stringPropertyNames()) {
-			if (!DataHelpers.APPLICATION_NAME.equals(k) && !DataHelpers.SCOPED_INSTANCE_PATH.equals(k)) {
+			if (! DataHelpers.APPLICATION_NAME.equals(k) && ! DataHelpers.SCOPED_INSTANCE_PATH.equals(k)) {
 				// All other properties are considered messaging-specific.
 				messagingConfiguration.put(k, updatedField( props, k));
 			}
 		}
-		result.setMessagingConfiguration(Collections.unmodifiableMap(messagingConfiguration));
 
+		result.setMessagingConfiguration(Collections.unmodifiableMap(messagingConfiguration));
 		return result;
 	}
 

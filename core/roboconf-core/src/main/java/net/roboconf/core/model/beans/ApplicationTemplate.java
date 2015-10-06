@@ -42,7 +42,7 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 
 	private static final long serialVersionUID = -4753958407033243184L;
 
-	private String qualifier, dslId;
+	private String qualifier, dslId, externalExportsPrefix;
 	private Graphs graphs;
 
 	// We use a list because an application's attributes may be modified.
@@ -53,11 +53,12 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	 * External exports.
 	 * <p>
 	 * Key = internal (graph) variable.<br />
-	 * Value = name (with no prefix) of the variable, seen from outside.
+	 * Value = name of the variable, seen from outside.
 	 * </p>
 	 * <p>
-	 * Example: <code>exports: Toto.ip as test</code> will result in an entry
-	 * whose key is <code>Toto.ip</code> and whose value is<code>test</code>.
+	 * Example: <code>exports: Toto.ip as test</code> and that the application's prefix
+	 * is <b>APP</b> will result in an entry whose key is <code>Toto.ip</code>
+	 * and whose value is<code>APP.test</code>.
 	 * </p>
 	 */
 	public final Map<String,String> externalExports = new HashMap<> ();
@@ -119,6 +120,20 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	 */
 	public void setGraphs( Graphs graphs ) {
 		this.graphs = graphs;
+	}
+
+	/**
+	 * @return the externalExportsPrefix
+	 */
+	public String getExternalExportsPrefix() {
+		return this.externalExportsPrefix;
+	}
+
+	/**
+	 * @param externalId the externalExportsPrefix to set
+	 */
+	public void setExternalExportsPrefix( String externalExportsPrefix ) {
+		this.externalExportsPrefix = externalExportsPrefix;
 	}
 
 	@Override
