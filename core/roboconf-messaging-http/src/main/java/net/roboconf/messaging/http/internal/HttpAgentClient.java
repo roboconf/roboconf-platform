@@ -45,6 +45,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.http.SubscriptionMessage;
 
 /**
  * The Http client for an agent (this client is intended to be used from within an agent).

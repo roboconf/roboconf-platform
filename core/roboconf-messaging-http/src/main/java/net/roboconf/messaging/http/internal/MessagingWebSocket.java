@@ -44,6 +44,8 @@ import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
 import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.http.HttpMessage;
+import net.roboconf.messaging.http.SubscriptionMessage;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -53,7 +55,7 @@ import net.roboconf.messaging.api.utils.SerializationUtils;
 public class MessagingWebSocket {
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
-	
+
     @OnOpen
     public void onWebSocketConnect(Session session) {
     	this.logger.finest("Socket Connected: " + session);
@@ -63,6 +65,9 @@ public class MessagingWebSocket {
     public void onWebSocketBinary(ByteBuffer buf) {
     	this.logger.finest("Received BINARY message: " + buf);
 
+    	//HttpMessage test = new HttpMessage("test", null);
+    	//this.logger.info("onWebSocketBinary TEST message=" + test);
+  
     	try {
     		HttpMessage msg = SerializationUtils.deserializeObject(buf.array(), HttpMessage.class);
     		this.logger.finest("Deserialized as " + msg);
@@ -77,7 +82,6 @@ public class MessagingWebSocket {
     					client.addMessageToMQ(msg.getMessage());
     				}
     			}
-
     		}
 
     	} catch (ClassNotFoundException e) {

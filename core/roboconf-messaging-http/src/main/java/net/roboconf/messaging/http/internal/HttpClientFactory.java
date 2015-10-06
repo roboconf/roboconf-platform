@@ -63,7 +63,8 @@ import org.osgi.service.http.HttpService;
  */
 @Component(
 		name = "roboconf-messaging-client-factory-http",
-		publicFactory = false
+		publicFactory = false,
+		managedservice = "net.roboconf.messaging.http"
 )
 @Provides(
 		specifications = MessagingClientFactory.class,
@@ -83,7 +84,7 @@ public class HttpClientFactory implements MessagingClientFactory {
 	private HttpService http;
 
 	// The logger
-	private final Logger logger = Logger.getLogger(this.getClass().getName());
+	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private String httpServerIp;
 	private String httpPort;
@@ -118,8 +119,13 @@ public class HttpClientFactory implements MessagingClientFactory {
 		Hashtable<String,String> initParams = new Hashtable<String,String> ();
 		initParams.put( "servlet-name", "Roboconf (agent) messaging-http websocket" );
 
-		MessagingWebSocketServlet messagingServlet = new MessagingWebSocketServlet();
-		this.http.registerServlet( "/messaging-http/*", messagingServlet, initParams, null );
+		try {
+			MessagingWebSocketServlet messagingServlet = new MessagingWebSocketServlet();
+			this.http.registerServlet( "/messaging-http", messagingServlet, initParams, null );
+		} catch(Throwable e) {
+			e.printStackTrace(System.err);
+			throw e;
+		}
 	}
 
 	@Invalidate

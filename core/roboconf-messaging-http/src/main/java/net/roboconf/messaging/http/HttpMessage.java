@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http.internal;
+package net.roboconf.messaging.http;
 
 import java.io.Serializable;
 

@@ -23,7 +23,8 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http.internal;
+package net.roboconf.messaging.http;
+
 
 /**
  * A subscribe/unsubscribe message for HTTP messaging system.

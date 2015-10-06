@@ -42,12 +42,15 @@ import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
+import org.eclipse.jetty.websocket.jsr356.ClientContainer;
+
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.http.HttpConstants;
+import net.roboconf.messaging.http.HttpMessage;
 
 /**
  * Common HTTP client-related stuffs.
@@ -158,7 +161,14 @@ public abstract class HttpClient implements IClient {
 				+ (routingKey == null ? "" : "|" + routingKey));
 		if(session == null) {
 
-			WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+			//WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+			//WebSocketContainer container = JettyClientContainerProvider.getWebSocketContainer();
+			ClientContainer container = new ClientContainer();
+			try {
+				container.start();
+			} catch (Exception e) {
+				throw new IOException(e);
+			}
 			try {
 				session = container.connectToServer(MessagingWebSocket.class, URI.create("ws://" + getIpAddress() + ":" + getPort() + "/messaging-http"
 						+ "?exchange=" + URLEncoder.encode(applicationName, "UTF-8")
