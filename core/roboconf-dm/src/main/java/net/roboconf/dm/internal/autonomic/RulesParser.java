@@ -116,7 +116,7 @@ public final class RulesParser {
 
 			s = s.substring( m.end()).trim();
 			String eventId = m.group( 1 );
-			AutonomicRule rule = new AutonomicRule( m.group( 2 ), s );
+			AutonomicRule rule = new AutonomicRule( m.group( 2 ), s, eventId );
 			result.put( eventId, rule );
 		}
 

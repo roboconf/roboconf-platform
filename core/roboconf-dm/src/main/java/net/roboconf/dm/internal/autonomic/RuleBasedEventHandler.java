@@ -27,6 +27,9 @@ package net.roboconf.dm.internal.autonomic;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -45,6 +48,7 @@ import javax.mail.internet.MimeMessage;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
@@ -70,8 +74,14 @@ public class RuleBasedEventHandler {
 
 	static final String AUTONOMIC_MARKER = "autonomic";
 
-	private final Manager manager;
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Manager manager;
+
+	/**
+	 * This map acts as a cache whose key is bound to an application and a given reaction ID.
+	 */
+	private final Map<String,Instance> reactionKeyToLastInstance;
+	boolean disableChecks = false;
 
 
 	/**
@@ -80,6 +90,7 @@ public class RuleBasedEventHandler {
 	 */
 	public RuleBasedEventHandler( Manager manager ) {
 		this.manager = manager;
+		this.reactionKeyToLastInstance = new HashMap<String,Instance> ();
 	}
 
 
@@ -94,20 +105,60 @@ public class RuleBasedEventHandler {
 			AutonomicRule rule = rules.get( event.getEventId());
 			this.logger.fine( "Autonomic management event. Event ID = " + event.getEventId());
 
+			// This key is bound to an application name and a reaction ID.
+			String reactionKey = ma.getName() + "_";
+			if( rule != null )
+				reactionKey += rule.getReactionId();
+
+			// Permissions checks are handled entirely in this method.
+			// Dealing with it in the (several) specific methods would make unit tests more complex.
 			if( rule == null )
 				this.logger.fine( "No rule was found to handle events with the '" + event.getEventId() + "' ID." );
 
 			// EVENT_ID ReplicateService ComponentTemplate
-			else if( REPLICATE_SERVICE.equalsIgnoreCase( rule.getReactionId()))
-				createInstances( ma, rule.getReactionInfo());
+			else if( REPLICATE_SERVICE.equalsIgnoreCase( rule.getReactionId())) {
+
+				this.logger.fine( "Autonomic management: about to create a new instance based on '" + rule.getReactionInfo() + "'." );
+				if( checkPermission( reactionKey, true )) {
+					Instance inst = createInstances( ma, rule.getReactionInfo());
+					ack( inst, reactionKey );
+
+				} else {
+					this.logger.warning(
+							"Autonomic management: replication of service of '" + rule.getReactionId() + "' is dropped. "
+							+ "A previous execution is still in progress (reaction ID = " + rule.getReactionId() + ")." );
+				}
+			}
 
 			// EVENT_ID ReplicateInstance RootInstanceName
-			else if( REPLICATE_INSTANCE.equalsIgnoreCase( rule.getReactionId()))
-				replicateInstance( ma, rule.getReactionInfo());
+			else if( REPLICATE_INSTANCE.equalsIgnoreCase( rule.getReactionId())) {
+
+				this.logger.fine( "Autonomic management: about to replicate instance '/" + rule.getReactionInfo() + "'." );
+				if( checkPermission( reactionKey, true )) {
+					Instance inst = replicateInstance( ma, rule.getReactionInfo());
+					ack( inst, reactionKey );
+
+				} else {
+					this.logger.warning(
+							"Autonomic management: replication of root instance '" + rule.getReactionId() + "' is dropped. "
+							+ "A previous execution is still in progress (reaction ID = " + rule.getReactionId() + ")." );
+				}
+			}
 
 			// EVENT_ID StopService ComponentName
-			else if( DELETE_SERVICE.equalsIgnoreCase( rule.getReactionId()))
-				deleteInstances( ma, rule.getReactionInfo());
+			else if( DELETE_SERVICE.equalsIgnoreCase( rule.getReactionId())) {
+
+				this.logger.fine( "Autonomic management: about to delete an instance of '" + rule.getReactionInfo() + "'." );
+				if( checkPermission( reactionKey, false )) {
+					Instance inst = deleteInstances( ma, rule.getReactionInfo());
+					ack( inst, reactionKey );
+
+				} else {
+					this.logger.warning(
+							"Autonomic management: deletion of an instance of '" + rule.getReactionId() + "' is dropped. "
+							+ "A previous execution is still in progress (reaction ID = " + rule.getReactionId() + ")." );
+				}
+			}
 
 			// EVENT_ID Mail DestinationEmail
 			else if( MAIL.equalsIgnoreCase( rule.getReactionId()))
@@ -208,10 +259,12 @@ public class RuleBasedEventHandler {
 	 * <p>
 	 * (e.g. VM_name/Software_container_name/App_artifact_name)
 	 * </p>
+	 *
+	 * @return the created root instance (can be null in case of error)
 	 */
-	void createInstances( ManagedApplication ma, String componentTemplates ) {
+	Instance createInstances( ManagedApplication ma, String componentTemplates ) {
 
-		this.logger.fine( "Autonomic management: about to create a new instance based on '" + componentTemplates + "'." );
+		Instance result = null;
 		try {
 			if( componentTemplates.startsWith( "/" ))
 				componentTemplates = componentTemplates.substring( 1 );
@@ -249,10 +302,15 @@ public class RuleBasedEventHandler {
 			rootInstance.data.put( AUTONOMIC_MARKER, "true" );
 			this.manager.instancesMngr().deployAndStartAll( ma, rootInstance );
 
+			// Only update the result if everything went fine
+			result = rootInstance;
+
 		} catch( Exception e ) {
 			this.logger.warning( "The creation of instances (autonomic context) failed. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
+
+		return result;
 	}
 
 
@@ -260,10 +318,11 @@ public class RuleBasedEventHandler {
 	 * Instantiates a new VM from another "template" instance.
 	 * @param ma the managed application
 	 * @param rootInstanceName the name of the root "template" instance
+	 * @return the created root instance (can be null in case of error)
 	 */
-	void replicateInstance( ManagedApplication ma, String rootInstanceName ) {
+	Instance replicateInstance( ManagedApplication ma, String rootInstanceName ) {
 
-		this.logger.fine( "Autonomic management: about to replicate instance '/" + rootInstanceName + "'." );
+		Instance result = null;
 		try {
 			// Find the instance to copy
 			Instance rootInstanceToCopy = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/" + rootInstanceName );
@@ -281,10 +340,15 @@ public class RuleBasedEventHandler {
 			copy.data.put( AUTONOMIC_MARKER, "true" );
 			this.manager.instancesMngr().deployAndStartAll( ma, copy );
 
+			// Only update the result if everything went fine
+			result = copy;
+
 		} catch( Exception e ) {
 			this.logger.warning( "The replication of an instance (autonomic context) failed. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
+
+		return result;
 	}
 
 
@@ -296,10 +360,11 @@ public class RuleBasedEventHandler {
 	 *
 	 * @param ma the managed application
 	 * @param componentName the component name of an instance to delete
+	 * @return the removed root instance (can be null in case of error)
 	 */
-	void deleteInstances( ManagedApplication ma, String componentName ) {
+	Instance deleteInstances( ManagedApplication ma, String componentName ) {
 
-		this.logger.fine( "Autonomic management: about to delete an instance of '" + componentName + "'." );
+		Instance result = null;
 		try {
 			// Find an instance which was created by the autonomic.
 			// Its root instance is annotated with the "autonomic" marker.
@@ -320,13 +385,94 @@ public class RuleBasedEventHandler {
 			if( instanceToRemove != null ) {
 				this.manager.instancesMngr().undeployAll( ma, instanceToRemove );
 				this.manager.instancesMngr().removeInstance( ma, instanceToRemove );
+
+				// Only update the result if everything went fine
+				result = instanceToRemove;
 			}
 
 		} catch( Exception e ) {
 			this.logger.warning( "The deletion of an instance (autonomic context) failed. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
+
+		return result;
 	}
+
+
+	/**
+	 * Checks some actions are allowed.
+	 * <p>
+	 * This method should only invoked for creation and deletion of instances.
+	 * </p>
+	 *
+	 * @param reactionKey the reaction key
+	 * @param add true if an instance is about to be added and started, false if it is about to be removed
+	 * @return true if the reaction can be triggered, false otherwise
+	 */
+	boolean checkPermission( String reactionKey, boolean add ) {
+
+		boolean permitted = true;
+		Instance lastInstance = this.reactionKeyToLastInstance.get( reactionKey );
+
+		// Disabling checks is used in some tests
+		if( ! this.disableChecks && lastInstance != null ) {
+
+			for( Iterator<Instance> it = InstanceHelpers.buildHierarchicalList( lastInstance ).iterator(); it.hasNext() && permitted; ) {
+				Instance inst = it.next();
+
+				// If we want to add a new instance, then all the instances "before"
+				// must have been started.
+				if( add && inst.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+					permitted = false;
+					this.logger.warning( "Autonomic management: instance " + inst + " is not yet started (context = " + reactionKey + ")." );
+				}
+
+				// Otherwise, if we want to remove an instance, then all the instances "before"
+				// must have been undeployed.
+				else if( ! add && inst.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
+					permitted = false;
+					this.logger.warning( "Autonomic management: instance " + inst + " is not yet undeployed (context = " + reactionKey + ")." );
+				}
+			}
+
+			// Clean the cache
+			if( permitted )
+				this.reactionKeyToLastInstance.remove( reactionKey );
+		}
+
+		return permitted;
+	}
+
+
+	/**
+	 * Acknowledges an instance was created or removed for a given reaction ID.
+	 * @param instance the resulting instance (can be null)
+	 * @param reactionKey a reaction key (not null)
+	 */
+	void ack( Instance instance, String reactionKey ) {
+
+		if( instance == null )
+			return;
+
+		// Update the cache
+		this.reactionKeyToLastInstance.put( reactionKey, instance );
+
+		// Clean it too
+		// Indeed, some actions may invalidate it. As an example, it is not worth
+		// keeping an instance cached for a replicate reaction if it was removed.
+
+		// We here consider an instance can only be cached for only one reaction ID.
+		List<String> reactionKeys = new ArrayList<> ();
+		for( Map.Entry<String,Instance> entry : this.reactionKeyToLastInstance.entrySet()) {
+			if( entry.getValue().equals( instance ))
+				reactionKeys.add( entry.getKey());
+		}
+
+		reactionKeys.remove( reactionKey );
+		for( String key : reactionKeys )
+			this.reactionKeyToLastInstance.remove( key );
+	}
+
 
 	/**
 	 * @author Pierre-Yves Gibello - Linagora
