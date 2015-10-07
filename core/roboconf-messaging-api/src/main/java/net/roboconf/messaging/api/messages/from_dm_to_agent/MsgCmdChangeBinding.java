@@ -34,24 +34,24 @@ import net.roboconf.messaging.api.messages.Message;
 public class MsgCmdChangeBinding extends Message {
 
 	private static final long serialVersionUID = -90811826628551779L;
-	private final String appTempleName, appName;
+	private final String externalExportsPrefix, appName;
 
 
 	/**
 	 * Constructor.
-	 * @param appTempleName
+	 * @param externalExportsPrefix
 	 * @param appName
 	 */
-	public MsgCmdChangeBinding( String appTempleName, String appName ) {
-		this.appTempleName = appTempleName;
+	public MsgCmdChangeBinding( String externalExportsPrefix, String appName ) {
+		this.externalExportsPrefix = externalExportsPrefix;
 		this.appName = appName;
 	}
 
 	/**
-	 * @return the appTempleName
+	 * @return the externalExportsPrefix
 	 */
-	public String getAppTempleName() {
-		return this.appTempleName;
+	public String getExternalExportsPrefix() {
+		return this.externalExportsPrefix;
 	}
 
 	/**

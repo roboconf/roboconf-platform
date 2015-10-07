@@ -193,7 +193,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	void processMsgChangeBinding( MsgCmdChangeBinding msg ) throws IOException {
 
 		// First, determine if a previous binding existed
-		String previousAppName = this.applicationBindings.get( msg.getAppTempleName());
+		String previousAppName = this.applicationBindings.get( msg.getExternalExportsPrefix());
 
 		// If so, act as if the associated imports had been removed
 		if( previousAppName != null ) {
@@ -209,7 +209,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			// symmetrical with added imports.
 			List<String> instancePaths = new ArrayList<> ();
 			for( Instance instance : InstanceHelpers.buildHierarchicalList( this.scopedInstance )) {
-				Collection<Import> imports = instance.getImports().get( msg.getAppTempleName());
+				Collection<Import> imports = instance.getImports().get( msg.getExternalExportsPrefix());
 				if( imports == null )
 					continue;
 
@@ -220,7 +220,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			// Now that we have the instance paths to remove,
 			// remove the associated imports.
 			for( String path : instancePaths ) {
-				MsgCmdRemoveImport fakeMsg = new MsgCmdRemoveImport( previousAppName, msg.getAppTempleName(), path );
+				MsgCmdRemoveImport fakeMsg = new MsgCmdRemoveImport( previousAppName, msg.getExternalExportsPrefix(), path );
 				try {
 					processMsgRemoveImport( fakeMsg, false );
 
@@ -232,7 +232,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		}
 
 		// Update the bindings
-		this.applicationBindings.put( msg.getAppTempleName(), msg.getAppName());
+		this.applicationBindings.put( msg.getExternalExportsPrefix(), msg.getAppName());
 
 		// Now, we need to find all the external imports associated with the new application.
 		// Then, we will act as if we had received AddImport messages. This is symmetrical with what we

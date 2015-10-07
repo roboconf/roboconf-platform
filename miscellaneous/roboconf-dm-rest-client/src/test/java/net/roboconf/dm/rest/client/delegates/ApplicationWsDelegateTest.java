@@ -560,6 +560,7 @@ public class ApplicationWsDelegateTest {
 		TestApplication app2 = new TestApplication();
 		app2.setDirectory( this.folder.newFolder());
 		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "eep" );
 		app2.setName( "app-other" );
 
 		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
@@ -569,7 +570,7 @@ public class ApplicationWsDelegateTest {
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getMySqlVm()).size());
 
-		this.client.getApplicationDelegate().bindApplication( this.ma.getName(), app2.getTemplate().getName(), app2.getName());
+		this.client.getApplicationDelegate().bindApplication( this.ma.getName(), app2.getTemplate().getExternalExportsPrefix(), app2.getName());
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
@@ -581,7 +582,7 @@ public class ApplicationWsDelegateTest {
 			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
 
 			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
-			Assert.assertEquals( app2.getTemplate().getName(), msg.getAppTempleName());
+			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
 			Assert.assertEquals( app2.getName(), msg.getAppName());
 		}
 	}

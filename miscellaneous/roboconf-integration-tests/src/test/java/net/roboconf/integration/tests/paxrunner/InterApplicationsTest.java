@@ -130,7 +130,7 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( 2, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Associate them together
-		this.manager.applicationMngr().bindApplication( importing, tplExporting.getName(), exporting.getName());
+		this.manager.applicationMngr().bindApplication( importing, tplExporting.getExternalExportsPrefix(), exporting.getName());
 
 		// Associate a target with it
 		String targetId = this.manager.targetsMngr().createTarget( "handler = in-memory" );

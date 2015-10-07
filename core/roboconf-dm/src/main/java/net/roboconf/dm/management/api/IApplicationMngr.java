@@ -111,11 +111,11 @@ public interface IApplicationMngr {
 	/**
 	 * Binds an application for external exports.
 	 * @param ma the application into which a binding must be created or changed
-	 * @param applicationTemplateName the name of the application template (prefix of the external variable)
+	 * @param externalExportPrefix the name of the prefix for external variables
 	 * @param applicationName the name of the application to use (must be associated with the template)
 	 * @throws UnauthorizedActionException if the application does not exist, or if it is not associated with the right template
 	 * @throws IOException if an error occurred while creating the binding
 	 */
-	void bindApplication( ManagedApplication ma, String applicationTemplateName, String applicationName )
+	void bindApplication( ManagedApplication ma, String externalExportPrefix, String applicationName )
 	throws UnauthorizedActionException, IOException;
 }

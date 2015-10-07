@@ -406,17 +406,41 @@ public class ApplicationMngrImplTest {
 	}
 
 
+	@Test( expected = UnauthorizedActionException.class )
+	public void testBindApplication_invalidTemplatePrefix() throws Exception {
+
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		app.getTemplate().setExternalExportsPrefix( "prefix" );
+
+		ManagedApplication ma1 = new ManagedApplication( app );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
+
+		app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+
+		ManagedApplication ma2 = new ManagedApplication( app );
+		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
+
+		// ma1 and ma2 do not have the same template name
+		this.mngr.bindApplication( ma1, ma1.getApplication().getTemplate().getName(), ma2.getName());
+	}
+
+
 	@Test
 	public void testBindApplication_success() throws Exception {
 
 		TestApplication app1 = new TestApplication();
 		app1.setDirectory( this.folder.newFolder());
+		app1.getTemplate().setExternalExportsPrefix( "prefix1" );
+
 		ManagedApplication ma1 = new ManagedApplication( app1 );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma1.getName(), ma1 );
 
 		TestApplication app2 = new TestApplication();
 		app2.getTemplate().setName( "tpl-other" );
 		app2.getTemplate().setExternalExportsPrefix( "tpl-other-prefix" );
+		app2.getTemplate().setExternalExportsPrefix( "prefix2" );
 		app2.setName( "app-other" );
 
 		// Rename root instances in the second application.
@@ -428,8 +452,14 @@ public class ApplicationMngrImplTest {
 		ManagedApplication ma2 = new ManagedApplication( app2 );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
+		Assert.assertEquals( 0, ma1.getApplication().applicationBindings.size());
+		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
+
 		Mockito.verifyZeroInteractions( this.messagingMngr );
-		this.mngr.bindApplication( ma1, ma2.getApplication().getTemplate().getName(), ma2.getName());
+		this.mngr.bindApplication( ma1, eep, ma2.getName());
+
+		Assert.assertEquals( 1, ma1.getApplication().applicationBindings.size());
+		Assert.assertEquals( ma2.getName(), ma1.getApplication().applicationBindings.get( eep ));
 
 		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
 		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );
@@ -444,7 +474,7 @@ public class ApplicationMngrImplTest {
 			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
 
 			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
-			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getAppTempleName());
+			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
 			Assert.assertEquals( ma2.getName(), msg.getAppName());
 		}
 
