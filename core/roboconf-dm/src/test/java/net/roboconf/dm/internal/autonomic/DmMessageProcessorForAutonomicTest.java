@@ -106,7 +106,7 @@ public class DmMessageProcessorForAutonomicTest {
 
 
 	@Test
-	public void testAutonomic() throws Exception {
+	public void testAutonomic_createDeleteEtc() throws Exception {
 
 		// Copy resources
 		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
@@ -171,6 +171,49 @@ public class DmMessageProcessorForAutonomicTest {
 		Message msg = new MsgNotifAutonomic( this.app.getName(), "invalid", "up", "we do not care" );
 		this.processor.processMessage( msg );
 		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// We must have the initial instances
+		Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );
+		Assert.assertTrue( allInstances.contains( this.app.getMySqlVm()));
+		Assert.assertTrue( allInstances.contains( this.app.getMySql()));
+		Assert.assertTrue( allInstances.contains( this.app.getTomcatVm()));
+		Assert.assertTrue( allInstances.contains( this.app.getTomcat()));
+		Assert.assertTrue( allInstances.contains( this.app.getWar()));
+	}
+
+
+	@Test
+	public void testAutonomic_replicateDelete() throws Exception {
+
+		// Copy resources
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
+		Assert.assertNotNull( ma );
+
+		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
+		Assert.assertTrue( dir.mkdirs());
+
+		File targetFile = new File( dir, Constants.FILE_RULES );
+		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
+		Utils.copyStream( sourceFile, targetFile );
+		Assert.assertTrue( targetFile.exists());
+
+		// Get some information about the application
+		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
+
+		// Simulate a first message to delete an instance
+		this.processor.processMessage( newMessage( "peaceful" ));
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Replicate the Tomcat VM
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( instanceCount + 6, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Reduce the number of instances
+		this.processor.processMessage( newMessage( "peaceful" ));
+		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.app ).size());
 
 		// We must have the initial instances
 		Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );

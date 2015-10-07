@@ -445,7 +445,7 @@ public final class InstanceHelpers {
 	 * Replicates an instance and its children.
 	 * <p>
 	 * The result does not have any parent. It does not have any
-	 * data, nor imports or real exports. In fact, only the name,
+	 * data and imports. In fact, only the name,
 	 * the component association, the channel and the overridden exports
 	 * are copied. The children are not "referenced" but replicated.
 	 * </p>

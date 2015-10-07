@@ -65,6 +65,7 @@ public class RuleBasedEventHandler {
 
 	static final String DELETE_SERVICE = "delete-service";
 	static final String REPLICATE_SERVICE = "replicate-service";
+	static final String REPLICATE_INSTANCE = "replicate-instance";
 	static final String MAIL = "mail";
 
 	static final String AUTONOMIC_MARKER = "autonomic";
@@ -99,6 +100,10 @@ public class RuleBasedEventHandler {
 			// EVENT_ID ReplicateService ComponentTemplate
 			else if( REPLICATE_SERVICE.equalsIgnoreCase( rule.getReactionId()))
 				createInstances( ma, rule.getReactionInfo());
+
+			// EVENT_ID ReplicateInstance RootInstanceName
+			else if( REPLICATE_INSTANCE.equalsIgnoreCase( rule.getReactionId()))
+				replicateInstance( ma, rule.getReactionInfo());
 
 			// EVENT_ID StopService ComponentName
 			else if( DELETE_SERVICE.equalsIgnoreCase( rule.getReactionId()))
@@ -246,6 +251,38 @@ public class RuleBasedEventHandler {
 
 		} catch( Exception e ) {
 			this.logger.warning( "The creation of instances (autonomic context) failed. " + e.getMessage());
+			Utils.logException( this.logger, e );
+		}
+	}
+
+
+	/**
+	 * Instantiates a new VM from another "template" instance.
+	 * @param ma the managed application
+	 * @param rootInstanceName the name of the root "template" instance
+	 */
+	void replicateInstance( ManagedApplication ma, String rootInstanceName ) {
+
+		this.logger.fine( "Autonomic management: about to replicate instance '/" + rootInstanceName + "'." );
+		try {
+			// Find the instance to copy
+			Instance rootInstanceToCopy = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/" + rootInstanceName );
+			if( rootInstanceToCopy == null )
+				throw new IOException( "Instance " + rootInstanceName + " was not found in application " + ma.getApplication().getName());
+
+			// Copy it
+			Instance copy = InstanceHelpers.replicateInstance( rootInstanceToCopy );
+			copy.setName( copy.getComponent().getName() + "_" + System.currentTimeMillis());
+
+			// Register it in the model
+			this.manager.instancesMngr().addInstance( ma, null, copy );
+
+			// Now, deploy and start all
+			copy.data.put( AUTONOMIC_MARKER, "true" );
+			this.manager.instancesMngr().deployAndStartAll( ma, copy );
+
+		} catch( Exception e ) {
+			this.logger.warning( "The replication of an instance (autonomic context) failed. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
 	}

@@ -137,6 +137,14 @@ public class RuleBasedEventHandlerTest {
 
 
 	@Test
+	public void testReplicateInstance_invalidInstanceName() {
+		int instanceCount = InstanceHelpers.getAllInstances( this.ma.getApplication()).size();
+		this.handler.replicateInstance( this.ma, "/whatever" );
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
+	}
+
+
+	@Test
 	public void testCreateAndDelete() {
 
 		// Create...
@@ -186,6 +194,56 @@ public class RuleBasedEventHandlerTest {
 
 		// Delete again => nothing
 		this.handler.deleteInstances( this.ma, this.app.getWar().getComponent().getName());
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
+	}
+
+
+	@Test
+	public void testReplicateAndDelete() {
+
+		// Create...
+		int instanceCount = InstanceHelpers.getAllInstances( this.ma.getApplication()).size();
+		StringBuilder sb = new StringBuilder();
+		sb.append( this.app.getTomcatVm().getComponent().getName());
+		sb.append( "/" );
+		sb.append( this.app.getTomcat().getComponent().getName());
+		sb.append( "/" );
+		sb.append( this.app.getWar().getComponent().getName());
+
+		this.handler.replicateInstance( this.ma, this.app.getMySqlVm().getName());
+		Assert.assertEquals( instanceCount + 2, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
+
+		Collection<Instance> rootInstances = new ArrayList<> ();
+		rootInstances.addAll( this.ma.getApplication().getRootInstances());
+		rootInstances.remove( this.app.getMySqlVm());
+		rootInstances.remove( this.app.getTomcatVm());
+
+		Assert.assertEquals( 1, rootInstances.size());
+		Instance instance = rootInstances.iterator().next();
+		Assert.assertTrue( instance.getName().startsWith( this.app.getMySqlVm().getComponent().getName() + "_" ));
+		Assert.assertEquals( this.app.getMySqlVm().getComponent(), instance.getComponent());
+
+		Assert.assertEquals( 1, instance.getChildren().size());
+		instance = instance.getChildren().iterator().next();
+		Assert.assertEquals( this.app.getMySql().getName().toLowerCase(), instance.getName());
+		Assert.assertEquals( this.app.getMySql().getComponent(), instance.getComponent());
+
+		Assert.assertEquals( 0, instance.getChildren().size());
+
+		// Create another time
+		this.handler.replicateInstance( this.ma, this.app.getMySqlVm().getName());
+		Assert.assertEquals( instanceCount + 4, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
+
+		// Delete once
+		this.handler.deleteInstances( this.ma, this.app.getMySql().getComponent().getName());
+		Assert.assertEquals( instanceCount + 2, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
+
+		// Delete again
+		this.handler.deleteInstances( this.ma, this.app.getMySql().getComponent().getName());
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
+
+		// Delete again => nothing
+		this.handler.deleteInstances( this.ma, this.app.getMySql().getComponent().getName());
 		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());
 	}
 
