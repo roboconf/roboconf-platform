@@ -417,7 +417,7 @@ public final class Utils {
 	 *
 	 * @param directory an existing directory
 	 * @param includeDirectories true to include directories, false to exclude them from the result
-	 * @return a non-null list of files, sorted alphabetically by file paths
+	 * @return a non-null list of files, sorted alphabetically by file names
 	 */
 	public static List<File> listAllFiles( File directory, boolean includeDirectories ) {
 
@@ -457,7 +457,7 @@ public final class Utils {
 	/**
 	 * Lists directories located under a given file.
 	 * @param root a file
-	 * @return a non-null list of directories, sorted alphabetically by file paths
+	 * @return a non-null list of directories, sorted alphabetically by file names
 	 */
 	public static List<File> listDirectories( File root ) {
 
