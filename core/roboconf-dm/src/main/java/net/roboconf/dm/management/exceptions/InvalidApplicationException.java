@@ -52,6 +52,14 @@ public class InvalidApplicationException extends Exception {
 	}
 
 	/**
+	 * Constructor.
+	 * @param e
+	 */
+	public InvalidApplicationException( Exception e ) {
+		super( e );
+	}
+
+	/**
 	 * @param errors a non-null list of errors
 	 * @return a detailed string
 	 */
