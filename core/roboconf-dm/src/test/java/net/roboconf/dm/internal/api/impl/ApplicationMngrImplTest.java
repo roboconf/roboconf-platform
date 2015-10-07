@@ -452,8 +452,14 @@ public class ApplicationMngrImplTest {
 		ManagedApplication ma2 = new ManagedApplication( app2 );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
+		Assert.assertEquals( 0, ma1.getApplication().applicationBindings.size());
+		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
+
 		Mockito.verifyZeroInteractions( this.messagingMngr );
-		this.mngr.bindApplication( ma1, ma2.getApplication().getTemplate().getExternalExportsPrefix(), ma2.getName());
+		this.mngr.bindApplication( ma1, eep, ma2.getName());
+
+		Assert.assertEquals( 1, ma1.getApplication().applicationBindings.size());
+		Assert.assertEquals( ma2.getName(), ma1.getApplication().applicationBindings.get( eep ));
 
 		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
 		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );

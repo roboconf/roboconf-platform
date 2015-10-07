@@ -373,8 +373,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		if( ! externalExportPrefix.equals( app.getTemplate().getExternalExportsPrefix()))
 			throw new UnauthorizedActionException( "Application " + applicationName + "'s template does not have " + externalExportPrefix + " as external exports prefix." );
 
-		app.applicationBindings.put( externalExportPrefix, applicationName );
-		ConfigurationUtils.saveApplicationBindings( app );
+		ma.getApplication().applicationBindings.put( externalExportPrefix, applicationName );
+		ConfigurationUtils.saveApplicationBindings( ma.getApplication());
+		this.logger.fine( "External prefix " + externalExportPrefix + " is now bound to application " + applicationName + " in " + ma.getName() + "." );
 
 		for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
 			MsgCmdChangeBinding msg = new MsgCmdChangeBinding( app.getTemplate().getExternalExportsPrefix(), applicationName );
