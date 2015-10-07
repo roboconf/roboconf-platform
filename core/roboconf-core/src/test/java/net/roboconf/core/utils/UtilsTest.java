@@ -36,6 +36,8 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -48,6 +50,7 @@ import java.util.logging.Logger;
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils.DirectoryFileFilter;
+import net.roboconf.core.utils.Utils.FileNameComparator;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -617,6 +620,29 @@ public class UtilsTest {
 	@Test( expected = IllegalArgumentException.class )
 	public void testListAllFiles_invalidParameter() throws Exception {
 		Utils.listAllFiles( this.folder.newFile( "roboconf.txt" ));
+	}
+
+
+	@Test
+	public void testFilesListingAreSortedAlphabetically() {
+
+		List<File> list = new ArrayList<> ();
+		list.add( new File( "a/toto" ));
+		list.add( new File( "a/zorro" ));
+		list.add( new File( "d/toto" ));
+		list.add( new File( "c/arbitrary" ));
+
+		Assert.assertEquals( "toto", list.get( 0 ).getName());
+		Assert.assertEquals( "zorro", list.get( 1 ).getName());
+		Assert.assertEquals( "toto", list.get( 2 ).getName());
+		Assert.assertEquals( "arbitrary", list.get( 3 ).getName());
+
+		Collections.sort( list, new FileNameComparator());
+
+		Assert.assertEquals( "arbitrary", list.get( 0 ).getName());
+		Assert.assertEquals( "toto", list.get( 1 ).getName());
+		Assert.assertEquals( "toto", list.get( 2 ).getName());
+		Assert.assertEquals( "zorro", list.get( 3 ).getName());
 	}
 
 

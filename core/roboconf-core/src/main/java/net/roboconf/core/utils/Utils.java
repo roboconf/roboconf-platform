@@ -41,6 +41,8 @@ import java.io.Writer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -415,7 +417,7 @@ public final class Utils {
 	 *
 	 * @param directory an existing directory
 	 * @param includeDirectories true to include directories, false to exclude them from the result
-	 * @return a non-null list of files
+	 * @return a non-null list of files, sorted alphabetically by file paths
 	 */
 	public static List<File> listAllFiles( File directory, boolean includeDirectories ) {
 
@@ -447,6 +449,7 @@ public final class Utils {
 			}
 		}
 
+		Collections.sort( result, new FileNameComparator());
 		return result;
 	}
 
@@ -454,16 +457,29 @@ public final class Utils {
 	/**
 	 * Lists directories located under a given file.
 	 * @param root a file
-	 * @return a non-null list of directories
+	 * @return a non-null list of directories, sorted alphabetically by file paths
 	 */
 	public static List<File> listDirectories( File root ) {
 
-		List<File> result = new ArrayList<File> ();
+		List<File> result = new ArrayList<> ();
 		File[] files = root.listFiles( new DirectoryFileFilter());
 		if( files != null )
 			result.addAll( Arrays.asList( files ));
 
+		Collections.sort( result, new FileNameComparator());
 		return result;
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	static final class FileNameComparator implements Comparator<File> {
+
+		@Override
+		public int compare( File o1, File o2 ) {
+			return o1.getName().compareTo( o2.getName());
+		}
 	}
 
 
