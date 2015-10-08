@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -76,12 +77,14 @@ public class RuleBasedEventHandler {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;
+	private final AtomicInteger vmCount = new AtomicInteger( 0 );
+
+	boolean disableChecks = false;
 
 	/**
 	 * This map acts as a cache whose key is bound to an application and a given reaction ID.
 	 */
 	private final Map<String,Instance> reactionKeyToLastInstance;
-	boolean disableChecks = false;
 
 
 	/**
@@ -110,6 +113,11 @@ public class RuleBasedEventHandler {
 			if( rule != null )
 				reactionKey += rule.getReactionId();
 
+			// Maximum number of machine the autonomic can create
+			int maxVmCount = this.manager.getAutonomicMaxRoots();
+			if( maxVmCount == -1 )
+				maxVmCount = Integer.MAX_VALUE;
+
 			// Permissions checks are handled entirely in this method.
 			// Dealing with it in the (several) specific methods would make unit tests more complex.
 			if( rule == null )
@@ -119,13 +127,16 @@ public class RuleBasedEventHandler {
 			else if( REPLICATE_SERVICE.equalsIgnoreCase( rule.getReactionId())) {
 
 				this.logger.fine( "Autonomic management: about to create a new instance based on '" + rule.getReactionInfo() + "'." );
-				if( checkPermission( reactionKey, true )) {
+				if( this.vmCount.get() >= maxVmCount ) {
+					this.logger.info( "Autonomic management: the maximum number of instances created by the autonomic has been reached. Service replication is cancelled." );
+
+				} else if( checkPermission( reactionKey, true )) {
 					Instance inst = createInstances( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
 				} else {
 					this.logger.warning(
-							"Autonomic management: replication of service of '" + rule.getReactionId() + "' is dropped. "
+							"Autonomic management: replication of service of '" + rule.getReactionId() + "' is cancelled. "
 							+ "A previous execution is still in progress (reaction ID = " + rule.getReactionId() + ")." );
 				}
 			}
@@ -134,13 +145,16 @@ public class RuleBasedEventHandler {
 			else if( REPLICATE_INSTANCE.equalsIgnoreCase( rule.getReactionId())) {
 
 				this.logger.fine( "Autonomic management: about to replicate instance '/" + rule.getReactionInfo() + "'." );
-				if( checkPermission( reactionKey, true )) {
+				if( this.vmCount.get() >= maxVmCount ) {
+					this.logger.info( "Autonomic management: the maximum number of instances created by the autonomic has been reached. Instance replication is cancelled." );
+
+				} else if( checkPermission( reactionKey, true )) {
 					Instance inst = replicateInstance( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
 				} else {
 					this.logger.warning(
-							"Autonomic management: replication of root instance '" + rule.getReactionId() + "' is dropped. "
+							"Autonomic management: replication of root instance '" + rule.getReactionId() + "' is cancelled. "
 							+ "A previous execution is still in progress (reaction ID = " + rule.getReactionId() + ")." );
 				}
 			}
@@ -155,7 +169,7 @@ public class RuleBasedEventHandler {
 
 				} else {
 					this.logger.warning(
-							"Autonomic management: deletion of an instance of '" + rule.getReactionId() + "' is dropped. "
+							"Autonomic management: deletion of an instance of '" + rule.getReactionId() + "' is cancelled. "
 							+ "A previous execution is still in progress (reaction ID = " + rule.getReactionId() + ")." );
 				}
 			}
@@ -242,7 +256,7 @@ public class RuleBasedEventHandler {
 			message.setSubject(subject);
 			message.setText(data.trim());
 
-			// Send email !
+			// Send email!
 			Transport.send(message);
 
 		} catch( MessagingException e ) {
@@ -304,6 +318,7 @@ public class RuleBasedEventHandler {
 
 			// Only update the result if everything went fine
 			result = rootInstance;
+			this.vmCount.incrementAndGet();
 
 		} catch( Exception e ) {
 			this.logger.warning( "The creation of instances (autonomic context) failed. " + e.getMessage());
@@ -342,6 +357,7 @@ public class RuleBasedEventHandler {
 
 			// Only update the result if everything went fine
 			result = copy;
+			this.vmCount.incrementAndGet();
 
 		} catch( Exception e ) {
 			this.logger.warning( "The replication of an instance (autonomic context) failed. " + e.getMessage());
@@ -388,6 +404,7 @@ public class RuleBasedEventHandler {
 
 				// Only update the result if everything went fine
 				result = instanceToRemove;
+				this.vmCount.decrementAndGet();
 			}
 
 		} catch( Exception e ) {

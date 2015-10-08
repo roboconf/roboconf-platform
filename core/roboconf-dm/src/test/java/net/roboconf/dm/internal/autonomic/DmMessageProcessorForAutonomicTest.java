@@ -105,12 +105,22 @@ public class DmMessageProcessorForAutonomicTest {
 		File appDirectory = ConfigurationUtils.findApplicationDirectory( this.app.getName(), dir );
 		this.app.setDirectory( appDirectory );
 
+		ManagedApplication ma = new ManagedApplication( this.app );
 		this.managerWrapper.getNameToManagedApplication().clear();
-		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), ma );
 
 		// Create a target and associate it with the application
 		String targetId = this.manager.targetsMngr().createTarget( "" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+
+		// Copy resources
+		dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
+		Assert.assertTrue( dir.mkdirs());
+
+		File targetFile = new File( dir, Constants.FILE_RULES );
+		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
+		Utils.copyStream( sourceFile, targetFile );
+		Assert.assertTrue( targetFile.exists());
 	}
 
 
@@ -125,18 +135,6 @@ public class DmMessageProcessorForAutonomicTest {
 
 		// Skip checks
 		this.ruleBasedHandler.disableChecks = true;
-
-		// Copy resources
-		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
-		Assert.assertNotNull( ma );
-
-		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
-		Assert.assertTrue( dir.mkdirs());
-
-		File targetFile = new File( dir, Constants.FILE_RULES );
-		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
-		Utils.copyStream( sourceFile, targetFile );
-		Assert.assertTrue( targetFile.exists());
 
 		// Get some information about the application
 		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
@@ -206,18 +204,6 @@ public class DmMessageProcessorForAutonomicTest {
 		// Skip checks
 		this.ruleBasedHandler.disableChecks = true;
 
-		// Copy resources
-		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
-		Assert.assertNotNull( ma );
-
-		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
-		Assert.assertTrue( dir.mkdirs());
-
-		File targetFile = new File( dir, Constants.FILE_RULES );
-		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
-		Utils.copyStream( sourceFile, targetFile );
-		Assert.assertTrue( targetFile.exists());
-
 		// Get some information about the application
 		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
 
@@ -248,18 +234,6 @@ public class DmMessageProcessorForAutonomicTest {
 
 	@Test
 	public void testAutonomic_replicate_failedPermission() throws Exception {
-
-		// Copy resources
-		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
-		Assert.assertNotNull( ma );
-
-		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
-		Assert.assertTrue( dir.mkdirs());
-
-		File targetFile = new File( dir, Constants.FILE_RULES );
-		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
-		Utils.copyStream( sourceFile, targetFile );
-		Assert.assertTrue( targetFile.exists());
 
 		// Get some information about the application
 		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
@@ -311,18 +285,6 @@ public class DmMessageProcessorForAutonomicTest {
 	@Test
 	public void testAutonomic_create_failedPermission() throws Exception {
 
-		// Copy resources
-		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
-		Assert.assertNotNull( ma );
-
-		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
-		Assert.assertTrue( dir.mkdirs());
-
-		File targetFile = new File( dir, Constants.FILE_RULES );
-		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
-		Utils.copyStream( sourceFile, targetFile );
-		Assert.assertTrue( targetFile.exists());
-
 		// Get some information about the application
 		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
 
@@ -372,18 +334,6 @@ public class DmMessageProcessorForAutonomicTest {
 
 	@Test
 	public void testAutonomic_delete_failedPermission() throws Exception {
-
-		// Copy resources
-		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
-		Assert.assertNotNull( ma );
-
-		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
-		Assert.assertTrue( dir.mkdirs());
-
-		File targetFile = new File( dir, Constants.FILE_RULES );
-		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
-		Utils.copyStream( sourceFile, targetFile );
-		Assert.assertTrue( targetFile.exists());
 
 		// Get some information about the application
 		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
@@ -452,21 +402,17 @@ public class DmMessageProcessorForAutonomicTest {
 		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
 		Assert.assertEquals( 2, this.managerWrapper.getNameToManagedApplication().size());
 
-		// Copy resources
-		String[] names = { this.app.getName(), app2.getName()};
-		for( String name: names ) {
+		// Copy resources for the 2nd application
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app2.getName());
+		Assert.assertNotNull( ma );
 
-			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( name );
-			Assert.assertNotNull( ma );
+		File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
+		Assert.assertTrue( dir.mkdirs());
 
-			File dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
-			Assert.assertTrue( dir.mkdirs());
-
-			File targetFile = new File( dir, Constants.FILE_RULES );
-			File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
-			Utils.copyStream( sourceFile, targetFile );
-			Assert.assertTrue( targetFile.exists());
-		}
+		File targetFile = new File( dir, Constants.FILE_RULES );
+		File sourceFile = TestUtils.findTestFile( "/autonomic/rules.cfg" );
+		Utils.copyStream( sourceFile, targetFile );
+		Assert.assertTrue( targetFile.exists());
 
 		// Get some information about application 1
 		int instanceCount1 = InstanceHelpers.getAllInstances( this.app ).size();
@@ -480,6 +426,60 @@ public class DmMessageProcessorForAutonomicTest {
 		int instanceCount2 = InstanceHelpers.getAllInstances( app2 ).size();
 		this.processor.processMessage( new MsgNotifAutonomic( app2.getName(), this.app.getTomcatVm().getName(), "loaded", "we do not care" ));
 		Assert.assertEquals( instanceCount2 + 3, InstanceHelpers.getAllInstances( app2 ).size());
+	}
+
+
+	@Test
+	public void testAutonomic_replicateWithUpperLimit() {
+
+		final int maxCount = 4;
+		this.manager.setAutonomicMaxRoots( maxCount );
+
+		// Create...
+		for( int i=0; i<maxCount; i++ ) {
+
+			Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );
+			for( Instance inst : allInstances )
+				inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+			this.processor.processMessage( newMessage( "replicated" ));
+			Assert.assertEquals( allInstances.size() + 3, InstanceHelpers.getAllInstances( this.app ).size());
+		}
+
+		// Next creation should fail
+		Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );
+		for( Instance inst : allInstances )
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( allInstances.size(), InstanceHelpers.getAllInstances( this.app ).size());
+	}
+
+
+	@Test
+	public void testAutonomic_createWithUpperLimit() {
+
+		final int maxCount = 3;
+		this.manager.setAutonomicMaxRoots( maxCount );
+
+		// Create...
+		for( int i=0; i<maxCount; i++ ) {
+
+			Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );
+			for( Instance inst : allInstances )
+				inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+			this.processor.processMessage( newMessage( "loaded" ));
+			Assert.assertEquals( allInstances.size() + 3, InstanceHelpers.getAllInstances( this.app ).size());
+		}
+
+		// Next creation should fail
+		Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );
+		for( Instance inst : allInstances )
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		this.processor.processMessage( newMessage( "loaded" ));
+		Assert.assertEquals( allInstances.size(), InstanceHelpers.getAllInstances( this.app ).size());
 	}
 
 

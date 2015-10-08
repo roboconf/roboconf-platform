@@ -89,6 +89,9 @@ public class Manager {
 	// Injected by iPojo or Admin Config
 	protected String messagingType;
 
+	// FIXME: move it into a new API
+	protected int autonomicMaxRoots = -1;
+
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected Timer timer;
@@ -275,6 +278,13 @@ public class Manager {
 		this.messagingType = messagingType;
 	}
 
+
+	public void setAutonomicMaxRoots( int autonomicMaxRoots ) {
+		this.logger.info( "The autonomic's maximum roots number is set to " + autonomicMaxRoots + "." );
+		this.autonomicMaxRoots = autonomicMaxRoots;
+	}
+
+
 	public void setTargetResolver( ITargetHandlerResolver targetHandlerResolver ) {
 
 		if( targetHandlerResolver == null )
@@ -316,5 +326,13 @@ public class Manager {
 
 	public IDebugMngr debugMngr() {
 		return this.debugMngr;
+	}
+
+	/**
+	 * FIXME: to remove once we have the autonomic configurator API.
+	 * @return the autonomicMaxRoots
+	 */
+	public int getAutonomicMaxRoots() {
+		return this.autonomicMaxRoots;
 	}
 }
