@@ -117,7 +117,7 @@ public final class RulesParser {
 			s = s.substring( m.end()).trim();
 			String eventId = m.group( 1 );
 			String delayAS = m.group( 3 );
-			long delay = delayAS != null ? Long.valueOf( delayAS.trim()) : 0L;
+			long delay = delayAS != null ? Long.parseLong( delayAS.trim()) : 0L;
 
 			AutonomicRule rule = new AutonomicRule( m.group( 2 ), s, eventId, delay );
 			result.put( eventId, rule );

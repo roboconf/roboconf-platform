@@ -509,7 +509,7 @@ public class RuleBasedEventHandler {
 
 			String timeAS = lastInstance.data.get( Instance.RUNNING_FROM );
 			if( timeAS != null ) {
-				long time = new Date().getTime() - Long.valueOf( timeAS );
+				long time = new Date().getTime() - Long.parseLong( timeAS );
 
 				// >= because delay can be 0
 				permitted = time >= delay * 1000;

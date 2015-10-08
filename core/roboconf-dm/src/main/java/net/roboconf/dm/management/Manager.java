@@ -168,6 +168,10 @@ public class Manager {
 		this.applicationTemplateMngr.restoreTemplates();
 		this.applicationMngr.restoreApplications();
 
+		// We must update instance states after we switched the messaging configuration.
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
+			this.instancesMngr.restoreInstanceStates( ma );
+
 		this.logger.info( "The DM was launched." );
 	}
 

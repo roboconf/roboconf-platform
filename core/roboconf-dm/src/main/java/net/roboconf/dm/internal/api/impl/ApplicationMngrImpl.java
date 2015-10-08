@@ -245,7 +245,21 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 					throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
 				// Recreate the application
-				ManagedApplication ma = createApplication( desc.getName(), desc.getDescription(), tpl );
+				if( this.nameToManagedApplication.containsKey( desc.getName()))
+					throw new AlreadyExistingException( desc.getName());
+
+				Application app = new Application( desc.getName(), tpl ).description( desc.getDescription());
+				File targetDirectory = ConfigurationUtils.findApplicationDirectory( app.getName(), configurationDirectory );
+				app.setDirectory( targetDirectory );
+
+				ManagedApplication ma = new ManagedApplication( app );
+				this.nameToManagedApplication.put( ma.getName(), ma );
+
+				// Start listening to messages
+				this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
+
+				// Read application bindings.
+				ConfigurationUtils.loadApplicationBindings( app );
 
 				// Restore the instances
 				InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, configurationDirectory );
