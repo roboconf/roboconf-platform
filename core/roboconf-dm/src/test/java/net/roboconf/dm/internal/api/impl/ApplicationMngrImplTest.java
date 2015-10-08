@@ -55,6 +55,7 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.client.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 
@@ -77,7 +78,10 @@ public class ApplicationMngrImplTest {
 	private IMessagingMngr messagingMngr;
 	private IConfigurationMngr configurationMngr;
 	private IApplicationTemplateMngr applicationTemplateMngr;
+
 	private File dmDirectory;
+	private IDmClient dmClientMock;
+
 
 
 	@Before
@@ -87,7 +91,8 @@ public class ApplicationMngrImplTest {
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 
 		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
-		Mockito.when( this.messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
+		this.dmClientMock = Mockito.mock( IDmClient.class );
+		Mockito.when( this.messagingMngr.getMessagingClient()).thenReturn( this.dmClientMock );
 
 		this.configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		this.applicationTemplateMngr = Mockito.mock( IApplicationTemplateMngr.class );
@@ -261,9 +266,13 @@ public class ApplicationMngrImplTest {
 
 		Mockito.when( this.applicationTemplateMngr.findTemplate( tpl.getName(), tpl.getQualifier())).thenReturn( tpl );
 
+		Mockito.verifyZeroInteractions( this.dmClientMock );
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
+
 		this.mngr.restoreApplications();
+
 		Assert.assertEquals( 1, this.mngr.getManagedApplications().size());
+		Mockito.verify( this.dmClientMock, Mockito.times( 1 )).listenToAgentMessages( app, ListenerCommand.START );
 
 		ManagedApplication ma = this.mngr.getManagedApplications().iterator().next();
 		Assert.assertEquals( app.getName(), ma.getName());

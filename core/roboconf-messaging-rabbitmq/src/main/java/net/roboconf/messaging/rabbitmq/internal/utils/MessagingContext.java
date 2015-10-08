@@ -41,7 +41,7 @@ import net.roboconf.core.model.helpers.VariableHelpers;
  */
 public final class MessagingContext {
 
-	public static final String INTER_APP = "roboconf.inter-app.";
+	public static final String INTER_APP = "roboconf.inter-app";
 	private final String exchangeName, routingKeySuffix;
 
 

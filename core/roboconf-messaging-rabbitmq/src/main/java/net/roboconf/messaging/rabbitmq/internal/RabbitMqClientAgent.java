@@ -414,7 +414,7 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 
 
 	private String getQueueName() {
-		return this.applicationName + RabbitMqUtils.escapeInstancePath( this.scopedInstancePath );
+		return this.applicationName + "." + RabbitMqUtils.escapeInstancePath( this.scopedInstancePath );
 	}
 
 
