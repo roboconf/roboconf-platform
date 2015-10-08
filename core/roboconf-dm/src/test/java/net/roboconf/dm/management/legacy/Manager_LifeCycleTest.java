@@ -160,6 +160,12 @@ public class Manager_LifeCycleTest {
 		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
 		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
+
+		// Make sure data are cleared correctly
+		Assert.assertNull( app.getMySqlVm().data.get( Instance.IP_ADDRESS ));
+		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
+		Assert.assertNull( app.getMySqlVm().data.get( Instance.RUNNING_FROM ));
+		Assert.assertNull( app.getMySqlVm().data.get( Instance.TARGET_ACQUIRED ));
 	}
 
 

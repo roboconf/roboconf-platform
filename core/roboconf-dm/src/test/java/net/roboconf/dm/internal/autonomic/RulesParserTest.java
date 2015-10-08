@@ -53,18 +53,22 @@ public class RulesParserTest {
 		AutonomicRule rule = map.get( "event-1" );
 		Assert.assertEquals( RuleBasedEventHandler.REPLICATE_SERVICE, rule.getReactionId().toLowerCase());
 		Assert.assertEquals( "/vm/tomcat/war1", rule.getReactionInfo());
+		Assert.assertEquals( 0, rule.getDelay());
 
 		rule = map.get( "event-2" );
 		Assert.assertEquals( RuleBasedEventHandler.DELETE_SERVICE, rule.getReactionId().toLowerCase());
 		Assert.assertEquals( "war1", rule.getReactionInfo());
+		Assert.assertEquals( 0, rule.getDelay());
 
 		rule = map.get( "event-3" );
 		Assert.assertEquals( RuleBasedEventHandler.MAIL, rule.getReactionId().toLowerCase());
 		Assert.assertEquals( "admin@company.com", rule.getReactionInfo());
+		Assert.assertEquals( 0, rule.getDelay());
 
 		rule = map.get( "event-4" );
 		Assert.assertEquals( "log", rule.getReactionId().toLowerCase());
 		Assert.assertEquals( "", rule.getReactionInfo());
+		Assert.assertEquals( 27, rule.getDelay());
 	}
 
 

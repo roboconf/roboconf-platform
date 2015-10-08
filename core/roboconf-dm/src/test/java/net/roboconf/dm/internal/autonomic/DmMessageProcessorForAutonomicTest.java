@@ -64,6 +64,7 @@ public class DmMessageProcessorForAutonomicTest {
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
+	private ManagedApplication ma;
 	private TestApplication app;
 	private DmMessageProcessor processor;
 	private RuleBasedEventHandler ruleBasedHandler;
@@ -105,16 +106,16 @@ public class DmMessageProcessorForAutonomicTest {
 		File appDirectory = ConfigurationUtils.findApplicationDirectory( this.app.getName(), dir );
 		this.app.setDirectory( appDirectory );
 
-		ManagedApplication ma = new ManagedApplication( this.app );
+		this.ma = new ManagedApplication( this.app );
 		this.managerWrapper.getNameToManagedApplication().clear();
-		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), ma );
+		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
 
 		// Create a target and associate it with the application
 		String targetId = this.manager.targetsMngr().createTarget( "" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
 
 		// Copy resources
-		dir = new File( ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
+		dir = new File( this.ma.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC );
 		Assert.assertTrue( dir.mkdirs());
 
 		File targetFile = new File( dir, Constants.FILE_RULES );
@@ -479,6 +480,118 @@ public class DmMessageProcessorForAutonomicTest {
 			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		this.processor.processMessage( newMessage( "loaded" ));
+		Assert.assertEquals( allInstances.size(), InstanceHelpers.getAllInstances( this.app ).size());
+	}
+
+
+	@Test
+	public void testAutonomic_replicateWithDelay() throws Exception {
+
+		// Override the rules
+		File f = new File( this.app.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES );
+		Assert.assertTrue( f.exists());
+
+		File sourceFile = TestUtils.findTestFile( "/autonomic/rules-with-delays.cfg" );
+		Utils.copyStream( sourceFile, f );
+
+		// Execute a same reaction twice.
+		// The first one will work. Simulate everything is working and an ACK.
+		// The second one will then not work, rejected because of the delay.
+
+		// This test assumes reactions will be triggered within a second, which is realistic
+		// on modern machines. It may fail on slower machines.
+
+		Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );
+		for( Instance inst : allInstances )
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		this.processor.processMessage( newMessage( "replicated" ));
+
+		Collection<Instance> newAllInstances = InstanceHelpers.getAllInstances( this.app );
+		Assert.assertEquals( allInstances.size() + 3, newAllInstances.size());
+
+		for( Instance inst : newAllInstances )
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// For instance creation, delay verifications rely on stored time when ACK are received
+		for( Instance inst : newAllInstances ) {
+			if( InstanceHelpers.isTarget( inst ))
+				this.ma.acknowledgeHeartBeat( inst );
+		}
+
+		// Next creation should fail
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( allInstances.size() + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Wait a second
+		Thread.sleep( 1000 );
+
+		// It should work now
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( allInstances.size() + 6, InstanceHelpers.getAllInstances( this.app ).size());
+	}
+
+
+	@Test
+	public void testAutonomic_createAndDeleteWithDelay() throws Exception {
+
+		// Override the rules
+		File f = new File( this.app.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES );
+		Assert.assertTrue( f.exists());
+
+		File sourceFile = TestUtils.findTestFile( "/autonomic/rules-with-delays.cfg" );
+		Utils.copyStream( sourceFile, f );
+
+		// Execute a same reaction twice.
+		// The first one will work. Simulate everything is working and an ACK.
+		// The second one will then not work, rejected because of the delay.
+
+		// This test assumes reactions will be triggered within a second, which is realistic
+		// on modern machines. It may fail on slower machines.
+
+		Collection<Instance> allInstances = InstanceHelpers.getAllInstances( this.app );
+		for( Instance inst : allInstances )
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		this.processor.processMessage( newMessage( "loaded" ));
+
+		Collection<Instance> newAllInstances = InstanceHelpers.getAllInstances( this.app );
+		Assert.assertEquals( allInstances.size() + 3, newAllInstances.size());
+
+		for( Instance inst : newAllInstances )
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// For instance creation, delay verifications rely on stored time when ACK are received
+		for( Instance inst : newAllInstances ) {
+			if( InstanceHelpers.isTarget( inst ))
+				this.ma.acknowledgeHeartBeat( inst );
+		}
+
+		// Next creation should fail
+		this.processor.processMessage( newMessage( "loaded" ));
+		Assert.assertEquals( allInstances.size() + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Wait a second
+		Thread.sleep( 1000 );
+
+		// It should work now
+		this.processor.processMessage( newMessage( "loaded" ));
+		Assert.assertEquals( allInstances.size() + 6, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Test removing
+		// First time works
+		this.processor.processMessage( newMessage( "peaceful" ));
+		Assert.assertEquals( allInstances.size() + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Second won't
+		this.processor.processMessage( newMessage( "peaceful" ));
+		Assert.assertEquals( allInstances.size() + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Wait a second
+		Thread.sleep( 1000 );
+
+		// After the delay, it works
+		this.processor.processMessage( newMessage( "peaceful" ));
 		Assert.assertEquals( allInstances.size(), InstanceHelpers.getAllInstances( this.app ).size());
 	}
 

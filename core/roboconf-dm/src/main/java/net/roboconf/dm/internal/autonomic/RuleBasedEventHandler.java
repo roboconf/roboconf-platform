@@ -28,6 +28,7 @@ package net.roboconf.dm.internal.autonomic;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -85,6 +86,7 @@ public class RuleBasedEventHandler {
 	 * This map acts as a cache whose key is bound to an application and a given reaction ID.
 	 */
 	private final Map<String,Instance> reactionKeyToLastInstance;
+	private final Map<String,Long> reactionKeyToLastExecution;
 
 
 	/**
@@ -93,7 +95,8 @@ public class RuleBasedEventHandler {
 	 */
 	public RuleBasedEventHandler( Manager manager ) {
 		this.manager = manager;
-		this.reactionKeyToLastInstance = new HashMap<String,Instance> ();
+		this.reactionKeyToLastInstance = new HashMap<> ();
+		this.reactionKeyToLastExecution = new HashMap<> ();
 	}
 
 
@@ -130,6 +133,9 @@ public class RuleBasedEventHandler {
 				if( this.vmCount.get() >= maxVmCount ) {
 					this.logger.info( "Autonomic management: the maximum number of instances created by the autonomic has been reached. Service replication is cancelled." );
 
+				} else if( ! checkTimingForAdditions( reactionKey, rule.getDelay())) {
+					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was created by the autonomic." );
+
 				} else if( checkPermission( reactionKey, true )) {
 					Instance inst = createInstances( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
@@ -148,6 +154,9 @@ public class RuleBasedEventHandler {
 				if( this.vmCount.get() >= maxVmCount ) {
 					this.logger.info( "Autonomic management: the maximum number of instances created by the autonomic has been reached. Instance replication is cancelled." );
 
+				} else if( ! checkTimingForAdditions( reactionKey, rule.getDelay())) {
+					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was created by the autonomic." );
+
 				} else if( checkPermission( reactionKey, true )) {
 					Instance inst = replicateInstance( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
@@ -163,7 +172,10 @@ public class RuleBasedEventHandler {
 			else if( DELETE_SERVICE.equalsIgnoreCase( rule.getReactionId())) {
 
 				this.logger.fine( "Autonomic management: about to delete an instance of '" + rule.getReactionInfo() + "'." );
-				if( checkPermission( reactionKey, false )) {
+				if( ! checkTimingForOthers( reactionKey, rule.getDelay())) {
+					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was deleted by the autonomic." );
+
+				} else if( checkPermission( reactionKey, false )) {
 					Instance inst = deleteInstances( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
@@ -175,8 +187,20 @@ public class RuleBasedEventHandler {
 			}
 
 			// EVENT_ID Mail DestinationEmail
-			else if( MAIL.equalsIgnoreCase( rule.getReactionId()))
-				sendEmail(ma, rule.getReactionInfo());
+			else if( MAIL.equalsIgnoreCase( rule.getReactionId())) {
+
+				// FIXME: as we do not really test e-mail notifications, we should find a better
+				// code organization so that we can at least delays on this kind of rule.
+				// As an example, we could extract the e-mail sender in another class we could mock.
+				this.logger.fine( "Autonomic management: about to send an e-mail." );
+				if( ! checkTimingForOthers( reactionKey, rule.getDelay())) {
+					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last e-mail was sent by the autonomic." );
+
+				} else {
+					sendEmail(ma, rule.getReactionInfo());
+					this.reactionKeyToLastExecution.put( reactionKey, new Date().getTime());
+				}
+			}
 
 			// EVENT_ID Log LogMessage
 			// And default behavior...
@@ -198,8 +222,6 @@ public class RuleBasedEventHandler {
 	 * @throws IOException if the mail properties could not be read
 	 */
 	void sendEmail( ManagedApplication ma, String emailData ) throws IOException {
-
-		this.logger.fine( "Autonomic management: about to send an e-mail." );
 
 		/*
 		 * Sample properties:
@@ -300,9 +322,10 @@ public class RuleBasedEventHandler {
 				// compToInstantiate should never be null (check done above).
 
 				// All the root instances must have a different name. Others do not matter.
+				// Use nanoTime() for generated names, as milliseconds can result in test failures (name conflicts).
 				String instanceName;
 				if( previousInstance == null )
-					instanceName = compToInstantiate.getName() + "_" + System.currentTimeMillis();
+					instanceName = compToInstantiate.getName() + "_" + System.nanoTime();
 				else
 					instanceName = compToInstantiate.getName().toLowerCase();
 
@@ -346,7 +369,9 @@ public class RuleBasedEventHandler {
 
 			// Copy it
 			Instance copy = InstanceHelpers.replicateInstance( rootInstanceToCopy );
-			copy.setName( copy.getComponent().getName() + "_" + System.currentTimeMillis());
+
+			// Use nanoTime() for generated names, as milliseconds can result in test failures (name conflicts).
+			copy.setName( copy.getComponent().getName() + "_" + System.nanoTime());
 
 			// Register it in the model
 			this.manager.instancesMngr().addInstance( ma, null, copy );
@@ -462,6 +487,70 @@ public class RuleBasedEventHandler {
 
 
 	/**
+	 * Checks time-related data to verify an action can be executed.
+	 * <p>
+	 * These verifications are only meaningful for reactions that create new instances.
+	 * </p>
+	 * <p>
+	 * When no timing information is available, consider it is permitted.
+	 * </p>
+	 *
+	 * @param reactionKey the reaction key
+	 * @param delay the delay to respect (in seconds)
+	 * @return true if the action is permitted, false otherwise
+	 */
+	boolean checkTimingForAdditions( String reactionKey, long delay ) {
+
+		boolean permitted = true;
+		Instance lastInstance = this.reactionKeyToLastInstance.get( reactionKey );
+
+		// Disabling checks is used in some tests
+		if( ! this.disableChecks && lastInstance != null ) {
+
+			String timeAS = lastInstance.data.get( Instance.RUNNING_FROM );
+			if( timeAS != null ) {
+				long time = new Date().getTime() - Long.valueOf( timeAS );
+
+				// >= because delay can be 0
+				permitted = time >= delay * 1000;
+			}
+		}
+
+		return permitted;
+	}
+
+
+	/**
+	 * Checks time-related data to verify an action can be executed.
+	 * <p>
+	 * These verifications are only meaningful for reactions that delete
+	 * instances or send notifications.
+	 * </p>
+	 * <p>
+	 * When no timing information is available, consider it is permitted.
+	 * </p>
+	 *
+	 * @param reactionKey the reaction key
+	 * @param delay the delay to respect (in seconds)
+	 * @return true if the action is permitted, false otherwise
+	 */
+	boolean checkTimingForOthers( String reactionKey, long delay ) {
+
+		boolean permitted = true;
+		if( ! this.disableChecks ) {
+			Long time = this.reactionKeyToLastExecution.get( reactionKey );
+			if( time == null )
+				time = 0L;
+
+			// >= because delay can be 0
+			permitted = (new Date().getTime() - time) >= (delay * 1000);
+		}
+
+		return permitted;
+	}
+
+
+	/**
 	 * Acknowledges an instance was created or removed for a given reaction ID.
 	 * @param instance the resulting instance (can be null)
 	 * @param reactionKey a reaction key (not null)
@@ -473,6 +562,9 @@ public class RuleBasedEventHandler {
 
 		// Update the cache
 		this.reactionKeyToLastInstance.put( reactionKey, instance );
+
+		// Update the last execution time
+		this.reactionKeyToLastExecution.put( reactionKey, new Date().getTime());
 
 		// Clean it too
 		// Indeed, some actions may invalidate it. As an example, it is not worth

@@ -34,17 +34,21 @@ public class AutonomicRule {
 	String reactionId;
 	String reactionInfo;
 	String eventId;
+	long delay;
 
 
 	/**
 	 * Create a new autonomic rule.
 	 * @param reactionId the reaction ID for this rule
 	 * @param reactionInfo the reaction data
-	 * @param eventId the vent ID
+	 * @param eventId the event ID
+	 * @param delay the delay to wait between two successful executions of this rule
 	 */
-	public AutonomicRule( String reactionId, String reactionInfo, String eventId ) {
+	public AutonomicRule( String reactionId, String reactionInfo, String eventId, long delay ) {
 		this.reactionId = reactionId;
 		this.reactionInfo = reactionInfo;
+		this.eventId = eventId;
+		this.delay = delay;
 	}
 
 	/**
@@ -68,5 +72,12 @@ public class AutonomicRule {
 	 */
 	public String getEventId() {
 		return this.eventId;
+	}
+
+	/**
+	 * @return the delay
+	 */
+	public long getDelay() {
+		return this.delay;
 	}
 }
