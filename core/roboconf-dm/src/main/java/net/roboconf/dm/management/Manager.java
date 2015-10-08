@@ -26,6 +26,7 @@
 package net.roboconf.dm.management;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -95,6 +96,8 @@ public class Manager {
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected Timer timer;
+	protected String oldMessagingType;
+
 	private RCDm messagingClient;
 
 	// API access
@@ -243,18 +246,20 @@ public class Manager {
 	}
 
 
+	// Reconfiguration
+
+
 	/**
 	 * This method reconfigures the manager.
 	 * <p>
-	 * It is invoked by iPojo when the configuration changes.
-	 * It may be invoked before the start() method is.
+	 * It is NOT invoked DIRECTLY by iPojo anymore.
 	 * </p>
 	 */
 	public void reconfigure() {
 
 		// Update the messaging client
 		if( this.messagingClient != null ) {
-			this.messagingClient.switchMessagingType(this.messagingType);
+			this.messagingClient.switchMessagingType( this.messagingType );
 			try {
 				if( this.messagingClient.isConnected())
 					this.messagingClient.listenToTheDm( ListenerCommand.START );
@@ -275,7 +280,20 @@ public class Manager {
 	// Setters
 
 	public void setMessagingType( String messagingType ) {
-		this.messagingType = messagingType;
+
+		// Properties are injected on every modification.
+		// so, we just want to track changes.
+		if( ! Objects.equals( this.messagingType, messagingType )) {
+			this.oldMessagingType = this.messagingType;
+			this.messagingType = messagingType;
+
+			// Explicitly require a reconfiguration.
+			// We don't let iPojo deal with it anymore since there may be parameters in the
+			// DM that are not related to the messaging. In fact, most of the messaging configuration
+			// was moved in messaging bundles. So, we only want to reconfigure the messaging client
+			// when the messaging type changes.
+			reconfigure();
+		}
 	}
 
 
