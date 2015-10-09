@@ -168,7 +168,7 @@ public class Manager {
 		this.applicationTemplateMngr.restoreTemplates();
 		this.applicationMngr.restoreApplications();
 
-		// We must update instance states after we switched the messaging configuration.
+		// We must update instance states after we restored applications
 		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
 			this.instancesMngr.restoreInstanceStates( ma );
 

@@ -133,6 +133,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	@Override
 	protected void processMessage( Message message ) {
 
+		this.logger.fine( "A message of type " + message.getClass() + " was received and is about to be processed." );
 		try {
 			if( message instanceof MsgCmdSetScopedInstance )
 				processMsgSetScopedInstance((MsgCmdSetScopedInstance) message );
@@ -191,6 +192,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * @param msg an change binding message
 	 */
 	void processMsgChangeBinding( MsgCmdChangeBinding msg ) throws IOException {
+		this.logger.fine( "Binding prefix " + msg.getExternalExportsPrefix() + " to application " + msg.getAppName() + "." );
 
 		// First, determine if a previous binding existed
 		String previousAppName = this.applicationBindings.get( msg.getExternalExportsPrefix());
