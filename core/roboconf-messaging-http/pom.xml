@@ -83,17 +83,20 @@
 			<scope>provided</scope>
 		</dependency>
 
-	<!-- To run javax.websocket in embedded server -->
+		<!-- To run javax.websocket in embedded server -->
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>javax-websocket-server-impl</artifactId>
 			<version>${websocket.version}</version>
+			<scope>test</scope>
 		</dependency>
+
 		<!-- To run javax.websocket client -->
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>javax-websocket-client-impl</artifactId>
 			<version>${websocket.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -167,22 +170,10 @@
 							net.roboconf.messaging.http; version="${project.version}"
 						</Export-Package>
 						<Private-Package>
-							net.roboconf.messaging.http.internal
+							net.roboconf.messaging.http.internal.*
 						</Private-Package>
 					</instructions>
 				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<executions>
-					<execution>
-						<goals>
-							<goal>test-jar</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
 			<plugin>

@@ -53,14 +53,12 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	HttpClientFactory factory;
 
 	@Before
-	public void registerHttpFactory() {
+	public void registerHttpFactory() throws InterruptedException {
 		MessagingWebSocket.cleanup();
 		HttpTestUtils.runWebServer();
-		try {
-			Thread.sleep(500); //TODO: any way to start webserver quicky (and remove this) ??
-		} catch (InterruptedException e) {
-			e.printStackTrace(System.err);
-		}
+		
+		Thread.sleep(500); //TODO: any way to start webserver quicky (and remove this) ??
+		
 		serverIsRunning = true;
 		factory = new HttpClientFactory();
 		factory.setHttpServerIp(HttpConstants.DEFAULT_IP);
@@ -69,24 +67,17 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	}
 
 	@After
-	public void stopWebServer() {
+	public void stopWebServer() throws IOException, InterruptedException {
 		HttpTestUtils.stopWebServer();
 		MessagingWebSocket.cleanup();
 		Set<HttpClient> httpClients = HttpClientFactory.getHttpClients();
 		for(HttpClient c : httpClients) {
-			try {
-				c.closeConnection();
-			} catch (IOException e) {
-				e.printStackTrace(System.err);
-			}
+			c.closeConnection();
 		}
 		HttpClientFactory.getHttpClients().clear();
 		serverIsRunning = false;
-		try {
-			Thread.sleep(500); //TODO: any way to stop webserver cleanly (and remove this) ??
-		} catch (InterruptedException e) {
-			e.printStackTrace(System.err);
-		}
+
+		Thread.sleep(500); //TODO: any way to stop webserver cleanly (and remove this) ??
 	}
 
 	@Override
