@@ -85,7 +85,7 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 	public Option[] config() throws Exception {
 
 		List<Option> options = new ArrayList<> ();
-		options.addAll( Arrays.asList( ItUtils.getOptionsForInMemory( false )));
+		options.addAll( Arrays.asList( ItUtils.getOptionsForInMemory( true )));
 
 		// Store the application's location
 		File resourcesDirectory = TestUtils.findTestFile( "/app-with-external-exports" );
