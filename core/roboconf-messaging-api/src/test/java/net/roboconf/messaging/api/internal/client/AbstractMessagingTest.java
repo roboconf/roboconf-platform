@@ -898,7 +898,7 @@ public abstract class AbstractMessagingTest {
 		this.clients.add( app2_tomcatClient );
 
 		// OK, let's start.
-		// Tomcat requests MySQL exports but no MySQL is not listening
+		// Tomcat requests MySQL exports but no MySQL is listening
 		app1_tomcatClient.requestExportsFromOtherAgents( app1.getTomcat());
 		Thread.sleep( DELAY );
 		Assert.assertEquals( 0, app1_tomcatMessages.size());
@@ -949,6 +949,24 @@ public abstract class AbstractMessagingTest {
 		Assert.assertEquals( "3306", msg2.getExportedVariables().get( "tpl2.ext-port" ));
 		Assert.assertTrue( msg2.getExportedVariables().containsKey( "tpl2.ext-ip" ));
 
+		// What happens if we ask to only publish an external variable?
+		app2_mysqlClient.publishExports( app2.getMySql(), "tpl2" );
+		Thread.sleep( DELAY );
+
+		Assert.assertEquals( 0, app2_tomcatMessages.size());
+		Assert.assertEquals( 0, app1_mysqlMessages.size());
+		Assert.assertEquals( 1, app2_mysqlMessages.size());
+		Assert.assertEquals( 2, app1_tomcatMessages.size());
+
+		Assert.assertEquals( MsgCmdAddImport.class, app1_tomcatMessages.get( 1 ).getClass());
+		msg2 = (MsgCmdAddImport) app1_tomcatMessages.get( 1 );
+		Assert.assertEquals( "tpl2", msg2.getComponentOrFacetName());
+		Assert.assertEquals( "app2", msg2.getApplicationOrContextName());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app2.getMySql()), msg2.getAddedInstancePath());
+		Assert.assertEquals( 2, msg2.getExportedVariables().size());
+		Assert.assertEquals( "3306", msg2.getExportedVariables().get( "tpl2.ext-port" ));
+		Assert.assertTrue( msg2.getExportedVariables().containsKey( "tpl2.ext-ip" ));
+
 		// Good! Now, let's check unpublish events.
 		// Just to be sure, turn off the listening on the Tomcat side.
 		app1_tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.STOP, app1.getTomcat());
@@ -958,7 +976,7 @@ public abstract class AbstractMessagingTest {
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
 		Assert.assertEquals( 1, app2_mysqlMessages.size());
-		Assert.assertEquals( 1, app1_tomcatMessages.size());
+		Assert.assertEquals( 2, app1_tomcatMessages.size());
 
 		// Good! Now, let's check unpublish events.
 		app1_tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, app1.getTomcat());
@@ -968,10 +986,10 @@ public abstract class AbstractMessagingTest {
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
 		Assert.assertEquals( 1, app2_mysqlMessages.size());
-		Assert.assertEquals( 2, app1_tomcatMessages.size());
+		Assert.assertEquals( 3, app1_tomcatMessages.size());
 
-		Assert.assertEquals( MsgCmdRemoveImport.class, app1_tomcatMessages.get( 1 ).getClass());
-		MsgCmdRemoveImport msg3 = (MsgCmdRemoveImport) app1_tomcatMessages.get( 1 );
+		Assert.assertEquals( MsgCmdRemoveImport.class, app1_tomcatMessages.get( 2 ).getClass());
+		MsgCmdRemoveImport msg3 = (MsgCmdRemoveImport) app1_tomcatMessages.get( 2 );
 		Assert.assertEquals( "tpl2", msg3.getComponentOrFacetName());
 		Assert.assertEquals( "app2", msg3.getApplicationOrContextName());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app2.getMySql()), msg3.getRemovedInstancePath());
@@ -984,7 +1002,7 @@ public abstract class AbstractMessagingTest {
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
 		Assert.assertEquals( 1, app2_mysqlMessages.size());
-		Assert.assertEquals( 2, app1_tomcatMessages.size());
+		Assert.assertEquals( 3, app1_tomcatMessages.size());
 	}
 
 

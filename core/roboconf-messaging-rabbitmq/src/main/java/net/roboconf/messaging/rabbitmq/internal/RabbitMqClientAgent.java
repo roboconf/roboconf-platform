@@ -217,13 +217,20 @@ public class RabbitMqClientAgent extends RabbitMqClient implements IAgentClient 
 
 		Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
 		for( Map.Entry<String,String> entry : exports.entrySet()) {
-			if( ! entry.getKey().startsWith( facetOrComponentName + "." ))
-				continue;
 
-			toPublishInternally.put( entry.getKey(), entry.getValue());
+			// Publishing an export may be about a facet or component name or about an external prefix.
+			// If an "internal prefix" is required, export both the internal and associated external, if any.
 			String alias = this.externalExports.get( entry.getKey());
-			if( alias != null )
+			if( entry.getKey().startsWith( facetOrComponentName + "." )) {
+				toPublishInternally.put( entry.getKey(), entry.getValue());
+				if( alias != null )
+					toPublishExternally.put( alias, entry.getValue());
+			}
+
+			// If an external prefix is required, only export the external variables
+			else if( alias != null && alias.startsWith( facetOrComponentName + "." )) {
 				toPublishExternally.put( alias, entry.getValue());
+			}
 		}
 
 		// Publish the internal exports
