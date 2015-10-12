@@ -113,6 +113,8 @@ public class ApplicationResourceTest {
 
 		// Load an application
 		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
+
 		this.ma = new ManagedApplication( this.app );
 		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
 	}

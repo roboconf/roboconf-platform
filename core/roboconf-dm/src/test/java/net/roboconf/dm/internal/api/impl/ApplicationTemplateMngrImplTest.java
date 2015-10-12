@@ -27,13 +27,17 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ApplicationTemplateDescriptor;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.api.IApplicationMngr;
@@ -384,5 +388,14 @@ public class ApplicationTemplateMngrImplTest {
 
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).createTarget( Mockito.any( File.class ));
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id", tpl );
+
+		Application app = new Application( tpl );
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
+		Assert.assertEquals( 3, scopedInstances.size());
+
+		for( Instance scopedInstance : scopedInstances ) {
+			String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
+		}
 	}
 }

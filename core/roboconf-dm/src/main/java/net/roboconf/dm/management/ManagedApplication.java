@@ -28,6 +28,7 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -168,6 +169,14 @@ public class ManagedApplication {
 				&& Integer.parseInt( count ) > THRESHOLD )
 			this.logger.info( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " is alive and reachable again." );
 
+		// Store the moment the first ACK (without interruption) was received.
+		// If we were deploying, store it.
+		// If we were in problem, store it.
+		// If we were already deployed and started, do NOT override it.
+		if( scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED
+				|| ! scopedInstance.data.containsKey( Instance.RUNNING_FROM ))
+			scopedInstance.data.put( Instance.RUNNING_FROM, String.valueOf( new Date().getTime()));
+
 		scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 		scopedInstance.data.remove( MISSED_HEARTBEATS );
 	}
@@ -197,9 +206,7 @@ public class ManagedApplication {
 			int count = countAs == null ? 0 : Integer.parseInt( countAs );
 			if( ++ count > THRESHOLD ) {
 				scopedInstance.setStatus( InstanceStatus.PROBLEM );
-
-				if( count == THRESHOLD + 1 )
-					this.logger.severe( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " has not sent heart beats for quite a long time. Status changed to PROBLEM." );
+				this.logger.severe( "Agent " + InstanceHelpers.computeInstancePath( scopedInstance ) + " has not sent heart beats for quite a long time. Status changed to PROBLEM." );
 			}
 
 			scopedInstance.data.put( MISSED_HEARTBEATS, String.valueOf( count ));

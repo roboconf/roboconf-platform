@@ -235,4 +235,24 @@ public class ManagerTest {
 			this.manager.stop();
 		}
 	}
+
+
+	@Test
+	public void testSetMessagingType_ignoresSameValue() {
+
+		Assert.assertNull( this.manager.oldMessagingType );
+		Assert.assertNull( this.manager.messagingType );
+
+		this.manager.setMessagingType( "test" );
+		Assert.assertNull( this.manager.oldMessagingType );
+		Assert.assertEquals( "test", this.manager.messagingType );
+
+		this.manager.setMessagingType( "test" );
+		Assert.assertNull( this.manager.oldMessagingType );
+		Assert.assertEquals( "test", this.manager.messagingType );
+
+		this.manager.setMessagingType( "toto" );
+		Assert.assertEquals( "test", this.manager.oldMessagingType );
+		Assert.assertEquals( "toto", this.manager.messagingType );
+	}
 }

@@ -151,7 +151,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		this.messagingMngr.checkMessagingConfiguration();
 
 		// Create the application
-		ManagedApplication ma = createApplication( name, description, tpl, this.configurationMngr.getWorkingDirectory());
+		ManagedApplication ma = createNewApplication( name, description, tpl, this.configurationMngr.getWorkingDirectory());
 
 		// Copy the target settings, if any
 		this.targetMngr.copyOriginalMapping( ma.getApplication());
@@ -245,7 +245,21 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 					throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
 				// Recreate the application
-				ManagedApplication ma = createApplication( desc.getName(), desc.getDescription(), tpl, configurationDirectory );
+				if( this.nameToManagedApplication.containsKey( desc.getName()))
+					throw new AlreadyExistingException( desc.getName());
+
+				Application app = new Application( desc.getName(), tpl ).description( desc.getDescription());
+				File targetDirectory = ConfigurationUtils.findApplicationDirectory( app.getName(), configurationDirectory );
+				app.setDirectory( targetDirectory );
+
+				ManagedApplication ma = new ManagedApplication( app );
+				this.nameToManagedApplication.put( ma.getName(), ma );
+
+				// Start listening to messages
+				this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
+
+				// Read application bindings.
+				ConfigurationUtils.loadApplicationBindings( app );
 
 				// Restore the instances
 				InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, configurationDirectory );
@@ -306,7 +320,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	 * @throws AlreadyExistingException if an application with this name already exists
 	 * @throws IOException if the application's directory could not be created
 	 */
-	private ManagedApplication createApplication(
+	private ManagedApplication createNewApplication(
 			String name,
 			String description,
 			ApplicationTemplate tpl,

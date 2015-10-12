@@ -82,6 +82,19 @@ public class Instance implements Serializable {
 	 */
 	public static final String LAST_PROBLEM = "last.problem";
 
+	/**
+	 * A constant to store the timestamp of the first heart beat received for this instance.
+	 * <p>
+	 * To be stored in {@link #data}.
+	 * Storing this information in a scoped instance is enough.
+	 * </p>
+	 * <p>
+	 * If an instance goes into the PROBLEM state, and that a new heart beat comes after, then
+	 * we should overwrite this information.
+	 * </p>
+	 */
+	public static final String RUNNING_FROM = "running.from";
+
 
 	private static final long serialVersionUID = -3320865356277185064L;
 

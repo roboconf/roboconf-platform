@@ -47,7 +47,7 @@ public final class RulesParser {
 
 	private static final String COMMENT_DELIMITER = "#";
 	static final String RULE_BEGINNING = "[reaction";
-	static final String RULE_PATTERN = "\\" + RULE_BEGINNING + "\\s+(\\S+)\\s+(\\S+)\\s*\\]";
+	static final String RULE_PATTERN = "\\" + RULE_BEGINNING + "\\s+(\\S+)\\s+(\\S+)(\\s+\\d+)*\\s*\\]";
 
 
 	/**
@@ -116,7 +116,10 @@ public final class RulesParser {
 
 			s = s.substring( m.end()).trim();
 			String eventId = m.group( 1 );
-			AutonomicRule rule = new AutonomicRule( m.group( 2 ), s );
+			String delayAS = m.group( 3 );
+			long delay = delayAS != null ? Long.parseLong( delayAS.trim()) : 0L;
+
+			AutonomicRule rule = new AutonomicRule( m.group( 2 ), s, eventId, delay );
 			result.put( eventId, rule );
 		}
 

@@ -452,6 +452,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			// Remove useless data for the configuration backup
 			scopedInstance.data.remove( Instance.IP_ADDRESS );
 			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+			scopedInstance.data.remove( Instance.RUNNING_FROM );
 			this.logger.fine( "Scoped instance " + path + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( TargetException | IOException e ) {

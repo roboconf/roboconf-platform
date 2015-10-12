@@ -96,23 +96,31 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 	}
 
 
-	@Test
-	public void run() throws Exception {
+
+	private ApplicationTemplate tplImporting, tplExporting;
+	private ManagedApplication importing, exporting;
+
+
+	/**
+	 * Loads the templates and creates applications.
+	 * @throws Exception
+	 */
+	private void prepare() throws Exception {
 
 		// Load the application template
 		String appLocation = System.getProperty( APP_LOCATION );
 		File exportingDir = new File( appLocation );
-		ApplicationTemplate tplExporting = this.manager.applicationTemplateMngr().loadApplicationTemplate( exportingDir );
+		this.tplExporting = this.manager.applicationTemplateMngr().loadApplicationTemplate( exportingDir );
 
 		File importingDir = new File( exportingDir, "../app-with-external-imports" );
-		ApplicationTemplate tplImporting = this.manager.applicationTemplateMngr().loadApplicationTemplate( importingDir );
+		this.tplImporting = this.manager.applicationTemplateMngr().loadApplicationTemplate( importingDir );
 
 		// Verify some assertions on the loaded templates
-		Assert.assertEquals( 1, tplExporting.externalExports.size());
-		Assert.assertEquals( "Lamp.lb-ip", tplExporting.externalExports.get( "Apache.ip" ));
-		Assert.assertEquals( "Lamp", tplExporting.getExternalExportsPrefix());
+		Assert.assertEquals( 1, this.tplExporting.externalExports.size());
+		Assert.assertEquals( "Lamp.lb-ip", this.tplExporting.externalExports.get( "Apache.ip" ));
+		Assert.assertEquals( "Lamp", this.tplExporting.getExternalExportsPrefix());
 
-		Component activitiComponent = ComponentHelpers.findComponent( tplImporting.getGraphs(), "SE-Activiti" );
+		Component activitiComponent = ComponentHelpers.findComponent( this.tplImporting.getGraphs(), "SE-Activiti" );
 		Assert.assertEquals( 3, activitiComponent.importedVariables.size());
 
 		ImportedVariable var = activitiComponent.importedVariables.get( "Lamp.lb-ip" );
@@ -121,46 +129,84 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 		Assert.assertFalse( var.isOptional());
 
 		// Create applications
-		ManagedApplication exporting = this.manager.applicationMngr().createApplication( "exporting", null, tplExporting );
-		Assert.assertNotNull( exporting );
+		this.exporting = this.manager.applicationMngr().createApplication( "exporting", null, this.tplExporting );
+		Assert.assertNotNull( this.exporting );
 
-		ManagedApplication importing = this.manager.applicationMngr().createApplication( "importing", null, tplImporting );
-		Assert.assertNotNull( importing );
+		this.importing = this.manager.applicationMngr().createApplication( "importing", null, this.tplImporting );
+		Assert.assertNotNull( this.importing );
 
 		Assert.assertEquals( 2, this.manager.applicationMngr().getManagedApplications().size());
 
-		// Associate them together
-		this.manager.applicationMngr().bindApplication( importing, tplExporting.getExternalExportsPrefix(), exporting.getName());
-
 		// Associate a target with it
 		String targetId = this.manager.targetsMngr().createTarget( "handler = in-memory" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, importing.getApplication(), null );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, exporting.getApplication(), null );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.importing.getApplication(), null );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.exporting.getApplication(), null );
+	}
 
-		// Deploy the importing application
-		this.manager.instancesMngr().deployAndStartAll( importing, null );
+
+	/**
+	 * Creates a binding between the two applications.
+	 * @throws Exception
+	 */
+	private void bind() throws Exception {
+		this.manager.applicationMngr().bindApplication( this.importing, this.tplExporting.getExternalExportsPrefix(), this.exporting.getName());
+	}
+
+
+	/**
+	 * Deploys the importing application.
+	 * @throws Exception
+	 */
+	private void deployImporting() throws Exception {
+		this.manager.instancesMngr().deployAndStartAll( this.importing, null );
+	}
+
+
+	/**
+	 * Deploys the exporting application.
+	 * @throws Exception
+	 */
+	private void deployExporting() throws Exception {
+
+		this.manager.instancesMngr().deployAndStartAll( this.exporting, null );
 		Thread.sleep( 800 );
-		for( Instance inst : InstanceHelpers.getAllInstances( importing.getApplication())) {
+		for( Instance inst : InstanceHelpers.getAllInstances( this.exporting.getApplication())) {
+			Assert.assertEquals( inst.getName(), InstanceStatus.DEPLOYED_STARTED, inst.getStatus());
+		}
+	}
+
+
+	/**
+	 * Verifies that the IMPORTING application is missing external dependencies.
+	 * @throws Exception
+	 */
+	private void verifyImportingIsWaiting() throws Exception {
+
+		Thread.sleep( 800 );
+		for( Instance inst : InstanceHelpers.getAllInstances( this.importing.getApplication())) {
 			if( "se".equals( inst.getName()))
 				Assert.assertEquals( InstanceStatus.UNRESOLVED, inst.getStatus());
 			else
 				Assert.assertEquals( inst.getName(), InstanceStatus.DEPLOYED_STARTED, inst.getStatus());
 		}
+	}
 
-		// Deploy the exporting one
-		this.manager.instancesMngr().deployAndStartAll( exporting, null );
+
+	/**
+	 * Verifies assertions on the applications once they were started and bound together.
+	 * @throws Exception
+	 */
+	private void verifyAfter() throws Exception {
+
 		Thread.sleep( 800 );
-		for( Instance inst : InstanceHelpers.getAllInstances( exporting.getApplication())) {
-			Assert.assertEquals( inst.getName(), InstanceStatus.DEPLOYED_STARTED, inst.getStatus());
-		}
 
 		// Verify the importing application is entirely started
-		for( Instance inst : InstanceHelpers.getAllInstances( importing.getApplication())) {
+		for( Instance inst : InstanceHelpers.getAllInstances( this.importing.getApplication())) {
 			Assert.assertEquals( inst.getName(), InstanceStatus.DEPLOYED_STARTED, inst.getStatus());
 		}
 
 		// Verify the import of the external variable
-		Instance seInstance = InstanceHelpers.findInstanceByPath( importing.getApplication(), "/VM/petals/se" );
+		Instance seInstance = InstanceHelpers.findInstanceByPath( this.importing.getApplication(), "/VM/petals/se" );
 		Assert.assertNotNull( seInstance );
 
 		Collection<Import> imports = seInstance.getImports().get( "Lamp" );
@@ -174,14 +220,14 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 		Assert.assertTrue( imp.getExportedVars().containsKey( "Lamp.lb-ip" ));
 
 		// Undeploy the exporting application
-		this.manager.instancesMngr().undeployAll( exporting, null );
+		this.manager.instancesMngr().undeployAll( this.exporting, null );
 		Thread.sleep( 800 );
-		for( Instance inst : InstanceHelpers.getAllInstances( exporting.getApplication())) {
+		for( Instance inst : InstanceHelpers.getAllInstances( this.exporting.getApplication())) {
 			Assert.assertEquals( inst.getName(), InstanceStatus.NOT_DEPLOYED, inst.getStatus());
 		}
 
 		// Verify the importing application
-		for( Instance inst : InstanceHelpers.getAllInstances( importing.getApplication())) {
+		for( Instance inst : InstanceHelpers.getAllInstances( this.importing.getApplication())) {
 			if( "se".equals( inst.getName()))
 				Assert.assertEquals( InstanceStatus.UNRESOLVED, inst.getStatus());
 			else
@@ -192,10 +238,102 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 		Assert.assertNull( imports );
 
 		// Undeploy the importing application
-		this.manager.instancesMngr().undeployAll( importing, null );
+		this.manager.instancesMngr().undeployAll( this.importing, null );
 		Thread.sleep( 800 );
-		for( Instance inst : InstanceHelpers.getAllInstances( importing.getApplication())) {
+		for( Instance inst : InstanceHelpers.getAllInstances( this.importing.getApplication())) {
 			Assert.assertEquals( inst.getName(), InstanceStatus.NOT_DEPLOYED, inst.getStatus());
 		}
+	}
+
+
+	// These tests are about verifying permutations and various order in scenarios.
+	// Depending on the order, we must verify that the states of the IMPORTING application
+	// are relevant with respect to the dependencies resolution.
+
+
+	// 1-2-3
+	@Test
+	public void bind_deployImporting_deployExporting() throws Exception {
+
+		prepare();
+		bind();
+
+		deployImporting();
+		verifyImportingIsWaiting();
+
+		deployExporting();
+		verifyAfter();
+	}
+
+
+	// 1-3-2
+	@Test
+	public void bind_deployExporting_deployImporting() throws Exception {
+
+		prepare();
+		bind();
+		deployExporting();
+
+		deployImporting();
+		verifyAfter();
+	}
+
+
+	// 2-3-1
+	@Test
+	public void deployImporting_deployExporting_bind() throws Exception {
+
+		prepare();
+		deployImporting();
+		verifyImportingIsWaiting();
+
+		deployExporting();
+		verifyImportingIsWaiting();
+
+		bind();
+		verifyAfter();
+	}
+
+
+	// 3-2-1
+	@Test
+	public void deployExporting_deployImporting_bind() throws Exception {
+
+		prepare();
+		deployExporting();
+
+		deployImporting();
+		verifyImportingIsWaiting();
+
+		bind();
+		verifyAfter();
+	}
+
+
+	// 3-1-2
+	@Test
+	public void deployExporting_bind_deployImporting() throws Exception {
+
+		prepare();
+		deployExporting();
+		bind();
+		deployImporting();
+		verifyAfter();
+	}
+
+
+	// 2-1-3
+	@Test
+	public void deployImporting_bind_deployExporting() throws Exception {
+
+		prepare();
+		deployImporting();
+		verifyImportingIsWaiting();
+
+		bind();
+		verifyImportingIsWaiting();
+
+		deployExporting();
+		verifyAfter();
 	}
 }
