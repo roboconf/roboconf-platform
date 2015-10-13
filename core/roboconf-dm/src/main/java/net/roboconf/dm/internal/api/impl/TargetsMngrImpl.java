@@ -29,11 +29,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -392,22 +394,23 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		}
 
 		// Now, let's build the result
-		List<TargetUsageItem> result = new ArrayList<> ();
+		Set<TargetUsageItem> result = new HashSet<> ();
 		for( Map.Entry<TargetMappingKey,String> entry : this.instanceToCachedId.entrySet()) {
 			if( ! entry.getValue().equals( targetId ))
 				continue;
 
 			String appName = entry.getKey().getName();
 			TargetUsageItem item = new TargetUsageItem();
-			result.add( item );
 
 			item.setName( appName );
 			item.setQualifier( entry.getKey().getQualifier());
 			item.setReferencing( true );
 			item.setUsing( appNames.contains( appName ));
+
+			result.add( item );
 		}
 
-		return result;
+		return new ArrayList<>( result );
 	}
 
 

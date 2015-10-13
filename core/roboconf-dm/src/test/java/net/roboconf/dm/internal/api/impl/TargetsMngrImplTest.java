@@ -35,6 +35,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.targets.TargetUsageItem;
@@ -628,12 +629,15 @@ public class TargetsMngrImplTest {
 
 		// Setup
 		TestApplication app = new TestApplication();
+		Instance newRootInstance = new Instance( "newRoot" ).component( app.getMySqlVm().getComponent());
+		app.getRootInstances().add( newRootInstance );
 
 		String t1 = this.mngr.createTarget( "prop: ok" );
 		String t2 = this.mngr.createTarget( "prop: ok" );
 		String t3 = this.mngr.createTarget( "prop: ok" );
 
 		this.mngr.associateTargetWithScopedInstance( t1, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		this.mngr.associateTargetWithScopedInstance( t1, app, InstanceHelpers.computeInstancePath( newRootInstance ));
 		this.mngr.associateTargetWithScopedInstance( t2, app, null );
 
 		// Checks
@@ -710,7 +714,10 @@ public class TargetsMngrImplTest {
 
 		// Remove the association for the named instance
 		this.mngr.dissociateTargetFromScopedInstance( app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
 
+		this.mngr.dissociateTargetFromScopedInstance( app, InstanceHelpers.computeInstancePath( newRootInstance ));
 		items = this.mngr.findUsageStatistics( t1 );
 		Assert.assertEquals( 0, items.size());
 
