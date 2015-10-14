@@ -190,15 +190,13 @@ public final class ConfigurationUtils {
 	 */
 	public static void loadApplicationBindings( Application app ) {
 
-		File descDir = new File( findApplicationDirectory( app.getName(), app.getDirectory()), Constants.PROJECT_DIR_DESC );
+		File descDir = new File( app.getDirectory(), Constants.PROJECT_DIR_DESC );
 		File appBindingsFile = new File( descDir, APP_BINDINGS_FILE );
-		if( appBindingsFile.exists()) {
 
-			Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
-			Properties props = Utils.readPropertiesFileQuietly( appBindingsFile, logger );
-			for( Map.Entry<?,?> entry : props.entrySet())
-				app.applicationBindings.put((String) entry.getKey(), (String) entry.getValue());
-		}
+		Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
+		Properties props = Utils.readPropertiesFileQuietly( appBindingsFile, logger );
+		for( Map.Entry<?,?> entry : props.entrySet())
+			app.applicationBindings.put((String) entry.getKey(), (String) entry.getValue());
 	}
 
 
@@ -209,7 +207,7 @@ public final class ConfigurationUtils {
 	 */
 	public static void saveApplicationBindings( Application app ) {
 
-		File descDir = new File( findApplicationDirectory( app.getName(), app.getDirectory()), Constants.PROJECT_DIR_DESC );
+		File descDir = new File( app.getDirectory(), Constants.PROJECT_DIR_DESC );
 		File appBindingsFile = new File( descDir, APP_BINDINGS_FILE );
 
 		Properties props = new Properties();
