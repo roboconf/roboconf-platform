@@ -403,4 +403,32 @@ public class ManagementWsDelegateTest {
 		// We cannot delete it, an application is associated with this template
 		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "sample" );
 	}
+
+
+	@Test
+	public void testCreateAndDeleteApplication() throws Exception {
+
+		File directory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( directory.exists());
+
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+		this.client.getManagementDelegate().loadApplicationTemplate( directory.getAbsolutePath());
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplicationTemplates().size());
+
+		this.client.getManagementDelegate().createApplication( "app1", "Legacy LAMP", "sample" );
+		Assert.assertEquals( 1, this.client.getManagementDelegate().listApplications().size());
+
+		this.client.getManagementDelegate().deleteApplication( "app1" );
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplications().size());
+
+		List<ApplicationTemplate> templates = this.client.getManagementDelegate().listApplicationTemplates();
+		Assert.assertEquals( 1, templates.size());
+
+		ApplicationTemplate tpl = templates.get( 0 );
+		Assert.assertEquals( 0, tpl.getAssociatedApplications().size());
+
+		// No associated application, delete it
+		this.client.getManagementDelegate().deleteApplicationTemplate( "Legacy LAMP", "sample" );
+		Assert.assertEquals( 0, this.client.getManagementDelegate().listApplicationTemplates().size());
+	}
 }

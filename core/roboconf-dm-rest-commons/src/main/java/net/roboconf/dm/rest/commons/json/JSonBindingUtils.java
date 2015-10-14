@@ -387,7 +387,7 @@ public final class JSonBindingUtils {
 			// We do not expect it for deserialization
 			generator.writeArrayFieldStart( APP_TPL_APPS );
 			for( Application associatedApp : app.getAssociatedApplications())
-				generator.writeObject( associatedApp.getName());
+				generator.writeString( associatedApp.getName());
 
 			generator.writeEndArray();
 			generator.writeEndObject();

@@ -171,6 +171,29 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
+	public void testApplicationTemplateBinding_7() throws Exception {
+
+		// Initial binding
+		ApplicationTemplate tpl = new ApplicationTemplate( "my tpl" );
+		Application app = new Application( "app", tpl );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, tpl );
+
+		Assert.assertEquals( "{\"name\":\"my tpl\",\"apps\":[\"app\"]}", writer.toString());
+
+		// After we remove the association with the application
+		app.removeAssociationWithTemplate();
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, tpl );
+
+		Assert.assertEquals( "{\"name\":\"my tpl\",\"apps\":[]}", writer.toString());
+	}
+
+
+	@Test
 	public void testApplicationBinding_1() throws Exception {
 
 		final String result = "{\"name\":\"app1\",\"desc\":\"some text\"}";
