@@ -133,7 +133,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	@Override
 	protected void processMessage( Message message ) {
 
-		this.logger.fine( "A message of type " + message.getClass() + " was received and is about to be processed." );
+		this.logger.fine( "A message of type " + message.getClass().getSimpleName() + " was received and is about to be processed." );
 		try {
 			if( message instanceof MsgCmdSetScopedInstance )
 				processMsgSetScopedInstance((MsgCmdSetScopedInstance) message );
@@ -550,7 +550,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			// If it is not in the application binding, this import should not be added in the instance imports.
 			String expectedName = this.applicationBindings.get( msg.getComponentOrFacetName());
 			if( ! msg.getApplicationOrContextName().equals( expectedName )) {
-				this.logger.fine( "An external export was received but did not match (bound) application " + expectedName );
+				this.logger.fine( "An external export was received (" + msg.getComponentOrFacetName() + ") but did not match (bound) application " + expectedName );
 				return;
 			}
 		}
