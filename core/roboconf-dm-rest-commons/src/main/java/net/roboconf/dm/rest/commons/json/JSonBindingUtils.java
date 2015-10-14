@@ -27,6 +27,7 @@ package net.roboconf.dm.rest.commons.json;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import net.roboconf.core.model.beans.Application;
@@ -35,6 +36,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
@@ -61,29 +63,30 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
  */
 public final class JSonBindingUtils {
 
-	private static final String APP_NAME = "name";
+	private static final String NAME = "name";
+	private static final String QUALIFIER = "qualifier";
+	private static final String DESC = "desc";
+	private static final String EEP = "eep";
+	private static final String EXT_VARS = "extVars";
+	private static final String S = "s";
+
 	private static final String APP_ICON = "icon";
-	private static final String APP_DESC = "desc";
 	private static final String APP_INFO = "info";
 
 	private static final String APP_INST_TPL_NAME = "tplName";
 	private static final String APP_INST_TPL_QUALIFIER = "tplQualifier";
+	private static final String APP_INST_TPL_EEP = "tplEep";
 
-	private static final String APP_TPL_QUALIFIER = "qualifier";
 	private static final String APP_TPL_APPS = "apps";
+	private static final String COMP_INSTALLER = "installer";
 
-	private static final String INST_NAME = "name";
 	private static final String INST_PATH = "path";
 	private static final String INST_CHANNELS = "channels";
 	private static final String INST_COMPONENT = "component";
 	private static final String INST_STATUS = "status";
-	public static final String INST_EXPORTS = "exports";
+	private static final String INST_EXPORTS = "exports";
 	private static final String INST_DATA = "data";
 
-	private static final String COMP_NAME = "name";
-	private static final String COMP_INSTALLER = "installer";
-
-	private static final String DEP_NAME = "name";
 	private static final String DEP_OPTIONAL = "optional";
 	private static final String DEP_RESOLVED = "resolved";
 
@@ -91,10 +94,11 @@ public final class JSonBindingUtils {
 	private static final String DIAG_DEPENDENCIES = "dependencies";
 
 	private static final String TARGET_ID = "id";
-	private static final String TARGET_NAME = "name";
 	private static final String TARGET_HANDLER = "handler";
-	private static final String TARGET_DESC = "desc";
 	private static final String TARGET_DEFAULT = "default";
+
+	private static final String TARGET_STATS_USING = "using";
+	private static final String TARGET_STATS_REFERENCING = "referencing";
 
 
 	/**
@@ -137,8 +141,51 @@ public final class JSonBindingUtils {
 		module.addSerializer( TargetWrapperDescriptor.class, new TargetWDSerializer());
 		module.addDeserializer( TargetWrapperDescriptor.class, new TargetWDDeserializer());
 
+		module.addSerializer( StringWrapper.class, new StringWrapperSerializer());
+		module.addDeserializer( StringWrapper.class, new StringWrapperDeserializer());
+
+		module.addSerializer( MapWrapper.class, new MapWrapperSerializer());
+		module.addDeserializer( MapWrapper.class, new MapWrapperDeserializer());
+
+		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
+
 		mapper.registerModule( module );
 		return mapper;
+	}
+
+
+	/**
+	 * A JSon serializer for a bean describing a target usage.
+	 * <p>
+	 * No deserializer is provided, as it does not make sense for the REST API.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class TargetUsageItemSerializer extends JsonSerializer<TargetUsageItem> {
+
+		@Override
+		public void serialize(
+				TargetUsageItem item,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( item.getName() != null )
+				generator.writeStringField( NAME, item.getName());
+
+			if( item.getQualifier() != null )
+				generator.writeStringField( QUALIFIER, item.getQualifier());
+
+			if( item.isUsing())
+				generator.writeStringField( TARGET_STATS_USING, "true" );
+
+			if( item.isReferencing())
+				generator.writeStringField( TARGET_STATS_REFERENCING, "true" );
+
+			generator.writeEndObject();
+		}
 	}
 
 
@@ -160,13 +207,13 @@ public final class JSonBindingUtils {
 				generator.writeStringField( TARGET_ID, twd.getId());
 
 			if( twd.getName() != null )
-				generator.writeStringField( TARGET_NAME, twd.getName());
+				generator.writeStringField( NAME, twd.getName());
 
 			if( twd.getHandler() != null )
 				generator.writeStringField( TARGET_HANDLER, twd.getHandler());
 
 			if( twd.getDescription() != null )
-				generator.writeStringField( TARGET_DESC, twd.getDescription());
+				generator.writeStringField( DESC, twd.getDescription());
 
 			if( twd.isDefault())
 				generator.writeStringField( TARGET_DEFAULT, "true" );
@@ -190,7 +237,7 @@ public final class JSonBindingUtils {
 	        TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
 
 	        JsonNode n;
-	        if(( n = node.get( TARGET_DESC )) != null )
+	        if(( n = node.get( DESC )) != null )
 	        	twd.setDescription( n.textValue());
 
 	        if(( n = node.get( TARGET_HANDLER )) != null )
@@ -199,10 +246,102 @@ public final class JSonBindingUtils {
 	        if(( n = node.get( TARGET_ID )) != null )
 	        	twd.setId( n.textValue());
 
-	        if(( n = node.get( TARGET_NAME )) != null )
+	        if(( n = node.get( NAME )) != null )
 	        	twd.setName( n.textValue());
 
 			return twd;
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for string wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class StringWrapperDeserializer extends JsonDeserializer<StringWrapper> {
+
+		@Override
+		public StringWrapper deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        String s = null;
+
+	        JsonNode n;
+	        if(( n = node.get( S )) != null )
+	        	s = n.textValue();
+
+			return new StringWrapper( s );
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for string wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class StringWrapperSerializer extends JsonSerializer<StringWrapper> {
+
+		@Override
+		public void serialize(
+				StringWrapper s,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( s.toString() != null )
+				generator.writeStringField( S, s.toString());
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for map wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class MapWrapperDeserializer extends JsonDeserializer<MapWrapper> {
+
+		@Override
+		public MapWrapper deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+	        JsonNode node = oc.readTree( parser );
+	        Map<String,String> map = new HashMap<> ();
+
+	        for( Iterator<Map.Entry<String,JsonNode>> it = node.fields(); it.hasNext(); ) {
+	        	Map.Entry<String,JsonNode> entry = it.next();
+	        	map.put( entry.getKey(), entry.getValue().textValue());
+	        }
+
+			return new MapWrapper( map );
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for map wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class MapWrapperSerializer extends JsonSerializer<MapWrapper> {
+
+		@Override
+		public void serialize(
+				MapWrapper m,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			for( Map.Entry<String,String> entry : m.getMap().entrySet()) {
+				generator.writeStringField(
+						entry.getKey() == null ? "" : entry.getKey(),
+						entry.getValue() == null ? "" : entry.getValue());
+			}
+
+			generator.writeEndObject();
 		}
 	}
 
@@ -222,13 +361,21 @@ public final class JSonBindingUtils {
 
 			generator.writeStartObject();
 			if( app.getName() != null )
-				generator.writeStringField( APP_NAME, app.getName());
+				generator.writeStringField( NAME, app.getName());
 
 			if( app.getDescription() != null )
-				generator.writeStringField( APP_DESC, app.getDescription());
+				generator.writeStringField( DESC, app.getDescription());
 
 			if( app.getQualifier() != null )
-				generator.writeStringField( APP_TPL_QUALIFIER, app.getQualifier());
+				generator.writeStringField( QUALIFIER, app.getQualifier());
+
+			if( app.getExternalExportsPrefix() != null )
+				generator.writeStringField( EEP, app.getExternalExportsPrefix());
+
+			// Read-only information.
+			// We do not expect it for deserialization
+			if( ! app.externalExports.isEmpty())
+				generator.writeObjectField( EXT_VARS, new MapWrapper( app.externalExports ));
 
 			// Read-only information.
 			// We do not expect it for deserialization
@@ -236,9 +383,21 @@ public final class JSonBindingUtils {
 			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
 				generator.writeStringField( APP_ICON, iconLocation );
 
+			// Read-only information.
+			// We do not expect it for deserialization
 			generator.writeArrayFieldStart( APP_TPL_APPS );
-			for( Application associatedApp : app.getAssociatedApplications())
-				generator.writeObject( associatedApp.getName());
+			for( Application associatedApp : app.getAssociatedApplications()) {
+
+				// #483 We do not know why, but after we delete an application
+				// from the web console, the resulting JSon array sometimes contain null.
+				// This prevents the deletion of a template that does not have applications anymore.
+				// The "IF" is a WORKAROUND.
+				if( associatedApp != null
+						&& associatedApp.getName() != null ) {
+					// end of WORKAROUND
+					generator.writeString( associatedApp.getName());
+				}
+			}
 
 			generator.writeEndArray();
 			generator.writeEndObject();
@@ -256,18 +415,21 @@ public final class JSonBindingUtils {
 		public ApplicationTemplate deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        ApplicationTemplate application = new ApplicationTemplate();
+			JsonNode node = oc.readTree( parser );
+			ApplicationTemplate application = new ApplicationTemplate();
 
-	        JsonNode n;
-	        if(( n = node.get( APP_NAME )) != null )
-	        	application.setName( n.textValue());
+			JsonNode n;
+			if(( n = node.get( NAME )) != null )
+				application.setName( n.textValue());
 
-	        if(( n = node.get( APP_DESC )) != null )
-	        	application.setDescription( n.textValue());
+			if(( n = node.get( DESC )) != null )
+				application.setDescription( n.textValue());
 
-	        if(( n = node.get( APP_TPL_QUALIFIER )) != null )
-	        	application.setQualifier( n.textValue());
+			if(( n = node.get( QUALIFIER )) != null )
+				application.setQualifier( n.textValue());
+
+			if(( n = node.get( EEP )) != null )
+				application.setExternalExportsPrefix( n.textValue());
 
 			return application;
 		}
@@ -346,7 +508,7 @@ public final class JSonBindingUtils {
 
 			generator.writeStartObject();
 			if( info.getDependencyName() != null )
-				generator.writeStringField( DEP_NAME, info.getDependencyName());
+				generator.writeStringField( NAME, info.getDependencyName());
 
 			generator.writeStringField( DEP_OPTIONAL, String.valueOf( info.isOptional()));
 			generator.writeStringField( DEP_RESOLVED, String.valueOf( info.isResolved()));
@@ -370,7 +532,7 @@ public final class JSonBindingUtils {
 	        DependencyInformation info = new DependencyInformation();
 
 	        JsonNode n;
-	        if(( n = node.get( DEP_NAME )) != null )
+	        if(( n = node.get( NAME )) != null )
 	        	info.setDependencyName( n.textValue());
 
 	        if(( n = node.get( DEP_OPTIONAL )) != null )
@@ -399,17 +561,26 @@ public final class JSonBindingUtils {
 
 			generator.writeStartObject();
 			if( app.getName() != null )
-				generator.writeStringField( APP_NAME, app.getName());
+				generator.writeStringField( NAME, app.getName());
 
 			if( app.getDescription() != null )
-				generator.writeStringField( APP_DESC, app.getDescription());
+				generator.writeStringField( DESC, app.getDescription());
 
 			if( app.getTemplate() != null ) {
 				if( app.getTemplate().getName() != null )
-					generator.writeObjectField( APP_INST_TPL_NAME, app.getTemplate().getName());
+					generator.writeStringField( APP_INST_TPL_NAME, app.getTemplate().getName());
 
 				if( app.getTemplate().getQualifier() != null )
-					generator.writeObjectField( APP_INST_TPL_QUALIFIER, app.getTemplate().getQualifier());
+					generator.writeStringField( APP_INST_TPL_QUALIFIER, app.getTemplate().getQualifier());
+
+				if( app.getTemplate().getExternalExportsPrefix() != null )
+					generator.writeStringField( APP_INST_TPL_EEP, app.getTemplate().getExternalExportsPrefix());
+
+				// Read-only information.
+				// We do not expect it for deserialization
+				Map<String,String> externalExports = app.getTemplate().externalExports;
+				if( ! externalExports.isEmpty())
+					generator.writeObjectField( EXT_VARS, new MapWrapper( externalExports ));
 			}
 
 			// Read-only information.
@@ -462,16 +633,20 @@ public final class JSonBindingUtils {
 	        	if( n != null )
 	        		appTemplate.setQualifier( n.textValue());
 
+	        	n = node.get( APP_INST_TPL_EEP );
+	        	if( n != null )
+	        		appTemplate.setExternalExportsPrefix( n.textValue());
+
 	        	application = new Application( appTemplate );
 
 	        } else {
 	        	application = new Application( null );
 	        }
 
-	        if(( n = node.get( APP_NAME )) != null )
+	        if(( n = node.get( NAME )) != null )
 	        	application.setName( n.textValue());
 
-	        if(( n = node.get( APP_DESC )) != null )
+	        if(( n = node.get( DESC )) != null )
 	        	application.setDescription( n.textValue());
 
 			return application;
@@ -494,7 +669,7 @@ public final class JSonBindingUtils {
 
 			generator.writeStartObject();
 			if( instance.getName() != null ) {
-				generator.writeStringField( INST_NAME, instance.getName());
+				generator.writeStringField( NAME, instance.getName());
 				generator.writeStringField( INST_PATH, InstanceHelpers.computeInstancePath( instance ));
 			}
 
@@ -555,7 +730,7 @@ public final class JSonBindingUtils {
 	        Instance instance = new Instance();
 
 	        JsonNode n;
-	        if(( n = node.get( INST_NAME )) != null )
+	        if(( n = node.get( NAME )) != null )
 	        	instance.setName( n.textValue());
 
 	        if(( n = node.get( INST_STATUS )) != null )
@@ -604,7 +779,7 @@ public final class JSonBindingUtils {
 
 			generator.writeStartObject();
 			if( component.getName() != null )
-				generator.writeStringField( COMP_NAME, component.getName());
+				generator.writeStringField( NAME, component.getName());
 
 			if( component.getInstallerName() != null )
 				generator.writeStringField( COMP_INSTALLER, component.getInstallerName());
@@ -628,7 +803,7 @@ public final class JSonBindingUtils {
 	        Component component = new Component();
 
 	        JsonNode n;
-	        if(( n = node.get( COMP_NAME )) != null )
+	        if(( n = node.get( NAME )) != null )
 	        	component.setName( n.textValue());
 
 	        if(( n = node.get( COMP_INSTALLER )) != null )

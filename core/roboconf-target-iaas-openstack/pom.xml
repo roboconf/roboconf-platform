@@ -101,7 +101,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${project.version}",
+							net.roboconf.*;version="${version.range}",
 							*
 						</Import-Package>
 						

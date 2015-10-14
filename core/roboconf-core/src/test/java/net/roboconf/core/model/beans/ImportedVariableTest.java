@@ -46,6 +46,12 @@ public class ImportedVariableTest {
 		set.add( var1 );
 		set.add( var2 );
 		Assert.assertEquals( 1, set.size());
+
+		Assert.assertEquals( var1, var2 );
+		Assert.assertFalse( var1.equals( new Object()));
+		Assert.assertFalse( var1.equals( new ImportedVariable( "test2", false, false )));
+
+		Assert.assertTrue( new ImportedVariable().hashCode() > 0 );
 	}
 
 

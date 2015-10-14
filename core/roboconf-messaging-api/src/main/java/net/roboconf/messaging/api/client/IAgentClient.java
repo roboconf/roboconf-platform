@@ -26,6 +26,7 @@
 package net.roboconf.messaging.api.client;
 
 import java.io.IOException;
+import java.util.Map;
 
 import net.roboconf.core.model.beans.Instance;
 
@@ -51,6 +52,28 @@ public interface IAgentClient extends IClient {
 	void setScopedInstancePath( String scopedInstancePath );
 
 
+	/**
+	 * Sets the external mapping parameters.
+	 * <p>
+	 * It is used to deal with inter-application dependencies.
+	 * The messaging implementation will use the map parameter to intercept
+	 * and find which variables must be exported to other applications.
+	 * </p>
+	 *
+	 * @param externalExports a non-null map
+	 * <p>
+	 * Key = internal (graph) variable.<br />
+	 * Value = name of the variable, seen from outside.
+	 * </p>
+	 * <p>
+	 * Example: <code>exports: Toto.ip as test</code> and that the application's prefix
+	 * is <b>APP</b> will result in an entry whose key is <code>Toto.ip</code>
+	 * and whose value is<code>APP.test</code>.
+	 * </p>
+	 */
+	void setExternalMapping( Map<String,String> externalExports );
+
+
 	// Resolve exports
 
 	/**
@@ -58,6 +81,12 @@ public interface IAgentClient extends IClient {
 	 * <p>
 	 * This method indicates to other instances that they can use
 	 * the variables exported by THIS instance.
+	 * </p>
+	 * <p>
+	 * This method must also handles external exports, i.e. variables that are
+	 * made visible by other Roboconf applications. The overall idea is that if
+	 * a variable must be visible outside the current scope, then its alias will be
+	 * given by the map parameter in {@link #setExternalMapping(Map)}.
 	 * </p>
 	 *
 	 * @param instance the instance whose exports must be published
@@ -67,6 +96,13 @@ public interface IAgentClient extends IClient {
 
 	/**
 	 * Publishes specific exports for a given instance.
+	 * <p>
+	 * This method must also handles external exports, i.e. variables that are
+	 * made visible by other Roboconf applications. The overall idea is that if
+	 * a variable must be visible outside the current scope, then its alias will be
+	 * given by the map parameter in {@link #setExternalMapping(Map)}.
+	 * </p>
+	 *
 	 * @param instance the instance whose exports must be published
 	 * @param facetOrComponentName the prefix of the variables to publish
 	 * @throws IOException if something went wrong
@@ -78,6 +114,12 @@ public interface IAgentClient extends IClient {
 	 * <p>
 	 * This method indicates to other instances that the variables exported
 	 * by THIS instance cannot be used anymore.
+	 * </p>
+	 * <p>
+	 * This method must also handles external exports, i.e. variables that are
+	 * made visible by other Roboconf applications. The overall idea is that if
+	 * a variable must be visible outside the current scope, then its alias will be
+	 * given by the map parameter in {@link #setExternalMapping(Map)}.
 	 * </p>
 	 *
 	 * @param instance the instance whose exports must be published
@@ -92,6 +134,10 @@ public interface IAgentClient extends IClient {
 	 * The agent will do so only if it exports a variable prefixed that
 	 * is required by THIS instance.
 	 * </p>
+	 * <p>
+	 * This method must also handles external exports, i.e. variables that are
+	 * made visible by other Roboconf applications.
+	 * </p>
 	 *
 	 * @param command {@link ListenerCommand#START} to start listening, {@link ListenerCommand#STOP} to stop listening
 	 * @param instance the instance that need exports from other agents
@@ -102,11 +148,16 @@ public interface IAgentClient extends IClient {
 
 	// Resolve imports
 
+
 	/**
 	 * Requests other agents to export their variables on the messaging server.
 	 * <p>
 	 * This should be called when a new instance is registered on the agent. It guarantees
 	 * that any new instance can be notified about the instances located on other agents.
+	 * </p>
+	 * <p>
+	 * This method must also handles external exports, i.e. variables that are
+	 * made visible by other Roboconf applications.
 	 * </p>
 	 *
 	 * @param instance the instance that need exports from other agents
@@ -116,6 +167,11 @@ public interface IAgentClient extends IClient {
 
 	/**
 	 * Configures the listener for the exports from other agents.
+	 * <p>
+	 * This method must also handles external exports, i.e. variables that are
+	 * made visible by other Roboconf applications.
+	 * </p>
+	 *
 	 * @param command {@link ListenerCommand#START} to start listening, {@link ListenerCommand#STOP} to stop listening
 	 * @param instance the instance that determine which exports must be listened to
 	 * @throws IOException if something went wrong

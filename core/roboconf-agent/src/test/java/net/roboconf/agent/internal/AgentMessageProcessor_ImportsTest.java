@@ -60,6 +60,7 @@ import org.junit.Test;
  */
 public class AgentMessageProcessor_ImportsTest {
 
+	private static final String APP = "app";
 	private Agent agent;
 
 
@@ -69,6 +70,7 @@ public class AgentMessageProcessor_ImportsTest {
 		final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 		registry.addMessagingClientFactory(new TestClientFactory());
 		this.agent = new Agent();
+		this.agent.applicationName = APP;
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
 		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
@@ -100,14 +102,14 @@ public class AgentMessageProcessor_ImportsTest {
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		// There are as many client invocations as started instances
-		processor.processMessage( new MsgCmdRequestImport( "war" ));
+		processor.processMessage( new MsgCmdRequestImport( APP, "war" ));
 		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
 
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		client.messagesForAgentsCount.set( 0 );
 
-		processor.processMessage( new MsgCmdRequestImport( "war" ));
+		processor.processMessage( new MsgCmdRequestImport( APP, "war" ));
 		Assert.assertEquals( 3, client.messagesForAgentsCount.get());
 	}
 
@@ -134,14 +136,14 @@ public class AgentMessageProcessor_ImportsTest {
 
 		// Request variables from the scoped instance
 		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
-		processor.processMessage( new MsgCmdRequestImport( app.getTomcatVm().getComponent().getName()));
+		processor.processMessage( new MsgCmdRequestImport( APP, app.getTomcatVm().getComponent().getName()));
 		Assert.assertEquals( 2, client.messagesForAgentsCount.get());
 		Assert.assertEquals( 1, client.messagesForTheDm.size());
 	}
 
 
 	@Test
-	public void testImports() throws Exception {
+	public void testImports_applicationScope_noExternalExport() throws Exception {
 
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplicationTemplate app = new TestApplicationTemplate();
@@ -157,7 +159,7 @@ public class AgentMessageProcessor_ImportsTest {
 		Map<String,String> variables1 = new HashMap<String,String> ();
 		variables1.put( "mysql.ip", "192.168.0.15" );
 		variables1.put( "mysql.port", "3306" );
-		processor.processMessage( new MsgCmdAddImport( "mysql", "mysql-vm-1/mysql", variables1 ));
+		processor.processMessage( new MsgCmdAddImport( APP, "mysql", "mysql-vm-1/mysql", variables1 ));
 
 		Assert.assertEquals( 1, app.getWar().getImports().size());
 		Collection<Import> imports = app.getWar().getImports().get( "mysql" );
@@ -173,7 +175,7 @@ public class AgentMessageProcessor_ImportsTest {
 		Map<String,String> variables2 = new HashMap<String,String> ();
 		variables2.put( "mysql.ip", "192.168.0.21" );
 		variables2.put( "mysql.port", "31306" );
-		processor.processMessage( new MsgCmdAddImport( "mysql", "mysql-vm-2/mysql", variables2 ));
+		processor.processMessage( new MsgCmdAddImport( APP, "mysql", "mysql-vm-2/mysql", variables2 ));
 
 		Assert.assertEquals( 1, app.getWar().getImports().size());
 		imports = app.getWar().getImports().get( "mysql" );
@@ -186,7 +188,7 @@ public class AgentMessageProcessor_ImportsTest {
 		Assert.assertEquals( "mysql-vm-2/mysql", imp.getInstancePath());
 
 		// Remove the last one
-		processor.processMessage( new MsgCmdRemoveImport( "mysql", "mysql-vm-2/mysql" ));
+		processor.processMessage( new MsgCmdRemoveImport( APP, "mysql", "mysql-vm-2/mysql" ));
 		Assert.assertEquals( 1, app.getWar().getImports().size());
 		imports = app.getWar().getImports().get( "mysql" );
 		Assert.assertEquals( 1, imports.size());
@@ -198,11 +200,87 @@ public class AgentMessageProcessor_ImportsTest {
 		Assert.assertEquals( "mysql-vm-1/mysql", imp.getInstancePath());
 
 		// Remove an invalid one
-		processor.processMessage( new MsgCmdRemoveImport( "mysql", "mysql-vm-54/mysql" ));
+		processor.processMessage( new MsgCmdRemoveImport( APP, "mysql", "mysql-vm-54/mysql" ));
 		Assert.assertEquals( 1, app.getWar().getImports().size());
 
-		processor.processMessage( new MsgCmdRemoveImport( "something-else", "a-vm/something-else" ));
+		processor.processMessage( new MsgCmdRemoveImport( APP, "something-else", "a-vm/something-else" ));
 		Assert.assertEquals( 1, app.getWar().getImports().size());
+	}
+
+
+	@Test
+	public void testImports_filtering_withExternalExport_noBinding() throws Exception {
+
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// Notify a MySQL instance is available
+		Assert.assertEquals( 0, app.getWar().getImports().size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+
+		Map<String,String> variables1 = new HashMap<String,String> ();
+		variables1.put( "mysql.ip", "192.168.0.15" );
+		variables1.put( "mysql.port", "3306" );
+		processor.processMessage( new MsgCmdAddImport( "not-app", "mysql", "mysql-vm-1/mysql", variables1 ));
+
+		Assert.assertEquals( 0, app.getWar().getImports().size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.size());
+		Assert.assertTrue( processor.applicationNameToExternalExports.containsKey( "not-app" ));
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "not-app" ).size());
+
+		// Try to remove it... No error
+		processor.processMessage( new MsgCmdRemoveImport( "not-app", "mysql", "mysql-vm-1/mysql" ));
+		Assert.assertEquals( 0, app.getWar().getImports().size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+	}
+
+
+	@Test
+	public void testImports_filtering_withExternalExport_withBinding() throws Exception {
+
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+
+		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
+		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// Create a binding - not really meaningful here
+		processor.applicationBindings.put( "mysql", "not-app" );
+
+		// Notify a MySQL instance is available
+		Assert.assertEquals( 0, app.getWar().getImports().size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+
+		Map<String,String> variables1 = new HashMap<String,String> ();
+		variables1.put( "mysql.ip", "192.168.0.15" );
+		variables1.put( "mysql.port", "3306" );
+		processor.processMessage( new MsgCmdAddImport( "not-app", "mysql", "mysql-vm-1/mysql", variables1 ));
+
+		Assert.assertEquals( 1, app.getWar().getImports().size());
+		Collection<Import> imports = app.getWar().getImports().get( "mysql" );
+		Assert.assertEquals( 1, imports.size());
+
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.size());
+		Assert.assertTrue( processor.applicationNameToExternalExports.containsKey( "not-app" ));
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "not-app" ).size());
+
+		Import imp = imports.iterator().next();
+		Assert.assertEquals( 2, imp.getExportedVars().size());
+		Assert.assertEquals( "192.168.0.15", imp.getExportedVars().get( "mysql.ip" ));
+		Assert.assertEquals( "3306", imp.getExportedVars().get( "mysql.port" ));
+		Assert.assertEquals( "mysql-vm-1/mysql", imp.getInstancePath());
+
+		// Remove it
+		processor.processMessage( new MsgCmdRemoveImport( "not-app", "mysql", "mysql-vm-1/mysql" ));
+		Assert.assertEquals( 0, app.getWar().getImports().size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
 	}
 
 
@@ -218,9 +296,10 @@ public class AgentMessageProcessor_ImportsTest {
 		};
 
 		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.applicationName = APP;
 		this.agent.start();
-		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 
@@ -234,7 +313,7 @@ public class AgentMessageProcessor_ImportsTest {
 		Map<String,String> variables1 = new HashMap<String,String> ();
 		variables1.put( "mysql.ip", "192.168.0.15" );
 		variables1.put( "mysql.port", "3306" );
-		processor.processMessage( new MsgCmdAddImport( "mysql", "mysql-vm-1/mysql", variables1 ));
+		processor.processMessage( new MsgCmdAddImport( APP, "mysql", "mysql-vm-1/mysql", variables1 ));
 
 		Assert.assertEquals( 1, app.getWar().getImports().size());
 		Collection<Import> imports = app.getWar().getImports().get( "mysql" );
@@ -277,9 +356,8 @@ public class AgentMessageProcessor_ImportsTest {
 		// Remove the MySQL export
 		Assert.assertEquals( 1, app.getWar().getImports().size());
 		Assert.assertEquals( 1, app.getWar().getImports().get( "mysql" ).size());
-		processor.processMessage( new MsgCmdRemoveImport( "mysql", "mysql-vm-1/mysql" ));
-		Assert.assertEquals( 1, app.getWar().getImports().size());
-		Assert.assertEquals( 0, app.getWar().getImports().get( "mysql" ).size());
+		processor.processMessage( new MsgCmdRemoveImport( APP, "mysql", "mysql-vm-1/mysql" ));
+		Assert.assertEquals( 0, app.getWar().getImports().size());
 		// No plug-in => no error (the exception is caught somewhere)
 	}
 
@@ -302,13 +380,13 @@ public class AgentMessageProcessor_ImportsTest {
 
 		// Adding itself does not work
 		Assert.assertEquals( 0, i1.getImports().size());
-		processor.processMessage( new MsgCmdAddImport( "cluster", "/inst 1", InstanceHelpers.findAllExportedVariables( i1 )));
+		processor.processMessage( new MsgCmdAddImport( APP, "cluster", "/inst 1", InstanceHelpers.findAllExportedVariables( i1 )));
 		Assert.assertEquals( 0, i1.getImports().size());
 
 		// Adding another node works
 		Map<String,String> variables = new HashMap<String,String> ();
 		variables.put( "cluster.ip", "192.168.0.45" );
-		processor.processMessage( new MsgCmdAddImport( "cluster", "/vm/cluster node", variables ));
+		processor.processMessage( new MsgCmdAddImport( APP, "cluster", "/vm/cluster node", variables ));
 
 		Assert.assertEquals( 1, i1.getImports().size());
 		Collection<Import> imports = i1.getImports().get( "cluster" );

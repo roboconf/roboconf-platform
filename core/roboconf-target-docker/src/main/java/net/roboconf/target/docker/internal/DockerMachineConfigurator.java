@@ -118,7 +118,9 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		String generateAS = this.targetProperties.get( DockerHandler.GENERATE_IMAGE );
 		boolean generate = Boolean.parseBoolean( generateAS );
-		if( generate )
+
+		Image img = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
+		if( generate && img == null )
 			createImage( fixedImageId );
 
 		createContainer( fixedImageId );
@@ -150,7 +152,13 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		// Execute...
 		try {
-			String containerName = this.scopedInstancePath.replaceFirst( "^/", "" ).replace( "/", "-" ).replaceAll( "\\s+", "_" );
+			String containerName = this.scopedInstancePath + "_from_" + this.applicationName;
+			containerName = containerName.replaceFirst( "^/", "" ).replace( "/", "-" ).replaceAll( "\\s+", "_" );
+
+			// Prevent container names from being too long (see #480)
+			if( containerName.length() > 61 )
+				containerName = containerName.substring( 0, 61 );
+
 			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId )
 					.withName( containerName )
 					.withCmd( args.toArray( new String[ args.size()]));

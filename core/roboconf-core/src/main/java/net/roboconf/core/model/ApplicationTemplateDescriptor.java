@@ -50,10 +50,11 @@ public class ApplicationTemplateDescriptor {
 	public static final String APPLICATION_DSL_ID = "application-dsl-id";
 	public static final String APPLICATION_GRAPH_EP = "graph-entry-point";
 	public static final String APPLICATION_INSTANCES_EP = "instance-entry-point";
+	public static final String APPLICATION_EXTERNAL_EXPORTS_PREFIX = "exports-prefix";
 	public static final String APPLICATION_EXTERNAL_EXPORTS = "exports";
 	public static final String APPLICATION_EXTERNAL_EXPORTS_AS = "as";
 
-	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId;
+	private String name, description, qualifier, graphEntryPoint, instanceEntryPoint, dslId, externalExportsPrefix;
 	public final Map<String,String> externalExports = new HashMap<> ();
 	public final Set<String> invalidExternalExports = new HashSet<> ();
 
@@ -98,6 +99,20 @@ public class ApplicationTemplateDescriptor {
 	 */
 	public void setQualifier( String qualifier ) {
 		this.qualifier = qualifier;
+	}
+
+	/**
+	 * @return the externalExportsPrefix
+	 */
+	public String getExternalExportsPrefix() {
+		return this.externalExportsPrefix;
+	}
+
+	/**
+	 * @param externalExportsPrefix the externalExportsPrefix to set
+	 */
+	public void setExternalExportsPrefix( String externalExportsId ) {
+		this.externalExportsPrefix = externalExportsId;
 	}
 
 	/**
@@ -157,6 +172,7 @@ public class ApplicationTemplateDescriptor {
 		result.graphEntryPoint = properties.getProperty( APPLICATION_GRAPH_EP, null );
 		result.instanceEntryPoint = properties.getProperty( APPLICATION_INSTANCES_EP, null );
 		result.dslId = properties.getProperty( APPLICATION_DSL_ID, null );
+		result.externalExportsPrefix = properties.getProperty( APPLICATION_EXTERNAL_EXPORTS_PREFIX, null );
 
 		final Pattern pattern = Pattern.compile(
 				"(\\S+)\\s+" + APPLICATION_EXTERNAL_EXPORTS_AS + "\\s+(\\S+)",
@@ -217,6 +233,9 @@ public class ApplicationTemplateDescriptor {
 
 		if( descriptor.instanceEntryPoint != null )
 			properties.setProperty( APPLICATION_INSTANCES_EP, descriptor.instanceEntryPoint );
+
+		if( descriptor.externalExportsPrefix != null )
+			properties.setProperty( APPLICATION_EXTERNAL_EXPORTS_PREFIX, descriptor.externalExportsPrefix );
 
 		StringBuilder sb = new StringBuilder();
 		for( Iterator<Map.Entry<String,String>> it = descriptor.externalExports.entrySet().iterator(); it.hasNext(); ) {

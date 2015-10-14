@@ -27,11 +27,14 @@ package net.roboconf.dm.internal.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.utils.IconUtils;
@@ -48,6 +51,8 @@ public final class ConfigurationUtils {
 	public static final String TARGETS = "targets";
 
 	public static final String INSTANCES_FILE = "current.instances";
+	public static final String APP_BINDINGS_FILE = "application-bindings.properties";
+
 	public static final String TARGETS_ASSOC_FILE = "targets-associations.properties";
 	public static final String TARGETS_HINTS_SUFFIX = ".hints.properties";
 	public static final String TARGETS_USAGE_SUFFIX = ".usage.properties";
@@ -98,7 +103,6 @@ public final class ConfigurationUtils {
 	 */
 	public static void saveInstances( ManagedApplication ma, File configurationDirectory ) {
 
-		Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
 		String relativeFilePath = findInstancesRelativeLocation( ma.getName());
 		File targetFile = new File( configurationDirectory, relativeFilePath );
 		try {
@@ -106,6 +110,7 @@ public final class ConfigurationUtils {
 			RuntimeModelIo.writeInstances( targetFile, ma.getApplication().getRootInstances());
 
 		} catch( IOException e ) {
+			Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
 			logger.severe( "Failed to save instances. " + e.getMessage());
 			Utils.logException( logger, e );
 		}
@@ -175,5 +180,47 @@ public final class ConfigurationUtils {
 
 		// Find an icon in the directory
 		return IconUtils.findIcon( root );
+	}
+
+
+	/**
+	 * Loads the application bindings into an application.
+	 * @param app a non-null application
+	 * @param configurationDirectory the DM's configuration directory
+	 */
+	public static void loadApplicationBindings( Application app ) {
+
+		File descDir = new File( app.getDirectory(), Constants.PROJECT_DIR_DESC );
+		File appBindingsFile = new File( descDir, APP_BINDINGS_FILE );
+
+		Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
+		Properties props = Utils.readPropertiesFileQuietly( appBindingsFile, logger );
+		for( Map.Entry<?,?> entry : props.entrySet())
+			app.applicationBindings.put((String) entry.getKey(), (String) entry.getValue());
+	}
+
+
+	/**
+	 * Saves the application bindings into the DM's directory.
+	 * @param app a non-null application
+	 * @param configurationDirectory the DM's configuration directory
+	 */
+	public static void saveApplicationBindings( Application app ) {
+
+		File descDir = new File( app.getDirectory(), Constants.PROJECT_DIR_DESC );
+		File appBindingsFile = new File( descDir, APP_BINDINGS_FILE );
+
+		Properties props = new Properties();
+		props.putAll( app.applicationBindings );
+
+		try {
+			Utils.createDirectory( descDir );
+			Utils.writePropertiesFile( props, appBindingsFile );
+
+		} catch( IOException e ) {
+			Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
+			logger.severe( "Failed to save application bindings for " + app + ". " + e.getMessage());
+			Utils.logException( logger, e );
+		}
 	}
 }

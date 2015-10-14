@@ -27,12 +27,17 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.ApplicationTemplateDescriptor;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.api.IApplicationMngr;
@@ -244,6 +249,74 @@ public class ApplicationTemplateMngrImplTest {
 
 
 	@Test( expected = IOException.class )
+	public void testLoadApplicationTemplate_externalExportsPrefixIsAlreadyUsed() throws Exception {
+
+		// We need to modify the descriptor, so work on a copy
+		File originalDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( originalDirectory.exists());
+
+		File directoryCopy = this.folder.newFolder();
+		Utils.copyDirectory( originalDirectory, directoryCopy );
+
+		// Update the external export ID
+		File descriptorFile = new File( directoryCopy, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( descriptorFile.exists());
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( descriptorFile );
+		desc.setExternalExportsPrefix( "for-test" );
+
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		try {
+			this.mngr.loadApplicationTemplate( directoryCopy );
+
+		} catch( Exception e ) {
+			Assert.fail( "Loading the application the first time should not fail." );
+		}
+
+		// Change the qualifier in the files
+		desc.setQualifier( "v33.2" );
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		this.mngr.loadApplicationTemplate( directoryCopy );
+	}
+
+
+	@Test
+	public void testLoadApplicationTemplate_externalExportsPrefixDoNotConflict() throws Exception {
+
+		// We need to modify the descriptor, so work on a copy
+		File originalDirectory = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( originalDirectory.exists());
+
+		File directoryCopy = this.folder.newFolder();
+		Utils.copyDirectory( originalDirectory, directoryCopy );
+
+		// Update the external export ID
+		File descriptorFile = new File( directoryCopy, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR );
+		Assert.assertTrue( descriptorFile.exists());
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( descriptorFile );
+		desc.setExternalExportsPrefix( "for-test" );
+
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		try {
+			this.mngr.loadApplicationTemplate( directoryCopy );
+
+		} catch( Exception e ) {
+			Assert.fail( "Loading the application the first time should not fail." );
+		}
+
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		// Change the qualifier in the files
+		desc.setQualifier( "v33.2" );
+		desc.setExternalExportsPrefix( null );
+		ApplicationTemplateDescriptor.save( descriptorFile, desc );
+		this.mngr.loadApplicationTemplate( directoryCopy );
+
+		Assert.assertEquals( 2, this.mngr.getApplicationTemplates().size());
+	}
+
+
+	@Test( expected = IOException.class )
 	public void testLoadApplicationTemplate_invalidDirectory() throws Exception {
 
 		File source = TestUtils.findApplicationDirectory( "lamp" );
@@ -315,5 +388,14 @@ public class ApplicationTemplateMngrImplTest {
 
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).createTarget( Mockito.any( File.class ));
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id", tpl );
+
+		Application app = new Application( tpl );
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
+		Assert.assertEquals( 3, scopedInstances.size());
+
+		for( Instance scopedInstance : scopedInstances ) {
+			String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
+		}
 	}
 }

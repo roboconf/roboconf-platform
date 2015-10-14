@@ -83,6 +83,12 @@ public class DismissClientAgent implements IAgentClient {
 
 
 	@Override
+	public void setExternalMapping( Map<String,String> externalExports ) {
+		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
+	}
+
+
+	@Override
 	public void publishExports( Instance instance ) throws IOException {
 		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 	}

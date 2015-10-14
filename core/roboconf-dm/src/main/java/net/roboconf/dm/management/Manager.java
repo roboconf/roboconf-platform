@@ -26,6 +26,7 @@
 package net.roboconf.dm.management;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -89,9 +90,14 @@ public class Manager {
 	// Injected by iPojo or Admin Config
 	protected String messagingType;
 
+	// FIXME: move it into a new API
+	protected int autonomicMaxRoots = -1;
+
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected Timer timer;
+	protected String oldMessagingType;
+
 	private RCDm messagingClient;
 
 	// API access
@@ -161,6 +167,10 @@ public class Manager {
 		// Restore what is necessary
 		this.applicationTemplateMngr.restoreTemplates();
 		this.applicationMngr.restoreApplications();
+
+		// We must update instance states after we restored applications
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
+			this.instancesMngr.restoreInstanceStates( ma );
 
 		this.logger.info( "The DM was launched." );
 	}
@@ -240,18 +250,20 @@ public class Manager {
 	}
 
 
+	// Reconfiguration
+
+
 	/**
 	 * This method reconfigures the manager.
 	 * <p>
-	 * It is invoked by iPojo when the configuration changes.
-	 * It may be invoked before the start() method is.
+	 * It is NOT invoked DIRECTLY by iPojo anymore.
 	 * </p>
 	 */
 	public void reconfigure() {
 
 		// Update the messaging client
 		if( this.messagingClient != null ) {
-			this.messagingClient.switchMessagingType(this.messagingType);
+			this.messagingClient.switchMessagingType( this.messagingType );
 			try {
 				if( this.messagingClient.isConnected())
 					this.messagingClient.listenToTheDm( ListenerCommand.START );
@@ -272,8 +284,28 @@ public class Manager {
 	// Setters
 
 	public void setMessagingType( String messagingType ) {
-		this.messagingType = messagingType;
+
+		// Properties are injected on every modification.
+		// so, we just want to track changes.
+		if( ! Objects.equals( this.messagingType, messagingType )) {
+			this.oldMessagingType = this.messagingType;
+			this.messagingType = messagingType;
+
+			// Explicitly require a reconfiguration.
+			// We don't let iPojo deal with it anymore since there may be parameters in the
+			// DM that are not related to the messaging. In fact, most of the messaging configuration
+			// was moved in messaging bundles. So, we only want to reconfigure the messaging client
+			// when the messaging type changes.
+			reconfigure();
+		}
 	}
+
+
+	public void setAutonomicMaxRoots( int autonomicMaxRoots ) {
+		this.logger.info( "The autonomic's maximum roots number is set to " + autonomicMaxRoots + "." );
+		this.autonomicMaxRoots = autonomicMaxRoots;
+	}
+
 
 	public void setTargetResolver( ITargetHandlerResolver targetHandlerResolver ) {
 
@@ -316,5 +348,13 @@ public class Manager {
 
 	public IDebugMngr debugMngr() {
 		return this.debugMngr;
+	}
+
+	/**
+	 * FIXME: to remove once we have the autonomic configurator API.
+	 * @return the autonomicMaxRoots
+	 */
+	public int getAutonomicMaxRoots() {
+		return this.autonomicMaxRoots;
 	}
 }

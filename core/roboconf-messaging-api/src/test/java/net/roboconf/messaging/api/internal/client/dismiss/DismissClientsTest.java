@@ -25,6 +25,8 @@
 
 package net.roboconf.messaging.api.internal.client.dismiss;
 
+import java.util.HashMap;
+
 import junit.framework.Assert;
 import net.roboconf.messaging.api.client.ListenerCommand;
 
@@ -73,6 +75,8 @@ public class DismissClientsTest {
 		client.sendMessageToTheDm( null );
 		client.unpublishExports( null );
 		client.getMessagingType();
+		client.setExternalMapping( null );
 		client.getConfiguration();
+		client.setExternalMapping( new HashMap<String,String>( 0 ));
 	}
 }

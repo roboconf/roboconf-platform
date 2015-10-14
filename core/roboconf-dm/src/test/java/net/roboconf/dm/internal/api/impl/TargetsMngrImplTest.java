@@ -35,10 +35,13 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
@@ -425,6 +428,97 @@ public class TargetsMngrImplTest {
 
 
 	@Test
+	public void testApplicationWasDeleted() throws Exception {
+
+		// Prepare the model
+		TestApplication app1 = new TestApplication();
+		app1.name( "app1" );
+		TestApplication app2 = new TestApplication();
+		app2.name( "app2" );
+
+		String t1 = this.mngr.createTarget( "prop: ok\nname: target 1\ndescription: t1's target" );
+		String t2 = this.mngr.createTarget( "prop: ok\nhandler: docker" );
+
+		String path = InstanceHelpers.computeInstancePath( app1.getTomcatVm());
+
+		// Create hints and associations
+		this.mngr.associateTargetWithScopedInstance( t1, app1.getTemplate(), null );
+		this.mngr.associateTargetWithScopedInstance( t1, app1, null );
+		this.mngr.associateTargetWithScopedInstance( t2, app1, path );
+		this.mngr.associateTargetWithScopedInstance( t2, app2, null );
+
+		this.mngr.addHint( t1, app1 );
+		this.mngr.addHint( t2, app1 );
+		this.mngr.addHint( t2, app2 );
+
+		// Verify pre-conditions
+		Assert.assertEquals( t1, this.mngr.findTargetId( app1, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app1, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1 ).size());
+
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app2 ).size());
+
+		Assert.assertEquals( t1, this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 0, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+
+		// Delete the application
+		this.mngr.applicationWasDeleted( app1 );
+
+		// Verify post-conditions
+		Assert.assertNull( this.mngr.findTargetId( app1, null ));
+		Assert.assertNull( this.mngr.findTargetId( app1, path ));
+
+		// t1 has not hint anymore, so it becomes global
+		List<TargetWrapperDescriptor> hints = this.mngr.listPossibleTargets( app1 );
+		Assert.assertEquals( 1, hints.size());
+		Assert.assertEquals( t1, hints.get( 0 ).getId());
+
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, path ));
+
+		// t1 is global now
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app2 ).size());
+
+		// t1 is global now
+		Assert.assertEquals( t1, this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+
+		// Delete the template of app1
+		this.mngr.applicationWasDeleted( app1.getTemplate());
+
+		// Verify post-conditions
+		Assert.assertNull( this.mngr.findTargetId( app1, null ));
+		Assert.assertNull( this.mngr.findTargetId( app1, path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app1 ).size());
+
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app2 ).size());
+
+		Assert.assertNull( this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+
+		// Delete app2
+		this.mngr.applicationWasDeleted( app2 );
+
+		// Verify post-conditions
+		// t2 does not have any hint anymore => it is global
+		Assert.assertNull( this.mngr.findTargetId( app1, null ));
+		Assert.assertNull( this.mngr.findTargetId( app1, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1 ).size());
+
+		Assert.assertNull( this.mngr.findTargetId( app2, null ));
+		Assert.assertNull( this.mngr.findTargetId( app2, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app2 ).size());
+
+		Assert.assertNull( this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+	}
+
+
+	@Test
 	public void testLocking_ByOneInstance() throws Exception {
 
 		TestApplication app = new TestApplication();
@@ -593,5 +687,141 @@ public class TargetsMngrImplTest {
 		List<TargetWrapperDescriptor> beans = ((TargetsMngrImpl) this.mngr).buildList( targetDirectories, null );
 		Assert.assertEquals( 1, beans.size());
 		Assert.assertEquals( dir1.getName(), beans.get( 0 ).getId());
+	}
+
+
+	@Test
+	public void testFindTargetById() throws Exception {
+
+		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS + "/5" );
+		Utils.createDirectory( dir );
+		Utils.writeStringInto( "prop: done\ntarget.id = test", new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME ));
+
+		TargetWrapperDescriptor twb = this.mngr.findTargetById( dir.getName());
+		Assert.assertNotNull( twb );
+		Assert.assertEquals( dir.getName(), twb.getId());
+		Assert.assertEquals( "test", twb.getHandler());
+		Assert.assertFalse( twb.isDefault());
+		Assert.assertNull( twb.getName());
+		Assert.assertNull( twb.getDescription());
+	}
+
+
+	@Test
+	public void testFindUsageStatistics_inexistingTarget() throws Exception {
+
+		List<TargetUsageItem> items = this.mngr.findUsageStatistics( "4" );
+		Assert.assertEquals( 0, items.size());
+	}
+
+
+	@Test
+	public void testFindUsageStatistics() throws Exception {
+
+		// Setup
+		TestApplication app = new TestApplication();
+		Instance newRootInstance = new Instance( "newRoot" ).component( app.getMySqlVm().getComponent());
+		app.getRootInstances().add( newRootInstance );
+
+		String t1 = this.mngr.createTarget( "prop: ok" );
+		String t2 = this.mngr.createTarget( "prop: ok" );
+		String t3 = this.mngr.createTarget( "prop: ok" );
+
+		this.mngr.associateTargetWithScopedInstance( t1, app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		this.mngr.associateTargetWithScopedInstance( t1, app, InstanceHelpers.computeInstancePath( newRootInstance ));
+		this.mngr.associateTargetWithScopedInstance( t2, app, null );
+
+		// Checks
+		List<TargetUsageItem> items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		TargetUsageItem item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		// Mark one as used
+		this.mngr.lockAndGetTarget( app, app.getTomcatVm());
+
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertTrue( item.isReferencing());
+
+		// The change is here!
+		Assert.assertTrue( item.isUsing());
+
+		// Release it
+		this.mngr.unlockTarget( app, app.getTomcatVm());
+
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
+
+		// Remove the association for the named instance
+		this.mngr.dissociateTargetFromScopedInstance( app, InstanceHelpers.computeInstancePath( app.getMySqlVm()));
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 1, items.size());
+
+		this.mngr.dissociateTargetFromScopedInstance( app, InstanceHelpers.computeInstancePath( newRootInstance ));
+		items = this.mngr.findUsageStatistics( t1 );
+		Assert.assertEquals( 0, items.size());
+
+		items = this.mngr.findUsageStatistics( t2 );
+		Assert.assertEquals( 1, items.size());
+
+		item = items.get( 0 );
+		Assert.assertEquals( app.getName(), item.getName());
+		Assert.assertNull( item.getQualifier());
+		Assert.assertFalse( item.isUsing());
+		Assert.assertTrue( item.isReferencing());
+
+		items = this.mngr.findUsageStatistics( t3 );
+		Assert.assertEquals( 0, items.size());
 	}
 }

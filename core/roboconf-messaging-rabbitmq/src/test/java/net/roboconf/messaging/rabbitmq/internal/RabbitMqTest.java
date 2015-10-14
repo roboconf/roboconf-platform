@@ -33,8 +33,9 @@ import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
-
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
+
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -133,7 +134,12 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	}
 
 
-
+	@Override
+	@Test
+	public void testExternalExports_withTwoApplications() throws Exception {
+		Assume.assumeTrue( rabbitMqIsRunning );
+		super.testExternalExports_withTwoApplications();
+	}
 
 
 	@Override

@@ -157,14 +157,22 @@ public class ManagedApplicationTest {
 	@Test
 	public void testAcknowledgeHeartBeat() {
 
+		Assert.assertNull( this.app.getMySqlVm().data.get( Instance.RUNNING_FROM ));
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
+
+		String time = this.app.getMySqlVm().data.get( Instance.RUNNING_FROM );
+		Assert.assertNotNull( time );
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
 		Assert.assertNull( this.app.getMySqlVm().data.get( ManagedApplication.MISSED_HEARTBEATS ));
+
+		String otherTime = this.app.getMySqlVm().data.get( Instance.RUNNING_FROM );
+		Assert.assertNotNull( otherTime );
+		Assert.assertEquals( time, otherTime );
 
 		this.app.getMySqlVm().setStatus( InstanceStatus.PROBLEM );
 		this.ma.acknowledgeHeartBeat( this.app.getMySqlVm());

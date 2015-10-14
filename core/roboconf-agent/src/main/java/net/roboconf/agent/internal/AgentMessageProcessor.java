@@ -28,7 +28,11 @@ package net.roboconf.agent.internal;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -53,6 +57,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImpo
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -67,10 +72,11 @@ import net.roboconf.plugin.api.PluginInterface;
  * The class (thread) in charge of processing messages received by the agent.
  * <p>
  * The key idea in this processor is that the method {@link #processMessage(Message)}
- * CANNOT be interrupted when it is processing a message. The agent can indicate
- * "Hey! I have a new configuration, I have to replace you."
+ * CANNOT be interrupted when it is processing a message.
  * </p>
  * <p>
+ * The agent can indicate
+ * "Hey! I have a new configuration, I have to replace you."
  * But in this case, the agent will not directly replace the processor.
  * Instead, it will wait the current processing to complete. And only then, it will
  * replace the messaging client and the processor.
@@ -82,7 +88,32 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Agent agent;
+
 	Instance scopedInstance;
+
+	/**
+	 * A map used for external exports.
+	 * <p>
+	 * Key = template name, value = application name.
+	 * </p>
+	 */
+	final Map<String,String> applicationBindings = new HashMap<> ();
+
+	/**
+	 * A local cache to store external imports, even those that are NOT used by instances.
+	 * <p>
+	 * Several applications may have the same template, and thus, exports the same variable
+	 * to other applications. But only ONE application can be bound with another. From the messaging's
+	 * point of view, the agent receives messages from all these applications. It is then up to it
+	 * to filter those it can use.
+	 * </p>
+	 * <p>
+	 * The imports that are compliant with {@link #applicationBindings} are directly injected in
+	 * the instance imports. But ALL the external imports are cached in this map.
+	 * </p>
+	 */
+	final Map<String,Collection<Import>> applicationNameToExternalExports = new HashMap<> ();
+
 
 
 	/**
@@ -102,6 +133,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	@Override
 	protected void processMessage( Message message ) {
 
+		this.logger.fine( "A message of type " + message.getClass().getSimpleName() + " was received and is about to be processed." );
 		try {
 			if( message instanceof MsgCmdSetScopedInstance )
 				processMsgSetScopedInstance((MsgCmdSetScopedInstance) message );
@@ -119,7 +151,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 				processMsgAddImport((MsgCmdAddImport) message );
 
 			else if( message instanceof MsgCmdRemoveImport )
-				processMsgRemoveImport((MsgCmdRemoveImport) message );
+				processMsgRemoveImport((MsgCmdRemoveImport) message, true );
 
 			else if( message instanceof MsgCmdRequestImport )
 				processMsgRequestImport((MsgCmdRequestImport) message );
@@ -130,8 +162,11 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			else if( message instanceof MsgCmdResynchronize )
 				processMsgResynchronize((MsgCmdResynchronize) message );
 
-			else if (message instanceof MsgEcho )
+			else if( message instanceof MsgEcho )
 				processMsgEcho((MsgEcho) message );
+
+			else if( message instanceof MsgCmdChangeBinding )
+				processMsgChangeBinding((MsgCmdChangeBinding) message );
 
 			else
 				this.logger.warning( getName() + " got an undetermined message to process. " + message.getClass().getName());
@@ -148,7 +183,81 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 
 	/**
-	 * Respond to an Echo 'PING' message sent by the DM.
+	 * Updates the application bindings.
+	 * <p>
+	 * These bindings can be modified when the application is running. In this
+	 * case, it triggers a reconfiguration when necessary.
+	 * </p>
+	 *
+	 * @param msg an change binding message
+	 */
+	void processMsgChangeBinding( MsgCmdChangeBinding msg ) throws IOException {
+		this.logger.fine( "Binding prefix " + msg.getExternalExportsPrefix() + " to application " + msg.getAppName() + "." );
+
+		// First, determine if a previous binding existed
+		String previousAppName = this.applicationBindings.get( msg.getExternalExportsPrefix());
+
+		// If so, act as if the associated imports had been removed
+		if( previousAppName != null ) {
+
+			// We need to remove all the instance paths associated with this inter-app prefix.
+			// For that, we act as if we had received MsgCmdRemoveImport messages.
+
+			// It means we will indirectly update some instances (at least once). And that we may invoke
+			// update scripts more than once. This is not very efficient, but it is to preserve the plug-in API
+			// and the way we pass parameters to our scripts.
+			// Indeed, when we remove an import, we pass it to our plug-ins. The scripts can handle them. Handling
+			// a collection (e.g. a list) would make scripts and recipes more complicated. Besides, it would not be
+			// symmetrical with added imports.
+			List<String> instancePaths = new ArrayList<> ();
+			for( Instance instance : InstanceHelpers.buildHierarchicalList( this.scopedInstance )) {
+				Collection<Import> imports = instance.getImports().get( msg.getExternalExportsPrefix());
+				if( imports == null )
+					continue;
+
+				for( Import imp : imports )
+					instancePaths.add( imp.getInstancePath());
+			}
+
+			// Now that we have the instance paths to remove,
+			// remove the associated imports.
+			for( String path : instancePaths ) {
+				MsgCmdRemoveImport fakeMsg = new MsgCmdRemoveImport( previousAppName, msg.getExternalExportsPrefix(), path );
+				try {
+					processMsgRemoveImport( fakeMsg, false );
+
+				} catch( PluginException e ) {
+					this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
+					Utils.logException( this.logger, e );
+				}
+			}
+		}
+
+		// Update the bindings
+		this.applicationBindings.put( msg.getExternalExportsPrefix(), msg.getAppName());
+
+		// Now, we need to find all the external imports associated with the new application.
+		// Then, we will act as if we had received AddImport messages. This is symmetrical with what we
+		// did with removed imports.
+		// This strategy with a local cache prevents use from requesting exports from other agents.
+		Collection<Import> imports = this.applicationNameToExternalExports.get( msg.getAppName());
+		if( imports != null ) {
+			for( Import imp : imports ) {
+				MsgCmdAddImport fakeMsg = new MsgCmdAddImport( msg.getAppName(), imp.getComponentName(), imp.getInstancePath(), imp.getExportedVars());
+				try {
+					processMsgAddImport( fakeMsg );
+
+				} catch( PluginException e ) {
+					this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
+					Utils.logException( this.logger, e );
+				}
+			}
+		}
+	}
+
+
+	/**
+	 * Responds to an Echo 'PING' message sent by the DM.
 	 * @param message the Echo 'PING' message sent by the DM.
 	 */
 	void processMsgEcho( MsgEcho message ) throws IOException {
@@ -222,6 +331,12 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			this.agent.setScopedInstance( newScopedInstance );
 			instancesToProcess.addAll( InstanceHelpers.buildHierarchicalList( this.scopedInstance ));
+
+			// Propagate the external mapping into the messaging
+			this.messagingClient.setExternalMapping( msg.getExternalExports());
+
+			// Initialize the application bindings
+			this.applicationBindings.putAll( msg.getApplicationBindings());
 
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
@@ -360,13 +475,20 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	/**
 	 * Removes (if necessary) an import from the model instances.
 	 * @param msg the message process
+	 * @param realMessage true if is real received message, false for a fake one
 	 * @throws IOException if an error occurred with the messaging
 	 * @throws PluginException if an error occurred with a plug-in
 	 */
-	void processMsgRemoveImport( MsgCmdRemoveImport msg ) throws IOException, PluginException {
+	void processMsgRemoveImport( MsgCmdRemoveImport msg, boolean realMessage ) throws IOException, PluginException {
 
-		// Go through all the instances to see which ones are impacted
+		// Track ALL external exports - only for real messages
 		String appName = this.agent.getApplicationName();
+		if( realMessage && ! msg.getApplicationOrContextName().equals( appName )) {
+			removeCachedExternalImport( msg );
+		}
+
+		// Go through all the instances to see which ones are impacted.
+		// If it is an external exports that is removed, it will not be found in this instance.
 		for( Instance instance : InstanceHelpers.buildHierarchicalList( this.scopedInstance )) {
 
 			Set<String> importPrefixes = VariableHelpers.findPrefixesForImportedVariables( instance );
@@ -381,6 +503,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			// Remove the import and publish an update to the DM
 			imports.remove( toRemove );
+			if( imports.isEmpty())
+				instance.getImports().remove( msg.getComponentOrFacetName());
+
 			this.logger.fine( "Removing import from " + InstanceHelpers.computeInstancePath( instance )
 					+ ". Removed exporting instance: " + msg.getRemovedInstancePath());
 
@@ -405,6 +530,30 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * @throws PluginException if an error occurred with a plug-in
 	 */
 	void processMsgAddImport( MsgCmdAddImport msg ) throws IOException, PluginException {
+
+		// We must filter the new import.
+		// It must either come from THIS application, or be referenced in the
+		// application bindings. Otherwise, drop the update.
+		if( ! msg.getApplicationOrContextName().equals( this.agent.getApplicationName())) {
+
+			// Track ALL external exports
+			Collection<Import> imports = this.applicationNameToExternalExports.get( msg.getApplicationOrContextName());
+			if( imports == null ) {
+				imports = new LinkedHashSet<> ();
+				this.applicationNameToExternalExports.put( msg.getApplicationOrContextName(), imports );
+			}
+
+			// We use a set to prevent duplicates, so no need to distinguish fake and real messages
+			imports.add( new Import( msg.getAddedInstancePath(), msg.getComponentOrFacetName(), msg.getExportedVariables()));
+
+			// Should we go further?
+			// If it is not in the application binding, this import should not be added in the instance imports.
+			String expectedName = this.applicationBindings.get( msg.getComponentOrFacetName());
+			if( ! msg.getApplicationOrContextName().equals( expectedName )) {
+				this.logger.fine( "An external export was received (" + msg.getComponentOrFacetName() + ") but did not match (bound) application " + expectedName );
+				return;
+			}
+		}
 
 		// Go through all the instances to see which ones need an update
 		String appName = this.agent.getApplicationName();
@@ -442,6 +591,26 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			AbstractLifeCycleManager
 			.build( instance, this.agent.getApplicationName(), this.messagingClient)
 			.updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
+		}
+	}
+
+
+	private void removeCachedExternalImport( MsgCmdRemoveImport msg ) {
+
+		Collection<Import> imports = this.applicationNameToExternalExports.get( msg.getApplicationOrContextName());
+		if( imports != null ) {
+			Import toRemove = null;
+			for( Iterator<Import> it = imports.iterator(); it.hasNext() && toRemove == null; ) {
+				Import cur = it.next();
+				if( cur.getInstancePath().equals( msg.getRemovedInstancePath()))
+					toRemove = cur;
+			}
+
+			if( toRemove != null )
+				imports.remove( toRemove );
+
+			if( imports.isEmpty())
+				this.applicationNameToExternalExports.remove( msg.getApplicationOrContextName());
 		}
 	}
 }

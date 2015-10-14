@@ -440,6 +440,14 @@ public final class RuntimeModelValidator {
 			allExports = ComponentHelpers.findAllExportedVariables( app.getGraphs());;
 		}
 
+		// External export ID
+		if( ! app.externalExports.isEmpty()) {
+			if( Utils.isEmptyOrWhitespaces( app.getExternalExportsPrefix()))
+				errors.add( new ModelError( ErrorCode.RM_MISSING_APPLICATION_EXPORT_PREFIX, app ));
+			else if( ! app.getExternalExportsPrefix().matches( ParsingConstants.PATTERN_ID ))
+				errors.add( new ModelError( ErrorCode.RM_INVALID_APPLICATION_EXPORT_PREFIX, app ));
+		}
+
 		// Check external exports
 		Set<String> alreadySeen = new HashSet<> ();
 		for( Map.Entry<String,String> entry : app.externalExports.entrySet()) {

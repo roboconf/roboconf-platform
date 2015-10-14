@@ -30,17 +30,25 @@ package net.roboconf.dm.internal.autonomic;
  * @author Pierre-Yves Gibello - Linagora
  */
 public class AutonomicRule {
+
 	String reactionId;
 	String reactionInfo;
+	String eventId;
+	long delay;
+
 
 	/**
 	 * Create a new autonomic rule.
 	 * @param reactionId the reaction ID for this rule
 	 * @param reactionInfo the reaction data
+	 * @param eventId the event ID
+	 * @param delay the delay to wait between two successful executions of this rule
 	 */
-	public AutonomicRule( String reactionId, String reactionInfo ) {
+	public AutonomicRule( String reactionId, String reactionInfo, String eventId, long delay ) {
 		this.reactionId = reactionId;
 		this.reactionInfo = reactionInfo;
+		this.eventId = eventId;
+		this.delay = delay;
 	}
 
 	/**
@@ -52,14 +60,6 @@ public class AutonomicRule {
 	}
 
 	/**
-	 * Set the reaction ID for this rule.
-	 * @param reactionId The reaction ID
-	 */
-	public void setReactionId(String reactionId) {
-		this.reactionId = reactionId;
-	}
-
-	/**
 	 * Get the reaction info for this rule.
 	 * @return The reaction info
 	 */
@@ -68,10 +68,16 @@ public class AutonomicRule {
 	}
 
 	/**
-	 * Set the reaction info for this rule.
-	 * @param reactionInfo The reaction info
+	 * @return the eventId
 	 */
-	public void setReactionInfo(String reactionInfo) {
-		this.reactionInfo = reactionInfo;
+	public String getEventId() {
+		return this.eventId;
+	}
+
+	/**
+	 * @return the delay
+	 */
+	public long getDelay() {
+		return this.delay;
 	}
 }

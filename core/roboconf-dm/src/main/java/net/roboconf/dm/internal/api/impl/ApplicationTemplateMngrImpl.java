@@ -27,6 +27,8 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -38,9 +40,12 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
@@ -133,6 +138,15 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 		if( this.templates.containsKey( tpl ))
 			throw new AlreadyExistingException( tpl.getName());
 
+		Set<String> externExportPrefixes = new HashSet<> ();
+		for( ApplicationTemplate otherTpl : this.templates.keySet()) {
+			if( otherTpl.getExternalExportsPrefix() != null )
+				externExportPrefixes.add( otherTpl.getExternalExportsPrefix());
+		}
+
+		if( externExportPrefixes.contains( tpl.getExternalExportsPrefix()))
+			throw new IOException( "The external exports prefix is already used by another template." );
+
 		File targetDirectory = ConfigurationUtils.findTemplateDirectory( tpl, this.configurationMngr.getWorkingDirectory());
 		if( ! applicationFilesDirectory.equals( targetDirectory )) {
 			if( Utils.isAncestorFile( targetDirectory, applicationFilesDirectory ))
@@ -166,12 +180,13 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 		} else {
 			this.logger.info( "Deleting the application template called " + tpl.getName() + "..." );
 			this.templates.remove( tpl );
+			this.notificationMngr.applicationTemplate( tpl, EventType.DELETED );
+			this.targetsMngr.applicationWasDeleted( tpl );
 
 			File targetDirectory = ConfigurationUtils.findTemplateDirectory( tpl, this.configurationMngr.getWorkingDirectory());
 			Utils.deleteFilesRecursively( targetDirectory );
 
 			this.logger.info( "Application template " + tpl.getName() + " was successfully deleted." );
-			this.notificationMngr.applicationTemplate( tpl, EventType.DELETED );
 		}
 	}
 
@@ -202,10 +217,13 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 	 * Finds and registers the targets available in this template.
 	 * @param tpl a template
 	 * @throws IOException
+	 * @throws InvalidApplicationException
 	 */
 	private void registerTargets( ApplicationTemplate tpl )
-	throws IOException {
+	throws IOException, InvalidApplicationException {
 
+		// Load and register targets
+		Map<Component,String> componentToTargetId = new HashMap<Component,String> ();
 		for( Component c : ComponentHelpers.findAllComponents( tpl )) {
 			if( ! Constants.TARGET_INSTALLER.equalsIgnoreCase( c.getInstallerName()))
 				continue;
@@ -215,8 +233,25 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 			if( f.exists()) {
 				this.logger.fine( "Registering target from component " + c + " in application template " + tpl );
 				String targetId = this.targetsMngr.createTarget( f );
+				componentToTargetId.put( c, targetId );
+
 				this.targetsMngr.addHint( targetId, tpl );
 				Utils.deleteFilesRecursivelyAndQuietly( f.getParentFile());
+			}
+		}
+
+		// Associate them with instances
+		Application app = new Application( tpl );
+		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app )) {
+			String targetId = componentToTargetId.get( scopedInstance.getComponent());
+			if( targetId != null ) {
+				String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+				try {
+					this.targetsMngr.associateTargetWithScopedInstance( targetId, tpl, instancePath );
+
+				} catch( UnauthorizedActionException e ) {
+					throw new InvalidApplicationException( e );
+				}
 			}
 		}
 	}

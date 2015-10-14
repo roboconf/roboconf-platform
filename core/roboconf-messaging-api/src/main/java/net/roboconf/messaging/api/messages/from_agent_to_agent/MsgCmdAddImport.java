@@ -37,21 +37,24 @@ public class MsgCmdAddImport extends Message {
 	private static final long serialVersionUID = -374008319791927432L;
 
 	private final String componentOrFacetName;
+	private final String applicationOrContextName;
 	private final String addedInstancePath;
 	private final Map<String,String> exportedVariables;
 
 
 	/**
 	 * Constructor.
+	 * @param applicationOrContextName
 	 * @param componentOrFacetName
 	 * @param addedInstancePath
 	 * @param exportedVariables
 	 */
-	public MsgCmdAddImport( String componentOrFacetName, String addedInstancePath, Map<String,String> exportedVariables ) {
+	public MsgCmdAddImport( String applicationOrContextName, String componentOrFacetName, String addedInstancePath, Map<String,String> exportedVariables ) {
 		super();
 		this.componentOrFacetName = componentOrFacetName;
 		this.addedInstancePath = addedInstancePath;
 		this.exportedVariables = exportedVariables;
+		this.applicationOrContextName = applicationOrContextName;
 	}
 
 	/**
@@ -73,5 +76,12 @@ public class MsgCmdAddImport extends Message {
 	 */
 	public Map<String, String> getExportedVariables() {
 		return this.exportedVariables;
+	}
+
+	/**
+	 * @return the applicationOrContextName
+	 */
+	public String getApplicationOrContextName() {
+		return this.applicationOrContextName;
 	}
 }

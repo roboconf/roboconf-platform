@@ -50,6 +50,7 @@ import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -117,7 +118,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
 
 		// Store the message because we want to make sure the message is not lost
-		ma.storeAwaitingMessage( instance, new MsgCmdSetScopedInstance( scopedInstance ));
+		ma.storeAwaitingMessage( instance, new MsgCmdAddInstance( scopedInstance ));
 
 		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
 		this.notificationMngr.instance( instance, ma.getApplication(), EventType.CREATED );
@@ -365,7 +366,11 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		InstanceStatus initialStatus = scopedInstance.getStatus();
 		try {
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( scopedInstance );
+			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance(
+					scopedInstance,
+					ma.getApplication().getExternalExports(),
+					ma.getApplication().applicationBindings );
+
 			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msg );
 
 			Map<String,String> targetProperties = this.targetsMngr.lockAndGetTarget( ma.getApplication(), scopedInstance );
@@ -451,6 +456,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			// Remove useless data for the configuration backup
 			scopedInstance.data.remove( Instance.IP_ADDRESS );
 			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+			scopedInstance.data.remove( Instance.RUNNING_FROM );
 			this.logger.fine( "Scoped instance " + path + "'s undeployment was successfully requested in " + ma.getName() + "." );
 
 		} catch( TargetException | IOException e ) {

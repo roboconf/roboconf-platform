@@ -104,7 +104,7 @@ public abstract class RabbitMqClient implements IClient {
 
 
 	@Override
-	public final void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
+	public final synchronized void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
 		this.messageQueue = messageQueue;
 	}
 

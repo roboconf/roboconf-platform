@@ -21,7 +21,8 @@ MySQL {
 # Tomcat
 Tomcat {
 	installer: puppet;
-	exports: ip, portAJP = 8009;
+	exports: ip;
+	exports: portAJP = 8009;
 	imports: MySQL.ip, MySQL.port;
 }
 

@@ -43,6 +43,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -58,6 +59,7 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 
 /**
  * @author Noël - LIG
@@ -70,7 +72,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final INotificationMngr notificationMngr;
 	private final IConfigurationMngr configurationMngr;
-	private final ITargetsMngr targetMngr;
+	private final ITargetsMngr targetsMngr;
 	private final IMessagingMngr messagingMngr;
 	private final Map<String,ManagedApplication> nameToManagedApplication;
 
@@ -82,7 +84,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	 * @param notificationMngr
 	 * @param configurationMngr
 	 * @param messagingMngr
-	 * @param targetMngr
+	 * @param targetsMngr
 	 */
 	public ApplicationMngrImpl(
 			INotificationMngr notificationMngr,
@@ -94,7 +96,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		this.notificationMngr = notificationMngr;
 		this.configurationMngr = configurationMngr;
 		this.messagingMngr = messagingMngr;
-		this.targetMngr = targetMngr;
+		this.targetsMngr = targetMngr;
 	}
 
 
@@ -149,10 +151,10 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		this.messagingMngr.checkMessagingConfiguration();
 
 		// Create the application
-		ManagedApplication ma = createApplication( name, description, tpl, this.configurationMngr.getWorkingDirectory());
+		ManagedApplication ma = createNewApplication( name, description, tpl, this.configurationMngr.getWorkingDirectory());
 
 		// Copy the target settings, if any
-		this.targetMngr.copyOriginalMapping( ma.getApplication());
+		this.targetsMngr.copyOriginalMapping( ma.getApplication());
 
 		// Start listening to messages
 		this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
@@ -211,8 +213,11 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		// Notify listeners
 		this.notificationMngr.application( ma.getApplication(), EventType.DELETED );
 
-		// Delete artifacts
+		// Remove it from the targets
 		Application app = ma.getApplication();
+		this.targetsMngr.applicationWasDeleted( app );
+
+		// Delete artifacts
 		this.logger.info( "Deleting the application called " + app.getName() + "..." );
 		this.nameToManagedApplication.remove( app.getName());
 		app.removeAssociationWithTemplate();
@@ -243,7 +248,21 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 					throw new InvalidApplicationException( new RoboconfError( ErrorCode.PROJ_APPLICATION_TEMPLATE_NOT_FOUND ));
 
 				// Recreate the application
-				ManagedApplication ma = createApplication( desc.getName(), desc.getDescription(), tpl, configurationDirectory );
+				if( this.nameToManagedApplication.containsKey( desc.getName()))
+					throw new AlreadyExistingException( desc.getName());
+
+				Application app = new Application( desc.getName(), tpl ).description( desc.getDescription());
+				File targetDirectory = ConfigurationUtils.findApplicationDirectory( app.getName(), configurationDirectory );
+				app.setDirectory( targetDirectory );
+
+				ManagedApplication ma = new ManagedApplication( app );
+				this.nameToManagedApplication.put( ma.getName(), ma );
+
+				// Start listening to messages
+				this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
+
+				// Read application bindings.
+				ConfigurationUtils.loadApplicationBindings( app );
 
 				// Restore the instances
 				InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, configurationDirectory );
@@ -304,7 +323,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	 * @throws AlreadyExistingException if an application with this name already exists
 	 * @throws IOException if the application's directory could not be created
 	 */
-	private ManagedApplication createApplication(
+	private ManagedApplication createNewApplication(
 			String name,
 			String description,
 			ApplicationTemplate tpl,
@@ -344,11 +363,40 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		for( Instance rootInstance : app.getRootInstances())
 			rootInstance.data.put( Instance.APPLICATION_NAME, app.getName());
 
+		// Read application bindings.
+		// They are not supposed to exist for new applications, but let's be flexible about it.
+		ConfigurationUtils.loadApplicationBindings( app );
+
 		// Register the application
 		ManagedApplication ma = new ManagedApplication( app );
 		this.nameToManagedApplication.put( name, ma );
 
+		// Save the instances!
+		ConfigurationUtils.saveInstances( ma, configurationDirectory );
+
 		this.logger.info( "Application " + name + " was successfully created from the template " + tpl + "." );
 		return ma;
+	}
+
+
+	@Override
+	public void bindApplication( ManagedApplication ma, String externalExportPrefix, String applicationName )
+	throws UnauthorizedActionException, IOException {
+
+		Application app = findApplicationByName( applicationName );
+		if( app == null )
+			throw new UnauthorizedActionException( "Application " + applicationName + " does not exist." );
+
+		if( ! externalExportPrefix.equals( app.getTemplate().getExternalExportsPrefix()))
+			throw new UnauthorizedActionException( "Application " + applicationName + "'s template does not have " + externalExportPrefix + " as external exports prefix." );
+
+		ma.getApplication().applicationBindings.put( externalExportPrefix, applicationName );
+		ConfigurationUtils.saveApplicationBindings( ma.getApplication());
+		this.logger.fine( "External prefix " + externalExportPrefix + " is now bound to application " + applicationName + " in " + ma.getName() + "." );
+
+		for( Instance inst : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
+			MsgCmdChangeBinding msg = new MsgCmdChangeBinding( app.getTemplate().getExternalExportsPrefix(), applicationName );
+			this.messagingMngr.sendMessageSafely( ma, inst, msg );
+		}
 	}
 }

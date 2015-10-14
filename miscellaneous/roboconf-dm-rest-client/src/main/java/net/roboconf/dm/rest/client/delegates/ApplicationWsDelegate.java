@@ -87,12 +87,7 @@ public class ApplicationWsDelegate {
 			path = path.queryParam( "new-state", newStatus.toString());
 
 		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
-		}
-
+		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
@@ -111,12 +106,7 @@ public class ApplicationWsDelegate {
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "description" );
 		ClientResponse response = path.accept( MediaType.TEXT_PLAIN ).post( ClientResponse.class, newDesc );
 
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
-		}
-
+		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
@@ -137,12 +127,7 @@ public class ApplicationWsDelegate {
 			path = path.queryParam( "instance-path", instancePath );
 
 		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
-		}
-
+		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
@@ -163,12 +148,7 @@ public class ApplicationWsDelegate {
 			path = path.queryParam( "instance-path", instancePath );
 
 		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
-		}
-
+		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
@@ -189,12 +169,7 @@ public class ApplicationWsDelegate {
 			path = path.queryParam( "instance-path", instancePath );
 
 		ClientResponse response = path.accept( MediaType.APPLICATION_JSON ).post( ClientResponse.class );
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
-		}
-
+		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
@@ -248,12 +223,7 @@ public class ApplicationWsDelegate {
 				.accept( MediaType.APPLICATION_JSON ).type( MediaType.APPLICATION_JSON )
 				.post( ClientResponse.class, instance );
 
-		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
-			String value = response.getEntity( String.class );
-			this.logger.finer( response.getStatusInfo() + ": " + value );
-			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
-		}
-
+		handleResponse( response );
 		this.logger.finer( String.valueOf( response.getStatusInfo()));
 	}
 
@@ -363,5 +333,37 @@ public class ApplicationWsDelegate {
 			this.logger.finer( "No possible parent was found for " + componentName + "." );
 
 		return result != null ? result : new ArrayList<Component> ();
+	}
+
+
+	/**
+	 * Binds an application for external exports.
+	 * @param applicationName the application name
+	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
+	 * @param boundApp the name of the application (instance of <code>tplName</code>)
+	 * @throws ApplicationWsException if something went wrong
+	 */
+	public void bindApplication( String applicationName, String boundTplName, String boundApp )
+	throws ApplicationWsException {
+
+		this.logger.finer( "Creating a binding for external exports in " + applicationName + "..." );
+
+		WebResource path = this.resource.path( UrlConstants.APP )
+				.path( applicationName ).path( "bind" )
+				.queryParam( "bound-tpl", boundTplName )
+				.queryParam( "bound-app", boundApp );
+
+		ClientResponse response = path.post( ClientResponse.class );
+		handleResponse( response );
+	}
+
+
+	private void handleResponse( ClientResponse response ) throws ApplicationWsException {
+
+		if( Family.SUCCESSFUL != response.getStatusInfo().getFamily()) {
+			String value = response.getEntity( String.class );
+			this.logger.finer( response.getStatusInfo() + ": " + value );
+			throw new ApplicationWsException( response.getStatusInfo().getStatusCode(), value );
+		}
 	}
 }

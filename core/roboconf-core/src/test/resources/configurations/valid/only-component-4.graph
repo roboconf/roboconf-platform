@@ -1,0 +1,26 @@
+
+vm {
+	installer: target;
+	children: tomcat, apache, db;
+}
+
+tomcat {
+	installer: puppet;
+	
+	# Split exports in several declarations
+	exports: db.ip;
+	exports: db.port = 8080;
+}
+
+apache {
+	exports: ip, port = 80;
+	installer: puppet;
+	
+	# Split imports in several declarations
+	imports: tomcat.port (optional);
+	imports: tomcat.ip;
+}
+
+db {
+	installer: whatever;
+}

@@ -25,22 +25,23 @@
 
 package net.roboconf.agent.internal;
 
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
+import static net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils.rabbitMqMessagingConfiguration;
+
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.agents.DataHelpers;
-
 import net.roboconf.messaging.api.MessagingConstants;
-import org.junit.Test;
 
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.rabbitMqMessagingConfiguration;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -115,8 +116,13 @@ public class AgentPropertiesTest {
 		AgentProperties ad = new AgentProperties();
 		ad.setApplicationName( "my app" );
 		ad.setScopedInstancePath( "/root" );
-		ad.setMessagingConfiguration(rabbitMqMessagingConfiguration("192.168.1.18", "personne", "azerty (;))"));
 		ad.setIpAddress( "whatever" );
+		Assert.assertNotNull( ad.validate());
+
+		ad.setMessagingConfiguration( new HashMap<String,String>( 0 ));
+		Assert.assertNotNull( ad.validate());
+
+		ad.setMessagingConfiguration(rabbitMqMessagingConfiguration("192.168.1.18", "personne", "azerty (;))"));
 		Assert.assertNull( ad.validate());
 
 		ad.setIpAddress( null );
@@ -149,5 +155,4 @@ public class AgentPropertiesTest {
 		Assert.assertNotNull( ad.validate());
 		ad.setMessagingConfiguration(rabbitMqMessagingConfiguration("192.168.1.18", "personne", "azerty (;))"));
 	}
-
 }

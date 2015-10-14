@@ -25,6 +25,9 @@
 
 package net.roboconf.messaging.api.messages.from_dm_to_agent;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.messages.Message;
 
@@ -34,15 +37,40 @@ import net.roboconf.messaging.api.messages.Message;
 public class MsgCmdSetScopedInstance extends Message {
 
 	private static final long serialVersionUID = 411037586577734609L;
+
 	private final Instance scopedInstance;
+	private final Map<String,String> externalExports;
+	private final Map<String,String> applicationBindings;
+
+
+	/**
+	 * Constructor.
+	 * @param scopedInstance
+	 * @param externalExports
+	 * @param applicationBindings
+	 */
+	public MsgCmdSetScopedInstance(
+			Instance scopedInstance,
+			Map<String,String> externalExports,
+			Map<String,String> applicationBindings ) {
+
+		this.scopedInstance = scopedInstance;
+
+		this.externalExports = new HashMap<String,String> ();
+		if( externalExports != null )
+			this.externalExports.putAll( externalExports );
+
+		this.applicationBindings = new HashMap<String,String> ();
+		if( applicationBindings != null )
+			this.applicationBindings.putAll( applicationBindings );
+	}
 
 	/**
 	 * Constructor.
 	 * @param scopedInstance
 	 */
 	public MsgCmdSetScopedInstance( Instance scopedInstance ) {
-		super();
-		this.scopedInstance = scopedInstance;
+		this( scopedInstance, null, null );
 	}
 
 	/**
@@ -50,5 +78,19 @@ public class MsgCmdSetScopedInstance extends Message {
 	 */
 	public Instance getScopedInstance() {
 		return this.scopedInstance;
+	}
+
+	/**
+	 * @return the externalExports (never null)
+	 */
+	public Map<String,String> getExternalExports() {
+		return this.externalExports;
+	}
+
+	/**
+	 * @return the applicationBindings (never null)
+	 */
+	public Map<String,String> getApplicationBindings() {
+		return this.applicationBindings;
 	}
 }

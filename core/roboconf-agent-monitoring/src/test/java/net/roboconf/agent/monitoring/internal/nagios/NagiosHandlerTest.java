@@ -59,42 +59,49 @@ public class NagiosHandlerTest {
 
 		final String query = "ok\nok";
 		final String url = "http://192.168.1.18";
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, query );
 
-		Assert.assertEquals( query, handler.getNagiosInstructions());
-		Assert.assertNull( handler.getHost());
-		Assert.assertEquals( -1, handler.getPort());
+		NagiosHandler handler = new NagiosHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, query );
 
-		handler = new NagiosHandler(
-				EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH,
+		Assert.assertEquals( query, handler.nagiosInstructions );
+		Assert.assertNull( handler.host );
+		Assert.assertEquals( -1, handler.port );
+
+		handler = new NagiosHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME,
 				NagiosHandler.NAGIOS_CONFIG + " " + url + "\n" + query );
 
-		Assert.assertEquals( query, handler.getNagiosInstructions());
-		Assert.assertEquals( url, handler.getHost());
-		Assert.assertEquals( -1, handler.getPort());
+		Assert.assertEquals( query, handler.nagiosInstructions );
+		Assert.assertEquals( url, handler.host );
+		Assert.assertEquals( -1, handler.port );
 
-		handler = new NagiosHandler(
-				EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH,
+		handler = new NagiosHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME,
 				NagiosHandler.NAGIOS_CONFIG + " " + url + ":1717\n" + query );
 
-		Assert.assertEquals( query, handler.getNagiosInstructions());
-		Assert.assertEquals( url, handler.getHost());
-		Assert.assertEquals( 1717, handler.getPort());
+		Assert.assertEquals( query, handler.nagiosInstructions );
+		Assert.assertEquals( url, handler.host );
+		Assert.assertEquals( 1717, handler.port );
 
-		handler = new NagiosHandler(
-				EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH,
-				NagiosHandler.NAGIOS_CONFIG );
+		handler = new NagiosHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, NagiosHandler.NAGIOS_CONFIG );
 
-		Assert.assertEquals( "", handler.getNagiosInstructions());
-		Assert.assertEquals( "", handler.getHost());
-		Assert.assertEquals( -1, handler.getPort());
+		Assert.assertEquals( "", handler.nagiosInstructions );
+		Assert.assertEquals( "", handler.host );
+		Assert.assertEquals( -1, handler.port );
 	}
 
 
 	@Test
 	public void testProcess_noConnection() throws Exception {
 
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "" );
+		NagiosHandler handler = new NagiosHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "" );
 		Assert.assertNull( handler.process());
 	}
 
@@ -102,8 +109,10 @@ public class NagiosHandlerTest {
 	@Test
 	public void testProcess_invalidHost() throws Exception {
 
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, "" );
-		handler.setHost( "my-unknown-host-for-tests" );
+		NagiosHandler handler = new NagiosHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, "" );
+		handler.host = "my-unknown-host-for-tests";
 		Assert.assertNull( handler.process());
 	}
 
@@ -187,8 +196,10 @@ public class NagiosHandlerTest {
 		Thread.sleep( 500 );
 
 		// Then, prepare our client.
-		NagiosHandler handler = new NagiosHandler( EVENT_NAME, APP_NAME, SCOPED_INSTANCE_PATH, nagiosQuery );
-		handler.setPort( port );
+		NagiosHandler handler = new NagiosHandler();
+		handler.setAgentId( APP_NAME, SCOPED_INSTANCE_PATH );
+		handler.reset( null, EVENT_NAME, nagiosQuery );
+		handler.port = port;
 		MsgNotifAutonomic msg = handler.process();
 
 		// Wait for the server to die.

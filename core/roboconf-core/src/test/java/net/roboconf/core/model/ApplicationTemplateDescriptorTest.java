@@ -73,6 +73,9 @@ public class ApplicationTemplateDescriptorTest {
 
 		desc1.externalExports.put( "Test2.to", "too" );
 		saveAndCompare( desc1 );
+
+		desc1.setExternalExportsPrefix( "whatever" );
+		saveAndCompare( desc1 );
 	}
 
 

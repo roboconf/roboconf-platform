@@ -25,6 +25,7 @@
 
 package net.roboconf.core.utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,9 +67,13 @@ public final class ModelUtils {
 	 * @return a non-null list of non-null values
 	 */
 	public static List<String> getPropertyValues( AbstractBlockHolder holder, String propertyName ) {
-		BlockProperty p = holder.findPropertyBlockByName( propertyName );
-		String propertyValue = p == null ? null : p.getValue();
-		return Utils.splitNicely( propertyValue, ParsingConstants.PROPERTY_SEPARATOR );
+
+		List<String> result = new ArrayList<> ();
+		for( BlockProperty p : holder.findPropertiesBlockByName( propertyName )) {
+			result.addAll( Utils.splitNicely( p.getValue(), ParsingConstants.PROPERTY_SEPARATOR ));
+		}
+
+		return result;
 	}
 
 
@@ -99,13 +104,13 @@ public final class ModelUtils {
 	 */
 	public static Map<String,String> getExportedVariables( AbstractBlockHolder holder ) {
 
-		BlockProperty p = holder.findPropertyBlockByName( ParsingConstants.PROPERTY_GRAPH_EXPORTS );
 		Map<String,String> result = new HashMap<String,String> ();
+		for( BlockProperty p : holder.findPropertiesBlockByName( ParsingConstants.PROPERTY_GRAPH_EXPORTS )) {
 
-		String propertyValue = p == null ? null : p.getValue();
-		for( String s : Utils.splitNicely( propertyValue, ParsingConstants.PROPERTY_SEPARATOR )) {
-			Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
-			result.put( entry.getKey(), entry.getValue());
+			for( String s : Utils.splitNicely( p.getValue(), ParsingConstants.PROPERTY_SEPARATOR )) {
+				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
+				result.put( entry.getKey(), entry.getValue());
+			}
 		}
 
 		return result;

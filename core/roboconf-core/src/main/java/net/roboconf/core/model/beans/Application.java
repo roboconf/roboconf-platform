@@ -27,6 +27,8 @@ package net.roboconf.core.model.beans;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -38,7 +40,9 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 public class Application extends AbstractApplication implements Serializable {
 
 	private static final long serialVersionUID = -4753958407033243184L;
+
 	private final ApplicationTemplate template;
+	public final Map<String,String> applicationBindings = new HashMap<String,String> ();
 
 
 	/**
@@ -71,6 +75,14 @@ public class Application extends AbstractApplication implements Serializable {
 	 */
 	public ApplicationTemplate getTemplate() {
 		return this.template;
+	}
+
+	/**
+	 * A shortcut method to access the template's external exports mapping.
+	 * @return a non-null map
+	 */
+	public Map<String,String> getExternalExports() {
+		return this.template != null ? this.template.externalExports : null;
 	}
 
 	@Override

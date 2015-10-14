@@ -27,6 +27,7 @@ package net.roboconf.dm.internal.utils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
@@ -108,5 +109,39 @@ public class TargetHelpersTest {
 				.thenReturn( new HashMap<String,String>( 0 ));
 
 		TargetHelpers.verifyTargets( new TargetHandlerResolverImpl(), ma, targetsMngr );
+	}
+
+
+	@Test
+	public void testFindTargetHandlerName_properties() {
+
+		Properties props = new Properties();
+		Assert.assertNull( TargetHelpers.findTargetHandlerName( props ));
+
+		props.put( Constants.TARGET_PROPERTY_HANDLER, "whatever" );
+		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
+
+		props.put( TargetHelpers.LEGACY_HANDLER_PROPERTY, "whatever2" );
+		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
+
+		props.remove( Constants.TARGET_PROPERTY_HANDLER );
+		Assert.assertEquals( "whatever2", TargetHelpers.findTargetHandlerName( props ));
+	}
+
+
+	@Test
+	public void testFindTargetHandlerName_map() {
+
+		Map<String,String> props = new HashMap<>( 2 );
+		Assert.assertNull( TargetHelpers.findTargetHandlerName( props ));
+
+		props.put( Constants.TARGET_PROPERTY_HANDLER, "whatever" );
+		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
+
+		props.put( TargetHelpers.LEGACY_HANDLER_PROPERTY, "whatever2" );
+		Assert.assertEquals( "whatever", TargetHelpers.findTargetHandlerName( props ));
+
+		props.remove( Constants.TARGET_PROPERTY_HANDLER );
+		Assert.assertEquals( "whatever2", TargetHelpers.findTargetHandlerName( props ));
 	}
 }

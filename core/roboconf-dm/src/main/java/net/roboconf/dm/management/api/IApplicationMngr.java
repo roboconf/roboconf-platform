@@ -107,4 +107,15 @@ public interface IApplicationMngr {
 	 * @return a non-null collection of managed applications
 	 */
 	Collection<ManagedApplication> getManagedApplications();
+
+	/**
+	 * Binds an application for external exports.
+	 * @param ma the application into which a binding must be created or changed
+	 * @param externalExportPrefix the name of the prefix for external variables
+	 * @param applicationName the name of the application to use (must be associated with the template)
+	 * @throws UnauthorizedActionException if the application does not exist, or if it is not associated with the right template
+	 * @throws IOException if an error occurred while creating the binding
+	 */
+	void bindApplication( ManagedApplication ma, String externalExportPrefix, String applicationName )
+	throws UnauthorizedActionException, IOException;
 }

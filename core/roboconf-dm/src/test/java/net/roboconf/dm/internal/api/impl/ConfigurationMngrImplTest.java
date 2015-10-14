@@ -65,10 +65,14 @@ public class ConfigurationMngrImplTest {
 	public void testDefault_inKaraf() throws Exception {
 
 		File dir = this.folder.newFolder();
-		System.setProperty( "karaf.data", dir.getAbsolutePath());
+		try {
+			System.setProperty( "karaf.data", dir.getAbsolutePath());
+			this.mngr = new ConfigurationMngrImpl();
+			Assert.assertEquals( new File( dir, "roboconf" ), this.mngr.getWorkingDirectory());
 
-		this.mngr = new ConfigurationMngrImpl();
-		Assert.assertEquals( new File( dir, "roboconf" ), this.mngr.getWorkingDirectory());
+		} finally {
+			System.setProperty( "karaf.data", "" );
+		}
 	}
 
 

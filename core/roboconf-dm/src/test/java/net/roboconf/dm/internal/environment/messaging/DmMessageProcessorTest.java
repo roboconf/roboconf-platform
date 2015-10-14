@@ -37,11 +37,13 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.internal.client.test.TestClientDm;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.After;
@@ -265,6 +267,36 @@ public class DmMessageProcessorTest {
 
 		this.processor.processMessage( msg );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
+	}
+
+
+	@Test
+	public void testMsgNotifHeartbeat_mustSendStoredMessages() throws Exception {
+
+		this.managerWrapper.configureMessagingForTest();
+		this.manager.reconfigure();
+		TestClientDm msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
+
+		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
+		Assert.assertNotNull( ma );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
+		Assert.assertNull( ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()));
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+
+		// Store messages
+		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-1" ));
+		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-2" ));
+		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-3" ));
+		Assert.assertEquals( 3, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
+		Assert.assertEquals( 0, msgClient.sentMessages.size());
+
+		// The ACK should send them
+		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.app.getName(), this.app.getMySqlVm(), "192.168.1.45" );
+		this.processor.processMessage( msg );
+
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
+		Assert.assertNull( ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()));
+		Assert.assertEquals( 3, msgClient.sentMessages.size());
 	}
 
 

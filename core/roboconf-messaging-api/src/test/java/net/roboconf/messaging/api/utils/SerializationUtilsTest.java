@@ -45,6 +45,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChan
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
@@ -107,7 +108,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_removeImport() throws Exception {
 
-		MsgCmdRemoveImport msg = new MsgCmdRemoveImport( "change-me", "anything" );
+		MsgCmdRemoveImport msg = new MsgCmdRemoveImport( "app", "change-me", "anything" );
 		checkBasics( msg, MsgCmdRemoveImport.class );
 	}
 
@@ -118,7 +119,7 @@ public class SerializationUtilsTest {
 		Map<String,String> map = new HashMap<String,String> ();
 		map.put( "yeah", "value" );
 
-		MsgCmdAddImport msg = new MsgCmdAddImport( "change-me", "anything", map );
+		MsgCmdAddImport msg = new MsgCmdAddImport( "app", "change-me", "anything", map );
 		checkBasics( msg, MsgCmdAddImport.class );
 	}
 
@@ -126,7 +127,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_requestImport() throws Exception {
 
-		MsgCmdRequestImport msg = new MsgCmdRequestImport( "dsf" );
+		MsgCmdRequestImport msg = new MsgCmdRequestImport( "app", "dsf" );
 		checkBasics( msg, MsgCmdRequestImport.class );
 	}
 
@@ -139,6 +140,16 @@ public class SerializationUtilsTest {
 
 		MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ));
 		checkBasics( msg, MsgCmdSetScopedInstance.class );
+
+		Map<String,String> map1 = new HashMap<> ();
+		map1.put( "test", "t1" );
+		map1.put( "another", "t2" );
+
+		Map<String,String> map2 = new HashMap<> ();
+		map2.put( "app_prefix", "app1" );
+
+		msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ), map1, map2 );
+		checkBasics( msg, MsgCmdSetScopedInstance.class );
 	}
 
 
@@ -147,6 +158,14 @@ public class SerializationUtilsTest {
 
 		MsgCmdResynchronize msg = new MsgCmdResynchronize();
 		checkBasics( msg, MsgCmdResynchronize.class );
+	}
+
+
+	@Test
+	public void testMessage_changeBinding() throws Exception {
+
+		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "tpl", "app" );
+		checkBasics( msg, MsgCmdChangeBinding.class );
 	}
 
 
@@ -197,6 +216,9 @@ public class SerializationUtilsTest {
 		checkBasics( msg, MsgCmdChangeInstanceState.class );
 
 		msg = new MsgCmdChangeInstanceState((String) null, InstanceStatus.NOT_DEPLOYED );
+		checkBasics( msg, MsgCmdChangeInstanceState.class );
+
+		msg = new MsgCmdChangeInstanceState( new Instance( "test" ), InstanceStatus.NOT_DEPLOYED );
 		checkBasics( msg, MsgCmdChangeInstanceState.class );
 
 		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();

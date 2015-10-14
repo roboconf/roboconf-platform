@@ -62,6 +62,9 @@ public class ApplicationDescriptorTest {
 
 		desc1.setTemplateQualifier( "version 1" );
 		saveAndCompare( desc1 );
+
+		desc1.setDescription( "A string\nwith\nmany\n\tline\nbreaks!" );
+		saveAndCompare( desc1 );
 	}
 
 

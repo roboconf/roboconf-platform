@@ -35,15 +35,18 @@ public class MsgCmdRequestImport extends Message {
 
 	private static final long serialVersionUID = 5366599037551758208L;
 	private final String componentOrFacetName;
+	private final String applicationOrContextName;
 
 
 	/**
 	 * Constructor.
 	 * @param componentOrFacetName
+	 * @param applicationOrContextName
 	 */
-	public MsgCmdRequestImport( String componentOrFacetName ) {
+	public MsgCmdRequestImport( String applicationOrContextName, String componentOrFacetName ) {
 		super();
 		this.componentOrFacetName = componentOrFacetName;
+		this.applicationOrContextName = applicationOrContextName;
 	}
 
 	/**
@@ -51,5 +54,12 @@ public class MsgCmdRequestImport extends Message {
 	 */
 	public String getComponentOrFacetName() {
 		return this.componentOrFacetName;
+	}
+
+	/**
+	 * @return the applicationOrContextName
+	 */
+	public String getApplicationOrContextName() {
+		return this.applicationOrContextName;
 	}
 }

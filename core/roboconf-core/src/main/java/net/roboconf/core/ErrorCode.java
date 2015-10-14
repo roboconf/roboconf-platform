@@ -104,6 +104,7 @@ public enum ErrorCode {
 	RM_MISSING_APPLICATION_QUALIFIER( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "The application qualifier is missing." ),
 	RM_MISSING_APPLICATION_GEP( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The entry-point for graph(s) is missing." ),
 	RM_MISSING_APPLICATION_GRAPHS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "An application must have a graph definition." ),
+	RM_MISSING_APPLICATION_EXPORT_PREFIX( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports external variables but did not specify the external prefix property." ),
 
 	RM_DOT_IS_NOT_ALLOWED( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Component and facet names cannot contain a dot." ),
 	RM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The component name cannot be empty." ),
@@ -117,6 +118,7 @@ public enum ErrorCode {
 
 	RM_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable name cannot be empty or null." ),
 	RM_INVALID_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid variable name. Expected pattern: " + ParsingConstants.PATTERN_ID ),
+	RM_INVALID_APPLICATION_EXPORT_PREFIX( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "Invalid prefix for external exports. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	RM_MAGIC_INSTANCE_VARIABLE( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but was not defined in its component." ),
 	RM_MISSING_VARIABLE_VALUE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "All the variables (except network ones, such as IP) must have a value." ),
 	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but is ambiguously resolved in its component." ),

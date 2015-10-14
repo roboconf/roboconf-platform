@@ -25,7 +25,9 @@
 
 package net.roboconf.agent.internal;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
@@ -33,6 +35,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -41,9 +44,12 @@ import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
@@ -197,6 +203,35 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
+	}
+
+
+	@Test
+	public void testSetscopedInstance_withAppBindings_andExternalExports() {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+
+		Map<String,String> externalExports = new HashMap<> ();
+		externalExports.put( "Lamp", "Toto" );
+
+		Map<String,String> applicationBindings = new HashMap<> ();
+		applicationBindings.put( "Tpl1", "app1" );
+		applicationBindings.put( "Tpl2", "app2" );
+
+		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings );
+
+		// Send the message
+		Assert.assertNull( processor.scopedInstance );
+		Assert.assertEquals( 0, processor.applicationBindings.size());
+
+		processor.processMessage( msg );
+
+		Assert.assertEquals( app.getMySqlVm(), processor.scopedInstance );
+		Assert.assertEquals( 2, processor.applicationBindings.size());
+		Assert.assertEquals( "app2", processor.applicationBindings.get( "Tpl2" ));
+		Assert.assertEquals( "app1", processor.applicationBindings.get( "Tpl1" ));
 	}
 
 
@@ -421,5 +456,143 @@ public class AgentMessageProcessor_BasicTest {
 		agent.plugins.add( new PluginMock());
 		agent.plugins.add( new PluginMock());
 		Assert.assertEquals( 2, agent.plugins.size());
+	}
+
+
+	@Test
+	public void testApplicationBinding_noPrevious_noImportAdded() throws IllegalAccessException {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+
+		// Create a binding
+		Assert.assertEquals( 0, processor.applicationBindings.size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+
+		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "ext", "demo" );
+		processor.processMessage( msg );
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( "demo", processor.applicationBindings.get( "ext" ));
+
+		// No imported added before => nothing to update
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+	}
+
+
+	@Test
+	public void testApplicationBinding_withPrevious_noImportAdded() throws IllegalAccessException {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+
+		// Create a first binding
+		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "ext", "demo1" );
+		processor.processMessage( msg );
+
+		// Change the binding
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+
+		msg = new MsgCmdChangeBinding( "ext", "demo2" );
+		processor.processMessage( msg );
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( "demo2", processor.applicationBindings.get( "ext" ));
+		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
+	}
+
+
+	@Test
+	public void testApplicationBinding_withPrevious_importsAdded() throws IllegalAccessException {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+
+		ImportedVariable var = new ImportedVariable( "ext.ip", false, true );
+		app.getTomcatVm().getComponent().importedVariables.put( var.getName(), var );
+
+		// Simulate incoming "external" variables
+		processor.processMessage( new MsgCmdAddImport( "demo1", "ext", "/toto-1", new HashMap<String,String>( 0 )));
+		processor.processMessage( new MsgCmdAddImport( "demo2", "ext", "/toto", new HashMap<String,String>( 0 )));
+		processor.processMessage( new MsgCmdAddImport( "demo1", "ext", "/toto-2", new HashMap<String,String>( 0 )));
+
+		Assert.assertEquals( 0, processor.applicationBindings.size());
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.size());
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.get( "demo1" ).size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo2" ).size());
+
+		Assert.assertEquals( 0, app.getTomcatVm().getImports().size());
+
+		// Create a first binding
+		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "ext", "demo1" );
+		processor.processMessage( msg );
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( "demo1", processor.applicationBindings.get( "ext" ));
+
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.size());
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.get( "demo1" ).size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo2" ).size());
+
+		Assert.assertEquals( 1, app.getTomcatVm().getImports().size());
+		Assert.assertEquals( 2, app.getTomcatVm().getImports().get( "ext" ).size());
+
+		// Change the binding
+		msg = new MsgCmdChangeBinding( "ext", "demo2" );
+		processor.processMessage( msg );
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( "demo2", processor.applicationBindings.get( "ext" ));
+
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.size());
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.get( "demo1" ).size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo2" ).size());
+
+		Assert.assertEquals( 1, app.getTomcatVm().getImports().size());
+		Assert.assertEquals( 1, app.getTomcatVm().getImports().get( "ext" ).size());
+
+		// Simulate a removed import
+		processor.processMessage( new MsgCmdRemoveImport( "demo1", "ext", "/toto-1" ));
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( "demo2", processor.applicationBindings.get( "ext" ));
+
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo1" ).size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo2" ).size());
+
+		Assert.assertEquals( 1, app.getTomcatVm().getImports().size());
+		Assert.assertEquals( 1, app.getTomcatVm().getImports().get( "ext" ).size());
+
+		// Try to remove an invalid import
+		processor.processMessage( new MsgCmdRemoveImport( "demo2", "ext", "/toto-invalid-path" ));
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( "demo2", processor.applicationBindings.get( "ext" ));
+
+		Assert.assertEquals( 2, processor.applicationNameToExternalExports.size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo1" ).size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo2" ).size());
+
+		Assert.assertEquals( 1, app.getTomcatVm().getImports().size());
+		Assert.assertEquals( 1, app.getTomcatVm().getImports().get( "ext" ).size());
+
+		// And simulate another once
+		processor.processMessage( new MsgCmdRemoveImport( "demo2", "ext", "/toto" ));
+
+		Assert.assertEquals( 1, processor.applicationBindings.size());
+		Assert.assertEquals( "demo2", processor.applicationBindings.get( "ext" ));
+
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.size());
+		Assert.assertEquals( 1, processor.applicationNameToExternalExports.get( "demo1" ).size());
+
+		Assert.assertEquals( 0, app.getTomcatVm().getImports().size());
 	}
 }

@@ -25,9 +25,6 @@
 
 package net.roboconf.messaging.rabbitmq;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import net.roboconf.messaging.api.MessagingConstants;
 
 /**
@@ -36,8 +33,11 @@ import net.roboconf.messaging.api.MessagingConstants;
  */
 public final class RabbitMqConstants {
 
-	// Prevent instantiation.
+	/**
+	 * Constructor.
+	 */
 	private RabbitMqConstants() {
+		// nothing
 	}
 
 	/**
@@ -64,24 +64,4 @@ public final class RabbitMqConstants {
 	 * Messaging property holding the RabbitMQ server password. Defaults to {@code "guest"}.
 	 */
 	public static final String RABBITMQ_SERVER_PASSWORD = RABBITMQ_PROPERTY_PREFIX + ".server.password";
-
-	/**
-	 * Return a RabbitMQ messaging configuration for the given parameters.
-	 * @param ip the RabbitMQ server ip (or host). May be {@code null}.
-	 * @param username the RabbitMQ server username. May be {@code null}.
-	 * @param password the RabbitMQ server password. May be {@code null}.
-	 * @return the messaging configuration for the given parameters.
-	 */
-	public static Map<String, String> rabbitMqMessagingConfiguration(String ip, String username, String password) {
-		final Map<String, String> result = new LinkedHashMap<>();
-		result.put(MessagingConstants.MESSAGING_TYPE_PROPERTY, RABBITMQ_FACTORY_TYPE);
-		if (ip != null)
-			result.put(RABBITMQ_SERVER_IP, ip);
-		if (username != null)
-			result.put(RABBITMQ_SERVER_USERNAME, username);
-		if (password != null)
-			result.put(RABBITMQ_SERVER_PASSWORD, password);
-		return result;
-	}
-
 }

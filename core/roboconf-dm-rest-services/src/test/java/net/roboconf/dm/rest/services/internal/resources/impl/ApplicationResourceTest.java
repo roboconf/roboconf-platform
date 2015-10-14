@@ -38,6 +38,7 @@ import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -46,10 +47,12 @@ import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.commons.json.MapWrapper;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.target.api.TargetException;
@@ -88,7 +91,7 @@ public class ApplicationResourceTest {
 
 		// Create the manager
 		this.manager = new Manager();
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
@@ -110,6 +113,8 @@ public class ApplicationResourceTest {
 
 		// Load an application
 		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
+
 		this.ma = new ManagedApplication( this.app );
 		this.managerWrapper.getNameToManagedApplication().put( this.app.getName(), this.ma );
 	}
@@ -681,7 +686,121 @@ public class ApplicationResourceTest {
 
 	@Test
 	public void testResynchronize_nonExistingApplication() {
+
 		Response resp = this.resource.resynchronize( "I-am-not-an-app" );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testBindApplication_iinexistingApplication() throws Exception {
+
+		Response resp = this.resource.bindApplication( "invalid", this.ma.getApplication().getTemplate().getName(), this.ma.getName());
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testBindApplication_invalidBoundApplication() throws Exception {
+
+		Response resp = this.resource.bindApplication( this.ma.getName(), this.ma.getApplication().getTemplate().getName(), "invalid" );
+		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testBindApplication_invalidBoundTemplate() throws Exception {
+
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.setName( "app-other" );
+
+		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// ma and app2 do not have the same template name
+		Response resp = this.resource.bindApplication( this.ma.getName(), this.ma.getApplication().getTemplate().getName(), app2.getName());
+		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+	}
+
+
+	@Test
+	public void testBindApplication_success() throws Exception {
+
+		// Create a second application with a different template
+		TestApplication app2 = new TestApplication();
+		app2.setDirectory( this.folder.newFolder());
+		app2.getTemplate().setName( "tpl-other" );
+		app2.getTemplate().setExternalExportsPrefix( "eep" );
+		app2.setName( "app-other" );
+
+		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// Bind and check
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
+		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getMySqlVm()).size());
+
+		Response resp = this.resource.bindApplication( this.ma.getName(), app2.getTemplate().getExternalExportsPrefix(), app2.getName());
+
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+
+		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
+		Assert.assertEquals( 1, messages.size());
+		messages.addAll( this.ma.removeAwaitingMessages( this.app.getMySqlVm()));
+		Assert.assertEquals( 2, messages.size());
+
+		for( Message m : this.msgClient.sentMessages ) {
+			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
+
+			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
+			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
+			Assert.assertEquals( app2.getName(), msg.getAppName());
+		}
+	}
+
+
+	@Test
+	public void testGetApplicationBindings_inexistingApplication() throws Exception {
+
+		Response resp = this.resource.getApplicationBindings( "inexisting" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testGetApplicationBindings_success() throws Exception {
+
+		this.app.applicationBindings.put( "some", "value" );
+		this.app.applicationBindings.put( "another", "value" );
+
+		Response resp = this.resource.getApplicationBindings( this.app.getName());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		MapWrapper wrapper = (MapWrapper) resp.getEntity();
+		Assert.assertEquals( 2, wrapper.getMap().size());
+		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
+		Assert.assertEquals( "value", wrapper.getMap().get( "another" ));
+	}
+
+
+	@Test
+	public void testGetApplicationBindings_success_withUnresolvedMapping() throws Exception {
+
+		ImportedVariable var = new ImportedVariable( "ext.ip", false, true );
+		this.app.getWar().getComponent().importedVariables.put( var.getName(), var );
+
+		this.app.applicationBindings.put( "some", "value" );
+
+		Response resp = this.resource.getApplicationBindings( this.app.getName());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		MapWrapper wrapper = (MapWrapper) resp.getEntity();
+		Assert.assertEquals( 2, wrapper.getMap().size());
+		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
+		Assert.assertNull( wrapper.getMap().get( "ext" ));
+		Assert.assertTrue( wrapper.getMap().containsKey( "ext" ));
 	}
 }

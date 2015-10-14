@@ -33,6 +33,7 @@ import java.util.Map;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
@@ -135,6 +136,13 @@ public interface ITargetsMngr {
 	 */
 	void copyOriginalMapping( Application app ) throws IOException;
 
+	/**
+	 * Removes any reference to an application after it was deleted.
+	 * @param app an application or application template
+	 * @throws IOException if something went wrong
+	 */
+	void applicationWasDeleted( AbstractApplication app ) throws IOException;
+
 
 	// Finding targets
 
@@ -176,6 +184,12 @@ public interface ITargetsMngr {
 	 */
 	List<TargetWrapperDescriptor> listAllTargets();
 
+	/**
+	 * @param targetId a non-null target ID
+	 * @return a wrapper describing the given target, or null if it was not found
+	 */
+	TargetWrapperDescriptor findTargetById( String targetId );
+
 
 	// Defining and in relation with hints (contextual help to reduce the number of choices when associating
 	// a target and an application instance). Indeed, some targets may be very specific
@@ -186,7 +200,7 @@ public interface ITargetsMngr {
 	 * Lists all the available targets for a given application or application template.
 	 * <p>
 	 * The result is built by listing all the targets and by filtering them with hints.
-	 * Indeed, some targets may be "tagged" to be used (or let's visible) only for some
+	 * Indeed, some targets may be "tagged" to be used (or let's say visible) only for some
 	 * applications or templates.
 	 * </p>
 	 * <p>
@@ -281,4 +295,15 @@ public interface ITargetsMngr {
 	 * @throws IOException if the target could not be unlocked
 	 */
 	void unlockTarget( Application app, Instance scopedInstance ) throws IOException;
+
+
+	// Diagnostics
+
+
+	/**
+	 * Finds usage statistics for a given target.
+	 * @param targetId a non-null target ID
+	 * @return a non-null list of usage item
+	 */
+	List<TargetUsageItem> findUsageStatistics( String targetId );
 }
