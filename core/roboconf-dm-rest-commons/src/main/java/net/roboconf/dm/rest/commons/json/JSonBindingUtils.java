@@ -386,8 +386,18 @@ public final class JSonBindingUtils {
 			// Read-only information.
 			// We do not expect it for deserialization
 			generator.writeArrayFieldStart( APP_TPL_APPS );
-			for( Application associatedApp : app.getAssociatedApplications())
-				generator.writeString( associatedApp.getName());
+			for( Application associatedApp : app.getAssociatedApplications()) {
+
+				// #483 We do not know why, but after we delete an application
+				// from the web console, the resulting JSon array sometimes contain null.
+				// This prevents the deletion of a template that does not have applications anymore.
+				// The "IF" is a WORKAROUND.
+				if( associatedApp != null
+						&& associatedApp.getName() != null ) {
+					// end of WORKAROUND
+					generator.writeString( associatedApp.getName());
+				}
+			}
 
 			generator.writeEndArray();
 			generator.writeEndObject();
