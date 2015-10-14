@@ -366,7 +366,11 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		InstanceStatus initialStatus = scopedInstance.getStatus();
 		try {
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( scopedInstance, ma.getApplication().getExternalExports());
+			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance(
+					scopedInstance,
+					ma.getApplication().getExternalExports(),
+					ma.getApplication().applicationBindings );
+
 			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msg );
 
 			Map<String,String> targetProperties = this.targetsMngr.lockAndGetTarget( ma.getApplication(), scopedInstance );

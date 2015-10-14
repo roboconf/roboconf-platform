@@ -27,6 +27,7 @@ package net.roboconf.agent.internal;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
@@ -202,6 +203,35 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
 		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
+	}
+
+
+	@Test
+	public void testSetscopedInstance_withAppBindings_andExternalExports() {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+		TestApplicationTemplate app = new TestApplicationTemplate();
+
+		Map<String,String> externalExports = new HashMap<> ();
+		externalExports.put( "Lamp", "Toto" );
+
+		Map<String,String> applicationBindings = new HashMap<> ();
+		applicationBindings.put( "Tpl1", "app1" );
+		applicationBindings.put( "Tpl2", "app2" );
+
+		Message msg = new MsgCmdSetScopedInstance( app.getMySqlVm(), externalExports, applicationBindings );
+
+		// Send the message
+		Assert.assertNull( processor.scopedInstance );
+		Assert.assertEquals( 0, processor.applicationBindings.size());
+
+		processor.processMessage( msg );
+
+		Assert.assertEquals( app.getMySqlVm(), processor.scopedInstance );
+		Assert.assertEquals( 2, processor.applicationBindings.size());
+		Assert.assertEquals( "app2", processor.applicationBindings.get( "Tpl2" ));
+		Assert.assertEquals( "app1", processor.applicationBindings.get( "Tpl1" ));
 	}
 
 

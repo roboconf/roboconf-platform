@@ -335,6 +335,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			// Propagate the external mapping into the messaging
 			this.messagingClient.setExternalMapping( msg.getExternalExports());
 
+			// Initialize the application bindings
+			this.applicationBindings.putAll( msg.getApplicationBindings());
+
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
 				this.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
