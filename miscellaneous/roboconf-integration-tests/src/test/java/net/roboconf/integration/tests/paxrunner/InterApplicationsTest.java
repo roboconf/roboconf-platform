@@ -336,4 +336,49 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 		deployExporting();
 		verifyAfter();
 	}
+
+
+	@Test
+	public void verifyApplicationBindingsAreSentAtTheBeginning() throws Exception {
+
+		// Basic things
+		prepare();
+		deployImporting();
+		deployExporting();
+		bind();
+
+		// Verify the importing application is entirely started
+		Thread.sleep( 800 );
+		for( Instance inst : InstanceHelpers.getAllInstances( this.importing.getApplication())) {
+			Assert.assertEquals( inst.getName(), InstanceStatus.DEPLOYED_STARTED, inst.getStatus());
+		}
+
+		// Now, stop all the instances in both applications
+		this.manager.instancesMngr().undeployAll( this.exporting, null );
+		this.manager.instancesMngr().undeployAll( this.importing, null );
+
+		Thread.sleep( 800 );
+		for( Instance inst : InstanceHelpers.getAllInstances( this.importing.getApplication())) {
+			Assert.assertEquals( inst.getName(), InstanceStatus.NOT_DEPLOYED, inst.getStatus());
+		}
+
+		for( Instance inst : InstanceHelpers.getAllInstances( this.exporting.getApplication())) {
+			Assert.assertEquals( inst.getName(), InstanceStatus.NOT_DEPLOYED, inst.getStatus());
+		}
+
+		// Deploy and start them all, again, but DO NOT bind.
+		// Bindings should have been kept by the DM and sent to the new agents.
+		this.manager.instancesMngr().deployAndStartAll( this.exporting, null );
+		this.manager.instancesMngr().deployAndStartAll( this.importing, null );
+
+		// All the instances should be started
+		Thread.sleep( 800 );
+		for( Instance inst : InstanceHelpers.getAllInstances( this.importing.getApplication())) {
+			Assert.assertEquals( inst.getName(), InstanceStatus.DEPLOYED_STARTED, inst.getStatus());
+		}
+
+		for( Instance inst : InstanceHelpers.getAllInstances( this.exporting.getApplication())) {
+			Assert.assertEquals( inst.getName(), InstanceStatus.DEPLOYED_STARTED, inst.getStatus());
+		}
+	}
 }
