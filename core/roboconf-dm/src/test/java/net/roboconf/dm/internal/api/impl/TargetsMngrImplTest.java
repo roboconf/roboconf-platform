@@ -428,6 +428,97 @@ public class TargetsMngrImplTest {
 
 
 	@Test
+	public void testApplicationWasDeleted() throws Exception {
+
+		// Prepare the model
+		TestApplication app1 = new TestApplication();
+		app1.name( "app1" );
+		TestApplication app2 = new TestApplication();
+		app2.name( "app2" );
+
+		String t1 = this.mngr.createTarget( "prop: ok\nname: target 1\ndescription: t1's target" );
+		String t2 = this.mngr.createTarget( "prop: ok\nhandler: docker" );
+
+		String path = InstanceHelpers.computeInstancePath( app1.getTomcatVm());
+
+		// Create hints and associations
+		this.mngr.associateTargetWithScopedInstance( t1, app1.getTemplate(), null );
+		this.mngr.associateTargetWithScopedInstance( t1, app1, null );
+		this.mngr.associateTargetWithScopedInstance( t2, app1, path );
+		this.mngr.associateTargetWithScopedInstance( t2, app2, null );
+
+		this.mngr.addHint( t1, app1 );
+		this.mngr.addHint( t2, app1 );
+		this.mngr.addHint( t2, app2 );
+
+		// Verify pre-conditions
+		Assert.assertEquals( t1, this.mngr.findTargetId( app1, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app1, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1 ).size());
+
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app2 ).size());
+
+		Assert.assertEquals( t1, this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 0, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+
+		// Delete the application
+		this.mngr.applicationWasDeleted( app1 );
+
+		// Verify post-conditions
+		Assert.assertNull( this.mngr.findTargetId( app1, null ));
+		Assert.assertNull( this.mngr.findTargetId( app1, path ));
+
+		// t1 has not hint anymore, so it becomes global
+		List<TargetWrapperDescriptor> hints = this.mngr.listPossibleTargets( app1 );
+		Assert.assertEquals( 1, hints.size());
+		Assert.assertEquals( t1, hints.get( 0 ).getId());
+
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, path ));
+
+		// t1 is global now
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app2 ).size());
+
+		// t1 is global now
+		Assert.assertEquals( t1, this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+
+		// Delete the template of app1
+		this.mngr.applicationWasDeleted( app1.getTemplate());
+
+		// Verify post-conditions
+		Assert.assertNull( this.mngr.findTargetId( app1, null ));
+		Assert.assertNull( this.mngr.findTargetId( app1, path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app1 ).size());
+
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, null ));
+		Assert.assertEquals( t2, this.mngr.findTargetId( app2, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app2 ).size());
+
+		Assert.assertNull( this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 1, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+
+		// Delete app2
+		this.mngr.applicationWasDeleted( app2 );
+
+		// Verify post-conditions
+		// t2 does not have any hint anymore => it is global
+		Assert.assertNull( this.mngr.findTargetId( app1, null ));
+		Assert.assertNull( this.mngr.findTargetId( app1, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1 ).size());
+
+		Assert.assertNull( this.mngr.findTargetId( app2, null ));
+		Assert.assertNull( this.mngr.findTargetId( app2, path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app2 ).size());
+
+		Assert.assertNull( this.mngr.findTargetId( app1.getTemplate(), path ));
+		Assert.assertEquals( 2, this.mngr.listPossibleTargets( app1.getTemplate()).size());
+	}
+
+
+	@Test
 	public void testLocking_ByOneInstance() throws Exception {
 
 		TestApplication app = new TestApplication();

@@ -215,6 +215,51 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	}
 
 
+	@Override
+	public void applicationWasDeleted( AbstractApplication app ) throws IOException {
+
+		String name = app.getName();
+		String qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getQualifier() : null;
+
+		List<TargetMappingKey> toClean = new ArrayList<> ();
+		Set<String> targetIds = new HashSet<> ();
+
+		// Find the mapping keys and the targets to update
+		for( Map.Entry<TargetMappingKey,String> entry : this.instanceToCachedId.entrySet()) {
+
+			if( Objects.equals( name, entry.getKey().getName())
+					&& Objects.equals( qualifier, entry.getKey().getQualifier())) {
+
+				targetIds.add( entry.getValue());
+				toClean.add( entry.getKey());
+			}
+		}
+
+		// Update the target files
+		for( String targetId : targetIds ) {
+			File targetDirectory = findTargetDirectory( targetId );
+
+			// Update the association file
+			File[] files = new File[] {
+					new File( targetDirectory, TARGETS_ASSOC_FILE ),
+					new File( targetDirectory, TARGETS_HINTS_FILE )
+			};
+
+			for( File f : files ) {
+				for( TargetMappingKey key : toClean ) {
+					Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
+					props.remove( key.toString());
+					writeProperties( props, f );
+				}
+			}
+		}
+
+		// Update the cache
+		for( TargetMappingKey key : toClean )
+			this.instanceToCachedId.remove( key );
+	}
+
+
 	// Finding targets
 
 
@@ -292,6 +337,11 @@ public class TargetsMngrImpl implements ITargetsMngr {
 	public List<TargetWrapperDescriptor> listPossibleTargets( AbstractApplication app ) {
 
 		// Find the matching targets based on registered hints
+		String key = new TargetMappingKey( app ).toString();
+		String tplKey = null;
+		if( app instanceof Application )
+			tplKey = new TargetMappingKey(((Application) app).getTemplate()).toString();
+
 		List<File> targetDirectories = new ArrayList<> ();
 		File dir = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.TARGETS );
 		for( File f : Utils.listDirectories( dir )) {
@@ -304,24 +354,11 @@ public class TargetsMngrImpl implements ITargetsMngr {
 				continue;
 			}
 
+			// Otherwise, the key must exist in the file
 			Properties props = Utils.readPropertiesFileQuietly( hintsFile, this.logger );
-
-			// Application?
-			ApplicationTemplate tpl;
-			if( app instanceof Application ) {
-				if( "".equals( props.getProperty( app.getName()))) {
-					targetDirectories.add( f );
-					continue;
-				}
-
-				tpl = ((Application) app).getTemplate();
-
-			} else {
-				tpl = (ApplicationTemplate) app;
-			}
-
-			// Application template
-			if( Objects.equals( tpl.getQualifier(), props.getProperty( tpl.getName())))
+			if( props.containsKey( key ))
+				targetDirectories.add( f );
+			else if( tplKey != null && props.containsKey( tplKey ))
 				targetDirectories.add( f );
 		}
 
@@ -574,11 +611,11 @@ public class TargetsMngrImpl implements ITargetsMngr {
 		File hintsFile = new File( findTargetDirectory( targetId ), TARGETS_HINTS_FILE );
 		Properties props = Utils.readPropertiesFileQuietly( hintsFile, this.logger );
 
+		String key = new TargetMappingKey( app ).toString();
 		if( add ) {
-			String qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getQualifier() : "";
-			props.setProperty( app.getName(), qualifier );
+			props.setProperty( key, "" );
 		} else {
-			props.remove( app.getName());
+			props.remove( key );
 		}
 
 		writeProperties( props, hintsFile );

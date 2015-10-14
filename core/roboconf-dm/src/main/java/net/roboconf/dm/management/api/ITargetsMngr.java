@@ -136,6 +136,13 @@ public interface ITargetsMngr {
 	 */
 	void copyOriginalMapping( Application app ) throws IOException;
 
+	/**
+	 * Removes any reference to an application after it was deleted.
+	 * @param app an application or application template
+	 * @throws IOException if something went wrong
+	 */
+	void applicationWasDeleted( AbstractApplication app ) throws IOException;
+
 
 	// Finding targets
 
@@ -193,7 +200,7 @@ public interface ITargetsMngr {
 	 * Lists all the available targets for a given application or application template.
 	 * <p>
 	 * The result is built by listing all the targets and by filtering them with hints.
-	 * Indeed, some targets may be "tagged" to be used (or let's visible) only for some
+	 * Indeed, some targets may be "tagged" to be used (or let's say visible) only for some
 	 * applications or templates.
 	 * </p>
 	 * <p>
