@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.AbstractMap;
@@ -245,11 +246,15 @@ public final class Utils {
 	 * @throws IOException if the file could not be created
 	 */
 	public static void copyStream( InputStream in, File outputFile ) throws IOException {
-		OutputStream os = new FileOutputStream( outputFile );
+
+		OutputStream os = null;
 		try {
+			os = new FileOutputStream( outputFile );
 			copyStream( in, os );
+
 		} finally {
-			os.close ();
+			if( os != null )
+				os.close ();
 		}
 	}
 
@@ -262,11 +267,15 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void copyStream( File inputFile, File outputFile ) throws IOException {
-		InputStream is = new FileInputStream( inputFile );
+
+		InputStream is = null;
 		try {
+			is = new FileInputStream( inputFile );
 			copyStream( is, outputFile );
+
 		} finally {
-			is.close();
+			if( is != null )
+				is.close();
 		}
 	}
 
@@ -279,11 +288,15 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void copyStream( File inputFile, OutputStream os ) throws IOException {
-		InputStream is = new FileInputStream( inputFile );
+
+		InputStream is = null;
 		try {
+			is = new FileInputStream( inputFile );
 			copyStream( is, os );
+
 		} finally {
-			is.close();
+			if( is != null )
+				is.close();
 		}
 	}
 
@@ -362,6 +375,7 @@ public final class Utils {
 			logger.severe( "Properties file " + file + " could not be read." );
 			logException( logger, e );
 		}
+
 		return result;
 	}
 
@@ -474,7 +488,8 @@ public final class Utils {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	static final class FileNameComparator implements Comparator<File> {
+	static final class FileNameComparator implements Serializable, Comparator<File> {
+		private static final long serialVersionUID = -4671366958457961589L;
 
 		@Override
 		public int compare( File o1, File o2 ) {
