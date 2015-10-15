@@ -72,6 +72,7 @@
 					<instructions>
 						<Import-Package>net.roboconf.core.*;version="${version.range}"</Import-Package>
 						<Export-Package>
+							!net.roboconf.plugin.api.internal.*,
 							net.roboconf.plugin.api.*
 						</Export-Package>
 					</instructions>

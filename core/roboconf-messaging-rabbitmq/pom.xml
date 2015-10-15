@@ -120,11 +120,9 @@
 							org.osgi.framework; version="[1.6,2.0)"
 						</Import-Package>
 						<Export-Package>
-							net.roboconf.messaging.rabbitmq; version="${project.version}"
+							!net.roboconf.messaging.rabbitmq.internal.*,
+							net.roboconf.messaging.rabbitmq.*
 						</Export-Package>
-						<Private-Package>
-							net.roboconf.messaging.rabbitmq.internal.*
-						</Private-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>

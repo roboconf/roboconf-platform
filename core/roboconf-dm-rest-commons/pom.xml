@@ -95,6 +95,7 @@
 							*
 						</Import-Package>
 						<Export-Package>
+							!net.roboconf.dm.rest.commons.internal.*,
 							net.roboconf.dm.rest.commons.*
 						</Export-Package>
 					</instructions>

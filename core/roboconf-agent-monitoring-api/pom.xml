@@ -63,7 +63,10 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Export-Package>net.roboconf.agent.monitoring.api.*</Export-Package>
+						<Export-Package>
+							!net.roboconf.agent.monitoring.api.internal.*,
+							net.roboconf.agent.monitoring.api.*
+						</Export-Package>
 						<Import-Package>
 							net.roboconf.*;version="${version.range}"
 						</Import-Package>

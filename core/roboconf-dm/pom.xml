@@ -132,7 +132,10 @@
 						<Import-Package>
 							net.roboconf.*;version="${version.range}",
 						</Import-Package>
-						<Export-Package>net.roboconf.dm.management.*</Export-Package>
+						<Export-Package>
+							!net.roboconf.dm.internal.*,
+							net.roboconf.dm.*
+						</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>

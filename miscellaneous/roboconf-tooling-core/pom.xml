@@ -74,7 +74,8 @@
 							net.roboconf.*;version="${version.range}"
 						</Import-Package>
 						<Export-Package>
-							net.roboconf.tooling.core
+							!net.roboconf.tooling.core.internal.*,
+							net.roboconf.tooling.core.*
 						</Export-Package>
 					</instructions>
 				</configuration>

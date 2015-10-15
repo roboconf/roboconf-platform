@@ -108,7 +108,6 @@
 							org.w3c.*,
 							org.slf4j.*
 						</Import-Package>
-						<Export-Package>net.roboconf.target.docker</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>

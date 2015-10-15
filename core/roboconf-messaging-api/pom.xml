@@ -91,7 +91,7 @@
 						</Import-Package>
 						<Export-Package>
 							!net.roboconf.messaging.api.internal.*,
-							net.roboconf.messaging.api*
+							net.roboconf.messaging.api.*
 						</Export-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

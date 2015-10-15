@@ -222,7 +222,10 @@
 							javax.servlet.http,
 							*
 						</Import-Package>
-						<Export-Package>net.roboconf.dm.rest.services.cors</Export-Package>
+						<Export-Package>
+							!net.roboconf.dm.rest.services.internal.*,
+							net.roboconf.dm.rest.services.*
+						</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>

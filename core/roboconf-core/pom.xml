@@ -56,7 +56,10 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Export-Package>!net.roboconf.core.internal.*, net.roboconf.core.*</Export-Package>
+						<Export-Package>
+							!net.roboconf.core.internal.*,
+							net.roboconf.core.*
+						</Export-Package>
 						<Import-Package>net.roboconf.*;version="${version.range}"</Import-Package>
 					</instructions>
 				</configuration>
