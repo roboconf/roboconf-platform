@@ -269,7 +269,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// Reading the stream does not take time as everything is sent at once by Docker.
 			if( this.logger.isLoggable( Level.FINE )) {
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				Utils.copyStream(response, out);
+				Utils.copyStreamSafely(response, out);
 				String s = out.toString("UTF-8").trim();
 				this.logger.fine( "Docker's output: " + s );
 			}
@@ -281,7 +281,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			throw new TargetException( e );
 
 		} finally {
-			Utils.closeQuietly( response );
 			Utils.deleteFilesRecursivelyAndQuietly( dockerfile );
 		}
 	}

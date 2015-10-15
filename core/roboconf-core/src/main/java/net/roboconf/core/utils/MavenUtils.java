@@ -123,7 +123,7 @@ public final class MavenUtils {
 
 			URL url = new URL( requestUrl.toString());
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( url.openStream(), os );
+			Utils.copyStreamSafely( url.openStream(), os );
 
 			Pattern p = Pattern.compile(
 					"<repositoryPath>(.*)</repositoryPath>",

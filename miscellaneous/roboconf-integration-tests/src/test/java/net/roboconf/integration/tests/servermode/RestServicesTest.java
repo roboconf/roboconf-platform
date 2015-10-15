@@ -135,21 +135,14 @@ public class RestServicesTest extends DmTest {
 
 		// Make sure we can get the image from the server
 		URL url = new URL( ICONS_URL + "/app1/application.png" );
-		InputStream in = null;
-		try {
-			in = url.openStream();
-			Utils.copyStream( in, new ByteArrayOutputStream());
-
-		} finally {
-			Utils.closeQuietly( in );
-		}
+		InputStream in = url.openStream();
+		Utils.copyStreamSafely( in, new ByteArrayOutputStream());
 
 		// Make sure getting an invalid icon returns an error
 		url = new URL( ICONS_URL + "/invalid-app-name/application.png" );
-		in = null;
 		try {
 			in = url.openStream();
-			Utils.copyStream( in, new ByteArrayOutputStream());
+			Utils.copyStreamSafely( in, new ByteArrayOutputStream());
 			Assert.fail( "An exception was expected here" );
 
 		} catch( Exception e ) {

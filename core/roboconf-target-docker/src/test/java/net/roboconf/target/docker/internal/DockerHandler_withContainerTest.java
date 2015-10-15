@@ -240,7 +240,7 @@ public class DockerHandler_withContainerTest {
 
 		InputStream in = this.docker.buildImageCmd(baseDir).withNoCache().withTag( tag ).exec();
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		Utils.copyStream( in, os );
+		Utils.copyStreamSafely( in, os );
 		this.logger.finest( os.toString( "UTF-8" ));
 
 		List<Image> images = this.docker.listImagesCmd().exec();

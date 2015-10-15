@@ -135,13 +135,10 @@ public class TestUtils {
 		InputStream in = null;
 		try {
 			in = uri.toURL().openStream();
-			Utils.copyStream( in, out );
+			Utils.copyStreamSafely( in, out );
 
 		} catch( Exception e ) {
 			// nothing
-
-		} finally {
-			Utils.closeQuietly( in );
 		}
 
 		return out.toString( "UTF-8" );
@@ -185,7 +182,12 @@ public class TestUtils {
 
 				if( entry.getValue() != null ) {
 					ByteArrayInputStream is = new ByteArrayInputStream( entry.getValue().getBytes( "UTF-8" ));
-					Utils.copyStream( is, zos );
+					try {
+						Utils.copyStreamUnsafelyUseWithCaution( is, zos );
+
+					} finally {
+						Utils.closeQuietly( is );
+					}
 				}
 
 				zos.closeEntry();

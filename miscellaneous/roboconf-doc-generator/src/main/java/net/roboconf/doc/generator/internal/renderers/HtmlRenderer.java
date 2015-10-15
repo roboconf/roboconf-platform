@@ -393,14 +393,8 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 
 		// Load the template
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		InputStream in = null;
-		try {
-			in = getClass().getResourceAsStream( "/html.tpl" );
-			Utils.copyStream( in, out );
-
-		} finally {
-			Utils.closeQuietly( in );
-		}
+		InputStream in = getClass().getResourceAsStream( "/html.tpl" );
+		Utils.copyStreamSafely( in, out );
 
 		// Create the target directory
 		File targetFile = new File( this.outputDirectory, "index.html" );

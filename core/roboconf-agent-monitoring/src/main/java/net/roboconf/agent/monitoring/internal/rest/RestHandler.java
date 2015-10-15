@@ -227,22 +227,14 @@ public class RestHandler implements IMonitoringHandler {
 
 	private String query( HttpURLConnection conn ) throws IOException {
 
-		InputStream in = null;
-		String response = null;
-		try {
-			conn.setRequestMethod( "GET" );
-			conn.setRequestProperty( "User-Agent", USER_AGENT );
+		conn.setRequestMethod( "GET" );
+		conn.setRequestProperty( "User-Agent", USER_AGENT );
 
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			in = conn.getInputStream();
-			Utils.copyStream( in, os );
-			response = os.toString("UTF-8");
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		InputStream in = conn.getInputStream();
+		Utils.copyStreamSafely( in, os );
 
-		} finally {
-			Utils.closeQuietly( in );
-		}
-
-		return response.toString();
+		return os.toString("UTF-8");
 	}
 
 

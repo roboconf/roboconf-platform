@@ -78,15 +78,12 @@ public final class UserDataUtils {
 			in = userDataUrl.openStream();
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-			Utils.copyStream( in, os );
+			Utils.copyStreamSafely( in, os );
 			userData = os.toString( "UTF-8" );
 
 		} catch( IOException e ) {
 			logger.severe( "The agent properties could not be read. " + e.getMessage());
 			Utils.logException( logger, e );
-
-		} finally {
-			Utils.closeQuietly( in );
 		}
 
 		AgentProperties result = null;
@@ -100,7 +97,7 @@ public final class UserDataUtils {
 			in = userDataUrl.openStream();
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-			Utils.copyStream( in, os );
+			Utils.copyStreamSafely( in, os );
 			String ip = os.toString( "UTF-8" );
 			if(! AgentUtils.isValidIP( ip )) {
 				// Failed retrieving public IP: try private one instead
@@ -109,7 +106,7 @@ public final class UserDataUtils {
 				in = userDataUrl.openStream();
 				os = new ByteArrayOutputStream();
 
-				Utils.copyStream( in, os );
+				Utils.copyStreamSafely( in, os );
 				ip = os.toString( "UTF-8" );
 			}
 
