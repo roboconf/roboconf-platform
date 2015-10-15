@@ -36,7 +36,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.AbstractMap;
@@ -246,15 +245,11 @@ public final class Utils {
 	 * @throws IOException if the file could not be created
 	 */
 	public static void copyStream( InputStream in, File outputFile ) throws IOException {
-
-		OutputStream os = null;
+		OutputStream os = new FileOutputStream( outputFile );
 		try {
-			os = new FileOutputStream( outputFile );
 			copyStream( in, os );
-
 		} finally {
-			if( os != null )
-				os.close ();
+			os.close ();
 		}
 	}
 
@@ -267,15 +262,11 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void copyStream( File inputFile, File outputFile ) throws IOException {
-
-		InputStream is = null;
+		InputStream is = new FileInputStream( inputFile );
 		try {
-			is = new FileInputStream( inputFile );
 			copyStream( is, outputFile );
-
 		} finally {
-			if( is != null )
-				is.close();
+			is.close();
 		}
 	}
 
@@ -288,15 +279,11 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void copyStream( File inputFile, OutputStream os ) throws IOException {
-
-		InputStream is = null;
+		InputStream is = new FileInputStream( inputFile );
 		try {
-			is = new FileInputStream( inputFile );
 			copyStream( is, os );
-
 		} finally {
-			if( is != null )
-				is.close();
+			is.close();
 		}
 	}
 
@@ -375,7 +362,6 @@ public final class Utils {
 			logger.severe( "Properties file " + file + " could not be read." );
 			logException( logger, e );
 		}
-
 		return result;
 	}
 
@@ -488,8 +474,7 @@ public final class Utils {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	static final class FileNameComparator implements Serializable, Comparator<File> {
-		private static final long serialVersionUID = -4671366958457961589L;
+	static final class FileNameComparator implements Comparator<File> {
 
 		@Override
 		public int compare( File o1, File o2 ) {
