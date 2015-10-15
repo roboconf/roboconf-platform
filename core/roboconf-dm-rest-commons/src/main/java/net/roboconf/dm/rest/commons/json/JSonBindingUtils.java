@@ -36,6 +36,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetAssociation;
 import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.core.utils.IconUtils;
@@ -69,6 +70,7 @@ public final class JSonBindingUtils {
 	private static final String EEP = "eep";
 	private static final String EXT_VARS = "extVars";
 	private static final String S = "s";
+	private static final String PATH = "path";
 
 	private static final String APP_ICON = "icon";
 	private static final String APP_INFO = "info";
@@ -80,7 +82,6 @@ public final class JSonBindingUtils {
 	private static final String APP_TPL_APPS = "apps";
 	private static final String COMP_INSTALLER = "installer";
 
-	private static final String INST_PATH = "path";
 	private static final String INST_CHANNELS = "channels";
 	private static final String INST_COMPONENT = "component";
 	private static final String INST_STATUS = "status";
@@ -148,6 +149,7 @@ public final class JSonBindingUtils {
 		module.addDeserializer( MapWrapper.class, new MapWrapperDeserializer());
 
 		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
+		module.addSerializer( TargetAssociation.class, new TargetAssociationSerializer());
 
 		mapper.registerModule( module );
 		return mapper;
@@ -183,6 +185,35 @@ public final class JSonBindingUtils {
 
 			if( item.isReferencing())
 				generator.writeStringField( TARGET_STATS_REFERENCING, "true" );
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for a bean describing a target association.
+	 * <p>
+	 * No deserializer is provided, as it does not make sense for the REST API.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class TargetAssociationSerializer extends JsonSerializer<TargetAssociation> {
+
+		@Override
+		public void serialize(
+				TargetAssociation item,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( item.getInstancePath() != null )
+				generator.writeStringField( PATH, item.getInstancePath());
+
+			if( item.getTargetDescriptor() != null )
+				generator.writeObjectField( DESC, item.getTargetDescriptor());
 
 			generator.writeEndObject();
 		}
@@ -670,7 +701,7 @@ public final class JSonBindingUtils {
 			generator.writeStartObject();
 			if( instance.getName() != null ) {
 				generator.writeStringField( NAME, instance.getName());
-				generator.writeStringField( INST_PATH, InstanceHelpers.computeInstancePath( instance ));
+				generator.writeStringField( PATH, InstanceHelpers.computeInstancePath( instance ));
 			}
 
 			if( instance.getStatus() != null )

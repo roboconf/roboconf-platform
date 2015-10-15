@@ -41,6 +41,7 @@ import javax.ws.rs.core.Response;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.targets.TargetAssociation;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**
@@ -135,6 +136,16 @@ public interface IApplicationResource {
 	@DELETE
 	@Path( "/instances" )
 	Response removeInstance( @PathParam("name") String applicationName, @QueryParam("instance-path") String instancePath );
+
+
+	/**
+	 * Finds the associations between the application "scoped" instances and targets.
+	 * @param applicationName the application name
+	 * @return a response
+	 */
+	@GET
+	@Path( "/targets" )
+	List<TargetAssociation> findTargetAssociations( @PathParam("name") String applicationName );
 
 
 	/**

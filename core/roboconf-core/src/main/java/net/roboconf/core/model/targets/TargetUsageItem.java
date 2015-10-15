@@ -28,6 +28,7 @@ package net.roboconf.core.model.targets;
 import java.util.Objects;
 
 /**
+ * A bean that describes associations between applications and targets.
  * @author Vincent Zurczak - Linagora
  */
 public class TargetUsageItem {
