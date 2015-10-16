@@ -199,7 +199,7 @@ public class RuleBasedEventHandlerTest {
 
 
 	@Test
-	public void testReplicateAndDelete() {
+	public void testReplicateAndDelete() throws Exception {
 
 		// Create...
 		int instanceCount = InstanceHelpers.getAllInstances( this.ma.getApplication()).size();
@@ -209,6 +209,11 @@ public class RuleBasedEventHandlerTest {
 		sb.append( this.app.getTomcat().getComponent().getName());
 		sb.append( "/" );
 		sb.append( this.app.getWar().getComponent().getName());
+
+		// Set a default target for the application
+		String targetId = this.manager.targetsMngr().createTarget( "" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, this.app, null );
+		//
 
 		this.handler.replicateInstance( this.ma, this.app.getMySqlVm().getName());
 		Assert.assertEquals( instanceCount + 2, InstanceHelpers.getAllInstances( this.ma.getApplication()).size());

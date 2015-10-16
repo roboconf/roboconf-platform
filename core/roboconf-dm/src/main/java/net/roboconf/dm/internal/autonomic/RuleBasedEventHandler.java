@@ -57,6 +57,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.target.api.TargetException;
 
 /**
  * An event handler to evaluate rules.
@@ -300,6 +301,7 @@ public class RuleBasedEventHandler {
 	 */
 	Instance createInstances( ManagedApplication ma, String componentTemplates ) {
 
+		// FIXME: the application must have a default target. See #492 for a fix.
 		Instance result = null;
 		try {
 			if( componentTemplates.startsWith( "/" ))
@@ -367,6 +369,11 @@ public class RuleBasedEventHandler {
 			if( rootInstanceToCopy == null )
 				throw new IOException( "Instance " + rootInstanceName + " was not found in application " + ma.getApplication().getName());
 
+			// FIXME: the replicated instance must be associated with a target. See #492 for a fix.
+			String targetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), "/" + rootInstanceName );
+			if( targetId == null )
+				throw new TargetException( "Instance to replicate (" + rootInstanceName + ") is not associated with any deployment target." );
+
 			// Copy it
 			Instance copy = InstanceHelpers.replicateInstance( rootInstanceToCopy );
 
@@ -375,6 +382,10 @@ public class RuleBasedEventHandler {
 
 			// Register it in the model
 			this.manager.instancesMngr().addInstance( ma, null, copy );
+
+			// Associate this new instance with the same target
+			// FIXME: this is a hack. The target should be part of the command. See #492.
+			this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/" + copy.getName());
 
 			// Now, deploy and start all
 			copy.data.put( AUTONOMIC_MARKER, "true" );
