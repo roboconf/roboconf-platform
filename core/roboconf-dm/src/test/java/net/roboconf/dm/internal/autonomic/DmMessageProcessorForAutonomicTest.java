@@ -365,17 +365,15 @@ public class DmMessageProcessorForAutonomicTest {
 		List<Instance> newAllInstances = InstanceHelpers.getAllInstances( this.app );
 		Assert.assertEquals( instanceCount + 3, newAllInstances.size());
 
-		// Mark the deleted instance as not completely removed
+		// The last 3 remaining instances have been deleted from the model
 		allInstances.removeAll( newAllInstances );
 		Assert.assertEquals( 3, allInstances.size());
-		allInstances.iterator().next().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		// Reducing the number of "autonomous" instances will not work this time
+		// Reducing the number of "autonomous" instances will work this time
 		this.processor.processMessage( newMessage( "peaceful" ));
-		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.app ).size());
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.app ).size());
 
-		// Fix the state and reduce the number of instances (again)
-		allInstances.iterator().next().setStatus( InstanceStatus.NOT_DEPLOYED );
+		// Try to reduce the number of instances (again)
 		this.processor.processMessage( newMessage( "peaceful" ));
 		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.app ).size());
 
@@ -386,6 +384,39 @@ public class DmMessageProcessorForAutonomicTest {
 		Assert.assertTrue( allInstances.contains( this.app.getTomcatVm()));
 		Assert.assertTrue( allInstances.contains( this.app.getTomcat()));
 		Assert.assertTrue( allInstances.contains( this.app.getWar()));
+	}
+
+
+	@Test
+	public void testAutonomic_replicate_permissionWithLastInstanceDeleted() throws Exception {
+
+		// Get some information about the application
+		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
+
+		// Simulate a first message to delete an instance
+		this.processor.processMessage( newMessage( "peaceful" ));
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Replicate the Tomcat VM
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Since there is no real agent in this state, none of the new instances
+		// will be deployed and started. Verify it.
+		List<Instance> rootInstances = new ArrayList<>( this.app.getRootInstances());
+		rootInstances.remove( this.app.getMySqlVm());
+		rootInstances.remove( this.app.getTomcatVm());
+
+		Assert.assertEquals( 1, rootInstances.size());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, rootInstances.get( 0 ).getStatus());
+
+		// Do not modify the instance states, but delete them from the model.
+		// The same reaction should work then.
+		this.app.getRootInstances().remove( rootInstances.get( 0 ));
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.app ).size());
+
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.app ).size());
 	}
 
 
@@ -593,6 +624,34 @@ public class DmMessageProcessorForAutonomicTest {
 		// After the delay, it works
 		this.processor.processMessage( newMessage( "peaceful" ));
 		Assert.assertEquals( allInstances.size(), InstanceHelpers.getAllInstances( this.app ).size());
+	}
+
+
+	@Test
+	public void testAutonomic_replicateWithCustomChildName() throws Exception {
+
+		// Override the rules
+		File f = new File( this.app.getDirectory(), Constants.PROJECT_DIR_AUTONOMIC + "/" + Constants.FILE_RULES );
+		Assert.assertTrue( f.exists());
+
+		File sourceFile = TestUtils.findTestFile( "/autonomic/rules-with-custom-child-name.cfg" );
+		Utils.copyStream( sourceFile, f );
+
+		// Get some information about the application
+		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
+
+		// Replicate the Tomcat VM
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Make sure the new Tomcat does not have the same name than other Tomcats
+		List<Instance> tomcatInstances = InstanceHelpers.findInstancesByComponentName( this.app, this.app.getTomcat().getComponent().getName());
+		Assert.assertEquals( 2, tomcatInstances.size());
+
+		String tomcat1 = tomcatInstances.get( 0 ).getName();
+		String tomcat2 = tomcatInstances.get( 1 ).getName();
+		Assert.assertFalse( tomcat1.equals( tomcat2 ));
+		Assert.assertTrue( tomcat2.startsWith( tomcat1 ));
 	}
 
 

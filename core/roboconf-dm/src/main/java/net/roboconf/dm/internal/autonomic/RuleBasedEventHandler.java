@@ -137,7 +137,7 @@ public class RuleBasedEventHandler {
 				} else if( ! checkTimingForAdditions( reactionKey, rule.getDelay())) {
 					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was created by the autonomic." );
 
-				} else if( checkPermission( reactionKey, true )) {
+				} else if( checkPermission( reactionKey, true, ma )) {
 					Instance inst = createInstances( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
@@ -158,7 +158,7 @@ public class RuleBasedEventHandler {
 				} else if( ! checkTimingForAdditions( reactionKey, rule.getDelay())) {
 					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was created by the autonomic." );
 
-				} else if( checkPermission( reactionKey, true )) {
+				} else if( checkPermission( reactionKey, true, ma )) {
 					Instance inst = replicateInstance( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
@@ -176,7 +176,7 @@ public class RuleBasedEventHandler {
 				if( ! checkTimingForOthers( reactionKey, rule.getDelay())) {
 					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was deleted by the autonomic." );
 
-				} else if( checkPermission( reactionKey, false )) {
+				} else if( checkPermission( reactionKey, false, ma )) {
 					Instance inst = deleteInstances( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
@@ -357,11 +357,27 @@ public class RuleBasedEventHandler {
 	/**
 	 * Instantiates a new VM from another "template" instance.
 	 * @param ma the managed application
-	 * @param rootInstanceName the name of the root "template" instance
+	 * @param instructions the name of the root "template" instance, potentially followed with an instance renamer
 	 * @return the created root instance (can be null in case of error)
 	 */
-	Instance replicateInstance( ManagedApplication ma, String rootInstanceName ) {
+	Instance replicateInstance( ManagedApplication ma, String instructions ) {
 
+		// Be able to rename segment paths
+		Pattern p = Pattern.compile( "(.*) where %(\\d+) with CPT", Pattern.CASE_INSENSITIVE );
+		Matcher m = p.matcher( instructions );
+
+		String rootInstanceName;
+		int segmentId = -1;
+
+		if( m.matches()) {
+			rootInstanceName = m.group( 1 );
+			segmentId = Integer.parseInt( m.group( 2 ));
+
+		} else {
+			rootInstanceName = instructions;
+		}
+
+		// Replicate the instance
 		Instance result = null;
 		try {
 			// Find the instance to copy
@@ -379,6 +395,15 @@ public class RuleBasedEventHandler {
 
 			// Use nanoTime() for generated names, as milliseconds can result in test failures (name conflicts).
 			copy.setName( copy.getComponent().getName() + "_" + System.nanoTime());
+
+			// Rename a child instance?
+			if( segmentId > 0 ) {
+				for( Instance inst : InstanceHelpers.buildHierarchicalList( copy )) {
+					String instancePath = InstanceHelpers.computeInstancePath( inst );
+					if( InstanceHelpers.countInstances( instancePath ) == segmentId )
+						inst.setName( inst.getName() + "_" + this.vmCount.get());
+				}
+			}
 
 			// Register it in the model
 			this.manager.instancesMngr().addInstance( ma, null, copy );
@@ -460,9 +485,10 @@ public class RuleBasedEventHandler {
 	 *
 	 * @param reactionKey the reaction key
 	 * @param add true if an instance is about to be added and started, false if it is about to be removed
+	 * @param ma the managed application
 	 * @return true if the reaction can be triggered, false otherwise
 	 */
-	boolean checkPermission( String reactionKey, boolean add ) {
+	boolean checkPermission( String reactionKey, boolean add, ManagedApplication ma ) {
 
 		boolean permitted = true;
 		Instance lastInstance = this.reactionKeyToLastInstance.get( reactionKey );
@@ -470,21 +496,28 @@ public class RuleBasedEventHandler {
 		// Disabling checks is used in some tests
 		if( ! this.disableChecks && lastInstance != null ) {
 
-			for( Iterator<Instance> it = InstanceHelpers.buildHierarchicalList( lastInstance ).iterator(); it.hasNext() && permitted; ) {
-				Instance inst = it.next();
+			// If the last instance does not exist anymore in the mode, then we can create a new group
+			String lastInstancePath = InstanceHelpers.computeInstancePath( lastInstance );
+			Instance existingInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), lastInstancePath );
 
-				// If we want to add a new instance, then all the instances "before"
-				// must have been started.
-				if( add && inst.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
-					permitted = false;
-					this.logger.warning( "Autonomic management: instance " + inst + " is not yet started (context = " + reactionKey + ")." );
-				}
+			// Otherwise, verify the state of all the child instances
+			if( existingInstance != null ) {
+				for( Iterator<Instance> it = InstanceHelpers.buildHierarchicalList( lastInstance ).iterator(); it.hasNext() && permitted; ) {
+					Instance inst = it.next();
 
-				// Otherwise, if we want to remove an instance, then all the instances "before"
-				// must have been undeployed.
-				else if( ! add && inst.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
-					permitted = false;
-					this.logger.warning( "Autonomic management: instance " + inst + " is not yet undeployed (context = " + reactionKey + ")." );
+					// If we want to add a new instance, then all the instances "before"
+					// must have been started.
+					if( add && inst.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+						permitted = false;
+						this.logger.warning( "Autonomic management: instance " + inst + " is not yet started (context = " + reactionKey + ")." );
+					}
+
+					// Otherwise, if we want to remove an instance, then all the instances "before"
+					// must have been undeployed.
+					else if( ! add && inst.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
+						permitted = false;
+						this.logger.warning( "Autonomic management: instance " + inst + " is not yet undeployed (context = " + reactionKey + ")." );
+					}
 				}
 			}
 
