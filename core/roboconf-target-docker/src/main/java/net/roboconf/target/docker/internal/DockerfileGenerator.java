@@ -26,12 +26,11 @@
 package net.roboconf.target.docker.internal;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -41,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import net.roboconf.core.utils.UriUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -50,15 +50,25 @@ import net.roboconf.core.utils.Utils;
  */
 public class DockerfileGenerator {
 
+	static final String RBCF_DIR = "/usr/local/roboconf-agent/";
+	static final String BACKUP = "agent-extensions-backup";
+
+	private static final String DEPLOY = "deploy";
+	private static final String GENERATED_FEATURE_XML = "generated-feature.xml";
+
 	private static final String[] RESOURCES_TO_COPY = { "start.sh", "rename.sh", "rc.local" };
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String agentPackURL;
 
 	private String packages = DockerHandler.AGENT_JRE_AND_PACKAGES_DEFAULT;
-	private final List<String> deployList;
 	private boolean isTar = true;
 	private String baseImageName = "ubuntu";
+
+	final List<String> deployList;
+	final List<String> fileUrlsToCopyInDockerFile = new ArrayList<String> ();
+	final List<String> bundleUrls = new ArrayList<String> ();
+
 
 
 	/**
@@ -126,10 +136,11 @@ public class DockerfileGenerator {
 			Utils.closeQuietly(in);
 		}
 
+		// Generate the Docker instructions
 		this.logger.fine( "Generating a Dockerfile." );
+
 		File generated = new File(dockerfile.toFile(), "Dockerfile");
 		PrintWriter out = null;
-		final List<URL> localDeploys = new ArrayList<>();
 		try {
 			out = new PrintWriter( generated, "UTF-8" );
 			out.println("FROM " + this.baseImageName);
@@ -153,39 +164,17 @@ public class DockerfileGenerator {
 
 			// The rc.local and start.sh files will be generated as well!
 			out.println("COPY rc.local /etc/");
-			out.println("COPY start.sh /usr/local/roboconf-agent/");
+			out.println("COPY start.sh " + RBCF_DIR);
 
-			// Copy additional resources in the Karaf deploy directory if needed.
-			// We use the Docker ADD command that accepts remote URLs.
-			if ( this.deployList != null ) {
-				for ( final String deploy : this.deployList ) {
-
-					// We need to be a bit selective here, because:
-					// - URL might be a local resource (file://)
-					// - Docker's ADD command does not accept:
-					//    - file URLs
-					//    - path of resources outside the Docker context directory (where the Dockerfile is)
-					// So if the URL is a "file:" URL, we add it in the "resourcesToCopy" list, that will be processed
-					// just a bit later.
-					final URI uri;
-					try {
-						uri = new URI(deploy);
-						if (!"file".equals(uri.getScheme())) {
-							// Remote resource URL. No special treatment.
-							out.println("ADD " + deploy + " /usr/local/roboconf-agent/deploy/");
-
-						} else {
-							// Add the URL to the toCopy list, and add the modified ADD Docker command.
-							final URL url = uri.toURL();
-							localDeploys.add(url);
-							out.println("ADD " + getFileNameFromFileUrl(url) + " /usr/local/roboconf-agent/deploy/");
-						}
-					} catch (URISyntaxException | IllegalArgumentException | MalformedURLException e) {
-						this.logger.warning("Invalid deploy resource URL: " + deploy);
-						Utils.logException( this.logger, e );
-					}
-				}
+			// Additional agent extensions?
+			if( this.deployList != null ) {
+				out.println( "RUN mkdir -p " + RBCF_DIR + BACKUP );
+				out.println( this.handleAdditionalDeployments());
 			}
+
+			// Generated feature?
+			if( this.bundleUrls.size() > 0 )
+				out.println( "COPY " + GENERATED_FEATURE_XML + " " + RBCF_DIR + DEPLOY );
 
 		} finally {
 			Utils.closeQuietly( out );
@@ -200,24 +189,39 @@ public class DockerfileGenerator {
 				in = this.getClass().getResourceAsStream( "/" + s );
 				Utils.copyStream( in, generated );
 				generated.setExecutable( true, false );
+				this.logger.fine( s + " was copied within the Dockerfile's directory." );
 
 			} finally {
 				Utils.closeQuietly( in );
-				this.logger.fine( s + " was copied within the Dockerfile's directory." );
 			}
 		}
 
+		// Do we have bundles to deploy?
+		// If some, generate a feature and save it in the Dockerfile resources.
+		String karafFeature = prepareKarafFeature( this.bundleUrls );
+		if( karafFeature != null ) {
+			this.logger.fine( "Writing " + GENERATED_FEATURE_XML + "..." );
+			File target = new File(dockerfile.toFile(), GENERATED_FEATURE_XML );
+			Utils.writeStringInto( karafFeature, target );
+			this.logger.fine( GENERATED_FEATURE_XML + " was copied within the Dockerfile's directory. (" + target + ")" );
+		}
+
 		// Copy additional deploy resources in the Docker context directory.
-		for (final URL s : localDeploys) {
+		for( String s : this.fileUrlsToCopyInDockerFile ) {
 
 			this.logger.fine( "Copying " + s + "..." );
-			final File target = new File(dockerfile.toFile(), getFileNameFromFileUrl(s));
+			final File target = new File(dockerfile.toFile(), getFileNameFromFileUrl( s ));
 			try {
-				in = s.openStream();
+				in = UriUtils.urlToUri( s ).toURL().openStream();
 				Utils.copyStream(in, target);
+				this.logger.fine( s + " was copied within the Dockerfile's directory. (" + target + ")" );
+
+			} catch( URISyntaxException e ) {
+				this.logger.severe( "Agent extension " + s + " could not be copied." );
+				throw new IOException( e );
+
 			} finally {
 				Utils.closeQuietly( in );
-				this.logger.fine( s + " was copied within the Dockerfile's directory. (" + target + ")" );
 			}
 		}
 
@@ -250,12 +254,6 @@ public class DockerfileGenerator {
 		return this.baseImageName;
 	}
 
-	/**
-	 * @return the deployList
-	 */
-	public List<String> getDeployList() {
-		return this.deployList;
-	}
 
 	/**
 	 * Finds the name of the agent file.
@@ -283,13 +281,88 @@ public class DockerfileGenerator {
 	 * @param url the URL of the file.
 	 * @return the file name.
 	 */
-	static String getFileNameFromFileUrl( final URL url ) {
+	static String getFileNameFromFileUrl( final String url ) {
 
-		final String path = url.getPath();
-		String name = path.substring( path.lastIndexOf('/') + 1 );
-		if( Utils.isEmptyOrWhitespaces( name ))
-			name = url.getQuery();
+		String name = url.substring( url.lastIndexOf('/') + 1 );
+		int index = name.lastIndexOf( '?' );
+		if( index > 0 )
+			name = name.substring( 0, index );
+		else if( index == 0 )
+			name = name.substring( 1 );
 
 		return name.replaceAll( "[^\\w.-]", "_" );
+	}
+
+
+	/**
+	 * @param bundleUrls a non-null list of URLs (relative to the Docker container)
+	 * @return the content of a Karaf feature, or null if no feature has to be installed
+	 * @throws IOException
+	 */
+	static String prepareKarafFeature( List<String> bundleUrls ) throws IOException {
+
+		String result = null;
+		if( ! bundleUrls.isEmpty()) {
+
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			InputStream in = DockerfileGenerator.class.getResourceAsStream( "/feature-tpl.xml" );
+			Utils.copyStreamSafely( in, os );
+
+			StringBuilder sb = new StringBuilder();
+			for( String url : bundleUrls ) {
+				sb.append( "<bundle>" );
+				sb.append( url );
+				sb.append( "</bundle>\n" );
+			}
+
+			result = os.toString( "UTF-8" ).replace( "%CONTENT%", sb.toString());
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * This methods prepares the actions to perform for agent extensions.
+	 * @return a string to append to the dockerfile (never null)
+	 */
+	String handleAdditionalDeployments() {
+		StringBuilder sb = new StringBuilder();
+
+		// Run through the list...
+		for( final String deployUrl : this.deployList ) {
+
+			String dir = RBCF_DIR;
+			dir += deployUrl.toLowerCase().endsWith( ".jar" ) ? BACKUP : DEPLOY;
+
+			String name = getFileNameFromFileUrl( deployUrl );
+
+			// Local or remote URL?
+			// "ADD" allows remote URLs.
+			if( deployUrl.toLowerCase().startsWith( "file:/" )) {
+
+				// Update the Docker file only if it is NOT a bundle
+				if( ! deployUrl.toLowerCase().endsWith( ".jar" ))
+					sb.append( "ADD " + name + " " + dir );
+
+				// Otherwise, remember it to generate a Karaf feature
+				else
+					this.bundleUrls.add( "file://" + dir + "/" + name );
+
+				// Copy it in the Dockerfile resources
+				this.fileUrlsToCopyInDockerFile.add( deployUrl );
+
+			} else {
+				// Update the Docker file only if it is NOT a bundle
+				if( ! deployUrl.toLowerCase().endsWith( ".jar" ))
+					sb.append( "ADD " + deployUrl + " " + dir );
+
+				// Otherwise, remember it to generate a Karaf feature
+				else
+					this.bundleUrls.add( deployUrl );
+			}
+		}
+
+		return sb.toString();
 	}
 }

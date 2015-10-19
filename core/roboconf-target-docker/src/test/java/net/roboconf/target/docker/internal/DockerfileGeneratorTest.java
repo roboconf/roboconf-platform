@@ -27,8 +27,8 @@ package net.roboconf.target.docker.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import junit.framework.Assert;
 import net.roboconf.core.utils.Utils;
@@ -136,16 +136,15 @@ public class DockerfileGeneratorTest {
 	@Test
 	public void testDockerfileWithAdditionalDeploys() throws Exception {
 
+		List<String> urls = new ArrayList<String>( 2 );
+		urls.add("toto");
+		urls.add("tutu");
+
 		File agentPackZip = this.folder.newFile( "dockertest.zip" );
-		DockerfileGenerator gen = new DockerfileGenerator("file://" + agentPackZip.getAbsolutePath(), null, new ArrayList<String>(){
-			{
-				add("toto");
-				add("tutu");
-			}
-		}, null);
-		Assert.assertEquals( 2, gen.getDeployList().size());
-		Assert.assertEquals( "toto", gen.getDeployList().get(0));
-		Assert.assertEquals("tutu", gen.getDeployList().get(1));
+		DockerfileGenerator gen = new DockerfileGenerator( "file://" + agentPackZip.getAbsolutePath(), null, urls, null );
+		Assert.assertEquals( 2, gen.deployList.size());
+		Assert.assertEquals( "toto", gen.deployList.get(0));
+		Assert.assertEquals("tutu", gen.deployList.get(1));
 	}
 
 
@@ -181,19 +180,75 @@ public class DockerfileGeneratorTest {
 	@Test
 	public void testGetFileNameFromFileUrl() throws Exception {
 
-		URL url = new URL( "http://host.com/test.html" );
+		String url = "http://host.com/test.html";
 		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
 
-		url = new URL( "http://host.com/path/test.html" );
+		url = "http://host.com/path/test.html";
 		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
 
-		url = new URL( "file://dir1/dir2/test.html" );
+		url = "file://dir1/dir2/test.html";
 		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
 
-		url = new URL( "file://host.com/dir/dir?name=test.html" );
+		url = "file://host.com/dir/dir?name=test.html";
 		Assert.assertEquals( "dir", DockerfileGenerator.getFileNameFromFileUrl( url ));
 
-		url = new URL( "file://host.com/dir/?test.html" );
+		url = "file://host.com/dir/?test.html";
 		Assert.assertEquals( "test.html", DockerfileGenerator.getFileNameFromFileUrl( url ));
+	}
+
+
+	@Test
+	public void testPrepareKarafFeature() throws Exception {
+
+		List<String> urls = new ArrayList<String> ();
+		String res = DockerfileGenerator.prepareKarafFeature( urls );
+		Assert.assertNull( res );
+
+		urls.add( "toto.txt" );
+		res = DockerfileGenerator.prepareKarafFeature( urls );
+		Assert.assertNotNull( res );
+		Assert.assertTrue( res.contains( "<bundle>toto.txt</bundle>" ));
+		Assert.assertFalse( res.contains( "%CONTENT%" ));
+
+		urls.add( "titi.txt" );
+		res = DockerfileGenerator.prepareKarafFeature( urls );
+		Assert.assertNotNull( res );
+		Assert.assertTrue( res.contains( "<bundle>titi.txt</bundle>" ));
+		Assert.assertFalse( res.contains( "%CONTENT%" ));
+	}
+
+
+	@Test
+	public void testHandleAdditionalDeployments() throws Exception {
+
+		// Empty
+		List<String> urls = new ArrayList<String> ();
+		DockerfileGenerator gen = new DockerfileGenerator( "file://whatever.zip", null, urls, null );
+
+		String content = gen.handleAdditionalDeployments();
+		Assert.assertEquals( 0, content.length());
+		Assert.assertEquals( 0, gen.bundleUrls.size());
+		Assert.assertEquals( 0, gen.fileUrlsToCopyInDockerFile.size());
+
+		// Mix local and remote bundles, local and remote XML
+		urls = new ArrayList<String> ();
+		urls.add( "file:///oops/my_local_bundle.jar" );
+		urls.add( "http://oops/my_remote_bundle.jar" );
+		urls.add( "file:///oops/my_local_feature.xml" );
+		urls.add( "http://oops/my_remote_feature.xml" );
+
+		gen = new DockerfileGenerator( "file://whatever.zip", null, urls, null );
+
+		content = gen.handleAdditionalDeployments();
+		Assert.assertTrue( content.length() > 0 );
+
+		Assert.assertEquals( 2, gen.bundleUrls.size());
+		Assert.assertEquals( 2, gen.fileUrlsToCopyInDockerFile.size());
+
+		Assert.assertTrue( gen.fileUrlsToCopyInDockerFile.contains( "file:///oops/my_local_bundle.jar" ));
+		Assert.assertTrue( gen.fileUrlsToCopyInDockerFile.contains( "file:///oops/my_local_feature.xml" ));
+
+		Assert.assertTrue( gen.bundleUrls.contains( "http://oops/my_remote_bundle.jar" ));
+		Assert.assertTrue( gen.bundleUrls.contains( "file://" + DockerfileGenerator.RBCF_DIR + DockerfileGenerator.BACKUP + "/my_local_bundle.jar" ));
 	}
 }
