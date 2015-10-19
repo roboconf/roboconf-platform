@@ -274,6 +274,7 @@ public class Instance implements Serializable {
 		DEPLOYING( false ),
 		DEPLOYED_STOPPED( true ),
 		UNRESOLVED( true ),
+		WAITING_FOR_ANCESTOR( true ),
 		STARTING( false ),
 		DEPLOYED_STARTED( true ),
 		STOPPING( false ),

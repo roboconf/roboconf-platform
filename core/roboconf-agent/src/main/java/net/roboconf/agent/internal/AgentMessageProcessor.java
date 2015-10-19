@@ -520,6 +520,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			.build( instance, this.agent.getApplicationName(), this.messagingClient)
 			.updateStateFromImports( instance, plugin, toRemove, InstanceStatus.DEPLOYED_STOPPED );
 		}
+
+		// Import changed => check all the waiting for ancestors...
+		startChildrenInstancesWaitingForAncestors();
 	}
 
 
@@ -592,6 +595,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			.build( instance, this.agent.getApplicationName(), this.messagingClient)
 			.updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
 		}
+
+		// Import changed => check all the waiting for ancestors...
+		startChildrenInstancesWaitingForAncestors();
 	}
 
 
@@ -611,6 +617,37 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			if( imports.isEmpty())
 				this.applicationNameToExternalExports.remove( msg.getApplicationOrContextName());
+		}
+	}
+
+
+	/**
+	 * Starts children instances when they are waiting for their ancestors to start.
+	 * <p>
+	 * To invoke every time imports change.
+	 * </p>
+	 * @throws IOException if something went wrong
+	 * @throws PluginException if something went wrong
+	 */
+	private void startChildrenInstancesWaitingForAncestors() throws IOException, PluginException {
+
+		List<Instance> childrenInstances = InstanceHelpers.buildHierarchicalList( this.scopedInstance );
+		childrenInstances.remove( this.scopedInstance );
+
+		for( Instance childInstance : childrenInstances ) {
+			if( childInstance.getStatus() != InstanceStatus.WAITING_FOR_ANCESTOR )
+				continue;
+
+			if( childInstance.getParent().getStatus() != InstanceStatus.DEPLOYED_STARTED )
+				continue;
+
+			PluginInterface plugin = this.agent.findPlugin( childInstance );
+			if( plugin == null )
+				this.logger.severe( "No plug-in was found for " + InstanceHelpers.computeInstancePath( childInstance ) + "." );
+			else
+				AbstractLifeCycleManager
+				.build( childInstance, this.agent.getApplicationName(), this.messagingClient)
+				.changeInstanceState( childInstance, plugin, InstanceStatus.DEPLOYED_STARTED, null );
 		}
 	}
 }

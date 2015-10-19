@@ -100,6 +100,10 @@ public abstract class AbstractLifeCycleManager {
 			result = new Unresolved( appName, messagingClient );
 			break;
 
+		case WAITING_FOR_ANCESTOR:
+			result = new WaitingForAncestor( appName, messagingClient );
+			break;
+
 		default:
 			result = new TransitiveStates( appName, messagingClient );
 			break;
@@ -197,7 +201,9 @@ public abstract class AbstractLifeCycleManager {
 
 		} else if( instance.getParent() != null
 				&& instance.getParent().getStatus() != InstanceStatus.DEPLOYED_STARTED
-				&& instance.getParent().getStatus() != InstanceStatus.DEPLOYED_STOPPED ) {
+				&& instance.getParent().getStatus() != InstanceStatus.DEPLOYED_STOPPED
+				&& instance.getParent().getStatus() != InstanceStatus.UNRESOLVED
+				&& instance.getParent().getStatus() != InstanceStatus.WAITING_FOR_ANCESTOR ) {
 			this.logger.fine( instancePath + " cannot be deployed because its parent is not deployed. Parent status: " + instance.getParent().getStatus() + "." );
 
 		} else {
@@ -245,8 +251,9 @@ public abstract class AbstractLifeCycleManager {
 		// Preliminary check
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
 		if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED
-				&& instance.getStatus() != InstanceStatus.UNRESOLVED ) {
-			this.logger.fine( instancePath + " cannot be undeployed. Prerequisite status: DEPLOYED_STOPPED or UNRESOLVED (but was " + instance.getStatus() + ")." );
+				&& instance.getStatus() != InstanceStatus.UNRESOLVED
+				&& instance.getStatus() != InstanceStatus.WAITING_FOR_ANCESTOR ) {
+			this.logger.fine( instancePath + " cannot be undeployed. Prerequisite status: DEPLOYED_STOPPED or UNRESOLVED or WAITING_FOR_ANCESTOR (but was " + instance.getStatus() + ")." );
 			return;
 		}
 
@@ -305,14 +312,26 @@ public abstract class AbstractLifeCycleManager {
 	throws IOException {
 
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
-		if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED ) {
-			this.logger.fine( instancePath + " cannot be started. Prerequisite status: DEPLOYED_STOPPED (but was " + instance.getStatus() + ")." );
+		if( instance.getStatus() != InstanceStatus.DEPLOYED_STOPPED
+				&& instance.getStatus() != InstanceStatus.WAITING_FOR_ANCESTOR ) {
+			this.logger.fine( instancePath + " cannot be started. Prerequisite status: DEPLOYED_STOPPED or WAITING_FOR_ANCESTOR (but was " + instance.getStatus() + ")." );
 
 		} else if( instance.getParent() != null
 				&& instance.getParent().getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+
+			// An element cannot start if its parent is not started.
+			// However, if the parent is unresolved (or waiting for its parent to start),
+			// then we can mark this instance as ready to start with its parent.
 			this.logger.fine( instancePath + " cannot be started because its parent is not started. Parent status: " + instance.getParent().getStatus() + "." );
+			if( instance.getParent().getStatus() == InstanceStatus.UNRESOLVED
+					|| instance.getParent().getStatus() == InstanceStatus.WAITING_FOR_ANCESTOR ) {
+
+				instance.setStatus( InstanceStatus.WAITING_FOR_ANCESTOR );
+				this.logger.fine( instancePath + " will start as soon as its parent starts." );
+			}
 
 		} else {
+			// Otherwise, start it
 			try {
 				if( ImportHelpers.hasAllRequiredImports( instance, this.logger )) {
 					instance.data.put( FORCE, "whatever" );
@@ -377,7 +396,6 @@ public abstract class AbstractLifeCycleManager {
 		List<Instance> instancesToStop = InstanceHelpers.buildHierarchicalList( instance );
 		Collections.reverse( instancesToStop );
 
-		InstanceStatus newStatus = isDueToImportsChange ? InstanceStatus.UNRESOLVED : InstanceStatus.DEPLOYED_STOPPED;
 		try {
 			// Update the statuses if necessary
 			for( Instance i : instancesToStop ) {
@@ -402,14 +420,24 @@ public abstract class AbstractLifeCycleManager {
 			}
 
 		} finally {
-			// In the case where the instances were stopped because of a change in "imports",
-			// we remain in the unresolved phase, so that we can start automatically when the required
-			// imports arrive.
 			List<Instance> forNotifications = new ArrayList<Instance> ();
 			for( Instance i : instancesToStop ) {
 				if( i.getStatus() != InstanceStatus.STOPPING
 						&& i.getStatus() != InstanceStatus.UNRESOLVED )
 					continue;
+
+				// Not due to import change? => stopped.
+				InstanceStatus newStatus;
+				if( ! isDueToImportsChange )
+					newStatus = InstanceStatus.DEPLOYED_STOPPED;
+
+				// If we deal with the instance whose dependencies changed => unresolved.
+				else if( i == instance )
+					newStatus = InstanceStatus.UNRESOLVED;
+
+				// Otherwise, we deal with a child instance.
+				else
+					newStatus = InstanceStatus.WAITING_FOR_ANCESTOR;
 
 				i.setStatus( newStatus );
 				forNotifications.add( i );

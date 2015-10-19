@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -39,14 +39,14 @@ import net.roboconf.plugin.api.PluginInterface;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class Unresolved extends AbstractLifeCycleManager {
+public class WaitingForAncestor extends AbstractLifeCycleManager {
 
 	/**
 	 * Constructor.
 	 * @param appName
 	 * @param messagingClient
 	 */
-	public Unresolved( String appName, IAgentClient messagingClient ) {
+	public WaitingForAncestor( String appName, IAgentClient messagingClient ) {
 		super( appName, messagingClient );
 	}
 
@@ -63,6 +63,10 @@ class Unresolved extends AbstractLifeCycleManager {
 		if( newStatus == InstanceStatus.NOT_DEPLOYED )
 			undeploy( instance, plugin );
 
+		// We can start
+		else if( newStatus == InstanceStatus.DEPLOYED_STARTED )
+			start( instance, plugin );
+
 		// Stop is only a status change, no script or notification run
 		else if( newStatus == InstanceStatus.DEPLOYED_STOPPED ) {
 			instance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
@@ -71,7 +75,7 @@ class Unresolved extends AbstractLifeCycleManager {
 			childrenInstances.remove( instance );
 
 			for( Instance childInstance : childrenInstances ) {
-				// Unresolved can only have "deployed stopped", "not deployed" and "waiting for ancestor" child status.
+				// "Waiting..." can only have "deployed stopped", "not deployed" and "waiting for ancestor" child status.
 				if( childInstance.getStatus() == InstanceStatus.WAITING_FOR_ANCESTOR )
 					childInstance.setStatus( InstanceStatus.DEPLOYED_STOPPED );
 			}
