@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -80,6 +81,7 @@ public final class MavenUtils {
 			String extension )
 	throws IOException {
 
+		Logger logger = Logger.getLogger( MavenUtils.class.getName());
 		String result = null;
 
 		// 1. Search in the local Maven repository
@@ -105,6 +107,8 @@ public final class MavenUtils {
 			File localFile = new File( defaultRepo, sb.toString());
 			if( localFile.exists())
 				result = localFile.toURI().toString();
+			else
+				logger.fine( "Maven resolution: " + localFile + " does not exist (no local artifact)." );
 		}
 
 		// 2. Rely on Sonatype
@@ -120,6 +124,8 @@ public final class MavenUtils {
 			requestUrl.append( version );
 			requestUrl.append( "&p=" );
 			requestUrl.append( extension );
+
+			logger.fine( "Maven resolution: requesting the address from " + requestUrl );
 
 			URL url = new URL( requestUrl.toString());
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -139,6 +145,7 @@ public final class MavenUtils {
 			}
 		}
 
+		logger.fine( "Maven resolution: the final artifact location is " + result );
 		return result;
 	}
 }
