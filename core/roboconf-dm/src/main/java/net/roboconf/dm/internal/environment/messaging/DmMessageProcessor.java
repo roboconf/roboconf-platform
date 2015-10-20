@@ -123,9 +123,13 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			this.logger.warning( sb.toString());
 
 		} else {
-			// FIXME: is this useful?
-			for( Instance inst : InstanceHelpers.buildHierarchicalList( scopedInstance ))
+			scopedInstance.data.remove( Instance.IP_ADDRESS );
+			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
+			scopedInstance.data.remove( Instance.RUNNING_FROM );
+
+			for( Instance inst : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
 				inst.setStatus( InstanceStatus.NOT_DEPLOYED );
+			}
 
 			this.logger.info( scopedInstance + " is now terminated. Back to NOT_DEPLOYED state." );
 		}
