@@ -126,6 +126,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			scopedInstance.data.remove( Instance.IP_ADDRESS );
 			scopedInstance.data.remove( Instance.TARGET_ACQUIRED );
 			scopedInstance.data.remove( Instance.RUNNING_FROM );
+			scopedInstance.data.remove( Instance.MACHINE_ID );
 
 			for( Instance inst : InstanceHelpers.buildHierarchicalList( scopedInstance )) {
 				inst.setStatus( InstanceStatus.NOT_DEPLOYED );

@@ -40,6 +40,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -53,6 +54,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClientDm;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
@@ -691,5 +693,37 @@ public class Manager_BasicsTest {
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
 		Assert.assertEquals( app, this.manager.applicationMngr().findApplicationByName( app.getName()));
+	}
+
+
+	@Test
+	public void verifyMsgNotifMachineDown_allowsRedeployment() throws Exception {
+
+		// Prepare the model
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma = new ManagedApplication( app );
+
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+		String targetId = this.manager.targetsMngr().createTarget( "" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
+
+		// Try a first deployment
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		this.manager.instancesMngr().deployAndStartAll( ma, app.getMySqlVm());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+
+		// Simulate the incoming of a heart beat message
+		DmMessageProcessor processor = (DmMessageProcessor) this.managerWrapper.getMessagingClient().getMessageProcessor();
+		processor.processMessage( new MsgNotifHeartbeat( app.getName(), app.getMySqlVm(), "127.0.0.1" ));
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+
+		// Simulate the incoming of a "machine down" notification
+		processor.processMessage( new MsgNotifMachineDown( app.getName(), app.getMySqlVm()));
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+
+		// Try to redeploy: it should work (no remains of the previous attempt)
+		this.manager.instancesMngr().deployAndStartAll( ma, app.getMySqlVm());
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 	}
 }
