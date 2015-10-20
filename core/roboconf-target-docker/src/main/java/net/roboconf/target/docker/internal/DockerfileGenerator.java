@@ -51,9 +51,9 @@ import net.roboconf.core.utils.Utils;
 public class DockerfileGenerator {
 
 	static final String RBCF_DIR = "/usr/local/roboconf-agent/";
-	static final String BACKUP = "agent-extensions-backup";
+	static final String BACKUP = "agent-extensions-backup/";
 
-	private static final String DEPLOY = "deploy";
+	private static final String DEPLOY = "deploy/";
 	private static final String GENERATED_FEATURE_XML = "generated-feature.xml";
 
 	private static final String[] RESOURCES_TO_COPY = { "start.sh", "rename.sh", "rc.local" };
@@ -173,8 +173,9 @@ public class DockerfileGenerator {
 			}
 
 			// Generated feature?
+			// It must be named "feature.xml"!!!
 			if( this.bundleUrls.size() > 0 )
-				out.println( "COPY " + GENERATED_FEATURE_XML + " " + RBCF_DIR + DEPLOY );
+				out.println( "COPY " + GENERATED_FEATURE_XML + " " + RBCF_DIR + DEPLOY + "feature.xml" );
 
 		} finally {
 			Utils.closeQuietly( out );
@@ -201,7 +202,7 @@ public class DockerfileGenerator {
 		String karafFeature = prepareKarafFeature( this.bundleUrls );
 		if( karafFeature != null ) {
 			this.logger.fine( "Writing " + GENERATED_FEATURE_XML + "..." );
-			File target = new File(dockerfile.toFile(), GENERATED_FEATURE_XML );
+			File target = new File( dockerfile.toFile(), GENERATED_FEATURE_XML );
 			Utils.writeStringInto( karafFeature, target );
 			this.logger.fine( GENERATED_FEATURE_XML + " was copied within the Dockerfile's directory. (" + target + ")" );
 		}
@@ -341,24 +342,22 @@ public class DockerfileGenerator {
 			// "ADD" allows remote URLs.
 			if( deployUrl.toLowerCase().startsWith( "file:/" )) {
 
-				// Update the Docker file only if it is NOT a bundle
-				if( ! deployUrl.toLowerCase().endsWith( ".jar" ))
-					sb.append( "ADD " + name + " " + dir );
+				// Update the Docker file
+				sb.append( "ADD " + name + " " + dir );
 
-				// Otherwise, remember it to generate a Karaf feature
-				else
-					this.bundleUrls.add( "file://" + dir + "/" + name );
+				// If it is a bundle, remember it to generate a Karaf feature
+				if( deployUrl.toLowerCase().endsWith( ".jar" ))
+					this.bundleUrls.add( "file://" + dir + name );
 
 				// Copy it in the Dockerfile resources
 				this.fileUrlsToCopyInDockerFile.add( deployUrl );
 
 			} else {
-				// Update the Docker file only if it is NOT a bundle
-				if( ! deployUrl.toLowerCase().endsWith( ".jar" ))
-					sb.append( "ADD " + deployUrl + " " + dir );
+				// Update the Docker file
+				sb.append( "ADD " + deployUrl + " " + dir );
 
-				// Otherwise, remember it to generate a Karaf feature
-				else
+				// If it is a bundle, remember it to generate a Karaf feature
+				if( deployUrl.toLowerCase().endsWith( ".jar" ))
 					this.bundleUrls.add( deployUrl );
 			}
 		}

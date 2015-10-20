@@ -102,6 +102,7 @@
 						<!-- Karaf 4.x has split the "standard" features into many sub-features -->
 						<feature>shell-compat</feature>
 						<feature>feature</feature>
+						<feature>deployer</feature>
 						<feature>instance</feature>
 						<feature>log</feature>
 						<feature>aries-blueprint</feature>

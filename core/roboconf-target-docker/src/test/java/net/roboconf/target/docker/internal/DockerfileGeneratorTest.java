@@ -249,6 +249,6 @@ public class DockerfileGeneratorTest {
 		Assert.assertTrue( gen.fileUrlsToCopyInDockerFile.contains( "file:///oops/my_local_feature.xml" ));
 
 		Assert.assertTrue( gen.bundleUrls.contains( "http://oops/my_remote_bundle.jar" ));
-		Assert.assertTrue( gen.bundleUrls.contains( "file://" + DockerfileGenerator.RBCF_DIR + DockerfileGenerator.BACKUP + "/my_local_bundle.jar" ));
+		Assert.assertTrue( gen.bundleUrls.contains( "file://" + DockerfileGenerator.RBCF_DIR + DockerfileGenerator.BACKUP + "my_local_bundle.jar" ));
 	}
 }
