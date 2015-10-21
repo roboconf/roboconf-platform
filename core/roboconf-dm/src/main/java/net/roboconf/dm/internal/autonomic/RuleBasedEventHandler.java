@@ -56,6 +56,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.target.api.TargetException;
 
@@ -68,7 +69,7 @@ import net.roboconf.target.api.TargetException;
  *
  * @author Pierre-Yves Gibello - Linagora
  */
-public class RuleBasedEventHandler {
+public class RuleBasedEventHandler implements IRuleBasedEventHandler {
 
 	static final String DELETE_SERVICE = "delete-service";
 	static final String REPLICATE_SERVICE = "replicate-service";
@@ -101,10 +102,37 @@ public class RuleBasedEventHandler {
 	}
 
 
-	/**
-	 * Reacts upon autonomic monitoring message (aka "autonomic event").
-	 * @param event The autonomic event message
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.management.api.IRuleBasedEventHandler
+	 * #notifyVmWasDeletedByHand(net.roboconf.core.model.beans.Instance)
 	 */
+	@Override
+	public void notifyVmWasDeletedByHand( Instance rootInstance ) {
+
+		// For the record, the instance was already removed from the model.
+		if( rootInstance.data.remove( AUTONOMIC_MARKER ) != null )
+			this.vmCount.decrementAndGet();
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.management.api.IRuleBasedEventHandler
+	 * #getAutonomicInstancesCount()
+	 */
+	@Override
+	public int getAutonomicInstancesCount() {
+		return this.vmCount.get();
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.management.api.IRuleBasedEventHandler
+	 * #handleEvent(net.roboconf.dm.management.ManagedApplication, net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic)
+	 */
+	@Override
 	public void handleEvent( ManagedApplication ma, MsgNotifAutonomic event ) {
 
 		try {
@@ -465,7 +493,9 @@ public class RuleBasedEventHandler {
 
 				// Only update the result if everything went fine
 				result = instanceToRemove;
-				this.vmCount.decrementAndGet();
+
+				// Do not decrement the instance counter,
+				// this.manager.instancesMngr().removeInstance( ... ) does it for us.
 			}
 
 		} catch( Exception e ) {

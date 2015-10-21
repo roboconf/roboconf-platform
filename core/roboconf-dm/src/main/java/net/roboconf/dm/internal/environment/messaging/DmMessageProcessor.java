@@ -34,9 +34,9 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
@@ -61,7 +61,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 	private final Manager manager;
-	private final RuleBasedEventHandler ruleBasedHandler;
+	private final IRuleBasedEventHandler ruleBasedHandler;
 
 
 	/**
@@ -71,7 +71,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	public DmMessageProcessor( Manager manager ) {
 		super( "Roboconf DM - Message Processor" );
 		this.manager = manager;
-		this.ruleBasedHandler = new RuleBasedEventHandler( this.manager );
+		this.ruleBasedHandler = manager.getRuleBasedHandler();
 	}
 
 

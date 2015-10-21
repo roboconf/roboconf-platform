@@ -655,6 +655,40 @@ public class DmMessageProcessorForAutonomicTest {
 	}
 
 
+	@Test
+	public void testAutonomic_deleteAutonomicInstanceByHand() throws Exception {
+
+		// Get some information about the application
+		int instanceCount = InstanceHelpers.getAllInstances( this.app ).size();
+
+		// Replicate the Tomcat VM
+		this.processor.processMessage( newMessage( "replicated" ));
+		Assert.assertEquals( instanceCount + 3, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// Since there is no real agent in this state, none of the new instances
+		// will be deployed and started. Verify it.
+		List<Instance> rootInstances = new ArrayList<>( this.app.getRootInstances());
+		rootInstances.remove( this.app.getMySqlVm());
+		rootInstances.remove( this.app.getTomcatVm());
+
+		Assert.assertEquals( 1, rootInstances.size());
+		Instance tomcatInstance = rootInstances.get( 0 );
+
+		Assert.assertEquals( InstanceStatus.DEPLOYING, tomcatInstance.getStatus());
+		Assert.assertEquals( 1, this.manager.getRuleBasedHandler().getAutonomicInstancesCount());
+
+		// Kill the new Tomcat by hand
+		this.manager.instancesMngr().undeployAll( this.ma, tomcatInstance );
+		this.manager.instancesMngr().removeInstance( this.ma, tomcatInstance );
+
+		// It should have been removed from the model
+		Assert.assertEquals( instanceCount, InstanceHelpers.getAllInstances( this.app ).size());
+
+		// And the autonomic instances count should have been decreased
+		Assert.assertEquals( 0, this.manager.getRuleBasedHandler().getAutonomicInstancesCount());
+	}
+
+
 	private Message newMessage( String eventId ) {
 		return new MsgNotifAutonomic( this.app.getName(), this.app.getTomcatVm().getName(), eventId, "we do not care" );
 	}

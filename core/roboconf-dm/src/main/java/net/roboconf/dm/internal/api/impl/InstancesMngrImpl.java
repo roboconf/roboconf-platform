@@ -45,6 +45,7 @@ import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.EventType;
@@ -77,6 +78,9 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 	private ITargetHandlerResolver targetHandlerResolver;
 
+	// FIXME: this is a dirty hack
+	private IRuleBasedEventHandler ruleBasedHandler;
+
 
 	/**
 	 * Constructor.
@@ -103,6 +107,15 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	 */
 	public void setTargetHandlerResolver( ITargetHandlerResolver targetHandlerResolver ) {
 		this.targetHandlerResolver = targetHandlerResolver;
+	}
+
+
+	/**
+	 * FIXME: dirty hack.
+	 * @param ruleBasedHandler the ruleBasedHandler to set
+	 */
+	public void setRuleBasedHandler( IRuleBasedEventHandler ruleBasedHandler ) {
+		this.ruleBasedHandler = ruleBasedHandler;
 	}
 
 
@@ -147,10 +160,13 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		MsgCmdRemoveInstance message = new MsgCmdRemoveInstance( instance );
 		this.messagingMngr.sendMessageSafely( ma, instance, message );
 
-		if( instance.getParent() == null )
+		if( instance.getParent() == null ) {
 			ma.getApplication().getRootInstances().remove( instance );
-		else
+			this.ruleBasedHandler.notifyVmWasDeletedByHand( instance );
+
+		} else {
 			instance.getParent().getChildren().remove( instance );
+		}
 
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
 		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
