@@ -99,7 +99,7 @@
 		<websocket.version>9.2.10.v20150310</websocket.version>
 		
 		<!-- To update on every release -->
-		<version.range>[${project.version},0.6)</version.range>
+		<version.range>[${project.version},0.7)</version.range>
 	</properties>
 
 	<dependencyManagement>
