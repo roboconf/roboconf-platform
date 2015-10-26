@@ -56,7 +56,9 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
+import net.roboconf.target.api.TargetException;
 
 /**
  * An event handler to evaluate rules.
@@ -67,7 +69,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
  *
  * @author Pierre-Yves Gibello - Linagora
  */
-public class RuleBasedEventHandler {
+public class RuleBasedEventHandler implements IRuleBasedEventHandler {
 
 	static final String DELETE_SERVICE = "delete-service";
 	static final String REPLICATE_SERVICE = "replicate-service";
@@ -100,10 +102,37 @@ public class RuleBasedEventHandler {
 	}
 
 
-	/**
-	 * Reacts upon autonomic monitoring message (aka "autonomic event").
-	 * @param event The autonomic event message
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.management.api.IRuleBasedEventHandler
+	 * #notifyVmWasDeletedByHand(net.roboconf.core.model.beans.Instance)
 	 */
+	@Override
+	public void notifyVmWasDeletedByHand( Instance rootInstance ) {
+
+		// For the record, the instance was already removed from the model.
+		if( rootInstance.data.remove( AUTONOMIC_MARKER ) != null )
+			this.vmCount.decrementAndGet();
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.management.api.IRuleBasedEventHandler
+	 * #getAutonomicInstancesCount()
+	 */
+	@Override
+	public int getAutonomicInstancesCount() {
+		return this.vmCount.get();
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.management.api.IRuleBasedEventHandler
+	 * #handleEvent(net.roboconf.dm.management.ManagedApplication, net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic)
+	 */
+	@Override
 	public void handleEvent( ManagedApplication ma, MsgNotifAutonomic event ) {
 
 		try {
@@ -136,7 +165,7 @@ public class RuleBasedEventHandler {
 				} else if( ! checkTimingForAdditions( reactionKey, rule.getDelay())) {
 					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was created by the autonomic." );
 
-				} else if( checkPermission( reactionKey, true )) {
+				} else if( checkPermission( reactionKey, true, ma )) {
 					Instance inst = createInstances( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
@@ -157,7 +186,7 @@ public class RuleBasedEventHandler {
 				} else if( ! checkTimingForAdditions( reactionKey, rule.getDelay())) {
 					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was created by the autonomic." );
 
-				} else if( checkPermission( reactionKey, true )) {
+				} else if( checkPermission( reactionKey, true, ma )) {
 					Instance inst = replicateInstance( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
@@ -175,7 +204,7 @@ public class RuleBasedEventHandler {
 				if( ! checkTimingForOthers( reactionKey, rule.getDelay())) {
 					this.logger.info( "Autonomic management: the " + rule.getDelay() + "s period has not yet completed since the last machine was deleted by the autonomic." );
 
-				} else if( checkPermission( reactionKey, false )) {
+				} else if( checkPermission( reactionKey, false, ma )) {
 					Instance inst = deleteInstances( ma, rule.getReactionInfo());
 					ack( inst, reactionKey );
 
@@ -300,6 +329,7 @@ public class RuleBasedEventHandler {
 	 */
 	Instance createInstances( ManagedApplication ma, String componentTemplates ) {
 
+		// FIXME: the application must have a default target. See #492 for a fix.
 		Instance result = null;
 		try {
 			if( componentTemplates.startsWith( "/" ))
@@ -355,11 +385,27 @@ public class RuleBasedEventHandler {
 	/**
 	 * Instantiates a new VM from another "template" instance.
 	 * @param ma the managed application
-	 * @param rootInstanceName the name of the root "template" instance
+	 * @param instructions the name of the root "template" instance, potentially followed with an instance renamer
 	 * @return the created root instance (can be null in case of error)
 	 */
-	Instance replicateInstance( ManagedApplication ma, String rootInstanceName ) {
+	Instance replicateInstance( ManagedApplication ma, String instructions ) {
 
+		// Be able to rename segment paths
+		Pattern p = Pattern.compile( "(.*) where %(\\d+) with CPT", Pattern.CASE_INSENSITIVE );
+		Matcher m = p.matcher( instructions );
+
+		String rootInstanceName;
+		int segmentId = -1;
+
+		if( m.matches()) {
+			rootInstanceName = m.group( 1 );
+			segmentId = Integer.parseInt( m.group( 2 ));
+
+		} else {
+			rootInstanceName = instructions;
+		}
+
+		// Replicate the instance
 		Instance result = null;
 		try {
 			// Find the instance to copy
@@ -367,14 +413,32 @@ public class RuleBasedEventHandler {
 			if( rootInstanceToCopy == null )
 				throw new IOException( "Instance " + rootInstanceName + " was not found in application " + ma.getApplication().getName());
 
+			// FIXME: the replicated instance must be associated with a target. See #492 for a fix.
+			String targetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), "/" + rootInstanceName );
+			if( targetId == null )
+				throw new TargetException( "Instance to replicate (" + rootInstanceName + ") is not associated with any deployment target." );
+
 			// Copy it
 			Instance copy = InstanceHelpers.replicateInstance( rootInstanceToCopy );
 
 			// Use nanoTime() for generated names, as milliseconds can result in test failures (name conflicts).
 			copy.setName( copy.getComponent().getName() + "_" + System.nanoTime());
 
+			// Rename a child instance?
+			if( segmentId > 0 ) {
+				for( Instance inst : InstanceHelpers.buildHierarchicalList( copy )) {
+					String instancePath = InstanceHelpers.computeInstancePath( inst );
+					if( InstanceHelpers.countInstances( instancePath ) == segmentId )
+						inst.setName( inst.getName() + "_" + this.vmCount.get());
+				}
+			}
+
 			// Register it in the model
 			this.manager.instancesMngr().addInstance( ma, null, copy );
+
+			// Associate this new instance with the same target
+			// FIXME: this is a hack. The target should be part of the command. See #492.
+			this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/" + copy.getName());
 
 			// Now, deploy and start all
 			copy.data.put( AUTONOMIC_MARKER, "true" );
@@ -429,7 +493,9 @@ public class RuleBasedEventHandler {
 
 				// Only update the result if everything went fine
 				result = instanceToRemove;
-				this.vmCount.decrementAndGet();
+
+				// Do not decrement the instance counter,
+				// this.manager.instancesMngr().removeInstance( ... ) does it for us.
 			}
 
 		} catch( Exception e ) {
@@ -449,9 +515,10 @@ public class RuleBasedEventHandler {
 	 *
 	 * @param reactionKey the reaction key
 	 * @param add true if an instance is about to be added and started, false if it is about to be removed
+	 * @param ma the managed application
 	 * @return true if the reaction can be triggered, false otherwise
 	 */
-	boolean checkPermission( String reactionKey, boolean add ) {
+	boolean checkPermission( String reactionKey, boolean add, ManagedApplication ma ) {
 
 		boolean permitted = true;
 		Instance lastInstance = this.reactionKeyToLastInstance.get( reactionKey );
@@ -459,21 +526,28 @@ public class RuleBasedEventHandler {
 		// Disabling checks is used in some tests
 		if( ! this.disableChecks && lastInstance != null ) {
 
-			for( Iterator<Instance> it = InstanceHelpers.buildHierarchicalList( lastInstance ).iterator(); it.hasNext() && permitted; ) {
-				Instance inst = it.next();
+			// If the last instance does not exist anymore in the mode, then we can create a new group
+			String lastInstancePath = InstanceHelpers.computeInstancePath( lastInstance );
+			Instance existingInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), lastInstancePath );
 
-				// If we want to add a new instance, then all the instances "before"
-				// must have been started.
-				if( add && inst.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
-					permitted = false;
-					this.logger.warning( "Autonomic management: instance " + inst + " is not yet started (context = " + reactionKey + ")." );
-				}
+			// Otherwise, verify the state of all the child instances
+			if( existingInstance != null ) {
+				for( Iterator<Instance> it = InstanceHelpers.buildHierarchicalList( lastInstance ).iterator(); it.hasNext() && permitted; ) {
+					Instance inst = it.next();
 
-				// Otherwise, if we want to remove an instance, then all the instances "before"
-				// must have been undeployed.
-				else if( ! add && inst.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
-					permitted = false;
-					this.logger.warning( "Autonomic management: instance " + inst + " is not yet undeployed (context = " + reactionKey + ")." );
+					// If we want to add a new instance, then all the instances "before"
+					// must have been started.
+					if( add && inst.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
+						permitted = false;
+						this.logger.warning( "Autonomic management: instance " + inst + " is not yet started (context = " + reactionKey + ")." );
+					}
+
+					// Otherwise, if we want to remove an instance, then all the instances "before"
+					// must have been undeployed.
+					else if( ! add && inst.getStatus() != InstanceStatus.NOT_DEPLOYED ) {
+						permitted = false;
+						this.logger.warning( "Autonomic management: instance " + inst + " is not yet undeployed (context = " + reactionKey + ")." );
+					}
 				}
 			}
 

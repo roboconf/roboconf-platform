@@ -107,7 +107,7 @@ public final class ProjectUtils {
 		// Create the descriptor
 		InputStream in = ProjectUtils.class.getResourceAsStream( "/application-skeleton.props" );
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Utils.copyStream( in, out );
+		Utils.copyStreamSafely( in, out );
 		String tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
 				.replace( TPL_VERSION, creationBean.getProjectVersion())
@@ -141,7 +141,7 @@ public final class ProjectUtils {
 			in = new FileInputStream( creationBean.getCustomPomLocation());
 
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Utils.copyStream( in, out );
+		Utils.copyStreamSafely( in, out );
 		String tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
 				.replace( TPL_POM_GROUP, creationBean.getGroupId())
@@ -156,7 +156,7 @@ public final class ProjectUtils {
 		// Create the descriptor
 		in = ProjectUtils.class.getResourceAsStream( "/application-skeleton.props" );
 		out = new ByteArrayOutputStream();
-		Utils.copyStream( in, out );
+		Utils.copyStreamSafely( in, out );
 		tpl = out.toString( "UTF-8" )
 				.replace( TPL_NAME, creationBean.getProjectName())
 				.replace( TPL_VERSION, "${project.version}--${timestamp}" )

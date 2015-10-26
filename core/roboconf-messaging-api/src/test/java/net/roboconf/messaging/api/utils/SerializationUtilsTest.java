@@ -141,11 +141,14 @@ public class SerializationUtilsTest {
 		MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ));
 		checkBasics( msg, MsgCmdSetScopedInstance.class );
 
-		Map<String,String> map = new HashMap<> ();
-		map.put( "test", "t1" );
-		map.put( "another", "t2" );
+		Map<String,String> map1 = new HashMap<> ();
+		map1.put( "test", "t1" );
+		map1.put( "another", "t2" );
 
-		msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ), map );
+		Map<String,String> map2 = new HashMap<> ();
+		map2.put( "app_prefix", "app1" );
+
+		msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ), map1, map2 );
 		checkBasics( msg, MsgCmdSetScopedInstance.class );
 	}
 

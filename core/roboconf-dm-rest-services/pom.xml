@@ -31,7 +31,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.5-SNAPSHOT</version>
+		<version>0.6-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	
@@ -222,7 +222,10 @@
 							javax.servlet.http,
 							*
 						</Import-Package>
-						<Export-Package>net.roboconf.dm.rest.services.cors</Export-Package>
+						<Export-Package>
+							!net.roboconf.dm.rest.services.internal.*,
+							net.roboconf.dm.rest.services.*
+						</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>

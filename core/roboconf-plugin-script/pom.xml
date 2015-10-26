@@ -31,7 +31,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.5-SNAPSHOT</version>
+		<version>0.6-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	
@@ -84,7 +84,7 @@
 				<configuration>
 					<instructions>
 						<Import-Package>
-							net.roboconf.*;version="${version.range}",
+							net.roboconf.*;version="${version.range}"
 						</Import-Package>
 						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>

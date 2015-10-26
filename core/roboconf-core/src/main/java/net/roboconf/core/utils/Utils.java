@@ -218,17 +218,43 @@ public final class Utils {
 	 * Neither <i>in</i> nor <i>os</i> are closed by this method.<br>
 	 * They must be explicitly closed after this method is called.
 	 * </p>
+	 * <p>
+	 * Be careful, this method should be avoided when possible.
+	 * It was responsible for memory leaks. See #489.
+	 * </p>
 	 *
 	 * @param in an input stream (not null)
 	 * @param os an output stream (not null)
 	 * @throws IOException if an error occurred
 	 */
-	public static void copyStream( InputStream in, OutputStream os ) throws IOException {
+	public static void copyStreamUnsafelyUseWithCaution( InputStream in, OutputStream os ) throws IOException {
 
 		byte[] buf = new byte[ 1024 ];
 		int len;
 		while((len = in.read( buf )) > 0) {
 			os.write( buf, 0, len );
+		}
+	}
+
+
+	/**
+	 * Copies the content from in into os.
+	 * <p>
+	 * This method closes the input stream.
+	 * <i>os</i> does not need to be closed.
+	 * </p>
+	 *
+	 * @param in an input stream (not null)
+	 * @param os an output stream (not null)
+	 * @throws IOException if an error occurred
+	 */
+	public static void copyStreamSafely( InputStream in, ByteArrayOutputStream os ) throws IOException {
+
+		try {
+			copyStreamUnsafelyUseWithCaution( in, os );
+
+		} finally {
+			in.close();
 		}
 	}
 
@@ -247,7 +273,7 @@ public final class Utils {
 	public static void copyStream( InputStream in, File outputFile ) throws IOException {
 		OutputStream os = new FileOutputStream( outputFile );
 		try {
-			copyStream( in, os );
+			copyStreamUnsafelyUseWithCaution( in, os );
 		} finally {
 			os.close ();
 		}
@@ -281,7 +307,7 @@ public final class Utils {
 	public static void copyStream( File inputFile, OutputStream os ) throws IOException {
 		InputStream is = new FileInputStream( inputFile );
 		try {
-			copyStream( is, os );
+			copyStreamUnsafelyUseWithCaution( is, os );
 		} finally {
 			is.close();
 		}
@@ -629,23 +655,16 @@ public final class Utils {
 					continue;
 
 				// Extract...
-				FileOutputStream os = null;
-				try {
-					File f = new File( targetDirectory, suffix );
+				File f = new File( targetDirectory, suffix );
 
-					// Case 'directory': create it.
-					// Case 'file': create its parents and copy the content.
-					if( entry.isDirectory()) {
-						Utils.createDirectory( f );
+				// Case 'directory': create it.
+				// Case 'file': create its parents and copy the content.
+				if( entry.isDirectory()) {
+					Utils.createDirectory( f );
 
-					} else {
-						Utils.createDirectory( f.getParentFile());
-						os = new FileOutputStream( f );
-						copyStream( theZipFile.getInputStream( entry ), os );
-					}
-
-				} finally {
-					closeQuietly( os );
+				} else {
+					Utils.createDirectory( f.getParentFile());
+					copyStream( theZipFile.getInputStream( entry ), f );
 				}
 			}
 

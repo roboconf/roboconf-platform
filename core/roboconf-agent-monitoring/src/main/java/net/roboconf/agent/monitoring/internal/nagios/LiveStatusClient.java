@@ -86,7 +86,7 @@ public class LiveStatusClient {
 			liveStatusSocket.shutdownOutput();
 
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( liveStatusSocket.getInputStream(), os );
+			Utils.copyStreamSafely( liveStatusSocket.getInputStream(), os );
 
 			String result = os.toString( "UTF-8" );
 			result = format( nagiosQuery, result );

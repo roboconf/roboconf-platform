@@ -37,6 +37,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.targets.TargetAssociation;
 import net.roboconf.core.model.targets.TargetUsageItem;
 import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.Diagnostic;
@@ -167,6 +168,29 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( "{\"name\":\"my application\",\"extVars\":{\"k1\":\"v1\",\"k2\":\"v2\"},\"apps\":[]}", s );
+	}
+
+
+	@Test
+	public void testApplicationTemplateBinding_7() throws Exception {
+
+		// Initial binding
+		ApplicationTemplate tpl = new ApplicationTemplate( "my tpl" );
+		Application app = new Application( "app", tpl );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, tpl );
+
+		Assert.assertEquals( "{\"name\":\"my tpl\",\"apps\":[\"app\"]}", writer.toString());
+
+		// After we remove the association with the application
+		app.removeAssociationWithTemplate();
+
+		writer = new StringWriter();
+		mapper.writeValue( writer, tpl );
+
+		Assert.assertEquals( "{\"name\":\"my tpl\",\"apps\":[]}", writer.toString());
 	}
 
 
@@ -813,5 +837,34 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( "{}", s );
 		MapWrapper read = mapper.readValue( s, MapWrapper.class );
 		Assert.assertEquals( obj.getMap(), read.getMap());
+	}
+
+
+	@Test
+	public void testTargetAssociationBinding() throws Exception {
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		TargetAssociation association = new TargetAssociation( null, null );
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, association );
+		Assert.assertEquals( "{}", writer.toString());
+
+		association = new TargetAssociation( "/my-path", null );
+		writer = new StringWriter();
+		mapper.writeValue( writer, association );
+		Assert.assertEquals( "{\"path\":\"/my-path\"}", writer.toString());
+
+		TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
+		association = new TargetAssociation( "/my-path", twd );
+		writer = new StringWriter();
+		mapper.writeValue( writer, association );
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"desc\":{}}", writer.toString());
+
+		twd.setId( "54" );
+		twd.setName( "toto" );
+		writer = new StringWriter();
+		mapper.writeValue( writer, association );
+		Assert.assertEquals( "{\"path\":\"/my-path\",\"desc\":{\"id\":\"54\",\"name\":\"toto\"}}", writer.toString());
 	}
 }

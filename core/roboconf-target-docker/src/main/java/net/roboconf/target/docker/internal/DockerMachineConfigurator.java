@@ -152,7 +152,13 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		// Execute...
 		try {
-			String containerName = this.scopedInstancePath.replaceFirst( "^/", "" ).replace( "/", "-" ).replaceAll( "\\s+", "_" );
+			String containerName = this.scopedInstancePath + "_from_" + this.applicationName;
+			containerName = containerName.replaceFirst( "^/", "" ).replace( "/", "-" ).replaceAll( "\\s+", "_" );
+
+			// Prevent container names from being too long (see #480)
+			if( containerName.length() > 61 )
+				containerName = containerName.substring( 0, 61 );
+
 			CreateContainerCmd cmd = this.dockerClient.createContainerCmd( imageId )
 					.withName( containerName )
 					.withCmd( args.toArray( new String[ args.size()]));
@@ -263,7 +269,7 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			// Reading the stream does not take time as everything is sent at once by Docker.
 			if( this.logger.isLoggable( Level.FINE )) {
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
-				Utils.copyStream(response, out);
+				Utils.copyStreamSafely(response, out);
 				String s = out.toString("UTF-8").trim();
 				this.logger.fine( "Docker's output: " + s );
 			}
@@ -275,7 +281,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			throw new TargetException( e );
 
 		} finally {
-			Utils.closeQuietly( response );
 			Utils.deleteFilesRecursivelyAndQuietly( dockerfile );
 		}
 	}

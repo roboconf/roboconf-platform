@@ -72,7 +72,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final INotificationMngr notificationMngr;
 	private final IConfigurationMngr configurationMngr;
-	private final ITargetsMngr targetMngr;
+	private final ITargetsMngr targetsMngr;
 	private final IMessagingMngr messagingMngr;
 	private final Map<String,ManagedApplication> nameToManagedApplication;
 
@@ -84,7 +84,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	 * @param notificationMngr
 	 * @param configurationMngr
 	 * @param messagingMngr
-	 * @param targetMngr
+	 * @param targetsMngr
 	 */
 	public ApplicationMngrImpl(
 			INotificationMngr notificationMngr,
@@ -96,7 +96,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		this.notificationMngr = notificationMngr;
 		this.configurationMngr = configurationMngr;
 		this.messagingMngr = messagingMngr;
-		this.targetMngr = targetMngr;
+		this.targetsMngr = targetMngr;
 	}
 
 
@@ -154,7 +154,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		ManagedApplication ma = createNewApplication( name, description, tpl, this.configurationMngr.getWorkingDirectory());
 
 		// Copy the target settings, if any
-		this.targetMngr.copyOriginalMapping( ma.getApplication());
+		this.targetsMngr.copyOriginalMapping( ma.getApplication());
 
 		// Start listening to messages
 		this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
@@ -213,8 +213,11 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		// Notify listeners
 		this.notificationMngr.application( ma.getApplication(), EventType.DELETED );
 
-		// Delete artifacts
+		// Remove it from the targets
 		Application app = ma.getApplication();
+		this.targetsMngr.applicationWasDeleted( app );
+
+		// Delete artifacts
 		this.logger.info( "Deleting the application called " + app.getName() + "..." );
 		this.nameToManagedApplication.remove( app.getName());
 		app.removeAssociationWithTemplate();

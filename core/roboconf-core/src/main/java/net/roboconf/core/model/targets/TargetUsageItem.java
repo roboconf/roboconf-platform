@@ -25,7 +25,10 @@
 
 package net.roboconf.core.model.targets;
 
+import java.util.Objects;
+
 /**
+ * A bean that describes associations between applications and targets.
  * @author Vincent Zurczak - Linagora
  */
 public class TargetUsageItem {
@@ -88,5 +91,22 @@ public class TargetUsageItem {
 	 */
 	public void setUsing( boolean isUsing ) {
 		this.isUsing = isUsing;
+	}
+
+
+	@Override
+	public int hashCode() {
+		int i1 = this.name == null ? 83 : this.name.hashCode();
+		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
+
+		return i1 + i2;
+	}
+
+
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof TargetUsageItem
+				&& Objects.equals( this.name, ((TargetUsageItem) obj ).name )
+				&& Objects.equals( this.qualifier, ((TargetUsageItem) obj ).qualifier );
 	}
 }

@@ -356,14 +356,9 @@ public class AzureIaasHandler implements TargetHandler {
 		con.addRequestProperty("x-ms-version", "2014-04-01");
 		InputStream responseStream = (InputStream) con.getContent();
 
-		try {
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( responseStream, os );
-			return os.toString( "UTF-8" );
-
-		} finally {
-			Utils.closeQuietly( responseStream );
-		}
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		Utils.copyStreamSafely( responseStream, os );
+		return os.toString( "UTF-8" );
 	}
 
 

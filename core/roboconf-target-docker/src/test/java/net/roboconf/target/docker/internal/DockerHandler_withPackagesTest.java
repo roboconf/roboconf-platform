@@ -433,7 +433,7 @@ public class DockerHandler_withPackagesTest {
 
 		// Put the command output into a string.
 		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		Utils.copyStream( in, out );
+		Utils.copyStreamSafely( in, out );
 
 		// Now return...
 		return new CommandResult(

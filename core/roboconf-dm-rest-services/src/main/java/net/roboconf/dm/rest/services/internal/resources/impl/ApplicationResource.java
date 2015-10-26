@@ -47,6 +47,8 @@ import net.roboconf.core.model.comparators.InstanceComparator;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.model.targets.TargetAssociation;
+import net.roboconf.core.model.targets.TargetWrapperDescriptor;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
@@ -408,6 +410,47 @@ public class ApplicationResource implements IApplicationResource {
 		}
 
 		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #findTargetAssociations(java.lang.String)
+	 */
+	@Override
+	public List<TargetAssociation> findTargetAssociations( String applicationName ) {
+
+		this.logger.fine( "Request: find target associations in " + applicationName + "." );
+		List<TargetAssociation> result = new ArrayList<> ();
+
+		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
+		if( app != null ) {
+
+			// Default target for the application.
+			// It must be in first position.
+			String targetId = this.manager.targetsMngr().findTargetId( app, null );
+			TargetWrapperDescriptor twd = null;
+			if( targetId != null )
+				twd = this.manager.targetsMngr().findTargetById( targetId );
+
+			result.add( new TargetAssociation( "", twd ));
+
+			// Then, show the scoped instances.
+			// List them, even if they do not have an associated target.
+			for( Instance inst : InstanceHelpers.findAllScopedInstances( app )) {
+				String instancePath = InstanceHelpers.computeInstancePath( inst );
+				targetId = this.manager.targetsMngr().findTargetId( app, instancePath );
+
+				twd = null;
+				if( targetId != null )
+					twd = this.manager.targetsMngr().findTargetById( targetId );
+
+				result.add( new TargetAssociation( instancePath, twd ));
+			}
+		}
+
+		return result;
 	}
 
 

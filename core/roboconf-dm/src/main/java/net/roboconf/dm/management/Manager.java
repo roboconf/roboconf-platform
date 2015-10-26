@@ -42,6 +42,7 @@ import net.roboconf.dm.internal.api.impl.MessagingMngrImpl;
 import net.roboconf.dm.internal.api.impl.NotificationMngrImpl;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.api.impl.TargetsMngrImpl;
+import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.environment.messaging.RCDm;
 import net.roboconf.dm.internal.tasks.CheckerHeartbeatsTask;
@@ -53,6 +54,7 @@ import net.roboconf.dm.management.api.IDebugMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.IDmListener;
@@ -113,6 +115,10 @@ public class Manager {
 
 	private final TargetHandlerResolverImpl defaultTargetHandlerResolver;
 
+	// Dirty hack
+	private final IRuleBasedEventHandler ruleBasedHandler;
+
+
 
 	/**
 	 * Constructor.
@@ -135,6 +141,10 @@ public class Manager {
 
 		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.configurationMngr, this.notificationMngr, this.targetsMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
+
+		// FIXME: to update once we have the commands API
+		this.ruleBasedHandler = new RuleBasedEventHandler( this );
+		this.instancesMngr.setRuleBasedHandler( this.ruleBasedHandler );
 	}
 
 
@@ -356,5 +366,13 @@ public class Manager {
 	 */
 	public int getAutonomicMaxRoots() {
 		return this.autonomicMaxRoots;
+	}
+
+	/**
+	 * FIXME: to update once we have the commands API.
+	 * @return the ruleBasedHandler
+	 */
+	public IRuleBasedEventHandler getRuleBasedHandler() {
+		return this.ruleBasedHandler;
 	}
 }

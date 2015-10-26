@@ -32,7 +32,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.5-SNAPSHOT</version>
+		<version>0.6-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	
@@ -56,7 +56,10 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Export-Package>!net.roboconf.core.internal.*, net.roboconf.core.*</Export-Package>
+						<Export-Package>
+							!net.roboconf.core.internal.*,
+							net.roboconf.core.*
+						</Export-Package>
 						<Import-Package>net.roboconf.*;version="${version.range}"</Import-Package>
 					</instructions>
 				</configuration>

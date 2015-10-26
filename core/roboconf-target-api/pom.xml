@@ -31,7 +31,7 @@
 	<parent>
 		<groupId>net.roboconf</groupId>
 		<artifactId>roboconf-platform-parent</artifactId>
-		<version>0.5-SNAPSHOT</version>
+		<version>0.6-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 	
@@ -70,7 +70,10 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Export-Package>net.roboconf.target.api.*</Export-Package>
+						<Export-Package>
+							!net.roboconf.target.api.internal.*,
+							net.roboconf.target.api.*
+						</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>

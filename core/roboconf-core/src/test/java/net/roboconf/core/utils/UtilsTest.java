@@ -134,6 +134,17 @@ public class UtilsTest {
 
 
 	@Test
+	public void testCopyStreamSafely() throws Exception {
+
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		ByteArrayInputStream in = new ByteArrayInputStream( "toto".getBytes());
+		Utils.copyStreamSafely( in, os );
+
+		Assert.assertEquals( "toto", os.toString( "UTF-8" ));
+	}
+
+
+	@Test
 	public void testSplitNicely() {
 
 		List<String> result = Utils.splitNicely( "once, upon, a , time   ", "," );

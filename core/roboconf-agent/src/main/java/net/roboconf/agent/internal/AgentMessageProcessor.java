@@ -133,7 +133,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	@Override
 	protected void processMessage( Message message ) {
 
-		this.logger.fine( "A message of type " + message.getClass() + " was received and is about to be processed." );
+		this.logger.fine( "A message of type " + message.getClass().getSimpleName() + " was received and is about to be processed." );
 		try {
 			if( message instanceof MsgCmdSetScopedInstance )
 				processMsgSetScopedInstance((MsgCmdSetScopedInstance) message );
@@ -335,6 +335,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			// Propagate the external mapping into the messaging
 			this.messagingClient.setExternalMapping( msg.getExternalExports());
 
+			// Initialize the application bindings
+			this.applicationBindings.putAll( msg.getApplicationBindings());
+
 			// Notify the DM
 			if( this.scopedInstance.getStatus() != InstanceStatus.DEPLOYED_STARTED ) {
 				this.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -517,6 +520,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			.build( instance, this.agent.getApplicationName(), this.messagingClient)
 			.updateStateFromImports( instance, plugin, toRemove, InstanceStatus.DEPLOYED_STOPPED );
 		}
+
+		// Import changed => check all the waiting for ancestors...
+		startChildrenInstancesWaitingForAncestors();
 	}
 
 
@@ -547,7 +553,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			// If it is not in the application binding, this import should not be added in the instance imports.
 			String expectedName = this.applicationBindings.get( msg.getComponentOrFacetName());
 			if( ! msg.getApplicationOrContextName().equals( expectedName )) {
-				this.logger.fine( "An external export was received but did not match (bound) application " + expectedName );
+				this.logger.fine( "An external export was received (" + msg.getComponentOrFacetName() + ") but did not match (bound) application " + expectedName );
 				return;
 			}
 		}
@@ -589,6 +595,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			.build( instance, this.agent.getApplicationName(), this.messagingClient)
 			.updateStateFromImports( instance, plugin, imp, InstanceStatus.DEPLOYED_STARTED );
 		}
+
+		// Import changed => check all the waiting for ancestors...
+		startChildrenInstancesWaitingForAncestors();
 	}
 
 
@@ -608,6 +617,37 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			if( imports.isEmpty())
 				this.applicationNameToExternalExports.remove( msg.getApplicationOrContextName());
+		}
+	}
+
+
+	/**
+	 * Starts children instances when they are waiting for their ancestors to start.
+	 * <p>
+	 * To invoke every time imports change.
+	 * </p>
+	 * @throws IOException if something went wrong
+	 * @throws PluginException if something went wrong
+	 */
+	private void startChildrenInstancesWaitingForAncestors() throws IOException, PluginException {
+
+		List<Instance> childrenInstances = InstanceHelpers.buildHierarchicalList( this.scopedInstance );
+		childrenInstances.remove( this.scopedInstance );
+
+		for( Instance childInstance : childrenInstances ) {
+			if( childInstance.getStatus() != InstanceStatus.WAITING_FOR_ANCESTOR )
+				continue;
+
+			if( childInstance.getParent().getStatus() != InstanceStatus.DEPLOYED_STARTED )
+				continue;
+
+			PluginInterface plugin = this.agent.findPlugin( childInstance );
+			if( plugin == null )
+				this.logger.severe( "No plug-in was found for " + InstanceHelpers.computeInstancePath( childInstance ) + "." );
+			else
+				AbstractLifeCycleManager
+				.build( childInstance, this.agent.getApplicationName(), this.messagingClient)
+				.changeInstanceState( childInstance, plugin, InstanceStatus.DEPLOYED_STARTED, null );
 		}
 	}
 }

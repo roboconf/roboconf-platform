@@ -180,12 +180,13 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 		} else {
 			this.logger.info( "Deleting the application template called " + tpl.getName() + "..." );
 			this.templates.remove( tpl );
+			this.notificationMngr.applicationTemplate( tpl, EventType.DELETED );
+			this.targetsMngr.applicationWasDeleted( tpl );
 
 			File targetDirectory = ConfigurationUtils.findTemplateDirectory( tpl, this.configurationMngr.getWorkingDirectory());
 			Utils.deleteFilesRecursively( targetDirectory );
 
 			this.logger.info( "Application template " + tpl.getName() + " was successfully deleted." );
-			this.notificationMngr.applicationTemplate( tpl, EventType.DELETED );
 		}
 	}
 
