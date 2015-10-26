@@ -64,7 +64,6 @@
 		<module>core/roboconf-target-iaas-ec2</module>
 		<module>core/roboconf-target-iaas-openstack</module>
 		<module>core/roboconf-target-iaas-vmware</module>
-		<module>core/roboconf-target-parsing</module>
 
 		<!-- Agent plug-ins -->
 		<module>core/roboconf-plugin-script</module>
