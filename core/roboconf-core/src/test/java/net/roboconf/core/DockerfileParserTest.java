@@ -93,7 +93,5 @@ public final class DockerfileParserTest {
 
 		Assert.assertEquals(DockerfileParser.DockerCommandType.ADD, c8.type);
 		Assert.assertEquals("hello.py /home/hello.py", c8.argument);
-
 	}
-
 }
