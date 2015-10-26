@@ -28,11 +28,8 @@ package net.roboconf.core;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Logger;
 
-import org.junit.Assume;
 import org.junit.Test;
 
 import junit.framework.Assert;
@@ -49,15 +46,29 @@ public final class DockerfileParserTest {
 	public void dockerfileToCommandListTest() throws IOException{
 
 		URL url = Thread.currentThread().getContextClassLoader().getResource("dockerfile");
+		URL url1 = Thread.currentThread().getContextClassLoader().getResource("dockerfile1");
+		URL url2 = Thread.currentThread().getContextClassLoader().getResource("dockerfile2");
+
 		File dockerfile = new File(url.getFile());
+		File dockerfile1 = new File(url1.getFile());
+		File dockerfile2 = new File(url2.getFile());
+
 		List<DockerfileParser.DockerCommand> ldc = DockerfileParser.dockerfileToCommandList(dockerfile);
+		List<DockerfileParser.DockerCommand> ldc1 = DockerfileParser.dockerfileToCommandList(dockerfile1);
+		List<DockerfileParser.DockerCommand> ldc2 = DockerfileParser.dockerfileToCommandList(dockerfile2);
+
 		Assert.assertEquals(9, ldc.size());
+		Assert.assertEquals(4, ldc1.size());
+		Assert.assertEquals(0, ldc2.size());
 
 		DockerfileParser.DockerCommand c1 = ldc.get(0);
 		DockerfileParser.DockerCommand c2 = ldc.get(1);
 		DockerfileParser.DockerCommand c3 = ldc.get(2);
 		DockerfileParser.DockerCommand c4 = ldc.get(3);
 		DockerfileParser.DockerCommand c5 = ldc.get(4);
+		DockerfileParser.DockerCommand c6 = ldc1.get(0);
+		DockerfileParser.DockerCommand c7 = ldc1.get(1);
+		DockerfileParser.DockerCommand c8 = ldc1.get(3);
 
 		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c1.type);
 		Assert.assertEquals("apt-get update",c1.argument);
@@ -74,63 +85,14 @@ public final class DockerfileParserTest {
 		Assert.assertEquals(DockerfileParser.DockerCommandType.COPY, c5.type);
 		Assert.assertEquals("/ttee/tree/toto.txt /usr/local/deploy/", c5.argument);
 
-	}
+		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c6.type);
+		Assert.assertEquals("apt-get update", c6.argument);
 
-	@Test
-	public void executeDockerCommandTestWindows() throws IOException, InterruptedException{
-		DockerfileParser.DockerCommand command = new DockerfileParser.DockerCommand();
-		command.type = DockerfileParser.DockerCommandType.RUN;
-		command.argument = "md toto";
-		boolean isWin = System.getProperty( "os.name" ).toLowerCase().contains( "win" );
-		Assume.assumeTrue( isWin );
-		int exitCode = DockerfileParser.executeDockerCommand(
-				Logger.getLogger( getClass().getName()),
-				null,
-				null,
-				command);
+		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c7.type);
+		Assert.assertEquals("apt-get install -y python python-pip wget", c7.argument);
 
-		Assert.assertSame( 0, exitCode );
-
-	}
-
-	@Test
-	public void executeDockerCommandTestUnix() throws IOException, InterruptedException{
-		DockerfileParser.DockerCommand c1 = new DockerfileParser.DockerCommand();
-		DockerfileParser.DockerCommand c2 = new DockerfileParser.DockerCommand();
-		DockerfileParser.DockerCommand c3 = new DockerfileParser.DockerCommand();
-
-		c1.type = DockerfileParser.DockerCommandType.RUN;
-		c1.argument = "mkdir toto";
-
-		c2.type = DockerfileParser.DockerCommandType.RUN;
-		c2.argument = "rm -rf toto";
-
-		/*c3.type = DockerfileParser.DockerCommandType.COPY;
-		c3.argument = "toto.jar etc/deploy";**/
-
-		String osName = System.getProperty( "os.name" ).toLowerCase();
-		boolean isUnix = osName.contains( "linux" )
-				|| osName.contains( "unix" )
-				|| osName.contains( "freebsd" );
-		Assume.assumeTrue( isUnix );
-		int exitCode1 = DockerfileParser.executeDockerCommand(
-				Logger.getLogger( getClass().getName()),
-				null,
-				new HashMap<String,String>( 0 ),
-				c1);
-		int exitCode2 = DockerfileParser.executeDockerCommand(
-				Logger.getLogger( getClass().getName()),
-				null,
-				new HashMap<String,String>( 0 ),
-				c2);
-		/*int exitCode3 = DockerfileParser.executeDockerCommand(
-				Logger.getLogger( getClass().getName()),
-				null,
-				new HashMap<String,String>( 0 ),
-				c3);*/
-		Assert.assertSame( 0, exitCode1 );
-		Assert.assertSame( 0, exitCode2 );
-		//Assert.assertSame( 0, exitCode3 );
+		Assert.assertEquals(DockerfileParser.DockerCommandType.ADD, c8.type);
+		Assert.assertEquals("hello.py /home/hello.py", c8.argument);
 
 	}
 

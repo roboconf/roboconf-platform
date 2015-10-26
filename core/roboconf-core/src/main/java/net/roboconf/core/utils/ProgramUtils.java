@@ -91,9 +91,8 @@ public final class ProgramUtils {
 
 		return exitValue;
 	}
-
 	
-
+	
 	/**
 	 * Executes a command on the VM and prints on the console its output.
 	 * @param command a command to execute (not null, not empty)

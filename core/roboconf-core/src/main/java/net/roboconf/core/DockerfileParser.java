@@ -31,10 +31,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 
 /**
@@ -80,58 +78,6 @@ public final class DockerfileParser {
 			Utils.closeQuietly(br);
 		}
 		return result;
-	}
-
-	/**
-	 * Executes a docker command on the VM and prints on the console its output.
-	 *
-	 * @param logger
-	 *            a logger (not null)
-	 * @param workingDir
-	 *            a file indicating the working directory
-	 * @param environmentVars
-	 *            a map containing environment variables (can be null)
-	 * @param dc
-	 *            a Docker command to execute (not null, not empty)
-	 * @throws IOException
-	 *             if a new process could not be created
-	 * @throws InterruptedException
-	 *             if the new process encountered a process
-	 */
-
-	public static int executeDockerCommand(final Logger logger, File workingDir,
-			final Map<String, String> environmentVars, DockerCommand dc) throws IOException, InterruptedException {
-		int r = 0;
-		switch (dc.type) {
-		case RUN:
-			r = ProgramUtils.executeCommand(logger, Utils.splitNicely(dc.argument, " "), workingDir, environmentVars);
-			break;
-		case COPY:
-			copyFiles(dc.argument);
-			break;
-		case ADD:
-			// TODO
-		default:
-		}
-		return r;
-	}
-
-	/**
-	 * Copies files using a Docker command passed in parameter as a string.
-	 *
-	 * @param command
-	 *            a string (not null)
-	 * @throws IOException
-	 *             if the file could not be created
-	 */
-	public static void copyFiles(String command) throws IOException {
-		List<String> c1 = Utils.splitNicely(command, " ");
-		File f1 = new File(c1.get(0));
-		File f2 = new File(c1.get(1));
-		if (f2.isDirectory()) {
-			f2 = new File(f2.getAbsolutePath() + "/" + f1.getName());
-		}
-		Utils.copyStream(f1, f2);
 	}
 
 	/**
