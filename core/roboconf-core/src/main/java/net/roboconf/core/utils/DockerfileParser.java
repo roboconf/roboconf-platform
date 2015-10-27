@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import net.roboconf.core.utils.Utils;
-
 /**
  * Program that parses a Dockerfile.
  * @author Amadou Diarra - Université Joseph Fourier
