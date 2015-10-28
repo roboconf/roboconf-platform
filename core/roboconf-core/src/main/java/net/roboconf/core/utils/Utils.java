@@ -115,7 +115,7 @@ public final class Utils {
 
 
 	/**
-	 * Expand a template, replacing each {{ param }} by the corresponding value.
+	 * Expands a template, replacing each {{ param }} by the corresponding value.
 	 * <p>
 	 * Eg. "My name is {{ name }}" will result in "My name is Bond", provided that "params" contains "name=Bond".
 	 * </p>
