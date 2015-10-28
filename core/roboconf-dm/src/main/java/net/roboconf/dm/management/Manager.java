@@ -35,6 +35,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.internal.api.impl.ApplicationTemplateMngrImpl;
+import net.roboconf.dm.internal.api.impl.CommandsMangrImpl;
 import net.roboconf.dm.internal.api.impl.ConfigurationMngrImpl;
 import net.roboconf.dm.internal.api.impl.DebugMngrImpl;
 import net.roboconf.dm.internal.api.impl.InstancesMngrImpl;
@@ -107,6 +108,8 @@ public class Manager {
 	private final MessagingMngrImpl messagingMngr;
 	private final ApplicationMngrImpl applicationMngr;
 	private final InstancesMngrImpl instancesMngr;
+	private final CommandsMangrImpl commandsMngr;
+
 
 	private final IConfigurationMngr configurationMngr;
 	private final IApplicationTemplateMngr applicationTemplateMngr;
@@ -117,6 +120,7 @@ public class Manager {
 
 	// Dirty hack
 	private final IRuleBasedEventHandler ruleBasedHandler;
+
 
 
 
@@ -141,6 +145,7 @@ public class Manager {
 
 		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.configurationMngr, this.notificationMngr, this.targetsMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
+		this.commandsMngr = new CommandsMangrImpl();
 
 		// FIXME: to update once we have the commands API
 		this.ruleBasedHandler = new RuleBasedEventHandler( this );

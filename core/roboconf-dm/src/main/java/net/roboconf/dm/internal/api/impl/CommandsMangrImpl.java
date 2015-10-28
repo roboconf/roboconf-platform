@@ -23,25 +23,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.management.api;
+package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.api.ICommandsMangr;
 
 /**
- * An API to manipulate commands in the DM.
- * <p>
- * Commands are only used by applications.
- * Application templates can come with predefined commands, but they will
- * be copied in applications. Commands are stored in application directories, under the
- * "commands" directory.
- * </p>
- *
- * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - Université Joseph Fourier
  */
-public interface ICommandsMangr {
+
+public class CommandsMangrImpl implements ICommandsMangr{
 
 	/**
 	 * Creates a command from its instructions.
@@ -51,7 +47,18 @@ public interface ICommandsMangr {
 	 * @throws IOException if something went wrong
 	 * @see #validate(String)
 	 */
-	void createCommand( Application app, String commandName, String commandText ) throws IOException;
+
+	@Override
+	public void createCommand( Application app, String commandName, String commandText ) throws IOException{
+
+		File appDir = app.getDirectory();
+		File cmdDir = new File(appDir.getAbsolutePath()+"/"+"commands");
+		if(!cmdDir.isDirectory()){
+			Utils.createDirectory(cmdDir);
+		}
+		File cmd = new File(cmdDir.getAbsolutePath()+"/"+commandName+".command");
+		Utils.writeStringInto(commandText, cmd);
+	}
 
 
 	/**
@@ -62,7 +69,17 @@ public interface ICommandsMangr {
 	 * @throws IOException if something went wrong
 	 * @see #validate(String)
 	 */
-	void createCommand( Application app, String commandName, File commandFile ) throws IOException;
+	@Override
+	public void createCommand( Application app, String commandName, File commandFile ) throws IOException{
+
+		File appDir = app.getDirectory();
+		File cmdDir = new File(appDir.getAbsolutePath()+"/"+"commands");
+		if(!cmdDir.isDirectory()){
+			Utils.createDirectory(cmdDir);
+		}
+		File cmd = new File(cmdDir.getAbsolutePath()+"/"+commandName+".command");
+		Utils.copyStream(commandFile, cmd);
+	}
 
 
 	/**
@@ -71,7 +88,17 @@ public interface ICommandsMangr {
 	 * @param commandName the command name
 	 * @throws IOException if something went wrong
 	 */
-	void deleteCommand( Application app, String commandName ) throws IOException;
+	@Override
+	public void deleteCommand( Application app, String commandName ) throws IOException{
+		File appDir = app.getDirectory();
+		File cmdDel = new File(appDir.getAbsolutePath()+"/"+"commands"+"/"+commandName+".command");
+		Logger logger = Logger.getLogger( CommandsMangrImpl.class.getName());
+		if(cmdDel.delete()){
+			logger.finer("The command "+commandName+" was deleted");
+		}else{
+			logger.fine(commandName+": No such command");
+		}
+	}
 
 
 	/**
@@ -81,7 +108,10 @@ public interface ICommandsMangr {
 	 * @param commandText the new command instructions (must be valid)
 	 * @throws IOException if something went wrong
 	 */
-	void updateCommand( Application app, String commandName, String commandText ) throws IOException;
+	@Override
+	public void updateCommand( Application app, String commandName, String commandText ) throws IOException{
+		createCommand(app,commandName,commandText);
+	}
 
 
 	/**
@@ -89,9 +119,22 @@ public interface ICommandsMangr {
 	 * @param app the associated application
 	 * @param commandName the command name
 	 * @return the commands content (never null)
-	 * @throws IOException if something went wrong
+	 * @throws IOException
 	 */
-	String getCommandInstructions( Application app, String commandName ) throws IOException;
+	@Override
+	public String getCommandInstructions( Application app, String commandName ) throws IOException{
+		File appDir = app.getDirectory();
+		File cmd = new File(appDir.getAbsolutePath()+"/"+"commands"+"/"+commandName+".command");
+		Logger logger = Logger.getLogger( CommandsMangrImpl.class.getName());
+		String result = "";
+		if(cmd.exists()){
+			result = Utils.readFileContent(cmd);
+		}
+		if(result.isEmpty()){
+			logger.fine(commandName+" contains no instructions");
+		}
+		return result;
+	}
 
 
 	/**
@@ -99,7 +142,10 @@ public interface ICommandsMangr {
 	 * @param commandText a set of command instructions
 	 * @return true if it is valid, false otherwise
 	 */
-	boolean validate( String commandText );
+	@Override
+	public boolean validate( String commandText ){
+		return false;
+	}
 
 
 	/**
@@ -108,5 +154,9 @@ public interface ICommandsMangr {
 	 * @param commandName a command name
 	 * @throws IOException if something went wrong
 	 */
-	void execute( Application app, String commandName ) throws IOException;
+	@Override
+	public void execute( Application app, String commandName ) throws IOException{
+
+	}
+
 }
