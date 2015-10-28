@@ -94,7 +94,7 @@ public interface ICommandsMangr {
 
 
 	/**
-	 * Validates the syntax of command instructions
+	 * Validates the syntax of command instructions.
 	 * @param commandText a set of command instructions
 	 * @return true if it is valid, false otherwise
 	 */
