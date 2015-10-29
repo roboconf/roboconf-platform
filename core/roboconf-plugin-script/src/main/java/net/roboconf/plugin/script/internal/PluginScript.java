@@ -26,9 +26,7 @@
 package net.roboconf.plugin.script.internal;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,6 +41,7 @@ import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
+import net.roboconf.plugin.script.internal.ScriptUtils.ActionFileFilter;
 import net.roboconf.plugin.script.internal.templating.InstanceTemplateHelper;
 
 /**
@@ -96,7 +95,7 @@ public class PluginScript implements PluginInterface {
 
 		// All scripts deployed should be made executable (the agent is supposed to run as root)
 		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
-		setScriptsExecutable( new File( instanceDirectory, SCRIPTS_FOLDER_NAME ));
+		ScriptUtils.setScriptsExecutable( new File( instanceDirectory, SCRIPTS_FOLDER_NAME ));
 	}
 
 
@@ -233,13 +232,19 @@ public class PluginScript implements PluginInterface {
     		script.setExecutable(true);
 
     	Map<String, String> environmentVars = new HashMap<String, String>();
-    	Map<String, String> vars = formatExportedVars(instance);
+    	Map<String, String> vars = ScriptUtils.formatExportedVars(instance);
     	environmentVars.putAll(vars);
 
-    	Map<String, String> importedVars = formatImportedVars(instance);
+    	Map<String, String> importedVars = ScriptUtils.formatImportedVars(instance);
     	environmentVars.putAll(importedVars);
     	environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
     	environmentVars.put("ROBOCONF_FILES_DIR", new File( instanceDir, FILES_FOLDER_NAME ).getAbsolutePath());
+
+    	String instancePath = InstanceHelpers.computeInstancePath( instance );
+    	environmentVars.put("ROBOCONF_INSTANCE_PATH", instancePath );
+    	environmentVars.put("ROBOCONF_CLEAN_INSTANCE_PATH", ScriptUtils.cleanInstancePath( instancePath ));
+    	environmentVars.put("ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH", ScriptUtils.cleanReversedInstancePath( instancePath ));
+
 
     	// Upon update, retrieve the status of the instance that triggered the update.
     	// Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...
@@ -262,105 +267,4 @@ public class PluginScript implements PluginInterface {
         if( exitCode != 0 )
         	throw new IOException( "Script execution failed. Exit code: " + exitCode );
     }
-
-
-    private Map<String, String> formatExportedVars( Instance instance ) {
-
-    	// The map we will return
-        Map<String, String> exportedVars = new HashMap<String,String>();
-        Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
-        for(Entry<String, String> entry : exports.entrySet()) {
-            String vname = VariableHelpers.parseVariableName( entry.getKey()).getValue();
-            exportedVars.put( vname, entry.getValue());
-        }
-
-        return exportedVars;
-    }
-
-
-    /**
-     * Simple vars are formatted a simple way ("myVarName=varValue"), while Imported vars must be formatted in a more complex way.
-     * <p>
-     * Taking the example of Apache needing workers in the example Apache-Tomcat-SQL,
-     * we chose to adopt the following style:
-     * <pre>
-     * ==========================
-     * "workers_size=3"
-     * "workers_0_name=tomcat1"
-     * "workers_0_ip=127.0.0.1"
-     * "workers_0_portAJP=8009"
-     * "workers_1_name=tomcat2"
-     * .....
-     * "workers_2_portAJP=8010"
-     * ==========================
-     * </pre>
-     * With this way of formatting vars, the script will know
-     * everything it needs to use these vars
-     * </p>
-     *
-     * @param instance
-     * @return
-     */
-    private Map<String,String> formatImportedVars( Instance instance ) {
-
-        // The map we will return
-        Map<String, String> importedVars = new HashMap<String, String>();
-        for( Map.Entry<String,Collection<Import>> entry : instance.getImports().entrySet()) {
-            Collection<Import> importList = entry.getValue();
-            String importTypeName = entry.getKey();
-
-            // For each ImportType, put the number of Import it has, so the script knows
-            importedVars.put(importTypeName + "_size", "" + importList.size());
-
-            // Now put each var contained in an Import
-            int i = 0;
-            for( Import imprt : importList ) {
-                // "workers_0_name=tomcat1"
-
-                /*int index = imprt.getInstancePath().lastIndexOf( '/' );
-                String instanceName = imprt.getInstancePath().substring( index + 1 );
-                importedVars.put(importTypeName + "_" + i + "_name", instanceName);*/
-
-                importedVars.put(importTypeName + "_" + i + "_name", imprt.getInstancePath());
-                for (Entry<String, String> entry2 : imprt.getExportedVars().entrySet()) {
-                    // "workers_0_ip=127.0.0.1"
-                    String vname = VariableHelpers.parseVariableName(entry2.getKey()).getValue();
-                    importedVars.put(importTypeName + "_" + i + "_" + vname, entry2.getValue());
-                }
-
-                ++i;
-            }
-        }
-
-        return importedVars;
-    }
-
-    /**
-	 * Recursively sets all files and directories executable, starting from a base directory.
-	 * @param dir the base directory
-	 */
-	void setScriptsExecutable( File dir ) {
-
-		if( dir.isDirectory()) {
-			for( File f : Utils.listAllFiles( dir, true ))
-				f.setExecutable( true );
-		}
-	}
-
-	/**
-	 * @author Pierre-Yves Gibello - Linagora
-	 */
-	static class ActionFileFilter implements FilenameFilter {
-		final String prefix;
-
-		public ActionFileFilter(String prefix) {
-			this.prefix = prefix;
-		}
-
-		@Override
-		public boolean accept(File dir, String name) {
-			return (this.prefix == null || this.prefix.length() < 1
-					? false : name.startsWith(this.prefix));
-		}
-	}
 }
