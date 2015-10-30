@@ -45,6 +45,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.RuntimeModelIo.GraphFileFilter;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -177,7 +178,8 @@ public class RuntimeModelIoTest {
 				Map<String,String> exportedVariables = InstanceHelpers.findAllExportedVariables( child );
 				Assert.assertEquals( "3306", exportedVariables.get( "MySQL.port" ));
 				Assert.assertNull( child.getComponent().exportedVariables.get( "MySQL.port" ));
-				Assert.assertNull( child.getComponent().exportedVariables.get( "port" ));
+				Assert.assertNotNull( child.getComponent().exportedVariables.get( "port" ));
+				Assert.assertNull( child.getComponent().exportedVariables.get( "port" ).getValue());
 
 			} else if( "Tomcat VM 1".equals( i.getName())) {
 				Assert.assertEquals( "VM", i.getComponent().getName());
@@ -679,5 +681,67 @@ public class RuntimeModelIoTest {
 		Assert.assertTrue( filter.accept( this.folder.newFile( "toto.graph" )));
 		Assert.assertFalse( filter.accept( this.folder.newFile( "toto.txt" )));
 		Assert.assertFalse( filter.accept( this.folder.newFolder( "sth.graph" )));
+	}
+
+
+	@Test
+	public void testParsingWithRandomValues() throws Exception {
+
+		File dir = TestUtils.findApplicationDirectory( "app-with-random-ports" );
+		Assert.assertTrue( dir.isDirectory());
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
+		Assert.assertFalse( RoboconfErrorHelpers.containsCriticalErrors( alr.getLoadErrors()));
+
+		// Container 1
+		Instance container1 = InstanceHelpers.findInstanceByPath( alr.getApplicationTemplate(), "/vm/container1" );
+		Assert.assertNotNull( container1 );
+
+		Assert.assertNull( container1.getComponent().exportedVariables.get( "httpPort" ).getValue());
+		Assert.assertTrue( container1.getComponent().exportedVariables.get( "httpPort" ).isRandom());
+		Assert.assertEquals( RandomKind.PORT, container1.getComponent().exportedVariables.get( "httpPort" ).getRandomKind());
+
+		Assert.assertNull( container1.getComponent().exportedVariables.get( "ajpPort" ).getValue());
+		Assert.assertTrue( container1.getComponent().exportedVariables.get( "ajpPort" ).isRandom());
+		Assert.assertEquals( RandomKind.PORT, container1.getComponent().exportedVariables.get( "ajpPort" ).getRandomKind());
+
+		Assert.assertEquals( "test", container1.getComponent().exportedVariables.get( "config" ).getValue());
+		Assert.assertFalse( container1.getComponent().exportedVariables.get( "config" ).isRandom());
+		Assert.assertNull( container1.getComponent().exportedVariables.get( "config" ).getRandomKind());
+
+		Assert.assertNull( container1.getComponent().exportedVariables.get( "ip" ).getValue());
+		Assert.assertFalse( container1.getComponent().exportedVariables.get( "ip" ).isRandom());
+		Assert.assertNull( container1.getComponent().exportedVariables.get( "ip" ).getRandomKind());
+
+		Map<String,String> exportedVariables = InstanceHelpers.findAllExportedVariables( container1 );
+		Assert.assertEquals( "test", exportedVariables.get( "Container1.config" ));
+
+		Assert.assertTrue( exportedVariables.containsKey( "Container1.ip" ));
+		Assert.assertNull( exportedVariables.get( "Container1.ip" ));
+
+		Assert.assertTrue( exportedVariables.containsKey( "Container1.httpPort" ));
+		Assert.assertNull( exportedVariables.get( "Container1.httpPort" ));
+
+		Assert.assertTrue( exportedVariables.containsKey( "Container1.ajpPort" ));
+		Assert.assertNull( exportedVariables.get( "Container1.ajpPort" ));
+
+		// Container 2
+		Instance container2 = InstanceHelpers.findInstanceByPath( alr.getApplicationTemplate(), "/vm/container2" );
+		Assert.assertNotNull( container2 );
+
+		Assert.assertNull( container2.getComponent().exportedVariables.get( "port" ).getValue());
+		Assert.assertTrue( container2.getComponent().exportedVariables.get( "port" ).isRandom());
+		Assert.assertEquals( RandomKind.PORT, container2.getComponent().exportedVariables.get( "port" ).getRandomKind());
+
+		Assert.assertNull( container2.getComponent().exportedVariables.get( "ip" ).getValue());
+		Assert.assertFalse( container2.getComponent().exportedVariables.get( "ip" ).isRandom());
+		Assert.assertNull( container2.getComponent().exportedVariables.get( "ip" ).getRandomKind());
+
+		exportedVariables = InstanceHelpers.findAllExportedVariables( container2 );
+		Assert.assertTrue( exportedVariables.containsKey( "Container2.ip" ));
+		Assert.assertNull( exportedVariables.get( "Container2.ip" ));
+
+		// This value is found in the instances.
+		Assert.assertEquals( "45012", exportedVariables.get( "Container2.port" ));
 	}
 }

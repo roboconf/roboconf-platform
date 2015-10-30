@@ -39,9 +39,9 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.ResourceUtils;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
@@ -72,9 +72,9 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private final IMessagingMngr messagingMngr;
-	private final IConfigurationMngr configurationMngr;
 	private final INotificationMngr notificationMngr;
 	private final ITargetsMngr targetsMngr;
+	private final IRandomMngr randomMngr;
 
 	private ITargetHandlerResolver targetHandlerResolver;
 
@@ -86,19 +86,19 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	 * Constructor.
 	 * @param targetsMngr
 	 * @param messagingMngr
-	 * @param configurationMngr
 	 * @param notificationMngr
+	 * @param randomMngr
 	 */
 	public InstancesMngrImpl(
 			IMessagingMngr messagingMngr,
-			IConfigurationMngr configurationMngr,
 			INotificationMngr notificationMngr,
-			ITargetsMngr targetsMngr ) {
+			ITargetsMngr targetsMngr,
+			IRandomMngr randomMngr ) {
 
 		this.targetsMngr = targetsMngr;
 		this.messagingMngr = messagingMngr;
-		this.configurationMngr = configurationMngr;
 		this.notificationMngr = notificationMngr;
+		this.randomMngr = randomMngr;
 	}
 
 
@@ -123,17 +123,22 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	public void addInstance( ManagedApplication ma, Instance parentInstance, Instance instance )
 	throws ImpossibleInsertionException, IOException {
 
+		// Insert it, if possible
 		this.messagingMngr.checkMessagingConfiguration();
 		if( ! InstanceHelpers.tryToInsertChildInstance( ma.getApplication(), parentInstance, instance ))
 			throw new ImpossibleInsertionException( instance.getName());
 
+		// Generate values for random variables, if any
+		this.randomMngr.generateRandomValues( ma.getApplication(), instance );
+
+		// Send it to the agent
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully added in " + ma.getName() + "." );
 		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
 
 		// Store the message because we want to make sure the message is not lost
 		ma.storeAwaitingMessage( instance, new MsgCmdAddInstance( scopedInstance ));
 
-		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
+		ConfigurationUtils.saveInstances( ma );
 		this.notificationMngr.instance( instance, ma.getApplication(), EventType.CREATED );
 	}
 
@@ -142,7 +147,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	public void instanceWasUpdated( Instance instance, ManagedApplication ma ) {
 
 		this.notificationMngr.instance( instance, ma.getApplication(), EventType.CHANGED );
-		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
+		ConfigurationUtils.saveInstances( ma );
 	}
 
 
@@ -160,6 +165,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		MsgCmdRemoveInstance message = new MsgCmdRemoveInstance( instance );
 		this.messagingMngr.sendMessageSafely( ma, instance, message );
 
+		// Remove it from the model
 		if( instance.getParent() == null ) {
 			ma.getApplication().getRootInstances().remove( instance );
 			this.ruleBasedHandler.notifyVmWasDeletedByHand( instance );
@@ -168,8 +174,12 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			instance.getParent().getChildren().remove( instance );
 		}
 
+		// Release random values, if any
+		this.randomMngr.releaseRandomValues( ma.getApplication(), instance );
+
+		// Persist the model and notify
 		this.logger.fine( "Instance " + InstanceHelpers.computeInstancePath( instance ) + " was successfully removed in " + ma.getName() + "." );
-		ConfigurationUtils.saveInstances( ma, this.configurationMngr.getWorkingDirectory());
+		ConfigurationUtils.saveInstances( ma );
 		this.notificationMngr.instance( instance, ma.getApplication(), EventType.DELETED );
 	}
 

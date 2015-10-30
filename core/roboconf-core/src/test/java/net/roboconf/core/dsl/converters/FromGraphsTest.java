@@ -40,6 +40,7 @@ import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -65,16 +66,16 @@ public class FromGraphsTest {
 		Component cA = new Component( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
 
-		cA.exportedVariables.put( "A.port", "9000" );
-		cA.exportedVariables.put( "A.ip", null );
+		cA.addExportedVariable( new ExportedVariable( "A.port", "9000" ));
+		cA.addExportedVariable( new ExportedVariable( "A.ip", null ));
 		cA.addImportedVariable( new ImportedVariable( "B.port", false, false ));
 		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
 
 		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
 
-		cB.exportedVariables.put( "B.port", "9000" );
-		cB.exportedVariables.put( "B.ip", null );
+		cB.addExportedVariable( new ExportedVariable( "B.port", "9000" ));
+		cB.addExportedVariable( new ExportedVariable( "B.ip", null ));
 
 		compareGraphs( graphs, false );
 	}
@@ -88,8 +89,8 @@ public class FromGraphsTest {
 		graphs.getRootComponents().add( cA );
 		cA.addImportedVariable( new ImportedVariable( "facetF.props", false, false ));
 
-		cA.exportedVariables.put( "A.port", "9000" );
-		cA.exportedVariables.put( "A.ip", null );
+		cA.addExportedVariable( new ExportedVariable( "A.port", "9000" ));
+		cA.addExportedVariable( new ExportedVariable( "A.ip", null ));
 		cA.addImportedVariable( new ImportedVariable( "B.port", true, false ));
 		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
 
@@ -97,11 +98,11 @@ public class FromGraphsTest {
 		graphs.getRootComponents().add( cB );
 
 		Facet facetF = new Facet( "facetF" );
-		facetF.exportedVariables.put( "facetF.props", "something" );
+		facetF.addExportedVariable( new ExportedVariable( "facetF.props", "something" ));
 
 		cB.associateFacet( facetF );
-		cB.exportedVariables.put( "B.port", "9000" );
-		cB.exportedVariables.put( "B.ip", null );
+		cB.addExportedVariable( new ExportedVariable( "B.port", "9000" ));
+		cB.addExportedVariable( new ExportedVariable( "B.ip", null ));
 
 		compareGraphs( graphs, false );
 	}
@@ -115,11 +116,11 @@ public class FromGraphsTest {
 		graphs.getRootComponents().add( cA );
 
 		Facet facet = new Facet( "my-facet-1" );
-		facet.exportedVariables.put( "data", "coucou" );
+		facet.addExportedVariable( new ExportedVariable( "data", "coucou" ));
 		cA.associateFacet( facet );
 
-		cA.exportedVariables.put( "A.port", "9000" );
-		cA.exportedVariables.put( "A.ip", null );
+		cA.addExportedVariable( new ExportedVariable( "A.port", "9000" ));
+		cA.addExportedVariable( new ExportedVariable( "A.ip", null ));
 
 		cA.addImportedVariable( new ImportedVariable( "B.port", true, false ));
 		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
@@ -129,15 +130,15 @@ public class FromGraphsTest {
 		graphs.getRootComponents().add( cB );
 
 		facet = new Facet( "facetF" );
-		facet.exportedVariables.put( "facetF.props", "some value" );
+		facet.addExportedVariable( new ExportedVariable( "facetF.props", "some value" ));
 		cB.associateFacet( facet );
 
 		facet = new Facet( "my-facet-2" );
-		facet.exportedVariables.put( "my-facet-2.woo", "woo" );
+		facet.addExportedVariable( new ExportedVariable( "my-facet-2.woo", "woo" ));
 		cB.associateFacet( facet );
 
-		cB.exportedVariables.put( "B.port", "9000" );
-		cB.exportedVariables.put( "B.ip", null );
+		cB.addExportedVariable( new ExportedVariable( "B.port", "9000" ));
+		cB.addExportedVariable( new ExportedVariable( "B.ip", null ));
 
 		compareGraphs( graphs, false );
 	}
@@ -159,34 +160,34 @@ public class FromGraphsTest {
 		graphs.getRootComponents().add( cA );
 
 		Facet facet = new Facet( "my-facet-1" );
-		facet.exportedVariables.put( "my-facet-1.data", "coucou" );
+		facet.addExportedVariable( new ExportedVariable( "my-facet-1.data", "coucou" ));
 		cA.associateFacet( facet );
 
-		cA.exportedVariables.put( "A.port", "9000" );
-		cA.exportedVariables.put( "A.ip", null );
+		cA.addExportedVariable( new ExportedVariable( "A.port", "9000" ));
+		cA.addExportedVariable( new ExportedVariable( "A.ip", null ));
 
 		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
 		cA.addImportedVariable( new ImportedVariable( "facetF.props", false, false ));
 
 		Component cB = new Component( "B" ).installerName( "installer B" );
-		cB.exportedVariables.put( "B.port", "9000" );
-		cB.exportedVariables.put( "B.ip", null );
+		cB.addExportedVariable( new ExportedVariable( "B.port", "9000" ));
+		cB.addExportedVariable( new ExportedVariable( "B.ip", null ));
 
 		facet = new Facet( "facetF" );
-		facet.exportedVariables.put( "facetF.props", "some value" );
+		facet.addExportedVariable( new ExportedVariable( "facetF.props", "some value" ));
 		cB.associateFacet( facet );
 
 		facet = new Facet( "my-facet-2" );
-		facet.exportedVariables.put( "my-facet-2.woo", "woo" );
+		facet.addExportedVariable( new ExportedVariable( "my-facet-2.woo", "woo" ));
 		cB.associateFacet( facet );
 
 		Component cC = new Component( "C" ).installerName( "installer C" );
 		for( Facet f : cB.getFacets())
 			cC.associateFacet( f );
 
-		cC.exportedVariables.put( "my-facet-2.woo", "woo" );
-		cC.exportedVariables.put( "C.port", "9000" );
-		cC.exportedVariables.put( "facetF.props", "something else" );
+		cC.addExportedVariable( new ExportedVariable( "my-facet-2.woo", "woo" ));
+		cC.addExportedVariable( new ExportedVariable( "C.port", "9000" ));
+		cC.addExportedVariable( new ExportedVariable( "facetF.props", "something else" ));
 
 		cA.addChild( cB );
 		cA.addChild( cC );
@@ -201,15 +202,15 @@ public class FromGraphsTest {
 		Component cA = new Component( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
 
-		cA.exportedVariables.put( "A.port", "9000" );
-		cA.exportedVariables.put( "A.ip", null );
+		cA.addExportedVariable( new ExportedVariable( "A.port", "9000" ));
+		cA.addExportedVariable( new ExportedVariable( "A.ip", null ));
 
 		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
 		cB.extendComponent( cA );
 		graphs.getRootComponents().add( cB );
 
-		cB.exportedVariables.put( "A.port", "9000" );
-		cB.exportedVariables.put( "A.ip", null );
+		cB.addExportedVariable( new ExportedVariable( "A.port", "9000" ));
+		cB.addExportedVariable( new ExportedVariable( "A.ip", null ));
 
 		compareGraphs( graphs, false );
 	}
@@ -222,16 +223,16 @@ public class FromGraphsTest {
 		Component cA = new Component( "A" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cA );
 
-		cA.exportedVariables.put( "A.port", "9000" );
-		cA.exportedVariables.put( "A.ip", null );
+		cA.addExportedVariable( new ExportedVariable( "A.port", "9000" ));
+		cA.addExportedVariable( new ExportedVariable( "A.ip", null ));
 		cA.addImportedVariable( new ImportedVariable( "B.port", false, true ));
 		cA.addImportedVariable( new ImportedVariable( "B.ip", true, false ));
 
 		Component cB = new Component( "B" ).installerName( Constants.TARGET_INSTALLER );
 		graphs.getRootComponents().add( cB );
 
-		cB.exportedVariables.put( "B.port", "9000" );
-		cB.exportedVariables.put( "B.ip", null );
+		cB.addExportedVariable( new ExportedVariable( "B.port", "9000" ));
+		cB.addExportedVariable( new ExportedVariable( "B.ip", null ));
 
 		compareGraphs( graphs, false );
 	}
@@ -274,10 +275,14 @@ public class FromGraphsTest {
 			Assert.assertEquals( readComponent.exportedVariables.size(), originalComponent.exportedVariables.size());
 			Assert.assertEquals( readComponent.importedVariables.size(), originalComponent.importedVariables.size());
 
-			for( Map.Entry<String,String> entry : readComponent.exportedVariables.entrySet()) {
+			for( Map.Entry<String,ExportedVariable> entry : readComponent.exportedVariables.entrySet()) {
 				Assert.assertTrue( readComponent.getName(), originalComponent.exportedVariables.containsKey( entry.getKey()));
-				String value = originalComponent.exportedVariables.get( entry.getKey());
-				Assert.assertEquals( readComponent.getName(), entry.getValue(), value );
+				ExportedVariable originalVar = originalComponent.exportedVariables.get( entry.getKey());
+
+				Assert.assertEquals( readComponent.getName(), entry.getValue().getName(), originalVar.getName());
+				Assert.assertEquals( readComponent.getName(), entry.getValue().getValue(), originalVar.getValue());
+				Assert.assertEquals( readComponent.getName(), entry.getValue().getRandomKind(), originalVar.getRandomKind());
+				Assert.assertEquals( readComponent.getName(), entry.getValue().isRandom(), originalVar.isRandom());
 			}
 
 			for( ImportedVariable var : readComponent.importedVariables.values()) {

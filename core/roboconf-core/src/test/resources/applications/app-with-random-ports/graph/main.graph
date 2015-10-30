@@ -1,0 +1,15 @@
+VM {
+	children: Container1, Container2;
+	installer: target;
+}
+
+Container1 {
+	installer: script;
+	exports: ip, random[port] httpPort, random[port] ajpPort, config = test;
+}
+
+Container2 {
+	installer: script;
+	exports: ip, random[port] port;
+	imports: Container1.httpPort;
+}

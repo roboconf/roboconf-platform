@@ -86,6 +86,12 @@ public class Manager_BasicsTest {
 	public void resetManager() throws Exception {
 
 		File directory = this.folder.newFolder();
+		resetManager( directory );
+	}
+
+
+	private void resetManager( File directory ) throws Exception {
+
 		this.targetResolver = new TestTargetResolver();
 
 		this.manager = new Manager();
@@ -725,5 +731,69 @@ public class Manager_BasicsTest {
 		// Try to redeploy: it should work (no remains of the previous attempt)
 		this.manager.instancesMngr().deployAndStartAll( ma, app.getMySqlVm());
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+	}
+
+
+	@Test
+	public void verifyApplicationWithRandomVariables_load() throws Exception {
+
+		// Deploy the template
+		File dir = TestUtils.findApplicationDirectory( "app-with-random-ports" );
+		Assert.assertTrue( dir.isDirectory());
+
+		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( dir );
+		Assert.assertNotNull( tpl );
+
+		Instance instance1 = InstanceHelpers.findInstanceByPath( tpl, "/vm/container1" );
+		Assert.assertNotNull( instance1 );
+
+		// No value set for random values in templates
+		Assert.assertNull( InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.httpPort" ));
+
+		// Create an application
+		ManagedApplication app1 = this.manager.applicationMngr().createApplication( "app1", "", tpl );
+		Assert.assertNotNull( app1 );
+
+		instance1 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container1" );
+		Assert.assertNotNull( instance1 );
+
+		// Random values are set in applications
+		Assert.assertEquals( "10000", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.httpPort" ));
+		Assert.assertEquals( "10001", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.ajpPort" ));
+
+		// Verify the 2nd container
+		Instance instance2 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container2" );
+		Assert.assertNotNull( instance2 );
+
+		// This value is not generated since it was set manually in the instances definition
+		Assert.assertEquals( "45012", InstanceHelpers.findAllExportedVariables( instance2 ).get( "Container2.port" ));
+	}
+
+
+	@Test
+	public void verifyApplicationWithRandomVariables_restore() throws Exception {
+
+		// Deploy and validate
+		verifyApplicationWithRandomVariables_load();
+
+		// Stop the manager
+		this.manager.stop();
+
+		// Reset it (except the configuration directory!)
+		resetManager( this.manager.configurationMngr().getWorkingDirectory());
+
+		// Verify what was restored.
+		// We expect the same ports than before.
+		ManagedApplication app1 = this.managerWrapper.getNameToManagedApplication().get( "app1" );
+		Assert.assertNotNull( app1 );
+
+		Instance instance1 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container1" );
+		Assert.assertNotNull( instance1 );
+		Assert.assertEquals( "10000", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.httpPort" ));
+		Assert.assertEquals( "10001", InstanceHelpers.findAllExportedVariables( instance1 ).get( "Container1.ajpPort" ));
+
+		Instance instance2 = InstanceHelpers.findInstanceByPath( app1.getApplication(), "/vm/container2" );
+		Assert.assertNotNull( instance2 );
+		Assert.assertEquals( "45012", InstanceHelpers.findAllExportedVariables( instance2 ).get( "Container2.port" ));
 	}
 }

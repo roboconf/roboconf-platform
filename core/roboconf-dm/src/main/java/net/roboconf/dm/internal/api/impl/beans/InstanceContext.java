@@ -35,10 +35,10 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
 /**
- * A class to ease searching an associated target ID.
+ * A class to ease searching when dealing when instances and several applications or templates.
  * @author Vincent Zurczak - Linagora
  */
-public class TargetMappingKey {
+public class InstanceContext {
 
 	private final String name, qualifier;
 	private String instancePath;
@@ -49,7 +49,7 @@ public class TargetMappingKey {
 	 * @param app
 	 * @param inst
 	 */
-	public TargetMappingKey( AbstractApplication app, Instance inst ) {
+	public InstanceContext( AbstractApplication app, Instance inst ) {
 		this( app );
 		this.instancePath = inst == null ? null : InstanceHelpers.computeInstancePath( inst );
 	}
@@ -61,7 +61,7 @@ public class TargetMappingKey {
 	 * @param qualifier
 	 * @param instancePath
 	 */
-	public TargetMappingKey( String name, String qualifier, String instancePath ) {
+	public InstanceContext( String name, String qualifier, String instancePath ) {
 		this.name = name;
 		this.qualifier = qualifier;
 		this.instancePath = instancePath;
@@ -72,7 +72,7 @@ public class TargetMappingKey {
 	 * Constructor.
 	 * @param app
 	 */
-	public TargetMappingKey( AbstractApplication app ) {
+	public InstanceContext( AbstractApplication app ) {
 		this.name = app.getName();
 		this.qualifier = app instanceof ApplicationTemplate ? ((ApplicationTemplate) app).getQualifier() : null;
 	}
@@ -83,7 +83,7 @@ public class TargetMappingKey {
 	 * @param app
 	 * @param instancePath
 	 */
-	public TargetMappingKey( AbstractApplication app, String instancePath ) {
+	public InstanceContext( AbstractApplication app, String instancePath ) {
 		this( app );
 		this.instancePath = instancePath;
 	}
@@ -100,7 +100,7 @@ public class TargetMappingKey {
 	 * @param s a string (can be null)
 	 * @return a target mapping key (never null)
 	 */
-	public static TargetMappingKey parse( String s ) {
+	public static InstanceContext parse( String s ) {
 
 		String name = null, qualifier = null, instancePath = null;
 		if( s != null ) {
@@ -112,7 +112,7 @@ public class TargetMappingKey {
 			}
 		}
 
-		return new TargetMappingKey( name, qualifier, instancePath );
+		return new InstanceContext( name, qualifier, instancePath );
 	}
 
 
@@ -126,10 +126,10 @@ public class TargetMappingKey {
 
 	@Override
 	public boolean equals( Object obj ) {
-		return obj instanceof TargetMappingKey
-				&& Objects.equals( this.name, ((TargetMappingKey) obj).name )
-				&& Objects.equals( this.qualifier, ((TargetMappingKey) obj).qualifier )
-				&& Objects.equals( this.instancePath, ((TargetMappingKey) obj).instancePath );
+		return obj instanceof InstanceContext
+				&& Objects.equals( this.name, ((InstanceContext) obj).name )
+				&& Objects.equals( this.qualifier, ((InstanceContext) obj).qualifier )
+				&& Objects.equals( this.instancePath, ((InstanceContext) obj).instancePath );
 	}
 
 

@@ -34,6 +34,7 @@ import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
 import net.roboconf.core.dsl.parsing.BlockFacet;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.model.beans.ExportedVariable;
 
 import org.junit.Test;
 
@@ -106,25 +107,27 @@ public class ModelUtilsTest {
 		String varName1 = "var1";
 
 		prop.setValue( "var1" );
-		Map<String,String> map = ModelUtils.getExportedVariables( holder );
+		Map<String,ExportedVariable> map = ModelUtils.getExportedVariables( holder );
 		Assert.assertEquals( 1, map.size());
 		Assert.assertTrue( map.containsKey( varName1 ));
-		Assert.assertNull( map.get( varName1 ));
+		Assert.assertNull( map.get( varName1 ).getValue());
+		Assert.assertNull( map.get( varName1 ).getRandomKind());
+		Assert.assertFalse( map.get( varName1 ).isRandom());
 
 		prop.setValue( "var1 = 5" );
 		map = ModelUtils.getExportedVariables( holder );
 		Assert.assertEquals( 1, map.size());
-		Assert.assertEquals( "5", map.get( varName1 ));
+		Assert.assertEquals( "5", map.get( varName1 ).getValue());
 
 		prop.setValue( "var1=5" );
 		map = ModelUtils.getExportedVariables( holder );
 		Assert.assertEquals( 1, map.size());
-		Assert.assertEquals( "5", map.get( varName1 ));
+		Assert.assertEquals( "5", map.get( varName1 ).getValue());
 
 		prop.setValue( "var1= 5895" );
 		map = ModelUtils.getExportedVariables( holder );
 		Assert.assertEquals( 1, map.size());
-		Assert.assertEquals( "5895", map.get( varName1 ));
+		Assert.assertEquals( "5895", map.get( varName1 ).getValue());
 
 		// Two variables
 		String varName2 = "var2";
@@ -134,21 +137,21 @@ public class ModelUtilsTest {
 		Assert.assertEquals( 2, map.size());
 		Assert.assertTrue( map.containsKey( varName1 ));
 		Assert.assertTrue( map.containsKey( varName2 ));
-		Assert.assertNull( map.get( varName1 ));
-		Assert.assertNull( map.get( varName2 ));
+		Assert.assertNull( map.get( varName1 ).getValue());
+		Assert.assertNull( map.get( varName2 ).getValue());
 
 		prop.setValue( "var1, var2 = 587" );
 		map = ModelUtils.getExportedVariables( holder );
 		Assert.assertEquals( 2, map.size());
 		Assert.assertTrue( map.containsKey( varName1 ));
-		Assert.assertNull( map.get( varName1 ));
-		Assert.assertEquals( "587", map.get( varName2 ));
+		Assert.assertNull( map.get( varName1 ).getValue());
+		Assert.assertEquals( "587", map.get( varName2 ).getValue());
 
 		prop.setValue( "var1 = abc, var2 = 587" );
 		map = ModelUtils.getExportedVariables( holder );
 		Assert.assertEquals( 2, map.size());
-		Assert.assertEquals( "abc", map.get( varName1 ));
-		Assert.assertEquals( "587", map.get( varName2 ));
+		Assert.assertEquals( "abc", map.get( varName1 ).getValue());
+		Assert.assertEquals( "587", map.get( varName2 ).getValue());
 
 	}
 }

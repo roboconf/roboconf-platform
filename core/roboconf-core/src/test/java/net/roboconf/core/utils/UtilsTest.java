@@ -137,7 +137,7 @@ public class UtilsTest {
 	public void testCopyStreamSafely() throws Exception {
 
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		ByteArrayInputStream in = new ByteArrayInputStream( "toto".getBytes());
+		ByteArrayInputStream in = new ByteArrayInputStream( "toto".getBytes( "UTF-8" ));
 		Utils.copyStreamSafely( in, os );
 
 		Assert.assertEquals( "toto", os.toString( "UTF-8" ));

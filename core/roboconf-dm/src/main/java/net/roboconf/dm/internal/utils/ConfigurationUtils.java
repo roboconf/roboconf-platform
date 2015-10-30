@@ -99,15 +99,23 @@ public final class ConfigurationUtils {
 	/**
 	 * Saves the instances into a file.
 	 * @param ma the application (not null)
+	 */
+	public static void saveInstances( ManagedApplication ma ) {
+		saveInstances( ma.getApplication());
+	}
+
+
+	/**
+	 * Saves the instances into a file.
+	 * @param app the application (not null)
 	 * @param configurationDirectory the configuration directory
 	 */
-	public static void saveInstances( ManagedApplication ma, File configurationDirectory ) {
+	public static void saveInstances( Application app ) {
 
-		String relativeFilePath = findInstancesRelativeLocation( ma.getName());
-		File targetFile = new File( configurationDirectory, relativeFilePath );
+		File targetFile = new File( app.getDirectory(), Constants.PROJECT_DIR_INSTANCES + "/" + INSTANCES_FILE );
 		try {
 			Utils.createDirectory( targetFile.getParentFile());
-			RuntimeModelIo.writeInstances( targetFile, ma.getApplication().getRootInstances());
+			RuntimeModelIo.writeInstances( targetFile, app.getRootInstances());
 
 		} catch( IOException e ) {
 			Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
@@ -122,10 +130,9 @@ public final class ConfigurationUtils {
 	 * @param ma the application
 	 * @param configurationDirectory the configuration directory
 	 */
-	public static InstancesLoadResult restoreInstances( ManagedApplication ma, File configurationDirectory ) {
+	public static InstancesLoadResult restoreInstances( ManagedApplication ma ) {
 
-		String relativeFilePath = findInstancesRelativeLocation( ma.getName());
-		File sourceFile = new File( configurationDirectory, relativeFilePath );
+		File sourceFile = new File( ma.getDirectory(), Constants.PROJECT_DIR_INSTANCES + "/" + INSTANCES_FILE );
 		Graphs graphs = ma.getApplication().getTemplate().getGraphs();
 		InstancesLoadResult result;
 		if( sourceFile.exists())
@@ -134,25 +141,6 @@ public final class ConfigurationUtils {
 			result = new InstancesLoadResult();
 
 		return result;
-	}
-
-
-	/**
-	 * Finds the relative file path of the file that stores instances for a given application.
-	 * @param appName the application's name
-	 * @return a non-null string
-	 */
-	public static String findInstancesRelativeLocation( String appName ) {
-
-		StringBuilder sb = new StringBuilder( APPLICATIONS );
-		sb.append( "/" );
-		sb.append( appName );
-		sb.append( "/" );
-		sb.append( Constants.PROJECT_DIR_INSTANCES );
-		sb.append( "/" );
-		sb.append( INSTANCES_FILE );
-
-		return sb.toString();
 	}
 
 

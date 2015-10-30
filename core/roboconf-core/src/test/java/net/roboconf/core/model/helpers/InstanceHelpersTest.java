@@ -39,6 +39,7 @@ import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Import;
@@ -158,8 +159,8 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( "value1", map.get( "var1" ));
 
 		Component component = new Component( "comp 1" );
-		component.exportedVariables.put( "var1", "another value" );
-		component.exportedVariables.put( "var2", "value2" );
+		component.addExportedVariable( new ExportedVariable( "var1", "another value" ));
+		component.addExportedVariable( new ExportedVariable( "var2", "value2" ));
 		instance.setComponent( component );
 
 		map = InstanceHelpers.findAllExportedVariables( instance );
@@ -179,28 +180,28 @@ public class InstanceHelpersTest {
 	public void testFindAllExportedVariables_withFacets() {
 
 		Component component = new Component( "comp 1" );
-		component.exportedVariables.put( "var1", "another value" );
-		component.exportedVariables.put( "var2", "var 2 value" );
-		component.exportedVariables.put( "ip", null );
+		component.addExportedVariable( new ExportedVariable( "var1", "another value" ));
+		component.addExportedVariable( new ExportedVariable( "var2", "var 2 value" ));
+		component.addExportedVariable( new ExportedVariable( "ip", null ));
 
 		Facet f1 = new Facet( "f1" );
-		f1.exportedVariables.put( "param1", "value1" );
+		f1.addExportedVariable( new ExportedVariable( "param1", "value1" ));
 		component.associateFacet( f1 );
 
 		Facet f2 = new Facet( "f2" );
-		f2.exportedVariables.put( "param2", "value2" );
+		f2.addExportedVariable( new ExportedVariable( "param2", "value2" ));
 		component.associateFacet( f2 );
 
 		Facet f3 = new Facet( "f3" );
-		f3.exportedVariables.put( "param3", "value3" );
+		f3.addExportedVariable( new ExportedVariable( "param3", "value3" ));
 		component.associateFacet( f3 );
-		component.exportedVariables.put( "f3.param3", "component overrides facet" );
+		component.addExportedVariable( new ExportedVariable( "f3.param3", "component overrides facet" ));
 
 		Facet f4 = new Facet( "f4" );
-		f4.exportedVariables.put( "param4-1", "value4" );
-		f4.exportedVariables.put( "param4-2", "value4" );
+		f4.addExportedVariable( new ExportedVariable( "param4-1", "value4" ));
+		f4.addExportedVariable( new ExportedVariable( "param4-2", "value4" ));
 		f2.extendFacet( f4 );
-		f2.exportedVariables.put( "f4.param4-1", "facet overrides facet" );
+		f2.addExportedVariable( new ExportedVariable( "f4.param4-1", "facet overrides facet" ));
 
 		Instance instance = new Instance( "inst 1" );
 		instance.setComponent( component );
@@ -210,9 +211,9 @@ public class InstanceHelpersTest {
 		instance.data.put( Instance.IP_ADDRESS, "192.168.1.18" );
 
 		Component extendedComponent = new Component( "extended" );
-		extendedComponent.exportedVariables.put( "v", "hop" );
+		extendedComponent.addExportedVariable( new ExportedVariable( "v", "hop" ));
 		component.extendComponent( extendedComponent );
-		component.exportedVariables.put( "extended.v", "nop" );
+		component.addExportedVariable( new ExportedVariable( "extended.v", "nop" ));
 
 		Map<String,String> map = InstanceHelpers.findAllExportedVariables( instance );
 		Assert.assertEquals( 16, map.size());
@@ -656,34 +657,35 @@ public class InstanceHelpersTest {
 		Assert.assertTrue( instances.contains( app2 ));
 	}
 
+
 	@Test
 	public void testFixOverriddenExports() {
 
 		Component comp = new Component("comp");
-		comp.exportedVariables.put("comp.export1", "c1");
-		comp.exportedVariables.put("comp.export2", "c2");
-		comp.exportedVariables.put("comp.export3", "c3");
+		comp.addExportedVariable( new ExportedVariable( "comp.export1", "c1" ));
+		comp.addExportedVariable( new ExportedVariable( "comp.export2", "c2" ));
+		comp.addExportedVariable( new ExportedVariable( "comp.export3", "c3" ));
 
 		Instance inst = new Instance("inst").component(comp);
 		Assert.assertEquals( 0, inst.overriddenExports.size());
 		InstanceHelpers.fixOverriddenExports(inst);
 		Assert.assertEquals( 0, inst.overriddenExports.size());
 
-		inst.overriddenExports.put("inst.export1", "i1"); // New (instance export)
-		inst.overriddenExports.put("comp.export2", "c2"); // Unchanged component export
-		inst.overriddenExports.put("comp.export3", "i3"); // Overridden component export
+		inst.overriddenExports.put( "inst.export1", "i1" ); // New (instance export)
+		inst.overriddenExports.put( "comp.export2", "c2" ); // Unchanged component export
+		inst.overriddenExports.put( "comp.export3", "i3" ); // Overridden component export
 		InstanceHelpers.fixOverriddenExports(inst);
 
 		// Check component exports (no change expected).
-		Assert.assertEquals(comp.exportedVariables.size(), 3);
-		Assert.assertEquals(comp.exportedVariables.get("comp.export1"), "c1");
-		Assert.assertEquals(comp.exportedVariables.get("comp.export2"), "c2");
-		Assert.assertEquals(comp.exportedVariables.get("comp.export3"), "c3");
+		Assert.assertEquals( 3, comp.exportedVariables.size());
+		Assert.assertEquals( "c1", comp.exportedVariables.get("comp.export1").getValue());
+		Assert.assertEquals( "c2", comp.exportedVariables.get("comp.export2").getValue());
+		Assert.assertEquals( "c3", comp.exportedVariables.get("comp.export3").getValue());
 
 		// Check instance overridden exports
-		// exports 1 and 3 should remain unchanged, export 2 should have disappeared !
-		Assert.assertEquals(inst.overriddenExports.size(), 2);
-		Assert.assertEquals(inst.overriddenExports.get("inst.export1"), "i1");
-		Assert.assertEquals(inst.overriddenExports.get("comp.export3"), "i3");
+		// exports 1 and 3 should remain unchanged, export 2 should have disappeared!
+		Assert.assertEquals( 2, inst.overriddenExports.size());
+		Assert.assertEquals( "i1", inst.overriddenExports.get("inst.export1"));
+		Assert.assertEquals( "i3", inst.overriddenExports.get("comp.export3"));
 	}
 }

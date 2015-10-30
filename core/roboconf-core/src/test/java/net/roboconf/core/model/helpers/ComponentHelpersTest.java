@@ -38,6 +38,7 @@ import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -563,7 +564,7 @@ public class ComponentHelpersTest {
 
 		serverWithApp.addImportedVariable( new ImportedVariable( "database.ip", false, false ));
 		serverWithApp.addImportedVariable( new ImportedVariable( "database.port", true, false ));
-		serverWithApp.exportedVariables.put( "url", "something" );
+		serverWithApp.addExportedVariable( new ExportedVariable( "url", "something" ));
 
 		serverWithAnotherApp.extendComponent( serverWithApp );
 
@@ -571,8 +572,8 @@ public class ComponentHelpersTest {
 		serverWithAnotherApp.addImportedVariable( new ImportedVariable( "database.port", false, false ));
 		serverWithAnotherApp.addImportedVariable( new ImportedVariable( "whatever", false, false ));
 
-		db.exportedVariables.put( "ip", null );
-		db.exportedVariables.put( "port", "3306" );
+		db.addExportedVariable( new ExportedVariable( "ip", null ));
+		db.addExportedVariable( new ExportedVariable( "port", "3306" ));
 
 		Assert.assertEquals( 0, ComponentHelpers.findAllImportedVariables( db ).size());
 		Assert.assertEquals( 0, ComponentHelpers.findAllImportedVariables( root ).size());
@@ -602,7 +603,7 @@ public class ComponentHelpersTest {
 		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( comp );
 		Assert.assertEquals( 0, exports.size());
 
-		comp.exportedVariables.put( "test", "ok" );
+		comp.addExportedVariable( new ExportedVariable( "test", "ok" ));
 		exports = ComponentHelpers.findAllExportedVariables( comp );
 		Assert.assertEquals( 1, exports.size());
 		Assert.assertEquals( "ok", exports.get( "comp.test" ));
@@ -613,10 +614,10 @@ public class ComponentHelpersTest {
 	public void testfindAllExportedVariables_withFacet() {
 
 		Component comp = new Component( "comp" );
-		comp.exportedVariables.put( "test", "ok" );
+		comp.addExportedVariable( new ExportedVariable( "test", "ok" ));
 
 		Facet f = new Facet( "facet" );
-		f.exportedVariables.put( "property", "value" );
+		f.addExportedVariable( new ExportedVariable( "property", "value" ));
 		comp.associateFacet( f );
 
 		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( comp );
@@ -626,7 +627,7 @@ public class ComponentHelpersTest {
 		Assert.assertEquals( "value", exports.get( "comp.property" ));
 
 		// Override a facet property
-		comp.exportedVariables.put( "facet.property", "something different" );
+		comp.addExportedVariable( new ExportedVariable( "facet.property", "something different" ));
 		exports = ComponentHelpers.findAllExportedVariables( comp );
 		Assert.assertEquals( 3, exports.size());
 		Assert.assertEquals( "ok", exports.get( "comp.test" ));
@@ -635,7 +636,7 @@ public class ComponentHelpersTest {
 
 		// Global override
 		comp.exportedVariables.remove( "facet.property" );
-		comp.exportedVariables.put( "property", "great" );
+		comp.addExportedVariable( new ExportedVariable( "property", "great" ));
 		exports = ComponentHelpers.findAllExportedVariables( comp );
 
 		Assert.assertEquals( 3, exports.size());
@@ -645,7 +646,7 @@ public class ComponentHelpersTest {
 
 		// Local override
 		comp.exportedVariables.remove( "property" );
-		comp.exportedVariables.put( "comp.property", "ha! ha!" );
+		comp.addExportedVariable( new ExportedVariable( "comp.property", "ha! ha!" ));
 		exports = ComponentHelpers.findAllExportedVariables( comp );
 
 		Assert.assertEquals( 3, exports.size());
@@ -659,10 +660,10 @@ public class ComponentHelpersTest {
 	public void testfindAllExportedVariables_withComponentExtension() {
 
 		Component comp = new Component( "comp" );
-		comp.exportedVariables.put( "test", "ok" );
+		comp.addExportedVariable( new ExportedVariable( "test", "ok" ));
 
 		Component parent = new Component( "parent" );
-		parent.exportedVariables.put( "property", "value" );
+		parent.addExportedVariable( new ExportedVariable( "property", "value" ));
 		comp.extendComponent( parent );
 
 		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( comp );
@@ -672,7 +673,7 @@ public class ComponentHelpersTest {
 		Assert.assertEquals( "value", exports.get( "comp.property" ));
 
 		// Override a parent property
-		comp.exportedVariables.put( "parent.property", "something different" );
+		comp.addExportedVariable( new ExportedVariable( "parent.property", "something different" ));
 		exports = ComponentHelpers.findAllExportedVariables( comp );
 		Assert.assertEquals( 3, exports.size());
 		Assert.assertEquals( "ok", exports.get( "comp.test" ));
@@ -681,7 +682,7 @@ public class ComponentHelpersTest {
 
 		// Global override
 		comp.exportedVariables.remove( "parent.property" );
-		comp.exportedVariables.put( "property", "great" );
+		comp.addExportedVariable( new ExportedVariable( "property", "great" ));
 		exports = ComponentHelpers.findAllExportedVariables( comp );
 
 		Assert.assertEquals( 3, exports.size());
@@ -691,7 +692,7 @@ public class ComponentHelpersTest {
 
 		// Local override
 		comp.exportedVariables.remove( "property" );
-		comp.exportedVariables.put( "comp.property", "ha! ha!" );
+		comp.addExportedVariable( new ExportedVariable( "comp.property", "ha! ha!" ));
 		exports = ComponentHelpers.findAllExportedVariables( comp );
 
 		Assert.assertEquals( 3, exports.size());
@@ -718,20 +719,20 @@ public class ComponentHelpersTest {
 		Facet serverFacet = new Facet( "server facet" );
 		Facet anotherServerFacet = new Facet( "another server facet" );
 		anotherServerFacet.extendFacet( serverFacet );
-		serverFacet.exportedVariables.put( "url-suffix", "some/path" );
+		serverFacet.addExportedVariable( new ExportedVariable( "url-suffix", "some/path" ));
 
 		serverWithApp.associateFacet( anotherServerFacet );
-		serverWithApp.exportedVariables.put( "ip", null );
-		serverWithApp.exportedVariables.put( serverWithApp.getName() + ".port", "8080" );
-		serverWithApp.exportedVariables.put( "env", "test" );
+		serverWithApp.addExportedVariable( new ExportedVariable( "ip", null ));
+		serverWithApp.addExportedVariable( new ExportedVariable( serverWithApp.getName() + ".port", "8080" ));
+		serverWithApp.addExportedVariable( new ExportedVariable( "env", "test" ));
 
 		// Override the value of a variable that comes from a super facet/component
-		serverWithAnotherApp.exportedVariables.put( serverFacet.getName() + ".url-suffix", "another/path" );
-		serverWithAnotherApp.exportedVariables.put( "whatever", "something" );
-		serverWithAnotherApp.exportedVariables.put( "env", "prod" );
+		serverWithAnotherApp.addExportedVariable( new ExportedVariable( serverFacet.getName() + ".url-suffix", "another/path" ));
+		serverWithAnotherApp.addExportedVariable( new ExportedVariable( "whatever", "something" ));
+		serverWithAnotherApp.addExportedVariable( new ExportedVariable( "env", "prod" ));
 
-		db.exportedVariables.put( "ip", null );
-		db.exportedVariables.put( "port", "3306" );
+		db.addExportedVariable( new ExportedVariable( "ip", null ));
+		db.addExportedVariable( new ExportedVariable( "port", "3306" ));
 
 		// Check assertions
 		Assert.assertEquals( 0, ComponentHelpers.findAllExportedVariables( root ).size());

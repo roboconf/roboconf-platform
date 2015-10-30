@@ -29,10 +29,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
 import net.roboconf.core.dsl.parsing.BlockProperty;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.helpers.VariableHelpers;
 
 /**
@@ -100,16 +103,31 @@ public final class ModelUtils {
 	/**
 	 * Gets and splits exported variables separated by a comma.
 	 * @param holder a property holder (not null)
-	 * @return a non-null map (key = exported variable name, value = default value, which can be null)
+	 * @return a non-null map (key = exported variable name, value = the exported variable)
 	 */
-	public static Map<String,String> getExportedVariables( AbstractBlockHolder holder ) {
+	public static Map<String,ExportedVariable> getExportedVariables( AbstractBlockHolder holder ) {
 
-		Map<String,String> result = new HashMap<String,String> ();
+		Pattern pattern = Pattern.compile( ParsingConstants.PROPERTY_GRAPH_RANDOM_PATTERN, Pattern.CASE_INSENSITIVE );
+		Map<String,ExportedVariable> result = new HashMap<> ();
 		for( BlockProperty p : holder.findPropertiesBlockByName( ParsingConstants.PROPERTY_GRAPH_EXPORTS )) {
 
 			for( String s : Utils.splitNicely( p.getValue(), ParsingConstants.PROPERTY_SEPARATOR )) {
-				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
-				result.put( entry.getKey(), entry.getValue());
+
+				String variableDecl = s;
+				ExportedVariable var = new ExportedVariable();
+
+				Matcher m = pattern.matcher( s );
+				if( m.matches()) {
+					var.setRandom( true );
+					var.setRawKind( m.group( 1 ));
+					variableDecl = m.group( 2 ).trim();
+				}
+
+				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( variableDecl );
+				var.setName( entry.getKey());
+				var.setValue( entry.getValue());
+
+				result.put( var.getName(), var );
 			}
 		}
 
