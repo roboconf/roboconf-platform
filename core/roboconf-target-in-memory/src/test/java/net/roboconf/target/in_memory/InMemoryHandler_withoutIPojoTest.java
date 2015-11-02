@@ -44,6 +44,7 @@ public class InMemoryHandler_withoutIPojoTest {
 
 	private Map<String, String> msgCfg = new LinkedHashMap<>();
 
+
 	@Before
 	public void setMessagingConfiguration() {
 		this.msgCfg = new LinkedHashMap<>();
@@ -83,7 +84,6 @@ public class InMemoryHandler_withoutIPojoTest {
 		targetProperties.put( InMemoryHandler.DELAY, "20L" );
 
 		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
-
 		handler.createMachine( targetProperties, this.msgCfg, "vm", "my app" );
 	}
 
@@ -95,10 +95,8 @@ public class InMemoryHandler_withoutIPojoTest {
 		handler.setDefaultDelay( 10L );
 		Assert.assertEquals( 10L, handler.getDefaultDelay());
 
-		Map<String,String> targetProperties = new HashMap<>(0);
-
+		Map<String,String> targetProperties = new HashMap<>( 0 );
 		handler.setMessagingFactoryRegistry(new MessagingClientFactoryRegistry());
-
 		handler.createMachine( targetProperties, this.msgCfg, "vm", "my app" );
 	}
 
@@ -109,5 +107,32 @@ public class InMemoryHandler_withoutIPojoTest {
 		InMemoryHandler handler = new InMemoryHandler();
 		handler.configureMachine( null, this.msgCfg, "my app", null, null, new Instance());
 		Assert.assertFalse( handler.isMachineRunning( null, "whatever, there is no iPojo factory" ));
+	}
+
+
+	@Test
+	public void testPreventNull() {
+		Assert.assertEquals( 0, InMemoryHandler.preventNull( null ).size());
+
+		Map<String,String> targetProperties = new HashMap<> ();
+		Assert.assertEquals( 0, InMemoryHandler.preventNull( targetProperties ).size());
+
+		targetProperties.put( "val 1", "test" );
+		targetProperties.put( "val 2", "test" );
+		Assert.assertEquals( 2, InMemoryHandler.preventNull( targetProperties ).size());
+	}
+
+
+	@Test
+	public void testSimulatePlugins() {
+
+		Map<String,String> targetProperties = new HashMap<> ();
+		Assert.assertTrue( InMemoryHandler.simulatePlugins( targetProperties ));
+
+		targetProperties.put( InMemoryHandler.EXECUTE_REAL_RECIPES, "false" );
+		Assert.assertTrue( InMemoryHandler.simulatePlugins( targetProperties ));
+
+		targetProperties.put( InMemoryHandler.EXECUTE_REAL_RECIPES, "True" );
+		Assert.assertFalse( InMemoryHandler.simulatePlugins( targetProperties ));
 	}
 }

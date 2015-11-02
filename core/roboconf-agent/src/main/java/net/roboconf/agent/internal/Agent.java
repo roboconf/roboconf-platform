@@ -106,7 +106,7 @@ public class Agent implements AgentMessagingInterface {
 		this.messagingClient = new ReconfigurableClientAgent();
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
-		
+
 		// Do we need to override properties with user data?
 		if( Utils.isEmptyOrWhitespaces( this.targetId )) {
 			this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
@@ -141,11 +141,13 @@ public class Agent implements AgentMessagingInterface {
 						System.getProperty("karaf.etc"),
 						props.getMessagingConfiguration(),
 						this.messagingType);
+
 				} catch(IOException e) {
 					this.logger.severe("Error in messaging reconfiguration from user data: " + e);
 				}
 			}
 		}
+
 		reconfigure();
 
 		TimerTask timerTask = new HeartbeatTask( this );

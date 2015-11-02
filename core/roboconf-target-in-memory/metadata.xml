@@ -7,7 +7,9 @@
 	<!-- This class is not in an internal package, we need it in the test framework. -->
 	<component classname="net.roboconf.target.in_memory.InMemoryHandler" name="roboconf-target-in-memory">
 		<provides />
+
 		<requires filter="(factory.name=roboconf-agent-in-memory)" field="agentFactory" optional="false" />
+		<requires field="manager" optional="false" />
 		<requires>
 			<callback type="bind" method="setMessagingFactoryRegistry" />
 		</requires>
