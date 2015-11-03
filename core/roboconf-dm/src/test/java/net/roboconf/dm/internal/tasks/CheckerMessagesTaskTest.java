@@ -30,6 +30,7 @@ import java.util.Map;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
@@ -59,9 +60,10 @@ public class CheckerMessagesTaskTest {
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 
 		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
-		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, this.messagingMngr );
+		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, this.messagingMngr, randomMngr );
 	}
 
 

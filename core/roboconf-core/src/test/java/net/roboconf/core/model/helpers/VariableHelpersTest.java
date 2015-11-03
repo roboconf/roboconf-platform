@@ -31,6 +31,7 @@ import java.util.Set;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -88,9 +89,9 @@ public class VariableHelpersTest {
 	public void testFindPrefixesForExportedVariables_withComponentVariables() {
 
 		Component component = new Component( "comp" );
-		component.exportedVariables.put( "comp.ip", "" );
-		component.exportedVariables.put( "comp.split.property", "" );
-		component.exportedVariables.put( "comp.port", "8000" );
+		component.addExportedVariable( new ExportedVariable( "comp.ip", "" ));
+		component.addExportedVariable( new ExportedVariable( "comp.split.property", "" ));
+		component.addExportedVariable( new ExportedVariable( "comp.port", "8000" ));
 
 		Instance instance = new Instance( "inst" ).component( component );
 
@@ -99,7 +100,7 @@ public class VariableHelpersTest {
 		Assert.assertTrue( prefixes.contains( "comp" ));
 
 		Facet facet = new Facet( "facet" );
-		facet.exportedVariables.put( "something", "value" );
+		facet.addExportedVariable( new ExportedVariable( "something", "value" ));
 		component.associateFacet( facet );
 
 		prefixes = VariableHelpers.findPrefixesForExportedVariables( instance );

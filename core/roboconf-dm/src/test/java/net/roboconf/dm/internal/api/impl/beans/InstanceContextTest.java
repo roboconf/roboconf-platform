@@ -35,47 +35,47 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TargetMappingKeyTest {
+public class InstanceContextTest {
 
 	@Test
 	public void testConstructors() {
 
 		ApplicationTemplate tpl = new ApplicationTemplate( "hop" );
 
-		TargetMappingKey key = new TargetMappingKey( tpl );
+		InstanceContext key = new InstanceContext( tpl );
 		Assert.assertEquals( "hop", key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertNull( key.getInstancePath());
 
-		key = new TargetMappingKey( tpl, "oops" );
+		key = new InstanceContext( tpl, "oops" );
 		Assert.assertEquals( "hop", key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertEquals( "oops", key.getInstancePath());
 
 		tpl.setQualifier( "v1" );
-		key = new TargetMappingKey( tpl, "oops" );
+		key = new InstanceContext( tpl, "oops" );
 		Assert.assertEquals( "hop", key.getName());
 		Assert.assertEquals( "v1", key.getQualifier());
 		Assert.assertEquals( "oops", key.getInstancePath());
 
 		Application app = new Application( tpl );
-		key = new TargetMappingKey( app );
+		key = new InstanceContext( app );
 		Assert.assertNull( key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertNull( key.getInstancePath());
 
 		app.setName( "ok" );
-		key = new TargetMappingKey( app );
+		key = new InstanceContext( app );
 		Assert.assertEquals( "ok", key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertNull( key.getInstancePath());
 
-		key = new TargetMappingKey( app, new Instance( "inst" ));
+		key = new InstanceContext( app, new Instance( "inst" ));
 		Assert.assertEquals( "ok", key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertEquals( "/inst", key.getInstancePath());
 
-		key = new TargetMappingKey( "1", "2", "3" );
+		key = new InstanceContext( "1", "2", "3" );
 		Assert.assertEquals( "1", key.getName());
 		Assert.assertEquals( "2", key.getQualifier());
 		Assert.assertEquals( "3", key.getInstancePath());
@@ -85,26 +85,26 @@ public class TargetMappingKeyTest {
 	@Test
 	public void testToStringAndParseAndEquals() {
 
-		TargetMappingKey key = TargetMappingKey.parse( "" );
+		InstanceContext key = InstanceContext.parse( "" );
 		Assert.assertNull( key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertNull( key.getInstancePath());
 
-		key = TargetMappingKey.parse( null );
+		key = InstanceContext.parse( null );
 		Assert.assertNull( key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertNull( key.getInstancePath());
 
-		TargetMappingKey newKey = new TargetMappingKey( "name", "qualifier", "inst" );
-		key = TargetMappingKey.parse( newKey.toString());
+		InstanceContext newKey = new InstanceContext( "name", "qualifier", "inst" );
+		key = InstanceContext.parse( newKey.toString());
 		Assert.assertEquals( "name", key.getName());
 		Assert.assertEquals( "qualifier", key.getQualifier());
 		Assert.assertEquals( "inst", key.getInstancePath());
 		Assert.assertEquals( newKey, key );
 		Assert.assertEquals( newKey.hashCode(), key.hashCode());
 
-		newKey = new TargetMappingKey( "name2", null, null );
-		key = TargetMappingKey.parse( newKey.toString());
+		newKey = new InstanceContext( "name2", null, null );
+		key = InstanceContext.parse( newKey.toString());
 		Assert.assertEquals( "name2", key.getName());
 		Assert.assertNull( key.getQualifier());
 		Assert.assertNull( key.getInstancePath());

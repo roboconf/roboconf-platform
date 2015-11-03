@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
@@ -183,6 +184,7 @@ public final class InstanceHelpers {
 			// No inherited variable or too many inherited ones? => Put it in raw mode.
 			if( fullNames == null || fullNames.size() > 1 )
 				result.put( entry.getKey(), entry.getValue());
+
 			// Otherwise, override the inherited variable
 			else
 				result.put( fullNames.iterator().next(), entry.getValue());
@@ -541,6 +543,7 @@ public final class InstanceHelpers {
 		return result;
 	}
 
+
 	/**
 	 * Fixes overridden exports.
 	 * <p>
@@ -553,17 +556,16 @@ public final class InstanceHelpers {
 	public static void fixOverriddenExports( Instance instance ) {
 
 		if( ! instance.overriddenExports.isEmpty()) {
-			Map<String,String> componentExports = ComponentHelpers.findAllExportedVariables(instance.getComponent());
+			Map<String,String> componentExports = ComponentHelpers.findAllExportedVariables( instance.getComponent());
 
 			Iterator<Map.Entry<String,String>> iter = instance.overriddenExports.entrySet().iterator();
-			while (iter.hasNext()) {
-				// Does export exist in component... with the same value as in overridden exports ?
+			while( iter.hasNext()) {
+				// Does export exist in component... with the same value as in overridden exports?
 				// If so, remove from overridden exports (because it is not overridden at all !)
 				Map.Entry<String,String> entry = iter.next();
-				String value = componentExports.get(entry.getKey());
-				if(value != null && value.equals(entry.getValue())) {
+				String value = componentExports.get( entry.getKey());
+				if( Objects.equals( value, entry.getValue()))
 					iter.remove();
-				}
 			}
 		}
 	}

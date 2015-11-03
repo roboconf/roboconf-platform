@@ -31,6 +31,7 @@ import java.util.Map;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -93,12 +94,12 @@ public class AgentMessageProcessor_WaitingAncestorsTest {
 
 		// Model
 		Component dbComponent = new Component( "database" ).installerName( "whatever" );
-		dbComponent.exportedVariables.put( "database.ip", null );
-		dbComponent.exportedVariables.put( "database.port", "3009" );
+		dbComponent.addExportedVariable( new ExportedVariable( "database.ip", null ));
+		dbComponent.addExportedVariable( new ExportedVariable( "database.port", "3009" ));
 
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
-		appServerComponent.exportedVariables.put( "app-server.ip", null );
-		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.ip", null ));
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.port", "8009" ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.ip", false, false ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.port", false, false ));
 
@@ -185,12 +186,12 @@ public class AgentMessageProcessor_WaitingAncestorsTest {
 
 		// Model
 		Component dbComponent = new Component( "database" ).installerName( "whatever" );
-		dbComponent.exportedVariables.put( "database.ip", null );
-		dbComponent.exportedVariables.put( "database.port", "3009" );
+		dbComponent.addExportedVariable( new ExportedVariable( "database.ip", null ));
+		dbComponent.addExportedVariable( new ExportedVariable( "database.port", "3009" ));
 
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
-		appServerComponent.exportedVariables.put( "app-server.ip", null );
-		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.ip", null ));
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.port", "8009" ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.ip", false, false ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.port", false, false ));
 

@@ -1,0 +1,13 @@
+
+instance of VM {
+	name: vm;
+
+	instance of Container1 {
+		name: container1;
+	}
+
+	instance of Container2 {
+		name: container2;
+		port: 45012;
+	}
+}

@@ -39,11 +39,12 @@ import java.util.Objects;
 public abstract class AbstractType implements Serializable {
 
 	private static final long serialVersionUID = 6426303830149882558L;
-	public final Map<String,String> exportedVariables = new HashMap<String,String>( 0 );
+
+	public final Map<String,ExportedVariable> exportedVariables = new HashMap<>( 0 );
 
 	protected String name;
-	protected final Collection<AbstractType> children = new HashSet<AbstractType>( 0 );
-	protected final Collection<AbstractType> ancestors = new HashSet<AbstractType>( 0 );
+	protected final Collection<AbstractType> children = new HashSet<>( 0 );
+	protected final Collection<AbstractType> ancestors = new HashSet<>( 0 );
 
 
 	/**
@@ -99,5 +100,13 @@ public abstract class AbstractType implements Serializable {
 	 */
 	public Collection<AbstractType> getAncestors() {
 		return Collections.unmodifiableCollection( this.ancestors );
+	}
+
+	/**
+	 * A shortcut method to add a new exported variable.
+	 * @param var a non-null variable to add
+	 */
+	public void addExportedVariable( ExportedVariable var ) {
+		this.exportedVariables.put( var.getName(), var );
 	}
 }

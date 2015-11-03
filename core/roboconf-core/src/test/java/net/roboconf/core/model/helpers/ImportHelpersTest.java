@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 
 import junit.framework.Assert;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -54,8 +55,8 @@ public class ImportHelpersTest {
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
 		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.ip", true, false ));
 		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.port", true, false ));
-		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
-		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
+		clusterNodeComponent.addExportedVariable( new ExportedVariable( "cluster.ip", null ));
+		clusterNodeComponent.addExportedVariable( new ExportedVariable( "cluster.port", "9007" ));
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
 		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );
@@ -84,13 +85,13 @@ public class ImportHelpersTest {
 	public void testHasAllRequiredImports_required() throws Exception {
 
 		Component dbComponent = new Component( "database" ).installerName( "whatever" );
-		dbComponent.exportedVariables.put( "database.ip", null );
-		dbComponent.exportedVariables.put( "database.port", "3009" );
-		dbComponent.exportedVariables.put( "database.collection", "whatever" );
+		dbComponent.addExportedVariable( new ExportedVariable( "database.ip", null ));
+		dbComponent.addExportedVariable( new ExportedVariable( "database.port", "3009" ));
+		dbComponent.addExportedVariable( new ExportedVariable( "database.collection", "whatever" ));
 
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
-		appServerComponent.exportedVariables.put( "app-server.ip", null );
-		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.ip", null ));
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.port", "8009" ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.ip", false, false ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.port", false, false ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.collection", true, false ));
@@ -120,13 +121,13 @@ public class ImportHelpersTest {
 		// Same test than "testHasAllRequiredImports_required"
 		// but here, variable imports use a wild card.
 		Component dbComponent = new Component( "database" ).installerName( "whatever" );
-		dbComponent.exportedVariables.put( "database.ip", null );
-		dbComponent.exportedVariables.put( "database.port", "3009" );
-		dbComponent.exportedVariables.put( "database.collection", "whatever" );
+		dbComponent.addExportedVariable( new ExportedVariable( "database.ip", null ));
+		dbComponent.addExportedVariable( new ExportedVariable( "database.port", "3009" ));
+		dbComponent.addExportedVariable( new ExportedVariable( "database.collection", "whatever" ));
 
 		Component appServerComponent = new Component( "app-server" ).installerName( "whatever" );
-		appServerComponent.exportedVariables.put( "app-server.ip", null );
-		appServerComponent.exportedVariables.put( "app-server.port", "8009" );
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.ip", null ));
+		appServerComponent.addExportedVariable( new ExportedVariable( "app-server.port", "8009" ));
 		appServerComponent.addImportedVariable( new ImportedVariable( "database.*", false, false ));
 
 		Instance appServer = new Instance( "app server" ).component( appServerComponent );

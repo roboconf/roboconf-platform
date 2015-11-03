@@ -67,7 +67,7 @@ public class ConfigurationUtilsTest {
 		app.setDirectory( ConfigurationUtils.findApplicationDirectory( app.getName(), this.dir ));
 
 		ManagedApplication ma = new ManagedApplication( app );
-		InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, this.dir );
+		InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma );
 		Assert.assertEquals( 0, ilr.getLoadErrors().size());
 		Assert.assertEquals( 0, ilr.getRootInstances().size());
 	}
@@ -88,10 +88,10 @@ public class ConfigurationUtilsTest {
 
 		app.setDirectory( ConfigurationUtils.findApplicationDirectory( app.getName(), this.dir ));
 		ManagedApplication ma = new ManagedApplication( app );
-		ConfigurationUtils.saveInstances( ma, this.dir );
+		ConfigurationUtils.saveInstances( ma );
 
 		// ... and restore...
-		InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, this.dir );
+		InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma );
 		Assert.assertEquals( 0, ilr.getLoadErrors().size());
 
 		Application restoredApp = new Application( "test", null );

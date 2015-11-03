@@ -27,8 +27,9 @@ package net.roboconf.core.utils;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -54,16 +55,16 @@ public final class DockerfileParser {
 	 * @param dockerfile a file
 	 * @return a list of Docker commands
 	 */
-	public static List<DockerCommand> dockerfileToCommandList(File dockerfile) throws IOException {
+	public static List<DockerCommand> dockerfileToCommandList( File dockerfile ) throws IOException {
 
 		List<DockerCommand> result = new ArrayList<DockerCommand>();
-		FileReader fr = new FileReader(dockerfile);
+		FileInputStream in = new FileInputStream( dockerfile );
 		Logger logger = Logger.getLogger( DockerfileParser.class.getName());
 		BufferedReader br = null;
 
 		try {
-			br = new BufferedReader(fr);
-			String line;;
+			br = new BufferedReader( new InputStreamReader( in, "UTF-8" ));
+			String line;
 			while((line = br.readLine()) != null) {
 
 				DockerCommand cmd = DockerCommand.guess(line);
@@ -74,7 +75,8 @@ public final class DockerfileParser {
 			}
 
 		} finally {
-			Utils.closeQuietly(br);
+			Utils.closeQuietly( br );
+			Utils.closeQuietly( in );
 		}
 
 		return result;

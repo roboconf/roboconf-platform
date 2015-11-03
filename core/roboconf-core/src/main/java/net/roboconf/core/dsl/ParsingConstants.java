@@ -121,6 +121,11 @@ public interface ParsingConstants {
 	 */
 	String PROPERTY_GRAPH_EXTENDS = "extends";
 
+	/**
+	 * A pattern to recognize an exported variable whose value is generated randomly by Roboconf.
+	 */
+	String PROPERTY_GRAPH_RANDOM_PATTERN = "random\\[([^]]*)\\](.*)";
+
 
 
 	/**

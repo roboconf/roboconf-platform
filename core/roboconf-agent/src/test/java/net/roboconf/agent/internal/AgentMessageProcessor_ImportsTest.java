@@ -36,6 +36,7 @@ import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -122,7 +123,7 @@ public class AgentMessageProcessor_ImportsTest {
 
 		// Our scoped instance has variables to export
 		TestApplicationTemplate app = new TestApplicationTemplate();
-		app.getTomcatVm().getComponent().exportedVariables.put( "config", "test" );
+		app.getTomcatVm().getComponent().addExportedVariable( new ExportedVariable( "config", "test" ));
 
 		// Remove children instances to not simplify the test
 		app.getTomcatVm().getChildren().clear();
@@ -371,8 +372,8 @@ public class AgentMessageProcessor_ImportsTest {
 		Component clusterNodeComponent = new Component( "cluster" ).installerName( "whatever" );
 		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.ip", true, false ));
 		clusterNodeComponent.addImportedVariable( new ImportedVariable( "cluster.port", true, false ));
-		clusterNodeComponent.exportedVariables.put( "cluster.ip", null );
-		clusterNodeComponent.exportedVariables.put( "cluster.port", "9007" );
+		clusterNodeComponent.addExportedVariable( new ExportedVariable( "cluster.ip", null ));
+		clusterNodeComponent.addExportedVariable( new ExportedVariable( "cluster.port", "9007" ));
 
 		Instance i1 = new Instance( "inst 1" ).component( clusterNodeComponent );
 		i1.overriddenExports.put( "cluster.ip", "192.168.1.15" );

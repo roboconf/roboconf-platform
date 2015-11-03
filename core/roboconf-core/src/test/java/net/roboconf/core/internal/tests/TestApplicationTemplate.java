@@ -28,6 +28,7 @@ package net.roboconf.core.internal.tests;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -60,13 +61,13 @@ public class TestApplicationTemplate extends ApplicationTemplate {
 		this.tomcat = new Instance( "tomcat-server" ).component( tomcatComponent );
 
 		Component mySqlComponent = new Component( "mysql" ).installerName( "puppet" );
-		mySqlComponent.exportedVariables.put( "mysql.port", "3306" );
-		mySqlComponent.exportedVariables.put( "mysql.ip", null );
+		mySqlComponent.addExportedVariable( new ExportedVariable( "port", "3306" ));
+		mySqlComponent.addExportedVariable( new ExportedVariable( "ip", null ));
 		this.mySql = new Instance( "mysql-server" ).component( mySqlComponent );
 
 		Component warComponent = new Component( "war" ).installerName( "script" );
-		warComponent.exportedVariables.put( "war.port", "8080" );
-		warComponent.exportedVariables.put( "war.ip", null );
+		warComponent.addExportedVariable( new ExportedVariable( "port", "8080" ));
+		warComponent.addExportedVariable( new ExportedVariable( "ip", null ));
 		warComponent.addImportedVariable( new ImportedVariable( "mysql.port", false, false ));
 		warComponent.addImportedVariable( new ImportedVariable( "mysql.ip", false, false ));
 		this.war = new Instance( "hello-world" ).component( warComponent );

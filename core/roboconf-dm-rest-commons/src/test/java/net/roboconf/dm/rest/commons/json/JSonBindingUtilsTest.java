@@ -34,6 +34,7 @@ import junit.framework.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -539,7 +540,8 @@ public class JSonBindingUtilsTest {
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
 		Component comp = new Component("component1");
-		comp.exportedVariables.put("test", "test");
+		comp.addExportedVariable( new ExportedVariable( "test", "test" ));
+
 		Instance inst = new Instance( "instance" ).component(comp);
 		inst.overriddenExports.put("component1.ip", "127.0.0.1");
 		inst.overriddenExports.put("any field", "some value");

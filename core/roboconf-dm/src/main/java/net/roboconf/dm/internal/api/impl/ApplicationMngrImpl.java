@@ -46,6 +46,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
@@ -70,11 +71,13 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 public class ApplicationMngrImpl implements IApplicationMngr {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Map<String,ManagedApplication> nameToManagedApplication;
+
 	private final INotificationMngr notificationMngr;
 	private final IConfigurationMngr configurationMngr;
 	private final ITargetsMngr targetsMngr;
 	private final IMessagingMngr messagingMngr;
-	private final Map<String,ManagedApplication> nameToManagedApplication;
+	private final IRandomMngr randomMngr;
 
 	private IApplicationTemplateMngr applicationTemplateMngr;
 
@@ -85,18 +88,21 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	 * @param configurationMngr
 	 * @param messagingMngr
 	 * @param targetsMngr
+	 * @param randomMngr
 	 */
 	public ApplicationMngrImpl(
 			INotificationMngr notificationMngr,
 			IConfigurationMngr configurationMngr,
-			ITargetsMngr targetMngr,
-			IMessagingMngr messagingMngr ) {
+			ITargetsMngr targetsMngr,
+			IMessagingMngr messagingMngr,
+			IRandomMngr randomMngr ) {
 		this.nameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
 
 		this.notificationMngr = notificationMngr;
 		this.configurationMngr = configurationMngr;
 		this.messagingMngr = messagingMngr;
-		this.targetsMngr = targetMngr;
+		this.targetsMngr = targetsMngr;
+		this.randomMngr = randomMngr;
 	}
 
 
@@ -156,6 +162,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		// Copy the target settings, if any
 		this.targetsMngr.copyOriginalMapping( ma.getApplication());
 
+		// Set a value to random variables, if any
+		this.randomMngr.generateAllRandomValues( ma.getApplication());
+
 		// Start listening to messages
 		this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 
@@ -210,6 +219,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 			Utils.logException( this.logger, e );
 		}
 
+		// Release random variables, if any
+		this.randomMngr.releaseAllRandomValues( ma.getApplication());
+
 		// Notify listeners
 		this.notificationMngr.application( ma.getApplication(), EventType.DELETED );
 
@@ -258,6 +270,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 				ManagedApplication ma = new ManagedApplication( app );
 				this.nameToManagedApplication.put( ma.getName(), ma );
 
+				// Restore the cache for random generation in variables
+				this.randomMngr.restoreRandomValuesCache( app );
+
 				// Start listening to messages
 				this.messagingMngr.getMessagingClient().listenToAgentMessages( ma.getApplication(), ListenerCommand.START );
 
@@ -265,7 +280,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 				ConfigurationUtils.loadApplicationBindings( app );
 
 				// Restore the instances
-				InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma, configurationDirectory );
+				InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma );
 				checkErrors( ilr.getLoadErrors(), this.logger );
 
 				ma.getApplication().getRootInstances().clear();
@@ -372,7 +387,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		this.nameToManagedApplication.put( name, ma );
 
 		// Save the instances!
-		ConfigurationUtils.saveInstances( ma, configurationDirectory );
+		ConfigurationUtils.saveInstances( ma );
 
 		this.logger.info( "Application " + name + " was successfully created from the template " + tpl + "." );
 		return ma;

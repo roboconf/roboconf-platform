@@ -29,6 +29,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -79,7 +80,7 @@ public class ComplexApplicationFactory1 {
 		Facet facetVm = new Facet( FACET_VM );
 		Facet facetDeployable = new Facet( FACET_DEPLOYABLE );
 		facetVm.addChild( facetDeployable );
-		facetVm.exportedVariables.put( Constants.SPECIFIC_VARIABLE_IP, null );
+		facetVm.addExportedVariable( new ExportedVariable( Constants.SPECIFIC_VARIABLE_IP, null ));
 
 		Component root1 = new Component( ROOT_1 ).installerName( Constants.TARGET_INSTALLER );
 		root1.associateFacet( facetVm );
@@ -91,15 +92,15 @@ public class ComplexApplicationFactory1 {
 
 		// Servers and so on...
 		Facet facetJee = new Facet( FACET_JEE );
-		facetJee.exportedVariables.put( "server-suffix", "/path" );
+		facetJee.addExportedVariable( new ExportedVariable( "server-suffix", "/path" ));
 		facetJee.extendFacet( facetDeployable );
 
 		Facet facetWeb = new Facet( FACET_WEB );
-		facetWeb.exportedVariables.put( "server-suffix", "/path" );
+		facetWeb.addExportedVariable( new ExportedVariable( "server-suffix", "/path" ));
 		facetWeb.extendFacet( facetDeployable );
 
 		Facet facetDb = new Facet( FACET_DATABASE );
-		facetDb.exportedVariables.put( "port", "3306" );
+		facetDb.addExportedVariable( new ExportedVariable( "port", "3306" ));
 		facetDb.extendFacet( facetDeployable );
 
 		Facet facetStorage = new Facet( FACET_STORAGE );
@@ -117,13 +118,13 @@ public class ComplexApplicationFactory1 {
 
 		// Add redundant variables for the MySQL type
 		Component mySql = new Component( MYSQL ).installerName( "script" );
-		mySql.exportedVariables.put( "ip", null );
-		mySql.exportedVariables.put( "port", "3306" );
+		mySql.addExportedVariable( new ExportedVariable( "ip", null ));
+		mySql.addExportedVariable( new ExportedVariable( "port", "3306" ));
 		mySql.associateFacet( facetDb );
 
 		Component mongoWithoutFacet = new Component( MONGO_DB ).installerName( "Chef" );
-		mongoWithoutFacet.exportedVariables.put( "ip", null );
-		mongoWithoutFacet.exportedVariables.put( "port", "28017" );
+		mongoWithoutFacet.addExportedVariable( new ExportedVariable( "ip", null ));
+		mongoWithoutFacet.addExportedVariable( new ExportedVariable( "port", "28017" ));
 		root1.addChild( mongoWithoutFacet );
 
 		// Applications

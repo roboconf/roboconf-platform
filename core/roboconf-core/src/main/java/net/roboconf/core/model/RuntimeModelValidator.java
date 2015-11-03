@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
@@ -40,6 +41,7 @@ import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -97,13 +99,21 @@ public final class RuntimeModelValidator {
 			errors.add( new ModelError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET, component, "Component name: " + component ));
 
 		// Check the name of exported variables
-		for( Map.Entry<String,String> entry : component.exportedVariables.entrySet()) {
-			String exportedVarName = entry.getKey();
+		for( ExportedVariable exportedVariable : component.exportedVariables.values()) {
 
+			String exportedVarName = exportedVariable.getName();
 			if( Utils.isEmptyOrWhitespaces( exportedVarName ))
 				errors.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, component, "Variable name: " + exportedVarName ));
 			else if( ! exportedVarName.matches( ParsingConstants.PATTERN_ID ))
 				errors.add( new ModelError( ErrorCode.RM_INVALID_VARIABLE_NAME, component, "Variable name: " + exportedVarName ));
+
+			if( exportedVariable.isRandom()) {
+				if( exportedVariable.getRandomKind() == null )
+					errors.add( new ModelError( ErrorCode.RM_INVALID_RANDOM_KIND, component, "Unknown kind: " + exportedVariable.getRawKind()));
+
+				if( exportedVariable.getValue() != null )
+					errors.add( new ModelError( ErrorCode.RM_NO_VALUE_FOR_RANDOM, component, "Variable name: " + exportedVariable.getName()));
+			}
 		}
 
 		// A component cannot import variables it exports unless these imports are optional.
@@ -164,8 +174,7 @@ public final class RuntimeModelValidator {
 			result.add( new ModelError( ErrorCode.RM_DOT_IS_NOT_ALLOWED, facet, "Facet name: " + facet ));
 
 		// Check the name of exported variables
-		for( Map.Entry<String,String> entry : facet.exportedVariables.entrySet()) {
-			String exportedVarName = entry.getKey();
+		for( String exportedVarName : facet.exportedVariables.keySet()) {
 
 			if( Utils.isEmptyOrWhitespaces( exportedVarName ))
 				result.add( new ModelError( ErrorCode.RM_EMPTY_VARIABLE_NAME, facet, "Variable name: " + exportedVarName ));
@@ -234,7 +243,7 @@ public final class RuntimeModelValidator {
 			for( Facet facet : ComponentHelpers.findAllFacets( component ))
 				errors.addAll( validate( facet ));
 
-			// Process the variables
+			// Process the imported variables
 			for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( component ).values()) {
 
 				// External are skipped
@@ -254,6 +263,7 @@ public final class RuntimeModelValidator {
 				importedVariableToImporters.put( importedVariableName, importers );
 			}
 
+			// Check ALL the exported variables (inherited, etc)
 			for( String exportedVariableName : ComponentHelpers.findAllExportedVariables( component ).keySet()) {
 				importedVariableNameToExported.put( exportedVariableName, Boolean.TRUE );
 
@@ -385,7 +395,19 @@ public final class RuntimeModelValidator {
 		}
 
 		// The graph(s) may define exported variables without values.
-		// So, all the variables an instance exports must have a value, except network ones (ip, ...).
+		// So, all the variables an instance exports must have a value, except network ones (ip, ...) and random ones.
+
+		// READ: it is complicated to determine whether a resolved exported variable is a random one or not.
+		// So, we use a trick. For all the random variables in the graph, we define an overridden export value.
+		// This way, we will not get a warning because of random values. Then, we remove the overridden export.
+		//
+		// This way, only non-random variables will raise errors in the validation.
+		// This solution has the GREAT advantage to also work with inheritance (!!!).
+
+		// Hack: start ("mock" random variables if no overridden export)
+		randomVariablesTrickForValidation( instance, true );
+		// Hack: stop
+
 		for( Map.Entry<String,String> entry : InstanceHelpers.findAllExportedVariables( instance ).entrySet()) {
 			String name = entry.getKey();
 			String value = entry.getValue();
@@ -395,6 +417,10 @@ public final class RuntimeModelValidator {
 					&& ! name.toLowerCase().endsWith( "." + Constants.SPECIFIC_VARIABLE_IP ))
 				errors.add( new ModelError( ErrorCode.RM_MISSING_VARIABLE_VALUE, instance, "Variable name: " + name ));
 		}
+
+		// Hack: start (restore overridden exports)
+		randomVariablesTrickForValidation( instance, false );
+		// Hack: stop
 
 		return errors;
 	}
@@ -504,5 +530,34 @@ public final class RuntimeModelValidator {
 		}
 
 		return errors;
+	}
+
+
+	/**
+	 * A trick to validate instances with random variables.
+	 * @param instance a non-null instance
+	 * @param set true to setup the trick, false to tear it down
+	 */
+	private static void randomVariablesTrickForValidation( Instance instance, boolean set ) {
+
+		final String trickValue = "@# --- #@";
+		Map<String,ExportedVariable> exportedVariables = instance.getComponent() != null
+				? instance.getComponent().exportedVariables
+				: new HashMap<String,ExportedVariable>( 0 );
+
+		for( ExportedVariable var : exportedVariables.values()) {
+			if( ! var.isRandom())
+				continue;
+
+			String overriddenExport = instance.overriddenExports.get( var.getName());
+
+			// Set and no export? => Set it.
+			if( set && overriddenExport == null )
+				instance.overriddenExports.put( var.getName(), trickValue );
+
+			// Unset and trick value? => Unset it.
+			else if( ! set && Objects.equals( trickValue, overriddenExport ))
+				instance.overriddenExports.remove( var.getName());
+		}
 	}
 }
