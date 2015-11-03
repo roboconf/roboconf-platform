@@ -33,8 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import net.roboconf.core.utils.Utils;
-
 /**
  * Program that parses a Dockerfile.
  * @author Amadou Diarra - Université Joseph Fourier
@@ -48,6 +46,7 @@ public final class DockerfileParser {
 	private DockerfileParser() {
 		// no thing
 	}
+
 
 	/**
 	 * Parses a dockerfile to a list of commands.
@@ -77,8 +76,10 @@ public final class DockerfileParser {
 		} finally {
 			Utils.closeQuietly(br);
 		}
+
 		return result;
 	}
+
 
 	/**
 	 * @author Amadou Diarra - UJF
@@ -106,12 +107,21 @@ public final class DockerfileParser {
 
 			return result;
 		}
+
+		public DockerCommandType getType() {
+			return this.type;
+		}
+
+		public String getArgument() {
+			return this.argument;
+		}
 	}
+
 
 	/**
 	 * Contains Docker commands type.
 	 */
-	enum DockerCommandType {
+	public enum DockerCommandType {
 		RUN, COPY, ADD
 	}
 }

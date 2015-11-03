@@ -26,71 +26,86 @@
 package net.roboconf.core.utils;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.List;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestUtils;
 
 /**
- * Program that tests a Dockerfile parsing.
- *
  * @author Amadou Diarra - Université Joseph Fourier
  */
 public final class DockerfileParserTest {
 
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	@Test
-	public void dockerfileToCommandListTest() throws IOException{
+	public void dockerfileToCommandListTest_1() throws Exception {
 
-		URL url = Thread.currentThread().getContextClassLoader().getResource("dockerfile");
-		URL url1 = Thread.currentThread().getContextClassLoader().getResource("dockerfile1");
-		URL url2 = Thread.currentThread().getContextClassLoader().getResource("dockerfile2");
+		File testFile = TestUtils.findTestFile( "/dockerfiles/dockerfile1" );
+		List<DockerfileParser.DockerCommand> ldc = DockerfileParser.dockerfileToCommandList( testFile );
+		Assert.assertEquals( 9, ldc.size());
 
-		File dockerfile = new File(url.getFile());
-		File dockerfile1 = new File(url1.getFile());
-		File dockerfile2 = new File(url2.getFile());
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 0 ).type );
+		Assert.assertEquals( "apt-get update", ldc.get( 0 ).argument );
 
-		List<DockerfileParser.DockerCommand> ldc = DockerfileParser.dockerfileToCommandList(dockerfile);
-		List<DockerfileParser.DockerCommand> ldc1 = DockerfileParser.dockerfileToCommandList(dockerfile1);
-		List<DockerfileParser.DockerCommand> ldc2 = DockerfileParser.dockerfileToCommandList(dockerfile2);
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 1 ).type );
+		Assert.assertEquals( "apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10", ldc.get( 1 ).argument );
 
-		Assert.assertEquals(9, ldc.size());
-		Assert.assertEquals(4, ldc1.size());
-		Assert.assertEquals(0, ldc2.size());
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 2 ).type );
+		Assert.assertEquals( "echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/mongodb.list", ldc.get( 2 ).argument );
 
-		DockerfileParser.DockerCommand c1 = ldc.get(0);
-		DockerfileParser.DockerCommand c2 = ldc.get(1);
-		DockerfileParser.DockerCommand c3 = ldc.get(2);
-		DockerfileParser.DockerCommand c4 = ldc.get(3);
-		DockerfileParser.DockerCommand c5 = ldc.get(4);
-		DockerfileParser.DockerCommand c6 = ldc1.get(0);
-		DockerfileParser.DockerCommand c7 = ldc1.get(1);
-		DockerfileParser.DockerCommand c8 = ldc1.get(3);
+		Assert.assertEquals( DockerfileParser.DockerCommandType.ADD, ldc.get( 3 ).type );
+		Assert.assertEquals( "rabbitmq-env.conf /etc/rabbitmq/rabbitmq-env.conf", ldc.get( 3 ).argument );
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c1.type);
-		Assert.assertEquals("apt-get update",c1.argument);
+		Assert.assertEquals( DockerfileParser.DockerCommandType.COPY, ldc.get( 4 ).type );
+		Assert.assertEquals( "/ttee/tree/toto.txt /usr/local/deploy/", ldc.get( 4 ).argument );
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c2.type);
-		Assert.assertEquals("apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10", c2.argument);
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 5 ).type );
+		Assert.assertEquals( "apt-get update", ldc.get( 5 ).argument );
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c3.type);
-		Assert.assertEquals("echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/mongodb.list", c3.argument);
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 6 ).type );
+		Assert.assertEquals( "apt-get install -y mongodb-10gen", ldc.get( 6 ).argument );
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.ADD, c4.type);
-		Assert.assertEquals("rabbitmq-env.conf /etc/rabbitmq/rabbitmq-env.conf", c4.argument);
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 7 ).type );
+		Assert.assertEquals( "mkdir -p /data/db", ldc.get( 7 ).argument );
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.COPY, c5.type);
-		Assert.assertEquals("/ttee/tree/toto.txt /usr/local/deploy/", c5.argument);
+		Assert.assertEquals( DockerfileParser.DockerCommandType.COPY, ldc.get( 8 ).type );
+		Assert.assertEquals( "ext1.jar /usr/local/deploy/", ldc.get( 8 ).argument );
+	}
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c6.type);
-		Assert.assertEquals("apt-get update", c6.argument);
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.RUN, c7.type);
-		Assert.assertEquals("apt-get install -y python python-pip wget", c7.argument);
+	@Test
+	public void dockerfileToCommandListTest_2() throws Exception {
 
-		Assert.assertEquals(DockerfileParser.DockerCommandType.ADD, c8.type);
-		Assert.assertEquals("hello.py /home/hello.py", c8.argument);
+		File testFile = TestUtils.findTestFile( "/dockerfiles/dockerfile2" );
+		List<DockerfileParser.DockerCommand> ldc = DockerfileParser.dockerfileToCommandList( testFile );
+		Assert.assertEquals( 4, ldc.size());
+
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 0 ).type );
+		Assert.assertEquals( "apt-get update", ldc.get( 0 ).argument );
+
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 1 ).type );
+		Assert.assertEquals( "apt-get install -y python python-pip wget", ldc.get( 1 ).argument );
+
+		Assert.assertEquals( DockerfileParser.DockerCommandType.RUN, ldc.get( 2 ).type );
+		Assert.assertEquals( "pip install Flask", ldc.get( 2 ).argument );
+
+		Assert.assertEquals( DockerfileParser.DockerCommandType.ADD, ldc.get( 3 ).type );
+		Assert.assertEquals( "hello.py /home/hello.py", ldc.get( 3 ).argument );
+	}
+
+
+	@Test
+	public void dockerfileToCommandListTest_empty() throws Exception {
+
+		File testFile = this.folder.newFile();
+		List<DockerfileParser.DockerCommand> ldc = DockerfileParser.dockerfileToCommandList( testFile );
+		Assert.assertEquals( 0, ldc.size());
 	}
 }
