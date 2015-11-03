@@ -136,6 +136,7 @@ public class ManagerTest {
 		Assert.assertNotNull( this.manager.messagingMngr());
 		Assert.assertNotNull( this.manager.notificationMngr());
 		Assert.assertNotNull( this.manager.targetsMngr());
+		Assert.assertNotNull( this.manager.commandsMngr());
 	}
 
 

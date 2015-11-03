@@ -57,6 +57,9 @@ public final class ConfigurationUtils {
 	public static final String TARGETS_HINTS_SUFFIX = ".hints.properties";
 	public static final String TARGETS_USAGE_SUFFIX = ".usage.properties";
 
+	public static final String COMMANDS_DIR = "commands";
+	public static final String COMMANDS_SUFFIX = ".command";
+
 
 	/**
 	 * Private constructor.
