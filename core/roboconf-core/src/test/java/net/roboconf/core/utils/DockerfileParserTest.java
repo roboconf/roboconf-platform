@@ -28,12 +28,12 @@ package net.roboconf.core.utils;
 import java.io.File;
 import java.util.List;
 
-import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestUtils;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestUtils;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier

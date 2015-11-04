@@ -41,7 +41,7 @@ import net.roboconf.core.model.beans.Application;
  *
  * @author Vincent Zurczak - Linagora
  */
-public interface ICommandsMangr {
+public interface ICommandsMngr {
 
 	/**
 	 * Creates a command from its instructions.
@@ -89,8 +89,9 @@ public interface ICommandsMangr {
 	 * @param app the associated application
 	 * @param commandName the command name
 	 * @return the commands content (never null)
+	 * @throws IOException if something went wrong
 	 */
-	String getCommandInstructions( Application app, String commandName );
+	String getCommandInstructions( Application app, String commandName ) throws IOException;
 
 
 	/**

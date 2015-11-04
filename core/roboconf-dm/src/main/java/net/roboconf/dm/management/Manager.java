@@ -36,6 +36,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.internal.api.impl.ApplicationTemplateMngrImpl;
+import net.roboconf.dm.internal.api.impl.CommandsMngrImpl;
 import net.roboconf.dm.internal.api.impl.ConfigurationMngrImpl;
 import net.roboconf.dm.internal.api.impl.DebugMngrImpl;
 import net.roboconf.dm.internal.api.impl.InstancesMngrImpl;
@@ -51,6 +52,7 @@ import net.roboconf.dm.internal.tasks.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.tasks.CheckerMessagesTask;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IApplicationTemplateMngr;
+import net.roboconf.dm.management.api.ICommandsMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IDebugMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
@@ -111,15 +113,18 @@ public class Manager {
 	private final InstancesMngrImpl instancesMngr;
 	private final IRandomMngr randomMngr;
 
+
 	private final IConfigurationMngr configurationMngr;
 	private final IApplicationTemplateMngr applicationTemplateMngr;
 	private final ITargetsMngr targetsMngr;
 	private final IDebugMngr debugMngr;
+	private final ICommandsMngr commandsMngr;
 
 	private final TargetHandlerResolverImpl defaultTargetHandlerResolver;
 
 	// Dirty hack
 	private final IRuleBasedEventHandler ruleBasedHandler;
+
 
 
 
@@ -139,6 +144,7 @@ public class Manager {
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
 		this.targetsMngr = new TargetsMngrImpl( this.configurationMngr );
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
+		this.commandsMngr = new CommandsMngrImpl();
 
 		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr, this.randomMngr );
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
@@ -363,6 +369,10 @@ public class Manager {
 
 	public IDebugMngr debugMngr() {
 		return this.debugMngr;
+	}
+
+	public ICommandsMngr commandsMngr() {
+		return this.commandsMngr;
 	}
 
 	/**
