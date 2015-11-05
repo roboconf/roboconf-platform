@@ -25,7 +25,6 @@
 
 package net.roboconf.target.in_memory;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -86,16 +85,14 @@ public class InMemoryHandler_mockedIPojoTest {
 		Mockito.when( this.agentFactory.createComponentInstance( Mockito.any( Dictionary.class ))).thenReturn( componentInstance );
 
 		// Create a machine and verify assertions
-		Assert.assertEquals( 0, this.handler.machineIdToCtx.size());
 		Mockito.verifyZeroInteractions( this.agentFactory );
 		Mockito.verifyZeroInteractions( componentInstance );
 
-		String machineId = this.handler.createMachine( new HashMap<String,String>( 0 ), this.msgCfg, "/VM", "my-app" );
-		Assert.assertEquals( "/VM @ my-app", machineId );
+		Map<String,String> targetProperties = new HashMap<> ();
+		targetProperties.put( InMemoryHandler.AGENT_IP_ADDRESS, "127.0.0.1" );
 
-		Assert.assertEquals( 1, this.handler.machineIdToCtx.size());
-		Assert.assertEquals( "my-app", this.handler.machineIdToCtx.get( machineId ).getValue());
-		Assert.assertEquals( "/VM", this.handler.machineIdToCtx.get( machineId ).getKey());
+		String machineId = this.handler.createMachine( targetProperties, this.msgCfg, "/VM", "my-app" );
+		Assert.assertEquals( "/VM @ my-app", machineId );
 		Mockito.verify( this.agentFactory, Mockito.times( 1 )).createComponentInstance( Mockito.any( Dictionary.class ));
 		Mockito.verify( componentInstance, Mockito.times( 1 )).start();
 	}
@@ -118,11 +115,8 @@ public class InMemoryHandler_mockedIPojoTest {
 
 		List<ComponentInstance> instances = new ArrayList<> ();
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
-		this.handler.machineIdToCtx.put( "test @ test", new AbstractMap.SimpleEntry<String,String>( "test", "test" ));
 
-		Assert.assertEquals( 1, this.handler.machineIdToCtx.size());
 		this.handler.terminateMachine( null, "test @ test" );
-		Assert.assertEquals( 0, this.handler.machineIdToCtx.size());
 		// No error, even if no iPojo instance was found (e.g. if it was killed from the Ipojo console)
 
 		Mockito.verifyZeroInteractions( this.manager );
@@ -139,11 +133,7 @@ public class InMemoryHandler_mockedIPojoTest {
 		instances.add( componentInstance );
 
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
-		this.handler.machineIdToCtx.put( "test @ test", new AbstractMap.SimpleEntry<String,String>( "test", "test" ));
-
-		Assert.assertEquals( 1, this.handler.machineIdToCtx.size());
 		this.handler.terminateMachine( null, "test @ test" );
-		Assert.assertEquals( 0, this.handler.machineIdToCtx.size());
 
 		Mockito.verify( componentInstance, Mockito.only()).getInstanceName();
 		Mockito.verifyZeroInteractions( this.manager );
@@ -162,12 +152,9 @@ public class InMemoryHandler_mockedIPojoTest {
 		instances.add( componentInstance );
 
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
-		this.handler.machineIdToCtx.put( "test @ test", new AbstractMap.SimpleEntry<String,String>( "test", "test" ));
 
 		// Execute and check
-		Assert.assertEquals( 1, this.handler.machineIdToCtx.size());
 		this.handler.terminateMachine( null, "test @ test" );
-		Assert.assertEquals( 0, this.handler.machineIdToCtx.size());
 
 		Mockito.verify( componentInstance, Mockito.times( 1 )).getInstanceName();
 		Mockito.verify( componentInstance, Mockito.times( 1 )).dispose();
@@ -187,11 +174,8 @@ public class InMemoryHandler_mockedIPojoTest {
 		instances.add( componentInstance );
 
 		Mockito.when( this.agentFactory.getInstances()).thenReturn( instances );
-		this.handler.machineIdToCtx.put(
-				componentInstance.getInstanceName(),
-				new AbstractMap.SimpleEntry<String,String>( "/" + app.getTomcatVm().getName(), app.getName()));
-
 		Mockito.when( this.manager.instancesMngr()).thenReturn( Mockito.mock( IInstancesMngr.class ));
+
 		IApplicationMngr applicationMngr = Mockito.mock( IApplicationMngr.class );
 		Mockito.when( applicationMngr.findManagedApplicationByName( Mockito.anyString())).thenReturn( new ManagedApplication( app ));
 		Mockito.when( this.manager.applicationMngr()).thenReturn( applicationMngr );
@@ -200,9 +184,7 @@ public class InMemoryHandler_mockedIPojoTest {
 		Map<String,String> targetProperties = new HashMap<>( 1 );
 		targetProperties.put( InMemoryHandler.EXECUTE_REAL_RECIPES, "true" );
 
-		Assert.assertEquals( 1, this.handler.machineIdToCtx.size());
 		this.handler.terminateMachine( targetProperties, componentInstance.getInstanceName());
-		Assert.assertEquals( 0, this.handler.machineIdToCtx.size());
 
 		Mockito.verify( componentInstance, Mockito.times( 1 )).dispose();
 		Mockito.verify( this.manager, Mockito.times( 1 )).applicationMngr();

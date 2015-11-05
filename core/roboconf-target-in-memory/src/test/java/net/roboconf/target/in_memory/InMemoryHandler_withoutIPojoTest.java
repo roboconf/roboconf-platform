@@ -135,4 +135,17 @@ public class InMemoryHandler_withoutIPojoTest {
 		targetProperties.put( InMemoryHandler.EXECUTE_REAL_RECIPES, "True" );
 		Assert.assertFalse( InMemoryHandler.simulatePlugins( targetProperties ));
 	}
+
+
+	@Test
+	public void testParseMachineId() throws Exception {
+
+		Map.Entry<String,String> entry = InMemoryHandler.parseMachineId( "/VM @ App" );
+		Assert.assertEquals( "/VM", entry.getKey());
+		Assert.assertEquals( "App", entry.getValue());
+
+		entry = InMemoryHandler.parseMachineId( " /VM/server@App 2   " );
+		Assert.assertEquals( "/VM/server", entry.getKey());
+		Assert.assertEquals( "App 2", entry.getValue());
+	}
 }

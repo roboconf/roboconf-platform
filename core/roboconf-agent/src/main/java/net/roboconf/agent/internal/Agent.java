@@ -84,6 +84,7 @@ public class Agent implements AgentMessagingInterface {
 		// Will be overridden in many cases (e.g. on IaaS with user-data).
 		try {
 			this.ipAddress = InetAddress.getLocalHost().getHostAddress();
+			this.logger.finer( "Local IP address found by the agent: " + this.ipAddress );
 
 		} catch( UnknownHostException e ) {
 			this.ipAddress = "127.0.0.1";
@@ -420,6 +421,7 @@ public class Agent implements AgentMessagingInterface {
 	 */
 	public void setIpAddress( String ipAddress ) {
 		this.ipAddress = ipAddress;
+		this.logger.finer( "New IP address set in the agent: " + ipAddress );
 	}
 
 

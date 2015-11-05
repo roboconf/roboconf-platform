@@ -126,8 +126,6 @@ public class Manager {
 	private final IRuleBasedEventHandler ruleBasedHandler;
 
 
-
-
 	/**
 	 * Constructor.
 	 */
