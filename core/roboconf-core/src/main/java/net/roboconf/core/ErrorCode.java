@@ -124,6 +124,8 @@ public enum ErrorCode {
 	RM_AMBIGUOUS_OVERRIDING( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A variable is exported in the instance but is ambiguously resolved in its component." ),
 	RM_INVALID_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable that does not exist in the graph." ),
 	RM_ALREADY_DEFINED_EXTERNAL_EXPORT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The application exports a variable more than once. This is probably a copy/paste error." ),
+	RM_INVALID_RANDOM_KIND( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component exports a variable whose value is generated randmly by Roboconf, but its type is invalid." ),
+	RM_NO_VALUE_FOR_RANDOM( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component exports a variable whose value is generated randmly by Roboconf, it cannot have a value set in the graph." ),
 
 	RM_CYCLE_IN_COMPONENTS( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A cycle was detected in the graph(s)." ),
 	RM_CYCLE_IN_COMPONENTS_INHERITANCE( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "A component directly or indirectly extends itself. Such a cycle is forbidden." ),

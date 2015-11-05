@@ -43,6 +43,7 @@ import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -221,13 +222,15 @@ public class FromGraphs {
 	private String writeExportedVariables( AbstractType type ) {
 
 		StringBuilder sb = new StringBuilder();
-		for( Iterator<Map.Entry<String,String>> it=type.exportedVariables.entrySet().iterator(); it.hasNext(); ) {
+		for( Iterator<Map.Entry<String,ExportedVariable>> it=type.exportedVariables.entrySet().iterator(); it.hasNext(); ) {
 
-			Map.Entry<String,String> entry = it.next();
+			Map.Entry<String,ExportedVariable> entry = it.next();
 			sb.append( entry.getKey());
-			if( ! Utils.isEmptyOrWhitespaces( entry.getValue())) {
+
+			String variableValue = entry.getValue().getValue();
+			if( ! Utils.isEmptyOrWhitespaces( variableValue )) {
 				sb.append( "=" );
-				sb.append( entry.getValue());
+				sb.append( variableValue );
 			}
 
 			if( it.hasNext())

@@ -36,6 +36,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -369,8 +370,10 @@ public class FromGraphDefinitionTest {
 		Assert.assertNotNull( tomcat );
 
 		Assert.assertEquals( 2, tomcat.exportedVariables.size());
-		Assert.assertEquals( "8080", tomcat.exportedVariables.get( "db.port" ));
-		Assert.assertNull( tomcat.exportedVariables.get( "db.ip" ));
+		Assert.assertNotNull( tomcat.exportedVariables.get( "db.port" ));
+		Assert.assertEquals( "8080", tomcat.exportedVariables.get( "db.port" ).getValue());
+		Assert.assertNotNull( tomcat.exportedVariables.get( "db.ip" ));
+		Assert.assertNull( tomcat.exportedVariables.get( "db.ip" ).getValue());
 
 		Component apache = ComponentHelpers.findComponent( g, "apache" );
 		Assert.assertNotNull( apache );
@@ -381,5 +384,83 @@ public class FromGraphDefinitionTest {
 
 		Assert.assertNotNull( apache.importedVariables.get( "tomcat.ip" ));
 		Assert.assertFalse( apache.importedVariables.get( "tomcat.ip" ).isOptional());
+	}
+
+
+	@Test
+	public void testComponentsWithRandomPorts() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/valid/component-with-random-ports.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs g = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+
+		// Comp1
+		Component comp1 = ComponentHelpers.findComponent( g, "comp1" );
+		Assert.assertNotNull( comp1 );
+
+		Assert.assertEquals( 2, comp1.exportedVariables.size());
+		Assert.assertNotNull( comp1.exportedVariables.get( "ip" ));
+
+		Assert.assertNotNull( comp1.exportedVariables.get( "port" ));
+		Assert.assertNull( comp1.exportedVariables.get( "port" ).getValue());
+		Assert.assertTrue( comp1.exportedVariables.get( "port" ).isRandom());
+		Assert.assertEquals( RandomKind.PORT, comp1.exportedVariables.get( "port" ).getRandomKind());
+
+		// Comp2
+		Component comp2 = ComponentHelpers.findComponent( g, "comp2" );
+		Assert.assertNotNull( comp2 );
+
+		Assert.assertEquals( 3, comp2.exportedVariables.size());
+		Assert.assertNotNull( comp2.exportedVariables.get( "ip" ));
+
+		Assert.assertNotNull( comp2.exportedVariables.get( "httpPort" ));
+		Assert.assertNull( comp2.exportedVariables.get( "httpPort" ).getValue());
+		Assert.assertTrue( comp2.exportedVariables.get( "httpPort" ).isRandom());
+		Assert.assertEquals( RandomKind.PORT, comp2.exportedVariables.get( "httpPort" ).getRandomKind());
+
+		Assert.assertNotNull( comp2.exportedVariables.get( "ajpPort" ));
+		Assert.assertNull( comp2.exportedVariables.get( "ajpPort" ).getValue());
+		Assert.assertTrue( comp2.exportedVariables.get( "ajpPort" ).isRandom());
+		Assert.assertEquals( RandomKind.PORT, comp2.exportedVariables.get( "ajpPort" ).getRandomKind());
+
+		// Comp3
+		Component comp3 = ComponentHelpers.findComponent( g, "comp3" );
+		Assert.assertNotNull( comp3 );
+
+		Assert.assertEquals( 2, comp3.exportedVariables.size());
+		Assert.assertNotNull( comp3.exportedVariables.get( "ip" ));
+
+		Assert.assertNotNull( comp3.exportedVariables.get( "ajpPort" ));
+		Assert.assertEquals( "8959", comp3.exportedVariables.get( "ajpPort" ).getValue());
+		Assert.assertFalse( comp3.exportedVariables.get( "ajpPort" ).isRandom());
+		Assert.assertNull( comp3.exportedVariables.get( "ajpPort" ).getRandomKind());
+	}
+
+
+	@Test
+	public void testComponentsWithInvalidRandomPorts() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/component-with-invalid-random-port.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs g = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Component comp2 = ComponentHelpers.findComponent( g, "comp2" );
+		Assert.assertNotNull( comp2 );
+
+		Assert.assertEquals( 3, comp2.exportedVariables.size());
+		Assert.assertNotNull( comp2.exportedVariables.get( "ip" ));
+
+		Assert.assertNotNull( comp2.exportedVariables.get( "httpPort" ));
+		Assert.assertNull( comp2.exportedVariables.get( "httpPort" ).getValue());
+		Assert.assertTrue( comp2.exportedVariables.get( "httpPort" ).isRandom());
+		Assert.assertEquals( RandomKind.PORT, comp2.exportedVariables.get( "httpPort" ).getRandomKind());
+
+		Assert.assertNotNull( comp2.exportedVariables.get( "ajpPort" ));
+		Assert.assertNull( comp2.exportedVariables.get( "ajpPort" ).getValue());
+		Assert.assertTrue( comp2.exportedVariables.get( "ajpPort" ).isRandom());
+		Assert.assertNull( comp2.exportedVariables.get( "ajpPort" ).getRandomKind());
 	}
 }

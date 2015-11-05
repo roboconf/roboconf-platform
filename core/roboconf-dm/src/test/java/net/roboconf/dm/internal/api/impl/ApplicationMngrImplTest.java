@@ -43,6 +43,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
@@ -89,6 +90,7 @@ public class ApplicationMngrImplTest {
 
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 
 		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
 		this.dmClientMock = Mockito.mock( IDmClient.class );
@@ -96,7 +98,7 @@ public class ApplicationMngrImplTest {
 
 		this.configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		this.applicationTemplateMngr = Mockito.mock( IApplicationTemplateMngr.class );
-		this.mngr = new ApplicationMngrImpl( notificationMngr, this.configurationMngr, targetsMngr, this.messagingMngr );
+		this.mngr = new ApplicationMngrImpl( notificationMngr, this.configurationMngr, targetsMngr, this.messagingMngr, randomMngr );
 		this.mngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 
 		this.dmDirectory = this.folder.newFolder();

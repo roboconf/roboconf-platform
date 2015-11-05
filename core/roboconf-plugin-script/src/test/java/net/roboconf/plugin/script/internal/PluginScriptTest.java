@@ -41,7 +41,6 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
-import net.roboconf.plugin.script.internal.PluginScript;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -368,17 +367,6 @@ public class PluginScriptTest {
 		Assert.assertFalse( OUTPUT_DIR.exists());
 		this.plugin.start( this.inst );
 		Assert.assertFalse( OUTPUT_DIR.exists());
-	}
-
-
-	@Test
-	public void testSetScriptsExecutableOnFile() throws Exception {
-
-		File f = this.folder.newFile();
-		Assert.assertFalse( f.canExecute());
-
-		this.plugin.setScriptsExecutable( f );
-		Assert.assertFalse( f.canExecute());
 	}
 
 

@@ -1,0 +1,15 @@
+
+comp1 {
+	installer: target;
+	exports: ip, random[port] port;
+}
+
+comp2 {
+	installer: target;
+	exports: ip, random[port] httpPort, Random[PORT] ajpPort;
+}
+
+comp3 {
+	installer: target;
+	exports: ip, ajpPort = 8959;
+}

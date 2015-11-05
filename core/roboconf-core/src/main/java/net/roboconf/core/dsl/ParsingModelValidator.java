@@ -32,6 +32,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
@@ -252,11 +254,17 @@ public final class ParsingModelValidator {
 
 		} else if( ParsingConstants.PROPERTY_GRAPH_EXPORTS.equals( name )) {
 			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
-				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( s );
+
+				String variableDecl = s;
+				Matcher m = Pattern.compile( ParsingConstants.PROPERTY_GRAPH_RANDOM_PATTERN, Pattern.CASE_INSENSITIVE ).matcher( s );
+				if( m.find())
+					variableDecl = m.group( 2 ).trim();
+
+				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( variableDecl );
 				if( Utils.isEmptyOrWhitespaces( entry.getKey()))
 					result.add( new ParsingError( ErrorCode.PM_EMPTY_VARIABLE_NAME, block.getFile(), line ));
 				else if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
-					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, s ));
+					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, variableDecl ));
 			}
 
 
@@ -268,13 +276,13 @@ public final class ParsingModelValidator {
 			// nothing
 
 		} else if( ParsingConstants.PROPERTY_INSTANCE_CHANNELS.equals( name )) {
-			// TODO: what is expected?
+			// nothing for the moment
 
 		} else if( ParsingConstants.PROPERTY_INSTANCE_DATA.equals( name )) {
-			// TODO: validate it?
+			// nothing
 
 		} else if( ParsingConstants.PROPERTY_INSTANCE_STATE.equals( name )) {
-			// TODO: validate it?
+			// nothing
 
 		} else if( ParsingConstants.PROPERTY_INSTANCE_COUNT.equals( name )) {
 			int count = -1;

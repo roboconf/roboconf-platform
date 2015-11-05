@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.AbstractMap;
@@ -500,7 +501,8 @@ public final class Utils {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-	static final class FileNameComparator implements Comparator<File> {
+	static final class FileNameComparator implements Serializable, Comparator<File> {
+		private static final long serialVersionUID = -4671366958457961589L;
 
 		@Override
 		public int compare( File o1, File o2 ) {

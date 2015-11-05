@@ -37,6 +37,7 @@ import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IConfigurationMngr;
@@ -90,6 +91,7 @@ public class InstancesMngrImplTest {
 		// Prepare stuff
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
@@ -97,7 +99,7 @@ public class InstancesMngrImplTest {
 		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
 		configurationMngr.setWorkingDirectory( this.folder.newFolder());
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, configurationMngr, notificationMngr, targetsMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver());
 
 		TestApplication app = new TestApplication();
@@ -162,6 +164,7 @@ public class InstancesMngrImplTest {
 		// Prepare stuff
 		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		Mockito.when( messagingMngr.getMessagingClient()).thenReturn( Mockito.mock( IDmClient.class ));
@@ -176,7 +179,7 @@ public class InstancesMngrImplTest {
 				Mockito.anyString(),
 				Mockito.anyString())).thenThrow( new TargetException( "for test" ));
 
-		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, configurationMngr, notificationMngr, targetsMngr );
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
 		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
 			@Override
 			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {

@@ -33,6 +33,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.internal.api.impl.ApplicationTemplateMngrImpl;
 import net.roboconf.dm.internal.api.impl.CommandsMngrImpl;
@@ -41,6 +42,7 @@ import net.roboconf.dm.internal.api.impl.DebugMngrImpl;
 import net.roboconf.dm.internal.api.impl.InstancesMngrImpl;
 import net.roboconf.dm.internal.api.impl.MessagingMngrImpl;
 import net.roboconf.dm.internal.api.impl.NotificationMngrImpl;
+import net.roboconf.dm.internal.api.impl.RandomMngrImpl;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.api.impl.TargetsMngrImpl;
 import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
@@ -109,6 +111,7 @@ public class Manager {
 	private final MessagingMngrImpl messagingMngr;
 	private final ApplicationMngrImpl applicationMngr;
 	private final InstancesMngrImpl instancesMngr;
+	private final IRandomMngr randomMngr;
 
 
 	private final IConfigurationMngr configurationMngr;
@@ -135,17 +138,19 @@ public class Manager {
 		// We do not want to mix N frameworks.
 		this.notificationMngr = new NotificationMngrImpl();
 		this.configurationMngr = new ConfigurationMngrImpl();
+		this.randomMngr = new RandomMngrImpl();
+
 		this.messagingMngr = new MessagingMngrImpl();
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
 		this.targetsMngr = new TargetsMngrImpl( this.configurationMngr );
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
 		this.commandsMngr = new CommandsMngrImpl();
 
-		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr );
+		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr, this.randomMngr );
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
 		this.applicationMngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 
-		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.configurationMngr, this.notificationMngr, this.targetsMngr );
+		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 
 		// FIXME: to update once we have the commands API

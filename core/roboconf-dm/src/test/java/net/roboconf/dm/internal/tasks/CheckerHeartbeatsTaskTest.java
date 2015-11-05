@@ -30,6 +30,7 @@ import java.util.Map;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
@@ -61,8 +62,9 @@ public class CheckerHeartbeatsTaskTest {
 		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
 
-		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, messagingMngr );
+		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, messagingMngr, randomMngr );
 		this.nameToManagedApplication = TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class );
 	}
 

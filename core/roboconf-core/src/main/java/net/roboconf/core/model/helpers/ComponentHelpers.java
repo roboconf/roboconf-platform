@@ -40,6 +40,7 @@ import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
@@ -246,11 +247,12 @@ public final class ComponentHelpers {
 
 				// If a variable name already exists from the inherited one, we can directly override it.
 				// Otherwise, we may have to update the variable prefix.
-				for( Map.Entry<String,String> var : f.exportedVariables.entrySet()) {
+				for( Map.Entry<String,ExportedVariable> var : f.exportedVariables.entrySet()) {
+					String value = var.getValue().getValue();
 					if( localExportedVariables.containsKey( var.getKey()))
-						localExportedVariables.put( var.getKey(), var.getValue());
+						localExportedVariables.put( var.getKey(), value );
 					else
-						localExportedVariables.put( fixVariableName( f, var.getKey()), var.getValue());
+						localExportedVariables.put( fixVariableName( f, var.getKey()), value );
 				}
 
 				facetToResolvedExports.put( f, localExportedVariables );
@@ -784,15 +786,16 @@ public final class ComponentHelpers {
 
 		// Handle current variables
 		Map<String,String> newVariables = new HashMap<> ();
-		for( Map.Entry<String,String> entry : component.exportedVariables.entrySet()) {
+		for( Map.Entry<String,ExportedVariable> entry : component.exportedVariables.entrySet()) {
 
 			// If a variable name already exists from the inherited one, we can directly override it.
+			String variableValue = entry.getValue().getValue();
 			if( result.containsKey( entry.getKey()))
-				newVariables.put( entry.getKey(), entry.getValue());
+				newVariables.put( entry.getKey(), variableValue );
 
 			// Or it is a new value
 			else
-				newVariables.put( fixVariableName( component, entry.getKey()), entry.getValue());
+				newVariables.put( fixVariableName( component, entry.getKey()), variableValue );
 
 			// Override inherited variables.
 			// If the component exports a and that its inherits Alpha.a, then we should
@@ -800,7 +803,7 @@ public final class ComponentHelpers {
 			for( String inheritedName : result.keySet()) {
 				String nameSuffix = VariableHelpers.parseVariableName( inheritedName ).getValue();
 				if( entry.getKey().equals( nameSuffix ))
-					newVariables.put( inheritedName, entry.getValue());
+					newVariables.put( inheritedName, variableValue );
 			}
 		}
 

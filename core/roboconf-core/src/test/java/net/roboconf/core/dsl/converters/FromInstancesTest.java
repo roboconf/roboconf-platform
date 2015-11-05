@@ -42,6 +42,7 @@ import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -169,8 +170,8 @@ public class FromInstancesTest {
 		// Parse
 		Component vmComponent = new Component( "VM" ).installerName( "target" );
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.exportedVariables.put( "tomcat.ip", null );
-		tomcatComponent.exportedVariables.put( "tomcat.port", "8080" );
+		tomcatComponent.addExportedVariable( new ExportedVariable( "tomcat.ip", null ));
+		tomcatComponent.addExportedVariable( new ExportedVariable( "tomcat.port", "8080" ));
 
 		vmComponent.addChild( tomcatComponent );
 		Graphs graphs = new Graphs();
@@ -201,8 +202,8 @@ public class FromInstancesTest {
 		graphs.getRootComponents().add( vmComponent );
 
 		Component tomcatComponent = new Component( "Tomcat" ).installerName( "puppet" );
-		tomcatComponent.exportedVariables.put( "Tomcat.ip", null );
-		tomcatComponent.exportedVariables.put( "Tomcat.port", "8080" );
+		tomcatComponent.addExportedVariable( new ExportedVariable( "Tomcat.ip", null ));
+		tomcatComponent.addExportedVariable( new ExportedVariable( "Tomcat.port", "8080" ));
 		vmComponent.addChild( tomcatComponent );
 
 		Component warComponent = new Component( "WAR" ).installerName( "script" );

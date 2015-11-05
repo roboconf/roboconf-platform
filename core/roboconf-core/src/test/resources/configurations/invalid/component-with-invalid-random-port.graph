@@ -1,0 +1,5 @@
+
+comp2 {
+	installer: target;
+	exports: ip, random[port] httpPort, random[string] ajpPort;
+}
