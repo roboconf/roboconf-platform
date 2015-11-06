@@ -73,7 +73,7 @@
 		<dependency>
 			<groupId>com.sun.mail</groupId>
 			<artifactId>javax.mail</artifactId>
-			<version>1.5.2</version>
+			<version>${javax.mail.version}</version>
 		</dependency>
 
 		<dependency>
@@ -131,13 +131,19 @@
 					<instructions>
 						<Import-Package>
 							net.roboconf.*;version="${version.range}",
+							javax.*
 						</Import-Package>
 						<Export-Package>
 							!net.roboconf.dm.internal.*,
 							net.roboconf.dm.*
 						</Export-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
-						<Embed-Transitive>true</Embed-Transitive>
+						
+						<!-- The DM should not embed any dependencies. -->
+						<!-- 
+							Those that are not provided will have to be deployed with
+							the "wrap" protocol in the DM's Karaf feature.
+						 -->
+						
 					</instructions>
 				</configuration>
 			</plugin>
