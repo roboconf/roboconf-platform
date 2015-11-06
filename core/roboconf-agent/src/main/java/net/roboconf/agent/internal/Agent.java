@@ -84,6 +84,7 @@ public class Agent implements AgentMessagingInterface {
 		// Will be overridden in many cases (e.g. on IaaS with user-data).
 		try {
 			this.ipAddress = InetAddress.getLocalHost().getHostAddress();
+			this.logger.finer( "Local IP address found by the agent: " + this.ipAddress );
 
 		} catch( UnknownHostException e ) {
 			this.ipAddress = "127.0.0.1";
@@ -106,7 +107,7 @@ public class Agent implements AgentMessagingInterface {
 		this.messagingClient = new ReconfigurableClientAgent();
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
 		this.messagingClient.associateMessageProcessor( messageProcessor );
-		
+
 		// Do we need to override properties with user data?
 		if( Utils.isEmptyOrWhitespaces( this.targetId )) {
 			this.logger.warning( "No target ID was specified in the agent configuration. No user data will be retrieved." );
@@ -141,11 +142,13 @@ public class Agent implements AgentMessagingInterface {
 						System.getProperty("karaf.etc"),
 						props.getMessagingConfiguration(),
 						this.messagingType);
+
 				} catch(IOException e) {
 					this.logger.severe("Error in messaging reconfiguration from user data: " + e);
 				}
 			}
 		}
+
 		reconfigure();
 
 		TimerTask timerTask = new HeartbeatTask( this );
@@ -418,6 +421,7 @@ public class Agent implements AgentMessagingInterface {
 	 */
 	public void setIpAddress( String ipAddress ) {
 		this.ipAddress = ipAddress;
+		this.logger.finer( "New IP address set in the agent: " + ipAddress );
 	}
 
 

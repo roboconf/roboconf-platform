@@ -33,18 +33,26 @@
 		<callback transition="validate" method="start"/>
 		<callback transition="invalidate" method="stop"/>
 		
+		<requires aggregate="true" optional="true">
+			<callback type="bind" method="pluginAppears"/>
+			<callback type="unbind" method="pluginDisappears"/>
+			<callback type="modified" method="pluginWasModified"/>
+		</requires>
+		
 		<properties updated="reconfigure" pid="net.roboconf.agent-in-memory.configuration">
 		
 			<!-- Values that will be set by the IaaS in memory -->
 			<property name="messaging-type" method="setMessagingType" />
 			<property name="application-name" method="setApplicationName" />
 			<property name="scoped-instance-path" method="setScopedInstancePath" />
+			<property name="ip-address-of-the-agent" method="setIpAddress" />
 			
 			<!-- Predefined Values -->
-			<property name="ip-address-of-the-agent" method="setIpAddress" value="localhost" />
 			<property name="target-id" method="setTargetId" value="in-memory" />
 			<property name="override-properties-with-user-data" method="setOverrideProperties" value="false" />
 			<property name="simulate-plugins" method="setSimulatePlugins" value="true" />
 		</properties>
+		
+		<!-- This agent does not expose ANY service -->
 	</component>
 </ipojo>
