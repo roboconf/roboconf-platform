@@ -40,7 +40,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
@@ -262,7 +262,7 @@ public class InMemoryHandler implements TargetHandler {
 
 		// Reconfigure the messaging factory.
 		final String messagingType = messagingConfiguration.get("net.roboconf.messaging.type");
-		MessagingClientFactory messagingFactory = this.registry.getMessagingClientFactory(messagingType);
+		IMessagingClientFactory messagingFactory = this.registry.getMessagingClientFactory(messagingType);
 		if (messagingFactory != null)
 			messagingFactory.setConfiguration(messagingConfiguration);
 

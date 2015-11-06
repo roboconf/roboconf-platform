@@ -35,10 +35,9 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 /**
  * A service that allows to create Roboconf messaging clients.
- *
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public interface MessagingClientFactory {
+public interface IMessagingClientFactory {
 
 	/**
 	 * Service property indicating the type of messaging this factory provides.
@@ -78,5 +77,4 @@ public interface MessagingClientFactory {
 	 * @return {@code true} if the configuration has been successfully applied, {@code false} otherwise.
 	 */
 	boolean setConfiguration(Map<String, String> configuration);
-
 }

@@ -32,7 +32,7 @@ import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.client.ListenerCommand;
-import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.dismiss.DismissClientDm;
 import net.roboconf.messaging.api.messages.Message;
@@ -53,7 +53,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 		IDmClient client = null;
 		MessagingClientFactoryRegistry registry = getRegistry();
 		if (registry != null) {
-			MessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
+			IMessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
 			if (factory != null) {
 				client = factory.createDmClient(this);
 			}

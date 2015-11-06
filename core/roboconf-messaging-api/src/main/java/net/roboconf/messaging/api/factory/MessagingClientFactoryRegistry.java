@@ -30,11 +30,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
-import org.apache.felix.ipojo.annotations.Bind;
-import org.apache.felix.ipojo.annotations.Component;
-import org.apache.felix.ipojo.annotations.Instantiate;
-import org.apache.felix.ipojo.annotations.Provides;
-import org.apache.felix.ipojo.annotations.Unbind;
 
 /**
  * A registry for {@link MessagingClientFactoryRegistry} objects.
@@ -47,15 +42,12 @@ import org.apache.felix.ipojo.annotations.Unbind;
  *
  * @author Pierre Bourret - Université Joseph Fourier
  */
-@Component(name = "roboconf-messaging-client-factory-registry", publicFactory = false)
-@Provides(specifications = MessagingClientFactoryRegistry.class)
-@Instantiate(name = "Roboconf Messaging Client Factory Registry")
 public class MessagingClientFactoryRegistry {
 
 	/**
 	 * The messaging client factories.
 	 */
-	private final ConcurrentHashMap<String, MessagingClientFactory> factories = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, IMessagingClientFactory> factories = new ConcurrentHashMap<>();
 
 	/**
 	 * The messaging client factory listeners.
@@ -71,8 +63,8 @@ public class MessagingClientFactoryRegistry {
 	 * @return the messaging client factory with the given type, or {@code null} if there is no registered factory
 	 * with the given type.
 	 */
-	public MessagingClientFactory getMessagingClientFactory(String type) {
-		final MessagingClientFactory result;
+	public IMessagingClientFactory getMessagingClientFactory(String type) {
+		final IMessagingClientFactory result;
 		if (type != null) {
 			result = this.factories.get(type);
 		} else {
@@ -86,8 +78,7 @@ public class MessagingClientFactoryRegistry {
 	 * @param factory the messaging client factory to add.
 	 * @return {@code true} if the factory has been added, {@code false} if a factory with the same type was already registered.
 	 */
-	@Bind(id = "messagingClientFactories", aggregate = true, optional = true)
-	public boolean addMessagingClientFactory(MessagingClientFactory factory) {
+	public boolean addMessagingClientFactory(IMessagingClientFactory factory) {
 		final String type = factory.getType();
 		this.logger.fine("Adding messaging client factory: " + type);
 		final boolean result = this.factories.putIfAbsent(type, factory) == null;
@@ -102,8 +93,7 @@ public class MessagingClientFactoryRegistry {
 	 * @param factory the messaging client factory to remove.
 	 * @return {@code true} if the factory has been removed, {@code false} if the factory was not registered.
 	 */
-	@Unbind(id = "messagingClientFactories")
-	public boolean removeMessagingClientFactory(MessagingClientFactory factory) {
+	public boolean removeMessagingClientFactory(IMessagingClientFactory factory) {
 		final String type = factory.getType();
 		this.logger.fine("Removing messaging client factory: " + type);
 		final boolean result = this.factories.remove(type, factory);
@@ -116,7 +106,7 @@ public class MessagingClientFactoryRegistry {
 	/**
 	 * Adds the given messaging client factory listener.
 	 * <p>
-	 * The given listener will begin to be notified of the {@code MessagingClientFactory}-related events.
+	 * The given listener will begin to be notified of the {@code IMessagingClientFactory}-related events.
 	 * </p>
 	 * @param listener the listener to add.
 	 */
@@ -127,7 +117,7 @@ public class MessagingClientFactoryRegistry {
 	/**
 	 * Removes the given messaging client factory listener.
 	 * <p>
-	 * The given listener will stop to be notified of the {@code MessagingClientFactory}-related events.
+	 * The given listener will stop to be notified of the {@code IMessagingClientFactory}-related events.
 	 * </p>
 	 * @param listener the listener to remove.
 	 */
@@ -140,7 +130,7 @@ public class MessagingClientFactoryRegistry {
 	 * @param factory the incoming/outgoing messaging client factory.
 	 * @param isAdded flag indicating whether the factory has been added or removed.
 	 */
-	private void notifyListeners(MessagingClientFactory factory, boolean isAdded) {
+	private void notifyListeners(IMessagingClientFactory factory, boolean isAdded) {
 		for (MessagingClientFactoryListener listener : this.listeners) {
 			try {
 				if (isAdded) {

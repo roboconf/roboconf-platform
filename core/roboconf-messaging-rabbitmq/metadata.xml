@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+	
+	<!-- A component for the RabbitMQ factory (messaging implementation) -->
+	<component classname="net.roboconf.messaging.rabbitmq.internal.RabbitMqClientFactory" name="roboconf-messaging-client-factory-rabbitmq" public="false">
+		<provides>
+			<!-- Static property: not attached to a field or method. -->
+			<property name="net.roboconf.messaging" value="rabbitmq" type="java.lang.String" />
+		</provides>
+		
+		<callback transition="invalidate" method="stop"/>
+		<properties pid="net.roboconf.messaging.rabbitmq" updated="reconfigure">
+			<property name="net.roboconf.messaging.rabbitmq.server.ip" method="setMessageServerIp" value="localhost" />
+			<property name="net.roboconf.messaging.rabbitmq.server.username" method="setMessageServerUsername" value="guest" />
+			<property name="net.roboconf.messaging.rabbitmq.server.password" method="setMessageServerPassword" value="guest" />
+		</properties>
+	</component>
+	
+	<!-- And the instance... -->
+	<instance component="roboconf-messaging-client-factory-rabbitmq" name="Factory for Roboconf's RabbitMQ Messaging Clients" />
+</ipojo>
