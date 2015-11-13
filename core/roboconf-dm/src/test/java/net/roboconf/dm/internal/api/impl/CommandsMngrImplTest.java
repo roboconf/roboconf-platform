@@ -27,15 +27,15 @@ package net.roboconf.dm.internal.api.impl;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier
@@ -53,26 +53,25 @@ public class CommandsMngrImplTest{
 	public void createMockObject() throws IOException {
 		this.a1 = new TestApplication();
 		this.cmdMngr = new CommandsMngrImpl();
-		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions( a1, ""));
+		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions( this.a1, ""));
 	}
 
 
 	@Test
-	public void CommandsTest() throws IOException {
+	public void commandsTest() throws IOException {
 
-		a1.directory(this.folder.newFolder());
+		this.a1.directory( this.folder.newFolder());
 		File f1 = this.folder.newFile();
 		Utils.writeStringInto("Bonjour le monde cruel", f1);
 
-		this.cmdMngr.createCommand(a1,"toto","This is a command");
-		Assert.assertEquals("This is a command", this.cmdMngr.getCommandInstructions(a1, "toto"));
-		this.cmdMngr.createCommand(a1,"tata",f1);
-		Assert.assertEquals("Bonjour le monde cruel", this.cmdMngr.getCommandInstructions(a1, "tata"));
+		this.cmdMngr.createOrUpdateCommand(this.a1,"toto","This is a command");
+		Assert.assertEquals("This is a command", this.cmdMngr.getCommandInstructions(this.a1, "toto"));
+		this.cmdMngr.createCommand(this.a1,"tata",f1);
+		Assert.assertEquals("Bonjour le monde cruel", this.cmdMngr.getCommandInstructions(this.a1, "tata"));
 
-
-		this.cmdMngr.updateCommand( a1, "toto", "Good command");
-		Assert.assertEquals( "Good command", this.cmdMngr.getCommandInstructions(a1, "toto"));
-		this.cmdMngr.deleteCommand( a1, "tata");
-		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions(a1, "tata"));
+		this.cmdMngr.createOrUpdateCommand( this.a1, "toto", "Good command");
+		Assert.assertEquals( "Good command", this.cmdMngr.getCommandInstructions(this.a1, "toto"));
+		this.cmdMngr.deleteCommand( this.a1, "tata");
+		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions(this.a1, "tata"));
 	}
 }

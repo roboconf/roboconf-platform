@@ -55,22 +55,18 @@ public class ApplicationCommandsResource implements IApplicationCommandsResource
 		this.manager = manager;
 	}
 
+
 	@Override
 	public Response createOrUpdateCommand(String app, String commandName, String commandText) {
+
 		this.logger.fine("Create or update command "+commandName+" in "+app+" application");
 		Response response = Response.ok().build();
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
-			if( ma == null ) {
+			if( ma == null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + app + " does not exist." ).build();
-			} else {
-				String cmd = this.manager.commandsMngr().getCommandInstructions( ma.getApplication(), commandName);
-				if(cmd.isEmpty()) {
-					this.manager.commandsMngr().createCommand(ma.getApplication(), commandName, commandText);
-				} else {
-					this.manager.commandsMngr().updateCommand(ma.getApplication(), commandName, commandText);
-				}
-			}
+			else
+				this.manager.commandsMngr().createOrUpdateCommand( ma.getApplication(), commandName, commandText );
 
 		} catch( Exception e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
@@ -82,40 +78,41 @@ public class ApplicationCommandsResource implements IApplicationCommandsResource
 
 	@Override
 	public Response deleteCommand(String app, String commandName) {
+
 		this.logger.fine("Delete the command "+commandName);
 		Response response = Response.ok().build();
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
-			if( ma==null ) {
+			if( ma==null )
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + app + " does not exist." ).build();
-			} else {
+			else
 				this.manager.commandsMngr().deleteCommand( ma.getApplication(), commandName );
-			}
 
 		} catch( IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
 		}
+
 		return response;
 	}
 
 
 	@Override
 	public Response getCommandInstructions(String app, String commandName) {
+
 		this.logger.fine("Get instructions contained in "+commandName);
-		String res="";
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
-			res = this.manager.commandsMngr().getCommandInstructions( ma.getApplication(), commandName);
-			if(res.isEmpty()) {
+			String res = this.manager.commandsMngr().getCommandInstructions( ma.getApplication(), commandName);
+			if( res.isEmpty())
 				response = Response.status( Status.NO_CONTENT ).build();
-			} else {
+			else
 				response = Response.ok(res).build();
-			}
 
 		} catch( IOException e ) {
 			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
 		}
+
 		return response;
 	}
 }

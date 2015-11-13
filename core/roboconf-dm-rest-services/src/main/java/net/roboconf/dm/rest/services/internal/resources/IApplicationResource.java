@@ -41,7 +41,7 @@ import javax.ws.rs.core.Response;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.targets.TargetAssociation;
+import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**

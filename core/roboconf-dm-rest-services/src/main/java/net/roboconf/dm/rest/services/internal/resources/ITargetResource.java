@@ -37,8 +37,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import net.roboconf.core.model.targets.TargetUsageItem;
-import net.roboconf.core.model.targets.TargetWrapperDescriptor;
+import net.roboconf.core.model.runtime.TargetUsageItem;
+import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**

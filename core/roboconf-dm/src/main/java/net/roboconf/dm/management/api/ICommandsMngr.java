@@ -44,14 +44,14 @@ import net.roboconf.core.model.beans.Application;
 public interface ICommandsMngr {
 
 	/**
-	 * Creates a command from its instructions.
+	 * Creates or updates a command from its instructions.
 	 * @param app the associated application
 	 * @param commandName the command name (must be unique)
 	 * @param commandText the instructions contained in the command (must be valid)
 	 * @throws IOException if something went wrong
 	 * @see #validate(String)
 	 */
-	void createCommand( Application app, String commandName, String commandText ) throws IOException;
+	void createOrUpdateCommand( Application app, String commandName, String commandText ) throws IOException;
 
 
 	/**
@@ -72,16 +72,6 @@ public interface ICommandsMngr {
 	 * @throws IOException if something went wrong
 	 */
 	void deleteCommand( Application app, String commandName ) throws IOException;
-
-
-	/**
-	 * Updates the instructions of a command.
-	 * @param app the associated application
-	 * @param commandName the command name
-	 * @param commandText the new command instructions (must be valid)
-	 * @throws IOException if something went wrong
-	 */
-	void updateCommand( Application app, String commandName, String commandText ) throws IOException;
 
 
 	/**

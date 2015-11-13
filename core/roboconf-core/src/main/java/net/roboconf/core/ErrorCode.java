@@ -171,6 +171,24 @@ public enum ErrorCode {
 	REC_AVOID_INSTANCES( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects do not have to contain instances definitions." ),
 
 	// Execution Errors
+	EXEC_CMD_INVALID_TARGET_ID( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "An invalid target ID was specified in the command." ),
+	EXEC_CMD_NO_MATCHING_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "No instance was found. A command was probably not written correctly." ),
+	EXEC_CMD_NOT_A_SCOPED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "An instance was supposed to be associated with the 'target' installer." ),
+	EXEC_CMD_NOT_A_ROOT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "This instruction can only be applied to root instances (no parent)." ),
+	EXEC_CMD_TARGET_WAS_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "No target was found with this ID." ),
+	EXEC_CMD_UNRECOGNIZED_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "No instruction was recognized." ),
+	EXEC_CMD_INVALID_INSTANCE_STATUS( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "An instance status was expected." ),
+	EXEC_CMD_INSTABLE_INSTANCE_STATUS( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "Instance status changes are only valid with stable statuses." ),
+	EXEC_CMD_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "Variables in Roboconf commands must have a name." ),
+	EXEC_CMD_MISSING_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "An instance name was expected." ),
+	EXEC_CMD_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "Instance names must respect the following pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
+	EXEC_CMD_MISSING_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "A component name was expected in the command." ),
+	EXEC_CMD_INEXISTING_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "The component referenced in the command does not exist in the graph." ),
+	EXEC_CMD_MISSING_PARENT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "A parent instance path was expected in the command." ),
+	EXEC_CMD_CONFLICTING_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "A sibling instance with this name already exists." ),
+	EXEC_CMD_APPLIABLE_TO_NOT_DEPLOYED_ONLY( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "This instruction can only be applied to 'not deployed' instances." ),
+	EXEC_CMD_EMAIL_NO_RECIPIENTS( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "E-mail recipients were not specified." ),
+	EXEC_CMD_EMAIL_NO_MESSAGE( ErrorLevel.SEVERE, ErrorCategory.EXECUTION, "The e-mail message cannot be empty." ),
 	;
 
 

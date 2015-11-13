@@ -38,9 +38,9 @@ import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.model.targets.TargetAssociation;
-import net.roboconf.core.model.targets.TargetUsageItem;
-import net.roboconf.core.model.targets.TargetWrapperDescriptor;
+import net.roboconf.core.model.runtime.TargetAssociation;
+import net.roboconf.core.model.runtime.TargetUsageItem;
+import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 

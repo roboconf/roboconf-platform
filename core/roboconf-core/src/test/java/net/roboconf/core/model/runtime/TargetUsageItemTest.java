@@ -23,9 +23,10 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.targets;
+package net.roboconf.core.model.runtime;
 
 import junit.framework.Assert;
+import net.roboconf.core.model.runtime.TargetUsageItem;
 
 import org.junit.Test;
 

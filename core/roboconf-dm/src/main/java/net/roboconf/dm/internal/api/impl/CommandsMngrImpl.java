@@ -27,6 +27,7 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -38,52 +39,45 @@ import net.roboconf.dm.management.api.ICommandsMngr;
 public class CommandsMngrImpl implements ICommandsMngr{
 
 	@Override
-	public void createCommand( Application app, String commandName, String commandText ) throws IOException{
+	public void createOrUpdateCommand( Application app, String commandName, String commandText ) throws IOException {
 
-		File appDir = app.getDirectory();
-		File cmdDir = new File(appDir,ConfigurationUtils.COMMANDS_DIR);
+		File cmdDir = new File( app.getDirectory(),ConfigurationUtils.COMMANDS_DIR );
 		Utils.createDirectory(cmdDir);
+
 		File cmd = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
 		Utils.writeStringInto(commandText, cmd);
 	}
 
 
 	@Override
-	public void createCommand( Application app, String commandName, File commandFile ) throws IOException{
+	public void createCommand( Application app, String commandName, File commandFile ) throws IOException {
 
-		File appDir = app.getDirectory();
-		File cmdDir = new File(appDir,ConfigurationUtils.COMMANDS_DIR);
+		File cmdDir = new File( app.getDirectory(), ConfigurationUtils.COMMANDS_DIR );
 		Utils.createDirectory(cmdDir);
+
 		File cmd = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
 		Utils.copyStream(commandFile, cmd);
 	}
 
 
 	@Override
-	public void deleteCommand( Application app, String commandName ) throws IOException{
+	public void deleteCommand( Application app, String commandName ) throws IOException {
 
-		File appDir = app.getDirectory();
-		File cmdDir = new File(appDir,ConfigurationUtils.COMMANDS_DIR);
+		File cmdDir = new File( app.getDirectory(),ConfigurationUtils.COMMANDS_DIR );
 		File cmdDel = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
 		Utils.deleteFilesRecursively(cmdDel);
 	}
 
 
 	@Override
-	public void updateCommand( Application app, String commandName, String commandText ) throws IOException{
-		createCommand(app,commandName,commandText);
-	}
+	public String getCommandInstructions( Application app, String commandName ) throws IOException {
 
-
-	@Override
-	public String getCommandInstructions( Application app, String commandName ) throws IOException{
-		File appDir = app.getDirectory();
-		File cmdDir = new File(appDir,ConfigurationUtils.COMMANDS_DIR);
+		File cmdDir = new File( app.getDirectory(),ConfigurationUtils.COMMANDS_DIR );
 		File cmd = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
+
 		String result = "";
-		if(cmd.exists()){
+		if( cmd.exists())
 			result = Utils.readFileContent(cmd);
-		}
 
 		return result;
 	}
@@ -96,7 +90,7 @@ public class CommandsMngrImpl implements ICommandsMngr{
 
 
 	@Override
-	public void execute( Application app, String commandName ) throws IOException{
+	public void execute( Application app, String commandName ) throws IOException {
 
 	}
 }

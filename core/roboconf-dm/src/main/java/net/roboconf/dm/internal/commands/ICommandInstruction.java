@@ -23,35 +23,24 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.targets;
+package net.roboconf.dm.internal.commands;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import net.roboconf.core.RoboconfError;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TargetBeanTest {
+public interface ICommandInstruction {
 
-	@Test
-	public void testEquals() {
+	/**
+	 * @return null if no error was found, an error otherwise
+	 */
+	RoboconfError validate();
 
-		TargetWrapperDescriptor b1 = new TargetWrapperDescriptor();
-		Assert.assertTrue( b1.hashCode() > 0 );
-
-		b1.setId( "test" );
-		TargetWrapperDescriptor b2 = new TargetWrapperDescriptor();
-		b2.setId( "test" );
-
-		TargetWrapperDescriptor b3 = new TargetWrapperDescriptor();
-		b3.setId( "other" );
-
-		Assert.assertEquals( b1, b2 );
-		Assert.assertFalse( b1.equals( b3 ));
-		Assert.assertFalse( b1.equals( new Object()));
-
-		Assert.assertEquals( b1.hashCode(), b2.hashCode());
-		Assert.assertTrue( b1.hashCode() != b3.hashCode());
-	}
+	/**
+	 * Executes the command.
+	 * @throws CommandException
+	 */
+	void execute() throws CommandException;
 }

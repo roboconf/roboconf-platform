@@ -23,39 +23,37 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.targets;
+package net.roboconf.core.model.runtime;
 
 /**
- * A bean that describes associations between instances and targets.
+ * A bean that describes a Roboconf command.
  * @author Vincent Zurczak - Linagora
  */
-public class TargetAssociation {
+public abstract class CommandDescriptor {
 
-	private final String instancePath;
-	private final TargetWrapperDescriptor targetDescriptor;
-
+	private final String name, instructions;
 
 	/**
 	 * Constructor.
-	 * @param instancePath
-	 * @param targetDescriptor
+	 * @param name
+	 * @param instructions
 	 */
-	public TargetAssociation( String instancePath, TargetWrapperDescriptor targetDescriptor ) {
-		this.instancePath = instancePath;
-		this.targetDescriptor = targetDescriptor;
+	public CommandDescriptor( String name, String instructions ) {
+		this.name = name;
+		this.instructions = instructions;
 	}
 
 	/**
-	 * @return the instancePath
+	 * @return the name
 	 */
-	public String getInstancePath() {
-		return this.instancePath;
+	public String getName() {
+		return this.name;
 	}
 
 	/**
-	 * @return the target descriptor
+	 * @return the instructions
 	 */
-	public TargetWrapperDescriptor getTargetDescriptor() {
-		return this.targetDescriptor;
+	public String getInstructions() {
+		return this.instructions;
 	}
 }
