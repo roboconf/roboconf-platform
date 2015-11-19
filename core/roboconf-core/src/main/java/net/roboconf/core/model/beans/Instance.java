@@ -299,8 +299,19 @@ public class Instance implements Serializable {
 		 * @return the associated runtime status, or {@link InstanceStatus#NOT_DEPLOYED} otherwise
 		 */
 		public static InstanceStatus whichStatus( String s ) {
+			InstanceStatus result = exactStatus( s );
+			return result == null ? NOT_DEPLOYED : result;
+		}
 
-			InstanceStatus result = InstanceStatus.NOT_DEPLOYED;
+
+		/**
+		 * A secured alternative to {@link InstanceStatus#valueOf(String)}.
+		 * @param s a string (can be null)
+		 * @return the associated runtime status, or null otherwise
+		 */
+		public static InstanceStatus exactStatus( String s ) {
+
+			InstanceStatus result = null;
 			for( InstanceStatus status : InstanceStatus.values()) {
 				if( status.toString().equalsIgnoreCase( s )) {
 					result = status;

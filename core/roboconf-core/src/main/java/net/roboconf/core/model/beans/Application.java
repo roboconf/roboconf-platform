@@ -77,6 +77,11 @@ public class Application extends AbstractApplication implements Serializable {
 		return this.template;
 	}
 
+	@Override
+	public Graphs getGraphs() {
+		return this.template == null ? null : this.template.getGraphs();
+	}
+
 	/**
 	 * A shortcut method to access the template's external exports mapping.
 	 * @return a non-null map
