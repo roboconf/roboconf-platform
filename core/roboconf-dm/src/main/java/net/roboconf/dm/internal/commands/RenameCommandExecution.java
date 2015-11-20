@@ -25,58 +25,31 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.io.File;
-import java.util.logging.Logger;
-
-import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
+import net.roboconf.core.commands.RenameCommandInstruction;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CommandsExecutor {
+class RenameCommandExecution extends AbstractCommandExecution {
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
-
-	private final File commandsFile;
-	private final ManagedApplication ma;
-	private final Manager manager;
+	private final RenameCommandInstruction instr;
 
 
 	/**
 	 * Constructor.
-	 * @param manager the manager
-	 * @param ma a managed application (not null)
-	 * @param commandsFile a file containing commands (not null)
+	 * @param instr
 	 */
-	public CommandsExecutor( Manager manager, ManagedApplication ma, File commandsFile ) {
-		this.commandsFile = commandsFile;
-		this.ma = ma;
-		this.manager = manager;
+	public RenameCommandExecution( RenameCommandInstruction instr ) {
+		this.instr = instr;
 	}
 
 
-	/**
-	 * Executes a set of commands.
-	 * <p>
-	 * It is assumed that {@link #validate()} was invoked first and was
-	 * successful.
-	 * </p>
-	 *
-	 * @throws CommandException if something went wrong
-	 */
+	@Override
 	public void execute() throws CommandException {
 
-//		try {
-//			for( ICommandInstruction instr : this.instructions )
-//				instr.execute();
-//
-//		} catch( CommandException e ) {
-//			throw e;
-//
-//		} catch( Exception e ) {
-//			throw new CommandException( e );
-//		}
+		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), false );
+		instance.setName( this.instr.getNewInstanceName());
 	}
 }

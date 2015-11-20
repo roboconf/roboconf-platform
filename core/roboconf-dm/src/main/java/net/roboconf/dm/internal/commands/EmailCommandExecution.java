@@ -25,8 +25,9 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,51 +38,27 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
-import net.roboconf.core.utils.Utils;
+import net.roboconf.core.commands.EmailCommandInstruction;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-class EmailCommandInstruction implements ICommandInstruction {
+class EmailCommandExecution extends AbstractCommandExecution {
 
-	static final String PREFIX = "email";
-
+	private final EmailCommandInstruction instr;
 	private final Manager manager;
-	private String msg;
-	private List<String> tos;
 
 
 	/**
 	 * Constructor.
-	 * @param instruction
+	 * @param instr
 	 * @param manager
 	 */
-	EmailCommandInstruction( Manager manager, String instruction ) {
+	public EmailCommandExecution( EmailCommandInstruction instr, Manager manager ) {
+		this.instr = instr;
 		this.manager = manager;
-
-		Pattern p = Pattern.compile( PREFIX + "\\s+(.*)\\s+with\\s+(.*)", Pattern.CASE_INSENSITIVE );
-		Matcher m = p.matcher( instruction );
-		if( m.matches()) {
-			this.tos = Utils.splitNicely( m.group( 1 ), "," );
-			this.msg = m.group( 2 ).trim();
-		}
-	}
-
-
-	@Override
-	public RoboconfError validate() {
-
-		RoboconfError result = null;
-		if( this.tos == null || this.tos.isEmpty())
-			result = new RoboconfError( ErrorCode.EXEC_CMD_EMAIL_NO_RECIPIENTS );
-		else if( Utils.isEmptyOrWhitespaces( this.msg ))
-			result = new RoboconfError( ErrorCode.EXEC_CMD_EMAIL_NO_MESSAGE );
-
-		return result;
 	}
 
 
@@ -92,10 +69,10 @@ class EmailCommandInstruction implements ICommandInstruction {
 			// Subject and message
 			Properties mailProperties = this.manager.preferencesMngr().getEmailProperties();
 			String subject = "Roboconf event";
-			String data = this.msg;
+			String data = this.instr.getMsg();
 
 			final String emailSubjectPattern = "Subject: ([^\n]+)(\n|$)(.*)";
-			Matcher m = Pattern.compile( emailSubjectPattern ).matcher( this.msg );
+			Matcher m = Pattern.compile( emailSubjectPattern ).matcher( this.instr.getMsg());
 			if( m.find()) {
 				subject += ": " + m.group( 1 );
 				data = m.group( 3 ).trim();
@@ -117,7 +94,12 @@ class EmailCommandInstruction implements ICommandInstruction {
 
 			// Set From: and To: header fields
 			message.setFrom( new InternetAddress( mailProperties.getProperty( "mail.from" )));
-			for( String to : this.tos )
+
+			Set<String> tos = new LinkedHashSet<> ();
+			tos.addAll( this.instr.getTos());
+			tos.addAll( this.manager.preferencesMngr().getDefaultEmailRecipients());
+
+			for( String to : tos )
 				message.addRecipient( Message.RecipientType.TO, new InternetAddress( to ));
 
 			message.setSubject( subject );

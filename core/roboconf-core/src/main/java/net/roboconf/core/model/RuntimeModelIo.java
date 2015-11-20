@@ -36,6 +36,7 @@ import java.util.Map;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.converters.FromInstanceDefinition;
@@ -181,10 +182,10 @@ public final class RuntimeModelIo {
 
 		ApplicationTemplate app = result.applicationTemplate;
 		result.applicationTemplate.setDirectory( projectDirectory );
-		File instDirectory = new File( projectDirectory, Constants.PROJECT_DIR_INSTANCES );
-		File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
+
 
 		// Load the graph
+		File graphDirectory = new File( projectDirectory, Constants.PROJECT_DIR_GRAPH );
 		GRAPH: if( ! graphDirectory.exists()) {
 			RoboconfError error = new RoboconfError( ErrorCode.PROJ_NO_GRAPH_DIR );
 			error.setDetails( "Directory path: " + projectDirectory.getAbsolutePath());
@@ -220,6 +221,7 @@ public final class RuntimeModelIo {
 
 
 		// Load the instances
+		File instDirectory = new File( projectDirectory, Constants.PROJECT_DIR_INSTANCES );
 		INST: if( appDescriptor != null && instDirectory.exists()) {
 
 			if( app.getGraphs() == null ) {
@@ -236,6 +238,17 @@ public final class RuntimeModelIo {
 			result.objectToSource.putAll( ilr.getObjectToSource());
 			result.loadErrors.addAll( ilr.getLoadErrors());
 			app.getRootInstances().addAll( ilr.getRootInstances());
+		}
+
+
+		// Commands
+		File commandsDirectory = new File( projectDirectory, Constants.PROJECT_DIR_COMMANDS );
+		if( app.getGraphs() != null && commandsDirectory.exists()) {
+
+			for( File f : Utils.listAllFiles( commandsDirectory )) {
+				CommandsParser parser = new CommandsParser( app, f );
+				result.loadErrors.addAll( parser.getParsingErrors());
+			}
 		}
 
 

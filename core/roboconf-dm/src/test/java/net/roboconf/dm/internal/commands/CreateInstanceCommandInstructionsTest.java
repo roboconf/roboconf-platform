@@ -50,6 +50,7 @@ public class CreateInstanceCommandInstructionsTest {
 
 	private TestApplication app;
 	private ManagedApplication ma;
+
 	private Manager manager;
 	private IInstancesMngr instancesMngr;
 
@@ -63,7 +64,6 @@ public class CreateInstanceCommandInstructionsTest {
 		this.manager = Mockito.mock( Manager.class );
 		this.instancesMngr = Mockito.mock( IInstancesMngr.class );
 		Mockito.when( this.manager.instancesMngr()).thenReturn( this.instancesMngr );
-
 	}
 
 

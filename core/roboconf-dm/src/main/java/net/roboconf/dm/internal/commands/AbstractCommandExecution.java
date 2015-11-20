@@ -25,9 +25,9 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.io.File;
-import java.util.logging.Logger;
-
+import net.roboconf.core.commands.AbstractCommandInstruction;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -35,48 +35,34 @@ import net.roboconf.dm.management.exceptions.CommandException;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CommandsExecutor {
-
-	private final Logger logger = Logger.getLogger( getClass().getName());
-
-	private final File commandsFile;
-	private final ManagedApplication ma;
-	private final Manager manager;
-
+public abstract class AbstractCommandExecution {
 
 	/**
-	 * Constructor.
-	 * @param manager the manager
-	 * @param ma a managed application (not null)
-	 * @param commandsFile a file containing commands (not null)
+	 * Executes a command.
+	 * @throws CommandException if something went wrong
 	 */
-	public CommandsExecutor( Manager manager, ManagedApplication ma, File commandsFile ) {
-		this.commandsFile = commandsFile;
-		this.ma = ma;
-		this.manager = manager;
+	abstract void execute() throws CommandException;
+
+
+	protected ManagedApplication resolveManagedApplication( Manager manager, AbstractCommandInstruction instr )
+	throws CommandException {
+
+		String appName = instr.getApplication().getName();
+		ManagedApplication ma = manager.applicationMngr().findManagedApplicationByName( appName );
+		if( ma == null )
+			throw new CommandException( "Application " + appName + " could not be found." );
+
+		return ma;
 	}
 
 
-	/**
-	 * Executes a set of commands.
-	 * <p>
-	 * It is assumed that {@link #validate()} was invoked first and was
-	 * successful.
-	 * </p>
-	 *
-	 * @throws CommandException if something went wrong
-	 */
-	public void execute() throws CommandException {
+	protected Instance resolveInstance( AbstractCommandInstruction instr, String instancePath, boolean nullIsAllowed )
+	throws CommandException {
 
-//		try {
-//			for( ICommandInstruction instr : this.instructions )
-//				instr.execute();
-//
-//		} catch( CommandException e ) {
-//			throw e;
-//
-//		} catch( Exception e ) {
-//			throw new CommandException( e );
-//		}
+		Instance instance = InstanceHelpers.findInstanceByPath( instr.getApplication(), instancePath );
+		if( instance == null && ! nullIsAllowed )
+			throw new CommandException( "Instance " + instancePath + " could not be found." );
+
+		return instance;
 	}
 }

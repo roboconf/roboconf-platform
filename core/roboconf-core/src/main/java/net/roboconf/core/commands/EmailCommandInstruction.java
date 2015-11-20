@@ -37,7 +37,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class EmailCommandInstruction extends AbstractCommandInstruction {
+public class EmailCommandInstruction extends AbstractCommandInstruction {
 
 	static final String PREFIX = "email";
 
@@ -82,7 +82,7 @@ class EmailCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the msg
 	 */
-	protected String getMsg() {
+	public String getMsg() {
 		return this.msg;
 	}
 
@@ -90,7 +90,7 @@ class EmailCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the tos
 	 */
-	protected List<String> getTos() {
+	public List<String> getTos() {
 		return this.tos;
 	}
 }

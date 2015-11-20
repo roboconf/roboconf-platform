@@ -37,7 +37,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class ChangeStateCommandInstruction extends AbstractCommandInstruction {
+public class ChangeStateCommandInstruction extends AbstractCommandInstruction {
 
 	static final String PREFIX = "change";
 
@@ -88,7 +88,7 @@ class ChangeStateCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the targetStatus
 	 */
-	protected InstanceStatus getTargetStatus() {
+	public InstanceStatus getTargetStatus() {
 		return this.targetStatus;
 	}
 
@@ -96,7 +96,7 @@ class ChangeStateCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the instancePath
 	 */
-	protected String getInstancePath() {
+	public String getInstancePath() {
 		return this.instancePath;
 	}
 }

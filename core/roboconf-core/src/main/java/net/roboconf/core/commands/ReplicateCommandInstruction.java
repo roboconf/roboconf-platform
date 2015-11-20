@@ -41,7 +41,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class ReplicateCommandInstruction extends AbstractCommandInstruction {
+public class ReplicateCommandInstruction extends AbstractCommandInstruction {
 
 	static final String PREFIX = "replicate";
 	private String newInstanceName, replicatedInstancePath;

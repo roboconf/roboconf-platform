@@ -88,6 +88,11 @@ public interface Constants {
 	String PROJECT_DIR_AUTONOMIC = "autonomic";
 
 	/**
+	 * The <strong>commands</strong> directory.
+	 */
+	String PROJECT_DIR_COMMANDS = "commands";
+
+	/**
 	 * The <strong>application.properties</strong> file name.
 	 */
 	String PROJECT_FILE_DESCRIPTOR = "application.properties";

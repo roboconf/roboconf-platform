@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.management.api;
 
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -36,4 +37,9 @@ public interface IPreferencesMngr {
 	 * @return the e-mail properties (not null)
 	 */
 	Properties getEmailProperties();
+
+	/**
+	 * @return a non-null list of default recipients when sending e-mails
+	 */
+	List<String> getDefaultEmailRecipients();
 }

@@ -121,4 +121,25 @@ public class BulkCommandInstructionsTest {
 		Assert.assertEquals( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, errors.get( 0 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.CMD_NO_MATCHING_INSTANCE, errors.get( 1 ).getErrorCode());
 	}
+
+
+	@Test
+	public void testUpdateContext() {
+
+		String line = "delete /tomcat-vm";
+		BulkCommandInstructions instr = new BulkCommandInstructions( this.context, line, 1 );
+		Assert.assertEquals( 0, instr.validate().size());
+
+		Assert.assertTrue( this.context.instancePathToComponentName.containsKey( "/tomcat-vm" ));
+		Assert.assertTrue( this.context.instancePathToComponentName.containsKey( "/tomcat-vm/tomcat-server" ));
+		Assert.assertTrue( this.context.instancePathToComponentName.containsKey( "/tomcat-vm/tomcat-server/hello-world" ));
+
+		int instancesCount = this.context.instancePathToComponentName.size();
+		instr.updateContext();
+		Assert.assertEquals( instancesCount - 3, this.context.instancePathToComponentName.size());
+
+		Assert.assertFalse( this.context.instancePathToComponentName.containsKey( "/tomcat-vm" ));
+		Assert.assertFalse( this.context.instancePathToComponentName.containsKey( "/tomcat-vm/tomcat-server" ));
+		Assert.assertFalse( this.context.instancePathToComponentName.containsKey( "/tomcat-vm/tomcat-server/hello-world" ));
+	}
 }

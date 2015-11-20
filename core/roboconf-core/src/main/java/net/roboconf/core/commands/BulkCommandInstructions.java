@@ -36,7 +36,7 @@ import net.roboconf.core.model.ParsingError;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class BulkCommandInstructions extends AbstractCommandInstruction {
+public class BulkCommandInstructions extends AbstractCommandInstruction {
 
 	private String instancePath;
 	private ChangeStateInstruction changeStateInstruction;
@@ -105,15 +105,21 @@ class BulkCommandInstructions extends AbstractCommandInstruction {
 	@Override
 	public void updateContext() {
 
-		if( this.changeStateInstruction == ChangeStateInstruction.DELETE )
-			this.context.instancePathToComponentName.remove( this.instancePath );
+		if( this.changeStateInstruction == ChangeStateInstruction.DELETE ) {
+			List<String> keys = new ArrayList<>( this.context.instancePathToComponentName.keySet());
+			for( String path : keys ) {
+				if( path.equals( this.instancePath )
+						|| path.startsWith( this.instancePath + "/" ))
+					this.context.instancePathToComponentName.remove( path );
+			}
+		}
 	}
 
 
 	/**
 	 * @return the instancePath
 	 */
-	protected String getInstancePath() {
+	public String getInstancePath() {
 		return this.instancePath;
 	}
 
@@ -121,7 +127,7 @@ class BulkCommandInstructions extends AbstractCommandInstruction {
 	/**
 	 * @return the changeStateInstruction
 	 */
-	protected ChangeStateInstruction getChangeStateInstruction() {
+	public ChangeStateInstruction getChangeStateInstruction() {
 		return this.changeStateInstruction;
 	}
 

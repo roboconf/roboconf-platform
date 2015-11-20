@@ -51,6 +51,7 @@ public class BulkCommandInstructionsTest {
 
 	private TestApplication app;
 	private ManagedApplication ma;
+
 	private Manager manager;
 	private IInstancesMngr instancesMngr;
 

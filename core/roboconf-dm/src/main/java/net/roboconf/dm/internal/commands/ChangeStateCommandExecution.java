@@ -25,9 +25,8 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.io.File;
-import java.util.logging.Logger;
-
+import net.roboconf.core.commands.ChangeStateCommandInstruction;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -35,48 +34,36 @@ import net.roboconf.dm.management.exceptions.CommandException;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class CommandsExecutor {
+class ChangeStateCommandExecution extends AbstractCommandExecution {
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
-
-	private final File commandsFile;
-	private final ManagedApplication ma;
+	private final ChangeStateCommandInstruction instr;
 	private final Manager manager;
 
 
 	/**
 	 * Constructor.
-	 * @param manager the manager
-	 * @param ma a managed application (not null)
-	 * @param commandsFile a file containing commands (not null)
+	 * @param instr
+	 * @param manager
 	 */
-	public CommandsExecutor( Manager manager, ManagedApplication ma, File commandsFile ) {
-		this.commandsFile = commandsFile;
-		this.ma = ma;
+	public ChangeStateCommandExecution( ChangeStateCommandInstruction instr, Manager manager ) {
+		this.instr = instr;
 		this.manager = manager;
 	}
 
 
-	/**
-	 * Executes a set of commands.
-	 * <p>
-	 * It is assumed that {@link #validate()} was invoked first and was
-	 * successful.
-	 * </p>
-	 *
-	 * @throws CommandException if something went wrong
-	 */
+	@Override
 	public void execute() throws CommandException {
 
-//		try {
-//			for( ICommandInstruction instr : this.instructions )
-//				instr.execute();
-//
-//		} catch( CommandException e ) {
-//			throw e;
-//
-//		} catch( Exception e ) {
-//			throw new CommandException( e );
-//		}
+		// Resolve runtime structure
+		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), true );
+		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
+
+		// Execute the command
+		try {
+			this.manager.instancesMngr().changeInstanceState( ma, instance, this.instr.getTargetStatus());
+
+		} catch( Exception e ) {
+			throw new CommandException( e );
+		}
 	}
 }

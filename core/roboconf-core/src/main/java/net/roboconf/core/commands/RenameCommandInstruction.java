@@ -40,7 +40,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class RenameCommandInstruction extends AbstractCommandInstruction {
+public class RenameCommandInstruction extends AbstractCommandInstruction {
 
 	static final String PREFIX = "rename";
 	private String newInstanceName, instancePath;
@@ -101,31 +101,24 @@ class RenameCommandInstruction extends AbstractCommandInstruction {
 
 		// Find the path to update
 		String newInstancePath = "/" + this.instancePath.replaceFirst( "/[^/]+$", this.newInstanceName );
-		List<String> pathToRemove = new ArrayList<> ();
-		Map<String,String> pathToAdd = new HashMap<> ();
 
-		for( Map.Entry<String,String> entry : this.context.instancePathToComponentName.entrySet()) {
+		Map<String,String> copy = new HashMap<>( this.context.instancePathToComponentName );
+		for( Map.Entry<String,String> entry : copy.entrySet()) {
 			if( ! entry.getKey().startsWith( this.instancePath + "/" )
 					&& ! entry.getKey().equals( this.instancePath ))
 				continue;
 
 			String updatedPath = entry.getKey().replace( this.instancePath, newInstancePath );
-			pathToRemove.add( entry.getKey());
-			pathToAdd.put( updatedPath, entry.getValue());
+			this.context.instancePathToComponentName.remove( entry.getKey());
+			this.context.instancePathToComponentName.put( updatedPath, entry.getValue());
 		}
-
-		// Update them
-		for( String path : pathToRemove )
-			this.context.instancePathToComponentName.remove( path );
-
-		this.context.instancePathToComponentName.putAll( pathToAdd );
 	}
 
 
 	/**
 	 * @return the newInstanceName
 	 */
-	protected String getNewInstanceName() {
+	public String getNewInstanceName() {
 		return this.newInstanceName;
 	}
 
@@ -133,7 +126,7 @@ class RenameCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the instancePath
 	 */
-	protected String getInstancePath() {
+	public String getInstancePath() {
 		return this.instancePath;
 	}
 }

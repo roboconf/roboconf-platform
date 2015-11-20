@@ -39,7 +39,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class DefineVariableCommandInstruction extends AbstractCommandInstruction {
+public class DefineVariableCommandInstruction extends AbstractCommandInstruction {
 
 	static final String PREFIX = "define";
 

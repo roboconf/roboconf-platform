@@ -25,22 +25,46 @@
 
 package net.roboconf.dm.internal.commands;
 
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.CreateInstanceCommandInstruction;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface ICommandInstruction {
+class CreateInstanceCommandExecution extends AbstractCommandExecution {
+
+	private final CreateInstanceCommandInstruction instr;
+	private final Manager manager;
+
 
 	/**
-	 * @return null if no error was found, an error otherwise
+	 * Constructor.
+	 * @param instr
+	 * @param manager
 	 */
-	RoboconfError validate();
+	public CreateInstanceCommandExecution( CreateInstanceCommandInstruction instr, Manager manager ) {
+		this.instr = instr;
+		this.manager = manager;
+	}
 
-	/**
-	 * Executes the command.
-	 * @throws CommandException
-	 */
-	void execute() throws CommandException;
+
+	@Override
+	public void execute() throws CommandException {
+
+		// Resolve runtime structures
+		Instance parentInstance = resolveInstance( this.instr, this.instr.getParentInstancePath(), true );
+		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
+
+		// Execute the command
+		try {
+			Instance instance = new Instance( this.instr.getInstanceName()).component( this.instr.getComponent());
+			this.manager.instancesMngr().addInstance( ma, parentInstance, instance );
+
+		} catch( Exception e ) {
+			throw new CommandException( e );
+		}
+	}
 }

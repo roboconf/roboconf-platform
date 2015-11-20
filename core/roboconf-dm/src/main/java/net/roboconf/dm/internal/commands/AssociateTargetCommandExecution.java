@@ -25,13 +25,8 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.AssociateTargetCommandInstruction;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -40,59 +35,36 @@ import net.roboconf.dm.management.exceptions.CommandException;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class ChangeStateCommandInstruction implements ICommandInstruction {
+class AssociateTargetCommandExecution extends AbstractCommandExecution {
 
-	static final String PREFIX = "change";
-
-	private final ManagedApplication ma;
+	private final AssociateTargetCommandInstruction instr;
 	private final Manager manager;
-
-	private Instance instance;
-	private InstanceStatus targetStatus;
-	private String targetStatusAsString;
 
 
 	/**
 	 * Constructor.
-	 * @param ma
+	 * @param instr
 	 * @param manager
-	 * @param instruction
 	 */
-	ChangeStateCommandInstruction( ManagedApplication ma, Manager manager, String instruction ) {
-		this.ma = ma;
+	public AssociateTargetCommandExecution( AssociateTargetCommandInstruction instr, Manager manager ) {
+		this.instr = instr;
 		this.manager = manager;
-
-		Pattern p = Pattern.compile( "change\\s+status\\s+of\\s+(/.*)\\s+to\\s+(.*)", Pattern.CASE_INSENSITIVE );
-		Matcher m = p.matcher( instruction );
-		if( m.matches()) {
-			this.targetStatusAsString = m.group( 2 ).trim();
-			this.targetStatus = InstanceStatus.whichStatus( this.targetStatusAsString );
-			String instancePath = m.group( 1 ).trim();
-			this.instance = InstanceHelpers.findInstanceByPath( this.ma.getApplication(), instancePath );
-		}
-	}
-
-
-	@Override
-	public RoboconfError validate() {
-
-		RoboconfError result = null;
-		if( this.targetStatus == null )
-			result = new RoboconfError( ErrorCode.EXEC_CMD_INVALID_INSTANCE_STATUS, "Found: " + this.targetStatusAsString );
-		else if( ! this.targetStatus.isStable())
-			result = new RoboconfError( ErrorCode.EXEC_CMD_NO_MATCHING_INSTANCE );
-		else if( this.instance == null )
-			result = new RoboconfError( ErrorCode.EXEC_CMD_NO_MATCHING_INSTANCE );
-
-		return result;
 	}
 
 
 	@Override
 	public void execute() throws CommandException {
 
+		// Resolve runtime structure
+		Instance scopedInstance = resolveInstance( this.instr, this.instr.getScopedInstancePath(), true );
+		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
+
+		// Execute the command
 		try {
-			this.manager.instancesMngr().changeInstanceState( this.ma, this.instance, this.targetStatus );
+			this.manager.targetsMngr().associateTargetWithScopedInstance(
+					this.instr.getTargetId(),
+					ma.getApplication(),
+					InstanceHelpers.computeInstancePath( scopedInstance ));
 
 		} catch( Exception e ) {
 			throw new CommandException( e );

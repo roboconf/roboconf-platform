@@ -39,7 +39,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class AssociateTargetCommandInstruction extends AbstractCommandInstruction {
+public class AssociateTargetCommandInstruction extends AbstractCommandInstruction {
 
 	static final String PREFIX = "associate";
 	private String targetId, scopedInstancePath;
@@ -88,7 +88,7 @@ class AssociateTargetCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the targetId
 	 */
-	protected String getTargetId() {
+	public String getTargetId() {
 		return this.targetId;
 	}
 
@@ -96,7 +96,7 @@ class AssociateTargetCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the scopedInstancePath
 	 */
-	protected String getScopedInstancePath() {
+	public String getScopedInstancePath() {
 		return this.scopedInstancePath;
 	}
 }

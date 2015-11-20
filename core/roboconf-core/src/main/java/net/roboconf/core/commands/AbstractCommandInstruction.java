@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.model.beans.AbstractApplication;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -83,6 +84,14 @@ public abstract class AbstractCommandInstruction {
 
 
 	/**
+	 * @return the (abstract) application this instruction is associated with
+	 */
+	public AbstractApplication getApplication() {
+		return this.context.getApp();
+	}
+
+
+	/**
 	 * Validates specific items related to sub-classes.
 	 * @return a non-null list of errors
 	 */
@@ -90,15 +99,18 @@ public abstract class AbstractCommandInstruction {
 
 
 	/**
+	 * @return a non-null list of variables to ignore
+	 */
+	protected List<String> getVariablesToIgnore() {
+		return Collections.emptyList();
+	}
+
+
+	/**
 	 * Updates the context (to be invoked after {@link #validate()}).
 	 */
 	public void updateContext() {
 		// nothing
-	}
-
-
-	protected List<String> getVariablesToIgnore() {
-		return Collections.emptyList();
 	}
 
 

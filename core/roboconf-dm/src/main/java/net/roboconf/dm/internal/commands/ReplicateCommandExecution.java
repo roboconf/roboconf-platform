@@ -25,14 +25,11 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.ReplicateCommandInstruction;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -40,61 +37,42 @@ import net.roboconf.dm.management.exceptions.CommandException;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class AssociateTargetCommandInstruction implements ICommandInstruction {
+class ReplicateCommandExecution extends AbstractCommandExecution {
 
-	static final String PREFIX = "associate";
-
-	private final ManagedApplication ma;
+	private final ReplicateCommandInstruction instr;
 	private final Manager manager;
-
-	private Instance scopedInstance;
-	private String targetId;
 
 
 	/**
 	 * Constructor.
-	 * @param ma
+	 * @param instr
 	 * @param manager
-	 * @param instruction
 	 */
-	AssociateTargetCommandInstruction( ManagedApplication ma, Manager manager, String instruction ) {
-		this.ma = ma;
+	public ReplicateCommandExecution( ReplicateCommandInstruction instr, Manager manager ) {
+		this.instr = instr;
 		this.manager = manager;
-
-		Pattern p = Pattern.compile( PREFIX + "\\s+(/.*)\\s+with\\s+(.*)", Pattern.CASE_INSENSITIVE );
-		Matcher m = p.matcher( instruction );
-		if( m.matches()) {
-			this.targetId = m.group( 2 ).trim();
-			String instanceName = m.group( 1 ).trim();
-			this.scopedInstance = InstanceHelpers.findInstanceByPath( this.ma.getApplication(), instanceName );
-		}
-	}
-
-
-	@Override
-	public RoboconfError validate() {
-
-		RoboconfError result = null;
-		if( Utils.isEmptyOrWhitespaces( this.targetId ))
-			result = new RoboconfError( ErrorCode.EXEC_CMD_INVALID_TARGET_ID, "Target ID: " + this.targetId );
-		else if( this.scopedInstance == null )
-			result = new RoboconfError( ErrorCode.EXEC_CMD_NO_MATCHING_INSTANCE );
-		else if( ! InstanceHelpers.isTarget( this.scopedInstance ))
-			result = new RoboconfError( ErrorCode.EXEC_CMD_NOT_A_SCOPED_INSTANCE );
-		else if( this.manager.targetsMngr().findTargetById( this.targetId ) == null )
-			result = new RoboconfError( ErrorCode.EXEC_CMD_TARGET_WAS_NOT_FOUND, "Target ID: " + this.targetId );
-
-		return result;
 	}
 
 
 	@Override
 	public void execute() throws CommandException {
 
+		// Resolve runtime structure
+		Instance rootInstance = resolveInstance( this.instr, this.instr.getReplicatedInstancePath(), true );
+		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
+
 		try {
-			this.manager.targetsMngr().associateTargetWithScopedInstance(
-					this.targetId, this.ma.getApplication(),
-					InstanceHelpers.computeInstancePath( this.scopedInstance ));
+			// Copy the instance
+			Instance copy = InstanceHelpers.replicateInstance( rootInstance );
+			copy.setName( this.instr.getNewInstanceName());
+			this.manager.instancesMngr().addInstance( ma, null, copy );
+
+			// Associate this new instance with the same target, if it has one
+			String targetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), "/" + rootInstance.getName());
+			String defaultTargetId = this.manager.targetsMngr().findTargetId( ma.getApplication(), null );
+			if( targetId != null
+					&& ! Objects.equals( targetId, defaultTargetId ))
+				this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/" + copy.getName());
 
 		} catch( Exception e ) {
 			throw new CommandException( e );

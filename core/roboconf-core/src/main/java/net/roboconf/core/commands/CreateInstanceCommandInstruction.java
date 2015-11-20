@@ -41,7 +41,7 @@ import net.roboconf.core.utils.Utils;
 /**
  * @author Vincent Zurczak - Linagora
  */
-class CreateInstanceCommandInstruction extends AbstractCommandInstruction {
+public class CreateInstanceCommandInstruction extends AbstractCommandInstruction {
 
 	static final String PREFIX = "create";
 
@@ -135,7 +135,7 @@ class CreateInstanceCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the instanceName
 	 */
-	protected String getInstanceName() {
+	public String getInstanceName() {
 		return this.instanceName;
 	}
 
@@ -143,7 +143,7 @@ class CreateInstanceCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the parentInstancePath
 	 */
-	protected String getParentInstancePath() {
+	public String getParentInstancePath() {
 		return this.parentInstancePath;
 	}
 
@@ -151,7 +151,7 @@ class CreateInstanceCommandInstruction extends AbstractCommandInstruction {
 	/**
 	 * @return the component
 	 */
-	protected Component getComponent() {
+	public Component getComponent() {
 		return this.component;
 	}
 }
