@@ -47,6 +47,7 @@ public class ApplicationCommandsResource implements IApplicationCommandsResource
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Manager manager;
 
+
 	/**
 	 * Constructor.
 	 * @param manager the manager

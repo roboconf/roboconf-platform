@@ -52,13 +52,24 @@ public class CommandsParser {
 
 	/**
 	 * Constructor.
-	 * @param manager the manager
-	 * @param ma a managed application (not null)
+	 * @param app an application (not null)
 	 * @param commandsFile a file containing commands (not null)
 	 */
 	public CommandsParser( AbstractApplication app, File commandsFile ) {
 		this.context = new Context( app, commandsFile );
 		parse();
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param app an application (not null)
+	 * @param instructionsText instructions text (not null)
+	 */
+	public CommandsParser( AbstractApplication app, String instructionsText ) {
+		this.context = new Context( app, null );
+		if( instructionsText != null )
+			parse( instructionsText );
 	}
 
 
@@ -78,7 +89,7 @@ public class CommandsParser {
 	/**
 	 * @return the instructions
 	 */
-	protected List<AbstractCommandInstruction> getInstructions() {
+	public List<AbstractCommandInstruction> getInstructions() {
 		return this.instructions;
 	}
 
@@ -108,24 +119,32 @@ public class CommandsParser {
 	 */
 	private void parse() {
 
-		String fileContent = "";
 		try {
 			// We assume these files are not that big.
-			fileContent = Utils.readFileContent( this.context.getCommandFile());
+			String fileContent = Utils.readFileContent( this.context.getCommandFile());
+			parse( fileContent );
 
 		} catch( IOException e ) {
 			this.logger.severe( "A commands file could not be read. File path: " + this.context.getName());
 		}
+	}
+
+
+	/**
+	 * Parses the whole file and extracts instructions.
+	 * @param instructionsText a non-null string to parse
+	 */
+	private void parse( String instructionsText ) {
 
 		// Allow line breaks in commands. But we must keep the lines count.
 		// So, we replace escaped line breaks by a particular separator.
 		// They will be used to count lines.
 		final String sep = "!@!";
-		fileContent = fileContent.replaceAll( "\\\\\n\\s*", sep );
+		instructionsText = instructionsText.replaceAll( "\\\\\n\\s*", sep );
 
 		// Parse line by line.
 		int lineNumber = 0;
-		for( String string : Utils.splitNicely( fileContent, "\n" ) ) {
+		for( String string : Utils.splitNicely( instructionsText, "\n" ) ) {
 
 			String line = string.trim();
 			lineNumber ++;

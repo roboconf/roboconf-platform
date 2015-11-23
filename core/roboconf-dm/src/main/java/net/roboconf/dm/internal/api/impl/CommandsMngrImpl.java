@@ -27,70 +27,81 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
+import net.roboconf.core.Constants;
+import net.roboconf.core.commands.CommandsParser;
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.internal.commands.CommandsExecutor;
+import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.ICommandsMngr;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier
  */
-public class CommandsMngrImpl implements ICommandsMngr{
+public class CommandsMngrImpl implements ICommandsMngr {
 
-	@Override
-	public void createOrUpdateCommand( Application app, String commandName, String commandText ) throws IOException {
+	private final Manager manager;
 
-		File cmdDir = new File( app.getDirectory(),ConfigurationUtils.COMMANDS_DIR );
-		Utils.createDirectory(cmdDir);
 
-		File cmd = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
-		Utils.writeStringInto(commandText, cmd);
+	/**
+	 * Constructor.
+	 * @param manager
+	 */
+	public CommandsMngrImpl( Manager manager ) {
+		this.manager = manager;
 	}
 
 
 	@Override
-	public void createCommand( Application app, String commandName, File commandFile ) throws IOException {
+	public void createOrUpdateCommand( Application app, String commandName, String commandText ) throws IOException {
 
-		File cmdDir = new File( app.getDirectory(), ConfigurationUtils.COMMANDS_DIR );
-		Utils.createDirectory(cmdDir);
-
-		File cmd = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
-		Utils.copyStream(commandFile, cmd);
+		File cmdFile = findCommandFile( app, commandName );
+		Utils.createDirectory( cmdFile.getParentFile());
+		Utils.writeStringInto( commandText, cmdFile );
 	}
 
 
 	@Override
 	public void deleteCommand( Application app, String commandName ) throws IOException {
 
-		File cmdDir = new File( app.getDirectory(),ConfigurationUtils.COMMANDS_DIR );
-		File cmdDel = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
-		Utils.deleteFilesRecursively(cmdDel);
+		File cmdFile = findCommandFile( app, commandName );
+		Utils.deleteFilesRecursively( cmdFile );
 	}
 
 
 	@Override
 	public String getCommandInstructions( Application app, String commandName ) throws IOException {
 
-		File cmdDir = new File( app.getDirectory(),ConfigurationUtils.COMMANDS_DIR );
-		File cmd = new File(cmdDir,commandName+ConfigurationUtils.COMMANDS_SUFFIX);
-
-		String result = "";
-		if( cmd.exists())
-			result = Utils.readFileContent(cmd);
-
+		File cmdFile = findCommandFile( app, commandName );
+		String result = cmdFile.exists() ? result = Utils.readFileContent( cmdFile ) : "";
 		return result;
 	}
 
 
 	@Override
-	public boolean validate( String commandText ){
-		return false;
+	public List<ParsingError> validate( Application app, String commandText ){
+
+		CommandsParser parser = new CommandsParser( app, commandText );
+		return parser.getParsingErrors();
 	}
 
 
 	@Override
-	public void execute( Application app, String commandName ) throws IOException {
+	public void execute( Application app, String commandName ) throws CommandException {
 
+		File cmdFile = findCommandFile( app, commandName );
+		CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile );
+		executor.execute();
+	}
+
+
+	private File findCommandFile( Application app, String commandName ) {
+
+		File cmdDir = new File( app.getDirectory(), Constants.PROJECT_DIR_COMMANDS );
+		return new File( cmdDir, commandName + Constants.FILE_EXT_COMMANDS );
 	}
 }

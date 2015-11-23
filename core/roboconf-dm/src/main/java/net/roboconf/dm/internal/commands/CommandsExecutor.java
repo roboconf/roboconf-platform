@@ -28,7 +28,17 @@ package net.roboconf.dm.internal.commands;
 import java.io.File;
 import java.util.logging.Logger;
 
-import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.core.commands.AbstractCommandInstruction;
+import net.roboconf.core.commands.AssociateTargetCommandInstruction;
+import net.roboconf.core.commands.BulkCommandInstructions;
+import net.roboconf.core.commands.ChangeStateCommandInstruction;
+import net.roboconf.core.commands.CommandsParser;
+import net.roboconf.core.commands.CreateInstanceCommandInstruction;
+import net.roboconf.core.commands.EmailCommandInstruction;
+import net.roboconf.core.commands.RenameCommandInstruction;
+import net.roboconf.core.commands.ReplicateCommandInstruction;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 
@@ -40,19 +50,19 @@ public class CommandsExecutor {
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	private final File commandsFile;
-	private final ManagedApplication ma;
+	private final Application app;
 	private final Manager manager;
 
 
 	/**
 	 * Constructor.
 	 * @param manager the manager
-	 * @param ma a managed application (not null)
+	 * @param app an application (not null)
 	 * @param commandsFile a file containing commands (not null)
 	 */
-	public CommandsExecutor( Manager manager, ManagedApplication ma, File commandsFile ) {
+	public CommandsExecutor( Manager manager, Application app, File commandsFile ) {
 		this.commandsFile = commandsFile;
-		this.ma = ma;
+		this.app = app;
 		this.manager = manager;
 	}
 
@@ -68,15 +78,58 @@ public class CommandsExecutor {
 	 */
 	public void execute() throws CommandException {
 
-//		try {
-//			for( ICommandInstruction instr : this.instructions )
-//				instr.execute();
-//
-//		} catch( CommandException e ) {
-//			throw e;
-//
-//		} catch( Exception e ) {
-//			throw new CommandException( e );
-//		}
+		try {
+			CommandsParser parser = new CommandsParser( this.app, this.commandsFile );
+			if( RoboconfErrorHelpers.containsCriticalErrors( parser.getParsingErrors()))
+				throw new CommandException( "Invalid command file. " + this.commandsFile.getName() + " contains errors." );
+
+			for( AbstractCommandInstruction instr : parser.getInstructions()) {
+				AbstractCommandExecution executor = findExecutor( instr );
+				if( executor != null )
+					executor.execute();
+				else
+					this.logger.fine( "Skipping non-executable instruction: " + instr.getClass().getSimpleName());
+			}
+
+		} catch( CommandException e ) {
+			throw e;
+
+		} catch( Exception e ) {
+			throw new CommandException( e );
+		}
+	}
+
+
+	/**
+	 * Finds the right executor for an instruction.
+	 * @param instr a non-null instruction
+	 * @return an executor, or null if the instruction is not executable
+	 */
+	AbstractCommandExecution findExecutor( AbstractCommandInstruction instr ) {
+
+		AbstractCommandExecution result = null;
+
+		if( RenameCommandInstruction.class.equals( instr.getClass()))
+			result = new RenameCommandExecution((RenameCommandInstruction) instr);
+
+		else if( ReplicateCommandInstruction.class.equals( instr.getClass()))
+			result = new ReplicateCommandExecution((ReplicateCommandInstruction) instr, this.manager );
+
+		else if( AssociateTargetCommandInstruction.class.equals( instr.getClass()))
+			result = new AssociateTargetCommandExecution((AssociateTargetCommandInstruction) instr, this.manager );
+
+		else if( BulkCommandInstructions.class.equals( instr.getClass()))
+			result = new BulkCommandExecution((BulkCommandInstructions) instr, this.manager );
+
+		else if( ChangeStateCommandInstruction.class.equals( instr.getClass()))
+			result = new ChangeStateCommandExecution((ChangeStateCommandInstruction) instr, this.manager );
+
+		else if( CreateInstanceCommandInstruction.class.equals( instr.getClass()))
+			result = new CreateInstanceCommandExecution((CreateInstanceCommandInstruction) instr, this.manager );
+
+		else if( EmailCommandInstruction.class.equals( instr.getClass()))
+			result = new EmailCommandExecution((EmailCommandInstruction) instr, this.manager );
+
+		return result;
 	}
 }

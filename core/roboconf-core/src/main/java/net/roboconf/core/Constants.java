@@ -103,6 +103,11 @@ public interface Constants {
 	String FILE_EXT_MEASURES = ".measures";
 
 	/**
+	 * The <strong>commands</strong> file extension.
+	 */
+	String FILE_EXT_COMMANDS = ".commands";
+
+	/**
 	 * The <strong>rules</strong> file extension.
 	 */
 	String FILE_RULES = "rules.cfg";

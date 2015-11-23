@@ -145,7 +145,7 @@ public class Manager {
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
 		this.targetsMngr = new TargetsMngrImpl( this.configurationMngr );
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
-		this.commandsMngr = new CommandsMngrImpl();
+		this.commandsMngr = new CommandsMngrImpl( this );
 
 		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr, this.randomMngr );
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );

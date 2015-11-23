@@ -56,7 +56,7 @@ class AssociateTargetCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		// Resolve runtime structure
-		Instance scopedInstance = resolveInstance( this.instr, this.instr.getScopedInstancePath(), true );
+		Instance scopedInstance = resolveInstance( this.instr, this.instr.getScopedInstancePath(), false );
 		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
 
 		// Execute the command

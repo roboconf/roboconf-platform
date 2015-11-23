@@ -59,6 +59,7 @@ public class CreateInstanceCommandInstructionsTest {
 		CreateInstanceCommandInstruction instr = new CreateInstanceCommandInstruction( this.context, line, 1 );
 		List<ParsingError> errors = instr.validate();
 
+		Assert.assertEquals( this.app, instr.getApplication());
 		Assert.assertEquals( 2, errors.size());
 		Assert.assertEquals( ErrorCode.CMD_MISSING_PARENT_INSTANCE, errors.get( 0 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.CMD_MISSING_INSTANCE_NAME, errors.get( 1 ).getErrorCode());

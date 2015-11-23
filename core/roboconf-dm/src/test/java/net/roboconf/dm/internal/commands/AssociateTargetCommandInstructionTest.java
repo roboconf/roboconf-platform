@@ -25,14 +25,12 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.AssociateTargetCommandInstruction;
+import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -52,17 +50,21 @@ public class AssociateTargetCommandInstructionTest {
 
 	private TestApplication app;
 	private Manager manager;
-	private ManagedApplication ma;
+	private TestManagerWrapper managerWrapper;
 
 
 	@Before
 	public void initialize() throws Exception {
 
-		this.app = new TestApplication();
-		this.ma = new ManagedApplication( this.app );
-
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+
+
+		this.app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( this.app );
+
+		this.managerWrapper = new TestManagerWrapper( this.manager );
+		this.managerWrapper.getNameToManagedApplication().put( ma.getName(), ma );
 	}
 
 
@@ -71,12 +73,10 @@ public class AssociateTargetCommandInstructionTest {
 
 		String targetId = this.manager.targetsMngr().createTarget( "" );
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
-		AssociateTargetCommandInstruction instr =
-				new AssociateTargetCommandInstruction( this.ma, this.manager, "associate " + instancePath + " with " + targetId );
+		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with " + targetId );
 
 		Assert.assertNull( this.manager.targetsMngr().findTargetId( this.app, instancePath ));
-		Assert.assertNull( instr.validate());
-		instr.execute();
+		executor.execute();
 		Assert.assertEquals( targetId, this.manager.targetsMngr().findTargetId( this.app, instancePath ));
 	}
 
@@ -85,31 +85,47 @@ public class AssociateTargetCommandInstructionTest {
 	public void testExecute_inexistingTarget() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
-		AssociateTargetCommandInstruction instr =
-				new AssociateTargetCommandInstruction( this.ma, this.manager, "associate " + instancePath + " with 80" );
+		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with 80" );
 
 		Assert.assertNull( this.manager.targetsMngr().findTargetId( this.app, instancePath ));
-		Assert.assertNotNull( instr.validate());
-		instr.execute();
+		executor.execute();
 	}
 
 
-	@Test
-	public void testValidate() {
+	@Test( expected = CommandException.class )
+	public void testExecute_inexistingApplication() throws Exception {
 
-		Map<String,ErrorCode> instructionToError = new HashMap<> ();
-		instructionToError.put( "associate /tomcat-vm with", ErrorCode.EXEC_CMD_INVALID_TARGET_ID );
-		instructionToError.put( "associate /vm with 2", ErrorCode.EXEC_CMD_NO_MATCHING_INSTANCE );
-		instructionToError.put( "associate /tomcat-vm/tomcat-server with 2", ErrorCode.EXEC_CMD_NOT_A_SCOPED_INSTANCE );
-		instructionToError.put( "associate /tomcat-vm with 2", ErrorCode.EXEC_CMD_TARGET_WAS_NOT_FOUND );
+		String targetId = this.manager.targetsMngr().createTarget( "" );
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		AssociateTargetCommandExecution executor = buildExecutor( "associate " + instancePath + " with " + targetId );
 
-		for( Map.Entry<String,ErrorCode> entry : instructionToError.entrySet()) {
+		this.managerWrapper.getNameToManagedApplication().clear();
+		executor.execute();
+	}
 
-			AssociateTargetCommandInstruction instr = new AssociateTargetCommandInstruction( this.ma, this.manager, entry.getKey());
-			RoboconfError error = instr.validate();
-			ErrorCode value = error == null ? null : error.getErrorCode();
 
-			Assert.assertEquals( entry.getKey(), entry.getValue(), value );
-		}
+	@Test( expected = CommandException.class )
+	public void testExecute_inexistingInstance() throws Exception {
+
+		String targetId = this.manager.targetsMngr().createTarget( "" );
+		AssociateTargetCommandExecution executor = buildExecutor( "associate /inexisting with " + targetId, 1 );
+		executor.execute();
+	}
+
+
+	private AssociateTargetCommandExecution buildExecutor( String command ) {
+		return buildExecutor( command, 0 );
+	}
+
+
+	private AssociateTargetCommandExecution buildExecutor( String command, int validationError ) {
+
+		CommandsParser parser = new CommandsParser( this.app, command );
+		Assert.assertEquals( validationError, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+		Assert.assertEquals( AssociateTargetCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
+
+		AssociateTargetCommandInstruction instr = (AssociateTargetCommandInstruction) parser.getInstructions().get( 0 );
+		return new AssociateTargetCommandExecution( instr, this.manager );
 	}
 }

@@ -32,6 +32,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -66,51 +67,61 @@ class EmailCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		try {
-			// Subject and message
-			Properties mailProperties = this.manager.preferencesMngr().getEmailProperties();
-			String subject = "Roboconf event";
-			String data = this.instr.getMsg();
-
-			final String emailSubjectPattern = "Subject: ([^\n]+)(\n|$)(.*)";
-			Matcher m = Pattern.compile( emailSubjectPattern ).matcher( this.instr.getMsg());
-			if( m.find()) {
-				subject += ": " + m.group( 1 );
-				data = m.group( 3 ).trim();
-			}
-
-			// Credentials
-			String username = mailProperties.getProperty( "mail.user", "" );
-			String password = mailProperties.getProperty( "mail.password", "" );
-
-			// Obtain mail session object
-			Session session = null;
-			if("true".equalsIgnoreCase( mailProperties.getProperty("mail.smtp.auth")))
-				session = Session.getInstance( mailProperties, new MailAuthenticator(username, password));
-			else
-				session = Session.getDefaultInstance( mailProperties );
-
-			// Create a default MimeMessage object
-			MimeMessage message = new MimeMessage(session);
-
-			// Set From: and To: header fields
-			message.setFrom( new InternetAddress( mailProperties.getProperty( "mail.from" )));
-
-			Set<String> tos = new LinkedHashSet<> ();
-			tos.addAll( this.instr.getTos());
-			tos.addAll( this.manager.preferencesMngr().getDefaultEmailRecipients());
-
-			for( String to : tos )
-				message.addRecipient( Message.RecipientType.TO, new InternetAddress( to ));
-
-			message.setSubject( subject );
-			message.setText( data.trim());
-
-			// Send email
+			Message message = getMessageToSend();
 			Transport.send( message );
 
 		} catch( Exception e ) {
 			throw new CommandException( e );
 		}
+	}
+
+
+	/**
+	 * @return the message to send
+	 * @throws MessagingException
+	 */
+	Message getMessageToSend() throws MessagingException {
+
+		// Subject and message
+		Properties mailProperties = this.manager.preferencesMngr().getEmailProperties();
+		String subject = "Roboconf event";
+		String data = this.instr.getMsg();
+
+		final String emailSubjectPattern = "Subject: ([^\n]+)(\n|$)(.*)";
+		Matcher m = Pattern.compile( emailSubjectPattern ).matcher( this.instr.getMsg());
+		if( m.find()) {
+			subject = m.group( 1 );
+			data = m.group( 3 ).trim();
+		}
+
+		// Credentials
+		String username = mailProperties.getProperty( "mail.user", "" );
+		String password = mailProperties.getProperty( "mail.password", "" );
+
+		// Obtain mail session object
+		Session session = null;
+		if("true".equalsIgnoreCase( mailProperties.getProperty("mail.smtp.auth")))
+			session = Session.getInstance( mailProperties, new MailAuthenticator(username, password));
+		else
+			session = Session.getDefaultInstance( mailProperties );
+
+		// Create a default MimeMessage object
+		MimeMessage message = new MimeMessage(session);
+
+		// Set From: and To: header fields
+		message.setFrom( new InternetAddress( mailProperties.getProperty( "mail.from" )));
+
+		Set<String> tos = new LinkedHashSet<> ();
+		tos.addAll( this.instr.getTos());
+		tos.addAll( this.manager.preferencesMngr().getDefaultEmailRecipients());
+
+		for( String to : tos )
+			message.addRecipient( Message.RecipientType.TO, new InternetAddress( to ));
+
+		message.setSubject( subject );
+		message.setText( data.trim());
+
+		return message;
 	}
 
 

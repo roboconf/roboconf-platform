@@ -26,16 +26,15 @@
 package net.roboconf.dm.internal.commands;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.ChangeStateCommandInstruction;
+import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
 
@@ -53,6 +52,7 @@ public class ChangeStateCommandInstructionTest {
 
 	private Manager manager;
 	private IInstancesMngr instancesMngr;
+	private IApplicationMngr applicationsMngr;
 
 
 	@Before
@@ -63,31 +63,11 @@ public class ChangeStateCommandInstructionTest {
 
 		this.manager = Mockito.mock( Manager.class );
 		this.instancesMngr = Mockito.mock( IInstancesMngr.class );
+		this.applicationsMngr = Mockito.mock( IApplicationMngr.class );
+
 		Mockito.when( this.manager.instancesMngr()).thenReturn( this.instancesMngr );
-	}
-
-
-	@Test
-	public void testValidate() {
-
-		Map<String,ErrorCode> instructionToError = new HashMap<> ();
-		instructionToError.put( "Change status of /tomcat-vm/tomcat-server", ErrorCode.EXEC_CMD_INVALID_INSTANCE_STATUS );
-		instructionToError.put( "Change status of /tomcat-vm/tomcat-server to started", ErrorCode.EXEC_CMD_INVALID_INSTANCE_STATUS );
-		instructionToError.put( "Change status of /tomcat-vm/tomcat-server to DEPLOYING", ErrorCode.EXEC_CMD_INSTABLE_INSTANCE_STATUS );
-		instructionToError.put( "Change status of /tomcat-vm/invalid to DEPLOYED_AND_STARTED", ErrorCode.EXEC_CMD_NO_MATCHING_INSTANCE );
-		instructionToError.put( "Change status of /tomcat-vm/tomcat-server to DEPLOYED_STARTED", null );
-		instructionToError.put( "Change status of /tomcat-vm/tomcat-server to DEPLOYED STARTED", null );
-		instructionToError.put( "Change status of /tomcat-vm/tomcat-server to DEPLOYED_AND_STARTED", null );
-		instructionToError.put( "Change status of /tomcat-vm/tomcat-server to DEPLOYED and STARTED", null );
-
-		for( Map.Entry<String,ErrorCode> entry : instructionToError.entrySet()) {
-
-			ChangeStateCommandInstruction instr = new ChangeStateCommandInstruction( this.ma, this.manager, entry.getKey());
-			RoboconfError error = instr.validate();
-			ErrorCode value = error == null ? null : error.getErrorCode();
-
-			Assert.assertEquals( entry.getKey(), entry.getValue(), value );
-		}
+		Mockito.when( this.manager.applicationMngr()).thenReturn( this.applicationsMngr );
+		Mockito.when( this.applicationsMngr.findManagedApplicationByName( this.app.getName())).thenReturn( this.ma );
 	}
 
 
@@ -95,11 +75,10 @@ public class ChangeStateCommandInstructionTest {
 	public void testExecute_success() throws Exception {
 
 		String txt = "Change status of /tomcat-vm/tomcat-server to DEPLOYED and STARTED";
-		ChangeStateCommandInstruction instr = new ChangeStateCommandInstruction( this.ma, this.manager, txt );
-		Assert.assertNull( instr.validate());
+		ChangeStateCommandExecution executor = buildExecutor( txt );
 
 		Mockito.verifyZeroInteractions( this.instancesMngr );
-		instr.execute();
+		executor.execute();
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).changeInstanceState( this.ma, this.app.getTomcat(), InstanceStatus.DEPLOYED_STARTED );
 	}
 
@@ -108,11 +87,35 @@ public class ChangeStateCommandInstructionTest {
 	public void testExecute_failure() throws Exception {
 
 		String txt = "Change status of /tomcat-vm/tomcat-server to DEPLOYED and STARTED";
-		ChangeStateCommandInstruction instr = new ChangeStateCommandInstruction( this.ma, this.manager, txt );
-		Assert.assertNull( instr.validate());
+		ChangeStateCommandExecution executor = buildExecutor( txt );
 
 		Mockito.doThrow( new IOException( "For test" )).when( this.instancesMngr ).changeInstanceState( this.ma, this.app.getTomcat(), InstanceStatus.DEPLOYED_STARTED );
 		Mockito.verifyZeroInteractions( this.instancesMngr );
-		instr.execute();
+		executor.execute();
+	}
+
+
+	@Test( expected = CommandException.class )
+	public void testExecute_failure_inexistingInstance() throws Exception {
+
+		ChangeStateCommandExecution executor = buildExecutor( "Change status of /inexisting to DEPLOYED and STARTED", 1 );
+		executor.execute();
+	}
+
+
+	private ChangeStateCommandExecution buildExecutor( String command ) {
+		return buildExecutor( command, 0 );
+	}
+
+
+	private ChangeStateCommandExecution buildExecutor( String command, int validationError ) {
+
+		CommandsParser parser = new CommandsParser( this.app, command );
+		Assert.assertEquals( validationError, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+		Assert.assertEquals( ChangeStateCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
+
+		ChangeStateCommandInstruction instr = (ChangeStateCommandInstruction) parser.getInstructions().get( 0 );
+		return new ChangeStateCommandExecution( instr, this.manager );
 	}
 }

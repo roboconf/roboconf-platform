@@ -85,4 +85,12 @@ public class ContextTest {
 		this.context.instancePathToComponentName.put( "not a path", "whatever" );
 		Assert.assertNull( this.context.resolveInstance( "not a path" ));
 	}
+
+
+	@Test
+	public void testGetName() {
+
+		Assert.assertEquals( "test", new Context( this.app, new File( "test" )).getName());
+		Assert.assertNull( new Context( this.app, null ).getName());
+	}
 }

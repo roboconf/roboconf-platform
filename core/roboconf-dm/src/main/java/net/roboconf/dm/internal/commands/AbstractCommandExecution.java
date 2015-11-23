@@ -60,8 +60,10 @@ public abstract class AbstractCommandExecution {
 	throws CommandException {
 
 		Instance instance = InstanceHelpers.findInstanceByPath( instr.getApplication(), instancePath );
-		if( instance == null && ! nullIsAllowed )
-			throw new CommandException( "Instance " + instancePath + " could not be found." );
+		if( instance == null ) {
+			if( ! nullIsAllowed || instancePath != null )
+				throw new CommandException( "Instance " + instancePath + " could not be found." );
+		}
 
 		return instance;
 	}

@@ -31,7 +31,6 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 
-
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -56,7 +55,7 @@ class BulkCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		// Resolve runtime structure
-		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), true );
+		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), false );
 		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
 
 		// Execute the command

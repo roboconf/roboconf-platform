@@ -26,17 +26,16 @@
 package net.roboconf.dm.internal.commands;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.BulkCommandInstructions;
+import net.roboconf.core.commands.BulkCommandInstructions.ChangeStateInstruction;
+import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.dm.internal.commands.BulkCommandInstructions.ChangeStateInstruction;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
 
@@ -54,6 +53,7 @@ public class BulkCommandInstructionsTest {
 
 	private Manager manager;
 	private IInstancesMngr instancesMngr;
+	private IApplicationMngr applicationsMngr;
 
 
 	@Before
@@ -64,7 +64,11 @@ public class BulkCommandInstructionsTest {
 
 		this.manager = Mockito.mock( Manager.class );
 		this.instancesMngr = Mockito.mock( IInstancesMngr.class );
+		this.applicationsMngr = Mockito.mock( IApplicationMngr.class );
+
 		Mockito.when( this.manager.instancesMngr()).thenReturn( this.instancesMngr );
+		Mockito.when( this.manager.applicationMngr()).thenReturn( this.applicationsMngr );
+		Mockito.when( this.applicationsMngr.findManagedApplicationByName( this.app.getName())).thenReturn( this.ma );
 	}
 
 
@@ -73,47 +77,32 @@ public class BulkCommandInstructionsTest {
 
 		// Prepare
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
-		BulkCommandInstructions instr1 = new BulkCommandInstructions(
-				this.ma, this.manager,
-				ChangeStateInstruction.DEPLOY_AND_START_ALL.toString() + " " + instancePath );
-
-		BulkCommandInstructions instr2 = new BulkCommandInstructions(
-				this.ma, this.manager,
-				ChangeStateInstruction.STOP_ALL.toString() + " " + instancePath );
-
-		BulkCommandInstructions instr3 = new BulkCommandInstructions(
-				this.ma, this.manager,
-				ChangeStateInstruction.UNDEPLOY_ALL.toString() + " " + instancePath );
-
-		BulkCommandInstructions instr4 = new BulkCommandInstructions(
-				this.ma, this.manager,
-				ChangeStateInstruction.DELETE.toString() + " " + instancePath );
+		BulkCommandExecution executor1 = buildExecutor( ChangeStateInstruction.DEPLOY_AND_START_ALL.toString() + " " + instancePath );
+		BulkCommandExecution executor2 = buildExecutor( ChangeStateInstruction.STOP_ALL.toString() + " " + instancePath );
+		BulkCommandExecution executor3 = buildExecutor( ChangeStateInstruction.UNDEPLOY_ALL.toString() + " " + instancePath );
+		BulkCommandExecution executor4 = buildExecutor( ChangeStateInstruction.DELETE.toString() + " " + instancePath );
 
 		// Deploy and start all
 		Mockito.verifyZeroInteractions( this.instancesMngr );
-		Assert.assertNull( instr1.validate());
-		instr1.execute();
+		executor1.execute();
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).deployAndStartAll( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).deployAndStartAll( this.ma, this.app.getTomcatVm());
 
 		// Stop all
 		Mockito.reset( this.instancesMngr );
-		Assert.assertNull( instr2.validate());
-		instr2.execute();
+		executor2.execute();
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).stopAll( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).stopAll( this.ma, this.app.getTomcatVm());
 
 		// Undeploy all
 		Mockito.reset( this.instancesMngr );
-		Assert.assertNull( instr3.validate());
-		instr3.execute();
+		executor3.execute();
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).undeployAll( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).undeployAll( this.ma, this.app.getTomcatVm());
 
 		// Delete
 		Mockito.reset( this.instancesMngr );
-		Assert.assertNull( instr4.validate());
-		instr4.execute();
+		executor4.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).removeInstance( this.ma, this.app.getTomcatVm());
@@ -124,53 +113,47 @@ public class BulkCommandInstructionsTest {
 	public void testExecute_inexistingInstance() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
-		BulkCommandInstructions instr = new BulkCommandInstructions(
-				this.ma, this.manager,
-				ChangeStateInstruction.DEPLOY_AND_START_ALL + " " + instancePath );
+		BulkCommandExecution executor = buildExecutor( ChangeStateInstruction.DEPLOY_AND_START_ALL + " " + instancePath );
 
 		Mockito.doThrow( new IOException( "for test" )).when( this.instancesMngr ).deployAndStartAll( this.ma, this.app.getTomcatVm());
-		Assert.assertNull( instr.validate());
-		instr.execute();
+		executor.execute();
 	}
 
 
-	@Test
-	public void testWhich() {
+	@Test( expected = CommandException.class )
+	public void testExecute_applicationNotFound() throws Exception {
 
-		Assert.assertEquals( ChangeStateInstruction.DELETE, ChangeStateInstruction.which( "dELETE" ));
-		Assert.assertEquals( ChangeStateInstruction.DEPLOY_AND_START_ALL, ChangeStateInstruction.which( "deploy and start all" ));
-		Assert.assertEquals( ChangeStateInstruction.STOP_ALL, ChangeStateInstruction.which( "Stop ALL" ));
-		Assert.assertEquals( ChangeStateInstruction.UNDEPLOY_ALL, ChangeStateInstruction.which( "undeploy all" ));
-		Assert.assertNull( ChangeStateInstruction.which( "invalid" ));
+		Mockito.reset( this.applicationsMngr );
+
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		BulkCommandExecution executor = buildExecutor( ChangeStateInstruction.DEPLOY_AND_START_ALL + " " + instancePath );
+
+		Mockito.doThrow( new IOException( "for test" )).when( this.instancesMngr ).deployAndStartAll( this.ma, this.app.getTomcatVm());
+		executor.execute();
 	}
 
 
-	@Test
-	public void testIsBulkInstruction() {
+	@Test( expected = CommandException.class )
+	public void testExecute_failure_inexistingInstance() throws Exception {
 
-		Assert.assertTrue( BulkCommandInstructions.isBulkInstruction( "deploy and start all /vm" ));
-		Assert.assertTrue( BulkCommandInstructions.isBulkInstruction( "Stop all /vm" ));
-		Assert.assertTrue( BulkCommandInstructions.isBulkInstruction( "undeploy all /vm" ));
-		Assert.assertFalse( BulkCommandInstructions.isBulkInstruction( "deploy /vm" ));
-		Assert.assertFalse( BulkCommandInstructions.isBulkInstruction( "" ));
+		BulkCommandExecution executor = buildExecutor( ChangeStateInstruction.DEPLOY_AND_START_ALL + "/inexisting", 1 );
+		executor.execute();
 	}
 
 
-	@Test
-	public void testValidate() {
+	private BulkCommandExecution buildExecutor( String command ) {
+		return buildExecutor( command, 0 );
+	}
 
-		Map<String,ErrorCode> instructionToError = new HashMap<> ();
-		instructionToError.put( "eat and drink everything", ErrorCode.EXEC_CMD_UNRECOGNIZED_INSTRUCTION );
-		instructionToError.put( "deploy and start all /vm", ErrorCode.EXEC_CMD_NO_MATCHING_INSTANCE );
-		instructionToError.put( "deploy and start all /tomcat-vm", null );
 
-		for( Map.Entry<String,ErrorCode> entry : instructionToError.entrySet()) {
+	private BulkCommandExecution buildExecutor( String command, int validationError ) {
 
-			BulkCommandInstructions instr = new BulkCommandInstructions( this.ma, this.manager, entry.getKey());
-			RoboconfError error = instr.validate();
-			ErrorCode value = error == null ? null : error.getErrorCode();
+		CommandsParser parser = new CommandsParser( this.app, command );
+		Assert.assertEquals( validationError, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+		Assert.assertEquals( BulkCommandInstructions.class, parser.getInstructions().get( 0 ).getClass());
 
-			Assert.assertEquals( entry.getKey(), entry.getValue(), value );
-		}
+		BulkCommandInstructions instr = (BulkCommandInstructions) parser.getInstructions().get( 0 );
+		return new BulkCommandExecution( instr, this.manager );
 	}
 }

@@ -26,18 +26,17 @@
 package net.roboconf.dm.internal.commands;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.CommandsParser;
+import net.roboconf.core.commands.ReplicateCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -49,14 +48,16 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ReplicateCommandInstructionTest {
+public class ReplicateCommandExecutionTest {
 
 	private TestApplication app;
 	private ManagedApplication ma;
 
 	private Manager manager;
+
 	private IInstancesMngr instancesMngr;
 	private ITargetsMngr targetsMngr;
+	private IApplicationMngr applicationsMngr;
 
 
 	@Before
@@ -67,10 +68,14 @@ public class ReplicateCommandInstructionTest {
 
 		this.instancesMngr = Mockito.mock( IInstancesMngr.class );
 		this.targetsMngr = Mockito.mock( ITargetsMngr.class );
+		this.applicationsMngr = Mockito.mock( IApplicationMngr.class );
 		this.manager = Mockito.mock( Manager.class );
 
 		Mockito.when( this.manager.instancesMngr()).thenReturn( this.instancesMngr );
 		Mockito.when( this.manager.targetsMngr()).thenReturn( this.targetsMngr );
+		Mockito.when( this.manager.applicationMngr()).thenReturn( this.applicationsMngr );
+
+		Mockito.when( this.applicationsMngr.findManagedApplicationByName( this.app.getName())).thenReturn( this.ma );
 	}
 
 
@@ -78,14 +83,13 @@ public class ReplicateCommandInstructionTest {
 	public void testExecute_success_noDefaultTarget() throws Exception {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
-		ReplicateCommandInstruction instr =
-				new ReplicateCommandInstruction( this.ma, this.manager, "replicate " + this.app.getTomcatVm().getName() + " as toto" );
+		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
+		ReplicateCommandExecution executor = buildExecutor( line );
 
 		Mockito.verifyZeroInteractions( this.instancesMngr );
 		Mockito.verifyZeroInteractions( this.targetsMngr );
 
-		Assert.assertNull( instr.validate());
-		instr.execute();
+		executor.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
@@ -106,14 +110,13 @@ public class ReplicateCommandInstructionTest {
 		Mockito.when( this.targetsMngr.findTargetId( this.app, instancePath )).thenReturn( "my-target-id" );
 
 		// Replicate it
-		ReplicateCommandInstruction instr =
-				new ReplicateCommandInstruction( this.ma, this.manager, "replicate /" + this.app.getTomcatVm().getName() + " as toto" );
+		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
+		ReplicateCommandExecution executor = buildExecutor( line );
 
 		Mockito.verifyZeroInteractions( this.instancesMngr );
 		Mockito.verifyZeroInteractions( this.targetsMngr );
 
-		Assert.assertNull( instr.validate());
-		instr.execute();
+		executor.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
@@ -131,14 +134,13 @@ public class ReplicateCommandInstructionTest {
 		Mockito.when( this.targetsMngr.findTargetId( this.app, instancePath )).thenReturn( "my-target-id" );
 
 		// Replicate it
-		ReplicateCommandInstruction instr =
-				new ReplicateCommandInstruction( this.ma, this.manager, "replicate " + this.app.getTomcatVm().getName() + " as toto" );
+		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
+		ReplicateCommandExecution executor = buildExecutor( line );
 
 		Mockito.verifyZeroInteractions( this.instancesMngr );
 		Mockito.verifyZeroInteractions( this.targetsMngr );
 
-		Assert.assertNull( instr.validate());
-		instr.execute();
+		executor.execute();
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
 		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
@@ -163,31 +165,48 @@ public class ReplicateCommandInstructionTest {
 					Mockito.any( Instance.class ));
 
 		// Execute the command
-		ReplicateCommandInstruction instr =
-				new ReplicateCommandInstruction( this.ma, this.manager, "replicate " + this.app.getTomcatVm().getName() + " as toto" );
+		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
+		ReplicateCommandExecution executor = buildExecutor( line );
 
-		Assert.assertNull( instr.validate());
-		instr.execute();
+		executor.execute();
 	}
 
 
-	@Test
-	public void testValidate() {
+	@Test( expected = CommandException.class )
+	public void testExecute_failure_applicationNotFound() throws Exception {
 
-		Map<String,ErrorCode> instructionToError = new HashMap<> ();
-		instructionToError.put( "replicate invalid as toto", ErrorCode.EXEC_CMD_NO_MATCHING_INSTANCE );
-		instructionToError.put( "replicate /tomcat-vm as", ErrorCode.EXEC_CMD_MISSING_INSTANCE_NAME );
-		instructionToError.put( "replicate /tomcat-vm as !boo!", ErrorCode.EXEC_CMD_INVALID_INSTANCE_NAME );
-		instructionToError.put( "replicate /tomcat-vm/tomcat-server as toto", ErrorCode.EXEC_CMD_NOT_A_ROOT_INSTANCE );
-		instructionToError.put( "replicate /tomcat-vm as toto", null );
+		// The application will not be resolved
+		Mockito.reset( this.applicationsMngr );
 
-		for( Map.Entry<String,ErrorCode> entry : instructionToError.entrySet()) {
+		// Execute the command
+		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
+		ReplicateCommandExecution executor = buildExecutor( line );
 
-			ReplicateCommandInstruction instr = new ReplicateCommandInstruction( this.ma, this.manager, entry.getKey());
-			RoboconfError error = instr.validate();
-			ErrorCode value = error == null ? null : error.getErrorCode();
+		executor.execute();
+	}
 
-			Assert.assertEquals( entry.getKey(), entry.getValue(), value );
-		}
+
+	@Test( expected = CommandException.class )
+	public void testExecute_failure_inexistingInstance() throws Exception {
+
+		ReplicateCommandExecution executor = buildExecutor( "replicate /inexisting as toto", 1 );
+		executor.execute();
+	}
+
+
+	private ReplicateCommandExecution buildExecutor( String command ) {
+		return buildExecutor( command, 0 );
+	}
+
+
+	private ReplicateCommandExecution buildExecutor( String command, int validationError ) {
+
+		CommandsParser parser = new CommandsParser( this.app, command );
+		Assert.assertEquals( validationError, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+		Assert.assertEquals( ReplicateCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
+
+		ReplicateCommandInstruction instr = (ReplicateCommandInstruction) parser.getInstructions().get( 0 );
+		return new ReplicateCommandExecution( instr, this.manager );
 	}
 }

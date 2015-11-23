@@ -26,16 +26,15 @@
 package net.roboconf.dm.internal.commands;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.CommandsParser;
+import net.roboconf.core.commands.CreateInstanceCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
 
@@ -53,6 +52,7 @@ public class CreateInstanceCommandInstructionsTest {
 
 	private Manager manager;
 	private IInstancesMngr instancesMngr;
+	private IApplicationMngr applicationsMngr;
 
 
 	@Before
@@ -63,7 +63,12 @@ public class CreateInstanceCommandInstructionsTest {
 
 		this.manager = Mockito.mock( Manager.class );
 		this.instancesMngr = Mockito.mock( IInstancesMngr.class );
+		this.applicationsMngr = Mockito.mock( IApplicationMngr.class );
+
 		Mockito.when( this.manager.instancesMngr()).thenReturn( this.instancesMngr );
+		Mockito.when( this.manager.applicationMngr()).thenReturn( this.applicationsMngr );
+		Mockito.when( this.applicationsMngr.findManagedApplicationByName( this.app.getName())).thenReturn( this.ma );
+
 	}
 
 
@@ -71,11 +76,9 @@ public class CreateInstanceCommandInstructionsTest {
 	public void testExecute_rootInstance_success() throws Exception {
 
 		String txt = "create vm as tomcat-vm-2";
-		CreateInstanceCommandInstruction instr = new CreateInstanceCommandInstruction( this.ma, this.manager, txt );
+		CreateInstanceCommandExecution executor = buildExecutor( txt );
 
-		Assert.assertNull( instr.validate());
-		instr.execute();
-
+		executor.execute();
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "tomcat-vm-2" ));
 	}
 
@@ -84,11 +87,9 @@ public class CreateInstanceCommandInstructionsTest {
 	public void testExecute_childInstance_success() throws Exception {
 
 		String txt = "create tomcat as tomcat-server-2 under /tomcat-vm";
-		CreateInstanceCommandInstruction instr = new CreateInstanceCommandInstruction( this.ma, this.manager, txt );
+		CreateInstanceCommandExecution executor = buildExecutor( txt );
 
-		Assert.assertNull( instr.validate());
-		instr.execute();
-
+		executor.execute();
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance(
 				this.ma,
 				this.app.getTomcatVm(),
@@ -97,7 +98,7 @@ public class CreateInstanceCommandInstructionsTest {
 
 
 	@Test( expected = CommandException.class )
-	public void testExecute_failure() throws Exception {
+	public void testExecute_failure_randomException() throws Exception {
 
 		// Simulate an exception
 		Mockito
@@ -109,36 +110,51 @@ public class CreateInstanceCommandInstructionsTest {
 					Mockito.any( Instance.class ));
 
 		// Prepare the arguments
-		String txt = "create tomcat as tomcat-server-2";
-		CreateInstanceCommandInstruction instr = new CreateInstanceCommandInstruction( this.ma, this.manager, txt );
+		String txt = "create vm as tomcat-vm3";
+		CreateInstanceCommandExecution executor = buildExecutor( txt );
 
 		// Execute the command
-		Assert.assertNotNull( instr.validate());
-		instr.execute();
+		executor.execute();
 	}
 
 
-	@Test
-	public void testValidate() {
+	@Test( expected = CommandException.class )
+	public void testExecute_failure_applicationNotFound() throws Exception {
 
-		Map<String,ErrorCode> instructionToError = new HashMap<> ();
-		instructionToError.put( "create tomcat as", ErrorCode.EXEC_CMD_MISSING_INSTANCE_NAME );
-		instructionToError.put( "create tomcat as ", ErrorCode.EXEC_CMD_MISSING_INSTANCE_NAME );
-		instructionToError.put( "create tomcat as !boo!", ErrorCode.EXEC_CMD_INVALID_INSTANCE_NAME );
-		instructionToError.put( "create as toto", ErrorCode.EXEC_CMD_MISSING_COMPONENT_NAME );
-		instructionToError.put( "create     as toto", ErrorCode.EXEC_CMD_MISSING_COMPONENT_NAME );
-		instructionToError.put( "create invalid as toto", ErrorCode.EXEC_CMD_INEXISTING_COMPONENT );
-		instructionToError.put( "create tomcat as toto", ErrorCode.EXEC_CMD_MISSING_PARENT_INSTANCE );
-		instructionToError.put( "create vm as toto", null );
-		instructionToError.put( "create tomcat as instance name with spaces under /tomcat-vm", null );
+		// Reset the mock
+		Mockito.reset( this.applicationsMngr );
 
-		for( Map.Entry<String,ErrorCode> entry : instructionToError.entrySet()) {
+		// Prepare the arguments
+		String txt = "create vm as tomcat-vm3";
+		CreateInstanceCommandExecution executor = buildExecutor( txt );
 
-			CreateInstanceCommandInstruction instr = new CreateInstanceCommandInstruction( this.ma, this.manager, entry.getKey());
-			RoboconfError error = instr.validate();
-			ErrorCode value = error == null ? null : error.getErrorCode();
+		// Execute the command
+		executor.execute();
+	}
 
-			Assert.assertEquals( entry.getKey(), entry.getValue(), value );
-		}
+
+	@Test( expected = CommandException.class )
+	public void testExecute_childInstance_failure_inexistingParent() throws Exception {
+
+		String txt = "create tomcat as tomcat-server-2 under /inexisting";
+		CreateInstanceCommandExecution executor = buildExecutor( txt, 1 );
+		executor.execute();
+	}
+
+
+	private CreateInstanceCommandExecution buildExecutor( String command ) {
+		return buildExecutor( command, 0 );
+	}
+
+
+	private CreateInstanceCommandExecution buildExecutor( String command, int validationError ) {
+
+		CommandsParser parser = new CommandsParser( this.app, command );
+		Assert.assertEquals( validationError, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+		Assert.assertEquals( CreateInstanceCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
+
+		CreateInstanceCommandInstruction instr = (CreateInstanceCommandInstruction) parser.getInstructions().get( 0 );
+		return new CreateInstanceCommandExecution( instr, this.manager );
 	}
 }

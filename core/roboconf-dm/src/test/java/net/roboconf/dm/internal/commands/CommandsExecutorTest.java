@@ -26,16 +26,28 @@
 package net.roboconf.dm.internal.commands;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
 
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
+import net.roboconf.core.commands.AbstractCommandInstruction;
+import net.roboconf.core.commands.BulkCommandInstructions;
+import net.roboconf.core.commands.ChangeStateCommandInstruction;
+import net.roboconf.core.commands.CommandsParser;
+import net.roboconf.core.commands.DefineVariableCommandInstruction;
+import net.roboconf.core.commands.EmailCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.exceptions.CommandException;
+import net.roboconf.messaging.api.MessagingConstants;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,80 +62,166 @@ public class CommandsExecutorTest {
 	public TemporaryFolder folder = new TemporaryFolder();
 
 	private TestApplication app;
-	private ManagedApplication ma;
 	private Manager manager;
 
 
 	@Before
-	public void initialize() throws Exception {
+	public void startManager() throws Exception {
 
 		this.app = new TestApplication();
-		this.ma = new ManagedApplication( this.app );
 
+		// Prepare the DM
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.manager.start();
+
+		// Reconfigure the manager
+		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
+		wrapper.getNameToManagedApplication().put( this.app.getName(), new ManagedApplication( this.app ));
+		wrapper.configureMessagingForTest();
+		this.manager.reconfigure();
+
+		// Disable the messages timer for predictability
+		TestUtils.getInternalField( this.manager, "timer", Timer.class).cancel();
 	}
 
 
-	@Test
-	public void testValidate() throws Exception {
-
-		File f = TestUtils.findTestFile( "/commands/single-line-commands.txt" );
-		CommandsExecutor executor = new CommandsExecutor( this.manager, this.ma, f );
-		Assert.assertEquals( 0, executor.validate().size());
-		Assert.assertEquals( 1, executor.instructions.size());
-		Assert.assertEquals( 3, executor.foundInstructions );
-
-		f = TestUtils.findTestFile( "/commands/multi-line-commands.txt" );
-		executor = new CommandsExecutor( this.manager, this.ma, f );
-		Assert.assertEquals( 0, executor.validate().size());
-		Assert.assertEquals( 1, executor.instructions.size());
-		Assert.assertEquals( 3, executor.foundInstructions );
-
-		f = TestUtils.findTestFile( "/commands/commands-in-error.txt" );
-		executor = new CommandsExecutor( this.manager, this.ma, f );
-		Assert.assertEquals( 2, executor.instructions.size());
-		Assert.assertEquals( 3, executor.foundInstructions );
-
-		List<RoboconfError> errors = executor.validate();
-		Assert.assertEquals( 4, errors.size());
-		Assert.assertEquals( ErrorCode.EXEC_CMD_UNRECOGNIZED_INSTRUCTION, errors.get( 0 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.EXEC_CMD_UNRESOLVED_VARIABLE, errors.get( 1 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.EXEC_CMD_INVALID_INSTANCE_NAME, errors.get( 2 ).getErrorCode());
-		Assert.assertEquals( ErrorCode.EXEC_CMD_INEXISTING_COMPONENT, errors.get( 3 ).getErrorCode());
-	}
-
-
-	@Test
-	public void testInexistingFile() {
-
-		CommandsExecutor executor = new CommandsExecutor( this.manager, this.ma, new File( "inexisting" ));
-		List<RoboconfError> errors = executor.validate();
-		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.EXEC_CMD_NO_INSTRUCTION, errors.get( 0 ).getErrorCode());
-	}
-
-
-	@Test
-	public void testEmptyFile() throws Exception {
-
-		CommandsExecutor executor = new CommandsExecutor( this.manager, this.ma, this.folder.newFile());
-		List<RoboconfError> errors = executor.validate();
-		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.EXEC_CMD_NO_INSTRUCTION, errors.get( 0 ).getErrorCode());
+	@After
+	public void stopManager() {
+		this.manager.stop();
 	}
 
 
 	@Test
 	public void testAllCommands() throws Exception {
 
-		File f = TestUtils.findTestFile( "/commands/all-commands.txt" );
-		CommandsExecutor executor = new CommandsExecutor( this.manager, this.ma, f );
+		// Before
+		File f = TestUtils.findTestFile( "/commands/create-and-delete.commands" );
+		CommandsExecutor executor = new CommandsExecutor( this.manager, this.app, f );
 
 		String targetId = this.manager.targetsMngr().createTarget( "" );
 		Assert.assertEquals( "1", targetId );
 
-		List<RoboconfError> errors = executor.validate();
-		Assert.assertEquals( 0, errors.size());
+		List<String> instancePaths = new ArrayList<> ();
+		for( Instance inst : InstanceHelpers.getAllInstances( this.app ))
+			instancePaths.add( InstanceHelpers.computeInstancePath( inst ));
+
+		int instancesCount = InstanceHelpers.getAllInstances( this.app ).size();
+		Assert.assertTrue( instancePaths.contains( "/tomcat-vm" ));
+
+		// Execute
+		executor.execute();
+
+		// After
+		instancePaths.clear();;
+		for( Instance inst : InstanceHelpers.getAllInstances( this.app ))
+			instancePaths.add( InstanceHelpers.computeInstancePath( inst ));
+
+		Assert.assertEquals( instancesCount + 5, instancePaths.size());
+		Assert.assertTrue( instancePaths.contains( "/tomcat 1" ));
+		Assert.assertTrue( instancePaths.contains( "/tomcat 1/tomcat-server" ));
+		Assert.assertTrue( instancePaths.contains( "/tomcat 1/tomcat-server/hello-world" ));
+
+		Assert.assertTrue( instancePaths.contains( "/tomcat 2" ));
+		Assert.assertTrue( instancePaths.contains( "/tomcat 2/tomcat-server" ));
+		Assert.assertTrue( instancePaths.contains( "/tomcat 2/tomcat-server/hello-world" ));
+
+		Assert.assertTrue( instancePaths.contains( "/tomcat 3" ));
+		Assert.assertTrue( instancePaths.contains( "/tomcat 3/my-tomcat-server" ));
+
+		Assert.assertFalse( instancePaths.contains( "/tomcat 3/tomcat-server/hello-world" ));
+		Assert.assertFalse( instancePaths.contains( "/tomcat 3/my-tomcat-server/hello-world" ));
+		Assert.assertFalse( instancePaths.contains( "/tomcat-vm" ));
+
+		Instance instance = InstanceHelpers.findInstanceByPath( this.app, "/tomcat 1" );
+		Assert.assertNotNull( instance );
+		Assert.assertNull( this.manager.targetsMngr().findTargetId( this.app, "/tomcat 1" ));
+
+		instance = InstanceHelpers.findInstanceByPath( this.app, "/tomcat 2" );
+		Assert.assertNotNull( instance );
+		Assert.assertNull( this.manager.targetsMngr().findTargetId( this.app, "/tomcat 2" ));
+
+		instance = InstanceHelpers.findInstanceByPath( this.app, "/tomcat 3" );
+		Assert.assertNotNull( instance );
+		Assert.assertEquals( targetId, this.manager.targetsMngr().findTargetId( this.app, "/tomcat 3" ));
+	}
+
+
+	@Test( expected = CommandException.class )
+	public void testExecutionFailure1() throws Exception {
+
+		// No command file
+		CommandsExecutor executor = new CommandsExecutor( this.manager, this.app, new File( "inexisting" ));
+		executor.execute();
+	}
+
+
+	@Test( expected = CommandException.class )
+	public void testExecutionFailure2() throws Exception {
+
+		// All the exceptions are caught, even NPE!
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "inexisting" ));
+		executor.execute();
+	}
+
+
+	@Test
+	public void testFindExecutor_bulkCommand() {
+
+		CommandsParser parser = new CommandsParser( this.app, "deploy and start all /tomcat-vm" );
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+
+		AbstractCommandInstruction instr = parser.getInstructions().get( 0 );
+		Assert.assertEquals( BulkCommandInstructions.class, instr.getClass());
+
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
+		Assert.assertEquals( BulkCommandExecution.class, executor.findExecutor( instr ).getClass());
+	}
+
+
+	@Test
+	public void testFindExecutor_changeStateCommand() {
+
+		CommandsParser parser = new CommandsParser( this.app, "change status of /tomcat-vm to DEPLOYED and STARTED" );
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+
+		AbstractCommandInstruction instr = parser.getInstructions().get( 0 );
+		Assert.assertEquals( ChangeStateCommandInstruction.class, instr.getClass());
+
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
+		Assert.assertEquals( ChangeStateCommandExecution.class, executor.findExecutor( instr ).getClass());
+	}
+
+
+	@Test
+	public void testFindExecutor_defineCommand() {
+
+		CommandsParser parser = new CommandsParser( this.app, "define key = value" );
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+
+		AbstractCommandInstruction instr = parser.getInstructions().get( 0 );
+		Assert.assertEquals( DefineVariableCommandInstruction.class, instr.getClass());
+
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
+		Assert.assertNull( executor.findExecutor( instr ));
+	}
+
+
+	@Test
+	public void testFindExecutor_emailCommand() {
+
+		CommandsParser parser = new CommandsParser( this.app, "email toto with this message" );
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+
+		AbstractCommandInstruction instr = parser.getInstructions().get( 0 );
+		Assert.assertEquals( EmailCommandInstruction.class, instr.getClass());
+
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
+		Assert.assertEquals( EmailCommandExecution.class, executor.findExecutor( instr ).getClass());
 	}
 }

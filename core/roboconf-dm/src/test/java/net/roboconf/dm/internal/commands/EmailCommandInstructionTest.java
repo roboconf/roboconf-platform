@@ -25,13 +25,20 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+import javax.mail.Address;
+import javax.mail.Message;
 
 import junit.framework.Assert;
-import net.roboconf.core.ErrorCode;
-import net.roboconf.core.RoboconfError;
-import net.roboconf.dm.internal.commands.EmailCommandInstruction.MailAuthenticator;
+import net.roboconf.core.commands.CommandsParser;
+import net.roboconf.core.commands.EmailCommandInstruction;
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.dm.internal.commands.EmailCommandExecution.MailAuthenticator;
 import net.roboconf.dm.management.Manager;
 
 import org.junit.Before;
@@ -64,21 +71,55 @@ public class EmailCommandInstructionTest {
 
 
 	@Test
-	public void testValidate() {
+	public void testMessagesToSend() throws Exception {
 
-		Map<String,ErrorCode> instructionToError = new HashMap<> ();
-		instructionToError.put( "email toto@company.net with this message", null );
-		instructionToError.put( "email toto1@company.net, toto2@company.net with this message", null );
-		instructionToError.put( "email with this message", ErrorCode.EXEC_CMD_EMAIL_NO_RECIPIENTS );
-		instructionToError.put( "email toto@company.net with ", ErrorCode.EXEC_CMD_EMAIL_NO_MESSAGE );
+		File f = TestUtils.findTestFile( "/commands/email-commands.txt" );
+		CommandsParser parser = new CommandsParser( new TestApplication(), f );
 
-		for( Map.Entry<String,ErrorCode> entry : instructionToError.entrySet()) {
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+		Assert.assertEquals( 2, parser.getInstructions().size());
 
-			EmailCommandInstruction instr = new EmailCommandInstruction( this.manager, entry.getKey());
-			RoboconfError error = instr.validate();
-			ErrorCode value = error == null ? null : error.getErrorCode();
+		Properties mailProperties = this.manager.preferencesMngr().getEmailProperties();
+		mailProperties.put( "mail.from", "me@test.fr" );
 
-			Assert.assertEquals( entry.getKey(), entry.getValue(), value );
-		}
+		// First message
+		Assert.assertEquals( EmailCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
+		EmailCommandInstruction instr = (EmailCommandInstruction) parser.getInstructions().get( 0 );
+		EmailCommandExecution executor = new EmailCommandExecution( instr, this.manager );
+		Message message = executor.getMessageToSend();
+
+		Assert.assertNotNull( message );
+		Assert.assertEquals( "Alert!", message.getSubject());
+		Assert.assertEquals( "This is an alert.", message.getContent());
+
+		List<String> recipients = new ArrayList<> ();
+		for( Address ad : message.getAllRecipients())
+			recipients.add( ad.toString());
+
+		Assert.assertEquals( 1, recipients.size());
+		Assert.assertTrue( recipients.contains( "toto@company.net" ));
+
+		// Second message
+
+		// Just for code coverage
+		mailProperties.put( "mail.smtp.auth", "true" );
+		// End
+
+		Assert.assertEquals( EmailCommandInstruction.class, parser.getInstructions().get( 1 ).getClass());
+		instr = (EmailCommandInstruction) parser.getInstructions().get( 1 );
+		executor = new EmailCommandExecution( instr, this.manager );
+		message = executor.getMessageToSend();
+
+		Assert.assertNotNull( message );
+		Assert.assertEquals( "Roboconf event", message.getSubject());
+		Assert.assertEquals( "This message is splitted over several lines!", message.getContent());
+
+		recipients.clear();
+		for( Address ad : message.getAllRecipients())
+			recipients.add( ad.toString());
+
+		Assert.assertEquals( 2, recipients.size());
+		Assert.assertTrue( recipients.contains( "p1@c.com" ));
+		Assert.assertTrue( recipients.contains( "p3@c.com" ));
 	}
 }

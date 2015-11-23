@@ -59,7 +59,7 @@ public class EmailCommandInstruction extends AbstractCommandInstruction {
 		if( m.matches()) {
 			this.syntaxicallyCorrect = true;
 			this.tos.addAll( Utils.splitNicely( m.group( 1 ), "," ));
-			this.msg = m.group( 2 ).trim();
+			this.msg = m.group( 2 ).trim().replace( "\\n", "\n" );
 		}
 	}
 

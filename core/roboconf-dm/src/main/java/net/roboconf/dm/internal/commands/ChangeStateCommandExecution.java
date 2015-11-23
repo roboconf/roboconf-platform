@@ -55,7 +55,7 @@ class ChangeStateCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		// Resolve runtime structure
-		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), true );
+		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), false );
 		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
 
 		// Execute the command

@@ -128,4 +128,42 @@ public class CommandsParserTest {
 		List<ParsingError> errors = parser.getParsingErrors();
 		Assert.assertEquals( 0, errors.size());
 	}
+
+
+	@Test
+	public void testEmailComandwithLineBreaks() throws Exception {
+
+		File f = TestUtils.findTestFile( "/commands/email-command-with-line-breaks.txt" );
+		CommandsParser parser = new CommandsParser( this.app, f );
+		List<ParsingError> errors = parser.getParsingErrors();
+		Assert.assertEquals( 0, errors.size());
+
+		Assert.assertEquals( 1, parser.getInstructions().size());
+		Assert.assertEquals( EmailCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
+
+		String expected = "Subject: Alert!\nThis is an alert.";
+		Assert.assertEquals( expected, ((EmailCommandInstruction) parser.getInstructions().get( 0 )).getMsg());
+	}
+
+
+	@Test
+	public void testConstructorWithString() throws Exception {
+
+		CommandsParser parser = new CommandsParser( this.app, "replicate /tomcat-vm as tomcat-vm-copy" );
+		List<ParsingError> errors = parser.getParsingErrors();
+
+		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+		Assert.assertEquals( ReplicateCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
+	}
+
+
+	@Test
+	public void testConstructorWithNullString() throws Exception {
+
+		CommandsParser parser = new CommandsParser( this.app, (String) null );
+		List<ParsingError> errors = parser.getParsingErrors();
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_NO_INSTRUCTION, errors.get( 0 ).getErrorCode());
+	}
 }

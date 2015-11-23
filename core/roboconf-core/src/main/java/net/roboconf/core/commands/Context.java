@@ -84,7 +84,7 @@ public class Context {
 	 * @return the name of the commands file
 	 */
 	protected String getName() {
-		return this.commandFile.getName();
+		return this.commandFile != null ? this.commandFile.getName() : null;
 	}
 
 

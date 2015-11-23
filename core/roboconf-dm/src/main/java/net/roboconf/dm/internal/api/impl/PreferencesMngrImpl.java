@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -35,16 +36,18 @@ import net.roboconf.dm.management.api.IPreferencesMngr;
  */
 public class PreferencesMngrImpl implements IPreferencesMngr {
 
+	private final Properties mailProperties = new Properties();
+
+
 	@Override
 	public Properties getEmailProperties() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.mailProperties;
 	}
 
 
 	@Override
 	public List<String> getDefaultEmailRecipients() {
 		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptyList();
 	}
 }

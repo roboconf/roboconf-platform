@@ -25,10 +25,12 @@
 
 package net.roboconf.dm.management.api;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
+import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * An API to manipulate commands in the DM.
@@ -55,17 +57,6 @@ public interface ICommandsMngr {
 
 
 	/**
-	 * Creates a command from a command file.
-	 * @param app the associated application
-	 * @param commandName the command name (must be unique)
-	 * @param commandFile a file with command instructions (that must be valid)
-	 * @throws IOException if something went wrong
-	 * @see #validate(String)
-	 */
-	void createCommand( Application app, String commandName, File commandFile ) throws IOException;
-
-
-	/**
 	 * Deletes a command.
 	 * @param app the associated application
 	 * @param commandName the command name
@@ -86,17 +77,18 @@ public interface ICommandsMngr {
 
 	/**
 	 * Validates the syntax of command instructions.
+	 * @param app the associated application
 	 * @param commandText a set of command instructions
-	 * @return true if it is valid, false otherwise
+	 * @return a non-null map of errors
 	 */
-	boolean validate( String commandText );
+	List<ParsingError> validate( Application app, String commandText );
 
 
 	/**
 	 * Executes a command.
 	 * @param app the associated application
 	 * @param commandName a command name
-	 * @throws IOException if something went wrong
+	 * @throws CommandException if execution failed
 	 */
-	void execute( Application app, String commandName ) throws IOException;
+	void execute( Application app, String commandName ) throws CommandException;
 }

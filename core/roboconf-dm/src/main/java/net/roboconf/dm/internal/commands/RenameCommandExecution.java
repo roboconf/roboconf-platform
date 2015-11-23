@@ -27,6 +27,8 @@ package net.roboconf.dm.internal.commands;
 
 import net.roboconf.core.commands.RenameCommandInstruction;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
@@ -50,6 +52,10 @@ class RenameCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), false );
+		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
+		if( scopedInstance.getStatus() != InstanceStatus.NOT_DEPLOYED )
+			throw new CommandException( "Only instances that are not yet managed by an agent can be renamed." );
+
 		instance.setName( this.instr.getNewInstanceName());
 	}
 }
