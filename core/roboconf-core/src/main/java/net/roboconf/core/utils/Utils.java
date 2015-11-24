@@ -98,7 +98,7 @@ public final class Utils {
 	 * Splits a string and formats the result.
 	 * @param toSplit the string to split (can be null)
 	 * @param separator the separator (cannot be null or the empty string)
-	 * @return a list of items (never null)
+	 * @return a list of items (never null), with every item being trimmed
 	 */
 	public static List<String> splitNicely( String toSplit, String separator ) {
 

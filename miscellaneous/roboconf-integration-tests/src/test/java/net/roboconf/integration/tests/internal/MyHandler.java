@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -54,7 +54,7 @@ public class MyHandler implements TargetHandler {
 			String applicationName )
 	throws TargetException {
 
-		final String messagingType = messagingProperties.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY);
+		final String messagingType = messagingProperties.get(IMessagingClientFactory.MESSAGING_TYPE_PROPERTY);
 
 		Agent agent = new Agent();
 		agent.setApplicationName( applicationName );
@@ -65,7 +65,7 @@ public class MyHandler implements TargetHandler {
 		agent.setMessagingType(messagingType);
 		agent.start();
 
-		MessagingClientFactory factory = agent.getMessagingClient().getRegistry().getMessagingClientFactory(messagingType);
+		IMessagingClientFactory factory = agent.getMessagingClient().getRegistry().getMessagingClientFactory(messagingType);
 		if (factory != null) {
 			factory.setConfiguration(messagingProperties);
 		}

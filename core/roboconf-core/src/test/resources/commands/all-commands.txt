@@ -1,0 +1,25 @@
+
+# Define and bulk actions
+define VAR = vm
+define cpt = $(SMART_INDEX)
+create vm as $(VAR) $(cpt)
+
+deploy and start all /$(VAR) $(cpt)
+stop all /$(VAR) $(cpt)
+undeploy all /$(VAR) $(cpt)
+delete /$(VAR) $(cpt)
+
+# Create, replicate, rename, associate
+replicate /tomcat-vm as new-tomcat-vm
+rename /tomcat-vm as tomcat-vm-2
+create vm as tomcat-vm-3
+associate /tomcat-vm-2 with 1
+
+# Change state
+change status of /tomcat-vm-2/tomcat-server to DEPLOYED and STARTED
+
+# E-mail
+email toto@company.net with \
+	Subject: Alert!\
+	\n\
+	This is an alert.

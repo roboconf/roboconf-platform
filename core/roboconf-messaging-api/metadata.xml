@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<!-- A component for the Messaging Client Factory Registry -->
+	<component classname="net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry" name="roboconf-messaging-client-factory-registry" public="false">
+		<provides />
+		
+		<requires aggregate="true" optional="true" id="messagingClientFactories">
+			<callback type="bind" method="addMessagingClientFactory" />
+			<callback type="unbind" method="removeMessagingClientFactory" />
+		</requires>
+	</component>
+	
+	<!-- A component for the Test factory (messaging implementation) -->
+	<component classname="net.roboconf.messaging.api.internal.client.test.TestClientFactory" name="roboconf-messaging-client-factory-test" public="false">
+		<provides>
+			<!-- Static property: not attached to a field or method. -->
+			<property name="net.roboconf.messaging.type" value="test" type="java.lang.String" />
+		</provides>
+	</component>
+	
+	<!-- And the instances... -->
+	<instance component="roboconf-messaging-client-factory-registry" name="Registry for Roboconf's Messaging Client Factories" />
+	<instance component="roboconf-messaging-client-factory-test" name="Factory for Roboconf's Test Messaging Clients" />
+</ipojo>

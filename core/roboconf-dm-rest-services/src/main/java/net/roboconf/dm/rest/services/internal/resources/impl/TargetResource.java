@@ -36,8 +36,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.beans.AbstractApplication;
-import net.roboconf.core.model.targets.TargetUsageItem;
-import net.roboconf.core.model.targets.TargetWrapperDescriptor;
+import net.roboconf.core.model.runtime.TargetUsageItem;
+import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.json.StringWrapper;

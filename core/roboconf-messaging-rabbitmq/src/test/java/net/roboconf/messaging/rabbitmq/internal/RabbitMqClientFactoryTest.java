@@ -43,7 +43,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Tests for the RabbitMQ {@link net.roboconf.messaging.api.factory.MessagingClientFactory}.
+ * Tests for the RabbitMQ {@link net.roboconf.messaging.api.factory.IMessagingClientFactory}.
  *
  * @author Pierre Bourret - Université Joseph Fourier
  */

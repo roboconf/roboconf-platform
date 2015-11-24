@@ -23,37 +23,48 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.targets;
+package net.roboconf.dm.internal.commands;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import net.roboconf.core.commands.CreateInstanceCommandInstruction;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TargetUsageItemTest {
+class CreateInstanceCommandExecution extends AbstractCommandExecution {
 
-	@Test
-	public void testEqualsAndHashCode() {
+	private final CreateInstanceCommandInstruction instr;
+	private final Manager manager;
 
-		TargetUsageItem obj = new TargetUsageItem();
-		obj.setName( "app" );
 
-		Assert.assertFalse( obj.equals( "test" ));
+	/**
+	 * Constructor.
+	 * @param instr
+	 * @param manager
+	 */
+	public CreateInstanceCommandExecution( CreateInstanceCommandInstruction instr, Manager manager ) {
+		this.instr = instr;
+		this.manager = manager;
+	}
 
-		TargetUsageItem obj2 = new TargetUsageItem();
-		Assert.assertFalse( obj.equals( obj2 ));
 
-		obj2.setName( "app" );
-		Assert.assertEquals( obj, obj2 );
-		Assert.assertEquals( obj.hashCode(), obj2.hashCode());
+	@Override
+	public void execute() throws CommandException {
 
-		obj.setQualifier( "desc" );
-		Assert.assertFalse( obj.equals( obj2 ));
+		// Resolve runtime structures
+		Instance parentInstance = resolveInstance( this.instr, this.instr.getParentInstancePath(), true );
+		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
 
-		obj2.setQualifier( "desc" );
-		Assert.assertEquals( obj, obj2 );
-		Assert.assertEquals( obj.hashCode(), obj2.hashCode());
+		// Execute the command
+		try {
+			Instance instance = new Instance( this.instr.getInstanceName()).component( this.instr.getComponent());
+			this.manager.instancesMngr().addInstance( ma, parentInstance, instance );
+
+		} catch( Exception e ) {
+			throw new CommandException( e );
+		}
 	}
 }

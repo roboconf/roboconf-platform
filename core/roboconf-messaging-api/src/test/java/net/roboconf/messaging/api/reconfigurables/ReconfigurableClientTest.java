@@ -34,7 +34,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IAgentClient;
 import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.dismiss.DismissClientAgent;
 import net.roboconf.messaging.api.internal.client.dismiss.DismissClientDm;
@@ -230,7 +230,7 @@ public class ReconfigurableClientTest {
 	/**
 	 * A stupid messaging client.
 	 */
-	private static class DummyMessagingClientFactory implements MessagingClientFactory {
+	private static class DummyMessagingClientFactory implements IMessagingClientFactory {
 
 		/**
 		 * The type of the messaging factory.

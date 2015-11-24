@@ -23,19 +23,51 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.targets;
+package net.roboconf.core.model.runtime;
 
 import java.util.Objects;
 
 /**
- * A bean that describes associations between applications and targets.
+ * An informative "bean" that contains significant information to manage targets.
+ * <p>
+ * This class is made available in the core because it is used in several bundles.
+ * As the core is intended to be the location for most of the common items, this
+ * choice is consistent.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-public class TargetUsageItem {
+public class TargetWrapperDescriptor {
 
-	private String name, qualifier;
-	private boolean isReferencing, isUsing;
+	private String id, name, description, handler;
+	private boolean isDefault = false;
 
+
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof TargetWrapperDescriptor
+				&& Objects.equals( this.id, ((TargetWrapperDescriptor) obj).id );
+	}
+
+	@Override
+	public int hashCode() {
+		return this.id == null ? 37 : this.id.hashCode();
+	}
+
+
+	/**
+	 * @return the id
+	 */
+	public String getId() {
+		return this.id;
+	}
+
+	/**
+	 * @param id the id to set
+	 */
+	public void setId( String id ) {
+		this.id = id;
+	}
 
 	/**
 	 * @return the name
@@ -52,61 +84,44 @@ public class TargetUsageItem {
 	}
 
 	/**
-	 * @return the qualifier
+	 * @return the description
 	 */
-	public String getQualifier() {
-		return this.qualifier;
+	public String getDescription() {
+		return this.description;
 	}
 
 	/**
-	 * @param qualifier the qualifier to set
+	 * @param description the description to set
 	 */
-	public void setQualifier( String qualifier ) {
-		this.qualifier = qualifier;
+	public void setDescription( String description ) {
+		this.description = description;
 	}
 
 	/**
-	 * @return the isReferencing
+	 * @return the handler
 	 */
-	public boolean isReferencing() {
-		return this.isReferencing;
+	public String getHandler() {
+		return this.handler;
 	}
 
 	/**
-	 * @param isReferencing the isReferencing to set
+	 * @param handler the handler to set
 	 */
-	public void setReferencing( boolean isReferencing ) {
-		this.isReferencing = isReferencing;
+	public void setHandler( String handler ) {
+		this.handler = handler;
 	}
 
 	/**
-	 * @return the isUsing
+	 * @return the isDefault
 	 */
-	public boolean isUsing() {
-		return this.isUsing;
+	public boolean isDefault() {
+		return this.isDefault;
 	}
 
 	/**
-	 * @param isUsing the isUsing to set
+	 * @param isDefault the isDefault to set
 	 */
-	public void setUsing( boolean isUsing ) {
-		this.isUsing = isUsing;
-	}
-
-
-	@Override
-	public int hashCode() {
-		int i1 = this.name == null ? 83 : this.name.hashCode();
-		int i2 = this.qualifier == null ? 11 : this.qualifier.hashCode();
-
-		return i1 + i2;
-	}
-
-
-	@Override
-	public boolean equals( Object obj ) {
-		return obj instanceof TargetUsageItem
-				&& Objects.equals( this.name, ((TargetUsageItem) obj ).name )
-				&& Objects.equals( this.qualifier, ((TargetUsageItem) obj ).qualifier );
+	public void setDefault( boolean isDefault ) {
+		this.isDefault = isDefault;
 	}
 }

@@ -1,0 +1,4 @@
+
+email toto@company.net with \
+	Subject: Alert!\n\
+	This is an alert.

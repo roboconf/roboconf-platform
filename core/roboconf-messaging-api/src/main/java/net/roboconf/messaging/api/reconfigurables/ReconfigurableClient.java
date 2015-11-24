@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IClient;
-import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryListener;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
@@ -159,7 +159,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	}
 
 	@Override
-	public void addMessagingClientFactory( final MessagingClientFactory factory ) {
+	public void addMessagingClientFactory( final IMessagingClientFactory factory ) {
 		synchronized( this ) {
 			if (this.messagingClient == null && factory.getType().equals(this.messagingType)) {
 				// This is the messaging factory we were expecting...
@@ -187,7 +187,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	}
 
 	@Override
-	public void removeMessagingClientFactory( final MessagingClientFactory factory ) {
+	public void removeMessagingClientFactory( final IMessagingClientFactory factory ) {
 
 		T oldClient = null;
 		synchronized( this ) {

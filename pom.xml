@@ -97,6 +97,7 @@
 		<jclouds.version>1.8.1</jclouds.version>
 		<mockito.version>1.10.19</mockito.version>
 		<websocket.version>9.2.10.v20150310</websocket.version>
+		<javax.mail.version>1.5.2</javax.mail.version>
 		
 		<!-- To update on every release -->
 		<version.range>[${project.version},0.7)</version.range>

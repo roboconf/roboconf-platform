@@ -23,39 +23,23 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.targets;
+package net.roboconf.dm.management.api;
+
+import java.util.List;
+import java.util.Properties;
 
 /**
- * A bean that describes associations between instances and targets.
  * @author Vincent Zurczak - Linagora
  */
-public class TargetAssociation {
-
-	private final String instancePath;
-	private final TargetWrapperDescriptor targetDescriptor;
-
+public interface IPreferencesMngr {
 
 	/**
-	 * Constructor.
-	 * @param instancePath
-	 * @param targetDescriptor
+	 * @return the e-mail properties (not null)
 	 */
-	public TargetAssociation( String instancePath, TargetWrapperDescriptor targetDescriptor ) {
-		this.instancePath = instancePath;
-		this.targetDescriptor = targetDescriptor;
-	}
+	Properties getEmailProperties();
 
 	/**
-	 * @return the instancePath
+	 * @return a non-null list of default recipients when sending e-mails
 	 */
-	public String getInstancePath() {
-		return this.instancePath;
-	}
-
-	/**
-	 * @return the target descriptor
-	 */
-	public TargetWrapperDescriptor getTargetDescriptor() {
-		return this.targetDescriptor;
-	}
+	List<String> getDefaultEmailRecipients();
 }

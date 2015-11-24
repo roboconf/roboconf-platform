@@ -1,0 +1,16 @@
+# Instructions related to adding and deleting instances.
+# State changes cannot be tested for real in unit tests.
+rename /tomcat-vm as tomcat-vm-tpl
+
+define NAME = tomcat $(SMART_INDEX)
+replicate /tomcat-vm-tpl as $(NAME)
+
+define NAME = tomcat $(SMART_INDEX)
+replicate /tomcat-vm-tpl as $(NAME)
+
+define NAME = tomcat $(SMART_INDEX)
+create vm as $(NAME)
+create tomcat as my-tomcat-server under /$(NAME)
+associate /$(NAME) with 1
+
+delete /tomcat-vm-tpl

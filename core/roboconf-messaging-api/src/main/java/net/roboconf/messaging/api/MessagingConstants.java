@@ -51,7 +51,7 @@ public interface MessagingConstants {
 	 * This property is used in the provider-specific
 	 * {@linkplain net.roboconf.messaging.api.client.IClient#getConfiguration() messaging configuration} to ensure a
 	 * configuration is applicable to a given messaging client. It is also used by
-	 * {@link net.roboconf.messaging.api.factory.MessagingClientFactory} services to indicate which type of messaging
+	 * {@link net.roboconf.messaging.api.factory.IMessagingClientFactory} services to indicate which type of messaging
 	 * they
 	 * support. In the latter case, the property value <em>must</em> be non-{@code null}.
 	 * </p>

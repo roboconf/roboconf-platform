@@ -30,25 +30,16 @@ import java.util.Map;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.client.IAgentClient;
 import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-import org.apache.felix.ipojo.annotations.Component;
-import org.apache.felix.ipojo.annotations.Instantiate;
-import org.apache.felix.ipojo.annotations.Provides;
-import org.apache.felix.ipojo.annotations.ServiceProperty;
 
 /**
  * Messaging client factory for tests.
- *
  * @author Pierre Bourret - Université Joseph Fourier
  */
-@Component(name = "roboconf-messaging-client-factory-test", publicFactory = false)
-@Provides(specifications = MessagingClientFactory.class)
-@Instantiate(name = "Roboconf Test Messaging Client Factory")
-public class TestClientFactory implements MessagingClientFactory {
+public class TestClientFactory implements IMessagingClientFactory {
 
-	@ServiceProperty(name = MessagingClientFactory.MESSAGING_TYPE_PROPERTY)
 	private final String type = MessagingConstants.TEST_FACTORY_TYPE;
 
 	@Override
@@ -69,6 +60,6 @@ public class TestClientFactory implements MessagingClientFactory {
 	@Override
 	public boolean setConfiguration( final Map<String, String> configuration ) {
 		// Nothing to reconfigure.
-		return MessagingConstants.TEST_FACTORY_TYPE.equals(configuration.get(MessagingClientFactory.MESSAGING_TYPE_PROPERTY));
+		return MessagingConstants.TEST_FACTORY_TYPE.equals(configuration.get(IMessagingClientFactory.MESSAGING_TYPE_PROPERTY));
 	}
 }
