@@ -29,14 +29,13 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 
 /**
  * A context used to validate and update command instructions.
@@ -124,16 +123,13 @@ public class Context {
 		Instance instance = null;
 		String componentName = this.instancePathToComponentName.get( instancePath );
 		if( componentName != null ) {
-			Matcher m = Pattern.compile( "/([^/]+)$" ).matcher( instancePath );
 
-			if( m.find()) {
-				String instanceName = m.group( 1 );
-				Component component = ComponentHelpers.findComponent( this.app, componentName );
+			String instanceName = InstanceHelpers.findInstanceName( instancePath );
+			Component component = ComponentHelpers.findComponent( this.app, componentName );
+			if( ! Utils.isEmptyOrWhitespaces( instanceName ) && component != null )
 				instance = new Instance( instanceName ).component( component );
-
-			} else {
-				this.logger.warning( "An instance name could not be resolved from its path." );
-			}
+			else
+				this.logger.warning( "Instance's component of " + instancePath + " could not be resolved." );
 		}
 
 		return instance;

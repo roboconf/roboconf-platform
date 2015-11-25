@@ -84,6 +84,7 @@ public class ContextTest {
 
 		this.context.instancePathToComponentName.put( "not a path", "whatever" );
 		Assert.assertNull( this.context.resolveInstance( "not a path" ));
+		Assert.assertNull( this.context.resolveInstance( "" ));
 	}
 
 

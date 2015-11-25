@@ -87,6 +87,18 @@ public class InstanceHelpersTest {
 
 
 	@Test
+	public void testFindInstanceName() {
+
+		Assert.assertEquals( "vm", InstanceHelpers.findInstanceName( "/vm" ));
+		Assert.assertEquals( "tomcat server", InstanceHelpers.findInstanceName( "/vm/tomcat server" ));
+		Assert.assertEquals( "war", InstanceHelpers.findInstanceName( "/vm/tomcat server/war" ));
+		Assert.assertEquals( "no slash", InstanceHelpers.findInstanceName( "no slash" ));
+		Assert.assertEquals( "   ", InstanceHelpers.findInstanceName( "   " ));
+		Assert.assertEquals( "", InstanceHelpers.findInstanceName( "" ));
+	}
+
+
+	@Test
 	public void testBuildHierarchicalList() {
 
 		// Series 0
