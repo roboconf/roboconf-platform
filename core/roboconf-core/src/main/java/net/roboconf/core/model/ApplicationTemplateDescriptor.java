@@ -175,13 +175,13 @@ public class ApplicationTemplateDescriptor {
 		result.externalExportsPrefix = properties.getProperty( APPLICATION_EXTERNAL_EXPORTS_PREFIX, null );
 
 		final Pattern pattern = Pattern.compile(
-				"(\\S+)\\s+" + APPLICATION_EXTERNAL_EXPORTS_AS + "\\s+(\\S+)",
+				"([^=\\s]+)\\s+" + APPLICATION_EXTERNAL_EXPORTS_AS + "\\s+([^=\\s]+)",
 				Pattern.CASE_INSENSITIVE );
 
 		String rawExports = properties.getProperty( APPLICATION_EXTERNAL_EXPORTS, "" );
 		for( String rawExport : Utils.splitNicely( rawExports, "," )) {
 			Matcher m = pattern.matcher( rawExport );
-			if( m.find())
+			if( m.matches())
 				result.externalExports.put( m.group( 1 ), m.group( 2 ));
 			else
 				result.invalidExternalExports.add( rawExport );
