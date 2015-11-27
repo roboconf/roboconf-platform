@@ -49,7 +49,7 @@ public interface MessagingConstants {
 	 * </p>
 	 * <p>
 	 * This property is used in the provider-specific
-	 * {@linkplain net.roboconf.messaging.api.client.IClient#getConfiguration() messaging configuration} to ensure a
+	 * {@linkplain net.roboconf.messaging.api.business.IClient#getConfiguration() messaging configuration} to ensure a
 	 * configuration is applicable to a given messaging client. It is also used by
 	 * {@link net.roboconf.messaging.api.factory.IMessagingClientFactory} services to indicate which type of messaging
 	 * they
@@ -61,11 +61,10 @@ public interface MessagingConstants {
 	/**
 	 * The factory's name for test clients.
 	 */
-	String TEST_FACTORY_TYPE = "test";
+	String FACTORY_TEST = "test";
 
 	/**
-	 * The "dismissed" message.
+	 * The factory's name for in-memory clients.
 	 */
-	String DISMISSED_MESSAGE = "No messaging client is available. Action is dismissed. Review the messaging configuration.";
-
+	String FACTORY_IN_MEMORY = "in-memory";
 }

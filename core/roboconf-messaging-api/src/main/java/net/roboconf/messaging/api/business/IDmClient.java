@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.client;
+package net.roboconf.messaging.api.business;
 
 import java.io.IOException;
 

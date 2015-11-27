@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -32,91 +32,82 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.extensions.MessagingContext;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
  * @author Vincent Zurczak - Linagora
- * @author Pierre Bourret - Université Joseph Fourier
  */
-public class DismissClientDm implements IDmClient {
+public class DismissClient implements IMessagingClient {
 
+	private static final String DISMISSED_MESSAGE = "No messaging client is available. Action is dismissed. Review the messaging configuration.";
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
 	@Override
 	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public boolean isConnected() {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
 		return false;
 	}
 
 
 	@Override
 	public void openConnection() throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( DISMISSED_MESSAGE );
 	}
 
 
 	@Override
 	public void closeConnection() throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
+		this.logger.warning( DISMISSED_MESSAGE );
 	}
 
-
-	@Override
-	public void sendMessageToAgent( Application application, Instance instance, Message message )
-	throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
-	}
-
-
-	@Override
-	public void listenToAgentMessages( Application application, ListenerCommand command )
-	throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
-	}
-
-	@Override
-	public void sendMessageToTheDm( Message msg ) throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
-	}
-
-
-	@Override
-	public void listenToTheDm( ListenerCommand command ) throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
-	}
 
 	@Override
 	public String getMessagingType() {
-		return null;
+		return "dismissed";
 	}
 
 
 	@Override
-	public Map<String, String> getConfiguration() {
-		// Dismiss client has no configuration.
+	public Map<String,String> getConfiguration() {
 		return Collections.emptyMap();
 	}
 
+
 	@Override
-	public void deleteMessagingServerArtifacts( Application application )
-	throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
+	public void subscribe( MessagingContext ctx ) throws IOException {
+		this.logger.warning( DISMISSED_MESSAGE );
 	}
 
 
 	@Override
-	public void propagateAgentTermination( Application application, Instance rootInstance ) throws IOException {
-		this.logger.warning( MessagingConstants.DISMISSED_MESSAGE );
+	public void unsubscribe( MessagingContext ctx ) throws IOException {
+		this.logger.warning( DISMISSED_MESSAGE );
+	}
+
+
+	@Override
+	public void publish( MessagingContext ctx, Message msg ) throws IOException {
+		this.logger.warning( DISMISSED_MESSAGE );
+	}
+
+
+	@Override
+	public void deleteMessagingServerArtifacts( Application application ) throws IOException {
+		this.logger.warning( DISMISSED_MESSAGE );
+	}
+
+
+	@Override
+	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
+		this.logger.warning( DISMISSED_MESSAGE );
 	}
 }

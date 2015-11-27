@@ -59,7 +59,7 @@ import net.roboconf.dm.management.events.EventType;
 import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.business.ListenerCommand;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 
 /**

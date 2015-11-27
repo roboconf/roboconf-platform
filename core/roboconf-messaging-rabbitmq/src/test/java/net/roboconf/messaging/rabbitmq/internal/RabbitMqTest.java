@@ -25,14 +25,9 @@
 
 package net.roboconf.messaging.rabbitmq.internal;
 
-import java.util.List;
-
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
@@ -46,12 +41,21 @@ import org.junit.Test;
  * @author Vincent Zurczak - Linagora
  */
 public class RabbitMqTest extends AbstractMessagingTest {
+
 	private static boolean rabbitMqIsRunning = false;
+
 
 	@BeforeClass
 	public static void checkRabbitMqIsRunning() throws Exception {
 		rabbitMqIsRunning = RabbitMqTestUtils.checkRabbitMqIsRunning();
 	}
+
+
+	@Override
+	protected long getDelay() {
+		return 700;
+	}
+
 
 	@Before
 	public void registerRabbitMqFactory() {
@@ -68,7 +72,13 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	public void cleanRabbitMq() throws Exception {
 
 		if( rabbitMqIsRunning ) {
-			RabbitMqClientDm client = new RabbitMqClientDm(null, getMessagingIp(), getMessagingUsername(), getMessagingPassword());
+			RabbitMqClient client = new RabbitMqClient(
+					null,
+					getMessagingIp(),
+					getMessagingUsername(),
+					getMessagingPassword(),
+					RecipientKind.DM );
+
 			client.openConnection();
 			client.deleteMessagingServerArtifacts( new Application( "app", null ));
 			client.deleteMessagingServerArtifacts( new Application( "app1", null ));
@@ -142,28 +152,6 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	}
 
 
-	@Override
-	protected AbstractMessageProcessor<IDmClient> createDmProcessor( final List<Message> dmMessages ) {
-		return new AbstractMessageProcessor<IDmClient>( "DM Processor - Test" ) {
-			@Override
-			protected void processMessage( Message message ) {
-				dmMessages.add( message );
-			}
-		};
-	}
-
-
-	@Override
-	protected AbstractMessageProcessor<IAgentClient> createAgentProcessor( final List<Message> agentMessages ) {
-		return new AbstractMessageProcessor<IAgentClient>( "Agent Processor - Test" ) {
-			@Override
-			protected void processMessage( Message message ) {
-				agentMessages.add( message );
-			}
-		};
-	}
-
-
 	private String getMessagingIp() {
 		return "localhost";
 	}
@@ -181,6 +169,6 @@ public class RabbitMqTest extends AbstractMessagingTest {
 
 	@Override
 	protected String getMessagingType() {
-		return RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
+		return RabbitMqConstants.FACTORY_RABBITMQ;
 	}
 }

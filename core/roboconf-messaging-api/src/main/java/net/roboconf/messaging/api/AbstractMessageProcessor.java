@@ -23,13 +23,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.processors;
+package net.roboconf.messaging.api;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
-import net.roboconf.messaging.api.client.IClient;
+import net.roboconf.messaging.api.business.IClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
@@ -45,7 +45,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
  * For an immediate stop, use the {@link #interrupt()} method.
  * </p>
  *
- * @param <T> a sub-class of {@link IClient}
+ * @param <T> a sub-class of {@link IMessagingClient}
  * @author Vincent Zurczak - Linagora
  */
 public abstract class AbstractMessageProcessor<T extends IClient> extends Thread {

@@ -93,7 +93,7 @@ public class ManagementWsDelegateTest {
 		// Create the manager
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 

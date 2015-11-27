@@ -23,12 +23,19 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.client;
+package net.roboconf.messaging.rabbitmq.internal.utils;
+
+import org.junit.Test;
 
 /**
- * Start or stop listening to events.
  * @author Vincent Zurczak - Linagora
  */
-public enum ListenerCommand {
-	START, STOP
+public class RoboconfReturnListenerTest {
+
+	@Test
+	public void testDeserializationError() throws Exception {
+
+		RoboconfReturnListener listener = new RoboconfReturnListener();
+		listener.handleReturn( 0, "reply", "exchange", "routingKey", null, new byte[ 1 ]);
+	}
 }

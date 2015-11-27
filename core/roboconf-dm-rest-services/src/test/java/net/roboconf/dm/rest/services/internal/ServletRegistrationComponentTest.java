@@ -75,7 +75,7 @@ public class ServletRegistrationComponentTest {
 	@Before
 	public void initializeManager() throws Exception {
 		this.manager = new Manager();
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 

@@ -64,7 +64,7 @@ import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.IDmListener;
-import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.business.ListenerCommand;
 import net.roboconf.target.api.TargetHandler;
 
 /**

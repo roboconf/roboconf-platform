@@ -49,7 +49,7 @@ import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.client.exceptions.ApplicationWsException;
 import net.roboconf.dm.rest.services.internal.RestApplication;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
@@ -81,7 +81,7 @@ public class ApplicationWsDelegateTest {
 
 	private WsClient client;
 	private HttpServer httpServer;
-	private TestClientDm msgClient;
+	private TestClient msgClient;
 
 
 	@After
@@ -101,7 +101,7 @@ public class ApplicationWsDelegateTest {
 
 		// Create the manager
 		this.manager = new Manager();
-		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
@@ -112,8 +112,8 @@ public class ApplicationWsDelegateTest {
 		this.manager.reconfigure();
 
 		// Get the messaging client
-		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
-		this.msgClient.sentMessages.clear();
+		this.msgClient = (TestClient) this.managerWrapper.getInternalMessagingClient();
+		this.msgClient.clearMessages();
 
 		// Disable the messages timer for predictability
 		TestUtils.getInternalField( this.manager, "timer", Timer.class).cancel();
@@ -181,12 +181,12 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testChangeState_deploy_success() throws Exception {
 
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().changeInstanceState( this.app.getName(), InstanceStatus.DEPLOYED_STOPPED, instancePath );
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -216,12 +216,12 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testStopAll() throws Exception {
 
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().stopAll( this.app.getName(), instancePath );
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -241,12 +241,12 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testUndeployAll() throws Exception {
 
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().undeployAll( this.app.getName(), instancePath );
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
@@ -266,12 +266,12 @@ public class ApplicationWsDelegateTest {
 	@Test
 	public void testDeployAndStartAll() throws Exception {
 
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		this.client.getApplicationDelegate().deployAndStartAll( this.app.getName(), instancePath );
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 2, messages.size());
@@ -504,7 +504,7 @@ public class ApplicationWsDelegateTest {
 		this.client.getApplicationDelegate().resynchronize( this.app.getName() );
 
 		// Check a MsgCmdResynchronize has been sent to each agent.
-		final List<Message> sentMessages = this.msgClient.sentMessages;
+		final List<Message> sentMessages = this.msgClient.allSentMessages;
 		Assert.assertEquals( rootInstances.size(), sentMessages.size() );
 		for( Message message : sentMessages )
 			Assert.assertTrue( message instanceof MsgCmdResynchronize );
@@ -568,19 +568,19 @@ public class ApplicationWsDelegateTest {
 		this.managerWrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
 
 		// Bind and check
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getTomcatVm()).size());
 		Assert.assertEquals( 0, this.ma.removeAwaitingMessages( this.app.getMySqlVm()).size());
 
 		this.client.getApplicationDelegate().bindApplication( this.ma.getName(), app2.getTemplate().getExternalExportsPrefix(), app2.getName());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		List<Message> messages = this.ma.removeAwaitingMessages( this.app.getTomcatVm());
 		Assert.assertEquals( 1, messages.size());
 		messages.addAll( this.ma.removeAwaitingMessages( this.app.getMySqlVm()));
 		Assert.assertEquals( 2, messages.size());
 
-		for( Message m : this.msgClient.sentMessages ) {
+		for( Message m : this.msgClient.allSentMessages ) {
 			Assert.assertEquals( MsgCmdChangeBinding.class, m.getClass());
 
 			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;

@@ -28,16 +28,19 @@ package net.roboconf.messaging.api.internal.client.test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.extensions.MessagingContext;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -45,13 +48,19 @@ import net.roboconf.messaging.api.messages.Message;
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class TestClientDm implements IDmClient {
+public class TestClient implements IMessagingClient {
 
-	public final List<Message> sentMessages = new ArrayList<Message> ();
 	public AtomicBoolean connected = new AtomicBoolean( false );
 	public AtomicBoolean failClosingConnection = new AtomicBoolean( false );
-	public AtomicBoolean failListeningToTheDm = new AtomicBoolean( false );
+	public AtomicBoolean failSubscribing = new AtomicBoolean( false );
 	public AtomicBoolean failMessageSending = new AtomicBoolean( false );
+
+	public Map<MessagingContext,List<Message>> ctxToMessages = new HashMap<> ();
+	public List<Message> messagesForTheDm = new ArrayList<> ();
+	public List<Message> messagesForAgents = new ArrayList<> ();
+	public List<Message> allSentMessages = new ArrayList<> ();
+	public Set<MessagingContext> subscriptions = new HashSet<> ();
+
 
 
 	@Override
@@ -62,52 +71,24 @@ public class TestClientDm implements IDmClient {
 		this.connected.set( false );
 	}
 
+
 	@Override
 	public void openConnection() throws IOException {
 		this.connected.set( true );
 	}
 
-	@Override
-	public void sendMessageToAgent( Application application, Instance instance, Message message )
-	throws IOException {
-
-		if( this.failMessageSending.get())
-			throw new IOException( "Message sending was configured to fail." );
-
-		this.sentMessages.add( message );
-	}
-
-	@Override
-	public void listenToAgentMessages( Application application, ListenerCommand command )
-	throws IOException {
-		// nothing, we do not care
-	}
-
-	@Override
-	public void sendMessageToTheDm( Message msg ) throws IOException {
-
-		if ( this.failMessageSending.get() )
-			throw new IOException( "Message sending was configured to fail." );
-
-		this.sentMessages.add( msg );
-	}
-
-	@Override
-	public void listenToTheDm( ListenerCommand command ) throws IOException {
-
-		if( this.failListeningToTheDm.get())
-			throw new IOException( "Listening to the DM was configured to fail." );
-	}
 
 	@Override
 	public String getMessagingType() {
-		return MessagingConstants.TEST_FACTORY_TYPE;
+		return MessagingConstants.FACTORY_TEST;
 	}
 
+
 	@Override
-	public Map<String, String> getConfiguration() {
-		return Collections.singletonMap(MessagingConstants.MESSAGING_TYPE_PROPERTY, MessagingConstants.TEST_FACTORY_TYPE);
+	public Map<String,String> getConfiguration() {
+		return Collections.singletonMap(MessagingConstants.MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_TEST);
 	}
+
 
 	@Override
 	public void deleteMessagingServerArtifacts( Application application )
@@ -115,20 +96,71 @@ public class TestClientDm implements IDmClient {
 		// nothing, we do not care
 	}
 
+
 	@Override
 	public boolean isConnected() {
 		return this.connected.get();
 	}
+
 
 	@Override
 	public void setMessageQueue( LinkedBlockingQueue<Message> messageQueue ) {
 		// nothing
 	}
 
+
 	@Override
-	public void propagateAgentTermination( Application application, Instance rootInstance )
-	throws IOException {
-		// nothing
+	public void subscribe( MessagingContext ctx ) throws IOException {
+
+		if( this.failSubscribing.get())
+			throw new IOException( "Subscribing was configured to fail." );
+
+		this.subscriptions.add( ctx );
 	}
 
+
+	@Override
+	public void unsubscribe( MessagingContext ctx ) throws IOException {
+		this.subscriptions.remove( ctx );
+	}
+
+
+	@Override
+	public void publish( MessagingContext ctx, Message msg ) throws IOException {
+
+		if( this.failMessageSending.get())
+			throw new IOException( "Sending a message was configured to fail." );
+
+		List<Message> messages = this.ctxToMessages.get( ctx );
+		if( messages == null ) {
+			messages = new ArrayList<> ();
+			this.ctxToMessages.put( ctx, messages );
+		}
+
+		messages.add( msg );
+
+		this.allSentMessages.add( msg );
+		if( ctx.getKind() == RecipientKind.DM )
+			this.messagesForTheDm.add( msg );
+		else
+			this.messagesForAgents.add( msg );
+	}
+
+
+	@Override
+	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
+		// We do not care...
+	}
+
+
+	/**
+	 * Clears all the stored messages.
+	 */
+	public void clearMessages() {
+
+		this.ctxToMessages.clear();
+		this.messagesForAgents.clear();
+		this.messagesForTheDm.clear();
+		this.allSentMessages.clear();
+	}
 }

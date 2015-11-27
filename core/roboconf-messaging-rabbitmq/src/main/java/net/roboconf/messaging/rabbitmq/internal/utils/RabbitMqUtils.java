@@ -30,12 +30,12 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.extensions.MessagingContext;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -53,59 +53,6 @@ public final class RabbitMqUtils {
 	 */
 	private RabbitMqUtils() {
 		// nothing
-	}
-
-
-	/**
-	 * Builds the exchange name for RabbitMQ.
-	 * @param applicationName the application name
-	 * @param dm true if we want the exchange name for the DM, false for the agents
-	 * @return a non-null string
-	 */
-	public static String buildExchangeName( String applicationName, boolean dm ) {
-		return applicationName + (dm ? ".admin" : ".agents" );
-	}
-
-
-	/**
-	 * Builds the exchange name for RabbitMQ.
-	 * @param application an application
-	 * @param dm true if we want the exchange name for the DM, false for the agents
-	 * @return a non-null string
-	 */
-	public static String buildExchangeName( Application application, boolean dm ) {
-		return buildExchangeName( application.getName(), dm );
-	}
-
-
-	/**
-	 * Builds the routing key for an agent.
-	 * @param instance an instance managed by the agent
-	 * @return a non-null string
-	 */
-	public static String buildRoutingKeyForAgent( Instance instance ) {
-		Instance scopedInstance = InstanceHelpers.findScopedInstance( instance );
-		return buildRoutingKeyForAgent( InstanceHelpers.computeInstancePath( scopedInstance ));
-	}
-
-
-	/**
-	 * Builds the routing key for an agent.
-	 * @param scopedInstancePath the path of the (scoped) instance associated with the agent
-	 * @return a non-null string
-	 */
-	public static String buildRoutingKeyForAgent( String scopedInstancePath ) {
-		return "machine." + escapeInstancePath( scopedInstancePath );
-	}
-
-
-	/**
-	 * Removes unnecessary slashes and transforms the others into dots.
-	 * @param instancePath a non-null instance path
-	 * @return a non-null string
-	 */
-	public static String escapeInstancePath( String instancePath ) {
-		return instancePath.replaceFirst( "^/*", "" ).replaceFirst( "/*$", "" ).replaceAll( "/+", "." );
 	}
 
 
@@ -150,36 +97,63 @@ public final class RabbitMqUtils {
 
 
 	/**
-	 * Declares the required exchanges for an application.
-	 * <p>
-	 * Every time the DM or an agent must send a message, we must be sure
-	 * all the exchanges have been declared. Otherwise, it will result in
-	 * an error in the client. And this error will close the channel.
-	 * </p>
-	 * <p>
-	 * To PREVENT stupid errors, it is really important to declare
-	 * both exchanges at once!
-	 * </p>
-	 *
+	 * Declares the required exchanges for an application (only for agents).
 	 * @param applicationName the application name
 	 * @param channel the RabbitMQ channel
 	 * @throws IOException if an error occurs
 	 */
 	public static void declareApplicationExchanges( String applicationName, Channel channel ) throws IOException {
 
-		// Exchange declaration is idem-potent
-		String dmExchangeName = buildExchangeName( applicationName, true );
-		channel.exchangeDeclare( dmExchangeName, "fanout" );
-		// "fanout" is a keyword for RabbitMQ.
-		// It broadcasts all the messages to all the queues this exchange knows.
-
-		String agentExchangeName = buildExchangeName( applicationName, false );
-		channel.exchangeDeclare( agentExchangeName, "topic" );
 		// "topic" is a keyword for RabbitMQ.
+		if( applicationName != null )
+			channel.exchangeDeclare( buildExchangeNameForAgent( applicationName ), "topic" );
+	}
 
-		// Also create the exchange for inter-application exchanges.
-		channel.exchangeDeclare( MessagingContext.INTER_APP, "topic" );
+
+	/**
+	 * Declares the global exchanges (those that do not depend on an application).
+	 * <p>
+	 * It includes the DM exchange and the one for inter-application exchanges.
+	 * </p>
+	 *
+	 * @param channel the RabbitMQ channel
+	 * @throws IOException if an error occurs
+	 */
+	public static void declareGlobalExchanges( Channel channel ) throws IOException {
+
 		// "topic" is a keyword for RabbitMQ.
+		channel.exchangeDeclare( RabbitMqConstants.EXHANGE_DM, "topic" );
+		channel.exchangeDeclare( RabbitMqConstants.EXHANGE_INTER_APP, "topic" );
+
+	}
+
+
+	/**
+	 * Builds the name of an exchange for agents (related to the application name).
+	 * @param applicationName the application name
+	 * @return a non-null string
+	 */
+	public static String buildExchangeNameForAgent( String applicationName ) {
+		return applicationName + ".agents";
+	}
+
+
+	/**
+	 * Builds an exchange name from a messaging context.
+	 * @param ctx a non-null context
+	 * @return a non-null string
+	 */
+	public static String buildExchangeName( MessagingContext ctx ) {
+
+		String exchangeName;
+		if( ctx.getKind() == RecipientKind.DM )
+			exchangeName = RabbitMqConstants.EXHANGE_DM;
+		else if( ctx.getKind() == RecipientKind.INTER_APP )
+			exchangeName = RabbitMqConstants.EXHANGE_INTER_APP;
+		else
+			exchangeName = RabbitMqUtils.buildExchangeNameForAgent( ctx.getApplicationName());
+
+		return exchangeName;
 	}
 
 
@@ -222,12 +196,8 @@ public final class RabbitMqUtils {
 				Utils.logException( logger, e );
 				break;
 
-			} catch( ClassNotFoundException e ) {
-				logger.severe( sourceName + ": a message could not be deserialized. Class cast exception." );
-				Utils.logException( logger, e );
-
-			}  catch( IOException e ) {
-				logger.severe( sourceName + ": a message could not be deserialized. I/O exception." );
+			} catch( ClassNotFoundException | IOException e ) {
+				logger.severe( sourceName + ": a message could not be deserialized. => " + e.getClass().getSimpleName());
 				Utils.logException( logger, e );
 			}
 		}

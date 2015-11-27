@@ -47,7 +47,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 
 import org.junit.After;
 import org.junit.Before;
@@ -68,7 +68,7 @@ public class ManagementResourceTest {
 	private Manager manager;
 	private TestManagerWrapper managerWrapper;
 	private IManagementResource resource;
-	private TestClientDm msgClient;
+	private TestClient msgClient;
 
 
 	@After
@@ -82,7 +82,7 @@ public class ManagementResourceTest {
 
 		// Create the manager
 		this.manager = new Manager();
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.setTargetResolver( new TestTargetResolver());
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
@@ -93,8 +93,8 @@ public class ManagementResourceTest {
 		this.manager.reconfigure();
 
 		// Get the messaging client
-		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
-		this.msgClient.sentMessages.clear();
+		this.msgClient = (TestClient) this.managerWrapper.getInternalMessagingClient();
+		this.msgClient.clearMessages();
 		this.resource = new ManagementResource( this.manager );
 	}
 

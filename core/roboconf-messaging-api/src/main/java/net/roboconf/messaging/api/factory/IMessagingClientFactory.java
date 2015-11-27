@@ -28,10 +28,8 @@ package net.roboconf.messaging.api.factory;
 import java.util.Map;
 
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
  * A service that allows to create Roboconf messaging clients.
@@ -57,19 +55,11 @@ public interface IMessagingClientFactory {
 	String getType();
 
 	/**
-	 * Creates a messaging client for the DM.
-	 * @return the created DM messaging client.
-	 * @param parent the parent client.
+	 * Creates a messaging client.
+	 * @return the created messaging client
+	 * @param parent the parent client
 	 */
-	IDmClient createDmClient( ReconfigurableClientDm parent );
-
-
-	/**
-	 * Creates a messaging client for an agent.
-	 * @return the created agent messaging client.
-	 * @param parent the parent client.
-	 */
-	IAgentClient createAgentClient( ReconfigurableClientAgent parent );
+	IMessagingClient createClient( ReconfigurableClient<?> parent );
 
 	/**
 	 * Attempts to apply the given provider-specific messaging configuration to this factory.

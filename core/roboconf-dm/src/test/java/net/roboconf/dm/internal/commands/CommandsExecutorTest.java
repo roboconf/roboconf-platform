@@ -73,7 +73,7 @@ public class CommandsExecutorTest {
 		// Prepare the DM
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
 		this.manager.start();
 
 		// Reconfigure the manager

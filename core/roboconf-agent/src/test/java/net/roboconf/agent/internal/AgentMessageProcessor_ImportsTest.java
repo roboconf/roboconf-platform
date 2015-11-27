@@ -44,7 +44,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
@@ -74,7 +74,7 @@ public class AgentMessageProcessor_ImportsTest {
 		this.agent.applicationName = APP;
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
@@ -82,7 +82,7 @@ public class AgentMessageProcessor_ImportsTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		getInternalClient().messagesForTheDm.clear();
+		getInternalClient().clearMessages();
 	}
 
 
@@ -95,30 +95,31 @@ public class AgentMessageProcessor_ImportsTest {
 	@Test
 	public void testImportsRequest() throws Exception {
 
-		TestClientAgent client = getInternalClient();
+		TestClient client = getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		TestApplicationTemplate app = new TestApplicationTemplate();
 		processor.scopedInstance = app.getTomcatVm();
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		// There are as many client invocations as started instances
+		// There are as many client invocations as started instances that
+		// export the requested variables.
 		processor.processMessage( new MsgCmdRequestImport( APP, "war" ));
-		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, client.messagesForAgents.size());
 
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
-		client.messagesForAgentsCount.set( 0 );
+		client.messagesForAgents.clear();
 
 		processor.processMessage( new MsgCmdRequestImport( APP, "war" ));
-		Assert.assertEquals( 3, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 1, client.messagesForAgents.size());
 	}
 
 
 	@Test
 	public void testImportsRequestOnScopedInstance() throws Exception {
 
-		TestClientAgent client = getInternalClient();
+		TestClient client = getInternalClient();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
 		// Our scoped instance has variables to export
@@ -135,10 +136,12 @@ public class AgentMessageProcessor_ImportsTest {
 		Assert.assertEquals( processor.scopedInstance, app.getTomcatVm());
 		Assert.assertEquals( 1, client.messagesForTheDm.size());
 
+		// No instance imports anything (we removed the WAR) => no message.
+		Assert.assertEquals( 0, client.messagesForAgents.size());
+
 		// Request variables from the scoped instance
-		Assert.assertEquals( 1, client.messagesForAgentsCount.get());
 		processor.processMessage( new MsgCmdRequestImport( APP, app.getTomcatVm().getComponent().getName()));
-		Assert.assertEquals( 2, client.messagesForAgentsCount.get());
+		Assert.assertEquals( 1, client.messagesForAgents.size());
 		Assert.assertEquals( 1, client.messagesForTheDm.size());
 	}
 
@@ -296,7 +299,7 @@ public class AgentMessageProcessor_ImportsTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.applicationName = APP;
 		this.agent.start();
 
@@ -340,7 +343,7 @@ public class AgentMessageProcessor_ImportsTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -399,7 +402,7 @@ public class AgentMessageProcessor_ImportsTest {
 	}
 
 
-	private TestClientAgent getInternalClient() throws IllegalAccessException {
-		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class );
+	private TestClient getInternalClient() throws IllegalAccessException {
+		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
 	}
 }

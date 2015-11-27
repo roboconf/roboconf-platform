@@ -34,12 +34,9 @@ import java.util.WeakHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 /**
@@ -49,13 +46,13 @@ import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 public class RabbitMqClientFactory implements IMessagingClientFactory {
 
 	// The connection properties.
-	private String messageServerIp;
-	private String messageServerUsername;
-	private String messageServerPassword;
+	String messageServerIp;
+	String messageServerUsername;
+	String messageServerPassword;
 
 	// The created clients.
 	// References to the clients are *weak*, so we never prevent their garbage collection.
-	private final Set<RabbitMqClient> clients = Collections.newSetFromMap(new WeakHashMap<RabbitMqClient, Boolean>());
+	final Set<RabbitMqClient> clients = Collections.newSetFromMap( new WeakHashMap<RabbitMqClient,Boolean> ());
 
 	// The logger
 	private final Logger logger = Logger.getLogger(this.getClass().getName());
@@ -80,33 +77,48 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 	}
 
 
+	/**
+	 * Reconfigures the client (invoked by iPojo).
+	 */
 	public void reconfigure() {
 		// Set the properties for all created clients.
-		resetClients(false);
+		resetClients( false );
 	}
 
 
+	/**
+	 * Stops the client (invoked by iPojo).
+	 */
 	public void stop() {
 		resetClients(true);
 	}
 
 
-	private void resetClients(boolean shutdown) {
+	private void resetClients( boolean shutdown ) {
+
 		// Make fresh snapshots of the clients, as we don't want to reconfigure them while holding the lock.
 		final ArrayList<RabbitMqClient> clients;
 		synchronized (this) {
-			clients = new ArrayList<>(this.clients);
+
+			// Get the snapshot.
+			clients = new ArrayList<>( this.clients );
+
+			// If we shutdown connections, remove the clients.
+			if( shutdown )
+				this.clients.clear();
 		}
 
 		// Now reconfigure all the clients.
-		for (RabbitMqClient client : clients) {
+		for( RabbitMqClient client : clients ) {
 			try {
 				final ReconfigurableClient<?> reconfigurable = client.getReconfigurableClient();
-				if (reconfigurable != null)
-					if (shutdown)
-						reconfigurable.closeConnection();
-					else
-						reconfigurable.switchMessagingType(RabbitMqConstants.RABBITMQ_FACTORY_TYPE);
+
+				// The reconfigurable can never be null.
+				// If it was, a NPE would have been thrown when the Rabbit MQ client was created.
+				if( shutdown )
+					reconfigurable.closeConnection();
+				else
+					reconfigurable.switchMessagingType(RabbitMqConstants.FACTORY_RABBITMQ);
 
 			} catch (Throwable t) {
 				// Warn but continue to reconfigure the next clients!
@@ -119,24 +131,21 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 
 	@Override
 	public String getType() {
-		return RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
+		return RabbitMqConstants.FACTORY_RABBITMQ;
 	}
 
 
 	@Override
-	public synchronized IDmClient createDmClient( final ReconfigurableClientDm parent ) {
-		final RabbitMqClientDm client = new RabbitMqClientDm(parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
-		this.clients.add(client);
-		this.logger.finer("Created a new DM client");
-		return client;
-	}
+	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
 
+		// The parent cannot be null. A NPE MUST be thrown otherwise.
+		// That's what the RabbitMqClient constructor does. There is unit test for this.
+		final RabbitMqClient client = new RabbitMqClient( parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword );
+		synchronized( this ) {
+			this.clients.add( client );
+		}
 
-	@Override
-	public synchronized IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
-		final RabbitMqClientAgent client = new RabbitMqClientAgent(parent, this.messageServerIp, this.messageServerUsername, this.messageServerPassword);
-		this.clients.add(client);
-		this.logger.finer("Created a new Agent client");
+		this.logger.finer( "A new Rabbit MQ client was created." );
 		return client;
 	}
 
@@ -144,33 +153,40 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 	@Override
 	public boolean setConfiguration( final Map<String, String> configuration ) {
 
-		final boolean result;
-		final String type = configuration.get(MESSAGING_TYPE_PROPERTY);
-		if (RabbitMqConstants.RABBITMQ_FACTORY_TYPE.equals(type)) {
+		boolean result = false;;
+		final String type = configuration.get( MESSAGING_TYPE_PROPERTY) ;
+		if( RabbitMqConstants.FACTORY_RABBITMQ.equals( type )) {
+			result = true;
+
 			String ip = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_IP);
 			String username = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME);
 			String password = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD);
 
 			// Handles default values.
 			if (ip == null)
-				ip = RabbitMqClient.DEFAULT_IP;
+				ip = RabbitMqConstants.DEFAULT_IP;
+
 			if (username == null)
-				username = RabbitMqClient.DEFAULT_USERNAME;
+				username = RabbitMqConstants.GUEST;
+
 			if (password == null)
-				password = RabbitMqClient.DEFAULT_PASSWORD;
+				password = RabbitMqConstants.GUEST;
 
 			// Avoid unnecessary (and potentially problematic) reconfiguration if nothing has changed.
 			// First we detect for changes, and set the parameters accordingly.
 			boolean hasChanged = false;
 			synchronized (this) {
+
 				if (!Objects.equals(this.messageServerIp, ip)) {
 					setMessageServerIp(ip);
 					hasChanged = true;
 				}
+
 				if (!Objects.equals(this.messageServerUsername, username)) {
 					setMessageServerUsername(username);
 					hasChanged = true;
 				}
+
 				if (!Objects.equals(this.messageServerPassword, password)) {
 					setMessageServerPassword(password);
 					hasChanged = true;
@@ -182,11 +198,6 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 			// prevent any message loss.
 			if (hasChanged)
 				reconfigure();
-			result = true;
-		} else {
-
-			// Not a configuration for this RabbitMQ client factory.
-			result = false;
 		}
 
 		return result;

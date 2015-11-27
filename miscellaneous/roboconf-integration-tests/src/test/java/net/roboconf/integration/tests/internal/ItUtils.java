@@ -155,7 +155,7 @@ public final class ItUtils {
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
 				"messaging-type",
-				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
+				RabbitMqConstants.FACTORY_RABBITMQ));
 
 		return options.toArray( new Option[ options.size()]);
 	}

@@ -87,7 +87,7 @@ public class InMemoryHandler_realManagerTest {
 		this.handler.manager = this.manager;
 
 		// Configure the manager
-		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 

@@ -161,7 +161,7 @@ public class ManagerTest {
 	public void testApplicationBindingsAreCorrectlySaved() throws Exception {
 
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
 		try {
 			this.manager.start();
 			TestManagerWrapper managerWrapper = new TestManagerWrapper( this.manager );
@@ -207,7 +207,7 @@ public class ManagerTest {
 
 		// To prevent #454 from happening again
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
 		try {
 			this.manager.start();
 			TestManagerWrapper managerWrapper = new TestManagerWrapper( this.manager );

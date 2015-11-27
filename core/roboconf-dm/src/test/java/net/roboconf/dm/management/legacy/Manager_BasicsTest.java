@@ -51,7 +51,7 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
@@ -78,7 +78,7 @@ public class Manager_BasicsTest {
 
 	private Manager manager;
 	private TestManagerWrapper managerWrapper;
-	private TestClientDm msgClient;
+	private TestClient msgClient;
 	private TestTargetResolver targetResolver;
 
 
@@ -97,7 +97,7 @@ public class Manager_BasicsTest {
 		this.manager = new Manager();
 		this.manager.setTargetResolver( this.targetResolver );
 		this.manager.configurationMngr().setWorkingDirectory( directory );
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.start();
 
 		// Register mocked listeners - mainly for code coverage reasons
@@ -108,8 +108,8 @@ public class Manager_BasicsTest {
 		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
-		this.msgClient.sentMessages.clear();
+		this.msgClient = (TestClient) this.managerWrapper.getInternalMessagingClient();
+		this.msgClient.clearMessages();
 
 		// Disable the messages timer for predictability
 		TestUtils.getInternalField( this.manager, "timer", Timer.class ).cancel();
@@ -160,7 +160,7 @@ public class Manager_BasicsTest {
 	@Test
 	public void testStop_messagingException() throws Exception {
 
-		this.msgClient.failListeningToTheDm.set( true );
+		this.msgClient.failSubscribing.set( true );
 		this.msgClient.failClosingConnection.set( true );
 
 		Timer timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
@@ -307,10 +307,10 @@ public class Manager_BasicsTest {
 
 		Assert.assertEquals( 2, app.getRootInstances().size());
 		Assert.assertEquals( app.getMySqlVm(), app.getRootInstances().iterator().next());
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
-		Assert.assertEquals( MsgCmdRemoveInstance.class, this.msgClient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, this.msgClient.allSentMessages.get( 0 ).getClass());
 
-		MsgCmdRemoveInstance msg = (MsgCmdRemoveInstance) this.msgClient.sentMessages.get( 0 );
+		MsgCmdRemoveInstance msg = (MsgCmdRemoveInstance) this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), msg.getInstancePath());
 	}
 
@@ -562,20 +562,20 @@ public class Manager_BasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 
 		this.manager.instancesMngr().resynchronizeAgents( ma );
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYING );
 		this.manager.instancesMngr().resynchronizeAgents( ma );
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
-		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.sentMessages.get( 0 ).getClass());
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
+		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.allSentMessages.get( 0 ).getClass());
 
-		this.msgClient.sentMessages.clear();
+		this.msgClient.allSentMessages.clear();
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		this.manager.instancesMngr().resynchronizeAgents( ma );
-		Assert.assertEquals( 2, this.msgClient.sentMessages.size());
-		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.sentMessages.get( 1 ).getClass());
+		Assert.assertEquals( 2, this.msgClient.allSentMessages.size());
+		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.allSentMessages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdResynchronize.class, this.msgClient.allSentMessages.get( 1 ).getClass());
 	}
 
 
@@ -614,17 +614,17 @@ public class Manager_BasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		this.msgClient.sentMessages.clear();
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		this.msgClient.allSentMessages.clear();
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( app.getName(), app.getMySqlVm(), "192.168.1.45" );
 		msg.setModelRequired( true );
 
 		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
-		Message sentMessage = this.msgClient.sentMessages.get( 0 );
+		Message sentMessage = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, sentMessage.getClass());
 		Assert.assertNotNull(((MsgCmdSetScopedInstance) sentMessage).getScopedInstance());
 	}
@@ -637,8 +637,8 @@ public class Manager_BasicsTest {
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
-		this.msgClient.sentMessages.clear();
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		this.msgClient.allSentMessages.clear();
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		// War is not a target / scoped instance: nothing will happen
 		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( app.getName(), app.getWar(), "192.168.1.45" );
@@ -646,16 +646,16 @@ public class Manager_BasicsTest {
 
 		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 
 		// Let's try again, but we change the WAR installer
 		app.getWar().getComponent().installerName( Constants.TARGET_INSTALLER );
 
 		this.managerWrapper.getMessagingClient().getMessageProcessor().storeMessage( msg );
 		Thread.sleep( 100 );
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
-		Message sentMessage = this.msgClient.sentMessages.get( 0 );
+		Message sentMessage = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, sentMessage.getClass());
 		Assert.assertNotNull(((MsgCmdSetScopedInstance) sentMessage).getScopedInstance());
 	}

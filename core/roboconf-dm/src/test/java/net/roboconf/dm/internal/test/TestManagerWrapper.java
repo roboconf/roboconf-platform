@@ -32,7 +32,7 @@ import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IApplicationMngr;
-import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
@@ -86,7 +86,7 @@ public final class TestManagerWrapper {
 	 * @return the DM's (internal) messaging client
 	 * @throws IllegalAccessException
 	 */
-	public IDmClient getInternalMessagingClient() throws IllegalAccessException {
+	public IMessagingClient getInternalMessagingClient() throws IllegalAccessException {
 		ReconfigurableClientDm client = getMessagingClient();
 		return getInternalMessagingClient( client );
 	}
@@ -133,9 +133,9 @@ public final class TestManagerWrapper {
 	 * @return the internal messaging client
 	 * @throws IllegalAccessException
 	 */
-	public static IDmClient getInternalMessagingClient( ReconfigurableClientDm client )
+	public static IMessagingClient getInternalMessagingClient( ReconfigurableClientDm client )
 	throws IllegalAccessException {
-		return TestUtils.getInternalField( client, "messagingClient", IDmClient.class );
+		return TestUtils.getInternalField( client, "messagingClient", IMessagingClient.class );
 	}
 
 

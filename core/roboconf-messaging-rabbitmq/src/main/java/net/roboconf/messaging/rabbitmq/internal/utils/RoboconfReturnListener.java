@@ -30,8 +30,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.utils.SerializationUtils;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.ReturnListener;
@@ -39,7 +39,7 @@ import com.rabbitmq.client.ReturnListener;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmReturnListener implements ReturnListener {
+public class RoboconfReturnListener implements ReturnListener {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 

@@ -26,8 +26,9 @@
 package net.roboconf.messaging.api.processors;
 
 import junit.framework.Assert;
+import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 
@@ -108,7 +109,7 @@ public class AbstractMessageProcessorTest {
 		 * Constructor.
 		 */
 		public EmptyTestDmMessageProcessor() {
-			super( MessagingConstants.TEST_FACTORY_TYPE);
+			super( MessagingConstants.FACTORY_TEST);
 		}
 
 		@Override

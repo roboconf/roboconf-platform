@@ -27,15 +27,14 @@ package net.roboconf.agent.monitoring.internal.tests;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.business.IAgentClient;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class MyAgentInterface implements AgentMessagingInterface {
 
-	private final TestClientAgent messagingClient;
+	private final IAgentClient messagingClient;
 	private Instance scopedInstance;
 
 
@@ -43,7 +42,7 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	 * Constructor.
 	 * @param messagingClient
 	 */
-	public MyAgentInterface( TestClientAgent messagingClient ) {
+	public MyAgentInterface( IAgentClient messagingClient ) {
 		this.messagingClient = messagingClient;
 	}
 

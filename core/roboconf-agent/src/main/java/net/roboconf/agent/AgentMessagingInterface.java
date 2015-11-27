@@ -26,7 +26,7 @@
 package net.roboconf.agent;
 
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.business.IAgentClient;
 
 /**
  * @author Pierre-Yves Gibello - Linagora

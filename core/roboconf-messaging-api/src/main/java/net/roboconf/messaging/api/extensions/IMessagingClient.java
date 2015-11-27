@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,18 +23,20 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.client;
+package net.roboconf.messaging.api.extensions;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface IClient {
+public interface IMessagingClient {
 
 	/**
 	 * Sets the message queue where the client can store the messages to process.
@@ -48,6 +50,19 @@ public interface IClient {
 	boolean isConnected();
 
 	/**
+	 * Sets information about the Roboconf part that uses this client.
+	 * <p>
+	 * This information can be changed dynamically.
+	 * Said differently, this information is not final, it can change with time.
+	 * </p>
+	 *
+	 * @param ownerKind {@link RecipientKind#DM} or {@link RecipientKind#AGENTS}
+	 * @param applicationName the application name (only makes sense for agents)
+	 * @param scopedInstancePath the scoped instance path  (only makes sense for agents)
+	 */
+	void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath );
+
+	/**
 	 * Opens a connection with the message server.
 	 */
 	void openConnection() throws IOException;
@@ -59,20 +74,6 @@ public interface IClient {
 	 * </p>
 	 */
 	void closeConnection() throws IOException;
-
-	/**
-	 * Sends a message to the DM.
-	 * @param message the message to send
-	 * @throws IOException if something went wrong
-	 */
-	void sendMessageToTheDm( Message message ) throws IOException;
-
-	/**
-	 * Configures the listener for messages from the DM.
-	 * @param command {@link ListenerCommand#START} to stop listening, {@link ListenerCommand#STOP} to stop listening
-	 * @throws IOException if something went wrong
-	 */
-	void listenToTheDm( ListenerCommand command ) throws IOException;
 
 	/**
 	 * @return the type of messaging currently used by this client.
@@ -90,4 +91,37 @@ public interface IClient {
 	// Exposing everything in the same configuration may raise serious security issues.
 	Map<String, String> getConfiguration();
 
+	/**
+	 * Subscribes to a given context.
+	 * @param ctx a messaging context (not null)
+	 * @throws IOException if something went wrong
+	 */
+	void subscribe( MessagingContext ctx ) throws IOException;
+
+	/**
+	 * Unsubscribes to a given context.
+	 * @param ctx a messaging context (not null)
+	 * @throws IOException if something went wrong
+	 */
+	void unsubscribe( MessagingContext ctx ) throws IOException;
+
+	/**
+	 * Publishes a message.
+	 * @param ctx a messaging context (not null)
+	 * @param msg the message to publish (not null)
+	 * @throws IOException if something went wrong
+	 */
+	void publish( MessagingContext ctx, Message msg ) throws IOException;
+
+	/**
+	 * Clear artifacts on the messaging server.
+	 * <p>
+	 * This method is invoked when an application was deleted.
+	 * It allows to remove topics or whatever that were related to the deleted application.
+	 * </p>
+	 *
+	 * @param application a non-null application
+	 * @throws IOException if something went wrong
+	 */
+	void deleteMessagingServerArtifacts( Application application ) throws IOException;
 }

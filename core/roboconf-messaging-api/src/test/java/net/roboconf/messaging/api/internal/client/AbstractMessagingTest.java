@@ -39,9 +39,10 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.AbstractMessageProcessor;
+import net.roboconf.messaging.api.business.IAgentClient;
+import net.roboconf.messaging.api.business.IDmClient;
+import net.roboconf.messaging.api.business.ListenerCommand;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
@@ -53,7 +54,6 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
-import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
@@ -76,9 +76,9 @@ import org.junit.After;
  */
 public abstract class AbstractMessagingTest {
 
-	private static final long DELAY = 700;
-	private final List<ReconfigurableClient<?>> clients = new ArrayList<> ();
 	protected final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	private final List<ReconfigurableClient<?>> clients = new ArrayList<> ();
+
 
 	@After
 	public void releaseClients() throws Exception {
@@ -91,6 +91,12 @@ public abstract class AbstractMessagingTest {
 
 		this.clients.clear();
 	}
+
+
+	/**
+	 * @return the delay to wait for messages (in ms)
+	 */
+	abstract protected long getDelay();
 
 
 	/**
@@ -107,34 +113,34 @@ public abstract class AbstractMessagingTest {
 		List<Message> agentMessages = new ArrayList<>();
 
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
-		dmClient.setRegistry(this.registry);
+		dmClient.setRegistry( this.registry );
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingType(getMessagingType());
+		dmClient.switchMessagingType( getMessagingType());
 		this.clients.add( dmClient );
 
 		ReconfigurableClientAgent agentClient = new ReconfigurableClientAgent();
-		agentClient.setRegistry(this.registry);
+		agentClient.setRegistry( this.registry );
 		agentClient.associateMessageProcessor( createAgentProcessor( agentMessages ));
 		agentClient.setApplicationName( app.getName());
 		agentClient.setScopedInstancePath( "/" + rootInstance.getName());
 		agentClient.setExternalMapping( app.getExternalExports());
-		agentClient.switchMessagingType(getMessagingType());
+		agentClient.switchMessagingType( getMessagingType());
 		this.clients.add( agentClient );
 
 		// No message yet
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, dmMessages.size());
 		Assert.assertEquals( 0, agentMessages.size());
 
 		// The agent is already listening to the DM.
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdSetScopedInstance( rootInstance ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 1, agentMessages.size());
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages.get( 0 ).getClass());
 
 		agentClient.listenToTheDm( ListenerCommand.START );
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdRemoveInstance( rootInstance ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 2, agentMessages.size());
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages.get( 1 ).getClass());
@@ -142,18 +148,18 @@ public abstract class AbstractMessagingTest {
 		// The agent sends a message to the DM
 		Assert.assertEquals( 0, dmMessages.size());
 		agentClient.sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance, "192.168.1.45" ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, dmMessages.size());
 
 		dmClient.listenToAgentMessages( app, ListenerCommand.START );
 		agentClient.sendMessageToTheDm( new MsgNotifMachineDown( app.getName(), rootInstance ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 1, dmMessages.size());
 		Assert.assertEquals( MsgNotifMachineDown.class, dmMessages.get( 0 ).getClass());
 
 		// The DM sends another message
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 3, agentMessages.size());
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages.get( 1 ).getClass());
@@ -165,21 +171,21 @@ public abstract class AbstractMessagingTest {
 		// The agent is not listening to the DM anymore.
 		// With RabbitMQ, the next invocation will result in a NO_ROUTE error in the channel.
 		dmClient.sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 3, agentMessages.size());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 3, agentMessages.size());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 3, agentMessages.size());
 
 		// The DM stops listening the agent
 		dmClient.listenToAgentMessages( app, ListenerCommand.STOP );
 		agentClient.sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance, "192.168.1.47" ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 1, dmMessages.size());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 1, dmMessages.size());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 1, dmMessages.size());
 	}
 
@@ -204,39 +210,39 @@ public abstract class AbstractMessagingTest {
 
 		List<Message> dmMessages = new ArrayList<>();
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
-		dmClient.setRegistry(this.registry);
+		dmClient.setRegistry( this.registry );
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingType(getMessagingType());
+		dmClient.switchMessagingType( getMessagingType());
 		this.clients.add( dmClient );
 
 		List<Message> agentMessages_11 = new ArrayList<>();
 		ReconfigurableClientAgent agentClient_11 = new ReconfigurableClientAgent();
-		agentClient_11.setRegistry(this.registry);
+		agentClient_11.setRegistry( this.registry );
 		agentClient_11.associateMessageProcessor( createAgentProcessor( agentMessages_11 ));
 		agentClient_11.setApplicationName( app1.getName());
 		agentClient_11.setScopedInstancePath( "/" + app1_root1.getName());
 		agentClient_11.setExternalMapping( app1.getExternalExports());
-		agentClient_11.switchMessagingType(getMessagingType());
+		agentClient_11.switchMessagingType( getMessagingType());
 		this.clients.add( agentClient_11 );
 
 		List<Message> agentMessages_12 = new ArrayList<>();
 		ReconfigurableClientAgent agentClient_12 = new ReconfigurableClientAgent();
-		agentClient_12.setRegistry(this.registry);
+		agentClient_12.setRegistry( this.registry );
 		agentClient_12.associateMessageProcessor( createAgentProcessor( agentMessages_12 ));
 		agentClient_12.setApplicationName( app1.getName());
 		agentClient_12.setScopedInstancePath( "/" + app1_root2.getName());
 		agentClient_12.setExternalMapping( app1.getExternalExports());
-		agentClient_12.switchMessagingType(getMessagingType());
+		agentClient_12.switchMessagingType( getMessagingType());
 		this.clients.add( agentClient_12 );
 
 		List<Message> agentMessages_2 = new ArrayList<>();
 		ReconfigurableClientAgent agentClient_2 = new ReconfigurableClientAgent();
-		agentClient_2.setRegistry(this.registry);
+		agentClient_2.setRegistry( this.registry );
 		agentClient_2.associateMessageProcessor( createAgentProcessor( agentMessages_2 ));
 		agentClient_2.setApplicationName( app2.getName());
 		agentClient_2.setScopedInstancePath( "/" + app2_root.getName());
 		agentClient_2.setExternalMapping( app2.getExternalExports());
-		agentClient_2.switchMessagingType(getMessagingType());
+		agentClient_2.switchMessagingType( getMessagingType());
 		this.clients.add( agentClient_2 );
 
 		// Everybody starts listening...
@@ -257,7 +263,7 @@ public abstract class AbstractMessagingTest {
 		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetScopedInstance( app1_root1 ));
 
 		// Check what was received
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 3, agentMessages_11.size());
 		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages_11.get( 0 ).getClass());
@@ -319,48 +325,48 @@ public abstract class AbstractMessagingTest {
 		// Initialize the messaging
 		List<Message> tomcatMessages = new ArrayList<>();
 		ReconfigurableClientAgent tomcatClient = new ReconfigurableClientAgent();
-		tomcatClient.setRegistry(this.registry);
+		tomcatClient.setRegistry( this.registry );
 		tomcatClient.associateMessageProcessor( createAgentProcessor( tomcatMessages ));
 		tomcatClient.setApplicationName( app1.getName());
 		tomcatClient.setScopedInstancePath( "/" + tomcat.getName());
 		tomcatClient.setExternalMapping( app1.getExternalExports());
-		tomcatClient.switchMessagingType(getMessagingType());
+		tomcatClient.switchMessagingType( getMessagingType());
 		this.clients.add( tomcatClient );
 
 		List<Message> apacheMessages = new ArrayList<>();
 		ReconfigurableClientAgent apacheClient = new ReconfigurableClientAgent();
-		apacheClient.setRegistry(this.registry);
+		apacheClient.setRegistry( this.registry );
 		apacheClient.associateMessageProcessor( createAgentProcessor( apacheMessages ));
 		apacheClient.setApplicationName( app1.getName());
 		apacheClient.setScopedInstancePath( "/" + apache.getName());
 		apacheClient.setExternalMapping( app1.getExternalExports());
-		apacheClient.switchMessagingType(getMessagingType());
+		apacheClient.switchMessagingType( getMessagingType());
 		this.clients.add( apacheClient );
 
 		List<Message> mySqlMessages = new ArrayList<>();
 		ReconfigurableClientAgent mySqlClient = new ReconfigurableClientAgent();
-		mySqlClient.setRegistry(this.registry);
+		mySqlClient.setRegistry( this.registry );
 		mySqlClient.associateMessageProcessor( createAgentProcessor( mySqlMessages ));
 		mySqlClient.setApplicationName( app1.getName());
 		mySqlClient.setScopedInstancePath( "/" + mysql.getName());
 		mySqlClient.setExternalMapping( app1.getExternalExports());
-		mySqlClient.switchMessagingType(getMessagingType());
+		mySqlClient.switchMessagingType( getMessagingType());
 		this.clients.add( mySqlClient );
 
 		List<Message> otherMessages = new ArrayList<>();
 		ReconfigurableClientAgent otherClient = new ReconfigurableClientAgent();
-		otherClient.setRegistry(this.registry);
+		otherClient.setRegistry( this.registry );
 		otherClient.associateMessageProcessor( createAgentProcessor( otherMessages ));
 		otherClient.setApplicationName( app2.getName());
 		otherClient.setScopedInstancePath( "/" + other.getName());
 		otherClient.setExternalMapping( app2.getExternalExports());
-		otherClient.switchMessagingType(getMessagingType());
+		otherClient.switchMessagingType( getMessagingType());
 		this.clients.add( otherClient );
 
 		// OK, let's start.
 		// MySQL publishes its exports but nobody is listening.
 		mySqlClient.publishExports( mysql );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, apacheMessages.size());
 		Assert.assertEquals( 0, tomcatMessages.size());
@@ -371,7 +377,7 @@ public abstract class AbstractMessagingTest {
 		otherClient.listenToExportsFromOtherAgents( ListenerCommand.START, other );
 		tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, tomcat );
 		mySqlClient.publishExports( mysql );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, apacheMessages.size());
@@ -397,7 +403,7 @@ public abstract class AbstractMessagingTest {
 		// Other publishes its exports.
 		// Tomcat is not supposed to receive it.
 		otherClient.publishExports( other );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, apacheMessages.size());
@@ -410,7 +416,7 @@ public abstract class AbstractMessagingTest {
 		apacheClient.listenToExportsFromOtherAgents( ListenerCommand.START, apache );
 		mySqlClient.listenToExportsFromOtherAgents( ListenerCommand.START, mysql );
 		tomcatClient.publishExports( tomcat );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, otherMessages.size());
@@ -427,7 +433,7 @@ public abstract class AbstractMessagingTest {
 
 		// MySQL publishes (again) its exports
 		mySqlClient.publishExports( mysql );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, otherMessages.size());
@@ -445,7 +451,7 @@ public abstract class AbstractMessagingTest {
 
 		// MySQL un-publishes its exports
 		mySqlClient.unpublishExports( mysql );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, otherMessages.size());
@@ -463,7 +469,7 @@ public abstract class AbstractMessagingTest {
 		// But this time, Tomcat does not listen anymore
 		tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.STOP, tomcat );
 		mySqlClient.publishExports( mysql );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, otherMessages.size());
@@ -514,48 +520,48 @@ public abstract class AbstractMessagingTest {
 		// Initialize the messaging
 		List<Message> tomcatMessages = new ArrayList<>();
 		ReconfigurableClientAgent tomcatClient = new ReconfigurableClientAgent();
-		tomcatClient.setRegistry(this.registry);
+		tomcatClient.setRegistry( this.registry );
 		tomcatClient.associateMessageProcessor( createAgentProcessor( tomcatMessages ));
 		tomcatClient.setApplicationName( app1.getName());
 		tomcatClient.setScopedInstancePath( "/" + tomcat.getName());
 		tomcatClient.setExternalMapping( app1.getExternalExports());
-		tomcatClient.switchMessagingType(getMessagingType());
+		tomcatClient.switchMessagingType( getMessagingType());
 		this.clients.add( tomcatClient );
 
 		List<Message> apacheMessages = new ArrayList<>();
 		ReconfigurableClientAgent apacheClient = new ReconfigurableClientAgent();
-		apacheClient.setRegistry(this.registry);
+		apacheClient.setRegistry( this.registry );
 		apacheClient.associateMessageProcessor( createAgentProcessor( apacheMessages ));
 		apacheClient.setApplicationName( app1.getName());
 		apacheClient.setScopedInstancePath( "/" + apache.getName());
 		apacheClient.setExternalMapping( app1.getExternalExports());
-		apacheClient.switchMessagingType(getMessagingType());
+		apacheClient.switchMessagingType( getMessagingType());
 		this.clients.add( apacheClient );
 
 		List<Message> mySqlMessages = new ArrayList<>();
 		ReconfigurableClientAgent mySqlClient = new ReconfigurableClientAgent();
-		mySqlClient.setRegistry(this.registry);
+		mySqlClient.setRegistry( this.registry );
 		mySqlClient.associateMessageProcessor( createAgentProcessor( mySqlMessages ));
 		mySqlClient.setApplicationName( app1.getName());
 		mySqlClient.setScopedInstancePath( "/" + mysql.getName());
 		mySqlClient.setExternalMapping( app1.getExternalExports());
-		mySqlClient.switchMessagingType(getMessagingType());
+		mySqlClient.switchMessagingType( getMessagingType());
 		this.clients.add( mySqlClient );
 
 		List<Message> otherMessages = new ArrayList<>();
 		ReconfigurableClientAgent otherClient = new ReconfigurableClientAgent();
-		otherClient.setRegistry(this.registry);
+		otherClient.setRegistry( this.registry );
 		otherClient.associateMessageProcessor( createAgentProcessor( otherMessages ));
 		otherClient.setApplicationName( app2.getName());
 		otherClient.setScopedInstancePath( "/" + other.getName());
 		otherClient.setExternalMapping( app2.getExternalExports());
-		otherClient.switchMessagingType(getMessagingType());
+		otherClient.switchMessagingType( getMessagingType());
 		this.clients.add( otherClient );
 
 		// OK, let's start.
 		// Tomcat requests MySQL exports but MySQL is not listening
 		tomcatClient.requestExportsFromOtherAgents( tomcat );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, apacheMessages.size());
 		Assert.assertEquals( 0, tomcatMessages.size());
@@ -566,7 +572,7 @@ public abstract class AbstractMessagingTest {
 		otherClient.listenToRequestsFromOtherAgents( ListenerCommand.START, other );
 		mySqlClient.listenToRequestsFromOtherAgents( ListenerCommand.START, mysql );
 		tomcatClient.requestExportsFromOtherAgents( tomcat );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, apacheMessages.size());
 		Assert.assertEquals( 0, tomcatMessages.size());
@@ -580,7 +586,7 @@ public abstract class AbstractMessagingTest {
 		// Now, let's do it again but MySQL stops listening.
 		mySqlClient.listenToRequestsFromOtherAgents( ListenerCommand.STOP, mysql );
 		tomcatClient.requestExportsFromOtherAgents( tomcat );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, apacheMessages.size());
 		Assert.assertEquals( 0, tomcatMessages.size());
@@ -589,7 +595,7 @@ public abstract class AbstractMessagingTest {
 
 		// Other requires exports from others.
 		otherClient.requestExportsFromOtherAgents( other );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, apacheMessages.size());
 		Assert.assertEquals( 0, tomcatMessages.size());
@@ -625,35 +631,35 @@ public abstract class AbstractMessagingTest {
 		// Initialize the messaging
 		List<Message> messages1 = new ArrayList<>();
 		ReconfigurableClientAgent client1 = new ReconfigurableClientAgent();
-		client1.setRegistry(this.registry);
+		client1.setRegistry( this.registry );
 		client1.associateMessageProcessor( createAgentProcessor( messages1 ));
 		client1.setApplicationName( app.getName());
 		client1.setScopedInstancePath( "/" + instance1.getName());
 		client1.setExternalMapping( app.getExternalExports());
-		client1.switchMessagingType(getMessagingType());
+		client1.switchMessagingType( getMessagingType());
 		this.clients.add( client1 );
 
 		List<Message> messages2 = new ArrayList<>();
 		ReconfigurableClientAgent client2 = new ReconfigurableClientAgent();
-		client2.setRegistry(this.registry);
+		client2.setRegistry( this.registry );
 		client2.associateMessageProcessor( createAgentProcessor( messages2 ));
 		client2.setApplicationName( app.getName());
 		client2.setScopedInstancePath( "/" + instance2.getName());
 		client2.setExternalMapping( app.getExternalExports());
-		client2.switchMessagingType(getMessagingType());
+		client2.switchMessagingType( getMessagingType());
 		this.clients.add( client2 );
 
 		// OK, let's start.
 		// Instance1 is alone.
 		client1.requestExportsFromOtherAgents( instance1 );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, messages1.size());
 		Assert.assertEquals( 0, messages2.size());
 
 		// Now, instance2 is listening.
 		client2.listenToRequestsFromOtherAgents( ListenerCommand.START, instance2 );
 		client1.requestExportsFromOtherAgents( instance1 );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, messages1.size());
 		Assert.assertEquals( 2, messages2.size());
 		Assert.assertEquals( MsgCmdRequestImport.class, messages2.get( 0 ).getClass());
@@ -671,7 +677,7 @@ public abstract class AbstractMessagingTest {
 		client2.listenToRequestsFromOtherAgents( ListenerCommand.STOP, instance2 );
 		client1.listenToRequestsFromOtherAgents( ListenerCommand.START, instance1 );
 		client1.requestExportsFromOtherAgents( instance1 );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 2, messages2.size());
 		Assert.assertEquals( 2, messages1.size());
@@ -719,9 +725,9 @@ public abstract class AbstractMessagingTest {
 		// Except it is not in the same application.
 		List<Message> dmMessages = new ArrayList<>();
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
-		dmClient.setRegistry(this.registry);
+		dmClient.setRegistry( this.registry );
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingType(getMessagingType());
+		dmClient.switchMessagingType( getMessagingType());
 		this.clients.add( dmClient );
 
 		Component otherComponent = new Component( "other" );
@@ -735,48 +741,48 @@ public abstract class AbstractMessagingTest {
 		// Initialize the messaging
 		List<Message> tomcatMessages = new ArrayList<>();
 		ReconfigurableClientAgent tomcatClient = new ReconfigurableClientAgent();
-		tomcatClient.setRegistry(this.registry);
+		tomcatClient.setRegistry( this.registry );
 		tomcatClient.associateMessageProcessor( createAgentProcessor( tomcatMessages ));
 		tomcatClient.setApplicationName( app1.getName());
 		tomcatClient.setScopedInstancePath( "/" + tomcat.getName());
 		tomcatClient.setExternalMapping( app1.getExternalExports());
-		tomcatClient.switchMessagingType(getMessagingType());
+		tomcatClient.switchMessagingType( getMessagingType());
 		tomcatClient.listenToTheDm( ListenerCommand.START );
 		tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, tomcat );
 		this.clients.add( tomcatClient );
 
 		List<Message> apacheMessages = new ArrayList<>();
 		ReconfigurableClientAgent apacheClient = new ReconfigurableClientAgent();
-		apacheClient.setRegistry(this.registry);
+		apacheClient.setRegistry( this.registry );
 		apacheClient.associateMessageProcessor( createAgentProcessor( apacheMessages ));
 		apacheClient.setApplicationName( app1.getName());
 		apacheClient.setScopedInstancePath( "/" + apache.getName());
 		apacheClient.setExternalMapping( app1.getExternalExports());
-		apacheClient.switchMessagingType(getMessagingType());
+		apacheClient.switchMessagingType( getMessagingType());
 		apacheClient.listenToTheDm( ListenerCommand.START );
 		apacheClient.listenToExportsFromOtherAgents( ListenerCommand.START, apache );
 		this.clients.add( apacheClient );
 
 		List<Message> mySqlMessages = new ArrayList<>();
 		ReconfigurableClientAgent mySqlClient = new ReconfigurableClientAgent();
-		mySqlClient.setRegistry(this.registry);
+		mySqlClient.setRegistry( this.registry );
 		mySqlClient.associateMessageProcessor( createAgentProcessor( mySqlMessages ));
 		mySqlClient.setApplicationName( app1.getName());
 		mySqlClient.setScopedInstancePath( "/" + mysql.getName());
 		mySqlClient.setExternalMapping( app1.getExternalExports());
-		mySqlClient.switchMessagingType(getMessagingType());
+		mySqlClient.switchMessagingType( getMessagingType());
 		mySqlClient.listenToTheDm( ListenerCommand.START );
 		mySqlClient.listenToExportsFromOtherAgents( ListenerCommand.START, mysql );
 		this.clients.add( mySqlClient );
 
 		List<Message> otherMessages = new ArrayList<>();
 		ReconfigurableClientAgent otherClient = new ReconfigurableClientAgent();
-		otherClient.setRegistry(this.registry);
+		otherClient.setRegistry( this.registry );
 		otherClient.associateMessageProcessor( createAgentProcessor( otherMessages ));
 		otherClient.setApplicationName( app2.getName());
 		otherClient.setScopedInstancePath( "/" + other.getName());
 		otherClient.setExternalMapping( app2.getExternalExports());
-		otherClient.switchMessagingType(getMessagingType());
+		otherClient.switchMessagingType( getMessagingType());
 		otherClient.listenToTheDm( ListenerCommand.START );
 		otherClient.listenToExportsFromOtherAgents( ListenerCommand.START, other );
 		this.clients.add( otherClient );
@@ -786,7 +792,7 @@ public abstract class AbstractMessagingTest {
 		dmClient.propagateAgentTermination( app1, mysql );
 		dmClient.propagateAgentTermination( app2, other );
 
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, apacheMessages.size());
 		Assert.assertEquals( 0, mySqlMessages.size());
@@ -808,19 +814,19 @@ public abstract class AbstractMessagingTest {
 
 		List<Message> dmMessages = new ArrayList<>();
 		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
-		dmClient.setRegistry(this.registry);
+		dmClient.setRegistry( this.registry );
 		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
-		dmClient.switchMessagingType(getMessagingType());
+		dmClient.switchMessagingType( getMessagingType());
 		this.clients.add( dmClient );
 
 		dmClient.sendMessageToTheDm( new MsgEcho( "hey 1" ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, dmMessages.size());
 
 		dmClient.listenToTheDm( ListenerCommand.START );
 		dmClient.sendMessageToTheDm( new MsgEcho( "hey 2" ));
 		dmClient.sendMessageToTheDm( new MsgEcho( "hey 3" ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 2, dmMessages.size());
 		Assert.assertEquals( MsgEcho.class, dmMessages.get( 0 ).getClass());
@@ -830,7 +836,7 @@ public abstract class AbstractMessagingTest {
 
 		dmClient.listenToTheDm( ListenerCommand.STOP );
 		dmClient.sendMessageToTheDm( new MsgEcho( "hey again" ));
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 2, dmMessages.size());
 	}
 
@@ -860,7 +866,7 @@ public abstract class AbstractMessagingTest {
 		// Prepare messaging clients - we only focus on MySQL and Tomcat
 		List<Message> app1_mysqlMessages = new ArrayList<> ();
 		ReconfigurableClientAgent app1_mysqlClient = new ReconfigurableClientAgent();
-		app1_mysqlClient.setRegistry(this.registry);
+		app1_mysqlClient.setRegistry( this.registry );
 		app1_mysqlClient.associateMessageProcessor( createAgentProcessor( app1_mysqlMessages ));
 		app1_mysqlClient.setApplicationName( app1.getName());
 		app1_mysqlClient.setScopedInstancePath( InstanceHelpers.computeInstancePath( app1.getMySqlVm()));
@@ -870,7 +876,7 @@ public abstract class AbstractMessagingTest {
 
 		List<Message> app2_mysqlMessages = new ArrayList<> ();
 		ReconfigurableClientAgent app2_mysqlClient = new ReconfigurableClientAgent();
-		app2_mysqlClient.setRegistry(this.registry);
+		app2_mysqlClient.setRegistry( this.registry );
 		app2_mysqlClient.associateMessageProcessor( createAgentProcessor( app2_mysqlMessages ));
 		app2_mysqlClient.setApplicationName( app2.getName());
 		app2_mysqlClient.setScopedInstancePath( InstanceHelpers.computeInstancePath( app2.getMySqlVm()));
@@ -880,7 +886,7 @@ public abstract class AbstractMessagingTest {
 
 		List<Message> app1_tomcatMessages = new ArrayList<> ();
 		ReconfigurableClientAgent app1_tomcatClient = new ReconfigurableClientAgent();
-		app1_tomcatClient.setRegistry(this.registry);
+		app1_tomcatClient.setRegistry( this.registry );
 		app1_tomcatClient.associateMessageProcessor( createAgentProcessor( app1_tomcatMessages ));
 		app1_tomcatClient.setApplicationName( app1.getName());
 		app1_tomcatClient.setScopedInstancePath( InstanceHelpers.computeInstancePath( app1.getTomcatVm()));
@@ -890,7 +896,7 @@ public abstract class AbstractMessagingTest {
 
 		List<Message> app2_tomcatMessages = new ArrayList<> ();
 		ReconfigurableClientAgent app2_tomcatClient = new ReconfigurableClientAgent();
-		app2_tomcatClient.setRegistry(this.registry);
+		app2_tomcatClient.setRegistry( this.registry );
 		app2_tomcatClient.associateMessageProcessor( createAgentProcessor( app2_tomcatMessages ));
 		app2_tomcatClient.setApplicationName( app2.getName());
 		app2_tomcatClient.setScopedInstancePath( InstanceHelpers.computeInstancePath( app2.getTomcatVm()));
@@ -901,7 +907,7 @@ public abstract class AbstractMessagingTest {
 		// OK, let's start.
 		// Tomcat requests MySQL exports but no MySQL is listening
 		app1_tomcatClient.requestExportsFromOtherAgents( app1.getTomcat());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 		Assert.assertEquals( 0, app1_tomcatMessages.size());
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
@@ -910,7 +916,7 @@ public abstract class AbstractMessagingTest {
 		// Now, start the (external) MySQL, the one in app2.
 		app2_mysqlClient.listenToRequestsFromOtherAgents( ListenerCommand.START, app2.getMySql());
 		app1_tomcatClient.requestExportsFromOtherAgents( app1.getTomcat());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, app1_tomcatMessages.size());
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
@@ -924,7 +930,7 @@ public abstract class AbstractMessagingTest {
 		// Let's check exports.
 		// Tomcat is not listening...
 		app2_mysqlClient.publishExports( app2.getMySql());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, app1_tomcatMessages.size());
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
@@ -934,7 +940,7 @@ public abstract class AbstractMessagingTest {
 		// Let's check exports with Tomcat listening...
 		app1_tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, app1.getTomcat());
 		app2_mysqlClient.publishExports( app2.getMySql());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
@@ -952,7 +958,7 @@ public abstract class AbstractMessagingTest {
 
 		// What happens if we ask to only publish an external variable?
 		app2_mysqlClient.publishExports( app2.getMySql(), "tpl2" );
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
@@ -972,7 +978,7 @@ public abstract class AbstractMessagingTest {
 		// Just to be sure, turn off the listening on the Tomcat side.
 		app1_tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.STOP, app1.getTomcat());
 		app2_mysqlClient.unpublishExports( app2.getMySql());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
@@ -982,7 +988,7 @@ public abstract class AbstractMessagingTest {
 		// Good! Now, let's check unpublish events.
 		app1_tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, app1.getTomcat());
 		app2_mysqlClient.unpublishExports( app2.getMySql());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
@@ -998,7 +1004,7 @@ public abstract class AbstractMessagingTest {
 		// app2 >> MySQL does not listen anymore. Requests are not propagated anymore.
 		app2_mysqlClient.listenToRequestsFromOtherAgents( ListenerCommand.STOP, app2.getMySql());
 		app1_tomcatClient.requestExportsFromOtherAgents( app1.getTomcat());
-		Thread.sleep( DELAY );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, app2_tomcatMessages.size());
 		Assert.assertEquals( 0, app1_mysqlMessages.size());
@@ -1007,7 +1013,27 @@ public abstract class AbstractMessagingTest {
 	}
 
 
-	protected abstract AbstractMessageProcessor<IDmClient> createDmProcessor( List<Message> dmMessages );
-	protected abstract AbstractMessageProcessor<IAgentClient> createAgentProcessor( List<Message> agentMessages );
+	protected AbstractMessageProcessor<IDmClient> createDmProcessor( final List<Message> dmMessages ) {
+
+		return new AbstractMessageProcessor<IDmClient>( "DM Processor - Test" ) {
+			@Override
+			protected void processMessage( Message message ) {
+				dmMessages.add( message );
+			}
+		};
+	}
+
+
+	protected AbstractMessageProcessor<IAgentClient> createAgentProcessor( final List<Message> agentMessages ) {
+
+		return new AbstractMessageProcessor<IAgentClient>( "Agent Processor - Test" ) {
+			@Override
+			protected void processMessage( Message message ) {
+				agentMessages.add( message );
+			}
+		};
+	}
+
+
 	protected abstract String getMessagingType();
 }

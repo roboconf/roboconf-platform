@@ -28,6 +28,7 @@ package net.roboconf.messaging.rabbitmq.internal;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import junit.framework.Assert;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
@@ -41,7 +42,7 @@ import com.rabbitmq.client.Channel;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentClientTest {
+public class RaabitMqClientTest {
 
 	private static boolean rabbitMqIsRunning = false;
 
@@ -55,32 +56,31 @@ public class AgentClientTest {
 	public void testConnectAndDisconnect() throws Exception {
 		Assume.assumeTrue( rabbitMqIsRunning );
 
-		RabbitMqClientAgent agentClient = new RabbitMqClientAgent(null, "localhost", "guest", "guest" );
-		agentClient.setApplicationName( "app" );
-		agentClient.setScopedInstancePath( "/root" );
+		RabbitMqClient client = new RabbitMqClient( null, "localhost", "guest", "guest", RecipientKind.DM );
+		client.setOwnerProperties( RecipientKind.DM, "app", "/root" );
 
-		Assert.assertEquals( RabbitMqConstants.RABBITMQ_FACTORY_TYPE, agentClient.getMessagingType());
-		Assert.assertFalse( agentClient.isConnected());
-		Assert.assertNull( agentClient.channel );
+		Assert.assertEquals( RabbitMqConstants.FACTORY_RABBITMQ, client.getMessagingType());
+		Assert.assertFalse( client.isConnected());
+		Assert.assertNull( client.channel );
 
 		LinkedBlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
-		agentClient.setMessageQueue( messagesQueue );
-		agentClient.openConnection();
-		Assert.assertNotNull( agentClient.channel );
-		Assert.assertNotNull( agentClient.consumerTag );
-		Assert.assertTrue( agentClient.isConnected());
+		client.setMessageQueue( messagesQueue );
+		client.openConnection();
+		Assert.assertNotNull( client.channel );
+		Assert.assertNotNull( client.consumerTag );
+		Assert.assertTrue( client.isConnected());
 
 		// openConnection is idem-potent
-		Channel oldChannel = agentClient.channel;
-		agentClient.openConnection();
-		Assert.assertEquals( oldChannel, agentClient.channel );
+		Channel oldChannel = client.channel;
+		client.openConnection();
+		Assert.assertEquals( oldChannel, client.channel );
 
-		agentClient.closeConnection();
-		Assert.assertNull( agentClient.channel );
-		Assert.assertNull( agentClient.consumerTag );
+		client.closeConnection();
+		Assert.assertNull( client.channel );
+		Assert.assertNull( client.consumerTag );
 
 		// closeConnection is idem-potent
-		agentClient.closeConnection();
-		Assert.assertNull( agentClient.channel );
+		client.closeConnection();
+		Assert.assertNull( client.channel );
 	}
 }

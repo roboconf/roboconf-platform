@@ -30,9 +30,9 @@ import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 
@@ -57,7 +57,7 @@ public class Agent_BasicsTest {
 		this.agent = new Agent();
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
@@ -86,7 +86,7 @@ public class Agent_BasicsTest {
 	@Test
 	public void testForceHeartbeatSending() throws Exception {
 
-		TestClientAgent client = getInternalClient();
+		TestClient client = getInternalClient();
 		Assert.assertEquals( 0, client.messagesForTheDm.size());
 
 		this.agent.forceHeartbeatSending();
@@ -98,7 +98,7 @@ public class Agent_BasicsTest {
 	@Test
 	public void testBasicStartAndStop() throws Exception {
 
-		TestClientAgent client = getInternalClient();
+		TestClient client = getInternalClient();
 
 		// Stop when not running => no problem
 		Assert.assertTrue( client.isConnected());
@@ -113,7 +113,7 @@ public class Agent_BasicsTest {
 		Assert.assertTrue( client.isConnected());
 
 		// Start when already started => nothing
-		IAgentClient oldClient = client;
+		IMessagingClient oldClient = client;
 		this.agent.start();
 		this.agent.getMessagingClient().setRegistry(this.registry);
 		this.agent.reconfigure();
@@ -143,7 +143,7 @@ public class Agent_BasicsTest {
 	@Test
 	public void testStop_withException() throws Exception {
 
-		TestClientAgent client = getInternalClient();
+		TestClient client = getInternalClient();
 		client.failMessageSending.set( true );
 		Assert.assertTrue( client.isConnected());
 
@@ -155,7 +155,7 @@ public class Agent_BasicsTest {
 	@Test
 	public void testStop_notConnected() throws Exception {
 
-		TestClientAgent client = getInternalClient();
+		TestClient client = getInternalClient();
 		client.closeConnection();
 		Assert.assertFalse( client.isConnected());
 
@@ -227,7 +227,7 @@ public class Agent_BasicsTest {
 
 
 
-	private TestClientAgent getInternalClient() throws IllegalAccessException {
-		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class );
+	private TestClient getInternalClient() throws IllegalAccessException {
+		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
 	}
 }

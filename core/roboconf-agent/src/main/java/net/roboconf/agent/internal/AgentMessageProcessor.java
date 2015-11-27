@@ -48,8 +48,9 @@ import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.ListenerCommand;
+import net.roboconf.messaging.api.AbstractMessageProcessor;
+import net.roboconf.messaging.api.business.IAgentClient;
+import net.roboconf.messaging.api.business.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
@@ -64,7 +65,6 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
-import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
@@ -127,7 +127,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 
 	/*
-	 * @see net.roboconf.messaging.api.client.AbstractMessageProcessor
+	 * @see net.roboconf.messaging.api.business.AbstractMessageProcessor
 	 * #processMessage(net.roboconf.messaging.api.messages.Message)
 	 */
 	@Override

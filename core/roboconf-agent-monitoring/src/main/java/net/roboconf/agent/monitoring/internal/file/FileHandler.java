@@ -76,7 +76,12 @@ public class FileHandler implements IMonitoringHandler {
 			this.logger.severe( "Invalid content for the 'file' handler in the agent's monitoring." );
 
 		} else {
+			// Back to defaults
 			this.fileLocation = fileContent;
+			this.notifyIfNotExists = false;
+			this.deleteIfExists = false;
+
+			// Update defaults if necessary
 			if( this.fileLocation.toLowerCase().startsWith( DELETE_IF_EXISTS )) {
 				this.deleteIfExists = true;
 				this.fileLocation = this.fileLocation.substring( DELETE_IF_EXISTS.length()).trim();
@@ -84,7 +89,6 @@ public class FileHandler implements IMonitoringHandler {
 			} else if( this.fileLocation.toLowerCase().startsWith( NOTIFY_IF_NOT_EXISTS )) {
 				this.notifyIfNotExists = true;
 				this.fileLocation = this.fileLocation.substring( NOTIFY_IF_NOT_EXISTS.length()).trim();
-
 			}
 		}
 	}

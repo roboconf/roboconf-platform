@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,21 +23,33 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal.utils;
+package net.roboconf.messaging.api.factory;
 
-import net.roboconf.messaging.rabbitmq.internal.utils.DmReturnListener;
+import junit.framework.Assert;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class DmReturnListenerTest {
+public class MessagingClientFactoryRegistryTest {
 
 	@Test
-	public void testDeserializationError() throws Exception {
+	public void testAddGetAndRemove() {
 
-		DmReturnListener listener = new DmReturnListener();
-		listener.handleReturn( 0, "reply", "exchange", "routingKey", null, new byte[ 1 ]);
+		MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+		Assert.assertNull( registry.getMessagingClientFactory( MessagingConstants.FACTORY_TEST ));
+
+		TestClientFactory factory = new TestClientFactory();
+		Assert.assertTrue( registry.addMessagingClientFactory( factory ));
+		Assert.assertNotNull( registry.getMessagingClientFactory( MessagingConstants.FACTORY_TEST ));
+
+		Assert.assertFalse( registry.addMessagingClientFactory( factory ));
+		Assert.assertTrue( registry.removeMessagingClientFactory( factory ));
+		Assert.assertNull( registry.getMessagingClientFactory( MessagingConstants.FACTORY_TEST ));
+
+		Assert.assertFalse( registry.removeMessagingClientFactory( factory ));
 	}
 }
