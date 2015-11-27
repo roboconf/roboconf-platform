@@ -29,13 +29,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.roboconf.core.agents.DataHelpers;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler;
-import net.roboconf.target.api.TargetException;
-
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
@@ -45,8 +38,16 @@ import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.jclouds.openstack.v2_0.domain.Resource;
 
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
+import net.roboconf.target.api.TargetException;
+
 /**
  * @author Pierre-Yves Gibello - Linagora
+ * @author Amadou Diarra - UJF
  */
 public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
@@ -65,9 +66,12 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	static final String FLOATING_IP_POOL = "openstack.floating-ip-pool";
 	static final String NETWORK_ID = "openstack.network-id";
-	// static final String VOLUME_ID = "openstack.volumeId";
-	// static final String VOLUME_MOUNT_POINT = "openstack.volumeMountPoint";
-	// static final String VOLUME_SIZE_GB = "openstack.volumeSizeGb";
+	//static final String VOLUME_ID = "openstack.volumeId";
+	static final String USE_BLOCK_STORAGE = "openstack.use-block-storage";
+	static final String VOLUME_MOUNT_POINT = "openstack.volume-mount-point";
+	static final String DEFAULT_VOLUME_MOUNT_POINT = "/dev/vdb";
+	static final String VOLUME_SIZE_GB = "openstack.volume-size";
+	static final String DEFAULT_VOLUME_SIZE_GB = "5";
 
 
 
@@ -92,7 +96,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
-	throws TargetException {
+					throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
 
@@ -167,7 +171,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	 */
 	@Override
 	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
-	throws TargetException {
+			throws TargetException {
 
 		NovaApi novaApi = novaApi( targetProperties );
 		String anyZoneName = novaApi.getConfiguredZones().iterator().next();
@@ -233,8 +237,8 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 		return ContextBuilder
 				.newBuilder( PROVIDER_NOVA )
 				.endpoint( targetProperties.get( API_URL ))
-			    .credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
-			    .buildApi( NovaApi.class );
+				.credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
+				.buildApi( NovaApi.class );
 	}
 
 
@@ -251,8 +255,8 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 		return ContextBuilder
 				.newBuilder( PROVIDER_NEUTRON )
 				.endpoint( targetProperties.get( API_URL ))
-			    .credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
-			    .buildApi( NeutronApi.class );
+				.credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
+				.buildApi( NeutronApi.class );
 	}
 
 
@@ -284,7 +288,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 
 	private static void checkProperty( String propertyName, Map<String,String> targetProperties )
-	throws TargetException {
+			throws TargetException {
 
 		if( ! targetProperties.containsKey( propertyName ))
 			throw new TargetException( "Property '" + propertyName + "' is missing." );
