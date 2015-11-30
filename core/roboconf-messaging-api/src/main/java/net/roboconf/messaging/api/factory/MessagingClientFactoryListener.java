@@ -39,12 +39,12 @@ public interface MessagingClientFactoryListener {
 	 * Called when a messaging client factory appears.
 	 * @param factory the appearing messaging client factory.
 	 */
-	void addMessagingClientFactory(MessagingClientFactory factory);
+	void addMessagingClientFactory(IMessagingClientFactory factory);
 
 	/**
 	 * Called when a messaging client factory disappears.
 	 * @param factory the disappearing messaging client factory.
 	 */
-	void removeMessagingClientFactory(MessagingClientFactory factory);
+	void removeMessagingClientFactory(IMessagingClientFactory factory);
 
 }

@@ -44,6 +44,7 @@ import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 
 import org.junit.Test;
 
@@ -422,6 +423,7 @@ public class InstanceHelpersTest {
 		original.overriddenExports.put( "A.port", "8012" );
 		original.data.put( "some", "data" );
 		original.getImports().put( "facet-name", new ArrayList<Import> ());
+		original.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		Instance copy = InstanceHelpers.replicateInstance( original );
 		Assert.assertEquals( original.getName(), copy.getName());
@@ -431,6 +433,7 @@ public class InstanceHelpersTest {
 		Assert.assertEquals( "8012", copy.overriddenExports.get( "A.port" ));
 		Assert.assertEquals( 0, copy.getImports().size());
 		Assert.assertEquals( original.getComponent(), copy.getComponent());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, copy.getStatus());
 	}
 
 

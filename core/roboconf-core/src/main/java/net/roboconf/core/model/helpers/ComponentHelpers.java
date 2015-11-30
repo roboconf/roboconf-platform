@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -85,8 +86,8 @@ public final class ComponentHelpers {
 	 * @param name the component name (not null)
 	 * @return a component (can be null)
 	 */
-	public static Component findComponent( Application app, String name ) {
-		Graphs graphs = app.getTemplate().getGraphs();
+	public static Component findComponent( AbstractApplication app, String name ) {
+		Graphs graphs = app.getGraphs();
 		return findComponent( graphs, name );
 	}
 

@@ -23,35 +23,47 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.model.targets;
+package net.roboconf.dm.internal.commands;
 
-import junit.framework.Assert;
-
-import org.junit.Test;
+import net.roboconf.core.commands.ChangeStateCommandInstruction;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TargetBeanTest {
+class ChangeStateCommandExecution extends AbstractCommandExecution {
 
-	@Test
-	public void testEquals() {
+	private final ChangeStateCommandInstruction instr;
+	private final Manager manager;
 
-		TargetWrapperDescriptor b1 = new TargetWrapperDescriptor();
-		Assert.assertTrue( b1.hashCode() > 0 );
 
-		b1.setId( "test" );
-		TargetWrapperDescriptor b2 = new TargetWrapperDescriptor();
-		b2.setId( "test" );
+	/**
+	 * Constructor.
+	 * @param instr
+	 * @param manager
+	 */
+	public ChangeStateCommandExecution( ChangeStateCommandInstruction instr, Manager manager ) {
+		this.instr = instr;
+		this.manager = manager;
+	}
 
-		TargetWrapperDescriptor b3 = new TargetWrapperDescriptor();
-		b3.setId( "other" );
 
-		Assert.assertEquals( b1, b2 );
-		Assert.assertFalse( b1.equals( b3 ));
-		Assert.assertFalse( b1.equals( new Object()));
+	@Override
+	public void execute() throws CommandException {
 
-		Assert.assertEquals( b1.hashCode(), b2.hashCode());
-		Assert.assertTrue( b1.hashCode() != b3.hashCode());
+		// Resolve runtime structure
+		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), false );
+		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
+
+		// Execute the command
+		try {
+			this.manager.instancesMngr().changeInstanceState( ma, instance, this.instr.getTargetStatus());
+
+		} catch( Exception e ) {
+			throw new CommandException( e );
+		}
 	}
 }

@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -40,6 +41,7 @@ import java.util.Set;
 import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
+import net.roboconf.core.ErrorCode.ErrorLevel;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
@@ -743,5 +745,34 @@ public class RuntimeModelIoTest {
 
 		// This value is found in the instances.
 		Assert.assertEquals( "45012", exportedVariables.get( "Container2.port" ));
+	}
+
+
+	@Test
+	public void testParsingWithInvalidCommands() throws Exception {
+
+		// Copy the application and update a command file
+		File dir = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( dir.isDirectory());
+
+		File newDir = this.folder.newFolder();
+		Utils.copyDirectory( dir, newDir );
+
+		File commandFile = new File( newDir, Constants.PROJECT_DIR_COMMANDS + "/scale.command" );
+		Assert.assertTrue( commandFile.isFile());
+		Utils.writeStringInto( "this is an invalid command", commandFile );
+
+		// Load it and verify it contains errors
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( newDir );
+		List<RoboconfError> criticalErrors = new ArrayList<> ();
+
+		for( RoboconfError error : alr.getLoadErrors()) {
+			if( error.getErrorCode().getLevel() == ErrorLevel.SEVERE )
+				criticalErrors.add( error );
+		}
+
+		Assert.assertEquals( 2, criticalErrors.size());
+		Assert.assertEquals( ErrorCode.CMD_NO_INSTRUCTION, criticalErrors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, criticalErrors.get( 1 ).getErrorCode());
 	}
 }

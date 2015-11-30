@@ -29,8 +29,6 @@ import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPE
 import static net.roboconf.messaging.api.MessagingConstants.TEST_FACTORY_TYPE;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,20 +50,8 @@ public class ToRunByHand {
 	 */
 	public static void main( String args[] ) throws Exception {
 
-		if( ! new File( PROPS_LOCATION ).exists())
-			throw new IllegalArgumentException( "The properties file does not exist." );
-
 		Map<String,String> conf = new HashMap<>();
-		Properties p = new Properties();
-		InputStream in = null;
-		try {
-			in = new FileInputStream( PROPS_LOCATION );
-			p.load( in );
-
-		} catch( Exception e ) {
-			Utils.closeQuietly( in );
-		}
-
+		Properties p = Utils.readPropertiesFile( new File( PROPS_LOCATION ));
 		for( Map.Entry<Object,Object> entry : p.entrySet())
 			conf.put( entry.getKey().toString(), entry.getValue().toString());
 

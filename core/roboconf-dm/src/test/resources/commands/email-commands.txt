@@ -1,0 +1,8 @@
+
+email toto@company.net with \
+	Subject: Alert!\n\
+	This is an alert.
+
+email p1@c.com, p3@c.com with This message \
+	is splitted \
+	over several lines!

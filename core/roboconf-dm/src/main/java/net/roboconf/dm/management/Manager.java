@@ -42,6 +42,7 @@ import net.roboconf.dm.internal.api.impl.DebugMngrImpl;
 import net.roboconf.dm.internal.api.impl.InstancesMngrImpl;
 import net.roboconf.dm.internal.api.impl.MessagingMngrImpl;
 import net.roboconf.dm.internal.api.impl.NotificationMngrImpl;
+import net.roboconf.dm.internal.api.impl.PreferencesMngrImpl;
 import net.roboconf.dm.internal.api.impl.RandomMngrImpl;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.api.impl.TargetsMngrImpl;
@@ -58,6 +59,7 @@ import net.roboconf.dm.management.api.IDebugMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
@@ -112,7 +114,7 @@ public class Manager {
 	private final ApplicationMngrImpl applicationMngr;
 	private final InstancesMngrImpl instancesMngr;
 	private final IRandomMngr randomMngr;
-
+	private final IPreferencesMngr preferencesMngr;
 
 	private final IConfigurationMngr configurationMngr;
 	private final IApplicationTemplateMngr applicationTemplateMngr;
@@ -137,12 +139,13 @@ public class Manager {
 		this.notificationMngr = new NotificationMngrImpl();
 		this.configurationMngr = new ConfigurationMngrImpl();
 		this.randomMngr = new RandomMngrImpl();
+		this.preferencesMngr = new PreferencesMngrImpl();
 
 		this.messagingMngr = new MessagingMngrImpl();
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
 		this.targetsMngr = new TargetsMngrImpl( this.configurationMngr );
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
-		this.commandsMngr = new CommandsMngrImpl();
+		this.commandsMngr = new CommandsMngrImpl( this );
 
 		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr, this.randomMngr );
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
@@ -371,6 +374,10 @@ public class Manager {
 
 	public ICommandsMngr commandsMngr() {
 		return this.commandsMngr;
+	}
+
+	public IPreferencesMngr preferencesMngr() {
+		return this.preferencesMngr;
 	}
 
 	/**

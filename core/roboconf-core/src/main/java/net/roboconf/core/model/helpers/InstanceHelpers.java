@@ -374,18 +374,12 @@ public final class InstanceHelpers {
 	 */
 	public static boolean tryToInsertChildInstance( AbstractApplication application, Instance parentInstance, Instance childInstance ) {
 
-		boolean success = false;
-		Collection<Instance> list = parentInstance == null ? application.getRootInstances() : parentInstance.getChildren();
-
 		// First, make sure there is no child instance with this name before inserting.
 		// Otherwise, removing the child instance may result randomly.
-		boolean hasAlreadyAChildWithThisName = false;
-		for( Instance inst : list ) {
-			if(( hasAlreadyAChildWithThisName = childInstance.getName().equals( inst.getName())))
-				break;
-		}
+		boolean hasAlreadyAChildWithThisName = hasChildWithThisName( application, parentInstance, childInstance.getName());
 
 		// We insert a "root instance"
+		boolean success = false;
 		if( parentInstance == null ) {
 			if( ! hasAlreadyAChildWithThisName
 					&& ComponentHelpers.findAllAncestors( childInstance.getComponent()).isEmpty()) {
@@ -415,6 +409,25 @@ public final class InstanceHelpers {
 		}
 
 		return success;
+	}
+
+
+	/**
+	 * Determines whether an instance name is not already used by a sibling instance.
+	 * @param application the application (not null)
+	 * @param parentInstance the parent instance (can be null to indicate a root instance)
+	 * @param nameToSearch the name to search
+	 * @return true if a child instance of <code>parentInstance</code> has the same name, false otherwise
+	 */
+	public static boolean hasChildWithThisName( AbstractApplication application, Instance parentInstance, String nameToSearch ) {
+
+		boolean hasAlreadyAChildWithThisName = false;
+		Collection<Instance> list = parentInstance == null ? application.getRootInstances() : parentInstance.getChildren();
+		for( Iterator<Instance> it = list.iterator(); it.hasNext() && ! hasAlreadyAChildWithThisName; ) {
+			hasAlreadyAChildWithThisName = Objects.equals( nameToSearch, it.next().getName());
+		}
+
+		return hasAlreadyAChildWithThisName;
 	}
 
 

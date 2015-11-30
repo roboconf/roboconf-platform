@@ -33,8 +33,8 @@ import java.util.Map;
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.targets.TargetUsageItem;
-import net.roboconf.core.model.targets.TargetWrapperDescriptor;
+import net.roboconf.core.model.runtime.TargetUsageItem;
+import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
 /**
@@ -174,7 +174,7 @@ public interface ITargetsMngr {
 	/**
 	 * Finds the target ID for a scoped instance within an application or an application template.
 	 * @param app an application or application template
-	 * @param instancePath an instance path
+	 * @param instancePath an instance path or null to find the default target for this application
 	 * @return a string, or null if no associated target was found
 	 */
 	String findTargetId( AbstractApplication app, String instancePath );

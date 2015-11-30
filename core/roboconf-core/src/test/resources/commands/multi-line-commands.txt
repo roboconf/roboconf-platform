@@ -1,0 +1,6 @@
+
+define VAR = vm
+define id = $(VAR) $(SMART_INDEX)
+
+create vm \
+		as $(id)

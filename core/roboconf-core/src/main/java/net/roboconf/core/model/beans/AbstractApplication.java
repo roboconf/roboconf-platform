@@ -88,6 +88,12 @@ public abstract class AbstractApplication {
 		this.directory = directory;
 	}
 
+	/**
+	 * @return the graph
+	 */
+	public abstract Graphs getGraphs();
+
+
 	@Override
 	public String toString() {
 		return this.name;

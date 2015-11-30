@@ -1,0 +1,8 @@
+
+defin VAR = vm
+define id = $(VAR) $(SMART_INDEX)
+create vm \
+		as $(id)
+
+create oops \
+		as instance $(id)

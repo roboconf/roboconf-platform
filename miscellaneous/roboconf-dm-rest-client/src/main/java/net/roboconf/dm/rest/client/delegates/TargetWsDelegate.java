@@ -34,7 +34,7 @@ import javax.ws.rs.core.Response.Status.Family;
 
 import net.roboconf.core.model.beans.AbstractApplication;
 import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.core.model.targets.TargetWrapperDescriptor;
+import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.client.exceptions.TargetWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
 

@@ -13,7 +13,7 @@
 		<feature version="${ipojo.version}">ipojo-all</feature>
 		<feature version="${jersey.stack.version}">jersey-1.x</feature>
 	
-		<!-- Core bundles -->
+		<!-- Core Bundles -->
 		<bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-messaging-api/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-messaging-rabbitmq/${project.version}</bundle>
@@ -23,11 +23,14 @@
 		<bundle>mvn:net.roboconf/roboconf-dm-web-administration/${project.version}/war</bundle>
 		<bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
 		
-		<!-- Commands -->
+		<!-- Karaf Commands -->
 		<bundle>mvn:net.roboconf/roboconf-karaf-commands-dm/${project.version}</bundle>
 		
+		<!-- Other Dependencies -->
+		<bundle>wrap:mvn:com.sun.mail/javax.mail/${javax.mail.version}</bundle>
+		
 		<!-- Optional bundles, to start depending on our needs -->
-		<!-- Deployment targets handlers could go here. -->
+		<!-- Targets handlers could go here. -->
 	</feature>
 	
 	<!-- The feature for Jersey 1.x -->

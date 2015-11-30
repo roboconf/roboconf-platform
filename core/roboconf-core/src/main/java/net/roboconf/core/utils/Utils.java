@@ -59,6 +59,7 @@ import java.util.zip.ZipFile;
 /**
  * Various utilities.
  * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UJF
  */
 public final class Utils {
 
@@ -98,7 +99,7 @@ public final class Utils {
 	 * Splits a string and formats the result.
 	 * @param toSplit the string to split (can be null)
 	 * @param separator the separator (cannot be null or the empty string)
-	 * @return a list of items (never null)
+	 * @return a list of items (never null), with every item being trimmed
 	 */
 	public static List<String> splitNicely( String toSplit, String separator ) {
 
@@ -594,7 +595,7 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void extractZipArchive( File zipFile, File targetDirectory )
-	throws IOException {
+			throws IOException {
 
 		extractZipArchive( zipFile, targetDirectory, null, null );
 	}
@@ -619,7 +620,7 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void extractZipArchive( File zipFile, File targetDirectory, String entryPattern, String removedEntryPrefix )
-	throws IOException {
+			throws IOException {
 
 		// Make some checks
 		if( zipFile == null || targetDirectory == null )
@@ -837,5 +838,15 @@ public final class Utils {
 		String address = portAsString == null ? url : url.replace( m.group( 1 ), "" );
 
 		return new AbstractMap.SimpleEntry<String,Integer>( address, port );
+	}
+
+	/**
+	 * Returns the value contained in a map of string if it exists using the key.
+	 * @param map a map of string
+	 * @param key a string
+	 * @param dvalue the default value
+	 */
+	public static String getValue(Map<String,String> map, String key, String dvalue) {
+		return map.containsKey( key ) ? map.get( key ) : dvalue;
 	}
 }

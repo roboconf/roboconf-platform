@@ -26,53 +26,88 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+
+import junit.framework.Assert;
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.Manager;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import junit.framework.Assert;
-import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.utils.Utils;
+import org.mockito.Mockito;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier
  */
-public class CommandsMngrImplTest{
+public class CommandsMngrImplTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
 
-	private Application a1;
+	private Application app;
 	private CommandsMngrImpl cmdMngr;
+
+	private Manager manager;
 
 
 	@Before
 	public void createMockObject() throws IOException {
-		this.a1 = new TestApplication();
-		this.cmdMngr = new CommandsMngrImpl();
-		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions( a1, ""));
+
+		this.app = new TestApplication();
+		this.manager = Mockito.mock( Manager.class );
+
+		this.cmdMngr = new CommandsMngrImpl( this.manager );
+		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions( this.app, "" ));
 	}
 
 
 	@Test
-	public void CommandsTest() throws IOException {
+	public void testBasics() throws IOException {
 
-		a1.directory(this.folder.newFolder());
+		this.app.directory( this.folder.newFolder());
 		File f1 = this.folder.newFile();
 		Utils.writeStringInto("Bonjour le monde cruel", f1);
 
-		this.cmdMngr.createCommand(a1,"toto","This is a command");
-		Assert.assertEquals("This is a command", this.cmdMngr.getCommandInstructions(a1, "toto"));
-		this.cmdMngr.createCommand(a1,"tata",f1);
-		Assert.assertEquals("Bonjour le monde cruel", this.cmdMngr.getCommandInstructions(a1, "tata"));
+		this.cmdMngr.createOrUpdateCommand(this.app, "toto","This is a command");
+		Assert.assertEquals("This is a command", this.cmdMngr.getCommandInstructions(this.app, "toto"));
+
+		this.cmdMngr.createOrUpdateCommand( this.app, "toto", "Good command");
+		Assert.assertEquals( "Good command", this.cmdMngr.getCommandInstructions(this.app, "toto"));
+		this.cmdMngr.deleteCommand( this.app, "tata");
+		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions(this.app, "tata"));
+	}
 
 
-		this.cmdMngr.updateCommand( a1, "toto", "Good command");
-		Assert.assertEquals( "Good command", this.cmdMngr.getCommandInstructions(a1, "toto"));
-		this.cmdMngr.deleteCommand( a1, "tata");
-		Assert.assertEquals( "", this.cmdMngr.getCommandInstructions(a1, "tata"));
+	@Test
+	public void testValidate() {
+
+		List<ParsingError> errors = this.cmdMngr.validate( this.app, "deploy and start all /tomcat-vm" );
+		Assert.assertEquals( 0, errors.size());
+
+		errors = this.cmdMngr.validate( this.app, "This is not a command..." );
+		Assert.assertEquals( 2, errors.size());
+	}
+
+
+	@Test
+	public void testExecute() throws Exception {
+
+		String line = "rename /tomcat-vm as tomcat-vm-copy";
+		Assert.assertEquals( 0, this.cmdMngr.validate( this.app, line ).size());
+
+		String cmdName = "my-command";
+		this.cmdMngr.createOrUpdateCommand( this.app, cmdName, line );
+
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm" ));
+		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm-copy" ));
+		this.cmdMngr.execute( this.app, cmdName );
+		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm" ));
+		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm-copy" ));
 	}
 }

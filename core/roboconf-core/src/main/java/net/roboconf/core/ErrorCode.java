@@ -170,7 +170,27 @@ public enum ErrorCode {
 	REC_NON_MATCHING_ARTIFACT_ID( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects' directories should have the same name than their artifact ID." ),
 	REC_AVOID_INSTANCES( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Recipe projects do not have to contain instances definitions." ),
 
-	// Execution Errors
+	// Commands Errors
+	CMD_INVALID_TARGET_ID( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An invalid target ID was specified in the command." ),
+	CMD_NO_MATCHING_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "No instance was found. A command was probably not written correctly." ),
+	CMD_NOT_AN_ACCEPTABLE_PARENT( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This component cannot be instantiated under this instance." ),
+	CMD_CANNOT_HAVE_ANY_PARENT( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This component cannot have any parent. It cannot be instantiated under this instance." ),
+	CMD_NOT_A_SCOPED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An instance was supposed to be associated with the 'target' installer." ),
+	CMD_NOT_A_ROOT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This instruction can only be applied to root instances (no parent)." ),
+	CMD_UNRECOGNIZED_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This instruction was recognized." ),
+	CMD_INVALID_INSTANCE_STATUS( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An instance status was expected." ),
+	CMD_INSTABLE_INSTANCE_STATUS( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Instance status changes are only valid with stable statuses." ),
+	CMD_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Variables in Roboconf commands must have a name." ),
+	CMD_MISSING_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An instance name was expected." ),
+	CMD_INVALID_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Instance names must respect the following pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
+	CMD_MISSING_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A component name was expected in the command." ),
+	CMD_INEXISTING_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "The component referenced in the command does not exist in the graph." ),
+	CMD_MISSING_PARENT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A parent instance path was expected in the command." ),
+	CMD_CONFLICTING_INSTANCE_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A sibling instance with this name already exists." ),
+	CMD_EMAIL_NO_MESSAGE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "The e-mail message cannot be empty." ),
+	CMD_NO_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "No valid instruction was found in the file." ),
+	CMD_UNRESOLVED_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A variable is used in a command but it could not be resolved." ),
+	CMD_INVALID_SYNTAX( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Invalid syntax for this command. Please, refer to the documentation." ),
 	;
 
 
@@ -178,7 +198,7 @@ public enum ErrorCode {
 	 * RoboconfError categories.
 	 */
 	public enum ErrorCategory {
-		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, PROJECT, RECIPES, EXECUTION;
+		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, PROJECT, RECIPES, COMMANDS, EXECUTION;
 	}
 
 	/**
