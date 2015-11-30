@@ -26,6 +26,7 @@
 package net.roboconf.target.ec2.internal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -38,9 +39,14 @@ import net.roboconf.target.api.TargetException;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AssociateAddressRequest;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
 import com.amazonaws.services.ec2.model.Tag;
 
 /**
@@ -63,7 +69,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public enum State {
-		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, ASSOCIATE_STORAGE, COMPLETE
+		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, CREATE_VOLUME, ATTACH_VOLUME, COMPLETE
 	}
 
 	private final Instance scopedInstance;
@@ -124,11 +130,23 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 		if( this.state == State.ASSOCIATE_ELASTIC_IP )
 			if( associateElasticIp())
-				this.state = State.ASSOCIATE_STORAGE;
+				this.state = State.CREATE_VOLUME;
+		
+		String volumeSnapshot = null;
+		if((volumeSnapshot = volumeRequested()) != null) {
+			String volumeId = null;
+			if( this.state == State.CREATE_VOLUME ) {
+				if((volumeId = createVolume(volumeSnapshot)) != null)
+					this.state = State.ATTACH_VOLUME;
+			}
 
-		if( this.state == State.ASSOCIATE_STORAGE )
-			if( associateStorage())
-				this.state = State.COMPLETE;
+			if( this.state == State.ATTACH_VOLUME ) {
+				if(volumeCreated(volumeId)) {
+					if(attachVolume(volumeId))
+						this.state = State.COMPLETE;
+				}
+			}
+		}
 
 		return this.state == State.COMPLETE;
 	}
@@ -195,20 +213,58 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		return "running".equalsIgnoreCase( disresult.getReservations().get(0).getInstances().get(0).getState().getName());
 	}
 
+	/**
+	 * Check whether EBS volume creation/attachment is requested.
+	 * @return volume snapshot ID if provided, null otherwise
+	 */
+	private String volumeRequested() {
+		String snapshotId = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+		return(Utils.isEmptyOrWhitespaces(snapshotId) ? null : snapshotId);
+	}
 
 	/**
-	 * Associates storage with the VM.
-	 * @return true if there is nothing more to do about elastic IP configuration, false otherwise
+	 * Create volume for EBS.
+	 * @return volume ID if successful creation, null otherwise (or if nothing to do)
 	 */
-	private boolean associateStorage() {
+	// TODO handle volume type...
+	private String createVolume(String snapshotId) {
+		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
+		  .withSnapshotId(snapshotId);
+		//.withAvailabilityZone("eu-west-1c")
+		//.withSize(2); // The size of the volume, in gigabytes.
 
-		String elasticIp = this.targetProperties.get( Ec2Constants.ELASTIC_IP );
-		if( ! Utils.isEmptyOrWhitespaces( elasticIp )) {
-			this.logger.fine( "Associating an elastic IP with the instance. IP = " + elasticIp );
-			AssociateAddressRequest associateAddressRequest = new AssociateAddressRequest( this.machineId, elasticIp );
-			this.ec2Api.associateAddress( associateAddressRequest );
-		}
+		CreateVolumeResult createVolumeResult = this.ec2Api.createVolume(createVolumeRequest);
+		return createVolumeResult.getVolume().getVolumeId();
+	}
+	
+	/**
+	 * Check whether volume is created.
+	 * @param volumeId the EBS volume ID
+	 * @return true if volume created, false otherwise
+	 */
+	private boolean volumeCreated(String volumeId) {
+		DescribeVolumesRequest dvs = new DescribeVolumesRequest();
+        ArrayList<String> volumeIds = new ArrayList<String>();
+        volumeIds.add(volumeId);
+        DescribeVolumesResult dvsresult = this.ec2Api.describeVolumes(dvs);
+        return "available".equals(dvsresult.getVolumes().get(0).getState());
+	}
+	
+	/**
+	 * Attach volume for EBS.
+	 * @return true if successful attachment, or nothing to do. false otherwise
+	 */
+	private boolean attachVolume(String volumeId) {
+		String mountPoint = this.targetProperties.get(Ec2Constants.VOLUME_MOUNTPOINT);
+		if(Utils.isEmptyOrWhitespaces(mountPoint)) mountPoint = "/dev/sda2";
+		
+		AttachVolumeRequest attachRequest = new AttachVolumeRequest()
+			.withInstanceId(this.machineId)
+			.withDevice(mountPoint)
+			.withVolumeId(volumeId);
 
+		this.ec2Api.attachVolume(attachRequest);
 		return true;
 	}
+
 }
