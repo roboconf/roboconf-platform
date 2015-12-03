@@ -1,6 +1,10 @@
 language: java
 sudo: false
 
+# ENV variables
+env:
+  - ROBOCONF_IT_TIMEOUT=60000
+
 # Test several JDK
 jdk:
   - oraclejdk7

@@ -39,6 +39,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
@@ -63,7 +64,6 @@ public final class ItUtils {
 	}
 
 
-	public static final long PLATFORM_TIMEOUT = 30000;
 	private static final String[] LOGGERS = {
 		// Loggers configured in our custom distributions
 		"net.roboconf",
@@ -94,7 +94,7 @@ public final class ItUtils {
 
 		options.add( cleanCaches( true ));
 		options.add( keepRuntimeFolder());
-		options.add( systemTimeout( PLATFORM_TIMEOUT ));
+		options.add( systemTimeout( getTimeout()));
 
 		// Logs management
 		if( bean.areLogsHidden()) {
@@ -203,5 +203,31 @@ public final class ItUtils {
 	 */
 	public static String findRoboconfVersion() {
 		return MavenUtils.getArtifactVersion( "net.roboconf", "roboconf-core" );
+	}
+
+
+	/**
+	 * @return the maximum delay to find OSGi services.
+	 * <p>
+	 * If the ROBCONF_IT_TIMEOUT environment variable is set, we return its
+	 * values. Otherwise, the default timeout is returned (30s).
+	 * </p>
+	 */
+	public static long getTimeout() {
+
+		long result = 30000;
+		Logger logger = Logger.getLogger( ItUtils.class.getName());
+		String envValue = System.getenv( "ROBOCONF_IT_TIMEOUT" );
+		try {
+			if( envValue != null ) {
+				logger.info( "Env variable ROBOCONF_IT_TIMEOUT is defined and will be used." );
+				result = Long.parseLong( envValue );
+			}
+
+		} catch( NumberFormatException e ) {
+			logger.warning( "The timeout for integration tests could not be read from ENV variables. " + e.getMessage());
+		}
+
+		return result;
 	}
 }

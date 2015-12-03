@@ -37,6 +37,7 @@ import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.integration.probes.AgentTest;
+import net.roboconf.integration.tests.internal.ItUtils;
 
 import org.junit.Test;
 import org.ops4j.pax.exam.ExamSystem;
@@ -62,7 +63,7 @@ public class KarafClient_AgentTest extends AgentTest {
 		try {
 			// Start the agent's distribution... and wait... :(
 			container.start();
-			Thread.sleep( 10000 );
+			Thread.sleep( ItUtils.getTimeout() / 3 );
 
 			// Since this test runs outside Karaf, we cannot rely on System.getProperty( "karaf.base" );
 			// So, we need to extract the Karaf directory by Java reflection.
