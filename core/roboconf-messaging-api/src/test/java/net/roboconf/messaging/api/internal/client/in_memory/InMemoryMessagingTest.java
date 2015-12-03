@@ -111,6 +111,14 @@ public class InMemoryMessagingTest extends AbstractMessagingTest {
 	}
 
 
+	@Test
+	@Override
+	public void testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation()
+	throws Exception {
+		super.testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation();
+	}
+
+
 	@Override
 	protected String getMessagingType() {
 		return MessagingConstants.FACTORY_IN_MEMORY;

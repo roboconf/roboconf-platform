@@ -151,6 +151,7 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 		// Roughly, we unpublish all the variables for all the instances that were on the agent's machine.
 		// This code is VERY similar to ...ClientAgent#unpublishExports
 		// The messages will go through JUST like if they were coming from other agents.
+		this.logger.fine( "The DM is un-publishing exports related to agent of " + rootInstance + " (termination propagation)." );
 		for( Instance instance : instances ) {
 			for( MessagingContext ctx : MessagingContext.forExportedVariables(
 					application.getName(), instance, application.getExternalExports(), ThoseThat.IMPORT )) {

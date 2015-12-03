@@ -152,6 +152,15 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	}
 
 
+	@Test
+	@Override
+	public void testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation()
+	throws Exception {
+		Assume.assumeTrue( rabbitMqIsRunning );
+		super.testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation();
+	}
+
+
 	private String getMessagingIp() {
 		return "localhost";
 	}

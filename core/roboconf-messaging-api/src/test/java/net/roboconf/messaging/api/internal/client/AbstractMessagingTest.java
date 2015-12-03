@@ -1013,6 +1013,123 @@ public abstract class AbstractMessagingTest {
 	}
 
 
+	/**
+	 * Verify agent termination is correctly propagated by the DM.
+	 * @throws Exception
+	 */
+	public void testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation() throws Exception {
+
+		// Create two applications
+		TestApplication app1 = new TestApplication();
+		app1.getTemplate().setName( "tpl1" );
+		app1.setName( "app1" );
+
+		TestApplication app2 = new TestApplication();
+		app2.getTemplate().setName( "tpl2" );
+		app2.setName( "app2" );
+
+		// Add an external dependency between them: app1 depends on app2
+		ImportedVariable var = new ImportedVariable( "tpl2.ext-ip", false, true );
+		app1.getTomcat().getComponent().importedVariables.put( var.getName(), var );
+
+		app2.getTemplate().externalExports.put( "mysql.ip", "tpl2.ext-ip" );
+		app2.getTemplate().externalExports.put( "mysql.port", "tpl2.ext-port" );
+
+		// Prepare messaging clients
+		List<Message> dmMessages = new ArrayList<>();
+		ReconfigurableClientDm dmClient = new ReconfigurableClientDm();
+		dmClient.setRegistry( this.registry );
+		dmClient.associateMessageProcessor( createDmProcessor( dmMessages ));
+		dmClient.switchMessagingType( getMessagingType());
+		this.clients.add( dmClient );
+
+		List<Message> app2_mysqlMessages = new ArrayList<> ();
+		ReconfigurableClientAgent app2_mysqlClient = new ReconfigurableClientAgent();
+		app2_mysqlClient.setRegistry( this.registry );
+		app2_mysqlClient.associateMessageProcessor( createAgentProcessor( app2_mysqlMessages ));
+		app2_mysqlClient.setApplicationName( app2.getName());
+		app2_mysqlClient.setScopedInstancePath( InstanceHelpers.computeInstancePath( app2.getMySqlVm()));
+		app2_mysqlClient.setExternalMapping( app2.getExternalExports());
+		app2_mysqlClient.switchMessagingType( getMessagingType());
+		this.clients.add( app2_mysqlClient );
+
+		List<Message> app1_tomcatMessages = new ArrayList<> ();
+		ReconfigurableClientAgent app1_tomcatClient = new ReconfigurableClientAgent();
+		app1_tomcatClient.setRegistry( this.registry );
+		app1_tomcatClient.associateMessageProcessor( createAgentProcessor( app1_tomcatMessages ));
+		app1_tomcatClient.setApplicationName( app1.getName());
+		app1_tomcatClient.setScopedInstancePath( InstanceHelpers.computeInstancePath( app1.getTomcatVm()));
+		app1_tomcatClient.setExternalMapping( app1.getExternalExports());
+		app1_tomcatClient.switchMessagingType( getMessagingType());
+		this.clients.add( app1_tomcatClient );
+
+		// OK, deploy and start all.
+		// Verify everything works
+		app1_tomcatClient.requestExportsFromOtherAgents( app1.getTomcat());
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 0, app1_tomcatMessages.size());
+		Assert.assertEquals( 0, app2_mysqlMessages.size());
+
+		// Now, start the (external) MySQL, the one in app2.
+		app2_mysqlClient.listenToRequestsFromOtherAgents( ListenerCommand.START, app2.getMySql());
+		app1_tomcatClient.requestExportsFromOtherAgents( app1.getTomcat());
+		Thread.sleep( getDelay());
+
+		Assert.assertEquals( 0, app1_tomcatMessages.size());
+		Assert.assertEquals( 1, app2_mysqlMessages.size());
+
+		Assert.assertEquals( MsgCmdRequestImport.class, app2_mysqlMessages.get( 0 ).getClass());
+		MsgCmdRequestImport msg1 = (MsgCmdRequestImport) app2_mysqlMessages.get( 0 );
+		Assert.assertEquals( "tpl2", msg1.getComponentOrFacetName());
+
+		// Let's check exports with Tomcat listening...
+		app1_tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, app1.getTomcat());
+		app2_mysqlClient.publishExports( app2.getMySql());
+		Thread.sleep( getDelay());
+
+		Assert.assertEquals( 1, app2_mysqlMessages.size());
+		Assert.assertEquals( 1, app1_tomcatMessages.size());
+
+		Assert.assertEquals( MsgCmdAddImport.class, app1_tomcatMessages.get( 0 ).getClass());
+		MsgCmdAddImport msg2 = (MsgCmdAddImport) app1_tomcatMessages.get( 0 );
+		Assert.assertEquals( "tpl2", msg2.getComponentOrFacetName());
+		Assert.assertEquals( "app2", msg2.getApplicationOrContextName());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app2.getMySql()), msg2.getAddedInstancePath());
+		Assert.assertEquals( 2, msg2.getExportedVariables().size());
+		Assert.assertEquals( "3306", msg2.getExportedVariables().get( "tpl2.ext-port" ));
+		Assert.assertTrue( msg2.getExportedVariables().containsKey( "tpl2.ext-ip" ));
+
+		// What happens if we ask to only publish an external variable?
+		app2_mysqlClient.publishExports( app2.getMySql(), "tpl2" );
+		Thread.sleep( getDelay());
+
+		Assert.assertEquals( 1, app2_mysqlMessages.size());
+		Assert.assertEquals( 2, app1_tomcatMessages.size());
+
+		Assert.assertEquals( MsgCmdAddImport.class, app1_tomcatMessages.get( 1 ).getClass());
+		msg2 = (MsgCmdAddImport) app1_tomcatMessages.get( 1 );
+		Assert.assertEquals( "tpl2", msg2.getComponentOrFacetName());
+		Assert.assertEquals( "app2", msg2.getApplicationOrContextName());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app2.getMySql()), msg2.getAddedInstancePath());
+		Assert.assertEquals( 2, msg2.getExportedVariables().size());
+		Assert.assertEquals( "3306", msg2.getExportedVariables().get( "tpl2.ext-port" ));
+		Assert.assertTrue( msg2.getExportedVariables().containsKey( "tpl2.ext-ip" ));
+
+		// Now, let's simulate the MySQL instance being stopped.
+		// We directly invoke the DM client to propagate the information.
+		dmClient.propagateAgentTermination( app2, app2.getMySqlVm());
+		Thread.sleep( getDelay());
+
+		// The Tomcat should have received a notification because one of its dependencies disappeared.
+		Assert.assertEquals( 3, app1_tomcatMessages.size());
+		Assert.assertEquals( MsgCmdRemoveImport.class, app1_tomcatMessages.get( 2 ).getClass());
+		MsgCmdRemoveImport msg3 = (MsgCmdRemoveImport) app1_tomcatMessages.get( 2 );
+		Assert.assertEquals( "tpl2", msg3.getComponentOrFacetName());
+		Assert.assertEquals( "/mysql-vm/mysql-server", msg3.getRemovedInstancePath());
+		Assert.assertEquals( "app2", msg3.getApplicationOrContextName());
+	}
+
+
 	protected AbstractMessageProcessor<IDmClient> createDmProcessor( final List<Message> dmMessages ) {
 
 		return new AbstractMessageProcessor<IDmClient>( "DM Processor - Test" ) {

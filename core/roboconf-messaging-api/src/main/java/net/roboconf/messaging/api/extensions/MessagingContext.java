@@ -28,9 +28,11 @@ package net.roboconf.messaging.api.extensions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -228,6 +230,7 @@ public class MessagingContext {
 			if( result.containsKey( componentOrApplicationTemplateName ))
 				continue;
 
+			// When we import a variable, it is either internal or external, but not both!
 			RecipientKind kind = var.isExternal() ? RecipientKind.INTER_APP : RecipientKind.AGENTS;
 			MessagingContext ctx = new MessagingContext( kind, componentOrApplicationTemplateName, thoseThat, applicationName );
 			result.put( componentOrApplicationTemplateName, ctx );
@@ -253,14 +256,24 @@ public class MessagingContext {
 
 		List<MessagingContext> result = new ArrayList<> ();
 
+		// For inter-app messages, the real question is about whether we need
+		// to create a context for the application template.
+		Set<String> externalExportPrefixes = new HashSet<> ();
+		for( String varName : externalExports.keySet()) {
+			String prefix = VariableHelpers.parseVariableName( varName ).getKey();
+			externalExportPrefixes.add( prefix );
+		}
+
 		// Internal variables
+		boolean publishExternal = false;
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
 			MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, facetOrComponentName, thoseThat, applicationName );
 			result.add( ctx );
+			publishExternal = publishExternal || externalExportPrefixes.contains( facetOrComponentName );
 		}
 
 		// External variables - they all have the same prefix, the application template's name
-		if( ! externalExports.isEmpty()) {
+		if( publishExternal ) {
 			String varName = externalExports.values().iterator().next();
 			String prefix = VariableHelpers.parseVariableName( varName ).getKey();
 

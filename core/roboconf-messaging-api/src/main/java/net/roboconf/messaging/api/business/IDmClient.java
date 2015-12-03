@@ -87,7 +87,7 @@ public interface IDmClient extends IClient {
 	 * </p>
 	 *
 	 * @param application the application the agent is associated with
-	 * @param rootInstance the root instance associated with the agent
+	 * @param rootInstance the root instance associated with the agent (not null)
 	 * @throws IOException if something went wrong
 	 */
 	void propagateAgentTermination( Application application, Instance rootInstance ) throws IOException;
