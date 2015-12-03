@@ -37,10 +37,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**

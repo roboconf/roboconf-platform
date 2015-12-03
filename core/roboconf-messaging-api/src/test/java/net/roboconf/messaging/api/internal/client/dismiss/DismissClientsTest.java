@@ -25,7 +25,7 @@
 
 package net.roboconf.messaging.api.internal.client.dismiss;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

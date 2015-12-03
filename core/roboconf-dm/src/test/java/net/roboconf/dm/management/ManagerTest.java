@@ -28,7 +28,7 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;

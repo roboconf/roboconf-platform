@@ -32,7 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Timer;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;

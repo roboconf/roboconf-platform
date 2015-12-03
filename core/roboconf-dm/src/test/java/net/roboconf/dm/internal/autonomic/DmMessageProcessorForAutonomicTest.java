@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Timer;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;

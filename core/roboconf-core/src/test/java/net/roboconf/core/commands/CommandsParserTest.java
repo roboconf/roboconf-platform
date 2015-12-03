@@ -28,7 +28,7 @@ package net.roboconf.core.commands;
 import java.io.File;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;

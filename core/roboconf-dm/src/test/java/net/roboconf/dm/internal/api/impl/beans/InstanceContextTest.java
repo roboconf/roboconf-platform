@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl.beans;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Instance;

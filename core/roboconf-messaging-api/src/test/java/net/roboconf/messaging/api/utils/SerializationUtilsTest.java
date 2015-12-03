@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;

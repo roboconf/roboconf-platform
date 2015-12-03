@@ -27,7 +27,7 @@ package net.roboconf.core.dsl.parsing;
 
 import java.io.File;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

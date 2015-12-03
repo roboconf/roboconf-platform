@@ -28,7 +28,7 @@ package net.roboconf.target.api;
 import java.util.Iterator;
 import java.util.Set;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.CancelledMachines;
 
 import org.junit.Test;

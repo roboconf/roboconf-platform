@@ -28,7 +28,6 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.util.List;
 
-import junit.framework.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -38,6 +37,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,16 +48,15 @@ import org.junit.rules.TemporaryFolder;
  */
 public class ManagedApplicationTest {
 
+	@Rule
+	public final TemporaryFolder folder = new TemporaryFolder();
+
 	private ManagedApplication ma;
 	private TestApplication app;
 
 
-	@Rule
-	public final TemporaryFolder folder = new TemporaryFolder();
-
-
 	@Before
-	public void initializeMa() {
+	public void initializeMa() throws Exception {
 
 		File f = this.folder.newFolder( "Roboconf_test" );
 		this.app = new TestApplication();

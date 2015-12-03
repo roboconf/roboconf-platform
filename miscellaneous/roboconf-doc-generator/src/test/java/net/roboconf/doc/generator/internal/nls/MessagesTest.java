@@ -25,7 +25,7 @@
 
 package net.roboconf.doc.generator.internal.nls;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

@@ -27,7 +27,7 @@ package net.roboconf.doc.generator;
 
 import java.io.File;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;

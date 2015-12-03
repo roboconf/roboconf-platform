@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;

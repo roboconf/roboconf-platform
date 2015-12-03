@@ -27,7 +27,7 @@ package net.roboconf.dm.rest.services.internal.websocket;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;

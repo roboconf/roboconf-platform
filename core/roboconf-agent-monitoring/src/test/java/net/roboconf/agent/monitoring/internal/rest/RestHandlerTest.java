@@ -36,7 +36,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler.LocalHostnameVerifier;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler.LocalX509TrustManager;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;

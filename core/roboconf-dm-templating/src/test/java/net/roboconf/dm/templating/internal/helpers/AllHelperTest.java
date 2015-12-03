@@ -27,7 +27,7 @@ package net.roboconf.dm.templating.internal.helpers;
 
 import java.util.HashMap;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 import org.mockito.Mockito;

@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingModelIo;

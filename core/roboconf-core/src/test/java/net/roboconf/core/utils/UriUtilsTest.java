@@ -29,7 +29,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

@@ -27,7 +27,7 @@ package net.roboconf.karaf.commands.dm.targets;
 
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

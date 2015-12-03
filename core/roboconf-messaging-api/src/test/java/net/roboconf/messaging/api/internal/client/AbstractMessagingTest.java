@@ -28,7 +28,7 @@ package net.roboconf.messaging.api.internal.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;

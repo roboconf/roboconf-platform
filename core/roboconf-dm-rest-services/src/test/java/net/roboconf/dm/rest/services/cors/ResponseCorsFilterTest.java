@@ -27,7 +27,7 @@ package net.roboconf.dm.rest.services.cors;
 
 import javax.ws.rs.core.Response;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 import org.mockito.Mockito;

@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.internal.autonomic;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler.MailAuthenticator;
 
 import org.junit.Test;

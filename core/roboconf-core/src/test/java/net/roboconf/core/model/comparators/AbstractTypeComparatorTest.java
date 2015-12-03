@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Facet;

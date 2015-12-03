@@ -34,7 +34,7 @@ import java.util.Timer;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;

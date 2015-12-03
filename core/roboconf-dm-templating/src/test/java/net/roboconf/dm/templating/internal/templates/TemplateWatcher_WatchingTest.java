@@ -28,7 +28,7 @@ package net.roboconf.dm.templating.internal.templates;
 import java.io.File;
 import java.io.InputStream;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.templating.internal.TemplatingManager;
 

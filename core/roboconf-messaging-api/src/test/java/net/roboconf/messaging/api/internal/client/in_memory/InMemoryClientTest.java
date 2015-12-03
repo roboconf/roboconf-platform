@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext;

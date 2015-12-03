@@ -25,7 +25,7 @@
 
 package net.roboconf.agent.internal;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;

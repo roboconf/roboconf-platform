@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.commands.AbstractCommandInstruction;
 import net.roboconf.core.commands.BulkCommandInstructions;
 import net.roboconf.core.commands.ChangeStateCommandInstruction;

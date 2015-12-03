@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;

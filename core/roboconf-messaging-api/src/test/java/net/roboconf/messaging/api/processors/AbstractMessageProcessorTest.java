@@ -25,7 +25,7 @@
 
 package net.roboconf.messaging.api.processors;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.business.IDmClient;

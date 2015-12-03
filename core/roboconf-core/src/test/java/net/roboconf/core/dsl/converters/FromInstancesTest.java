@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.FileDefinition;

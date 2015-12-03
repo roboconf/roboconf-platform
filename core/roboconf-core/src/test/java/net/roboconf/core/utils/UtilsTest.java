@@ -47,7 +47,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils.DirectoryFileFilter;
 import net.roboconf.core.utils.Utils.FileNameComparator;

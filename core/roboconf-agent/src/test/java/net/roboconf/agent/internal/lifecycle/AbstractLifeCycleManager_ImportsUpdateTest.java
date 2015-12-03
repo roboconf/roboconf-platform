@@ -28,7 +28,7 @@ package net.roboconf.agent.internal.lifecycle;
 import java.io.IOException;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;

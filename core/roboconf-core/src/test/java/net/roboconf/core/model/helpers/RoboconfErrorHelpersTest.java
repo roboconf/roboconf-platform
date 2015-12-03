@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.ModelError;

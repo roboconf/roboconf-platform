@@ -28,7 +28,7 @@ package net.roboconf.core.model;
 import java.io.File;
 import java.util.UUID;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.Rule;

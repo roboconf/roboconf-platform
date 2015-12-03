@@ -27,7 +27,7 @@ package net.roboconf.dm.templating.internal.templates;
 
 import java.io.File;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.dm.templating.internal.templates.TemplateWatcher.TemplateDirectoryFileFilter;
 import net.roboconf.dm.templating.internal.templates.TemplateWatcher.TemplateFileFilter;
 import net.roboconf.dm.templating.internal.templates.TemplateWatcher.TemplateSubDirectoryFileFilter;

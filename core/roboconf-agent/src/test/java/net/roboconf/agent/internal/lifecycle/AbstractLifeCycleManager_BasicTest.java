@@ -25,7 +25,7 @@
 
 package net.roboconf.agent.internal.lifecycle;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;

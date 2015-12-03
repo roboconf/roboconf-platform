@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.monitoring.api.IMonitoringHandler;
 import net.roboconf.agent.monitoring.internal.MonitoringTask.MonitoringHandlerRun;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;

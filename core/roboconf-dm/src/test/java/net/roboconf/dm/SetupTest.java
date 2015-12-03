@@ -27,7 +27,7 @@ package net.roboconf.dm;
 
 import java.util.Collection;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.RuntimeModelValidator;

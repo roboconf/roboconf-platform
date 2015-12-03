@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;

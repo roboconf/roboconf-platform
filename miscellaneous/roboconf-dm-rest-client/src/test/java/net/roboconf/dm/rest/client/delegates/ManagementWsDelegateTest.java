@@ -34,7 +34,7 @@ import java.util.Map;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;

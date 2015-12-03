@@ -25,7 +25,7 @@
 
 package net.roboconf.messaging.api.factory;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 

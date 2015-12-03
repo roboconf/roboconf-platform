@@ -27,7 +27,7 @@ package net.roboconf.messaging.rabbitmq.internal;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;

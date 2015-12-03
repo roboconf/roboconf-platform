@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.internal.environment.messaging;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;

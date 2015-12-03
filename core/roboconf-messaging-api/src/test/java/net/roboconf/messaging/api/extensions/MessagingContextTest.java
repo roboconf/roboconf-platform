@@ -25,7 +25,7 @@
 
 package net.roboconf.messaging.api.extensions;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
 

@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.internal.api.impl;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

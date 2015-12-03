@@ -25,7 +25,7 @@
 
 package net.roboconf.agent.internal.misc;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.model.beans.Instance;
 
 import org.junit.Test;

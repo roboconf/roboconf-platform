@@ -27,7 +27,7 @@ package net.roboconf.messaging.api.internal.client.in_memory;
 
 import java.util.HashMap;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;

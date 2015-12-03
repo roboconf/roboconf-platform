@@ -35,7 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
