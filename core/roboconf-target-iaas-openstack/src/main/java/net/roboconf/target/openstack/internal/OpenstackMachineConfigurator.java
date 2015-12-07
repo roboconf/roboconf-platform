@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
+//import org.jclouds.openstack.neutron.v2.domain.FloatingIP;
+//import org.jclouds.openstack.neutron.v2.extensions.FloatingIPApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
@@ -72,7 +74,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static enum State {
-		WAITING_VM, ASSOCIATE_FLOATING_IP, COMPLETE, CREATE_VOLUME, ATTACH_VOLUME;
+		WAITING_VM, ASSOCIATE_FLOATING_IP, COMPLETE, ASSOCIATE_NETWORK, CREATE_VOLUME, ATTACH_VOLUME;
 	}
 
 	private final Instance scopedInstance;
@@ -81,6 +83,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	private final Logger logger = Logger.getLogger(getClass().getName());
 	private String volumeId = "";
 	private NovaApi novaApi;
+	//private NeutronApi neutronApi;
 	private State state = State.WAITING_VM;
 
 	/**
@@ -104,6 +107,9 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	public void close() throws IOException {
 		if( this.novaApi != null)
 			this.novaApi.close();
+
+		//		if( this.neutronApi != null)
+		//			this.neutronApi.close();
 	}
 
 	@Override
@@ -112,6 +118,9 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		if( this.novaApi == null )
 			this.novaApi = OpenstackIaasHandler.novaApi( this.targetProperties );
 
+		//		if( this.neutronApi == null )
+		//			this.neutronApi = OpenstackIaasHandler.neutronApi( this.targetProperties );
+
 		if( this.state == State.WAITING_VM )
 			if( checkVmIsOnline())
 				this.state = State.ASSOCIATE_FLOATING_IP;
@@ -119,9 +128,13 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		if( this.state == State.ASSOCIATE_FLOATING_IP )
 			if( associateFloatingIp())
 				this.state = State.CREATE_VOLUME;
+		//this.state = State.ASSOCIATE_NETWORK;
 
-		// if( state == State.ASSOCIATE_NETWORK )
-		// associateNetwork();
+
+		//		if( this.state == State.ASSOCIATE_NETWORK )
+		//			if( associateNetwork())
+		//				this.state = State.CREATE_VOLUME;
+
 
 		if( this.state == State.CREATE_VOLUME ) {
 			if( createBlockStorage())
@@ -179,9 +192,12 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 			// Find a floating IP
 			String availableIp = null;
 			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
+			//String anyZoneName = this.neutronApi.getConfiguredRegions().iterator().next();
 			FloatingIPApi floatingIPApi = this.novaApi.getFloatingIPExtensionForZone(anyZoneName).get();
-			for (FloatingIP ip : floatingIPApi.list().toList()) {
-				if (ip.getInstanceId() == null) {
+			//FloatingIPApi floatingIPApi = this.neutronApi.getFloatingIPApi(anyZoneName).get();
+			//List<IterableWithMarker<FloatingIP>> floatingIps = floatingIPApi.list().toList();
+			for(FloatingIP ip : floatingIPApi.list().toList()) {
+				if (ip.getFixedIp() == null) {
 					availableIp = ip.getIp();
 					break;
 				}
@@ -202,23 +218,22 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		return done;
 	}
 
-	// /**
-	// * Associates a Neutron network with the VM (if necessary and if
-	// possible).
-	// * @throws TargetException
-	// */192.168.0.6
-	// private void associateNetwork() throws TargetException {
+	//		/**
+	//		 * Associates a Neutron network with the VM (if necessary and if possible).
+	//		 * @throws TargetException
+	//		 */
+	//		private boolean associateNetwork() throws TargetException {
 	//
-	// String networkId = this.targetProperties.get(
-	// OpenstackIaasHandler.NETWORK_ID );
-	// if( ! Utils.isEmptyOrWhitespaces( networkId )) {
-	// NeutronApi neutronApi = OpenstackIaasHandler.neutronApi(
-	// this.targetProperties );
-	// Network network = neutronApi.getNetworkApi( this.anyZoneName ).get(
-	// networkId );
-	//
-	// }
-	// }
+	//			String networkId = this.targetProperties.get( OpenstackIaasHandler.NETWORK_ID );
+	//			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
+	//			boolean isAssociated = true;
+	//			if( ! Utils.isEmptyOrWhitespaces( networkId )) {
+	//				NeutronApi neutronApi = OpenstackIaasHandler.neutronApi( this.targetProperties );
+	//				Network network = neutronApi.getNetworkApi( anyZoneName ).get( networkId );
+	//				isAssociated = !Utils.isEmptyOrWhitespaces( network.getId());
+	//			}
+	//			return isAssociated;
+	//		}
 
 	/**
 	 * Creates a block storage in Openstack infrastructure.
