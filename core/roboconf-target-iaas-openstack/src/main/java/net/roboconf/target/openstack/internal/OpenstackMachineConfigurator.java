@@ -245,10 +245,11 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		boolean isCreated = true;
 		if( Boolean.parseBoolean(useBlockStorage)) {
 			String vol = Utils.getValue(this.targetProperties, OpenstackIaasHandler.VOLUME_SIZE_GB, OpenstackIaasHandler.DEFAULT_VOLUME_SIZE_GB);
+			String name = Utils.getValue(this.targetProperties, OpenstackIaasHandler.VOLUME_NAME, OpenstackIaasHandler.VOLUME_NAME_DEFAULT);
 			int vsize = Integer.parseInt(vol);
 			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
 			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone(anyZoneName).get();
-			this.volumeId = volumeApi.create(vsize, CreateVolumeOptions.Builder.name("toto")).getId();
+			this.volumeId = volumeApi.create(vsize, CreateVolumeOptions.Builder.name(name)).getId();
 			isCreated = !Utils.isEmptyOrWhitespaces( this.volumeId );
 			if( !isCreated )
 				throw new TargetException( "No volume created" );

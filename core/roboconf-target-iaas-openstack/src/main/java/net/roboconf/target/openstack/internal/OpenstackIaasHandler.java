@@ -70,6 +70,8 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	static final String USE_BLOCK_STORAGE = "openstack.use-block-storage";
 	static final String VOLUME_MOUNT_POINT = "openstack.volume-mount-point";
 	static final String DEFAULT_VOLUME_MOUNT_POINT = "/dev/vdb";
+	static final String VOLUME_NAME = "openstack.volume-name";
+	static final String VOLUME_NAME_DEFAULT = "roboconf-volume";
 	static final String VOLUME_SIZE_GB = "openstack.volume-size";
 	static final String DEFAULT_VOLUME_SIZE_GB = "5";
 
