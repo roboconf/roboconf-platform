@@ -41,20 +41,20 @@ import org.junit.Test;
  */
 public class HttpMessagingTest extends AbstractMessagingTest {
 
-	private static WebServer webServerRunnable;
+	private WebServer webServerRunnable;
 
 
 	@Before
 	public void registerHttpFactory() throws InterruptedException {
 
 		// Launch a new web server
-		webServerRunnable = new WebServer();
-		Thread webServerThread = new Thread( webServerRunnable, "Test for Roboconf HTTP Messaging" );
+		this.webServerRunnable = new WebServer();
+		Thread webServerThread = new Thread( this.webServerRunnable, "Test for Roboconf HTTP Messaging" );
 		webServerThread.start();
 
 		for( int i=0; i<15; i++ ) {
-			if( webServerRunnable.isRunning()
-					&& webServerRunnable.isServerStarted())
+			if( this.webServerRunnable.isRunning()
+					&& this.webServerRunnable.isServerStarted())
 				break;
 
 			Thread.sleep( 50 );
@@ -74,14 +74,14 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@After
 	public void stopWebServer() throws IOException, InterruptedException {
 
-		webServerRunnable.stop();
+		this.webServerRunnable.stop();
 	}
 
 
 	@Override
 	@Test
 	public void testExchangesBetweenTheDmAndOneAgent() throws Exception {
-		Assume.assumeTrue( webServerRunnable.isRunning());
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
 		super.testExchangesBetweenTheDmAndOneAgent();
 	}
 
@@ -89,7 +89,7 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@Override
 	@Test
 	public void testExchangesBetweenTheDmAndThreeAgents() throws Exception {
-		Assume.assumeTrue( webServerRunnable.isRunning());
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
 		super.testExchangesBetweenTheDmAndThreeAgents();
 	}
 
@@ -97,7 +97,7 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@Override
 	@Test
 	public void testExportsBetweenAgents() throws Exception {
-		Assume.assumeTrue( webServerRunnable.isRunning());
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
 		super.testExportsBetweenAgents();
 	}
 
@@ -105,7 +105,7 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@Override
 	@Test
 	public void testExportsRequestsBetweenAgents() throws Exception {
-		Assume.assumeTrue( webServerRunnable.isRunning());
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
 		super.testExportsRequestsBetweenAgents();
 	}
 
@@ -113,7 +113,7 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@Override
 	@Test
 	public void testExportsBetweenSiblingAgents() throws Exception {
-		Assume.assumeTrue( webServerRunnable.isRunning());
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
 		super.testExportsBetweenSiblingAgents();
 	}
 
@@ -121,7 +121,7 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@Override
 	@Test
 	public void testPropagateAgentTermination() throws Exception {
-		Assume.assumeTrue( webServerRunnable.isRunning());
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
 		super.testPropagateAgentTermination();
 	}
 
@@ -129,7 +129,7 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@Override
 	@Test
 	public void testDmDebug() throws Exception {
-		Assume.assumeTrue( webServerRunnable.isRunning());
+		Assume.assumeTrue( this.webServerRunnable.isRunning());
 		super.testDmDebug();
 	}
 

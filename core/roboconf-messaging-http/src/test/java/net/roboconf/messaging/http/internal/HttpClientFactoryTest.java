@@ -240,14 +240,19 @@ public class HttpClientFactoryTest {
 
 		map.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, HttpConstants.FACTORY_HTTP );
 		Assert.assertTrue( this.factory.setConfiguration( map ));
-		Assert.assertEquals( HttpConstants.DEFAULT_IP, this.factory.httpServerIp );
-		Assert.assertEquals( HttpConstants.DEFAULT_PORT, this.factory.httpPort );
+
+		synchronized( this.factory ) {
+			Assert.assertEquals( HttpConstants.DEFAULT_IP, this.factory.httpServerIp );
+			Assert.assertEquals( HttpConstants.DEFAULT_PORT, this.factory.httpPort );
+		}
 
 		map.put( HttpConstants.HTTP_SERVER_IP, "127.0.0.4" );
 		map.put( HttpConstants.HTTP_SERVER_PORT, "24658" );
 
 		Assert.assertTrue( this.factory.setConfiguration( map ));
-		Assert.assertEquals( "127.0.0.4", this.factory.httpServerIp );
-		Assert.assertEquals( 24658, this.factory.httpPort );
+		synchronized( this.factory ) {
+			Assert.assertEquals( "127.0.0.4", this.factory.httpServerIp );
+			Assert.assertEquals( 24658, this.factory.httpPort );
+		}
 	}
 }

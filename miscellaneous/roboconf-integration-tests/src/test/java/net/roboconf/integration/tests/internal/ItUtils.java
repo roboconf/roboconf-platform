@@ -96,6 +96,19 @@ public final class ItUtils {
 		options.add( keepRuntimeFolder());
 		options.add( systemTimeout( getTimeout()));
 
+		// Use RabbitMQ by default?
+		if( bean.useRabbit()) {
+			options.add( editConfigurationFilePut(
+					  "etc/net.roboconf.dm.configuration.cfg",
+					  "messaging-type",
+					  "rabbitmq" ));
+
+			options.add( editConfigurationFilePut(
+					  "etc/net.roboconf.agent.configuration.cfg",
+					  "messaging-type",
+					  "rabbitmq" ));
+		}
+
 		// Logs management
 		if( bean.areLogsHidden()) {
 			// Override the log configuration in Karaf

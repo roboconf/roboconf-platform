@@ -25,6 +25,12 @@
 
 package net.roboconf.messaging.rabbitmq.internal;
 
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.DEFAULT_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.GUEST;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -156,19 +162,10 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 		final String type = configuration.get( MESSAGING_TYPE_PROPERTY) ;
 		if(( result = RabbitMqConstants.FACTORY_RABBITMQ.equals( type ))) {
 
-			String ip = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_IP);
-			String username = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME);
-			String password = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD);
-
-			// Handles default values.
-			if (ip == null)
-				ip = RabbitMqConstants.DEFAULT_IP;
-
-			if (username == null)
-				username = RabbitMqConstants.GUEST;
-
-			if (password == null)
-				password = RabbitMqConstants.GUEST;
+			// Get the new values
+			String ip = Utils.getValue( configuration, RABBITMQ_SERVER_IP, DEFAULT_IP );
+			String username = Utils.getValue( configuration, RABBITMQ_SERVER_USERNAME, GUEST );
+			String password = Utils.getValue( configuration, RABBITMQ_SERVER_PASSWORD, GUEST );
 
 			// Avoid unnecessary (and potentially problematic) reconfiguration if nothing has changed.
 			// First we detect for changes, and set the parameters accordingly.

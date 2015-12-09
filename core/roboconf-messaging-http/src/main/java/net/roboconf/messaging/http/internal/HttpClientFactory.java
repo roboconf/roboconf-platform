@@ -25,6 +25,9 @@
 
 package net.roboconf.messaging.http.internal;
 
+import static net.roboconf.messaging.http.HttpConstants.DEFAULT_IP;
+import static net.roboconf.messaging.http.HttpConstants.HTTP_SERVER_IP;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -166,12 +169,11 @@ public class HttpClientFactory implements IMessagingClientFactory {
 		boolean valid = HttpConstants.FACTORY_HTTP.equals( configuration.get( MESSAGING_TYPE_PROPERTY ));
 		if( valid ) {
 			boolean hasChanged = false;
-			String ip = configuration.get( HttpConstants.HTTP_SERVER_IP );
-			if( ip == null )
-				ip = HttpConstants.DEFAULT_IP;
 
+			// Get the new values
+			String ip = Utils.getValue( configuration, HTTP_SERVER_IP, DEFAULT_IP );
 			String portAS = configuration.get( HttpConstants.HTTP_SERVER_PORT );
-			int port = portAS == null ? HttpConstants.DEFAULT_PORT : Integer.valueOf( portAS );
+			int port = portAS == null ? HttpConstants.DEFAULT_PORT : Integer.parseInt( portAS );
 
 			// Avoid unnecessary (and potentially problematic) reconfiguration if nothing has changed.
 			// First we detect for changes, and set the parameters accordingly.
