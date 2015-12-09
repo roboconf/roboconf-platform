@@ -38,6 +38,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -47,11 +48,11 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils.DirectoryFileFilter;
 import net.roboconf.core.utils.Utils.FileNameComparator;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -889,5 +890,20 @@ public class UtilsTest {
 		// Inexisting file
 		props = Utils.readPropertiesFileQuietly( new File( "inexisting" ), logger );
 		Assert.assertEquals( 0, props.size());
+	}
+
+	@Test
+	public void testGetValue() throws Exception {
+		Map<String,String> map = new HashMap<String,String>();
+		for(int i=0;i<10;i++) {
+			map.put(""+i, "toto"+i);
+		}
+		Assert.assertEquals(10, map.size());
+
+		for(int i=0;i<10;i++) {
+			Assert.assertEquals("toto"+i, Utils.getValue(map, ""+i, "tata"));
+		}
+
+		Assert.assertEquals("tata", Utils.getValue(map, "coucou", "tata"));
 	}
 }
