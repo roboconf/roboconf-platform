@@ -30,14 +30,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -130,9 +131,17 @@ public class TestClientTest {
 		Assert.assertEquals( 1, client.ctxToMessages.size());
 		List<Message> messages = client.ctxToMessages.get( ctx );
 
+		Assert.assertEquals( 2, client.messagesForTheDm.size());
 		Assert.assertEquals( 2, messages.size());
 		Assert.assertEquals( MsgCmdChangeBinding.class, messages.get( 0 ).getClass());
 		Assert.assertEquals( MsgCmdChangeBinding.class, messages.get( 1 ).getClass());
+
+		Assert.assertEquals( 0, client.messagesForAgents.size());
+		ctx = new MessagingContext( RecipientKind.AGENTS, "app1" );
+		client.publish( ctx, new MsgCmdResynchronize());
+
+		Assert.assertEquals( 1, client.messagesForAgents.size());
+		Assert.assertEquals( MsgCmdResynchronize.class, client.messagesForAgents.get( 0 ).getClass());
 	}
 
 

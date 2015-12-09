@@ -152,7 +152,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		// Create a new client
 		IMessagingClient newMessagingClient = null;
 		try {
-			newMessagingClient = createMessagingClient(factoryName);
+			newMessagingClient = createMessagingClient( factoryName );
 			if( newMessagingClient != null ) {
 				newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
 				openConnection(newMessagingClient);

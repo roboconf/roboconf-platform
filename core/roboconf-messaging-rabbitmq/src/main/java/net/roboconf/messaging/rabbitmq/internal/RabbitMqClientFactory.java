@@ -103,9 +103,8 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 			// Get the snapshot.
 			clients = new ArrayList<>( this.clients );
 
-			// If we shutdown connections, remove the clients.
-			if( shutdown )
-				this.clients.clear();
+			// Remove the clients, new ones will be created if necessary.
+			this.clients.clear();
 		}
 
 		// Now reconfigure all the clients.
@@ -118,7 +117,7 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 				if( shutdown )
 					reconfigurable.closeConnection();
 				else
-					reconfigurable.switchMessagingType(RabbitMqConstants.FACTORY_RABBITMQ);
+					reconfigurable.switchMessagingType( RabbitMqConstants.FACTORY_RABBITMQ );
 
 			} catch (Throwable t) {
 				// Warn but continue to reconfigure the next clients!
@@ -155,8 +154,7 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 
 		boolean result = false;;
 		final String type = configuration.get( MESSAGING_TYPE_PROPERTY) ;
-		if( RabbitMqConstants.FACTORY_RABBITMQ.equals( type )) {
-			result = true;
+		if(( result = RabbitMqConstants.FACTORY_RABBITMQ.equals( type ))) {
 
 			String ip = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_IP);
 			String username = configuration.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME);

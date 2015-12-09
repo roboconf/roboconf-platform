@@ -23,66 +23,47 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http;
+package net.roboconf.messaging.http.internal.messages;
 
 import java.io.Serializable;
 
+import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
- * A message with additional metadata useful for HTTP messaging.
+ * A message with additional meta-data useful for HTTP messaging.
  * @author Pierre-Yves Gibello - Linagora
- *
  */
-public class HttpMessage implements Serializable {
-	
+public class HttpMessage extends Message implements Serializable {
+
 	private static final long serialVersionUID = -1012611751797601185L;
 
-	private String id;
-	private Message message;
+	private final String ownerId;
+	private final Message message;
+	private final MessagingContext ctx;
 
-	private String queueName;
-	private String exchangeName;
-	private String routingKey;
-	
-	public HttpMessage(String id, Message message) {
-		this.id = id;
+
+	/**
+	 * Constructor.
+	 * @param ownerId who sent the message
+	 * @param message the wrapped message
+	 * @param ctx the message recipient(s)
+	 */
+	public HttpMessage( String ownerId, Message message, MessagingContext ctx ) {
+		this.ownerId = ownerId;
 		this.message = message;
+		this.ctx = ctx;
 	}
-	
-	public String getId() {
-		return id;
+
+	public String getOwnerId() {
+		return this.ownerId;
 	}
 
 	public Message getMessage() {
-		return message;
+		return this.message;
 	}
 
-	public String toString() {
-		return id + "|" + exchangeName + "|" + routingKey + "|" + message;
-	}
-
-	public String getQueueName() {
-		return this.queueName;
-	}
-
-	public void setQueueName(String queueName) {
-		this.queueName = queueName;
-	}
-
-	public String getExchangeName() {
-		return exchangeName;
-	}
-
-	public void setExchangeName(String exchangeName) {
-		this.exchangeName = exchangeName;
-	}
-
-	public String getRoutingKey() {
-		return this.routingKey;
-	}
-
-	public void setRoutingKey(String routingKey) {
-		this.routingKey = routingKey;
+	public MessagingContext getCtx() {
+		return this.ctx;
 	}
 }

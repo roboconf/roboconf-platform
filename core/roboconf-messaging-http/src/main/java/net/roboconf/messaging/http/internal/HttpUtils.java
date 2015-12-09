@@ -23,38 +23,39 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.in_memory;
+package net.roboconf.messaging.http.internal;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-
-import org.junit.Assert;
-import org.junit.Test;
+import net.roboconf.messaging.http.HttpConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryClientFactoryTest {
+public final class HttpUtils {
 
-	@Test
-	public void testBasics() {
+	/**
+	 * Private empty constructor.
+	 */
+	private HttpUtils() {
+		// nothing
+	}
 
-		InMemoryClientFactory factory = new InMemoryClientFactory();
-		Assert.assertEquals( MessagingConstants.FACTORY_IN_MEMORY, factory.getType());
-		factory.setConfiguration( new HashMap<String,String>( 0 ));
 
-		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
-		IMessagingClient client = factory.createClient( parentDm );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "@DM@", ((InMemoryClient) client).getOwnerId());
+	/**
+	 * Return a HTTP messaging configuration for the given parameters.
+	 * @param agentPort the HTTP server port of the agent.. May be {@code null}.
+	 * @return the messaging configuration for the given parameters.
+	 */
+	public static Map<String,String> httpMessagingConfiguration( String ip, int port ) {
 
-		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
-		client = factory.createClient( parentAgent );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "", ((InMemoryClient) client).getOwnerId());
+		final Map<String,String> result = new LinkedHashMap<>();
+		result.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, HttpConstants.FACTORY_HTTP );
+		result.put( HttpConstants.HTTP_SERVER_IP, ip == null ? HttpConstants.DEFAULT_IP : ip );
+		result.put( HttpConstants.HTTP_SERVER_PORT, "" + (port <= 0 ? HttpConstants.DEFAULT_PORT : port));
+
+		return result;
 	}
 }

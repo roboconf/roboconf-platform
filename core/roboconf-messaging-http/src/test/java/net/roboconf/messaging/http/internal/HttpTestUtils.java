@@ -23,28 +23,28 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http;
-
-import javax.websocket.server.ServerContainer;
-
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+package net.roboconf.messaging.http.internal;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-import net.roboconf.messaging.http.internal.HttpAgentClient;
-import net.roboconf.messaging.http.internal.HttpDmClient;
-import net.roboconf.messaging.http.internal.MessagingWebSocket;
+import net.roboconf.messaging.http.HttpConstants;
+import net.roboconf.messaging.http.internal.clients.HttpAgentClient;
+import net.roboconf.messaging.http.internal.clients.HttpDmClient;
+import net.roboconf.messaging.http.internal.sockets.DmWebSocketServlet;
+
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
 public abstract class HttpTestUtils {
 
-	static WebServer WEBSERVER = new WebServer();
+	static final int TEST_PORT = 9999;
+
 
 	/**
 	 * Empty constructor.
@@ -53,8 +53,9 @@ public abstract class HttpTestUtils {
 		// nothing
 	}
 
+
 	/**
-	 * Get the delegate messaging client of a reconfigurable messaging client.
+	 * Gets the delegate messaging client of a reconfigurable messaging client.
 	 *
 	 * @param reconfigurable the reconfigurable messaging client.
 	 * @param type           the expected type of the internal messaging client.
@@ -63,12 +64,13 @@ public abstract class HttpTestUtils {
 	 * @throws IllegalAccessException if the internal messaging client could not be read.
 	 */
 	public static HttpDmClient getMessagingClientDm( ReconfigurableClientDm reconfigurable )
-			throws IllegalAccessException {
+	throws IllegalAccessException {
 		return TestUtils.getInternalField(reconfigurable, "messagingClient", HttpDmClient.class);
 	}
 
+
 	/**
-	 * Get the delegate messaging client of a reconfigurable messaging client.
+	 * Gets the delegate messaging client of a reconfigurable messaging client.
 	 *
 	 * @param reconfigurable the reconfigurable messaging client.
 	 * @param type           the expected type of the internal messaging client.
@@ -77,59 +79,68 @@ public abstract class HttpTestUtils {
 	 * @throws IllegalAccessException if the internal messaging client could not be read.
 	 */
 	public static HttpAgentClient getMessagingClientAgent( ReconfigurableClientAgent reconfigurable )
-			throws IllegalAccessException {
+	throws IllegalAccessException {
 		return TestUtils.getInternalField(reconfigurable, "messagingClient", HttpAgentClient.class);
 	}
 
+
 	/**
-	 * Run a jetty Web Server with instantiated Messaging WebSocket
+	 * @author Pierre-Yves Gibello - Linagora
 	 */
-	public static void runWebServer() {
-		new Thread(WEBSERVER).start();
-	}
-	
-	public static void stopWebServer() {
-		WEBSERVER.stop();
-	}
-}
+	static class WebServer implements Runnable {
 
-class WebServer implements Runnable {
+		Server server;
+		boolean running;
 
-	Server server;
+		@Override
+		public void run() {
 
-	@Override
-	public void run() {
-		try {
-			server = new Server();
-			ServerConnector connector = new ServerConnector(server);
-			connector.setPort(8080);
-			server.addConnector(connector);
+			try {
+				this.server = new Server();
+				ServerConnector connector = new ServerConnector( this.server );
+				connector.setPort( TEST_PORT );
+				this.server.addConnector( connector );
 
-			// Setup the basic application "context" for this application at "/"
-			// This is also known as the handler tree (in jetty speak)
-			ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-			context.setContextPath("/");
-			server.setHandler(context);
+				// Setup the basic application "context" for this application at "/"
+				// This is also known as the handler tree (in jetty speak)
+				ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
+				context.setContextPath( "/" );
+				context.addServlet( new ServletHolder( new DmWebSocketServlet()), HttpConstants.DM_SOCKET_PATH );
 
-			// Initialize javax.websocket layer
-			ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
+				this.server.setHandler( context );
+				this.server.start();
+				// this.server.dump( System.err );
 
-			// Add WebSocket endpoint to javax.websocket layer
-			wscontainer.addEndpoint(MessagingWebSocket.class);
-			server.start();
-			server.dump(System.err);
-			server.join();
-		} catch(Exception e) {
-			e.printStackTrace(System.err);
+				this.running = true;
+				this.server.join();
+
+			} catch( Exception e ) {
+				e.printStackTrace( System.err );
+			}
 		}
-	}
 
-	public void stop() {
-		try {
-			server.stop();
-			server.destroy();
-		} catch (Exception e) {
-			e.printStackTrace(System.err);
+
+		public void stop() {
+
+			try {
+				this.server.stop();
+				this.server.destroy();
+
+			} catch( Exception e ) {
+				e.printStackTrace( System.err );
+			}
+
+			this.running = false;
+		}
+
+
+		public boolean isServerStarted() {
+			return this.server.isStarted();
+		}
+
+
+		public boolean isRunning() {
+			return this.running;
 		}
 	}
 }

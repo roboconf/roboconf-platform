@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,27 +23,26 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http;
+package net.roboconf.messaging.api.messages;
 
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * A subscribe/unsubscribe message for HTTP messaging system.
- * @author Pierre-Yves Gibello - Linagora
- *
+ * @author Vincent Zurczak - Linagora
  */
-public class SubscriptionMessage extends HttpMessage {
+public class MessageTest {
 
-	private static final long serialVersionUID = -857054136326662577L;
-	private boolean subscribe;
+	@Test
+	public void testToString() {
 
-	public SubscriptionMessage(String id, String queueName, String exchangeName, String routingKey, boolean subscribe) {
-		super(id, null);
-		this.subscribe = subscribe;
-		
-		setQueueName(queueName);
-		setExchangeName(exchangeName);
-		setRoutingKey(routingKey);
+		MsgCmdRemoveInstance msg1 = new MsgCmdRemoveInstance( "/path" );
+		Assert.assertEquals( "MsgCmdRemoveInstance", msg1.toString());
+
+		MsgCmdResynchronize msg2 = new MsgCmdResynchronize();
+		Assert.assertEquals( "MsgCmdResynchronize", msg2.toString());
 	}
-	
-	public boolean isSubscribe() { return this.subscribe; }
 }

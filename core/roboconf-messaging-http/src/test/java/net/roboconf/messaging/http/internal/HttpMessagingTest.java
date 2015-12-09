@@ -23,20 +23,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http;
+package net.roboconf.messaging.http.internal;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
 import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
-import net.roboconf.messaging.http.internal.HttpClient;
-import net.roboconf.messaging.http.internal.HttpClientFactory;
-import net.roboconf.messaging.http.internal.MessagingWebSocket;
+import net.roboconf.messaging.http.HttpConstants;
+import net.roboconf.messaging.http.internal.HttpTestUtils.WebServer;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -48,109 +41,107 @@ import org.junit.Test;
  */
 public class HttpMessagingTest extends AbstractMessagingTest {
 
-	private static boolean serverIsRunning = false;
+	private static WebServer webServerRunnable;
 
-	HttpClientFactory factory;
 
 	@Before
 	public void registerHttpFactory() throws InterruptedException {
-		MessagingWebSocket.cleanup();
-		HttpTestUtils.runWebServer();
-		
-		Thread.sleep(500); //TODO: any way to start webserver quicky (and remove this) ??
-		
-		serverIsRunning = true;
-		factory = new HttpClientFactory();
-		factory.setHttpServerIp(HttpConstants.DEFAULT_IP);
-		factory.setHttpPort(HttpConstants.DEFAULT_PORT);
-		this.registry.addMessagingClientFactory(factory);
+
+		// Launch a new web server
+		webServerRunnable = new WebServer();
+		Thread webServerThread = new Thread( webServerRunnable, "Test for Roboconf HTTP Messaging" );
+		webServerThread.start();
+
+		for( int i=0; i<15; i++ ) {
+			if( webServerRunnable.isRunning()
+					&& webServerRunnable.isServerStarted())
+				break;
+
+			Thread.sleep( 50 );
+		}
+
+		// Register a new factory
+		final HttpClientFactory factory = new HttpClientFactory();
+		factory.setHttpServerIp( HttpConstants.DEFAULT_IP );
+		factory.setHttpPort( HttpTestUtils.TEST_PORT );
+		this.registry.addMessagingClientFactory( factory );
+
+		// Clean remaining artifacts
+		HttpClientFactory.reset();
 	}
+
 
 	@After
 	public void stopWebServer() throws IOException, InterruptedException {
-		HttpTestUtils.stopWebServer();
-		MessagingWebSocket.cleanup();
-		Set<HttpClient> httpClients = HttpClientFactory.getHttpClients();
-		for(HttpClient c : httpClients) {
-			c.closeConnection();
-		}
-		HttpClientFactory.getHttpClients().clear();
-		serverIsRunning = false;
 
-		Thread.sleep(500); //TODO: any way to stop webserver cleanly (and remove this) ??
+		webServerRunnable.stop();
 	}
+
 
 	@Override
 	@Test
 	public void testExchangesBetweenTheDmAndOneAgent() throws Exception {
-		Assume.assumeTrue( serverIsRunning );
+		Assume.assumeTrue( webServerRunnable.isRunning());
 		super.testExchangesBetweenTheDmAndOneAgent();
 	}
+
 
 	@Override
 	@Test
 	public void testExchangesBetweenTheDmAndThreeAgents() throws Exception {
-		Assume.assumeTrue( serverIsRunning );
+		Assume.assumeTrue( webServerRunnable.isRunning());
 		super.testExchangesBetweenTheDmAndThreeAgents();
 	}
+
 
 	@Override
 	@Test
 	public void testExportsBetweenAgents() throws Exception {
-		Assume.assumeTrue( serverIsRunning );
+		Assume.assumeTrue( webServerRunnable.isRunning());
 		super.testExportsBetweenAgents();
 	}
+
 
 	@Override
 	@Test
 	public void testExportsRequestsBetweenAgents() throws Exception {
-		Assume.assumeTrue( serverIsRunning );
+		Assume.assumeTrue( webServerRunnable.isRunning());
 		super.testExportsRequestsBetweenAgents();
 	}
+
 
 	@Override
 	@Test
 	public void testExportsBetweenSiblingAgents() throws Exception {
-		Assume.assumeTrue( serverIsRunning );
+		Assume.assumeTrue( webServerRunnable.isRunning());
 		super.testExportsBetweenSiblingAgents();
 	}
+
 
 	@Override
 	@Test
 	public void testPropagateAgentTermination() throws Exception {
-		Assume.assumeTrue( serverIsRunning );
+		Assume.assumeTrue( webServerRunnable.isRunning());
 		super.testPropagateAgentTermination();
 	}
+
 
 	@Override
 	@Test
 	public void testDmDebug() throws Exception {
-		Assume.assumeTrue( serverIsRunning );
+		Assume.assumeTrue( webServerRunnable.isRunning());
 		super.testDmDebug();
 	}
 
-	@Override
-	protected AbstractMessageProcessor<IDmClient> createDmProcessor( final List<Message> dmMessages ) {
-		return new AbstractMessageProcessor<IDmClient>( "DM Processor - Test" ) {
-			@Override
-			protected void processMessage( Message message ) {
-				dmMessages.add( message );
-			}
-		};
-	}
 
 	@Override
-	protected AbstractMessageProcessor<IAgentClient> createAgentProcessor( final List<Message> agentMessages ) {
-		return new AbstractMessageProcessor<IAgentClient>( "Agent Processor - Test" ) {
-			@Override
-			protected void processMessage( Message message ) {
-				agentMessages.add( message );
-			}
-		};
+	protected long getDelay() {
+		return 100;
 	}
+
 
 	@Override
 	protected String getMessagingType() {
-		return HttpConstants.HTTP_FACTORY_TYPE;
+		return HttpConstants.FACTORY_HTTP;
 	}
 }

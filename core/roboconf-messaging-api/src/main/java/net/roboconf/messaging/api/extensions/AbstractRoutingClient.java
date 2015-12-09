@@ -48,23 +48,47 @@ import net.roboconf.messaging.api.messages.Message;
  *
  * @param <T> a handler class where messages will be directed to
  * @author Vincent Zurczak - Linagora
- *
- * TODO: to test with HTTP messaging. If working, make InMemory inherit from it.
  */
 public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 
-	protected static final Map<String,Set<MessagingContext>> SUBSCRIPTIONS = new ConcurrentHashMap<> ();
+	/**
+	 * A bean to wrap routing contexts.
+	 * <p>
+	 * At the beginning, routing contexts were stored as static final maps.
+	 * Sub-classes were thus all sharing the same routing information. When used
+	 * in stand-alone mode, it was fine. However, Roboconf allows to switch messaging
+	 * type and such an organization would have had side effects.
+	 * </p>
+	 * <p>
+	 * So, replaced static map by a class.
+	 * Each messaging factory should extend this class and pass it as an
+	 * arguments to the agents it creates. This way, messaging clients that
+	 * extends this class are isolated from other implementations.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static abstract class RoutingContext {
+		public final Map<String,Set<MessagingContext>> subscriptions = new ConcurrentHashMap<> ();
+	}
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final AtomicBoolean connected = new AtomicBoolean( false );
-	String ownerId;
+
+	protected final RoutingContext routingContext;
+	protected final AtomicBoolean connected = new AtomicBoolean( false );
+	protected final Logger logger = Logger.getLogger( getClass().getName());
+
+	protected String ownerId, applicationName, scopedInstancePath;
+	protected boolean connectionIsRequired = true;
+
 
 
 	/**
 	 * Constructor.
+	 * @param routingContext
 	 * @param ownerKind
 	 */
-	public AbstractRoutingClient( RecipientKind ownerKind ) {
+	public AbstractRoutingClient( RoutingContext routingContext, RecipientKind ownerKind ) {
+		this.routingContext = routingContext;
 		setOwnerProperties( ownerKind, null, null );
 	}
 
@@ -82,14 +106,8 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 
 
 	@Override
-	public String getMessagingType() {
-		return MessagingConstants.FACTORY_IN_MEMORY;
-	}
-
-
-	@Override
 	public Map<String,String> getConfiguration() {
-		return Collections.singletonMap(MessagingConstants.MESSAGING_TYPE_PROPERTY, MessagingConstants.FACTORY_IN_MEMORY);
+		return Collections.singletonMap(MessagingConstants.MESSAGING_TYPE_PROPERTY, getMessagingType());
 	}
 
 
@@ -97,7 +115,7 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	public void deleteMessagingServerArtifacts( Application application ) throws IOException {
 
 		getStaticContextToObject().remove( this.ownerId );
-		SUBSCRIPTIONS.remove( this.ownerId );
+		this.routingContext.subscriptions.remove( this.ownerId );
 	}
 
 
@@ -109,42 +127,23 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 
 	@Override
 	public void subscribe( MessagingContext ctx ) throws IOException {
-
-		if( ! this.connected.get())
-			return;
-
-		Set<MessagingContext> sub = SUBSCRIPTIONS.get( this.ownerId );
-		if( sub == null ) {
-			sub = new HashSet<> ();
-			SUBSCRIPTIONS.put( this.ownerId, sub );
-		}
-
-		sub.add( ctx );
+		subscribe( this.ownerId, ctx );
 	}
 
 
 	@Override
 	public void unsubscribe( MessagingContext ctx ) throws IOException {
-
-		if( ! this.connected.get())
-			return;
-
-		Set<MessagingContext> sub = SUBSCRIPTIONS.get( this.ownerId );
-		if( sub != null ) {
-			sub.remove( ctx );
-			if( sub.isEmpty())
-				SUBSCRIPTIONS.remove( this.ownerId );
-		}
+		unsubscribe( this.ownerId, ctx );
 	}
 
 
 	@Override
 	public void publish( MessagingContext ctx, Message msg ) throws IOException {
 
-		if( ! this.connected.get())
+		if( ! canProceed())
 			return;
 
-		for( Map.Entry<String,Set<MessagingContext>> entry : SUBSCRIPTIONS.entrySet()) {
+		for( Map.Entry<String,Set<MessagingContext>> entry : this.routingContext.subscriptions.entrySet()) {
 			if( ! entry.getValue().contains( ctx ))
 				continue;
 
@@ -158,25 +157,12 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	@Override
 	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
 
-		// Build a unique ID
-		StringBuilder sb = new StringBuilder();
-		if( ownerKind == RecipientKind.DM ) {
-			sb.append( "@DM@" );
-
-		} else {
-			if( scopedInstancePath !=null ) {
-				sb.append( scopedInstancePath );
-				sb.append( " " );
-			}
-
-			if( applicationName != null ) {
-				sb.append( "@ " );
-				sb.append( applicationName );
-			}
-		}
+		// Store the fields (the owner kind is not supposed to change)
+		this.applicationName = applicationName;
+		this.scopedInstancePath = scopedInstancePath;
 
 		// Update the client's owner ID
-		String newOwnerId = sb.toString().trim();
+		String newOwnerId = buildOwnerId( ownerKind, applicationName, scopedInstancePath );
 		this.logger.fine( "New owner ID in in-memory client: " + newOwnerId );
 		if( this.ownerId == null) {
 			this.ownerId = newOwnerId;
@@ -195,13 +181,104 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 			if( obj != null )
 				getStaticContextToObject().put( newOwnerId, obj );
 
-			Set<MessagingContext> subscriptions = SUBSCRIPTIONS.remove( oldOwnerId );
+			Set<MessagingContext> subscriptions = this.routingContext.subscriptions.remove( oldOwnerId );
 			if( subscriptions != null )
-				SUBSCRIPTIONS.put( newOwnerId, subscriptions );
+				this.routingContext.subscriptions.put( newOwnerId, subscriptions );
 		}
 	}
 
 
+	/**
+	 * @return the routing context
+	 */
+	public RoutingContext getRoutingContext() {
+		return this.routingContext;
+	}
+
+
+	/**
+	 * @return the owner ID
+	 */
+	public String getOwnerId() {
+		return this.ownerId;
+	}
+
+
+	/**
+	 * Builds a unique ID.
+	 * @param ownerKind the owner kind (not null)
+	 * @param applicationName the application name (can be null)
+	 * @param scopedInstancePath the scoped instance path (can be null)
+	 * @return a non-null string
+	 */
+	public static String buildOwnerId( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
+
+		StringBuilder sb = new StringBuilder();
+		if( ownerKind == RecipientKind.DM ) {
+			sb.append( "@DM@" );
+
+		} else {
+			if( scopedInstancePath !=null ) {
+				sb.append( scopedInstancePath );
+				sb.append( " " );
+			}
+
+			if( applicationName != null ) {
+				sb.append( "@ " );
+				sb.append( applicationName );
+			}
+		}
+
+		return sb.toString().trim();
+	}
+
+
+	/**
+	 * Registers a subscription between an ID and a context.
+	 * @param id a client ID
+	 * @param ctx a messaging context
+	 * @throws IOException
+	 */
+	protected void subscribe( String id, MessagingContext ctx ) throws IOException {
+
+		if( ! canProceed())
+			return;
+
+		Set<MessagingContext> sub = this.routingContext.subscriptions.get( id );
+		if( sub == null ) {
+			sub = new HashSet<> ();
+			this.routingContext.subscriptions.put( id, sub );
+		}
+
+		sub.add( ctx );
+	}
+
+
+	/**
+	 * Unregisters a subscription between an ID and a context.
+	 * @param id a client ID
+	 * @param ctx a messaging context
+	 * @throws IOException
+	 */
+	protected void unsubscribe( String id, MessagingContext ctx ) throws IOException {
+
+		if( ! canProceed())
+			return;
+
+		Set<MessagingContext> sub = this.routingContext.subscriptions.get( id );
+		if( sub != null ) {
+			sub.remove( ctx );
+			if( sub.isEmpty())
+				this.routingContext.subscriptions.remove( id );
+		}
+	}
+
+
+	protected boolean canProceed() {
+		return ! this.connectionIsRequired || this.connected.get();
+	}
+
+
 	protected abstract Map<String,T> getStaticContextToObject();
-	protected abstract void process( T obj, Message message );
+	protected abstract void process( T obj, Message message ) throws IOException;
 }

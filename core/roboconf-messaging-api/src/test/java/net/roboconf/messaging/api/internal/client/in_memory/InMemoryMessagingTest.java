@@ -40,12 +40,8 @@ public class InMemoryMessagingTest extends AbstractMessagingTest {
 	@Before
 	public void registerRabbitMqFactory() {
 
-		// Prepare the factory
 		final InMemoryClientFactory factory = new InMemoryClientFactory();
 		this.registry.addMessagingClientFactory(factory);
-
-		// Clean the remaining artifacts
-		InMemoryClient.reset();
 	}
 
 

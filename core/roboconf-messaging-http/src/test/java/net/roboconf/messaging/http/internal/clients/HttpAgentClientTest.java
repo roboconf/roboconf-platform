@@ -23,14 +23,13 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.in_memory;
+package net.roboconf.messaging.http.internal.clients;
 
-import java.util.HashMap;
+import java.io.IOException;
+import java.util.Map;
 
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.http.HttpConstants;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,23 +37,35 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryClientFactoryTest {
+public class HttpAgentClientTest {
 
 	@Test
-	public void testBasics() {
+	public void testBasics() throws Exception {
 
-		InMemoryClientFactory factory = new InMemoryClientFactory();
-		Assert.assertEquals( MessagingConstants.FACTORY_IN_MEMORY, factory.getType());
-		factory.setConfiguration( new HashMap<String,String>( 0 ));
+		// Invalid connection, etc.
+		HttpAgentClient client = new HttpAgentClient( null, "localhost", 9898 );
+		Assert.assertFalse( client.isConnected());
+		client.closeConnection();
 
-		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
-		IMessagingClient client = factory.createClient( parentDm );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "@DM@", ((InMemoryClient) client).getOwnerId());
+		try {
+			client.openConnection();
+			Assert.fail( "An exception was expected." );
 
-		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
-		client = factory.createClient( parentAgent );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "", ((InMemoryClient) client).getOwnerId());
+		} catch( IOException e ) {
+			// nothing
+		}
+
+		Assert.assertFalse( client.isConnected());
+		client.closeConnection();
+		client.deleteMessagingServerArtifacts( null );
+
+		// Configuration
+		Assert.assertEquals( HttpConstants.FACTORY_HTTP, client.getMessagingType());
+		Map<String,String> config = client.getConfiguration();
+		Assert.assertEquals( 3, config.size());
+
+		Assert.assertEquals( HttpConstants.FACTORY_HTTP, config.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
+		Assert.assertEquals( "localhost", config.get( HttpConstants.HTTP_SERVER_IP ));
+		Assert.assertEquals( "9898", config.get( HttpConstants.HTTP_SERVER_PORT ));
 	}
 }

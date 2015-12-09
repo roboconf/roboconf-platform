@@ -25,21 +25,20 @@
 
 package net.roboconf.messaging.api.internal.client.in_memory;
 
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.junit.Assert;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.internal.client.in_memory.InMemoryClient.InMemoryRoutingContext;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 
-import org.junit.Before;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -47,16 +46,10 @@ import org.junit.Test;
  */
 public class InMemoryClientTest {
 
-	@Before
-	public void reset() {
-		InMemoryClient.reset();
-	}
-
-
 	@Test
 	public void testGetMessagingType() {
 
-		InMemoryClient client = new InMemoryClient( RecipientKind.DM );
+		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
 		Assert.assertEquals( MessagingConstants.FACTORY_IN_MEMORY, client.getMessagingType());
 	}
 
@@ -64,7 +57,7 @@ public class InMemoryClientTest {
 	@Test
 	public void testGetConfiguration() {
 
-		InMemoryClient client = new InMemoryClient( RecipientKind.DM );
+		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
 		Map<String,String> conf = client.getConfiguration();
 
 		Assert.assertEquals( 1, conf.size());
@@ -75,44 +68,44 @@ public class InMemoryClientTest {
 	@Test
 	public void testScenarios_subscriptions() throws Exception {
 
-		InMemoryClient client = new InMemoryClient( RecipientKind.DM );
+		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
 		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "app" );
 
 		// Not connected, subscriptions cannot work
 		Assert.assertFalse( client.isConnected());
-		Assert.assertNull( client.getSubscriptions());
+		Assert.assertNull( getSubscriptions( client ));
 		client.subscribe( ctx );
-		Assert.assertNull( client.getSubscriptions());
+		Assert.assertNull( getSubscriptions( client ));
 		client.unsubscribe( ctx );
-		Assert.assertNull( client.getSubscriptions());
+		Assert.assertNull( getSubscriptions( client ));
 
 		// Connection
 		client.openConnection();
 		Assert.assertTrue( client.isConnected());
 		client.subscribe( ctx );
-		Assert.assertEquals( 1, client.getSubscriptions().size());
-		Assert.assertTrue( client.getSubscriptions().contains( ctx ));
+		Assert.assertEquals( 1, getSubscriptions( client ).size());
+		Assert.assertTrue( getSubscriptions( client ).contains( ctx ));
 
 		client.unsubscribe( ctx );
-		Assert.assertNull( client.getSubscriptions());
+		Assert.assertNull( getSubscriptions( client ));
 
 		client.unsubscribe( ctx );
 		client.unsubscribe( null );
-		Assert.assertNull( client.getSubscriptions());
+		Assert.assertNull( getSubscriptions( client ));
 
 		// Cleaning artifacts
 		client.subscribe( ctx );
-		Assert.assertEquals( 1, client.getSubscriptions().size());
+		Assert.assertEquals( 1, getSubscriptions( client ).size());
 
 		client.deleteMessagingServerArtifacts( null );
-		Assert.assertNull( client.getSubscriptions());
+		Assert.assertNull( getSubscriptions( client ));
 	}
 
 
 	@Test
 	public void testScenarios_publications() throws Exception {
 
-		InMemoryClient client = new InMemoryClient( RecipientKind.DM );
+		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
 		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<Message> ();
 		client.setMessageQueue( queue );
 
@@ -147,48 +140,42 @@ public class InMemoryClientTest {
 
 		Set<String> ownerIds = new HashSet<> ();
 
-		InMemoryClient client = new InMemoryClient( RecipientKind.DM );
+		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
 		client.setOwnerProperties( RecipientKind.DM, null, null );
-		ownerIds.add( client.ownerId );
+		ownerIds.add( client.getOwnerId());
 
 		client.setOwnerProperties( RecipientKind.AGENTS, "app1", "root1" );
-		ownerIds.add( client.ownerId );
+		ownerIds.add( client.getOwnerId());
 
 		client.setOwnerProperties( RecipientKind.AGENTS, "app1", "root2" );
-		ownerIds.add( client.ownerId );
+		ownerIds.add( client.getOwnerId());
 
 		client.setOwnerProperties( RecipientKind.AGENTS, "app2", "root2" );
-		ownerIds.add( client.ownerId );
+		ownerIds.add( client.getOwnerId());
 
 		Assert.assertEquals( 4, ownerIds.size());
 	}
 
 
 	@Test
-	@SuppressWarnings( "unchecked" )
 	public void testSetOwnerProperties_propertiesAreMoved() throws Exception {
 
 		// Init...
-		InMemoryClient client = new InMemoryClient( RecipientKind.DM );
+		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
 		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<Message> ();
 		client.setMessageQueue( queue );
 		client.openConnection();
 
 		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "app" );
 		client.subscribe( ctx );
-		String ownerId_1 = client.ownerId;
+		String ownerId_1 = client.getOwnerId();
 
 		// Verify associations
-		Field field = InMemoryClient.class.getDeclaredField( "CTX_TO_QUEUE" );
-		field.setAccessible( true );
-		Map<?,?> ctxToQueue = (Map<?,?>) field.get( client );
+		Map<String,Set<MessagingContext>> sub = client.getRoutingContext().subscriptions;
+		Map<String,LinkedBlockingQueue<Message>> ctxToQueue = ((InMemoryRoutingContext) client.getRoutingContext()).ctxToQueue;
 		Assert.assertEquals( queue, ctxToQueue.get( ownerId_1 ));
 
-		field = InMemoryClient.class.getDeclaredField( "SUBSCRIPTIONS" );
-		field.setAccessible( true );
-		Map<?,?> sub = (Map<?,?>) field.get( client );
-
-		Set<MessagingContext> subscribedContexts = (Set<MessagingContext>) sub.get( ownerId_1 );
+		Set<MessagingContext> subscribedContexts = sub.get( ownerId_1 );
 		Assert.assertNotNull( subscribedContexts );
 		Assert.assertEquals( 1, subscribedContexts.size());
 		Assert.assertTrue( subscribedContexts.contains( ctx ));
@@ -197,16 +184,21 @@ public class InMemoryClientTest {
 		client.setOwnerProperties( RecipientKind.AGENTS, "app1", "root1" );
 
 		// Verify properties were kept
-		String ownerId_2 = client.ownerId;
+		String ownerId_2 = client.getOwnerId();
 		Assert.assertFalse( ownerId_2.equals( ownerId_1 ));
 
 		Assert.assertEquals( queue, ctxToQueue.get( ownerId_2 ));
 		Assert.assertNull( ctxToQueue.get( ownerId_1 ));
 		Assert.assertNull( sub.get( ownerId_1 ));
 
-		subscribedContexts = (Set<MessagingContext>) sub.get( ownerId_2 );
+		subscribedContexts = sub.get( ownerId_2 );
 		Assert.assertNotNull( subscribedContexts );
 		Assert.assertEquals( 1, subscribedContexts.size());
 		Assert.assertTrue( subscribedContexts.contains( ctx ));
+	}
+
+
+	private Set<MessagingContext> getSubscriptions( InMemoryClient client ) {
+		return client.getRoutingContext().subscriptions.get( client.getOwnerId());
 	}
 }

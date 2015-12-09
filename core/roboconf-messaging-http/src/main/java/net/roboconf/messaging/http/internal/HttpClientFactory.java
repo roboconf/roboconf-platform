@@ -25,81 +25,74 @@
 
 package net.roboconf.messaging.http.internal;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.logging.Logger;
 
-import javax.websocket.DeploymentException;
-
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.factory.MessagingClientFactory;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.messaging.http.HttpConstants;
+import net.roboconf.messaging.http.internal.clients.HttpAgentClient;
+import net.roboconf.messaging.http.internal.clients.HttpDmClient;
+import net.roboconf.messaging.http.internal.clients.HttpDmClient.HttpRoutingContext;
+import net.roboconf.messaging.http.internal.sockets.DmWebSocketServlet;
 
-import org.apache.felix.ipojo.annotations.Component;
-import org.apache.felix.ipojo.annotations.Instantiate;
-import org.apache.felix.ipojo.annotations.Invalidate;
-import org.apache.felix.ipojo.annotations.Property;
-import org.apache.felix.ipojo.annotations.Provides;
-import org.apache.felix.ipojo.annotations.Requires;
-import org.apache.felix.ipojo.annotations.StaticServiceProperty;
-import org.apache.felix.ipojo.annotations.Updated;
-import org.apache.felix.ipojo.annotations.Validate;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.service.http.HttpService;
 
 /**
  * Messaging client factory for HTTP.
  * @author Pierre-Yves Gibello - Linagora
  */
-@Component(
-		name = "roboconf-messaging-client-factory-http",
-		publicFactory = false,
-		managedservice = "net.roboconf.messaging.http"
-)
-@Provides(
-		specifications = MessagingClientFactory.class,
-		properties = @StaticServiceProperty(
-				name = MessagingClientFactory.MESSAGING_TYPE_PROPERTY,
-				type = "string",
-				value = HttpConstants.HTTP_FACTORY_TYPE
-))
-@Instantiate(name = "Roboconf Http Messaging Client Factory")
-public class HttpClientFactory implements MessagingClientFactory {
+public class HttpClientFactory implements IMessagingClientFactory {
 
 	// The created CLIENTS.
 	// References to the CLIENTS are *weak*, so we never prevent their garbage collection.
-	private final static Set<HttpClient> CLIENTS = Collections.newSetFromMap(new WeakHashMap<HttpClient, Boolean>());
+	public final Set<HttpAgentClient> agentClients = Collections.newSetFromMap( new WeakHashMap<HttpAgentClient,Boolean> ());
 
-	@Requires
-	private HttpService http;
+	// We must always have one DM client. Indeed, messaging between agents relies on this client.
+	// Besides, it does not need any reconfiguration. And it greatly simplifies unit tests BTW.
+	// This client is only used when a servlet is registered in the HTTP service.
+	public static final HttpDmClient DM_CLIENT = new HttpDmClient();
 
 	// The logger
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
-	private String httpServerIp;
-	private String httpPort;
+	// Injected by iPojo
+	BundleContext bundleContext;
+	HttpService httpService;
 
-	@Property(name = HttpConstants.HTTP_SERVER_IP, value = HttpConstants.DEFAULT_IP)
+	String httpServerIp;
+	int httpPort;
+
+
+
+	// Setters
+
 	public synchronized void setHttpServerIp( final String serverIp ) {
 		this.httpServerIp = serverIp;
-		this.logger.finer("Server IP set to " + httpServerIp);
+		this.logger.finer( "Server IP set to " + this.httpServerIp );
 	}
-	
-	@Property(name = HttpConstants.HTTP_SERVER_PORT, value = HttpConstants.DEFAULT_PORT)
-	public synchronized void setHttpPort( final String port ) {
+
+
+	public synchronized void setHttpPort( final int port ) {
 		this.httpPort = port;
-		this.logger.finer("Server port set to " + httpPort);
+		this.logger.finer( "Server port set to " + this.httpPort );
 	}
+
+
+	// iPojo methods
+
 
 	/**
 	 * The method to use when all the dependencies are resolved.
@@ -110,108 +103,145 @@ public class HttpClientFactory implements MessagingClientFactory {
 	 *
 	 * @throws Exception
 	 */
-	@Validate
 	public void start() throws Exception {
-		this.logger.fine( "iPojo registers messaging-http web socket servlet." );
 
-		// Register the web socket
-		//TODO: Should be done on the DM only !!
-		Hashtable<String,String> initParams = new Hashtable<String,String> ();
-		initParams.put( "servlet-name", "Roboconf (agent) messaging-http websocket" );
+		// Is the DM part of the distribution?
+		boolean found = false;
+		for( Bundle b : this.bundleContext.getBundles()) {
+			if( "net.roboconf.dm".equals( b.getSymbolicName())) {
+				found = true;
+				break;
+			}
+		}
 
-		try {
-			MessagingWebSocketServlet messagingServlet = new MessagingWebSocketServlet();
-			this.http.registerServlet( "/messaging-http", messagingServlet, initParams, null );
-		} catch(Throwable e) {
-			e.printStackTrace(System.err);
-			throw e;
+		// If we are on an agent, we have nothing to do.
+		// Otherwise, we must register a servlet.
+		if( found ) {
+			this.logger.fine( "iPojo registers a servlet for HTTP messaging." );
+
+			Hashtable<String,String> initParams = new Hashtable<String,String> ();
+			initParams.put( "servlet-name", "roboconf-http-messaging" );
+
+			DmWebSocketServlet messagingServlet = new DmWebSocketServlet();
+			this.httpService.registerServlet( HttpConstants.DM_SOCKET_PATH, messagingServlet, initParams, null );
 		}
 	}
 
-	@Invalidate
+
+
 	public void stop() {
-		this.logger.fine("Stopping HTTP messaging client factory.");
-		resetClients(true);
+		this.logger.fine( "iPojo unregisters a servlet for HTTP messaging." );
+		resetClients( true );
 	}
 
-	@Override
-	public synchronized IDmClient createDmClient( final ReconfigurableClientDm parent ) {
-		this.logger.finer("Creating a new HTTP messaging DM client.");
-
-		// Create the DM client, with the current list of the agent addresses.
-		final HttpDmClient client = new HttpDmClient(parent, this.httpServerIp, this.httpPort);
-
-		// Keep track of the client, so it gets notified of the agent addresses adding/removals.
-		CLIENTS.add(client);
-
-		this.logger.finer("HTTP messaging DM client created.");
-		return client;
-	}
 
 	@Override
-	public synchronized IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
-		this.logger.finer("Creating a new HTTP messaging Agent client.");
+	public IMessagingClient createClient( ReconfigurableClient<?> parent ) {
 
-		HttpAgentClient client = null;
-		try {
-			client = new HttpAgentClient(parent, this.httpServerIp, this.httpPort);
-			CLIENTS.add(client);
-			this.logger.finer("HTTP messaging Agent client created.");
-		} catch (DeploymentException | IOException | URISyntaxException e) {
-			this.logger.finer("HTTP messaging Agent error: " + e);
+		IMessagingClient client;
+		if( parent.getOwnerKind() == RecipientKind.DM ) {
+			client = DM_CLIENT;
+
+		} else {
+			synchronized( this ) {
+				client = new HttpAgentClient( parent, this.httpServerIp, this.httpPort );
+			}
+
+			this.agentClients.add((HttpAgentClient) client);
 		}
 
 		return client;
 	}
+
 
 	@Override
 	public String getType() {
-		return HttpConstants.HTTP_FACTORY_TYPE;
+		return HttpConstants.FACTORY_HTTP;
 	}
+
 
 	@Override
 	public boolean setConfiguration( final Map<String, String> configuration ) {
-		return HttpConstants.HTTP_FACTORY_TYPE.equals(configuration.get(MESSAGING_TYPE_PROPERTY));
+
+		boolean valid = HttpConstants.FACTORY_HTTP.equals( configuration.get( MESSAGING_TYPE_PROPERTY ));
+		if( valid ) {
+			boolean hasChanged = false;
+			String ip = configuration.get( HttpConstants.HTTP_SERVER_IP );
+			if( ip == null )
+				ip = HttpConstants.DEFAULT_IP;
+
+			String portAS = configuration.get( HttpConstants.HTTP_SERVER_PORT );
+			int port = portAS == null ? HttpConstants.DEFAULT_PORT : Integer.valueOf( portAS );
+
+			// Avoid unnecessary (and potentially problematic) reconfiguration if nothing has changed.
+			// First we detect for changes, and set the parameters accordingly.
+			synchronized( this ) {
+
+				if( ! Objects.equals( this.httpServerIp, ip )) {
+					this.httpServerIp = ip;
+					hasChanged = true;
+				}
+
+				if( this.httpPort != port ) {
+					this.httpPort = port;
+					hasChanged = true;
+				}
+			}
+
+			// Then, if changes has occurred, we reconfigure the factory. This will invalidate every created client.
+			// Otherwise, if nothing has changed, we do nothing. Thus we avoid invalidating clients uselessly, and
+			// prevent any message loss.
+			if( hasChanged )
+				reconfigure();
+		}
+
+		return valid;
 	}
-	
-	@Updated
+
+
 	public void reconfigure() {
-		// Set the properties for all created CLIENTS.
-		resetClients(false);
+		resetClients( false );
 	}
 
-	public static Set<HttpClient> getHttpClients() {
-		return CLIENTS;
+
+	public static void reset() {
+		DM_CLIENT.getRoutingContext().subscriptions.clear();
+		((HttpRoutingContext) DM_CLIENT.getRoutingContext()).ctxToSession.clear();
 	}
 
-	private void resetClients(boolean shutdown) {
 
+	/**
+	 * Closes messaging clients or requests a replacement to the reconfigurable client.
+	 * @param shutdown true to close, false to request...
+	 */
+	private void resetClients( boolean shutdown ) {
+
+		// Only agent clients need to be reconfigured.
 		// Make fresh snapshots of the CLIENTS, as we don't want to reconfigure them while holding the lock.
-		final ArrayList<HttpClient> clients;
-		synchronized (this) {
-			clients = new ArrayList<>(CLIENTS);
+		final List<HttpAgentClient> clients;
+		synchronized( this ) {
+
+			// Get the snapshot.
+			clients = new ArrayList<>( this.agentClients );
+
+			// Remove the clients, new ones will be created if necessary.
+			this.agentClients.clear();
 		}
 
 		// Now reconfigure all the CLIENTS.
-		for (HttpClient client : clients) {
+		for( HttpAgentClient client : clients ) {
 			try {
 				final ReconfigurableClient<?> reconfigurable = client.getReconfigurableClient();
-				if (reconfigurable != null) {
-					if (shutdown) {
-						reconfigurable.closeConnection();
-					} else {
-						reconfigurable.switchMessagingType(HttpConstants.HTTP_FACTORY_TYPE);
-						client.setIpAddress(this.httpServerIp);
-						client.setPort(this.httpPort);
-					}
-				}
+				if (shutdown)
+					reconfigurable.closeConnection();
+				else
+					reconfigurable.switchMessagingType( HttpConstants.FACTORY_HTTP );
 
-			} catch (Throwable t) {
+			} catch( Throwable t ) {
 				// Warn but continue to reconfigure the next CLIENTS!
-				this.logger.warning("A client has thrown an exception on reconfiguration: " + client);
-				Utils.logException(this.logger, new RuntimeException(t));
+				this.logger.warning( "A client has thrown an exception on reconfiguration: " + client );
+				Utils.logException( this.logger, new RuntimeException( t ));
 			}
 		}
 	}
-
 }

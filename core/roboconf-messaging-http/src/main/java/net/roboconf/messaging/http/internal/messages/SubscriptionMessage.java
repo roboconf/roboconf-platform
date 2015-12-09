@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,20 +23,47 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http.internal;
+package net.roboconf.messaging.http.internal.messages;
 
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import java.io.Serializable;
+
+import net.roboconf.messaging.api.extensions.MessagingContext;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
+ * A subscribe/unsubscribe message for HTTP messaging system.
  * @author Pierre-Yves Gibello - Linagora
  */
-public class MessagingWebSocketServlet extends WebSocketServlet {
-	
-	private static final long serialVersionUID = 1359420439902184795L;
+public class SubscriptionMessage extends Message implements Serializable {
 
-	@Override
-	public void configure( WebSocketServletFactory factory ) {
-		factory.register( MessagingWebSocket.class );
+	private static final long serialVersionUID = -857054136326662577L;
+
+	private final String ownerId;
+	private final MessagingContext ctx;
+	private final boolean subscribe;
+
+
+	/**
+	 * Constructor.
+	 * @param ownerId the subscriber or unsubscriber ID
+	 * @param ctx the context to subscribe or unsubscribe
+	 * @param subscribe true to subscribe, false to unsubscribe
+	 */
+	public SubscriptionMessage( String ownerId, MessagingContext ctx, boolean subscribe ) {
+		this.ownerId = ownerId;
+		this.ctx = ctx;
+		this.subscribe = subscribe;
+	}
+
+	public String getOwnerId() {
+		return this.ownerId;
+	}
+
+	public MessagingContext getCtx() {
+		return this.ctx;
+	}
+
+	public boolean isSubscribe() {
+		return this.subscribe;
 	}
 }

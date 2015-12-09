@@ -28,7 +28,6 @@ package net.roboconf.messaging.api.internal.client;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -59,6 +58,7 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
 import org.junit.After;
+import org.junit.Assert;
 
 /**
  * This class defines messaging tests, independently of the implementation.
@@ -167,6 +167,7 @@ public abstract class AbstractMessagingTest {
 
 		// The agent stops listening the DM
 		agentClient.listenToTheDm( ListenerCommand.STOP );
+		Thread.sleep( getDelay());
 
 		// The agent is not listening to the DM anymore.
 		// With RabbitMQ, the next invocation will result in a NO_ROUTE error in the channel.

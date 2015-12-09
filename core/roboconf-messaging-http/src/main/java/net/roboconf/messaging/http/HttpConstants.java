@@ -25,54 +25,47 @@
 
 package net.roboconf.messaging.http;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import net.roboconf.messaging.api.MessagingConstants;
 
 /**
  * Constants related to the HTTP messaging client factory.
- * @author Pierre Bourret - Université Joseph Fourier
+ * @author Pierre-Yves Gibello - Linagora
  */
-public final class HttpConstants {
-
-	// Prevent instantiation.
-	private HttpConstants() {
-	}
+public interface HttpConstants {
 
 	/**
-	 * The factory's name for HTTP clients.
+	 * The factory type.
 	 */
-	public static final String HTTP_FACTORY_TYPE = "http";
+	String FACTORY_HTTP = "http";
 
 	/**
-	 * The prefix for all HTTP-related properties.
+	 * The prefix for HTTP properties.
 	 */
-	private static final String HTTP_PROPERTY_PREFIX = MessagingConstants.MESSAGING_PROPERTY_PREFIX + "." + HTTP_FACTORY_TYPE;
+	String HTTP_PROPERTY_PREFIX = MessagingConstants.MESSAGING_PROPERTY_PREFIX + "." + FACTORY_HTTP;
 
 	/**
-	 * Messaging property holding the HTTP port. Defaults to {@code "8080"}.
+	 * The HTTP port (to create a client).
 	 */
-	public static final String HTTP_SERVER_PORT = HTTP_PROPERTY_PREFIX + ".server.port";
+	String HTTP_SERVER_PORT = HTTP_PROPERTY_PREFIX + ".server.port";
 
 	/**
-	 * Messaging property holding the HTTP server IP. Defaults to {@code "127.0.0.1"}.
+	 * The HTTP server IP (to create a client).
 	 */
-	public static final String HTTP_SERVER_IP = HTTP_PROPERTY_PREFIX + ".server.ip";
+	String HTTP_SERVER_IP = HTTP_PROPERTY_PREFIX + ".server.ip";
 
-	public static final String DEFAULT_IP = "127.0.0.1";
-	public static final String DEFAULT_PORT = "8080";
 
 	/**
-	 * Return a HTTP messaging configuration for the given parameters.
-	 * @param agentPort the HTTP server port of the agent.. May be {@code null}.
-	 * @return the messaging configuration for the given parameters.
+	 * The default IP address.
 	 */
-	public static Map<String, String> httpMessagingConfiguration(String ip, String port) {
-		final Map<String, String> result = new LinkedHashMap<>();
-		result.put(MessagingConstants.MESSAGING_TYPE_PROPERTY, HTTP_FACTORY_TYPE);
-		result.put(HTTP_SERVER_IP, (ip == null ? DEFAULT_IP : ip));
-		result.put(HTTP_SERVER_PORT, (port == null ? "8080" : port));
-		return result;
-	}
+	String DEFAULT_IP = "127.0.0.1";
+
+	/**
+	 * The default port (Karaf's one).
+	 */
+	int DEFAULT_PORT = 8081;
+
+	/**
+	 * The path of the socket registered by the DM.
+	 */
+	String DM_SOCKET_PATH = "/messaging-http";
 }

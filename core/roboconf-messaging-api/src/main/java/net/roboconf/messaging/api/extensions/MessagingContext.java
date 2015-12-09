@@ -25,6 +25,7 @@
 
 package net.roboconf.messaging.api.extensions;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -71,7 +72,9 @@ import net.roboconf.core.utils.Utils;
  *
  * @author Vincent Zurczak - Linagora
  */
-public class MessagingContext {
+public class MessagingContext implements Serializable {
+
+	private static final long serialVersionUID = 5529159467155629784L;
 
 	private final RecipientKind kind;
 	private final String componentOrFacetName, applicationName;
@@ -114,6 +117,7 @@ public class MessagingContext {
 	 */
 	public MessagingContext( RecipientKind kind, String componentOrFacetName, ThoseThat thoseThat, String applicationName ) {
 		this.kind = kind;
+
 		if( kind == RecipientKind.DM ) {
 			// The application name will be used to build a topic name.
 			this.componentOrFacetName = null;
@@ -269,7 +273,9 @@ public class MessagingContext {
 		for( String facetOrComponentName : VariableHelpers.findPrefixesForExportedVariables( instance )) {
 			MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, facetOrComponentName, thoseThat, applicationName );
 			result.add( ctx );
-			publishExternal = publishExternal || externalExportPrefixes.contains( facetOrComponentName );
+
+			if( externalExportPrefixes.contains( facetOrComponentName ))
+				publishExternal = true;
 		}
 
 		// External variables - they all have the same prefix, the application template's name

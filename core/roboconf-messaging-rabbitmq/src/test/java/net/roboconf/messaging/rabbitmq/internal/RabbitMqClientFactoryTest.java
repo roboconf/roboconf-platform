@@ -105,7 +105,7 @@ public class RabbitMqClientFactoryTest {
 		Assert.assertEquals("127.0.0.1", config2.get(RabbitMqConstants.RABBITMQ_SERVER_IP));
 		Assert.assertEquals("john.doe", config2.get(RabbitMqConstants.RABBITMQ_SERVER_USERNAME));
 		Assert.assertEquals("1234", config2.get(RabbitMqConstants.RABBITMQ_SERVER_PASSWORD));
-		Assert.assertEquals( 2, this.factory.clients.size());
+		Assert.assertEquals( 1, this.factory.clients.size());
 	}
 
 
@@ -146,7 +146,7 @@ public class RabbitMqClientFactoryTest {
 		testFactoryReconfiguration();
 
 		// Verify there is a client.
-		Assert.assertEquals( 2, this.factory.clients.size());
+		Assert.assertEquals( 1, this.factory.clients.size());
 		this.factory.stop();
 		Assert.assertEquals( 0, this.factory.clients.size());
 	}
@@ -160,7 +160,7 @@ public class RabbitMqClientFactoryTest {
 
 
 	@Test
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "rawtypes" })
 	public void testStop_errorOnClose() throws Exception {
 
 		// Mockito does not like classes with generic... <_<

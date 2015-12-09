@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,48 +23,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.http;
+package net.roboconf.messaging.http.internal.sockets;
 
-import java.util.concurrent.LinkedBlockingQueue;
-
-import org.junit.Assert;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.http.internal.HttpAgentClient;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
+import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
-public class AgentClientTest {
+public class DmWebSocketServlet extends WebSocketServlet {
 
-	@Before
-	public void runWebServer() {
-		HttpTestUtils.runWebServer();
-	}
+	private static final long serialVersionUID = 1359420439902184795L;
 
-	@Test
-	public void testConnectAndDisconnect() throws Exception {
 
-		HttpAgentClient agentClient = new HttpAgentClient(null, "localhost", "8080" );
-		agentClient.setApplicationName( "app" );
-		agentClient.setScopedInstancePath( "/root" );
-
-		Assert.assertFalse( agentClient.isConnected());
-
-		LinkedBlockingQueue<Message> messagesQueue = new LinkedBlockingQueue<>();
-		agentClient.setMessageQueue( messagesQueue );
-		agentClient.openConnection();
-		Assert.assertTrue( agentClient.isConnected());
-
-		agentClient.closeConnection();
-		Assert.assertFalse(agentClient.isConnected());
-
-		// closeConnection is idem-potent
-		agentClient.closeConnection();
-		Assert.assertFalse(agentClient.isConnected());
+	@Override
+	public void configure( WebSocketServletFactory factory ) {
+		factory.register( DmWebSocket.class );
 	}
 }
-
-

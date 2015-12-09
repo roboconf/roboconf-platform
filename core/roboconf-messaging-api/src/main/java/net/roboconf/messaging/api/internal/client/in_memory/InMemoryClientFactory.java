@@ -30,6 +30,7 @@ import java.util.Map;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
+import net.roboconf.messaging.api.internal.client.in_memory.InMemoryClient.InMemoryRoutingContext;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
@@ -38,6 +39,9 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
  */
 public class InMemoryClientFactory implements IMessagingClientFactory {
 
+	private final InMemoryRoutingContext routingContext = new InMemoryRoutingContext();
+
+
 	@Override
 	public String getType() {
 		return MessagingConstants.FACTORY_IN_MEMORY;
@@ -45,7 +49,7 @@ public class InMemoryClientFactory implements IMessagingClientFactory {
 
 	@Override
 	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
-		return new InMemoryClient( parent.getOwnerKind());
+		return new InMemoryClient( this.routingContext, parent.getOwnerKind());
 	}
 
 	@Override

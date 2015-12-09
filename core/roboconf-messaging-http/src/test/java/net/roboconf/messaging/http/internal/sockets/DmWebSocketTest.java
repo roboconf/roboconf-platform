@@ -23,38 +23,30 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.in_memory;
+package net.roboconf.messaging.http.internal.sockets;
 
-import java.util.HashMap;
+import net.roboconf.messaging.http.internal.sockets.DmWebSocket;
 
-import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryClientFactoryTest {
+public class DmWebSocketTest {
 
 	@Test
 	public void testBasics() {
 
-		InMemoryClientFactory factory = new InMemoryClientFactory();
-		Assert.assertEquals( MessagingConstants.FACTORY_IN_MEMORY, factory.getType());
-		factory.setConfiguration( new HashMap<String,String>( 0 ));
+		DmWebSocket socket = new DmWebSocket();
+		socket.onWebSocketError( null );
+		socket.onWebSocketText( "ignored" );
+	}
 
-		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
-		IMessagingClient client = factory.createClient( parentDm );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "@DM@", ((InMemoryClient) client).getOwnerId());
 
-		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
-		client = factory.createClient( parentAgent );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "", ((InMemoryClient) client).getOwnerId());
+	@Test
+	public void testBinaryMessageInError() {
+
+		DmWebSocket socket = new DmWebSocket();
+		socket.onWebSocketBinary( new byte[1], 0, 1 );
 	}
 }

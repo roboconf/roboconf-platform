@@ -1,6 +1,7 @@
 instance of vm {
 	name: mysql-vm;
 	instance-state: NOT_DEPLOYED;
+	instance-data: ip.address = 192.168.1.45;
 
 	instance of mysql {
 		name: mysql-server;
@@ -20,7 +21,6 @@ instance of vm {
 		instance of war {
 			name: hello-world;
 			instance-state: NOT_DEPLOYED;
-			instance-data: ip.address = 192.168.1.45;
 		}
 	}
 }

@@ -23,14 +23,12 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.internal.client.in_memory;
+package net.roboconf.messaging.http.internal.sockets;
 
-import java.util.HashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
-import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.http.internal.sockets.AgentWebSocket;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,23 +36,27 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryClientFactoryTest {
+public class AgentWebSocketTest {
 
 	@Test
 	public void testBasics() {
 
-		InMemoryClientFactory factory = new InMemoryClientFactory();
-		Assert.assertEquals( MessagingConstants.FACTORY_IN_MEMORY, factory.getType());
-		factory.setConfiguration( new HashMap<String,String>( 0 ));
+		LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<> ();
+		AgentWebSocket socket = new AgentWebSocket( messageQueue );
+		socket.onWebSocketError( null );
+		socket.onWebSocketText( "ignored" );
 
-		ReconfigurableClientDm parentDm = new ReconfigurableClientDm();
-		IMessagingClient client = factory.createClient( parentDm );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "@DM@", ((InMemoryClient) client).getOwnerId());
+		Assert.assertEquals( 0, messageQueue.size());
+	}
 
-		ReconfigurableClientAgent parentAgent = new ReconfigurableClientAgent();
-		client = factory.createClient( parentAgent );
-		Assert.assertEquals( InMemoryClient.class, client.getClass());
-		Assert.assertEquals( "", ((InMemoryClient) client).getOwnerId());
+
+	@Test
+	public void testBinaryMessageInError() {
+
+		LinkedBlockingQueue<Message> messageQueue = new LinkedBlockingQueue<> ();
+		AgentWebSocket socket = new AgentWebSocket( messageQueue );
+		socket.onWebSocketBinary( new byte[1], 0, 1 );
+
+		Assert.assertEquals( 0, messageQueue.size());
 	}
 }
