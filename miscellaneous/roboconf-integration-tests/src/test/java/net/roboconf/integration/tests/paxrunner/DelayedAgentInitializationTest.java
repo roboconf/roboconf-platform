@@ -46,7 +46,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import org.junit.Assert;

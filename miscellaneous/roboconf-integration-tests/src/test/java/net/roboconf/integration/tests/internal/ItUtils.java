@@ -44,7 +44,7 @@ import java.util.logging.Logger;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.integration.probes.ItConfigurationBean;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+import net.roboconf.integration.tests.internal.parametrized.IMessagingConfiguration;
 
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
@@ -77,7 +77,7 @@ public final class ItUtils {
 	/**
 	 * @return a non-null list of options to run Karaf from this test
 	 */
-	public static List<Option> getBaseOptionsAsList( ItConfigurationBean bean ) {
+	public static List<Option> getBaseOptionsAsList( ItConfigurationBean bean, IMessagingConfiguration messagingConfiguration ) {
 
 		MavenArtifactUrlReference karafUrl = maven()
 				.groupId( bean.getGroupId())
@@ -96,18 +96,8 @@ public final class ItUtils {
 		options.add( keepRuntimeFolder());
 		options.add( systemTimeout( getTimeout()));
 
-		// Use RabbitMQ by default?
-		if( bean.useRabbit()) {
-			options.add( editConfigurationFilePut(
-					  "etc/net.roboconf.dm.configuration.cfg",
-					  "messaging-type",
-					  "rabbitmq" ));
-
-			options.add( editConfigurationFilePut(
-					  "etc/net.roboconf.agent.configuration.cfg",
-					  "messaging-type",
-					  "rabbitmq" ));
-		}
+		// Which messaging configuration?
+		options.addAll( messagingConfiguration.options());
 
 		// Logs management
 		if( bean.areLogsHidden()) {
@@ -131,21 +121,32 @@ public final class ItUtils {
 	/**
 	 * @return a non-null array of options to run Karaf from this test
 	 */
-	public static Option[] getBaseOptions( ItConfigurationBean bean ) {
-		return asArray( getBaseOptionsAsList( bean ));
+	public static Option[] getBaseOptions( ItConfigurationBean bean, IMessagingConfiguration messagingConfiguration ) {
+		return asArray( getBaseOptionsAsList( bean, messagingConfiguration ));
 	}
 
 
 	/**
 	 * @param hideLogs true if logs should be hidden, false otherwise
+	 * @param messagingConfiguration a messaging configuration
 	 * @return a set of options to run agents in memory
 	 */
-	public static Option[] getOptionsForInMemory( boolean hideLogs ) {
+	public static Option[] getOptionsForInMemory( boolean hideLogs, IMessagingConfiguration messagingConfiguration ) {
+		return asArray( getOptionsForInMemoryAsList( hideLogs, messagingConfiguration ));
+	}
+
+
+	/**
+	 * @param hideLogs true if logs should be hidden, false otherwise
+	 * @param messagingConfiguration a messaging configuration
+	 * @return a set of options to run agents in memory
+	 */
+	public static List<Option> getOptionsForInMemoryAsList( boolean hideLogs, IMessagingConfiguration messagingConfiguration ) {
 
 		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm-with-agent-in-memory" );
 		bean.hideLogs( hideLogs );
 
-		List<Option> options = ItUtils.getBaseOptionsAsList( bean );
+		List<Option> options = ItUtils.getBaseOptionsAsList( bean, messagingConfiguration );
 		String roboconfVersion = ItUtils.findRoboconfVersion();
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
@@ -165,12 +166,7 @@ public final class ItUtils {
 				.version( roboconfVersion )
 				.start());
 
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
-				RabbitMqConstants.FACTORY_RABBITMQ));
-
-		return options.toArray( new Option[ options.size()]);
+		return options;
 	}
 
 

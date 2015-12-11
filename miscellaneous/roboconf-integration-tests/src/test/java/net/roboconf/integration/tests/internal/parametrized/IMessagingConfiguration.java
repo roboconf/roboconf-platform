@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,23 +23,16 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.probes;
+package net.roboconf.integration.tests.internal.parametrized;
 
-import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import java.util.List;
 
-import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 
 /**
- * A base class to run the DM's distribution.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class DmTest {
+public interface IMessagingConfiguration {
 
-	@Configuration
-	public Option[] config() throws Exception {
-		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm" );
-		return ItUtils.getBaseOptions( bean, new RabbitMqConfiguration());
-	}
+	List<Option> options();
 }

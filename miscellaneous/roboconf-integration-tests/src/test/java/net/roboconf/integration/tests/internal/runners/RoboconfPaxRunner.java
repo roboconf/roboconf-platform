@@ -23,16 +23,9 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal;
+package net.roboconf.integration.tests.internal.runners;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
-import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
-import net.roboconf.target.docker.internal.DockerTestUtils;
-import net.roboconf.target.docker.internal.DockerUtils;
 
 import org.junit.runner.Description;
 import org.junit.runner.notification.Failure;
@@ -40,15 +33,10 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.ops4j.pax.exam.junit.PaxExam;
 
-import com.github.dockerjava.api.DockerClient;
-
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RoboconfPaxRunnerWithDocker extends PaxExam {
-
-	public static final String RBCF = "roboconf";
-	private static final String IMG_NAME = "roboconf-it-test";
+public class RoboconfPaxRunner extends PaxExam {
 
 	private final Class<?> testClass;
 
@@ -58,7 +46,7 @@ public class RoboconfPaxRunnerWithDocker extends PaxExam {
 	 * @param klass
 	 * @throws InitializationError
 	 */
-	public RoboconfPaxRunnerWithDocker( Class<?> klass ) throws InitializationError {
+	public RoboconfPaxRunner( Class<?> klass ) throws InitializationError {
 		super( klass );
 		this.testClass = klass;
 	}
@@ -67,38 +55,12 @@ public class RoboconfPaxRunnerWithDocker extends PaxExam {
 	@Override
 	public void run( RunNotifier notifier ) {
 
-		// We need RabbitMQ
-		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning("127.0.0.1", RBCF, RBCF)) {
+		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning()) {
 			Description description = Description.createSuiteDescription( this.testClass );
-			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running or does not accept the 'roboconf' user." )));
+			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running." )));
 
 		} else {
-			// We also need Docker
-			boolean dockerIsHere = false;
-			try {
-				DockerTestUtils.checkDockerIsInstalled();
-				dockerIsHere = true;
-
-				Map<String,String> targetProperties = new HashMap<String,String> ();
-				targetProperties.put( "docker.endpoint", "http://localhost:" + DockerTestUtils.DOCKER_TCP_PORT );
-				targetProperties.put( "docker.image", IMG_NAME );
-
-				DockerClient client = DockerUtils.createDockerClient( targetProperties );
-				DockerUtils.deleteImageIfItExists( IMG_NAME, client );
-
-			} catch( Exception e ) {
-				Logger logger = Logger.getLogger( getClass().getName());
-				Utils.logException( logger, e );
-			}
-
-			// If it is here, run the test
-			if( dockerIsHere ) {
-				super.run( notifier );
-
-			} else {
-				Description description = Description.createSuiteDescription( this.testClass );
-				notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "Docker is not installed or not configured correctly." )));
-			}
+			super.run( notifier );
 		}
 	}
 }

@@ -45,7 +45,8 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
+import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -85,7 +86,7 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 	public Option[] config() throws Exception {
 
 		List<Option> options = new ArrayList<> ();
-		options.addAll( Arrays.asList( ItUtils.getOptionsForInMemory( true )));
+		options.addAll( Arrays.asList( ItUtils.getOptionsForInMemory( true, new RabbitMqConfiguration())));
 
 		// Store the application's location
 		File resourcesDirectory = TestUtils.findTestFile( "/app-with-external-exports" );

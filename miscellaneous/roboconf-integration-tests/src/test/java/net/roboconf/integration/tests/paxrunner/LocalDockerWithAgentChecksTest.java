@@ -52,7 +52,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.RoboconfPaxRunnerWithDocker;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunnerWithDocker;
 import net.roboconf.target.docker.internal.DockerTestUtils;
 
 import org.junit.Assert;

@@ -33,7 +33,7 @@ import net.roboconf.integration.tests.internal.ItUtils;
 public class ItConfigurationBean {
 
 	private String groupId, artifactId, version, directoryName;
-	private boolean hideLogs, useRabbit;
+	private boolean hideLogs;
 
 
 	/**
@@ -50,7 +50,6 @@ public class ItConfigurationBean {
 		this.groupId = "net.roboconf";
 		this.version = ItUtils.findRoboconfVersion();
 		this.hideLogs = true;
-		this.useRabbit = true;
 	}
 
 	/**
@@ -122,22 +121,6 @@ public class ItConfigurationBean {
 	 */
 	public ItConfigurationBean hideLogs( boolean hideLogs ) {
 		this.hideLogs = hideLogs;
-		return this;
-	}
-
-	/**
-	 * @return true if RabbitMQ must be used, false otherwise
-	 */
-	public boolean useRabbit() {
-		return this.useRabbit;
-	}
-
-	/**
-	 * @param useRabbit true if RabbitMQ must be used, false otherwise
-	 * @return this
-	 */
-	public ItConfigurationBean useRabbit( boolean useRabbit ) {
-		this.useRabbit = useRabbit;
 		return this;
 	}
 

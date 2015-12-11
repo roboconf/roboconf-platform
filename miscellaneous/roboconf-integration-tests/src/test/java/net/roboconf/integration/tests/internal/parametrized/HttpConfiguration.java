@@ -23,44 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal;
+package net.roboconf.integration.tests.internal.parametrized;
 
-import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
-import org.junit.runner.Description;
-import org.junit.runner.notification.Failure;
-import org.junit.runner.notification.RunNotifier;
-import org.junit.runners.model.InitializationError;
-import org.ops4j.pax.exam.junit.PaxExam;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.ops4j.pax.exam.Option;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RoboconfPaxRunner extends PaxExam {
-
-	private final Class<?> testClass;
-
-
-	/**
-	 * Constructor.
-	 * @param klass
-	 * @throws InitializationError
-	 */
-	public RoboconfPaxRunner( Class<?> klass ) throws InitializationError {
-		super( klass );
-		this.testClass = klass;
-	}
-
+public class HttpConfiguration implements IMessagingConfiguration {
 
 	@Override
-	public void run( RunNotifier notifier ) {
+	public List<Option> options() {
 
-		if( ! RabbitMqTestUtils.checkRabbitMqIsRunning()) {
-			Description description = Description.createSuiteDescription( this.testClass );
-			notifier.fireTestAssumptionFailed( new Failure( description, new Exception( "RabbitMQ is not running." )));
+		// For HTTP, we only need to specify we use this messaging type.
+		List<Option> options = new ArrayList<> ();
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"messaging-type",
+				"http" ));
 
-		} else {
-			super.run( notifier );
-		}
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.dm.configuration.cfg",
+				"messaging-type",
+				"http" ));
+
+		return options;
 	}
 }

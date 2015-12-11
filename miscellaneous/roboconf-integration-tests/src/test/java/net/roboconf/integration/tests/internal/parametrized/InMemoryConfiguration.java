@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,23 +23,38 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.probes;
+package net.roboconf.integration.tests.internal.parametrized;
 
-import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
-import org.ops4j.pax.exam.Configuration;
+import java.util.ArrayList;
+import java.util.List;
+
+import net.roboconf.messaging.api.MessagingConstants;
+
 import org.ops4j.pax.exam.Option;
 
 /**
- * A base class to run the DM's distribution.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class DmTest {
+public class InMemoryConfiguration implements IMessagingConfiguration {
 
-	@Configuration
-	public Option[] config() throws Exception {
-		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm" );
-		return ItUtils.getBaseOptions( bean, new RabbitMqConfiguration());
+	@Override
+	public List<Option> options() {
+
+		// We only need to specify we use this messaging type.
+		// There is no configuration to specify.
+		List<Option> options = new ArrayList<> ();
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"messaging-type",
+				MessagingConstants.FACTORY_IN_MEMORY ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.dm.configuration.cfg",
+				"messaging-type",
+				MessagingConstants.FACTORY_IN_MEMORY ));
+
+		return options;
 	}
 }
