@@ -36,17 +36,18 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PullImageCmd;
+import com.github.dockerjava.api.model.Image;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ManifestUtils;
 import net.roboconf.core.utils.MavenUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
 import net.roboconf.target.api.TargetException;
-
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.model.Image;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -55,6 +56,7 @@ import com.github.dockerjava.api.model.Image;
 public class DockerMachineConfigurator implements MachineConfigurator {
 
 	private static final String DEFAULT_IMG_NAME = "generated.by.roboconf";
+
 	DockerClient dockerClient;
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -118,7 +120,6 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 
 		String generateAS = this.targetProperties.get( DockerHandler.GENERATE_IMAGE );
 		boolean generate = Boolean.parseBoolean( generateAS );
-
 		Image img = DockerUtils.findImageByIdOrByTag( fixedImageId, this.dockerClient );
 		if( generate && img == null )
 			createImage( fixedImageId );
@@ -221,16 +222,50 @@ public class DockerMachineConfigurator implements MachineConfigurator {
 			if( Utils.isEmptyOrWhitespaces( agentPackageUrl )) {
 				throw new TargetException(
 						"No Maven package was found for the agent distribution "
-						+ mavenVersion + " (guessing the agent package URL failed).", exception );
+								+ mavenVersion + " (guessing the agent package URL failed).", exception );
 			}
 		}
 
 		// Verify the base image exists, if any
 		String baseImageRef = this.targetProperties.get( DockerHandler.BASE_IMAGE );
-		if( ! Utils.isEmptyOrWhitespaces( baseImageRef )) {
-			Image baseImage = DockerUtils.findImageByIdOrByTag( baseImageRef, this.dockerClient );
-			if( baseImage == null )
-				throw new TargetException( "Base image '" + baseImageRef + "' was not found. Image generation is not possible." );
+		if(!Utils.isEmptyOrWhitespaces(baseImageRef)) {
+			String downloadImage = this.targetProperties.get( DockerHandler.DOWNLOAD_IMAGE_BASE);
+			String imageRegistry = Utils.getValue( this.targetProperties,DockerHandler.DOWNLOAD_IMAGE_REGISTRY ,DockerHandler.DEFAULT_IMAGE_REGISTRY );
+
+			List<String> imageInfos = Utils.splitNicely(baseImageRef, ":");
+			String tmpImageRepository = imageInfos.get(0);
+			String tmpImageTag = imageInfos.size() == 2 ? imageInfos.get(1) : "" ;
+			String imageRepository = Utils.isEmptyOrWhitespaces(tmpImageRepository) ? DockerHandler.DEFAULT_IMAGE_REPOSITORY :  tmpImageRepository;
+			String imageTag = Utils.isEmptyOrWhitespaces(tmpImageTag) ? DockerHandler.DEFAULT_IMAGE_TAG : tmpImageTag;
+
+			Image baseImage = DockerUtils.findImageByIdOrByTag( imageTag, this.dockerClient );
+			if( baseImage == null ) {
+				// Download an image from a registry
+				if(Boolean.parseBoolean(downloadImage)) {
+					this.logger.fine( "Asking Docker to download an image from a registry" );
+					PullImageCmd cmd  = this.dockerClient.pullImageCmd(imageRegistry);
+					cmd.withRepository(imageRepository);
+					cmd.withTag(imageTag);
+					long startTime = System.currentTimeMillis();
+					cmd.exec();
+					long endTime = System.currentTimeMillis();
+					//Wait the end of downloading
+					try {
+						Thread.sleep(endTime-startTime+20000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					baseImage = DockerUtils.findImageByIdOrByTag(imageTag, this.dockerClient);
+					if( baseImage == null)
+						throw new TargetException( "Base image '" + baseImageRef + "' was not found. Image generation is not possible." );
+				} else {
+					throw new TargetException( "No base image can't be downloaded because the parameter docker.download.base.image is set to false");
+				}
+			}
+		} else {
+			this.logger.fine( "No reference to base image" );
 		}
 
 		// Build the packages list.

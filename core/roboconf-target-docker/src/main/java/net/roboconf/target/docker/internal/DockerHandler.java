@@ -29,17 +29,18 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.target.api.AbstractThreadedTargetHandler;
-import net.roboconf.target.api.TargetException;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.model.Container;
 
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
+import net.roboconf.target.api.TargetException;
+
 /**
  * @author Pierre-Yves Gibello - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
+ * @author Amadou Diarra -  Université Joseph Fourier
  */
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
@@ -63,6 +64,12 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 	static final String ADDITIONAL_PACKAGES = "docker.additional.packages";
 	static final String ADDITIONAL_DEPLOY = "docker.additional.deploy";
+	static final String DOWNLOAD_IMAGE_BASE = "docker.download.base.image";
+	static final String DOWNLOAD_IMAGE_REGISTRY = "docker.image.registry";
+
+	static final String DEFAULT_IMAGE_REGISTRY = "registry.hub.docker.com/ubuntu";
+	static final String DEFAULT_IMAGE_TAG = "latest";
+	static final String DEFAULT_IMAGE_REPOSITORY = "ubuntu";
 
 	// Docker exec markers for Roboconf configuration injection.
 	static final String MARKER_MESSAGING_CONFIGURATION = "$msgConfig$";
@@ -106,7 +113,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
-	throws TargetException {
+					throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
 
@@ -148,7 +155,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	 */
 	@Override
 	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
-	throws TargetException {
+			throws TargetException {
 
 		boolean result = false;
 		try {
