@@ -149,6 +149,11 @@ public abstract class HttpTestUtils {
 		}
 
 
+		public boolean isServerStopped() {
+			return this.server.isStopped();
+		}
+
+
 		public boolean isRunning() {
 			return this.running;
 		}

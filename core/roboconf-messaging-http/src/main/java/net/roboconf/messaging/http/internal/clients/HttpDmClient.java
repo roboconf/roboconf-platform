@@ -30,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import net.roboconf.messaging.api.extensions.AbstractRoutingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
@@ -54,7 +55,7 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 
 	private final Map<String,Session> ctxToSession;
 	private LinkedBlockingQueue<Message> messageQueue;
-	private int openConnections = 0;
+	private final AtomicInteger openConnections = new AtomicInteger( 0 );
 
 	private String httpServerIp;
 	private int httpPort;
@@ -75,7 +76,7 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 
 		// There is only one instance per Http Factory.
 		// So, we do not want to close the connection someone is still using it.
-		this.openConnections ++;
+		this.openConnections.incrementAndGet();
 		super.openConnection();
 	}
 
@@ -85,8 +86,7 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 
 		// There is only one instance per Http Factory.
 		// So, we do not want to close the connection someone is still using it.
-		this.openConnections --;
-		if( this.openConnections == 0 )
+		if( this.openConnections.decrementAndGet() == 0 )
 			super.closeConnection();
 	}
 

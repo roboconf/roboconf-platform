@@ -176,10 +176,34 @@ public class HttpClientFactory implements IMessagingClientFactory {
 	}
 
 
-
+	/**
+	 * Stops all the agent clients.
+	 * <p>
+	 * Invoked by iPojo.
+	 * </p>
+	 */
 	public void stop() {
 		this.logger.fine( "iPojo unregisters a servlet for HTTP messaging." );
 		resetClients( true );
+	}
+
+
+	/**
+	 * Stops all the clients (agents and DM).
+	 * <p>
+	 * Mostly for tests.
+	 * </p>
+	 */
+	void stopAll() {
+
+		try {
+			this.dmClient.closeConnection();
+			stop();
+
+		} catch( Throwable t ) {
+			this.logger.warning( "An error occurred while closing the connection of the DM client." );
+			Utils.logException( this.logger, new RuntimeException( t ));
+		}
 	}
 
 

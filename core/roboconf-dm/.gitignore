@@ -15,7 +15,7 @@
 /.settings
 
 # Remains of some builds
-#instances
+instances
 
 #idea
 *.iml

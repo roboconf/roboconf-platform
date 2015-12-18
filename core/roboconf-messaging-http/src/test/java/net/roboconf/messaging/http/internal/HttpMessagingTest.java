@@ -33,6 +33,7 @@ import net.roboconf.messaging.http.HttpConstants;
 import net.roboconf.messaging.http.internal.HttpTestUtils.WebServer;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,39 +43,58 @@ import org.junit.Test;
  */
 public class HttpMessagingTest extends AbstractMessagingTest {
 
+	private static final int ATTEMPTS = 30;
 	private WebServer webServerRunnable;
+	private HttpClientFactory factory;
 
 
 	@Before
 	public void registerHttpFactory() throws InterruptedException {
 
 		// Register a new factory
-		final HttpClientFactory factory = new HttpClientFactory();
-		factory.setHttpServerIp( HttpConstants.DEFAULT_IP );
-		factory.setHttpPort( HttpTestUtils.TEST_PORT );
+		this.factory = new HttpClientFactory();
+		this.factory.setHttpServerIp( HttpConstants.DEFAULT_IP );
+		this.factory.setHttpPort( HttpTestUtils.TEST_PORT );
 
 		this.registry = new MessagingClientFactoryRegistry();
-		this.registry.addMessagingClientFactory( factory );
+		this.registry.addMessagingClientFactory( this.factory );
 
 		// Launch a new web server
-		this.webServerRunnable = new WebServer( factory );
+		this.webServerRunnable = new WebServer( this.factory );
 		Thread webServerThread = new Thread( this.webServerRunnable, "Test for Roboconf HTTP Messaging" );
 		webServerThread.start();
 
-		for( int i=0; i<15; i++ ) {
+		// For diagnostic
+		for( int i=0; i<ATTEMPTS; i++ ) {
 			if( this.webServerRunnable.isRunning()
 					&& this.webServerRunnable.isServerStarted())
 				break;
 
 			Thread.sleep( 50 );
 		}
+
+		Assert.assertTrue( this.webServerRunnable.isServerStarted());
 	}
 
 
 	@After
 	public void stopWebServer() throws IOException, InterruptedException {
 
+		// Stop all the clients
+		this.factory.stopAll();
+
+		// Stop the web server
 		this.webServerRunnable.stop();
+
+		// For diagnostic
+		for( int i=0; i<ATTEMPTS; i++ ) {
+			if( this.webServerRunnable.isServerStopped())
+				break;
+
+			Thread.sleep( 50 );
+		}
+
+		Assert.assertTrue( this.webServerRunnable.isServerStopped());
 	}
 
 
@@ -136,7 +156,7 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 
 	@Override
 	protected long getDelay() {
-		return 100;
+		return 300;
 	}
 
 

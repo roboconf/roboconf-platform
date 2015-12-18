@@ -26,6 +26,7 @@
 package net.roboconf.messaging.api.internal.client.in_memory;
 
 import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
 
 import org.junit.Before;
@@ -40,8 +41,8 @@ public class InMemoryMessagingTest extends AbstractMessagingTest {
 	@Before
 	public void registerRabbitMqFactory() {
 
-		final InMemoryClientFactory factory = new InMemoryClientFactory();
-		this.registry.addMessagingClientFactory(factory);
+		this.registry = new MessagingClientFactoryRegistry();
+		this.registry.addMessagingClientFactory( new InMemoryClientFactory());
 	}
 
 

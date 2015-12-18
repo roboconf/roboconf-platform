@@ -250,6 +250,7 @@ public abstract class AbstractMessagingTest {
 		agentClient_11.listenToTheDm( ListenerCommand.START );
 		agentClient_12.listenToTheDm( ListenerCommand.START );
 		agentClient_2.listenToTheDm( ListenerCommand.START );
+		Thread.sleep( getDelay());
 
 		// The DM sends messages
 		dmClient.sendMessageToAgent( app1, app1_root1, new MsgCmdSetScopedInstance( app1_root1 ));
@@ -368,6 +369,7 @@ public abstract class AbstractMessagingTest {
 		// MySQL publishes its exports but nobody is listening.
 		mySqlClient.publishExports( mysql );
 		Thread.sleep( getDelay());
+
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, apacheMessages.size());
 		Assert.assertEquals( 0, tomcatMessages.size());
@@ -377,6 +379,8 @@ public abstract class AbstractMessagingTest {
 		// Let's re-export MySQL.
 		otherClient.listenToExportsFromOtherAgents( ListenerCommand.START, other );
 		tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.START, tomcat );
+		Thread.sleep( getDelay());
+
 		mySqlClient.publishExports( mysql );
 		Thread.sleep( getDelay());
 
@@ -395,6 +399,7 @@ public abstract class AbstractMessagingTest {
 
 		// Let's publish an unknown facet. Nobody should receive it.
 		mySqlClient.publishExports( mysql, "an-unknown-facet-or-component-name" );
+		Thread.sleep( getDelay());
 
 		Assert.assertEquals( 0, mySqlMessages.size());
 		Assert.assertEquals( 0, apacheMessages.size());
@@ -416,6 +421,8 @@ public abstract class AbstractMessagingTest {
 		// Tomcat publishes its exports.
 		apacheClient.listenToExportsFromOtherAgents( ListenerCommand.START, apache );
 		mySqlClient.listenToExportsFromOtherAgents( ListenerCommand.START, mysql );
+		Thread.sleep( getDelay());
+
 		tomcatClient.publishExports( tomcat );
 		Thread.sleep( getDelay());
 
@@ -469,6 +476,8 @@ public abstract class AbstractMessagingTest {
 		// MySQL publishes (again) its exports
 		// But this time, Tomcat does not listen anymore
 		tomcatClient.listenToExportsFromOtherAgents( ListenerCommand.STOP, tomcat );
+		Thread.sleep( getDelay());
+
 		mySqlClient.publishExports( mysql );
 		Thread.sleep( getDelay());
 
@@ -659,8 +668,10 @@ public abstract class AbstractMessagingTest {
 
 		// Now, instance2 is listening.
 		client2.listenToRequestsFromOtherAgents( ListenerCommand.START, instance2 );
+		Thread.sleep( getDelay());
 		client1.requestExportsFromOtherAgents( instance1 );
 		Thread.sleep( getDelay());
+
 		Assert.assertEquals( 0, messages1.size());
 		Assert.assertEquals( 2, messages2.size());
 		Assert.assertEquals( MsgCmdRequestImport.class, messages2.get( 0 ).getClass());
@@ -677,6 +688,8 @@ public abstract class AbstractMessagingTest {
 		// instance1 should receive the notification it has sent. It will be up to the agent to ignore it.
 		client2.listenToRequestsFromOtherAgents( ListenerCommand.STOP, instance2 );
 		client1.listenToRequestsFromOtherAgents( ListenerCommand.START, instance1 );
+		Thread.sleep( getDelay());
+
 		client1.requestExportsFromOtherAgents( instance1 );
 		Thread.sleep( getDelay());
 
