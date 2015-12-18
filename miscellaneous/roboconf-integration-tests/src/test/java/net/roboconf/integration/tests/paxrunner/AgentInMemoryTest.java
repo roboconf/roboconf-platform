@@ -45,6 +45,7 @@ import net.roboconf.integration.tests.internal.parametrized.HttpConfiguration;
 import net.roboconf.integration.tests.internal.parametrized.IMessagingConfiguration;
 import net.roboconf.integration.tests.internal.parametrized.InMemoryConfiguration;
 import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 
 import org.apache.felix.ipojo.ComponentInstance;
 import org.apache.felix.ipojo.Factory;
@@ -56,7 +57,6 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.junit.impl.ParameterizedProbeRunner;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
 import org.ops4j.pax.exam.util.Filter;
@@ -75,7 +75,8 @@ import org.ops4j.pax.exam.util.Filter;
  *
  * @author Vincent Zurczak - Linagora
  */
-@RunWith( ParameterizedProbeRunner.class )
+//@RunWith( ParameterizedProbeRunner.class )
+@RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerMethod.class )
 public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
@@ -101,7 +102,7 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 	}
 
 
-	@Parameters( name= "{method} {index}: agent in memory with {1}" )
+	@Parameters( name = "{method} {index}: agent in memory with {1}" )
 	public static List<Object[]> getParameters() {
 
 		return Arrays.asList( new Object[][] {
@@ -114,16 +115,28 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 	/**
 	 * Constructor.
+	 * FIXME: to remove once we switch to the ParameterizedProbeRunner runner.
+	 */
+	public AgentInMemoryTest() {
+		this.messagingConfiguration = new RabbitMqConfiguration();
+	}
+
+
+	/**
+	 * Constructor.
 	 * <p>
 	 * Invoked by the runner with parameters.
 	 * </p>
 	 *
 	 * @param messagingConfiguration a non-null messaging configuration
 	 * @param messagingType
+	 * FIXME: to un-comment once we switch to the ParameterizedProbeRunner runner (1! constructor).
 	 */
+	/*
 	public AgentInMemoryTest( IMessagingConfiguration messagingConfiguration, String messagingType ) {
 		this.messagingConfiguration = messagingConfiguration;
 	}
+	*/
 
 
 	@Override

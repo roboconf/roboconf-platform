@@ -40,7 +40,8 @@
 	<name>Roboconf :: Integration Tests</name>
 
 	<properties>
-		<pax.exam.version>4.8.0-SNAPSHOT</pax.exam.version>
+		<!-- FIXME: switch to 4.8.0 once VZ's patch is accepted -->
+		<pax.exam.version>4.7.0</pax.exam.version>
 		<pax.url.aether.version>2.4.1</pax.url.aether.version>
 	</properties>
 	
