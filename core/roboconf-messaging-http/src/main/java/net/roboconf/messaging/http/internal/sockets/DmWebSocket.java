@@ -30,8 +30,8 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.http.internal.HttpClientFactory;
+import net.roboconf.messaging.http.internal.messages.HttpSerializationUtils;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
@@ -43,7 +43,16 @@ public class DmWebSocket implements WebSocketListener {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private Session session;
+	private final HttpClientFactory httpClientFactory;
 
+
+	/**
+	 * Constructor.
+	 * @param httpClientFactory
+	 */
+	public DmWebSocket( HttpClientFactory httpClientFactory ) {
+		this.httpClientFactory = httpClientFactory;
+	}
 
 
 	@Override
@@ -51,10 +60,10 @@ public class DmWebSocket implements WebSocketListener {
 
 		this.logger.finest( "A binary message was received." );
 		try {
-			Message msg = SerializationUtils.deserializeObject( payload, Message.class );
+			Message msg = HttpSerializationUtils.deserializeObject( payload );
 			this.logger.finest( "The received message was deserialized as an instance of " + msg.getClass().getSimpleName());
 
-			HttpClientFactory.DM_CLIENT.processReceivedMessage( msg, this.session );
+			this.httpClientFactory.getDmClient().processReceivedMessage( msg, this.session );
 
 		} catch( ClassNotFoundException | IOException e ) {
 			this.logger.severe( "A message could not be deserialized. => " + e.getClass().getSimpleName());

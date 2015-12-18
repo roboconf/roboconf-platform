@@ -301,9 +301,6 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	}
 
 
-
-
-
 	@Override
 	public void stopAll( ManagedApplication ma, Instance instance ) throws IOException {
 

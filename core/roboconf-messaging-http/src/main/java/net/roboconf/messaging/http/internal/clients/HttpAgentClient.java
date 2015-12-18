@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.api.extensions.AbstractRoutingClient;
@@ -56,6 +57,7 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
  */
 public class HttpAgentClient implements IMessagingClient {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final WeakReference<ReconfigurableClient<?>> reconfigurable;
 	private final String dmIp;
 	private final int dmPort;
@@ -106,18 +108,21 @@ public class HttpAgentClient implements IMessagingClient {
 	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
 		this.applicationName = applicationName;
 		this.scopedInstancePath = scopedInstancePath;
+		this.logger.fine( "Owner properties changed to " + getId());
 	}
 
 
 	@Override
 	public void openConnection() throws IOException {
 
+		this.logger.info( getId() + " is opening a connection to the DM." );
 		try {
 			this.client = new WebSocketClient();
 			this.socket = new AgentWebSocket( this.messageQueue );
 			this.client.start();
 
 			URI dmUri = new URI( "ws://" + this.dmIp + ":" + this.dmPort + HttpConstants.DM_SOCKET_PATH );
+			this.logger.fine( "Connecting to " + dmUri );
 			ClientUpgradeRequest request = new ClientUpgradeRequest();
 
 			Future<Session> fut = this.client.connect( this.socket, dmUri, request );
@@ -132,6 +137,7 @@ public class HttpAgentClient implements IMessagingClient {
 	@Override
 	public void closeConnection() throws IOException {
 
+		this.logger.info( getId() + " is closing its connection to the DM." );
 		try {
 			if( this.client != null )
 				this.client.stop();
@@ -158,6 +164,7 @@ public class HttpAgentClient implements IMessagingClient {
 	public void subscribe( MessagingContext ctx ) throws IOException {
 
 		String ownerId = AbstractRoutingClient.buildOwnerId( RecipientKind.AGENTS, this.applicationName, this.scopedInstancePath );
+		this.logger.fine( getId() + " is about to subscribe to " + ownerId );
 		sendToTheDm( new SubscriptionMessage( ownerId, ctx, true ));
 	}
 
@@ -166,6 +173,7 @@ public class HttpAgentClient implements IMessagingClient {
 	public void unsubscribe( MessagingContext ctx ) throws IOException {
 
 		String ownerId = AbstractRoutingClient.buildOwnerId( RecipientKind.AGENTS, this.applicationName, this.scopedInstancePath );
+		this.logger.fine( getId() + " is about to unsubscribe to " + ownerId );
 		sendToTheDm( new SubscriptionMessage( ownerId, ctx, false ));
 	}
 
@@ -174,6 +182,7 @@ public class HttpAgentClient implements IMessagingClient {
 	public void publish( MessagingContext ctx, Message msg ) throws IOException {
 
 		String ownerId = AbstractRoutingClient.buildOwnerId( RecipientKind.AGENTS, this.applicationName, this.scopedInstancePath );
+		this.logger.fine( getId() + " is about to publish a message (" + msg + ") to " + ownerId );
 		sendToTheDm( new HttpMessage( ownerId, msg, ctx ));
 	}
 
@@ -190,5 +199,10 @@ public class HttpAgentClient implements IMessagingClient {
 		byte[] rawData = SerializationUtils.serializeObject( message );
 		ByteBuffer data = ByteBuffer.wrap( rawData );
 		this.clientSession.getRemote().sendBytes( data );
+	}
+
+
+	String getId() {
+		return this.scopedInstancePath + " @ " + this.applicationName;
 	}
 }

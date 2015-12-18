@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.utils.SerializationUtils;
+import net.roboconf.messaging.http.internal.messages.HttpSerializationUtils;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketListener;
@@ -60,7 +60,7 @@ public class AgentWebSocket implements WebSocketListener {
 
 		this.logger.finest( "A binary message was received." );
 		try {
-			Message msg = SerializationUtils.deserializeObject( payload, Message.class );
+			Message msg = HttpSerializationUtils.deserializeObject( payload );
 			this.logger.finest( "The received message was deserialized as an instance of " + msg.getClass().getSimpleName());
 			this.messageQueue.add( msg );
 

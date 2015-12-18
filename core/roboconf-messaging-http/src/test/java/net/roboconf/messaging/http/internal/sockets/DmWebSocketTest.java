@@ -25,9 +25,10 @@
 
 package net.roboconf.messaging.http.internal.sockets;
 
-import net.roboconf.messaging.http.internal.sockets.DmWebSocket;
+import net.roboconf.messaging.http.internal.HttpClientFactory;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -37,7 +38,8 @@ public class DmWebSocketTest {
 	@Test
 	public void testBasics() {
 
-		DmWebSocket socket = new DmWebSocket();
+		HttpClientFactory httpClientFatory = Mockito.mock( HttpClientFactory.class );
+		DmWebSocket socket = new DmWebSocket( httpClientFatory );
 		socket.onWebSocketError( null );
 		socket.onWebSocketText( "ignored" );
 	}
@@ -46,7 +48,8 @@ public class DmWebSocketTest {
 	@Test
 	public void testBinaryMessageInError() {
 
-		DmWebSocket socket = new DmWebSocket();
+		HttpClientFactory httpClientFatory = Mockito.mock( HttpClientFactory.class );
+		DmWebSocket socket = new DmWebSocket( httpClientFatory );
 		socket.onWebSocketBinary( new byte[1], 0, 1 );
 	}
 }

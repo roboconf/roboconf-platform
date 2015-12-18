@@ -36,9 +36,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.extensions.AbstractRoutingClient.RoutingContext;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
@@ -46,30 +49,41 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.http.HttpConstants;
 import net.roboconf.messaging.http.internal.clients.HttpAgentClient;
 import net.roboconf.messaging.http.internal.clients.HttpDmClient;
-import net.roboconf.messaging.http.internal.clients.HttpDmClient.HttpRoutingContext;
 import net.roboconf.messaging.http.internal.sockets.DmWebSocketServlet;
 
+import org.eclipse.jetty.websocket.api.Session;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.http.HttpService;
 
 /**
  * Messaging client factory for HTTP.
+ * <p>
+ * In this factory, there is a singleton instance of the client for
+ * the DM. This is because of the web sockets. We do not want to lost
+ * and/or confuse message routing. So, there is no reconfiguration for
+ * this client and we keep a single instance.
+ * </p>
+ *
  * @author Pierre-Yves Gibello - Linagora
+ * @author Vincent Zurczak - Linagora
  */
 public class HttpClientFactory implements IMessagingClientFactory {
 
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class HttpRoutingContext extends RoutingContext {
+		public final Map<String,Session> ctxToSession = new ConcurrentHashMap<> ();
+	}
+
 	// The created CLIENTS.
 	// References to the CLIENTS are *weak*, so we never prevent their garbage collection.
-	public final Set<HttpAgentClient> agentClients = Collections.newSetFromMap( new WeakHashMap<HttpAgentClient,Boolean> ());
+	final Set<HttpAgentClient> agentClients = Collections.newSetFromMap( new WeakHashMap<HttpAgentClient,Boolean> ());
 
-	// We must always have one DM client. Indeed, messaging between agents relies on this client.
-	// Besides, it does not need any reconfiguration. And it greatly simplifies unit tests BTW.
-	// This client is only used when a servlet is registered in the HTTP service.
-	public static final HttpDmClient DM_CLIENT = new HttpDmClient();
-
-	// The logger
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final HttpRoutingContext routingContext = new HttpRoutingContext();
+	private final HttpDmClient dmClient = new HttpDmClient( this.routingContext );
 
 	// Injected by iPojo
 	BundleContext bundleContext;
@@ -80,17 +94,45 @@ public class HttpClientFactory implements IMessagingClientFactory {
 
 
 
-	// Setters
+	/**
+	 * Constructor.
+	 */
+	public HttpClientFactory() {
+		// nothing
+	}
+
+
+	/**
+	 * Constructor with the bundle context.
+	 * <p>
+	 * This constructor is automatically invoked by iPojo.
+	 * </p>
+	 *
+	 * @param context
+	 */
+	public HttpClientFactory( BundleContext bundleContext ) {
+		this.bundleContext = bundleContext;
+	}
+
+
+	// Getters and Setters
 
 	public synchronized void setHttpServerIp( final String serverIp ) {
 		this.httpServerIp = serverIp;
+		this.dmClient.setHttpServerIp( serverIp );
 		this.logger.finer( "Server IP set to " + this.httpServerIp );
 	}
 
 
 	public synchronized void setHttpPort( final int port ) {
 		this.httpPort = port;
+		this.dmClient.setHttpPort( port );
 		this.logger.finer( "Server port set to " + this.httpPort );
+	}
+
+
+	public HttpDmClient getDmClient() {
+		return this.dmClient;
 	}
 
 
@@ -123,10 +165,13 @@ public class HttpClientFactory implements IMessagingClientFactory {
 			this.logger.fine( "iPojo registers a servlet for HTTP messaging." );
 
 			Hashtable<String,String> initParams = new Hashtable<String,String> ();
-			initParams.put( "servlet-name", "roboconf-http-messaging" );
+			initParams.put( "servlet-name", "Roboconf DM (HTTP messaging)" );
 
-			DmWebSocketServlet messagingServlet = new DmWebSocketServlet();
+			DmWebSocketServlet messagingServlet = new DmWebSocketServlet( this );
 			this.httpService.registerServlet( HttpConstants.DM_SOCKET_PATH, messagingServlet, initParams, null );
+
+		} else {
+			this.logger.warning( "Roboconf's DM bundle was not found. No servlet will be registered." );
 		}
 	}
 
@@ -141,9 +186,10 @@ public class HttpClientFactory implements IMessagingClientFactory {
 	@Override
 	public IMessagingClient createClient( ReconfigurableClient<?> parent ) {
 
+		this.logger.fine( "Creating a new HTTP client with owner = " + parent.getOwnerKind());
 		IMessagingClient client;
 		if( parent.getOwnerKind() == RecipientKind.DM ) {
-			client = DM_CLIENT;
+			client = this.dmClient;
 
 		} else {
 			synchronized( this ) {
@@ -166,7 +212,7 @@ public class HttpClientFactory implements IMessagingClientFactory {
 	@Override
 	public boolean setConfiguration( final Map<String, String> configuration ) {
 
-		boolean valid = HttpConstants.FACTORY_HTTP.equals( configuration.get( MESSAGING_TYPE_PROPERTY ));
+		boolean valid = HttpConstants.FACTORY_HTTP.equals( configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
 		if( valid ) {
 			boolean hasChanged = false;
 
@@ -202,13 +248,8 @@ public class HttpClientFactory implements IMessagingClientFactory {
 
 
 	public void reconfigure() {
+		this.logger.fine( "HTTP clients are about to be reconfigured." );
 		resetClients( false );
-	}
-
-
-	public static void reset() {
-		DM_CLIENT.getRoutingContext().subscriptions.clear();
-		((HttpRoutingContext) DM_CLIENT.getRoutingContext()).ctxToSession.clear();
 	}
 
 

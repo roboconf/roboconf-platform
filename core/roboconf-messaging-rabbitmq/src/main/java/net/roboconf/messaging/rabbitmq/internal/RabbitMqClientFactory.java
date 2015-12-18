@@ -40,6 +40,7 @@ import java.util.WeakHashMap;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
@@ -87,6 +88,8 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 	 * Reconfigures the client (invoked by iPojo).
 	 */
 	public void reconfigure() {
+		this.logger.fine( "Rabbit MQ clients are about to be reconfigured." );
+
 		// Set the properties for all created clients.
 		resetClients( false );
 	}
@@ -142,6 +145,7 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 
 	@Override
 	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
+		this.logger.fine( "Creating a new Rabbit MQ client with owner = " + parent.getOwnerKind());
 
 		// The parent cannot be null. A NPE MUST be thrown otherwise.
 		// That's what the RabbitMqClient constructor does. There is unit test for this.
@@ -159,7 +163,7 @@ public class RabbitMqClientFactory implements IMessagingClientFactory {
 	public boolean setConfiguration( final Map<String, String> configuration ) {
 
 		boolean result = false;;
-		final String type = configuration.get( MESSAGING_TYPE_PROPERTY) ;
+		final String type = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ) ;
 		if(( result = RabbitMqConstants.FACTORY_RABBITMQ.equals( type ))) {
 
 			// Get the new values

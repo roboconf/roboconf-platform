@@ -76,7 +76,7 @@ import org.junit.Assert;
  */
 public abstract class AbstractMessagingTest {
 
-	protected final MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+	protected MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
 	private final List<ReconfigurableClient<?>> clients = new ArrayList<> ();
 
 

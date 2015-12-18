@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 
-import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -61,6 +60,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInsta
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -146,6 +146,7 @@ public class Manager_BasicsTest {
 	public void testStop_invalidConfiguration() throws Exception {
 
 		this.manager = new Manager();
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 
 		Timer timer = TestUtils.getInternalField( this.manager, "timer", Timer.class );
@@ -259,6 +260,7 @@ public class Manager_BasicsTest {
 	public void testRemoveInstance_unauthorized() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
@@ -271,6 +273,7 @@ public class Manager_BasicsTest {
 	public void testRemoveInstance_success_1() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
@@ -296,6 +299,7 @@ public class Manager_BasicsTest {
 	public void testRemoveInstance_success_2() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
@@ -319,6 +323,7 @@ public class Manager_BasicsTest {
 	public void testRemoveInstance_invalidConfiguration() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
@@ -326,6 +331,7 @@ public class Manager_BasicsTest {
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		this.manager = new Manager();
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
@@ -403,7 +409,9 @@ public class Manager_BasicsTest {
 
 	@Test
 	public void testLoadApplicationTemplate_invalidConfiguration() throws Exception {
+
 		this.manager = new Manager();
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 
 		// No messaging is configured
@@ -559,6 +567,7 @@ public class Manager_BasicsTest {
 	public void testResynchronizeAgents_withConnection() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		this.manager.instancesMngr().resynchronizeAgents( ma );
@@ -583,6 +592,7 @@ public class Manager_BasicsTest {
 	public void testResynchronizeAgents_noConnection() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 
 		this.managerWrapper.getMessagingClient().closeConnection();
@@ -597,11 +607,14 @@ public class Manager_BasicsTest {
 	public void testResynchronizeAgents_invalidConfiguration() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+
 		ManagedApplication ma = new ManagedApplication( app );
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		this.manager = new Manager();
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 		this.manager.instancesMngr().resynchronizeAgents( ma );
 	}
@@ -611,6 +624,7 @@ public class Manager_BasicsTest {
 	public void testMsgNotifHeartbeat_requestModel() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
@@ -634,6 +648,7 @@ public class Manager_BasicsTest {
 	public void testMsgNotifHeartbeat_requestModel_nonRoot() throws Exception {
 
 		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
 		ManagedApplication ma = new ManagedApplication( app );
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 
@@ -665,6 +680,7 @@ public class Manager_BasicsTest {
 	public void applicationsShouldBeDeletedEvenWhenNoMessagingServer() throws Exception {
 
 		this.manager = new Manager();
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.managerWrapper = new TestManagerWrapper( this.manager );
 
 		TestApplication app = new TestApplication();

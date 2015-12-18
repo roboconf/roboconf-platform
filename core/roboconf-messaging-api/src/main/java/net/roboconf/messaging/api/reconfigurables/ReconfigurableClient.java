@@ -332,8 +332,15 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	/**
 	 * @return a messaging client (never null)
 	 */
-	protected synchronized IMessagingClient getMessagingClient() {
-		return this.messagingClient != null ? this.messagingClient : this.dismissClient;
+	protected IMessagingClient getMessagingClient() {
+
+		IMessagingClient result;
+		synchronized( this ) {
+			result = this.messagingClient != null ? this.messagingClient : this.dismissClient;
+		}
+
+		//this.logger.finest( "The messaging client is of type " + result.getClass().getSimpleName());
+		return result;
 	}
 
 

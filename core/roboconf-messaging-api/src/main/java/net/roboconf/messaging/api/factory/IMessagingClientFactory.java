@@ -27,7 +27,6 @@ package net.roboconf.messaging.api.factory;
 
 import java.util.Map;
 
-import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
@@ -38,19 +37,8 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 public interface IMessagingClientFactory {
 
 	/**
-	 * Service property indicating the type of messaging this factory provides.
-	 * <p>
-	 * This property is <em>mandatory</em>, its value is <em>immutable</em> and must be an non-null {@code String}.
-	 * </p>
-	 * @see #getType()
-	 * @see MessagingConstants#MESSAGING_TYPE_PROPERTY
-	 */
-	String MESSAGING_TYPE_PROPERTY = MessagingConstants.MESSAGING_TYPE_PROPERTY;
-
-	/**
 	 * Get the type of messaging this factory supports.
 	 * @return the type of messaging this factory supports.
-	 * @see #MESSAGING_TYPE_PROPERTY
 	 */
 	String getType();
 

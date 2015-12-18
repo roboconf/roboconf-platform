@@ -25,6 +25,11 @@
 
 package net.roboconf.messaging.http.internal.sockets;
 
+import net.roboconf.messaging.http.internal.HttpClientFactory;
+
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeRequest;
+import org.eclipse.jetty.websocket.servlet.ServletUpgradeResponse;
+import org.eclipse.jetty.websocket.servlet.WebSocketCreator;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 
@@ -34,10 +39,42 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 public class DmWebSocketServlet extends WebSocketServlet {
 
 	private static final long serialVersionUID = 1359420439902184795L;
+	private final transient HttpClientFactory httpClientFactory;
+
+
+	/**
+	 * Constructor.
+	 * @param httpClientFactory
+	 */
+	public DmWebSocketServlet( HttpClientFactory httpClientFactory ) {
+		this.httpClientFactory = httpClientFactory;
+	}
 
 
 	@Override
 	public void configure( WebSocketServletFactory factory ) {
-		factory.register( DmWebSocket.class );
+		factory.setCreator( new DmWebSocketCreator( this.httpClientFactory ));
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	private static class DmWebSocketCreator implements WebSocketCreator {
+		private final HttpClientFactory httpClientFactory;
+
+		/**
+		 * Constructor.
+		 * @param httpClientFactory
+		 */
+		public DmWebSocketCreator( HttpClientFactory httpClientFactory ) {
+			this.httpClientFactory = httpClientFactory;
+		}
+
+
+		@Override
+		public Object createWebSocket( ServletUpgradeRequest req, ServletUpgradeResponse resp ) {
+			return new DmWebSocket( this.httpClientFactory );
+		}
 	}
 }

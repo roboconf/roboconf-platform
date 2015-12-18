@@ -27,6 +27,7 @@ package net.roboconf.messaging.http.internal;
 
 import java.io.IOException;
 
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
 import net.roboconf.messaging.http.HttpConstants;
 import net.roboconf.messaging.http.internal.HttpTestUtils.WebServer;
@@ -47,8 +48,16 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 	@Before
 	public void registerHttpFactory() throws InterruptedException {
 
+		// Register a new factory
+		final HttpClientFactory factory = new HttpClientFactory();
+		factory.setHttpServerIp( HttpConstants.DEFAULT_IP );
+		factory.setHttpPort( HttpTestUtils.TEST_PORT );
+
+		this.registry = new MessagingClientFactoryRegistry();
+		this.registry.addMessagingClientFactory( factory );
+
 		// Launch a new web server
-		this.webServerRunnable = new WebServer();
+		this.webServerRunnable = new WebServer( factory );
 		Thread webServerThread = new Thread( this.webServerRunnable, "Test for Roboconf HTTP Messaging" );
 		webServerThread.start();
 
@@ -59,15 +68,6 @@ public class HttpMessagingTest extends AbstractMessagingTest {
 
 			Thread.sleep( 50 );
 		}
-
-		// Register a new factory
-		final HttpClientFactory factory = new HttpClientFactory();
-		factory.setHttpServerIp( HttpConstants.DEFAULT_IP );
-		factory.setHttpPort( HttpTestUtils.TEST_PORT );
-		this.registry.addMessagingClientFactory( factory );
-
-		// Clean remaining artifacts
-		HttpClientFactory.reset();
 	}
 
 

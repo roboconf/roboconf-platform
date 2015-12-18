@@ -4,20 +4,16 @@
 		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
 		xmlns="org.apache.felix.ipojo">
 	
-	<!-- A component for the RabbitMQ factory (messaging implementation) -->
+	<!-- A component for the HTTP factory (messaging implementation) -->
 	<component classname="net.roboconf.messaging.http.internal.HttpClientFactory" name="roboconf-messaging-client-factory-http" public="false">
-		<provides>
-			<!-- Static property: not attached to a field or method. -->
-			<property name="net.roboconf.messaging" value="http" type="java.lang.String" />
-		</provides>
-		
 		<requires field="httpService" optional="false" />
-		<requires field="bundleContext" optional="false" />
-		
+		<provides />
+
+		<callback transition="validate" method="start"/>
 		<callback transition="invalidate" method="stop"/>
 		<properties pid="net.roboconf.messaging.http" updated="reconfigure">
 			<property name="net.roboconf.messaging.http.server.port" method="setHttpPort" value="8081" />
-			<property name="net.roboconf.messaging.http.server.ip" method="setHttpServerIp" value="127.0.0.1" />
+			<property name="net.roboconf.messaging.http.server.ip" method="setHttpServerIp" />
 		</properties>
 	</component>
 	

@@ -72,8 +72,6 @@ public class HttpClientFactoryTest {
 		this.factory.setHttpServerIp( HttpConstants.DEFAULT_IP );
 		this.factory.setHttpPort( HttpConstants.DEFAULT_PORT );
 		this.registry.addMessagingClientFactory( this.factory );
-
-		this.factory.agentClients.clear();
 	}
 
 
@@ -96,11 +94,12 @@ public class HttpClientFactoryTest {
 		final HttpDmClient client1 = HttpTestUtils.getMessagingClientDm(client);
 		final Map<String,String> config1 = client1.getConfiguration();
 		Assert.assertEquals( HttpConstants.FACTORY_HTTP, config1.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
-		Assert.assertEquals( 1, config1.size());
+		Assert.assertEquals( HttpConstants.DEFAULT_IP, config1.get( HttpConstants.HTTP_SERVER_IP ));
+		Assert.assertEquals( String.valueOf( HttpConstants.DEFAULT_PORT ), config1.get( HttpConstants.HTTP_SERVER_PORT ));
+		Assert.assertEquals( 3, config1.size());
 
 		// Reconfigure the factory.
-		// The DM client will not be impacted. It is the messaging server.
-		this.factory.setHttpServerIp("localhost");
+		this.factory.setHttpServerIp( "192.168.1.18" );
 		this.factory.setHttpPort( 10234 );
 		this.factory.reconfigure();
 
@@ -108,9 +107,11 @@ public class HttpClientFactoryTest {
 		final HttpDmClient client2 = HttpTestUtils.getMessagingClientDm(client);
 		Assert.assertSame(client1, client2);
 
-		final Map<String, String> config2 = client2.getConfiguration();
+		final Map<String,String> config2 = client2.getConfiguration();
 		Assert.assertEquals( HttpConstants.FACTORY_HTTP, config2.get( MessagingConstants.MESSAGING_TYPE_PROPERTY ));
-		Assert.assertEquals( 1, config2.size());
+		Assert.assertEquals( "192.168.1.18", config2.get( HttpConstants.HTTP_SERVER_IP ));
+		Assert.assertEquals( "10234", config2.get( HttpConstants.HTTP_SERVER_PORT ));
+		Assert.assertEquals( 3, config2.size());
 	}
 
 

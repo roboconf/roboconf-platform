@@ -47,17 +47,17 @@ public class MessagingClientFactoryRegistry {
 	/**
 	 * The messaging client factories.
 	 */
-	private final ConcurrentHashMap<String, IMessagingClientFactory> factories = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, IMessagingClientFactory> factories = new ConcurrentHashMap<> ();
 
 	/**
 	 * The messaging client factory listeners.
 	 */
-	private final ConcurrentLinkedQueue<MessagingClientFactoryListener> listeners = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedQueue<MessagingClientFactoryListener> listeners = new ConcurrentLinkedQueue<> ();
 
 	/**
 	 * The logger.
 	 */
-	private final Logger logger = Logger.getLogger(this.getClass().getName());
+	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
 

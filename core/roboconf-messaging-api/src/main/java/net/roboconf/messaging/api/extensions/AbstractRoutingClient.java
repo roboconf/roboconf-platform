@@ -60,7 +60,7 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	 * type and such an organization would have had side effects.
 	 * </p>
 	 * <p>
-	 * So, replaced static map by a class.
+	 * So, we replaced the static maps by a class.
 	 * Each messaging factory should extend this class and pass it as an
 	 * arguments to the agents it creates. This way, messaging clients that
 	 * extends this class are isolated from other implementations.
@@ -95,12 +95,14 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 
 	@Override
 	public void closeConnection() throws IOException {
+		this.logger.fine( getOwnerId() + " is closing its connection." );
 		this.connected.set( false );
 	}
 
 
 	@Override
 	public void openConnection() throws IOException {
+		this.logger.fine( getOwnerId() + " is opening a connection." );
 		this.connected.set( true );
 	}
 
@@ -114,6 +116,7 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	@Override
 	public void deleteMessagingServerArtifacts( Application application ) throws IOException {
 
+		this.logger.fine( getOwnerId() + " is deleting server artifacts for " + application );
 		getStaticContextToObject().remove( this.ownerId );
 		this.routingContext.subscriptions.remove( this.ownerId );
 	}
@@ -127,12 +130,14 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 
 	@Override
 	public void subscribe( MessagingContext ctx ) throws IOException {
+		this.logger.fine( getOwnerId() + " is subscribing to " + buildOwnerId( ctx ));
 		subscribe( this.ownerId, ctx );
 	}
 
 
 	@Override
 	public void unsubscribe( MessagingContext ctx ) throws IOException {
+		this.logger.fine( getOwnerId() + " is unsubscribing to " + buildOwnerId( ctx ));
 		unsubscribe( this.ownerId, ctx );
 	}
 
@@ -140,8 +145,11 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	@Override
 	public void publish( MessagingContext ctx, Message msg ) throws IOException {
 
-		if( ! canProceed())
+		this.logger.fine( getOwnerId() + " is publishing message (" + msg + ") to " + buildOwnerId( ctx ));
+		if( ! canProceed()) {
+			this.logger.fine( getOwnerId() + " is dropping message (" + msg + ") for " + buildOwnerId( ctx ));
 			return;
+		}
 
 		for( Map.Entry<String,Set<MessagingContext>> entry : this.routingContext.subscriptions.entrySet()) {
 			if( ! entry.getValue().contains( ctx ))
@@ -163,7 +171,7 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 
 		// Update the client's owner ID
 		String newOwnerId = buildOwnerId( ownerKind, applicationName, scopedInstancePath );
-		this.logger.fine( "New owner ID in in-memory client: " + newOwnerId );
+		this.logger.fine( "New owner ID in " + getMessagingType() + " client: " + newOwnerId );
 		if( this.ownerId == null) {
 			this.ownerId = newOwnerId;
 
@@ -230,6 +238,18 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 		}
 
 		return sb.toString().trim();
+	}
+
+
+	/**
+	 * Builds a unique ID.
+	 * @param ownerKind the owner kind (not null)
+	 * @param applicationName the application name (can be null)
+	 * @param scopedInstancePath the scoped instance path (can be null)
+	 * @return a non-null string
+	 */
+	public static String buildOwnerId( MessagingContext ctx ) {
+		return ctx == null ? null : buildOwnerId( ctx.getKind(), ctx.getApplicationName(), ctx.getComponentOrFacetName());
 	}
 
 

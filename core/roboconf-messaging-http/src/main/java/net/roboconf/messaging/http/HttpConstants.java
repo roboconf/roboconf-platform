@@ -62,10 +62,10 @@ public interface HttpConstants {
 	/**
 	 * The default port (Karaf's one).
 	 */
-	int DEFAULT_PORT = 8081;
+	int DEFAULT_PORT = 8181;
 
 	/**
 	 * The path of the socket registered by the DM.
 	 */
-	String DM_SOCKET_PATH = "/messaging-http";
+	String DM_SOCKET_PATH = "/roboconf-messaging-http";
 }

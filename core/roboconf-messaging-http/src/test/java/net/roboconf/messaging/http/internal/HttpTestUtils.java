@@ -91,6 +91,16 @@ public abstract class HttpTestUtils {
 
 		Server server;
 		boolean running;
+		HttpClientFactory httpClientFactory;
+
+
+		/**
+		 * Constructor.
+		 */
+		public WebServer( HttpClientFactory httpClientFactory ) {
+			this.httpClientFactory = httpClientFactory;
+		}
+
 
 		@Override
 		public void run() {
@@ -105,7 +115,7 @@ public abstract class HttpTestUtils {
 				// This is also known as the handler tree (in jetty speak)
 				ServletContextHandler context = new ServletContextHandler( ServletContextHandler.SESSIONS );
 				context.setContextPath( "/" );
-				context.addServlet( new ServletHolder( new DmWebSocketServlet()), HttpConstants.DM_SOCKET_PATH );
+				context.addServlet( new ServletHolder( new DmWebSocketServlet( this.httpClientFactory )), HttpConstants.DM_SOCKET_PATH );
 
 				this.server.setHandler( context );
 				this.server.start();

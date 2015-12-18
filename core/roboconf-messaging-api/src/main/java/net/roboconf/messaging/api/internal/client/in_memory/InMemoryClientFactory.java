@@ -54,7 +54,7 @@ public class InMemoryClientFactory implements IMessagingClientFactory {
 
 	@Override
 	public boolean setConfiguration( final Map<String, String> configuration ) {
-		String messagingType = configuration.get(IMessagingClientFactory.MESSAGING_TYPE_PROPERTY);
+		String messagingType = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
 		return MessagingConstants.FACTORY_IN_MEMORY.equals( messagingType );
 	}
 }
