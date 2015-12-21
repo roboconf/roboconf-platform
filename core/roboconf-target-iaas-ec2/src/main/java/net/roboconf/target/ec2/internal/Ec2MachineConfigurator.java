@@ -135,41 +135,22 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 			if( checkVmIsStarted())
 				this.state = State.ASSOCIATE_ELASTIC_IP;
 
-		if( this.state == State.ASSOCIATE_ELASTIC_IP )
+		if( this.state == State.ASSOCIATE_ELASTIC_IP ) {
 			if( associateElasticIp())
 				this.state = State.CREATE_VOLUME;
-		
-		if(volumeRequested()) {
-			// Lookup volume, according to its snapshot ID or Name tag.
-			String volumeSnapshotOrId = lookupVolume(this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID));
-			if(volumeSnapshotOrId == null) volumeSnapshotOrId = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+		}
 
-			if( this.state == State.CREATE_VOLUME ) {
-				int size = DEFAULT_VOLUME_SIZE;
-				try {
-					size = Integer.parseInt(this.targetProperties.get(Ec2Constants.VOLUME_SIZE));
-				} catch(Exception nfe) {
-					size = DEFAULT_VOLUME_SIZE;
-				}
-				if(size <= 0) size = DEFAULT_VOLUME_SIZE;
-				
-				if(volumeSnapshotOrId != null && volumeCreated(volumeSnapshotOrId)) {
-					this.volumeId = volumeSnapshotOrId;
-					this.state = State.ATTACH_VOLUME;
-				} else if((this.volumeId = createVolume(volumeSnapshotOrId, size)) != null) {
-					this.state = State.ATTACH_VOLUME;
-				}
+		if( this.state == State.CREATE_VOLUME ) {
+			if(! volumeRequested()) {
+				this.state = State.COMPLETE;
+			} else if(createOrReuseVolume()) {
+				this.state = State.ATTACH_VOLUME;
 			}
+		}
 
-			if( this.state == State.ATTACH_VOLUME ) {
-				if(volumeCreated(this.volumeId)) {
-					String name = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
-					if(Utils.isEmptyOrWhitespaces(name)) name = "Created by Roboconf for " + this.tagName;
-					tagResource(this.volumeId, name);
-					if(attachVolume(this.volumeId))
-						this.state = State.COMPLETE;
-				}
-			}
+		if( this.state == State.ATTACH_VOLUME ) {
+			if(volumeCreated(this.volumeId) && attachVolume(this.volumeId))
+				this.state = State.COMPLETE;
 		}
 
 		return this.state == State.COMPLETE;
@@ -196,17 +177,18 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 * @return true if the tag was done, false otherwise
 	 */
 	private boolean tagResource(String resourceId, String tagName) {
+		boolean result = false;
 		if(! Utils.isEmptyOrWhitespaces(tagName)) {
 			Tag tag = new Tag( "Name", tagName );
 			CreateTagsRequest ctr = new CreateTagsRequest(Collections.singletonList(resourceId), Arrays.asList( tag ));
 			try {
 				this.ec2Api.createTags( ctr );
 			} catch(Exception e) {
-				logger.info("Error tagging resource " + resourceId + " with name=" + tagName + ": " + e);
+				logger.warning("Error tagging resource " + resourceId + " with name=" + tagName + ": " + e);
 			}
-			return true;
+			result = true;
 		}
-		return false;
+		return result;
 	}
 
 	/**
@@ -236,21 +218,49 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 		DescribeInstancesResult disresult = this.ec2Api.describeInstances( dis );
 		// Obtain availability zone (for later use, eg. volume attachment).
+		// Necessary if no availability zone is specified in configuration
+		// (because volumes must be attached to instances in the same availability zone).
 		this.availabilityZone = disresult.getReservations().get(0).getInstances().get(0).getPlacement().getAvailabilityZone();
 		return "running".equalsIgnoreCase( disresult.getReservations().get(0).getInstances().get(0).getState().getName());
 	}
 	
 	/**
-	 * Check whether EBS volume creation/attachment is requested.
+	 * Checks whether EBS volume creation/attachment is requested.
 	 * @return true if requested, false otherwise
 	 */
 	private boolean volumeRequested() {
 		return Boolean.parseBoolean(this.targetProperties.get(Ec2Constants.USE_BLOCK_STORAGE));
 	}
-	
+
 	/**
-	 * Create volume for EBS.
-	 * @return volume ID if successful creation, null otherwise (or if nothing to do)
+	 * Performs all steps necessary to create or reuse volume, as specified in configuration.
+	 * @return true when volume creation is done
+	 */
+	private boolean createOrReuseVolume() {
+		// Lookup volume, according to its snapshot ID or Name tag.
+		String volumeSnapshotOrId = lookupVolume(this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID));
+		if(volumeSnapshotOrId == null) volumeSnapshotOrId = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+
+		int size = DEFAULT_VOLUME_SIZE;
+		try {
+			size = Integer.parseInt(this.targetProperties.get(Ec2Constants.VOLUME_SIZE));
+		} catch(Exception nfe) {
+			size = DEFAULT_VOLUME_SIZE;
+		}
+		if(size <= 0) size = DEFAULT_VOLUME_SIZE;
+
+		if(volumeSnapshotOrId != null && volumeCreated(volumeSnapshotOrId)) {
+			this.volumeId = volumeSnapshotOrId;
+		} else {
+			this.volumeId = createVolume(volumeSnapshotOrId, size);
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Creates volume for EBS.
+	 * @return volume ID of newly created volume
 	 */
 	private String createVolume(String snapshotId, int size) {
 		String volumeType = this.targetProperties.get(Ec2Constants.VOLUME_TYPE);
@@ -270,32 +280,32 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	}
 	
 	/**
-	 * Check whether volume is created.
+	 * Checks whether volume is created.
 	 * @param volumeId the EBS volume ID
 	 * @return true if volume created, false otherwise
 	 */
 	private boolean volumeCreated(String volumeId) {
 		DescribeVolumesRequest dvs = new DescribeVolumesRequest();
-        ArrayList<String> volumeIds = new ArrayList<String>();
-        volumeIds.add(volumeId);
-        dvs.setVolumeIds(volumeIds);
-        DescribeVolumesResult dvsresult = null;
-        try {
-        	dvsresult = this.ec2Api.describeVolumes(dvs);
-        } catch(Exception e) {
-        	dvsresult = null;
-        }
-        
-        return dvsresult != null && "available".equals(dvsresult.getVolumes().get(0).getState());
+		ArrayList<String> volumeIds = new ArrayList<String>();
+		volumeIds.add(volumeId);
+		dvs.setVolumeIds(volumeIds);
+		DescribeVolumesResult dvsresult = null;
+		try {
+			dvsresult = this.ec2Api.describeVolumes(dvs);
+		} catch(Exception e) {
+			dvsresult = null;
+		}
+
+		return dvsresult != null && "available".equals(dvsresult.getVolumes().get(0).getState());
 	}
 
 	/**
-	 * Lookup volume, by ID or Name tag.
+	 * Looks up volume, by ID or Name tag.
 	 * @param volumeIdOrName the EBS volume ID or Name tag
 	 * @return The volume ID of 1st matching volume found, null if no volume found
 	 */
 	private String lookupVolume(String volumeIdOrName) {
-		
+		String ret = null;
 		if(! Utils.isEmptyOrWhitespaces(volumeIdOrName)) {
 			// Lookup by volume ID
 			DescribeVolumesRequest dvs = new DescribeVolumesRequest(Collections.singletonList(volumeIdOrName));
@@ -317,20 +327,24 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 				}
 			}
 
-			if(dvsresult == null || dvsresult.getVolumes() == null || dvsresult.getVolumes().size() < 1)
-				return null;
-			else
-				return dvsresult.getVolumes().get(0).getVolumeId();
+			if(dvsresult != null && dvsresult.getVolumes() != null && dvsresult.getVolumes().size() > 0)
+				ret = dvsresult.getVolumes().get(0).getVolumeId();
 		}
 		
-		return null;
+		return ret;
 	}
 
 	/**
-	 * Attach volume for EBS.
+	 * Attaches volume for EBS.
 	 * @return true if successful attachment, or nothing to do. false otherwise
 	 */
 	private boolean attachVolume(String volumeId) {
+		// Give a name to the volume before attaching
+		String name = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+		if(Utils.isEmptyOrWhitespaces(name)) name = "Created by Roboconf for " + this.tagName;
+		tagResource(volumeId, name);
+
+		// Attach volume now
 		String mountPoint = this.targetProperties.get(Ec2Constants.VOLUME_MOUNTPOINT);
 		if(Utils.isEmptyOrWhitespaces(mountPoint)) mountPoint = "/dev/sdf";
 
@@ -342,7 +356,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		try {
 			this.ec2Api.attachVolume(attachRequest);
 		} catch(Exception e) {
-			logger.info("EBS Volume attachment error: " + e);
+			logger.warning("EBS Volume attachment error: " + e);
 		}
 
 		// Set deleteOnTermination flag ?
