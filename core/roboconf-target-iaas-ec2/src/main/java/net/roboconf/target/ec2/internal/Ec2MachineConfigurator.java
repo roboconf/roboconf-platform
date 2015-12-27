@@ -26,6 +26,7 @@
 package net.roboconf.target.ec2.internal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -38,9 +39,18 @@ import net.roboconf.target.api.TargetException;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AssociateAddressRequest;
+import com.amazonaws.services.ec2.model.AttachVolumeRequest;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeRequest;
+import com.amazonaws.services.ec2.model.CreateVolumeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeVolumesRequest;
+import com.amazonaws.services.ec2.model.DescribeVolumesResult;
+import com.amazonaws.services.ec2.model.EbsInstanceBlockDeviceSpecification;
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.ec2.model.InstanceBlockDeviceMappingSpecification;
+import com.amazonaws.services.ec2.model.ModifyInstanceAttributeRequest;
 import com.amazonaws.services.ec2.model.Tag;
 
 /**
@@ -63,18 +73,20 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public enum State {
-		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, ASSOCIATE_STORAGE, COMPLETE
+		UNKNOWN_VM, TAG_VM, RUNNING_VM, ASSOCIATE_ELASTIC_IP, CREATE_VOLUME, ATTACH_VOLUME, COMPLETE
 	}
 
 	private final Instance scopedInstance;
 	private final String machineId, tagName;
+	private String availabilityZone;
+	private String volumeId = null;
 	private final Map<String,String> targetProperties;
 	private final Logger logger = Logger.getLogger( getClass().getName());
-
+	
 	private AmazonEC2 ec2Api;
 	private State state = State.UNKNOWN_VM;
 
-
+	private static int DEFAULT_VOLUME_SIZE = 2;
 
 	/**
 	 * Constructor.
@@ -89,20 +101,19 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		this.targetProperties = targetProperties;
 		this.tagName = tagName;
 		this.scopedInstance = scopedInstance;
+		
+		this.availabilityZone = targetProperties.get(Ec2Constants.AVAILABILITY_ZONE);
 	}
-
 
 	@Override
 	public Instance getScopedInstance() {
 		return this.scopedInstance;
 	}
 
-
 	@Override
 	public void close() throws IOException {
 		// nothing
 	}
-
 
 	@Override
 	public boolean configure() throws TargetException {
@@ -114,25 +125,36 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 			if( checkVmIsKnown())
 				this.state = State.TAG_VM;
 
+		// We cannot tag directly after the VM creation. See #197.
+		// We need it to be known by all the EC2 components.
 		if( this.state == State.TAG_VM )
-			if( tagVm())
+			if( tagResource(this.machineId, this.tagName))
 				this.state = State.RUNNING_VM;
 
 		if( this.state == State.RUNNING_VM )
 			if( checkVmIsStarted())
 				this.state = State.ASSOCIATE_ELASTIC_IP;
 
-		if( this.state == State.ASSOCIATE_ELASTIC_IP )
+		if( this.state == State.ASSOCIATE_ELASTIC_IP ) {
 			if( associateElasticIp())
-				this.state = State.ASSOCIATE_STORAGE;
+				this.state = State.CREATE_VOLUME;
+		}
 
-		if( this.state == State.ASSOCIATE_STORAGE )
-			if( associateStorage())
+		if( this.state == State.CREATE_VOLUME ) {
+			if(! volumeRequested()) {
 				this.state = State.COMPLETE;
+			} else if(createOrReuseVolume()) {
+				this.state = State.ATTACH_VOLUME;
+			}
+		}
+
+		if( this.state == State.ATTACH_VOLUME ) {
+			if(volumeCreated(this.volumeId) && attachVolume(this.volumeId))
+				this.state = State.COMPLETE;
+		}
 
 		return this.state == State.COMPLETE;
 	}
-
 
 	/**
 	 * Checks whether a VM is known (i.e. all the EC2 parts know it).
@@ -148,22 +170,26 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 				&& disresult.getReservations().get( 0 ).getInstances().size() > 0;
 	}
 
-
 	/**
-	 * Tags the VM (basically, it gives it a name).
+	 * Tags the specified resource, eg. a VM or volume (basically, it gives it a name).
+	 * @param resourceId The ID of the resource to tag
+	 * @param tagName The resource's name
 	 * @return true if the tag was done, false otherwise
 	 */
-	private boolean tagVm() {
-
-		// We cannot tag directly after the VM creation. See #197.
-		// We need it to be known by all the EC2 components.
-		Tag tag = new Tag( "Name", this.tagName );
-		CreateTagsRequest ctr = new CreateTagsRequest(Collections.singletonList(this.machineId), Arrays.asList( tag ));
-		this.ec2Api.createTags( ctr );
-
-		return true;
+	private boolean tagResource(String resourceId, String tagName) {
+		boolean result = false;
+		if(! Utils.isEmptyOrWhitespaces(tagName)) {
+			Tag tag = new Tag( "Name", tagName );
+			CreateTagsRequest ctr = new CreateTagsRequest(Collections.singletonList(resourceId), Arrays.asList( tag ));
+			try {
+				this.ec2Api.createTags( ctr );
+			} catch(Exception e) {
+				logger.warning("Error tagging resource " + resourceId + " with name=" + tagName + ": " + e);
+			}
+			result = true;
+		}
+		return result;
 	}
-
 
 	/**
 	 * Associates an elastic IP with the VM.
@@ -180,8 +206,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 		return true;
 	}
-
-
+	
 	/**
 	 * Checks whether a VM is started or not (which is stronger than {@link #checkVmIsKnown()}).
 	 * @return true if the VM is started, false otherwise
@@ -192,23 +217,163 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		dis.setInstanceIds(Collections.singletonList(this.machineId));
 
 		DescribeInstancesResult disresult = this.ec2Api.describeInstances( dis );
+		// Obtain availability zone (for later use, eg. volume attachment).
+		// Necessary if no availability zone is specified in configuration
+		// (because volumes must be attached to instances in the same availability zone).
+		this.availabilityZone = disresult.getReservations().get(0).getInstances().get(0).getPlacement().getAvailabilityZone();
 		return "running".equalsIgnoreCase( disresult.getReservations().get(0).getInstances().get(0).getState().getName());
 	}
-
+	
+	/**
+	 * Checks whether EBS volume creation/attachment is requested.
+	 * @return true if requested, false otherwise
+	 */
+	private boolean volumeRequested() {
+		return Boolean.parseBoolean(this.targetProperties.get(Ec2Constants.USE_BLOCK_STORAGE));
+	}
 
 	/**
-	 * Associates storage with the VM.
-	 * @return true if there is nothing more to do about elastic IP configuration, false otherwise
+	 * Performs all steps necessary to create or reuse volume, as specified in configuration.
+	 * @return true when volume creation is done
 	 */
-	private boolean associateStorage() {
+	private boolean createOrReuseVolume() {
+		// Lookup volume, according to its snapshot ID or Name tag.
+		String volumeSnapshotOrId = lookupVolume(this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID));
+		if(volumeSnapshotOrId == null) volumeSnapshotOrId = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
 
-		String elasticIp = this.targetProperties.get( Ec2Constants.ELASTIC_IP );
-		if( ! Utils.isEmptyOrWhitespaces( elasticIp )) {
-			this.logger.fine( "Associating an elastic IP with the instance. IP = " + elasticIp );
-			AssociateAddressRequest associateAddressRequest = new AssociateAddressRequest( this.machineId, elasticIp );
-			this.ec2Api.associateAddress( associateAddressRequest );
+		int size = DEFAULT_VOLUME_SIZE;
+		try {
+			size = Integer.parseInt(this.targetProperties.get(Ec2Constants.VOLUME_SIZE));
+		} catch(Exception nfe) {
+			size = DEFAULT_VOLUME_SIZE;
+		}
+		if(size <= 0) size = DEFAULT_VOLUME_SIZE;
+
+		if(volumeSnapshotOrId != null && volumeCreated(volumeSnapshotOrId)) {
+			this.volumeId = volumeSnapshotOrId;
+		} else {
+			this.volumeId = createVolume(volumeSnapshotOrId, size);
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Creates volume for EBS.
+	 * @return volume ID of newly created volume
+	 */
+	private String createVolume(String snapshotId, int size) {
+		String volumeType = this.targetProperties.get(Ec2Constants.VOLUME_TYPE);
+		if(volumeType == null) volumeType = "standard";
+		
+		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
+		  .withAvailabilityZone(this.availabilityZone)
+		  .withVolumeType(volumeType)
+		  .withSize(size); // The size of the volume, in gigabytes.
+
+		// EC2 snapshot IDs start with "snap-"...
+		if(! Utils.isEmptyOrWhitespaces(snapshotId) && snapshotId.startsWith("snap-"))
+			createVolumeRequest.withSnapshotId(snapshotId);
+		
+		CreateVolumeResult createVolumeResult = this.ec2Api.createVolume(createVolumeRequest);
+		return createVolumeResult.getVolume().getVolumeId();
+	}
+	
+	/**
+	 * Checks whether volume is created.
+	 * @param volumeId the EBS volume ID
+	 * @return true if volume created, false otherwise
+	 */
+	private boolean volumeCreated(String volumeId) {
+		DescribeVolumesRequest dvs = new DescribeVolumesRequest();
+		ArrayList<String> volumeIds = new ArrayList<String>();
+		volumeIds.add(volumeId);
+		dvs.setVolumeIds(volumeIds);
+		DescribeVolumesResult dvsresult = null;
+		try {
+			dvsresult = this.ec2Api.describeVolumes(dvs);
+		} catch(Exception e) {
+			dvsresult = null;
+		}
+
+		return dvsresult != null && "available".equals(dvsresult.getVolumes().get(0).getState());
+	}
+
+	/**
+	 * Looks up volume, by ID or Name tag.
+	 * @param volumeIdOrName the EBS volume ID or Name tag
+	 * @return The volume ID of 1st matching volume found, null if no volume found
+	 */
+	private String lookupVolume(String volumeIdOrName) {
+		String ret = null;
+		if(! Utils.isEmptyOrWhitespaces(volumeIdOrName)) {
+			// Lookup by volume ID
+			DescribeVolumesRequest dvs = new DescribeVolumesRequest(Collections.singletonList(volumeIdOrName));
+			DescribeVolumesResult dvsresult = null;
+			
+			try {
+				dvsresult = this.ec2Api.describeVolumes(dvs);
+			} catch(Exception e) {
+				dvsresult = null;
+			}
+
+			// If not found, lookup by name
+			if(dvsresult == null || dvsresult.getVolumes() == null || dvsresult.getVolumes().size() < 1) {
+				dvs = new DescribeVolumesRequest().withFilters(new Filter().withName("tag:Name").withValues(volumeIdOrName));
+				try {
+					dvsresult = this.ec2Api.describeVolumes(dvs);
+				} catch(Exception e) {
+					dvsresult = null;
+				}
+			}
+
+			if(dvsresult != null && dvsresult.getVolumes() != null && dvsresult.getVolumes().size() > 0)
+				ret = dvsresult.getVolumes().get(0).getVolumeId();
+		}
+		
+		return ret;
+	}
+
+	/**
+	 * Attaches volume for EBS.
+	 * @return true if successful attachment, or nothing to do. false otherwise
+	 */
+	private boolean attachVolume(String volumeId) {
+		// Give a name to the volume before attaching
+		String name = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+		if(Utils.isEmptyOrWhitespaces(name)) name = "Created by Roboconf for " + this.tagName;
+		tagResource(volumeId, name);
+
+		// Attach volume now
+		String mountPoint = this.targetProperties.get(Ec2Constants.VOLUME_MOUNTPOINT);
+		if(Utils.isEmptyOrWhitespaces(mountPoint)) mountPoint = "/dev/sdf";
+
+		AttachVolumeRequest attachRequest = new AttachVolumeRequest()
+			.withInstanceId(this.machineId)
+			.withDevice(mountPoint)
+			.withVolumeId(volumeId);
+
+		try {
+			this.ec2Api.attachVolume(attachRequest);
+		} catch(Exception e) {
+			logger.warning("EBS Volume attachment error: " + e);
+		}
+
+		// Set deleteOnTermination flag ?
+		if(Boolean.parseBoolean(this.targetProperties.get(Ec2Constants.VOLUME_VOLATILE))) {
+			EbsInstanceBlockDeviceSpecification ebsSpecification = new EbsInstanceBlockDeviceSpecification()
+				.withVolumeId(volumeId)
+				.withDeleteOnTermination(true);
+			InstanceBlockDeviceMappingSpecification mappingSpecification = new InstanceBlockDeviceMappingSpecification()
+				.withDeviceName(mountPoint)
+				.withEbs(ebsSpecification);
+			ModifyInstanceAttributeRequest request = new ModifyInstanceAttributeRequest()
+				.withInstanceId(this.machineId)
+				.withBlockDeviceMappings(mappingSpecification);
+			this.ec2Api.modifyInstanceAttribute(request);
 		}
 
 		return true;
 	}
+
 }
