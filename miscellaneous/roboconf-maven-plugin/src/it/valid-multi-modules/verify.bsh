@@ -1,0 +1,11 @@
+import java.io.*;
+
+File zipFile = new File( basedir, "module-a/target/module-a-1.0.zip" );
+if( ! zipFile.isFile()) {
+    throw new FileNotFoundException( "Module A's ZIP file was not found." );
+}
+
+zipFile = new File( basedir, "module-b/target/module-b-1.0.zip" );
+if( ! zipFile.isFile()) {
+    throw new FileNotFoundException( "Module B's ZIP file was not found." );
+}

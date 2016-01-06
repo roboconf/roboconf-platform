@@ -28,7 +28,6 @@ package net.roboconf.maven;
 import java.io.File;
 
 import org.apache.maven.archiver.MavenArchiveConfiguration;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -49,9 +48,6 @@ public class PackageMojo extends AbstractMojo {
 
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
-
-	@Parameter( defaultValue = "${session}", readonly = true )
-	private MavenSession session;
 
 	@Component( role = Archiver.class, hint = "zip" )
 	private ZipArchiver zipArchiver;

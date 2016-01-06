@@ -26,19 +26,26 @@
 package net.roboconf.maven;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Map;
 
 import net.roboconf.core.Constants;
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.utils.Utils;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
-import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.impl.DefaultServiceLocator;
+import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -70,7 +77,7 @@ public class ResolveMojoTest extends AbstractTest {
 	}
 
 
-	@Test
+	@Test( expected = MojoExecutionException.class )
 	public void testWithInvalidRoboconfDependencies() throws Exception {
 
 		// Prepare the project
@@ -81,7 +88,8 @@ public class ResolveMojoTest extends AbstractTest {
 		Assert.assertTrue( baseDir.isDirectory());
 
 		AbstractMojo mojo = findMojo( projectName, "resolve" );
-		this.rule.setVariableValueToObject( mojo, "local", new TestMavenArtifactRepository());
+		this.rule.setVariableValueToObject( mojo, "repoSession", newRepositorySession());
+		this.rule.setVariableValueToObject( mojo, "repositories", new ArrayList<RemoteRepository>( 0 ));
 
 		// Add dependencies
 		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
@@ -105,68 +113,20 @@ public class ResolveMojoTest extends AbstractTest {
 		File targetDir = new File( baseDir, MavenPluginConstants.TARGET_MODEL_DIRECTORY + "/" + Constants.PROJECT_DIR_GRAPH );
 		Assert.assertFalse( targetDir.isDirectory());
 		mojo.execute();
-
-		Assert.assertFalse( targetDir.isDirectory());
 	}
 
 
-	@Test
-	public void testWithRoboconfDependency() throws Exception {
+	private RepositorySystemSession newRepositorySession() throws IOException {
 
-		// Prepare the project
-		final String projectName = "project--valid";
+		DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
+		RepositorySystem repositorySystem = locator.getService( RepositorySystem.class );
 
-		File baseDir = this.resources.getBasedir( projectName );
-		Assert.assertNotNull( baseDir );
-		Assert.assertTrue( baseDir.isDirectory());
+		LocalRepository localRepo = new LocalRepository( this.folder.newFolder());
 
-		AbstractMojo mojo = findMojo( projectName, "resolve" );
-		this.rule.setVariableValueToObject( mojo, "local", new TestMavenArtifactRepository());
+		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+		LocalRepositoryManager lrm = repositorySystem.newLocalRepositoryManager( session, localRepo );
+		session.setLocalRepositoryManager( lrm );
 
-		// Add dependencies
-		MavenProject project = (MavenProject) this.rule.getVariableValueFromObject( mojo, "project" );
-		project.setDependencyArtifacts( new HashSet<Artifact> ());
-
-		Artifact dep = new DefaultArtifact( "net.roboconf", "recipe", "0.2", "runtime", "jar", null, new DefaultArtifactHandler());
-		dep.setFile( zipRecipe());
-		project.getDependencyArtifacts().add( dep );
-
-		// Execute it
-		File targetDir = new File( baseDir, MavenPluginConstants.TARGET_MODEL_DIRECTORY + "/" + Constants.PROJECT_DIR_GRAPH );
-		Assert.assertFalse( targetDir.isDirectory());
-		mojo.execute();
-
-		Assert.assertTrue( targetDir.isDirectory());
-		Assert.assertEquals( 2, targetDir.listFiles().length );
-		Assert.assertTrue( new File( targetDir, "recipe" ).isDirectory());
-		Assert.assertTrue( new File( targetDir, "recipe/lamp.graph" ).isFile());
-		Assert.assertTrue( new File( targetDir, "MySQL" ).isDirectory());
-		Assert.assertTrue( new File( targetDir, "MySQL/readme.md" ).isFile());
-	}
-
-
-	private File zipRecipe() throws Exception {
-
-		File baseDir = this.resources.getBasedir( "recipe" );
-		Assert.assertNotNull( baseDir );
-		Assert.assertTrue( baseDir.isDirectory());
-
-		File targetZipFile = this.folder.newFile( "dep.zip" );
-		Map<String,String> entryToContent = Utils.storeDirectoryResourcesAsString( new File( baseDir, MavenPluginConstants.SOURCE_MODEL_DIRECTORY ));
-		TestUtils.createZipFile( entryToContent, targetZipFile );
-
-		return targetZipFile;
-	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	private static class TestMavenArtifactRepository extends MavenArtifactRepository {
-
-		@Override
-		public Artifact find( Artifact artifact ) {
-			return artifact;
-		}
+		return session;
 	}
 }

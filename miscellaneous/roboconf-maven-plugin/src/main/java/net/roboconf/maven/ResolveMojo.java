@@ -28,20 +28,28 @@ package net.roboconf.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 
 /**
  * The <strong>resolve</strong> mojo.
@@ -53,8 +61,14 @@ public class ResolveMojo extends AbstractMojo {
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
 
-	@Parameter( defaultValue = "${localRepository}", readonly = true, required = true )
-	private ArtifactRepository local;
+	@Component
+	private RepositorySystem repoSystem;
+
+	@Parameter( defaultValue = "${repositorySystemSession}", readonly = true, required = true )
+	private RepositorySystemSession repoSession;
+
+	@Parameter( defaultValue = "${project.remoteProjectRepositories}", readonly = true, required = true )
+	private List<RemoteRepository> repositories;
 
 
 
@@ -64,36 +78,47 @@ public class ResolveMojo extends AbstractMojo {
 		// Find the target directory
 		File completeAppDirectory = new File( this.project.getBuild().getOutputDirectory());
 
-		// Copy the resources in the target directory
+		// Copy the dependencies resources in the target directory
 		Set<Artifact> artifacts = new HashSet<Artifact> ();
 		if( this.project.getDependencyArtifacts() != null )
 			artifacts.addAll( this.project.getDependencyArtifacts());
 
 		for( Artifact unresolvedArtifact : artifacts ) {
 
-			// Find the artifact in the local repository.
-			Artifact art = this.local.find( unresolvedArtifact );
+			// Here, it becomes messy. We ask Maven to resolve the artifact's location.
+			// It may imply downloading it from a remote repository,
+			// searching the local repository or looking into the reactor's cache.
 
-			// If necessary, resolve JAR as ZIP files.
-			File file = art.getFile();
-			if( art.getFile() == null ) {
-				getLog().warn( "Artifact " + art.getArtifactId() + " has no attached file. Its content will not be copied in the target model directory." );
-				continue;
+			// To achieve this, we must use Aether
+			// (the dependency mechanism behind Maven).
+			String artifactId = unresolvedArtifact.getArtifactId();
+			org.eclipse.aether.artifact.Artifact aetherArtifact = new DefaultArtifact(
+					unresolvedArtifact.getGroupId(),
+					unresolvedArtifact.getArtifactId(),
+					unresolvedArtifact.getClassifier(),
+					unresolvedArtifact.getType(),
+					unresolvedArtifact.getVersion());
+
+			ArtifactRequest req = new ArtifactRequest().setRepositories( this.repositories ).setArtifact( aetherArtifact );
+			ArtifactResult resolutionResult;
+			try {
+				resolutionResult = this.repoSystem.resolveArtifact( this.repoSession, req );
+
+			} catch( ArtifactResolutionException e ) {
+				throw new MojoExecutionException( "Artifact " + artifactId + " could not be resolved.", e );
 			}
 
-			String fixedFileName = file.getName().replaceFirst( "(?i)\\.jar$", ".zip" );
-			file = new File( file.getParentFile(), fixedFileName );
-
-			// Only accept ZIP files
-			if( ! file.exists()) {
-				getLog().warn( "Artifact " + art.getArtifactId() + " is not a ZIP file. Its content will not be copied in the target model directory." );
+			// The file should exists, but we never know.
+			File file = resolutionResult.getArtifact().getFile();
+			if( file == null || ! file.exists()) {
+				getLog().warn( "Artifact " + artifactId + " has no attached file. Its content will not be copied in the target model directory." );
 				continue;
 			}
 
 			// Prepare the extraction
 			File temporaryDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-temp" );
-			File targetDirectory = new File( completeAppDirectory, Constants.PROJECT_DIR_GRAPH + "/" + art.getArtifactId());
-			getLog().debug( "Copying the content of artifact " + art.getArtifactId() + " under " + targetDirectory );
+			File targetDirectory = new File( completeAppDirectory, Constants.PROJECT_DIR_GRAPH + "/" + artifactId );
+			getLog().debug( "Copying the content of artifact " + artifactId + " under " + targetDirectory );
 			try {
 
 				// Extract graph files - assumed to be at the root of the graph directory
@@ -103,7 +128,7 @@ public class ResolveMojo extends AbstractMojo {
 				Utils.extractZipArchive( file, targetDirectory.getParentFile(), "graph/.*/.*", "graph/" );
 
 			} catch( IOException e ) {
-				throw new MojoExecutionException( "The ZIP archive for artifact " + art.getArtifactId() + " could not be extracted.", e );
+				throw new MojoExecutionException( "The ZIP archive for artifact " + artifactId + " could not be extracted.", e );
 
 			} finally {
 				Utils.deleteFilesRecursivelyAndQuietly( temporaryDirectory );
