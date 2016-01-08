@@ -120,9 +120,6 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 			if( associateFloatingIp())
 				this.state = State.CREATE_VOLUME;
 
-		// if( state == State.ASSOCIATE_NETWORK )
-		// associateNetwork();
-
 		if( this.state == State.CREATE_VOLUME ) {
 			if( createBlockStorage())
 				this.state = State.ATTACH_VOLUME;
@@ -156,12 +153,8 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	private boolean associateFloatingIp() {
 
 		// Associating a floating IP requires a client-side synchronization
-		// since Openstack does
-		// not provide it. Indeed, it can associate a floating IP to a new
-		// server, even if this
-		// address was already associated with another one. It is not possible,
-		// at the moment, to
-		// reserve a floating IP. So, we must treat this step with locks.
+		// since Openstack does not provide it. Indeed, it can associate a floating IP to a new
+		// server, even if this address was already associated with another one.
 		String floatingIpPool = this.targetProperties.get(OpenstackIaasHandler.FLOATING_IP_POOL);
 		if (Utils.isEmptyOrWhitespaces(floatingIpPool))
 			return true;
@@ -180,8 +173,8 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 			String availableIp = null;
 			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
 			FloatingIPApi floatingIPApi = this.novaApi.getFloatingIPExtensionForZone(anyZoneName).get();
-			for (FloatingIP ip : floatingIPApi.list().toList()) {
-				if (ip.getInstanceId() == null) {
+			for(FloatingIP ip : floatingIPApi.list().toList()) {
+				if (ip.getFixedIp() == null) {
 					availableIp = ip.getIp();
 					break;
 				}
@@ -202,38 +195,21 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		return done;
 	}
 
-	// /**
-	// * Associates a Neutron network with the VM (if necessary and if
-	// possible).
-	// * @throws TargetException
-	// */192.168.0.6
-	// private void associateNetwork() throws TargetException {
-	//
-	// String networkId = this.targetProperties.get(
-	// OpenstackIaasHandler.NETWORK_ID );
-	// if( ! Utils.isEmptyOrWhitespaces( networkId )) {
-	// NeutronApi neutronApi = OpenstackIaasHandler.neutronApi(
-	// this.targetProperties );
-	// Network network = neutronApi.getNetworkApi( this.anyZoneName ).get(
-	// networkId );
-	//
-	// }
-	// }
-
 	/**
 	 * Creates a block storage in Openstack infrastructure.
 	 * @throws TargetException
 	 */
 	public boolean createBlockStorage() throws TargetException {
 
-		String useBlockStorage = Utils.getValue(this.targetProperties, OpenstackIaasHandler.USE_BLOCK_STORAGE, "false");
+		String useBlockStorage = Utils.getValue(this.targetProperties, OpenstackIaasHandler.USE_BLOCK_STORAGE, OpenstackIaasHandler.DEFAULT_USE_BLOCK_STORAGE);
 		boolean isCreated = true;
 		if( Boolean.parseBoolean(useBlockStorage)) {
 			String vol = Utils.getValue(this.targetProperties, OpenstackIaasHandler.VOLUME_SIZE_GB, OpenstackIaasHandler.DEFAULT_VOLUME_SIZE_GB);
+			String name = Utils.getValue(this.targetProperties, OpenstackIaasHandler.VOLUME_NAME, OpenstackIaasHandler.DEFAULT_VOLUME_NAME);
 			int vsize = Integer.parseInt(vol);
 			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
 			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone(anyZoneName).get();
-			this.volumeId = volumeApi.create(vsize, CreateVolumeOptions.Builder.name("toto")).getId();
+			this.volumeId = volumeApi.create(vsize, CreateVolumeOptions.Builder.name(name)).getId();
 			isCreated = !Utils.isEmptyOrWhitespaces( this.volumeId );
 			if( !isCreated )
 				throw new TargetException( "No volume created" );
