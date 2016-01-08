@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
@@ -83,6 +83,18 @@ public class InstanceHelpersTest {
 
 		instance2.setName( "inst1" );
 		Assert.assertTrue( InstanceHelpers.haveSamePath( instance1, instance2 ));
+	}
+
+
+	@Test
+	public void testFindInstanceName() {
+
+		Assert.assertEquals( "vm", InstanceHelpers.findInstanceName( "/vm" ));
+		Assert.assertEquals( "tomcat server", InstanceHelpers.findInstanceName( "/vm/tomcat server" ));
+		Assert.assertEquals( "war", InstanceHelpers.findInstanceName( "/vm/tomcat server/war" ));
+		Assert.assertEquals( "no slash", InstanceHelpers.findInstanceName( "no slash" ));
+		Assert.assertEquals( "   ", InstanceHelpers.findInstanceName( "   " ));
+		Assert.assertEquals( "", InstanceHelpers.findInstanceName( "" ));
 	}
 
 

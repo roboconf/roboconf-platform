@@ -6,10 +6,7 @@
 	
 	<!-- A component for the RabbitMQ factory (messaging implementation) -->
 	<component classname="net.roboconf.messaging.rabbitmq.internal.RabbitMqClientFactory" name="roboconf-messaging-client-factory-rabbitmq" public="false">
-		<provides>
-			<!-- Static property: not attached to a field or method. -->
-			<property name="net.roboconf.messaging" value="rabbitmq" type="java.lang.String" />
-		</provides>
+		<provides />
 		
 		<callback transition="invalidate" method="stop"/>
 		<properties pid="net.roboconf.messaging.rabbitmq" updated="reconfigure">

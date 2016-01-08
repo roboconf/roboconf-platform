@@ -28,7 +28,7 @@ package net.roboconf.agent.internal.lifecycle;
 import java.io.IOException;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
@@ -37,11 +37,12 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.business.IAgentClient;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -67,7 +68,8 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		// The basis
 		PluginInterface plugin = new PluginMock();
-		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", new TestClientAgent()) {
+		IAgentClient messagingClient = Mockito.mock( IAgentClient.class );
+		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", messagingClient ) {
 			@Override
 			public void changeInstanceState(
 					Instance instance, PluginInterface plugin,
@@ -124,7 +126,8 @@ public class AbstractLifeCycleManager_ImportsUpdateTest {
 
 		// The basis
 		PluginInterface plugin = new PluginMock();
-		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", new TestClientAgent()) {
+		IAgentClient messagingClient = Mockito.mock( IAgentClient.class );
+		AbstractLifeCycleManager lfm = new AbstractLifeCycleManager( "my-app", messagingClient ) {
 			@Override
 			public void changeInstanceState(
 					Instance instance, PluginInterface plugin,

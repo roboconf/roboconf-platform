@@ -28,16 +28,17 @@ package net.roboconf.messaging.rabbitmq.internal.utils;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
+import org.junit.Assert;
+import net.roboconf.messaging.api.extensions.MessagingContext;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
 import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -49,6 +50,7 @@ import com.rabbitmq.client.ShutdownSignalException;
  * @author Vincent Zurczak - Linagora
  */
 public class RabbitMqUtilsTest {
+
 	private static boolean rabbitMqIsRunning = false;
 
 	@BeforeClass
@@ -58,68 +60,57 @@ public class RabbitMqUtilsTest {
 
 
 	@Test
-	public void testBuildExchangeName_String() {
+	public void testDeclareApplicationExchanges() throws Exception {
 
-		Assert.assertNotNull( RabbitMqUtils.buildExchangeName( "app", true ));
-		Assert.assertNotNull( RabbitMqUtils.buildExchangeName( "app", false ));
-		Assert.assertNotSame(
-				RabbitMqUtils.buildExchangeName( "app", false ),
-				RabbitMqUtils.buildExchangeName( "app", true ));
+		Channel channel = Mockito.mock( Channel.class );
+		RabbitMqUtils.declareApplicationExchanges( null, channel );
+		Mockito.verifyZeroInteractions( channel );
 
-		Assert.assertNotSame(
-				RabbitMqUtils.buildExchangeName( "app1", false ),
-				RabbitMqUtils.buildExchangeName( "app2", false ));
-
-		Assert.assertNotSame(
-				RabbitMqUtils.buildExchangeName( "app1", true ),
-				RabbitMqUtils.buildExchangeName( "app2", true ));
+		RabbitMqUtils.declareApplicationExchanges( "te", channel );
+		String exchangeName = RabbitMqUtils.buildExchangeNameForAgent( "te" );
+		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( exchangeName, "topic" );
 	}
 
 
 	@Test
-	public void testBuildExchangeName_Application() {
-		Application app = new Application( "my-app", null );
+	public void testDeclareGlobalExchanges() throws Exception {
 
-		Assert.assertNotNull( RabbitMqUtils.buildExchangeName( app, true ));
-		Assert.assertNotNull( RabbitMqUtils.buildExchangeName( app, false ));
+		Channel channel = Mockito.mock( Channel.class );
+		RabbitMqUtils.declareGlobalExchanges( channel );
 
-		Assert.assertEquals(
-				RabbitMqUtils.buildExchangeName( app, false ),
-				RabbitMqUtils.buildExchangeName( app.getName(), false ));
-
-		Assert.assertEquals(
-				RabbitMqUtils.buildExchangeName( app, true),
-				RabbitMqUtils.buildExchangeName( app.getName(), true ));
+		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( RabbitMqConstants.EXHANGE_DM, "topic" );
+		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( RabbitMqConstants.EXHANGE_INTER_APP, "topic" );
 	}
 
 
 	@Test
-	public void testBuildRoutingKeyForAgent_String() {
+	public void testBuildExchangeNameForAgent() {
 
-		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "root" ));
-		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent("/root"));
-		Assert.assertEquals( "machine.root", RabbitMqUtils.buildRoutingKeyForAgent( "/root/" ));
-		Assert.assertEquals( "machine.root.docker", RabbitMqUtils.buildRoutingKeyForAgent( "/root/docker" ));
-		Assert.assertNotSame(
-				RabbitMqUtils.buildRoutingKeyForAgent( "root1" ),
-				RabbitMqUtils.buildRoutingKeyForAgent( "root2" ));
+		Assert.assertEquals( "test.agents", RabbitMqUtils.buildExchangeNameForAgent( "test" ));
+		Assert.assertEquals( "te.agents", RabbitMqUtils.buildExchangeNameForAgent( "te" ));
 	}
 
 
 	@Test
-	public void testBuildRoutingKeyForAgent_Instance() {
-		Instance inst = new Instance( "my-root" );
+	public void testBuildExchangeName() {
 
-		Assert.assertNotNull( RabbitMqUtils.buildRoutingKeyForAgent( inst ));
-		Assert.assertEquals(
-				RabbitMqUtils.buildRoutingKeyForAgent( inst ),
-				RabbitMqUtils.buildRoutingKeyForAgent( inst.getName()));
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "app1" );
+		Assert.assertEquals( RabbitMqConstants.EXHANGE_DM, RabbitMqUtils.buildExchangeName( ctx ));
 
-		Instance childInstance = new Instance( "child" );
-		InstanceHelpers.insertChild( inst, childInstance );
-		Assert.assertEquals(
-				RabbitMqUtils.buildRoutingKeyForAgent( childInstance ),
-				RabbitMqUtils.buildRoutingKeyForAgent( inst ));
+		ctx = new MessagingContext( RecipientKind.DM, "app2" );
+		Assert.assertEquals( RabbitMqConstants.EXHANGE_DM, RabbitMqUtils.buildExchangeName( ctx ));
+
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "app1" );
+		Assert.assertEquals( RabbitMqConstants.EXHANGE_INTER_APP, RabbitMqUtils.buildExchangeName( ctx ));
+
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.IMPORT, "app1" );
+		Assert.assertEquals( RabbitMqConstants.EXHANGE_INTER_APP, RabbitMqUtils.buildExchangeName( ctx ));
+
+		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.IMPORT, "app1" );
+		Assert.assertEquals( "app1.agents", RabbitMqUtils.buildExchangeName( ctx ));
+
+		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.EXPORT, "app2" );
+		Assert.assertEquals( "app2.agents", RabbitMqUtils.buildExchangeName( ctx ));
 	}
 
 

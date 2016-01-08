@@ -28,11 +28,9 @@ package net.roboconf.messaging.api.internal.client.test;
 import java.util.Map;
 
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
  * Messaging client factory for tests.
@@ -40,26 +38,19 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
  */
 public class TestClientFactory implements IMessagingClientFactory {
 
-	private final String type = MessagingConstants.TEST_FACTORY_TYPE;
-
 	@Override
 	public String getType() {
-		return this.type;
+		return MessagingConstants.FACTORY_TEST;
 	}
 
 	@Override
-	public IDmClient createDmClient( final ReconfigurableClientDm parent ) {
-		return new TestClientDm();
-	}
-
-	@Override
-	public IAgentClient createAgentClient( final ReconfigurableClientAgent parent ) {
-		return new TestClientAgent();
+	public IMessagingClient createClient( final ReconfigurableClient<?> parent ) {
+		return new TestClient();
 	}
 
 	@Override
 	public boolean setConfiguration( final Map<String, String> configuration ) {
-		// Nothing to reconfigure.
-		return MessagingConstants.TEST_FACTORY_TYPE.equals(configuration.get(IMessagingClientFactory.MESSAGING_TYPE_PROPERTY));
+		String messagingType = configuration.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
+		return MessagingConstants.FACTORY_TEST.equals( messagingType );
 	}
 }

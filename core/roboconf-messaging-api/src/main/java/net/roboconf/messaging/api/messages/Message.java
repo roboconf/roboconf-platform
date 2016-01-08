@@ -32,4 +32,10 @@ import java.io.Serializable;
  */
 public abstract class Message implements Serializable {
 	private static final long serialVersionUID = -4397827141046520759L;
+
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 }

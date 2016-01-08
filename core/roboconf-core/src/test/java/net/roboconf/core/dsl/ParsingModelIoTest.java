@@ -32,7 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;

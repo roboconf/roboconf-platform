@@ -31,37 +31,38 @@ import net.roboconf.messaging.api.MessagingConstants;
  * Constants related to the RabbitMQ messaging client factory.
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public final class RabbitMqConstants {
-
-	/**
-	 * Constructor.
-	 */
-	private RabbitMqConstants() {
-		// nothing
-	}
+public interface RabbitMqConstants {
 
 	/**
 	 * The factory's name for RabbitMQ clients.
 	 */
-	public static final String RABBITMQ_FACTORY_TYPE = "rabbitmq";
+	String FACTORY_RABBITMQ = "rabbitmq";
 
 	/**
 	 * The prefix for all RabbitMQ-related properties.
 	 */
-	private static final String RABBITMQ_PROPERTY_PREFIX = MessagingConstants.MESSAGING_PROPERTY_PREFIX + "." + RABBITMQ_FACTORY_TYPE;
+	String RABBITMQ_PROPERTY_PREFIX = MessagingConstants.MESSAGING_PROPERTY_PREFIX + "." + FACTORY_RABBITMQ;
 
 	/**
 	 * Messaging property holding the RabbitMQ server IP (or host). Defaults to {@code "localhost"}.
 	 */
-	public static final String RABBITMQ_SERVER_IP = RABBITMQ_PROPERTY_PREFIX + ".server.ip";
+	String RABBITMQ_SERVER_IP = RABBITMQ_PROPERTY_PREFIX + ".server.ip";
 
 	/**
 	 * Messaging property holding the RabbitMQ server username. Defaults to {@code "guest"}.
 	 */
-	public static final String RABBITMQ_SERVER_USERNAME = RABBITMQ_PROPERTY_PREFIX + ".server.username";
+	String RABBITMQ_SERVER_USERNAME = RABBITMQ_PROPERTY_PREFIX + ".server.username";
 
 	/**
 	 * Messaging property holding the RabbitMQ server password. Defaults to {@code "guest"}.
 	 */
-	public static final String RABBITMQ_SERVER_PASSWORD = RABBITMQ_PROPERTY_PREFIX + ".server.password";
+	String RABBITMQ_SERVER_PASSWORD = RABBITMQ_PROPERTY_PREFIX + ".server.password";
+
+
+	String EXHANGE_INTER_APP = "roboconf.inter-app";
+	String EXHANGE_DM = "roboconf.dm";
+
+
+	String DEFAULT_IP = "localhost";
+	String GUEST = "guest";
 }

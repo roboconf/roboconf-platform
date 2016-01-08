@@ -46,6 +46,7 @@ import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
+import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -71,7 +72,7 @@ public class RestServicesTest extends DmTest {
 		File appDirectory = TestUtils.findApplicationDirectory( "lamp" );
 
 		// Prepare to run an agent distribution
-		Option[] options = ItUtils.getOptionsForInMemory( true );
+		Option[] options = ItUtils.getOptionsForInMemory( true, new RabbitMqConfiguration());
 		ExamSystem system = PaxExamRuntime.createServerSystem( options );
 		TestContainer container = PaxExamRuntime.createContainer( system );
 		Assert.assertEquals( KarafTestContainer.class, container.getClass());

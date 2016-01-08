@@ -36,7 +36,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.environment.messaging.RCDm;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IMessagingMngr;
-import net.roboconf.messaging.api.client.IDmClient;
+import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
 
 /**

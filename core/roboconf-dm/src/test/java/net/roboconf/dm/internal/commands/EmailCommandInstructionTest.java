@@ -33,7 +33,7 @@ import java.util.Properties;
 import javax.mail.Address;
 import javax.mail.Message;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.EmailCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;

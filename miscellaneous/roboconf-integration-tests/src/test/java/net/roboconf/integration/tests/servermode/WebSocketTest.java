@@ -27,7 +27,7 @@ package net.roboconf.integration.tests.servermode;
 
 import java.net.URI;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
 

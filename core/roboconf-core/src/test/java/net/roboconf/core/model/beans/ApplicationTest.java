@@ -27,7 +27,7 @@ package net.roboconf.core.model.beans;
 
 import java.util.HashSet;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 

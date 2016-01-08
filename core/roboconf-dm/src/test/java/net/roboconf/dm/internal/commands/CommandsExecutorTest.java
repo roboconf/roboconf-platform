@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.commands.AbstractCommandInstruction;
 import net.roboconf.core.commands.BulkCommandInstructions;
 import net.roboconf.core.commands.ChangeStateCommandInstruction;
@@ -73,7 +73,7 @@ public class CommandsExecutorTest {
 		// Prepare the DM
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.manager.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
 		this.manager.start();
 
 		// Reconfigure the manager

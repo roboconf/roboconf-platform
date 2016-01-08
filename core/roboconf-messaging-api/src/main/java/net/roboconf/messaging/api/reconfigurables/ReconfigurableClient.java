@@ -31,12 +31,15 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IClient;
+import net.roboconf.messaging.api.business.IClient;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryListener;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
+import net.roboconf.messaging.api.internal.client.dismiss.DismissClient;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -45,21 +48,30 @@ import org.osgi.framework.ServiceReference;
 
 /**
  * A class that can switch dynamically between messaging types.
- * @param <T> a sub-class of {@link IClient}
+ * @param <T> a sub-class of {@link IMessagingClient}
  * @author Vincent Zurczak - Linagora
  */
 public abstract class ReconfigurableClient<T extends IClient> implements IClient, MessagingClientFactoryListener {
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
+	protected final Logger logger = Logger.getLogger( getClass().getName());
+	private final DismissClient dismissClient;
+
 	private AbstractMessageProcessor<T> messageProcessor;
 	private String messagingType;
-	private T messagingClient;
+	private IMessagingClient messagingClient;
 	private MessagingClientFactoryRegistry registry;
 
+
+	/**
+	 * Constructor.
+	 */
 	protected ReconfigurableClient() {
+		this.dismissClient = new DismissClient();
+
 		// Try to find the MessagingClientFactoryRegistry service.
-		setRegistry(lookupMessagingClientFactoryRegistryService());
+		setRegistry( lookupMessagingClientFactoryRegistryService());
 	}
+
 
 	/**
 	 * @return the {@code MessagingClientFactoryRegistry} associated to this client.
@@ -68,11 +80,13 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		return this.registry;
 	}
 
+
 	/**
 	 * Sets the {@code MessagingClientFactoryRegistry} associated for this client.
 	 * @param registry the {@code MessagingClientFactoryRegistry} for this client.
 	 */
 	public synchronized void setRegistry(MessagingClientFactoryRegistry registry) {
+
 		if (this.registry != null)
 			this.registry.removeListener(this);
 
@@ -80,6 +94,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		if (registry != null)
 			registry.addListener(this);
 	}
+
 
 	/**
 	 * Try to locate the {@code MessagingClientFactoryRegistry} service in an OSGi execution context.
@@ -121,10 +136,12 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		return result;
 	}
 
+
 	@Override
 	public synchronized String getMessagingType() {
 		return this.messagingType;
 	}
+
 
 	/**
 	 * Changes the internal messaging client.
@@ -133,9 +150,9 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	public void switchMessagingType( String factoryName ) {
 
 		// Create a new client
-		T newMessagingClient = null;
+		IMessagingClient newMessagingClient = null;
 		try {
-			newMessagingClient = createMessagingClient(factoryName);
+			newMessagingClient = createMessagingClient( factoryName );
 			if( newMessagingClient != null ) {
 				newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
 				openConnection(newMessagingClient);
@@ -148,7 +165,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 		// Replace the current client
 		// (the new client may be null, it is not a problem - see #getMessagingClient())
-		T oldClient;
+		IMessagingClient oldClient;
 		synchronized( this ) {
 			oldClient = this.messagingClient;
 			this.messagingClient = newMessagingClient;
@@ -158,17 +175,20 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		closeConnection(oldClient, "The previous client could not be terminated correctly.");
 	}
 
+
 	@Override
 	public void addMessagingClientFactory( final IMessagingClientFactory factory ) {
+
 		synchronized( this ) {
-			if (this.messagingClient == null && factory.getType().equals(this.messagingType)) {
+			if( this.messagingClient == null
+					&& factory.getType().equals(this.messagingType)) {
 				// This is the messaging factory we were expecting...
 				// We can try to switch to this incoming factory right now!
 
 				// Create a new client
-				T newMessagingClient = null;
+				IMessagingClient newMessagingClient = null;
 				try {
-					newMessagingClient = createMessagingClient(factory.getType());
+					newMessagingClient = createMessagingClient( factory.getType());
 					if( newMessagingClient != null ) {
 						newMessagingClient.setMessageQueue( this.messageProcessor.getMessageQueue());
 						openConnection(newMessagingClient);
@@ -186,12 +206,13 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 		}
 	}
 
+
 	@Override
 	public void removeMessagingClientFactory( final IMessagingClientFactory factory ) {
 
-		T oldClient = null;
+		IMessagingClient oldClient = null;
 		synchronized( this ) {
-			if (this.messagingClient != null
+			if( this.messagingClient != null
 					&& this.messagingClient.getMessagingType().equals(this.messagingType)) {
 
 				// This is the messaging factory we were using...
@@ -203,6 +224,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 		closeConnection(oldClient, "The previous client could not be terminated correctly.");
 	}
+
 
 	@Override
 	public Map<String,String> getConfiguration() {
@@ -220,14 +242,24 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 
 	/**
-	 * Creates a new messaging client and opens a connection with the messaging server.
+	 * Creates a new messaging client.
 	 * @param factoryName the factory name (see {@link MessagingConstants})
 	 * @return a new messaging client, or {@code null} if {@code factoryName} is {@code null} or cannot be found in the
 	 * available messaging factories.
 	 * @throws IOException if something went wrong
 	 */
-	protected abstract T createMessagingClient( String factoryName )
-	throws IOException;
+	protected IMessagingClient createMessagingClient( String factoryName ) throws IOException {
+
+		IMessagingClient client = null;
+		MessagingClientFactoryRegistry registry = getRegistry();
+		if( registry != null ) {
+			IMessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
+			if( factory != null )
+				client = factory.createClient( this );
+		}
+
+		return client;
+	}
 
 
 	/**
@@ -242,13 +274,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * @param newMessagingClient the messaging client to configure
 	 * @throws IOException if something went wrong
 	 */
-	protected abstract void openConnection( T newMessagingClient ) throws IOException;
-
-
-	/**
-	 * @return a dismiss client for the case where the internal client is null
-	 */
-	protected abstract T getDismissedClient();
+	protected abstract void openConnection( IMessagingClient newMessagingClient ) throws IOException;
 
 
 	/**
@@ -256,6 +282,12 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * @param messageProcessor the message processor
 	 */
 	protected abstract void configureMessageProcessor( AbstractMessageProcessor<T> messageProcessor );
+
+
+	/**
+	 * @return the kind of this client's owner (DM or AGENT).
+	 */
+	public abstract RecipientKind getOwnerKind();
 
 
 	/**
@@ -291,24 +323,33 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * @return true if the internal client exists and is connected, false otherwise
 	 */
 	public synchronized boolean hasValidClient() {
-		return this.messagingClient != null
-				&& this.messagingClient.isConnected();
+
+		// The dismissed client always return false for this statement.
+		return getMessagingClient().isConnected();
 	}
 
 
 	/**
 	 * @return a messaging client (never null)
 	 */
-	protected synchronized T getMessagingClient() {
-		return this.messagingClient != null ? this.messagingClient : getDismissedClient();
+	protected IMessagingClient getMessagingClient() {
+
+		IMessagingClient result;
+		synchronized( this ) {
+			result = this.messagingClient != null ? this.messagingClient : this.dismissClient;
+		}
+
+		//this.logger.finest( "The messaging client is of type " + result.getClass().getSimpleName());
+		return result;
 	}
 
 
 	/**
 	 * Resets the internal client (sets it to null).
 	 */
-	protected synchronized T resetInternalClient() {
-		T oldClient = this.messagingClient;
+	protected synchronized IMessagingClient resetInternalClient() {
+
+		IMessagingClient oldClient = this.messagingClient;
 		this.messagingClient = null;
 		return oldClient;
 	}
@@ -319,7 +360,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * @param client the client (may be null)
 	 * @param errorMessage the error message to log in case of problem
 	 */
-	static void closeConnection( IClient client, String errorMessage ) {
+	static void closeConnection( IMessagingClient client, String errorMessage ) {
 
 		if( client != null ) {
 			try {

@@ -27,7 +27,7 @@ package net.roboconf.dm.templating.internal.contexts;
 
 import java.util.Date;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

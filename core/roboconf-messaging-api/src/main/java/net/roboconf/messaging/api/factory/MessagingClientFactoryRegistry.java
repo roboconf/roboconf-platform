@@ -47,29 +47,30 @@ public class MessagingClientFactoryRegistry {
 	/**
 	 * The messaging client factories.
 	 */
-	private final ConcurrentHashMap<String, IMessagingClientFactory> factories = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<String, IMessagingClientFactory> factories = new ConcurrentHashMap<> ();
 
 	/**
 	 * The messaging client factory listeners.
 	 */
-	private final ConcurrentLinkedQueue<MessagingClientFactoryListener> listeners = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedQueue<MessagingClientFactoryListener> listeners = new ConcurrentLinkedQueue<> ();
 
 	/**
 	 * The logger.
 	 */
-	private final Logger logger = Logger.getLogger(this.getClass().getName());
+	private final Logger logger = Logger.getLogger( getClass().getName());
+
+
 
 	/**
 	 * @return the messaging client factory with the given type, or {@code null} if there is no registered factory
 	 * with the given type.
 	 */
 	public IMessagingClientFactory getMessagingClientFactory(String type) {
-		final IMessagingClientFactory result;
-		if (type != null) {
+
+		IMessagingClientFactory result = null;
+		if (type != null)
 			result = this.factories.get(type);
-		} else {
-			result = null;
-		}
+
 		return result;
 	}
 
@@ -79,12 +80,13 @@ public class MessagingClientFactoryRegistry {
 	 * @return {@code true} if the factory has been added, {@code false} if a factory with the same type was already registered.
 	 */
 	public boolean addMessagingClientFactory(IMessagingClientFactory factory) {
+
 		final String type = factory.getType();
 		this.logger.fine("Adding messaging client factory: " + type);
 		final boolean result = this.factories.putIfAbsent(type, factory) == null;
-		if (result) {
+		if (result)
 			notifyListeners(factory, true);
-		}
+
 		return result;
 	}
 
@@ -94,12 +96,13 @@ public class MessagingClientFactoryRegistry {
 	 * @return {@code true} if the factory has been removed, {@code false} if the factory was not registered.
 	 */
 	public boolean removeMessagingClientFactory(IMessagingClientFactory factory) {
+
 		final String type = factory.getType();
 		this.logger.fine("Removing messaging client factory: " + type);
 		final boolean result = this.factories.remove(type, factory);
-		if (result) {
+		if (result)
 			notifyListeners(factory, false);
-		}
+
 		return result;
 	}
 
@@ -125,19 +128,21 @@ public class MessagingClientFactoryRegistry {
 		this.listeners.remove(listener);
 	}
 
+
 	/**
 	 * Notifies the messaging client factory listeners that a factory has been added/removed.
 	 * @param factory the incoming/outgoing messaging client factory.
 	 * @param isAdded flag indicating whether the factory has been added or removed.
 	 */
 	private void notifyListeners(IMessagingClientFactory factory, boolean isAdded) {
+
 		for (MessagingClientFactoryListener listener : this.listeners) {
 			try {
-				if (isAdded) {
+				if (isAdded)
 					listener.addMessagingClientFactory(factory);
-				} else {
+				else
 					listener.removeMessagingClientFactory(factory);
-				}
+
 			} catch (Throwable t) {
 				// Log the exception, but *do not* interrupt the notification of the other listeners.
 				this.logger.warning("Messaging client factory listener has thrown an exception: " + listener);
@@ -145,5 +150,4 @@ public class MessagingClientFactoryRegistry {
 			}
 		}
 	}
-
 }

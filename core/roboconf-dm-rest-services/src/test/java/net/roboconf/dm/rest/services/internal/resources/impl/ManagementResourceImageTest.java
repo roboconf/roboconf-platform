@@ -34,7 +34,6 @@ import java.io.RandomAccessFile;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import junit.framework.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.AbstractApplication;
@@ -48,6 +47,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -84,7 +84,7 @@ public class ManagementResourceImageTest {
 			IMAGE_JPEG = MFOLDER.newFile( "/smiley.jpeg" );
 			IMAGE_UNSUPPORTED = MFOLDER.newFile( "/smiley.tif" );
 
-			IMAGE_TOO_BIG = MFOLDER.newFile( "/smiley.tif" );
+			IMAGE_TOO_BIG = MFOLDER.newFile( "/big-smiley.tif" );
 			RandomAccessFile f = new RandomAccessFile( IMAGE_TOO_BIG.getAbsolutePath(), "rw" );
 			f.setLength( 2 * ManagementResource.MAX_IMAGE_SIZE );
 			f.close();
@@ -119,7 +119,7 @@ public class ManagementResourceImageTest {
 
 		// Create, configure & start the manager.
 		this.manager = new Manager();
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.setTargetResolver(new TestTargetResolver());
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();

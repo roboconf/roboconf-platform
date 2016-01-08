@@ -117,6 +117,7 @@ public class ItConfigurationBean {
 
 	/**
 	 * @param hideLogs the hideLogs to set
+	 * @return this
 	 */
 	public ItConfigurationBean hideLogs( boolean hideLogs ) {
 		this.hideLogs = hideLogs;

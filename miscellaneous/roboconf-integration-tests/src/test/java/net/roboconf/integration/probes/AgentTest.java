@@ -26,6 +26,7 @@
 package net.roboconf.integration.probes;
 
 import net.roboconf.integration.tests.internal.ItUtils;
+import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
 
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -39,6 +40,6 @@ public abstract class AgentTest {
 	@Configuration
 	public Option[] config() throws Exception {
 		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-agent", "agent" );
-		return ItUtils.getBaseOptions( bean );
+		return ItUtils.getBaseOptions( bean, new RabbitMqConfiguration());
 	}
 }

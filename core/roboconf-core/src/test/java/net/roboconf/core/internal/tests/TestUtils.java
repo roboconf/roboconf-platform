@@ -44,7 +44,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.dsl.ParsingModelIoTest;
 import net.roboconf.core.utils.Utils;
 

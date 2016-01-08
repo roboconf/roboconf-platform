@@ -39,11 +39,12 @@ import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.integration.probes.ItConfigurationBean;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+import net.roboconf.integration.tests.internal.parametrized.IMessagingConfiguration;
 
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
@@ -63,7 +64,6 @@ public final class ItUtils {
 	}
 
 
-	public static final long PLATFORM_TIMEOUT = 30000;
 	private static final String[] LOGGERS = {
 		// Loggers configured in our custom distributions
 		"net.roboconf",
@@ -77,7 +77,7 @@ public final class ItUtils {
 	/**
 	 * @return a non-null list of options to run Karaf from this test
 	 */
-	public static List<Option> getBaseOptionsAsList( ItConfigurationBean bean ) {
+	public static List<Option> getBaseOptionsAsList( ItConfigurationBean bean, IMessagingConfiguration messagingConfiguration ) {
 
 		MavenArtifactUrlReference karafUrl = maven()
 				.groupId( bean.getGroupId())
@@ -94,7 +94,10 @@ public final class ItUtils {
 
 		options.add( cleanCaches( true ));
 		options.add( keepRuntimeFolder());
-		options.add( systemTimeout( PLATFORM_TIMEOUT ));
+		options.add( systemTimeout( getTimeout()));
+
+		// Which messaging configuration?
+		options.addAll( messagingConfiguration.options());
 
 		// Logs management
 		if( bean.areLogsHidden()) {
@@ -118,21 +121,32 @@ public final class ItUtils {
 	/**
 	 * @return a non-null array of options to run Karaf from this test
 	 */
-	public static Option[] getBaseOptions( ItConfigurationBean bean ) {
-		return asArray( getBaseOptionsAsList( bean ));
+	public static Option[] getBaseOptions( ItConfigurationBean bean, IMessagingConfiguration messagingConfiguration ) {
+		return asArray( getBaseOptionsAsList( bean, messagingConfiguration ));
 	}
 
 
 	/**
 	 * @param hideLogs true if logs should be hidden, false otherwise
+	 * @param messagingConfiguration a messaging configuration
 	 * @return a set of options to run agents in memory
 	 */
-	public static Option[] getOptionsForInMemory( boolean hideLogs ) {
+	public static Option[] getOptionsForInMemory( boolean hideLogs, IMessagingConfiguration messagingConfiguration ) {
+		return asArray( getOptionsForInMemoryAsList( hideLogs, messagingConfiguration ));
+	}
+
+
+	/**
+	 * @param hideLogs true if logs should be hidden, false otherwise
+	 * @param messagingConfiguration a messaging configuration
+	 * @return a set of options to run agents in memory
+	 */
+	public static List<Option> getOptionsForInMemoryAsList( boolean hideLogs, IMessagingConfiguration messagingConfiguration ) {
 
 		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm-with-agent-in-memory" );
 		bean.hideLogs( hideLogs );
 
-		List<Option> options = ItUtils.getBaseOptionsAsList( bean );
+		List<Option> options = ItUtils.getBaseOptionsAsList( bean, messagingConfiguration );
 		String roboconfVersion = ItUtils.findRoboconfVersion();
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
@@ -152,12 +166,7 @@ public final class ItUtils {
 				.version( roboconfVersion )
 				.start());
 
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
-				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
-
-		return options.toArray( new Option[ options.size()]);
+		return options;
 	}
 
 
@@ -203,5 +212,31 @@ public final class ItUtils {
 	 */
 	public static String findRoboconfVersion() {
 		return MavenUtils.getArtifactVersion( "net.roboconf", "roboconf-core" );
+	}
+
+
+	/**
+	 * @return the maximum delay to find OSGi services.
+	 * <p>
+	 * If the ROBCONF_IT_TIMEOUT environment variable is set, we return its
+	 * values. Otherwise, the default timeout is returned (30s).
+	 * </p>
+	 */
+	public static long getTimeout() {
+
+		long result = 30000;
+		Logger logger = Logger.getLogger( ItUtils.class.getName());
+		String envValue = System.getenv( "ROBOCONF_IT_TIMEOUT" );
+		try {
+			if( envValue != null ) {
+				logger.info( "Env variable ROBOCONF_IT_TIMEOUT is defined and will be used." );
+				result = Long.parseLong( envValue );
+			}
+
+		} catch( NumberFormatException e ) {
+			logger.warning( "The timeout for integration tests could not be read from ENV variables. " + e.getMessage());
+		}
+
+		return result;
 	}
 }

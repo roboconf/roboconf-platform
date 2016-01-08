@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.rest.services.internal.websocket;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.junit.Test;

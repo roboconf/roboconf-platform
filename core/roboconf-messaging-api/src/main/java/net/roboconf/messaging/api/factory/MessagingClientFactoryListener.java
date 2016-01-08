@@ -46,5 +46,4 @@ public interface MessagingClientFactoryListener {
 	 * @param factory the disappearing messaging client factory.
 	 */
 	void removeMessagingClientFactory(IMessagingClientFactory factory);
-
 }

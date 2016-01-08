@@ -27,7 +27,7 @@ package net.roboconf.core.dsl.parsing;
 
 import java.io.File;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.dsl.parsing.BlockBlank;
 import net.roboconf.core.dsl.parsing.BlockComment;
 import net.roboconf.core.dsl.parsing.BlockComponent;

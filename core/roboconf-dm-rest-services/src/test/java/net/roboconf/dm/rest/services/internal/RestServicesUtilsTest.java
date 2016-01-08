@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 import javax.ws.rs.core.Response.Status;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

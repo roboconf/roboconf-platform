@@ -28,7 +28,7 @@ package net.roboconf.dm.internal.api.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;

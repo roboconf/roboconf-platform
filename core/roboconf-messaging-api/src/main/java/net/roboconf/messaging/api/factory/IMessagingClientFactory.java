@@ -27,11 +27,8 @@ package net.roboconf.messaging.api.factory;
 
 import java.util.Map;
 
-import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 
 /**
  * A service that allows to create Roboconf messaging clients.
@@ -40,36 +37,17 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 public interface IMessagingClientFactory {
 
 	/**
-	 * Service property indicating the type of messaging this factory provides.
-	 * <p>
-	 * This property is <em>mandatory</em>, its value is <em>immutable</em> and must be an non-null {@code String}.
-	 * </p>
-	 * @see #getType()
-	 * @see MessagingConstants#MESSAGING_TYPE_PROPERTY
-	 */
-	String MESSAGING_TYPE_PROPERTY = MessagingConstants.MESSAGING_TYPE_PROPERTY;
-
-	/**
 	 * Get the type of messaging this factory supports.
 	 * @return the type of messaging this factory supports.
-	 * @see #MESSAGING_TYPE_PROPERTY
 	 */
 	String getType();
 
 	/**
-	 * Creates a messaging client for the DM.
-	 * @return the created DM messaging client.
-	 * @param parent the parent client.
+	 * Creates a messaging client.
+	 * @return the created messaging client
+	 * @param parent the parent client
 	 */
-	IDmClient createDmClient( ReconfigurableClientDm parent );
-
-
-	/**
-	 * Creates a messaging client for an agent.
-	 * @return the created agent messaging client.
-	 * @param parent the parent client.
-	 */
-	IAgentClient createAgentClient( ReconfigurableClientAgent parent );
+	IMessagingClient createClient( ReconfigurableClient<?> parent );
 
 	/**
 	 * Attempts to apply the given provider-specific messaging configuration to this factory.

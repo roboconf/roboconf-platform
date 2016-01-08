@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.target.api.TargetException;
 
 import org.junit.Test;

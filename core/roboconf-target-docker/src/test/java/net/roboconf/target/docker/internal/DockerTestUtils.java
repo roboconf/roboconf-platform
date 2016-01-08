@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;

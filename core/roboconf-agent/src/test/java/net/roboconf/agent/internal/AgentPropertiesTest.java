@@ -25,7 +25,7 @@
 
 package net.roboconf.agent.internal;
 
-import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_FACTORY_TYPE;
+import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.FACTORY_RABBITMQ;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_IP;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_PASSWORD;
 import static net.roboconf.messaging.rabbitmq.RabbitMqConstants.RABBITMQ_SERVER_USERNAME;
@@ -37,10 +37,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import junit.framework.Assert;
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -68,7 +68,7 @@ public class AgentPropertiesTest {
 		Assert.assertEquals( "my app", ad.getApplicationName());
 		Assert.assertNull( ad.getIpAddress());
 		final Map<String, String> msgCfg = ad.getMessagingConfiguration();
-		Assert.assertEquals( RABBITMQ_FACTORY_TYPE, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals( FACTORY_RABBITMQ, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 		Assert.assertEquals( "ip", msgCfg.get(RABBITMQ_SERVER_IP));
 		Assert.assertEquals( "pwd", msgCfg.get(RABBITMQ_SERVER_PASSWORD));
 		Assert.assertEquals( "user", msgCfg.get(RABBITMQ_SERVER_USERNAME));
@@ -85,7 +85,7 @@ public class AgentPropertiesTest {
 		Assert.assertEquals( "my app", ad.getApplicationName());
 		Assert.assertNull( ad.getIpAddress());
 		final Map<String, String> msgCfg = ad.getMessagingConfiguration();
-		Assert.assertEquals( RABBITMQ_FACTORY_TYPE, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals( FACTORY_RABBITMQ, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 		Assert.assertEquals( "ip", msgCfg.get(RABBITMQ_SERVER_IP));
 		Assert.assertNull(msgCfg.get(RABBITMQ_SERVER_PASSWORD));
 		Assert.assertEquals( "user", msgCfg.get(RABBITMQ_SERVER_USERNAME));
@@ -102,7 +102,7 @@ public class AgentPropertiesTest {
 		Assert.assertEquals( "my app", ad.getApplicationName());
 		Assert.assertNull( ad.getIpAddress());
 		final Map<String, String> msgCfg = ad.getMessagingConfiguration();
-		Assert.assertEquals( RABBITMQ_FACTORY_TYPE, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
+		Assert.assertEquals( FACTORY_RABBITMQ, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 		Assert.assertEquals( "ip:port", msgCfg.get(RABBITMQ_SERVER_IP));
 		Assert.assertEquals( "pwd:with:two;dots:", msgCfg.get(RABBITMQ_SERVER_PASSWORD));
 		Assert.assertEquals( "user", msgCfg.get(RABBITMQ_SERVER_USERNAME));

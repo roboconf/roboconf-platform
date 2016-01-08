@@ -29,7 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
@@ -41,7 +41,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdAddImport;
@@ -66,7 +66,7 @@ import org.junit.Test;
 public class AgentMessageProcessor_BasicTest {
 
 	private Agent agent;
-	private TestClientAgent client;
+	private TestClient client;
 
 
 	@Before
@@ -77,7 +77,7 @@ public class AgentMessageProcessor_BasicTest {
 		this.agent = new Agent();
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
@@ -85,8 +85,8 @@ public class AgentMessageProcessor_BasicTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		this.client = TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class );
-		this.client.messagesForTheDm.clear();
+		this.client = TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
+		this.client.clearMessages();
 	}
 
 
@@ -106,7 +106,7 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Check the agent has sent a 'PONG' response to the DM.
 		List<Message> messages = this.client.messagesForTheDm;
-		Assert.assertEquals( 1, messages.size() );
+		Assert.assertEquals( 1, messages.size());
 		Message message = messages.get(0);
 		Assert.assertTrue( message instanceof MsgEcho );
 		MsgEcho echo = (MsgEcho) message;
@@ -179,13 +179,15 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertNull( processor.scopedInstance );
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getMySql()));
 		Assert.assertNull( processor.scopedInstance );
-		Assert.assertEquals( 0, this.client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForAgents.size());
 
 		// Insert a root
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
-		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
+
+		// Only the WAR imports variables.
+		Assert.assertEquals( 1, this.client.messagesForAgents.size());
 
 		// We cannot change the root
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getMySqlVm()));
@@ -196,13 +198,15 @@ public class AgentMessageProcessor_BasicTest {
 
 		// Make sure the final state of the root instance is always "deployed and started"
 		processor.scopedInstance = null;
-		this.client.messagesForAgentsCount.set( 0 );
+		this.client.messagesForAgents.clear();
 		app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
-		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 3, this.client.messagesForAgentsCount.get());
+
+		// Only the WAR imports variables.
+		Assert.assertEquals( "Expected a message for Tomcat, its VM and the WAR.", 1, this.client.messagesForAgents.size());
 	}
 
 
@@ -248,7 +252,9 @@ public class AgentMessageProcessor_BasicTest {
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcat()));
 		Assert.assertEquals( app.getTomcat(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
-		Assert.assertEquals( "Expected a message for Tomcat and the WAR.", 2, this.client.messagesForAgentsCount.get());
+
+		// Only the WAR imports variables.
+		Assert.assertEquals( "Expected a message for Tomcat and the WAR.", 1, this.client.messagesForAgents.size());
 	}
 
 
@@ -265,7 +271,10 @@ public class AgentMessageProcessor_BasicTest {
 		processor.processMessage( new MsgCmdSetScopedInstance( app.getTomcatVm()));
 		Assert.assertEquals( app.getTomcatVm(), processor.scopedInstance );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, processor.scopedInstance.getStatus());
-		Assert.assertEquals( "Expected a message for the Tomcat VM (children were removed).", 1, this.client.messagesForAgentsCount.get());
+
+		// The VM is the only kept instance.
+		// And it does not export anything, so no sent message.
+		Assert.assertEquals( "Expected a message for the Tomcat VM (children were removed).", 0, this.client.messagesForAgents.size());
 
 		// The Tomcat (child) instance was removed because it is a target (so managed by another agent)
 		Assert.assertEquals( 1, InstanceHelpers.buildHierarchicalList( app.getTomcatVm()).size());
@@ -305,7 +314,7 @@ public class AgentMessageProcessor_BasicTest {
 		// No root instance
 		processor.processMessage( new MsgCmdResynchronize());
 		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
-		Assert.assertEquals( 0, this.client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForAgents.size());
 
 		// With a root instance which has no variable.
 		// Unlike with a real messaging client, we do not check variables in our test client.
@@ -314,21 +323,22 @@ public class AgentMessageProcessor_BasicTest {
 		processor.scopedInstance = app.getTomcatVm();
 		processor.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
+		// The VM is the only started component, and it does not export any variable.
 		processor.processMessage( new MsgCmdResynchronize());
 		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
-		Assert.assertEquals( 1, this.client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForAgents.size());
 
-		// With a child instance
+		// Same thing with the Tomcat instance.
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		processor.processMessage( new MsgCmdResynchronize());
 		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
-		Assert.assertEquals( 3, this.client.messagesForAgentsCount.get());
+		Assert.assertEquals( 0, this.client.messagesForAgents.size());
 
-		// With another started child
+		// Only the WAR imports variables.
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		processor.processMessage( new MsgCmdResynchronize());
 		Assert.assertEquals( 0, this.client.messagesForTheDm.size());
-		Assert.assertEquals( 6, this.client.messagesForAgentsCount.get());
+		Assert.assertEquals( 1, this.client.messagesForAgents.size());
 	}
 
 

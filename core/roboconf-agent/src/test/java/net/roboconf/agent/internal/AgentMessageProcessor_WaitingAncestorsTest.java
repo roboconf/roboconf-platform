@@ -28,7 +28,7 @@ package net.roboconf.agent.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
@@ -67,7 +67,7 @@ public class AgentMessageProcessor_WaitingAncestorsTest {
 		this.agent.setScopedInstancePath( "app server" );
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
-		this.agent.setMessagingType( MessagingConstants.TEST_FACTORY_TYPE );
+		this.agent.setMessagingType( MessagingConstants.FACTORY_TEST );
 		this.agent.start();
 
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.

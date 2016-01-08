@@ -29,7 +29,7 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.client.IAgentClient;
+import net.roboconf.messaging.api.business.IAgentClient;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 
 /**

@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.internal.environment.messaging;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
@@ -37,7 +37,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
@@ -73,7 +73,7 @@ public class DmMessageProcessorTest {
 		// Create the manager
 		this.manager = new Manager();
 		this.manager.setTargetResolver( new TestTargetResolver());
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.manager.start();
 
@@ -275,20 +275,20 @@ public class DmMessageProcessorTest {
 
 		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
-		TestClientDm msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
+		TestClient msgClient = (TestClient) this.managerWrapper.getInternalMessagingClient();
 
 		ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( this.app.getName());
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, this.app.getMySqlVm().getStatus());
 		Assert.assertNull( ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()));
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, msgClient.allSentMessages.size());
 
 		// Store messages
 		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-1" ));
 		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-2" ));
 		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-3" ));
 		Assert.assertEquals( 3, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
-		Assert.assertEquals( 0, msgClient.sentMessages.size());
+		Assert.assertEquals( 0, msgClient.allSentMessages.size());
 
 		// The ACK should send them
 		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.app.getName(), this.app.getMySqlVm(), "192.168.1.45" );
@@ -296,7 +296,7 @@ public class DmMessageProcessorTest {
 
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, this.app.getMySqlVm().getStatus());
 		Assert.assertNull( ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()));
-		Assert.assertEquals( 3, msgClient.sentMessages.size());
+		Assert.assertEquals( 3, msgClient.allSentMessages.size());
 	}
 
 

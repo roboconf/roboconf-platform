@@ -109,6 +109,7 @@
 						<feature>ssh</feature>
 						<feature>bundle</feature>
 						<feature>config</feature>
+						<feature>war</feature>
 						<feature>ipojo-all</feature>
 						<feature>roboconf-agent</feature>
 					</bootFeatures>

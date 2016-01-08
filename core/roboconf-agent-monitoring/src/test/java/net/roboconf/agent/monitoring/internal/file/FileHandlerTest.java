@@ -27,7 +27,7 @@ package net.roboconf.agent.monitoring.internal.file;
 
 import java.io.File;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 import org.junit.Rule;

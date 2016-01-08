@@ -46,7 +46,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import org.junit.Assert;
@@ -149,7 +149,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
 				"messaging-type",
-				RabbitMqConstants.RABBITMQ_FACTORY_TYPE));
+				RabbitMqConstants.FACTORY_RABBITMQ));
 
 		// Add an invalid configuration for the DM
 		options.add( editConfigurationFilePut(

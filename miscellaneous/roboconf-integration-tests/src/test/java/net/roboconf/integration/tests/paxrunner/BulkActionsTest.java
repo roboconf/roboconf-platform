@@ -38,7 +38,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
-import net.roboconf.integration.tests.internal.RoboconfPaxRunner;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 
 import org.junit.Assert;
 import org.junit.Test;

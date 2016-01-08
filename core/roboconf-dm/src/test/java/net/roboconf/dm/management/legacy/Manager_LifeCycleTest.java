@@ -41,8 +41,9 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.internal.client.test.TestClientDm;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.target.api.TargetException;
@@ -66,7 +67,7 @@ public class Manager_LifeCycleTest {
 
 	private Manager manager;
 	private TestManagerWrapper managerWrapper;
-	private TestClientDm msgClient;
+	private TestClient msgClient;
 	private TestTargetResolver targetResolver;
 
 
@@ -78,7 +79,7 @@ public class Manager_LifeCycleTest {
 		this.manager = new Manager();
 		this.manager.setTargetResolver( this.targetResolver );
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
-		this.manager.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.manager.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.manager.start();
 
 		// Register mocked listeners - mainly for code coverage reasons
@@ -89,8 +90,8 @@ public class Manager_LifeCycleTest {
 		this.managerWrapper.configureMessagingForTest();
 		this.manager.reconfigure();
 
-		this.msgClient = (TestClientDm) this.managerWrapper.getInternalMessagingClient();
-		this.msgClient.sentMessages.clear();
+		this.msgClient = (TestClient) this.managerWrapper.getInternalMessagingClient();
+		this.msgClient.clearMessages();
 
 		// Disable the messages timer for predictability
 		TestUtils.getInternalField( this.manager, "timer", Timer.class ).cancel();
@@ -119,14 +120,14 @@ public class Manager_LifeCycleTest {
 		// Switch a root instance only works if the state is DEPLOYED_STARTED...
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STOPPED );
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
@@ -145,7 +146,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+
+		verifyAgentTerminationPropagation();
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// ... Same thing if the current state is DEPLOYED_STARTED
@@ -158,7 +160,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Make sure data are cleared correctly
@@ -185,37 +187,37 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
-		Message msg = this.msgClient.sentMessages.get( 0 );
+		Message msg = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STOPPED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Try other states
-		this.msgClient.sentMessages.clear();
+		this.msgClient.allSentMessages.clear();
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
-		msg = this.msgClient.sentMessages.get( 0 );
+		msg = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) msg).getNewState());
 		Assert.assertNotNull( ((MsgCmdChangeInstanceState) msg).getFileNameToFileContent());
 
 		// Not_DEPLOYED
-		this.msgClient.sentMessages.clear();
+		this.msgClient.allSentMessages.clear();
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 1, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
 
-		msg = this.msgClient.sentMessages.get( 0 );
+		msg = this.msgClient.allSentMessages.get( 0 );
 		Assert.assertEquals( MsgCmdChangeInstanceState.class, msg.getClass());
 		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getMySql()), ((MsgCmdChangeInstanceState) msg).getInstancePath());
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, ((MsgCmdChangeInstanceState) msg).getNewState());
@@ -239,7 +241,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STOPPED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
@@ -254,7 +256,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.DEPLOYED_STARTED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
@@ -269,7 +271,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySql(), InstanceStatus.NOT_DEPLOYED );
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySql().getStatus());
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 
@@ -395,7 +397,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 	}
 
@@ -468,7 +470,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+
+		verifyAgentTerminationPropagation();
 	}
 
 
@@ -490,7 +493,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 	}
 
 
@@ -511,7 +514,7 @@ public class Manager_LifeCycleTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// The state means nothing in fact, the machine ID does
@@ -524,8 +527,9 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
 		Assert.assertFalse( this.targetResolver.isRunning( app.getMySqlVm()));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
+
+
 	}
 
 
@@ -589,7 +593,7 @@ public class Manager_LifeCycleTest {
 
 		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
 		Assert.assertTrue( this.targetResolver.isRunning( app.getTomcatVm()));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// MySQL
@@ -637,7 +641,7 @@ public class Manager_LifeCycleTest {
 
 		Assert.assertNull( this.targetResolver.isRunning( app.getMySqlVm()));
 		Assert.assertTrue( this.targetResolver.isRunning( app.getTomcatVm()));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Tomcat
@@ -674,16 +678,16 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().deployAndStartAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 2, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 2, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
 
-		Assert.assertEquals( MsgCmdChangeInstanceState.class, this.msgClient.sentMessages.get( 0 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) this.msgClient.sentMessages.get( 0 )).getInstancePath());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) this.msgClient.sentMessages.get( 0 )).getNewState());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, this.msgClient.allSentMessages.get( 0 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getTomcat()), ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 0 )).getInstancePath());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 0 )).getNewState());
 
-		Assert.assertEquals( MsgCmdChangeInstanceState.class, this.msgClient.sentMessages.get( 1 ).getClass());
-		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) this.msgClient.sentMessages.get( 1 )).getInstancePath());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) this.msgClient.sentMessages.get( 1 )).getNewState());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, this.msgClient.allSentMessages.get( 1 ).getClass());
+		Assert.assertEquals( InstanceHelpers.computeInstancePath( app.getWar()), ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 1 )).getInstancePath());
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, ((MsgCmdChangeInstanceState) this.msgClient.allSentMessages.get( 1 )).getNewState());
 	}
 
 
@@ -704,7 +708,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().deployAndStartAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 
 		// Tomcat
@@ -750,7 +754,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().stopAll( ma, null );
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
@@ -780,7 +784,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().stopAll( ma, app.getTomcatVm());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
 
@@ -804,7 +808,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().stopAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
 
@@ -848,8 +852,8 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( this.targetResolver.isRunning( app.getMySqlVm()));
 		Assert.assertFalse( this.targetResolver.isRunning( app.getTomcatVm()));
 
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
+		verifyAgentTerminationPropagation();
 	}
 
 
@@ -872,8 +876,9 @@ public class Manager_LifeCycleTest {
 
 		Assert.assertNull( this.targetResolver.isRunning( app.getMySqlVm()));
 		Assert.assertFalse( this.targetResolver.isRunning( app.getTomcatVm()));
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
 		Assert.assertEquals( 0, ma.getScopedInstanceToAwaitingMessages().size());
+
+		verifyAgentTerminationPropagation();
 	}
 
 
@@ -890,7 +895,7 @@ public class Manager_LifeCycleTest {
 		this.manager.instancesMngr().undeployAll( ma, app.getTomcat());
 
 		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
-		Assert.assertEquals( 0, this.msgClient.sentMessages.size());
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
 		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().get( app.getTomcatVm()).size());
 
@@ -911,5 +916,14 @@ public class Manager_LifeCycleTest {
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
 		this.manager.instancesMngr().undeployAll( ma, app.getMySqlVm());
+	}
+
+
+	private void verifyAgentTerminationPropagation() {
+
+		// The DM mimicked an agent sending a removed import.
+		Assert.assertEquals( 1, this.msgClient.allSentMessages.size());
+		Assert.assertEquals( MsgCmdRemoveImport.class, this.msgClient.allSentMessages.get( 0 ).getClass());
+		this.msgClient.allSentMessages.clear();
 	}
 }

@@ -27,7 +27,7 @@ package net.roboconf.doc.generator.internal;
 
 import java.awt.Color;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

@@ -27,7 +27,7 @@ package net.roboconf.dm.internal.commands;
 
 import java.io.IOException;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.commands.ChangeStateCommandInstruction;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.internal.tests.TestApplication;

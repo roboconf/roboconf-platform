@@ -26,7 +26,7 @@
 package net.roboconf.target.ec2.internal;
 
 import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPERTY;
-import static net.roboconf.messaging.api.MessagingConstants.TEST_FACTORY_TYPE;
+import static net.roboconf.messaging.api.MessagingConstants.FACTORY_TEST;
 
 import java.io.File;
 import java.util.Collections;
@@ -58,7 +58,7 @@ public class ToRunByHand {
 		Ec2IaasHandler target = new Ec2IaasHandler();
 		String serverId = null;
 		try {
-			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, TEST_FACTORY_TYPE);
+			Map<String, String> msgCfg = Collections.singletonMap(MESSAGING_TYPE_PROPERTY, FACTORY_TEST);
 			serverId = target.createMachine( conf, msgCfg, "root", "app" );
 			target.configureMachine( conf, msgCfg, serverId, "root", "app", new Instance( "root" ));
 

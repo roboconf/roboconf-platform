@@ -25,7 +25,7 @@
 
 package net.roboconf.agent.internal;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -34,7 +34,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
@@ -61,7 +61,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent = new Agent();
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
@@ -69,7 +69,7 @@ public class AgentMessageProcessor_StateChangeTest {
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
-		TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClientAgent.class ).messagesForTheDm.clear();
+		TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class ).clearMessages();
 	}
 
 
@@ -230,7 +230,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -286,7 +286,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -332,7 +332,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -378,7 +378,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 
@@ -427,7 +427,7 @@ public class AgentMessageProcessor_StateChangeTest {
 			}
 		};
 
-		this.agent.setMessagingType(MessagingConstants.TEST_FACTORY_TYPE);
+		this.agent.setMessagingType(MessagingConstants.FACTORY_TEST);
 		this.agent.start();
 		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
 

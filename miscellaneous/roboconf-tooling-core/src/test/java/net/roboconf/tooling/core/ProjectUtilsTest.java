@@ -27,7 +27,7 @@ package net.roboconf.tooling.core;
 
 import java.io.File;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;

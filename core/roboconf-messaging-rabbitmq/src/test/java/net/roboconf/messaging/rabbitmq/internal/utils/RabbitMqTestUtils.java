@@ -33,11 +33,9 @@ import java.util.logging.Logger;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
-import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-import net.roboconf.messaging.rabbitmq.internal.RabbitMqClientAgent;
-import net.roboconf.messaging.rabbitmq.internal.RabbitMqClientDm;
+import net.roboconf.messaging.rabbitmq.internal.RabbitMqClient;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -170,7 +168,7 @@ public abstract class RabbitMqTestUtils {
 	}
 
 	/**
-	 * Get the delegate messaging client of a reconfigurable messaging client.
+	 * Gets the delegate messaging client of a reconfigurable messaging client.
 	 *
 	 * @param reconfigurable the reconfigurable messaging client.
 	 * @param type           the expected type of the internal messaging client.
@@ -178,23 +176,9 @@ public abstract class RabbitMqTestUtils {
 	 * @return the internal messaging client, or {@code null} if it is not defined, or has the wrong type.
 	 * @throws IllegalAccessException if the internal messaging client could not be read.
 	 */
-	public static RabbitMqClientDm getMessagingClientDm( ReconfigurableClientDm reconfigurable )
+	public static RabbitMqClient getMessagingClient( ReconfigurableClient<?> reconfigurable )
 	throws IllegalAccessException {
-		return TestUtils.getInternalField(reconfigurable, "messagingClient", RabbitMqClientDm.class);
-	}
-
-	/**
-	 * Get the delegate messaging client of a reconfigurable messaging client.
-	 *
-	 * @param reconfigurable the reconfigurable messaging client.
-	 * @param type           the expected type of the internal messaging client.
-	 * @param <T>            the expected type of the internal messaging client.
-	 * @return the internal messaging client, or {@code null} if it is not defined, or has the wrong type.
-	 * @throws IllegalAccessException if the internal messaging client could not be read.
-	 */
-	public static RabbitMqClientAgent getMessagingClientAgent( ReconfigurableClientAgent reconfigurable )
-	throws IllegalAccessException {
-		return TestUtils.getInternalField(reconfigurable, "messagingClient", RabbitMqClientAgent.class);
+		return TestUtils.getInternalField( reconfigurable, "messagingClient", RabbitMqClient.class );
 	}
 
 
@@ -208,7 +192,7 @@ public abstract class RabbitMqTestUtils {
 	public static Map<String, String> rabbitMqMessagingConfiguration(String ip, String username, String password) {
 
 		final Map<String,String> result = new LinkedHashMap<> ();
-		result.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, RabbitMqConstants.RABBITMQ_FACTORY_TYPE );
+		result.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, RabbitMqConstants.FACTORY_RABBITMQ );
 		if (ip != null)
 			result.put( RabbitMqConstants.RABBITMQ_SERVER_IP, ip );
 

@@ -25,10 +25,7 @@
 
 package net.roboconf.messaging.api.internal.client.dismiss;
 
-import java.util.HashMap;
-
-import junit.framework.Assert;
-import net.roboconf.messaging.api.client.ListenerCommand;
+import org.junit.Assert;
 
 import org.junit.Test;
 
@@ -38,45 +35,19 @@ import org.junit.Test;
 public class DismissClientsTest {
 
 	@Test
-	public void testDm() throws Exception {
+	public void testAll() throws Exception {
 
-		DismissClientDm client = new DismissClientDm();
+		DismissClient client = new DismissClient();
 		client.closeConnection();
 		client.deleteMessagingServerArtifacts( null );
 		Assert.assertFalse( client.isConnected());
-		client.listenToAgentMessages( null, ListenerCommand.START );;
+		client.subscribe( null );
 		client.openConnection();
-		client.propagateAgentTermination( null, null );
-		client.sendMessageToAgent( null, null, null );
-		client.sendMessageToTheDm( null );
-		client.listenToTheDm( ListenerCommand.START );
+		client.unsubscribe( null );
+		client.publish( null, null );
+		client.deleteMessagingServerArtifacts( null );
 		client.setMessageQueue( null );
 		client.getMessagingType();
 		client.getConfiguration();
-	}
-
-
-	@Test
-	public void testAgent() throws Exception {
-
-		DismissClientAgent client = new DismissClientAgent();
-		client.closeConnection();
-		Assert.assertFalse( client.isConnected());
-		client.openConnection();
-		client.setMessageQueue( null );
-		client.listenToExportsFromOtherAgents( ListenerCommand.STOP, null );
-		client.listenToRequestsFromOtherAgents( ListenerCommand.STOP, null );
-		client.listenToTheDm( ListenerCommand.START );
-		client.publishExports( null );
-		client.publishExports( null, "" );
-		client.requestExportsFromOtherAgents( null );
-		client.setScopedInstancePath( "/root" );
-		client.setApplicationName( "app" );
-		client.sendMessageToTheDm( null );
-		client.unpublishExports( null );
-		client.getMessagingType();
-		client.setExternalMapping( null );
-		client.getConfiguration();
-		client.setExternalMapping( new HashMap<String,String>( 0 ));
 	}
 }

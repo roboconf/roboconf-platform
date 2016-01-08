@@ -28,7 +28,7 @@ package net.roboconf.core.model;
 import java.io.File;
 import java.util.UUID;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.Rule;
@@ -80,7 +80,7 @@ public class ApplicationTemplateDescriptorTest {
 
 
 	@Test
-	public void testInvalidExternalExports() throws Exception {
+	public void testInvalidExternalExports_1() throws Exception {
 
 		File f = this.folder.newFile();
 		Utils.writeStringInto( "exports = toto IS titi", f );
@@ -89,6 +89,34 @@ public class ApplicationTemplateDescriptorTest {
 		Assert.assertEquals( 0, desc.externalExports.size());
 		Assert.assertEquals( 1, desc.invalidExternalExports.size());
 		Assert.assertEquals( "toto IS titi", desc.invalidExternalExports.iterator().next());
+	}
+
+
+	@Test
+	public void testInvalidExternalExports_2() throws Exception {
+
+		File f = this.folder.newFile();
+		Utils.writeStringInto( "exports: HAProxy.ip as lb-ip HAProxy.httpPort as lb-port", f );
+
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( f );
+		Assert.assertEquals( 0, desc.externalExports.size());
+		Assert.assertEquals( 1, desc.invalidExternalExports.size());
+		Assert.assertEquals( "HAProxy.ip as lb-ip HAProxy.httpPort as lb-port", desc.invalidExternalExports.iterator().next());
+	}
+
+
+	@Test
+	public void testValidExternalExports() throws Exception {
+
+		File f = this.folder.newFile();
+		Utils.writeStringInto( "exports: HAProxy.ip as lb-ip, HAProxy.httpPort as lb-port", f );
+
+		ApplicationTemplateDescriptor desc = ApplicationTemplateDescriptor.load( f );
+		Assert.assertEquals( 0, desc.invalidExternalExports.size());
+		Assert.assertEquals( 2, desc.externalExports.size());
+
+		Assert.assertEquals( "lb-ip", desc.externalExports.get( "HAProxy.ip" ));
+		Assert.assertEquals( "lb-port", desc.externalExports.get( "HAProxy.httpPort" ));
 	}
 
 

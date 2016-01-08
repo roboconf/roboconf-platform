@@ -26,17 +26,23 @@
 package net.roboconf.messaging.api.reconfigurables;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
-import net.roboconf.messaging.api.client.IDmClient;
-import net.roboconf.messaging.api.client.ListenerCommand;
-import net.roboconf.messaging.api.factory.IMessagingClientFactory;
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.dismiss.DismissClientDm;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.messaging.api.AbstractMessageProcessor;
+import net.roboconf.messaging.api.business.IDmClient;
+import net.roboconf.messaging.api.business.ListenerCommand;
+import net.roboconf.messaging.api.extensions.IMessagingClient;
+import net.roboconf.messaging.api.extensions.MessagingContext;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
 import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.processors.AbstractMessageProcessor;
+import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
+import net.roboconf.messaging.api.utils.MessagingUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -47,36 +53,20 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 	// Methods inherited from ReconfigurableClient
 
 	@Override
-	protected IDmClient createMessagingClient( String factoryName )
-	throws IOException {
-
-		IDmClient client = null;
-		MessagingClientFactoryRegistry registry = getRegistry();
-		if (registry != null) {
-			IMessagingClientFactory factory = registry.getMessagingClientFactory(factoryName);
-			if (factory != null) {
-				client = factory.createDmClient(this);
-			}
-		}
-		return client;
-	}
-
-
-	@Override
-	protected void openConnection( IDmClient newMessagingClient ) throws IOException {
+	protected void openConnection( IMessagingClient newMessagingClient ) throws IOException {
 		newMessagingClient.openConnection();
-	}
-
-
-	@Override
-	protected IDmClient getDismissedClient() {
-		return new DismissClientDm();
 	}
 
 
 	@Override
 	protected void configureMessageProcessor( AbstractMessageProcessor<IDmClient> messageProcessor ) {
 		messageProcessor.setMessagingClient( this );
+	}
+
+
+	@Override
+	public RecipientKind getOwnerKind() {
+		return RecipientKind.DM;
 	}
 
 
@@ -102,46 +92,90 @@ public class ReconfigurableClientDm extends ReconfigurableClient<IDmClient> impl
 
 
 	@Override
-	public void closeConnection() throws IOException {
-		final IDmClient toClose = resetInternalClient();
-		if (toClose != null) {
-			toClose.closeConnection();
-		}
-	}
-
-
-	@Override
-	public void sendMessageToAgent( Application application, Instance instance, Message message ) throws IOException {
-		getMessagingClient().sendMessageToAgent( application, instance, message );
-	}
-
-
-	@Override
-	public void listenToAgentMessages( Application application, ListenerCommand command ) throws IOException {
-		getMessagingClient().listenToAgentMessages( application, command );
-	}
-
-
-	@Override
-	public void sendMessageToTheDm( Message msg ) throws IOException {
-		getMessagingClient().sendMessageToTheDm( msg );
-	}
-
-
-	@Override
-	public void listenToTheDm( ListenerCommand command ) throws IOException {
-		getMessagingClient().listenToTheDm( command );
-	}
-
-
-	@Override
 	public void deleteMessagingServerArtifacts( Application application ) throws IOException {
 		getMessagingClient().deleteMessagingServerArtifacts( application );
 	}
 
 
 	@Override
+	public void closeConnection() throws IOException {
+
+		final IMessagingClient toClose = resetInternalClient();
+		if (toClose != null)
+			toClose.closeConnection();
+	}
+
+
+	@Override
+	public void sendMessageToAgent( Application application, Instance instance, Message message ) throws IOException {
+
+		// The context match the one used by agents to listen to messages sent by the DM.
+		String topicName = MessagingUtils.buildTopicNameForAgent( instance );
+		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, topicName, application.getName());
+		getMessagingClient().publish( ctx, message );
+	}
+
+
+	@Override
+	public void listenToAgentMessages( Application application, ListenerCommand command ) throws IOException {
+		listenToAgentMessages( getMessagingClient(), application, command );
+	}
+
+
+	@Override
+	public void sendMessageToTheDm( Message msg ) throws IOException {
+
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, null );
+		getMessagingClient().publish( ctx, msg );
+	}
+
+
+	@Override
+	public void listenToTheDm( ListenerCommand command ) throws IOException {
+
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, null );
+		if( command == ListenerCommand.STOP )
+			getMessagingClient().unsubscribe( ctx );
+		else
+			getMessagingClient().subscribe( ctx );
+	}
+
+
+	@Override
 	public void propagateAgentTermination( Application application, Instance rootInstance ) throws IOException {
-		getMessagingClient().propagateAgentTermination( application, rootInstance );
+
+		// Start with the deepest instances
+		List<Instance> instances = InstanceHelpers.buildHierarchicalList( rootInstance );
+		Collections.reverse( instances );
+
+		// Roughly, we unpublish all the variables for all the instances that were on the agent's machine.
+		// This code is VERY similar to ...ClientAgent#unpublishExports
+		// The messages will go through JUST like if they were coming from other agents.
+		this.logger.fine( "The DM is un-publishing exports related to agent of " + rootInstance + " (termination propagation)." );
+		for( Instance instance : instances ) {
+			for( MessagingContext ctx : MessagingContext.forExportedVariables(
+					application.getName(), instance, application.getExternalExports(), ThoseThat.IMPORT )) {
+
+				MsgCmdRemoveImport message = new MsgCmdRemoveImport(
+						application.getName(),
+						ctx.getComponentOrFacetName(),
+						InstanceHelpers.computeInstancePath( instance ));
+
+				// FIXME: external exports are not handled here!!!!
+				getMessagingClient().publish( ctx, message );
+			}
+		}
+	}
+
+
+	protected void listenToAgentMessages( IMessagingClient messagingClient, Application application, ListenerCommand command )
+	throws IOException {
+
+		// The context match the one used by agents to send messages to the DM.
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, application.getName());
+		if( command == ListenerCommand.STOP )
+			messagingClient.unsubscribe( ctx );
+		else
+			messagingClient.subscribe( ctx );
 	}
 }

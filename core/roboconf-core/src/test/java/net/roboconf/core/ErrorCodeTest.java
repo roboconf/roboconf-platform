@@ -28,7 +28,7 @@ package net.roboconf.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.ErrorCode.ErrorCategory;
 
 import org.junit.Test;

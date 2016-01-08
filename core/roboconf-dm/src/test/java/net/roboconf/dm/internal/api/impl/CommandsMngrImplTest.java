@@ -28,7 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
@@ -60,6 +60,7 @@ public class CommandsMngrImplTest {
 	public void createMockObject() throws IOException {
 
 		this.app = new TestApplication();
+		this.app.setDirectory( this.folder.newFolder());
 		this.manager = Mockito.mock( Manager.class );
 
 		this.cmdMngr = new CommandsMngrImpl( this.manager );
@@ -70,7 +71,6 @@ public class CommandsMngrImplTest {
 	@Test
 	public void testBasics() throws IOException {
 
-		this.app.directory( this.folder.newFolder());
 		File f1 = this.folder.newFile();
 		Utils.writeStringInto("Bonjour le monde cruel", f1);
 

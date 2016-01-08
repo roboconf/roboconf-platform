@@ -26,11 +26,12 @@
 package net.roboconf.agent.monitoring.internal;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.monitoring.api.IMonitoringHandler;
 import net.roboconf.agent.monitoring.internal.MonitoringTask.MonitoringHandlerRun;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
@@ -44,12 +45,14 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
-import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.business.IAgentClient;
+import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -58,18 +61,19 @@ public class MonitoringTaskTest {
 
 	private static final List<IMonitoringHandler> HANDLERS = new ArrayList<> ();
 	static {
-		HANDLERS.add(  new FileHandler());
-		HANDLERS.add(  new NagiosHandler());
-		HANDLERS.add(  new RestHandler());
+		HANDLERS.add( new FileHandler());
+		HANDLERS.add( new NagiosHandler());
+		HANDLERS.add( new RestHandler());
 	}
 
-	private TestClientAgent messagingClient;
+	private IAgentClient messagingClient;
 	private MyAgentInterface agentInterface;
 
 
 	@Before
-	public void initializeMessagingClient() {
-		this.messagingClient = (TestClientAgent) new TestClientFactory().createAgentClient(null);
+	public void initializeMessagingClient() throws Exception {
+
+		this.messagingClient = Mockito.mock( IAgentClient.class );
 		this.agentInterface = new MyAgentInterface( this.messagingClient );
 	}
 
@@ -100,17 +104,17 @@ public class MonitoringTaskTest {
 		MonitoringHandlerRun bean = handlers.get( 0 );
 		Assert.assertEquals( "file", bean.handlerName );
 		Assert.assertEquals( "myRuleName-1", bean.eventId );
-		Assert.assertTrue( bean.rawRulesText.contains( "/tmp/ta-daaaaa" ));
+		Assert.assertTrue( bean.rawRulesText.contains( "%TMP%/rbcf-test/ta-daaaaa" ));
 
 		bean = handlers.get( 1 );
 		Assert.assertEquals( "file", bean.handlerName );
 		Assert.assertEquals( "myRuleName-2", bean.eventId );
-		Assert.assertTrue( bean.rawRulesText.contains( "/tmp/ta-daaaaa-2" ));
+		Assert.assertTrue( bean.rawRulesText.contains( "%TMP%/rbcf-test/ta-daaaaa-2" ));
 
 		bean = handlers.get( 2 );
 		Assert.assertEquals( "file", bean.handlerName );
 		Assert.assertEquals( "myRuleName", bean.eventId );
-		Assert.assertTrue( bean.rawRulesText.contains( "/tmp/a-directory-to-not-delete" ));
+		Assert.assertTrue( bean.rawRulesText.contains( "%TMP%/rbcf-test/a-directory-to-not-delete" ));
 	}
 
 
@@ -257,11 +261,11 @@ public class MonitoringTaskTest {
 	public void testWholeChain_instancesStarted() throws Exception {
 
 		testTheCommonChain( InstanceStatus.DEPLOYED_STARTED, "/file-events.conf" );
+		ArgumentCaptor<Message> msgCapture = ArgumentCaptor.forClass( Message.class );
+		Mockito.verify( this.messagingClient, Mockito.times( 1 )).sendMessageToTheDm( msgCapture.capture());
+		Assert.assertEquals( MsgNotifAutonomic.class, msgCapture.getValue().getClass());
 
-		Assert.assertEquals( 1, this.messagingClient.messagesForTheDm.size());
-		Assert.assertEquals( MsgNotifAutonomic.class, this.messagingClient.messagesForTheDm.get( 0 ).getClass());
-
-		MsgNotifAutonomic msg = (MsgNotifAutonomic) this.messagingClient.messagesForTheDm.get( 0 );
+		MsgNotifAutonomic msg = (MsgNotifAutonomic) msgCapture.getValue();
 		Assert.assertEquals( this.agentInterface.getApplicationName(), msg.getApplicationName());
 		Assert.assertEquals( "myRuleName", msg.getEventId());
 		Assert.assertEquals( "/" + this.agentInterface.getScopedInstance().getName(), msg.getScopedInstancePath());
@@ -273,7 +277,7 @@ public class MonitoringTaskTest {
 	public void testWholeChain_instancesNotStarted() throws Exception {
 
 		testTheCommonChain( InstanceStatus.DEPLOYED_STOPPED, "/file-events.conf" );
-		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
+		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
 	}
 
 
@@ -281,26 +285,26 @@ public class MonitoringTaskTest {
 	public void testWholeChain_noHandler() throws Exception {
 
 		testTheCommonChain( InstanceStatus.DEPLOYED_STARTED, "/unknown-events.conf" );
-		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
+		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
 	}
 
 
 	@Test
 	public void testWholeChain_messagingError() throws Exception {
 
-		this.messagingClient.failMessageSending.set( true );
+		Mockito.doThrow( new IOException( "For test" )).when( this.messagingClient ).sendMessageToTheDm( Mockito.any( Message.class ));
 		testTheCommonChain( InstanceStatus.DEPLOYED_STARTED, "/file-events.conf" );
-		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
+		// No exception is thrown
 	}
 
 
 	@Test
 	public void testWholeChain_noModelYet() throws Exception {
 
-		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
+		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
 		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
 		task.run();
-		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
+		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
 	}
 
 
@@ -321,17 +325,22 @@ public class MonitoringTaskTest {
 		Assert.assertTrue( dir.mkdirs());
 
 		File f = TestUtils.findTestFile( file );
-		File measureFile = new File( dir, childInstance.getComponent().getName() + ".measures" );
+		String tmpDirLocation = System.getProperty( "java.io.tmpdir" ).replace( "\\", "/" ).replaceAll( "/?$", "" );
+		String updatedContent = Utils.readFileContent( f ).replace( "%TMP%", tmpDirLocation );
 
-		Assert.assertFalse( measureFile.exists());
-		Utils.copyStream( f, measureFile );
+		File measureFile = new File( dir, childInstance.getComponent().getName() + ".measures" );
+		Utils.writeStringInto( updatedContent, measureFile );
 		Assert.assertTrue( measureFile.exists());
 
 		// Run the task
-		Assert.assertEquals( 0, this.messagingClient.messagesForTheDm.size());
+		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
 		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
 		task.run();
 
 		Utils.deleteFilesRecursively( dir );
+		Assert.assertFalse( dir.exists());
+
+		File temporaryDirectory = new File( tmpDirLocation, "rbcf-test" );
+		Utils.deleteFilesRecursively( temporaryDirectory );
 	}
 }

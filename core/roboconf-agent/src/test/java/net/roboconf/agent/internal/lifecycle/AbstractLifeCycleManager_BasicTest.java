@@ -25,16 +25,16 @@
 
 package net.roboconf.agent.internal.lifecycle;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
-import net.roboconf.messaging.api.client.IAgentClient;
-import net.roboconf.messaging.api.internal.client.test.TestClientAgent;
+import net.roboconf.messaging.api.business.IAgentClient;
 
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,7 +44,7 @@ public class AbstractLifeCycleManager_BasicTest {
 	@Test
 	public void testFactory() {
 
-		IAgentClient messagingClient = new TestClientAgent();
+		IAgentClient messagingClient = Mockito.mock( IAgentClient.class );
 		String appName = "my app";
 
 		Instance instance = new Instance( "inst" );
@@ -82,7 +82,7 @@ public class AbstractLifeCycleManager_BasicTest {
 	@Test
 	public void undeployingShouldNotModifyImportsList() throws Exception {
 
-		IAgentClient messagingClient = new TestClientAgent();
+		IAgentClient messagingClient = Mockito.mock( IAgentClient.class );
 		Instance instance = new Instance( "inst" );
 		Assert.assertTrue( instance.getImports().isEmpty());
 

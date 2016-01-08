@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.internal.commands;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.RenameCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;

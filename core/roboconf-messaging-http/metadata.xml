@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+	
+	<!-- A component for the HTTP factory (messaging implementation) -->
+	<component classname="net.roboconf.messaging.http.internal.HttpClientFactory" name="roboconf-messaging-client-factory-http" public="false">
+		<requires field="httpService" optional="false" />
+		<provides />
+
+		<callback transition="validate" method="start"/>
+		<callback transition="invalidate" method="stop"/>
+		<properties pid="net.roboconf.messaging.http" updated="reconfigure">
+			<property name="net.roboconf.messaging.http.server.port" method="setHttpPort" value="8081" />
+			<property name="net.roboconf.messaging.http.server.ip" method="setHttpServerIp" />
+		</properties>
+	</component>
+	
+	<!-- And the instance... -->
+	<instance component="roboconf-messaging-client-factory-http" name="Factory for Roboconf's HTTP Messaging Clients" />
+</ipojo>

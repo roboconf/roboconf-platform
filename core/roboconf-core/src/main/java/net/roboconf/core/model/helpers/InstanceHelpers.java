@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.ModelError;
@@ -92,6 +94,22 @@ public final class InstanceHelpers {
 	 */
 	public static boolean haveSamePath( Instance i1, Instance i2 ) {
 		return computeInstancePath( i1 ).equals( computeInstancePath( i2 ));
+	}
+
+
+	/**
+	 * Finds the name of an instance from its path.
+	 * @param instancePath a non-null instance path
+	 * @return an instance name, or the path itself if it is not valid (e.g. no slash)
+	 */
+	public static String findInstanceName( String instancePath ) {
+
+		String instanceName = "";
+		Matcher m = Pattern.compile( "([^/]+)$" ).matcher( instancePath );
+		if( m.find())
+			instanceName = m.group( 1 );
+
+		return instanceName;
 	}
 
 
