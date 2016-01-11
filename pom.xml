@@ -93,7 +93,7 @@
 	<properties>
 		<jersey.stack.version>1.18.2</jersey.stack.version>
 		<jackson.stack.version>2.3.1</jackson.stack.version>
-		<karaf.version>4.0.2</karaf.version>
+		<karaf.version>4.0.3</karaf.version>
 		<ipojo.version>1.12.1</ipojo.version>
 		<jclouds.version>1.8.1</jclouds.version>
 		<mockito.version>1.10.19</mockito.version>
