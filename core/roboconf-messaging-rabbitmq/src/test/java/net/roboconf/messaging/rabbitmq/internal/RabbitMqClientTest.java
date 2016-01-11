@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -42,7 +42,7 @@ import com.rabbitmq.client.Channel;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RaabitMqClientTest {
+public class RabbitMqClientTest {
 
 	private static boolean rabbitMqIsRunning = false;
 
