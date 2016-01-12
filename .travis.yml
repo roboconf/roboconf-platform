@@ -1,6 +1,10 @@
 language: java
 sudo: false
 
+# Skip the default Maven command launched by Travis.
+# By default, it is "mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+install: true
+
 # ENV variables
 env:
   - ROBOCONF_IT_TIMEOUT=60000
