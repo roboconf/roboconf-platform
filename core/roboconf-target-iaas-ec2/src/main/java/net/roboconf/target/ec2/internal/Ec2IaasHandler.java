@@ -47,6 +47,7 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
@@ -260,6 +261,10 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 		runInstancesRequest.setSecurityGroups(Collections.singletonList(secGroup));
 
+		String availabilityZone = targetProperties.get(Ec2Constants.AVAILABILITY_ZONE);
+		if(! Utils.isEmptyOrWhitespaces(availabilityZone))
+			runInstancesRequest.setPlacement(new Placement(availabilityZone));
+		
 		// The following part enables to transmit data to the VM.
 		// When the VM is up, it will be able to read this data.
 		String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
