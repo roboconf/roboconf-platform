@@ -30,17 +30,17 @@ import java.io.IOException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationCommandsResource;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier
@@ -59,6 +59,7 @@ public class ApplicationCommandsResourceTest {
 
 	@Before
 	public void before() throws Exception {
+
 		// Create the manager
 		this.manager = new Manager();
 		this.manager.start();
@@ -77,6 +78,7 @@ public class ApplicationCommandsResourceTest {
 		this.managerWrapper.getNameToManagedApplication().put(this.app.getName(), this.ma);
 	}
 
+
 	@Test
 	public void commandsTest() throws IOException {
 
@@ -86,18 +88,18 @@ public class ApplicationCommandsResourceTest {
 		resp = this.resource.createOrUpdateCommand(this.app.getName(), "toto", "this is a command");
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
-		Assert.assertEquals( "this is a command", (String)resp.getEntity());
+		Assert.assertEquals( "this is a command", resp.getEntity());
 
 
 		resp = this.resource.createOrUpdateCommand(this.app.getName(), "toto", "Good command");
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
-		Assert.assertEquals( "Good command",(String)resp.getEntity());
+		Assert.assertEquals( "Good command",resp.getEntity());
 
 		resp = this.resource.deleteCommand(this.app.getName(), "toto");
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
 		Assert.assertEquals( Status.NO_CONTENT.getStatusCode(), resp.getStatus());
-		Assert.assertEquals( null, (String)resp.getEntity());
+		Assert.assertEquals( null, resp.getEntity());
 	}
 }

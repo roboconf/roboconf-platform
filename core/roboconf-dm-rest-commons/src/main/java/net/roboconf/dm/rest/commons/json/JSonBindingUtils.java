@@ -36,6 +36,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
@@ -101,6 +102,9 @@ public final class JSonBindingUtils {
 	private static final String TARGET_STATS_USING = "using";
 	private static final String TARGET_STATS_REFERENCING = "referencing";
 
+	private static final String PREF_VALUE = "value";
+	private static final String PREF_CATEGORY = "category";
+
 
 	/**
 	 * Private constructor.
@@ -150,6 +154,7 @@ public final class JSonBindingUtils {
 
 		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
 		module.addSerializer( TargetAssociation.class, new TargetAssociationSerializer());
+		module.addSerializer( Preference.class, new PreferenceSerializer());
 
 		mapper.registerModule( module );
 		return mapper;
@@ -214,6 +219,38 @@ public final class JSonBindingUtils {
 
 			if( item.getTargetDescriptor() != null )
 				generator.writeObjectField( DESC, item.getTargetDescriptor());
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for Roboconf preferences.
+	 * <p>
+	 * No deserializer is provided, as it does not make sense for the REST API.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class PreferenceSerializer extends JsonSerializer<Preference> {
+
+		@Override
+		public void serialize(
+				Preference item,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( item.getName() != null )
+				generator.writeStringField( NAME, item.getName());
+
+			if( item.getValue() != null )
+				generator.writeObjectField( PREF_VALUE, item.getValue());
+
+			if( item.getCategory() != null )
+				generator.writeObjectField( PREF_CATEGORY, item.getCategory().toString().toLowerCase());
 
 			generator.writeEndObject();
 		}

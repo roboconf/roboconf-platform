@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,16 +23,50 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.core.model.runtime;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public class Preference {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
-	String PREFERENCES = "preferences";
+	private final String name, value;
+	private final PreferenceKeyCategory category;
+
+
+	/**
+	 * Constructor.
+	 * @param name the key name (not null)
+	 * @param category the category (can be null)
+	 */
+	public Preference( String name, String value, PreferenceKeyCategory category ) {
+		this.name = name;
+		this.value = value;
+		this.category = category;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public String getValue() {
+		return this.value;
+	}
+
+	public PreferenceKeyCategory getCategory() {
+		return this.category;
+	}
+
+	@Override
+	public String toString() {
+		return this.name;
+	}
+
+
+	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public enum PreferenceKeyCategory {
+		EMAIL;
+	}
 }

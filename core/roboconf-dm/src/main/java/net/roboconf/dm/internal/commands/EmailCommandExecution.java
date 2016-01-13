@@ -26,6 +26,7 @@
 package net.roboconf.dm.internal.commands;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -40,7 +41,9 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import net.roboconf.core.commands.EmailCommandInstruction;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
@@ -83,7 +86,7 @@ class EmailCommandExecution extends AbstractCommandExecution {
 	Message getMessageToSend() throws MessagingException {
 
 		// Subject and message
-		Properties mailProperties = this.manager.preferencesMngr().getEmailProperties();
+		Properties mailProperties = this.manager.preferencesMngr().getJavaxMailProperties();
 		String subject = "Roboconf event";
 		String data = this.instr.getMsg();
 
@@ -95,13 +98,13 @@ class EmailCommandExecution extends AbstractCommandExecution {
 		}
 
 		// Credentials
-		String username = mailProperties.getProperty( "mail.user", "" );
-		String password = mailProperties.getProperty( "mail.password", "" );
+		String username = mailProperties.getProperty( IPreferencesMngr.JAVAX_MAIL_SMTP_USER, "" );
+		String password = mailProperties.getProperty( IPreferencesMngr.JAVAX_MAIL_SMTP_PWD, "" );
 
 		// Obtain mail session object
 		Session session = null;
-		if("true".equalsIgnoreCase( mailProperties.getProperty("mail.smtp.auth")))
-			session = Session.getInstance( mailProperties, new MailAuthenticator(username, password));
+		if("true".equalsIgnoreCase( mailProperties.getProperty( IPreferencesMngr.JAVAX_MAIL_SMTP_AUTH )))
+			session = Session.getInstance( mailProperties, new MailAuthenticator( username, password ));
 		else
 			session = Session.getDefaultInstance( mailProperties );
 
@@ -109,11 +112,14 @@ class EmailCommandExecution extends AbstractCommandExecution {
 		MimeMessage message = new MimeMessage(session);
 
 		// Set From: and To: header fields
-		message.setFrom( new InternetAddress( mailProperties.getProperty( "mail.from" )));
+		message.setFrom( new InternetAddress( mailProperties.getProperty( IPreferencesMngr.JAVAX_MAIL_FROM )));
 
 		Set<String> tos = new LinkedHashSet<> ();
 		tos.addAll( this.instr.getTos());
-		tos.addAll( this.manager.preferencesMngr().getDefaultEmailRecipients());
+
+		String defaultRecipients = this.manager.preferencesMngr().get( IPreferencesMngr.EMAIL_DEFAULT_RECIPIENTS, "" );
+		List<String> recipients = Utils.splitNicely( defaultRecipients, "," );
+		tos.addAll( recipients );
 
 		for( String to : tos )
 			message.addRecipient( Message.RecipientType.TO, new InternetAddress( to ));

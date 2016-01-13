@@ -138,8 +138,8 @@ public class Manager {
 		// We do not want to mix N frameworks.
 		this.notificationMngr = new NotificationMngrImpl();
 		this.configurationMngr = new ConfigurationMngrImpl();
-		this.randomMngr = new RandomMngrImpl();
-		this.preferencesMngr = new PreferencesMngrImpl();
+		this.preferencesMngr = new PreferencesMngrImpl( this.configurationMngr );
+		this.randomMngr = new RandomMngrImpl( this.preferencesMngr );
 
 		this.messagingMngr = new MessagingMngrImpl();
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
@@ -171,6 +171,9 @@ public class Manager {
 	 */
 	public void start() {
 		this.logger.info( "The DM is about to be launched." );
+
+		// Load the preferences
+		this.preferencesMngr.loadProperties();
 
 		// Start the messaging
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );

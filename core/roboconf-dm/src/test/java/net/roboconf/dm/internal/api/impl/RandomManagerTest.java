@@ -26,16 +26,20 @@
 package net.roboconf.dm.internal.api.impl;
 
 import java.util.Map;
+import java.util.Properties;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,6 +48,18 @@ public class RandomManagerTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+	private RandomMngrImpl mngr;
+
+
+	@Before
+	public void prepareManager() {
+
+		IPreferencesMngr preferencesMngr = Mockito.mock( IPreferencesMngr.class );
+		Mockito.when( preferencesMngr.get( Mockito.anyString())).thenReturn( "" );
+		Mockito.when( preferencesMngr.getJavaxMailProperties()).thenReturn( new Properties());
+
+		this.mngr = new RandomMngrImpl( preferencesMngr );
+	}
 
 
 	@Test
@@ -65,32 +81,30 @@ public class RandomManagerTest {
 		app2.getWar().getComponent().exportedVariables.get( "port" ).setValue( null );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-
 		verify( app1.getWar(), "war.port", null );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
-		mngr.generateAllRandomValues( app1 );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
+		this.mngr.generateAllRandomValues( app1 );
 		verify( app1.getWar(), "war.port", "10000" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
 
 		verify( app2.getWar(), "war.port", null );
-		mngr.generateAllRandomValues( app2 );
+		this.mngr.generateAllRandomValues( app2 );
 		verify( app2.getWar(), "war.port", "10000" );
-		Assert.assertEquals( 2, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 2, this.mngr.agentToRandomPorts.size());
 
 		// Release one
-		mngr.releaseAllRandomValues( app1 );
+		this.mngr.releaseAllRandomValues( app1 );
 		verify( app2.getWar(), "war.port", "10000" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
 
 		// Release an instance without any random
-		mngr.releaseRandomValues( app2, app2.getMySql());
+		this.mngr.releaseRandomValues( app2, app2.getMySql());
 		verify( app2.getWar(), "war.port", "10000" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
 
 		// Release the right instance
-		mngr.releaseRandomValues( app2, app2.getWar());
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		this.mngr.releaseRandomValues( app2, app2.getWar());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 	}
 
 
@@ -110,23 +124,20 @@ public class RandomManagerTest {
 		app1.getMySql().getComponent().exportedVariables.get( "port" ).setRawKind( RandomKind.PORT.toString());
 		app1.getMySql().getComponent().exportedVariables.get( "port" ).setValue( null );
 
-		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-
 		// The MySQL instance and the WAR are NOT on the same machine => they can use the same port
 		verify( app1.getWar(), "war.port", null );
 		verify( app1.getMySql(), "mysql.port", null );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 
-		mngr.generateAllRandomValues( app1 );
+		this.mngr.generateAllRandomValues( app1 );
 
 		verify( app1.getWar(), "war.port", "10000" );
 		verify( app1.getMySql(), "mysql.port", "10000" );
-		Assert.assertEquals( 2, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 2, this.mngr.agentToRandomPorts.size());
 
 		// Release them all
-		mngr.releaseAllRandomValues( app1 );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		this.mngr.releaseAllRandomValues( app1 );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 	}
 
 
@@ -147,34 +158,32 @@ public class RandomManagerTest {
 		InstanceHelpers.insertChild( app1.getTomcat(), newWar );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 		verify( app1.getWar(), "war.port", null );
 		verify( newWar, "war.port", null );
 
-		mngr.generateAllRandomValues( app1 );
+		this.mngr.generateAllRandomValues( app1 );
 
 		verify( app1.getWar(), "war.port", "10000" );
 		verify( newWar, "war.port", "10001" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
-		Assert.assertEquals( 2, mngr.agentToRandomPorts.values().iterator().next().size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 2, this.mngr.agentToRandomPorts.values().iterator().next().size());
 
 		// Release one instance
-		mngr.releaseRandomValues( app1, app1.getWar());
+		this.mngr.releaseRandomValues( app1, app1.getWar());
 		verify( newWar, "war.port", "10001" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.values().iterator().next().size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.values().iterator().next().size());
 
 		// Release an instance without any random
-		mngr.releaseRandomValues( app1, app1.getTomcat());
+		this.mngr.releaseRandomValues( app1, app1.getTomcat());
 		verify( newWar, "war.port", "10001" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.values().iterator().next().size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.values().iterator().next().size());
 
 		// Release the right instance
-		mngr.releaseRandomValues( app1, newWar );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		this.mngr.releaseRandomValues( app1, newWar );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 	}
 
 
@@ -191,17 +200,16 @@ public class RandomManagerTest {
 		app1.getWar().getComponent().exportedVariables.get( "port" ).setValue( null );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
 		verify( app1.getWar(), "war.port", null );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 
-		mngr.generateAllRandomValues( app1 );
+		this.mngr.generateAllRandomValues( app1 );
 		verify( app1.getWar(), "war.port", null );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 
-		mngr.releaseRandomValues( app1, app1.getWar());
+		this.mngr.releaseRandomValues( app1, app1.getWar());
 		verify( app1.getWar(), "war.port", null );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 	}
 
 
@@ -219,13 +227,12 @@ public class RandomManagerTest {
 		app1.getWar().overriddenExports.put( "port", "43210" );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
 		verify( app1.getWar(), "war.port", "43210" );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 
-		mngr.generateAllRandomValues( app1 );
+		this.mngr.generateAllRandomValues( app1 );
 		verify( app1.getWar(), "war.port", "43210" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
 	}
 
 
@@ -246,15 +253,14 @@ public class RandomManagerTest {
 		verify( app1.getWar(), "war.port", "17401" );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
-		mngr.restoreRandomValuesCache( app1 );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
+		this.mngr.restoreRandomValuesCache( app1 );
 
 		// The value cannot have changed
 		verify( app1.getWar(), "war.port", "17401" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.values().iterator().next().size());
-		Assert.assertEquals( 17401, mngr.agentToRandomPorts.values().iterator().next().get( 0 ).intValue());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.values().iterator().next().size());
+		Assert.assertEquals( 17401, this.mngr.agentToRandomPorts.values().iterator().next().get( 0 ).intValue());
 	}
 
 
@@ -271,13 +277,12 @@ public class RandomManagerTest {
 		app1.getWar().getComponent().exportedVariables.get( "port" ).setValue( null );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 		verify( app1.getWar(), "war.port", null );
 
-		mngr.restoreRandomValuesCache( app1 );
+		this.mngr.restoreRandomValuesCache( app1 );
 		verify( app1.getWar(), "war.port", null );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 	}
 
 
@@ -306,14 +311,13 @@ public class RandomManagerTest {
 		verify( app1.getMySql(), "mysql.port", "17401" );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
-		mngr.restoreRandomValuesCache( app1 );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
+		this.mngr.restoreRandomValuesCache( app1 );
 
 		// The same port cannot be used twice, once will have been rewritten
 		verify( app1.getWar(), "war.port", "17401" );
 		verify( app1.getMySql(), "mysql.port", "17401" );
-		Assert.assertEquals( 2, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 2, this.mngr.agentToRandomPorts.size());
 	}
 
 
@@ -341,15 +345,14 @@ public class RandomManagerTest {
 		verify( newWar, "war.port", "17401" );
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
-		mngr.restoreRandomValuesCache( app1 );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
+		this.mngr.restoreRandomValuesCache( app1 );
 
 		// The same port cannot be used twice, once will have been rewritten
 		verify( app1.getWar(), "war.port", "17401" );
 		verify( newWar, "war.port", "10000" );
-		Assert.assertEquals( 1, mngr.agentToRandomPorts.size());
-		Assert.assertEquals( 2, mngr.agentToRandomPorts.values().iterator().next().size());
+		Assert.assertEquals( 1, this.mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 2, this.mngr.agentToRandomPorts.values().iterator().next().size());
 	}
 
 
@@ -362,10 +365,9 @@ public class RandomManagerTest {
 		app1.setDirectory( this.folder.newFolder());
 
 		// Verify what happens with the random manager
-		RandomMngrImpl mngr = new RandomMngrImpl();
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
-		mngr.restoreRandomValuesCache( app1 );
-		Assert.assertEquals( 0, mngr.agentToRandomPorts.size());
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
+		this.mngr.restoreRandomValuesCache( app1 );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 	}
 
 

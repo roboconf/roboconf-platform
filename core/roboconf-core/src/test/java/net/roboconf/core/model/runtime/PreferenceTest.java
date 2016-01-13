@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,16 +23,23 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.core.model.runtime;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public class PreferenceTest {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
-	String PREFERENCES = "preferences";
+	@Test
+	public void verifyTosString() {
+
+		Preference pref = new Preference( null, null, null );
+		Assert.assertNull( pref.toString());
+
+		pref = new Preference( "key", "value", null );
+		Assert.assertEquals( "key", pref.toString());
+	}
 }

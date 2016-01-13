@@ -23,16 +23,51 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.dm.rest.services.internal.resources;
+
+import java.util.List;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+
+import net.roboconf.core.model.runtime.Preference;
+import net.roboconf.dm.rest.commons.UrlConstants;
 
 /**
+ * The REST API to set global preferences.
+ * <p>
+ * Implementing classes have to define the "Path" annotation
+ * on the class. Use {@link #PATH}.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public interface IPreferencesResource {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
-	String PREFERENCES = "preferences";
+	String PATH = "/" + UrlConstants.PREFERENCES;
+
+
+	/**
+	 * Gets all the preferences.
+	 * @return a non-null list of preferences
+	 */
+	@GET
+	List<Preference> getAllPreferences();
+
+
+	/**
+	 * Changes a preference value.
+	 * <p>
+	 * Notice that preferences cannot be deleted (and created) through
+	 * the REST API.
+	 * </p>
+	 *
+	 * @param key the preference name
+	 * @param value the preference value
+	 * @return a response
+	 */
+	@POST
+	Response savePreference( @QueryParam("key") String key, @QueryParam("value") String value );
 }
