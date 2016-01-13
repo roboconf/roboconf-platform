@@ -246,8 +246,14 @@ public final class RuntimeModelIo {
 		if( app.getGraphs() != null && commandsDirectory.exists()) {
 
 			for( File f : Utils.listAllFiles( commandsDirectory )) {
-				CommandsParser parser = new CommandsParser( app, f );
-				result.loadErrors.addAll( parser.getParsingErrors());
+
+				if( ! f.getName().endsWith( Constants.FILE_EXT_COMMANDS )) {
+					result.loadErrors.add( new RoboconfError( ErrorCode.PROJ_INVALID_COMMAND_EXT ));
+
+				} else {
+					CommandsParser parser = new CommandsParser( app, f );
+					result.loadErrors.addAll( parser.getParsingErrors());
+				}
 			}
 		}
 

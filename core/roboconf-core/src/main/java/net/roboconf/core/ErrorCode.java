@@ -154,6 +154,7 @@ public enum ErrorCode {
 	PROJ_INVALID_EXTERNAL_EXPORTS( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "Invalid external exports were found in the application's descriptor." ),
 	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource (recipe) directory." ),
 	PROJ_APPLICATION_TEMPLATE_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application template was not found." ),
+	PROJ_INVALID_COMMAND_EXT( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A command script file must use the " + Constants.FILE_EXT_COMMANDS + " extension." ),
 
 	// Recipes Errors
 	REC_PUPPET_DISLIKES_WILDCARD_IMPORTS( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Puppet modules may encounter problems with Roboconf wildcard imports." ),
