@@ -33,4 +33,5 @@ public interface AgentConstants {
 	String PLATFORM_EC2 = "iaas-ec2";
 	String PLATFORM_OPENSTACK = "iaas-openstack";
 	String PLATFORM_AZURE = "iaas-azure";
+	String PLATFORM_VMWARE = "iaas-vmware";
 }

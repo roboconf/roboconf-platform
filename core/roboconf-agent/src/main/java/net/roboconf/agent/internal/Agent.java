@@ -124,6 +124,10 @@ public class Agent implements AgentMessagingInterface {
 
 			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.targetId ))
 				props = UserDataUtils.findParametersForAzure( this.logger );
+			
+			else if(AgentConstants.PLATFORM_VMWARE.equalsIgnoreCase(this.targetId)) {
+				props = UserDataUtils.findParametersForVmware(this.logger);
+			}
 
 			else
 				this.logger.warning( "Unknown target ID. No user data will be retrieved." );

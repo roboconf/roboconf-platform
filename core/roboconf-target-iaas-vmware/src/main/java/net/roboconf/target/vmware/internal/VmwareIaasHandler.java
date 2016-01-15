@@ -104,6 +104,7 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 		// Deal with the creation
 		try {
+			System.setProperty("org.xml.sax.driver","org.apache.xerces.parsers.SAXParser");
 			final String machineImageId = targetProperties.get( TEMPLATE );
 			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
 
