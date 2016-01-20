@@ -779,4 +779,39 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, criticalErrors.get( 1 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.PROJ_INVALID_COMMAND_EXT, criticalErrors.get( 2 ).getErrorCode());
 	}
+
+
+	@Test
+	public void testParsingWithInvalidAutonomicRules() throws Exception {
+
+		// Copy the application and update a command file
+		File dir = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( dir.isDirectory());
+
+		File newDir = this.folder.newFolder();
+		Utils.copyDirectory( dir, newDir );
+
+		File ruleFile = new File( newDir, Constants.PROJECT_DIR_RULES_AUTONOMIC + "/sample.drl" );
+		Assert.assertTrue( ruleFile.isFile());
+
+		File ruleFileCopy = new File( newDir, Constants.PROJECT_DIR_RULES_AUTONOMIC + "/sample.drl-invalid-extension" );
+		Utils.copyStream( ruleFile, ruleFileCopy );
+
+		String s = Utils.readFileContent( ruleFile );
+		s = s.replace( "scale", "inexisting-command" );
+		Utils.writeStringInto( s, ruleFile );
+
+		// Load it and verify it contains errors
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( newDir );
+		List<RoboconfError> criticalErrors = new ArrayList<> ();
+
+		for( RoboconfError error : alr.getLoadErrors()) {
+			if( error.getErrorCode().getLevel() == ErrorLevel.SEVERE )
+				criticalErrors.add( error );
+		}
+
+		Assert.assertEquals( 2, criticalErrors.size());
+		Assert.assertEquals( ErrorCode.RULE_UNKNOWN_COMMAND, criticalErrors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_INVALID_RULE_EXT, criticalErrors.get( 1 ).getErrorCode());
+	}
 }

@@ -66,33 +66,22 @@ public final class ResourceUtils {
 				&& instanceResourcesDirectory.isDirectory())
 			result.putAll( Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory ));
 
-		// Measure files (are not located with recipes, so no trouble with component inheritance)
-		String fileName = instance.getComponent().getName() + Constants.FILE_EXT_MEASURES;
-		File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/" + fileName );
-		if( autonomicMeasureFile.exists()) {
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( autonomicMeasureFile, os );
-			result.put( autonomicMeasureFile.getName(), os.toByteArray());
-		}
-
-		// Deal with autonomic files.
-		// There can be the ".measure" file.
+		// Measure files (are not located with recipes, so no trouble with component inheritance).
 		// There can also be a properties file to inject values.
-		autonomicMeasureFile = new File(
-				applicationFilesDirectory,
-				Constants.PROJECT_DIR_AUTONOMIC + "/" + instance.getComponent().getName() + Constants.FILE_EXT_MEASURES );
+		String[] exts = {
+				Constants.FILE_EXT_MEASURES,
+				Constants.FILE_EXT_MEASURES + ".properties"
+		};
 
-		if( autonomicMeasureFile.exists()) {
+		for( String ext : exts ) {
+			String fileName = instance.getComponent().getName() + ext;
+			File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_PROBES + "/" + fileName );
+			if( ! autonomicMeasureFile.exists())
+				break;
+
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			Utils.copyStream( autonomicMeasureFile, os );
 			result.put( autonomicMeasureFile.getName(), os.toByteArray());
-
-			File autonomicPropertiesFile = new File( autonomicMeasureFile.getAbsolutePath() + ".properties" );
-			if( autonomicPropertiesFile.exists()) {
-				os = new ByteArrayOutputStream();
-				Utils.copyStream( autonomicPropertiesFile, os );
-				result.put( autonomicPropertiesFile.getName(), os.toByteArray());
-			}
 		}
 
 		return result;

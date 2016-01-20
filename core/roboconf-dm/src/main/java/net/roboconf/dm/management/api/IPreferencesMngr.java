@@ -52,8 +52,38 @@ public interface IPreferencesMngr {
 
 	// General keys.
 	// These properties are specific to Roboconf.
+
+	/**
+	 * Default email recipients.
+	 */
 	String EMAIL_DEFAULT_RECIPIENTS = "email.default.recipients";
+
+	/**
+	 * The ports that must be excluded from random port generation.
+	 */
 	String FORBIDDEN_RANDOM_PORTS = "forbidden.random.ports";
+
+	/**
+	 * The maximum number of VM the autonomic can create.
+	 */
+	String AUTONOMIC_MAX_VM_NUMBER = "autonomic.maximum.vm.number";
+
+	/**
+	 * A boolean value indicating if the maximum number of VM must be strict or not.
+	 * <p>
+	 * When a given event is processed, one or several command scripts can be executed.
+	 * If the maximum is reached before the execution starts, then it is dropped. Otherwise,
+	 * it may happen that the scripts create several VMs. If this preference is set to true,
+	 * then the script execution will be interrupted. Otherwise, it will continue, with the side
+	 * effect that the autonomic may create more VM than the maximum.
+	 * </p>
+	 * <p>
+	 * Said differently, when set to false, this property makes the maximum an ideal barrier.
+	 * It thus prevents started scripts from interrupting, even if the maximum was reached during
+	 * their execution.
+	 * </p>
+	 */
+	String AUTONOMIC_STRICT_MAX_VM_NUMBER = "autonomic.strict.maximum.vm.number";
 
 
 	/**
@@ -132,6 +162,8 @@ public interface IPreferencesMngr {
 			this.keyToCategory.put( JAVAX_MAIL_SSL_TRUST, PreferenceKeyCategory.EMAIL );
 			this.keyToCategory.put( JAVAX_MAIL_START_SSL_ENABLE, PreferenceKeyCategory.EMAIL );
 			this.keyToCategory.put( EMAIL_DEFAULT_RECIPIENTS, PreferenceKeyCategory.EMAIL );
+
+			this.keyToCategory.put( AUTONOMIC_MAX_VM_NUMBER, PreferenceKeyCategory.AUTONOMIC );
 
 			// Define default values
 			this.keyToDefaultValue.put( JAVAX_MAIL_FROM, "dm@roboconf.net" );

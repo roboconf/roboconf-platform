@@ -28,9 +28,9 @@ package net.roboconf.core;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.core.ErrorCode.ErrorCategory;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -70,6 +70,7 @@ public class ErrorCodeTest {
 		categoryToPrefix.put( ErrorCategory.PROJECT, "PROJ_" );
 		categoryToPrefix.put( ErrorCategory.RECIPES, "REC_" );
 		categoryToPrefix.put( ErrorCategory.COMMANDS, "CMD_" );
+		categoryToPrefix.put( ErrorCategory.RULES, "RULE_" );
 
 		for( ErrorCode code : ErrorCode.values()) {
 			String prefix = categoryToPrefix.get( code.getCategory());

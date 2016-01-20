@@ -25,15 +25,42 @@
 
 package net.roboconf.dm.management.api;
 
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
 /**
- * FIXME: to replace by the commands API and/or autonomic API.
+ * An API related to autonomic stuff.
+ * <p>
+ * It must be invoked every time a rule-based decision must be made in the DM.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
-public interface IRuleBasedEventHandler {
+public interface IAutonomicMngr {
+
+	/**
+	 * Loads the rules of a given application.
+	 * @param app a non-null application
+	 */
+	public void loadApplicationRules( Application app );
+
+
+	/**
+	 * Unloads the rules of a given application.
+	 * @param app a non-null application
+	 */
+	public void unloadApplicationRules( Application app );
+
+
+	/**
+	 * Refreshes the rules of a given application.
+	 * @param app a non-null application
+	 * @param ruleName a rule name to refresh a specific rule, null to refresh them all
+	 */
+	public void refreshApplicationRules( Application app, String ruleName );
+
 
 	/**
 	 * Machines created by the autonomic may be deleted by hand.
@@ -52,8 +79,8 @@ public interface IRuleBasedEventHandler {
 
 
 	/**
-	 * Reacts upon autonomic monitoring message (aka "autonomic event").
-	 * @param event The autonomic event message
+	 * Reacts upon autonomic monitoring message (a.k.a "autonomic event").
+	 * @param event the autonomic event message
 	 */
 	void handleEvent( ManagedApplication ma, MsgNotifAutonomic event );
 }

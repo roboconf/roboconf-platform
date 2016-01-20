@@ -92,9 +92,16 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 	@Override
 	public void execute( Application app, String commandName ) throws CommandException {
+		execute( app, commandName, null );
+	}
+
+
+	@Override
+	public void execute( Application app, String commandName, CommandExecutionContext executionContext )
+	throws CommandException {
 
 		File cmdFile = findCommandFile( app, commandName );
-		CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile );
+		CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile, executionContext );
 		executor.execute();
 	}
 

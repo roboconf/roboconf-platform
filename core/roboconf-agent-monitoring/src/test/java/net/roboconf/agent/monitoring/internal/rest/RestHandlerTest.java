@@ -36,11 +36,11 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler.LocalHostnameVerifier;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler.LocalX509TrustManager;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -334,7 +334,7 @@ public class RestHandlerTest {
 		MsgNotifAutonomic msg = queryMockedHttpServer( url, expected );
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventId());
+		Assert.assertEquals( EVENT_NAME, msg.getEventName());
 		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertEquals( expected, msg.getEventInfo());
 

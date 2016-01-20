@@ -155,6 +155,7 @@ public enum ErrorCode {
 	PROJ_NO_RESOURCE_DIRECTORY( ErrorLevel.WARNING, ErrorCategory.PROJECT, "A graph(s) component has no resource (recipe) directory." ),
 	PROJ_APPLICATION_TEMPLATE_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application template was not found." ),
 	PROJ_INVALID_COMMAND_EXT( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A command script file must use the " + Constants.FILE_EXT_COMMANDS + " extension." ),
+	PROJ_INVALID_RULE_EXT( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "An autonomic rule file must use the " + Constants.FILE_EXT_RULE + " extension." ),
 
 	// Recipes Errors
 	REC_PUPPET_DISLIKES_WILDCARD_IMPORTS( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Puppet modules may encounter problems with Roboconf wildcard imports." ),
@@ -178,7 +179,7 @@ public enum ErrorCode {
 	CMD_CANNOT_HAVE_ANY_PARENT( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This component cannot have any parent. It cannot be instantiated under this instance." ),
 	CMD_NOT_A_SCOPED_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An instance was supposed to be associated with the 'target' installer." ),
 	CMD_NOT_A_ROOT_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This instruction can only be applied to root instances (no parent)." ),
-	CMD_UNRECOGNIZED_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This instruction was recognized." ),
+	CMD_UNRECOGNIZED_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "This instruction was not recognized." ),
 	CMD_INVALID_INSTANCE_STATUS( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An instance status was expected." ),
 	CMD_INSTABLE_INSTANCE_STATUS( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Instance status changes are only valid with stable statuses." ),
 	CMD_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Variables in Roboconf commands must have a name." ),
@@ -192,6 +193,14 @@ public enum ErrorCode {
 	CMD_NO_INSTRUCTION( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "No valid instruction was found in the file." ),
 	CMD_UNRESOLVED_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A variable is used in a command but it could not be resolved." ),
 	CMD_INVALID_SYNTAX( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Invalid syntax for this command. Please, refer to the documentation." ),
+
+	// Rule errors
+	RULE_IO_ERROR( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
+	RULE_EMPTY_NAME( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
+	RULE_INVALID_SYNTAX( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
+	RULE_EMPTY_WHEN( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
+	RULE_EMPTY_THEN( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
+	RULE_UNKNOWN_COMMAND( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
 	;
 
 
@@ -199,7 +208,7 @@ public enum ErrorCode {
 	 * RoboconfError categories.
 	 */
 	public enum ErrorCategory {
-		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, PROJECT, RECIPES, COMMANDS, EXECUTION;
+		PARSING, PARSING_MODEL, CONVERSION, RUNTIME_MODEL, PROJECT, RECIPES, COMMANDS, RULES, EXECUTION;
 	}
 
 	/**

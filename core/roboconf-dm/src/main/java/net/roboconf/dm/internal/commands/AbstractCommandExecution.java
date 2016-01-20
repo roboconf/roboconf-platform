@@ -30,12 +30,16 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public abstract class AbstractCommandExecution {
+
+	protected CommandExecutionContext executionContext;
+
 
 	/**
 	 * Executes a command.
@@ -66,5 +70,10 @@ public abstract class AbstractCommandExecution {
 		}
 
 		return instance;
+	}
+
+
+	public void setExecutionContext( CommandExecutionContext executionContext ) {
+		this.executionContext = executionContext;
 	}
 }

@@ -67,6 +67,6 @@ public class Preference {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public enum PreferenceKeyCategory {
-		EMAIL;
+		EMAIL, AUTONOMIC;
 	}
 }
