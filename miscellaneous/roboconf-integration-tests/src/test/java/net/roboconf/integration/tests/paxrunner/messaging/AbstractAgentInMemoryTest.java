@@ -29,6 +29,7 @@ import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
 import java.util.List;
+import java.util.logging.Logger;
 
 import javax.inject.Inject;
 
@@ -103,6 +104,7 @@ public abstract class AbstractAgentInMemoryTest extends DmWithAgentInMemoryTest 
 	 */
 	public AbstractAgentInMemoryTest( IMessagingConfiguration messagingConfiguration, String messagingType ) {
 		this.messagingConfiguration = messagingConfiguration;
+		Logger.getLogger( getClass().getName()).info( "Running an IT for messaging with " + messagingType );
 	}
 
 

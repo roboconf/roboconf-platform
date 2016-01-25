@@ -30,6 +30,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 import java.util.ArrayList;
 import java.util.List;
 
+import net.roboconf.core.Constants;
 import net.roboconf.messaging.api.MessagingConstants;
 
 import org.ops4j.pax.exam.Option;
@@ -47,12 +48,12 @@ public class InMemoryConfiguration implements IMessagingConfiguration {
 		List<Option> options = new ArrayList<> ();
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
+				Constants.MESSAGING_TYPE,
 				MessagingConstants.FACTORY_IN_MEMORY ));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.dm.configuration.cfg",
-				"messaging-type",
+				Constants.MESSAGING_TYPE,
 				MessagingConstants.FACTORY_IN_MEMORY ));
 
 		return options;

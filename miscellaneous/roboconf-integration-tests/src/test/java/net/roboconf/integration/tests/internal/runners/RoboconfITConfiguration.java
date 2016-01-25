@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,32 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal.parameterized;
+package net.roboconf.integration.tests.internal.runners;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.core.Constants;
-
-import org.ops4j.pax.exam.Option;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class HttpConfiguration implements IMessagingConfiguration {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface RoboconfITConfiguration {
 
-	@Override
-	public List<Option> options() {
+	/**
+	 * @return true if the test requires RabbitMQ running with default credentials
+	 */
+	boolean withRabbitMq() default true;
 
-		// For HTTP, we only need to specify we use this messaging type.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				"http" ));
+	/**
+	 * @return true if the test requires RabbitMQ running with "advanced" credentials
+	 */
+	boolean withComplexRabbitMq() default false;
 
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				"http" ));
-
-		return options;
-	}
+	/**
+	 * @return true if the test required Docker to be installed on the local machine
+	 */
+	boolean withDocker() default false;
 }

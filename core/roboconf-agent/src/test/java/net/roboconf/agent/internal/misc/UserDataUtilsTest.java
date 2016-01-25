@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.After;
@@ -87,7 +88,7 @@ public class UserDataUtilsTest {
 		Assert.assertEquals(val, "password1");
 
 		p = Utils.readPropertiesFile( agentConf );
-		Assert.assertEquals( "rabbitmq", p.get( UserDataUtils.MESSAGING_TYPE ));
+		Assert.assertEquals( "rabbitmq", p.get( Constants.MESSAGING_TYPE ));
 		Assert.assertEquals( 1, p.size());
 	}
 
@@ -103,7 +104,7 @@ public class UserDataUtilsTest {
 		Properties props = new Properties();
 		props.setProperty( "key", "value" );
 		props.setProperty( "something", "else" );
-		props.setProperty( UserDataUtils.MESSAGING_TYPE, "http" );
+		props.setProperty( Constants.MESSAGING_TYPE, "http" );
 		Utils.writePropertiesFile( props, agentConf );
 
 		// Execute
@@ -131,7 +132,7 @@ public class UserDataUtilsTest {
 
 		p = Utils.readPropertiesFile( agentConf );
 		Assert.assertEquals( 3, p.size());
-		Assert.assertEquals( "rabbitmq", p.get( UserDataUtils.MESSAGING_TYPE ));
+		Assert.assertEquals( "rabbitmq", p.get( Constants.MESSAGING_TYPE ));
 		Assert.assertEquals( "else", p.get( "something" ));
 		Assert.assertEquals( "value", p.get( "key" ));
 	}

@@ -132,4 +132,10 @@ public interface Constants {
 	 * A constant used for generated applications (used with recipes).
 	 */
 	String GENERATED = "generated";
+
+
+	/**
+	 * The property to define the messaging type in the DM and agent configuration files.
+	 */
+	String MESSAGING_TYPE = "messaging-type";
 }

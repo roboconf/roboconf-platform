@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,37 +23,21 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal.parameterized;
+package net.roboconf.integration.tests.paxrunner.messaging;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.core.Constants;
-
-import org.ops4j.pax.exam.Option;
+import net.roboconf.integration.tests.internal.parameterized.RabbitMqNonLocalConfiguration;
+import net.roboconf.integration.tests.internal.runners.RoboconfITConfiguration;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class HttpConfiguration implements IMessagingConfiguration {
+@RoboconfITConfiguration( withComplexRabbitMq = true )
+public class AgentInMemoryWithRabbitMqAndNonDefaultsTest extends AbstractAgentInMemoryTest {
 
-	@Override
-	public List<Option> options() {
-
-		// For HTTP, we only need to specify we use this messaging type.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				"http" ));
-
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				Constants.MESSAGING_TYPE,
-				"http" ));
-
-		return options;
+	/**
+	 * Constructor.
+	 */
+	public AgentInMemoryWithRabbitMqAndNonDefaultsTest() {
+		super( new RabbitMqNonLocalConfiguration(), "Rabbit MQ with non-local configuration" );
 	}
 }

@@ -52,7 +52,9 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunnerWithDocker;
+import net.roboconf.integration.tests.internal.runners.RoboconfITConfiguration;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 import net.roboconf.target.docker.internal.DockerTestUtils;
 
 import org.junit.Assert;
@@ -85,7 +87,8 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
  *
  * @author Vincent Zurczak - Linagora
  */
-@RunWith( RoboconfPaxRunnerWithDocker.class )
+@RunWith( RoboconfPaxRunner.class )
+@RoboconfITConfiguration( withDocker = true, withComplexRabbitMq = true )
 @ExamReactorStrategy( PerMethod.class )
 @Ignore
 public class LocalDockerWithAgentChecksTest extends DmTest {
@@ -133,13 +136,13 @@ public class LocalDockerWithAgentChecksTest extends DmTest {
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.messaging.rabbitmq.cfg",
-				"net.roboconf.messaging.rabbitmq.server.username",
-				RoboconfPaxRunnerWithDocker.RBCF ));
+				RabbitMqConstants.RABBITMQ_SERVER_USERNAME,
+				RoboconfPaxRunner.RBCF_USER ));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.messaging.rabbitmq.cfg",
-				"net.roboconf.messaging.rabbitmq.server.password",
-				RoboconfPaxRunnerWithDocker.RBCF ));
+				RabbitMqConstants.RABBITMQ_SERVER_PASSWORD,
+				RoboconfPaxRunner.RBCF_USER ));
 
 		// Install Docker support
 		String roboconfVersion = ItUtils.findRoboconfVersion();

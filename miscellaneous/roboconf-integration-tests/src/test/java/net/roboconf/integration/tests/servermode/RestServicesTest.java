@@ -47,8 +47,10 @@ import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.ops4j.pax.exam.ExamSystem;
 import org.ops4j.pax.exam.Option;
@@ -69,6 +71,8 @@ public class RestServicesTest extends DmTest {
 
 	@Test
 	public void run() throws Exception {
+
+		Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
 		File appDirectory = TestUtils.findApplicationDirectory( "lamp" );
 
 		// Prepare to run an agent distribution

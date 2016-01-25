@@ -31,28 +31,41 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.roboconf.core.Constants;
+import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import org.ops4j.pax.exam.Option;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class HttpConfiguration implements IMessagingConfiguration {
+public class RabbitMqNonLocalConfiguration implements IMessagingConfiguration {
 
 	@Override
 	public List<Option> options() {
 
-		// For HTTP, we only need to specify we use this messaging type.
+		// For RabbitMQ, we only need to specify we use this messaging type.
+		// We use the default credentials to interact with RMQ.
 		List<Option> options = new ArrayList<> ();
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
 				Constants.MESSAGING_TYPE,
-				"http" ));
+				RabbitMqConstants.FACTORY_RABBITMQ ));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.dm.configuration.cfg",
 				Constants.MESSAGING_TYPE,
-				"http" ));
+				RabbitMqConstants.FACTORY_RABBITMQ ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.dm.configuration.cfg",
+				RabbitMqConstants.RABBITMQ_SERVER_USERNAME,
+				RoboconfPaxRunner.RBCF_USER ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.dm.configuration.cfg",
+				RabbitMqConstants.RABBITMQ_SERVER_PASSWORD,
+				RoboconfPaxRunner.RBCF_USER ));
 
 		return options;
 	}

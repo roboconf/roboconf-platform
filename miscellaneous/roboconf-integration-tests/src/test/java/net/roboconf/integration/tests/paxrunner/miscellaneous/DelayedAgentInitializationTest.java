@@ -36,6 +36,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import net.roboconf.agent.AgentMessagingInterface;
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -148,7 +149,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
+				Constants.MESSAGING_TYPE,
 				RabbitMqConstants.FACTORY_RABBITMQ));
 
 		// Add an invalid configuration for the DM

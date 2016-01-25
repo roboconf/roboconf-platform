@@ -39,6 +39,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import net.roboconf.agent.internal.AgentProperties;
+import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
 
 import org.apache.commons.codec.binary.Base64;
@@ -55,7 +56,6 @@ import org.xml.sax.SAXException;
 public final class UserDataUtils {
 
 	public static final String CONF_FILE_AGENT = "net.roboconf.agent.configuration.cfg";
-	public static final String MESSAGING_TYPE = "messaging-type";
 
 
 	/**
@@ -190,7 +190,7 @@ public final class UserDataUtils {
 			f = new File( etcDir, CONF_FILE_AGENT );
 
 			props = Utils.readPropertiesFileQuietly( f, Logger.getLogger( UserDataUtils.class.getName()));
-			props.put( MESSAGING_TYPE, messagingType );
+			props.put( Constants.MESSAGING_TYPE, messagingType );
 			Utils.writePropertiesFile( props, f );
 		}
 	}

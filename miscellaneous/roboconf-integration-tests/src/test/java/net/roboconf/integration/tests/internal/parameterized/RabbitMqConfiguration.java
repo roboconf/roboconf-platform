@@ -30,6 +30,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfi
 import java.util.ArrayList;
 import java.util.List;
 
+import net.roboconf.core.Constants;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import org.ops4j.pax.exam.Option;
@@ -47,12 +48,12 @@ public class RabbitMqConfiguration implements IMessagingConfiguration {
 		List<Option> options = new ArrayList<> ();
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
+				Constants.MESSAGING_TYPE,
 				RabbitMqConstants.FACTORY_RABBITMQ ));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.dm.configuration.cfg",
-				"messaging-type",
+				Constants.MESSAGING_TYPE,
 				RabbitMqConstants.FACTORY_RABBITMQ ));
 
 		return options;

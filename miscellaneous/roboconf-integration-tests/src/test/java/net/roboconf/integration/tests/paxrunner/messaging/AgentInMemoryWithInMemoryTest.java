@@ -26,10 +26,12 @@
 package net.roboconf.integration.tests.paxrunner.messaging;
 
 import net.roboconf.integration.tests.internal.parameterized.InMemoryConfiguration;
+import net.roboconf.integration.tests.internal.runners.RoboconfITConfiguration;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
+@RoboconfITConfiguration( withRabbitMq = false )
 public class AgentInMemoryWithInMemoryTest extends AbstractAgentInMemoryTest {
 
 	/**
