@@ -224,6 +224,9 @@ public class CommandsParser {
 		else if( toLowerCase.startsWith( RenameCommandInstruction.PREFIX ))
 			result = new RenameCommandInstruction( this.context, line, lineNumber );
 
+		else if( toLowerCase.startsWith( WriteCommandInstruction.PREFIX ))
+			result = new WriteCommandInstruction( this.context, line, lineNumber );
+
 		return result;
 	}
 }

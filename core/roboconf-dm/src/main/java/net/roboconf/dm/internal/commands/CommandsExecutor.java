@@ -37,6 +37,7 @@ import net.roboconf.core.commands.CreateInstanceCommandInstruction;
 import net.roboconf.core.commands.EmailCommandInstruction;
 import net.roboconf.core.commands.RenameCommandInstruction;
 import net.roboconf.core.commands.ReplicateCommandInstruction;
+import net.roboconf.core.commands.WriteCommandInstruction;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.dm.management.Manager;
@@ -152,6 +153,9 @@ public class CommandsExecutor {
 
 		else if( EmailCommandInstruction.class.equals( instr.getClass()))
 			result = new EmailCommandExecution((EmailCommandInstruction) instr, this.manager );
+
+		else if( WriteCommandInstruction.class.equals( instr.getClass()))
+			result = new WriteCommandExecution((WriteCommandInstruction) instr);
 
 		return result;
 	}

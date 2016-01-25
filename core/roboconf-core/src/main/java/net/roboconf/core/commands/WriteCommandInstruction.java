@@ -32,17 +32,17 @@ import java.util.regex.Pattern;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.model.ParsingError;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ChangeStateCommandInstruction extends AbstractCommandInstruction {
+public class WriteCommandInstruction extends AbstractCommandInstruction {
 
-	static final String PREFIX = "change";
+	static final String TMP = "%TMP%";
+	static final String PREFIX = "write";
 
-	private InstanceStatus targetStatus;
-	private String targetStatusAsString, instancePath;
+	private String content, filePath;
 
 
 	/**
@@ -51,16 +51,15 @@ public class ChangeStateCommandInstruction extends AbstractCommandInstruction {
 	 * @param instruction
 	 * @param line
 	 */
-	ChangeStateCommandInstruction( Context context, String instruction, int line ) {
+	WriteCommandInstruction( Context context, String instruction, int line ) {
 		super( context, instruction, line );
 
-		Pattern p = Pattern.compile( PREFIX + "\\s+status\\s+of\\s+(/.*)\\s+to\\b(.*)", Pattern.CASE_INSENSITIVE );
+		Pattern p = Pattern.compile( PREFIX + "\\s+(.*)\\s*into\\b(.*)", Pattern.CASE_INSENSITIVE );
 		Matcher m = p.matcher( instruction );
 		if( m.matches()) {
 			this.syntaxicallyCorrect = true;
-			this.targetStatusAsString = m.group( 2 ).trim().toUpperCase().replace( ' ', '_' ).replace( "_AND_", "_" );
-			this.targetStatus = InstanceStatus.exactStatus( this.targetStatusAsString );
-			this.instancePath = m.group( 1 ).trim();
+			this.content = m.group( 1 ).trim();
+			this.filePath = m.group( 2 ).trim().replaceAll( TMP, findTemporaryDir());
 		}
 	}
 
@@ -73,30 +72,37 @@ public class ChangeStateCommandInstruction extends AbstractCommandInstruction {
 	public List<ParsingError> doValidate() {
 
 		List<ParsingError> result = new ArrayList<> ();
-		if( this.targetStatus == null )
-			result.add( error( ErrorCode.CMD_INVALID_INSTANCE_STATUS, "Invalid status: " + this.targetStatusAsString ));
-		else if( ! this.targetStatus.isStable())
-			result.add( error( ErrorCode.CMD_INSTABLE_INSTANCE_STATUS ));
-
-		if( ! this.context.instanceExists( this.instancePath ))
-			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE ));
+		if( Utils.isEmptyOrWhitespaces( this.filePath ))
+			result.add( new ParsingError( ErrorCode.CMD_MISSING_TARGET_FILE, this.context.getCommandFile(), this.line ));
 
 		return result;
 	}
 
 
 	/**
-	 * @return the targetStatus
+	 * @return the content
 	 */
-	public InstanceStatus getTargetStatus() {
-		return this.targetStatus;
+	public String getContent() {
+		return this.content;
 	}
 
 
 	/**
-	 * @return the instancePath
+	 * @return the filePath
 	 */
-	public String getInstancePath() {
-		return this.instancePath;
+	public String getFilePath() {
+		return this.filePath;
+	}
+
+
+	/**
+	 * @return the location of the temporary directory WITHOUT a slash at the end
+	 */
+	static String findTemporaryDir() {
+
+		String tmpDir = System.getProperty( "java.io.tmpdir" );
+		tmpDir = tmpDir.replaceAll( "/$", "" );
+
+		return tmpDir;
 	}
 }
