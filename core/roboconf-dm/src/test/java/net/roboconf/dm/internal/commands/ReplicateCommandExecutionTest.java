@@ -26,8 +26,8 @@
 package net.roboconf.dm.internal.commands;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Assert;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.ReplicateCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -37,10 +37,12 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -98,6 +100,55 @@ public class ReplicateCommandExecutionTest {
 				Mockito.anyString(),
 				Mockito.any( Application.class ),
 				Mockito.anyString());
+	}
+
+
+	@Test
+	public void testExecute_noDefaultTarget_withAutonomicContext_success() throws Exception {
+
+		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
+		ReplicateCommandExecution executor = buildExecutor( line );
+
+		executor.setExecutionContext( new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 3 ),
+				2, false,
+				null, null
+		));
+
+		Mockito.verifyZeroInteractions( this.instancesMngr );
+		Mockito.verifyZeroInteractions( this.targetsMngr );
+
+		executor.execute();
+
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "toto" ));
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, instancePath );
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).findTargetId( this.app, null );
+		Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance(
+				Mockito.anyString(),
+				Mockito.any( Application.class ),
+				Mockito.anyString());
+	}
+
+
+	@Test( expected = CommandException.class )
+	public void testExecute_noDefaultTarget_withAutonomicContext_failure() throws Exception {
+
+		String line = "replicate /" + this.app.getTomcatVm().getName() + " as toto";
+		ReplicateCommandExecution executor = buildExecutor( line );
+
+		executor.setExecutionContext( new CommandExecutionContext(
+				new AtomicInteger( 6 ),
+				new AtomicInteger( 3 ),
+				5, true,
+				null, null
+		));
+
+		Mockito.verifyZeroInteractions( this.instancesMngr );
+		Mockito.verifyZeroInteractions( this.targetsMngr );
+
+		executor.execute();
 	}
 
 

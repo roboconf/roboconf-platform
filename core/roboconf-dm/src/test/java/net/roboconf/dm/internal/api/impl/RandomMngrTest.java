@@ -44,21 +44,23 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RandomManagerTest {
+public class RandomMngrTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
+
 	private RandomMngrImpl mngr;
+	private IPreferencesMngr preferencesMngr;
 
 
 	@Before
 	public void prepareManager() {
 
-		IPreferencesMngr preferencesMngr = Mockito.mock( IPreferencesMngr.class );
-		Mockito.when( preferencesMngr.get( Mockito.anyString())).thenReturn( "" );
-		Mockito.when( preferencesMngr.getJavaxMailProperties()).thenReturn( new Properties());
+		this.preferencesMngr = Mockito.mock( IPreferencesMngr.class );
+		Mockito.when( this.preferencesMngr.get( Mockito.anyString())).thenReturn( "" );
+		Mockito.when( this.preferencesMngr.getJavaxMailProperties()).thenReturn( new Properties());
 
-		this.mngr = new RandomMngrImpl( preferencesMngr );
+		this.mngr = new RandomMngrImpl( this.preferencesMngr );
 	}
 
 
@@ -111,33 +113,8 @@ public class RandomManagerTest {
 	@Test
 	public void testGenerateAndReleaseRandomValues_noConflictBetweenAgents() throws Exception {
 
-		// An application where the Tomcat and MySQL port will be chosen randomly
-		TestApplication app1 = new TestApplication();
-		app1.setName( "app1" );
-		app1.setDirectory( this.folder.newFolder());
-
-		app1.getWar().getComponent().exportedVariables.get( "port" ).setRandom( true );
-		app1.getWar().getComponent().exportedVariables.get( "port" ).setRawKind( RandomKind.PORT.toString());
-		app1.getWar().getComponent().exportedVariables.get( "port" ).setValue( null );
-
-		app1.getMySql().getComponent().exportedVariables.get( "port" ).setRandom( true );
-		app1.getMySql().getComponent().exportedVariables.get( "port" ).setRawKind( RandomKind.PORT.toString());
-		app1.getMySql().getComponent().exportedVariables.get( "port" ).setValue( null );
-
-		// The MySQL instance and the WAR are NOT on the same machine => they can use the same port
-		verify( app1.getWar(), "war.port", null );
-		verify( app1.getMySql(), "mysql.port", null );
-		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
-
-		this.mngr.generateAllRandomValues( app1 );
-
-		verify( app1.getWar(), "war.port", "10000" );
-		verify( app1.getMySql(), "mysql.port", "10000" );
-		Assert.assertEquals( 2, this.mngr.agentToRandomPorts.size());
-
-		// Release them all
-		this.mngr.releaseAllRandomValues( app1 );
-		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
+		// The first port to be picked up will be 10000
+		generic_testGenerateAndReleaseRandomValues_noConflictBetweenAgents( "10000" );
 	}
 
 
@@ -371,11 +348,76 @@ public class RandomManagerTest {
 	}
 
 
+	@Test
+	public void testGenerateRandomValue_withRandomFromPreferences_noValue() throws Exception {
+
+		// Prepare the mock
+		Mockito.when( this.preferencesMngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "" )).thenReturn( "" );
+
+		// Invoke another test method
+		testGenerateAndReleaseRandomValues_noConflictBetweenAgents();
+	}
+
+
+	@Test
+	public void testGenerateRandomValue_withRandomFromPreferences_withSeveralPorts() throws Exception {
+
+		// Prepare the mock
+		Mockito.when( this.preferencesMngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "" )).thenReturn( "10000,10001" );
+
+		// Invoke another test method
+		generic_testGenerateAndReleaseRandomValues_noConflictBetweenAgents( "10002" );
+	}
+
+
+	@Test
+	public void testGenerateRandomValue_withRandomFromPreferences_withSeveralAndInvalidPorts() throws Exception {
+
+		// Prepare the mock
+		Mockito.when( this.preferencesMngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "" )).thenReturn( "10000,,10001, abc,10002" );
+
+		// Invoke another test method
+		generic_testGenerateAndReleaseRandomValues_noConflictBetweenAgents( "10003" );
+	}
+
 
 	private void verify( Instance instance, String variableName, String expectedValue ) {
 
 		Map<String,String> exportedVariables = InstanceHelpers.findAllExportedVariables( instance );
 		Assert.assertTrue( exportedVariables.containsKey( variableName ));
 		Assert.assertEquals( expectedValue, exportedVariables.get( variableName ));
+	}
+
+
+	private void generic_testGenerateAndReleaseRandomValues_noConflictBetweenAgents( String port )
+	throws Exception {
+
+		// An application where the Tomcat and MySQL port will be chosen randomly
+		TestApplication app1 = new TestApplication();
+		app1.setName( "app1" );
+		app1.setDirectory( this.folder.newFolder());
+
+		app1.getWar().getComponent().exportedVariables.get( "port" ).setRandom( true );
+		app1.getWar().getComponent().exportedVariables.get( "port" ).setRawKind( RandomKind.PORT.toString());
+		app1.getWar().getComponent().exportedVariables.get( "port" ).setValue( null );
+
+		app1.getMySql().getComponent().exportedVariables.get( "port" ).setRandom( true );
+		app1.getMySql().getComponent().exportedVariables.get( "port" ).setRawKind( RandomKind.PORT.toString());
+		app1.getMySql().getComponent().exportedVariables.get( "port" ).setValue( null );
+
+		// The MySQL instance and the WAR are NOT on the same machine => they can use the same port
+		verify( app1.getWar(), "war.port", null );
+		verify( app1.getMySql(), "mysql.port", null );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
+
+		this.mngr.generateAllRandomValues( app1 );
+
+		verify( app1.getWar(), "war.port", port );
+		verify( app1.getMySql(), "mysql.port", port );
+		Assert.assertEquals( 2, this.mngr.agentToRandomPorts.size());
+
+		// Release them all
+		this.mngr.releaseAllRandomValues( app1 );
+		Assert.assertEquals( 0, this.mngr.agentToRandomPorts.size());
 	}
 }

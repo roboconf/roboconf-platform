@@ -25,16 +25,19 @@
 
 package net.roboconf.dm.internal.api.impl;
 
-import java.util.Date;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.autonomic.Rule;
+import net.roboconf.core.autonomic.RuleParser;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.impl.beans.AutonomicApplicationContext;
 import net.roboconf.dm.management.ManagedApplication;
@@ -52,8 +55,8 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 	static final String AUTONOMIC_MARKER = "autonomic";
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private final Map<String,AutonomicApplicationContext> appNameToContext = new ConcurrentHashMap<> ();
-	private final AtomicInteger autonomicVmCount = new AtomicInteger( 0 );
+	final Map<String,AutonomicApplicationContext> appNameToContext = new ConcurrentHashMap<> ();
+	final AtomicInteger autonomicVmCount = new AtomicInteger( 0 );
 
 	private final ICommandsMngr commandsMngr;
 	private final IPreferencesMngr preferencesMngr;
@@ -73,22 +76,30 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 
 	@Override
 	public void loadApplicationRules( Application app ) {
-		// TODO Auto-generated method stub
 
+		// Create the context
+		AutonomicApplicationContext ctx = new AutonomicApplicationContext( app );
+
+		// Load the rule
+		loadRule( app, ctx, null );
+
+		// Register the context
+		this.appNameToContext.put( app.getName(), ctx );
 	}
 
 
 	@Override
-	public void refreshApplicationRules( Application app, String ruleName ) {
-		// TODO Auto-generated method stub
+	public void refreshApplicationRules( Application app, String ruleFileName ) {
 
+		AutonomicApplicationContext ctx = this.appNameToContext.get( app.getName());
+		if( ctx != null )
+			loadRule( app, ctx, ruleFileName );
 	}
 
 
 	@Override
 	public void unloadApplicationRules( Application app ) {
-		// TODO Auto-generated method stub
-
+		this.appNameToContext.remove( app.getName());
 	}
 
 
@@ -120,7 +131,7 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 				this.logger.fine( "No autonomic context was found for application " + ma.getApplication() + "." );
 
 			} else {
-				ctx.eventNameToLastRecordTime.put( event.getEventName(), new Date().getTime());
+				ctx.registerEvent( event.getEventName());
 				List<Rule> rulesToExecute = ctx.findRulesToExecute();
 				if( rulesToExecute.isEmpty()) {
 					this.logger.fine( "No rule was found after the event '" + event.getEventName() + "' occurred." );
@@ -144,7 +155,9 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 
 					// Complete the execution context
 					CommandExecutionContext execCtx = new CommandExecutionContext(
-							this.autonomicVmCount, maxVmCount, strictMaxVm,
+							this.autonomicVmCount,
+							ctx.getVmCount(),
+							maxVmCount, strictMaxVm,
 							AUTONOMIC_MARKER, "" );
 
 					// Process the rules
@@ -160,6 +173,57 @@ public class AutonomicMngrImpl implements IAutonomicMngr {
 		} catch( Exception e ) {
 			this.logger.warning( "An autonomic event could not be handled. " + e.getMessage());
 			Utils.logException( this.logger, e );
+		}
+	}
+
+
+	/**
+	 * @param app
+	 * @param ctx
+	 * @param ruleName
+	 */
+	static void loadRule( Application app, AutonomicApplicationContext ctx, String ruleFileName ) {
+
+		final Logger logger = Logger.getLogger( AutonomicMngrImpl.class.getName());
+		File autonomicRulesDirectory = new File( app.getDirectory(), Constants.PROJECT_DIR_RULES_AUTONOMIC );
+		if( autonomicRulesDirectory.exists()) {
+
+			if( ruleFileName != null ) {
+				String fileName = ruleFileName;
+				if( ! fileName.endsWith( Constants.FILE_EXT_RULE ))
+					fileName += Constants.FILE_EXT_RULE;
+
+				File f = new File( autonomicRulesDirectory, fileName );
+				if( f.exists())
+					readRule( f, ctx, logger );
+
+			} else for( File f : Utils.listAllFiles( autonomicRulesDirectory )) {
+
+				if( ! f.getName().endsWith( Constants.FILE_EXT_RULE )) {
+					logger.warning( "Invalid file extension for rule " + f.getName()  + ", it is skipped." );
+					continue;
+				}
+
+				readRule( f, ctx, logger );
+			}
+		}
+	}
+
+
+	/**
+	 * @param f
+	 * @param ctx
+	 * @param logger
+	 */
+	private static void readRule( File f, AutonomicApplicationContext ctx, Logger logger  ) {
+
+		RuleParser parser = new RuleParser( f );
+		if( RoboconfErrorHelpers.containsCriticalErrors( parser.getParsingErrors())) {
+			logger.warning( "Critical errors were found for rule " + parser.getRule().getRuleName());
+
+		} else {
+			Rule rule = parser.getRule();
+			ctx.ruleNameToRule.put( rule.getRuleName(), rule );
 		}
 	}
 }

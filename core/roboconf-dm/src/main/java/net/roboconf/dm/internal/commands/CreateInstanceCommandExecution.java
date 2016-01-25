@@ -87,7 +87,8 @@ class CreateInstanceCommandExecution extends AbstractCommandExecution {
 
 		if( executionContext != null
 				&& Constants.TARGET_INSTALLER.equalsIgnoreCase( component.getInstallerName())
-				&& executionContext.getMaxVm() <= executionContext.getCurrentVmNumber().get()
+				&& executionContext.getMaxVm() > 0
+				&& executionContext.getMaxVm() <= executionContext.getGlobalVmNumber().get()
 				&& executionContext.isStrictMaxVm())
 			throw new CommandException( "The maximum number of VM created by the autonomic has been reached." );
 	}
@@ -102,7 +103,8 @@ class CreateInstanceCommandExecution extends AbstractCommandExecution {
 
 		if( executionContext != null ) {
 			createdInstance.data.put( executionContext.getNewVmMarkerKey(), executionContext.getNewVmMarkerValue());
-			executionContext.getCurrentVmNumber().incrementAndGet();
+			executionContext.getGlobalVmNumber().incrementAndGet();
+			executionContext.getAppVmNumber().incrementAndGet();
 		}
 	}
 }

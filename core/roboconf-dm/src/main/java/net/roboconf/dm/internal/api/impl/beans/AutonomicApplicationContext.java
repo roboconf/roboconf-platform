@@ -26,11 +26,12 @@
 package net.roboconf.dm.internal.api.impl.beans;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -43,12 +44,17 @@ import net.roboconf.core.model.beans.Application;
  */
 public class AutonomicApplicationContext {
 
-	private final Logger logger = Logger.getLogger( getClass().getName());
-	public final Map<String,Long> eventNameToLastRecordTime = new HashMap<> ();
-	private final Map<String,Rule> ruleNameToRule = new ConcurrentHashMap<> ();
-	private final Map<String,Long> ruleNameToLastExecution = new HashMap<> ();
+	public final Map<String,Rule> ruleNameToRule = new ConcurrentHashMap<> ();
 
-	private final AtomicInteger vmCount = new AtomicInteger( 0 );
+	// eventNameToLastRecordTime => time is in nanoseconds.
+	// ruleNameToLastExecution => time is in nanoseconds.
+	// ruleNameToLastTrigger values include a time stamp which is in nanoseconds.
+	final Map<String,Long> eventNameToLastRecordTime = new HashMap<> ();
+	final Map<String,Long> ruleNameToLastExecution = new HashMap<> ();
+	final Map<String,String> ruleNameToLastTrigger = new HashMap<> ();
+	final AtomicInteger vmCount = new AtomicInteger( 0 );
+
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Application app;
 
 
@@ -71,10 +77,19 @@ public class AutonomicApplicationContext {
 
 
 	/**
-	 * @return number of created VM for this applications / context (autonomic)
+	 * @return number of created VM for this application / context (autonomic)
 	 */
-	public int getVmCount() {
-		return this.vmCount.get();
+	public AtomicInteger getVmCount() {
+		return this.vmCount;
+	}
+
+
+	/**
+	 * Registers an event and its time of registration (in nanoseconds).
+	 * @param eventName the vent to register
+	 */
+	public void registerEvent( String eventName ) {
+		this.eventNameToLastRecordTime.put( eventName, System.nanoTime());
 	}
 
 
@@ -83,7 +98,7 @@ public class AutonomicApplicationContext {
 	 * @param ruleName the rule name
 	 */
 	public void recordPreExecution( String ruleName ) {
-		this.ruleNameToLastExecution.put( ruleName, new Date().getTime());
+		this.ruleNameToLastExecution.put( ruleName, System.nanoTime());
 	}
 
 
@@ -95,15 +110,70 @@ public class AutonomicApplicationContext {
 
 		this.logger.fine( "Looking for rules to execute after an event was recorded for application " + this.app );
 		List<Rule> result = new ArrayList<> ();
-		long now = new Date().getTime();
+		long now = System.nanoTime();
+
+		/*
+		 * For all the rules, find if there are events that should trigger its execution.
+		 */
 		for( Rule rule : this.ruleNameToRule.values()) {
 
-			// Could we execute it?
+			/*
+			 * A rule can be added if...
+			 * 1 - If its last execution occurred more than "the rule's delay" ago.
+			 * 2 - This event did not already trigger the execution of the rule.
+			 * 3 - If this rule has no timing window OR if the event occurred within the timing window.
+			 */
+
+			// Check the condition "1", about the last execution.
+			long validPeriodStart = now - TimeUnit.SECONDS.toNanos( rule.getDelayBetweenSucceedingInvocations());
 			Long lastExecutionTime = this.ruleNameToLastExecution.get( rule.getRuleName());
-			if( lastExecutionTime != null && (now - lastExecutionTime) < (rule.getDelayBetweenSucceedingInvocations() * 1000)) {
+			if( lastExecutionTime != null
+					&& lastExecutionTime - validPeriodStart > 0 ) {
+
 				this.logger.finer( "Ignoring the rule " + rule.getRuleName() + " since the execution delay has not yet expired." );
 				continue;
 			}
+
+			// Check the condition "2", or said differently, did this event record already trigger
+			// the execution of this rule?
+
+			// No record? Then the rule cannot be triggered.
+			Long lastRecord = this.eventNameToLastRecordTime.get( rule.getEventName());
+			if( lastRecord == null )
+				continue;
+
+			// FIXME: for the moment, a rule is activated by a single event.
+			// But later, it will be boolean combination of events. So, keep
+			// the string builder to generate it.
+			StringBuilder sbTrigger = new StringBuilder();
+			sbTrigger.append( rule.getEventName());
+			sbTrigger.append( lastRecord );
+
+			String lastTrigger = this.ruleNameToLastTrigger.get( rule.getRuleName());
+			if( Objects.equals( lastTrigger, sbTrigger.toString())) {
+				this.logger.finer( "Ignoring the rule " + rule.getRuleName() + " since no new event occurred since its last execution." );
+				continue;
+			}
+
+			// Check the condition "3", the one that prevents a recent event from "spamming".
+			// Too old events may not be relevant. This is why rules can define a timing window.
+			// FIXME: with one event as a trigger, it does not really make sense.
+			// But with a combination of events, it will.
+
+			// Either there is no timing window...
+			// ... or the last record occurred between 'now' and 'now - timing window'.
+			validPeriodStart = now - TimeUnit.SECONDS.toNanos( rule.getTimingWindow());
+			if( rule.getTimingWindow() != Rule.NO_TIMING_WINDOW
+					&& lastRecord - validPeriodStart < 0 ) {
+
+				this.logger.finer( "Ignoring the rule " + rule.getRuleName() + " since no new event occurred since its last execution." );
+				continue;
+			}
+
+			this.logger.finer( "Rule " + rule.getRuleName() + " was found following the occurrence of the " + rule.getEventName() + " event." );
+			this.ruleNameToLastTrigger.put( rule.getRuleName(), sbTrigger.toString());
+			result.add( rule );
+
 
 			// Other checks?
 			/*
@@ -135,12 +205,6 @@ public class AutonomicApplicationContext {
 			 * to have an analysis tool rather than finding workarounds for them at runtime.
 			 */
 			// So, no other check related to a previous execution.
-
-			// Are there matching events?
-			long interestingPeriod = now - rule.getTimingWindow() * 1000;
-			Long lastRecord = this.eventNameToLastRecordTime.get( rule.getEventName());
-			if( lastRecord != null && lastRecord >= interestingPeriod )
-				result.add( rule );
 		}
 
 		return result;

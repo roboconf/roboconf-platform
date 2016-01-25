@@ -33,6 +33,7 @@ import java.util.List;
  */
 public class Rule {
 
+	public static final int NO_TIMING_WINDOW = -1;
 	private final List<String> commandsToInvoke = new ArrayList<String> ();
 
 	// FIXME: this event will be replaced later by a combination
@@ -40,7 +41,7 @@ public class Rule {
 	private String eventName;
 	private String ruleName;
 
-	private int timingWindow = -1;
+	private int timingWindow = NO_TIMING_WINDOW;
 	private int delayBetweenSucceedingInvocations = 0;
 
 
@@ -68,7 +69,7 @@ public class Rule {
 	/**
 	 * The period (in seconds) during which we consider the event as valid.
 	 * <p>
-	 * -1 to indicate there is no timing window.
+	 * {@link #NO_TIMING_WINDOW} to indicate there is no timing window.
 	 * </p>
 	 * @return the timing window
 	 */

@@ -1,7 +1,7 @@
 RULE "test"
 
-Time span is 8s
-Collect events over 60	// The 's' is optional
+Probation is 8s
+Time window is 60	// The 's' is optional
 
 WHEN
 	event-1

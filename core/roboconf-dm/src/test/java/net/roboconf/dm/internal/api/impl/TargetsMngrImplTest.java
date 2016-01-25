@@ -26,11 +26,11 @@
 package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
@@ -46,6 +46,7 @@ import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -591,6 +592,15 @@ public class TargetsMngrImplTest {
 		this.mngr.unlockTarget( app, app.getTomcatVm());
 		this.mngr.deleteTarget( targetId );
 		Assert.assertEquals( 0, this.mngr.listAllTargets().size());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testLocking_noTarget() throws Exception {
+
+		TestApplication app = new TestApplication();
+		Assert.assertEquals( 0, this.mngr.listAllTargets().size());
+		this.mngr.lockAndGetTarget( app, app.getMySqlVm());
 	}
 
 

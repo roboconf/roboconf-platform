@@ -44,22 +44,22 @@ public interface IAutonomicMngr {
 	 * Loads the rules of a given application.
 	 * @param app a non-null application
 	 */
-	public void loadApplicationRules( Application app );
+	void loadApplicationRules( Application app );
 
 
 	/**
 	 * Unloads the rules of a given application.
 	 * @param app a non-null application
 	 */
-	public void unloadApplicationRules( Application app );
+	void unloadApplicationRules( Application app );
 
 
 	/**
 	 * Refreshes the rules of a given application.
 	 * @param app a non-null application
-	 * @param ruleName a rule name to refresh a specific rule, null to refresh them all
+	 * @param ruleFileName the name of a rule file to reload, null to refresh them all
 	 */
-	public void refreshApplicationRules( Application app, String ruleName );
+	void refreshApplicationRules( Application app, String ruleFileName );
 
 
 	/**

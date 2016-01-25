@@ -119,7 +119,7 @@ public interface ICommandsMngr {
 	 */
 	public static final class CommandExecutionContext {
 
-		private final AtomicInteger currentVmNumber;
+		private final AtomicInteger globalVmNumber, appVmNumber;
 		private final int maxVm;
 		private final boolean strictMaxVm;
 		private final String newVmMarkerKey, newVmMarkerValue;
@@ -133,7 +133,8 @@ public interface ICommandsMngr {
 		 * @param newVmMarkerValue
 		 */
 		public CommandExecutionContext(
-				AtomicInteger currentVmNumber,
+				AtomicInteger globalVmNumber,
+				AtomicInteger appVmNumber,
 				int maxVm,
 				boolean strictMaxVm,
 				String newVmMarkerKey,
@@ -143,7 +144,8 @@ public interface ICommandsMngr {
 			this.strictMaxVm = strictMaxVm;
 			this.newVmMarkerKey = newVmMarkerKey;
 			this.newVmMarkerValue = newVmMarkerValue;
-			this.currentVmNumber = currentVmNumber;
+			this.globalVmNumber = globalVmNumber;
+			this.appVmNumber = appVmNumber;
 		}
 
 		public int getMaxVm() {
@@ -162,8 +164,12 @@ public interface ICommandsMngr {
 			return newVmMarkerValue;
 		}
 
-		public AtomicInteger getCurrentVmNumber() {
-			return currentVmNumber;
+		public AtomicInteger getGlobalVmNumber() {
+			return globalVmNumber;
+		}
+
+		public AtomicInteger getAppVmNumber() {
+			return appVmNumber;
 		}
 	}
 }

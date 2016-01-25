@@ -101,7 +101,6 @@ public class Manager {
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected Timer timer;
-	protected String oldMessagingType;
 
 	private RCDm messagingClient;
 
@@ -306,17 +305,14 @@ public class Manager {
 
 		// Properties are injected on every modification.
 		// so, we just want to track changes.
+
+		// We only want to reconfigure the messaging client
+		// when the messaging type changes.
 		if( ! Objects.equals( this.messagingType, messagingType )) {
-			this.oldMessagingType = this.messagingType;
 			this.messagingType = messagingType;
 
 			// Explicitly require a reconfiguration.
-			// We don't let iPojo deal with it anymore since there may be parameters in the
-			// DM that are not related to the messaging. In fact, most of the messaging configuration
-			// was moved in messaging bundles. So, we only want to reconfigure the messaging client
-			// when the messaging type changes.
-			if( ! Objects.equals( messagingType, this.oldMessagingType ))
-				reconfigure();
+			reconfigure();
 		}
 	}
 
