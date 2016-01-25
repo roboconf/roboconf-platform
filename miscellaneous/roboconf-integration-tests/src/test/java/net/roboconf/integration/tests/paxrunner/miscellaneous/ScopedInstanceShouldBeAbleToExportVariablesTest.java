@@ -23,21 +23,24 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.paxrunner;
+package net.roboconf.integration.tests.paxrunner.miscellaneous;
 
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Import;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
-import net.roboconf.integration.tests.internal.MyHandler;
-import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 
 import org.junit.Assert;
@@ -45,27 +48,21 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.OptionUtils;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
- * Test agent termination.
- * <p>
- * Start two in-memory agents, one (1) depending on the other (2).
- * We kill the VM of (2). The DM should notify (1) that (2) was killed.
- * (1)'s state should be impacted and switch to the "starting" state.
- * </p>
- *
+ * A scoped instance MUST be able to export variables.
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerMethod.class )
-public class AgentTerminationTest extends DmWithAgentInMemoryTest {
+public class ScopedInstanceShouldBeAbleToExportVariablesTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
+
 
 	@ProbeBuilder
 	public TestProbeBuilder probeConfiguration( TestProbeBuilder probe ) {
@@ -75,9 +72,6 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 		probe.addTest( DmWithAgentInMemoryTest.class );
 		probe.addTest( TestUtils.class );
 
-		probe.addTest( MyHandler.class );
-		probe.addTest( MyTargetResolver.class );
-
 		return probe;
 	}
 
@@ -86,62 +80,58 @@ public class AgentTerminationTest extends DmWithAgentInMemoryTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		File resourcesDirectory = TestUtils.findApplicationDirectory( "simple" );
+		List<Option> options = new ArrayList<> ();
+		options.addAll( Arrays.asList( super.config()));
+
+		// Store the application's location
+		File resourcesDirectory = TestUtils.findApplicationDirectory( "root-exporting-variables" );
 		String appLocation = resourcesDirectory.getAbsolutePath();
-		return OptionUtils.combine(
-				super.config(),
-				systemProperty( APP_LOCATION ).value( appLocation ));
+		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
+
+		return options.toArray( new Option[ options.size()]);
 	}
 
 
 	@Test
 	public void run() throws Exception {
 
-		// Update the manager
-		configureManagerForInMemoryUsage();
-
-		// Load the application
+		// Load the application template
 		String appLocation = System.getProperty( APP_LOCATION );
 		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( new File( appLocation ));
+
+		// Create an application
 		ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
 		Assert.assertNotNull( ma );
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
-		// Associate a default target for this application
-		String targetId = this.manager.targetsMngr().createTarget( "handler: in-memory" );
-		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
+		// Associate a target with it
+		String targetId = this.manager.targetsMngr().createTarget( "handler = in-memory" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/vm1" );
 
-		// Change the instances states
-		Instance mysql = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM/MySQL" );
-		Instance app = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/App VM/App" );
-		Assert.assertNotNull( mysql );
-		Assert.assertNotNull( app );
+		// Instantiate a new scoped instance
+		Instance scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/vm1" );
+		Assert.assertNotNull( scopedInstance );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, scopedInstance.getStatus());
 
-		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.DEPLOYED_STARTED );
-		this.manager.instancesMngr().changeInstanceState( ma, app.getParent(), InstanceStatus.DEPLOYED_STARTED );
+		Instance childInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/vm1/app" );
+		Assert.assertNotNull( childInstance );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, childInstance.getStatus());
+
+		this.manager.instancesMngr().changeInstanceState( ma, scopedInstance, InstanceStatus.DEPLOYED_STARTED );
+		Thread.sleep( 800 );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, scopedInstance.getStatus());
+
+		// Verify that the child instance has resolved its dependencies and that it is started
+		this.manager.instancesMngr().changeInstanceState( ma, childInstance, InstanceStatus.DEPLOYED_STARTED );
 		Thread.sleep( 800 );
 
-		this.manager.instancesMngr().changeInstanceState( ma, mysql, InstanceStatus.DEPLOYED_STARTED );
-		this.manager.instancesMngr().changeInstanceState( ma, app, InstanceStatus.DEPLOYED_STARTED );
-		Thread.sleep( 300 );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, childInstance.getStatus());
+		Collection<Import> resolvedImports = childInstance.getImports().get( "VM" );
+		Assert.assertEquals( 1, resolvedImports.size());
 
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getParent().getStatus());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, mysql.getStatus());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getStatus());
-
-		// Kill the VM of MySQL. The App should be "unresolved" because one of its dependencies is missing.
-		this.manager.instancesMngr().changeInstanceState( ma, mysql.getParent(), InstanceStatus.NOT_DEPLOYED );
-		Thread.sleep( 300 );
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getStatus());
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, mysql.getParent().getStatus());
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getParent().getStatus());
-		Assert.assertEquals( InstanceStatus.UNRESOLVED, app.getStatus());
-
-		// Undeploy them all
-		this.manager.instancesMngr().undeployAll( ma, null );
-		Thread.sleep( 300 );
-		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication()))
-			Assert.assertEquals( inst.getName(), InstanceStatus.NOT_DEPLOYED, inst.getStatus());
+		Import imp = resolvedImports.iterator().next();
+		Assert.assertEquals( "/vm1", imp.getInstancePath());
+		Assert.assertEquals( "VM", imp.getComponentName());
+		Assert.assertEquals( "test", imp.getExportedVars().get( "VM.config" ));
 	}
 }

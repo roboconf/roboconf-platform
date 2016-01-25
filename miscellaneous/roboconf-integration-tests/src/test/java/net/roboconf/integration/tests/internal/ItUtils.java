@@ -44,7 +44,7 @@ import java.util.logging.Logger;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.integration.probes.ItConfigurationBean;
-import net.roboconf.integration.tests.internal.parametrized.IMessagingConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.IMessagingConfiguration;
 
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;

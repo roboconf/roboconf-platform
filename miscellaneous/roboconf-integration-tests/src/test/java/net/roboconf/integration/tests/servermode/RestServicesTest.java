@@ -46,7 +46,7 @@ import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
 
 import org.junit.Assert;
 import org.junit.Test;

@@ -23,38 +23,16 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal.parametrized;
+package net.roboconf.integration.tests.internal.parameterized;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-
-import java.util.ArrayList;
 import java.util.List;
-
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 import org.ops4j.pax.exam.Option;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RabbitMqConfiguration implements IMessagingConfiguration {
+public interface IMessagingConfiguration {
 
-	@Override
-	public List<Option> options() {
-
-		// For RabbitMQ, we only need to specify we use this messaging type.
-		// We use the default credentials to interact with RMQ.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
-				RabbitMqConstants.FACTORY_RABBITMQ ));
-
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				"messaging-type",
-				RabbitMqConstants.FACTORY_RABBITMQ ));
-
-		return options;
-	}
+	List<Option> options();
 }

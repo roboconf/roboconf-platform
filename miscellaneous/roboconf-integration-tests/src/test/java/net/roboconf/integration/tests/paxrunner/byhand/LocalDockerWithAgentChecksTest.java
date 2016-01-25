@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.paxrunner;
+package net.roboconf.integration.tests.paxrunner.byhand;
 
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;

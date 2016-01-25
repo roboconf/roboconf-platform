@@ -23,12 +23,11 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.paxrunner;
+package net.roboconf.integration.tests.paxrunner.messaging;
 
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -41,10 +40,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.HttpConfiguration;
-import net.roboconf.integration.tests.internal.parametrized.IMessagingConfiguration;
-import net.roboconf.integration.tests.internal.parametrized.InMemoryConfiguration;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.IMessagingConfiguration;
 import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 
 import org.apache.felix.ipojo.ComponentInstance;
@@ -52,7 +48,6 @@ import org.apache.felix.ipojo.Factory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized.Parameters;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
@@ -69,16 +64,15 @@ import org.ops4j.pax.exam.util.Filter;
  * is created (and associated with an in-memory agent).
  * </p>
  * <p>
- * This class has parameters so that this test is run with
- * several Roboconf messaging implementations.
+ * This class was made to be run with various Roboconf messaging implementations
+ * (as sub-classes).
  * </p>
  *
  * @author Vincent Zurczak - Linagora
  */
-//@RunWith( ParameterizedProbeRunner.class )
 @RunWith( RoboconfPaxRunner.class )
 @ExamReactorStrategy( PerMethod.class )
-public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
+public abstract class AbstractAgentInMemoryTest extends DmWithAgentInMemoryTest {
 
 	private static final String APP_LOCATION = "my.app.location";
 
@@ -102,41 +96,14 @@ public class AgentInMemoryTest extends DmWithAgentInMemoryTest {
 	}
 
 
-	@Parameters( name = "{method} {index}: agent in memory with {1}" )
-	public static List<Object[]> getParameters() {
-
-		return Arrays.asList( new Object[][] {
-				{ new RabbitMqConfiguration(), "Rabbit MQ" },
-				{ new InMemoryConfiguration(), "In-Memory" },
-				{ new HttpConfiguration(), "HTTP" }
-		});
-	}
-
-
 	/**
 	 * Constructor.
-	 * FIXME: to remove once we switch to the ParameterizedProbeRunner runner.
-	 */
-	public AgentInMemoryTest() {
-		this.messagingConfiguration = new RabbitMqConfiguration();
-	}
-
-
-	/**
-	 * Constructor.
-	 * <p>
-	 * Invoked by the runner with parameters.
-	 * </p>
-	 *
 	 * @param messagingConfiguration a non-null messaging configuration
 	 * @param messagingType
-	 * FIXME: to un-comment once we switch to the ParameterizedProbeRunner runner (1! constructor).
 	 */
-	/*
-	public AgentInMemoryTest( IMessagingConfiguration messagingConfiguration, String messagingType ) {
+	public AbstractAgentInMemoryTest( IMessagingConfiguration messagingConfiguration, String messagingType ) {
 		this.messagingConfiguration = messagingConfiguration;
 	}
-	*/
 
 
 	@Override

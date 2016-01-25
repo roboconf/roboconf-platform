@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.paxrunner;
+package net.roboconf.integration.tests.paxrunner.miscellaneous;
 
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
@@ -45,7 +45,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
 import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 
 import org.junit.Assert;

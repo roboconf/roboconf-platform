@@ -26,7 +26,7 @@
 package net.roboconf.integration.probes;
 
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
 
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;

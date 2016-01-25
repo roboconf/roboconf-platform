@@ -1,5 +1,5 @@
 /**
- * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,38 +23,19 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal.parametrized;
+package net.roboconf.integration.tests.paxrunner.messaging;
 
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import net.roboconf.messaging.api.MessagingConstants;
-
-import org.ops4j.pax.exam.Option;
+import net.roboconf.integration.tests.internal.parameterized.InMemoryConfiguration;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryConfiguration implements IMessagingConfiguration {
+public class AgentInMemoryWithInMemoryTest extends AbstractAgentInMemoryTest {
 
-	@Override
-	public List<Option> options() {
-
-		// We only need to specify we use this messaging type.
-		// There is no configuration to specify.
-		List<Option> options = new ArrayList<> ();
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.agent.configuration.cfg",
-				"messaging-type",
-				MessagingConstants.FACTORY_IN_MEMORY ));
-
-		options.add( editConfigurationFilePut(
-				"etc/net.roboconf.dm.configuration.cfg",
-				"messaging-type",
-				MessagingConstants.FACTORY_IN_MEMORY ));
-
-		return options;
+	/**
+	 * Constructor.
+	 */
+	public AgentInMemoryWithInMemoryTest() {
+		super( new InMemoryConfiguration(), "In-Memory" );
 	}
 }

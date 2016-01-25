@@ -33,7 +33,7 @@ import javax.inject.Inject;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 

@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.integration.tests.internal.parametrized;
+package net.roboconf.integration.tests.internal.parameterized;
 
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
