@@ -141,14 +141,18 @@ public class Manager {
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
 		this.commandsMngr = new CommandsMngrImpl( this );
 
-		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr, this.randomMngr );
+		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr, this.preferencesMngr );
+		this.applicationMngr = new ApplicationMngrImpl(
+				this.notificationMngr, this.configurationMngr,
+				this.targetsMngr, this.messagingMngr,
+				this.randomMngr, this.autonomicMngr );
+
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
 		this.applicationMngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 
 		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 
-		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr, this.preferencesMngr );
 		this.instancesMngr.setRuleBasedHandler( this.autonomicMngr );
 	}
 

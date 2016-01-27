@@ -27,6 +27,7 @@ package net.roboconf.integration.tests.paxrunner.miscellaneous;
 
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,10 +36,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import net.roboconf.agent.internal.Agent;
-import net.roboconf.agent.internal.AgentMessageProcessor;
-import net.roboconf.agent.internal.misc.HeartbeatTask;
-import net.roboconf.agent.internal.misc.PluginMock;
+import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -53,11 +51,12 @@ import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -68,6 +67,11 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * A test that verifies a full chain involving the autonomic.
+ * <p>
+ * This test uses a real agent, deployed locally, with the "embedded" target.
+ * RabbitMQ is the messaging server.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 @RunWith( RoboconfPaxRunner.class )
@@ -81,11 +85,12 @@ public class AutonomicTest extends DmTest {
 	private static final File AUTONOMIC_RULE_RESULT = new File( TMP_DIR, "autonomic-result" );
 
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
-
 	@Inject
 	protected Manager manager;
+
+	@Inject
+	protected AgentMessagingInterface agent;
+
 
 
 	@ProbeBuilder
@@ -99,12 +104,6 @@ public class AutonomicTest extends DmTest {
 		probe.addTest( MyHandler.class );
 		probe.addTest( MyTargetResolver.class );
 
-		// Classes from the agent
-		probe.addTest( Agent.class );
-		probe.addTest( PluginMock.class );
-		probe.addTest( HeartbeatTask.class );
-		probe.addTest( AgentMessageProcessor.class );
-
 		return probe;
 	}
 
@@ -113,29 +112,41 @@ public class AutonomicTest extends DmTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		List<Option> options = new ArrayList<> ();
-		options.addAll( Arrays.asList( super.config()));
-
 		// Store the application's location
+		File targetDirectory = File.createTempFile( "roboconf-it-temp", "", null );
+		Assert.assertTrue( targetDirectory.delete());
+		Assert.assertTrue( targetDirectory.mkdir());
+
 		File resourcesDirectory = TestUtils.findApplicationDirectory( "lamp" );
-		File targetDirectory = this.folder.newFolder();
 		Utils.copyDirectory( resourcesDirectory, targetDirectory );
 
-		options.add( systemProperty( APP_LOCATION ).value( targetDirectory.getAbsolutePath()));
 
 		// Update the application's content (autonomic part)
 		File cmdFile = new File( targetDirectory, Constants.PROJECT_DIR_COMMANDS + "/scale.commands" );
-		Assert.assertTrue( cmdFile.exists());
-		Utils.writeStringInto( "[EVENT file it-event]\nDelete if exists " + PROBE_TRIGGER_FILE.getAbsolutePath(), cmdFile );
+		Assert.assertTrue( cmdFile.delete());
+
+		cmdFile = new File( targetDirectory, Constants.PROJECT_DIR_COMMANDS + "/it-cmd.commands" );
+		Utils.writeStringInto( "write this into " + AUTONOMIC_RULE_RESULT.getAbsolutePath(), cmdFile );
 
 		File ruleFile = new File( targetDirectory, Constants.PROJECT_DIR_RULES_AUTONOMIC + "/sample.drl" );
 		Assert.assertTrue( ruleFile.exists());
 		Utils.writeStringInto( "rule \"it\" when it-event then it-cmd end", ruleFile );
 
-		File probeFile = new File( targetDirectory, Constants.PROJECT_DIR_PROBES + "/" + "/VM.measures" );
-		Utils.writeStringInto( "write this into " + AUTONOMIC_RULE_RESULT.getAbsolutePath(), probeFile );
+		File probesDir = new File( targetDirectory, Constants.PROJECT_DIR_PROBES );
+		Assert.assertTrue( probesDir.mkdir());
+
+		File probeFile = new File( probesDir, "/VM.measures" );
+		Utils.writeStringInto( "[EVENT file it-event]\nDelete if exists " + PROBE_TRIGGER_FILE.getAbsolutePath(), probeFile );
+
+		File vmDir = new File( targetDirectory, Constants.PROJECT_DIR_GRAPH + "/VM" );
+		Assert.assertTrue( vmDir.mkdir());
+
 
 		// Deploy the agent's bundles
+		List<Option> options = new ArrayList<> ();
+		options.addAll( Arrays.asList( super.config()));
+		options.add( systemProperty( APP_LOCATION ).value( targetDirectory.getAbsolutePath()));
+
 		String roboconfVersion = ItUtils.findRoboconfVersion();
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
@@ -151,6 +162,12 @@ public class AutonomicTest extends DmTest {
 
 		options.add( mavenBundle()
 				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-agent-default" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
 				.artifactId( "roboconf-agent-monitoring-api" )
 				.version( roboconfVersion )
 				.start());
@@ -161,17 +178,32 @@ public class AutonomicTest extends DmTest {
 				.version( roboconfVersion )
 				.start());
 
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-target-embedded" )
+				.version( roboconfVersion )
+				.start());
+
+		// Agent configuration (embedded)
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				Constants.MESSAGING_TYPE,
+				RabbitMqConstants.FACTORY_RABBITMQ ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"application-name", "test" ));
+
+		options.add( editConfigurationFilePut(
+				"etc/net.roboconf.agent.configuration.cfg",
+				"scoped-instance-path", "/MySQL VM" ));
+
 		return options.toArray( new Option[ options.size()]);
 	}
 
 
 	@Test
 	public void run() throws Exception {
-
-		// Update the manager
-		MyTargetResolver myResolver = new MyTargetResolver();
-		this.manager.setTargetResolver( myResolver );
-		this.manager.reconfigure();
 
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
 		Thread.sleep( 2000 );
@@ -191,11 +223,8 @@ public class AutonomicTest extends DmTest {
 		Assert.assertEquals( 1, this.manager.applicationMngr().getManagedApplications().size());
 
 		// Associate a default target for this application
-		String targetId = this.manager.targetsMngr().createTarget( "handler: whatever" );
+		String targetId = this.manager.targetsMngr().createTarget( "handler: embedded" );
 		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), null );
-
-		// There is no agent yet (no root instance was deployed)
-		Assert.assertEquals( 0, myResolver.handler.agentIdToAgent.size());
 
 		// Instantiate a new root instance
 		Instance rootInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/MySQL VM" );
@@ -203,15 +232,39 @@ public class AutonomicTest extends DmTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, rootInstance.getStatus());
 
 		this.manager.instancesMngr().changeInstanceState( ma, rootInstance, InstanceStatus.DEPLOYED_STARTED );
+
+		// At this step, the DM is waiting the agent to send a heart beat.
+		// Except that in this test, the agent may have started (and tried to send a heart beat)
+		// before the DM was started. So, we here force the agent to send a new heart beat.
+		// What we want to test is that the autonomic works. Not the heart beats...
+		this.agent.getMessagingClient().sendMessageToTheDm( new MsgNotifHeartbeat(
+				this.agent.getApplicationName(),
+				this.agent.getScopedInstancePath(),
+				"127.0.0.1" ));
+
+		// Wait a little bit
 		Thread.sleep( 800 );
 		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, rootInstance.getStatus());
 
 		// Wait a little bit, the autonomic should do its job.
-		Thread.sleep( 2000 );
+		// The polling period for probes is Constants.PROBES_POLLING_PERIOD
+		Thread.sleep( Constants.PROBES_POLLING_PERIOD + 100 );
 
-		// A file does not exist => send a notification.
+		// A file exists => delete it and send a notification.
 		// Notification received => create another file.
 		// So, we just need to verify the file was created.
 		Assert.assertTrue( AUTONOMIC_RULE_RESULT.exists());
+	}
+
+
+	@After
+	public void cleanMess() throws Exception {
+
+		Utils.deleteFilesRecursively( PROBE_TRIGGER_FILE );
+		Utils.deleteFilesRecursively( AUTONOMIC_RULE_RESULT );
+
+		String appLocation = System.getProperty( APP_LOCATION );
+		if( ! Utils.isEmptyOrWhitespaces( appLocation ))
+			Utils.deleteFilesRecursively( new File( appLocation ));
 	}
 }

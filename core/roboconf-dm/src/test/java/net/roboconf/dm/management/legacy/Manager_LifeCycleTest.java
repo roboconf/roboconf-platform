@@ -25,16 +25,19 @@
 
 package net.roboconf.dm.management.legacy;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
@@ -46,6 +49,7 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImport;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -168,6 +172,50 @@ public class Manager_LifeCycleTest {
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.MACHINE_ID ));
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.RUNNING_FROM ));
 		Assert.assertNull( app.getMySqlVm().data.get( Instance.TARGET_ACQUIRED ));
+	}
+
+
+	@Test
+	public void testChangeInstanceState_rootWithProbeConfiguration() throws Exception {
+
+		// Prepare the application
+		TestApplication app = new TestApplication();
+		app.setDirectory( this.folder.newFolder());
+		ManagedApplication ma = new ManagedApplication( app );
+		this.managerWrapper.getNameToManagedApplication().put( app.getName(), ma );
+
+		String targetId = this.manager.targetsMngr().createTarget( "prop: ok\nhandler: test" );
+		this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, app, null );
+
+		Assert.assertEquals( 0, this.targetResolver.instancePathToRunningStatus.size());
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+
+		// Add a probe file
+		File probeDir = new File( ma.getDirectory(), Constants.PROJECT_DIR_PROBES );
+		Assert.assertTrue( probeDir.mkdir());
+
+		String filename = app.getMySqlVm().getComponent().getName() + Constants.FILE_EXT_MEASURES;
+		File probeFile = new File( probeDir, filename );
+		Utils.writeStringInto( "whatever", probeFile );
+
+		// Deploy
+		this.manager.instancesMngr().changeInstanceState( ma, app.getMySqlVm(), InstanceStatus.DEPLOYED_STARTED );
+		Assert.assertEquals( InstanceStatus.DEPLOYING, app.getMySqlVm().getStatus());
+		Assert.assertEquals( 1, this.targetResolver.instancePathToRunningStatus.size());
+		Assert.assertTrue( this.targetResolver.isRunning( app.getMySqlVm()));
+		Assert.assertEquals( 0, this.msgClient.allSentMessages.size());
+		Assert.assertEquals( 1, ma.getScopedInstanceToAwaitingMessages().size());
+		Assert.assertEquals( 2, ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).size());
+
+		Message msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 0 );
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, msg.getClass());
+		Assert.assertEquals( app.getMySqlVm(), ((MsgCmdSetScopedInstance) msg).getScopedInstance());
+
+		msg = ma.getScopedInstanceToAwaitingMessages().get( app.getMySqlVm()).get( 1 );
+		Assert.assertEquals( MsgCmdUpdateProbeConfiguration.class, msg.getClass());
+		Assert.assertEquals( "/" + app.getMySqlVm(), ((MsgCmdUpdateProbeConfiguration) msg).getInstancePath());
+		Assert.assertEquals( 1, ((MsgCmdUpdateProbeConfiguration) msg).getProbeResources().size());
+		Assert.assertNotNull(((MsgCmdUpdateProbeConfiguration) msg).getProbeResources().get( filename ));
 	}
 
 

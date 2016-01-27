@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Assert;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
@@ -51,8 +50,10 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -158,6 +159,17 @@ public class SerializationUtilsTest {
 
 		MsgCmdResynchronize msg = new MsgCmdResynchronize();
 		checkBasics( msg, MsgCmdResynchronize.class );
+	}
+
+
+	@Test
+	public void testMessage_updateProbeConfiguration() throws Exception {
+
+		MsgCmdUpdateProbeConfiguration msg = new MsgCmdUpdateProbeConfiguration( "/inst", null );
+		checkBasics( msg, MsgCmdUpdateProbeConfiguration.class );
+
+		msg = new MsgCmdUpdateProbeConfiguration( new Instance( "inst" ), new HashMap<String,byte[]>( 0 ));
+		checkBasics( msg, MsgCmdUpdateProbeConfiguration.class );
 	}
 
 

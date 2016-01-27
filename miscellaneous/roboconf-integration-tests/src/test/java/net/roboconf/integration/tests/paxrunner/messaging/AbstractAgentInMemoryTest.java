@@ -115,10 +115,16 @@ public abstract class AbstractAgentInMemoryTest extends DmWithAgentInMemoryTest 
 		File resourcesDirectory = TestUtils.findApplicationDirectory( "lamp" );
 		String appLocation = resourcesDirectory.getAbsolutePath();
 
-		List<Option> options = ItUtils.getOptionsForInMemoryAsList( true, this.messagingConfiguration );
+		List<Option> options = getOptionsForInMemoryAsList();
 		options.add( systemProperty( APP_LOCATION ).value( appLocation ));
 
 		return ItUtils.asArray( options );
+	}
+
+
+	@Override
+	protected IMessagingConfiguration getMessagingConfiguration() {
+		return this.messagingConfiguration;
 	}
 
 

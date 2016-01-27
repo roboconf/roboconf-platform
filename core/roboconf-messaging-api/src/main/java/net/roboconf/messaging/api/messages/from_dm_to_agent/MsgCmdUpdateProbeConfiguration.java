@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,56 +23,60 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.monitoring.internal.tests;
+package net.roboconf.messaging.api.messages.from_dm_to_agent;
 
-import net.roboconf.agent.AgentMessagingInterface;
+import java.util.Map;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.api.business.IAgentClient;
+import net.roboconf.messaging.api.messages.Message;
 
 /**
+ * A message to update the probe configuration of a component.
  * @author Vincent Zurczak - Linagora
  */
-public class MyAgentInterface implements AgentMessagingInterface {
+public class MsgCmdUpdateProbeConfiguration extends Message {
 
-	private final IAgentClient messagingClient;
-	private Instance scopedInstance;
+	private static final long serialVersionUID = 2695001434974872770L;
+
+	private final String instancePath;
+	private final Map<String,byte[]> probeResources;
+
 
 
 	/**
 	 * Constructor.
-	 * @param messagingClient
+	 * @param instancePath
+	 * @param probeResources
 	 */
-	public MyAgentInterface( IAgentClient messagingClient ) {
-		this.messagingClient = messagingClient;
+	public MsgCmdUpdateProbeConfiguration( String instancePath, Map<String,byte[]> probeResources ) {
+		this.instancePath = instancePath;
+		this.probeResources = probeResources;
 	}
 
-	@Override
-	public IAgentClient getMessagingClient() {
-		return this.messagingClient;
+
+	/**
+	 * Constructor.
+	 * @param instance
+	 * @param probeResources
+	 */
+	public MsgCmdUpdateProbeConfiguration( Instance instance, Map<String,byte[]> probeResources ) {
+		this( InstanceHelpers.computeInstancePath( instance ), probeResources );
 	}
 
-	@Override
-	public String getApplicationName() {
-		return "app";
+
+	/**
+	 * @return the instancePath
+	 */
+	public String getInstancePath() {
+		return this.instancePath;
 	}
 
-	@Override
-	public Instance getScopedInstance() {
-		return this.scopedInstance;
-	}
 
-	@Override
-	public String getScopedInstancePath() {
-		return InstanceHelpers.computeInstancePath( this.scopedInstance );
-	}
-
-	public void setScopedInstance( Instance scopedInstance ) {
-		this.scopedInstance = scopedInstance;
-	}
-
-	@Override
-	public void forceHeartbeatSending() {
-		// nothing
+	/**
+	 * @return the probeResources
+	 */
+	public Map<String,byte[]> getProbeResources() {
+		return this.probeResources;
 	}
 }

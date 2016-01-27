@@ -196,12 +196,12 @@ public enum ErrorCode {
 	CMD_MISSING_TARGET_FILE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "The target file is missing." ),
 
 	// Rule errors
-	RULE_IO_ERROR( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
-	RULE_EMPTY_NAME( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
+	RULE_IO_ERROR( ErrorLevel.SEVERE, ErrorCategory.RULES, "I/O error while reading a rule file." ),
+	RULE_EMPTY_NAME( ErrorLevel.SEVERE, ErrorCategory.RULES, "The rule name cannot be empty." ),
 	RULE_INVALID_SYNTAX( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
-	RULE_EMPTY_WHEN( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
-	RULE_EMPTY_THEN( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
-	RULE_UNKNOWN_COMMAND( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax for this command. Please, refer to the documentation." ),
+	RULE_EMPTY_WHEN( ErrorLevel.SEVERE, ErrorCategory.RULES, "The WHEN section cannot be empty, Roboconf events must be specified." ),
+	RULE_EMPTY_THEN( ErrorLevel.SEVERE, ErrorCategory.RULES, "The THEN section cannot be empty, Roboconf commands must be listed." ),
+	RULE_UNKNOWN_COMMAND( ErrorLevel.SEVERE, ErrorCategory.RULES, "Invalid syntax in rule file. This command could not be found." ),
 	;
 
 

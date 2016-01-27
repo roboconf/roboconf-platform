@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.internal.lifecycle.AbstractLifeCycleManager;
+import net.roboconf.agent.internal.misc.AgentUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
@@ -64,6 +65,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.plugin.api.PluginException;
 import net.roboconf.plugin.api.PluginInterface;
@@ -168,6 +170,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			else if( message instanceof MsgCmdChangeBinding )
 				processMsgChangeBinding((MsgCmdChangeBinding) message );
 
+			else if( message instanceof MsgCmdUpdateProbeConfiguration )
+				processUpdateProbeConfiguration((MsgCmdUpdateProbeConfiguration) message );
+
 			else
 				this.logger.warning( getName() + " got an undetermined message to process. " + message.getClass().getName());
 
@@ -179,6 +184,22 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
+	}
+
+
+	/**
+	 * Updates the probe configuration of a given instance.
+	 * @param message the incoming message
+	 * @throws IOException if something went wrong
+	 */
+	private void processUpdateProbeConfiguration( MsgCmdUpdateProbeConfiguration message )
+	throws IOException {
+
+		Instance inst = InstanceHelpers.findInstanceByPath( this.scopedInstance, message.getInstancePath());
+		if( inst == null )
+			this.logger.warning( "Instance " + message.getInstancePath() + " could not be found. Probe configuration will not be updated." );
+		else
+			AgentUtils.copyInstanceResources( inst, message.getProbeResources());
 	}
 
 

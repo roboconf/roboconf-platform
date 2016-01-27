@@ -138,4 +138,9 @@ public interface Constants {
 	 * The property to define the messaging type in the DM and agent configuration files.
 	 */
 	String MESSAGING_TYPE = "messaging-type";
+
+	/**
+	 * The default polling period for probes.
+	 */
+	Long PROBES_POLLING_PERIOD = 10000L;
 }

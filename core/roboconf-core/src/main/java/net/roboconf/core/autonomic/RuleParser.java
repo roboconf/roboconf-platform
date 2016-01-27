@@ -58,6 +58,7 @@ public class RuleParser {
 	 */
 	public RuleParser( File ruleFile ) {
 
+		String details = "File name: " + ruleFile.getName();
 		try {
 			String s = Utils.readFileContent( ruleFile );
 			s = s.replaceAll( MULTILINE_COMMENT_PATTERN, "" );
@@ -91,17 +92,17 @@ public class RuleParser {
 
 				// Validate the rule
 				if( Utils.isEmptyOrWhitespaces( ruleName ))
-					this.parsingErrors.add( new ParsingError( ErrorCode.RULE_EMPTY_NAME, ruleFile, -1 ));
+					this.parsingErrors.add( new ParsingError( ErrorCode.RULE_EMPTY_NAME, ruleFile, -1, details ));
 
 				if( Utils.isEmptyOrWhitespaces( eventName ))
-					this.parsingErrors.add( new ParsingError( ErrorCode.RULE_EMPTY_WHEN, ruleFile, -1 ));
+					this.parsingErrors.add( new ParsingError( ErrorCode.RULE_EMPTY_WHEN, ruleFile, -1, details ));
 
 				if( this.rule.getCommandsToInvoke().isEmpty())
-					this.parsingErrors.add( new ParsingError( ErrorCode.RULE_EMPTY_THEN, ruleFile, -1 ));
+					this.parsingErrors.add( new ParsingError( ErrorCode.RULE_EMPTY_THEN, ruleFile, -1, details ));
 			}
 
 		} catch( IOException e ) {
-			this.parsingErrors.add( new ParsingError( ErrorCode.RULE_IO_ERROR, ruleFile, -1 ));
+			this.parsingErrors.add( new ParsingError( ErrorCode.RULE_IO_ERROR, ruleFile, -1, details ));
 		}
 	}
 

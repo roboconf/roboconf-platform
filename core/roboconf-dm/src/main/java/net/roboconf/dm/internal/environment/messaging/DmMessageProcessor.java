@@ -152,7 +152,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( scopedInstancePath );
 			sb.append( " (app = " );
 			sb.append( ma );
-			sb.append( ")." );
+			sb.append( ", inst = " );
+			sb.append( scopedInstancePath );
+			sb.append( "). The heart beat is dropped." );
 			this.logger.warning( sb.toString());
 
 		} else if( ! InstanceHelpers.isTarget( scopedInstance )) {
@@ -161,6 +163,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( scopedInstancePath );
 			sb.append( " (app = " );
 			sb.append( ma );
+			sb.append( ", inst = " );
+			sb.append( scopedInstancePath );
 			sb.append( "). The heart beat is dropped." );
 			this.logger.warning( sb.toString());
 

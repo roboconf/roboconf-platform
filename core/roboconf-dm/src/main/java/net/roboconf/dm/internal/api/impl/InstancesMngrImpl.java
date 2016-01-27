@@ -57,6 +57,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -385,14 +386,23 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 		InstanceStatus initialStatus = scopedInstance.getStatus();
 		try {
+			// Send the model
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance(
+			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
 					ma.getApplication().getExternalExports(),
 					ma.getApplication().applicationBindings );
 
-			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msg );
+			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
 
+			// Send the probe files (if any)
+			Map<String,byte[]> probeResources = ResourceUtils.storeInstanceProbeResources( ma.getDirectory(), scopedInstance );
+			if( ! probeResources.isEmpty()) {
+				MsgCmdUpdateProbeConfiguration msgProbes = new MsgCmdUpdateProbeConfiguration( scopedInstance, probeResources );
+				this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgProbes );
+			}
+
+			// Prepare the creation
 			Map<String,String> targetProperties = this.targetsMngr.lockAndGetTarget( ma.getApplication(), scopedInstance );
 			targetProperties.putAll( scopedInstance.data );
 

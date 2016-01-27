@@ -28,8 +28,6 @@ package net.roboconf.integration.tests.paxrunner.miscellaneous;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -44,8 +42,6 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
-import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
 import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 
 import org.junit.Assert;
@@ -85,8 +81,7 @@ public class InterApplicationsTest extends DmWithAgentInMemoryTest {
 	@Configuration
 	public Option[] config() throws Exception {
 
-		List<Option> options = new ArrayList<> ();
-		options.addAll( Arrays.asList( ItUtils.getOptionsForInMemory( true, new RabbitMqConfiguration())));
+		List<Option> options = super.getOptionsForInMemoryAsList();
 
 		// Store the application's location
 		File resourcesDirectory = TestUtils.findTestFile( "/app-with-external-exports" );

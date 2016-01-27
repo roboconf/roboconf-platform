@@ -66,6 +66,22 @@ public final class ResourceUtils {
 				&& instanceResourcesDirectory.isDirectory())
 			result.putAll( Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory ));
 
+		// Probe files
+		result.putAll( storeInstanceProbeResources( applicationFilesDirectory, instance ));
+
+		return result;
+	}
+
+
+	/**
+	 * Stores the instance's resources related to probes into a map.
+	 * @param applicationFilesDirectory the application's directory
+	 * @param instance an instance (not null)
+	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
+	 * @throws IOException if something went wrong while reading a file
+	 */
+	public static Map<String,byte[]> storeInstanceProbeResources( File applicationFilesDirectory, Instance instance ) throws IOException {
+
 		// Measure files (are not located with recipes, so no trouble with component inheritance).
 		// There can also be a properties file to inject values.
 		String[] exts = {
@@ -73,6 +89,7 @@ public final class ResourceUtils {
 				Constants.FILE_EXT_MEASURES + ".properties"
 		};
 
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
 		for( String ext : exts ) {
 			String fileName = instance.getComponent().getName() + ext;
 			File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_PROBES + "/" + fileName );
@@ -86,6 +103,7 @@ public final class ResourceUtils {
 
 		return result;
 	}
+
 
 	/**
 	 * Finds the resource directory for an instance.
