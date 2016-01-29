@@ -26,17 +26,12 @@
 package net.roboconf.target.openstack.internal;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-
-import org.jclouds.ContextBuilder;
-import org.jclouds.openstack.neutron.v2.NeutronApi;
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.domain.Server;
-import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
-import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
-import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
-import org.jclouds.openstack.v2_0.domain.Resource;
+import java.util.Set;
 
 import net.roboconf.core.agents.DataHelpers;
 import net.roboconf.core.model.beans.Instance;
@@ -45,6 +40,19 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
 
+import org.jclouds.ContextBuilder;
+import org.jclouds.openstack.neutron.v2.NeutronApi;
+import org.jclouds.openstack.nova.v2_0.NovaApi;
+import org.jclouds.openstack.nova.v2_0.domain.Server;
+import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
+import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
+import org.jclouds.openstack.nova.v2_0.domain.Volume;
+import org.jclouds.openstack.nova.v2_0.domain.VolumeAttachment;
+import org.jclouds.openstack.nova.v2_0.extensions.VolumeApi;
+import org.jclouds.openstack.nova.v2_0.extensions.VolumeAttachmentApi;
+import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
+import org.jclouds.openstack.v2_0.domain.Resource;
+
 /**
  * @author Pierre-Yves Gibello - Linagora
  * @author Amadou Diarra - UJF
@@ -52,9 +60,15 @@ import net.roboconf.target.api.TargetException;
 public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "iaas-openstack";
+
+	static final String TPL_VOLUME_NAME = "%NAME%";
+	static final String TPL_VOLUME_APP = "%APP%";
+	static final String DELETE_ON_TERMINATION = "delete.on.termination";
+
 	private static final String PROVIDER_NOVA = "openstack-nova";
 	private static final String PROVIDER_NEUTRON = "openstack-neutron";
 
+	// "Basic" options
 	static final String IMAGE_NAME = "openstack.image-name";
 	static final String TENANT_NAME = "openstack.tenant-name";
 	static final String KEY_PAIR = "openstack.key-pair";
@@ -66,14 +80,23 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	static final String FLOATING_IP_POOL = "openstack.floating-ip-pool";
 	static final String NETWORK_ID = "openstack.network-id";
+
+	// Storage has several options
 	static final String USE_BLOCK_STORAGE = "openstack.use-block-storage";
-	static final String DEFAULT_USE_BLOCK_STORAGE = "false";
-	static final String VOLUME_MOUNT_POINT = "openstack.volume-mount-point";
-	static final String DEFAULT_VOLUME_MOUNT_POINT = "/dev/vdb";
-	static final String VOLUME_NAME = "openstack.volume-name";
-	static final String DEFAULT_VOLUME_NAME = "roboconf-volume";
-	static final String VOLUME_SIZE_GB = "openstack.volume-size";
-	static final String DEFAULT_VOLUME_SIZE_GB = "5";
+
+	static final String VOLUME_MOUNT_POINT_PREFIX = "openstack.volume-mount-point.";
+	static final String VOLUME_NAME_PREFIX = "openstack.volume-name.";
+	static final String VOLUME_SIZE_GB_PREFIX = "openstack.volume-size.";
+	static final String VOLUME_DELETE_OT_PREFIX = "openstack.delete-volume-on-termination.";
+	static final String VOLUME_TYPE_PREFIX = "openstack.volume-type.";
+
+	static final Map<String,String> DEFAULTS = new HashMap<> ();
+	static {
+		DEFAULTS.put( VOLUME_MOUNT_POINT_PREFIX, "/dev/vdb" );
+		DEFAULTS.put( VOLUME_NAME_PREFIX, "roboconf-" + TPL_VOLUME_APP + "-" + TPL_VOLUME_NAME );
+		DEFAULTS.put( VOLUME_SIZE_GB_PREFIX, "5" );
+		DEFAULTS.put( VOLUME_DELETE_OT_PREFIX, "false" );
+	}
 
 
 
@@ -98,7 +121,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
-					throws TargetException {
+	throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
 
@@ -106,7 +129,11 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
 			throw new TargetException( "Only root instances can be passed in arguments." );
 
+		// Validate all the properties here
 		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
+		validateAll( targetProperties, applicationName, rootInstanceName );
+
+		// Prepare the work
 		NovaApi novaApi = OpenstackIaasHandler.novaApi( targetProperties );
 		String anyZoneName = novaApi.getConfiguredZones().iterator().next();
 		String vmName = applicationName + "." + rootInstanceName;
@@ -173,7 +200,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	 */
 	@Override
 	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
-			throws TargetException {
+	throws TargetException {
 
 		NovaApi novaApi = novaApi( targetProperties );
 		String anyZoneName = novaApi.getConfiguredZones().iterator().next();
@@ -200,7 +227,8 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			String scopedInstancePath,
 			String applicationName,
 			Instance scopedInstance ) {
-		return new OpenstackMachineConfigurator( targetProperties, machineId, scopedInstance );
+
+		return new OpenstackMachineConfigurator( targetProperties, machineId, applicationName, scopedInstance );
 	}
 
 
@@ -218,7 +246,37 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 			NovaApi novaApi = novaApi( targetProperties );
 			String anyZoneName = novaApi.getConfiguredZones().iterator().next();
+
+			// List the attached volumes, if any.
+			Set<String> volumeIds = new HashSet<> ();
+			VolumeAttachmentApi volumeAttachmentApi = novaApi.getVolumeAttachmentExtensionForZone(anyZoneName).get();
+			for( VolumeAttachment vol : volumeAttachmentApi.listAttachmentsOnServer( machineId )) {
+				volumeIds.add( vol.getVolumeId());
+			}
+
+			// Delete the VM
 			novaApi.getServerApiForZone( anyZoneName ).delete( machineId );
+
+			// Delete the volumes?
+			VolumeApi volumeApi = novaApi.getVolumeExtensionForZone(anyZoneName).get();
+			for( String volumeId : volumeIds ) {
+
+				Volume volume = volumeApi.get( volumeId );
+				if( volume == null ) {
+					this.logger.warning( "Volume " + volumeId + " was not found. Deletion check is aborted for this volume." );
+					continue;
+				}
+
+				String del = volume.getMetadata().get( DELETE_ON_TERMINATION );
+				if( Boolean.parseBoolean( del )) {
+					this.logger.info( "Deleting volume " + volumeId );
+					volumeApi.delete( volumeId );
+
+				} else {
+					this.logger.info( "Orphan volume " + volumeId + " is kept and will not be deleted." );
+				}
+			}
+
 			novaApi.close();
 
 		} catch( IOException e ) {
@@ -263,7 +321,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 
 	/**
-	 * Validates the target properties.
+	 * Validates the basic target properties.
 	 * @param targetProperties the properties
 	 * @throws TargetException if an error occurred during the validation
 	 */
@@ -281,6 +339,51 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 
 	/**
+	 * Validates the target properties, including storage ones.
+	 * @param targetProperties
+	 * @param appName
+	 * @param instanceName
+	 * @throws TargetException
+	 */
+	static void validateAll( Map<String,String> targetProperties, String appName, String instanceName )
+	throws TargetException {
+
+		// Basic checks
+		validate( targetProperties );
+
+		// Storage checks
+		Set<String> mountPoints = new HashSet<> ();
+		Set<String> volumeNames = new HashSet<> ();
+		for( String s : findStorageIds( targetProperties )) {
+
+			// Unit tests should guarantee there is a default value for the "mount point".
+			String mountPoint = findStorageProperty( targetProperties, s, VOLUME_MOUNT_POINT_PREFIX );
+			if( mountPoints.contains( mountPoint ))
+				throw new TargetException( "Mount point '" + mountPoint + "' is already used by another volume for this VM." );
+
+			mountPoints.add( mountPoint );
+
+			// Same thing for the volume name
+			String volumeName = findStorageProperty( targetProperties, s, VOLUME_NAME_PREFIX );
+			volumeName = filterStorageVolumeName( volumeName, appName, instanceName );
+			if( volumeNames.contains( volumeName ))
+				throw new TargetException( "Volume name '" + volumeName + "' is already used by another volume for this VM." );
+
+			volumeNames.add( volumeName );
+
+			// Validate volume size
+			String volumesize = findStorageProperty( targetProperties, s, VOLUME_SIZE_GB_PREFIX );
+			try {
+				Integer.valueOf( volumesize );
+
+			} catch( NumberFormatException e ) {
+				throw new TargetException( "The volume size must be a valid integer.", e );
+			}
+		}
+	}
+
+
+	/**
 	 * @param targetProperties the target properties (assumed to be valid)
 	 * @return the identity
 	 */
@@ -289,8 +392,60 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	}
 
 
+	/**
+	 * Finds the storage IDs (used as property suffixes).
+	 * @param targetProperties
+	 * @return a non-null list
+	 */
+	static List<String> findStorageIds( Map<String,String> targetProperties ) {
+
+		List<String> result = new ArrayList<String> ();
+		String prop = targetProperties.get( USE_BLOCK_STORAGE );
+		if( ! Utils.isEmptyOrWhitespaces( prop )) {
+			for( String s : Utils.splitNicely( prop, "," )) {
+				if( ! Utils.isEmptyOrWhitespaces( s ))
+					result.add( s );
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds a storage property for a given storage ID.
+	 * @param targetProperties
+	 * @param storageId
+	 * @param propertyPrefix one of the constants defined in this class
+	 * @return the property's value, or the default value otherwise, if one exists
+	 */
+	static String findStorageProperty( Map<String,String> targetProperties, String storageId, String propertyPrefix ) {
+
+		String property = propertyPrefix + storageId;
+		String value = targetProperties.get( property );
+		return Utils.isEmptyOrWhitespaces( value ) ? DEFAULTS.get( propertyPrefix ) : value.trim();
+	}
+
+
+	/**
+	 * Updates a volume name by replacing template variables.
+	 * @param rawName (not null)
+	 * @param appName (not null)
+	 * @param instanceName (not null)
+	 * @return a non-null string
+	 */
+	static String filterStorageVolumeName( String rawName, String appName, String instanceName ) {
+
+		String name = rawName.replace( TPL_VOLUME_NAME, instanceName );
+		name = name.replace( TPL_VOLUME_APP, appName );
+		name = name.replaceAll( "[\\W_-]", "-" );
+
+		return name;
+	}
+
+
 	private static void checkProperty( String propertyName, Map<String,String> targetProperties )
-			throws TargetException {
+	throws TargetException {
 
 		if( ! targetProperties.containsKey( propertyName ))
 			throw new TargetException( "Property '" + propertyName + "' is missing." );
