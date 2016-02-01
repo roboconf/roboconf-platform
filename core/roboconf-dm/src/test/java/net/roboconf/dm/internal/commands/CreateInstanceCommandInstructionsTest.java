@@ -26,8 +26,8 @@
 package net.roboconf.dm.internal.commands;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Assert;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.CreateInstanceCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -35,9 +35,11 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -84,7 +86,63 @@ public class CreateInstanceCommandInstructionsTest {
 
 
 	@Test
+	public void testExecute_rootInstance_withAutonomicContext_success() throws Exception {
+
+		String txt = "create vm as tomcat-vm-2";
+		CreateInstanceCommandExecution executor = buildExecutor( txt );
+
+		executor.setExecutionContext( new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 3 ),
+				2, false,
+				null, null
+		));
+
+		executor.execute();
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance( this.ma, null, new Instance( "tomcat-vm-2" ));
+	}
+
+
+	@Test( expected = CommandException.class )
+	public void testExecute_rootInstance_withAutonomicContext_failure() throws Exception {
+
+		String txt = "create vm as tomcat-vm-2";
+		CreateInstanceCommandExecution executor = buildExecutor( txt );
+
+		executor.setExecutionContext( new CommandExecutionContext(
+				new AtomicInteger( 6 ),
+				new AtomicInteger( 3 ),
+				5, true,
+				null, null
+		));
+
+		executor.execute();
+	}
+
+
+	@Test
 	public void testExecute_childInstance_success() throws Exception {
+
+		String txt = "create tomcat as tomcat-server-2 under /tomcat-vm";
+		CreateInstanceCommandExecution executor = buildExecutor( txt );
+
+		executor.setExecutionContext( new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 3 ),
+				2, true,
+				null, null
+		));
+
+		executor.execute();
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).addInstance(
+				this.ma,
+				this.app.getTomcatVm(),
+				new Instance( "tomcat-server-2" ));
+	}
+
+
+	@Test
+	public void testExecute_childInstance_withAutonomicContext_success() throws Exception {
 
 		String txt = "create tomcat as tomcat-server-2 under /tomcat-vm";
 		CreateInstanceCommandExecution executor = buildExecutor( txt );
@@ -139,6 +197,96 @@ public class CreateInstanceCommandInstructionsTest {
 		String txt = "create tomcat as tomcat-server-2 under /inexisting";
 		CreateInstanceCommandExecution executor = buildExecutor( txt, 1 );
 		executor.execute();
+	}
+
+
+	@Test
+	public void testVerify_exception_rootNoMax() throws Exception {
+
+		CommandExecutionContext executionContext = new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 1 ),
+				-1, true,	// no max
+				null, null
+		);
+
+		CreateInstanceCommandExecution.verify( executionContext, this.app.getMySqlVm().getComponent());
+	}
+
+
+	@Test( expected = CommandException.class )
+	public void testVerify_exception_rootWithMax_andStrictCheck() throws Exception {
+
+		CommandExecutionContext executionContext = new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 3 ),
+				2, true,
+				null, null
+		);
+
+		CreateInstanceCommandExecution.verify( executionContext, this.app.getMySqlVm().getComponent());
+	}
+
+
+	@Test
+	public void testVerify_exception_rootWithMax_butNoStrictCheck() throws Exception {
+
+		CommandExecutionContext executionContext = new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 3 ),
+				2, false,
+				null, null
+		);
+
+		CreateInstanceCommandExecution.verify( executionContext, this.app.getMySqlVm().getComponent());
+	}
+
+
+	@Test
+	public void testVerify_exception_nonRoot() throws Exception {
+
+		CommandExecutionContext executionContext = new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 3 ),
+				2, false,
+				null, null
+		);
+
+		CreateInstanceCommandExecution.verify( executionContext, this.app.getMySql().getComponent());
+	}
+
+
+	@Test
+	public void testVerify_noException() throws Exception {
+		CreateInstanceCommandExecution.verify( null, null );
+	}
+
+
+	@Test
+	public void testUpdate_nullContext() {
+		CreateInstanceCommandExecution.update( null, null );
+	}
+
+
+	@Test
+	public void testUpdate_nonNullContext() {
+
+		CommandExecutionContext executionContext = new CommandExecutionContext(
+				new AtomicInteger( 4 ),
+				new AtomicInteger( 3 ),
+				2, false,
+				"xcv", "vbn"
+		);
+
+		Instance inst = new Instance( "inst" );
+		Assert.assertEquals( 0, inst.data.size());
+
+		CreateInstanceCommandExecution.update( executionContext, inst );
+
+		Assert.assertEquals( 5, executionContext.getGlobalVmNumber().get());
+		Assert.assertEquals( 4, executionContext.getAppVmNumber().get());
+		Assert.assertEquals( 1, inst.data.size());
+		Assert.assertEquals( "vbn", inst.data.get( "xcv" ));
 	}
 
 

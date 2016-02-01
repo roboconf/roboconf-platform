@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.junit.Assert;
 import net.roboconf.agent.monitoring.api.IMonitoringHandler;
 import net.roboconf.agent.monitoring.internal.MonitoringTask.MonitoringHandlerRun;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
@@ -49,6 +48,7 @@ import net.roboconf.messaging.api.business.IAgentClient;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -267,7 +267,7 @@ public class MonitoringTaskTest {
 
 		MsgNotifAutonomic msg = (MsgNotifAutonomic) msgCapture.getValue();
 		Assert.assertEquals( this.agentInterface.getApplicationName(), msg.getApplicationName());
-		Assert.assertEquals( "myRuleName", msg.getEventId());
+		Assert.assertEquals( "myRuleName", msg.getEventName());
 		Assert.assertEquals( "/" + this.agentInterface.getScopedInstance().getName(), msg.getScopedInstancePath());
 		Assert.assertTrue( msg.getEventInfo().toLowerCase().contains( "does not exist" ));
 	}

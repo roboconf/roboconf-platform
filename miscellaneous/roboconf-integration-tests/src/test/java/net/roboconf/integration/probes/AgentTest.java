@@ -26,7 +26,7 @@
 package net.roboconf.integration.probes;
 
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
 
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -35,11 +35,15 @@ import org.ops4j.pax.exam.Option;
  * A base class to run the agent's distribution.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class AgentTest {
+public abstract class AgentTest extends AbstractIntegrationTest {
 
 	@Configuration
 	public Option[] config() throws Exception {
-		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-agent", "agent" );
-		return ItUtils.getBaseOptions( bean, new RabbitMqConfiguration());
+		return ItUtils.getBaseOptions( getConfigurationBean(), new RabbitMqConfiguration());
+	}
+
+	@Override
+	protected ItConfigurationBean getConfigurationBean() {
+		return new ItConfigurationBean( "roboconf-karaf-dist-agent", "agent" );
 	}
 }

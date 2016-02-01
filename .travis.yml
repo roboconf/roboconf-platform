@@ -25,10 +25,10 @@ addons:
     packages:
     - wget
 
-# Gem, NPM and Gulp seem to be available by default now.
+# Configure RabbitMQ with new users.
 #before_script:
-#  - gem install puppet
-#  - npm install -g gulp
+#  - rabbitmqctl add_user roboconf roboconf
+#  - rabbitmqctl set_permissions roboconf ".*" ".*" ".*"
 
 # For debug only
 #  - puppet --version

@@ -1,0 +1,6 @@
+rule "test"
+when
+	event-1
+then
+	cmd1
+end

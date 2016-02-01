@@ -25,7 +25,10 @@
 
 package net.roboconf.integration.probes;
 
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -33,7 +36,8 @@ import javax.inject.Inject;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.IMessagingConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.RabbitMqConfiguration;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -45,7 +49,7 @@ import org.ops4j.pax.exam.util.Filter;
  * A base test for PAX-runner tests with the DM's distribution and agents in-memory.
  * @author Vincent Zurczak - Linagora
  */
-public abstract class DmWithAgentInMemoryTest {
+public abstract class DmWithAgentInMemoryTest extends AbstractIntegrationTest {
 
 	@Inject
 	protected Manager manager;
@@ -57,7 +61,44 @@ public abstract class DmWithAgentInMemoryTest {
 
 	@Configuration
 	public Option[] config() throws Exception {
-		return ItUtils.getOptionsForInMemory( true, new RabbitMqConfiguration());
+		return ItUtils.asArray( getOptionsForInMemoryAsList());
+	}
+
+
+	protected List<Option> getOptionsForInMemoryAsList() {
+
+		List<Option> options = ItUtils.getBaseOptionsAsList( getConfigurationBean(), getMessagingConfiguration());
+		String roboconfVersion = ItUtils.findRoboconfVersion();
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-plugin-api" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-agent" )
+				.version( roboconfVersion )
+				.start());
+
+		options.add( mavenBundle()
+				.groupId( "net.roboconf" )
+				.artifactId( "roboconf-target-in-memory" )
+				.version( roboconfVersion )
+				.start());
+
+		return options;
+	}
+
+
+	@Override
+	protected ItConfigurationBean getConfigurationBean() {
+		return new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm-with-agent-in-memory" );
+	}
+
+
+	protected IMessagingConfiguration getMessagingConfiguration() {
+		return new RabbitMqConfiguration();
 	}
 
 

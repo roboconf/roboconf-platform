@@ -25,8 +25,9 @@
 
 package net.roboconf.core.model.beans;
 
-import org.junit.Assert;
+import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -48,5 +49,7 @@ public class CrapForCodeCoverageTest {
 		Application app = new Application( new ApplicationTemplate());
 		Assert.assertNull( app.toString());
 		Assert.assertNotNull( app.name( "azerty" ).toString());
+
+		Assert.assertTrue( 0 < PreferenceKeyCategory.values().length );
 	}
 }

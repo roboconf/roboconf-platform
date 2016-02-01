@@ -27,6 +27,7 @@ package net.roboconf.agent.monitoring.internal.tests;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.api.business.IAgentClient;
 
 /**
@@ -59,6 +60,11 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	@Override
 	public Instance getScopedInstance() {
 		return this.scopedInstance;
+	}
+
+	@Override
+	public String getScopedInstancePath() {
+		return InstanceHelpers.computeInstancePath( this.scopedInstance );
 	}
 
 	public void setScopedInstance( Instance scopedInstance ) {

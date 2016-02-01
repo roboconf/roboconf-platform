@@ -85,7 +85,12 @@ public interface Constants {
 	/**
 	 * The <strong>autonomic</strong> directory.
 	 */
-	String PROJECT_DIR_AUTONOMIC = "autonomic";
+	String PROJECT_DIR_RULES_AUTONOMIC = "rules.autonomic";
+
+	/**
+	 * The <strong>probes</strong> directory.
+	 */
+	String PROJECT_DIR_PROBES = "probes";
 
 	/**
 	 * The <strong>commands</strong> directory.
@@ -108,9 +113,9 @@ public interface Constants {
 	String FILE_EXT_COMMANDS = ".commands";
 
 	/**
-	 * The <strong>rules</strong> file extension.
+	 * The <strong>drl</strong> file extension.
 	 */
-	String FILE_RULES = "rules.cfg";
+	String FILE_EXT_RULE = ".drl";
 
 
 	/**
@@ -127,4 +132,15 @@ public interface Constants {
 	 * A constant used for generated applications (used with recipes).
 	 */
 	String GENERATED = "generated";
+
+
+	/**
+	 * The property to define the messaging type in the DM and agent configuration files.
+	 */
+	String MESSAGING_TYPE = "messaging-type";
+
+	/**
+	 * The default polling period for probes.
+	 */
+	Long PROBES_POLLING_PERIOD = 10000L;
 }

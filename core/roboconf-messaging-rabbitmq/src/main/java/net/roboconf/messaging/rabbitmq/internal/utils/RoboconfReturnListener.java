@@ -70,7 +70,7 @@ public class RoboconfReturnListener implements ReturnListener {
 
 		if (this.logger.isLoggable(Level.WARNING)) {
 			final StringBuilder sb = new StringBuilder();
-			sb.append("A message sent by the DM was not received by any agent queue.\n");
+			sb.append("A message sent by a RabbitMQ client was not received by any queue.\n");
 			sb.append("Message type: " + messageType + '\n');
 			sb.append("Routing key: " + routingKey + '\n');
 			sb.append("Reason: " + replyText);

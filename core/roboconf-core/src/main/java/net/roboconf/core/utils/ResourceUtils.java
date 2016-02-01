@@ -66,37 +66,44 @@ public final class ResourceUtils {
 				&& instanceResourcesDirectory.isDirectory())
 			result.putAll( Utils.storeDirectoryResourcesAsBytes( instanceResourcesDirectory ));
 
-		// Measure files (are not located with recipes, so no trouble with component inheritance)
-		String fileName = instance.getComponent().getName() + Constants.FILE_EXT_MEASURES;
-		File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_AUTONOMIC + "/" + fileName );
-		if( autonomicMeasureFile.exists()) {
-			ByteArrayOutputStream os = new ByteArrayOutputStream();
-			Utils.copyStream( autonomicMeasureFile, os );
-			result.put( autonomicMeasureFile.getName(), os.toByteArray());
-		}
+		// Probe files
+		result.putAll( storeInstanceProbeResources( applicationFilesDirectory, instance ));
 
-		// Deal with autonomic files.
-		// There can be the ".measure" file.
+		return result;
+	}
+
+
+	/**
+	 * Stores the instance's resources related to probes into a map.
+	 * @param applicationFilesDirectory the application's directory
+	 * @param instance an instance (not null)
+	 * @return a non-null map (key = the file location, relative to the instance's directory, value = file content)
+	 * @throws IOException if something went wrong while reading a file
+	 */
+	public static Map<String,byte[]> storeInstanceProbeResources( File applicationFilesDirectory, Instance instance ) throws IOException {
+
+		// Measure files (are not located with recipes, so no trouble with component inheritance).
 		// There can also be a properties file to inject values.
-		autonomicMeasureFile = new File(
-				applicationFilesDirectory,
-				Constants.PROJECT_DIR_AUTONOMIC + "/" + instance.getComponent().getName() + Constants.FILE_EXT_MEASURES );
+		String[] exts = {
+				Constants.FILE_EXT_MEASURES,
+				Constants.FILE_EXT_MEASURES + ".properties"
+		};
 
-		if( autonomicMeasureFile.exists()) {
+		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		for( String ext : exts ) {
+			String fileName = instance.getComponent().getName() + ext;
+			File autonomicMeasureFile = new File( applicationFilesDirectory, Constants.PROJECT_DIR_PROBES + "/" + fileName );
+			if( ! autonomicMeasureFile.exists())
+				break;
+
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 			Utils.copyStream( autonomicMeasureFile, os );
 			result.put( autonomicMeasureFile.getName(), os.toByteArray());
-
-			File autonomicPropertiesFile = new File( autonomicMeasureFile.getAbsolutePath() + ".properties" );
-			if( autonomicPropertiesFile.exists()) {
-				os = new ByteArrayOutputStream();
-				Utils.copyStream( autonomicPropertiesFile, os );
-				result.put( autonomicPropertiesFile.getName(), os.toByteArray());
-			}
 		}
 
 		return result;
 	}
+
 
 	/**
 	 * Finds the resource directory for an instance.

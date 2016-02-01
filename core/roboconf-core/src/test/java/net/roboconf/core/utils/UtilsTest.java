@@ -186,6 +186,32 @@ public class UtilsTest {
 
 
 	@Test
+	public void testSplitNicelyWithPattern() {
+
+		List<String> result = Utils.splitNicelyWithPattern( "once upon a , time   ", ",|\\s" );
+		Assert.assertEquals( 6, result.size());
+		Assert.assertEquals( "once", result.get( 0 ));
+		Assert.assertEquals( "upon", result.get( 1 ));
+		Assert.assertEquals( "a", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 3 ));
+		Assert.assertEquals( "", result.get( 4 ));
+		Assert.assertEquals( "time", result.get( 5 ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testSplitNicelyWithPattern_illegalArgument_1() {
+		Utils.splitNicelyWithPattern( "once, upon, a , time   ", "" );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testSplitNicelyWithPattern_illegalArgument_2() {
+		Utils.splitNicelyWithPattern( "once, upon, a , time   ", null );
+	}
+
+
+	@Test
 	public void testWriteStringInto() throws Exception {
 
 		File f = this.folder.newFile();

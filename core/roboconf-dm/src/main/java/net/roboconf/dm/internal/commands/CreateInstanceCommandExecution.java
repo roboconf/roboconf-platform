@@ -25,10 +25,13 @@
 
 package net.roboconf.dm.internal.commands;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.commands.CreateInstanceCommandInstruction;
+import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
@@ -58,13 +61,50 @@ class CreateInstanceCommandExecution extends AbstractCommandExecution {
 		Instance parentInstance = resolveInstance( this.instr, this.instr.getParentInstancePath(), true );
 		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
 
+		// Verify we can create new VMs in the model
+		verify( this.executionContext, this.instr.getComponent());
+
 		// Execute the command
 		try {
 			Instance instance = new Instance( this.instr.getInstanceName()).component( this.instr.getComponent());
 			this.manager.instancesMngr().addInstance( ma, parentInstance, instance );
+			update( this.executionContext, instance );
 
 		} catch( Exception e ) {
 			throw new CommandException( e );
+		}
+	}
+
+
+	/**
+	 * Verifies a new VM model can be created according to a given context.
+	 * @param executionContext
+	 * @param component
+	 * @throws CommandException
+	 */
+	public static void verify( CommandExecutionContext executionContext, Component component )
+	throws CommandException {
+
+		if( executionContext != null
+				&& Constants.TARGET_INSTALLER.equalsIgnoreCase( component.getInstallerName())
+				&& executionContext.getMaxVm() > 0
+				&& executionContext.getMaxVm() <= executionContext.getGlobalVmNumber().get()
+				&& executionContext.isStrictMaxVm())
+			throw new CommandException( "The maximum number of VM created by the autonomic has been reached." );
+	}
+
+
+	/**
+	 * Updates an instance with context information.
+	 * @param executionContext
+	 * @param createdInstance
+	 */
+	public static void update( CommandExecutionContext executionContext, Instance createdInstance ) {
+
+		if( executionContext != null ) {
+			createdInstance.data.put( executionContext.getNewVmMarkerKey(), executionContext.getNewVmMarkerValue());
+			executionContext.getGlobalVmNumber().incrementAndGet();
+			executionContext.getAppVmNumber().incrementAndGet();
 		}
 	}
 }

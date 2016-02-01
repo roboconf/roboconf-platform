@@ -1,0 +1,6 @@
+rule "sample"
+when
+	alert
+then
+	scale
+end

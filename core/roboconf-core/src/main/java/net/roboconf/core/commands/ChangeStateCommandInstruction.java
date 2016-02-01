@@ -54,7 +54,7 @@ public class ChangeStateCommandInstruction extends AbstractCommandInstruction {
 	ChangeStateCommandInstruction( Context context, String instruction, int line ) {
 		super( context, instruction, line );
 
-		Pattern p = Pattern.compile( "change\\s+status\\s+of\\s+(/.*)\\s+to\\b(.*)", Pattern.CASE_INSENSITIVE );
+		Pattern p = Pattern.compile( PREFIX + "\\s+status\\s+of\\s+(/.*)\\s+to\\b(.*)", Pattern.CASE_INSENSITIVE );
 		Matcher m = p.matcher( instruction );
 		if( m.matches()) {
 			this.syntaxicallyCorrect = true;

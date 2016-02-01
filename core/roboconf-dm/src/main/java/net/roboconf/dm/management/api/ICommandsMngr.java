@@ -27,6 +27,7 @@ package net.roboconf.dm.management.api;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
@@ -86,9 +87,89 @@ public interface ICommandsMngr {
 
 	/**
 	 * Executes a command.
+	 * <p>
+	 * Equivalent to <code>execute( app, commandName, null )</code>
+	 * </p>
+	 *
 	 * @param app the associated application
 	 * @param commandName a command name
 	 * @throws CommandException if execution failed
 	 */
 	void execute( Application app, String commandName ) throws CommandException;
+
+
+	/**
+	 * Executes a command.
+	 * @param app the associated application
+	 * @param commandName a command name
+	 * @param executionContext an execution context to define some constraints on commands
+	 * @throws CommandException if execution failed
+	 */
+	void execute( Application app, String commandName, CommandExecutionContext executionContext ) throws CommandException;
+
+
+	/**
+	 * A context to set constraints on commands.
+	 * <p>
+	 * The primary purpose is related to the autonomic, but it could be resued
+	 * if necessary.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static final class CommandExecutionContext {
+
+		private final AtomicInteger globalVmNumber, appVmNumber;
+		private final int maxVm;
+		private final boolean strictMaxVm;
+		private final String newVmMarkerKey, newVmMarkerValue;
+
+		/**
+		 * Constructor.
+		 * @param currentVmNumber
+		 * @param maxVm
+		 * @param strictMaxVm
+		 * @param newVmMarkerKey
+		 * @param newVmMarkerValue
+		 */
+		public CommandExecutionContext(
+				AtomicInteger globalVmNumber,
+				AtomicInteger appVmNumber,
+				int maxVm,
+				boolean strictMaxVm,
+				String newVmMarkerKey,
+				String newVmMarkerValue ) {
+
+			this.maxVm = maxVm;
+			this.strictMaxVm = strictMaxVm;
+			this.newVmMarkerKey = newVmMarkerKey;
+			this.newVmMarkerValue = newVmMarkerValue;
+			this.globalVmNumber = globalVmNumber;
+			this.appVmNumber = appVmNumber;
+		}
+
+		public int getMaxVm() {
+			return maxVm;
+		}
+
+		public boolean isStrictMaxVm() {
+			return strictMaxVm;
+		}
+
+		public String getNewVmMarkerKey() {
+			return newVmMarkerKey;
+		}
+
+		public String getNewVmMarkerValue() {
+			return newVmMarkerValue;
+		}
+
+		public AtomicInteger getGlobalVmNumber() {
+			return globalVmNumber;
+		}
+
+		public AtomicInteger getAppVmNumber() {
+			return appVmNumber;
+		}
+	}
 }

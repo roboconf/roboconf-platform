@@ -36,7 +36,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.api.IRuleBasedEventHandler;
+import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.messages.Message;
@@ -61,7 +61,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 	private final Manager manager;
-	private final IRuleBasedEventHandler ruleBasedHandler;
+	private final IAutonomicMngr autonomicMngr;
 
 
 	/**
@@ -71,7 +71,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	public DmMessageProcessor( Manager manager ) {
 		super( "Roboconf DM - Message Processor" );
 		this.manager = manager;
-		this.ruleBasedHandler = manager.getRuleBasedHandler();
+		this.autonomicMngr = manager.autonomicMngr();
 	}
 
 
@@ -152,7 +152,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( scopedInstancePath );
 			sb.append( " (app = " );
 			sb.append( ma );
-			sb.append( ")." );
+			sb.append( ", inst = " );
+			sb.append( scopedInstancePath );
+			sb.append( "). The heart beat is dropped." );
 			this.logger.warning( sb.toString());
 
 		} else if( ! InstanceHelpers.isTarget( scopedInstance )) {
@@ -161,6 +163,8 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 			sb.append( scopedInstancePath );
 			sb.append( " (app = " );
 			sb.append( ma );
+			sb.append( ", inst = " );
+			sb.append( scopedInstancePath );
 			sb.append( "). The heart beat is dropped." );
 			this.logger.warning( sb.toString());
 
@@ -291,7 +295,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 
 		} else {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app.getName());
-			this.ruleBasedHandler.handleEvent( ma, message );
+			this.autonomicMngr.handleEvent( ma, message );
 		}
 	}
 }

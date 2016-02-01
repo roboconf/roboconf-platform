@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.monitoring.api.IMonitoringHandler;
+import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -102,7 +103,7 @@ public class MonitoringTask extends TimerTask {
 				continue;
 
 			File dir = InstanceHelpers.findInstanceDirectoryOnAgent( inst );
-			File measureFile = new File( dir, inst.getComponent().getName() + ".measures" );
+			File measureFile = new File( dir, inst.getComponent().getName() + Constants.FILE_EXT_MEASURES );
 			if( ! measureFile.exists())
 				continue;
 
@@ -121,7 +122,7 @@ public class MonitoringTask extends TimerTask {
 			File paramFile;
 			Properties params;
 			try {
-				paramFile = new File( dir, inst.getComponent().getName() + ".measures.properties" );
+				paramFile = new File( dir, inst.getComponent().getName() + Constants.FILE_EXT_MEASURES + ".properties" );
 				params = Utils.readPropertiesFile( paramFile );
 				this.logger.fine( "A file with measure parameters (properties) was found for instance '" + inst + "'." );
 

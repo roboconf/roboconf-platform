@@ -25,10 +25,25 @@
 
 package net.roboconf.target.openstack.internal;
 
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.API_URL;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.DELETE_ON_TERMINATION;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.FLOATING_IP_POOL;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_DELETE_OT_PREFIX;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_MOUNT_POINT_PREFIX;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_NAME_PREFIX;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_SIZE_GB_PREFIX;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_TYPE_PREFIX;
+
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
+import net.roboconf.target.api.TargetException;
 
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
@@ -40,15 +55,10 @@ import org.jclouds.openstack.nova.v2_0.extensions.VolumeApi;
 import org.jclouds.openstack.nova.v2_0.extensions.VolumeAttachmentApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateVolumeOptions;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
-
 /**
  * A machine configurator for Openstack.
  * @author Vincent Zurczak - Linagora
- * @author Amadou Diarra - UJF
+ * @author Amadou Diarra - Université Joseph Fourier
  */
 public class OpenstackMachineConfigurator implements MachineConfigurator {
 
@@ -59,7 +69,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	 * user names too, but this does not seem necessary at the moment.
 	 * </p>
 	 */
-	private static final ConcurrentHashMap<String, Object> URL_TO_LOCK = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<String,Object> URL_TO_LOCK = new ConcurrentHashMap<> ();
 
 	/**
 	 * The steps of a workflow.
@@ -76,35 +86,47 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	}
 
 	private final Instance scopedInstance;
-	private final String machineId;
+	private final String machineId, applicationName;
 	private final Map<String, String> targetProperties;
+
 	private final Logger logger = Logger.getLogger(getClass().getName());
-	private String volumeId = "";
+	private final Map<String,String> storageIdToVolumeId = new HashMap<> ();
+	private final Map<String,Boolean> volumeIdToAttached = new HashMap<> ();
+
 	private NovaApi novaApi;
 	private State state = State.WAITING_VM;
 
+
 	/**
 	 * Constructor.
-	 *
 	 * @param targetProperties
 	 * @param machineId
 	 */
-	public OpenstackMachineConfigurator(Map<String, String> targetProperties, String machineId, Instance scopedInstance) {
+	public OpenstackMachineConfigurator(
+			Map<String, String> targetProperties,
+			String machineId,
+			String applicationName,
+			Instance scopedInstance ) {
+
 		this.machineId = machineId;
+		this.applicationName = applicationName;
 		this.targetProperties = targetProperties;
 		this.scopedInstance = scopedInstance;
 	}
+
 
 	@Override
 	public Instance getScopedInstance() {
 		return this.scopedInstance;
 	}
 
+
 	@Override
 	public void close() throws IOException {
 		if( this.novaApi != null)
 			this.novaApi.close();
 	}
+
 
 	@Override
 	public boolean configure() throws TargetException {
@@ -121,21 +143,21 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 				this.state = State.CREATE_VOLUME;
 
 		if( this.state == State.CREATE_VOLUME ) {
-			if( createBlockStorage())
+			if( createVolumes())
 				this.state = State.ATTACH_VOLUME;
 		}
 
 		if( this.state == State.ATTACH_VOLUME ) {
-			if( attachVolume())
+			if( attachVolumes())
 				this.state = State.COMPLETE;
 		}
 
 		return this.state == State.COMPLETE;
 	}
 
+
 	/**
 	 * Checks whether a VM is created.
-	 *
 	 * @return true if it is online, false otherwise
 	 */
 	private boolean checkVmIsOnline() {
@@ -145,9 +167,9 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		return Status.ACTIVE.equals(server.getStatus());
 	}
 
+
 	/**
 	 * Associates a floating IP to the VM (if necessary and if possible).
-	 *
 	 * @return true if this operation successfully completed, false otherwise
 	 */
 	private boolean associateFloatingIp() {
@@ -155,14 +177,14 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		// Associating a floating IP requires a client-side synchronization
 		// since Openstack does not provide it. Indeed, it can associate a floating IP to a new
 		// server, even if this address was already associated with another one.
-		String floatingIpPool = this.targetProperties.get(OpenstackIaasHandler.FLOATING_IP_POOL);
+		String floatingIpPool = this.targetProperties.get( FLOATING_IP_POOL );
 		if (Utils.isEmptyOrWhitespaces(floatingIpPool))
 			return true;
 
 		// Protected section to prevent using a same IP for several machines.
 		// An action is already in progress for this URL?
 		// Then return immediately, we will try in the next scheduled run.
-		String url = this.targetProperties.get(OpenstackIaasHandler.API_URL);
+		String url = this.targetProperties.get( API_URL );
 		if (URL_TO_LOCK.putIfAbsent(url, new Object()) != null)
 			return false;
 
@@ -195,45 +217,123 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		return done;
 	}
 
+
 	/**
-	 * Creates a block storage in Openstack infrastructure.
+	 * Creates block storage volumes in Openstack infrastructure.
+	 * <p>
+	 * Volume creation goes in a single row. For a given VM, we should enter this method
+	 * only once.
+	 * </p>
+	 *
 	 * @throws TargetException
 	 */
-	public boolean createBlockStorage() throws TargetException {
+	public boolean createVolumes() throws TargetException {
 
-		String useBlockStorage = Utils.getValue(this.targetProperties, OpenstackIaasHandler.USE_BLOCK_STORAGE, OpenstackIaasHandler.DEFAULT_USE_BLOCK_STORAGE);
-		boolean isCreated = true;
-		if( Boolean.parseBoolean(useBlockStorage)) {
-			String vol = Utils.getValue(this.targetProperties, OpenstackIaasHandler.VOLUME_SIZE_GB, OpenstackIaasHandler.DEFAULT_VOLUME_SIZE_GB);
-			String name = Utils.getValue(this.targetProperties, OpenstackIaasHandler.VOLUME_NAME, OpenstackIaasHandler.DEFAULT_VOLUME_NAME);
-			int vsize = Integer.parseInt(vol);
+		for( String storageId : OpenstackIaasHandler.findStorageIds( this.targetProperties )) {
+
+			// Prepare the parameters
+			String name = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_NAME_PREFIX );
+			name = OpenstackIaasHandler.filterStorageVolumeName( name, this.applicationName, this.scopedInstance.getName());
+
 			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
 			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone(anyZoneName).get();
-			this.volumeId = volumeApi.create(vsize, CreateVolumeOptions.Builder.name(name)).getId();
-			isCreated = !Utils.isEmptyOrWhitespaces( this.volumeId );
-			if( !isCreated )
-				throw new TargetException( "No volume created" );
+
+			// If the volume should not volatile (i.e. not deleted on termination), we try to reuse it, if it exists.
+			String deleteOnT = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_DELETE_OT_PREFIX );
+			boolean deleteOnTermination = Boolean.parseBoolean( deleteOnT );
+			String volumeId = null;
+			if( ! deleteOnTermination ) {
+				for( Volume vol : volumeApi.list()) {
+
+					if( name.equals( vol.getName())) {
+						this.logger.info( "Volume " + name + " already exists and is not volatile. It will be reused." );
+						volumeId = vol.getId();
+						break;
+					}
+				}
+			}
+
+			// Otherwise, create it.
+			if( volumeId == null ) {
+
+				String volumeType = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_TYPE_PREFIX );
+				String volumeSize = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_SIZE_GB_PREFIX );
+				int vsize = Integer.parseInt( volumeSize );
+
+				CreateVolumeOptions options = CreateVolumeOptions.Builder.name( name );
+				if( ! Utils.isEmptyOrWhitespaces( volumeType ))
+					options = options.volumeType( volumeType );
+
+				if( deleteOnTermination ) {
+					Map<String,String> metadata = new HashMap<>( 1 );
+					metadata.put( DELETE_ON_TERMINATION, "true" );
+					options = options.metadata( metadata );
+				}
+
+				Volume volume = volumeApi.create( vsize, options );
+				volumeId = volume.getId();
+			}
+
+			if( Utils.isEmptyOrWhitespaces( volumeId ))
+				throw new TargetException( "Volume " + name + " was not found and could not be created." );
+
+			this.storageIdToVolumeId.put( storageId, volumeId );
 		}
-		return isCreated;
+
+		return true;
 	}
 
+
 	/**
-	 * Attach the created volume to a device.
+	 * Attaches the created volume to a device.
+	 * <p>
+	 * Attachment can be iterative, as not all the volumes may be available
+	 * at the same moment.
+	 * </p>
 	 * */
-	public boolean attachVolume() {
-		boolean attach = true;
-		if( !Utils.isEmptyOrWhitespaces(this.volumeId)) {
+	public boolean attachVolumes() {
+
+		boolean allAttached = true;
+		for( Map.Entry<String,String> entry : this.storageIdToVolumeId.entrySet()) {
+
+			String volumeId = entry.getValue();
+			String storageId = entry.getKey();
+
 			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
 			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone(anyZoneName).get();
-			Volume createdVolume = volumeApi.get(this.volumeId);
-			attach = false;
+			Volume createdVolume = volumeApi.get( volumeId );
+
+			// Already attached? Skip...
+			Boolean attached = this.volumeIdToAttached.get( volumeId );
+			if( attached != null && attached )
+				continue;
+
+			// Otherwise, try to attach it, if possible.
 			if( createdVolume.getStatus() == Volume.Status.AVAILABLE ) {
-				String device = Utils.getValue(this.targetProperties, OpenstackIaasHandler.VOLUME_MOUNT_POINT, OpenstackIaasHandler.DEFAULT_VOLUME_MOUNT_POINT);
+				String device = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_MOUNT_POINT_PREFIX );
 				VolumeAttachmentApi volumeAttachmentApi = this.novaApi.getVolumeAttachmentExtensionForZone(anyZoneName).get();
-				volumeAttachmentApi.attachVolumeToServerAsDevice(this.volumeId, this.machineId, device);
-				attach = true;
+				volumeAttachmentApi.attachVolumeToServerAsDevice( volumeId, this.machineId, device );
+
+				// Notice: there is no way, unlike in AWS, to specify a volume should be deleted when the
+				// server terminates. This option is only available with BlockDeviceMapping, which means
+				// booting a server from a volume (which is not the same than attaching a volume to a server).
+				// See https://review.openstack.org/#/c/67067/
+
+				// BlockDeviceMapping would rather be used when creating the server with Nova.
+				// And it is a real mess to understand.
+
+				// FIXME: how about when attachment fails (e.g. if the volume is already attached to another VM)?
+				this.volumeIdToAttached.put( volumeId, Boolean.TRUE );
+				this.logger.info( "Volume " + volumeId + " was successfully attached to " + this.scopedInstance.getName());
+			}
+
+			// Not available, we will attach it later.
+			else {
+				this.logger.fine( "Volume " + volumeId + " is not yet available to be attached to " + this.scopedInstance.getName());
+				allAttached = false;
 			}
 		}
-		return attach;
+
+		return allAttached;
 	}
 }

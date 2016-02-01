@@ -106,9 +106,24 @@ public final class Utils {
 		if( separator == null || separator.isEmpty())
 			throw new IllegalArgumentException( "The separator cannot be null or the empty string." );
 
+		return splitNicelyWithPattern( toSplit, Pattern.quote( separator ));
+	}
+
+
+	/**
+	 * Splits a string and formats the result.
+	 * @param toSplit the string to split (can be null)
+	 * @param patternSeparator the separator pattern (cannot be null or the empty string)
+	 * @return a list of items (never null), with every item being trimmed
+	 */
+	public static List<String> splitNicelyWithPattern( String toSplit, String patternSeparator ) {
+
+		if( patternSeparator == null || patternSeparator.isEmpty())
+			throw new IllegalArgumentException( "The separator cannot be null or the empty string." );
+
 		List<String> result = new ArrayList<String> ();
 		if( ! Utils.isEmptyOrWhitespaces( toSplit )) {
-			for( String s : toSplit.split( Pattern.quote( separator )))
+			for( String s : toSplit.split( patternSeparator ))
 				result.add( s .trim());
 		}
 

@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.ErrorCode.ErrorLevel;
@@ -58,6 +57,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -758,8 +758,11 @@ public class RuntimeModelIoTest {
 		File newDir = this.folder.newFolder();
 		Utils.copyDirectory( dir, newDir );
 
-		File commandFile = new File( newDir, Constants.PROJECT_DIR_COMMANDS + "/scale.command" );
+		File commandFile = new File( newDir, Constants.PROJECT_DIR_COMMANDS + "/scale.commands" );
 		Assert.assertTrue( commandFile.isFile());
+
+		File commandFileCopy = new File( newDir, Constants.PROJECT_DIR_COMMANDS + "/scale.invalid-extension" );
+		Utils.copyStream( commandFile, commandFileCopy );
 		Utils.writeStringInto( "this is an invalid command", commandFile );
 
 		// Load it and verify it contains errors
@@ -771,8 +774,44 @@ public class RuntimeModelIoTest {
 				criticalErrors.add( error );
 		}
 
-		Assert.assertEquals( 2, criticalErrors.size());
+		Assert.assertEquals( 3, criticalErrors.size());
 		Assert.assertEquals( ErrorCode.CMD_NO_INSTRUCTION, criticalErrors.get( 0 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, criticalErrors.get( 1 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_INVALID_COMMAND_EXT, criticalErrors.get( 2 ).getErrorCode());
+	}
+
+
+	@Test
+	public void testParsingWithInvalidAutonomicRules() throws Exception {
+
+		// Copy the application and update a command file
+		File dir = TestUtils.findApplicationDirectory( "lamp" );
+		Assert.assertTrue( dir.isDirectory());
+
+		File newDir = this.folder.newFolder();
+		Utils.copyDirectory( dir, newDir );
+
+		File ruleFile = new File( newDir, Constants.PROJECT_DIR_RULES_AUTONOMIC + "/sample.drl" );
+		Assert.assertTrue( ruleFile.isFile());
+
+		File ruleFileCopy = new File( newDir, Constants.PROJECT_DIR_RULES_AUTONOMIC + "/sample.drl-invalid-extension" );
+		Utils.copyStream( ruleFile, ruleFileCopy );
+
+		String s = Utils.readFileContent( ruleFile );
+		s = s.replace( "scale", "inexisting-command" );
+		Utils.writeStringInto( s, ruleFile );
+
+		// Load it and verify it contains errors
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( newDir );
+		List<RoboconfError> criticalErrors = new ArrayList<> ();
+
+		for( RoboconfError error : alr.getLoadErrors()) {
+			if( error.getErrorCode().getLevel() == ErrorLevel.SEVERE )
+				criticalErrors.add( error );
+		}
+
+		Assert.assertEquals( 2, criticalErrors.size());
+		Assert.assertEquals( ErrorCode.RULE_UNKNOWN_COMMAND, criticalErrors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_INVALID_RULE_EXT, criticalErrors.get( 1 ).getErrorCode());
 	}
 }

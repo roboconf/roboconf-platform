@@ -49,6 +49,11 @@ public interface AgentMessagingInterface {
 	Instance getScopedInstance();
 
 	/**
+	 * @return the scoped instance's path (as specified in the agent's configuration)
+	 */
+	String getScopedInstancePath();
+
+	/**
 	 * Forces the sending of a heart beat to the DM.
 	 */
 	void forceHeartbeatSending();

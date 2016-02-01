@@ -36,6 +36,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.internal.api.impl.ApplicationTemplateMngrImpl;
+import net.roboconf.dm.internal.api.impl.AutonomicMngrImpl;
 import net.roboconf.dm.internal.api.impl.CommandsMngrImpl;
 import net.roboconf.dm.internal.api.impl.ConfigurationMngrImpl;
 import net.roboconf.dm.internal.api.impl.DebugMngrImpl;
@@ -46,13 +47,13 @@ import net.roboconf.dm.internal.api.impl.PreferencesMngrImpl;
 import net.roboconf.dm.internal.api.impl.RandomMngrImpl;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.api.impl.TargetsMngrImpl;
-import net.roboconf.dm.internal.autonomic.RuleBasedEventHandler;
 import net.roboconf.dm.internal.environment.messaging.DmMessageProcessor;
 import net.roboconf.dm.internal.environment.messaging.RCDm;
 import net.roboconf.dm.internal.tasks.CheckerHeartbeatsTask;
 import net.roboconf.dm.internal.tasks.CheckerMessagesTask;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IApplicationTemplateMngr;
+import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.dm.management.api.ICommandsMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IDebugMngr;
@@ -60,7 +61,6 @@ import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.IPreferencesMngr;
-import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.IDmListener;
@@ -98,13 +98,9 @@ public class Manager {
 	// Injected by iPojo or Admin Config
 	protected String messagingType;
 
-	// FIXME: move it into a new API
-	protected int autonomicMaxRoots = -1;
-
 	// Internal fields
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected Timer timer;
-	protected String oldMessagingType;
 
 	private RCDm messagingClient;
 
@@ -113,19 +109,17 @@ public class Manager {
 	private final MessagingMngrImpl messagingMngr;
 	private final ApplicationMngrImpl applicationMngr;
 	private final InstancesMngrImpl instancesMngr;
+
 	private final IRandomMngr randomMngr;
 	private final IPreferencesMngr preferencesMngr;
-
 	private final IConfigurationMngr configurationMngr;
 	private final IApplicationTemplateMngr applicationTemplateMngr;
 	private final ITargetsMngr targetsMngr;
 	private final IDebugMngr debugMngr;
 	private final ICommandsMngr commandsMngr;
+	private final IAutonomicMngr autonomicMngr;
 
 	private final TargetHandlerResolverImpl defaultTargetHandlerResolver;
-
-	// Dirty hack
-	private final IRuleBasedEventHandler ruleBasedHandler;
 
 
 	/**
@@ -138,8 +132,8 @@ public class Manager {
 		// We do not want to mix N frameworks.
 		this.notificationMngr = new NotificationMngrImpl();
 		this.configurationMngr = new ConfigurationMngrImpl();
-		this.randomMngr = new RandomMngrImpl();
-		this.preferencesMngr = new PreferencesMngrImpl();
+		this.preferencesMngr = new PreferencesMngrImpl( this.configurationMngr );
+		this.randomMngr = new RandomMngrImpl( this.preferencesMngr );
 
 		this.messagingMngr = new MessagingMngrImpl();
 		this.defaultTargetHandlerResolver = new TargetHandlerResolverImpl();
@@ -147,16 +141,19 @@ public class Manager {
 		this.debugMngr = new DebugMngrImpl( this.messagingMngr, this.notificationMngr );
 		this.commandsMngr = new CommandsMngrImpl( this );
 
-		this.applicationMngr = new ApplicationMngrImpl( this.notificationMngr, this.configurationMngr, this.targetsMngr, this.messagingMngr, this.randomMngr );
+		this.autonomicMngr = new AutonomicMngrImpl( this.commandsMngr, this.preferencesMngr );
+		this.applicationMngr = new ApplicationMngrImpl(
+				this.notificationMngr, this.configurationMngr,
+				this.targetsMngr, this.messagingMngr,
+				this.randomMngr, this.autonomicMngr );
+
 		this.applicationTemplateMngr = new ApplicationTemplateMngrImpl( this.notificationMngr, this.targetsMngr, this.applicationMngr, this.configurationMngr );
 		this.applicationMngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 
 		this.instancesMngr = new InstancesMngrImpl( this.messagingMngr, this.notificationMngr, this.targetsMngr, this.randomMngr );
 		this.instancesMngr.setTargetHandlerResolver( this.defaultTargetHandlerResolver );
 
-		// FIXME: to update once we have the commands API
-		this.ruleBasedHandler = new RuleBasedEventHandler( this );
-		this.instancesMngr.setRuleBasedHandler( this.ruleBasedHandler );
+		this.instancesMngr.setRuleBasedHandler( this.autonomicMngr );
 	}
 
 
@@ -171,6 +168,9 @@ public class Manager {
 	 */
 	public void start() {
 		this.logger.info( "The DM is about to be launched." );
+
+		// Load the preferences
+		this.preferencesMngr.loadProperties();
 
 		// Start the messaging
 		DmMessageProcessor messageProcessor = new DmMessageProcessor( this );
@@ -309,23 +309,15 @@ public class Manager {
 
 		// Properties are injected on every modification.
 		// so, we just want to track changes.
+
+		// We only want to reconfigure the messaging client
+		// when the messaging type changes.
 		if( ! Objects.equals( this.messagingType, messagingType )) {
-			this.oldMessagingType = this.messagingType;
 			this.messagingType = messagingType;
 
 			// Explicitly require a reconfiguration.
-			// We don't let iPojo deal with it anymore since there may be parameters in the
-			// DM that are not related to the messaging. In fact, most of the messaging configuration
-			// was moved in messaging bundles. So, we only want to reconfigure the messaging client
-			// when the messaging type changes.
 			reconfigure();
 		}
-	}
-
-
-	public void setAutonomicMaxRoots( int autonomicMaxRoots ) {
-		this.logger.info( "The autonomic's maximum roots number is set to " + autonomicMaxRoots + "." );
-		this.autonomicMaxRoots = autonomicMaxRoots;
 	}
 
 
@@ -380,19 +372,7 @@ public class Manager {
 		return this.preferencesMngr;
 	}
 
-	/**
-	 * FIXME: to remove once we have the autonomic configurator API.
-	 * @return the autonomicMaxRoots
-	 */
-	public int getAutonomicMaxRoots() {
-		return this.autonomicMaxRoots;
-	}
-
-	/**
-	 * FIXME: to update once we have the commands API.
-	 * @return the ruleBasedHandler
-	 */
-	public IRuleBasedEventHandler getRuleBasedHandler() {
-		return this.ruleBasedHandler;
+	public IAutonomicMngr autonomicMngr() {
+		return this.autonomicMngr;
 	}
 }

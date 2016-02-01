@@ -379,6 +379,7 @@ public class Agent implements AgentMessagingInterface {
 	/**
 	 * @return the scoped instance's path
 	 */
+	@Override
 	public String getScopedInstancePath() {
 		return this.scopedInstancePath;
 	}

@@ -33,12 +33,14 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
+import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.ops4j.pax.exam.ExamSystem;
 import org.ops4j.pax.exam.Option;
@@ -53,6 +55,8 @@ public class KarafClient_DmTest extends DmTest {
 
 	@Test
 	public void run() throws Exception {
+
+		Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
 
 		// Prepare to run an agent distribution
 		Option[] options = super.config();

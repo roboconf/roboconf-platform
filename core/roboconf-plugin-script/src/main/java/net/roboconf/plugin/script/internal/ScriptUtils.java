@@ -54,51 +54,6 @@ public final class ScriptUtils {
 
 
 	/**
-	 * Cleans an instance path.
-	 * <p>
-	 * In fact, this method creates a string from an instance path
-	 * and replaces all the non-alphanumeric characters by an underscore.
-	 * This can be used to create proper IDs to use in scripts (e.g. to name
-	 * a Docker container - see #506).
-	 * </p>
-	 *
-	 * @param instancePath a non-null instance path
-	 * @return a non-null string
-	 */
-	public static String cleanInstancePath( String instancePath ) {
-		return instancePath.replaceFirst( "^/", "" ).replaceAll( "[\\W]", "_" );
-	}
-
-
-	/**
-	 * Reverses and cleans an instance path.
-	 * <p>
-	 * In fact, this method creates a string from an instance path
-	 * that is reverted (the root becomes the leaf and the lead the root).
-	 * Then, it cleans it with {@link #cleanInstancePath(String)}.
-	 * This can be used to create proper (and readable) IDs to use in scripts (e.g. to name
-	 * a Docker container - see #506).
-	 * </p>
-	 *
-	 * @param instancePath a non-null instance path
-	 * @return a non-null string
-	 */
-	public static String cleanReversedInstancePath( String instancePath ) {
-
-		StringBuilder sb = new StringBuilder();
-		for( String s : instancePath.split( "/" )) {
-			if( Utils.isEmptyOrWhitespaces( s ))
-				continue;
-
-			sb.insert( 0, s );
-			sb.insert( 0, "/" );
-		}
-
-		return cleanInstancePath( sb.toString());
-	}
-
-
-	/**
      * Formats imported variables to be used in a script as environment variables.
      * @param instance the instance whose exported variables must be formatted
      * @return a non-null map

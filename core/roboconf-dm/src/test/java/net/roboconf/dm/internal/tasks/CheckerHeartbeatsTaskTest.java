@@ -34,6 +34,7 @@ import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
@@ -63,8 +64,13 @@ public class CheckerHeartbeatsTaskTest {
 		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		IAutonomicMngr autonomicMngr = Mockito.mock( IAutonomicMngr.class );
 
-		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, messagingMngr, randomMngr );
+		this.appManager = new ApplicationMngrImpl(
+				notificationMngr, configurationMngr,
+				targetsMngr, messagingMngr,
+				randomMngr, autonomicMngr );
+
 		this.nameToManagedApplication = TestUtils.getInternalField( this.appManager, "nameToManagedApplication", Map.class );
 	}
 

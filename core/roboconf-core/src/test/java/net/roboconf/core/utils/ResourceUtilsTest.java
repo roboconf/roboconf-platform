@@ -28,11 +28,11 @@ package net.roboconf.core.utils;
 import java.io.File;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -142,7 +142,7 @@ public class ResourceUtilsTest {
 		Assert.assertEquals( 1, map.size());
 
 		// With a properties file for measures
-		File autonomicDir = new File( appDir, Constants.PROJECT_DIR_AUTONOMIC );
+		File autonomicDir = new File( appDir, Constants.PROJECT_DIR_PROBES );
 		Assert.assertTrue( autonomicDir.mkdir());
 
 		File propertiesFile = new File( autonomicDir, componentName + Constants.FILE_EXT_MEASURES + ".properties" );

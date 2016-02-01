@@ -42,10 +42,10 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
-import net.roboconf.dm.management.api.IRuleBasedEventHandler;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.EventType;
@@ -57,6 +57,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -75,11 +76,9 @@ public class InstancesMngrImpl implements IInstancesMngr {
 	private final INotificationMngr notificationMngr;
 	private final ITargetsMngr targetsMngr;
 	private final IRandomMngr randomMngr;
+	private IAutonomicMngr autonomicMngr;
 
 	private ITargetHandlerResolver targetHandlerResolver;
-
-	// FIXME: this is a dirty hack
-	private IRuleBasedEventHandler ruleBasedHandler;
 
 
 	/**
@@ -111,11 +110,10 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 
 	/**
-	 * FIXME: dirty hack.
-	 * @param ruleBasedHandler the ruleBasedHandler to set
+	 * @param autonomicMngr the autonomicMngr to set
 	 */
-	public void setRuleBasedHandler( IRuleBasedEventHandler ruleBasedHandler ) {
-		this.ruleBasedHandler = ruleBasedHandler;
+	public void setRuleBasedHandler( IAutonomicMngr autonomicMngr ) {
+		this.autonomicMngr = autonomicMngr;
 	}
 
 
@@ -168,7 +166,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 		// Remove it from the model
 		if( instance.getParent() == null ) {
 			ma.getApplication().getRootInstances().remove( instance );
-			this.ruleBasedHandler.notifyVmWasDeletedByHand( instance );
+			this.autonomicMngr.notifyVmWasDeletedByHand( instance );
 
 		} else {
 			instance.getParent().getChildren().remove( instance );
@@ -388,14 +386,23 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 		InstanceStatus initialStatus = scopedInstance.getStatus();
 		try {
+			// Send the model
 			scopedInstance.setStatus( InstanceStatus.DEPLOYING );
-			MsgCmdSetScopedInstance msg = new MsgCmdSetScopedInstance(
+			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
 					ma.getApplication().getExternalExports(),
 					ma.getApplication().applicationBindings );
 
-			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msg );
+			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
 
+			// Send the probe files (if any)
+			Map<String,byte[]> probeResources = ResourceUtils.storeInstanceProbeResources( ma.getDirectory(), scopedInstance );
+			if( ! probeResources.isEmpty()) {
+				MsgCmdUpdateProbeConfiguration msgProbes = new MsgCmdUpdateProbeConfiguration( scopedInstance, probeResources );
+				this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgProbes );
+			}
+
+			// Prepare the creation
 			Map<String,String> targetProperties = this.targetsMngr.lockAndGetTarget( ma.getApplication(), scopedInstance );
 			targetProperties.putAll( scopedInstance.data );
 

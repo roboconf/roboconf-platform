@@ -36,6 +36,7 @@ import net.roboconf.agent.monitoring.api.IMonitoringHandler;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
 import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler;
+import net.roboconf.core.Constants;
 
 /**
  * The agent monitoring service.
@@ -75,7 +76,7 @@ public class AgentMonitoring {
 
 			// FIXME: not sure "scheduleAtFixedRate" is the right choice.
 			// What happens when one "polling raw" takes more than 10 seconds?
-			this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface, this.handlers ), 0, 10000 );
+			this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface, this.handlers ), 0, Constants.PROBES_POLLING_PERIOD );
 		}
 	}
 
