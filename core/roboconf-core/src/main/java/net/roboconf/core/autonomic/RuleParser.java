@@ -42,7 +42,7 @@ import net.roboconf.core.utils.Utils;
 public class RuleParser {
 
 	private static final Pattern RULE_PATTERN = Pattern.compile( "(?is)^\\s*rule\\s+\"([^\"]*)\"\\s+(.*)when\\s+(.+)\\s+then\\s+(.+)\\s+end\\s*$" );
-	private static final Pattern PROBATION_IS_PATTERN = Pattern.compile( "(?i)\\bprobation is\\s+(\\d+)s?" );
+	private static final Pattern SLEEP_PERIOD_PATTERN = Pattern.compile( "(?i)\\bsleep period is\\s+(\\d+)s?" );
 	private static final Pattern TIME_WINDOW_PATTERN = Pattern.compile( "(?i)\\btime window is\\s+(\\d+)s?" );
 
 	private static final String SINGLE_COMMENT_PATTERN = "//.*\r?\n";
@@ -87,7 +87,7 @@ public class RuleParser {
 				if(( m = TIME_WINDOW_PATTERN.matcher( properties )).find())
 					this.rule.setTimingWindow( Integer.parseInt( m.group( 1 )));
 
-				if(( m = PROBATION_IS_PATTERN.matcher( properties )).find())
+				if(( m = SLEEP_PERIOD_PATTERN.matcher( properties )).find())
 					this.rule.setDelayBetweenSucceedingInvocations( Integer.parseInt( m.group( 1 )));
 
 				// Validate the rule

@@ -26,9 +26,9 @@ addons:
     - wget
 
 # Configure RabbitMQ with new users.
-before_script:
-  - echo rabbitmq | sudo -u rabbitmq -c "rabbitmqctl add_user roboconf roboconf"
-#  - rabbitmqctl -n rabbit@server set_permissions roboconf ".*" ".*" ".*"
+#before_script:
+#  - rabbitmqctl add_user roboconf roboconf
+#  - rabbitmqctl set_permissions roboconf ".*" ".*" ".*"
 
 # For debug only
 #  - puppet --version

@@ -1,6 +1,6 @@
 RULE "test"
 
-Probation is 8s
+Sleep period is 8s
 Time window is 60	// The 's' is optional
 
 WHEN

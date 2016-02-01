@@ -23,5 +23,5 @@
 	</component>
 	
 	<!-- And the instance... -->
-	<instance component="roboconf-dm-templating" name="Roboconf DM's Templating" />
+	<instance component="roboconf-dm-templating" name="Roboconf - DM's Templating" />
 </ipojo>

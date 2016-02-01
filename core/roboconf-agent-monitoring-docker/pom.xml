@@ -27,8 +27,8 @@
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
-	<artifactId>roboconf-agent-monitoring</artifactId>
-	<name>Roboconf :: Agent :: Monitoring</name>
+	<artifactId>roboconf-agent-monitoring-docker</artifactId>
+	<name>Roboconf :: Agent :: Monitoring for Docker containers</name>
 	<packaging>bundle</packaging>
 	
 	<dependencies>
@@ -52,25 +52,10 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-agent</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
 	
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-core</artifactId>
-  			<version>${project.version}</version>
-			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
 

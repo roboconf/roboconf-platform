@@ -26,5 +26,5 @@
 	</component>
 	
 	<!-- And the instance... -->
-	<instance component="roboconf-dm" name="Roboconf DM" />
+	<instance component="roboconf-dm" name="Roboconf - DM" />
 </ipojo>

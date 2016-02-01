@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<component 
+			classname="net.roboconf.agent.monitoring.docker.internal.DockerMonitoringHandler" 
+			name="roboconf-agent-monitoring-docker">
+
+		<provides />
+	</component>
+	
+	<instance name="Roboconf - Agent Monitoring for Docker" component="roboconf-agent-monitoring-docker" />
+</ipojo>

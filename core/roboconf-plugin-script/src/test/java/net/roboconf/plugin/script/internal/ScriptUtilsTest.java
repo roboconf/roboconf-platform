@@ -27,9 +27,9 @@ package net.roboconf.plugin.script.internal;
 
 import java.io.File;
 
-import org.junit.Assert;
 import net.roboconf.plugin.script.internal.ScriptUtils.ActionFileFilter;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -89,23 +89,5 @@ public class ScriptUtilsTest {
 
 		files = dir.listFiles( new ActionFileFilter( "whatever-1" ));
 		Assert.assertEquals( 1, files.length );
-	}
-
-
-	@Test
-	public void testCleanInstancePath() {
-
-		Assert.assertEquals( "", ScriptUtils.cleanInstancePath( "" ));
-		Assert.assertEquals( "root", ScriptUtils.cleanInstancePath( "/root" ));
-		Assert.assertEquals( "root_web_server_app_1", ScriptUtils.cleanInstancePath( "/root/web server/app-1" ));
-	}
-
-
-	@Test
-	public void testCleanReversedInstancePath() {
-
-		Assert.assertEquals( "", ScriptUtils.cleanReversedInstancePath( "" ));
-		Assert.assertEquals( "root", ScriptUtils.cleanReversedInstancePath( "/root" ));
-		Assert.assertEquals( "app_1_web_server_root", ScriptUtils.cleanReversedInstancePath( "/root/web server/app-1" ));
 	}
 }

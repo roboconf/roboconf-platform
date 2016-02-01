@@ -18,5 +18,5 @@
 	</component>
 	
 	<!-- And the instance... -->
-	<instance component="roboconf-messaging-client-factory-http" name="Factory for Roboconf's HTTP Messaging Clients" />
+	<instance component="roboconf-messaging-client-factory-http" name="Roboconf Messaging - Factory for HTTP" />
 </ipojo>

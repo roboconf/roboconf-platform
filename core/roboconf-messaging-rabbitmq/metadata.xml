@@ -17,5 +17,5 @@
 	</component>
 	
 	<!-- And the instance... -->
-	<instance component="roboconf-messaging-client-factory-rabbitmq" name="Factory for Roboconf's RabbitMQ Messaging Clients" />
+	<instance component="roboconf-messaging-client-factory-rabbitmq" name="Roboconf Messaging - Factory for RabbitMQ" />
 </ipojo>
