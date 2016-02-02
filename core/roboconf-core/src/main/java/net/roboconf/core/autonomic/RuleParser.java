@@ -46,6 +46,7 @@ public class RuleParser {
 	private static final Pattern TIME_WINDOW_PATTERN = Pattern.compile( "(?i)\\btime window is\\s+(\\d+)s?" );
 
 	private static final String SINGLE_COMMENT_PATTERN = "//.*\r?\n";
+	private static final String SINGLE_SHARP_COMMENT_PATTERN = "#.*\r?\n";
 	private static final String MULTILINE_COMMENT_PATTERN =  "(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)";
 
 	private final List<ParsingError> parsingErrors = new ArrayList<> ();
@@ -63,6 +64,7 @@ public class RuleParser {
 			String s = Utils.readFileContent( ruleFile );
 			s = s.replaceAll( MULTILINE_COMMENT_PATTERN, "" );
 			s = s.replaceAll( SINGLE_COMMENT_PATTERN, "" );
+			s = s.replaceAll( SINGLE_SHARP_COMMENT_PATTERN, "" );
 			s = s.trim();
 
 			Matcher m = RULE_PATTERN.matcher( s );

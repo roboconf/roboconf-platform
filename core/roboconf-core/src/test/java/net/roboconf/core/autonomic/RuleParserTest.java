@@ -96,9 +96,30 @@ public class RuleParserTest {
 
 
 	@Test
-	public void testRuleFileWithComments() throws Exception {
+	public void testRuleFileWithComments_1() throws Exception {
 
 		File ruleFile = TestUtils.findTestFile( "/rules.autonomic/rule-with-comments.drl" );
+		RuleParser parser = new RuleParser( ruleFile );
+
+		Assert.assertNotNull( parser.getRule());
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+
+		Assert.assertEquals( "event-1", parser.getRule().getEventName());
+		Assert.assertEquals( "test", parser.getRule().getRuleName());
+		Assert.assertEquals( 0L, parser.getRule().getDelayBetweenSucceedingInvocations());
+		Assert.assertEquals( -1, parser.getRule().getTimingWindow());
+		Assert.assertEquals( 4, parser.getRule().getCommandsToInvoke().size());
+		Assert.assertEquals( "cmd1" , parser.getRule().getCommandsToInvoke().get( 0 ));
+		Assert.assertEquals( "cmd2" , parser.getRule().getCommandsToInvoke().get( 1 ));
+		Assert.assertEquals( "cmd3" , parser.getRule().getCommandsToInvoke().get( 2 ));
+		Assert.assertEquals( "cmd4" , parser.getRule().getCommandsToInvoke().get( 3 ));
+	}
+
+
+	@Test
+	public void testRuleFileWithComments_2() throws Exception {
+
+		File ruleFile = TestUtils.findTestFile( "/rules.autonomic/rule-with-comments-2.drl" );
 		RuleParser parser = new RuleParser( ruleFile );
 
 		Assert.assertNotNull( parser.getRule());
