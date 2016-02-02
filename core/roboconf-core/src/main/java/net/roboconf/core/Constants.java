@@ -142,5 +142,5 @@ public interface Constants {
 	/**
 	 * The default polling period for probes.
 	 */
-	Long PROBES_POLLING_PERIOD = 10000L;
+	Long PROBES_POLLING_PERIOD = 20000L;
 }

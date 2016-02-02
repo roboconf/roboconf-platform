@@ -59,7 +59,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 	protected long delay = DEFAULT_DELAY;
 
-	private final ScheduledThreadPoolExecutor timer = new ScheduledThreadPoolExecutor( 1 );
+	private ScheduledThreadPoolExecutor timer;
 	private final Map<String,MachineConfigurator> machineIdToConfigurators = new ConcurrentHashMap<> ();
 	private final CancelledMachines cancelledMachineIds = new CancelledMachines();
 
@@ -76,7 +76,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 */
 	public void start() {
 
-		// FIXME: should we create a new timer on every start?
+		this.timer = new ScheduledThreadPoolExecutor( 1 );
 		this.timer.scheduleWithFixedDelay(
 				new CheckingRunnable( this.machineIdToConfigurators, this.cancelledMachineIds ),
 				0, this.delay, TimeUnit.MILLISECONDS );
@@ -91,6 +91,7 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 	 */
 	public void stop() {
 		this.timer.shutdownNow();
+		this.timer = null;
 	}
 
 

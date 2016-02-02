@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Properties;
 
 import net.roboconf.agent.monitoring.api.IMonitoringHandler;
-import net.roboconf.agent.monitoring.internal.MonitoringTask.MonitoringHandlerRun;
+import net.roboconf.agent.monitoring.internal.MonitoringRunnable.MonitoringHandlerRun;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
 import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler;
@@ -57,7 +57,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class MonitoringTaskTest {
+public class MonitoringRunnableTest {
 
 	private static final List<IMonitoringHandler> HANDLERS = new ArrayList<> ();
 	static {
@@ -82,7 +82,7 @@ public class MonitoringTaskTest {
 	public void testExtractRuleSections_noSection() throws Exception {
 
 		String fileContent = "";
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( new File( "whatever" ), fileContent, null );
@@ -95,7 +95,7 @@ public class MonitoringTaskTest {
 
 		File f = TestUtils.findTestFile( "/file-events.conf" );
 		String fileContent = Utils.readFileContent( f );
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( f, fileContent, null );
@@ -123,7 +123,7 @@ public class MonitoringTaskTest {
 
 		File f = TestUtils.findTestFile( "/nagios-events.conf" );
 		String fileContent = Utils.readFileContent( f );
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( f, fileContent, null );
@@ -151,7 +151,7 @@ public class MonitoringTaskTest {
 
 		File f = TestUtils.findTestFile( "/rest-events.conf" );
 		String fileContent = Utils.readFileContent( f );
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( f, fileContent, null );
@@ -169,7 +169,7 @@ public class MonitoringTaskTest {
 
 		File f = TestUtils.findTestFile( "/mixed-events.conf" );
 		String fileContent = Utils.readFileContent( f );
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( f, fileContent, null );
@@ -192,7 +192,7 @@ public class MonitoringTaskTest {
 
 		File f = TestUtils.findTestFile( "/mixed-events-templating.conf" );
 		String fileContent = Utils.readFileContent( f );
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		File propertiesFile = TestUtils.findTestFile( "/mixed-events-templating.properties" );
@@ -219,8 +219,8 @@ public class MonitoringTaskTest {
 	@Test
 	public void testExtractRuleSections_incompleteRule() throws Exception {
 
-		String fileContent = MonitoringTask.RULE_BEGINNING;
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		String fileContent = MonitoringRunnable.RULE_BEGINNING;
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
@@ -231,8 +231,8 @@ public class MonitoringTaskTest {
 	@Test
 	public void testExtractRuleSections_invalidRule() throws Exception {
 
-		String fileContent = MonitoringTask.RULE_BEGINNING + " file event id with spaces]";
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		String fileContent = MonitoringRunnable.RULE_BEGINNING + " file event id with spaces]";
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
@@ -243,8 +243,8 @@ public class MonitoringTaskTest {
 	@Test
 	public void testExtractRuleSections_unknownParser() throws Exception {
 
-		String fileContent = MonitoringTask.RULE_BEGINNING + " unknown event-id]\nok";
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		String fileContent = MonitoringRunnable.RULE_BEGINNING + " unknown event-id]\nok";
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		this.agentInterface.setScopedInstance( new Instance( "root" ));
 
 		List<MonitoringHandlerRun> handlers = task.extractRuleSections( new File( "test" ), fileContent, null );
@@ -302,7 +302,7 @@ public class MonitoringTaskTest {
 	public void testWholeChain_noModelYet() throws Exception {
 
 		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		task.run();
 		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
 	}
@@ -334,7 +334,7 @@ public class MonitoringTaskTest {
 
 		// Run the task
 		Mockito.verify( this.messagingClient, Mockito.times( 0 )).sendMessageToTheDm( Mockito.any( Message.class ));
-		MonitoringTask task = new MonitoringTask( this.agentInterface, HANDLERS );
+		MonitoringRunnable task = new MonitoringRunnable( this.agentInterface, HANDLERS );
 		task.run();
 
 		Utils.deleteFilesRecursively( dir );
