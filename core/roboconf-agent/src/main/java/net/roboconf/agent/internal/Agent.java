@@ -72,6 +72,10 @@ public class Agent implements AgentMessagingInterface {
 	private Instance scopedInstance;
 	Timer heartBeatTimer;
 
+	// Set as a class attribute to be overridden for tests.
+	String karafEtc = System.getProperty( Constants.KARAF_ETC );
+	String karafData = System.getProperty( Constants.KARAF_DATA );
+
 
 
 	/**
@@ -139,7 +143,7 @@ public class Agent implements AgentMessagingInterface {
 
 				try {
 					UserDataUtils.reconfigureMessaging(
-						System.getProperty("karaf.etc"),
+						this.karafEtc,
 						props.getMessagingConfiguration(),
 						this.messagingType);
 

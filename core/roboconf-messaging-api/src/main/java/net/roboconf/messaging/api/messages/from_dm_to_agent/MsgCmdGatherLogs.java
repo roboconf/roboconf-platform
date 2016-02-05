@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,17 +23,15 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.internal.misc;
+package net.roboconf.messaging.api.messages.from_dm_to_agent;
+
+import net.roboconf.messaging.api.messages.Message;
 
 /**
+ * A message that indicates to an agent it must sends its logs.
  * @author Vincent Zurczak - Linagora
  */
-public interface AgentConstants {
+public class MsgCmdGatherLogs extends Message {
 
-	String PLATFORM_EC2 = "iaas-ec2";
-	String PLATFORM_OPENSTACK = "iaas-openstack";
-	String PLATFORM_AZURE = "iaas-azure";
-
-	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
-	String KARAF_LOGS_DIRECTORY = "logs";
+	private static final long serialVersionUID = -97111826628551779L;
 }

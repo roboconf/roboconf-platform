@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,17 +23,35 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.internal.misc;
+package net.roboconf.messaging.api.messages.from_agent_to_dm;
+
+import java.util.Map;
 
 /**
+ * A message to send agent logs to the DM.
  * @author Vincent Zurczak - Linagora
  */
-public interface AgentConstants {
+public class MsgNotifLogs extends AbstractMsgNotif {
 
-	String PLATFORM_EC2 = "iaas-ec2";
-	String PLATFORM_OPENSTACK = "iaas-openstack";
-	String PLATFORM_AZURE = "iaas-azure";
+	private static final long serialVersionUID = -8930645802175790064L;
+	private final Map<String,byte[]> logFiles;
 
-	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
-	String KARAF_LOGS_DIRECTORY = "logs";
+
+	/**
+	 * Constructor.
+	 * @param applicationName the application name
+	 * @param scopedInstancePath the scoped instance's path
+	 * @param logFiles a non-null (and not empty) map (key = file name, value = file content)
+	 */
+	public MsgNotifLogs( String applicationName, String scopedInstancePath, Map<String,byte[]> logFiles ) {
+		super( applicationName, scopedInstancePath );
+		this.logFiles = logFiles;
+	}
+
+	/**
+	 * @return the logFiles
+	 */
+	public Map<String,byte[]> getLogFiles() {
+		return this.logFiles;
+	}
 }

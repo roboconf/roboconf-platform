@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,17 +23,37 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.internal.misc;
+package net.roboconf.karaf.commands.dm.logs;
+
+import java.util.List;
+
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
+
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.api.console.CommandLine;
+import org.apache.karaf.shell.api.console.Completer;
+import org.apache.karaf.shell.api.console.Session;
+import org.apache.karaf.shell.support.completers.StringsCompleter;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface AgentConstants {
+@Service
+public class ApplicationCompleter implements Completer {
 
-	String PLATFORM_EC2 = "iaas-ec2";
-	String PLATFORM_OPENSTACK = "iaas-openstack";
-	String PLATFORM_AZURE = "iaas-azure";
+	@Reference
+    Manager manager;
 
-	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
-	String KARAF_LOGS_DIRECTORY = "logs";
+
+	@Override
+	public int complete( Session session, CommandLine commandLine, List<String> candidates ) {
+
+		StringsCompleter delegate = new StringsCompleter( false );
+		for( ManagedApplication ma : this.manager.applicationMngr().getManagedApplications())
+			delegate.getStrings().add( ma.getName());
+
+		return delegate.complete( session, commandLine, candidates );
+	}
 }

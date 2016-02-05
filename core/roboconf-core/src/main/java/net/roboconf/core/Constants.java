@@ -143,4 +143,15 @@ public interface Constants {
 	 * The default polling period for probes.
 	 */
 	Long PROBES_POLLING_PERIOD = 20000L;
+
+
+	/**
+	 * The system property that points to Karaf's etc directory.
+	 */
+	String KARAF_ETC = "karaf.etc";
+
+	/**
+	 * The system property that points to Karaf's data directory.
+	 */
+	String KARAF_DATA = "karaf.data";
 }

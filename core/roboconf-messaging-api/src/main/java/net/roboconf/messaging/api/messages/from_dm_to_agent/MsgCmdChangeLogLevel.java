@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,17 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.internal.misc;
+package net.roboconf.messaging.api.messages.from_dm_to_agent;
+
+import java.util.logging.Level;
+
+import net.roboconf.messaging.api.messages.Message;
 
 /**
+ * A message to change the log level of an agent.
  * @author Vincent Zurczak - Linagora
  */
-public interface AgentConstants {
+public class MsgCmdChangeLogLevel extends Message {
 
-	String PLATFORM_EC2 = "iaas-ec2";
-	String PLATFORM_OPENSTACK = "iaas-openstack";
-	String PLATFORM_AZURE = "iaas-azure";
+	private static final long serialVersionUID = -20814826628551779L;
+	private final String logLevel;
 
-	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
-	String KARAF_LOGS_DIRECTORY = "logs";
+
+	/**
+	 * Constructor.
+	 * @param logLevel
+	 */
+	public MsgCmdChangeLogLevel( Level logLevel ) {
+		this.logLevel = logLevel.toString();
+	}
+
+	/**
+	 * @return the logLevel
+	 */
+	public String getLogLevel() {
+		return this.logLevel;
+	}
 }
