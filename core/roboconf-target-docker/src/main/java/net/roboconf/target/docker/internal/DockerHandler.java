@@ -29,13 +29,13 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
-import com.github.dockerjava.api.model.Container;
-
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
+import com.github.dockerjava.api.model.Container;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -64,12 +64,10 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 	static final String ADDITIONAL_PACKAGES = "docker.additional.packages";
 	static final String ADDITIONAL_DEPLOY = "docker.additional.deploy";
-	static final String DOWNLOAD_IMAGE_BASE = "docker.download.base.image";
-	static final String DOWNLOAD_IMAGE_REGISTRY = "docker.image.registry";
 
-	static final String DEFAULT_IMAGE_REGISTRY = "registry.hub.docker.com/ubuntu";
-	static final String DEFAULT_IMAGE_TAG = "latest";
-	static final String DEFAULT_IMAGE_REPOSITORY = "ubuntu";
+	static final String DOWNLOAD_BASE_IMAGE = "docker.download.base-image";
+	static final String DOCKER_IMAGE_REGISTRY = "docker.image.registry";
+	static final String DEFAULT_DOCKER_IMAGE_REGISTRY = "registry.hub.docker.com";
 
 	// Docker exec markers for Roboconf configuration injection.
 	static final String MARKER_MESSAGING_CONFIGURATION = "$msgConfig$";

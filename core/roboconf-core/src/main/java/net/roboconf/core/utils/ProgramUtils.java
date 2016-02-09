@@ -125,7 +125,7 @@ public final class ProgramUtils {
 
 		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars );
 		if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
-			logger.info( result.getNormalOutput());
+			logger.fine( result.getNormalOutput());
 
 		if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
 			logger.warning( result.getErrorOutput());

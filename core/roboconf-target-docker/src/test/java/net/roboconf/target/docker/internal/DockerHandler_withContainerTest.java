@@ -25,10 +25,8 @@
 
 package net.roboconf.target.docker.internal;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,13 +36,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
+import net.roboconf.target.docker.internal.DockerMachineConfigurator.RoboconfBuildImageResultCallback;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -238,10 +237,12 @@ public class DockerHandler_withContainerTest {
 		this.docker = DockerClientBuilder.getInstance( config.build()).build();
 		File baseDir = new File( Thread.currentThread().getContextClassLoader().getResource("./image").getFile());
 
-		InputStream in = this.docker.buildImageCmd(baseDir).withNoCache().withTag( tag ).exec();
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		Utils.copyStreamSafely( in, os );
-		this.logger.finest( os.toString( "UTF-8" ));
+		String builtImageId = this.docker.buildImageCmd(baseDir)
+				.withNoCache().withTag( tag )
+				.exec( new RoboconfBuildImageResultCallback())
+				.awaitImageId();
+
+		this.logger.finest( "Built image ID: " + builtImageId );
 
 		List<Image> images = this.docker.listImagesCmd().exec();
 		images = images == null ? new ArrayList<Image>( 0 ) : images;

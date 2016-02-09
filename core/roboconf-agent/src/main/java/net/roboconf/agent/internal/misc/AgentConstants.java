@@ -35,5 +35,5 @@ public interface AgentConstants {
 	String PLATFORM_AZURE = "iaas-azure";
 
 	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
-	String KARAF_LOGS_DIRECTORY = "logs";
+	String KARAF_LOGS_DIRECTORY = "log";
 }
