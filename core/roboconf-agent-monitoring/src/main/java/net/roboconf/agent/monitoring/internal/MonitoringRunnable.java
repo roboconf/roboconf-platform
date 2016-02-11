@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.TimerTask;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,10 +46,10 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.Message;
 
 /**
- * Scheduler for periodic monitoring checks (polling).
+ * Runnable for periodic monitoring checks (polling).
  * @author Pierre-Yves Gibello - Linagora
  */
-public class MonitoringTask extends TimerTask {
+public class MonitoringRunnable implements Runnable {
 
 	private static final String COMMENT_DELIMITER = "#";
 	static final String RULE_BEGINNING = "[event";
@@ -68,7 +67,7 @@ public class MonitoringTask extends TimerTask {
 	 * @param agentInterface the interface to access the agent
 	 * @param handlers the monitoring handlers
 	 */
-	public MonitoringTask( AgentMessagingInterface agentInterface, List<IMonitoringHandler> handlers ) {
+	public MonitoringRunnable( AgentMessagingInterface agentInterface, List<IMonitoringHandler> handlers ) {
 		this.agentInterface = agentInterface;
 		this.handlers = handlers;
 		this.eventPattern = Pattern.compile( EVENT_PATTERN, Pattern.CASE_INSENSITIVE );

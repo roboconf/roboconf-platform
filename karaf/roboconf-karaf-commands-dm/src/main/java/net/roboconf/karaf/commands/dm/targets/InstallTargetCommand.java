@@ -52,6 +52,7 @@ public class InstallTargetCommand implements Action {
 	@Reference
     private Session session;
 
+	// Other fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	String roboconfVersion;
 	PrintStream out = System.out;

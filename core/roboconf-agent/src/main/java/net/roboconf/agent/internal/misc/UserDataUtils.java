@@ -41,6 +41,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import net.roboconf.agent.internal.AgentProperties;
 import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 
 import org.apache.commons.codec.binary.Base64;
 import org.w3c.dom.Document;
@@ -174,14 +175,17 @@ public final class UserDataUtils {
 	 * @param etcDir the KARAF_ETC directory
 	 * @param msgData the messaging configuration parameters
 	 */
-	public static void reconfigureMessaging(String etcDir, Map<String,String> msgData, String messagingType)
+	public static void reconfigureMessaging( String etcDir, Map<String,String> msgData )
 	throws IOException {
 
+		String messagingType = msgData.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
+		Logger.getLogger( UserDataUtils.class.getName()).fine( "Messaging type for reconfiguration: " + messagingType );
 		if( ! Utils.isEmptyOrWhitespaces( etcDir )) {
 
 			// Write the messaging configuration
 			Properties props = new Properties();
 			props.putAll( msgData );
+			props.remove( Constants.MESSAGING_TYPE );
 
 			File f = new File( etcDir, "net.roboconf.messaging." + messagingType + ".cfg" );
 			Utils.writePropertiesFile( props, f );

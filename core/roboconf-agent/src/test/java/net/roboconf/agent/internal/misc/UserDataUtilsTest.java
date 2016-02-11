@@ -33,6 +33,7 @@ import java.util.Properties;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -66,6 +67,7 @@ public class UserDataUtilsTest {
 
 		// Execute
 		Map<String,String> msgData = new HashMap<> ();
+		msgData.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "rabbitmq" );
 		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
@@ -73,7 +75,7 @@ public class UserDataUtilsTest {
 		Assert.assertFalse( msgConf.exists());
 		Assert.assertFalse( agentConf.exists());
 
-		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData, "rabbitmq");
+		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData);
 
 		// Check
 		Assert.assertTrue( msgConf.exists());
@@ -109,6 +111,7 @@ public class UserDataUtilsTest {
 
 		// Execute
 		Map<String,String> msgData = new HashMap<> ();
+		msgData.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "rabbitmq" );
 		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
@@ -116,7 +119,7 @@ public class UserDataUtilsTest {
 		Assert.assertFalse( msgConf.exists());
 		Assert.assertTrue( agentConf.exists());
 
-		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData, "rabbitmq");
+		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData);
 
 		// Check
 		Assert.assertTrue( msgConf.exists());
@@ -143,7 +146,6 @@ public class UserDataUtilsTest {
 
 		UserDataUtils.reconfigureMessaging(
 				File.separator + "this_is_a_wrong_path",
-				new HashMap<String,String>( 0 ),
-				"rabbitmq");
+				new HashMap<String,String>( 0 ));
 	}
 }

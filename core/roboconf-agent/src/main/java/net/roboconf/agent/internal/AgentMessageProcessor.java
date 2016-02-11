@@ -58,9 +58,12 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImpor
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeLogLevel;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdGatherLogs;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
@@ -90,7 +93,6 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final Agent agent;
-
 	Instance scopedInstance;
 
 	/**
@@ -173,6 +175,12 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			else if( message instanceof MsgCmdUpdateProbeConfiguration )
 				processUpdateProbeConfiguration((MsgCmdUpdateProbeConfiguration) message );
 
+			else if( message instanceof MsgCmdChangeLogLevel )
+				processChangeLogLevel((MsgCmdChangeLogLevel) message );
+
+			else if( message instanceof MsgCmdGatherLogs )
+				processGatherLogs((MsgCmdGatherLogs) message );
+
 			else
 				this.logger.warning( getName() + " got an undetermined message to process. " + message.getClass().getName());
 
@@ -184,6 +192,29 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			this.logger.severe( "A problem occurred with a plug-in. " + e.getMessage());
 			Utils.logException( this.logger, e );
 		}
+	}
+
+
+	/**
+	 * Gathers the main log files and sends them to the DM.
+	 * @param message the incoming message
+	 * @throws IOException if something went wrong
+	 */
+	private void processGatherLogs( MsgCmdGatherLogs message ) throws IOException {
+
+		Map<String,byte[]> logFiles = AgentUtils.collectLogs( this.agent.karafData );
+		MsgNotifLogs msg = new MsgNotifLogs( this.agent.getApplicationName(), this.agent.getScopedInstancePath(), logFiles );
+		this.messagingClient.sendMessageToTheDm( msg );
+	}
+
+
+	/**
+	 * Changes the log level.
+	 * @param message the incoming message
+	 * @throws IOException if something went wrong
+	 */
+	private void processChangeLogLevel( MsgCmdChangeLogLevel message ) throws IOException {
+		AgentUtils.changeRoboconfLogLevel( message.getLogLevel(), this.agent.karafEtc );
 	}
 
 

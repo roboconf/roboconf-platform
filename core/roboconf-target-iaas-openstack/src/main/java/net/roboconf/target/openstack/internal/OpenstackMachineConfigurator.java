@@ -162,8 +162,8 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	 */
 	private boolean checkVmIsOnline() {
 
-		String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
-		Server server = this.novaApi.getServerApiForZone(anyZoneName).get(this.machineId);
+		String zoneName = OpenstackIaasHandler.findZoneName( this.novaApi, this.targetProperties );
+		Server server = this.novaApi.getServerApiForZone( zoneName ).get(this.machineId);
 		return Status.ACTIVE.equals(server.getStatus());
 	}
 
@@ -193,8 +193,8 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 		try {
 			// Find a floating IP
 			String availableIp = null;
-			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
-			FloatingIPApi floatingIPApi = this.novaApi.getFloatingIPExtensionForZone(anyZoneName).get();
+			String zoneName = OpenstackIaasHandler.findZoneName( this.novaApi, this.targetProperties );
+			FloatingIPApi floatingIPApi = this.novaApi.getFloatingIPExtensionForZone( zoneName ).get();
 			for(FloatingIP ip : floatingIPApi.list().toList()) {
 				if (ip.getFixedIp() == null) {
 					availableIp = ip.getIp();
@@ -229,14 +229,13 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	 */
 	public boolean createVolumes() throws TargetException {
 
+		String zoneName = OpenstackIaasHandler.findZoneName( this.novaApi, this.targetProperties );
 		for( String storageId : OpenstackIaasHandler.findStorageIds( this.targetProperties )) {
 
 			// Prepare the parameters
 			String name = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_NAME_PREFIX );
 			name = OpenstackIaasHandler.filterStorageVolumeName( name, this.applicationName, this.scopedInstance.getName());
-
-			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
-			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone(anyZoneName).get();
+			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone( zoneName ).get();
 
 			// If the volume should not volatile (i.e. not deleted on termination), we try to reuse it, if it exists.
 			String deleteOnT = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_DELETE_OT_PREFIX );
@@ -246,7 +245,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 				for( Volume vol : volumeApi.list()) {
 
 					if( name.equals( vol.getName())) {
-						this.logger.info( "Volume " + name + " already exists and is not volatile. It will be reused." );
+						this.logger.info( "Volume " + name + " (" + vol.getId() + ") already exists and is not volatile. It will be reused." );
 						volumeId = vol.getId();
 						break;
 					}
@@ -277,6 +276,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 			if( Utils.isEmptyOrWhitespaces( volumeId ))
 				throw new TargetException( "Volume " + name + " was not found and could not be created." );
 
+			this.logger.info( "Volume " + volumeId + " was successfully created." );
 			this.storageIdToVolumeId.put( storageId, volumeId );
 		}
 
@@ -294,13 +294,13 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 	public boolean attachVolumes() {
 
 		boolean allAttached = true;
+		String zoneName = OpenstackIaasHandler.findZoneName( this.novaApi, this.targetProperties );
 		for( Map.Entry<String,String> entry : this.storageIdToVolumeId.entrySet()) {
 
 			String volumeId = entry.getValue();
 			String storageId = entry.getKey();
 
-			String anyZoneName = this.novaApi.getConfiguredZones().iterator().next();
-			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone(anyZoneName).get();
+			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone( zoneName ).get();
 			Volume createdVolume = volumeApi.get( volumeId );
 
 			// Already attached? Skip...
@@ -311,7 +311,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 			// Otherwise, try to attach it, if possible.
 			if( createdVolume.getStatus() == Volume.Status.AVAILABLE ) {
 				String device = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_MOUNT_POINT_PREFIX );
-				VolumeAttachmentApi volumeAttachmentApi = this.novaApi.getVolumeAttachmentExtensionForZone(anyZoneName).get();
+				VolumeAttachmentApi volumeAttachmentApi = this.novaApi.getVolumeAttachmentExtensionForZone( zoneName ).get();
 				volumeAttachmentApi.attachVolumeToServerAsDevice( volumeId, this.machineId, device );
 
 				// Notice: there is no way, unlike in AWS, to specify a volume should be deleted when the

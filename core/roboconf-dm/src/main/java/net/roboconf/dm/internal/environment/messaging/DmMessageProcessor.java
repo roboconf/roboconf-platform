@@ -25,7 +25,10 @@
 
 package net.roboconf.dm.internal.environment.messaging;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Application;
@@ -33,6 +36,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ImportHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.DockerAndScriptUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -44,6 +48,7 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
@@ -62,6 +67,9 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 	private final Logger logger = Logger.getLogger( DmMessageProcessor.class.getName());
 	private final Manager manager;
 	private final IAutonomicMngr autonomicMngr;
+
+	// Set as a class attribute so that it can be replaced for unit tests.
+	String tmpDir = System.getProperty( "java.io.tmpdir" );
 
 
 	/**
@@ -101,8 +109,44 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 		else if( message instanceof MsgEcho )
 			this.manager.debugMngr().notifyMsgEchoReceived((MsgEcho) message );
 
+		else if( message instanceof MsgNotifLogs )
+			processMsgNotifLogs((MsgNotifLogs) message );
+
 		else
 			this.logger.warning( "The DM got an undetermined message to process: " + message.getClass().getName());
+	}
+
+
+	private void processMsgNotifLogs( MsgNotifLogs message ) {
+
+		StringBuilder path = new StringBuilder();
+		path.append( "roboconf-logs/" );
+		path.append( message.getApplicationName());
+		path.append( "/" );
+		path.append( DockerAndScriptUtils.cleanInstancePath( message.getScopedInstancePath()));
+
+		// Dump these messages in the temporary directory...
+		File dumpDir = new File( this.tmpDir, path.toString());
+		try {
+			Utils.createDirectory( dumpDir );
+			for( Map.Entry<String,byte[]> entry : message.getLogFiles().entrySet()) {
+				ByteArrayInputStream in = new ByteArrayInputStream( entry.getValue());
+				Utils.copyStream( in, new File( dumpDir, entry.getKey()));
+			}
+
+		} catch( IOException e ) {
+			StringBuilder sb = new StringBuilder();
+			sb.append( "An error occurred while dumping logs from agent " );
+			sb.append( message.getScopedInstancePath());
+			sb.append( " @ " );
+			sb.append( message.getApplicationName());
+			sb.append( ". " );
+			if( ! Utils.isEmptyOrWhitespaces( e.getMessage()))
+				sb.append( e.getMessage());
+
+			this.logger.severe( sb.toString());
+			Utils.logException( this.logger, e );
+		}
 	}
 
 

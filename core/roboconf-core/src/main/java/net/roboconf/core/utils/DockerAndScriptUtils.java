@@ -61,11 +61,11 @@ public final class DockerAndScriptUtils {
 		String instancePath = InstanceHelpers.computeInstancePath( instance );
 
 		result.put( ROBOCONF_INSTANCE_NAME, instance.getName());
-    	result.put( ROBOCONF_INSTANCE_PATH, instancePath );
-    	result.put( ROBOCONF_CLEAN_INSTANCE_PATH, cleanInstancePath( instancePath ));
-    	result.put( ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH, cleanReversedInstancePath( instancePath ));
+		result.put( ROBOCONF_INSTANCE_PATH, instancePath );
+		result.put( ROBOCONF_CLEAN_INSTANCE_PATH, cleanInstancePath( instancePath ));
+		result.put( ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH, cleanReversedInstancePath( instancePath ));
 
-    	return result;
+		return result;
 	}
 
 

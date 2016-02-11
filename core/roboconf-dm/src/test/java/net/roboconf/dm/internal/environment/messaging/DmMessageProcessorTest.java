@@ -25,7 +25,10 @@
 
 package net.roboconf.dm.internal.environment.messaging;
 
-import org.junit.Assert;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
@@ -42,11 +45,13 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -145,6 +150,46 @@ public class DmMessageProcessorTest {
 		this.processor.processMessage( msg );
 
 		Mockito.verify( listener ).raw( "hey!" );
+	}
+
+
+	@Test
+	public void testProcessMsgNotifLogs_success() throws Exception {
+
+		this.processor.tmpDir = this.folder.newFolder().getAbsolutePath();
+		Map<String,byte[]> map = new HashMap<>( 2 );
+		map.put( "karaf.log", new byte[ 0 ]);
+		map.put( "roboconf.log", new byte[ 0 ]);
+
+		File output = new File( this.processor.tmpDir, "roboconf-logs/app/si" );
+		Assert.assertFalse( output.exists());
+
+		MsgNotifLogs msg = new MsgNotifLogs( "app", "si", map );
+		this.processor.processMessage( msg );
+
+		Assert.assertTrue( output.exists());
+		Assert.assertEquals( 2, output.listFiles().length );
+		Assert.assertTrue( new File( output, "karaf.log" ).exists());
+		Assert.assertTrue( new File( output, "roboconf.log" ).exists());
+	}
+
+
+	@Test
+	public void testProcessMsgNotifLogs_failure() throws Exception {
+
+		// It will fail because the root is a file (and not a directory)
+		this.processor.tmpDir = this.folder.newFile().getAbsolutePath();
+		Map<String,byte[]> map = new HashMap<>( 2 );
+		map.put( "karaf.log", new byte[ 0 ]);
+		map.put( "roboconf.log", new byte[ 0 ]);
+
+		File output = new File( this.processor.tmpDir, "roboconf-logs/app/si/" );
+		Assert.assertFalse( output.exists());
+
+		MsgNotifLogs msg = new MsgNotifLogs( "app", "si", map );
+		this.processor.processMessage( msg );
+
+		Assert.assertFalse( output.exists());
 	}
 
 

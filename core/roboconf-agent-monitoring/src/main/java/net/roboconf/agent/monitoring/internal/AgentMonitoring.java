@@ -28,7 +28,8 @@ package net.roboconf.agent.monitoring.internal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Timer;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
@@ -50,7 +51,7 @@ public class AgentMonitoring {
 
 	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private Timer timer;
+	private ScheduledThreadPoolExecutor timer;
 
 
 	/**
@@ -72,11 +73,11 @@ public class AgentMonitoring {
 
 		if( this.timer == null ) {
 			this.logger.fine( "Agent Monitoring is being started." );
-			this.timer = new Timer( "Monitoring Timer @ Agent", true );
 
-			// FIXME: not sure "scheduleAtFixedRate" is the right choice.
-			// What happens when one "polling raw" takes more than 10 seconds?
-			this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface, this.handlers ), 0, Constants.PROBES_POLLING_PERIOD );
+			this.timer = new ScheduledThreadPoolExecutor( 1 );
+			this.timer.scheduleWithFixedDelay(
+					new MonitoringRunnable( this.agentInterface, this.handlers ),
+					0, Constants.PROBES_POLLING_PERIOD, TimeUnit.MILLISECONDS );
 		}
 	}
 
@@ -88,7 +89,7 @@ public class AgentMonitoring {
 
 		this.logger.fine( "Agent Monitoring is being stopped." );
 		if( this.timer != null ) {
-			this.timer.cancel();
+			this.timer.shutdownNow();
 			this.timer = null;
 		}
 	}

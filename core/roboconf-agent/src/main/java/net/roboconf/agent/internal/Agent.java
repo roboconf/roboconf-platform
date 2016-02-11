@@ -72,6 +72,10 @@ public class Agent implements AgentMessagingInterface {
 	private Instance scopedInstance;
 	Timer heartBeatTimer;
 
+	// Set as a class attribute to be overridden for tests.
+	String karafEtc = System.getProperty( Constants.KARAF_ETC );
+	String karafData = System.getProperty( Constants.KARAF_DATA );
+
 
 
 	/**
@@ -138,10 +142,10 @@ public class Agent implements AgentMessagingInterface {
 				this.scopedInstancePath = props.getScopedInstancePath();
 
 				try {
+					this.logger.info( "Reconfiguring the agent with user data." );
 					UserDataUtils.reconfigureMessaging(
-						System.getProperty("karaf.etc"),
-						props.getMessagingConfiguration(),
-						this.messagingType);
+						this.karafEtc,
+						props.getMessagingConfiguration());
 
 				} catch(IOException e) {
 					this.logger.severe("Error in messaging reconfiguration from user data: " + e);

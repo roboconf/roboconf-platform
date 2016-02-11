@@ -58,6 +58,19 @@
 		<dependency>
 			<groupId>com.github.docker-java</groupId>
 			<artifactId>docker-java</artifactId>
+			
+			<!-- 
+				Note about logging...
+				Docker Java relies on SLF4j for logging. When running the
+				default build commands (mvn clean install, mvn clean test...),
+				no specific log appear.
+				
+				However, when running "mvn clean cobertura:cobertura", a SLF4j
+				configuration is generated and used by both Cobertura and Docker-Java.
+				In this case (only), additional DEBUG messages appear. They mention REST
+				client details. You should not worry about them as they only appear when
+				Cobertura is used.
+			 -->
 		</dependency>
 
 		<dependency>
@@ -85,6 +98,12 @@
   			<artifactId>roboconf-core</artifactId>
   			<version>${project.version}</version>
 			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

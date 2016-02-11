@@ -27,7 +27,6 @@ package net.roboconf.tooling.core;
 
 import java.io.File;
 
-import org.junit.Assert;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -36,6 +35,7 @@ import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.tooling.core.ProjectUtils.CreationBean;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -59,7 +59,7 @@ public class ProjectUtilsTest {
 
 		Assert.assertEquals( 0, dir.listFiles().length );
 		ProjectUtils.createProjectSkeleton( dir, bean );
-		Assert.assertEquals( 3, dir.listFiles().length );
+		Assert.assertEquals( 6, dir.listFiles().length );
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
 		Assert.assertEquals( 2, alr.getLoadErrors().size());
@@ -88,7 +88,7 @@ public class ProjectUtilsTest {
 
 		File modelDir = new File( dir, "src/main/model" );
 		Assert.assertTrue( modelDir.exists());
-		Assert.assertEquals( 3, modelDir.listFiles().length );
+		Assert.assertEquals( 6, modelDir.listFiles().length );
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( modelDir );
 		Assert.assertEquals( 2, alr.getLoadErrors().size());
@@ -129,7 +129,7 @@ public class ProjectUtilsTest {
 
 		File modelDir = new File( dir, "src/main/model" );
 		Assert.assertTrue( modelDir.exists());
-		Assert.assertEquals( 3, modelDir.listFiles().length );
+		Assert.assertEquals( 6, modelDir.listFiles().length );
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( modelDir );
 		Assert.assertEquals( 2, alr.getLoadErrors().size());

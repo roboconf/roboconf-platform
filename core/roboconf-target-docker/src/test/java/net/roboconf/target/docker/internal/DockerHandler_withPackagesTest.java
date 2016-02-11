@@ -39,7 +39,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -47,6 +46,7 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.TargetException;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -287,12 +287,10 @@ public class DockerHandler_withPackagesTest {
 		this.targetProperties.put(DockerHandler.ADDITIONAL_DEPLOY,
 				"http://www.apache.org/licenses/LICENSE-2.0.txt " + dummy.toURI());
 
-		runAndTestDockerContainer(new ArrayList<String>() {
-			{
-				add("/usr/local/roboconf-agent/deploy/LICENSE-2.0.txt");
-				add("/usr/local/roboconf-agent/deploy/DUMMY.TXT");
-			}
-		});
+		List<String> values = new ArrayList<>( 2 );
+		values.add("/usr/local/roboconf-agent/deploy/LICENSE-2.0.txt");
+		values.add("/usr/local/roboconf-agent/deploy/DUMMY.TXT");
+		runAndTestDockerContainer( values );
 	}
 
 

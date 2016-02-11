@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
@@ -42,10 +43,13 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChanged;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeLogLevel;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdGatherLogs;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
@@ -79,6 +83,23 @@ public class SerializationUtilsTest {
 
 		MsgNotifAutonomic msg = new MsgNotifAutonomic( "app1", "instance1", "too high", "oops" );
 		checkBasics( msg, MsgNotifAutonomic.class );
+	}
+
+
+	@Test
+	public void testMessage_logs() throws Exception {
+
+		MsgNotifLogs msg = new MsgNotifLogs( "app1", "instance1", null );
+		checkBasics( msg, MsgNotifLogs.class );
+
+		Map<String,byte[]> map = new HashMap<> ();
+		msg = new MsgNotifLogs( "app2", "instance2", map );
+		checkBasics( msg, MsgNotifLogs.class );
+
+		map.put( "file1", new byte[ 0 ]);
+		map.put( "file2", "test".getBytes( "UTF-8" ));
+		msg = new MsgNotifLogs( "app5", "instance4", map );
+		checkBasics( msg, MsgNotifLogs.class );
 	}
 
 
@@ -159,6 +180,22 @@ public class SerializationUtilsTest {
 
 		MsgCmdResynchronize msg = new MsgCmdResynchronize();
 		checkBasics( msg, MsgCmdResynchronize.class );
+	}
+
+
+	@Test
+	public void testMessage_changeLogLevel() throws Exception {
+
+		MsgCmdChangeLogLevel msg = new MsgCmdChangeLogLevel( Level.FINER );
+		checkBasics( msg, MsgCmdChangeLogLevel.class );
+	}
+
+
+	@Test
+	public void testMessage_gatherLogs() throws Exception {
+
+		MsgCmdGatherLogs msg = new MsgCmdGatherLogs();
+		checkBasics( msg, MsgCmdGatherLogs.class );
 	}
 
 
