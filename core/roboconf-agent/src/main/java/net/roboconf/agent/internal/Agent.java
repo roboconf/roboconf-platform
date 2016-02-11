@@ -142,10 +142,10 @@ public class Agent implements AgentMessagingInterface {
 				this.scopedInstancePath = props.getScopedInstancePath();
 
 				try {
+					this.logger.info( "Reconfiguring the agent with user data." );
 					UserDataUtils.reconfigureMessaging(
 						this.karafEtc,
-						props.getMessagingConfiguration(),
-						this.messagingType);
+						props.getMessagingConfiguration());
 
 				} catch(IOException e) {
 					this.logger.severe("Error in messaging reconfiguration from user data: " + e);

@@ -80,6 +80,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	static final String FLOATING_IP_POOL = "openstack.floating-ip-pool";
 	static final String NETWORK_ID = "openstack.network-id";
+	static final String REGION_NAME = "openstack.region-name";
 
 	// Storage has several options
 	static final String USE_BLOCK_STORAGE = "openstack.use-block-storage";
@@ -135,13 +136,13 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 		// Prepare the work
 		NovaApi novaApi = OpenstackIaasHandler.novaApi( targetProperties );
-		String anyZoneName = novaApi.getConfiguredZones().iterator().next();
+		String zoneName = findZoneName( novaApi, targetProperties );
 		String vmName = applicationName + "." + rootInstanceName;
 
 		// Find flavor and image IDs
 		String flavorId = null;
 		String flavorName = targetProperties.get( OpenstackIaasHandler.FLAVOR_NAME );
-		for( Resource res : novaApi.getFlavorApiForZone( anyZoneName ).list().concat()) {
+		for( Resource res : novaApi.getFlavorApiForZone( zoneName ).list().concat()) {
 			if( res.getName().equalsIgnoreCase( flavorName )) {
 				flavorId = res.getId();
 				break;
@@ -153,7 +154,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 		String imageId = null;
 		String imageName = targetProperties.get( OpenstackIaasHandler.IMAGE_NAME );
-		for( Resource res : novaApi.getImageApiForZone( anyZoneName ).list().concat()) {
+		for( Resource res : novaApi.getImageApiForZone( zoneName ).list().concat()) {
 			if( res.getName().equalsIgnoreCase( imageName )) {
 				imageId = res.getId();
 				break;
@@ -181,7 +182,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			if( ! Utils.isEmptyOrWhitespaces( networkId ))
 				options = options.networks( networkId );
 
-			ServerCreated server = novaApi.getServerApiForZone( anyZoneName ).create( vmName, imageId, flavorId, options);
+			ServerCreated server = novaApi.getServerApiForZone( zoneName ).create( vmName, imageId, flavorId, options);
 			String machineId = server.getId();
 			novaApi.close();
 
@@ -203,8 +204,8 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 	throws TargetException {
 
 		NovaApi novaApi = novaApi( targetProperties );
-		String anyZoneName = novaApi.getConfiguredZones().iterator().next();
-		Server server = novaApi.getServerApiForZone( anyZoneName ).get( machineId );
+		String zoneName = findZoneName( novaApi, targetProperties );
+		Server server = novaApi.getServerApiForZone( zoneName ).get( machineId );
 
 		boolean running = false;
 		if( server != null )
@@ -245,20 +246,20 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 			cancelMachineConfigurator( machineId );
 
 			NovaApi novaApi = novaApi( targetProperties );
-			String anyZoneName = novaApi.getConfiguredZones().iterator().next();
+			String zoneName = findZoneName( novaApi, targetProperties );
 
 			// List the attached volumes, if any.
 			Set<String> volumeIds = new HashSet<> ();
-			VolumeAttachmentApi volumeAttachmentApi = novaApi.getVolumeAttachmentExtensionForZone(anyZoneName).get();
+			VolumeAttachmentApi volumeAttachmentApi = novaApi.getVolumeAttachmentExtensionForZone( zoneName ).get();
 			for( VolumeAttachment vol : volumeAttachmentApi.listAttachmentsOnServer( machineId )) {
 				volumeIds.add( vol.getVolumeId());
 			}
 
 			// Delete the VM
-			novaApi.getServerApiForZone( anyZoneName ).delete( machineId );
+			novaApi.getServerApiForZone( zoneName ).delete( machineId );
 
 			// Delete the volumes?
-			VolumeApi volumeApi = novaApi.getVolumeExtensionForZone(anyZoneName).get();
+			VolumeApi volumeApi = novaApi.getVolumeExtensionForZone( zoneName ).get();
 			for( String volumeId : volumeIds ) {
 
 				Volume volume = volumeApi.get( volumeId );
@@ -317,6 +318,21 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 				.endpoint( targetProperties.get( API_URL ))
 				.credentials( identity( targetProperties ), targetProperties.get( PASSWORD ))
 				.buildApi( NeutronApi.class );
+	}
+
+
+	/**
+	 * @param novaApi the nova client
+	 * @param targetProperties the target properties (not null)
+	 * @return a zone name (either the specified one, or the first found otherwise)
+	 */
+	static String findZoneName( NovaApi novaApi, Map<String,String> targetProperties ) {
+
+		String zoneName = targetProperties.get( REGION_NAME );
+		if( Utils.isEmptyOrWhitespaces( zoneName ))
+			zoneName = novaApi.getConfiguredZones().iterator().next();
+
+		return zoneName;
 	}
 
 
