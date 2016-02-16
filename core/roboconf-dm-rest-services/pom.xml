@@ -40,6 +40,10 @@
 	<name>Roboconf :: Deployment Manager :: REST Services</name>
 	<packaging>bundle</packaging>
 	
+	<properties>
+		<enunciate.version>2.2.0</enunciate.version>
+	</properties>
+	
 	<dependencies>
 		<dependency>
 			<groupId>com.fasterxml.jackson.jaxrs</groupId>
@@ -241,41 +245,65 @@
 					</execution>
 				</executions>
 			</plugin>
-		</plugins>
-	</build>
-
-	<profiles>
-		<profile>
-			<id>rest-documentation</id>
 			
 			<!-- 
-				Enunciate does not work with JDK 8.
-				See https://github.com/stoicflame/enunciate/issues/68
-				Update it once it is resolved.
-			 -->
-			<activation>
-				<jdk>1.7</jdk>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.codehaus.enunciate</groupId>
-						<artifactId>maven-enunciate-plugin</artifactId>
-						<version>1.30.1</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>docs</goal>
-								</goals>
-							</execution>
-						</executions>
+				Additional Checkstyle configuration.
+				REST methods exposed by APIs must be documented with the
+				@HTTP (JAX) doclet. See http://fromage.github.io/jax-doclets/docs/0.10.0/html/#d0e463
+				
+				They are used by Enunciate to generate a swagger.json file.
+			-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>check-rest-resources</id>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
 						<configuration>
-							<docsDir>${project.build.directory}/docs</docsDir>
+							<includes>**/I*Resource.java</includes>
+							<checkstyleRules>
+			
+								<module name="Checker">
+									<property name="charset" value="UTF-8" />
+			
+									<module name="TreeWalker">
+										<module name="WriteTag">
+											<property name="tag" value="@HTTP" />
+											<property name="tagFormat" value="\S" />
+											<property name="severity" value="error" />
+											<property name="tagSeverity" value="ignore" />
+											<property name="tokens" value="METHOD_DEF" />
+										</module>
+									</module>
+								</module>
+			
+							</checkstyleRules>
 						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>com.webcohesion.enunciate</groupId>
+				<artifactId>enunciate-maven-plugin</artifactId>
+				<version>2.2.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>docs</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<docsDir>${project.build.directory}/docs</docsDir>
+					<configFile>${project.basedir}/enunciate.xml</configFile>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>

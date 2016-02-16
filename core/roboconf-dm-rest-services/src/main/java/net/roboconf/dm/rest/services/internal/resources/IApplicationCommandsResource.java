@@ -51,6 +51,9 @@ public interface IApplicationCommandsResource {
 	 * @param commandName the command name (must be unique)
 	 * @param commandText the instructions contained in the command (must be valid)
 	 * @throws IOException if something went wrong
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
 	 */
 	@POST
 	Response createOrUpdateCommand(@PathParam("name") String app, @QueryParam("command-name") String commandName, String commandText);
@@ -61,6 +64,9 @@ public interface IApplicationCommandsResource {
 	 * @param app the associated application
 	 * @param commandName the command name
 	 * @throws IOException if something went wrong
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
 	 */
 	@DELETE
 	@Path( "{command-name}" )
@@ -73,6 +79,9 @@ public interface IApplicationCommandsResource {
 	 * @param commandName the command name
 	 * @return the commands content (never null)
 	 * @throws IOException if something went wrong
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 204 no instruction was found
 	 */
 	@GET
 	@Path( "{command-name}" )

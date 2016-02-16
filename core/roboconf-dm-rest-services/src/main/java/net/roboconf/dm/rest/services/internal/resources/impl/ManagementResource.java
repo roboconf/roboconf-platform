@@ -224,7 +224,7 @@ public class ManagementResource implements IManagementResource {
 			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + app + " already exists.", e ).build();
 
 		} catch( IOException e ) {
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, "Application " + app + " could not be created.", e ).build();
+			result = RestServicesUtils.handleException( this.logger, Status.UNAUTHORIZED, "Application " + app + " could not be created.", e ).build();
 		}
 
 		return result;
@@ -296,22 +296,31 @@ public class ManagementResource implements IManagementResource {
 	}
 
 
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IManagementResource
+	 * #setImage(java.lang.String, java.lang.String, java.io.InputStream, com.sun.jersey.core.header.FormDataContentDisposition)
+	 */
 	@Override
-	public Response setImage(final String name, final String qualifier, final InputStream image,
-							 final FormDataContentDisposition fileDetail) {
+	public Response setImage(
+			final String name,
+			final String qualifier,
+			final InputStream image,
+			final FormDataContentDisposition fileDetail) {
 
 		// Do set the image, and wrap exceptions in a HTTP response.
 		Response response;
 		try {
 			doSetImage(name, qualifier, image, fileDetail);
 			response = Response.noContent().build();
+
 		} catch (final NoSuchElementException | IllegalArgumentException e) {
-			response = RestServicesUtils.handleException(this.logger, Status.BAD_REQUEST, e.getMessage(), e)
-					.build();
+			response = RestServicesUtils.handleException(this.logger, Status.BAD_REQUEST, e.getMessage(), e).build();
+
 		} catch (final IOException e) {
-			response = RestServicesUtils.handleException(this.logger, Status.INTERNAL_SERVER_ERROR, e.getMessage(), e)
-					.build();
+			response = RestServicesUtils.handleException(this.logger, Status.INTERNAL_SERVER_ERROR, e.getMessage(), e).build();
 		}
+
 		return response;
 	}
 
@@ -329,17 +338,21 @@ public class ManagementResource implements IManagementResource {
 	 * @throws NoSuchElementException if the application/template cannot be found.
 	 * @throws IOException if the image cannot be stored.
 	 */
-	private void doSetImage(final String name, final String qualifier, final InputStream image,
-							final FormDataContentDisposition fileDetail) throws IOException {
+	private void doSetImage(
+			final String name,
+			final String qualifier,
+			final InputStream image,
+			final FormDataContentDisposition fileDetail)
+	throws IOException {
 
 		// Check image size and extension.
 		final long size = fileDetail.getSize();
 		final String extension = getFileExtension(fileDetail.getFileName());
-		if (size > MAX_IMAGE_SIZE) {
+		if (size > MAX_IMAGE_SIZE)
 			throw new IllegalArgumentException("Image is too large: " + size);
-		} else if (!SUPPORTED_EXTENSIONS.contains(extension)) {
+
+		if (!SUPPORTED_EXTENSIONS.contains(extension))
 			throw new IllegalArgumentException("Unsupported image file extension: " + extension);
-		}
 
 		// Get the target directory.
 		File targetDir;

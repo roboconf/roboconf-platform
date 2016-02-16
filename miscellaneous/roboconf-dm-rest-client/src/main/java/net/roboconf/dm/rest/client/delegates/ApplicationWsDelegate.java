@@ -301,7 +301,7 @@ public class ApplicationWsDelegate {
 
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "components/children" );
 		if( componentName != null )
-			path = path.queryParam( "name", componentName );
+			path = path.queryParam( "component-name", componentName );
 
 		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
 		if( result != null )
@@ -324,7 +324,7 @@ public class ApplicationWsDelegate {
 
 		WebResource path = this.resource.path( UrlConstants.APP ).path( applicationName ).path( "components/ancestors" );
 		if( componentName != null )
-			path = path.queryParam( "name", componentName );
+			path = path.queryParam( "component-name", componentName );
 
 		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
 		if( result != null )

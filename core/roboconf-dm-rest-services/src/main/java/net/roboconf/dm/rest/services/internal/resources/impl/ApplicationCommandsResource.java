@@ -38,7 +38,6 @@ import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationCommandsResource;
 
 /**
- * The REST API to manipulate commands in DM.
  * @author Amadou Diarra - Université Joseph Fourier
  */
 @Path( IApplicationCommandsResource.PATH )

@@ -74,6 +74,8 @@ public interface IDebugResource {
 	 *
 	 * @param message a customized message content (not null)
 	 * @return the response to the messaging server connection check
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Path("/check-dm")
@@ -103,6 +105,10 @@ public interface IDebugResource {
 	 * @param scopedInstanceName the identifier of the targeted agent
 	 * @param message a customized message content (not null)
 	 * @return the response to the agent connection check
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance was not found
+	 * @HTTP 400 the agent is not started
 	 */
 	@GET
 	@Path("/check-agent")
@@ -118,6 +124,9 @@ public interface IDebugResource {
 	 * </p>
 	 *
 	 * @return a response (with a diagnostic in case of code 200)
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance was not found
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
@@ -132,7 +141,8 @@ public interface IDebugResource {
 	 * The diagnostic is based on the information hold by the DM, and not by the agent.
 	 * </p>
 	 *
-	 * @return a list of diagnostics (one per instance in the application)
+	 * @return a non-null list of diagnostics (one per instance in the application)
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
