@@ -429,10 +429,10 @@ public class ApplicationResource implements IApplicationResource {
 
 			// Default target for the application.
 			// It must be in first position.
-			String targetId = this.manager.targetsMngr().findTargetId( app, null );
+			String defaultTargetId = this.manager.targetsMngr().findTargetId( app, null );
 			TargetWrapperDescriptor twd = null;
-			if( targetId != null )
-				twd = this.manager.targetsMngr().findTargetById( targetId );
+			if( defaultTargetId != null )
+				twd = this.manager.targetsMngr().findTargetById( defaultTargetId );
 
 			result.add( new TargetAssociation( "", twd ));
 
@@ -440,7 +440,7 @@ public class ApplicationResource implements IApplicationResource {
 			// List them, even if they do not have an associated target.
 			for( Instance inst : InstanceHelpers.findAllScopedInstances( app )) {
 				String instancePath = InstanceHelpers.computeInstancePath( inst );
-				targetId = this.manager.targetsMngr().findTargetId( app, instancePath );
+				String targetId = this.manager.targetsMngr().findTargetId( app, instancePath, true );
 
 				twd = null;
 				if( targetId != null )

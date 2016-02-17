@@ -175,6 +175,19 @@ public interface ITargetsMngr {
 	 * Finds the target ID for a scoped instance within an application or an application template.
 	 * @param app an application or application template
 	 * @param instancePath an instance path or null to find the default target for this application
+	 * @param strict if set to true, only a target that was explicitly associated will be returned (no default)
+	 * @return a string, or null if no associated target was found
+	 */
+	String findTargetId( AbstractApplication app, String instancePath, boolean strict );
+
+	/**
+	 * Finds the target ID for a scoped instance within an application or an application template.
+	 * <p>
+	 * Equivalent to <code>findTargetId( app, instancePath, false );</code>
+	 * </p>
+	 *
+	 * @param app an application or application template
+	 * @param instancePath an instance path or null to find the default target for this application
 	 * @return a string, or null if no associated target was found
 	 */
 	String findTargetId( AbstractApplication app, String instancePath );

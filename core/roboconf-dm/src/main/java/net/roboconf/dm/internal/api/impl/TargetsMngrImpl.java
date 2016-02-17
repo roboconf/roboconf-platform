@@ -298,15 +298,21 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public String findTargetId( AbstractApplication app, String instancePath ) {
+	public String findTargetId( AbstractApplication app, String instancePath, boolean strict ) {
 
 		InstanceContext key = new InstanceContext( app, instancePath );
 		String targetId = this.instanceToCachedId.get( key );
-		if( targetId == null )
+		if( targetId == null && ! strict )
 			key = new InstanceContext( app, (String) null );
 
 		targetId = this.instanceToCachedId.get( key );
 		return targetId;
+	}
+
+
+	@Override
+	public String findTargetId( AbstractApplication app, String instancePath ) {
+		return findTargetId( app, instancePath, false );
 	}
 
 

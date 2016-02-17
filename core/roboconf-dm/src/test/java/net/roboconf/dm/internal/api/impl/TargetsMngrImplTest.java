@@ -148,13 +148,18 @@ public class TargetsMngrImplTest {
 		associatedId = this.mngr.findTargetId( app, mySqlPath );
 		Assert.assertEquals( targetId, associatedId );
 
+		associatedId = this.mngr.findTargetId( app, mySqlPath, true );
+		Assert.assertEquals( targetId, associatedId );
+
 		associatedId = this.mngr.findTargetId( app, tomcatPath );
 		Assert.assertEquals( defaultTargetId, associatedId );
+		Assert.assertNull( this.mngr.findTargetId( app, tomcatPath, true ));
 
 		// Remove the custom association for MySQL
 		this.mngr.dissociateTargetFromScopedInstance( app, mySqlPath );
 		associatedId = this.mngr.findTargetId( app, mySqlPath );
 		Assert.assertEquals( defaultTargetId, associatedId );
+		Assert.assertNull( this.mngr.findTargetId( app, mySqlPath, true ));
 
 		// Make sure we cannot delete a default target
 		this.mngr.dissociateTargetFromScopedInstance( app, null );
