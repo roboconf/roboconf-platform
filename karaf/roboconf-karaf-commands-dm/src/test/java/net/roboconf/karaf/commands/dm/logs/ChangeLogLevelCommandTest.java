@@ -31,6 +31,7 @@ import java.util.logging.Level;
 
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -151,11 +152,33 @@ public class ChangeLogLevelCommandTest {
 
 
 	@Test
-	public void testExecute_valid_noSpecifiedInstance() throws Exception {
+	public void testExecute_valid_noSpecifiedInstance_notDeployed() throws Exception {
 
 		this.cll.applicationName = this.app.getName();
 		this.cll.scopedInstancePath = null;
 		this.cll.logLevelAsString = Level.INFO.toString();
+
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		this.cll.out = new PrintStream( os, true, "UTF-8" );
+
+		this.cll.execute();
+		String s = os.toString( "UTF-8" ).trim();
+		Assert.assertTrue( s.startsWith( "No message will be sent to " ));
+
+		Mockito.verify( this.applicationMngr, Mockito.times( 1 )).findManagedApplicationByName( this.cll.applicationName );
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+	}
+
+
+	@Test
+	public void testExecute_valid_noSpecifiedInstance_allDeployed() throws Exception {
+
+		this.cll.applicationName = this.app.getName();
+		this.cll.scopedInstancePath = null;
+		this.cll.logLevelAsString = Level.INFO.toString();
+
+		for( Instance inst : InstanceHelpers.findAllScopedInstances( this.app ))
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		this.cll.out = new PrintStream( os, true, "UTF-8" );
@@ -176,11 +199,12 @@ public class ChangeLogLevelCommandTest {
 
 
 	@Test
-	public void testExecute_valid_withSpecifiedInstance() throws Exception {
+	public void testExecute_valid_withSpecifiedInstance_deployed() throws Exception {
 
 		this.cll.applicationName = this.app.getName();
 		this.cll.scopedInstancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
 		this.cll.logLevelAsString = Level.INFO.toString();
+		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		// Hack for code coverage
 		this.cll.logger.setLevel( Level.FINE );
@@ -201,5 +225,28 @@ public class ChangeLogLevelCommandTest {
 
 		Assert.assertEquals( MsgCmdChangeLogLevel.class, msg.getValue().getClass());
 		Assert.assertEquals( this.cll.logLevelAsString, ((MsgCmdChangeLogLevel) msg.getValue()).getLogLevel());
+	}
+
+
+	@Test
+	public void testExecute_valid_withSpecifiedInstance_notDeployed() throws Exception {
+
+		this.cll.applicationName = this.app.getName();
+		this.cll.scopedInstancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		this.cll.logLevelAsString = Level.INFO.toString();
+
+		// Hack for code coverage
+		this.cll.logger.setLevel( Level.FINE );
+		// End of hack
+
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		this.cll.out = new PrintStream( os, true, "UTF-8" );
+
+		this.cll.execute();
+		Mockito.verify( this.applicationMngr, Mockito.times( 1 )).findManagedApplicationByName( this.cll.applicationName );
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+
+		String s = os.toString( "UTF-8" ).trim();
+		Assert.assertTrue( s.startsWith( "No message will be sent to " ));
 	}
 }

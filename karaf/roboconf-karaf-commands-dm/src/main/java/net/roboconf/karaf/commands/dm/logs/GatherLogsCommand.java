@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -94,6 +95,15 @@ public class GatherLogsCommand implements Action {
 
     	// Send messages
     	for( Instance inst : scopedInstances ) {
+
+    		if( inst.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
+    			StringBuilder sb = new StringBuilder( "No message will be sent to " );
+    			sb.append( this.scopedInstancePath );
+    			sb.append( ", the associated agent is not marked as deployed." );
+    			this.out.println( sb.toString());
+
+    			continue;
+    		}
 
     		if( this.logger.isLoggable( Level.FINE )) {
     			StringBuilder sb = new StringBuilder( "Sending a request to gather the logs from " );

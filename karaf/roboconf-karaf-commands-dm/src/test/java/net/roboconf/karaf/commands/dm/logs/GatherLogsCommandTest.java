@@ -31,6 +31,7 @@ import java.util.logging.Level;
 
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -132,7 +133,7 @@ public class GatherLogsCommandTest {
 
 
 	@Test
-	public void testExecute_valid_noSpecifiedInstance() throws Exception {
+	public void testExecute_valid_noSpecifiedInstance_notDeployed() throws Exception {
 
 		this.gl.applicationName = this.app.getName();
 		this.gl.scopedInstancePath = null;
@@ -142,10 +143,24 @@ public class GatherLogsCommandTest {
 
 		this.gl.execute();
 		Mockito.verify( this.applicationMngr, Mockito.times( 1 )).findManagedApplicationByName( this.gl.applicationName );
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+	}
 
-		String s = os.toString( "UTF-8" ).trim();
-		Assert.assertTrue( s.startsWith( "On reception" ));
-		Assert.assertTrue( s.endsWith( "/roboconf-logs..." ));
+
+	@Test
+	public void testExecute_valid_noSpecifiedInstance_allDeployed() throws Exception {
+
+		this.gl.applicationName = this.app.getName();
+		this.gl.scopedInstancePath = null;
+
+		for( Instance inst : InstanceHelpers.findAllScopedInstances( this.app ))
+			inst.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		this.gl.out = new PrintStream( os, true, "UTF-8" );
+
+		this.gl.execute();
+		Mockito.verify( this.applicationMngr, Mockito.times( 1 )).findManagedApplicationByName( this.gl.applicationName );
 
 		ArgumentCaptor<Message> msg = ArgumentCaptor.forClass( Message.class );
 		Mockito.verify( this.messagingMngr, Mockito.times( 2 )).sendMessageSafely(
@@ -154,14 +169,19 @@ public class GatherLogsCommandTest {
 				msg.capture());
 
 		Assert.assertEquals( MsgCmdGatherLogs.class, msg.getValue().getClass());
+
+		String s = os.toString( "UTF-8" ).trim();
+		Assert.assertTrue( s.startsWith( "On reception" ));
+		Assert.assertTrue( s.endsWith( "/roboconf-logs..." ));
 	}
 
 
 	@Test
-	public void testExecute_valid_withSpecifiedInstance() throws Exception {
+	public void testExecute_valid_withSpecifiedInstance_deployed() throws Exception {
 
 		this.gl.applicationName = this.app.getName();
 		this.gl.scopedInstancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+		this.app.getTomcatVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		// Hack for code coverage
 		this.gl.logger.setLevel( Level.FINE );
@@ -184,5 +204,29 @@ public class GatherLogsCommandTest {
 				msg.capture());
 
 		Assert.assertEquals( MsgCmdGatherLogs.class, msg.getValue().getClass());
+	}
+
+
+	@Test
+	public void testExecute_valid_withSpecifiedInstance_notDeployed() throws Exception {
+
+		this.gl.applicationName = this.app.getName();
+		this.gl.scopedInstancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
+
+		// Hack for code coverage
+		this.gl.logger.setLevel( Level.FINE );
+		// End of hack
+
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		this.gl.out = new PrintStream( os, true, "UTF-8" );
+
+		this.gl.execute();
+		Mockito.verify( this.applicationMngr, Mockito.times( 1 )).findManagedApplicationByName( this.gl.applicationName );
+		Mockito.verifyZeroInteractions( this.messagingMngr );
+
+		String s = os.toString( "UTF-8" ).trim();
+		Assert.assertTrue( s.startsWith( "No message will be sent to " ));
+		Assert.assertTrue( s.contains( "On reception" ));
+		Assert.assertTrue( s.endsWith( "/roboconf-logs..." ));
 	}
 }
