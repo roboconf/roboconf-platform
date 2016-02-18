@@ -109,7 +109,7 @@ public class ApplicationTemplateDescriptor {
 	}
 
 	/**
-	 * @param externalExportsPrefix the externalExportsPrefix to set
+	 * @param externalExportsId the externalExportsId to set
 	 */
 	public void setExternalExportsPrefix( String externalExportsId ) {
 		this.externalExportsPrefix = externalExportsId;

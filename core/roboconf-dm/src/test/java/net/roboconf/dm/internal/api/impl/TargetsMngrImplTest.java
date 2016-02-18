@@ -839,4 +839,37 @@ public class TargetsMngrImplTest {
 		items = this.mngr.findUsageStatistics( t3 );
 		Assert.assertEquals( 0, items.size());
 	}
+
+
+	@Test
+	public void verifyAssociationsPersistenceOnDissociation() throws Exception {
+
+		// Unit test for #579
+		// One target manager => write associations.
+		String targetId_1 = this.mngr.createTarget( "1" );
+		String targetId_2 = this.mngr.createTarget( "2" );
+		TestApplication app = new TestApplication();
+		String path = InstanceHelpers.computeInstancePath( app.getMySqlVm());
+
+		this.mngr.associateTargetWithScopedInstance( targetId_1, app, null );
+		this.mngr.associateTargetWithScopedInstance( targetId_2, app, path );
+
+		Assert.assertEquals( targetId_1, this.mngr.findTargetId( app, null, true ));
+		Assert.assertEquals( targetId_2, this.mngr.findTargetId( app, path, true ));
+
+		// Create another manager and verify the associations
+		ITargetsMngr newMngr = new TargetsMngrImpl( this.configurationMngr );
+		Assert.assertEquals( targetId_1, newMngr.findTargetId( app, null, true ));
+		Assert.assertEquals( targetId_2, newMngr.findTargetId( app, path, true ));
+
+		// Now, dissociate target_2 and the root instance
+		this.mngr.dissociateTargetFromScopedInstance( app, path );
+		Assert.assertEquals( targetId_1, this.mngr.findTargetId( app, null, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, path, true ));
+
+		// Create another manager and verify the associations
+		newMngr = new TargetsMngrImpl( this.configurationMngr );
+		Assert.assertEquals( targetId_1, this.mngr.findTargetId( app, null, true ));
+		Assert.assertNull( this.mngr.findTargetId( app, path, true ));
+	}
 }

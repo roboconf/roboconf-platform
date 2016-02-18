@@ -111,6 +111,7 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	/**
 	 * @return the graphs
 	 */
+	@Override
 	public Graphs getGraphs() {
 		return this.graphs;
 	}
@@ -130,7 +131,7 @@ public class ApplicationTemplate extends AbstractApplication implements Serializ
 	}
 
 	/**
-	 * @param externalId the externalExportsPrefix to set
+	 * @param externalExportsPrefix the externalExportsPrefix to set
 	 */
 	public void setExternalExportsPrefix( String externalExportsPrefix ) {
 		this.externalExportsPrefix = externalExportsPrefix;

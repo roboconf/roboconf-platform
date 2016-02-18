@@ -32,6 +32,27 @@ package net.roboconf.core;
 public interface Constants {
 
 	/**
+	 * The <strong>measures</strong> file extension.
+	 */
+	String FILE_EXT_MEASURES = ".measures";
+
+	/**
+	 * The <strong>commands</strong> file extension.
+	 */
+	String FILE_EXT_COMMANDS = ".commands";
+
+	/**
+	 * The <strong>properties</strong> file extension.
+	 */
+	String FILE_EXT_PROPERTIES = ".properties";
+
+	/**
+	 * The <strong>drl</strong> file extension.
+	 */
+	String FILE_EXT_RULE = ".drl";
+
+
+	/**
 	 * The wild card symbol (can be used in a component to reference any variable for a given group).
 	 */
 	String WILDCARD = "*";
@@ -44,7 +65,7 @@ public interface Constants {
 	/**
 	 * The name of the file that contain the target properties.
 	 */
-	String TARGET_PROPERTIES_FILE_NAME = "target.properties";
+	String TARGET_PROPERTIES_FILE_NAME = "target" + FILE_EXT_PROPERTIES;
 
 	/**
 	 * The {@value #TARGET_PROPERTY_HANDLER} property in {@value #TARGET_PROPERTIES_FILE_NAME} files.
@@ -100,22 +121,7 @@ public interface Constants {
 	/**
 	 * The <strong>application.properties</strong> file name.
 	 */
-	String PROJECT_FILE_DESCRIPTOR = "application.properties";
-
-	/**
-	 * The <strong>measures</strong> file extension.
-	 */
-	String FILE_EXT_MEASURES = ".measures";
-
-	/**
-	 * The <strong>commands</strong> file extension.
-	 */
-	String FILE_EXT_COMMANDS = ".commands";
-
-	/**
-	 * The <strong>drl</strong> file extension.
-	 */
-	String FILE_EXT_RULE = ".drl";
+	String PROJECT_FILE_DESCRIPTOR = "application" + FILE_EXT_PROPERTIES;
 
 
 	/**

@@ -93,7 +93,7 @@ public final class DockerfileParser {
 
 		/**
 		 * @param line
-		 * @return
+		 * @return a Docker command, or null if none matched
 		 */
 		public static DockerCommand guess( String line ) {
 

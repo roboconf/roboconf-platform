@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ApplicationTemplateDescriptor;
@@ -49,10 +48,12 @@ import net.roboconf.dm.management.exceptions.AlreadyExistingException;
 import net.roboconf.dm.management.exceptions.InvalidApplicationException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 /**
@@ -362,7 +363,7 @@ public class ApplicationTemplateMngrImplTest {
 
 
 	@Test
-	public void testRegisterTargets_withTarget() throws Exception {
+	public void testRegisterTargets_oneRootComponent_withOneTarget_default() throws Exception {
 
 		File tplDir = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES + "/Legacy LAMP - sample" );
 		Assert.assertTrue( tplDir.mkdirs());
@@ -377,6 +378,7 @@ public class ApplicationTemplateMngrImplTest {
 
 		Mockito.when( this.targetsMngr.createTarget( Mockito.any( File.class ))).thenReturn( "the_id" );
 
+		// Load the template
 		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
 		ApplicationTemplate tpl = this.mngr.loadApplicationTemplate( tplDir );
 		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
@@ -393,9 +395,275 @@ public class ApplicationTemplateMngrImplTest {
 		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
 		Assert.assertEquals( 3, scopedInstances.size());
 
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, null );
 		for( Instance scopedInstance : scopedInstances ) {
 			String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
 		}
+	}
+
+
+	@Test
+	public void testRegisterTargets_oneRootComponent_withOneTarget_notDefault() throws Exception {
+
+		File tplDir = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES + "/Legacy LAMP - sample" );
+		Assert.assertTrue( tplDir.mkdirs());
+
+		File toCopy = TestUtils.findApplicationDirectory( "lamp" );
+		Utils.copyDirectory( toCopy, tplDir );
+
+		// The VM directory MUST exist for this test.
+		// Unlike the previous test, the target properties are not located in "target.properties".
+		File targetPropertiesFile = new File( tplDir, "graph/VM/notDefault.properties" );
+		Assert.assertTrue( targetPropertiesFile.getParentFile().mkdirs());
+		Utils.writeStringInto( "", targetPropertiesFile );
+
+		Mockito.when( this.targetsMngr.createTarget( Mockito.any( File.class ))).thenReturn( "the_id" );
+
+		// Load the template
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		ApplicationTemplate tpl = this.mngr.loadApplicationTemplate( tplDir );
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		Assert.assertEquals( "Legacy LAMP", tpl.getName());
+		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertNotNull( tpl.getGraphs());
+		Assert.assertFalse( tpl.getRootInstances().isEmpty());
+
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id", tpl );
+
+		Application app = new Application( tpl );
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
+		Assert.assertEquals( 3, scopedInstances.size());
+
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, null );
+		for( Instance scopedInstance : scopedInstances ) {
+			String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
+		}
+	}
+
+
+	@Test
+	public void testRegisterTargets_oneRootComponent_withSeveralTargets_noDefault() throws Exception {
+
+		File tplDir = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES + "/Legacy LAMP - sample" );
+		Assert.assertTrue( tplDir.mkdirs());
+
+		File toCopy = TestUtils.findApplicationDirectory( "lamp" );
+		Utils.copyDirectory( toCopy, tplDir );
+
+		// The VM directory MUST exist for this test
+		File dir = new File( tplDir, "graph/VM" );
+		Assert.assertTrue( dir.mkdirs());
+
+		// Create several targets
+		final int targetCpt = 4;
+		for( int i=1; i<=targetCpt; i++ ) {
+			File targetPropertiesFile = new File( dir, "target" + i + ".properties" );
+			Utils.writeStringInto( "", targetPropertiesFile );
+			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
+		}
+
+		// Load the template
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		ApplicationTemplate tpl = this.mngr.loadApplicationTemplate( tplDir );
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		Assert.assertEquals( "Legacy LAMP", tpl.getName());
+		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertNotNull( tpl.getGraphs());
+		Assert.assertFalse( tpl.getRootInstances().isEmpty());
+
+		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt )).createTarget( Mockito.any( File.class ));
+		for( int i=1; i<=targetCpt; i++ )
+			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_" + i, tpl );
+
+		// No target should have been associated (several ones, which one would be the default?)
+		Application app = new Application( tpl );
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
+		Assert.assertEquals( 3, scopedInstances.size());
+
+		for( int i=1; i<=targetCpt; i++ ) {
+			String tid = "the_id_" + i;
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, null );
+			for( Instance scopedInstance : scopedInstances ) {
+				String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+				Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, instancePath );
+			}
+		}
+	}
+
+
+	@Test
+	public void testRegisterTargets_oneRootComponent_withSeveralTargets_withDefault() throws Exception {
+
+		File tplDir = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES + "/Legacy LAMP - sample" );
+		Assert.assertTrue( tplDir.mkdirs());
+
+		File toCopy = TestUtils.findApplicationDirectory( "lamp" );
+		Utils.copyDirectory( toCopy, tplDir );
+
+		// The VM directory MUST exist for this test
+		File dir = new File( tplDir, "graph/VM" );
+		Assert.assertTrue( dir.mkdirs());
+
+		// Create several targets
+		final int targetCpt = 4;
+		for( int i=1; i<=targetCpt; i++ ) {
+			File targetPropertiesFile = new File( dir, "target" + i + ".properties" );
+			Utils.writeStringInto( "", targetPropertiesFile );
+			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
+		}
+
+		File targetPropertiesFile = new File( dir, Constants.TARGET_PROPERTIES_FILE_NAME );
+		Utils.writeStringInto( "", targetPropertiesFile );
+		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id" );
+
+		// Load the template
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		ApplicationTemplate tpl = this.mngr.loadApplicationTemplate( tplDir );
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		Assert.assertEquals( "Legacy LAMP", tpl.getName());
+		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertNotNull( tpl.getGraphs());
+		Assert.assertFalse( tpl.getRootInstances().isEmpty());
+
+		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt + 1 )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id", tpl );
+		for( int i=1; i<=targetCpt; i++ )
+			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_" + i, tpl );
+
+		// The default target should have been associated (other ones will only have been registered)
+		Application app = new Application( tpl );
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
+		Assert.assertEquals( 3, scopedInstances.size());
+
+		for( int i=1; i<=targetCpt; i++ ) {
+			String tid = "the_id_" + i;
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, null );
+			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).associateTargetWithScopedInstance( "the_id", tpl, null );
+			for( Instance scopedInstance : scopedInstances ) {
+				String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+				Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( tid, tpl, instancePath );
+				Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance( "the_id", tpl, instancePath );
+			}
+		}
+	}
+
+
+	@Test
+	public void testRegisterTargets_severalRootComponents_withSeveralTargets_noDefault() throws Exception {
+
+		File tplDir = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES + "/Legacy LAMP - sample" );
+		Assert.assertTrue( tplDir.mkdirs());
+
+		File toCopy = TestUtils.findApplicationDirectory( "lamp" );
+		Utils.copyDirectory( toCopy, tplDir );
+
+		// The VM directory MUST exist for this test
+		File dir = new File( tplDir, "graph/VM" );
+		Assert.assertTrue( dir.mkdirs());
+
+		// A single target for the original root component
+		File targetPropertiesFile = new File( dir, "test.properties" );
+		Utils.writeStringInto( "", targetPropertiesFile );
+		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_original" );
+
+		// Create a new root component
+		dir = new File( tplDir, "graph/VM-bis" );
+		Assert.assertTrue( dir.mkdirs());
+
+		final int targetCpt = 4;
+		for( int i=1; i<=targetCpt; i++ ) {
+			targetPropertiesFile = new File( dir, "target" + i + ".properties" );
+			Utils.writeStringInto( "", targetPropertiesFile );
+			Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_" + i );
+		}
+
+		// Create a sibling file with the wrong extension, it should not be picked up.
+		Utils.writeStringInto( "", new File( dir, "invalid.extension" ));
+
+		// Update the graph
+		File graphFile = new File( tplDir, "graph/lamp.graph" );
+		Assert.assertTrue( graphFile.exists());
+		String s = Utils.readFileContent( graphFile );
+		s += "\n\nVM-bis {\ninstaller: target;\n}\n";
+		Utils.writeStringInto( s, graphFile );
+
+		// Load the template
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		ApplicationTemplate tpl = this.mngr.loadApplicationTemplate( tplDir );
+		Assert.assertEquals( 1, this.mngr.getApplicationTemplates().size());
+
+		Assert.assertEquals( "Legacy LAMP", tpl.getName());
+		Assert.assertEquals( "sample", tpl.getQualifier());
+		Assert.assertNotNull( tpl.getGraphs());
+		Assert.assertFalse( tpl.getRootInstances().isEmpty());
+
+		Mockito.verify( this.targetsMngr, Mockito.times( targetCpt + 1 )).createTarget( Mockito.any( File.class ));
+		Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_original", tpl );
+		for( int i=1; i<=targetCpt; i++ )
+			Mockito.verify( this.targetsMngr, Mockito.times( 1 )).addHint( "the_id_" + i, tpl );
+
+		// There should be no default target for the application (several components).
+		// Instances should not be associated with any target since there were several ones.
+		Application app = new Application( tpl );
+		List<Instance> scopedInstances = InstanceHelpers.findAllScopedInstances( app );
+		Assert.assertEquals( 3, scopedInstances.size());
+
+		for( int i=1; i<=targetCpt; i++ ) {
+			String tid = "the_id_" + i;
+			Mockito.verify( this.targetsMngr, Mockito.times( 0 )).associateTargetWithScopedInstance(
+					Mockito.eq( tid ),
+					Mockito.any( ApplicationTemplate.class ),
+					Mockito.anyString());
+		}
+
+		ArgumentCaptor<String> targetId = ArgumentCaptor.forClass( String.class );
+		Mockito.verify( this.targetsMngr, Mockito.times( 3 )).associateTargetWithScopedInstance(
+				targetId.capture(),
+				Mockito.any( ApplicationTemplate.class ),
+				Mockito.anyString());
+
+		// 3 scoped instances => 3 registrations.
+		// This is because there are several root components with targets => no default target for the app.
+		// And there is only one target for the scoped instances' component => they are registered with it.
+		for( String value : targetId.getAllValues())
+			Assert.assertEquals( "the_id_original", value );
+	}
+
+
+	@Test( expected = InvalidApplicationException.class )
+	public void testRegisterTargets_errorDuringAssociation() throws Exception {
+
+		File tplDir = new File( this.dmDirectory, ConfigurationUtils.TEMPLATES + "/Legacy LAMP - sample" );
+		Assert.assertTrue( tplDir.mkdirs());
+
+		File toCopy = TestUtils.findApplicationDirectory( "lamp" );
+		Utils.copyDirectory( toCopy, tplDir );
+
+		// The VM directory MUST exist for this test
+		File dir = new File( tplDir, "graph/VM" );
+		Assert.assertTrue( dir.mkdirs());
+
+		File targetPropertiesFile = new File( dir, "test.properties" );
+		Utils.writeStringInto( "", targetPropertiesFile );
+		Mockito.when( this.targetsMngr.createTarget( targetPropertiesFile )).thenReturn( "the_id_original" );
+
+		// All the conditions are met to register this target with the root instances.
+		// Throw an exception when we try an association.
+		Mockito.doThrow( new UnauthorizedActionException( "for test" ))
+				.when( this.targetsMngr )
+				.associateTargetWithScopedInstance(
+						Mockito.anyString(),
+						Mockito.any( ApplicationTemplate.class ),
+						Mockito.anyString());
+
+		// Load the template
+		Assert.assertEquals( 0, this.mngr.getApplicationTemplates().size());
+		this.mngr.loadApplicationTemplate( tplDir );
 	}
 }
