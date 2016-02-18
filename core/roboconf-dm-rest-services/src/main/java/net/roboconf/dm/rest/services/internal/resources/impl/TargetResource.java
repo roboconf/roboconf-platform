@@ -71,10 +71,6 @@ public class TargetResource implements ITargetResource {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
-	 * #listTargets(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public List<TargetWrapperDescriptor> listTargets( String name, String qualifier ) {
 
@@ -98,10 +94,6 @@ public class TargetResource implements ITargetResource {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
-	 * #createOrUpdateTarget(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public Response createOrUpdateTarget( String rawProperties, String targetId ) {
 
@@ -129,10 +121,6 @@ public class TargetResource implements ITargetResource {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
-	 * #deleteTarget(java.lang.String)
-	 */
 	@Override
 	public Response deleteTarget( String targetId ) {
 
@@ -150,10 +138,6 @@ public class TargetResource implements ITargetResource {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
-	 * #getTargetProperties(java.lang.String)
-	 */
 	@Override
 	public Response getTargetProperties( String targetId ) {
 
@@ -169,11 +153,6 @@ public class TargetResource implements ITargetResource {
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
-	 * #findTargetById(java.lang.String)
-	 */
 	@Override
 	public Response findTargetById( String targetId ) {
 
@@ -189,11 +168,6 @@ public class TargetResource implements ITargetResource {
 	}
 
 
-	/*
-	 * (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
-	 * #associateTarget(java.lang.String, java.lang.String, java.lang.String, java.lang.String, boolean)
-	 */
 	@Override
 	public Response associateTarget( String name, String qualifier, String instancePath, String targetId, boolean bind ) {
 
@@ -221,10 +195,6 @@ public class TargetResource implements ITargetResource {
 	}
 
 
-	/* (non-Javadoc)
-	 * @see net.roboconf.dm.rest.services.internal.resources.ITargetResource
-	 * #updateHint(java.lang.String, java.lang.String, java.lang.String, boolean)
-	 */
 	@Override
 	public Response updateHint( String name, String qualifier, String targetId, boolean bind ) {
 

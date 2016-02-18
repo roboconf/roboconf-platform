@@ -30,11 +30,13 @@ import java.util.Set;
 
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
+import net.roboconf.dm.rest.services.internal.resources.IApplicationCommandsResource;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
+import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationCommandsResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ManagementResource;
@@ -49,6 +51,7 @@ import com.sun.jersey.api.core.ResourceConfig;
  */
 public class RestApplication extends DefaultResourceConfig {
 
+	private final IApplicationCommandsResource applicationCommandsResource;
 	private final IApplicationResource applicationResource;
 	private final IManagementResource managementResource;
 	private final IDebugResource debugResource;
@@ -68,6 +71,7 @@ public class RestApplication extends DefaultResourceConfig {
 		this.debugResource = new DebugResource( manager );
 		this.targetResource = new TargetResource( manager );
 		this.preferencesResource = new PreferencesResource( manager );
+		this.applicationCommandsResource = new ApplicationCommandsResource( manager );
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
@@ -96,6 +100,7 @@ public class RestApplication extends DefaultResourceConfig {
 		set.add( this.debugResource );
 		set.add( this.targetResource );
 		set.add( this.preferencesResource );
+		set.add( this.applicationCommandsResource );
 
 		return set;
 	}

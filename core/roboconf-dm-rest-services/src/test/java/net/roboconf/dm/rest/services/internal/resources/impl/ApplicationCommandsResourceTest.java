@@ -25,12 +25,15 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
@@ -82,24 +85,80 @@ public class ApplicationCommandsResourceTest {
 	@Test
 	public void commandsTest() throws IOException {
 
+		// Inexisting application
+		Application inexisting = new Application( "inexisting", this.app.getTemplate());
+		Assert.assertEquals( 0, this.resource.listCommands( inexisting.getName()).size());
+
+		// With a real application
 		Response resp = this.resource.getCommandInstructions(this.app.getName(), "");
 		Assert.assertEquals( Status.NO_CONTENT.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.resource.listCommands( this.app.getName()).size());
 
+		// Add a command
 		resp = this.resource.createOrUpdateCommand(this.app.getName(), "toto", "this is a command");
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
 		Assert.assertEquals( "this is a command", resp.getEntity());
 
+		List<String> commandsList = this.resource.listCommands( this.app.getName());
+		Assert.assertEquals( 1, commandsList.size());
+		Assert.assertEquals( "toto", commandsList.get( 0 ));
 
+		// Update a command
 		resp = this.resource.createOrUpdateCommand(this.app.getName(), "toto", "Good command");
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
 		Assert.assertEquals( "Good command",resp.getEntity());
 
+		// Delete it
 		resp = this.resource.deleteCommand(this.app.getName(), "toto");
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
 		Assert.assertEquals( Status.NO_CONTENT.getStatusCode(), resp.getStatus());
 		Assert.assertEquals( null, resp.getEntity());
+		Assert.assertEquals( 0, this.resource.listCommands( this.app.getName()).size());
+	}
+
+
+	@Test
+	public void testExecuteCommand_inexistingApplication() throws Exception {
+
+		Response resp = this.resource.executeCommand( "inexisting", "cmd" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testExecuteCommand_inexistingCommand() throws Exception {
+
+		Response resp = this.resource.executeCommand( this.app.getName(), "cmd" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testExecuteCommand_executionError() throws Exception {
+
+		Response resp = this.resource.createOrUpdateCommand(this.app.getName(), "toto", "Good command");
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		resp = this.resource.executeCommand( this.app.getName(), "toto" );
+		Assert.assertEquals( Status.CONFLICT.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testExecuteCommand_success() throws Exception {
+
+		File f = this.folder.newFile();
+		Assert.assertTrue( f.delete());
+
+		Response resp = this.resource.createOrUpdateCommand(this.app.getName(), "toto", "Write this into " + f.getAbsolutePath());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+
+		Assert.assertFalse( f.exists());
+		resp = this.resource.executeCommand( this.app.getName(), "toto" );
+		Assert.assertTrue( f.exists());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 	}
 }

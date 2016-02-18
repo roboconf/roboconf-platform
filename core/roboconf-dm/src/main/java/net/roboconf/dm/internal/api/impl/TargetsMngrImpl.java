@@ -518,7 +518,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		// Remove the old association, always.
 		if( instancePath != null ) {
-			String oldTargetId = this.instanceToCachedId.get( key );
+			String oldTargetId = this.instanceToCachedId.remove( key );
 			if( oldTargetId != null ) {
 				File associationFile = new File( findTargetDirectory( oldTargetId ), TARGETS_ASSOC_FILE );
 				Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
@@ -535,9 +535,6 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			writeProperties( props, associationFile );
 
 			this.instanceToCachedId.put( key, targetId );
-
-		} else if( instancePath != null ) {
-			this.instanceToCachedId.remove( key );
 		}
 	}
 

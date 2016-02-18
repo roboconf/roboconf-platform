@@ -26,6 +26,7 @@
 package net.roboconf.dm.management.api;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -67,6 +68,14 @@ public interface ICommandsMngr {
 
 
 	/**
+	 * Lists available commands.
+	 * @param app an application name
+	 * @return a non-null list
+	 */
+	List<String> listCommands( Application app );
+
+
+	/**
 	 * Gets the instructions contained by a command.
 	 * @param app the associated application
 	 * @param commandName the command name
@@ -94,8 +103,9 @@ public interface ICommandsMngr {
 	 * @param app the associated application
 	 * @param commandName a command name
 	 * @throws CommandException if execution failed
+	 * @throws NoSuchFileException if there is no such command
 	 */
-	void execute( Application app, String commandName ) throws CommandException;
+	void execute( Application app, String commandName ) throws CommandException, NoSuchFileException;
 
 
 	/**
@@ -104,8 +114,10 @@ public interface ICommandsMngr {
 	 * @param commandName a command name
 	 * @param executionContext an execution context to define some constraints on commands
 	 * @throws CommandException if execution failed
+	 * @throws NoSuchFileException if there is no such command
 	 */
-	void execute( Application app, String commandName, CommandExecutionContext executionContext ) throws CommandException;
+	void execute( Application app, String commandName, CommandExecutionContext executionContext )
+	throws CommandException, NoSuchFileException;
 
 
 	/**

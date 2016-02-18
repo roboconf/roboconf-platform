@@ -74,7 +74,7 @@ public class DebugResource implements IDebugResource {
 	@Override
 	public Response checkMessagingConnectionForTheDm( String message ) {
 
-		this.logger.fine( "Checking connection to the message queue. message=" + message );
+		this.logger.fine( "Request: check the connection to the message queue. message=" + message );
 		Response response;
 		if( this.manager.debugMngr().pingMessageQueue( message ))
 			response = Response.status( Status.OK ).entity( "An Echo message (" + message + ") was sent. Wait for the echo on websocket." ).build();
@@ -96,7 +96,7 @@ public class DebugResource implements IDebugResource {
 			String scopedInstancePath,
 			String message ) {
 
-		this.logger.fine( "Checking connection with agent " + applicationName + " :: " + scopedInstancePath + ". message=" + message );
+		this.logger.fine( "Request: check the connection with agent " + applicationName + " :: " + scopedInstancePath + ". message=" + message );
 		final ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
 		Response response;
 		int pingResult;
@@ -124,7 +124,7 @@ public class DebugResource implements IDebugResource {
 	@Override
 	public Response diagnoseInstance( String applicationName, String instancePath ) {
 
-		this.logger.fine( "Creating a diagnostic for " + instancePath + " in application " + applicationName );
+		this.logger.fine( "Request: create a diagnostic for " + instancePath + " in application " + applicationName );
 		final Application application = this.manager.applicationMngr().findApplicationByName( applicationName );
 		final Instance instance;
 		final Response response;
@@ -148,7 +148,7 @@ public class DebugResource implements IDebugResource {
 	@Override
 	public List<Diagnostic> diagnoseApplication( String applicationName ) {
 
-		this.logger.fine( "Creating a diagnostic for the application called " + applicationName + "." );
+		this.logger.fine( "Request: create a diagnostic for the application called " + applicationName + "." );
 		List<Diagnostic> result = new ArrayList<Diagnostic> ();
 		final Application application = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( application != null ) {

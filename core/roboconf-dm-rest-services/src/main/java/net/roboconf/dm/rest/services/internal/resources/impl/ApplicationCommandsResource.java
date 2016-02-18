@@ -26,14 +26,19 @@
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.exceptions.CommandException;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationCommandsResource;
 
@@ -57,9 +62,54 @@ public class ApplicationCommandsResource implements IApplicationCommandsResource
 
 
 	@Override
+	public List<String> listCommands( String app ) {
+
+		this.logger.fine("Request: list all the commands in the " + app + " application.");
+		List<String> result;
+		Application application = this.manager.applicationMngr().findApplicationByName( app );
+		if( application == null )
+			result = new ArrayList<>( 0 );
+		else
+			result = this.manager.commandsMngr().listCommands( application );
+
+		return result;
+	}
+
+
+	@Override
+	public Response executeCommand( String app, String commandName ) {
+
+		this.logger.fine("Request: execute command " + commandName + " in the " + app + " application.");
+		Response response = Response.ok().build();
+		try {
+			Application application = this.manager.applicationMngr().findApplicationByName( app );
+			if( application == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + app + " does not exist." ).build();
+			else
+				this.manager.commandsMngr().execute( application, commandName );
+
+		} catch( NoSuchFileException e ) {
+			response = RestServicesUtils.handleException(
+					this.logger, Status.NOT_FOUND,
+					"Command " + commandName + " does not exist.", e ).build();
+
+		} catch( CommandException e ) {
+			response = RestServicesUtils.handleException(
+					this.logger, Status.CONFLICT,
+					"Command " + commandName + " encountered an error during its execution.", e ).build();
+
+		} catch( Exception e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	@Override
 	public Response createOrUpdateCommand(String app, String commandName, String commandText) {
 
-		this.logger.fine("Create or update command "+commandName+" in "+app+" application");
+		this.logger.fine("Request: create or update command " + commandName + " in the " + app + " application.");
 		Response response = Response.ok().build();
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
@@ -79,7 +129,7 @@ public class ApplicationCommandsResource implements IApplicationCommandsResource
 	@Override
 	public Response deleteCommand(String app, String commandName) {
 
-		this.logger.fine("Delete the command "+commandName);
+		this.logger.fine("Request: delete the command " + commandName + " in the " + app + " application.");
 		Response response = Response.ok().build();
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
@@ -99,7 +149,7 @@ public class ApplicationCommandsResource implements IApplicationCommandsResource
 	@Override
 	public Response getCommandInstructions(String app, String commandName) {
 
-		this.logger.fine("Get instructions contained in "+commandName);
+		this.logger.fine("Request: get instructions from " + commandName + " in the " + app + " application.");
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
