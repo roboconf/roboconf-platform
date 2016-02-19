@@ -27,6 +27,8 @@ package net.roboconf.dm.internal.api.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
 import java.util.List;
 
 import net.roboconf.core.Constants;
@@ -74,6 +76,25 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 
 	@Override
+	public List<String> listCommands( Application app ) {
+
+		List<String> result = new ArrayList<> ();
+		File cmdDir = new File( app.getDirectory(), Constants.PROJECT_DIR_COMMANDS );
+
+		if( cmdDir.isDirectory()) {
+			for( File f : Utils.listAllFiles( cmdDir )) {
+				if( f.getName().endsWith( Constants.FILE_EXT_COMMANDS )) {
+					String cmdName = f.getName().replace( Constants.FILE_EXT_COMMANDS, "" );
+					result.add( cmdName );
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	@Override
 	public String getCommandInstructions( Application app, String commandName ) throws IOException {
 
 		File cmdFile = findCommandFile( app, commandName );
@@ -91,16 +112,20 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 
 	@Override
-	public void execute( Application app, String commandName ) throws CommandException {
+	public void execute( Application app, String commandName )
+	throws CommandException, NoSuchFileException {
 		execute( app, commandName, null );
 	}
 
 
 	@Override
 	public void execute( Application app, String commandName, CommandExecutionContext executionContext )
-	throws CommandException {
+	throws CommandException, NoSuchFileException {
 
 		File cmdFile = findCommandFile( app, commandName );
+		if( ! cmdFile.isFile())
+			throw new NoSuchFileException( cmdFile.getAbsolutePath());
+
 		CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile, executionContext );
 		executor.execute();
 	}

@@ -25,7 +25,7 @@
 
 package net.roboconf.dm.rest.services.internal.resources;
 
-import java.io.IOException;
+import java.util.List;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -45,12 +45,26 @@ public interface IApplicationCommandsResource {
 
 	String PATH = "/" + UrlConstants.APP + "/{name}/commands";
 
+
+	/**
+	 * Lists all the available commands for an application.
+	 * @param app the associated application
+	 * @return a non-null list of commands
+	 *
+	 * @HTTP 200 everything went fine
+	 */
+	@GET
+	List<String> listCommands( @PathParam("name") String app );
+
+
 	/**
 	 * Creates or updates a command from its instructions.
 	 * @param app the associated application
 	 * @param commandName the command name (must be unique)
 	 * @param commandText the instructions contained in the command (must be valid)
-	 * @throws IOException if something went wrong
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
 	 */
 	@POST
 	Response createOrUpdateCommand(@PathParam("name") String app, @QueryParam("command-name") String commandName, String commandText);
@@ -60,7 +74,9 @@ public interface IApplicationCommandsResource {
 	 * Deletes a command.
 	 * @param app the associated application
 	 * @param commandName the command name
-	 * @throws IOException if something went wrong
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
 	 */
 	@DELETE
 	@Path( "{command-name}" )
@@ -72,9 +88,31 @@ public interface IApplicationCommandsResource {
 	 * @param app the associated application
 	 * @param commandName the command name
 	 * @return the commands content (never null)
-	 * @throws IOException if something went wrong
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 204 no instruction was found
 	 */
 	@GET
 	@Path( "{command-name}" )
-	Response getCommandInstructions(@PathParam("name") String app,@PathParam("command-name") String commandName);
+	Response getCommandInstructions(@PathParam("name") String app, @PathParam("command-name") String commandName);
+
+
+	/**
+	 * Executes a given command.
+	 * @param app the associated application
+	 * @param commandName the command name
+	 * @return a response indicating if the command is about to be executed.
+	 * <p>
+	 * The result does not indicate whether the command was successfully executed.
+	 * Commands may take time to be run. If the application and the command was found,
+	 * then this operation is considered as successful.
+	 * </p>
+	 *
+	 * @HTTP 200 the command was found and successfully executed
+	 * @HTTP 404 the application or the command was not found
+	 * @HTTP 409 if the command execution failed
+	 */
+	@POST
+	@Path( "{command-name}" )
+	Response executeCommand(@PathParam("name") String app, @PathParam("command-name") String commandName);
 }

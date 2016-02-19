@@ -34,7 +34,6 @@ import java.util.Timer;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
@@ -60,6 +59,7 @@ import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -641,7 +641,7 @@ public class ApplicationResourceTest {
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
 
 			Assert.assertEquals( path, ta.getInstancePath());
-			Assert.assertEquals( targetId, ta.getTargetDescriptor().getId());
+			Assert.assertNull( ta.getTargetDescriptor());
 		}
 
 		ta = associations.get( 0 );
@@ -666,7 +666,7 @@ public class ApplicationResourceTest {
 				Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());
 				foundCustomInstance = true;
 			} else {
-				Assert.assertEquals( targetId, ta.getTargetDescriptor().getId());
+				Assert.assertNull( ta.getTargetDescriptor());
 			}
 		}
 
@@ -679,15 +679,21 @@ public class ApplicationResourceTest {
 		this.manager.targetsMngr().associateTargetWithScopedInstance( newTargetId, this.app, null );
 		associations = this.resource.findTargetAssociations( this.app.getName());
 
+		foundCustomInstance = false;
 		for( int i=0; i<scopedInstances.size(); i++ ) {
-
 			ta = associations.get( i + 1 );
 			String path = InstanceHelpers.computeInstancePath( scopedInstances.get( i ));
-
 			Assert.assertEquals( path, ta.getInstancePath());
-			Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());
+
+			if( instancePath.equals( path )) {
+				Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());
+				foundCustomInstance = true;
+			} else {
+				Assert.assertNull( ta.getTargetDescriptor());
+			}
 		}
 
+		Assert.assertTrue( foundCustomInstance );
 		ta = associations.get( 0 );
 		Assert.assertEquals( "", ta.getInstancePath());
 		Assert.assertEquals( newTargetId, ta.getTargetDescriptor().getId());

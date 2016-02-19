@@ -33,7 +33,6 @@ import java.util.Map;
 
 import javax.ws.rs.core.Response.Status;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -50,6 +49,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -330,7 +330,7 @@ public class ManagementResourceTest {
 
 		this.msgClient.connected.set( false );
 		Assert.assertEquals(
-				Status.FORBIDDEN.getStatusCode(),
+				Status.UNAUTHORIZED.getStatusCode(),
 				this.resource.createApplication( new Application( null )).getStatus());
 
 		Assert.assertEquals( 0, this.resource.listApplicationTemplates().size());

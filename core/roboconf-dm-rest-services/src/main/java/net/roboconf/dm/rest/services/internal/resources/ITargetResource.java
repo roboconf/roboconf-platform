@@ -69,6 +69,8 @@ public interface ITargetResource {
 	 * @param applicationName an optional application name
 	 * @param qualifier an optional qualifier, if we want to list targets for a given application template
 	 * @return a non-null list of target descriptions
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
@@ -82,6 +84,9 @@ public interface ITargetResource {
 	 * @param rawProperties the target's properties
 	 * @param targetId an optional target ID (not specified =&gt; will be created)
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 403 invalid target ID or target still in use
 	 */
 	@POST
 	Response createOrUpdateTarget( String rawProperties, @QueryParam("target-id") String targetId );
@@ -91,6 +96,9 @@ public interface ITargetResource {
 	 * Deletes a target.
 	 * @param targetId a non-null target ID
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 403 the target is still in use
 	 */
 	@DELETE
 	@Path( "{target-id}" )
@@ -101,6 +109,9 @@ public interface ITargetResource {
 	 * Gets the target properties.
 	 * @param targetId a non-null target ID
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine (with the properties)
+	 * @HTTP 404 the target was not found
 	 */
 	@GET
 	@Path( "{target-id}" )
@@ -111,6 +122,9 @@ public interface ITargetResource {
 	 * Gets general information about a target.
 	 * @param targetId a non-null target ID
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine (with a description of the target)
+	 * @HTTP 404 the target was not found
 	 */
 	@GET
 	@Path( "{target-id}/details" )
@@ -128,6 +142,10 @@ public interface ITargetResource {
 	 * @param targetId a target ID (useless when <code>bind</code> is false)
 	 * @param bind true if we should create the association, false to delete it
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 400 no application or application template was found
+	 * @HTTP 403 the association could not be created
 	 */
 	@Path( "{target-id}/associations" )
 	@POST
@@ -149,6 +167,8 @@ public interface ITargetResource {
 	 * @param targetId a target ID
 	 * @param bind true if we should create the association, false to delete it
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@Path( "{target-id}/hints" )
 	@POST
@@ -161,6 +181,12 @@ public interface ITargetResource {
 
 	// Diagnostics
 
+	/**
+	 * Finds statistics about target usage.
+	 * @param targetId a target ID
+	 * @return a non-null list of target usage
+	 * @HTTP 200 everything went fine
+	 */
 	@GET
 	@Path( "{target-id}/usage" )
 	@Produces( MediaType.APPLICATION_JSON )

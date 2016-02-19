@@ -298,15 +298,21 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 
 	@Override
-	public String findTargetId( AbstractApplication app, String instancePath ) {
+	public String findTargetId( AbstractApplication app, String instancePath, boolean strict ) {
 
 		InstanceContext key = new InstanceContext( app, instancePath );
 		String targetId = this.instanceToCachedId.get( key );
-		if( targetId == null )
+		if( targetId == null && ! strict )
 			key = new InstanceContext( app, (String) null );
 
 		targetId = this.instanceToCachedId.get( key );
 		return targetId;
+	}
+
+
+	@Override
+	public String findTargetId( AbstractApplication app, String instancePath ) {
+		return findTargetId( app, instancePath, false );
 	}
 
 
@@ -512,7 +518,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 
 		// Remove the old association, always.
 		if( instancePath != null ) {
-			String oldTargetId = this.instanceToCachedId.get( key );
+			String oldTargetId = this.instanceToCachedId.remove( key );
 			if( oldTargetId != null ) {
 				File associationFile = new File( findTargetDirectory( oldTargetId ), TARGETS_ASSOC_FILE );
 				Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
@@ -529,9 +535,6 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			writeProperties( props, associationFile );
 
 			this.instanceToCachedId.put( key, targetId );
-
-		} else if( instancePath != null ) {
-			this.instanceToCachedId.remove( key );
 		}
 	}
 

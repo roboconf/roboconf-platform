@@ -64,6 +64,10 @@ public interface IApplicationResource {
 	 * @param newState the new state (see {@link InstanceStatus})
 	 * @param instancePath the instance path (not null)
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance was not found
+	 * @HTTP 403 invalid state or permission issue
 	 */
 	@POST
 	@Path( "/change-state" )
@@ -75,6 +79,10 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @param desc the new description
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
+	 * @HTTP 403 the application's description could not be updated
 	 */
 	@POST
 	@Path( "/description" )
@@ -86,6 +94,10 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance was not found
+	 * @HTTP 403 invalid state or permission issue
 	 */
 	@POST
 	@Path( "/deploy-all" )
@@ -97,6 +109,10 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance was not found
+	 * @HTTP 403 invalid state or permission issue
 	 */
 	@POST
 	@Path( "/stop-all" )
@@ -108,6 +124,10 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance was not found
+	 * @HTTP 403 invalid state or permission issue
 	 */
 	@POST
 	@Path( "/undeploy-all" )
@@ -120,6 +140,10 @@ public interface IApplicationResource {
 	 * @param parentInstancePath the path of the parent instance (optional, null to consider the application as the root)
 	 * @param instance the new instance
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance's component was not found
+	 * @HTTP 403 the insertion does not comply with the graph definition
 	 */
 	@POST
 	@Path( "/instances" )
@@ -132,6 +156,11 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @param instancePath the path of the instance to remove
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application or the instance was not found
+	 * @HTTP 403 invalid instance state
+	 * @HTTP 406 the request could not be handled
 	 */
 	@DELETE
 	@Path( "/instances" )
@@ -141,7 +170,9 @@ public interface IApplicationResource {
 	/**
 	 * Finds the associations between the application "scoped" instances and targets.
 	 * @param applicationName the application name
-	 * @return a response
+	 * @return a non-null list of target associations
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Path( "/targets" )
@@ -152,6 +183,10 @@ public interface IApplicationResource {
 	 * Resynchronizes all the instances / agents.
 	 * @param applicationName the application name
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
+	 * @HTTP 406 the request could not be processed
 	 */
 	@POST
 	@Path( "/resynchronize" )
@@ -164,6 +199,10 @@ public interface IApplicationResource {
 	 * @param boundTplName the template name (no qualifier as it does not make sense for external exports)
 	 * @param boundApp the name of the application (instance of <code>tplName</code>)
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
+	 * @HTTP 403 such a binding is not allowed
 	 */
 	@POST
 	@Path( "/bind" )
@@ -177,6 +216,9 @@ public interface IApplicationResource {
 	 * Gets the application bindings (as a map).
 	 * @param applicationName the application name
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine (application bindings were returned too)
+	 * @HTTP 404 the application was not found
 	 */
 	@GET
 	@Path( "/bind" )
@@ -188,7 +230,9 @@ public interface IApplicationResource {
 	 * @param applicationName the application name
 	 * @param instancePath the instance path (null to consider the whole application)
 	 * @param allChildren true to get all the children, false to only get the direct children
-	 * @return a non-null list
+	 * @return a non-null list of instances
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Path( "/children" )
@@ -203,6 +247,8 @@ public interface IApplicationResource {
 	 * Lists the available components in this application.
 	 * @param applicationName the application name
 	 * @return a non-null list of components
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Path( "/components" )
@@ -213,22 +259,26 @@ public interface IApplicationResource {
 	/**
 	 * Finds possible parent components for a given component.
 	 * @param applicationName the application name
-	 * @return a non-null list of instances paths
+	 * @return a non-null list of components
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Path("/components/ancestors")
 	@Produces( MediaType.APPLICATION_JSON )
-	List<Component> findComponentAncestors( @PathParam("name") String applicationName, @QueryParam("name") String componentName );
+	List<Component> findComponentAncestors( @PathParam("name") String applicationName, @QueryParam("component-name") String componentName );
 
 
 	/**
 	 * Finds possible components under a given component.
 	 * @param applicationName the application name
 	 * @param componentName a component name (if not specified, returns all the root components)
-	 * @return a non-null list of components names
+	 * @return a non-null list of components
+	 *
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Path( "/components/children" )
 	@Produces( MediaType.APPLICATION_JSON )
-	List<Component> findComponentChildren( @PathParam("name") String applicationName, @QueryParam("name") String componentName );
+	List<Component> findComponentChildren( @PathParam("name") String applicationName, @QueryParam("component-name") String componentName );
 }

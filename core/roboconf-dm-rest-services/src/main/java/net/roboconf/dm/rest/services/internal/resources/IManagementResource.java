@@ -69,6 +69,9 @@ public interface IManagementResource {
 	 * @param uploadedInputStream the uploaded archive
 	 * @param fileDetail the file details
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 406 the application could not be created (e.g. invalid)
 	 */
 	@POST
 	@Path("/templates")
@@ -94,6 +97,11 @@ public interface IManagementResource {
 	 *
 	 * @param localFilePath the local file path of the application directory
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 406 invalid application template
+	 * @HTTP 403 an application template with this name already exists
+	 * @HTTP 401 the application template could not be registered (e.g. DM not ready)
 	 */
 	@POST
 	@Path("/templates/local")
@@ -103,7 +111,8 @@ public interface IManagementResource {
 
 	/**
 	 * Lists the application templates.
-	 * @return a non-null list
+	 * @return a non-null list of application templates
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Path("/templates")
@@ -115,6 +124,10 @@ public interface IManagementResource {
 	 * @param tplName the application template's name
 	 * @param tplQualifier the application template's qualifier
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application template was not found
+	 * @HTTP 403 there are still applications attached to this template
 	 */
 	@DELETE
 	@Path("/templates/{name}/{qualifier}")
@@ -129,6 +142,11 @@ public interface IManagementResource {
 	 * Creates a new application.
 	 * @param app an application
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application's template was not found
+	 * @HTTP 403 an application with this name already exists
+	 * @HTTP 401 the application could not be created (e.g. DM not ready)
 	 */
 	@POST
 	@Consumes( MediaType.APPLICATION_JSON )
@@ -138,7 +156,8 @@ public interface IManagementResource {
 
 	/**
 	 * Lists the applications.
-	 * @return a non-null list
+	 * @return a non-null list of applications
+	 * @HTTP 200 everything went fine
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
@@ -154,6 +173,10 @@ public interface IManagementResource {
 	 *
 	 * @param applicationName the application name
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
+	 * @HTTP 403 the application could not be shutdown (e.g. messaging error)
 	 */
 	@POST
 	@Path("/{name}/shutdown")
@@ -164,6 +187,10 @@ public interface IManagementResource {
 	 * Deletes an application.
 	 * @param applicationName the application name
 	 * @return a response
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 404 the application was not found
+	 * @HTTP 403 the application could not be deleted (e.g. messaging error)
 	 */
 	@DELETE
 	@Path("/{name}")
@@ -176,7 +203,7 @@ public interface IManagementResource {
 
 
 	/**
-	 * Upload an image for a template/application.
+	 * Uploads an image for a template/application.
 	 * <p>
 	 * If an image was already set, it is overridden by the new one.
 	 * </p>
@@ -185,6 +212,9 @@ public interface IManagementResource {
 	 * @param image the uploaded image.
 	 * @param fileDetail the image details.
 	 * @return a response.
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 400 the application was not found or the image type or extension is invalid
 	 */
 	@POST
 	@Path("/image")

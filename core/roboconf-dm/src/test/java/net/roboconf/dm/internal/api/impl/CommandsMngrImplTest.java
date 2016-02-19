@@ -24,18 +24,17 @@
  */
 package net.roboconf.dm.internal.api.impl;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -71,9 +70,6 @@ public class CommandsMngrImplTest {
 	@Test
 	public void testBasics() throws IOException {
 
-		File f1 = this.folder.newFile();
-		Utils.writeStringInto("Bonjour le monde cruel", f1);
-
 		this.cmdMngr.createOrUpdateCommand(this.app, "toto","This is a command");
 		Assert.assertEquals("This is a command", this.cmdMngr.getCommandInstructions(this.app, "toto"));
 
@@ -96,6 +92,37 @@ public class CommandsMngrImplTest {
 
 
 	@Test
+	public void testListCommands() throws Exception {
+
+		Application inexisting = new Application( "inexisting", this.app.getTemplate());
+		Assert.assertEquals( 0, this.cmdMngr.listCommands( inexisting ).size());
+		Assert.assertEquals( 0, this.cmdMngr.listCommands( this.app ).size());
+
+		this.cmdMngr.createOrUpdateCommand( this.app, "toto", "Good command");
+		List<String> list = this.cmdMngr.listCommands( this.app );
+
+		Assert.assertEquals( 1, list.size());
+		Assert.assertEquals( "toto", list.get( 0 ));
+
+		this.cmdMngr.createOrUpdateCommand( this.app, "before", "Good command");
+		this.cmdMngr.createOrUpdateCommand( this.app, "toto2", "Good command");
+		list = this.cmdMngr.listCommands( this.app );
+
+		Assert.assertEquals( 3, list.size());
+		Assert.assertEquals( "before", list.get( 0 ));
+		Assert.assertEquals( "toto", list.get( 1 ));
+		Assert.assertEquals( "toto2", list.get( 2 ));
+
+		this.cmdMngr.deleteCommand( this.app, "toto" );
+		list = this.cmdMngr.listCommands( this.app );
+
+		Assert.assertEquals( 2, list.size());
+		Assert.assertEquals( "before", list.get( 0 ));
+		Assert.assertEquals( "toto2", list.get( 1 ));
+	}
+
+
+	@Test
 	public void testExecute() throws Exception {
 
 		String line = "rename /tomcat-vm as tomcat-vm-copy";
@@ -109,5 +136,12 @@ public class CommandsMngrImplTest {
 		this.cmdMngr.execute( this.app, cmdName );
 		Assert.assertNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm" ));
 		Assert.assertNotNull( InstanceHelpers.findInstanceByPath( this.app, "/tomcat-vm-copy" ));
+	}
+
+
+	@Test( expected = NoSuchFileException.class )
+	public void testExecute_noSuchCommand() throws Exception {
+
+		this.cmdMngr.execute( this.app, "my-command" );
 	}
 }

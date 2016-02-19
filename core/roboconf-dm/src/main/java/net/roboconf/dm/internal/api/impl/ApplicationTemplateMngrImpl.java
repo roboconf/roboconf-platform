@@ -222,37 +222,80 @@ public class ApplicationTemplateMngrImpl implements IApplicationTemplateMngr {
 	private void registerTargets( ApplicationTemplate tpl )
 	throws IOException, InvalidApplicationException {
 
-		// Load and register targets
-		Map<Component,String> componentToTargetId = new HashMap<Component,String> ();
+		// Find all the properties files and register them
+		Map<Component,Set<String>> componentToTargetIds = new HashMap<> ();
 		for( Component c : ComponentHelpers.findAllComponents( tpl )) {
+
+			// Target?
 			if( ! Constants.TARGET_INSTALLER.equalsIgnoreCase( c.getInstallerName()))
 				continue;
 
-			File f = ResourceUtils.findInstanceResourcesDirectory( tpl.getDirectory(), c );
-			f = new File( f, Constants.TARGET_PROPERTIES_FILE_NAME );
-			if( f.exists()) {
-				this.logger.fine( "Registering target from component " + c + " in application template " + tpl );
-				String targetId = this.targetsMngr.createTarget( f );
-				componentToTargetId.put( c, targetId );
+			// Is there a resources directory?
+			File dir = ResourceUtils.findInstanceResourcesDirectory( tpl.getDirectory(), c );
+			if( ! dir.exists())
+				continue;
 
+			// Register the targets
+			String defaultTargetId = null;
+			Set<String> targetIds = new HashSet<> ();
+			componentToTargetIds.put( c, targetIds );
+
+			for( File f : Utils.listAllFiles( dir )) {
+				if( ! f.getName().toLowerCase().endsWith( Constants.FILE_EXT_PROPERTIES ))
+					continue;
+
+				// FIXME: with this mechanism, we may create the same target over and over again
+				// when we deploy a test application more than once. #520 would avoid it.
+				this.logger.fine( "Registering target " + f.getName() + " from component " + c + " in application template " + tpl );
+				String targetId = this.targetsMngr.createTarget( f );
 				this.targetsMngr.addHint( targetId, tpl );
-				Utils.deleteFilesRecursivelyAndQuietly( f.getParentFile());
+
+				targetIds.add( targetId );
+				if( Constants.TARGET_PROPERTIES_FILE_NAME.equalsIgnoreCase( f.getName()))
+					defaultTargetId = targetId;
 			}
+
+			// If there is a "target.properties" file, forget the other properties.
+			// They were registered but we will not use them by default.
+			if( defaultTargetId != null ) {
+				targetIds.clear();
+				targetIds.add( defaultTargetId );
+			}
+
+			// Delete them
+			Utils.deleteFilesRecursivelyAndQuietly( dir );
 		}
 
-		// Associate them with instances
+		// Associate them with instances.
 		Application app = new Application( tpl );
-		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app )) {
-			String targetId = componentToTargetId.get( scopedInstance.getComponent());
-			if( targetId != null ) {
-				String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
-				try {
-					this.targetsMngr.associateTargetWithScopedInstance( targetId, tpl, instancePath );
-
-				} catch( UnauthorizedActionException e ) {
-					throw new InvalidApplicationException( e );
-				}
+		try {
+			// If there is only one root component,
+			// and only one target for it, register it by default for the application template.
+			Set<String> targetIds;
+			if( componentToTargetIds.size() == 1
+					&& (targetIds = componentToTargetIds.values().iterator().next()).size() == 1 ) {
+				this.targetsMngr.associateTargetWithScopedInstance( targetIds.iterator().next(), tpl, null );
 			}
+
+			// Otherwise, make the associations per instances.
+			else for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( app )) {
+				targetIds = componentToTargetIds.get( scopedInstance.getComponent());
+
+				// No target for the component? Skip.
+				if( targetIds == null )
+					continue;
+
+				// Only one target? Register it for the instance.
+				if( targetIds.size() == 1 ) {
+					String instancePath = InstanceHelpers.computeInstancePath( scopedInstance );
+					this.targetsMngr.associateTargetWithScopedInstance( targetIds.iterator().next(), tpl, instancePath );
+				}
+
+				// Otherwise, do not register anything.
+			}
+
+		} catch( UnauthorizedActionException e ) {
+			throw new InvalidApplicationException( e );
 		}
 	}
 }
