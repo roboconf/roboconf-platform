@@ -118,7 +118,7 @@ public class VmWareMachineConfigurator implements MachineConfigurator {
 				this.logger.fine("VMWare tools not yet started... check #" + this.vmwareToolsCheckCount + " failed");
 				return false;
 			}
-			else throw new TargetException( e );
+			throw new TargetException( e );
 		}
 	}
 }

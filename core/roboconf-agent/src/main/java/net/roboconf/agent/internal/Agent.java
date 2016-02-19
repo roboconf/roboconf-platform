@@ -450,8 +450,10 @@ public class Agent implements AgentMessagingInterface {
 	 * @param ipAddress the ipAddress to set
 	 */
 	public void setIpAddress( String ipAddress ) {
-		if(! Utils.isEmptyOrWhitespaces(ipAddress)) this.ipAddress = ipAddress;
-		this.logger.finer( "New IP address set in the agent (if not empty): " + ipAddress );
+		if(! Utils.isEmptyOrWhitespaces(ipAddress)) {
+			this.ipAddress = ipAddress;
+			this.logger.finer( "New IP address set in the agent: " + ipAddress );
+		}
 	}
 
 
