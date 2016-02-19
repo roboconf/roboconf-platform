@@ -33,6 +33,7 @@ public interface AgentConstants {
 	String PLATFORM_EC2 = "iaas-ec2";
 	String PLATFORM_OPENSTACK = "iaas-openstack";
 	String PLATFORM_AZURE = "iaas-azure";
+	String PLATFORM_VMWARE = "iaas-vmware";
 
 	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
 	String KARAF_LOGS_DIRECTORY = "log";
