@@ -26,9 +26,13 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
@@ -84,9 +88,24 @@ public class Agent implements AgentMessagingInterface {
 		// Will be overridden in many cases (e.g. on IaaS with user-data).
 		try {
 			this.ipAddress = InetAddress.getLocalHost().getHostAddress();
+			if(this.ipAddress.startsWith("127.0")) {
+				NetworkInterface nif = NetworkInterface.getByName("eth0");
+				if(nif != null) {
+					Enumeration<InetAddress> addrs = nif.getInetAddresses();
+					while(addrs.hasMoreElements() && this.ipAddress.startsWith("127.0")) {
+						Object obj = addrs.nextElement();
+						if(obj instanceof Inet4Address) {
+							this.ipAddress =  obj.toString();
+							if(this.ipAddress.startsWith("/")) {
+								this.ipAddress = this.ipAddress.substring(1);
+							}
+						}
+					}
+				}
+			}
 			this.logger.finer( "Local IP address found by the agent: " + this.ipAddress );
 
-		} catch( UnknownHostException e ) {
+		} catch( UnknownHostException | SocketException e ) {
 			this.ipAddress = "127.0.0.1";
 			this.logger.warning( "The IP address could not be found. " + e.getMessage());
 			Utils.logException( this.logger, e );
@@ -138,7 +157,9 @@ public class Agent implements AgentMessagingInterface {
 					this.logger.severe( "An error was found in user data. " + errorMessage );
 
 				this.applicationName = props.getApplicationName();
-				this.ipAddress = props.getIpAddress();
+				if(! Utils.isEmptyOrWhitespaces(props.getIpAddress())) {
+					this.ipAddress = props.getIpAddress();
+				}
 				this.scopedInstancePath = props.getScopedInstancePath();
 
 				try {
@@ -424,8 +445,8 @@ public class Agent implements AgentMessagingInterface {
 	 * @param ipAddress the ipAddress to set
 	 */
 	public void setIpAddress( String ipAddress ) {
-		this.ipAddress = ipAddress;
-		this.logger.finer( "New IP address set in the agent: " + ipAddress );
+		if(! Utils.isEmptyOrWhitespaces(ipAddress)) this.ipAddress = ipAddress;
+		this.logger.finer( "New IP address set in the agent (if not empty): " + ipAddress );
 	}
 
 
