@@ -41,6 +41,11 @@
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-messaging-api</module>
 		<module>core/roboconf-agent-monitoring-api</module>
+		
+		<!-- Utilities -->
+		<module>miscellaneous/roboconf-tooling-core</module>
+		<module>miscellaneous/roboconf-doc-generator</module>
+		<module>miscellaneous/roboconf-maven-plugin</module>
 
 		<!-- Messaging providers -->
 		<module>core/roboconf-messaging-rabbitmq</module>
@@ -83,12 +88,9 @@
 		<module>karaf/roboconf-karaf-dist-agent</module>
 		<module>karaf/roboconf-karaf-dist-dm</module>
 
-		<!-- Testing & Utilities -->
+		<!-- Testing & Others -->
 		<module>miscellaneous/roboconf-dm-rest-client</module>
 		<module>miscellaneous/roboconf-integration-tests</module>
-		<module>miscellaneous/roboconf-tooling-core</module>
-		<module>miscellaneous/roboconf-doc-generator</module>
-		<module>miscellaneous/roboconf-maven-plugin</module>
 	</modules>
 
 

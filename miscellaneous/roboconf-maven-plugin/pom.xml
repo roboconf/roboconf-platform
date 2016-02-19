@@ -160,6 +160,15 @@
 				<version>2.0.0</version>
 				<executions>
 					<execution>
+						<id>prepare-integration-tests</id>
+						<goals>
+							<goal>install</goal>
+						</goals>
+						<configuration>
+							<localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+						</configuration>
+					</execution>
+					<execution>
 						<id>integration-tests</id>
 						<goals>
 							<goal>run</goal>

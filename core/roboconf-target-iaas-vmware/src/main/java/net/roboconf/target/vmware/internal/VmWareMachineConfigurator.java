@@ -50,6 +50,7 @@ public class VmWareMachineConfigurator implements MachineConfigurator {
 	private final Map<String,String> targetProperties;
 	private final String userData, rootInstanceName;
 	private final Instance scopedInstance;
+	private int vmwareToolsCheckCount = 0;
 
 	private ServiceInstance vmwareServiceInstance;
 
@@ -113,6 +114,10 @@ public class VmWareMachineConfigurator implements MachineConfigurator {
 			return true;
 
 		} catch( Exception e ) {
+			if(++ this.vmwareToolsCheckCount < 20) {
+				this.logger.fine("VMWare tools not yet started... check #" + this.vmwareToolsCheckCount + " failed");
+				return false;
+			}
 			throw new TargetException( e );
 		}
 	}
