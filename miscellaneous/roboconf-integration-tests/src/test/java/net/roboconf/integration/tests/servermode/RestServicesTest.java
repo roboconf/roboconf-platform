@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -44,11 +44,12 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.client.WsClient;
 import net.roboconf.dm.rest.commons.Diagnostic;
-import net.roboconf.integration.probes.DmTest;
+import net.roboconf.integration.probes.DmWithAgentInMemoryTest;
 import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.integration.tests.internal.parametrized.RabbitMqConfiguration;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.ops4j.pax.exam.ExamSystem;
 import org.ops4j.pax.exam.Option;
@@ -60,7 +61,7 @@ import org.ops4j.pax.exam.spi.PaxExamRuntime;
  * This test verifies that a client can interact with the DM's REST services.
  * @author Vincent Zurczak - Linagora
  */
-public class RestServicesTest extends DmTest {
+public class RestServicesTest extends DmWithAgentInMemoryTest {
 
 	private static final String ROOT_URL = "http://localhost:8181/roboconf-dm";
 	private static final String ICONS_URL = "http://localhost:8181/roboconf-icons";
@@ -69,10 +70,12 @@ public class RestServicesTest extends DmTest {
 
 	@Test
 	public void run() throws Exception {
+
+		Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
 		File appDirectory = TestUtils.findApplicationDirectory( "lamp" );
 
 		// Prepare to run an agent distribution
-		Option[] options = ItUtils.getOptionsForInMemory( true, new RabbitMqConfiguration());
+		Option[] options = config();
 		ExamSystem system = PaxExamRuntime.createServerSystem( options );
 		TestContainer container = PaxExamRuntime.createContainer( system );
 		Assert.assertEquals( KarafTestContainer.class, container.getClass());

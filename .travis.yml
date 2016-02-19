@@ -1,6 +1,10 @@
 language: java
 sudo: false
 
+# Skip the default Maven command launched by Travis.
+# By default, it is "mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
+install: true
+
 # ENV variables
 env:
   - ROBOCONF_IT_TIMEOUT=60000
@@ -21,10 +25,10 @@ addons:
     packages:
     - wget
 
-# Gem, NPM and Gulp seem to be available by default now.
+# Configure RabbitMQ with new users.
 #before_script:
-#  - gem install puppet
-#  - npm install -g gulp
+#  - rabbitmqctl add_user roboconf roboconf
+#  - rabbitmqctl set_permissions roboconf ".*" ".*" ".*"
 
 # For debug only
 #  - puppet --version

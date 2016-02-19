@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -37,7 +37,7 @@ package net.roboconf.messaging.api.messages.from_agent_to_dm;
 public class MsgNotifAutonomic extends AbstractMsgNotif {
 
 	private static final long serialVersionUID = -8930645802175790064L;
-	private final String eventId, eventInfo;
+	private final String eventName, eventInfo;
 
 
 	/**
@@ -45,19 +45,19 @@ public class MsgNotifAutonomic extends AbstractMsgNotif {
 	 * @param applicationName the application name
 	 * @param scopedInstancePath the scoped instance's path
 	 * @param eventId the event ID
-	 * @param eventInfo info about the event (eg. result of Nagios Livestatus query)
+	 * @param eventInfo info about the event (e.g. result of Nagios Livestatus query)
 	 */
-	public MsgNotifAutonomic( String applicationName, String scopedInstancePath, String eventId, String eventInfo ) {
+	public MsgNotifAutonomic( String applicationName, String scopedInstancePath, String eventName, String eventInfo ) {
 		super( applicationName, scopedInstancePath );
 		this.eventInfo = eventInfo;
-		this.eventId = eventId;
+		this.eventName = eventName;
 	}
 
 	/**
 	 * @return the event name
 	 */
-	public String getEventId() {
-		return this.eventId;
+	public String getEventName() {
+		return this.eventName;
 	}
 
 	/**

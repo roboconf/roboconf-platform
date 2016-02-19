@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -38,12 +37,15 @@ import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.runtime.Preference;
+import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -868,5 +870,35 @@ public class JSonBindingUtilsTest {
 		writer = new StringWriter();
 		mapper.writeValue( writer, association );
 		Assert.assertEquals( "{\"path\":\"/my-path\",\"desc\":{\"id\":\"54\",\"name\":\"toto\"}}", writer.toString());
+	}
+
+
+	@Test
+	public void testPreferenceBinding_1() throws Exception {
+
+		final String result = "{}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Preference pref = new Preference( null, null, null );
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, pref );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+	}
+
+
+	@Test
+	public void testPreferenceBinding_2() throws Exception {
+
+		final String result = "{\"name\":\"mail.toto\",\"value\":\"smtp.something\",\"category\":\"email\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Preference pref = new Preference( "mail.toto", "smtp.something", PreferenceKeyCategory.EMAIL );
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, pref );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
 	}
 }

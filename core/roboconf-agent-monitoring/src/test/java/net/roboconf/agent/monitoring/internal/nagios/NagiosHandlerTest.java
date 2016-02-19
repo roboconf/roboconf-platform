@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -34,9 +34,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -123,7 +123,7 @@ public class NagiosHandlerTest {
 		MsgNotifAutonomic msg = queryMockedNagios( "whatever" );
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventId());
+		Assert.assertEquals( EVENT_NAME, msg.getEventName());
 		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertEquals( RESULT, msg.getEventInfo());
 	}
@@ -135,7 +135,7 @@ public class NagiosHandlerTest {
 		MsgNotifAutonomic msg = queryMockedNagios( "Columns: host_name" );
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventId());
+		Assert.assertEquals( EVENT_NAME, msg.getEventName());
 		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertEquals( "host_name\n" + RESULT, msg.getEventInfo());
 	}
@@ -147,7 +147,7 @@ public class NagiosHandlerTest {
 		MsgNotifAutonomic msg = queryMockedNagios( "Columns: host_name acknowledged" );
 		Assert.assertNotNull( msg );
 		Assert.assertEquals( APP_NAME, msg.getApplicationName());
-		Assert.assertEquals( EVENT_NAME, msg.getEventId());
+		Assert.assertEquals( EVENT_NAME, msg.getEventName());
 		Assert.assertEquals( SCOPED_INSTANCE_PATH, msg.getScopedInstancePath());
 		Assert.assertEquals( "host_name;acknowledged\n" + RESULT, msg.getEventInfo());
 	}

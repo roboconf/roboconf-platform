@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -29,19 +29,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 
 import org.junit.After;
+import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class AgentUtilsTest {
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
+
+
 
 	@After
 	public void clearAgentDirectories() throws Exception {
@@ -162,5 +170,70 @@ public class AgentUtilsTest {
 		} finally {
 			Utils.deleteFilesRecursively( dir );
 		}
+	}
+
+
+	@Test
+	public void testChangeRoboconfLogLevel() throws Exception {
+
+		// Null => no exception
+		AgentUtils.collectLogs( null );
+
+		// Create an empty directory => no log file to update
+		File karafEtc = this.folder.newFolder();
+		Assert.assertEquals( 0, karafEtc.listFiles().length );
+
+		AgentUtils.changeRoboconfLogLevel( Level.FINE.toString(), karafEtc.getAbsolutePath());
+		Assert.assertEquals( 0, karafEtc.listFiles().length );
+
+		// Create a new file to update
+		File configFile = new File( karafEtc, "org.ops4j.pax.logging.cfg" );
+		Assert.assertTrue( configFile.createNewFile());
+		Assert.assertEquals( 0, configFile.length());
+
+		AgentUtils.changeRoboconfLogLevel( Level.FINE.toString(), karafEtc.getAbsolutePath());
+		String content = Utils.readFileContent( configFile );
+		Assert.assertTrue( content.contains( Level.FINE.toString() + ", roboconf" ));
+
+		// Try a new update
+		AgentUtils.changeRoboconfLogLevel( Level.SEVERE.toString(), karafEtc.getAbsolutePath());
+		content = Utils.readFileContent( configFile );
+		Assert.assertTrue( content.contains( Level.SEVERE.toString() + ", roboconf" ));
+		Assert.assertFalse( content.contains( Level.FINE.toString() + ", roboconf" ));
+	}
+
+
+	@Test
+	public void testCollectLogs() throws Exception {
+
+		// Null => no resource
+		Map<String,byte[]> map = AgentUtils.collectLogs( null );
+		Assert.assertEquals( 0, map.size());
+
+		// Empty directory => no resource
+		File karafData = this.folder.newFolder();
+		map = AgentUtils.collectLogs( karafData.getAbsolutePath());
+		Assert.assertEquals( 0, map.size());
+
+		// Find the logs directory
+		File karafLog = new File( karafData, AgentConstants.KARAF_LOGS_DIRECTORY + "/karaf.log" );
+		Assert.assertTrue( karafLog.getParentFile().mkdir());
+		Assert.assertTrue( karafLog.createNewFile());
+
+		map = AgentUtils.collectLogs( karafData.getAbsolutePath());
+		Assert.assertEquals( 1, map.size());
+		Assert.assertTrue( map.containsKey( "karaf.log" ));
+
+		// Add other files
+		String[] names = { "roboconf", "roboconf2", "whatever" };
+		for( String s : names ) {
+			karafLog = new File( karafData, AgentConstants.KARAF_LOGS_DIRECTORY + "/" + s + ".log" );
+			Assert.assertTrue( karafLog.createNewFile());
+		}
+
+		map = AgentUtils.collectLogs( karafData.getAbsolutePath());
+		Assert.assertEquals( 2, map.size());
+		Assert.assertTrue( map.containsKey( "karaf.log" ));
+		Assert.assertTrue( map.containsKey( "roboconf.log" ));
 	}
 }

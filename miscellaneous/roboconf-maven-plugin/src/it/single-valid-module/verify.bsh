@@ -1,0 +1,6 @@
+import java.io.*;
+
+File zipFile = new File( basedir, "target/single-valid-module-1.0.zip" );
+if( ! zipFile.isFile()) {
+    throw new FileNotFoundException( "No ZIP file was not found." );
+}

@@ -1,0 +1,10 @@
+RULE "test"
+
+Sleep period is 8s
+Time window is 60	// The 's' is optional
+
+WHEN
+	event-1
+THEN
+	cmd1
+END

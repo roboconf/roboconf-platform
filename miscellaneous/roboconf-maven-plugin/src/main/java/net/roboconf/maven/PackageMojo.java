@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,7 +28,6 @@ package net.roboconf.maven;
 import java.io.File;
 
 import org.apache.maven.archiver.MavenArchiveConfiguration;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -49,9 +48,6 @@ public class PackageMojo extends AbstractMojo {
 
 	@Parameter( defaultValue = "${project}", readonly = true )
 	private MavenProject project;
-
-	@Parameter( defaultValue = "${session}", readonly = true )
-	private MavenSession session;
 
 	@Component( role = Archiver.class, hint = "zip" )
 	private ZipArchiver zipArchiver;

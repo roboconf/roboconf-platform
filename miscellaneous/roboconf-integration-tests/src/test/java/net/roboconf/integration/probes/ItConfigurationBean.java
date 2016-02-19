@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -27,13 +27,26 @@ package net.roboconf.integration.probes;
 
 import net.roboconf.integration.tests.internal.ItUtils;
 
+import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
+
 /**
+ * A bean to configure Karaf options.
+ * <p>
+ * Maven-related properties indicate which Karaf distribution use.
+ * The directory name is the name of the directory where the tests file lie.
+ * All the Karaf logs can be hidden with the <code>hideLogs</code> field.
+ * This parameter is ignored if the <code>roboconfLogsLevel</code> is set. By
+ * default, it is null. When set, Roboconf logs will use this level. This level
+ * should only be changed for debug purpose.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 public class ItConfigurationBean {
 
 	private String groupId, artifactId, version, directoryName;
 	private boolean hideLogs;
+	private LogLevel roboconfLogsLevel;
 
 
 	/**
@@ -137,5 +150,19 @@ public class ItConfigurationBean {
 	public ItConfigurationBean directoryName( String directoryName ) {
 		this.directoryName = directoryName;
 		return this;
+	}
+
+	/**
+	 * @return the roboconfLogsLevel
+	 */
+	public LogLevel getRoboconfLogsLevel() {
+		return this.roboconfLogsLevel;
+	}
+
+	/**
+	 * @param roboconfLogsLevel the roboconfLogsLevel to set
+	 */
+	public void roboconfLogsLevel( LogLevel roboconfLogsLevel ) {
+		this.roboconfLogsLevel = roboconfLogsLevel;
 	}
 }

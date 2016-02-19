@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -27,7 +27,6 @@ package net.roboconf.integration.tests.internal;
 
 import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
 import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureConsole;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
@@ -44,7 +43,7 @@ import java.util.logging.Logger;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.UriUtils;
 import net.roboconf.integration.probes.ItConfigurationBean;
-import net.roboconf.integration.tests.internal.parametrized.IMessagingConfiguration;
+import net.roboconf.integration.tests.internal.parameterized.IMessagingConfiguration;
 
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
@@ -100,7 +99,18 @@ public final class ItUtils {
 		options.addAll( messagingConfiguration.options());
 
 		// Logs management
-		if( bean.areLogsHidden()) {
+		if( bean.getRoboconfLogsLevel() != null ) {
+
+			// Override the log configuration in Karaf
+			for( String loggerName : LOGGERS ) {
+				options.add( editConfigurationFilePut(
+						  "etc/org.ops4j.pax.logging.cfg",
+						  "log4j.logger." + loggerName,
+						  bean.getRoboconfLogsLevel() + ", roboconf" ));
+			}
+
+		} else if( bean.areLogsHidden()) {
+
 			// Override the log configuration in Karaf
 			options.add( logLevel( LogLevel.ERROR ));
 			for( String loggerName : LOGGERS ) {
@@ -123,50 +133,6 @@ public final class ItUtils {
 	 */
 	public static Option[] getBaseOptions( ItConfigurationBean bean, IMessagingConfiguration messagingConfiguration ) {
 		return asArray( getBaseOptionsAsList( bean, messagingConfiguration ));
-	}
-
-
-	/**
-	 * @param hideLogs true if logs should be hidden, false otherwise
-	 * @param messagingConfiguration a messaging configuration
-	 * @return a set of options to run agents in memory
-	 */
-	public static Option[] getOptionsForInMemory( boolean hideLogs, IMessagingConfiguration messagingConfiguration ) {
-		return asArray( getOptionsForInMemoryAsList( hideLogs, messagingConfiguration ));
-	}
-
-
-	/**
-	 * @param hideLogs true if logs should be hidden, false otherwise
-	 * @param messagingConfiguration a messaging configuration
-	 * @return a set of options to run agents in memory
-	 */
-	public static List<Option> getOptionsForInMemoryAsList( boolean hideLogs, IMessagingConfiguration messagingConfiguration ) {
-
-		ItConfigurationBean bean = new ItConfigurationBean( "roboconf-karaf-dist-dm", "dm-with-agent-in-memory" );
-		bean.hideLogs( hideLogs );
-
-		List<Option> options = ItUtils.getBaseOptionsAsList( bean, messagingConfiguration );
-		String roboconfVersion = ItUtils.findRoboconfVersion();
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-plugin-api" )
-				.version( roboconfVersion )
-				.start());
-
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-agent" )
-				.version( roboconfVersion )
-				.start());
-
-		options.add( mavenBundle()
-				.groupId( "net.roboconf" )
-				.artifactId( "roboconf-target-in-memory" )
-				.version( roboconfVersion )
-				.start());
-
-		return options;
 	}
 
 

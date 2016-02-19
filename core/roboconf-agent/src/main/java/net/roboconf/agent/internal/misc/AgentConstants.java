@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -34,4 +34,7 @@ public interface AgentConstants {
 	String PLATFORM_OPENSTACK = "iaas-openstack";
 	String PLATFORM_AZURE = "iaas-azure";
 	String PLATFORM_VMWARE = "iaas-vmware";
+
+	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
+	String KARAF_LOGS_DIRECTORY = "log";
 }

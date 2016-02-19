@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,7 +28,8 @@ package net.roboconf.agent.monitoring.internal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Timer;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
@@ -36,6 +37,7 @@ import net.roboconf.agent.monitoring.api.IMonitoringHandler;
 import net.roboconf.agent.monitoring.internal.file.FileHandler;
 import net.roboconf.agent.monitoring.internal.nagios.NagiosHandler;
 import net.roboconf.agent.monitoring.internal.rest.RestHandler;
+import net.roboconf.core.Constants;
 
 /**
  * The agent monitoring service.
@@ -49,7 +51,7 @@ public class AgentMonitoring {
 
 	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private Timer timer;
+	private ScheduledThreadPoolExecutor timer;
 
 
 	/**
@@ -71,11 +73,11 @@ public class AgentMonitoring {
 
 		if( this.timer == null ) {
 			this.logger.fine( "Agent Monitoring is being started." );
-			this.timer = new Timer( "Monitoring Timer @ Agent", true );
 
-			// FIXME: not sure "scheduleAtFixedRate" is the right choice.
-			// What happens when one "polling raw" takes more than 10 seconds?
-			this.timer.scheduleAtFixedRate( new MonitoringTask( this.agentInterface, this.handlers ), 0, 10000 );
+			this.timer = new ScheduledThreadPoolExecutor( 1 );
+			this.timer.scheduleWithFixedDelay(
+					new MonitoringRunnable( this.agentInterface, this.handlers ),
+					0, Constants.PROBES_POLLING_PERIOD, TimeUnit.MILLISECONDS );
 		}
 	}
 
@@ -87,7 +89,7 @@ public class AgentMonitoring {
 
 		this.logger.fine( "Agent Monitoring is being stopped." );
 		if( this.timer != null ) {
-			this.timer.cancel();
+			this.timer.shutdownNow();
 			this.timer = null;
 		}
 	}

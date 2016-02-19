@@ -18,6 +18,9 @@ associate /tomcat-vm-2 with 1
 # Change state
 change status of /tomcat-vm-2/tomcat-server to DEPLOYED and STARTED
 
+# Write
+write something into /this/file
+
 # E-mail
 email toto@company.net with \
 	Subject: Alert!\

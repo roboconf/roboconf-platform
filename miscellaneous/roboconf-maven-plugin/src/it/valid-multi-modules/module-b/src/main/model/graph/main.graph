@@ -1,0 +1,6 @@
+import module-a/main.graph;
+
+VM2 {
+	installer: target;
+	extends: VM;
+}

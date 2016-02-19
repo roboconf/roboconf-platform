@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -37,6 +37,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.utils.DockerAndScriptUtils;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
@@ -235,16 +236,10 @@ public class PluginScript implements PluginInterface {
     	Map<String, String> vars = ScriptUtils.formatExportedVars(instance);
     	environmentVars.putAll(vars);
 
-    	Map<String, String> importedVars = ScriptUtils.formatImportedVars(instance);
-    	environmentVars.putAll(importedVars);
-    	environmentVars.put("ROBOCONF_INSTANCE_NAME", instance.getName());
+    	Map<String, String> importedVars = ScriptUtils.formatImportedVars( instance );
+    	environmentVars.putAll( DockerAndScriptUtils.buildReferenceMap( instance ));
+    	environmentVars.putAll( importedVars );
     	environmentVars.put("ROBOCONF_FILES_DIR", new File( instanceDir, FILES_FOLDER_NAME ).getAbsolutePath());
-
-    	String instancePath = InstanceHelpers.computeInstancePath( instance );
-    	environmentVars.put("ROBOCONF_INSTANCE_PATH", instancePath );
-    	environmentVars.put("ROBOCONF_CLEAN_INSTANCE_PATH", ScriptUtils.cleanInstancePath( instancePath ));
-    	environmentVars.put("ROBOCONF_CLEAN_REVERSED_INSTANCE_PATH", ScriptUtils.cleanReversedInstancePath( instancePath ));
-
 
     	// Upon update, retrieve the status of the instance that triggered the update.
     	// Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...

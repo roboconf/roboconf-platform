@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
@@ -48,6 +47,7 @@ import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationTemplateMngr;
+import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
@@ -60,6 +60,7 @@ import net.roboconf.messaging.api.business.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -79,6 +80,7 @@ public class ApplicationMngrImplTest {
 	private IMessagingMngr messagingMngr;
 	private IConfigurationMngr configurationMngr;
 	private IApplicationTemplateMngr applicationTemplateMngr;
+	private IAutonomicMngr autonomicMngr;
 
 	private File dmDirectory;
 	private IDmClient dmClientMock;
@@ -96,9 +98,14 @@ public class ApplicationMngrImplTest {
 		this.dmClientMock = Mockito.mock( IDmClient.class );
 		Mockito.when( this.messagingMngr.getMessagingClient()).thenReturn( this.dmClientMock );
 
+		this.autonomicMngr = Mockito.mock( IAutonomicMngr.class );
 		this.configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		this.applicationTemplateMngr = Mockito.mock( IApplicationTemplateMngr.class );
-		this.mngr = new ApplicationMngrImpl( notificationMngr, this.configurationMngr, targetsMngr, this.messagingMngr, randomMngr );
+		this.mngr = new ApplicationMngrImpl(
+				notificationMngr, this.configurationMngr,
+				targetsMngr, this.messagingMngr,
+				randomMngr, this.autonomicMngr );
+
 		this.mngr.setApplicationTemplateMngr( this.applicationTemplateMngr );
 
 		this.dmDirectory = this.folder.newFolder();
@@ -151,6 +158,8 @@ public class ApplicationMngrImplTest {
 		Assert.assertEquals( 1, this.mngr.getManagedApplications().size());
 		this.mngr.deleteApplication( ma );
 		Assert.assertEquals( 0, this.mngr.getManagedApplications().size());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).unloadApplicationRules( ma.getApplication());
 	}
 
 
@@ -173,6 +182,8 @@ public class ApplicationMngrImplTest {
 
 		File expected = new File( this.configurationMngr.getWorkingDirectory(), ConfigurationUtils.APPLICATIONS );
 		Assert.assertEquals( expected, ma.getDirectory().getParentFile());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
 	}
 
 
@@ -281,6 +292,8 @@ public class ApplicationMngrImplTest {
 		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
 		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
 		Assert.assertEquals( dir.getParentFile(), ma.getDirectory());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
 	}
 
 
@@ -310,6 +323,8 @@ public class ApplicationMngrImplTest {
 		Assert.assertEquals( app.getName(), ma.getName());
 		Assert.assertEquals( tpl.getName(), app.getTemplate().getName());
 		Assert.assertEquals( tpl.getQualifier(), app.getTemplate().getQualifier());
+
+		Mockito.verify( this.autonomicMngr, Mockito.times( 1 )).loadApplicationRules( ma.getApplication());
 	}
 
 

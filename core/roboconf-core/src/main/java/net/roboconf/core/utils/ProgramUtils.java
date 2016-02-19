@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -51,14 +51,19 @@ public final class ProgramUtils {
 
 
 	/**
-	 * Executes a command on the VM and prints on the console its output.
+	 * Executes a command on the VM and retrieves all the result.
+	 * <p>
+	 * This includes the process's exit value, its normal output as well
+	 * as the error flow.
+	 * </p>
+	 *
 	 * @param command a command to execute (not null, not empty)
 	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)
 	 * @throws IOException if a new process could not be created
 	 * @throws InterruptedException if the new process encountered a process
 	 */
-	public static int executeCommand(
+	public static ExecutionResult executeCommandWithResult(
 			final Logger logger,
 			final String[] command,
 			final File workingDir,
@@ -67,6 +72,7 @@ public final class ProgramUtils {
 
 		logger.fine( "Executing command: " + Arrays.toString( command ));
 
+		// Setup
 		ProcessBuilder pb = new ProcessBuilder( command );
 		if( workingDir != null )
 			pb.directory(workingDir);
@@ -81,15 +87,50 @@ public final class ProgramUtils {
 			}
 		}
 
-		Process process = pb.start();
-		new Thread( new OutputRunnable( process, true, logger )).start();
-		new Thread( new OutputRunnable( process, false, logger )).start();
+		// Prepare the result
+		StringBuilder normalOutput = new StringBuilder();
+		StringBuilder errorOutput = new StringBuilder();
+		int exitValue = -1;
 
-		int exitValue = process.waitFor();
+		// Execute
+		Process process = pb.start();
+		new Thread( new OutputRunnable( process, true, errorOutput, logger )).start();
+		new Thread( new OutputRunnable( process, false, normalOutput, logger )).start();
+
+		exitValue = process.waitFor();
 		if( exitValue != 0 )
 			logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
 
-		return exitValue;
+		return new ExecutionResult(
+				normalOutput.toString().trim(),
+				errorOutput.toString().trim(),
+				exitValue );
+	}
+
+
+	/**
+	 * Executes a command on the VM and logs the output.
+	 * @param command a command to execute (not null, not empty)
+	 * @param environmentVars a map containing environment variables (can be null)
+	 * @param logger a logger (not null)
+	 * @throws IOException if a new process could not be created
+	 * @throws InterruptedException if the new process encountered a process
+	 */
+	public static int executeCommand(
+			final Logger logger,
+			final String[] command,
+			final File workingDir,
+			final Map<String,String> environmentVars )
+	throws IOException, InterruptedException {
+
+		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars );
+		if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
+			logger.fine( result.getNormalOutput());
+
+		if( ! Utils.isEmptyOrWhitespaces( result.getErrorOutput()))
+			logger.warning( result.getErrorOutput());
+
+		return result.getExitValue();
 	}
 
 
@@ -113,16 +154,60 @@ public final class ProgramUtils {
 
 
 	/**
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ExecutionResult {
+
+		private final String normalOutput, errorOutput;
+		private final int exitValue;
+
+		/**
+		 * Constructor.
+		 * @param normalOutput
+		 * @param errorOutput
+		 * @param exitValue
+		 */
+		public ExecutionResult( String normalOutput, String errorOutput, int exitValue ) {
+			this.normalOutput = normalOutput;
+			this.errorOutput = errorOutput;
+			this.exitValue = exitValue;
+		}
+
+		public String getNormalOutput() {
+			return this.normalOutput;
+		}
+
+		public String getErrorOutput() {
+			return this.errorOutput;
+		}
+
+		public int getExitValue() {
+			return this.exitValue;
+		}
+	}
+
+
+	/**
 	 * @author Noël - LIG
 	 */
 	private static class OutputRunnable implements Runnable {
+
 		private final Process process;
 		private final boolean errorLevel;
 		private final Logger logger;
+		private final StringBuilder sb;
 
-		public OutputRunnable( Process process, boolean errorLevel, Logger logger ) {
+		/**
+		 * Constructor.
+		 * @param process
+		 * @param errorLevel
+		 * @param sb
+		 * @param logger
+		 */
+		public OutputRunnable( Process process, boolean errorLevel, StringBuilder sb, Logger logger ) {
 			this.process = process;
 			this.errorLevel = errorLevel;
+			this.sb = sb;
 			this.logger = logger;
 		}
 
@@ -136,7 +221,7 @@ public final class ProgramUtils {
 				br = new BufferedReader( new InputStreamReader( is, "UTF-8" ));
 
 				for( String line = br.readLine(); line != null; line = br.readLine())
-					this.logger.info( prefix + line );
+					this.sb.append( prefix + line + "\n" );
 
 			} catch( IOException e ) {
 				this.logger.severe( Utils.writeException( e ));

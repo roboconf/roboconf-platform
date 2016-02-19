@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,11 +25,11 @@
 
 package net.roboconf.agent.internal;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
@@ -39,6 +39,7 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
@@ -54,9 +55,11 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -380,6 +383,79 @@ public class AgentMessageProcessor_BasicTest {
 		Assert.assertEquals(
 				InstanceHelpers.computeInstancePath( app.getMySql()),
 				((MsgNotifInstanceRemoved) this.client.messagesForTheDm.get( 0 )).getInstancePath());
+	}
+
+
+	@Test
+	public void testUpdateProbeConfiguration_instanceNotFound() throws Exception {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+		processor.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// Make sure no resource was saved
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcatVm());
+		Utils.deleteFilesRecursively( dir );
+		Assert.assertFalse( dir.exists());
+
+		try {
+			// The VM is the only started component, and it does not export any variable.
+			Map<String,byte[]> map = new HashMap<>( 1 );
+			map.put( "VM.properties", new byte[ 0 ]);
+
+			MsgCmdUpdateProbeConfiguration msg = new MsgCmdUpdateProbeConfiguration( "/invalid", map );
+			processor.processMessage( msg );
+			Assert.assertFalse( dir.exists());
+
+		} finally {
+			Utils.deleteFilesRecursively( dir );
+		}
+	}
+
+
+	@Test
+	public void testUpdateProbeConfiguration_withValidInstance() throws Exception {
+
+		// Initialize all the stuff
+		AgentMessageProcessor processor = (AgentMessageProcessor) this.agent.getMessagingClient().getMessageProcessor();
+
+		TestApplicationTemplate app = new TestApplicationTemplate();
+		processor.scopedInstance = app.getTomcatVm();
+		processor.scopedInstance.setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		// Make sure no resource was saved
+		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcatVm());
+		Utils.deleteFilesRecursively( dir );
+		Assert.assertFalse( dir.exists());
+
+		try {
+			// The VM is the only started component, and it does not export any variable.
+			Map<String,byte[]> map = new HashMap<>( 1 );
+			map.put( "VM.properties", new byte[ 0 ]);
+
+			MsgCmdUpdateProbeConfiguration msg = new MsgCmdUpdateProbeConfiguration( "/" + app.getTomcatVm(), map );
+			processor.processMessage( msg );
+			Assert.assertTrue( dir.exists());
+
+			File measuresFile = new File( dir, "VM.properties" );
+			Assert.assertTrue( measuresFile.exists());
+			Assert.assertEquals( "", Utils.readFileContent( measuresFile ));
+
+			// Verify updates work
+			final String content = "target: ec2";
+			map.put( "VM.properties", content.getBytes( "UTF-8" ));
+			msg = new MsgCmdUpdateProbeConfiguration( "/" + app.getTomcatVm(), map );
+			processor.processMessage( msg );
+
+			Assert.assertTrue( measuresFile.exists());
+			Assert.assertEquals( content, Utils.readFileContent( measuresFile ));
+
+		} finally {
+			Utils.deleteFilesRecursively( dir );
+		}
 	}
 
 

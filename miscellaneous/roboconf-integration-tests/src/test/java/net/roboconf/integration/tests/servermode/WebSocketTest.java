@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -27,14 +27,16 @@ package net.roboconf.integration.tests.servermode;
 
 import java.net.URI;
 
-import org.junit.Assert;
 import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.ops4j.pax.exam.ExamSystem;
 import org.ops4j.pax.exam.Option;
@@ -50,6 +52,8 @@ public class WebSocketTest extends DmTest {
 
 	@Test
 	public void run() throws Exception {
+
+		Assume.assumeTrue( RabbitMqTestUtils.checkRabbitMqIsRunning());
 
 		// Prepare to run an agent distribution
 		Option[] options = super.config();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -33,10 +33,12 @@ import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
+import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ManagementResource;
+import net.roboconf.dm.rest.services.internal.resources.impl.PreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.TargetResource;
 
 import com.sun.jersey.api.core.DefaultResourceConfig;
@@ -51,6 +53,7 @@ public class RestApplication extends DefaultResourceConfig {
 	private final IManagementResource managementResource;
 	private final IDebugResource debugResource;
 	private final ITargetResource targetResource;
+	private final IPreferencesResource preferencesResource;
 
 
 	/**
@@ -64,6 +67,7 @@ public class RestApplication extends DefaultResourceConfig {
 		this.managementResource = new ManagementResource( manager );
 		this.debugResource = new DebugResource( manager );
 		this.targetResource = new TargetResource( manager );
+		this.preferencesResource = new PreferencesResource( manager );
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
@@ -91,6 +95,7 @@ public class RestApplication extends DefaultResourceConfig {
 		set.add( this.managementResource );
 		set.add( this.debugResource );
 		set.add( this.targetResource );
+		set.add( this.preferencesResource );
 
 		return set;
 	}

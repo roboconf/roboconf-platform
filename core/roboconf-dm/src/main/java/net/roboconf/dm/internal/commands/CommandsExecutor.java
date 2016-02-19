@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -37,9 +37,11 @@ import net.roboconf.core.commands.CreateInstanceCommandInstruction;
 import net.roboconf.core.commands.EmailCommandInstruction;
 import net.roboconf.core.commands.RenameCommandInstruction;
 import net.roboconf.core.commands.ReplicateCommandInstruction;
+import net.roboconf.core.commands.WriteCommandInstruction;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ICommandsMngr.CommandExecutionContext;
 import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
@@ -52,6 +54,7 @@ public class CommandsExecutor {
 	private final File commandsFile;
 	private final Application app;
 	private final Manager manager;
+	private final CommandExecutionContext executionContext;
 
 
 	/**
@@ -61,9 +64,27 @@ public class CommandsExecutor {
 	 * @param commandsFile a file containing commands (not null)
 	 */
 	public CommandsExecutor( Manager manager, Application app, File commandsFile ) {
+		this( manager, app, commandsFile, null );
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param manager the manager
+	 * @param app an application (not null)
+	 * @param commandsFile a file containing commands (not null)
+	 * @param executionContext an execution context
+	 */
+	public CommandsExecutor(
+			Manager manager,
+			Application app,
+			File commandsFile,
+			CommandExecutionContext executionContext ) {
+
 		this.commandsFile = commandsFile;
 		this.app = app;
 		this.manager = manager;
+		this.executionContext = executionContext;
 	}
 
 
@@ -85,10 +106,13 @@ public class CommandsExecutor {
 
 			for( AbstractCommandInstruction instr : parser.getInstructions()) {
 				AbstractCommandExecution executor = findExecutor( instr );
-				if( executor != null )
-					executor.execute();
-				else
+				if( executor == null ) {
 					this.logger.fine( "Skipping non-executable instruction: " + instr.getClass().getSimpleName());
+					continue;
+				}
+
+				executor.setExecutionContext( this.executionContext );
+				executor.execute();
 			}
 
 		} catch( CommandException e ) {
@@ -129,6 +153,9 @@ public class CommandsExecutor {
 
 		else if( EmailCommandInstruction.class.equals( instr.getClass()))
 			result = new EmailCommandExecution((EmailCommandInstruction) instr, this.manager );
+
+		else if( WriteCommandInstruction.class.equals( instr.getClass()))
+			result = new WriteCommandExecution((WriteCommandInstruction) instr);
 
 		return result;
 	}

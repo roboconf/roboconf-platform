@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,8 +25,9 @@
 
 package net.roboconf.core.model.beans;
 
-import org.junit.Assert;
+import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -48,5 +49,7 @@ public class CrapForCodeCoverageTest {
 		Application app = new Application( new ApplicationTemplate());
 		Assert.assertNull( app.toString());
 		Assert.assertNotNull( app.name( "azerty" ).toString());
+
+		Assert.assertTrue( 0 < PreferenceKeyCategory.values().length );
 	}
 }

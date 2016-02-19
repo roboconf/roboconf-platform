@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -43,10 +43,10 @@ public class DefineVariableCommandInstruction extends AbstractCommandInstruction
 
 	static final String PREFIX = "define";
 
-	static final String MILLI_TIME = "$(MILLI_TIME)";
-	static final String NANO_TIME = "$(NANO_TIME)";
-	static final String RANDOM_UUID = "$(UUID)";
-	static final String SMART_INDEX = "$(SMART_INDEX)";
+	public static final String MILLI_TIME = "$(MILLI_TIME)";
+	public static final String NANO_TIME = "$(NANO_TIME)";
+	public static final String RANDOM_UUID = "$(UUID)";
+	public static final String SMART_INDEX = "$(SMART_INDEX)";
 
 	private String key, value, instancePath;
 

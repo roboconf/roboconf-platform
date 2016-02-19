@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -92,9 +92,16 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 	@Override
 	public void execute( Application app, String commandName ) throws CommandException {
+		execute( app, commandName, null );
+	}
+
+
+	@Override
+	public void execute( Application app, String commandName, CommandExecutionContext executionContext )
+	throws CommandException {
 
 		File cmdFile = findCommandFile( app, commandName );
-		CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile );
+		CommandsExecutor executor = new CommandsExecutor( this.manager, app, cmdFile, executionContext );
 		executor.execute();
 	}
 

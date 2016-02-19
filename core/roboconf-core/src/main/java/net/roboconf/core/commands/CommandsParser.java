@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -223,6 +223,9 @@ public class CommandsParser {
 
 		else if( toLowerCase.startsWith( RenameCommandInstruction.PREFIX ))
 			result = new RenameCommandInstruction( this.context, line, lineNumber );
+
+		else if( toLowerCase.startsWith( WriteCommandInstruction.PREFIX ))
+			result = new WriteCommandInstruction( this.context, line, lineNumber );
 
 		return result;
 	}

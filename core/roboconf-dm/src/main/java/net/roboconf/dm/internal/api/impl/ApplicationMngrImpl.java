@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -51,6 +51,7 @@ import net.roboconf.dm.internal.utils.ConfigurationUtils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IApplicationTemplateMngr;
+import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
@@ -78,6 +79,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 	private final ITargetsMngr targetsMngr;
 	private final IMessagingMngr messagingMngr;
 	private final IRandomMngr randomMngr;
+	private final IAutonomicMngr autonomicMngr;
 
 	private IApplicationTemplateMngr applicationTemplateMngr;
 
@@ -95,7 +97,8 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 			IConfigurationMngr configurationMngr,
 			ITargetsMngr targetsMngr,
 			IMessagingMngr messagingMngr,
-			IRandomMngr randomMngr ) {
+			IRandomMngr randomMngr,
+			IAutonomicMngr autonomicMngr ) {
 		this.nameToManagedApplication = new ConcurrentHashMap<String,ManagedApplication> ();
 
 		this.notificationMngr = notificationMngr;
@@ -103,6 +106,7 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		this.messagingMngr = messagingMngr;
 		this.targetsMngr = targetsMngr;
 		this.randomMngr = randomMngr;
+		this.autonomicMngr = autonomicMngr;
 	}
 
 
@@ -171,6 +175,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		// Notify listeners
 		this.notificationMngr.application( ma.getApplication(), EventType.CREATED );
 
+		// Load autonomic rules
+		this.autonomicMngr.loadApplicationRules( ma.getApplication());
+
 		this.logger.fine( "Application " + ma.getApplication().getName() + " was successfully loaded and added." );
 		return ma;
 	}
@@ -229,6 +236,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		Application app = ma.getApplication();
 		this.targetsMngr.applicationWasDeleted( app );
 
+		// Remove the autonomic context
+		this.autonomicMngr.unloadApplicationRules( app );
+
 		// Delete artifacts
 		this.logger.info( "Deleting the application called " + app.getName() + "..." );
 		this.nameToManagedApplication.remove( app.getName());
@@ -278,6 +288,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 
 				// Read application bindings.
 				ConfigurationUtils.loadApplicationBindings( app );
+
+				// Load autonomic rules
+				this.autonomicMngr.loadApplicationRules( app );
 
 				// Restore the instances
 				InstancesLoadResult ilr = ConfigurationUtils.restoreInstances( ma );

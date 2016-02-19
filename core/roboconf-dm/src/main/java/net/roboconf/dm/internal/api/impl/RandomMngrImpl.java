@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -37,16 +37,16 @@ import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.beans.InstanceContext;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class RandomMngrImpl implements IRandomMngr {
-
-	private final Logger logger = Logger.getLogger( getClass().getName());
 
 	/**
 	 * A map that associates AGENTS and random ports.
@@ -56,6 +56,17 @@ public class RandomMngrImpl implements IRandomMngr {
 	 */
 	final Map<InstanceContext,List<Integer>> agentToRandomPorts = new HashMap<> ();
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final IPreferencesMngr preferencesMngr;
+
+
+	/**
+	 * Constructor.
+	 * @param preferencesMngr
+	 */
+	public RandomMngrImpl( IPreferencesMngr preferencesMngr ) {
+		this.preferencesMngr = preferencesMngr;
+	}
 
 
 	@Override
@@ -174,7 +185,6 @@ public class RandomMngrImpl implements IRandomMngr {
 
 	// Port Management
 
-	private static final int RABBITMQ_PORT = 35197;
 	private static final int PORT_MIN = 10000;
 	private static final int PORT_MAX = 65500;
 
@@ -192,13 +202,23 @@ public class RandomMngrImpl implements IRandomMngr {
 	 * @param exportedVariableName the name of the exported variable
 	 */
 	private void generateRandomPort( Application application, Instance instance, String exportedVariableName ) {
-
-		// See http://stackoverflow.com/questions/12792856/what-ports-does-rabbitmq-use
-		// for the RabbitMQ ports. Since we choose random ports above PORT_MIN, only
-		// one has to be added explicitly to the forbidden list.
 		List<Integer> forbiddenPorts = new ArrayList<> ();
-		forbiddenPorts.add( RABBITMQ_PORT );
 
+		// Forbidden ports specified in the preferences
+		String preferences = this.preferencesMngr.get( IPreferencesMngr.FORBIDDEN_RANDOM_PORTS, "" );
+		for( String s : Utils.splitNicely( preferences, "," )) {
+			if( Utils.isEmptyOrWhitespaces( s ))
+				continue;
+
+			try {
+				forbiddenPorts.add( Integer.parseInt( s ));
+
+			} catch( NumberFormatException e ) {
+				this.logger.severe( "An invalid port was found in the preferences: " + s );
+			}
+		}
+
+		// Ports already in use
 		InstanceContext ctx = findAgentContext( application, instance );
 		List<Integer> portsUsedByAgent = this.agentToRandomPorts.get( ctx );
 		if( portsUsedByAgent != null )

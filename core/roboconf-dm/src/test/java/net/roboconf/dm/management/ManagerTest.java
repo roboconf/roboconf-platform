@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,7 +28,6 @@ package net.roboconf.dm.management;
 import java.io.File;
 import java.util.List;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
@@ -40,6 +39,7 @@ import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.target.api.TargetHandler;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -242,19 +242,20 @@ public class ManagerTest {
 	@Test
 	public void testSetMessagingType_ignoresSameValue() {
 
-		Assert.assertNull( this.manager.oldMessagingType );
+		this.manager = Mockito.spy( this.manager );
+
 		Assert.assertNull( this.manager.messagingType );
 
 		this.manager.setMessagingType( "test" );
-		Assert.assertNull( this.manager.oldMessagingType );
 		Assert.assertEquals( "test", this.manager.messagingType );
+		Mockito.verify( this.manager, Mockito.times( 1 )).reconfigure();
 
 		this.manager.setMessagingType( "test" );
-		Assert.assertNull( this.manager.oldMessagingType );
 		Assert.assertEquals( "test", this.manager.messagingType );
+		Mockito.verify( this.manager, Mockito.times( 1 )).reconfigure();
 
 		this.manager.setMessagingType( "toto" );
-		Assert.assertEquals( "test", this.manager.oldMessagingType );
 		Assert.assertEquals( "toto", this.manager.messagingType );
+		Mockito.verify( this.manager, Mockito.times( 2 )).reconfigure();
 	}
 }

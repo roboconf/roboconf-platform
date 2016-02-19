@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import net.roboconf.core.Constants;
 import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.utils.ConfigurationUtils;
@@ -49,7 +50,7 @@ public class ConfigurationMngrImpl implements IConfigurationMngr {
 	 */
 	public ConfigurationMngrImpl() {
 
-		String karafData = System.getProperty( "karaf.data" );
+		String karafData = System.getProperty( Constants.KARAF_DATA );
 		if( Utils.isEmptyOrWhitespaces( karafData ))
 			this.workingDirectory = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-dm" );
 		else

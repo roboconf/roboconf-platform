@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+   Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
 
    The present code is developed in the scope of their joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
@@ -52,6 +52,20 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-dm</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-messaging-api</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
 	
 		<dependency>
 			<groupId>org.apache.karaf.shell</groupId>
@@ -70,6 +84,28 @@
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			   <groupId>org.apache.felix</groupId>
+			   <artifactId>org.apache.felix.ipojo</artifactId>
+			   <version>${ipojo.version}</version>
+			   <scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-target-api</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-core</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

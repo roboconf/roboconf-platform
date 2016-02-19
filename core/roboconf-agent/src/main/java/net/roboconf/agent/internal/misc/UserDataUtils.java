@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -29,7 +29,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
@@ -40,7 +39,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import net.roboconf.agent.internal.AgentProperties;
+import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 
 import org.apache.commons.codec.binary.Base64;
 import org.w3c.dom.Document;
@@ -54,6 +55,9 @@ import org.xml.sax.SAXException;
  * @author Pierre-Yves Gibello - Linagora
  */
 public final class UserDataUtils {
+
+	public static final String CONF_FILE_AGENT = "net.roboconf.agent.configuration.cfg";
+
 
 	/**
 	 * Private empty constructor.
@@ -194,20 +198,27 @@ public final class UserDataUtils {
 	 * @param etcDir the KARAF_ETC directory
 	 * @param msgData the messaging configuration parameters
 	 */
-	public static void reconfigureMessaging(String etcDir, Map<String,String> msgData, String messagingType) throws IOException {
-		if( ! Utils.isEmptyOrWhitespaces(etcDir)) {
-			String fileName = "net.roboconf.messaging." + messagingType + ".cfg";
-			PrintWriter out = null;
-			try {
-				Properties props = new Properties();
-				props.putAll( msgData );
+	public static void reconfigureMessaging( String etcDir, Map<String,String> msgData )
+	throws IOException {
 
-				File f = new File( etcDir, fileName );
-				Utils.writePropertiesFile( props, f );
+		String messagingType = msgData.get( MessagingConstants.MESSAGING_TYPE_PROPERTY );
+		Logger.getLogger( UserDataUtils.class.getName()).fine( "Messaging type for reconfiguration: " + messagingType );
+		if( ! Utils.isEmptyOrWhitespaces( etcDir )) {
 
-			} finally {
-				Utils.closeQuietly(out);
-			}
+			// Write the messaging configuration
+			Properties props = new Properties();
+			props.putAll( msgData );
+			props.remove( Constants.MESSAGING_TYPE );
+
+			File f = new File( etcDir, "net.roboconf.messaging." + messagingType + ".cfg" );
+			Utils.writePropertiesFile( props, f );
+
+			// Set the messaging type
+			f = new File( etcDir, CONF_FILE_AGENT );
+
+			props = Utils.readPropertiesFileQuietly( f, Logger.getLogger( UserDataUtils.class.getName()));
+			props.put( Constants.MESSAGING_TYPE, messagingType );
+			Utils.writePropertiesFile( props, f );
 		}
 	}
 

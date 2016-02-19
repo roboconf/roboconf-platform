@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -182,6 +182,32 @@ public class UtilsTest {
 	@Test( expected = IllegalArgumentException.class )
 	public void testSplitNicely_illegalArgument_2() {
 		Utils.splitNicely( "once, upon, a , time   ", null );
+	}
+
+
+	@Test
+	public void testSplitNicelyWithPattern() {
+
+		List<String> result = Utils.splitNicelyWithPattern( "once upon a , time   ", ",|\\s" );
+		Assert.assertEquals( 6, result.size());
+		Assert.assertEquals( "once", result.get( 0 ));
+		Assert.assertEquals( "upon", result.get( 1 ));
+		Assert.assertEquals( "a", result.get( 2 ));
+		Assert.assertEquals( "", result.get( 3 ));
+		Assert.assertEquals( "", result.get( 4 ));
+		Assert.assertEquals( "time", result.get( 5 ));
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testSplitNicelyWithPattern_illegalArgument_1() {
+		Utils.splitNicelyWithPattern( "once, upon, a , time   ", "" );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testSplitNicelyWithPattern_illegalArgument_2() {
+		Utils.splitNicelyWithPattern( "once, upon, a , time   ", null );
 	}
 
 

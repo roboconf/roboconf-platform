@@ -1,0 +1,14 @@
+// This is a rule with comments
+
+rule /* oops */ "test"
+when
+	event-1	// if event-1 arises...
+then
+	/*
+	 * Execute cmd1
+	 */
+	cmd1;
+	cmd2;
+	cmd3
+	cmd4
+end

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -70,7 +70,7 @@ public class RoboconfReturnListener implements ReturnListener {
 
 		if (this.logger.isLoggable(Level.WARNING)) {
 			final StringBuilder sb = new StringBuilder();
-			sb.append("A message sent by the DM was not received by any agent queue.\n");
+			sb.append("A message sent by a RabbitMQ client was not received by any queue.\n");
 			sb.append("Message type: " + messageType + '\n');
 			sb.append("Routing key: " + routingKey + '\n');
 			sb.append("Reason: " + replyText);

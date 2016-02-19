@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,7 +28,9 @@ package net.roboconf.agent.internal.misc;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -112,5 +114,54 @@ public final class AgentUtils {
 	public static void deleteInstanceResources( Instance instance )	throws IOException {
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 		Utils.deleteFilesRecursively( dir );
+	}
+
+
+	/**
+	 * Changes the level of the Roboconf logger.
+	 * <p>
+	 * This method assumes the default log configuration for a Roboconf
+	 * distribution has a certain shape. If a user manually changed the log
+	 * configuration (not the level, but the logger name, as an example), then
+	 * this will not work.
+	 * </p>
+	 */
+	public static void changeRoboconfLogLevel( String logLevel, String etcDir )
+	throws IOException {
+
+		if( ! Utils.isEmptyOrWhitespaces( etcDir )) {
+
+			File f = new File( etcDir, AgentConstants.KARAF_LOG_CONF_FILE );
+			if( f.exists()) {
+				Properties props = Utils.readPropertiesFile( f );
+				props.put( "log4j.logger.net.roboconf", logLevel + ", roboconf" );
+				Utils.writePropertiesFile( props, f );
+			}
+		}
+	}
+
+
+	/**
+	 * Collect the main log files into a map.
+	 * @param karafData the Karaf's data directory
+	 * @return a non-null map
+	 */
+	public static Map<String,byte[]> collectLogs( String karafData ) throws IOException {
+
+		Map<String,byte[]> logFiles = new HashMap<>( 2 );
+		if( ! Utils.isEmptyOrWhitespaces( karafData )) {
+
+			String[] names = { "karaf.log", "roboconf.log" };
+			for( String name : names ) {
+				File log = new File( karafData, AgentConstants.KARAF_LOGS_DIRECTORY + "/" + name );
+				if( ! log.exists())
+					continue;
+
+				String content = Utils.readFileContent( log );
+				logFiles.put( name, content.getBytes( "UTF-8" ));
+			}
+		}
+
+		return logFiles;
 	}
 }

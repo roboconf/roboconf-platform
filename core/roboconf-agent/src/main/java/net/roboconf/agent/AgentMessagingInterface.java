@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -47,6 +47,11 @@ public interface AgentMessagingInterface {
 	 * @return the scoped instance's
 	 */
 	Instance getScopedInstance();
+
+	/**
+	 * @return the scoped instance's path (as specified in the agent's configuration)
+	 */
+	String getScopedInstancePath();
 
 	/**
 	 * Forces the sending of a heart beat to the DM.

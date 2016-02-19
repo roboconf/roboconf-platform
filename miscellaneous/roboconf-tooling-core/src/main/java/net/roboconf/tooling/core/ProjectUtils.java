@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -52,10 +52,13 @@ public final class ProjectUtils {
 	private static final String TPL_POM_ARTIFACT = "${ARTIFACT_ID}";
 	private static final String TPL_POM_PLUGIN_VERSION = "${PLUGIN_VERSION}";
 
-	private static String[] DIRECTORIES = {
+	private static final String[] DIRECTORIES = {
 		Constants.PROJECT_DIR_DESC,
 		Constants.PROJECT_DIR_GRAPH,
-		Constants.PROJECT_DIR_INSTANCES
+		Constants.PROJECT_DIR_INSTANCES,
+		Constants.PROJECT_DIR_COMMANDS,
+		Constants.PROJECT_DIR_RULES_AUTONOMIC,
+		Constants.PROJECT_DIR_PROBES
 	};
 
 

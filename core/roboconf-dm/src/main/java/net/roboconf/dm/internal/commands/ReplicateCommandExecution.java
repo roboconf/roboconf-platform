@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -61,6 +61,9 @@ class ReplicateCommandExecution extends AbstractCommandExecution {
 		Instance rootInstance = resolveInstance( this.instr, this.instr.getReplicatedInstancePath(), true );
 		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
 
+		// Verify we can create new VMs in the model
+		CreateInstanceCommandExecution.verify( this.executionContext, rootInstance.getComponent());
+
 		try {
 			// Copy the instance
 			Instance copy = InstanceHelpers.replicateInstance( rootInstance );
@@ -73,6 +76,9 @@ class ReplicateCommandExecution extends AbstractCommandExecution {
 			if( targetId != null
 					&& ! Objects.equals( targetId, defaultTargetId ))
 				this.manager.targetsMngr().associateTargetWithScopedInstance( targetId, ma.getApplication(), "/" + copy.getName());
+
+			// Register meta-data
+			CreateInstanceCommandExecution.update( this.executionContext, copy );
 
 		} catch( Exception e ) {
 			throw new CommandException( e );

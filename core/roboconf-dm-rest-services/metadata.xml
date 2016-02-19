@@ -12,12 +12,12 @@
 		<callback transition="invalidate" method="stopping" />
 	</component>
 	
-	<instance component="roboconf-dm-rest-component" name="Roboconf DM REST services" />
+	<instance component="roboconf-dm-rest-component" name="Roboconf - DM REST services" />
 	
 	<!-- Web Socket handler injected in the DM as a listener. -->
 	<component classname="net.roboconf.dm.rest.services.internal.websocket.WebSocketHandler" name="roboconf-dm-websocket-component" immediate="true" public="false">
 		<provides />
 	</component>
 	
-	<instance component="roboconf-dm-websocket-component" name="Roboconf DM Websocket" />
+	<instance component="roboconf-dm-websocket-component" name="Roboconf - DM Websocket" />
 </ipojo>

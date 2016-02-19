@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -40,6 +40,7 @@ import com.github.dockerjava.api.model.Container;
 /**
  * @author Pierre-Yves Gibello - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
+ * @author Amadou Diarra -  Université Joseph Fourier
  */
 public class DockerHandler extends AbstractThreadedTargetHandler {
 
@@ -63,6 +64,10 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	static final String AGENT_JRE_AND_PACKAGES = "docker.agent.jre-packages";
 	static final String ADDITIONAL_PACKAGES = "docker.additional.packages";
 	static final String ADDITIONAL_DEPLOY = "docker.additional.deploy";
+
+	static final String DOWNLOAD_BASE_IMAGE = "docker.download.base-image";
+	static final String DOCKER_IMAGE_REGISTRY = "docker.image.registry";
+	static final String DEFAULT_DOCKER_IMAGE_REGISTRY = "registry.hub.docker.com";
 
 	// Docker exec markers for Roboconf configuration injection.
 	static final String MARKER_MESSAGING_CONFIGURATION = "$msgConfig$";
@@ -106,7 +111,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 			Map<String,String> messagingConfiguration,
 			String scopedInstancePath,
 			String applicationName )
-	throws TargetException {
+					throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
 
@@ -148,7 +153,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	 */
 	@Override
 	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
-	throws TargetException {
+			throws TargetException {
 
 		boolean result = false;
 		try {

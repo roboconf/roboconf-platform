@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -75,6 +75,10 @@ public class Agent implements AgentMessagingInterface {
 	private ReconfigurableClientAgent messagingClient;
 	private Instance scopedInstance;
 	Timer heartBeatTimer;
+
+	// Set as a class attribute to be overridden for tests.
+	String karafEtc = System.getProperty( Constants.KARAF_ETC );
+	String karafData = System.getProperty( Constants.KARAF_DATA );
 
 
 
@@ -163,10 +167,10 @@ public class Agent implements AgentMessagingInterface {
 				this.scopedInstancePath = props.getScopedInstancePath();
 
 				try {
+					this.logger.info( "Reconfiguring the agent with user data." );
 					UserDataUtils.reconfigureMessaging(
-						System.getProperty("karaf.etc"),
-						props.getMessagingConfiguration(),
-						this.messagingType);
+						this.karafEtc,
+						props.getMessagingConfiguration());
 
 				} catch(IOException e) {
 					this.logger.severe("Error in messaging reconfiguration from user data: " + e);
@@ -404,6 +408,7 @@ public class Agent implements AgentMessagingInterface {
 	/**
 	 * @return the scoped instance's path
 	 */
+	@Override
 	public String getScopedInstancePath() {
 		return this.scopedInstancePath;
 	}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -28,11 +28,11 @@ package net.roboconf.core.utils;
 import java.io.File;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -142,7 +142,7 @@ public class ResourceUtilsTest {
 		Assert.assertEquals( 1, map.size());
 
 		// With a properties file for measures
-		File autonomicDir = new File( appDir, Constants.PROJECT_DIR_AUTONOMIC );
+		File autonomicDir = new File( appDir, Constants.PROJECT_DIR_PROBES );
 		Assert.assertTrue( autonomicDir.mkdir());
 
 		File propertiesFile = new File( autonomicDir, componentName + Constants.FILE_EXT_MEASURES + ".properties" );

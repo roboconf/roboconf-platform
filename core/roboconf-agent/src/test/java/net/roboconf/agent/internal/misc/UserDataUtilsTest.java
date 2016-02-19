@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -31,10 +31,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.junit.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -54,27 +56,88 @@ public class UserDataUtilsTest {
 		Utils.deleteFilesRecursively( f );
 	}
 
-	@Test
-	public void testReconfigureMessaging() throws IOException {
-		File karafEtc =  this.folder.newFolder();
 
-		Map<String, String> msgData = new HashMap<String, String>();
+	@Test
+	public void testReconfigureMessaging_noAgentConfigurationFile() throws IOException {
+
+		// Prepare
+		File karafEtc =  this.folder.newFolder();
+		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
+		final File agentConf = new File( karafEtc, UserDataUtils.CONF_FILE_AGENT );
+
+		// Execute
+		Map<String,String> msgData = new HashMap<> ();
+		msgData.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "rabbitmq" );
 		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
 		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
 
-		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData, "rabbitmq");
+		Assert.assertFalse( msgConf.exists());
+		Assert.assertFalse( agentConf.exists());
 
-		File conf = new File(karafEtc, "net.roboconf.messaging.rabbitmq.cfg");
-		Assert.assertTrue(conf.exists());
+		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData);
 
-		Properties p = Utils.readPropertiesFile(conf);
+		// Check
+		Assert.assertTrue( msgConf.exists());
+		Assert.assertTrue( agentConf.exists());
+
+		Properties p = Utils.readPropertiesFile(msgConf);
 		String val = p.getProperty("net.roboconf.messaging.rabbitmq.server.ip");
 		Assert.assertEquals(val, "rabbit-server");
 		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.username");
 		Assert.assertEquals(val, "user1");
 		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.password");
 		Assert.assertEquals(val, "password1");
+
+		p = Utils.readPropertiesFile( agentConf );
+		Assert.assertEquals( "rabbitmq", p.get( Constants.MESSAGING_TYPE ));
+		Assert.assertEquals( 1, p.size());
+	}
+
+
+	@Test
+	public void testReconfigureMessaging_withAgentConfigurationFile() throws IOException {
+
+		// Prepare
+		File karafEtc =  this.folder.newFolder();
+		final File msgConf = new File( karafEtc, "net.roboconf.messaging.rabbitmq.cfg" );
+		final File agentConf = new File( karafEtc, UserDataUtils.CONF_FILE_AGENT );
+
+		Properties props = new Properties();
+		props.setProperty( "key", "value" );
+		props.setProperty( "something", "else" );
+		props.setProperty( Constants.MESSAGING_TYPE, "http" );
+		Utils.writePropertiesFile( props, agentConf );
+
+		// Execute
+		Map<String,String> msgData = new HashMap<> ();
+		msgData.put( MessagingConstants.MESSAGING_TYPE_PROPERTY, "rabbitmq" );
+		msgData.put("net.roboconf.messaging.rabbitmq.server.ip", "rabbit-server");
+		msgData.put("net.roboconf.messaging.rabbitmq.server.username", "user1");
+		msgData.put("net.roboconf.messaging.rabbitmq.server.password", "password1");
+
+		Assert.assertFalse( msgConf.exists());
+		Assert.assertTrue( agentConf.exists());
+
+		UserDataUtils.reconfigureMessaging(karafEtc.getAbsolutePath(), msgData);
+
+		// Check
+		Assert.assertTrue( msgConf.exists());
+		Assert.assertTrue( agentConf.exists());
+
+		Properties p = Utils.readPropertiesFile(msgConf);
+		String val = p.getProperty("net.roboconf.messaging.rabbitmq.server.ip");
+		Assert.assertEquals(val, "rabbit-server");
+		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.username");
+		Assert.assertEquals(val, "user1");
+		val = p.getProperty("net.roboconf.messaging.rabbitmq.server.password");
+		Assert.assertEquals(val, "password1");
+
+		p = Utils.readPropertiesFile( agentConf );
+		Assert.assertEquals( 3, p.size());
+		Assert.assertEquals( "rabbitmq", p.get( Constants.MESSAGING_TYPE ));
+		Assert.assertEquals( "else", p.get( "something" ));
+		Assert.assertEquals( "value", p.get( "key" ));
 	}
 
 
@@ -83,7 +146,6 @@ public class UserDataUtilsTest {
 
 		UserDataUtils.reconfigureMessaging(
 				File.separator + "this_is_a_wrong_path",
-				new HashMap<String,String>( 0 ),
-				"rabbitmq");
+				new HashMap<String,String>( 0 ));
 	}
 }

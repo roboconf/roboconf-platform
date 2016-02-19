@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -31,11 +31,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.autonomic.RuleParser;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.converters.FromGraphDefinition;
@@ -243,11 +245,43 @@ public final class RuntimeModelIo {
 
 		// Commands
 		File commandsDirectory = new File( projectDirectory, Constants.PROJECT_DIR_COMMANDS );
+		List<String> commandNames = new ArrayList<> ();
 		if( app.getGraphs() != null && commandsDirectory.exists()) {
 
 			for( File f : Utils.listAllFiles( commandsDirectory )) {
-				CommandsParser parser = new CommandsParser( app, f );
-				result.loadErrors.addAll( parser.getParsingErrors());
+
+				if( ! f.getName().endsWith( Constants.FILE_EXT_COMMANDS )) {
+					result.loadErrors.add( new RoboconfError( ErrorCode.PROJ_INVALID_COMMAND_EXT ));
+
+				} else {
+					CommandsParser parser = new CommandsParser( app, f );
+					result.loadErrors.addAll( parser.getParsingErrors());
+					commandNames.add( f.getName().replace( Constants.FILE_EXT_COMMANDS, "" ));
+				}
+			}
+		}
+
+
+		// Autonomic
+		File autonomicRulesDirectory = new File( projectDirectory, Constants.PROJECT_DIR_RULES_AUTONOMIC );
+		if( app.getGraphs() != null && autonomicRulesDirectory.exists()) {
+
+			for( File f : Utils.listAllFiles( autonomicRulesDirectory )) {
+
+				if( ! f.getName().endsWith( Constants.FILE_EXT_RULE )) {
+					result.loadErrors.add( new RoboconfError( ErrorCode.PROJ_INVALID_RULE_EXT ));
+
+				} else {
+					// Parsing errors
+					RuleParser parser = new RuleParser( f );
+					result.loadErrors.addAll( parser.getParsingErrors());
+
+					// Invalid references to commands?
+					List<String> coll = new ArrayList<>( parser.getRule().getCommandsToInvoke());
+					coll.removeAll( commandNames );
+					for( String commandName : coll )
+						result.loadErrors.add( new RoboconfError( ErrorCode.RULE_UNKNOWN_COMMAND, "Command name: " + commandName ));
+				}
 			}
 		}
 

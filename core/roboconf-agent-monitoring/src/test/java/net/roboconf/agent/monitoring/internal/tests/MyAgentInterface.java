@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -27,6 +27,7 @@ package net.roboconf.agent.monitoring.internal.tests;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.messaging.api.business.IAgentClient;
 
 /**
@@ -59,6 +60,11 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	@Override
 	public Instance getScopedInstance() {
 		return this.scopedInstance;
+	}
+
+	@Override
+	public String getScopedInstancePath() {
+		return InstanceHelpers.computeInstancePath( this.scopedInstance );
 	}
 
 	public void setScopedInstance( Instance scopedInstance ) {

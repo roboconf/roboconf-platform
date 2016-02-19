@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -25,8 +25,8 @@
 
 package net.roboconf.target.openstack.internal;
 
-import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPERTY;
 import static net.roboconf.messaging.api.MessagingConstants.FACTORY_TEST;
+import static net.roboconf.messaging.api.MessagingConstants.MESSAGING_TYPE_PROPERTY;
 
 import java.io.File;
 import java.util.Collections;
@@ -42,7 +42,7 @@ import net.roboconf.core.utils.Utils;
  */
 public class ToRunByHand {
 
-	private static final String PROPS_LOCATION = "/data1/targets/openstack.ow2.properties";
+	private static final String PROPS_LOCATION = "/data1/targets/openstack.ow2.with.block.storage.properties";
 
 	/**
 	 * A test that starts a new VM, passes user data, waits 5 minutes and terminates the VM.
@@ -76,7 +76,10 @@ public class ToRunByHand {
 				System.out.println( ": it does NOT run." );
 
 			// 4 minutes
-			Thread.sleep( 60000 * 4 );
+			Thread.sleep( 60000 * 1 );
+
+		} catch( Exception e ) {
+			e.printStackTrace();
 
 		} finally {
 			if( serverId != null )

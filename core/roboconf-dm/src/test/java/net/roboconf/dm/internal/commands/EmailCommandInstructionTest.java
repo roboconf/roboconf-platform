@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -33,7 +33,6 @@ import java.util.Properties;
 import javax.mail.Address;
 import javax.mail.Message;
 
-import org.junit.Assert;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.EmailCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
@@ -41,6 +40,7 @@ import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.dm.internal.commands.EmailCommandExecution.MailAuthenticator;
 import net.roboconf.dm.management.Manager;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,6 +60,7 @@ public class EmailCommandInstructionTest {
 	public void initialize() throws Exception {
 		this.manager = new Manager();
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+		this.manager.preferencesMngr().loadProperties();
 	}
 
 
@@ -79,7 +80,7 @@ public class EmailCommandInstructionTest {
 		Assert.assertEquals( 0, parser.getParsingErrors().size());
 		Assert.assertEquals( 2, parser.getInstructions().size());
 
-		Properties mailProperties = this.manager.preferencesMngr().getEmailProperties();
+		Properties mailProperties = this.manager.preferencesMngr().getJavaxMailProperties();
 		mailProperties.put( "mail.from", "me@test.fr" );
 
 		// First message

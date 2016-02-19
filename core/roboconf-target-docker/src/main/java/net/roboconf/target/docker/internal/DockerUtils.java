@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -33,9 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
-
 import org.apache.commons.lang.WordUtils;
 
 import com.github.dockerjava.api.DockerClient;
@@ -51,6 +48,9 @@ import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
 import com.github.dockerjava.jaxrs.DockerCmdExecFactoryImpl;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -250,7 +250,7 @@ public final class DockerUtils {
 	 * @throws TargetException
 	 */
 	public static void configureOptions( Map<String,String> options, CreateContainerCmd cmd )
-	throws TargetException {
+			throws TargetException {
 
 		// Basically, we had two choices:
 		// 1. Map our properties to the Java REST API.
@@ -414,7 +414,7 @@ public final class DockerUtils {
 				j = arg.indexOf(DockerHandler.MARKER_MESSAGING_TYPE);
 				l = DockerHandler.MARKER_MESSAGING_TYPE.length();
 				s = messagingConfiguration.containsKey( DockerHandler.MESSAGING_TYPE )
-					? messagingConfiguration.get( DockerHandler.MESSAGING_TYPE ) : "";
+						? messagingConfiguration.get( DockerHandler.MESSAGING_TYPE ) : "";
 
 			} else if( arg.contains( DockerHandler.MARKER_APPLICATION_NAME )) {
 				j = arg.indexOf(DockerHandler.MARKER_APPLICATION_NAME);

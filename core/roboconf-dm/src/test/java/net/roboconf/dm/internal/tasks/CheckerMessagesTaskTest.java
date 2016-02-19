@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -34,6 +34,7 @@ import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.api.IApplicationMngr;
+import net.roboconf.dm.management.api.IAutonomicMngr;
 import net.roboconf.dm.management.api.IConfigurationMngr;
 import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
@@ -61,9 +62,13 @@ public class CheckerMessagesTaskTest {
 		IConfigurationMngr configurationMngr = Mockito.mock( IConfigurationMngr.class );
 		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
 		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		IAutonomicMngr autonomicMngr = Mockito.mock( IAutonomicMngr.class );
 
 		this.messagingMngr = Mockito.mock( IMessagingMngr.class );
-		this.appManager = new ApplicationMngrImpl( notificationMngr, configurationMngr, targetsMngr, this.messagingMngr, randomMngr );
+		this.appManager = new ApplicationMngrImpl(
+				notificationMngr, configurationMngr,
+				targetsMngr, this.messagingMngr,
+				randomMngr, autonomicMngr );
 	}
 
 

@@ -22,12 +22,9 @@
 		
 		<properties pid="net.roboconf.dm.configuration">
 			<property name="messaging-type" method="setMessagingType" />
-		
-			<!-- FIXME: to manage through the REST API later -->	
-			<property name="autonomic-max-roots" method="setAutonomicMaxRoots" />
 		</properties>
 	</component>
 	
 	<!-- And the instance... -->
-	<instance component="roboconf-dm" name="Roboconf DM" />
+	<instance component="roboconf-dm" name="Roboconf - DM" />
 </ipojo>
