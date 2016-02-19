@@ -522,7 +522,7 @@ public class TargetsMngrImpl implements ITargetsMngr {
 			if( oldTargetId != null ) {
 				File associationFile = new File( findTargetDirectory( oldTargetId ), TARGETS_ASSOC_FILE );
 				Properties props = Utils.readPropertiesFileQuietly( associationFile, this.logger );
-				props.remove( key );
+				props.remove( key.toString());
 				writeProperties( props, associationFile );
 			}
 		}
