@@ -76,6 +76,15 @@ public class HttpClientFactoryTest {
 
 
 	@Test
+	public void testNonTrivialConstructor() {
+
+		BundleContext bundleContext = Mockito.mock( BundleContext.class );
+		HttpClientFactory factory = new HttpClientFactory( bundleContext );
+		Assert.assertEquals( bundleContext, factory.bundleContext );
+	}
+
+
+	@Test
 	public void testFactoryReconfigurationClientDm() throws IllegalAccessException {
 
 		// Create the client DM

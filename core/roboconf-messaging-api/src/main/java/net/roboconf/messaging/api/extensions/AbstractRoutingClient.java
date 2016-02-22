@@ -294,6 +294,18 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	}
 
 
+	/**
+	 * Determines whether a messaging operation can be done.
+	 * <p>
+	 * A messaging operation can be publishing a message or
+	 * dealing with subscriptions.
+	 * </p>
+	 * <p>
+	 * Example: verify a connection/login was established.
+	 * </p>
+	 *
+	 * @return true if we can proceed, false otherwise
+	 */
 	protected boolean canProceed() {
 		return ! this.connectionIsRequired || this.connected.get();
 	}
