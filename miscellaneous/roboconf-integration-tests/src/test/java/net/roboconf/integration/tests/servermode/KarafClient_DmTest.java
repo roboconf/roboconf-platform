@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -79,6 +80,7 @@ public class KarafClient_DmTest extends DmTest {
 
 			final StringBuilder sb = new StringBuilder();
 			Logger logger = Logger.getLogger( getClass().getName());
+			LogManager.getLogManager().addLogger( logger );
 			logger.setLevel( Level.ALL );
 			logger.addHandler( new Handler() {
 

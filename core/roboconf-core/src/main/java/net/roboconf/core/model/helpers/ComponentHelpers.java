@@ -214,7 +214,7 @@ public final class ComponentHelpers {
 	public static Map<String,String> findAllExportedVariables( Facet facet ) {
 
 		Map<Facet,Boolean> facetToResolved = new HashMap<Facet,Boolean> ();
-		Map<Facet,Map<String,String>> facetToResolvedExports = new HashMap<Facet,Map<String,String>> ();
+		Map<Facet,Map<String,String>> facetToResolvedExports = new HashMap<> ();
 
 		Collection<Facet> facets = new HashSet<Facet>( findAllExtendedFacets( facet ));
 		facets.add( facet );

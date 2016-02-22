@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Import;
@@ -43,19 +42,15 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.plugin.api.PluginException;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
 public class PluginScriptTest {
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
 
 	// This is hard-coded path for Linux, but this is because the Script plugin
 	// only makes sense for Linux systems. Tests that try to execute scripts
