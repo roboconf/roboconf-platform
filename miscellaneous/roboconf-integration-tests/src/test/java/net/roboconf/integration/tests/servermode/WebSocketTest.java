@@ -74,7 +74,13 @@ public class WebSocketTest extends DmTest {
 				URI echoUri = new URI( "ws://localhost:8181/roboconf-dm-websocket" );
 				ClientUpgradeRequest request = new ClientUpgradeRequest();
 				client.connect( socket, echoUri, request );
-				Thread.sleep( 2000 );
+
+				// Wait more or less (Travis builds with Java 8 may need it).
+				for( int i=0; i<10; i++ ) {
+					Thread.sleep( 2000 );
+					if( socket.wasConnected )
+						break;
+				}
 
 			} finally {
 				client.stop();
