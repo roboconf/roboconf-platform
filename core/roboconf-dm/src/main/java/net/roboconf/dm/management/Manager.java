@@ -26,6 +26,7 @@
 package net.roboconf.dm.management;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.logging.Level;
@@ -191,8 +192,7 @@ public class Manager {
 		this.applicationMngr.restoreApplications();
 
 		// We must update instance states after we restored applications
-		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
-			this.instancesMngr.restoreInstanceStates( ma );
+		restoreAllInstances();
 
 		this.logger.info( "The DM was launched." );
 	}
@@ -242,6 +242,19 @@ public class Manager {
 	 */
 	public void targetAppears( TargetHandler targetItf ) {
 		this.defaultTargetHandlerResolver.addTargetHandler( targetItf );
+
+		// When a target is deployed, we may also have to update instance states.
+		// Consider as an example when the DM restarts. Targets may be injected
+		// before and after the pojo was started by iPojo.
+
+		// See #519 for more details.
+		// Notice we restore instances only when the DM was started (the messaging
+		// must be ready). If it is not started, do nothing. The "start" method
+		// will trigger the restoration.
+
+		// We consider the DM is started if the timer is not null.
+		if( this.timer != null )
+			restoreInstancesFrom( targetItf );
 	}
 
 
@@ -296,8 +309,7 @@ public class Manager {
 		}
 
 		// We must update instance states after we switched the messaging configuration.
-		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
-			this.instancesMngr.restoreInstanceStates( ma );
+		restoreAllInstances();
 
 		this.logger.info( "The DM was successfully (re)configured." );
 	}
@@ -374,5 +386,37 @@ public class Manager {
 
 	public IAutonomicMngr autonomicMngr() {
 		return this.autonomicMngr;
+	}
+
+
+	// Private utilities
+
+
+	/**
+	 * Restores the states of all the instances from the current target handlers.
+	 */
+	void restoreAllInstances() {
+
+		// instancesMngr() instead of this.instancesMngr (for unit tests).
+		this.logger.fine( "Restoring all the instance states from the current target handlers." );
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications()) {
+
+			// Build a new snapshot on every loop
+			List<TargetHandler> snapshot = this.defaultTargetHandlerResolver.getTargetHandlersSnapshot();
+			for( TargetHandler targetHandler : snapshot )
+				instancesMngr().restoreInstanceStates( ma, targetHandler );
+		}
+	}
+
+
+	/**
+	 * Restores the states of all the instances from a given target handler.
+	 */
+	void restoreInstancesFrom( TargetHandler targetHandler ) {
+
+		// instancesMngr() instead of this.instancesMngr (for unit tests).
+		this.logger.fine( "Restoring the instance states with the '" + targetHandler.getTargetId() + "' target handler." );
+		for( ManagedApplication ma : this.applicationMngr.getManagedApplications())
+			instancesMngr().restoreInstanceStates( ma, targetHandler );
 	}
 }

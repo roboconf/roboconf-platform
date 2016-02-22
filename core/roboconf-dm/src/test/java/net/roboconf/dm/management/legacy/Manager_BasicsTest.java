@@ -498,68 +498,6 @@ public class Manager_BasicsTest {
 		Assert.assertEquals( path, apache.data.get( Instance.MACHINE_ID ));
 		Assert.assertEquals( "something", apache.data.get( "whatever" ));
 		Assert.assertEquals( ma.getName(), apache.data.get( Instance.APPLICATION_NAME ));
-
-		// It is considered started because upon a reconfiguration, the IaaS is contacted
-		// to determine whether a VM runs or not.
-		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, apache.getStatus());
-	}
-
-
-	@Test
-	public void testConfigurationChanged_andShutdown_withApps_withInstances_vmWasKilled() throws Exception {
-
-		// Copy an application in the configuration
-		File source = TestUtils.findApplicationDirectory( "lamp" );
-		ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( source );
-		ManagedApplication ma = this.manager.applicationMngr().createApplication( "lamp2", "test", tpl );
-		Instance apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
-		Assert.assertNotNull( apache );
-		String path = InstanceHelpers.computeInstancePath( apache );
-
-		// Make sure the VM is considered as deployed in the pseudo-IaaS
-		TargetHandler th = this.targetResolver.findTargetHandler( new HashMap<String,String>( 0 ));
-		Assert.assertNotNull( th );
-		String machineId = th.createMachine( null, null, path, ma.getName());
-
-		// Update the instances
-		apache.data.put( Instance.IP_ADDRESS, "192.168.1.23" );
-		apache.data.put( Instance.MACHINE_ID, path );
-		apache.data.put( "whatever", "something" );
-		apache.setStatus( InstanceStatus.PROBLEM );
-
-		// Save the manager's state
-		this.manager.stop();
-
-		//
-		// Here is the difference with #testConfigurationChanged_andShutdown_withApps_withInstances
-		// We simulate the fact that the VM was killed while the DM was stopped.
-		//
-		th.terminateMachine( null, machineId );
-
-		// Reset the manager (reload the configuration)
-		this.manager.reconfigure();
-
-		// Check there is the right application
-		Assert.assertEquals( 1, this.managerWrapper.getNameToManagedApplication().size());
-		ma = this.managerWrapper.getNameToManagedApplication().get( "lamp2" );
-		Assert.assertNotNull( ma );
-		Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
-		Assert.assertEquals( 6, InstanceHelpers.getAllInstances( ma.getApplication()).size());
-
-		for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication())) {
-			if( ! inst.equals( apache ))
-				Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, inst.getStatus());
-		}
-
-		apache = InstanceHelpers.findInstanceByPath( ma.getApplication(), "/Apache VM" );
-		Assert.assertNull( apache.data.get( Instance.IP_ADDRESS ));
-		Assert.assertNull( apache.data.get( Instance.MACHINE_ID ));
-		Assert.assertEquals( "something", apache.data.get( "whatever" ));
-		Assert.assertEquals( ma.getName(), apache.data.get( Instance.APPLICATION_NAME ));
-
-		// The VM was killed outside the DM. Upon restoration, the DM
-		// contacts the IaaS and sets the NOT_DEPLOYED status.
-		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, apache.getStatus());
 	}
 
 
