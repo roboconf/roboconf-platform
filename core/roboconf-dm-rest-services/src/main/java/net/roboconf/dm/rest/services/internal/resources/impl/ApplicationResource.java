@@ -150,10 +150,15 @@ public class ApplicationResource implements IApplicationResource {
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			Instance instance = null;
 			if( ma == null ) {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else if( instancePath != null &&
+					(instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " does not exist in " + applicationName + "." ).build();
+
 			} else {
-				Instance instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath );
 				this.manager.instancesMngr().deployAndStartAll( ma, instance );
 				response = Response.ok().build();
 			}
@@ -178,10 +183,15 @@ public class ApplicationResource implements IApplicationResource {
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			Instance instance = null;
 			if( ma == null ) {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else if( instancePath != null &&
+					(instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " does not exist in " + applicationName + "." ).build();
+
 			} else {
-				Instance instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath );
 				this.manager.instancesMngr().stopAll( ma, instance );
 				response = Response.ok().build();
 			}
@@ -206,10 +216,15 @@ public class ApplicationResource implements IApplicationResource {
 		Response response;
 		try {
 			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( applicationName );
+			Instance instance = null;
 			if( ma == null ) {
 				response = Response.status( Status.NOT_FOUND ).entity( "Application " + applicationName + " does not exist." ).build();
+
+			} else if( instancePath != null &&
+					(instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath )) == null ) {
+				response = Response.status( Status.NOT_FOUND ).entity( "Instance " + instancePath + " does not exist in " + applicationName + "." ).build();
+
 			} else {
-				Instance instance = InstanceHelpers.findInstanceByPath( ma.getApplication(), instancePath );
 				this.manager.instancesMngr().undeployAll( ma, instance );
 				response = Response.ok().build();
 			}
