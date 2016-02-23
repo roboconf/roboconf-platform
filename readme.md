@@ -1,5 +1,5 @@
 # Roboconf 
-[![Build Status](http://travis-ci.org/roboconf/roboconf-platform.png?branch=master)](http://travis-ci.org/roboconf/roboconf-platform)
+[![Build Status](http://travis-ci.org/roboconf/roboconf-platform.png?branch=master)](http://travis-ci.org/roboconf/roboconf-platform/builds)
 [![Coverage Status](https://coveralls.io/repos/roboconf/roboconf-platform/badge.svg?branch=master&service=github)](https://coveralls.io/github/roboconf/roboconf-platform?branch=master)
 [![License](https://img.shields.io/hexpm/l/plug.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 [![Join us on Gitter.im](https://img.shields.io/badge/gitter-join%20chat-brightgreen.svg)](https://gitter.im/roboconf/roboconf)
