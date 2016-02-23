@@ -33,6 +33,7 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandler;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -68,9 +69,24 @@ public interface IInstancesMngr {
 
 	/**
 	 * Restores instances states for a given application.
+	 * <p>
+	 * This method is invoked when the DM restarts or when it was reconfigured.
+	 * It must verify that agents (their VM) that are associated with the given
+	 * target handler, are still running. If so, the DM must send them a message
+	 * to retrieve the remote states of the children instances.
+	 * </p>
+	 * <p>
+	 * If the VM is not online anymore (e.g. external shutdown), then the instance
+	 * and its children must be marked as not deployed.
+	 * </p>
+	 * <p>
+	 * Scoped instances that are not associated with the given handler must be ignored.
+	 * </p>
+	 *
 	 * @param ma a managed application (not null)
+	 * @param targetHandler a target handler (not null)
 	 */
-	void restoreInstanceStates( ManagedApplication ma );
+	void restoreInstanceStates( ManagedApplication ma, TargetHandler targetHandler );
 
 	/**
 	 * Notifies all the agents they must re-export their variables.

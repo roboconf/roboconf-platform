@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
@@ -183,7 +184,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 
 	@Override
-	public void restoreInstanceStates( ManagedApplication ma ) {
+	public void restoreInstanceStates( ManagedApplication ma, TargetHandler targetHandler ) {
 
 		for( Instance scopedInstance : InstanceHelpers.findAllScopedInstances( ma.getApplication())) {
 			try {
@@ -199,7 +200,18 @@ public class InstancesMngrImpl implements IInstancesMngr {
 				Map<String,String> targetProperties = this.targetsMngr.findRawTargetProperties( ma.getApplication(), scopedInstancePath );
 				targetProperties.putAll( scopedInstance.data );
 
-				TargetHandler targetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+				TargetHandler readTargetHandler = null;
+				try {
+					readTargetHandler = this.targetHandlerResolver.findTargetHandler( targetProperties );
+
+				} catch( Exception e ) {
+					// nothing
+				}
+
+				// If it is not the right handler, ignore this scoped instance.
+				if( readTargetHandler == null
+						|| ! Objects.equals( targetHandler.getTargetId(), readTargetHandler.getTargetId()))
+					continue;
 
 				// Not a running VM? => Everything must be not deployed.
 				if( ! targetHandler.isMachineRunning( targetProperties, machineId )) {

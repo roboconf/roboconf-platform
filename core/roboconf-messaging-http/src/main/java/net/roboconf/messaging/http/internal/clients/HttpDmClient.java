@@ -118,9 +118,14 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 	@Override
 	protected void process( Session session, Message message ) throws IOException {
 
-		byte[] rawData = SerializationUtils.serializeObject( message );
-		ByteBuffer data = ByteBuffer.wrap( rawData );
-		session.getRemote().sendBytes( data );
+		if( session.isOpen()) {
+			byte[] rawData = SerializationUtils.serializeObject( message );
+			ByteBuffer data = ByteBuffer.wrap( rawData );
+			session.getRemote().sendBytes( data );
+
+		} else {
+			this.logger.finer( "Session is not available anymore. No message can be published." );
+		}
 	}
 
 

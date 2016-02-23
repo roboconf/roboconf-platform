@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.internal.api.IRandomMngr;
@@ -46,9 +46,12 @@ import net.roboconf.dm.management.api.IMessagingMngr;
 import net.roboconf.dm.management.api.INotificationMngr;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.messaging.api.business.IDmClient;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -229,5 +232,287 @@ public class InstancesMngrImplTest {
 		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
 		Assert.assertTrue( acquired.get());
 		Assert.assertTrue( released.get());
+	}
+
+
+	@Test
+	public void testRestoreInstances_nullHandler() throws Exception {
+
+		// Prepare stuff
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.findRawTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( new HashMap<String,String>( 0 ));
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
+			@Override
+			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
+				throw new TargetException( "No handler for tests" );
+			}
+		});
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+
+		// One scoped instance has a machine ID (considered as running somewhere)
+		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+
+		// Try to restore instances
+		mngr.restoreInstanceStates( ma, targetHandlerArgument );
+
+		// The handler's ID did not match => no restoration and no use of other mocks
+		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+
+		Mockito.verifyZeroInteractions( targetHandlerArgument );
+		Mockito.verifyZeroInteractions( messagingMngr );
+		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( randomMngr );
+	}
+
+
+	@Test
+	public void testRestoreInstances_nonNullNonMatchingHandler() throws Exception {
+
+		// Prepare stuff
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.findRawTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( new HashMap<String,String>( 0 ));
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
+
+		final TargetHandler targetHandler = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandler.getTargetId()).thenReturn( "some other target id" );
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
+			@Override
+			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
+				return targetHandler;
+			}
+		});
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+
+		// One scoped instance has a machine ID (considered as running somewhere)
+		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+
+		// Try to restore instances
+		mngr.restoreInstanceStates( ma, targetHandlerArgument );
+
+		// The handler's ID did not match => no restoration and no use of other mocks
+		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetHandler, Mockito.only()).getTargetId();
+		Mockito.verify( targetHandlerArgument, Mockito.only()).getTargetId();
+
+		Mockito.verifyZeroInteractions( messagingMngr );
+		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( randomMngr );
+	}
+
+
+	@Test
+	public void testRestoreInstances_rightHandler_vmRunning() throws Exception {
+
+		// Prepare stuff
+		Map<String,String> targetProperties = new HashMap<>( 0 );
+
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.findRawTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( targetProperties );
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
+			@Override
+			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
+				return targetHandlerArgument;
+			}
+		});
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+
+		// One scoped instance has a machine ID (considered as running somewhere)
+		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+
+		// Try to restore instances
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Mockito.when( targetHandlerArgument.isMachineRunning( targetProperties, "machine-id" )).thenReturn( true );
+		mngr.restoreInstanceStates( ma, targetHandlerArgument );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+
+		// The handler's ID matched and the VM is running => a message was sent.
+		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning( targetProperties, "machine-id" );
+
+		Mockito.verify( messagingMngr, Mockito.only()).sendMessageDirectly(
+				Mockito.eq( ma ),
+				Mockito.eq( app.getMySqlVm() ),
+				Mockito.any( MsgCmdSendInstances.class ));
+
+		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( randomMngr );
+	}
+
+
+	@Test
+	public void testRestoreInstances_rightHandler_vmRunning_withMessagingException() throws Exception {
+
+		// Prepare stuff
+		Map<String,String> targetProperties = new HashMap<>( 0 );
+
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.findRawTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( targetProperties );
+
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+		Mockito.doThrow( new IOException( "for test" )).when( messagingMngr ).sendMessageDirectly(
+				Mockito.any( ManagedApplication.class ),
+				Mockito.any( Instance.class ),
+				Mockito.any( Message.class ));
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
+			@Override
+			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
+				return targetHandlerArgument;
+			}
+		});
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+
+		// One scoped instance has a machine ID (considered as running somewhere)
+		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+
+		// Try to restore instances
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		Mockito.when( targetHandlerArgument.isMachineRunning( targetProperties, "machine-id" )).thenReturn( true );
+		mngr.restoreInstanceStates( ma, targetHandlerArgument );
+		Assert.assertEquals( InstanceStatus.DEPLOYED_STARTED, app.getMySqlVm().getStatus());
+
+		// The handler's ID matched and the VM is running => a message was sent.
+		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning( targetProperties, "machine-id" );
+
+		Mockito.verify( messagingMngr, Mockito.only()).sendMessageDirectly(
+				Mockito.eq( ma ),
+				Mockito.eq( app.getMySqlVm() ),
+				Mockito.any( MsgCmdSendInstances.class ));
+
+		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( randomMngr );
+	}
+
+
+	@Test
+	public void testRestoreInstances_rightHandler_vmNotRunning() throws Exception {
+
+		// Prepare stuff
+		Map<String,String> targetProperties = new HashMap<>( 0 );
+
+		INotificationMngr notificationMngr = Mockito.mock( INotificationMngr.class );
+		IRandomMngr randomMngr = Mockito.mock( IRandomMngr.class );
+		IMessagingMngr messagingMngr = Mockito.mock( IMessagingMngr.class );
+
+		ITargetsMngr targetsMngr = Mockito.mock( ITargetsMngr.class );
+		Mockito.when( targetsMngr.findRawTargetProperties(
+				Mockito.any( Application.class ),
+				Mockito.anyString())).thenReturn( targetProperties );
+
+		IConfigurationMngr configurationMngr = new ConfigurationMngrImpl();
+		configurationMngr.setWorkingDirectory( this.folder.newFolder());
+
+		final TargetHandler targetHandlerArgument = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandlerArgument.getTargetId()).thenReturn( "some target id" );
+
+		IInstancesMngr mngr = new InstancesMngrImpl( messagingMngr, notificationMngr, targetsMngr, randomMngr );
+		((InstancesMngrImpl) mngr).setTargetHandlerResolver( new TestTargetResolver() {
+			@Override
+			public TargetHandler findTargetHandler( Map<String,String> targetProperties ) throws TargetException {
+				return targetHandlerArgument;
+			}
+		});
+
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+
+		// One scoped instance has a machine ID (considered as running somewhere)
+		app.getMySqlVm().data.put( Instance.MACHINE_ID, "machine-id" );
+
+		// Try to restore instances
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+		app.getMySqlVm().setStatus( InstanceStatus.DEPLOYED_STARTED );
+
+		Mockito.when( targetHandlerArgument.isMachineRunning( targetProperties, "machine-id" )).thenReturn( false );
+		mngr.restoreInstanceStates( ma, targetHandlerArgument );
+		Assert.assertEquals( InstanceStatus.NOT_DEPLOYED, app.getMySqlVm().getStatus());
+
+		// The handler's ID matched and the VM is NOT running => no message was sent.
+		Mockito.verify( targetsMngr, Mockito.only()).findRawTargetProperties( Mockito.eq( app ), Mockito.anyString());
+		Mockito.verify( targetHandlerArgument, Mockito.times( 1 )).isMachineRunning( targetProperties, "machine-id" );
+
+		Mockito.verifyZeroInteractions( messagingMngr );
+		Mockito.verifyZeroInteractions( notificationMngr );
+		Mockito.verifyZeroInteractions( randomMngr );
+	}
+
+
+	@Test
+	public void testRestoreInstances_noMachineId() throws Exception {
+
+		// Prepare stuff
+		IInstancesMngr mngr = new InstancesMngrImpl( null, null, null, null );
+		TestApplication app = new TestApplication();
+		ManagedApplication ma = new ManagedApplication( app );
+
+		TargetHandler targetHandler = Mockito.mock( TargetHandler.class );
+
+		// Try to restore instances
+		mngr.restoreInstanceStates( ma, targetHandler );
+
+		// We did not go very far, and the mock was not even checked.
+		Mockito.verifyZeroInteractions( targetHandler );
 	}
 }

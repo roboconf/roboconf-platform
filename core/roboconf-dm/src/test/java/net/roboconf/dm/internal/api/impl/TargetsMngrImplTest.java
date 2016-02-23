@@ -869,7 +869,7 @@ public class TargetsMngrImplTest {
 
 		// Create another manager and verify the associations
 		newMngr = new TargetsMngrImpl( this.configurationMngr );
-		Assert.assertEquals( targetId_1, this.mngr.findTargetId( app, null, true ));
-		Assert.assertNull( this.mngr.findTargetId( app, path, true ));
+		Assert.assertEquals( targetId_1, newMngr.findTargetId( app, null, true ));
+		Assert.assertNull( newMngr.findTargetId( app, path, true ));
 	}
 }

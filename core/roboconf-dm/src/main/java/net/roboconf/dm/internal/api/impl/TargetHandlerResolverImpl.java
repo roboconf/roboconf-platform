@@ -53,7 +53,11 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 
 		if( targetItf != null ) {
 			this.logger.info( "Target handler '" + targetItf.getTargetId() + "' is now available in Roboconf's DM." );
-			this.targetHandlers.add( targetItf );
+
+			synchronized( this.targetHandlers ) {
+				this.targetHandlers.add( targetItf );
+			}
+
 			listTargets( this.targetHandlers, this.logger );
 		}
 	}
@@ -69,8 +73,12 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 		// (iPojo uses proxies). In this case, it results in a NPE here.
 		if( targetItf == null ) {
 			this.logger.info( "An invalid target handler is removed." );
+
 		} else {
-			this.targetHandlers.remove( targetItf );
+			synchronized( this.targetHandlers ) {
+				this.targetHandlers.remove( targetItf );
+			}
+
 			this.logger.info( "Target handler '" + targetItf.getTargetId() + "' is not available anymore in Roboconf's DM." );
 		}
 
@@ -97,6 +105,20 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 			throw new TargetException( "No deployment handler was found for handler named " + targetId );
 
 		return result;
+	}
+
+
+	/**
+	 * @return a snapshot of the target handlers
+	 */
+	public List<TargetHandler> getTargetHandlersSnapshot() {
+
+		List<TargetHandler> snapshot;
+		synchronized( this.targetHandlers ) {
+			 snapshot = new ArrayList<>( this.targetHandlers );
+		}
+
+		return snapshot;
 	}
 
 

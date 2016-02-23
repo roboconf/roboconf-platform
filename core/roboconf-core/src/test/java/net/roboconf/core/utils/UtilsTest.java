@@ -45,6 +45,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
@@ -791,6 +792,7 @@ public class UtilsTest {
 
 		// Prepare a logger
 		Logger logger = Logger.getLogger( getClass().getName());
+		LogManager.getLogManager().addLogger( logger );
 		logger.setLevel( Level.FINEST );
 		logger.addHandler( new Handler() {
 

@@ -113,6 +113,6 @@ public interface IApplicationCommandsResource {
 	 * @HTTP 409 if the command execution failed
 	 */
 	@POST
-	@Path( "{command-name}" )
-	Response executeCommand(@PathParam("name") String app, @PathParam("command-name") String commandName);
+	@Path( "execute" )
+	Response executeCommand(@PathParam("name") String app, @QueryParam("command-name") String commandName);
 }

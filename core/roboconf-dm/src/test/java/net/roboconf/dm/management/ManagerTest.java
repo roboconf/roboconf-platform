@@ -27,6 +27,7 @@ package net.roboconf.dm.management;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -34,9 +35,11 @@ import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.dm.internal.test.TargetHandlerMock;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
+import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
 import org.junit.Assert;
@@ -234,6 +237,106 @@ public class ManagerTest {
 			Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
 
 		} finally {
+			this.manager.stop();
+		}
+	}
+
+
+	@Test
+	public void testApplicationInstancesStatesAreCorrectlyRestored() throws Exception {
+
+		// Verify instances states are restored correctly.
+		// Instances states are restored when the DM starts and when new
+		// target handlers appears AFTER the DM has started.
+
+		final String targetId = "for-test";
+		final TargetHandler targetHandler = Mockito.mock( TargetHandler.class );
+		Mockito.when( targetHandler.getTargetId()).thenReturn( targetId );
+
+		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
+		this.manager.setMessagingType( MessagingConstants.FACTORY_TEST );
+		this.manager.setTargetResolver( new ITargetHandlerResolver() {
+
+			@Override
+			public TargetHandler findTargetHandler( Map<String,String> targetProperties )
+			throws TargetException {
+				return targetHandler;
+			}
+		});
+
+		try {
+			// Add the target handler before starting the DM.
+			// Verify no restoration was attempted.
+			this.manager = Mockito.spy( this.manager );
+			IInstancesMngr instancesMngr = Mockito.mock( IInstancesMngr.class );
+			Mockito.when( this.manager.instancesMngr()).thenReturn( instancesMngr );
+
+			this.manager.targetAppears( targetHandler );
+			Mockito.verify( instancesMngr, Mockito.times( 0 )).restoreInstanceStates(
+					Mockito.any( ManagedApplication.class ),
+					Mockito.eq( targetHandler ));
+
+			// Start the DM. Still no restoration.
+			this.manager.start();
+			Mockito.verify( instancesMngr, Mockito.times( 0 )).restoreInstanceStates(
+					Mockito.any( ManagedApplication.class ),
+					Mockito.eq( targetHandler ));
+
+			// Register an application.
+			TestManagerWrapper managerWrapper = new TestManagerWrapper( this.manager );
+			managerWrapper.configureMessagingForTest();
+			this.manager.reconfigure();
+
+			File dir = TestUtils.findApplicationDirectory( "lamp" );
+			Assert.assertTrue( dir.exists());
+
+			ApplicationTemplate tpl = this.manager.applicationTemplateMngr().loadApplicationTemplate( dir );
+			Assert.assertNotNull( tpl );
+
+			ManagedApplication ma = this.manager.applicationMngr().createApplication( "test", null, tpl );
+			Assert.assertNotNull( ma );
+
+			// Clear the applications and restore them.
+			// Even with no life cycle action, instances were saved and restored.
+			Assert.assertEquals( 3, ma.getApplication().getRootInstances().size());
+			managerWrapper.getNameToManagedApplication().clear();
+
+			// Restart the DM then.
+			this.manager.stop();
+			this.manager.start();
+
+			// Verify instances were restored
+			ma = this.manager.applicationMngr().findManagedApplicationByName( "test" );
+			Assert.assertNotNull( ma );
+
+			// Verify invocations
+			Mockito.verify( instancesMngr, Mockito.times( 1 )).restoreInstanceStates( ma, targetHandler );
+			Mockito.verify( instancesMngr, Mockito.times( 1 )).restoreInstanceStates(
+					Mockito.eq( ma ),
+					Mockito.any( TargetHandler.class ));
+
+			// Add a new target handler and verify restoration was also invoked.
+			TargetHandler newTargetHandler = Mockito.mock( TargetHandler.class );
+			this.manager.targetAppears( newTargetHandler );
+
+			Mockito.verify( instancesMngr, Mockito.times( 1 )).restoreInstanceStates( ma, targetHandler );
+			Mockito.verify( instancesMngr, Mockito.times( 1 )).restoreInstanceStates( ma, newTargetHandler );
+			Mockito.verify( instancesMngr, Mockito.times( 2 )).restoreInstanceStates(
+					Mockito.eq( ma ),
+					Mockito.any( TargetHandler.class ));
+
+			// Stop the DM again
+			this.manager.stop();
+
+			// Verify adding a new target handler does nothing
+			newTargetHandler = Mockito.mock( TargetHandler.class );
+			this.manager.targetAppears( newTargetHandler );
+			Mockito.verify( instancesMngr, Mockito.times( 2 )).restoreInstanceStates(
+					Mockito.eq( ma ),
+					Mockito.any( TargetHandler.class ));
+
+		} finally {
+			// Manager#stop() is idem-potent.
 			this.manager.stop();
 		}
 	}

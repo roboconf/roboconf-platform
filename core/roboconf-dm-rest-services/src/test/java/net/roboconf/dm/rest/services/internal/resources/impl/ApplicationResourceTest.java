@@ -299,6 +299,14 @@ public class ApplicationResourceTest {
 
 
 	@Test
+	public void testStopAll_invalidInstancePath() throws Exception {
+
+		Response resp = this.resource.stopAll( this.app.getName(), "/invalid" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
 	public void testStopAll_IOException() throws Exception {
 
 		this.msgClient.connected.set( false );
@@ -331,6 +339,14 @@ public class ApplicationResourceTest {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		Response resp = this.resource.undeployAll( "oops", instancePath );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testUndeployAll_invalidInstancePath() throws Exception {
+
+		Response resp = this.resource.undeployAll( this.app.getName(), "/invalid" );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 	}
 
@@ -372,6 +388,14 @@ public class ApplicationResourceTest {
 
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcat());
 		Response resp = this.resource.deployAndStartAll( "oops", instancePath );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testDeployandStartAll_invalidInstancePath() throws Exception {
+
+		Response resp = this.resource.deployAndStartAll( this.app.getName(), "/invalid" );
 		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
 	}
 
