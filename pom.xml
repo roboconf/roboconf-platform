@@ -107,7 +107,7 @@
 		<docker.java.version>2.1.4</docker.java.version>
 		
 		<!-- To update on every release -->
-		<version.range>[${project.version},0.7)</version.range>
+		<version.range>[${project.version},0.8)</version.range>
 	</properties>
 
 	<dependencyManagement>
