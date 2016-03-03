@@ -27,7 +27,7 @@
 
 	<groupId>net.roboconf</groupId>
 	<artifactId>roboconf-platform-parent</artifactId>
-	<version>0.6-SNAPSHOT</version>
+	<version>0.7-SNAPSHOT</version>
 	<name>Roboconf :: Platform Parent</name>
 	<packaging>pom</packaging>
 
@@ -107,7 +107,7 @@
 		<docker.java.version>2.1.4</docker.java.version>
 		
 		<!-- To update on every release -->
-		<version.range>[${project.version},0.7)</version.range>
+		<version.range>[${project.version},0.8)</version.range>
 	</properties>
 
 	<dependencyManagement>
