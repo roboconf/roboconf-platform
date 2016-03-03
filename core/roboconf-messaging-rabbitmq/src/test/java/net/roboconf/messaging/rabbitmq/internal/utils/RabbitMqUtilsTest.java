@@ -25,16 +25,12 @@
 
 package net.roboconf.messaging.rabbitmq.internal.utils;
 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Logger;
-
-import org.junit.Assert;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
-import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,9 +38,6 @@ import org.mockito.Mockito;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.ConsumerCancelledException;
-import com.rabbitmq.client.QueueingConsumer;
-import com.rabbitmq.client.ShutdownSignalException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -170,49 +163,5 @@ public class RabbitMqUtilsTest {
 		RabbitMqUtils.closeConnection( channel );
 		Assert.assertFalse( channel.isOpen());
 		Assert.assertFalse( channel.getConnection().isOpen());
-	}
-
-
-	@Test( timeout = 2000 )
-	public void testListenToRabbitMq_rabbitExceptions() throws Exception {
-		Assume.assumeTrue( rabbitMqIsRunning );
-
-		// In these tests, Rabbit exceptions break the processing loop
-		Channel channel = RabbitMqTestUtils.createTestChannel();
-		Logger logger = Logger.getLogger( getClass().getName());
-		LinkedBlockingQueue<Message> messgesQueue = new LinkedBlockingQueue<>();
-
-		// Shutdown
-		QueueingConsumer consumer = new QueueingConsumer( channel ) {
-			@Override
-			public Delivery nextDelivery()
-			throws InterruptedException, ShutdownSignalException, ConsumerCancelledException {
-				throw new ShutdownSignalException( false, false, null, "for tests" );
-			}
-		};
-
-		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messgesQueue );
-
-		// Interrupted
-		consumer = new QueueingConsumer( channel ) {
-			@Override
-			public Delivery nextDelivery()
-			throws InterruptedException, ShutdownSignalException, ConsumerCancelledException {
-				throw new InterruptedException( "for tests" );
-			}
-		};
-
-		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messgesQueue );
-
-		// Consumer
-		consumer = new QueueingConsumer( channel ) {
-			@Override
-			public Delivery nextDelivery()
-			throws InterruptedException, ShutdownSignalException, ConsumerCancelledException {
-				throw new ConsumerCancelledException();
-			}
-		};
-
-		RabbitMqUtils.listenToRabbitMq( "whatever", logger, consumer, messgesQueue );
 	}
 }

@@ -43,13 +43,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.internal.tests.TestUtils.StringHandler;
 import net.roboconf.core.utils.Utils.DirectoryFileFilter;
 import net.roboconf.core.utils.Utils.FileNameComparator;
 
@@ -788,47 +787,31 @@ public class UtilsTest {
 	@Test
 	public void testLogException() {
 
-		final StringBuffer sb = new StringBuffer();
+		final StringHandler logHandler = new StringHandler();
 
 		// Prepare a logger
 		Logger logger = Logger.getLogger( getClass().getName());
 		LogManager.getLogManager().addLogger( logger );
 		logger.setLevel( Level.FINEST );
-		logger.addHandler( new Handler() {
-
-			@Override
-			public void close() throws SecurityException {
-				// nothing
-			}
-
-			@Override
-			public void flush() {
-				// nothing
-			}
-
-			@Override
-			public void publish( LogRecord record ) {
-				sb.append( record.getMessage());
-			}
-		});
+		logger.addHandler( logHandler );
 
 		// Run the first test
-		Assert.assertEquals( "", sb.toString());
+		Assert.assertEquals( "", logHandler.getLogs());
 		Utils.logException( logger, new Exception( "boo!" ));
-		Assert.assertTrue( sb.toString().startsWith( "java.lang.Exception: boo!" ));
+		Assert.assertTrue( logHandler.getLogs().startsWith( "java.lang.Exception: boo!" ));
 
 		// Change the log level
 		logger.setLevel( Level.INFO );
 		Assert.assertFalse( logger.isLoggable( Level.FINEST ));
 		Assert.assertTrue( logger.isLoggable( Level.INFO ));
 
-		sb.delete( 0, sb.length());
-		Assert.assertEquals( "", sb.toString());
+		logHandler.getStringBuilder().setLength( 0 );
+		Assert.assertEquals( "", logHandler.getLogs());
 		Utils.logException( logger, new Exception( "boo!" ));
-		Assert.assertEquals( "", sb.toString());
+		Assert.assertEquals( "", logHandler.getLogs());
 
 		Utils.logException( logger, Level.INFO, new Exception( "boo!" ));
-		Assert.assertTrue( sb.toString().startsWith( "java.lang.Exception: boo!" ));
+		Assert.assertTrue( logHandler.getLogs().startsWith( "java.lang.Exception: boo!" ));
 	}
 
 

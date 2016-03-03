@@ -43,14 +43,15 @@ import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.utils.MessagingUtils;
 import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-import net.roboconf.messaging.rabbitmq.internal.utils.ListeningThread;
+import net.roboconf.messaging.rabbitmq.internal.impl.RoboconfConsumer;
+import net.roboconf.messaging.rabbitmq.internal.impl.RoboconfRecoveryListener;
+import net.roboconf.messaging.rabbitmq.internal.impl.RoboconfReturnListener;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
-import net.roboconf.messaging.rabbitmq.internal.utils.RoboconfReturnListener;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.Recoverable;
 
 /**
  * Common RabbitMQ client-related stuffs.
@@ -59,7 +60,7 @@ import com.rabbitmq.client.QueueingConsumer;
  */
 public class RabbitMqClient implements IMessagingClient {
 
-	private final Logger logger = Logger.getLogger(this.getClass().getName());
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final String messageServerIp, messageServerUsername, messageServerPassword;
 	private final WeakReference<ReconfigurableClient<?>> reconfigurable;
 
@@ -169,6 +170,10 @@ public class RabbitMqClient implements IMessagingClient {
 		// Be notified when a message does not arrive in a queue (i.e. nobody is listening)
 		this.channel.addReturnListener( new RoboconfReturnListener());
 
+		// Add a recoverable listener (when broken connections are recovered).
+		// Given the way the RabbitMQ factory is configured, the channel should be "recoverable".
+		((Recoverable) this.channel).addRecoveryListener( new RoboconfRecoveryListener());
+
 		// Declare the exchanges.
 		RabbitMqUtils.declareGlobalExchanges( this.channel );
 		RabbitMqUtils.declareApplicationExchanges( this.applicationName, this.channel );
@@ -178,11 +183,9 @@ public class RabbitMqClient implements IMessagingClient {
 		this.channel.queueDeclare( queueName, true, false, true, null );
 
 		// Start listening to messages.
-		QueueingConsumer consumer = new QueueingConsumer( this.channel );
+		RoboconfConsumer consumer = new RoboconfConsumer( getId(), this.channel, this.messageQueue );
+		consumer.handleConsumeOk( queueName );
 		this.consumerTag = this.channel.basicConsume( queueName, true, consumer );
-
-		String threadName = "Roboconf - Queue listener for " + getId();
-		new ListeningThread( threadName, this.logger, consumer, this.messageQueue, getId()).start();
 	}
 
 

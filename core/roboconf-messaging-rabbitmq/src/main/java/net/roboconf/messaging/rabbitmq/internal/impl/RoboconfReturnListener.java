@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal.utils;
+package net.roboconf.messaging.rabbitmq.internal.impl;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -68,14 +68,13 @@ public class RoboconfReturnListener implements ReturnListener {
 			Utils.logException( this.logger, e );
 		}
 
-		if (this.logger.isLoggable(Level.WARNING)) {
+		if( this.logger.isLoggable( Level.WARNING )) {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("A message sent by a RabbitMQ client was not received by any queue.\n");
 			sb.append("Message type: " + messageType + '\n');
 			sb.append("Routing key: " + routingKey + '\n');
 			sb.append("Reason: " + replyText);
-			this.logger.warning(sb.toString());
+			this.logger.warning( sb.toString());
 		}
-
 	}
 }

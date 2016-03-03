@@ -131,7 +131,7 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 
 	@Override
 	public void publish( MessagingContext ctx, Message msg ) throws IOException {
-		this.logger.fine( "The DM's HTTP client is about to publish a message (" + msg + ") to" + ctx );
+		this.logger.fine( "The DM's HTTP client is about to publish a message (" + msg + ") to " + ctx );
 
 		// The DM has no session.
 		// So, we intercept messages for the DM and determine whether the
