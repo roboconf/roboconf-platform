@@ -10,21 +10,21 @@
 			<callback type="bind" method="targetAppears" />
 			<callback type="unbind" method="targetDisappears" />
 		</requires>
-		
+
 		<requires aggregate="true" optional="true">
 			<callback type="bind" method="listenerAppears" />
 			<callback type="unbind" method="listenerDisappears" />
 		</requires>
-		
+
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />
 		<provides />
-		
+
 		<properties pid="net.roboconf.dm.configuration">
 			<property name="messaging-type" method="setMessagingType" />
 		</properties>
 	</component>
-	
+
 	<!-- And the instance... -->
 	<instance component="roboconf-dm" name="Roboconf - DM" />
 </ipojo>

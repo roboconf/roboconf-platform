@@ -40,13 +40,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
-import org.junit.Assert;
 import net.roboconf.core.dsl.ParsingModelIoTest;
 import net.roboconf.core.utils.Utils;
+
+import org.junit.Assert;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -279,5 +282,37 @@ public class TestUtils {
 		}
 
 		return clazz.cast( fieldValue );
+	}
+
+
+	/**
+	 * A log handler that writes records in a string buffer.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class StringHandler extends Handler {
+		private final StringBuilder sb = new StringBuilder();
+
+		@Override
+		public void close() throws SecurityException {
+			// nothing
+		}
+
+		@Override
+		public void flush() {
+			// nothing
+		}
+
+		@Override
+		public void publish( LogRecord rec ) {
+			this.sb.append( rec.getMessage() + "\n" );
+		}
+
+		public String getLogs() {
+			return this.sb.toString();
+		}
+
+		public StringBuilder getStringBuilder() {
+			return this.sb;
+		}
 	}
 }

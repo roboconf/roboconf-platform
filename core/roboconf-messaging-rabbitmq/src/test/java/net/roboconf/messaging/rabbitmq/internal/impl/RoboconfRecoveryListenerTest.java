@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,19 +23,34 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal.utils;
+package net.roboconf.messaging.rabbitmq.internal.impl;
+
+import net.roboconf.messaging.rabbitmq.internal.impl.RoboconfRecoveryListener;
 
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.rabbitmq.client.Recoverable;
+import com.rabbitmq.client.impl.recovery.AutorecoveringChannel;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class RoboconfReturnListenerTest {
+public class RoboconfRecoveryListenerTest {
 
 	@Test
-	public void testDeserializationError() throws Exception {
+	public void testHandleRecovery() {
 
-		RoboconfReturnListener listener = new RoboconfReturnListener();
-		listener.handleReturn( 0, "reply", "exchange", "routingKey", null, new byte[ 1 ]);
+		// Channel being recovered
+		RoboconfRecoveryListener listener = new RoboconfRecoveryListener();
+		AutorecoveringChannel ch = Mockito.mock( AutorecoveringChannel.class );
+
+		listener.handleRecovery( ch );
+		Mockito.verify( ch, Mockito.only()).getChannelNumber();
+
+		// Not a channel (e.g. a connection)
+		Recoverable recoverable = Mockito.mock( Recoverable.class );
+		listener.handleRecovery( recoverable );
+		Mockito.verifyZeroInteractions( recoverable );
 	}
 }

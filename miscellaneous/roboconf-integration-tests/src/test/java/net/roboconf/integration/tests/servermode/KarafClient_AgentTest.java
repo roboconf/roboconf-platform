@@ -28,13 +28,12 @@ package net.roboconf.integration.tests.servermode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.internal.tests.TestUtils.StringHandler;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.integration.probes.AgentTest;
 import net.roboconf.integration.tests.internal.ItUtils;
@@ -78,27 +77,12 @@ public class KarafClient_AgentTest extends AgentTest {
 			File binDirectory = new File( karafDirectory, "bin" );
 			Assert.assertTrue( binDirectory.exists());
 
-			final StringBuilder sb = new StringBuilder();
 			Logger logger = Logger.getLogger( getClass().getName());
 			LogManager.getLogManager().addLogger( logger );
 			logger.setLevel( Level.ALL );
-			logger.addHandler( new Handler() {
 
-				@Override
-				public void close() throws SecurityException {
-					// nothing
-				}
-
-				@Override
-				public void flush() {
-					// nothing
-				}
-
-				@Override
-				public void publish( LogRecord record ) {
-					sb.append( record.getMessage() + "\n" );
-				}
-			});
+			final StringHandler logHandler = new StringHandler();
+			logger.addHandler( logHandler );
 
 			List<String> command = new ArrayList<> ();
 			command.add( "/bin/sh" );
@@ -107,7 +91,7 @@ public class KarafClient_AgentTest extends AgentTest {
 
 			int code = ProgramUtils.executeCommand( logger, command, binDirectory, null );
 			Assert.assertEquals( 0, code );
-			Assert.assertTrue( sb.toString().contains( "ipojo-all" ));
+			Assert.assertTrue( logHandler.getLogs().contains( "ipojo-all" ));
 
 		} finally {
 			container.stop();

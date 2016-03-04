@@ -25,7 +25,6 @@
 
 package net.roboconf.agent.internal.misc;
 
-import java.io.IOException;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 
@@ -54,6 +53,7 @@ public class HeartbeatTask extends TimerTask {
 
 	@Override
 	public void run() {
+
 		try {
 			MsgNotifHeartbeat heartBeat = new MsgNotifHeartbeat(
 					this.agent.getApplicationName(),
@@ -68,7 +68,8 @@ public class HeartbeatTask extends TimerTask {
 					&& messagingClient.isConnected())
 				messagingClient.sendMessageToTheDm( heartBeat );
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
+			// Catch ALL the exceptions (important for connections recovery - e.g. with RabbitMQ).
 			this.logger.severe( e.getMessage());
 			Utils.logException( this.logger, e );
 		}

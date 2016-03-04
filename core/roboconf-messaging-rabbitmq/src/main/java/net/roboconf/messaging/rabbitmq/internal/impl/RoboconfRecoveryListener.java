@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,50 +23,28 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.rabbitmq.internal.utils;
+package net.roboconf.messaging.rabbitmq.internal.impl;
 
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
-import net.roboconf.messaging.api.messages.Message;
-
-import com.rabbitmq.client.QueueingConsumer;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Recoverable;
+import com.rabbitmq.client.RecoveryListener;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ListeningThread extends Thread {
+public class RoboconfRecoveryListener implements RecoveryListener {
 
-	private final Logger logger;
-	private final QueueingConsumer consumer;
-	private final LinkedBlockingQueue<Message> messageQueue;
-	private final String id;
+	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
-	/**
-	 * Constructor.
-	 */
-	public ListeningThread(
-			String threadName,
-			Logger logger,
-			QueueingConsumer consumer,
-			LinkedBlockingQueue<Message> messageQueue,
-			String id ) {
-
-		super( threadName );
-		this.logger = logger;
-		this.consumer = consumer;
-		this.messageQueue = messageQueue;
-		this.id = id;
-	}
-
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Thread#run()
-	 */
 	@Override
-	public void run() {
-		RabbitMqUtils.listenToRabbitMq( this.id, this.logger, this.consumer, this.messageQueue );
+	public void handleRecovery( Recoverable recoverable ) {
+
+		if( recoverable instanceof Channel ) {
+			int channelNumber = ((Channel) recoverable).getChannelNumber();
+			this.logger.fine( "Connection to channel #" + channelNumber + " was recovered." );
+		}
 	}
 }
