@@ -28,12 +28,14 @@ package net.roboconf.core.commands;
 import java.io.File;
 import java.util.List;
 
-import org.junit.Assert;
+import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.utils.Utils;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -122,9 +124,15 @@ public class CommandsParserTest {
 	@Test
 	public void testAllCommands() throws Exception {
 
-		File f = TestUtils.findTestFile( "/commands/all-commands.txt" );
-		CommandsParser parser = new CommandsParser( this.app, f );
+		this.app.setDirectory( this.folder.newFolder());
+		File cmdDir = new File( this.app.getDirectory(), Constants.PROJECT_DIR_COMMANDS );
+		Assert.assertTrue( cmdDir.mkdirs());
 
+		File f = TestUtils.findTestFile( "/commands/single-line-commands.txt" );
+		Utils.copyStream( f, new File( cmdDir, "single-line-commands" + Constants.FILE_EXT_COMMANDS ));
+
+		f = TestUtils.findTestFile( "/commands/all-commands.txt" );
+		CommandsParser parser = new CommandsParser( this.app, f );
 		List<ParsingError> errors = parser.getParsingErrors();
 		Assert.assertEquals( 0, errors.size());
 	}

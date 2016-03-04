@@ -75,7 +75,7 @@ public class MessagingClientFactoryRegistry {
 	}
 
 	/**
-	 * Adds a messaging client factory to this registry.
+	 * Adds a messaging client factory to this registry, unless a similar one was already registered.
 	 * @param factory the messaging client factory to add.
 	 * @return {@code true} if the factory has been added, {@code false} if a factory with the same type was already registered.
 	 */

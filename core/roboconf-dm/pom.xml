@@ -90,10 +90,10 @@
 		</dependency>
 
 		<dependency>
-			   <groupId>org.apache.felix</groupId>
-			   <artifactId>org.apache.felix.ipojo</artifactId>
-			   <version>${ipojo.version}</version>
-			   <scope>test</scope>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo</artifactId>
+			<version>${ipojo.version}</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>

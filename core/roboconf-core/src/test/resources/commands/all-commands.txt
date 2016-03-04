@@ -21,6 +21,9 @@ change status of /tomcat-vm-2/tomcat-server to DEPLOYED and STARTED
 # Write
 write something into /this/file
 
+# Execute
+execute single-line-commands
+
 # E-mail
 email toto@company.net with \
 	Subject: Alert!\
