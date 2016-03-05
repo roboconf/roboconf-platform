@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.runtime.IReconfigurable;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
@@ -93,7 +94,7 @@ import net.roboconf.target.api.TargetHandler;
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class Manager {
+public class Manager implements IReconfigurable {
 
 	// Constants
 	private static final long TIMER_PERIOD = 6000;
@@ -296,9 +297,11 @@ public class Manager {
 	 * It is NOT invoked DIRECTLY by iPojo anymore.
 	 * </p>
 	 */
+	@Override
 	public void reconfigure() {
 
 		// Update the messaging client
+		this.logger.info( "Reconfiguration requested in the DM." );
 		if( this.messagingClient != null ) {
 			this.messagingClient.switchMessagingType( this.messagingType );
 			try {

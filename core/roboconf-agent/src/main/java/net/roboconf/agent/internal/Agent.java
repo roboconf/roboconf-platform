@@ -47,21 +47,17 @@ import net.roboconf.agent.internal.misc.UserDataUtils;
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
+import net.roboconf.core.runtime.IReconfigurable;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.plugin.api.PluginInterface;
 
 /**
- * An abstract implementation for a Roboconf agent.
- * <p>
- * This class does not have any method to implement.
- * It is only here to be extended.
- * </p>
- *
+ * An implementation of a Roboconf agent.
  * @author Vincent Zurczak - Linagora
  */
-public class Agent implements AgentMessagingInterface {
+public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	// Component properties (ipojo)
 	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType;
@@ -147,7 +143,7 @@ public class Agent implements AgentMessagingInterface {
 
 			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.targetId ))
 				props = UserDataUtils.findParametersForAzure( this.logger );
-			
+
 			else if(AgentConstants.PLATFORM_VMWARE.equalsIgnoreCase(this.targetId)) {
 				props = UserDataUtils.findParametersForVmware(this.logger);
 			}
@@ -376,10 +372,12 @@ public class Agent implements AgentMessagingInterface {
 	 * It may be invoked before the start() method is.
 	 * </p>
 	 */
+	@Override
 	public void reconfigure() {
 
 		// This method is invoked when properties change.
 		// It is not related to life cycle (start/stop).
+		this.logger.info( "Reconfiguration requested in agent " + getAgentId());
 		if( this.messagingClient == null ) {
 			this.logger.info( "The agent has not yet been started. Configuration is dropped." );
 			return;
