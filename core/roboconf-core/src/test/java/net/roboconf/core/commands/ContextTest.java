@@ -28,11 +28,11 @@ package net.roboconf.core.commands;
 import java.io.File;
 import java.util.List;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,6 +84,9 @@ public class ContextTest {
 
 		this.context.instancePathToComponentName.put( "not a path", "whatever" );
 		Assert.assertNull( this.context.resolveInstance( "not a path" ));
+		Assert.assertNull( this.context.resolveInstance( "" ));
+
+		this.context.instancePathToComponentName.put( "", "vm" );
 		Assert.assertNull( this.context.resolveInstance( "" ));
 	}
 

@@ -36,6 +36,7 @@ import net.roboconf.core.commands.ChangeStateCommandInstruction;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.DefineVariableCommandInstruction;
 import net.roboconf.core.commands.EmailCommandInstruction;
+import net.roboconf.core.commands.ExecuteCommandInstruction;
 import net.roboconf.core.commands.WriteCommandInstruction;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
@@ -239,5 +240,20 @@ public class CommandsExecutorTest {
 
 		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
 		Assert.assertEquals( WriteCommandExecution.class, executor.findExecutor( instr ).getClass());
+	}
+
+
+	@Test
+	public void testFindExecutor_executeCommand() {
+
+		CommandsParser parser = new CommandsParser( this.app, "execute this" );
+		Assert.assertEquals( 1, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+
+		AbstractCommandInstruction instr = parser.getInstructions().get( 0 );
+		Assert.assertEquals( ExecuteCommandInstruction.class, instr.getClass());
+
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
+		Assert.assertEquals( ExecuteCommandExecution.class, executor.findExecutor( instr ).getClass());
 	}
 }

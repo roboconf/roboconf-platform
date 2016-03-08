@@ -194,6 +194,10 @@ public enum ErrorCode {
 	CMD_UNRESOLVED_VARIABLE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A variable is used in a command but it could not be resolved." ),
 	CMD_INVALID_SYNTAX( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "Invalid syntax for this command. Please, refer to the documentation." ),
 	CMD_MISSING_TARGET_FILE( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "The target file is missing." ),
+	CMD_MISSING_COMMAND_NAME( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "The command name is missing." ),
+	CMD_INEXISTING_COMMAND( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "There is no command file with this name." ),
+	CMD_LOOPING_COMMAND( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "A command file cannot invoke itself recursively." ),
+	CMD_NASTY_LOOPING_COMMAND( ErrorLevel.SEVERE, ErrorCategory.COMMANDS, "An 'execute' instruction cannot invoke a *.commands file that contains this same instruction." ),
 
 	// Rule errors
 	RULE_IO_ERROR( ErrorLevel.SEVERE, ErrorCategory.RULES, "I/O error while reading a rule file." ),

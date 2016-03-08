@@ -28,7 +28,6 @@ package net.roboconf.dm.internal.commands;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import javax.mail.Address;
 import javax.mail.Message;
@@ -39,6 +38,7 @@ import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.dm.internal.commands.EmailCommandExecution.MailAuthenticator;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IPreferencesMngr;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -80,8 +80,7 @@ public class EmailCommandInstructionTest {
 		Assert.assertEquals( 0, parser.getParsingErrors().size());
 		Assert.assertEquals( 2, parser.getInstructions().size());
 
-		Properties mailProperties = this.manager.preferencesMngr().getJavaxMailProperties();
-		mailProperties.put( "mail.from", "me@test.fr" );
+		this.manager.preferencesMngr().save( "mail.from", "me@test.fr" );
 
 		// First message
 		Assert.assertEquals( EmailCommandInstruction.class, parser.getInstructions().get( 0 ).getClass());
@@ -102,8 +101,8 @@ public class EmailCommandInstructionTest {
 
 		// Second message
 
-		// Just for code coverage
-		mailProperties.put( "mail.smtp.auth", "true" );
+		// Just for code coverage (default value is "true")
+		this.manager.preferencesMngr().save( IPreferencesMngr.JAVAX_MAIL_SMTP_AUTH, "false" );
 		// End
 
 		Assert.assertEquals( EmailCommandInstruction.class, parser.getInstructions().get( 1 ).getClass());

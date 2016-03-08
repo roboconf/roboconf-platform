@@ -227,6 +227,9 @@ public class CommandsParser {
 		else if( toLowerCase.startsWith( WriteCommandInstruction.PREFIX ))
 			result = new WriteCommandInstruction( this.context, line, lineNumber );
 
+		else if( toLowerCase.startsWith( ExecuteCommandInstruction.PREFIX ))
+			result = new ExecuteCommandInstruction( this.context, line, lineNumber );
+
 		return result;
 	}
 }

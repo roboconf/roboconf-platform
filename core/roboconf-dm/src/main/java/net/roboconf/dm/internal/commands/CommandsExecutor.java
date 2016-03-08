@@ -35,6 +35,7 @@ import net.roboconf.core.commands.ChangeStateCommandInstruction;
 import net.roboconf.core.commands.CommandsParser;
 import net.roboconf.core.commands.CreateInstanceCommandInstruction;
 import net.roboconf.core.commands.EmailCommandInstruction;
+import net.roboconf.core.commands.ExecuteCommandInstruction;
 import net.roboconf.core.commands.RenameCommandInstruction;
 import net.roboconf.core.commands.ReplicateCommandInstruction;
 import net.roboconf.core.commands.WriteCommandInstruction;
@@ -156,6 +157,9 @@ public class CommandsExecutor {
 
 		else if( WriteCommandInstruction.class.equals( instr.getClass()))
 			result = new WriteCommandExecution((WriteCommandInstruction) instr);
+
+		else if( ExecuteCommandInstruction.class.equals( instr.getClass()))
+			result = new ExecuteCommandExecution((ExecuteCommandInstruction) instr, this.manager );
 
 		return result;
 	}
