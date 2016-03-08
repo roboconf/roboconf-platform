@@ -39,6 +39,9 @@ import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.MessagingConstants;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
 
@@ -141,6 +144,63 @@ public class ManagerTest {
 		Assert.assertNotNull( this.manager.targetsMngr());
 		Assert.assertNotNull( this.manager.commandsMngr());
 		Assert.assertNotNull( this.manager.preferencesMngr());
+	}
+
+
+	@Test
+	public void verifyAddAndRemoveMessaging_nonOsgiEnvironment() throws Exception {
+
+		// Initial checks
+		ReconfigurableClientDm mc;
+		try {
+			this.manager.start();
+			mc = TestUtils.getInternalField( this.manager, "messagingClient", ReconfigurableClientDm.class );
+			Assert.assertNotNull( mc );
+			Assert.assertNull( mc.getRegistry());
+
+		} finally {
+			this.manager.stop();
+		}
+
+		// After "stop"...
+		mc = TestUtils.getInternalField( this.manager, "messagingClient", ReconfigurableClientDm.class );
+		Assert.assertNotNull( mc );
+		Assert.assertNull( mc.getRegistry());
+
+		// No error if we try to remove a factory that does not exist
+		IMessagingClientFactory f1 = Mockito.mock( IMessagingClientFactory.class );
+		Mockito.when( f1.getType()).thenReturn( "f1" );
+
+		this.manager.removeMessagingFactory( f1 );
+		Assert.assertNull( mc.getRegistry());
+
+		// Set new messaging factories
+		this.manager.addMessagingFactory( f1 );
+
+		MessagingClientFactoryRegistry registry = mc.getRegistry();
+		Assert.assertNotNull( registry );
+		Assert.assertSame( f1, registry.getMessagingClientFactory( "f1" ));
+
+		// Add another one
+		IMessagingClientFactory f2 = Mockito.mock( IMessagingClientFactory.class );
+		Mockito.when( f2.getType()).thenReturn( "f2" );
+		this.manager.addMessagingFactory( f2 );
+
+		Assert.assertSame( registry, mc.getRegistry());
+		Assert.assertSame( f2, registry.getMessagingClientFactory( "f2" ));
+		Assert.assertSame( f1, registry.getMessagingClientFactory( "f1" ));
+
+		// Remove one
+		this.manager.removeMessagingFactory( f2 );
+		Assert.assertSame( f1, registry.getMessagingClientFactory( "f1" ));
+		Assert.assertNull( registry.getMessagingClientFactory( "f2" ));
+
+		// Remove the other one
+		this.manager.removeMessagingFactory( f2 );
+		this.manager.removeMessagingFactory( f1 );
+		Assert.assertNull( registry.getMessagingClientFactory( "f1" ));
+		Assert.assertNull( registry.getMessagingClientFactory( "f2" ));
+		Assert.assertNotNull( mc.getRegistry());
 	}
 
 

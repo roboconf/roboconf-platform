@@ -33,7 +33,6 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 
@@ -121,10 +120,7 @@ public final class TestManagerWrapper {
 	 * @throws IllegalAccessException
 	 */
 	public void configureMessagingForTest() throws IllegalAccessException {
-
-		MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
-		registry.addMessagingClientFactory( new TestClientFactory());
-		getMessagingClient().setRegistry( registry );
+		this.manager.addMessagingFactory( new TestClientFactory());
 	}
 
 

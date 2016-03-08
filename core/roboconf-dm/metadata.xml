@@ -18,7 +18,9 @@
 
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />
-		<provides />
+
+		<provides specifications="net.roboconf.core.runtime.IReconfigurable" />
+		<provides specifications="net.roboconf.dm.management.Manager" />
 
 		<properties pid="net.roboconf.dm.configuration">
 			<property name="messaging-type" method="setMessagingType" />

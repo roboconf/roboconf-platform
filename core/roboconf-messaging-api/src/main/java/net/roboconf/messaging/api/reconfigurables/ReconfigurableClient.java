@@ -158,9 +158,19 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 				openConnection(newMessagingClient);
 			}
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			this.logger.warning( "An error occurred while creating a new messaging client. " + e.getMessage());
 			Utils.logException( this.logger, e );
+
+			// #594: print a message to be visible in a console
+			StringBuilder sb = new StringBuilder();
+			sb.append( "\n\n**** WARNING ****\n" );
+			sb.append( "Connection failed.\n" );
+			sb.append( "The messaging configuration may be invalid.\n" );
+			sb.append( "Or the messaging server may not be started yet.\n\n" );
+			sb.append( "Consider using the 'roboconf:force-reconnect' command if you forgot to start the messaging server.\n" );
+			sb.append( "**** WARNING ****\n" );
+			System.out.println( sb );
 		}
 
 		// Replace the current client

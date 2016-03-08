@@ -25,6 +25,7 @@
 		<bundle>mvn:net.roboconf/roboconf-target-api/${project.version}</bundle>
 		
 		<!-- Karaf Commands -->
+		<bundle>mvn:net.roboconf/roboconf-karaf-commands-common/${project.version}</bundle>
 		<bundle>mvn:net.roboconf/roboconf-karaf-commands-dm/${project.version}</bundle>
 		
 		<!-- Other Dependencies -->

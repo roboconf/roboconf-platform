@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.runtime.IReconfigurable;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.api.IRandomMngr;
 import net.roboconf.dm.internal.api.impl.ApplicationMngrImpl;
@@ -66,6 +67,8 @@ import net.roboconf.dm.management.api.ITargetHandlerResolver;
 import net.roboconf.dm.management.api.ITargetsMngr;
 import net.roboconf.dm.management.events.IDmListener;
 import net.roboconf.messaging.api.business.ListenerCommand;
+import net.roboconf.messaging.api.factory.IMessagingClientFactory;
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetHandler;
 
 /**
@@ -91,7 +94,7 @@ import net.roboconf.target.api.TargetHandler;
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class Manager {
+public class Manager implements IReconfigurable {
 
 	// Constants
 	private static final long TIMER_PERIOD = 6000;
@@ -294,9 +297,11 @@ public class Manager {
 	 * It is NOT invoked DIRECTLY by iPojo anymore.
 	 * </p>
 	 */
+	@Override
 	public void reconfigure() {
 
 		// Update the messaging client
+		this.logger.info( "Reconfiguration requested in the DM." );
 		if( this.messagingClient != null ) {
 			this.messagingClient.switchMessagingType( this.messagingType );
 			try {
@@ -317,6 +322,16 @@ public class Manager {
 
 	// Setters
 
+
+	/**
+	 * Sets the messaging type.
+	 * <p>
+	 * If the set messaging type is different than the previous one,
+	 * this method triggers a re configuration.
+	 * </p>
+	 *
+	 * @param messagingType the messaging type
+	 */
 	public void setMessagingType( String messagingType ) {
 
 		// Properties are injected on every modification.
@@ -333,6 +348,10 @@ public class Manager {
 	}
 
 
+	/**
+	 * Sets the target resolver.
+	 * @param targetHandlerResolver a resolver for target handlers
+	 */
 	public void setTargetResolver( ITargetHandlerResolver targetHandlerResolver ) {
 
 		if( targetHandlerResolver == null )
@@ -344,48 +363,120 @@ public class Manager {
 
 	// Getters
 
+
+	/**
+	 * @return the notification API
+	 */
 	public INotificationMngr notificationMngr() {
 		return this.notificationMngr;
 	}
 
+	/**
+	 * @return the messaging API
+	 */
 	public IMessagingMngr messagingMngr() {
 		return this.messagingMngr;
 	}
 
+	/**
+	 * @return the applications management API
+	 */
 	public IApplicationMngr applicationMngr() {
 		return this.applicationMngr;
 	}
 
+	/**
+	 * @return the instances management API
+	 */
 	public IInstancesMngr instancesMngr() {
 		return this.instancesMngr;
 	}
 
+	/**
+	 * @return the configuration API
+	 */
 	public IConfigurationMngr configurationMngr() {
 		return this.configurationMngr;
 	}
 
+	/**
+	 * @return the application templates management API
+	 */
 	public IApplicationTemplateMngr applicationTemplateMngr() {
 		return this.applicationTemplateMngr;
 	}
 
+	/**
+	 * @return the targets management API
+	 */
 	public ITargetsMngr targetsMngr() {
 		return this.targetsMngr;
 	}
 
+	/**
+	 * @return the debug API
+	 */
 	public IDebugMngr debugMngr() {
 		return this.debugMngr;
 	}
 
+	/**
+	 * @return the commands API
+	 */
 	public ICommandsMngr commandsMngr() {
 		return this.commandsMngr;
 	}
 
+	/**
+	 * @return the preferences API
+	 */
 	public IPreferencesMngr preferencesMngr() {
 		return this.preferencesMngr;
 	}
 
+	/**
+	 * @return the autonomic API
+	 */
 	public IAutonomicMngr autonomicMngr() {
 		return this.autonomicMngr;
+	}
+
+
+	// Convenience methods for non-OSGi environments
+
+	/**
+	 * Adds a messaging client factory.
+	 * <p>
+	 * WARNING: this method is made available only to be used in non-OSGi environments
+	 * (e.g. Maven, embedded mode, etc). If you are not sure, do not use it.
+	 * </p>
+	 *
+	 * @param clientFactory a non-null client factory
+	 */
+	public void addMessagingFactory( IMessagingClientFactory clientFactory ) {
+
+		if( this.messagingClient.getRegistry() == null ) {
+			MessagingClientFactoryRegistry registry = new MessagingClientFactoryRegistry();
+			this.messagingClient.setRegistry( registry );
+		}
+
+		this.messagingClient.getRegistry().addMessagingClientFactory( clientFactory );
+	}
+
+
+	/**
+	 * Removes a messaging client factory.
+	 * <p>
+	 * WARNING: this method is made available only to be used in non-OSGi environments
+	 * (e.g. Maven, embedded mode, etc). If you are not sure, do not use it.
+	 * </p>
+	 *
+	 * @param clientFactory a non-null client factory
+	 */
+	public void removeMessagingFactory( IMessagingClientFactory clientFactory ) {
+
+		if( this.messagingClient.getRegistry() != null )
+			this.messagingClient.getRegistry().removeMessagingClientFactory( clientFactory );
 	}
 
 

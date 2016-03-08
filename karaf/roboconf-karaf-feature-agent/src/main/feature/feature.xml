@@ -12,6 +12,7 @@
     <feature name="roboconf-agent" version="${project.version}" description="The Karaf feature for Roboconf's agent">
     	<feature>ipojo-all</feature>
     	
+    	<!-- Core Bundles -->
         <bundle>mvn:net.roboconf/roboconf-core/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-messaging-api/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-messaging-rabbitmq/${project.version}</bundle>
@@ -26,5 +27,8 @@
         <bundle>mvn:net.roboconf/roboconf-plugin-file/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-logger/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-puppet/${project.version}</bundle>
+        
+        <!-- Karaf Commands -->
+		<bundle>mvn:net.roboconf/roboconf-karaf-commands-common/${project.version}</bundle>
     </feature>
 </features>
