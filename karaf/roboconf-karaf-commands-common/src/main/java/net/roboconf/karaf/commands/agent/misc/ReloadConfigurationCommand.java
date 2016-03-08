@@ -39,9 +39,9 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Command( scope = "roboconf", name = "force-reconnect", description="Force the DM and/or agents to reload their configuration." )
+@Command( scope = "roboconf", name = "reload-config", description="Force the DM and/or agents to reload their configuration." )
 @Service
-public class ForceReconnectCommand implements Action {
+public class ReloadConfigurationCommand implements Action {
 
 	/*
 	 * Possible configurations:
