@@ -25,6 +25,9 @@
 
 package net.roboconf.messaging.http.internal.clients;
 
+import java.nio.ByteBuffer;
+import java.util.concurrent.Future;
+
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.http.internal.HttpClientFactory.HttpRoutingContext;
 
@@ -55,7 +58,11 @@ public class HttpDmClientTest {
 
 		// Connected => processing...
 		Mockito.reset( session );
-		Mockito.when( session.getRemote()).thenReturn( Mockito.mock( RemoteEndpoint.class ));
+		Future<Void> future = Mockito.mock( Future.class );
+		RemoteEndpoint remote = Mockito.mock( RemoteEndpoint.class );
+		Mockito.when( remote.sendBytesByFuture( Mockito.any( ByteBuffer.class ) )).thenReturn( future );
+
+		Mockito.when( session.getRemote()).thenReturn( remote );
 		Mockito.when( session.isOpen()).thenReturn( true );
 
 		httpDmClient.process( session, message );
