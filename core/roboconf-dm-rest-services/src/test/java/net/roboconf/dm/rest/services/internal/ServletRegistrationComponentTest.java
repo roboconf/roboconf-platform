@@ -36,7 +36,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.ws.rs.core.UriBuilder;
 
-import org.junit.Assert;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
@@ -48,6 +47,7 @@ import net.roboconf.messaging.api.MessagingConstants;
 
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -103,6 +103,12 @@ public class ServletRegistrationComponentTest {
 	public void testStartAndStop() throws Exception {
 
 		ServletRegistrationComponent register = new ServletRegistrationComponent();
+
+		// No error if these methods are called before the component is started.
+		register.schedulerAppears();
+		register.schedulerDisappears();
+
+		// Deal with the HTTP service.
 		HttpServiceForTest httpService = new HttpServiceForTest();
 		register.setHttpService( httpService );
 
@@ -119,6 +125,11 @@ public class ServletRegistrationComponentTest {
 		HttpServlet websocketServlet = (HttpServlet) httpService.pathToServlet.get( ServletRegistrationComponent.WEBSOCKET_CONTEXT );
 		Assert.assertNotNull( websocketServlet );
 
+		// Update the scheduler...
+		register.schedulerAppears();
+		register.schedulerDisappears();
+
+		// Stop...
 		register.stopping();
 		Assert.assertEquals( 0, httpService.pathToServlet.size());
 	}

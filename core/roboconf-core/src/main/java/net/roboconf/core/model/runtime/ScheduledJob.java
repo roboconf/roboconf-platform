@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,17 +23,69 @@
  * limitations under the License.
  */
 
-package net.roboconf.dm.rest.commons;
+package net.roboconf.core.model.runtime;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface UrlConstants {
+public class ScheduledJob {
 
-	String APPLICATIONS = "applications";
-	String APP = "app";
-	String DEBUG = "debug";
-	String TARGETS = "targets";
-	String PREFERENCES = "preferences";
-	String SCHEDULER = "scheduler";
+	private String jobName, appName, cmdName, cron;
+
+
+	/**
+	 * @return the jobName
+	 */
+	public String getJobName() {
+		return this.jobName;
+	}
+
+	/**
+	 * @param jobName the jobName to set
+	 */
+	public void setJobName( String jobName ) {
+		this.jobName = jobName;
+	}
+
+	/**
+	 * @return the appName
+	 */
+	public String getAppName() {
+		return this.appName;
+	}
+
+	/**
+	 * @param appName the appName to set
+	 */
+	public void setAppName( String appName ) {
+		this.appName = appName;
+	}
+
+	/**
+	 * @return the cmdName
+	 */
+	public String getCmdName() {
+		return this.cmdName;
+	}
+
+	/**
+	 * @param cmdName the cmdName to set
+	 */
+	public void setCmdName( String cmdName ) {
+		this.cmdName = cmdName;
+	}
+
+	/**
+	 * @return the cron
+	 */
+	public String getCron() {
+		return this.cron;
+	}
+
+	/**
+	 * @param cron the cron to set
+	 */
+	public void setCron( String cron ) {
+		this.cron = cron;
+	}
 }

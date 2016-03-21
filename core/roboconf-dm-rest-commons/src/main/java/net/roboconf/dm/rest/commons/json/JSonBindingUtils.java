@@ -37,6 +37,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Preference;
+import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
@@ -72,6 +73,7 @@ public final class JSonBindingUtils {
 	private static final String EXT_VARS = "extVars";
 	private static final String S = "s";
 	private static final String PATH = "path";
+	private static final String CRON = "cron";
 
 	private static final String APP_ICON = "icon";
 	private static final String APP_INFO = "info";
@@ -104,6 +106,10 @@ public final class JSonBindingUtils {
 
 	private static final String PREF_VALUE = "value";
 	private static final String PREF_CATEGORY = "category";
+
+	private static final String JOB_NAME = "job-name";
+	private static final String JOB_APP_NAME = "app-name";
+	private static final String JOB_CMD_NAME = "cmd-name";
 
 
 	/**
@@ -155,6 +161,7 @@ public final class JSonBindingUtils {
 		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
 		module.addSerializer( TargetAssociation.class, new TargetAssociationSerializer());
 		module.addSerializer( Preference.class, new PreferenceSerializer());
+		module.addSerializer( ScheduledJob.class, new ScheduledJobSerializer());
 
 		mapper.registerModule( module );
 		return mapper;
@@ -190,6 +197,41 @@ public final class JSonBindingUtils {
 
 			if( item.isReferencing())
 				generator.writeStringField( TARGET_STATS_REFERENCING, "true" );
+
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for a bean describing a scheduled job.
+	 * <p>
+	 * No deserializer is provided, as it does not make sense for the REST API.
+	 * </p>
+	 *
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ScheduledJobSerializer extends JsonSerializer<ScheduledJob> {
+
+		@Override
+		public void serialize(
+				ScheduledJob job,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			if( job.getAppName() != null )
+				generator.writeStringField( JOB_APP_NAME, job.getAppName());
+
+			if( job.getCmdName() != null )
+				generator.writeStringField( JOB_CMD_NAME, job.getCmdName());
+
+			if( job.getJobName() != null )
+				generator.writeStringField( JOB_NAME, job.getJobName());
+
+			if( job.getCron() != null )
+				generator.writeStringField( CRON, job.getCron());
 
 			generator.writeEndObject();
 		}

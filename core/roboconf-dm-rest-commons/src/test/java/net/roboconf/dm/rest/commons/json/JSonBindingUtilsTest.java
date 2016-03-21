@@ -39,6 +39,7 @@ import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.Preference.PreferenceKeyCategory;
+import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
@@ -897,6 +898,41 @@ public class JSonBindingUtilsTest {
 		Preference pref = new Preference( "mail.toto", "smtp.something", PreferenceKeyCategory.EMAIL );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, pref );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+	}
+
+
+	@Test
+	public void testScheduledJobBinding_1() throws Exception {
+
+		final String result = "{}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ScheduledJob job = new ScheduledJob();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, job );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+	}
+
+
+	@Test
+	public void testScheduledJobBinding_2() throws Exception {
+
+		final String result = "{\"app-name\":\"app\",\"cmd-name\":\"cmd\",\"job-name\":\"job\",\"cron\":\"* * *\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ScheduledJob job = new ScheduledJob();
+		job.setAppName( "app" );
+		job.setCmdName( "cmd" );
+		job.setJobName( "job" );
+		job.setCron( "* * *" );
+
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, job );
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );

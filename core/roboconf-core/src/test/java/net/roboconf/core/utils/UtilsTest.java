@@ -903,6 +903,7 @@ public class UtilsTest {
 		Assert.assertEquals( 0, props.size());
 	}
 
+
 	@Test
 	public void testGetValue() throws Exception {
 		Map<String,String> map = new HashMap<String,String>();
@@ -916,5 +917,36 @@ public class UtilsTest {
 		}
 
 		Assert.assertEquals("tata", Utils.getValue(map, "coucou", "tata"));
+	}
+
+
+	@Test
+	public void testRemoveFileExtension() {
+
+		Assert.assertEquals( "", Utils.removeFileExtension( "" ));
+		Assert.assertEquals( "test", Utils.removeFileExtension( "test" ));
+		Assert.assertEquals( "test", Utils.removeFileExtension( "test.txt" ));
+		Assert.assertEquals( "test", Utils.removeFileExtension( "test.jpg" ));
+		Assert.assertEquals( "test.jpg", Utils.removeFileExtension( "test.jpg.txt" ));
+	}
+
+
+	@Test
+	public void testListAllFiles_withFileExtension() throws Exception {
+
+		File dir = this.folder.newFolder();
+		Assert.assertTrue( new File( dir, "f1.txt" ).createNewFile());
+		Assert.assertTrue( new File( dir, "f2.jpg" ).createNewFile());
+		Assert.assertTrue( new File( dir, "f3.txt" ).createNewFile());
+		Assert.assertTrue( new File( dir, "f4.JPG" ).createNewFile());
+		Assert.assertTrue( new File( dir, "f5.zip" ).createNewFile());
+
+		Assert.assertEquals( 2, Utils.listAllFiles( dir, "jpg" ).size());
+		Assert.assertEquals( 2, Utils.listAllFiles( dir, ".jpg" ).size());
+		Assert.assertEquals( 2, Utils.listAllFiles( dir, "jPg" ).size());
+
+		Assert.assertEquals( 2, Utils.listAllFiles( dir, "txt" ).size());
+		Assert.assertEquals( 1, Utils.listAllFiles( dir, ".zip" ).size());
+		Assert.assertEquals( 5, Utils.listAllFiles( dir, null ).size());
 	}
 }
