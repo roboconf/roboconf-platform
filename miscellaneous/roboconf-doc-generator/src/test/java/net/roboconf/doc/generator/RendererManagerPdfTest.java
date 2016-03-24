@@ -27,40 +27,40 @@ package net.roboconf.doc.generator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.RuntimeModelIo;
-import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.utils.Utils;
+import com.codeborne.pdftest.PDF;
+import static com.codeborne.pdftest.PDF.*;
+
+import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.doc.generator.RenderingManager.Renderer;
 
 /**
- * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
-public class ToRunByHand {
+public class RendererManagerPdfTest extends AbstractTestForRendererManager {
+	
+	@Test
+	public void testFopRenderer() throws Exception {
 
-	/**
-	 * @param args
-	 */
-	public static void main( String[] args ) {
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.FOP, null );
+		File fofile = new File(this.outputDir,"index.fo");
+		Assert.assertTrue( fofile.exists() );
+		Assert.assertTrue( fofile.length() > 0 );
 
-		try {
-			File f = TestUtils.findTestFile( "/lamp" );
-			//File outputDir = new File( System.getProperty( "user.home" ), "Bureau/html" );
-			File outputDir = new File( System.getProperty( "user.home" ), "Bureau/pdf" );
-			Utils.deleteFilesRecursively( outputDir );
-			if( ! outputDir.mkdirs())
-				throw new IOException( "Could not create the output directory." );
-
-			ApplicationLoadResult alr = RuntimeModelIo.loadApplication( f );
-			Map<String,String> options = new HashMap<String,String> ();
-			//new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.HTML, options );
-			new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.PDF, options );
-
-		} catch( Exception e ) {
-			e.printStackTrace();
-		}
 	}
+	
+	@Test
+	public void testPdfRenderer() throws IOException {
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.PDF, null );
+		File pdffile = new File(this.outputDir,"index.pdf");
+		Assert.assertTrue( pdffile.exists() );
+		Assert.assertTrue( pdffile.length() > 0 );
+		PDF genPdf = new PDF( pdffile );
+		Assert.assertThat( genPdf, containsText("Legacy LAMP") );
+		Assert.assertThat( genPdf, containsText("This document lists the Software components used in this application") );
+
+	}
+	
 }
