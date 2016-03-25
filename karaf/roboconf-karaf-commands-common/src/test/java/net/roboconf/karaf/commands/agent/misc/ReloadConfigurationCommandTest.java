@@ -37,12 +37,12 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ForceReconnectCommandTest {
+public class ReloadConfigurationCommandTest {
 
 	@Test
 	public void testExecute_noReconfigurable() throws Exception {
 
-		ForceReconnectCommand cmd = new ForceReconnectCommand();
+		ReloadConfigurationCommand cmd = new ReloadConfigurationCommand();
 		Assert.assertNull( cmd.execute());
 	}
 
@@ -50,7 +50,7 @@ public class ForceReconnectCommandTest {
 	@Test
 	public void testExecute_emptyReconfigurableList() throws Exception {
 
-		ForceReconnectCommand cmd = new ForceReconnectCommand();
+		ReloadConfigurationCommand cmd = new ReloadConfigurationCommand();
 		cmd.reconfigurables = new ArrayList<>( 0 );
 		Assert.assertNull( cmd.execute());
 	}
@@ -59,7 +59,7 @@ public class ForceReconnectCommandTest {
 	@Test
 	public void testExecute_twoReconfigurables() throws Exception {
 
-		ForceReconnectCommand cmd = new ForceReconnectCommand();
+		ReloadConfigurationCommand cmd = new ReloadConfigurationCommand();
 
 		IReconfigurable r1 = Mockito.mock( IReconfigurable.class );
 		IReconfigurable r2 = Mockito.mock( IReconfigurable.class );
@@ -74,7 +74,7 @@ public class ForceReconnectCommandTest {
 	@Test
 	public void testExecute_testException() throws Exception {
 
-		ForceReconnectCommand cmd = new ForceReconnectCommand();
+		ReloadConfigurationCommand cmd = new ReloadConfigurationCommand();
 
 		IReconfigurable r1 = Mockito.mock( IReconfigurable.class );
 		Mockito.doThrow( new RuntimeException( "for test" )).when( r1 ).reconfigure();

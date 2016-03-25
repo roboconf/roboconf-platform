@@ -188,7 +188,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 			return machineId;
 
-		} catch( IOException e ) {
+		} catch( Exception e ) {
 			throw new TargetException( e );
 		}
 	}

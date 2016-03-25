@@ -133,7 +133,11 @@ public class CommandsMngrImpl implements ICommandsMngr {
 
 	private File findCommandFile( Application app, String commandName ) {
 
+		String name = commandName;
+		if( ! name.endsWith( Constants.FILE_EXT_COMMANDS ))
+			name += Constants.FILE_EXT_COMMANDS;
+
 		File cmdDir = new File( app.getDirectory(), Constants.PROJECT_DIR_COMMANDS );
-		return new File( cmdDir, commandName + Constants.FILE_EXT_COMMANDS );
+		return new File( cmdDir, name );
 	}
 }

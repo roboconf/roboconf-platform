@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ipojo 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="org.apache.felix.ipojo http://felix.apache.org/ipojo/schemas/CURRENT/core.xsd"
+		xmlns="org.apache.felix.ipojo">
+
+	<component classname="net.roboconf.dm.scheduler.internal.RoboconfScheduler" name="roboconf-dm-scheduler" immediate="true" public="false">
+		<requires field="manager" optional="false" />
+		<callback transition="validate" method="start" />
+		<callback transition="invalidate" method="stop" />
+	</component>
+	
+	<instance component="roboconf-dm-scheduler" name="Roboconf - DM Scheduler" />
+</ipojo>

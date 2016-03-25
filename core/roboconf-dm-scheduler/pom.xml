@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-   Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+   Copyright 2016 Linagora, Université Joseph Fourier, Floralis
    
    The present code is developed in the scope of the joint LINAGORA -
    Université Joseph Fourier - Floralis research program and is designated
@@ -36,11 +36,32 @@
 	</parent>
 	
 	<groupId>net.roboconf</groupId>
-	<artifactId>roboconf-dm-rest-client</artifactId>
-	<name>Roboconf :: Deployment Manager :: REST Client</name>
+	<artifactId>roboconf-dm-scheduler</artifactId>
+	<name>Roboconf :: Deployment Manager :: Scheduler</name>
 	<packaging>bundle</packaging>
 	
+	<properties>
+		<quartz.version>2.2.2</quartz.version>
+	</properties>
+	
 	<dependencies>
+		
+		<!-- Quartz -->
+
+		<dependency>
+			<groupId>org.quartz-scheduler</groupId>
+			<artifactId>quartz</artifactId>
+			<version>${quartz.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.quartz-scheduler</groupId>
+			<artifactId>quartz-jobs</artifactId>
+			<version>${quartz.version}</version>
+		</dependency>
+
+		<!-- Roboconf -->
+
 		<dependency>
   			<groupId>net.roboconf</groupId>
   			<artifactId>roboconf-core</artifactId>
@@ -49,37 +70,35 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>com.fasterxml.jackson.jaxrs</groupId>
-			<artifactId>jackson-jaxrs-json-provider</artifactId>
-			<version>${jackson.stack.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		
-		<dependency>
   			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-dm-rest-commons</artifactId>
+  			<artifactId>roboconf-target-api</artifactId>
   			<version>${project.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-core</artifactId>
-			<scope>provided</scope>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-messaging-api</artifactId>
+  			<version>${project.version}</version>
+  			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.sun.jersey.contribs</groupId>
-			<artifactId>jersey-multipart</artifactId>
-			<scope>provided</scope>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm</artifactId>
+  			<version>${project.version}</version>
+  			<scope>provided</scope>
 		</dependency>
 		
 		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-client</artifactId>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.ipojo</artifactId>
+			<version>${ipojo.version}</version>
 			<scope>provided</scope>
 		</dependency>
-
+		
+		<!-- Test -->
+		
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -87,82 +106,9 @@
 		</dependency>
 		
 		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-dm</artifactId>
-  			<version>${project.version}</version>
-  			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-target-api</artifactId>
-  			<version>${project.version}</version>
-  			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-dm</artifactId>
-  			<version>${project.version}</version>
-  			<type>test-jar</type>
-  			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-dm-rest-services</artifactId>
-  			<version>${project.version}</version>
-  			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-core</artifactId>
-  			<version>${project.version}</version>
-  			<type>test-jar</type>
-  			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-dm-scheduler</artifactId>
-  			<version>${project.version}</version>
-  			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.ipojo</artifactId>
-			<version>${ipojo.version}</version>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.sun.jersey.jersey-test-framework</groupId>
-			<artifactId>jersey-test-framework-grizzly2</artifactId>
-			<version>${jersey.stack.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-			<groupId>com.sun.jersey.jersey-test-framework</groupId>
-			<artifactId>jersey-test-framework-core</artifactId>
-			<version>${jersey.stack.version}</version>
-			<scope>test</scope>
-		</dependency>
-		
-		<dependency>
-  			<groupId>net.roboconf</groupId>
-  			<artifactId>roboconf-messaging-api</artifactId>
-  			<version>${project.version}</version>
-  			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
-			<version>4.3.1</version>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 	
@@ -173,17 +119,30 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
+						<Bundle-SymbolicName>${project.groupId}.${project.artifactId};singleton=true</Bundle-SymbolicName>
 						<Import-Package>
-							net.roboconf.*;version="${version.range}",
-							com.sun.jersey.*;version="${jersey.stack.version}",
-							*
+							net.roboconf.*;version="${version.range}"
 						</Import-Package>
 						<Export-Package>
-							!net.roboconf.dm.rest.client.internal.*,
-							net.roboconf.dm.rest.client.*
+							!net.roboconf.dm.scheduler.internal.*,
+							net.roboconf.dm.scheduler.*
 						</Export-Package>
+						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-ipojo-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>ipojo-bundle</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

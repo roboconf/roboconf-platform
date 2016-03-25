@@ -96,6 +96,22 @@ public final class Utils {
 
 
 	/**
+	 * Removes the extension from a file name.
+	 * @param filename a non-null file name
+	 * @return a non-null string
+	 */
+	public static String removeFileExtension( String filename ) {
+
+		String result = filename;
+		int index = filename.lastIndexOf( '.' );
+		if( index != -1 )
+			result= filename.substring( 0, index );
+
+		return result;
+	}
+
+
+	/**
 	 * Splits a string and formats the result.
 	 * @param toSplit the string to split (can be null)
 	 * @param separator the separator (cannot be null or the empty string)
@@ -452,6 +468,41 @@ public final class Utils {
 
 
 	/**
+	 * Finds all the files directly contained in a directory and with a given extension.
+	 * <p>
+	 * Search is case-insensitive.
+	 * It means searching for properties or PROPERTIES extensions will give
+	 * the same result.
+	 * </p>
+	 *
+	 * @param directory an existing directory
+	 * @param fileExtension a file extension (null will not filter extensions)
+	 * <p>
+	 * If it does not start with a dot, then one will be inserted at the first position.
+	 * </p>
+	 *
+	 * @return a non-null list of files
+	 */
+	public static List<File> listAllFiles( File directory, String fileExtension ) {
+
+		String ext = fileExtension;
+		if( ext != null ) {
+			ext = ext.toLowerCase();
+			if( ! ext.startsWith( "." ))
+				ext = "." + ext;
+		}
+
+		List<File> result = new ArrayList<> ();
+		for( File f : listAllFiles( directory )) {
+			if( ext == null || f.getName().toLowerCase().endsWith( ext ))
+				result.add( f );
+		}
+
+		return result;
+	}
+
+
+	/**
 	 * Finds all the files (direct and indirect) from a directory.
 	 * <p>
 	 * This method skips hidden files and files whose name starts
@@ -467,7 +518,7 @@ public final class Utils {
 		if( ! directory.isDirectory())
 			throw new IllegalArgumentException( directory.getAbsolutePath() + " does not exist or is not a directory." );
 
-		List<File> result = new ArrayList<File> ();
+		List<File> result = new ArrayList<> ();
 		List<File> directoriesToInspect = new ArrayList<File> ();
 		directoriesToInspect.add( directory );
 

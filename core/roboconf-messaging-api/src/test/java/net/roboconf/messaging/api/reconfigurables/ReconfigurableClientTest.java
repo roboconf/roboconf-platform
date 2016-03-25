@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Application;
@@ -56,14 +57,15 @@ public class ReconfigurableClientTest {
 	@Test
 	public void testCloseConnection() throws Exception {
 
+		Logger logger = Logger.getLogger( getClass().getName());
 		IMessagingClient client = new TestClient();
 		Assert.assertFalse( client.isConnected());
-		ReconfigurableClient.closeConnection( client, "" );
+		ReconfigurableClient.closeConnection( client, "", logger );
 
 		client = new TestClient();
 		client.openConnection();
 		Assert.assertTrue( client.isConnected());
-		ReconfigurableClient.closeConnection( client, "" );
+		ReconfigurableClient.closeConnection( client, "", logger );
 		Assert.assertFalse( client.isConnected());
 
 		client = new TestClient() {
@@ -75,7 +77,7 @@ public class ReconfigurableClientTest {
 
 		client.openConnection();
 		Assert.assertTrue( client.isConnected());
-		ReconfigurableClient.closeConnection( client, "" );
+		ReconfigurableClient.closeConnection( client, "", logger );
 	}
 
 

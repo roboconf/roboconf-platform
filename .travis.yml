@@ -19,7 +19,7 @@ jdk:
 services:
   - rabbitmq
 
-# Install Puppet to test the Puppet plugin.
+# We need wget for Sonatype deployment.
 addons:
   apt:
     packages:
