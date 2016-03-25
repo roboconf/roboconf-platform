@@ -51,7 +51,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderTitle1(String title) {
-		return "<axf:document-info name=\"document-title\" value=\""+ title + "\" />\n";
+		return "<fo:title>" + title + "</fo:title>\n";
 	}
 
 	@Override
@@ -108,32 +108,39 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String startTable() {
-		// TODO Auto-generated method stub
-		return null;
+		return "<fo:table>\n";
 	}
 
 	@Override
 	protected String endTable() {
-		// TODO Auto-generated method stub
-		return null;
+		return "</fo:table>\n";
 	}
 
 	@Override
 	protected String addTableHeader(String... headerEntries) {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder sb = new StringBuilder();
+		for( String s : headerEntries ) {
+			sb.append( "<fo:table-header>\n" );
+			sb.append( s );
+			sb.append( "</fo:table-header>\n" );
+		}
+		return sb.toString();
 	}
 
 	@Override
 	protected String addTableLine(String... lineEntries) {
-		// TODO Auto-generated method stub
-		return null;
+		StringBuilder sb = new StringBuilder();
+		for( String s : lineEntries ) {
+			sb.append( "<fo:table-row>\n" );
+			sb.append( s );
+			sb.append( "</fo:table-row>\n" );
+		}
+		return sb.toString();
 	}
 
 	@Override
 	protected String renderDocumentTitle() {
-		// TODO Auto-generated method stub
-		return null;
+		return "<fo:title>" + this.applicationTemplate.getName() + "</fo:title>\n";
 	}
 
 	@Override
