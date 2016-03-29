@@ -25,6 +25,10 @@
 
 package net.roboconf.target.ec2.internal;
 
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.TPL_VOLUME_APP;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.TPL_VOLUME_NAME;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.expandVolumeName;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,5 +67,21 @@ public class Ec2IaasHandlerTest {
 	@Test
 	public void testGetTargetId() {
 		Assert.assertEquals( Ec2IaasHandler.TARGET_ID, new Ec2IaasHandler().getTargetId());
+	}
+	
+	@Test
+	public void testExpandVolumeName() {
+
+		String name = "roboconf-" + TPL_VOLUME_APP + "-" + TPL_VOLUME_NAME;
+		Assert.assertEquals("roboconf-app-inst", expandVolumeName(name, "app", "inst"));
+
+		name = "cache-" + TPL_VOLUME_NAME;
+		Assert.assertEquals("cache-inst4", expandVolumeName(name, "app2", "inst4"));
+
+		name = "pre-" + TPL_VOLUME_APP + "-post";
+		Assert.assertEquals("pre-app2-post", expandVolumeName(name, "app2", "inst"));
+
+		name = "pre-" + TPL_VOLUME_APP + "-post 2";
+		Assert.assertEquals("pre-app-51--post-2", expandVolumeName(name, "app 51 ", "vm 1"));
 	}
 }

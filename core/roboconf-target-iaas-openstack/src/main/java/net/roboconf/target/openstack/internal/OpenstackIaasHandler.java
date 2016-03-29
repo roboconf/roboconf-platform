@@ -381,7 +381,7 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 			// Same thing for the volume name
 			String volumeName = findStorageProperty( targetProperties, s, VOLUME_NAME_PREFIX );
-			volumeName = filterStorageVolumeName( volumeName, appName, instanceName );
+			volumeName = expandVolumeName( volumeName, appName, instanceName );
 			if( volumeNames.contains( volumeName ))
 				throw new TargetException( "Volume name '" + volumeName + "' is already used by another volume for this VM." );
 
@@ -445,14 +445,14 @@ public class OpenstackIaasHandler extends AbstractThreadedTargetHandler {
 
 	/**
 	 * Updates a volume name by replacing template variables.
-	 * @param rawName (not null)
+	 * @param nameTemplate (not null)
 	 * @param appName (not null)
 	 * @param instanceName (not null)
 	 * @return a non-null string
 	 */
-	static String filterStorageVolumeName( String rawName, String appName, String instanceName ) {
+	static String expandVolumeName( String nameTemplate, String appName, String instanceName ) {
 
-		String name = rawName.replace( TPL_VOLUME_NAME, instanceName );
+		String name = nameTemplate.replace( TPL_VOLUME_NAME, instanceName );
 		name = name.replace( TPL_VOLUME_APP, appName );
 		name = name.replaceAll( "[\\W_-]", "-" );
 

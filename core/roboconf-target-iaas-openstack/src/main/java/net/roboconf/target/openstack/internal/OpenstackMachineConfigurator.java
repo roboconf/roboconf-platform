@@ -234,7 +234,7 @@ public class OpenstackMachineConfigurator implements MachineConfigurator {
 
 			// Prepare the parameters
 			String name = OpenstackIaasHandler.findStorageProperty( this.targetProperties, storageId, VOLUME_NAME_PREFIX );
-			name = OpenstackIaasHandler.filterStorageVolumeName( name, this.applicationName, this.scopedInstance.getName());
+			name = OpenstackIaasHandler.expandVolumeName( name, this.applicationName, this.scopedInstance.getName());
 			VolumeApi volumeApi = this.novaApi.getVolumeExtensionForZone( zoneName ).get();
 
 			// If the volume should not volatile (i.e. not deleted on termination), we try to reuse it, if it exists.

@@ -78,6 +78,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 	private final Instance scopedInstance;
 	private final String machineId, tagName;
+	private String applicationName;
 	private String availabilityZone;
 	private String volumeId = null;
 	private final Map<String,String> targetProperties;
@@ -94,14 +95,15 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	public Ec2MachineConfigurator(
 			Map<String,String> targetProperties,
 			String machineId,
-			String tagName,
+			String applicationName,
+			String rootInstanceName,
 			Instance scopedInstance  ) {
 
 		this.machineId = machineId;
 		this.targetProperties = targetProperties;
-		this.tagName = tagName;
+		this.applicationName = applicationName;
+		this.tagName = applicationName + "." + rootInstanceName;
 		this.scopedInstance = scopedInstance;
-
 		this.availabilityZone = targetProperties.get(Ec2Constants.AVAILABILITY_ZONE);
 	}
 
@@ -238,8 +240,10 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 */
 	private boolean createOrReuseVolume() {
 		// Lookup volume, according to its snapshot ID or Name tag.
-		String volumeSnapshotOrId = lookupVolume(this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID));
-		if(volumeSnapshotOrId == null) volumeSnapshotOrId = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+		String idOrName = Ec2IaasHandler.expandVolumeName(
+				this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID), this.applicationName, this.scopedInstance.getName());
+		String volumeSnapshotOrId = lookupVolume(idOrName);
+		if(volumeSnapshotOrId == null) volumeSnapshotOrId = idOrName;
 
 		int size = DEFAULT_VOLUME_SIZE;
 		try {
@@ -342,7 +346,8 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	private boolean attachVolume(String volumeId) {
 
 		// Give a name to the volume before attaching
-		String name = this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID);
+		String name = Ec2IaasHandler.expandVolumeName(
+				this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID), this.applicationName, this.scopedInstance.getName());
 		if(Utils.isEmptyOrWhitespaces(name)) name = "Created by Roboconf for " + this.tagName;
 		tagResource(volumeId, name);
 

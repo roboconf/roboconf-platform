@@ -59,6 +59,8 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "iaas-ec2";
 
+	static final String TPL_VOLUME_NAME = "%NAME%";
+	static final String TPL_VOLUME_APP = "%APP%";
 
 	/*
 	 * (non-Javadoc)
@@ -128,8 +130,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 			Instance scopedInstance ) {
 
 		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
-		String tagName = applicationName + "." + rootInstanceName;
-		return new Ec2MachineConfigurator( targetProperties, machineId, tagName, scopedInstance );
+		return new Ec2MachineConfigurator( targetProperties, machineId, applicationName, rootInstanceName, scopedInstance );
 	}
 
 
@@ -271,5 +272,24 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 		runInstancesRequest.setUserData( encodedUserData );
 
 		return runInstancesRequest;
+	}
+	
+	/**
+	 * Updates a volume name by replacing template variables.
+	 * @param nameTemplate (not null)
+	 * @param appName (not null)
+	 * @param instanceName (not null)
+	 * @return a string representing the expanded template
+	 */
+	static String expandVolumeName(String nameTemplate, String appName, String instanceName) {
+
+		if(! Utils.isEmptyOrWhitespaces(nameTemplate)) {
+			String name = nameTemplate.replace(TPL_VOLUME_NAME, instanceName);
+			name = name.replace(TPL_VOLUME_APP, appName);
+			name = name.replaceAll("[\\W_-]", "-");
+			return name;
+		}
+
+		return nameTemplate;
 	}
 }
