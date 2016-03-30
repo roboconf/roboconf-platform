@@ -27,10 +27,13 @@ package net.roboconf.doc.generator.internal.renderers;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.doc.generator.DocConstants;
 import net.roboconf.doc.generator.internal.AbstractStructuredRenderer;
 
 /**
@@ -145,20 +148,47 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderDocumentIndex() {
-		// TODO Auto-generated method stub
-		return null;
+		// What keys should we inject in the index?
+		List<String> keys = new ArrayList<String> ();
+		keys.add( "introduction" );
+		keys.add( "components" );
+		if( this.options.containsKey( DocConstants.OPTION_RECIPE )) {
+			if( ! this.applicationTemplate.getGraphs().getFacetNameToFacet().isEmpty())
+				keys.add( "facets" );
+
+		} else {
+			keys.add( "instances" );
+		}
+
+		// Create the index
+		StringBuilder sb = new StringBuilder();
+		sb.append( "<list-block>\n" );
+		for( String key : keys ) {
+			sb.append( "\t<list-item></>\n" );
+			sb.append( "\t<list-body>" );
+			sb.append( this.messages.get( key ).toLowerCase());
+			sb.append( "\">" );
+			sb.append( this.messages.get( key ));
+			sb.append( "</list-body>\n" );
+		}
+
+		sb.append( "</list-block>\n" );
+		return sb.toString();
 	}
 
 	@Override
 	protected String renderImage(String componentName, DiagramType type, String relativeImagePath) {
-		// TODO Auto-generated method stub
-		return null;
+
+		StringBuilder sb = new StringBuilder();
+		sb.append( "<fo:block>\n" );
+		sb.append( "\t<fo:external-graphic src=\"" + relativeImagePath + "\" />\n" );
+		sb.append( "</fo:block>" );
+		return sb.toString();
 	}
 
 	@Override
 	protected String applyBoldStyle(String text, String keyword) {
-		// TODO Auto-generated method stub
-		return null;
+		return text.replaceAll( Pattern.quote( keyword ), "<fo:block font-weight=\"bold\">" + keyword + "</fo:block>" );
 	}
 
 	@Override

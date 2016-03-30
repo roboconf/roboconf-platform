@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.doc.generator.internal.IRenderer;
+import net.roboconf.doc.generator.internal.renderers.FopRenderer;
 import net.roboconf.doc.generator.internal.renderers.HtmlRenderer;
 import net.roboconf.doc.generator.internal.renderers.MarkdownRenderer;
 
@@ -86,7 +87,7 @@ public class RenderingManager {
 			ApplicationTemplate applicationTemplate,
 			File applicationDirectory,
 			Renderer renderer, Map<String,String> options )
-	throws IOException {
+					throws IOException {
 		options = fixOptions( options );
 		buildRenderer( outputDirectory, applicationTemplate, applicationDirectory, renderer ).render( options );
 	}
@@ -111,7 +112,7 @@ public class RenderingManager {
 			File applicationDirectory,
 			List<String> renderers,
 			Map<String,String> options )
-	throws IOException {
+					throws IOException {
 
 		options = fixOptions( options );
 		if( renderers.size() > 1 )
@@ -180,6 +181,10 @@ public class RenderingManager {
 
 		case MARKDOWN:
 			result = new MarkdownRenderer( outputDirectory, applicationTemplate, applicationDirectory );
+			break;
+
+		case FOP:
+			result = new FopRenderer( outputDirectory, applicationTemplate, applicationDirectory );
 			break;
 
 		default:
