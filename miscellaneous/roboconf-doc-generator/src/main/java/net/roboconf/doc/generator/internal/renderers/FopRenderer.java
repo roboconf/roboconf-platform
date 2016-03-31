@@ -59,14 +59,12 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderTitle2(String title) {
-		// TODO Auto-generated method stub
-		return null;
+		return "";
 	}
 
 	@Override
 	protected String renderTitle3(String title) {
-		// TODO Auto-generated method stub
-		return null;
+		return "";
 	}
 
 	@Override
@@ -193,32 +191,38 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String applyLink(String text, String linkId) {
-		// TODO Auto-generated method stub
-		return null;
+		String link;
+		if( this.options.containsKey( DocConstants.OPTION_HTML_EXPLODED ))
+			link = "components/" + linkId + ".html".replace( " ", "%20" );
+		else
+			link = "#" + createId( linkId );
+
+		return text.replaceAll( Pattern.quote( text ), "<fo:basic-link external-destination=\"" + "url(" + link + ")" +"\">" + text + "</fo:basic-link>" );
 	}
 
 	@Override
 	protected File writeFileContent(String fileContent) throws IOException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
-	protected StringBuilder startSection(String sectionName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	protected StringBuilder endSection(String sectionName, StringBuilder sb) {
-		// TODO Auto-generated method stub
-		return null;
+		return new StringBuilder();
 	}
 
 	@Override
 	protected String renderSections(List<String> sectionNames) {
-		// TODO Auto-generated method stub
-		return null;
+		return "";
+	}
+
+	@Override
+	protected StringBuilder startSection(String sectionName) {
+		return new StringBuilder();
+	}
+
+	private String createId( String title ) {
+		return title.toLowerCase().replaceAll( "\\s+", "-" );
 	}
 
 }
