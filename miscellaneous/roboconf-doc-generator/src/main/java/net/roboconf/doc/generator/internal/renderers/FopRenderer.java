@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.DocConstants;
 import net.roboconf.doc.generator.internal.AbstractStructuredRenderer;
 
@@ -54,17 +55,17 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderTitle1(String title) {
-		return "<fo:title>" + title + "</fo:title>\n";
+		return "<fo:block font-size=\"18pt\" font-weight=\"bold\">" + title + "</fo:block>\n";
 	}
 
 	@Override
 	protected String renderTitle2(String title) {
-		return "";
+		return "<fo:block font-size=\"14pt\" font-weight=\"bold\">" + title + "</fo:block>\n";
 	}
 
 	@Override
 	protected String renderTitle3(String title) {
-		return "";
+		return "<fo:block font-size=\"12pt\" font-weight=\"bold\">" + title + "</fo:block>\n";
 	}
 
 	@Override
@@ -202,7 +203,11 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected File writeFileContent(String fileContent) throws IOException {
-		return null;
+
+		File targetFile = new File( this.outputDirectory, "index.fo" );
+		Utils.createDirectory( targetFile.getParentFile());
+		Utils.writeStringInto( fileContent.replaceAll( "\n{3,}", "\n\n" ), targetFile );
+		return targetFile;
 	}
 
 

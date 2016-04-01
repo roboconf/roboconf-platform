@@ -48,14 +48,16 @@ public class ToRunByHand {
 
 		try {
 			File f = TestUtils.findTestFile( "/lamp" );
-			File outputDir = new File( System.getProperty( "user.home" ), "Bureau/html" );
+			//File outputDir = new File( System.getProperty( "user.home" ), "Bureau/html" );
+			File outputDir = new File( System.getProperty( "user.home" ), "Bureau/fop" );
 			Utils.deleteFilesRecursively( outputDir );
 			if( ! outputDir.mkdirs())
 				throw new IOException( "Could not create the output directory." );
 
 			ApplicationLoadResult alr = RuntimeModelIo.loadApplication( f );
 			Map<String,String> options = new HashMap<String,String> ();
-			new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.HTML, options );
+			//new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.HTML, options );
+			new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.FOP, options );
 
 		} catch( Exception e ) {
 			e.printStackTrace();
