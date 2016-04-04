@@ -25,8 +25,10 @@
 
 package net.roboconf.doc.generator.internal.renderers;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -42,6 +44,9 @@ import net.roboconf.doc.generator.internal.AbstractStructuredRenderer;
  * @author Amadou Diarra - UGA
  */
 public class FopRenderer extends AbstractStructuredRenderer {
+
+	private static final String TITLE_MARKUP = "${TITLE}";
+	private static final String CONTENT_MARKUP = "${CONTENT}";
 
 	/**
 	 * Constructor.
@@ -105,7 +110,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 	@Override
 	protected String indent() {
 
-		return "";
+		return "\t";
 	}
 
 	@Override
@@ -142,7 +147,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderDocumentTitle() {
-		return "<fo:title>" + this.applicationTemplate.getName() + "</fo:title>\n";
+		return "<fo:block font-size=\"18pt\" font-weight=\"bold\">" + this.applicationTemplate.getName() + "</fo:block>\n";
 	}
 
 	@Override
@@ -161,12 +166,14 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 		// Create the index
 		StringBuilder sb = new StringBuilder();
-		sb.append( "<list-block>\n" );
+		sb.append( "\n<list-block provisional-label-separation=\"2pt\""
+				+ "               provisional-distance-between-starts=\"8pt\">\n" );
 		for( String key : keys ) {
-			sb.append( "\t<list-item></>\n" );
-			sb.append( "\t<list-body>" );
-			sb.append( this.messages.get( key ).toLowerCase());
-			sb.append( "\">" );
+			sb.append( "\t<list-item></list-item>\n" );
+			sb.append( "\t\t<list-item></list-item>\n" );
+			sb.append( "\t<list-body start-indent=\"body-start()\">" );
+			//sb.append( this.messages.get( key ).toLowerCase());
+			//sb.append( "\">" );
 			sb.append( this.messages.get( key ));
 			sb.append( "</list-body>\n" );
 		}
@@ -194,7 +201,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 	protected String applyLink(String text, String linkId) {
 		String link;
 		if( this.options.containsKey( DocConstants.OPTION_HTML_EXPLODED ))
-			link = "components/" + linkId + ".html".replace( " ", "%20" );
+			link = "components/" + linkId + ".fo".replace( " ", "%20" );
 		else
 			link = "#" + createId( linkId );
 
@@ -204,16 +211,30 @@ public class FopRenderer extends AbstractStructuredRenderer {
 	@Override
 	protected File writeFileContent(String fileContent) throws IOException {
 
+		// Load the template
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		InputStream in = getClass().getResourceAsStream( "/fop.tpl" );
+		Utils.copyStreamSafely( in, out );
+
+		// Create the target directory
 		File targetFile = new File( this.outputDirectory, "index.fo" );
 		Utils.createDirectory( targetFile.getParentFile());
-		Utils.writeStringInto( fileContent.replaceAll( "\n{3,}", "\n\n" ), targetFile );
+
+		// Write the main file
+		String toWrite = out.toString( "UTF-8" )
+				.replace( TITLE_MARKUP, this.applicationTemplate.getName())
+				.replace( CONTENT_MARKUP, fileContent )
+				.replaceAll( "\n{3,}", "\n\n" );
+
+		Utils.writeStringInto( toWrite, targetFile );
 		return targetFile;
 	}
 
 
 	@Override
 	protected StringBuilder endSection(String sectionName, StringBuilder sb) {
-		return new StringBuilder();
+		StringBuilder result = sb;
+		return result;
 	}
 
 	@Override
