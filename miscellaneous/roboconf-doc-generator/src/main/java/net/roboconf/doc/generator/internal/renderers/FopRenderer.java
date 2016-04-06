@@ -75,6 +75,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderParagraph(String paragraph) {
+
 		StringBuilder sb = new StringBuilder();
 		for( String s : paragraph.trim().split( "\n\n" )) {
 			sb.append( "\n<fo:block>" );
@@ -87,35 +88,40 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderList(Collection<String> listItems) {
+
 		StringBuilder sb = new StringBuilder();
-		sb.append( "\n<list-block>\n" );
+		sb.append( "\n<fo:list-block provisional-label-separation=\"2pt\"" );
+		sb.append( " provisional-distance-between-starts=\"8pt\">\n" );
 		for( String s : listItems ) {
-			sb.append( "\t<list-item-label>" );
-			sb.append( "</>\n" );
-			sb.append( "\t<list-item-body>" );
+			sb.append( "\t<fo:list-item>\n" );
+			sb.append( "\t\t<fo:list-item-label end-indent=\"label-end()\">\n" );
+			sb.append( "\t\t  <fo:block> - </fo:block>\n" );
+			sb.append( "\t\t</fo:list-item-label>\n" );
+			sb.append( "\t\t<fo:list-item-body start-indent=\"body-start()\">\n" );
+			sb.append( "\t\t  <fo:block>" );
 			sb.append( s );
-			sb.append( "</>\n" );
+			sb.append( "</fo:block>\n" );
+			sb.append( "\t\t</fo:list-item-body>\n" );
+			sb.append( "\t</fo:list-item>\n");
 		}
 
-		sb.append( "</list-block>\n\n" );
+		sb.append( "</fo:list-block>\n" );
 		return sb.toString();
 	}
 
 	@Override
 	protected String renderPageBreak() {
-
 		return "<fo:block break-after=\"page\"/>";
 	}
 
 	@Override
 	protected String indent() {
-
 		return "\t";
 	}
 
 	@Override
 	protected String startTable() {
-		return "<fo:table>\n";
+		return "\n<fo:table text-align=\"center\" space-before=\"1em\" table-layout=\"fixed\" border=\"0.5pt solid black\">\n";
 	}
 
 	@Override
@@ -125,23 +131,39 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String addTableHeader(String... headerEntries) {
+
 		StringBuilder sb = new StringBuilder();
+		sb.append( "<fo:table-body>\n" );
+		sb.append( "\t<fo:table-row>\n" );
 		for( String s : headerEntries ) {
-			sb.append( "<fo:table-header>\n" );
+			sb.append( "\t  <fo:table-cell border=\"0.5pt solid black\">" );
+			sb.append( "<fo:block>" );
 			sb.append( s );
-			sb.append( "</fo:table-header>\n" );
+			sb.append( "</fo:block>" );
+			sb.append( "</fo:table-cell>\n" );
 		}
+
+		sb.append( "\t</fo:table-row>\n" );
+		sb.append( "</fo:table-body>\n" );
 		return sb.toString();
 	}
 
 	@Override
 	protected String addTableLine(String... lineEntries) {
+
 		StringBuilder sb = new StringBuilder();
+		sb.append( "\t<fo:table-body>\n" );
+		sb.append( "\t\t<fo:table-row>\n" );
 		for( String s : lineEntries ) {
-			sb.append( "<fo:table-row>\n" );
+			sb.append( "\t\t  <fo:table-cell border=\"0.5pt solid black\" padding=\"2pt 5pt\">" );
+			sb.append( "<fo:block>" );
 			sb.append( s );
-			sb.append( "</fo:table-row>\n" );
+			sb.append( "</fo:block>" );
+			sb.append( "\n</fo:table-cell>" );
 		}
+
+		sb.append( "\n\t\t</fo:table-row>\n" );
+		sb.append( "\t</fo:table-body>\n" );
 		return sb.toString();
 	}
 
@@ -166,19 +188,22 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 		// Create the index
 		StringBuilder sb = new StringBuilder();
-		sb.append( "\n<list-block provisional-label-separation=\"2pt\""
-				+ "               provisional-distance-between-starts=\"8pt\">\n" );
+		sb.append( "\n<fo:list-block provisional-label-separation=\"2pt\"" );
+		sb.append( " provisional-distance-between-starts=\"8pt\">\n" );
 		for( String key : keys ) {
-			sb.append( "\t<list-item></list-item>\n" );
-			sb.append( "\t\t<list-item></list-item>\n" );
-			sb.append( "\t<list-body start-indent=\"body-start()\">" );
-			//sb.append( this.messages.get( key ).toLowerCase());
-			//sb.append( "\">" );
+			sb.append( "\t<fo:list-item>\n" );
+			sb.append( "\t\t<fo:list-item-label end-indent=\"label-end()\">\n" );
+			sb.append( "\t\t  <fo:block> - </fo:block>\n" );
+			sb.append( "\t\t</fo:list-item-label>\n" );
+			sb.append( "\t\t<fo:list-item-body start-indent=\"body-start()\">\n" );
+			sb.append( "\t\t  <fo:block>" );
 			sb.append( this.messages.get( key ));
-			sb.append( "</list-body>\n" );
+			sb.append( "</fo:block>\n" );
+			sb.append( "\t\t</fo:list-item-body>\n" );
+			sb.append( "\t</fo:list-item>\n");
 		}
 
-		sb.append( "</list-block>\n" );
+		sb.append( "</fo:list-block>\n" );
 		return sb.toString();
 	}
 

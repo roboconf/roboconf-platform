@@ -561,7 +561,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	 * @throws IOException if something went wrong
 	 */
 	private void saveImage( final Component comp, DiagramType type, AbstractRoboconfTransformer transformer, StringBuilder sb )
-			throws IOException {
+	throws IOException {
 
 		String baseName = comp.getName() + "_" + type; //$NON-NLS-1$
 		String relativePath = "png/" + baseName + ".png"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -594,7 +594,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	 * @throws IOException if the file could not be read
 	 */
 	private String readCustomInformation( File applicationDirectory, String prefix, String suffix )
-			throws IOException {
+	throws IOException {
 
 		// Prepare the file name
 		StringBuilder sb = new StringBuilder();
@@ -653,15 +653,15 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			String componentOrFacet = VariableHelpers.parseVariableName( entry.getKey()).getKey();
 			String s = Utils.isEmptyOrWhitespaces( componentOrFacet )
 					? entry.getKey()
-							: applyLink( entry.getKey(), componentOrFacet );
+					: applyLink( entry.getKey(), componentOrFacet );
 
-					if( ! Utils.isEmptyOrWhitespaces( entry.getValue()))
-						s += MessageFormat.format( this.messages.get( "default" ), entry.getValue()); //$NON-NLS-1$
+			if( ! Utils.isEmptyOrWhitespaces( entry.getValue()))
+				s += MessageFormat.format( this.messages.get( "default" ), entry.getValue()); //$NON-NLS-1$
 
-					if( entry.getKey().toLowerCase().endsWith( ".ip" )) //$NON-NLS-1$
-						s += this.messages.get( "injected" ); //$NON-NLS-1$
+			if( entry.getKey().toLowerCase().endsWith( ".ip" )) //$NON-NLS-1$
+				s += this.messages.get( "injected" ); //$NON-NLS-1$
 
-					result.add( s );
+			result.add( s );
 		}
 
 		return result;
