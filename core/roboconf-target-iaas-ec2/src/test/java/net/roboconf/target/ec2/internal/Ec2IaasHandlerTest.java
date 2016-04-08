@@ -25,14 +25,21 @@
 
 package net.roboconf.target.ec2.internal;
 
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.DEFAULTS;
 import static net.roboconf.target.ec2.internal.Ec2IaasHandler.TPL_VOLUME_APP;
 import static net.roboconf.target.ec2.internal.Ec2IaasHandler.TPL_VOLUME_NAME;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.USE_BLOCK_STORAGE;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.VOLUME_NAME_PREFIX;
 import static net.roboconf.target.ec2.internal.Ec2IaasHandler.expandVolumeName;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.findStorageIds;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.findStorageProperty;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+
 import net.roboconf.target.api.TargetException;
 
 import org.junit.Test;
@@ -68,7 +75,46 @@ public class Ec2IaasHandlerTest {
 	public void testGetTargetId() {
 		Assert.assertEquals( Ec2IaasHandler.TARGET_ID, new Ec2IaasHandler().getTargetId());
 	}
-	
+
+	@Test
+	public void testFindStorageIds() {
+
+		Map<String,String> targetProperties = new HashMap<>();
+		targetProperties.put( USE_BLOCK_STORAGE, "" );
+		Assert.assertEquals( Arrays.asList(), findStorageIds( targetProperties ));
+
+		targetProperties.put( USE_BLOCK_STORAGE, "a" );
+		Assert.assertEquals( Arrays.asList( "a" ), findStorageIds( targetProperties ));
+
+		targetProperties.put( USE_BLOCK_STORAGE, "a,b" );
+		Assert.assertEquals( Arrays.asList( "a", "b" ), findStorageIds( targetProperties ));
+
+		targetProperties.put( USE_BLOCK_STORAGE, "a,, b , c " );
+		Assert.assertEquals( Arrays.asList( "a", "b", "c" ), findStorageIds( targetProperties ));
+	}
+
+
+	@Test
+	public void testFindStorageProperty() {
+
+		Map<String,String> targetProperties = new HashMap<>();
+		String s = findStorageProperty( targetProperties, "a", VOLUME_NAME_PREFIX );
+		Assert.assertEquals( DEFAULTS.get( VOLUME_NAME_PREFIX ), s );
+		Assert.assertNotNull( DEFAULTS.get( VOLUME_NAME_PREFIX ));
+
+		targetProperties.put( VOLUME_NAME_PREFIX + "a", "" );
+		s = findStorageProperty( targetProperties, "a", VOLUME_NAME_PREFIX );
+		Assert.assertEquals( DEFAULTS.get( VOLUME_NAME_PREFIX ), s );
+
+		targetProperties.put( VOLUME_NAME_PREFIX + "a", "name" );
+		s = findStorageProperty( targetProperties, "a", VOLUME_NAME_PREFIX );
+		Assert.assertEquals( "name", s );
+
+		targetProperties.put( VOLUME_NAME_PREFIX + "a", "name with space after   " );
+		s = findStorageProperty( targetProperties, "a", VOLUME_NAME_PREFIX );
+		Assert.assertEquals( "name with space after", s );
+	}
+
 	@Test
 	public void testExpandVolumeName() {
 

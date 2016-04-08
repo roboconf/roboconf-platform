@@ -25,10 +25,17 @@
 
 package net.roboconf.target.ec2.internal;
 
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.VOLUME_DELETE_OT_PREFIX;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.VOLUME_MOUNT_POINT_PREFIX;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.VOLUME_NAME_PREFIX;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.VOLUME_SIZE_GB_PREFIX;
+import static net.roboconf.target.ec2.internal.Ec2IaasHandler.VOLUME_TYPE_PREFIX;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -80,9 +87,9 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	private final String machineId, tagName;
 	private String applicationName;
 	private String availabilityZone;
-	private String volumeId = null;
 	private final Map<String,String> targetProperties;
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private final Map<String,String> storageIdToVolumeId = new HashMap<> ();
 
 	private AmazonEC2 ec2Api;
 	private State state = State.UNKNOWN_VM;
@@ -143,15 +150,15 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		}
 
 		if( this.state == State.CREATE_VOLUME ) {
-			if(! volumeRequested()) {
+			if(! volumesRequested()) {
 				this.state = State.COMPLETE;
-			} else if(createOrReuseVolume()) {
+			} else if(createOrReuseVolumes()) {
 				this.state = State.ATTACH_VOLUME;
 			}
 		}
 
 		if( this.state == State.ATTACH_VOLUME ) {
-			if(volumeCreated(this.volumeId) && attachVolume(this.volumeId))
+			if(volumesCreated() && attachVolumes())
 				this.state = State.COMPLETE;
 		}
 
@@ -227,36 +234,44 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	}
 
 	/**
-	 * Checks whether EBS volume creation/attachment is requested.
+	 * Checks whether EBS volume(s) creation/attachment is requested.
 	 * @return true if requested, false otherwise
 	 */
-	private boolean volumeRequested() {
-		return Boolean.parseBoolean(this.targetProperties.get(Ec2Constants.USE_BLOCK_STORAGE));
+	private boolean volumesRequested() {
+		return ! Utils.isEmptyOrWhitespaces(this.targetProperties.get(Ec2Constants.USE_BLOCK_STORAGE));
 	}
 
 	/**
-	 * Performs all steps necessary to create or reuse volume, as specified in configuration.
-	 * @return true when volume creation is done
+	 * Performs all steps necessary to create or reuse volume(s), as specified in configuration.
+	 * @return true when volume(s) creation is done
 	 */
-	private boolean createOrReuseVolume() {
-		// Lookup volume, according to its snapshot ID or Name tag.
-		String idOrName = Ec2IaasHandler.expandVolumeName(
-				this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID), this.applicationName, this.scopedInstance.getName());
-		String volumeSnapshotOrId = lookupVolume(idOrName);
-		if(volumeSnapshotOrId == null) volumeSnapshotOrId = idOrName;
+	private boolean createOrReuseVolumes() {
+		for( String storageId : Ec2IaasHandler.findStorageIds( this.targetProperties )) {
+			String nameTemplate = Ec2IaasHandler.findStorageProperty(this.targetProperties, storageId, VOLUME_NAME_PREFIX);
+			// Lookup volume, according to its snapshot ID or Name tag.
+			String idOrName = Ec2IaasHandler.expandVolumeName(
+					nameTemplate, this.applicationName, this.scopedInstance.getName());
+			String volumeSnapshotOrId = lookupVolume(idOrName);
+			if(volumeSnapshotOrId == null) volumeSnapshotOrId = idOrName;
 
-		int size = DEFAULT_VOLUME_SIZE;
-		try {
-			size = Integer.parseInt(this.targetProperties.get(Ec2Constants.VOLUME_SIZE));
-		} catch(Exception nfe) {
-			size = DEFAULT_VOLUME_SIZE;
-		}
-		if(size <= 0) size = DEFAULT_VOLUME_SIZE;
+			int size = DEFAULT_VOLUME_SIZE;
+			try {
+				size = Integer.parseInt(
+						Ec2IaasHandler.findStorageProperty(this.targetProperties, storageId, VOLUME_SIZE_GB_PREFIX));
+			} catch(Exception nfe) {
+				size = DEFAULT_VOLUME_SIZE;
+			}
+			if(size <= 0) size = DEFAULT_VOLUME_SIZE;
 
-		if(volumeSnapshotOrId != null && volumeCreated(volumeSnapshotOrId)) {
-			this.volumeId = volumeSnapshotOrId;
-		} else {
-			this.volumeId = createVolume(volumeSnapshotOrId, size);
+			String volumeId;
+			if(volumeSnapshotOrId != null && volumeCreated(volumeSnapshotOrId)) {
+				volumeId = volumeSnapshotOrId;
+			} else {
+				volumeId = createVolume(storageId, volumeSnapshotOrId, size);
+			}
+			
+			this.logger.info("Volume " + volumeId + " was successfully created.");
+			this.storageIdToVolumeId.put(storageId, volumeId);
 		}
 
 		return true;
@@ -266,8 +281,8 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 * Creates volume for EBS.
 	 * @return volume ID of newly created volume
 	 */
-	private String createVolume(String snapshotId, int size) {
-		String volumeType = this.targetProperties.get(Ec2Constants.VOLUME_TYPE);
+	private String createVolume(String storageId, String snapshotId, int size) {
+		String volumeType = Ec2IaasHandler.findStorageProperty(this.targetProperties, storageId, VOLUME_TYPE_PREFIX);
 		if(volumeType == null) volumeType = "standard";
 
 		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
@@ -301,6 +316,18 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		}
 
 		return dvsresult != null && "available".equals(dvsresult.getVolumes().get(0).getState());
+	}
+	
+	/**
+	 * Checks whether all specified volumes are created.
+	 * @return true if all volumes created, false otherwise
+	 */
+	private boolean volumesCreated() {
+		for( Map.Entry<String,String> entry : this.storageIdToVolumeId.entrySet()) {
+			String volumeId = entry.getValue();
+			if(! volumeCreated(volumeId)) return false;
+		}
+		return true;
 	}
 
 	/**
@@ -340,47 +367,55 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	}
 
 	/**
-	 * Attaches volume for EBS.
+	 * Attaches volume(s) for EBS.
 	 * @return true if successful attachment, or nothing to do. false otherwise
 	 */
-	private boolean attachVolume(String volumeId) {
+	private boolean attachVolumes() {
+		
+		// If volume is found in map, it has been successfully created (no need to check here)
+		for( Map.Entry<String,String> entry : this.storageIdToVolumeId.entrySet()) {
 
-		// Give a name to the volume before attaching
-		String name = Ec2IaasHandler.expandVolumeName(
-				this.targetProperties.get(Ec2Constants.VOLUME_SNAPSHOT_ID), this.applicationName, this.scopedInstance.getName());
-		if(Utils.isEmptyOrWhitespaces(name)) name = "Created by Roboconf for " + this.tagName;
-		tagResource(volumeId, name);
+			String volumeId = entry.getValue();
+			String storageId = entry.getKey();
 
-		// Attach volume now
-		String mountPoint = this.targetProperties.get(Ec2Constants.VOLUME_MOUNTPOINT);
-		if(Utils.isEmptyOrWhitespaces(mountPoint)) mountPoint = "/dev/sdf";
+			// Give a name to the volume before attaching
+			String nameTemplate = Ec2IaasHandler.findStorageProperty(this.targetProperties, storageId, VOLUME_NAME_PREFIX);
+			String name = Ec2IaasHandler.expandVolumeName(
+					nameTemplate, this.applicationName, this.scopedInstance.getName());
+			if(Utils.isEmptyOrWhitespaces(name)) name = "Created by Roboconf for " + this.tagName;
+			tagResource(volumeId, name);
 
-		AttachVolumeRequest attachRequest = new AttachVolumeRequest()
-			.withInstanceId(this.machineId)
-			.withDevice(mountPoint)
-			.withVolumeId(volumeId);
+			// Attach volume now
+			String mountPoint = Ec2IaasHandler.findStorageProperty(this.targetProperties, storageId, VOLUME_MOUNT_POINT_PREFIX);
+			if(Utils.isEmptyOrWhitespaces(mountPoint)) mountPoint = "/dev/sdf";
 
-		try {
-			this.ec2Api.attachVolume(attachRequest);
-		} catch(Exception e) {
-			this.logger.warning("EBS Volume attachment error: " + e);
-		}
-
-		// Set deleteOnTermination flag ?
-		if(Boolean.parseBoolean(this.targetProperties.get(Ec2Constants.VOLUME_VOLATILE))) {
-			EbsInstanceBlockDeviceSpecification ebsSpecification = new EbsInstanceBlockDeviceSpecification()
-				.withVolumeId(volumeId)
-				.withDeleteOnTermination(true);
-
-			InstanceBlockDeviceMappingSpecification mappingSpecification = new InstanceBlockDeviceMappingSpecification()
-				.withDeviceName(mountPoint)
-				.withEbs(ebsSpecification);
-
-			ModifyInstanceAttributeRequest request = new ModifyInstanceAttributeRequest()
+			AttachVolumeRequest attachRequest = new AttachVolumeRequest()
 				.withInstanceId(this.machineId)
-				.withBlockDeviceMappings(mappingSpecification);
+				.withDevice(mountPoint)
+				.withVolumeId(volumeId);
 
-			this.ec2Api.modifyInstanceAttribute(request);
+			try {
+				this.ec2Api.attachVolume(attachRequest);
+			} catch(Exception e) {
+				this.logger.warning("EBS Volume attachment error: " + e);
+			}
+
+			// Set deleteOnTermination flag ?
+			if(Boolean.parseBoolean(Ec2IaasHandler.findStorageProperty(this.targetProperties, storageId, VOLUME_DELETE_OT_PREFIX))) {
+				EbsInstanceBlockDeviceSpecification ebsSpecification = new EbsInstanceBlockDeviceSpecification()
+					.withVolumeId(volumeId)
+					.withDeleteOnTermination(true);
+
+				InstanceBlockDeviceMappingSpecification mappingSpecification = new InstanceBlockDeviceMappingSpecification()
+					.withDeviceName(mountPoint)
+					.withEbs(ebsSpecification);
+
+				ModifyInstanceAttributeRequest request = new ModifyInstanceAttributeRequest()
+					.withInstanceId(this.machineId)
+					.withBlockDeviceMappings(mappingSpecification);
+
+				this.ec2Api.modifyInstanceAttribute(request);
+			}
 		}
 
 		return true;
