@@ -44,7 +44,7 @@ import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_MOUNT_POINT_PREFIX;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_NAME_PREFIX;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.VOLUME_SIZE_GB_PREFIX;
-import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.filterStorageVolumeName;
+import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.expandVolumeName;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.findStorageIds;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.findStorageProperty;
 import static net.roboconf.target.openstack.internal.OpenstackIaasHandler.identity;
@@ -332,18 +332,18 @@ public class OpenstackIaasHandlerTest {
 
 
 	@Test
-	public void testFilterStorageVolumeName() {
+	public void testExpandVolumeName() {
 
 		String name = DEFAULTS.get( VOLUME_NAME_PREFIX );
-		Assert.assertEquals( "roboconf-app-inst", filterStorageVolumeName( name, "app", "inst" ));
+		Assert.assertEquals( "roboconf-app-inst", expandVolumeName( name, "app", "inst" ));
 
 		name = "cache-" + TPL_VOLUME_NAME;
-		Assert.assertEquals( "cache-inst4", filterStorageVolumeName( name, "app2", "inst4" ));
+		Assert.assertEquals( "cache-inst4", expandVolumeName( name, "app2", "inst4" ));
 
 		name = "pre-" + TPL_VOLUME_APP + "-post";
-		Assert.assertEquals( "pre-app2-post", filterStorageVolumeName( name, "app2", "inst" ));
+		Assert.assertEquals( "pre-app2-post", expandVolumeName( name, "app2", "inst" ));
 
 		name = "pre-" + TPL_VOLUME_APP + "-post 2";
-		Assert.assertEquals( "pre-app-51--post-2", filterStorageVolumeName( name, "app 51 ", "vm 1" ));
+		Assert.assertEquals( "pre-app-51--post-2", expandVolumeName( name, "app 51 ", "vm 1" ));
 	}
 }
