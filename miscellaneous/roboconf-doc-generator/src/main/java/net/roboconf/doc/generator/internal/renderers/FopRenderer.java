@@ -174,12 +174,13 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderDocumentIndex() {
+		
 		// What keys should we inject in the index?
 		List<String> keys = new ArrayList<String> ();
 		keys.add( "introduction" );
 		keys.add( "components" );
-		if( this.options.containsKey( DocConstants.OPTION_RECIPE )) {
-			if( ! this.applicationTemplate.getGraphs().getFacetNameToFacet().isEmpty())
+		if( this.options.containsKey( DocConstants.OPTION_RECIPE ) ) {
+			if( ! this.applicationTemplate.getGraphs().getFacetNameToFacet().isEmpty() )
 				keys.add( "facets" );
 
 		} else {
@@ -224,13 +225,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String applyLink(String text, String linkId) {
-		String link;
-		if( this.options.containsKey( DocConstants.OPTION_HTML_EXPLODED ))
-			link = "components/" + linkId + ".fo".replace( " ", "%20" );
-		else
-			link = "#" + createId( linkId );
-
-		return text.replaceAll( Pattern.quote( text ), "<fo:basic-link external-destination=\"" + "url(" + link + ")" +"\">" + text + "</fo:basic-link>" );
+		return text.replaceAll( Pattern.quote( text ), "<fo:basic-link external-destination=\"" + "url(" + createId( linkId ) + ")" +"\">" + text + "</fo:basic-link>" );
 	}
 
 	@Override
@@ -249,6 +244,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		String toWrite = out.toString( "UTF-8" )
 				.replace( TITLE_MARKUP, this.applicationTemplate.getName())
 				.replace( CONTENT_MARKUP, fileContent )
+				.replace( "png/", this.outputDirectory.getAbsolutePath() + "/png/" )
 				.replaceAll( "\n{3,}", "\n\n" );
 
 		Utils.writeStringInto( toWrite, targetFile );
