@@ -9,7 +9,7 @@
  	<fo:page-sequence master-reference="A4-portrait">
   		<fo:flow flow-name="xsl-region-body">
     		<fo:block >
-  				<fo:external-graphic content-height="5em" content-width="5em" src="roboconf.jpg"/>
+  				<fo:external-graphic content-height="5em" content-width="5em" src="header.jpg"/>
      		</fo:block>
      		<fo:block text-align="center">${TITLE}</fo:block>
      		${CONTENT}
