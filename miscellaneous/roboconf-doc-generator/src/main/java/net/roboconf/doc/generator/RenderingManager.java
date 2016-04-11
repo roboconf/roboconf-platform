@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.doc.generator.internal.IRenderer;
+import net.roboconf.doc.generator.internal.renderers.FopRenderer;
 import net.roboconf.doc.generator.internal.renderers.HtmlRenderer;
 import net.roboconf.doc.generator.internal.renderers.MarkdownRenderer;
 
@@ -180,6 +181,10 @@ public class RenderingManager {
 
 		case MARKDOWN:
 			result = new MarkdownRenderer( outputDirectory, applicationTemplate, applicationDirectory );
+			break;
+
+		case FOP:
+			result = new FopRenderer( outputDirectory, applicationTemplate, applicationDirectory );
 			break;
 
 		default:
