@@ -87,7 +87,7 @@ public class RenderingManager {
 			ApplicationTemplate applicationTemplate,
 			File applicationDirectory,
 			Renderer renderer, Map<String,String> options )
-					throws IOException {
+	throws IOException {
 		options = fixOptions( options );
 		buildRenderer( outputDirectory, applicationTemplate, applicationDirectory, renderer ).render( options );
 	}
@@ -112,7 +112,7 @@ public class RenderingManager {
 			File applicationDirectory,
 			List<String> renderers,
 			Map<String,String> options )
-					throws IOException {
+	throws IOException {
 
 		options = fixOptions( options );
 		if( renderers.size() > 1 )

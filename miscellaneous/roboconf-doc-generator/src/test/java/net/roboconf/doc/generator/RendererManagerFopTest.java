@@ -42,14 +42,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.RenderingManager.Renderer;
-
-
 
 /**
  * @author Amadou Diarra - UGA
  */
-
 public class RendererManagerFopTest extends AbstractTestForRendererManager {
 
 
@@ -82,16 +80,22 @@ public class RendererManagerFopTest extends AbstractTestForRendererManager {
 	private boolean validateFop2pdf( File fopFile, File pdffile ) throws Exception {
 
 		File fopConfig = TestUtils.findTestFile( "/fop.xconf" );
-		OutputStream out = new BufferedOutputStream(new FileOutputStream(pdffile));
-		FopFactory fopFactory = FopFactory.newInstance(fopConfig);
-		Fop fop =  fopFactory.newFop("application/pdf", out);
-		Source src = new StreamSource( fopFile );
+		OutputStream out = null;
+		try {
+				out = new BufferedOutputStream(new FileOutputStream(pdffile));
+				FopFactory fopFactory = FopFactory.newInstance(fopConfig);
+				Fop fop =  fopFactory.newFop("application/pdf", out);
+				Source src = new StreamSource( fopFile );
 
-		TransformerFactory factory = TransformerFactory.newInstance();
-		Transformer transformer = factory.newTransformer();
+				TransformerFactory factory = TransformerFactory.newInstance();
+				Transformer transformer = factory.newTransformer();
 
-		Result res = new SAXResult(fop.getDefaultHandler());
-		transformer.transform(src, res);
+				Result res = new SAXResult(fop.getDefaultHandler());
+				transformer.transform(src, res);
+		} finally {
+				Utils.closeQuietly ( out );	
+		}
+		
 		return pdffile.length() > 0;
 
 	}

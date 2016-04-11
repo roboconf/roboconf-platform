@@ -379,7 +379,6 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		}
 
 		sb.append( renderSections( sectionNames ));
-		//System.out.println(sb.toString());
 		return sb;
 	}
 
