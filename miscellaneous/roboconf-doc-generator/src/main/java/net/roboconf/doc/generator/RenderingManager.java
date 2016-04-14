@@ -37,6 +37,7 @@ import net.roboconf.doc.generator.internal.IRenderer;
 import net.roboconf.doc.generator.internal.renderers.FopRenderer;
 import net.roboconf.doc.generator.internal.renderers.HtmlRenderer;
 import net.roboconf.doc.generator.internal.renderers.MarkdownRenderer;
+import net.roboconf.doc.generator.internal.renderers.PdfRenderer;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -185,6 +186,10 @@ public class RenderingManager {
 
 		case FOP:
 			result = new FopRenderer( outputDirectory, applicationTemplate, applicationDirectory );
+			break;
+			
+		case PDF:
+			result = new PdfRenderer( outputDirectory, applicationTemplate, applicationDirectory );
 			break;
 
 		default:
