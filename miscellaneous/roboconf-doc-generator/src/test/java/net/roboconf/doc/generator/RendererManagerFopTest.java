@@ -27,6 +27,7 @@ package net.roboconf.doc.generator;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 import javax.xml.transform.Result;
@@ -41,9 +42,9 @@ import org.apache.fop.apps.FopFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
-import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.RenderingManager.Renderer;
+import net.roboconf.doc.generator.internal.renderers.FopRenderer;
 
 /**
  * @author Amadou Diarra - UGA
@@ -78,8 +79,11 @@ public class RendererManagerFopTest extends AbstractTestForRendererManager {
 	 * @throws Exception
 	 */
 	private boolean validateFop2pdf( File fopFile, File pdffile ) throws Exception {
-
-		File fopConfig = TestUtils.findTestFile( "/fop.xconf" );
+		
+		InputStream conf = FopRenderer.class.getResourceAsStream( "/fop.xconf" );
+		File fopConfig = new File( this.outputDir, "fop.xconf" );
+		Utils.copyStream( conf, fopConfig );
+		
 		OutputStream out = null;
 		try {
 				out = new BufferedOutputStream(new FileOutputStream(pdffile));
