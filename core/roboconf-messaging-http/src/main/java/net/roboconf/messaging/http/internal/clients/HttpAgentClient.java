@@ -28,7 +28,6 @@ package net.roboconf.messaging.http.internal.clients;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,7 +40,6 @@ import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
-import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.http.HttpConstants;
 import net.roboconf.messaging.http.internal.HttpUtils;
 import net.roboconf.messaging.http.internal.messages.HttpMessage;
@@ -165,7 +163,9 @@ public class HttpAgentClient implements IMessagingClient {
 
 		String ownerId = AbstractRoutingClient.buildOwnerId( RecipientKind.AGENTS, this.applicationName, this.scopedInstancePath );
 		this.logger.fine( getId() + " is about to subscribe to " + ownerId );
-		sendToTheDm( new SubscriptionMessage( ownerId, ctx, true ));
+		HttpUtils.sendAsynchronously(
+				new SubscriptionMessage( ownerId, ctx, true ),
+				this.clientSession.getRemote());
 	}
 
 
@@ -174,7 +174,9 @@ public class HttpAgentClient implements IMessagingClient {
 
 		String ownerId = AbstractRoutingClient.buildOwnerId( RecipientKind.AGENTS, this.applicationName, this.scopedInstancePath );
 		this.logger.fine( getId() + " is about to unsubscribe to " + ownerId );
-		sendToTheDm( new SubscriptionMessage( ownerId, ctx, false ));
+		HttpUtils.sendAsynchronously(
+				new SubscriptionMessage( ownerId, ctx, false ),
+				this.clientSession.getRemote());;
 	}
 
 
@@ -183,7 +185,9 @@ public class HttpAgentClient implements IMessagingClient {
 
 		String ownerId = AbstractRoutingClient.buildOwnerId( RecipientKind.AGENTS, this.applicationName, this.scopedInstancePath );
 		this.logger.fine( getId() + " is about to publish a message (" + msg + ") to " + ownerId );
-		sendToTheDm( new HttpMessage( ownerId, msg, ctx ));
+		HttpUtils.sendAsynchronously(
+				new HttpMessage( ownerId, msg, ctx ),
+				this.clientSession.getRemote());
 	}
 
 
@@ -191,14 +195,6 @@ public class HttpAgentClient implements IMessagingClient {
 	public void deleteMessagingServerArtifacts( Application application )
 	throws IOException {
 		// nothing
-	}
-
-
-	private void sendToTheDm( Message message ) throws IOException {
-
-		byte[] rawData = SerializationUtils.serializeObject( message );
-		ByteBuffer data = ByteBuffer.wrap( rawData );
-		this.clientSession.getRemote().sendBytes( data );
 	}
 
 

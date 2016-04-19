@@ -41,7 +41,9 @@ import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ManagementResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.PreferencesResource;
+import net.roboconf.dm.rest.services.internal.resources.impl.SchedulerResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.TargetResource;
+import net.roboconf.dm.scheduler.IScheduler;
 
 import com.sun.jersey.api.core.DefaultResourceConfig;
 import com.sun.jersey.api.core.ResourceConfig;
@@ -57,6 +59,7 @@ public class RestApplication extends DefaultResourceConfig {
 	private final IDebugResource debugResource;
 	private final ITargetResource targetResource;
 	private final IPreferencesResource preferencesResource;
+	private final SchedulerResource schedulerResource;
 
 
 	/**
@@ -72,6 +75,7 @@ public class RestApplication extends DefaultResourceConfig {
 		this.targetResource = new TargetResource( manager );
 		this.preferencesResource = new PreferencesResource( manager );
 		this.applicationCommandsResource = new ApplicationCommandsResource( manager );
+		this.schedulerResource = new SchedulerResource();
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
@@ -101,7 +105,17 @@ public class RestApplication extends DefaultResourceConfig {
 		set.add( this.targetResource );
 		set.add( this.preferencesResource );
 		set.add( this.applicationCommandsResource );
+		set.add( this.schedulerResource );
 
 		return set;
+	}
+
+
+	/**
+	 * Sets the scheduler.
+	 * @param scheduler the scheduler (can be null)
+	 */
+	public void setScheduler( IScheduler scheduler ) {
+		this.schedulerResource.setScheduler( scheduler );
 	}
 }

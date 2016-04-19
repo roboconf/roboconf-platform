@@ -124,6 +124,13 @@
 		</dependency>
 		
 		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm-scheduler</artifactId>
+  			<version>${project.version}</version>
+  			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.ipojo</artifactId>
 			<version>${ipojo.version}</version>

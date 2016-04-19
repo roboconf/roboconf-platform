@@ -26,7 +26,6 @@
 package net.roboconf.messaging.http.internal.clients;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -36,7 +35,6 @@ import net.roboconf.messaging.api.extensions.AbstractRoutingClient;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.utils.SerializationUtils;
 import net.roboconf.messaging.http.HttpConstants;
 import net.roboconf.messaging.http.internal.HttpClientFactory.HttpRoutingContext;
 import net.roboconf.messaging.http.internal.HttpUtils;
@@ -119,9 +117,7 @@ public class HttpDmClient extends AbstractRoutingClient<Session> {
 	protected void process( Session session, Message message ) throws IOException {
 
 		if( session.isOpen()) {
-			byte[] rawData = SerializationUtils.serializeObject( message );
-			ByteBuffer data = ByteBuffer.wrap( rawData );
-			session.getRemote().sendBytes( data );
+			HttpUtils.sendAsynchronously( message, session.getRemote());
 
 		} else {
 			this.logger.finer( "Session is not available anymore. No message can be published." );

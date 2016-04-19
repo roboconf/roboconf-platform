@@ -79,11 +79,11 @@ public class RendererManagerFopTest extends AbstractTestForRendererManager {
 	 * @throws Exception
 	 */
 	private boolean validateFop2pdf( File fopFile, File pdffile ) throws Exception {
-		
+
 		InputStream conf = FopRenderer.class.getResourceAsStream( "/fop.xconf" );
 		File fopConfig = new File( this.outputDir, "fop.xconf" );
 		Utils.copyStream( conf, fopConfig );
-		
+
 		OutputStream out = null;
 		try {
 				out = new BufferedOutputStream(new FileOutputStream(pdffile));
@@ -96,12 +96,12 @@ public class RendererManagerFopTest extends AbstractTestForRendererManager {
 
 				Result res = new SAXResult(fop.getDefaultHandler());
 				transformer.transform(src, res);
+
 		} finally {
-				Utils.closeQuietly ( out );	
+				Utils.closeQuietly ( out );
 		}
-		
+
 		return pdffile.length() > 0;
 
 	}
-
 }

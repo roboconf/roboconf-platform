@@ -23,57 +23,42 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.agent.misc;
+package net.roboconf.dm.scheduler.internal;
 
-import java.util.List;
 import java.util.logging.Logger;
 
-import net.roboconf.core.runtime.IReconfigurable;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.Manager;
 
-import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.lifecycle.Reference;
-import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-@Command( scope = "roboconf", name = "force-reconnect", description="Force the DM and/or agents to reload their configuration." )
-@Service
-public class ForceReconnectCommand implements Action {
-
-	/*
-	 * Possible configurations:
-	 * (*) The DM is alone in its distribution.
-	 * (*) An agent is alone in its distribution.
-	 * (*) The DM and in-memory agents coexist in the same distribution.
-	 *
-	 * So, we need to inject all the available reconfigurables.
-	 * No need to add complexity with parameters. Reconfigure everything.
-	 */
-	@Reference
-	List<IReconfigurable> reconfigurables;
+public class CommandExecutionJob implements Job {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 
 
 	@Override
-	public Object execute() throws Exception {
+	public void execute( JobExecutionContext context )
+	throws JobExecutionException {
 
-		if( this.reconfigurables != null ) {
-			for( IReconfigurable reconfigurable : this.reconfigurables ) {
-				try {
-					this.logger.fine( "Forcing reconfiguration from a Karaf command." );
-					reconfigurable.reconfigure();
+		String appName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.APP_NAME );
+		String jobName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.JOB_NAME );
+		String commandsFileName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.CMD_NAME );
+		Manager manager = (Manager) context.get( RoboconfScheduler.MANAGER );
 
-				} catch( Exception e ) {
-					this.logger.warning( "An error occurred while reloading the configuration. " + e.getMessage());
-					Utils.logException( this.logger, e );
-				}
-			}
+		try {
+			Application app = manager.applicationMngr().findApplicationByName( appName );
+			manager.commandsMngr().execute( app, commandsFileName );
+
+		} catch( Exception e ) {
+			this.logger.warning( "An error occurred while executing job " + jobName + " (command file =" + commandsFileName + ")." );
+			Utils.logException( this.logger, e );
 		}
-
-		return null;
 	}
 }

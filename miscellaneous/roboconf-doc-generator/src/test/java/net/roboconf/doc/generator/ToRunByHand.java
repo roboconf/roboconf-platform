@@ -49,6 +49,7 @@ public class ToRunByHand {
 		try {
 			File f = TestUtils.findTestFile( "/lamp" );
 			//File outputDir = new File( System.getProperty( "user.home" ), "Bureau/html" );
+
 			File outputDir = new File( System.getProperty( "user.home" ), "Bureau/pdf" );
 			Utils.deleteFilesRecursively( outputDir );
 			if( ! outputDir.mkdirs())
@@ -56,7 +57,6 @@ public class ToRunByHand {
 
 			ApplicationLoadResult alr = RuntimeModelIo.loadApplication( f );
 			Map<String,String> options = new HashMap<String,String> ();
-			//new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.HTML, options );
 			new RenderingManager().render( outputDir, alr.getApplicationTemplate(), f, Renderer.PDF, options );
 
 		} catch( Exception e ) {

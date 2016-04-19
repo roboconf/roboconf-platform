@@ -101,7 +101,7 @@ public interface ICommandsMngr {
 	 * </p>
 	 *
 	 * @param app the associated application
-	 * @param commandName a command name
+	 * @param commandName a command name (the file extension is optional)
 	 * @throws CommandException if execution failed
 	 * @throws NoSuchFileException if there is no such command
 	 */
@@ -111,7 +111,7 @@ public interface ICommandsMngr {
 	/**
 	 * Executes a command.
 	 * @param app the associated application
-	 * @param commandName a command name
+	 * @param commandName a command name (the file extension is optional)
 	 * @param executionContext an execution context to define some constraints on commands
 	 * @throws CommandException if execution failed
 	 * @throws NoSuchFileException if there is no such command

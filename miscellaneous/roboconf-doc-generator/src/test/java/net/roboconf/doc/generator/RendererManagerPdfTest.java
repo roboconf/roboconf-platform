@@ -40,7 +40,7 @@ import net.roboconf.doc.generator.RenderingManager.Renderer;
  * @author Amadou Diarra - UGA
  */
 public class RendererManagerPdfTest extends AbstractTestForRendererManager {
-	
+
 	@Test
 	public void testFopRenderer() throws Exception {
 
@@ -48,19 +48,19 @@ public class RendererManagerPdfTest extends AbstractTestForRendererManager {
 		File fofile = new File(this.outputDir,"index.fo");
 		Assert.assertTrue( fofile.exists() );
 		Assert.assertTrue( fofile.length() > 0 );
-
 	}
-	
+
+
 	@Test
 	public void testPdfRenderer() throws IOException {
+
 		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.PDF, null );
 		File pdffile = new File(this.outputDir,"index.pdf");
 		Assert.assertTrue( pdffile.exists() );
 		Assert.assertTrue( pdffile.length() > 0 );
+
 		PDF genPdf = new PDF( pdffile );
 		Assert.assertThat( genPdf, containsText("Legacy LAMP") );
 		Assert.assertThat( genPdf, containsText("This document lists the Software components used in this application") );
-
 	}
-	
 }

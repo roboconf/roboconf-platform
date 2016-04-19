@@ -8,6 +8,11 @@
 	<component classname="net.roboconf.dm.rest.services.internal.ServletRegistrationComponent" name="roboconf-dm-rest-component" immediate="true" public="false">
 		<requires field="manager" optional="false" />
 		<requires field="httpService" optional="false" />
+		<requires field="scheduler" optional="true">
+			<callback type="bind" method="schedulerAppears" />
+			<callback type="unbind" method="schedulerDisappears" />
+		</requires>
+		
 		<callback transition="validate" method="starting" />
 		<callback transition="invalidate" method="stopping" />
 	</component>

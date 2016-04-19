@@ -26,7 +26,12 @@
 package net.roboconf.plugin.script.internal;
 
 import java.io.File;
+import java.util.Map;
 
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.model.beans.ExportedVariable;
+import net.roboconf.core.model.beans.Instance;
 import net.roboconf.plugin.script.internal.ScriptUtils.ActionFileFilter;
 
 import org.junit.Assert;
@@ -89,5 +94,44 @@ public class ScriptUtilsTest {
 
 		files = dir.listFiles( new ActionFileFilter( "whatever-1" ));
 		Assert.assertEquals( 1, files.length );
+	}
+
+
+	@Test
+	public void testFormatExportedVars_singleInstance() {
+
+		Component c = new Component( "c" );
+		c.exportedVariables.put( "forced-ip", new ExportedVariable( "forced-ip", "127.0.0.1" ));
+		c.exportedVariables.put( "port", new ExportedVariable( "port", "49535" ));
+
+		Instance i = new Instance( "i" ).component( c );
+		i.overriddenExports.put( "something", "else" );
+
+		Map<String,String> exportedVariables = ScriptUtils.formatExportedVars( i );
+		Assert.assertEquals( 3, exportedVariables.size());
+		Assert.assertEquals( "127.0.0.1", exportedVariables.get( "forced_ip" ));
+		Assert.assertEquals( "49535", exportedVariables.get( "port" ));
+		Assert.assertEquals( "else", exportedVariables.get( "something" ));
+	}
+
+
+	@Test
+	public void testFormatExportedVars_severalInstances() {
+
+		TestApplication app = new TestApplication();
+		app.getTomcat().getComponent().exportedVariables.put( "path", new ExportedVariable( "path", "apps" ));
+
+		Map<String,String> exportedVariables = ScriptUtils.formatExportedVars( app.getTomcatVm());
+		Assert.assertEquals( 0, exportedVariables.size());
+
+		exportedVariables = ScriptUtils.formatExportedVars( app.getTomcat());
+		Assert.assertEquals( 1, exportedVariables.size());
+		Assert.assertEquals( "apps", exportedVariables.get( "path" ));
+
+		exportedVariables = ScriptUtils.formatExportedVars( app.getWar());
+		Assert.assertEquals( 3, exportedVariables.size());
+		Assert.assertEquals( "apps", exportedVariables.get( "ANCESTOR_tomcat_path" ));
+		Assert.assertEquals( "8080", exportedVariables.get( "port" ));
+		Assert.assertNull( exportedVariables.get( "ip" ));
 	}
 }

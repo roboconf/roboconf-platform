@@ -51,7 +51,7 @@ public final class RestServicesUtils {
 	 * @param logger the logger
 	 * @param status the response's status
 	 * @param msg the message (can be null)
-	 * @param e the exception (not null)
+	 * @param e the exception (can be null)
 	 * @return a response builder
 	 */
 	public static ResponseBuilder handleException( Logger logger, int status, String msg, Exception e ) {
@@ -60,7 +60,7 @@ public final class RestServicesUtils {
 		if( msg != null )
 			sb.append( formatEnd( msg ));
 
-		if( ! Utils.isEmptyOrWhitespaces( e.getMessage()))
+		if( e != null && ! Utils.isEmptyOrWhitespaces( e.getMessage()))
 			sb.append( e.getMessage());
 
 		logger.severe( sb.toString());
@@ -78,11 +78,23 @@ public final class RestServicesUtils {
 	 * @param logger the logger
 	 * @param status the response's status
 	 * @param msg the message (can be null)
-	 * @param e the exception (not null)
+	 * @param e the exception (can be null)
 	 * @return a response builder
 	 */
 	public static ResponseBuilder handleException( Logger logger, Status status, String msg, Exception e ) {
 		return handleException( logger, status.getStatusCode(), msg, e );
+	}
+
+
+	/**
+	 * Handles an exception.
+	 * @param logger the logger
+	 * @param status the response's status
+	 * @param msg the message (can be null)
+	 * @return a response builder
+	 */
+	public static ResponseBuilder handleException( Logger logger, Status status, String msg ) {
+		return handleException( logger, status.getStatusCode(), msg, null );
 	}
 
 

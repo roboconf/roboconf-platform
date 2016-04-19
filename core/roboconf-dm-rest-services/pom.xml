@@ -86,6 +86,13 @@
   			<version>${project.version}</version>
   			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+  			<groupId>net.roboconf</groupId>
+  			<artifactId>roboconf-dm-scheduler</artifactId>
+  			<version>${project.version}</version>
+  			<scope>provided</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>com.sun.jersey</groupId>

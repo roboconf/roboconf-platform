@@ -182,7 +182,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 			this.messagingType = factoryName;
 		}
 
-		closeConnection(oldClient, "The previous client could not be terminated correctly.");
+		closeConnection( oldClient, "The previous client could not be terminated correctly.", this.logger );
 	}
 
 
@@ -232,7 +232,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 			}
 		}
 
-		closeConnection(oldClient, "The previous client could not be terminated correctly.");
+		closeConnection( oldClient, "The previous client could not be terminated correctly.", this.logger );
 	}
 
 
@@ -369,15 +369,16 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * Closes the connection of a messaging client.
 	 * @param client the client (may be null)
 	 * @param errorMessage the error message to log in case of problem
+	 * @param logger a logger
 	 */
-	static void closeConnection( IMessagingClient client, String errorMessage ) {
+	static void closeConnection( IMessagingClient client, String errorMessage, Logger logger ) {
 
 		if( client != null ) {
 			try {
+				logger.fine( "The reconfigurable client is requesting its internal connection to be closed." );
 				client.closeConnection();
 
 			} catch( Exception e ) {
-				Logger logger = Logger.getLogger( ReconfigurableClient.class.getName());
 				logger.warning( errorMessage + " " + e.getMessage());
 				Utils.logException( logger, e );
 			}

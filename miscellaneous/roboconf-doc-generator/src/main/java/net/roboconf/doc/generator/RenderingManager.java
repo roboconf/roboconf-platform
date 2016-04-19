@@ -187,7 +187,7 @@ public class RenderingManager {
 		case FOP:
 			result = new FopRenderer( outputDirectory, applicationTemplate, applicationDirectory );
 			break;
-			
+
 		case PDF:
 			result = new PdfRenderer( outputDirectory, applicationTemplate, applicationDirectory );
 			break;

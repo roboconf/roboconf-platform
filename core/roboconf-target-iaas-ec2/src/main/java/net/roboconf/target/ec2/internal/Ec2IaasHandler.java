@@ -26,7 +26,10 @@
 package net.roboconf.target.ec2.internal;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.roboconf.core.agents.DataHelpers;
@@ -59,6 +62,23 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 	public static final String TARGET_ID = "iaas-ec2";
 
+	static final String TPL_VOLUME_NAME = "%NAME%";
+	static final String TPL_VOLUME_APP = "%APP%";
+
+	static final String USE_BLOCK_STORAGE = "ec2.use-block-storage";
+	static final String VOLUME_MOUNT_POINT_PREFIX = "ec2.ebs-mount-point.";
+	static final String VOLUME_NAME_PREFIX = "ec2.ebs-snapshot-id.";
+	static final String VOLUME_SIZE_GB_PREFIX = "ec2.ebs-size.";
+	static final String VOLUME_DELETE_OT_PREFIX = "ec2.ebs-delete-on-termination.";
+	static final String VOLUME_TYPE_PREFIX = "ec2.ebs-type.";
+
+	static final Map<String,String> DEFAULTS = new HashMap<> ();
+	static {
+		DEFAULTS.put( VOLUME_MOUNT_POINT_PREFIX, "/dev/sdf" );
+		DEFAULTS.put( VOLUME_NAME_PREFIX, "roboconf-" + TPL_VOLUME_APP + "-" + TPL_VOLUME_NAME );
+		DEFAULTS.put( VOLUME_SIZE_GB_PREFIX, "2" );
+		DEFAULTS.put( VOLUME_DELETE_OT_PREFIX, "false" );
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -128,8 +148,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 			Instance scopedInstance ) {
 
 		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
-		String tagName = applicationName + "." + rootInstanceName;
-		return new Ec2MachineConfigurator( targetProperties, machineId, tagName, scopedInstance );
+		return new Ec2MachineConfigurator( targetProperties, machineId, applicationName, rootInstanceName, scopedInstance );
 	}
 
 
@@ -271,5 +290,57 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 		runInstancesRequest.setUserData( encodedUserData );
 
 		return runInstancesRequest;
+	}
+	
+	/**
+	 * Finds the storage IDs (used as property suffixes).
+	 * @param targetProperties
+	 * @return a non-null list
+	 */
+	static List<String> findStorageIds( Map<String,String> targetProperties ) {
+
+		List<String> result = new ArrayList<String> ();
+		String prop = targetProperties.get( USE_BLOCK_STORAGE );
+		if( ! Utils.isEmptyOrWhitespaces( prop )) {
+			for( String s : Utils.splitNicely( prop, "," )) {
+				if( ! Utils.isEmptyOrWhitespaces( s ))
+					result.add( s );
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * Finds a storage property for a given storage ID.
+	 * @param targetProperties
+	 * @param storageId
+	 * @param propertyPrefix one of the constants defined in this class
+	 * @return the property's value, or the default value otherwise, if one exists
+	 */
+	static String findStorageProperty( Map<String,String> targetProperties, String storageId, String propertyPrefix ) {
+
+		String property = propertyPrefix + storageId;
+		String value = targetProperties.get( property );
+		return Utils.isEmptyOrWhitespaces( value ) ? DEFAULTS.get( propertyPrefix ) : value.trim();
+	}
+
+	/**
+	 * Updates a volume name by replacing template variables.
+	 * @param nameTemplate (not null)
+	 * @param appName (not null)
+	 * @param instanceName (not null)
+	 * @return a string representing the expanded template
+	 */
+	static String expandVolumeName(String nameTemplate, String appName, String instanceName) {
+
+		if(! Utils.isEmptyOrWhitespaces(nameTemplate)) {
+			String name = nameTemplate.replace(TPL_VOLUME_NAME, instanceName);
+			name = name.replace(TPL_VOLUME_APP, appName);
+			name = name.replaceAll("[\\W_-]", "-");
+			return name;
+		}
+
+		return nameTemplate;
 	}
 }

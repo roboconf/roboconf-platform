@@ -61,11 +61,26 @@ public final class ScriptUtils {
 	public static Map<String,String> formatExportedVars( Instance instance ) {
 
     	// The map we will return
-        Map<String, String> exportedVars = new HashMap<String,String>();
-        Map<String,String> exports = InstanceHelpers.findAllExportedVariables( instance );
-        for(Entry<String, String> entry : exports.entrySet()) {
-            String vname = VariableHelpers.parseVariableName( entry.getKey()).getValue();
-            exportedVars.put( vname, entry.getValue());
+        Map<String, String> exportedVars = new HashMap<> ();
+
+        // Iterate over the instance and its ancestors.
+        // There is no loop in parent relations, so no risk of conflict in variable names.
+        for( Instance inst = instance; inst != null; inst = inst.getParent()) {
+
+        	String prefix = "";
+        	if( inst != instance )
+        		prefix = "ANCESTOR_" + inst.getComponent().getName() + "_";
+
+	        Map<String,String> exports = InstanceHelpers.findAllExportedVariables( inst );
+	        for(Entry<String, String> entry : exports.entrySet()) {
+
+	        	// FIXME: removing the prefix may result in inconsistencies when a facet
+	        	// and a component export variables with the same "local name".
+	        	// And this has nothing to do with ancestors. This is about inheritance.
+	            String vname = prefix + VariableHelpers.parseVariableName( entry.getKey()).getValue();
+	            vname = vname.replaceAll( "(-|%s)+", "_" );
+	            exportedVars.put( vname, entry.getValue());
+	        }
         }
 
         return exportedVars;
@@ -140,7 +155,7 @@ public final class ScriptUtils {
 	 */
 	public static void setScriptsExecutable( File fileOrDir ) {
 
-		List<File> files = new ArrayList<File> ();
+		List<File> files = new ArrayList<> ();
 		if( fileOrDir.isDirectory())
 			files.addAll( Utils.listAllFiles( fileOrDir, true ));
 		else

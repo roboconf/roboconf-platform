@@ -32,6 +32,7 @@ import java.util.logging.Logger;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.icons.IconServlet;
 import net.roboconf.dm.rest.services.internal.websocket.RoboconfWebSocketServlet;
+import net.roboconf.dm.scheduler.IScheduler;
 
 import org.osgi.service.http.HttpService;
 
@@ -56,9 +57,11 @@ public class ServletRegistrationComponent {
 	// Injected by iPojo
 	private HttpService httpService;
 	private Manager manager;
+	private IScheduler scheduler;
 
 	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
+	private RestApplication app;
 
 
 	/**
@@ -73,12 +76,15 @@ public class ServletRegistrationComponent {
 	public void starting() throws Exception {
 		this.logger.fine( "iPojo registers REST and icons servlets related to Roboconf's DM." );
 
-		// Create the REST application with its resources
-		RestApplication app = new RestApplication( this.manager );
+		// Create the REST application with its resources.
+		// The scheduler may be null, it is optional.
+		this.app = new RestApplication( this.manager );
+		this.app.setScheduler( this.scheduler );
+
 		Dictionary<String,String> initParams = new Hashtable<String,String> ();
 		initParams.put( "servlet-name", "Roboconf DM (REST)" );
 
-		ServletContainer jerseyServlet = new ServletContainer( app );
+		ServletContainer jerseyServlet = new ServletContainer( this.app );
 		this.httpService.registerServlet( REST_CONTEXT, jerseyServlet, initParams, null );
 
 		// Deal with the icons servlet
@@ -103,6 +109,7 @@ public class ServletRegistrationComponent {
 	 */
 	public void stopping() throws Exception {
 
+		// Update the HTTP service
 		this.logger.fine( "iPojo unregisters REST and icons servlets related to Roboconf's DM." );
 		if( this.httpService != null ) {
 			this.httpService.unregister( REST_CONTEXT );
@@ -112,6 +119,35 @@ public class ServletRegistrationComponent {
 		} else {
 			this.logger.fine( "The HTTP service is gone. The servlets were already unregistered." );
 		}
+
+		// Reset the application
+		this.app = null;
+	}
+
+
+	/**
+	 * Invoked by iPojo when the scheduler appears.
+	 * @throws Exception in case of error
+	 */
+	public void schedulerAppears() throws Exception {
+
+		// We simply update the "scheduler" resource.
+		this.logger.fine( "Roboconf's scheduler is here. Updating the REST resource." );
+		if( this.app != null )
+			this.app.setScheduler( this.scheduler );
+	}
+
+
+	/**
+	 * Invoked by iPojo when the scheduler disappears.
+	 * @throws Exception in case of error
+	 */
+	public void schedulerDisappears() throws Exception {
+
+		// We simply update the "scheduler" resource.
+		this.logger.fine( "Roboconf's scheduler vanished. Updating the REST resource." );
+		if( this.app != null )
+			this.app.setScheduler( null );
 	}
 
 
