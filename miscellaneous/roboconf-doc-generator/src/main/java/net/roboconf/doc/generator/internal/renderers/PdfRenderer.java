@@ -37,15 +37,12 @@ import java.util.List;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.fop.apps.Fop;
 import org.apache.fop.apps.FopFactory;
-import org.xml.sax.SAXException;
 
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.utils.Utils;
@@ -95,12 +92,9 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 
 				Result res = new SAXResult(fop.getDefaultHandler());
 				transformer.transform(src, res);
-		} catch (SAXException e) {
-			e.printStackTrace();
-		} catch (TransformerConfigurationException e) {
-			e.printStackTrace();
-		} catch (TransformerException e) {
-			e.printStackTrace();
+		} catch ( Exception e) {
+				throw new IOException( e );
+				
 		} finally {
 				Utils.closeQuietly ( out );	
 		}
@@ -125,7 +119,6 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderParagraph(String paragraph) {
-		//return this.fopfile.renderParagraph( paragraph );
 		return "";
 	}
 
@@ -141,7 +134,6 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String indent() {
-		//return this.fopfile.indent();
 		return "";
 	}
 
@@ -167,7 +159,6 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderDocumentTitle() {
-		//return this.fopfile.renderDocumentTitle();
 		return "";
 	}
 

@@ -60,6 +60,7 @@ public class RendererManagerPdfTest extends AbstractTestForRendererManager {
 		PDF genPdf = new PDF( pdffile );
 		Assert.assertThat( genPdf, containsText("Legacy LAMP") );
 		Assert.assertThat( genPdf, containsText("This document lists the Software components used in this application") );
+
 	}
 	
 }
