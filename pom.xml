@@ -84,6 +84,7 @@
 
 		<!-- Distributions -->
 		<module>karaf/roboconf-karaf-commands-common</module>
+		<module>karaf/roboconf-karaf-commands-agent</module>
 		<module>karaf/roboconf-karaf-commands-dm</module>
 		<module>karaf/roboconf-karaf-feature-agent</module>
 		<module>karaf/roboconf-karaf-feature-dm</module>

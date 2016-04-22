@@ -1,5 +1,5 @@
 /**
- * Copyright 2014-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,62 +23,52 @@
  * limitations under the License.
  */
 
-package net.roboconf.agent.monitoring.internal.tests;
+package net.roboconf.karaf.commands.agent.status;
+
+import java.util.List;
+import java.util.logging.Logger;
+
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
 
 import net.roboconf.agent.AgentMessagingInterface;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.api.business.IAgentClient;
+import net.roboconf.core.utils.Utils;
+
 
 /**
- * @author Vincent Zurczak - Linagora
+ * @author Amadou Diarra - UGA
  */
-public class MyAgentInterface implements AgentMessagingInterface {
+@Command( scope = "roboconf", name = "agent-status", description="Gives an agent status" )
+@Service
+public class AgentStatusCommand implements Action {
 
-	private final IAgentClient messagingClient;
-	private Instance scopedInstance;
+	// Other fields
+	final Logger logger = Logger.getLogger( getClass().getName());
 
+    @Reference
+    List<AgentMessagingInterface> agents;
 
-	/**
-	 * Constructor.
-	 * @param messagingClient
-	 */
-	public MyAgentInterface( IAgentClient messagingClient ) {
-		this.messagingClient = messagingClient;
+    @Override
+	public Object execute() throws Exception {
+
+    	if( this.agents != null ) {
+			for( AgentMessagingInterface agent : this.agents ) {
+				try {
+
+					agent.agentStatus();
+
+				} catch( Exception e ) {
+					this.logger.warning( "An error occurred while giving agent status. " + e.getMessage());
+					Utils.logException( this.logger, e );
+				}
+			}
+		}
+		return null;
 	}
 
-	@Override
-	public IAgentClient getMessagingClient() {
-		return this.messagingClient;
-	}
 
-	@Override
-	public String getApplicationName() {
-		return "app";
-	}
 
-	@Override
-	public Instance getScopedInstance() {
-		return this.scopedInstance;
-	}
 
-	@Override
-	public String getScopedInstancePath() {
-		return InstanceHelpers.computeInstancePath( this.scopedInstance );
-	}
-
-	public void setScopedInstance( Instance scopedInstance ) {
-		this.scopedInstance = scopedInstance;
-	}
-
-	@Override
-	public void forceHeartbeatSending() {
-		// nothing
-	}
-
-	@Override
-	public void agentStatus() {
-		// nothing
-
-	}
 }

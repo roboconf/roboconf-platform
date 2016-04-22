@@ -28,6 +28,8 @@ package net.roboconf.doc.generator;
 import java.io.File;
 import java.io.IOException;
 
+import java.util.Locale;
+
 import com.codeborne.pdftest.PDF;
 import static com.codeborne.pdftest.PDF.*;
 
@@ -54,13 +56,21 @@ public class RendererManagerPdfTest extends AbstractTestForRendererManager {
 	@Test
 	public void testPdfRenderer() throws IOException {
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.PDF, null );
-		File pdffile = new File(this.outputDir,"index.pdf");
-		Assert.assertTrue( pdffile.exists() );
-		Assert.assertTrue( pdffile.length() > 0 );
+		Locale locale = Locale.getDefault();
+		try {
+			Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("US").build());
 
-		PDF genPdf = new PDF( pdffile );
-		Assert.assertThat( genPdf, containsText("Legacy LAMP") );
-		Assert.assertThat( genPdf, containsText("This document lists the Software components used in this application") );
+			this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.PDF, null );
+			File pdffile = new File(this.outputDir,"index.pdf");
+			Assert.assertTrue( pdffile.exists() );
+			Assert.assertTrue( pdffile.length() > 0 );
+
+			PDF genPdf = new PDF( pdffile );
+			Assert.assertThat( genPdf, containsText("Legacy LAMP") );
+			Assert.assertThat( genPdf, containsText("This document lists the Software components used in this application") );
+		} finally {
+			Locale.setDefault(locale);
+		}
+
 	}
 }

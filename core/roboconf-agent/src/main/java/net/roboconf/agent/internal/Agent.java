@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
@@ -49,6 +50,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.runtime.IReconfigurable;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.plugin.api.PluginInterface;
@@ -367,7 +369,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	/**
 	 * This method reconfigures the agent.
-	 * <p>
+	 * <p>AgentMessagingInterface
 	 * It is invoked by iPojo when the configuration changes.
 	 * It may be invoked before the start() method is.
 	 * </p>
@@ -514,5 +516,27 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	public List<PluginInterface> getPlugins() {
 		return this.plugins;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.agent.AgentMessagingInterface
+	 * #agentStatus()
+	 */
+	@Override
+	public void agentStatus() {
+
+		LinkedBlockingQueue<Message> agentQueue = this.messagingClient.getMessageProcessor().getMessageQueue();
+		if( agentQueue.isEmpty() ) {
+			System.out.println( "There is no message being processed in agent queue" );
+		} else {
+			System.out.println( "The number total of messages in agent queue is : "+agentQueue.size() );
+			System.out.println( "The types of messages being processed are : " );
+			for( Message msg : agentQueue ) {
+				System.out.println( msg.getClass().getSimpleName() );
+			}
+		}
+
 	}
 }

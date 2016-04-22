@@ -57,4 +57,9 @@ public interface AgentMessagingInterface {
 	 * Forces the sending of a heart beat to the DM.
 	 */
 	void forceHeartbeatSending();
+
+	/**
+	 * Gives the status of an agent.
+	 */
+	void agentStatus();
 }
