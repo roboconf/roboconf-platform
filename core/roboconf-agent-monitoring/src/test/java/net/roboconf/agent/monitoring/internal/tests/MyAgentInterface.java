@@ -75,4 +75,9 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	public void forceHeartbeatSending() {
 		// nothing
 	}
+
+	@Override
+	public String agentStatus() {
+        return "";
+	}
 }
