@@ -61,5 +61,5 @@ public interface AgentMessagingInterface {
 	/**
 	 * Gives the status of an agent.
 	 */
-	void agentStatus();
+	String agentStatus();
 }

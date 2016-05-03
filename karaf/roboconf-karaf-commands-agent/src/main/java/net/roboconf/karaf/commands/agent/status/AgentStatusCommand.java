@@ -57,7 +57,8 @@ public class AgentStatusCommand implements Action {
 			for( AgentMessagingInterface agent : this.agents ) {
 				try {
 
-					agent.agentStatus();
+					System.out.println( agent.agentStatus() );
+					System.out.println( "" );
 
 				} catch( Exception e ) {
 					this.logger.warning( "An error occurred while giving agent status. " + e.getMessage());
@@ -67,8 +68,5 @@ public class AgentStatusCommand implements Action {
 		}
 		return null;
 	}
-
-
-
 
 }

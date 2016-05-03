@@ -66,13 +66,6 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		
-		<dependency>
-			<groupId>net.roboconf</groupId>
-			<artifactId>roboconf-target-api</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
 	
 		<dependency>
 			<groupId>org.apache.karaf.shell</groupId>

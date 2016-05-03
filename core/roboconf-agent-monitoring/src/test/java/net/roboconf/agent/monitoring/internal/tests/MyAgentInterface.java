@@ -77,8 +77,7 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	}
 
 	@Override
-	public void agentStatus() {
-		// nothing
-
+	public String agentStatus() {
+        return "";
 	}
 }

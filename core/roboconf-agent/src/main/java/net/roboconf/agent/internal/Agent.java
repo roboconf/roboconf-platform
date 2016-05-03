@@ -369,7 +369,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	/**
 	 * This method reconfigures the agent.
-	 * <p>AgentMessagingInterface
+	 * <p>
 	 * It is invoked by iPojo when the configuration changes.
 	 * It may be invoked before the start() method is.
 	 * </p>
@@ -525,18 +525,21 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	 * #agentStatus()
 	 */
 	@Override
-	public void agentStatus() {
+	public String agentStatus() {
 
+		StringBuilder sb = new StringBuilder();
 		LinkedBlockingQueue<Message> agentQueue = this.messagingClient.getMessageProcessor().getMessageQueue();
 		if( agentQueue.isEmpty() ) {
-			System.out.println( "There is no message being processed in agent queue" );
+			sb.append( "There is no message being processed in agent queue\n" );
 		} else {
-			System.out.println( "The number total of messages in agent queue is : "+agentQueue.size() );
-			System.out.println( "The types of messages being processed are : " );
+			sb.append( "Agent " + getScopedInstancePath() + " (" + getApplicationName() + ")\n" );
+			sb.append( "The number total of messages in agent queue is : " + agentQueue.size() + "\n" );
+			sb.append( "The types of messages being processed are : " + "\n");
 			for( Message msg : agentQueue ) {
-				System.out.println( msg.getClass().getSimpleName() );
+				sb.append( msg.getClass().getSimpleName() + "\n" );
 			}
 		}
-
+		return sb.toString();
 	}
+
 }

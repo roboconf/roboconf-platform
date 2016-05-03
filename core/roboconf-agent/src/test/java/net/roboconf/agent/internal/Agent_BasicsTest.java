@@ -34,11 +34,14 @@ import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
 import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -225,7 +228,20 @@ public class Agent_BasicsTest {
 		agent.listPlugins();
 	}
 
+	@Test
+	public void testAgentStatus() throws Exception {
 
+		Assert.assertNotNull( this.agent.agentStatus() );
+
+		this.agent.stop();
+
+		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add(Mockito.mock(MsgNotifHeartbeat.class));
+		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add(Mockito.mock(MsgNotifAutonomic.class));
+		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add(Mockito.mock(MsgNotifLogs.class));
+
+		Assert.assertFalse( this.agent.agentStatus().startsWith( "There is no message" ));
+
+	}
 
 	private TestClient getInternalClient() throws IllegalAccessException {
 		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );
