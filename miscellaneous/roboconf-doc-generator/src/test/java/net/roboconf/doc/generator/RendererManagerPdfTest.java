@@ -27,10 +27,10 @@ package net.roboconf.doc.generator;
 
 import java.io.File;
 import java.io.IOException;
-
 import java.util.Locale;
 
 import com.codeborne.pdftest.PDF;
+
 import static com.codeborne.pdftest.PDF.*;
 
 import org.junit.Assert;
@@ -71,6 +71,5 @@ public class RendererManagerPdfTest extends AbstractTestForRendererManager {
 		} finally {
 			Locale.setDefault(locale);
 		}
-
 	}
 }
