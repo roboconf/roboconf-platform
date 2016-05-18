@@ -38,6 +38,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.ErrorCode.ErrorLevel;
@@ -56,11 +61,6 @@ import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
-
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -491,7 +491,7 @@ public class RuntimeModelIoTest {
 		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
 		Assert.assertEquals( ErrorCode.CO_NOT_A_GRAPH, iterator.next().getErrorCode());
 
-		fileContent = "facet MyFacet {\n}\n\nA {\n\tinstaller: target;\n}";
+		fileContent = "facet MyFacet {\n}\n\nA {\n\tinstaller: target;\n\tfacets: MyFacet;\n}";
 		Utils.copyStream( new ByteArrayInputStream( fileContent.getBytes( "UTF-8" )), graphFile );
 
 		// Instances

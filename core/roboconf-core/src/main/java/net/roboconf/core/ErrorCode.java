@@ -140,6 +140,9 @@ public enum ErrorCode {
 	RM_EMPTY_INSTANCE_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance is not associated with a component." ),
 	RM_MISSING_INSTANCE_PARENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "According to the graph(s), this instance should have a parent instance." ),
 	RM_INVALID_INSTANCE_PARENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "According to the graph(s), this instance cannot have this parent instance." ),
+	RM_UNREACHABLE_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "This component will never be instantiated. Only a facet references it as a child and no component uses this facet." ),
+	RM_ORPHAN_FACET( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This facet is not used by any component in the graph." ),
+	RM_ORPHAN_FACET_WITH_CHILDREN( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This facet has children and is not used by any component in the graph." ),
 
 	// Projects Errors
 	PROJ_NO_GRAPH_DIR( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A Roboconf project must contain a 'graph' directory with the graph(s) definition(s)." ),

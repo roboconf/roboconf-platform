@@ -1,0 +1,13 @@
+vm {
+    children: f;
+    installer: target;
+}
+
+facet f {
+     children: t;
+}
+
+# "t" is unreachable because there is no component with the "f" facet.
+t {
+      installer: script;
+}

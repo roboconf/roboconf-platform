@@ -27,15 +27,22 @@ package net.roboconf.core.dsl.converters;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.internal.tests.ComplexApplicationFactory1;
+import net.roboconf.core.model.ModelError;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -45,10 +52,7 @@ import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -246,7 +250,11 @@ public class FromGraphsTest {
 	 */
 	private void compareGraphs( Graphs graphs, boolean writeComments ) throws Exception {
 
-		Assert.assertEquals(  0, RuntimeModelValidator.validate( graphs ).size());
+		// Ignore some errors, for convenience...
+		Collection<ModelError> errors = RuntimeModelValidator.validate( graphs );
+		RoboconfErrorHelpers.filterErrorsForRecipes( errors );
+		Assert.assertEquals(  0, errors.size());
+
 		File targetFile = this.testFolder.newFile( "roboconf_test.graph" );
 		FileDefinition defToWrite = new FromGraphs().buildFileDefinition( graphs, targetFile, writeComments );
 		ParsingModelIo.saveRelationsFile( defToWrite, writeComments, System.getProperty( "line.separator" ));
@@ -262,7 +270,11 @@ public class FromGraphsTest {
 		FromGraphDefinition fromDef = new FromGraphDefinition( null );
 		Graphs readGraphs = fromDef.buildGraphs( targetFile );
 		Assert.assertEquals(  0, fromDef.getErrors().size());
-		Assert.assertEquals(  0, RuntimeModelValidator.validate( readGraphs ).size());
+
+		// Compare all the errors, without ignoring ones
+		Set<ModelError> originalErrors = new HashSet<>( RuntimeModelValidator.validate( graphs ));
+		Set<ModelError> readErrors = new HashSet<>( RuntimeModelValidator.validate( readGraphs ));
+		Assert.assertEquals( originalErrors, readErrors );
 
 		// Compare the graphs
 		List<Component> readComponents = ComponentHelpers.findAllComponents( readGraphs );

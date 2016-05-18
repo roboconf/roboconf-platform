@@ -31,6 +31,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 import net.roboconf.core.model.ModelError;
@@ -38,8 +40,6 @@ import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.SourceReference;
 import net.roboconf.core.model.beans.Component;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -94,6 +94,7 @@ public class RoboconfErrorHelpersTest {
 
 	@Test
 	public void testResolveErrorsWithLocation() {
+
 		ApplicationLoadResult alr = new ApplicationLoadResult();
 		Component c1 = new Component( "comp1" );
 		Component c2 = new Component( "comp2" );
@@ -122,5 +123,23 @@ public class RoboconfErrorHelpersTest {
 		Assert.assertEquals( ErrorCode.RM_INVALID_VARIABLE_NAME, errors.get( 1 ).getErrorCode());
 		Assert.assertEquals( 5, ((ParsingError) errors.get( 1 )).getLine());
 		Assert.assertEquals( ModelError.class, errors.get( 2 ).getClass());
+	}
+
+
+	@Test
+	public void testFilterErrorsForRecipes() {
+
+		List<RoboconfError> errors = new ArrayList<> ();
+		errors.add( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT ));
+		errors.add( new RoboconfError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET ));
+		errors.add( new RoboconfError( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET ));
+		errors.add( new RoboconfError( ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE ));
+		errors.add( new RoboconfError( ErrorCode.RM_UNREACHABLE_COMPONENT ));
+		errors.add( new RoboconfError( ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN ));
+		errors.add( new RoboconfError( ErrorCode.RM_ORPHAN_FACET ));
+
+		RoboconfErrorHelpers.filterErrorsForRecipes( errors );
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, errors.iterator().next().getErrorCode());
 	}
 }

@@ -26,6 +26,7 @@
 package net.roboconf.core.model;
 
 import java.io.File;
+import java.util.Objects;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
@@ -35,6 +36,7 @@ import net.roboconf.core.RoboconfError;
  * @author Vincent Zurczak - Linagora
  */
 public class ParsingError extends RoboconfError {
+
 	private final int line;
 	private final File file;
 
@@ -76,5 +78,26 @@ public class ParsingError extends RoboconfError {
 	 */
 	public File getFile() {
 		return this.file;
+	}
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.core.RoboconfError
+	 * #equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals( Object obj ) {
+		return super.equals( obj )
+				&& Objects.equals( this.line, ((ParsingError) obj).line )
+				&& Objects.equals( this.file, ((ParsingError) obj).file );
+	}
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.core.RoboconfError
+	 * #hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		// Keep for Findbugs.
+		return super.hashCode();
 	}
 }
