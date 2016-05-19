@@ -1,0 +1,5 @@
+
+t {
+	installer: target;
+	exports: mongoSeedExports, externalshare, shareexternal, external share;
+}

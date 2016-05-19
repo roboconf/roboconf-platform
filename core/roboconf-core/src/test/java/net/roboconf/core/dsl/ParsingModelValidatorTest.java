@@ -26,11 +26,16 @@
 package net.roboconf.core.dsl;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.ErrorCode;
+import net.roboconf.core.dsl.converters.FromGraphDefinition;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.BlockBlank;
 import net.roboconf.core.dsl.parsing.BlockComment;
@@ -40,9 +45,8 @@ import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
 import net.roboconf.core.dsl.parsing.FileDefinition;
+import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -726,5 +730,23 @@ public class ParsingModelValidatorTest {
 		Iterator<ParsingError> iterator = errors.iterator();
 		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
 		Assert.assertEquals( ErrorCode.PM_INVALID_INSTANCE_ELEMENT, iterator.next().getErrorCode());
+	}
+
+
+	@Test
+	public void testExternalIsAKeywordForImports_file() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/external-is-keyword-for-imports.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		fromDef.buildGraphs( f );
+
+		List<ParsingError> errors = new ArrayList<>( fromDef.getErrors());
+		Assert.assertEquals( 2, errors.size());
+
+		Assert.assertEquals( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( 4, errors.get( 0 ).getLine());
+
+		Assert.assertEquals( ErrorCode.PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS, errors.get( 1 ).getErrorCode());
+		Assert.assertEquals( 4, errors.get( 1 ).getLine());
 	}
 }
