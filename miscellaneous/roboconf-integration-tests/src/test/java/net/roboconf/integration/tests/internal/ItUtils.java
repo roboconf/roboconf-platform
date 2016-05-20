@@ -40,15 +40,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.utils.UriUtils;
-import net.roboconf.integration.probes.ItConfigurationBean;
-import net.roboconf.integration.tests.internal.parameterized.IMessagingConfiguration;
-
 import org.ops4j.pax.exam.MavenUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
+
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.utils.UriUtils;
+import net.roboconf.integration.probes.ItConfigurationBean;
+import net.roboconf.integration.tests.internal.parameterized.IMessagingConfiguration;
 
 /**
  * @author Vincent Zurczak - Linagora
