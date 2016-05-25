@@ -67,6 +67,7 @@ public enum ErrorCode {
 	PM_INVALID_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An invalid name was found. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	PM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid component name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	PM_INVALID_EXPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Exported variable names must be separated by a comma." ),
+	PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT + " is a keyword reserved for imports." ),
 	PM_INVALID_IMPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Imported variable names must be separated by a comma." ),
 	PM_INVALID_INSTALLER_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid installer name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
 	PM_INVALID_INSTANCE_ELEMENT( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An instance can only contain properties, other instances, blank lines or comments." ),
@@ -140,6 +141,9 @@ public enum ErrorCode {
 	RM_EMPTY_INSTANCE_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "The instance is not associated with a component." ),
 	RM_MISSING_INSTANCE_PARENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "According to the graph(s), this instance should have a parent instance." ),
 	RM_INVALID_INSTANCE_PARENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "According to the graph(s), this instance cannot have this parent instance." ),
+	RM_UNREACHABLE_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.RUNTIME_MODEL, "This component will never be instantiated. Only a facet references it as a child and no component uses this facet." ),
+	RM_ORPHAN_FACET( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This facet is not used by any component in the graph." ),
+	RM_ORPHAN_FACET_WITH_CHILDREN( ErrorLevel.WARNING, ErrorCategory.RUNTIME_MODEL, "This facet has children and is not used by any component in the graph." ),
 
 	// Projects Errors
 	PROJ_NO_GRAPH_DIR( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A Roboconf project must contain a 'graph' directory with the graph(s) definition(s)." ),

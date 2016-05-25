@@ -263,8 +263,12 @@ public final class ParsingModelValidator {
 				Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( variableDecl );
 				if( Utils.isEmptyOrWhitespaces( entry.getKey()))
 					result.add( new ParsingError( ErrorCode.PM_EMPTY_VARIABLE_NAME, block.getFile(), line ));
-				else if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID ))
+				else if( ! entry.getKey().matches( ParsingConstants.PATTERN_ID )) {
 					result.add( new ParsingError( ErrorCode.PM_INVALID_EXPORTED_VAR_NAME, block.getFile(), line, variableDecl ));
+
+					if( entry.getKey().toLowerCase().startsWith( ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT + " " ))
+						result.add( new ParsingError( ErrorCode.PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS, block.getFile(), line, variableDecl ));
+				}
 			}
 
 

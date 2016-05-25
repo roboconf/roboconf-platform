@@ -25,7 +25,6 @@
 
 package net.roboconf.integration.tests.paxrunner.miscellaneous;
 
-import static org.ops4j.pax.exam.CoreOptions.jarProbe;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
 
@@ -34,6 +33,16 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.ProbeBuilder;
+import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.Constants;
@@ -49,16 +58,6 @@ import net.roboconf.integration.probes.DmTest;
 import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.ProbeBuilder;
-import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * Checks delayed initialization.
@@ -108,9 +107,6 @@ public class DelayedAgentInitializationTest extends DmTest {
 		probe.addTest( TestManagerWrapper.class );
 		probe.addTest( TestUtils.class );
 
-		// Force the use of the AgentMessagingInterface from the agent's bundle.
-		probe.setHeader( "Import-Package", "net.roboconf.agent" );
-
 		return probe;
 	}
 
@@ -121,11 +117,6 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		List<Option> options = new ArrayList<> ();
 		options.addAll( Arrays.asList( super.config()));
-
-		// Create a custom probe to prevent class conflicts.
-		// Using a probe configuration is not enough, we do not want all the
-		// tests classes from this project to be part of the probe.
-		options.add( jarProbe().classes( getClass()));
 
 		// Generic messaging update note:
 		//
@@ -188,7 +179,7 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// Sleep for a while, to let the RabbitMQ client factory arrive.
 		Thread.sleep(2000);
 
-		//
+		// Prepare the manager's wrapper.
 		TestManagerWrapper managerWrapper = new TestManagerWrapper( this.manager );
 
 		// Artificially closes the DM-side client, to prevent Agent <-> DM exchanges.

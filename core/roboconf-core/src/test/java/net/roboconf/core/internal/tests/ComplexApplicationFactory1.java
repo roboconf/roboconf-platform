@@ -77,8 +77,11 @@ public class ComplexApplicationFactory1 {
 		app.setGraphs( graph );
 
 		// Roots
-		Facet facetVm = new Facet( FACET_VM );
 		Facet facetDeployable = new Facet( FACET_DEPLOYABLE );
+		graph.getFacetNameToFacet().put( facetDeployable.getName(), facetDeployable );
+
+		Facet facetVm = new Facet( FACET_VM );
+		graph.getFacetNameToFacet().put( facetVm.getName(), facetVm );
 		facetVm.addChild( facetDeployable );
 		facetVm.addExportedVariable( new ExportedVariable( Constants.SPECIFIC_VARIABLE_IP, null ));
 
@@ -92,18 +95,22 @@ public class ComplexApplicationFactory1 {
 
 		// Servers and so on...
 		Facet facetJee = new Facet( FACET_JEE );
+		graph.getFacetNameToFacet().put( facetJee.getName(), facetJee );
 		facetJee.addExportedVariable( new ExportedVariable( "server-suffix", "/path" ));
 		facetJee.extendFacet( facetDeployable );
 
 		Facet facetWeb = new Facet( FACET_WEB );
+		graph.getFacetNameToFacet().put( facetWeb.getName(), facetWeb );
 		facetWeb.addExportedVariable( new ExportedVariable( "server-suffix", "/path" ));
 		facetWeb.extendFacet( facetDeployable );
 
 		Facet facetDb = new Facet( FACET_DATABASE );
+		graph.getFacetNameToFacet().put( facetDb.getName(), facetDb );
 		facetDb.addExportedVariable( new ExportedVariable( "port", "3306" ));
 		facetDb.extendFacet( facetDeployable );
 
 		Facet facetStorage = new Facet( FACET_STORAGE );
+		graph.getFacetNameToFacet().put( facetStorage.getName(), facetStorage );
 		facetStorage.extendFacet( facetDb );
 
 		Component glassfish = new Component( GLASSFISH ).installerName( "puppet" );

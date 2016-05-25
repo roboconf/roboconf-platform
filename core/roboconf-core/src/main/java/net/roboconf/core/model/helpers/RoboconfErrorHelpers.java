@@ -156,18 +156,35 @@ public final class RoboconfErrorHelpers {
 	 * @param alr an {@link ApplicationLoadResult}
 	 */
 	public static void filterErrorsForRecipes( ApplicationLoadResult alr ) {
+		filterErrorsForRecipes( alr.getLoadErrors());
+	}
+
+
+	/**
+	 * Filters errors for recipes.
+	 * <p>
+	 * Indeed, some errors only make sense for complete applications, not for
+	 * reusable recipes. This method removes them from the input list of errors.
+	 * </p>
+	 *
+	 * @param errors a non-null list of errors
+	 */
+	public static void filterErrorsForRecipes( Collection<? extends RoboconfError> errors ) {
 
 		List<ErrorCode> codesToSkip = Arrays.asList(
 			ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET,
-			ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE
+			ErrorCode.RM_UNRESOLVABLE_FACET_VARIABLE,
+			ErrorCode.RM_UNREACHABLE_COMPONENT,
+			ErrorCode.RM_ORPHAN_FACET,
+			ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN
 		);
 
 		Collection<RoboconfError> toRemove = new ArrayList<RoboconfError> ();
-		for( RoboconfError error : alr.getLoadErrors()) {
+		for( RoboconfError error : errors ) {
 			if( codesToSkip.contains( error.getErrorCode()))
 				toRemove.add( error );
 		}
 
-		alr.getLoadErrors().removeAll( toRemove );
+		errors.removeAll( toRemove );
 	}
 }

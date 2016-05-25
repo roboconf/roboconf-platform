@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <features 
-		name="roboconf-agent-karaf-${project.version}"
+		name="roboconf-dm-karaf-${project.version}"
 		xmlns="http://karaf.apache.org/xmlns/features/v1.2.0"
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.2.0 http://karaf.apache.org/xmlns/features/v1.2.0">
@@ -9,7 +9,7 @@
 	<repository>mvn:org.apache.felix/org.apache.felix.ipojo.features/${ipojo.version}/xml</repository>
 
 	<!-- The feature associated with the DM -->
-	<feature name="roboconf-dm" version="${project.version}">
+	<feature name="roboconf-dm" version="${project.version}" description="The Karaf feature for Roboconf's DM">
 		<feature version="${ipojo.version}">ipojo-all</feature>
 		<feature version="${jersey.stack.version}">jersey-1.x</feature>
 	
