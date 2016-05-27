@@ -67,7 +67,9 @@ public final class ProgramUtils {
 			final Logger logger,
 			final String[] command,
 			final File workingDir,
-			final Map<String,String> environmentVars )
+			final Map<String,String> environmentVars,
+			final String applicationName,
+			final String scopedInstancePath)
 	throws IOException, InterruptedException {
 
 		logger.fine( "Executing command: " + Arrays.toString( command ));
@@ -94,12 +96,19 @@ public final class ProgramUtils {
 
 		// Execute
 		Process process = pb.start();
+		
+		// Store process in ThreadLocal, so it can be cancelled later (eg. if blocked)
+		logger.fine("Storing process [" + applicationName + "] [" + scopedInstancePath + "]");
+		ProcessStore.setProcess(applicationName, scopedInstancePath, process);
+
 		new Thread( new OutputRunnable( process, true, errorOutput, logger )).start();
 		new Thread( new OutputRunnable( process, false, normalOutput, logger )).start();
 
 		exitValue = process.waitFor();
 		if( exitValue != 0 )
 			logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
+
+		ProcessStore.clearProcess(applicationName, scopedInstancePath);
 
 		return new ExecutionResult(
 				normalOutput.toString().trim(),
@@ -120,10 +129,12 @@ public final class ProgramUtils {
 			final Logger logger,
 			final String[] command,
 			final File workingDir,
-			final Map<String,String> environmentVars )
+			final Map<String,String> environmentVars,
+			final String applicationName,
+			final String scopedInstanceName)
 	throws IOException, InterruptedException {
 
-		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars );
+		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars, applicationName, scopedInstanceName);
 		if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
 			logger.fine( result.getNormalOutput());
 
@@ -146,10 +157,12 @@ public final class ProgramUtils {
 			final Logger logger,
 			final List<String> command,
 			final File workingDir,
-			final Map<String,String> environmentVars )
+			final Map<String,String> environmentVars,
+			final String applicationName,
+			final String scopedInstanceName)
 	throws IOException, InterruptedException {
 
-		return executeCommand( logger, command.toArray( new String[ 0 ]), workingDir, environmentVars );
+		return executeCommand( logger, command.toArray( new String[ 0 ]), workingDir, environmentVars, applicationName, scopedInstanceName);
 	}
 
 

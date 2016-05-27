@@ -91,7 +91,8 @@ public class PluginPuppet implements PluginInterface {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 	String agentId;
-
+	String applicationName;
+	String scopedInstancePath;
 
 
 	@Override
@@ -101,8 +102,10 @@ public class PluginPuppet implements PluginInterface {
 
 
 	@Override
-	public void setNames( String applicationName, String rootInstanceName ) {
-		this.agentId = "'" + rootInstanceName + "' agent";
+	public void setNames( String applicationName, String scopedInstancePath ) {
+		this.applicationName = applicationName;
+		this.scopedInstancePath = scopedInstancePath;
+		this.agentId = "'" + scopedInstancePath + "' agent";
 	}
 
 
@@ -231,7 +234,7 @@ public class PluginPuppet implements PluginInterface {
 			String[] params = commands.toArray( new String[ 0 ]);
 			this.logger.fine( "Module installation: " + Arrays.toString( params ));
 
-			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null, null );
+			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null, null, this.applicationName, this.scopedInstancePath);
 			if( exitCode != 0 )
 				throw new IOException( "Puppet modules could not be installed for " + instance + "." );
 		}
@@ -322,7 +325,7 @@ public class PluginPuppet implements PluginInterface {
 			// 0 or 2 => correct execution.
 			// 4 => errors during execution.
 			// 6 => changes were applied, but errors occurred too.
-			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null, null );
+			int exitCode = ProgramUtils.executeCommand( this.logger, commands, null, null, this.applicationName, this.scopedInstancePath);
 			switch( exitCode ) {
 			case 0:
 			case 2:
