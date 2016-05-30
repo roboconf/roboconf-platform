@@ -39,6 +39,7 @@ import java.util.Set;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingConstants;
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
@@ -296,6 +297,22 @@ public final class RuntimeModelValidator {
 			// Add an error about unknown variable
 			for( Component component : importedVariableToImporters.get( entry.getKey()))
 				errors.add( new ModelError( errorCode, component, "Variable name: " + entry.getKey()));
+		}
+
+		// Do we have orphan facets?
+		for( Facet f : graphs.getFacetNameToFacet().values()) {
+			if( f.getAssociatedComponents().isEmpty()) {
+				if( f.getChildren().isEmpty())
+					errors.add( new ModelError( ErrorCode.RM_ORPHAN_FACET, f, "Facet name: " + f ));
+				else
+					errors.add( new ModelError( ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN, f, "Facet name: " + f ));
+
+				// Unreachable components
+				for( AbstractType t : f.getChildren()) {
+					if( t instanceof Component )
+						errors.add( new ModelError( ErrorCode.RM_UNREACHABLE_COMPONENT, t, "Component name: " + t ));
+				}
+			}
 		}
 
 		return errors;

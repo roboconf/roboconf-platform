@@ -211,6 +211,20 @@
 		</dependency>
 		
 		<dependency>
+			<groupId>org.apache.karaf.shell</groupId>
+			<artifactId>org.apache.karaf.shell.console</artifactId>
+			<version>${karaf.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.apache.karaf.features</groupId>
+			<artifactId>org.apache.karaf.features.core</artifactId>
+			<version>${karaf.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
@@ -307,5 +321,28 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<!-- A profile to disable integration tests (IT), as they are quite long. -->
+		<!-- Not enabled by default. -->
+		<profile>
+			<id>skip-it</id>
+			<build>
+			
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+						
+							<!-- skipTests compiles the tests but does not run them. -->
+							<!-- Not the same than "skip". -->
+							<skipTests>true</skipTests>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
 </project>

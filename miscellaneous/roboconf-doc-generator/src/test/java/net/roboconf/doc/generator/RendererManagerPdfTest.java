@@ -71,6 +71,6 @@ public class RendererManagerPdfTest extends AbstractTestForRendererManager {
 		} finally {
 			Locale.setDefault(locale);
 		}
-	
+
 	}
 }

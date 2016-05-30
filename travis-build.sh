@@ -8,10 +8,11 @@ WHOLE_VER=`java -version 2>&1`
 VER=`java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q'`
 
 # We build for several JDKs on Travis.
-# OpenJDK 7 => Run Cobertura and Coveralls.
+# OpenJDK 7 => Compile, run unit and integration tests. Also run Cobertura and Coveralls.
+# Others => Compile and run unit tests, but skip integration tests.
 
 if [[ $VER == "17" ]] && [[ $WHOLE_VER == *OpenJDK* ]]; then
 	mvn clean cobertura:cobertura install coveralls:report -q
 else
-	mvn clean install -q
+	mvn clean install -q -P skip-it
 fi
