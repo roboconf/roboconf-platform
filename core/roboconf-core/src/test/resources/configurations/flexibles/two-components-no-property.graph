@@ -1,0 +1,9 @@
+
+comp1 {
+	exports: ip, port;
+	installer: script;
+}
+
+comp2 {
+
+}

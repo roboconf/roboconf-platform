@@ -1,0 +1,34 @@
+
+comp1 {
+	exports: ip, port;
+	installer: script;
+	children: comp2;
+}
+
+comp2 {
+	exports: ip, invalid!port;
+	installer: script;
+}
+
+comp3 {
+	exports: ip, port;
+	installer: script;
+	imports: comp2.*;
+}
+
+comp4 {
+	exports: ip, port;
+	# no installer
+}
+
+comp5 {
+	exports: ip, port;
+	installer: invalid!syntax;
+	
+	# invalid imports
+	imports: comp7.*;
+}
+
+comp6 {
+
+}
