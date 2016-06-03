@@ -92,6 +92,15 @@ public class FromGraphs {
 			}
 		}
 
+		// There may be orphan facets too
+		for( Facet f : graphs.getFacetNameToFacet().values()) {
+			if( alreadySerializedNames.contains( f.getName()))
+				continue;
+
+			alreadySerializedNames.add( f.getName());
+			result.getBlocks().addAll( buildFacet( result, f, addComment ));
+		}
+
 		return result;
 	}
 

@@ -56,10 +56,12 @@ public final class ProgramUtils {
 	 * This includes the process's exit value, its normal output as well
 	 * as the error flow.
 	 * </p>
-	 *
-	 * @param command a command to execute (not null, not empty)
-	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)
+	 * @param command a command to execute (not null, not empty)
+	 * @param workingDir the working directory for the command
+	 * @param environmentVars a map containing environment variables (can be null)
+	 * @param applicationName the roboconf application name (null if not specified)
+	 * @param scopedInstancePath the roboconf scoped instance path (null if not specified)
 	 * @throws IOException if a new process could not be created
 	 * @throws InterruptedException if the new process encountered a process
 	 */
@@ -67,7 +69,9 @@ public final class ProgramUtils {
 			final Logger logger,
 			final String[] command,
 			final File workingDir,
-			final Map<String,String> environmentVars )
+			final Map<String,String> environmentVars,
+			final String applicationName,
+			final String scopedInstancePath)
 	throws IOException, InterruptedException {
 
 		logger.fine( "Executing command: " + Arrays.toString( command ));
@@ -94,12 +98,21 @@ public final class ProgramUtils {
 
 		// Execute
 		Process process = pb.start();
-		new Thread( new OutputRunnable( process, true, errorOutput, logger )).start();
-		new Thread( new OutputRunnable( process, false, normalOutput, logger )).start();
+		
+		// Store process in ThreadLocal, so it can be cancelled later (eg. if blocked)
+		logger.fine("Storing process [" + applicationName + "] [" + scopedInstancePath + "]");
+		ProcessStore.setProcess(applicationName, scopedInstancePath, process);
 
-		exitValue = process.waitFor();
-		if( exitValue != 0 )
-			logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
+		try {
+			new Thread( new OutputRunnable( process, true, errorOutput, logger )).start();
+			new Thread( new OutputRunnable( process, false, normalOutput, logger )).start();
+
+			exitValue = process.waitFor();
+			if( exitValue != 0 )
+				logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
+		} finally {
+			ProcessStore.clearProcess(applicationName, scopedInstancePath);
+		}
 
 		return new ExecutionResult(
 				normalOutput.toString().trim(),
@@ -110,9 +123,12 @@ public final class ProgramUtils {
 
 	/**
 	 * Executes a command on the VM and logs the output.
-	 * @param command a command to execute (not null, not empty)
-	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)
+	 * @param command a command to execute (not null, not empty)
+	 * @param workingDir the working directory for the command
+	 * @param environmentVars a map containing environment variables (can be null)
+	 * @param applicationName the roboconf application name (null if not specified)
+	 * @param scopedInstancePath the roboconf scoped instance path (null if not specified)
 	 * @throws IOException if a new process could not be created
 	 * @throws InterruptedException if the new process encountered a process
 	 */
@@ -120,10 +136,12 @@ public final class ProgramUtils {
 			final Logger logger,
 			final String[] command,
 			final File workingDir,
-			final Map<String,String> environmentVars )
+			final Map<String,String> environmentVars,
+			final String applicationName,
+			final String scopedInstanceName)
 	throws IOException, InterruptedException {
 
-		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars );
+		ExecutionResult result = executeCommandWithResult( logger, command, workingDir, environmentVars, applicationName, scopedInstanceName);
 		if( ! Utils.isEmptyOrWhitespaces( result.getNormalOutput()))
 			logger.fine( result.getNormalOutput());
 
@@ -146,10 +164,12 @@ public final class ProgramUtils {
 			final Logger logger,
 			final List<String> command,
 			final File workingDir,
-			final Map<String,String> environmentVars )
+			final Map<String,String> environmentVars,
+			final String applicationName,
+			final String scopedInstanceName)
 	throws IOException, InterruptedException {
 
-		return executeCommand( logger, command.toArray( new String[ 0 ]), workingDir, environmentVars );
+		return executeCommand( logger, command.toArray( new String[ 0 ]), workingDir, environmentVars, applicationName, scopedInstanceName);
 	}
 
 

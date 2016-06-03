@@ -50,7 +50,8 @@ public class ProgramUtilsTest {
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
 				null,
-				new HashMap<String,String>( 0 ));
+				new HashMap<String,String>( 0 ),
+				null, null);
 	}
 
 
@@ -67,7 +68,8 @@ public class ProgramUtilsTest {
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
 				null,
-				new HashMap<String,String>( 0 ));
+				new HashMap<String,String>( 0 ),
+				null, null);
 	}
 
 
@@ -86,7 +88,7 @@ public class ProgramUtilsTest {
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
 				null,
-				map );
+				map, null, null);
 	}
 
 
@@ -108,7 +110,8 @@ public class ProgramUtilsTest {
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
 				null,
-				map );
+				map,
+				null, null );
 	}
 
 
@@ -120,8 +123,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "cmd", "/C", "dir" ),
-				null,
-				null );
+				null, null, null, null);
 	}
 
 
@@ -137,8 +139,7 @@ public class ProgramUtilsTest {
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "pwd" ),
-				null,
-				null );
+				null, null, null, null);
 	}
 
 
@@ -150,8 +151,7 @@ public class ProgramUtilsTest {
 		int exitCode = ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "help" ),
-				null,
-				null );
+				null, null, null, null);
 
 		Assert.assertNotSame( 0, exitCode );
 	}
@@ -170,7 +170,8 @@ public class ProgramUtilsTest {
 				Logger.getLogger( getClass().getName()),
 				Arrays.asList( "/bin/sh", "-c", "apt-get-update" ),
 				null,
-				new HashMap<String,String>( 0 ));
+				new HashMap<String,String>( 0 ),
+				null, null);
 
 		Assert.assertNotSame( 0, exitCode );
 		// Either it requires root privileges, or it is not installed.
@@ -182,6 +183,7 @@ public class ProgramUtilsTest {
 
 		ProgramUtils.executeCommand(
 				Logger.getLogger( getClass().getName()),
-				Arrays.asList( "whatever" ), null, null );
+				Arrays.asList( "whatever" ),
+				null, null, null, null);
 	}
 }

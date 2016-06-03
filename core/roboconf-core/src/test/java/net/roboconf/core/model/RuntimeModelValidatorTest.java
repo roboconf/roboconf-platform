@@ -35,6 +35,10 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.dsl.ParsingModelIo;
@@ -52,10 +56,7 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -784,7 +785,10 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 
 		Collection<ModelError> errors = RuntimeModelValidator.validate( graphs );
+		Assert.assertEquals( 5, errors.size());
+		RoboconfErrorHelpers.filterErrorsForRecipes( errors );
 		Assert.assertEquals( 3, errors.size());
+
 		Set<String> messages = new HashSet<String> ();
 		for( ModelError error : errors ) {
 			Assert.assertEquals( ErrorCode.RM_CYCLE_IN_FACETS_INHERITANCE, error.getErrorCode());
@@ -887,5 +891,27 @@ public class RuntimeModelValidatorTest {
 		Assert.assertEquals( 0, fromDef.getErrors().size());
 		Collection<ModelError> errors = RuntimeModelValidator.validate( g );
 		Assert.assertEquals( 0, errors.size());
+	}
+
+
+	@Test
+	public void testUnreachableComponent() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/facet-without-component.graph" );
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs g = fromDef.buildGraphs( f );
+
+		Assert.assertEquals( 0, fromDef.getErrors().size());
+		List<ModelError> errors = new ArrayList<>( RuntimeModelValidator.validate( g ));
+		Assert.assertEquals( 3, errors.size());
+
+		Assert.assertEquals( ErrorCode.RM_ROOT_INSTALLER_MUST_BE_TARGET, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( new Component( "t" ), errors.get( 0 ).getModelObject());
+
+		Assert.assertEquals( ErrorCode.RM_ORPHAN_FACET_WITH_CHILDREN, errors.get( 1 ).getErrorCode());
+		Assert.assertEquals( new Facet( "f" ), errors.get( 1 ).getModelObject());
+
+		Assert.assertEquals( ErrorCode.RM_UNREACHABLE_COMPONENT, errors.get( 2 ).getErrorCode());
+		Assert.assertEquals( new Component( "t" ), errors.get( 2 ).getModelObject());
 	}
 }

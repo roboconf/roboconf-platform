@@ -189,7 +189,7 @@ public final class RecipesValidator {
 		String[] cmd = { "puppet", "parser", "validate", pp.getAbsolutePath()};
 		Logger logger = Logger.getLogger( RecipesValidator.class.getName());
 		try {
-			int execCode = ProgramUtils.executeCommand( logger, cmd, null, null );
+			int execCode = ProgramUtils.executeCommand( logger, cmd, null, null, null, null );
 			if( execCode != 0 )
 				errors.add( new ModelError( ErrorCode.REC_PUPPET_SYNTAX_ERROR, component, "Component: " + component + ", File: " + pp ));
 

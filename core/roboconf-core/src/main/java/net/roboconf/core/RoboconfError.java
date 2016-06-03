@@ -25,6 +25,8 @@
 
 package net.roboconf.core;
 
+import java.util.Objects;
+
 /**
  * An error instantiates an {@link ErrorCode}.
  * @author Vincent Zurczak - Linagora
@@ -88,5 +90,25 @@ public class RoboconfError {
 	@Override
 	public String toString() {
 		return this.errorCode.getMsg();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals( Object obj ) {
+		return obj != null
+				&& obj.getClass().equals( getClass())
+				&& Objects.equals( this.errorCode, ((RoboconfError) obj).errorCode )
+				&& Objects.equals( this.details, ((RoboconfError) obj).details );
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return this.errorCode == null ? 47 : this.errorCode.hashCode();
 	}
 }

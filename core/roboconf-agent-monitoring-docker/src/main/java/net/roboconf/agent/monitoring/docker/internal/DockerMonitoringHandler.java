@@ -127,7 +127,7 @@ public class DockerMonitoringHandler implements IMonitoringHandler {
 					containerName
 			};
 
-			ExecutionResult res = ProgramUtils.executeCommandWithResult( logger, cmd, null, null );
+			ExecutionResult res = ProgramUtils.executeCommandWithResult( logger, cmd, null, null, this.applicationName, this.scopedInstancePath);
 			logger.finest( "Execution's result: " + res.getExitValue());
 			logger.finest( "Execution's normal output: " + res.getNormalOutput());
 			running = res.getExitValue() == 0 && Boolean.parseBoolean( res.getNormalOutput());

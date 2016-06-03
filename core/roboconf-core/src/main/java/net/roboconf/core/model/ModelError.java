@@ -25,6 +25,8 @@
 
 package net.roboconf.core.model;
 
+import java.util.Objects;
+
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
 
@@ -62,5 +64,25 @@ public class ModelError extends RoboconfError {
 	 */
 	public Object getModelObject() {
 		return this.modelObject;
+	}
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.core.RoboconfError
+	 * #equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals( Object obj ) {
+		return super.equals( obj )
+				&& Objects.equals( this.modelObject, ((ModelError) obj).modelObject );
+	}
+
+	/* (non-Javadoc)
+	 * @see net.roboconf.core.RoboconfError
+	 * #hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		// Keep for Findbugs.
+		return super.hashCode();
 	}
 }
