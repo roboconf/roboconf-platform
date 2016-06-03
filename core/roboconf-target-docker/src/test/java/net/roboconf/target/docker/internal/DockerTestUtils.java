@@ -74,7 +74,7 @@ public final class DockerTestUtils {
 
 		Logger logger = Logger.getLogger( DockerTestUtils.class.getName());
 		List<String> command = Arrays.asList( "docker", "version" );
-		int exitCode = ProgramUtils.executeCommand( logger, command, null, null );
+		int exitCode = ProgramUtils.executeCommand( logger, command, null, null, null, null);
 		if( exitCode != 0 )
 			throw new Exception( "Docker is not installed." );
 
@@ -138,7 +138,7 @@ public final class DockerTestUtils {
 			}
 
 			List<String> command = Arrays.asList( "docker", "restart" );
-			int exitCode = ProgramUtils.executeCommand( logger, command, null, null );
+			int exitCode = ProgramUtils.executeCommand( logger, command, null, null, null, null);
 			Assert.assertEquals( 0, exitCode );
 		}
 	}

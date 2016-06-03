@@ -59,14 +59,21 @@
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>net.roboconf</groupId>
 			<artifactId>roboconf-messaging-api</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
-	
+
+		<dependency>
+			<groupId>net.roboconf</groupId>
+			<artifactId>roboconf-plugin-api</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.apache.karaf.shell</groupId>
 			<artifactId>org.apache.karaf.shell.console</artifactId>

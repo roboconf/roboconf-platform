@@ -89,7 +89,7 @@ public class KarafClient_AgentTest extends AgentTest {
 			command.add( "client" );
 			command.add( "feature:list" );
 
-			int code = ProgramUtils.executeCommand( logger, command, binDirectory, null );
+			int code = ProgramUtils.executeCommand( logger, command, binDirectory, null, null, null);
 			Assert.assertEquals( 0, code );
 			Assert.assertTrue( logHandler.getLogs().contains( "ipojo-all" ));
 

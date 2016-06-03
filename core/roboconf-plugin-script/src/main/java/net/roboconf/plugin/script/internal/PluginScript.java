@@ -75,8 +75,8 @@ public class PluginScript implements PluginInterface {
 
     private final Logger logger = Logger.getLogger( getClass().getName());
     String agentId;
-
-
+    String applicationName, scopedInstancePath;
+    
 
     @Override
     public String getPluginName() {
@@ -85,8 +85,10 @@ public class PluginScript implements PluginInterface {
 
 
     @Override
-    public void setNames( String applicationName, String rootInstanceName ) {
-    	this.agentId = "'" + rootInstanceName + "' agent";
+    public void setNames( String applicationName, String scopedInstancePath ) {
+    	this.applicationName = applicationName;
+    	this.scopedInstancePath = scopedInstancePath;
+    	this.agentId = "'" + scopedInstancePath + "' agent";
     }
 
 
@@ -258,7 +260,7 @@ public class PluginScript implements PluginInterface {
     		}
     	}
 
-    	int exitCode = ProgramUtils.executeCommand( this.logger, command, script.getParentFile(), environmentVars );
+    	int exitCode = ProgramUtils.executeCommand( this.logger, command, script.getParentFile(), environmentVars, this.applicationName, this.scopedInstancePath );
         if( exitCode != 0 )
         	throw new IOException( "Script execution failed. Exit code: " + exitCode );
     }
