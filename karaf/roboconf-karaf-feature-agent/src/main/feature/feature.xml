@@ -27,10 +27,10 @@
         <bundle>mvn:net.roboconf/roboconf-plugin-file/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-logger/${project.version}</bundle>
         <bundle>mvn:net.roboconf/roboconf-plugin-puppet/${project.version}</bundle>
-        
+ 
         <!-- Karaf Commands -->
-		<bundle>mvn:net.roboconf/roboconf-karaf-commands-common/${project.version}</bundle>
-		<bundle>mvn:net.roboconf/roboconf-karaf-commands-agent/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-karaf-commands-common/${project.version}</bundle>
+        <bundle>mvn:net.roboconf/roboconf-karaf-commands-agent/${project.version}</bundle>
 
     </feature>
 </features>

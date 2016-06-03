@@ -30,17 +30,15 @@ import java.util.Map;
 
 /**
  * Global process store.
- * 
  * @author Pierre-Yves Gibello - Linagora
  */ 
 public class ProcessStore {
 
 	private static final Map<String, Process> PROCESS_MAP = new HashMap<String, Process>();
-	
+
 	/**
-	 * Store a process (eg. a running script), so that the
+	 * Stores a process (eg. a running script), so that the
 	 * process can be reached later (eg. to cancel it when blocked).
-	 * 
 	 * @param process The process to be stored
 	 */
 	public static synchronized void setProcess(String applicationName, String scopedInstancePath, Process process) {
@@ -48,7 +46,7 @@ public class ProcessStore {
 	}
 
 	/**
-	 * Retrieve a stored process, when found.
+	 * Retrieves a stored process, when found.
 	 * 
 	 * @return The process
 	 */
@@ -57,7 +55,7 @@ public class ProcessStore {
 	}
 
 	/**
-	 * Remove a stored process, if found.
+	 * Removes a stored process, if found.
 	 */
 	public static synchronized Process clearProcess(String applicationName, String scopedInstancePath) {
 		return PROCESS_MAP.remove(toAgentId(applicationName, scopedInstancePath));

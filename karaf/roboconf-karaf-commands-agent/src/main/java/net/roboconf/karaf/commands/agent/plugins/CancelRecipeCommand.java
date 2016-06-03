@@ -27,10 +27,10 @@ package net.roboconf.karaf.commands.agent.plugins;
 
 import java.io.PrintStream;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
-import net.roboconf.core.utils.ManifestUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.core.utils.ProcessStore;
 
@@ -39,7 +39,6 @@ import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.apache.karaf.shell.api.console.Session;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -49,15 +48,10 @@ import org.apache.karaf.shell.api.console.Session;
 public class CancelRecipeCommand implements Action {
 
 	@Argument( index = 0, name = "applicationName", description = "The application name.", required = false, multiValued = false )
-	//@Completion( PluginsCompleter.class )
     String applicationName = null;
 
 	@Argument( index = 1, name = "scopedInstancePath", description = "The root instance path.", required = false, multiValued = false )
-	//@Completion( PluginsCompleter.class )
     String scopedInstancePath = null;
-
-	@Reference
-    private Session session;
 
 	/*
 	 * Possible configurations:
@@ -73,18 +67,7 @@ public class CancelRecipeCommand implements Action {
 
 	// Other fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	String roboconfVersion;
 	PrintStream out = System.out;
-
-
-	/**
-	 * Constructor.
-	 */
-	public CancelRecipeCommand() {
-		String bundleVersion = ManifestUtils.findBundleVersion();
-		this.roboconfVersion = ManifestUtils.findMavenVersion( bundleVersion );
-	}
-
 
     @Override
     public Object execute() throws Exception {
@@ -100,7 +83,7 @@ public class CancelRecipeCommand implements Action {
     					out.println("Single agent eligible to cancel recipe");
     					cancelRecipe(agent.getApplicationName(), agent.getScopedInstancePath());
     				}
-    			} else if(agent.getApplicationName().equals(this.applicationName)) {
+    			} else if(Objects.equals(agent.getApplicationName(), this.applicationName)) {
     				if(this.scopedInstancePath == null || this.scopedInstancePath.equals(agent.getScopedInstancePath())) {
     					// Found agent eligible to cancel recipe (if any)
     					out.println("Agent is eligible to cancel recipe");
@@ -117,20 +100,20 @@ public class CancelRecipeCommand implements Action {
     }
     
     /**
-     * Cancel running recipe, if any.
+     * Cancels running recipe, if any.
      */
     private void cancelRecipe(String applicationName, String scopedInstancePath) {
     	if(Utils.isEmptyOrWhitespaces(applicationName)) applicationName = "";
     	if(Utils.isEmptyOrWhitespaces(scopedInstancePath)) scopedInstancePath = "";
-    	
+
     	out.println("looking up [" + applicationName + "] [" + scopedInstancePath + "]");
     	Process p = ProcessStore.getProcess(applicationName, scopedInstancePath);
-		if(p != null) {
-			p.destroy();
-			ProcessStore.clearProcess(applicationName, scopedInstancePath);
-			out.println("Recipe cancelled !");
-		} else {
-			out.println("No running recipe to cancel.");
-		}
+    	if(p != null) {
+    		p.destroy();
+    		ProcessStore.clearProcess(applicationName, scopedInstancePath);
+    		out.println("Recipe cancelled !");
+    	} else {
+    		out.println("No running recipe to cancel.");
+    	}
     }
 }

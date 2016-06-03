@@ -20,10 +20,12 @@ public class ProcessStoreTest {
 	public void testProcessFunctions() throws IOException {
 		Assert.assertNull(ProcessStore.getProcess(applicationName, scopedInstancePath));
 		
-		Process process = (new ProcessBuilder("ls")).start();
-		
+		// Use a cross-OS command ("date" looks quite universal !)
+		Process process = (new ProcessBuilder("date")).start();
+
 		ProcessStore.setProcess(applicationName, scopedInstancePath, process);
 		Assert.assertEquals(ProcessStore.getProcess(applicationName, scopedInstancePath), process);
+		Assert.assertSame(ProcessStore.getProcess(applicationName, scopedInstancePath), process);
 		
 		ProcessStore.setProcess(null, null, process);	
 		Assert.assertEquals(ProcessStore.getProcess(null, null), process);

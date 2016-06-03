@@ -56,10 +56,12 @@ public final class ProgramUtils {
 	 * This includes the process's exit value, its normal output as well
 	 * as the error flow.
 	 * </p>
-	 *
-	 * @param command a command to execute (not null, not empty)
-	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)
+	 * @param command a command to execute (not null, not empty)
+	 * @param workingDir the working directory for the command
+	 * @param environmentVars a map containing environment variables (can be null)
+	 * @param applicationName the roboconf application name (null if not specified)
+	 * @param scopedInstancePath the roboconf scoped instance path (null if not specified)
 	 * @throws IOException if a new process could not be created
 	 * @throws InterruptedException if the new process encountered a process
 	 */
@@ -101,14 +103,16 @@ public final class ProgramUtils {
 		logger.fine("Storing process [" + applicationName + "] [" + scopedInstancePath + "]");
 		ProcessStore.setProcess(applicationName, scopedInstancePath, process);
 
-		new Thread( new OutputRunnable( process, true, errorOutput, logger )).start();
-		new Thread( new OutputRunnable( process, false, normalOutput, logger )).start();
+		try {
+			new Thread( new OutputRunnable( process, true, errorOutput, logger )).start();
+			new Thread( new OutputRunnable( process, false, normalOutput, logger )).start();
 
-		exitValue = process.waitFor();
-		if( exitValue != 0 )
-			logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
-
-		ProcessStore.clearProcess(applicationName, scopedInstancePath);
+			exitValue = process.waitFor();
+			if( exitValue != 0 )
+				logger.warning( "Command execution returned a non-zero code. Code:" + exitValue );
+		} finally {
+			ProcessStore.clearProcess(applicationName, scopedInstancePath);
+		}
 
 		return new ExecutionResult(
 				normalOutput.toString().trim(),
@@ -119,9 +123,12 @@ public final class ProgramUtils {
 
 	/**
 	 * Executes a command on the VM and logs the output.
-	 * @param command a command to execute (not null, not empty)
-	 * @param environmentVars a map containing environment variables (can be null)
 	 * @param logger a logger (not null)
+	 * @param command a command to execute (not null, not empty)
+	 * @param workingDir the working directory for the command
+	 * @param environmentVars a map containing environment variables (can be null)
+	 * @param applicationName the roboconf application name (null if not specified)
+	 * @param scopedInstancePath the roboconf scoped instance path (null if not specified)
 	 * @throws IOException if a new process could not be created
 	 * @throws InterruptedException if the new process encountered a process
 	 */

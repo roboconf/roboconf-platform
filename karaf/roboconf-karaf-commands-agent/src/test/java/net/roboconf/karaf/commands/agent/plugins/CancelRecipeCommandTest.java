@@ -47,40 +47,4 @@ public class CancelRecipeCommandTest {
 		Assert.assertTrue( os.toString( "UTF-8" ).contains( "No agent found" ));
 	}
 
-	/*
-	@Test
-	public void testExecute_valid() throws Exception {
-
-		// Prepare the command
-		CancelRecipeCommand cmd = new CancelRecipeCommand();
-		ByteArrayOutputStream os = new ByteArrayOutputStream();
-		cmd.out = new PrintStream( os, true, "UTF-8" );
-		cmd.applicationName = "testApplication";
-		cmd.roboconfVersion = "0.5";
-
-		// Mock the session
-		final String expected = "bundle:install --start mvn:net.roboconf/roboconf-target-docker/0.5";
-		Session session = Mockito.mock( Session.class );
-		Mockito.when( session.execute( expected )).thenReturn( null );
-
-		// Inject the session
-		for( Class<?> c = cmd.getClass(); c != null; c = c.getSuperclass()) {
-			try {
-				Field field = c.getDeclaredField( "session" );
-				field.setAccessible( true );
-				field.set( cmd, session );
-
-			} catch( NoSuchFieldException e ) {
-				// nothing
-			}
-		}
-
-		// Verify the execution
-		cmd.execute();
-		String s = os.toString( "UTF-8" );
-		Assert.assertFalse( s.contains( "the Roboconf version" ));
-		Assert.assertFalse( s.contains( "Unknown target" ));
-		Mockito.verify( session ).execute( expected );
-	}
-	*/
 }
