@@ -39,7 +39,7 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TemplateWatcher_FiltersTest {
+public class TemplateWatcherFiltersTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();

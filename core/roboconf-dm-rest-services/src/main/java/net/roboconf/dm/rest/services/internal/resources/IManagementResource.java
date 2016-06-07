@@ -39,12 +39,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataParam;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.rest.commons.UrlConstants;
-
-import com.sun.jersey.core.header.FormDataContentDisposition;
-import com.sun.jersey.multipart.FormDataParam;
 
 /**
  * The REST API to manipulate applications on the DM.
@@ -219,8 +219,8 @@ public interface IManagementResource {
 	@POST
 	@Path("/image")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	Response setImage(@QueryParam("name") String name, @QueryParam("qualifier") String qualifier,
-							  @FormDataParam("file") InputStream image,
-							  @FormDataParam("file") FormDataContentDisposition fileDetail);
-
+	Response setImage(	@QueryParam("name") String name,
+						@QueryParam("qualifier") String qualifier,
+						@FormDataParam("file") InputStream image,
+						@FormDataParam("file") FormDataContentDisposition fileDetail);
 }

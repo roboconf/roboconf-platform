@@ -25,8 +25,6 @@
 
 package net.roboconf.messaging.rabbitmq.internal.impl;
 
-import net.roboconf.messaging.rabbitmq.internal.impl.RoboconfRecoveryListener;
-
 import org.junit.Test;
 import org.mockito.Mockito;
 

@@ -33,17 +33,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.fest.assertions.Condition;
+
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.templating.internal.contexts.InstanceContextBean;
 import net.roboconf.dm.templating.internal.contexts.VariableContextBean;
-
-import org.fest.assertions.Condition;
 
 /**
  * Utility methods dedicated to the testing of the Roboconf templating support.
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class TemplatingTestUtils {
+public final class TemplatingTestUtils {
 
 	/**
 	 * Constructor.

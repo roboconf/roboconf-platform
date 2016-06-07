@@ -60,7 +60,7 @@ import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 public class FromGraphsTest {
 
 	@Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
+	public TemporaryFolder testFolder = new TemporaryFolder();
 
 
 	@Test

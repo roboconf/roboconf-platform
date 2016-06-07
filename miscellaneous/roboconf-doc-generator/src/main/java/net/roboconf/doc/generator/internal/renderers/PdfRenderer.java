@@ -55,7 +55,7 @@ import net.roboconf.doc.generator.internal.AbstractStructuredRenderer;
  * @author Amadou Diarra - UGA
  */
 public class PdfRenderer extends AbstractStructuredRenderer {
-	
+
 	/**
 	 * Constructor.
 	 * @param outputDirectory
@@ -68,17 +68,17 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected File writeFileContent(String fileContent) throws IOException {
-		
+
 		//Generate fop render
-		new RenderingManager().render( this.outputDirectory, this.applicationTemplate, this.applicationDirectory, Renderer.FOP, options );
+		new RenderingManager().render( this.outputDirectory, this.applicationTemplate, this.applicationDirectory, Renderer.FOP, this.options );
 		File index_fo = new File( this.outputDirectory, "index.fo" );
 		File index_pdf = new File( this.outputDirectory, "index.pdf" );
-		
+
 		//Copy fop configuration file in outputDirectory
 		InputStream conf = getClass().getResourceAsStream( "/fop.xconf" );
 		File fopConfig = new File( this.outputDirectory, "fop.xconf" );
 		Utils.copyStream( conf, fopConfig );
-		
+
 		//Generate pdf render
 		OutputStream out = null;
 		try {
@@ -94,16 +94,16 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 				transformer.transform(src, res);
 		} catch ( Exception e) {
 				throw new IOException( e );
-				
+
 		} finally {
-				Utils.closeQuietly ( out );	
+				Utils.closeQuietly ( out );
 		}
-	
+
 		return index_pdf;
 	}
-	
+
 	@Override
-	protected String renderTitle1(String title) {	
+	protected String renderTitle1(String title) {
 		return "";
 	}
 
@@ -196,5 +196,4 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 	protected String renderSections(List<String> sectionNames) {
 		return "";
 	}
-
 }

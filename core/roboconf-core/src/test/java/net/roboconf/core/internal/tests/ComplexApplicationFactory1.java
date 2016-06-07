@@ -37,7 +37,7 @@ import net.roboconf.core.model.beans.ImportedVariable;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ComplexApplicationFactory1 {
+public final class ComplexApplicationFactory1 {
 
 	public static final String ROOT_1 = "root1";
 	public static final String ROOT_2 = "root2";

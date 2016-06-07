@@ -25,8 +25,6 @@
 
 package net.roboconf.dm.rest.commons.json;
 
-import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
-
 import org.junit.Assert;
 import org.junit.Test;
 

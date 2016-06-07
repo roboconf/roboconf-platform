@@ -32,13 +32,13 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import net.roboconf.core.model.runtime.ScheduledJob;
-import net.roboconf.dm.scheduler.IScheduler;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.dm.scheduler.IScheduler;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -67,7 +67,7 @@ public class SchedulerResourceTest {
 
 
 	@Test
-	public void TestSaveJob_ok() {
+	public void testSaveJob_ok() {
 
 		Response resp = this.resource.saveJob( "job", "app", "cmd", "cron" );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
@@ -75,7 +75,7 @@ public class SchedulerResourceTest {
 
 
 	@Test
-	public void TestSaveJob_error() throws Exception {
+	public void testSaveJob_error() throws Exception {
 
 		Mockito
 			.doThrow( new IOException( "For test" ))

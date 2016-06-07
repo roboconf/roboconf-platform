@@ -28,8 +28,6 @@ package net.roboconf.karaf.commands.dm.targets;
 import java.io.PrintStream;
 import java.util.logging.Logger;
 
-import net.roboconf.core.utils.ManifestUtils;
-
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -37,6 +35,8 @@ import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.api.console.Session;
+
+import net.roboconf.core.utils.ManifestUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -47,10 +47,10 @@ public class InstallTargetCommand implements Action {
 
 	@Argument( index = 0, name = "target", description = "The target's name.", required = true, multiValued = false )
 	@Completion( TargetCompleter.class )
-    String targetName = null;
+	String targetName = null;
 
 	@Reference
-    private Session session;
+	private Session session;
 
 	// Other fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -67,22 +67,22 @@ public class InstallTargetCommand implements Action {
 	}
 
 
-    @Override
-    public Object execute() throws Exception {
+	@Override
+	public Object execute() throws Exception {
 
-    	SupportedTarget st = SupportedTarget.which( this.targetName );
-    	if( st == null ) {
-    		this.out.println( "Unknown target: " + this.targetName + ". Make sure it is correct or install it manually." );
+		SupportedTarget st = SupportedTarget.which( this.targetName );
+		if( st == null ) {
+			this.out.println( "Unknown target: " + this.targetName + ". Make sure it is correct or install it manually." );
 
-    	} else if( this.roboconfVersion == null ) {
-    		this.out.println( "Error: the Roboconf version could not be determined." );
+		} else if( this.roboconfVersion == null ) {
+			this.out.println( "Error: the Roboconf version could not be determined." );
 
-    	} else for( String cmd : st.findCommands( this.roboconfVersion )) {
-    		this.logger.fine( "Executing " + cmd + "..." );
-    		this.out.println( "Executing " + cmd + "..." );
-    		this.session.execute( cmd );
-    	}
+		} else for( String cmd : st.findCommands( this.roboconfVersion )) {
+			this.logger.fine( "Executing " + cmd + "..." );
+			this.out.println( "Executing " + cmd + "..." );
+			this.session.execute( cmd );
+		}
 
-    	return null;
-    }
+		return null;
+	}
 }

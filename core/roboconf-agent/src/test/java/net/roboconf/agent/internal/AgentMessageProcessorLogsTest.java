@@ -50,7 +50,7 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentMessageProcessor_LogsTest {
+public class AgentMessageProcessorLogsTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();

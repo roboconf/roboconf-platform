@@ -69,9 +69,9 @@ import com.github.dockerjava.core.DockerClientConfig;
  * @author Pierre Bourret - Université Joseph Fourier
  */
 @Ignore
-public class DockerHandler_withPackagesTest {
+public class DockerHandlerWithPackagesTest {
 
-	private static final Logger LOGGER = Logger.getLogger(DockerHandler_withPackagesTest.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(DockerHandlerWithPackagesTest.class.getName());
 	private static final String APPLICATION_NAME = "roboconf_test";
 	private static final String FAKE_AGENT_LOCATION = "/usr/local/roboconf-agent/roboconf-fake-agent.txt";
 	private static final String FAKE_AGENT_CONTENT = "INSTALLED!";

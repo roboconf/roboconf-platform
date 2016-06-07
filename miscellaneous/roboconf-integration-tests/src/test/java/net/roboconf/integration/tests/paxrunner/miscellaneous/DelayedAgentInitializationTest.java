@@ -129,14 +129,14 @@ public class DelayedAgentInitializationTest extends DmTest {
 		// Add the configuration for the agent
 		TestApplication app = new TestApplication();
 		options.add( editConfigurationFilePut(
-				  "etc/net.roboconf.agent.configuration.cfg",
-				  "application-name",
-				  app.getName()));
+				"etc/net.roboconf.agent.configuration.cfg",
+				"application-name",
+				app.getName()));
 
 		options.add( editConfigurationFilePut(
-				  "etc/net.roboconf.agent.configuration.cfg",
-				  "scoped-instance-path",
-				  InstanceHelpers.computeInstancePath( app.getMySqlVm())));
+				"etc/net.roboconf.agent.configuration.cfg",
+				"scoped-instance-path",
+				InstanceHelpers.computeInstancePath( app.getMySqlVm())));
 
 		options.add( editConfigurationFilePut(
 				"etc/net.roboconf.agent.configuration.cfg",
@@ -145,9 +145,9 @@ public class DelayedAgentInitializationTest extends DmTest {
 
 		// Add an invalid configuration for the DM
 		options.add( editConfigurationFilePut(
-				  "etc/net.roboconf.dm.configuration.cfg",
-				  "message-server-username",
-				  "invalid" ));
+				"etc/net.roboconf.dm.configuration.cfg",
+				"message-server-username",
+				"invalid" ));
 
 		// Deploy the agent's bundles
 		String roboconfVersion = ItUtils.findRoboconfVersion();

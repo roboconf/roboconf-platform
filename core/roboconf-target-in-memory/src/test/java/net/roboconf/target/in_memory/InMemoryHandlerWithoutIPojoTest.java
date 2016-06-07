@@ -40,7 +40,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryHandler_withoutIPojoTest {
+public class InMemoryHandlerWithoutIPojoTest {
 
 	private Map<String, String> msgCfg = new LinkedHashMap<>();
 

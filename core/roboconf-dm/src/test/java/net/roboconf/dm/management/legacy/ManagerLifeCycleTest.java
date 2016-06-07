@@ -64,7 +64,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class Manager_LifeCycleTest {
+public class ManagerLifeCycleTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
@@ -395,7 +395,7 @@ public class Manager_LifeCycleTest {
 				@Override
 				public void run() {
 					try {
-						Manager_LifeCycleTest.this.manager.instancesMngr().changeInstanceState( ma, instance, InstanceStatus.DEPLOYED_STARTED );
+						ManagerLifeCycleTest.this.manager.instancesMngr().changeInstanceState( ma, instance, InstanceStatus.DEPLOYED_STARTED );
 
 					} catch( Exception e ) {
 						e.printStackTrace();

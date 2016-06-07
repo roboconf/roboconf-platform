@@ -30,12 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
-import net.roboconf.target.api.TargetHandler;
-
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
@@ -44,6 +38,12 @@ import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandler;
 
 /**
  * FIXME: add user data support.
@@ -135,17 +135,17 @@ public class JCloudsHandler implements TargetHandler {
 
 			// Specify our own key pair if the current provider supports it
 			String keyPairName = targetProperties.get( KEY_PAIR );
-		    try {
-		    	if( ! Utils.isEmptyOrWhitespaces( keyPairName )) {
-			        Method keyPairMethod = template.getOptions().getClass().getMethod( "keyPair", String.class );
-			        keyPairMethod.invoke( template.getOptions(), keyPairName );
-		    	}
+			try {
+				if( ! Utils.isEmptyOrWhitespaces( keyPairName )) {
+					Method keyPairMethod = template.getOptions().getClass().getMethod( "keyPair", String.class );
+					keyPairMethod.invoke( template.getOptions(), keyPairName );
+				}
 
-		    } catch( Exception e ) {
-		        throw new TargetException( "Provider: " + providerId + " does not support specifying key pairs.", e );
-		    }
+			} catch( Exception e ) {
+				throw new TargetException( "Provider: " + providerId + " does not support specifying key pairs.", e );
+			}
 
-		    String vmName = (applicationName + "." + rootInstanceName).replaceAll( "\\.|\\s+", "-" );
+			String vmName = (applicationName + "." + rootInstanceName).replaceAll( "\\.|\\s+", "-" );
 			Set<? extends NodeMetadata> nodes = computeService.createNodesInGroup( vmName, 1, template );
 			machineId = nodes.iterator().next().getId();
 
@@ -220,8 +220,8 @@ public class JCloudsHandler implements TargetHandler {
 		ComputeServiceContext context = ContextBuilder
 				.newBuilder( targetProperties.get( PROVIDER_ID ))
 				.endpoint( targetProperties.get( ENDPOINT ))
-			    .credentials( targetProperties.get( IDENTITY ), targetProperties.get( CREDENTIAL ))
-			    .buildView( ComputeServiceContext.class );
+				.credentials( targetProperties.get( IDENTITY ), targetProperties.get( CREDENTIAL ))
+				.buildView( ComputeServiceContext.class );
 
 		return context.getComputeService();
 	}

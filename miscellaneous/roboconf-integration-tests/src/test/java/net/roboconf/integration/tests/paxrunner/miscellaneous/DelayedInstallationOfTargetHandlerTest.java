@@ -107,7 +107,7 @@ public class DelayedInstallationOfTargetHandlerTest extends DmTest {
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 	private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 	private final PrintStream printStream = new PrintStream( this.byteArrayOutputStream );
-    private final PrintStream errStream = new PrintStream( this.byteArrayOutputStream );
+	private final PrintStream errStream = new PrintStream( this.byteArrayOutputStream );
 
 
 

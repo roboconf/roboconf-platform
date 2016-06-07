@@ -38,17 +38,17 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import net.roboconf.agent.internal.AgentProperties;
-import net.roboconf.core.Constants;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.messaging.api.MessagingConstants;
-
 import org.apache.commons.codec.binary.Base64;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import net.roboconf.agent.internal.AgentProperties;
+import net.roboconf.core.Constants;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.messaging.api.MessagingConstants;
 
 /**
  * @author Noël - LIG
@@ -168,7 +168,7 @@ public final class UserDataUtils {
 
 		return result;
 	}
-	
+
 	/**
 	 * Configures the agent from VMWare.
 	 * @param logger a logger

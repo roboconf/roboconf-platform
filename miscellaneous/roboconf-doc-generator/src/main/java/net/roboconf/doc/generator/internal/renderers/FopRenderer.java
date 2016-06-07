@@ -48,6 +48,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 	private static final String TITLE_MARKUP = "${TITLE}";
 	private static final String CONTENT_MARKUP = "${CONTENT}";
 
+
 	/**
 	 * Constructor.
 	 * @param outputDirectory
@@ -174,7 +175,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 	@Override
 	protected String renderDocumentIndex() {
-		
+
 		// What keys should we inject in the index?
 		List<String> keys = new ArrayList<String> ();
 		keys.add( "introduction" );
@@ -235,12 +236,12 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		InputStream in = getClass().getResourceAsStream( "/fop.tpl" );
 		Utils.copyStreamSafely( in, out );
-        
+
 		//Copy the header in outputDirectory
 		InputStream h = getClass().getResourceAsStream( "/roboconf.jpg" );
 		File imgFile = new File( this.outputDirectory, "header.jpg" );
 		Utils.copyStream( h, imgFile );
-        
+
 		// Create the target directory
 		File targetFile = new File( this.outputDirectory, "index.fo" );
 		Utils.createDirectory( targetFile.getParentFile());

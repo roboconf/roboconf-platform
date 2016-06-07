@@ -59,7 +59,7 @@ import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
  * @author Pierre-Yves Gibello - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class DockerHandler_withContainerTest {
+public class DockerHandlerWithContainerTest {
 
 	private final Logger logger = Logger.getLogger( getClass().getName());
 

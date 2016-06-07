@@ -113,8 +113,8 @@ public interface IDebugResource {
 	@GET
 	@Path("/check-agent")
 	Response checkMessagingConnectionWithAgent( @QueryParam("application-name") String applicationName,
-	                                            @QueryParam("scoped-instance-path") String scopedInstancePath,
-	                                            @QueryParam("message") String message );
+												@QueryParam("scoped-instance-path") String scopedInstancePath,
+												@QueryParam("message") String message );
 
 
 	/**
@@ -131,8 +131,8 @@ public interface IDebugResource {
 	@GET
 	@Produces( MediaType.APPLICATION_JSON )
 	@Path("/diagnose-instance")
-	Response diagnoseInstance( @QueryParam("application-name") String applicationName,
-	                           @QueryParam("instance-path") String instancePath );
+	Response diagnoseInstance( 	@QueryParam("application-name") String applicationName,
+								@QueryParam("instance-path") String instancePath );
 
 
 	/**

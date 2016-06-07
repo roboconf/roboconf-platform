@@ -73,23 +73,23 @@ public class PluginScript implements PluginInterface {
 	private static final String TEMPLATES_FOLDER_NAME = "roboconf-templates";
 	private static final String FILES_FOLDER_NAME = "files";
 
-    private final Logger logger = Logger.getLogger( getClass().getName());
-    String agentId;
-    String applicationName, scopedInstancePath;
-    
-
-    @Override
-    public String getPluginName() {
-    	return PLUGIN_NAME;
-    }
+	private final Logger logger = Logger.getLogger( getClass().getName());
+	String agentId;
+	String applicationName, scopedInstancePath;
 
 
-    @Override
-    public void setNames( String applicationName, String scopedInstancePath ) {
-    	this.applicationName = applicationName;
-    	this.scopedInstancePath = scopedInstancePath;
-    	this.agentId = "'" + scopedInstancePath + "' agent";
-    }
+	@Override
+	public String getPluginName() {
+		return PLUGIN_NAME;
+	}
+
+
+	@Override
+	public void setNames( String applicationName, String scopedInstancePath ) {
+		this.applicationName = applicationName;
+		this.scopedInstancePath = scopedInstancePath;
+		this.agentId = "'" + scopedInstancePath + "' agent";
+	}
 
 
 	@Override
@@ -115,153 +115,153 @@ public class PluginScript implements PluginInterface {
 	}
 
 
-    @Override
-    public void start( Instance instance ) throws PluginException {
+	@Override
+	public void start( Instance instance ) throws PluginException {
 
-        this.logger.fine( this.agentId + " is starting instance " + instance );
-        try {
+		this.logger.fine( this.agentId + " is starting instance " + instance );
+		try {
 			prepareAndExecuteCommand( "start", instance, null, null );
 
 		} catch( Exception e ) {
 			throw new PluginException( e );
 		}
-    }
+	}
 
 
-    @Override
-    public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
+	@Override
+	public void update(Instance instance, Import importChanged, InstanceStatus statusChanged) throws PluginException {
 
-        this.logger.fine( this.agentId + " is updating instance " + instance );
-        try {
+		this.logger.fine( this.agentId + " is updating instance " + instance );
+		try {
 			prepareAndExecuteCommand( "update", instance, importChanged, statusChanged );
 
 		} catch( Exception e ) {
 			throw new PluginException( e );
 		}
-    }
+	}
 
 
-    @Override
-    public void stop( Instance instance ) throws PluginException {
+	@Override
+	public void stop( Instance instance ) throws PluginException {
 
-        this.logger.fine( this.agentId + " is stopping instance " + instance );
-        try {
+		this.logger.fine( this.agentId + " is stopping instance " + instance );
+		try {
 			prepareAndExecuteCommand( "stop", instance, null, null );
 
 		} catch( Exception e ) {
 			throw new PluginException( e );
 		}
-    }
+	}
 
 
-    @Override
-    public void undeploy( Instance instance ) throws PluginException {
+	@Override
+	public void undeploy( Instance instance ) throws PluginException {
 
-    	this.logger.fine( this.agentId + " is undeploying instance " + instance );
-        try {
+		this.logger.fine( this.agentId + " is undeploying instance " + instance );
+		try {
 			prepareAndExecuteCommand( "undeploy", instance, null, null );
 
 		} catch( Exception e ) {
 			throw new PluginException( e );
 		}
-    }
+	}
 
 
-    private void prepareAndExecuteCommand(String action, Instance instance, Import importChanged, InstanceStatus statusChanged)
-    throws IOException, InterruptedException {
+	private void prepareAndExecuteCommand(String action, Instance instance, Import importChanged, InstanceStatus statusChanged)
+	throws IOException, InterruptedException {
 
-        this.logger.info("Preparing the invocation of " + action + " script for instance " + instance );
-        File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
+		this.logger.info("Preparing the invocation of " + action + " script for instance " + instance );
+		File instanceDirectory = InstanceHelpers.findInstanceDirectoryOnAgent( instance );
 
-        File scriptsFolder = new File(instanceDirectory, SCRIPTS_FOLDER_NAME);
-        File templatesFolder = new File(instanceDirectory, TEMPLATES_FOLDER_NAME);
+		File scriptsFolder = new File(instanceDirectory, SCRIPTS_FOLDER_NAME);
+		File templatesFolder = new File(instanceDirectory, TEMPLATES_FOLDER_NAME);
 
-        // Look for action script (default <action>.sh, or any file that starts with <action>)
-        File script = new File(scriptsFolder, action + ".sh");
-        if(! script.exists()) {
-        	File[] foundFiles = scriptsFolder.listFiles(new ActionFileFilter(action));
-        	if(foundFiles != null && foundFiles.length > 0) {
-        		script = foundFiles[0];
-        		if(foundFiles.length > 1)
-        			this.logger.warning("More than one " + action + " script found: taking the 1st one, " + script.getName());
-        	}
-        }
+		// Look for action script (default <action>.sh, or any file that starts with <action>)
+		File script = new File(scriptsFolder, action + ".sh");
+		if(! script.exists()) {
+			File[] foundFiles = scriptsFolder.listFiles(new ActionFileFilter(action));
+			if(foundFiles != null && foundFiles.length > 0) {
+				script = foundFiles[0];
+				if(foundFiles.length > 1)
+					this.logger.warning("More than one " + action + " script found: taking the 1st one, " + script.getName());
+			}
+		}
 
-        File template = new File(templatesFolder, action + ".template");
-        if( ! template.exists())
-        	template = new File(templatesFolder, "default.template");
+		File template = new File(templatesFolder, action + ".template");
+		if( ! template.exists())
+			template = new File(templatesFolder, "default.template");
 
-        if (script.exists()) {
-            executeScript(script, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
+		if (script.exists()) {
+			executeScript(script, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
 
-        } else if (template.exists()) {
-            File generated = generateTemplate(template, instance);
-            executeScript(generated, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
-            Utils.deleteFilesRecursively( generated );
+		} else if (template.exists()) {
+			File generated = generateTemplate(template, instance);
+			executeScript(generated, instance, importChanged, statusChanged, instanceDirectory.getAbsolutePath());
+			Utils.deleteFilesRecursively( generated );
 
-        } else {
-            this.logger.warning("Can not find a script or a template for action " + action);
-        }
-    }
-
-
-    /**
-     * Generates a file from the template and the instance.
-     * @param template
-     * @param instance
-     * @return the generated file
-     * @throws IOException
-     */
-    protected File generateTemplate(File template, Instance instance) throws IOException {
-
-    	String scriptName = instance.getName().replace( "\\s+", "_" );
-        File generated = File.createTempFile( scriptName, ".script");
-        InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
-
-        return generated;
-    }
+		} else {
+			this.logger.warning("Can not find a script or a template for action " + action);
+		}
+	}
 
 
-    protected void executeScript(
-    		File script,
-    		Instance instance,
-    		Import importChanged,
-    		InstanceStatus statusChanged,
-    		String instanceDir )
-    throws IOException, InterruptedException {
+	/**
+	 * Generates a file from the template and the instance.
+	 * @param template
+	 * @param instance
+	 * @return the generated file
+	 * @throws IOException
+	 */
+	protected File generateTemplate(File template, Instance instance) throws IOException {
 
-    	String[] command = { script.getAbsolutePath() };
-    	if(! script.canExecute())
-    		script.setExecutable(true);
+		String scriptName = instance.getName().replace( "\\s+", "_" );
+		File generated = File.createTempFile( scriptName, ".script");
+		InstanceTemplateHelper.injectInstanceImports(instance, template, generated);
 
-    	Map<String, String> environmentVars = new HashMap<String, String>();
-    	Map<String, String> vars = ScriptUtils.formatExportedVars(instance);
-    	environmentVars.putAll(vars);
+		return generated;
+	}
 
-    	Map<String, String> importedVars = ScriptUtils.formatImportedVars( instance );
-    	environmentVars.putAll( DockerAndScriptUtils.buildReferenceMap( instance ));
-    	environmentVars.putAll( importedVars );
-    	environmentVars.put("ROBOCONF_FILES_DIR", new File( instanceDir, FILES_FOLDER_NAME ).getAbsolutePath());
 
-    	// Upon update, retrieve the status of the instance that triggered the update.
-    	// Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...
-    	if( statusChanged != null )
-    		environmentVars.put("ROBOCONF_UPDATE_STATUS", statusChanged.toString());
+	protected void executeScript(
+			File script,
+			Instance instance,
+			Import importChanged,
+			InstanceStatus statusChanged,
+			String instanceDir )
+	throws IOException, InterruptedException {
 
-    	// Upon update, retrieve the import that changed
-    	// (removed when an instance stopped, or added when it started)
-    	if( importChanged != null ) {
-    		environmentVars.put("ROBOCONF_IMPORT_CHANGED_INSTANCE_PATH", importChanged.getInstancePath());
-    		environmentVars.put("ROBOCONF_IMPORT_CHANGED_COMPONENT", importChanged.getComponentName());
-    		for (Entry<String, String> entry : importChanged.getExportedVars().entrySet()) {
-    			// "ROBOCONF_IMPORT_CHANGED_ip=127.0.0.1"
-    			String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
-    			importedVars.put("ROBOCONF_IMPORT_CHANGED_" + vname, entry.getValue());
-    		}
-    	}
+		String[] command = { script.getAbsolutePath() };
+		if(! script.canExecute())
+			script.setExecutable(true);
 
-    	int exitCode = ProgramUtils.executeCommand( this.logger, command, script.getParentFile(), environmentVars, this.applicationName, this.scopedInstancePath );
-        if( exitCode != 0 )
-        	throw new IOException( "Script execution failed. Exit code: " + exitCode );
-    }
+		Map<String, String> environmentVars = new HashMap<String, String>();
+		Map<String, String> vars = ScriptUtils.formatExportedVars(instance);
+		environmentVars.putAll(vars);
+
+		Map<String, String> importedVars = ScriptUtils.formatImportedVars( instance );
+		environmentVars.putAll( DockerAndScriptUtils.buildReferenceMap( instance ));
+		environmentVars.putAll( importedVars );
+		environmentVars.put("ROBOCONF_FILES_DIR", new File( instanceDir, FILES_FOLDER_NAME ).getAbsolutePath());
+
+		// Upon update, retrieve the status of the instance that triggered the update.
+		// Should be either DEPLOYED_STARTED or DEPLOYED_STOPPED...
+		if( statusChanged != null )
+			environmentVars.put("ROBOCONF_UPDATE_STATUS", statusChanged.toString());
+
+		// Upon update, retrieve the import that changed
+		// (removed when an instance stopped, or added when it started)
+		if( importChanged != null ) {
+			environmentVars.put("ROBOCONF_IMPORT_CHANGED_INSTANCE_PATH", importChanged.getInstancePath());
+			environmentVars.put("ROBOCONF_IMPORT_CHANGED_COMPONENT", importChanged.getComponentName());
+			for (Entry<String, String> entry : importChanged.getExportedVars().entrySet()) {
+				// "ROBOCONF_IMPORT_CHANGED_ip=127.0.0.1"
+				String vname = VariableHelpers.parseVariableName(entry.getKey()).getValue();
+				importedVars.put("ROBOCONF_IMPORT_CHANGED_" + vname, entry.getValue());
+			}
+		}
+
+		int exitCode = ProgramUtils.executeCommand( this.logger, command, script.getParentFile(), environmentVars, this.applicationName, this.scopedInstancePath );
+		if( exitCode != 0 )
+			throw new IOException( "Script execution failed. Exit code: " + exitCode );
+	}
 }

@@ -59,7 +59,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentMessageProcessor_ImportsTest {
+public class AgentMessageProcessorImportsTest {
 
 	private static final String APP = "app";
 	private Agent agent;

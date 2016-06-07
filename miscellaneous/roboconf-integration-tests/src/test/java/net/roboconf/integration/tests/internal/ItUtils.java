@@ -64,12 +64,12 @@ public final class ItUtils {
 
 
 	private static final String[] LOGGERS = {
-		// Loggers configured in our custom distributions
-		"net.roboconf",
-		"net.roboconf.dm.internal.tasks.CheckerMessagesTask",
-		"net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource",
-		"net.roboconf.target.api.AbstractThreadedTargetHandler$CheckingRunnable",
-		"net.roboconf.dm.internal.environment.messaging.DmMessageProcessor"
+			// Loggers configured in our custom distributions
+			"net.roboconf",
+			"net.roboconf.dm.internal.tasks.CheckerMessagesTask",
+			"net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource",
+			"net.roboconf.target.api.AbstractThreadedTargetHandler$CheckingRunnable",
+			"net.roboconf.dm.internal.environment.messaging.DmMessageProcessor"
 	};
 
 
@@ -104,9 +104,9 @@ public final class ItUtils {
 			// Override the log configuration in Karaf
 			for( String loggerName : LOGGERS ) {
 				options.add( editConfigurationFilePut(
-						  "etc/org.ops4j.pax.logging.cfg",
-						  "log4j.logger." + loggerName,
-						  bean.getRoboconfLogsLevel() + ", roboconf" ));
+						"etc/org.ops4j.pax.logging.cfg",
+						"log4j.logger." + loggerName,
+						bean.getRoboconfLogsLevel() + ", roboconf" ));
 			}
 
 		} else if( bean.areLogsHidden()) {
@@ -115,9 +115,9 @@ public final class ItUtils {
 			options.add( logLevel( LogLevel.ERROR ));
 			for( String loggerName : LOGGERS ) {
 				options.add( editConfigurationFilePut(
-						  "etc/org.ops4j.pax.logging.cfg",
-						  "log4j.logger." + loggerName,
-						  "ERROR, roboconf" ));
+						"etc/org.ops4j.pax.logging.cfg",
+						"log4j.logger." + loggerName,
+						"ERROR, roboconf" ));
 			}
 
 			// Do not show the Karaf console in the logs

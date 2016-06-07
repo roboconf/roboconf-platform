@@ -51,7 +51,7 @@ import org.ops4j.pax.exam.spi.PaxExamRuntime;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class KarafClient_DmTest extends DmTest {
+public class KarafClientDmTest extends DmTest {
 
 	@Test
 	public void run() throws Exception {

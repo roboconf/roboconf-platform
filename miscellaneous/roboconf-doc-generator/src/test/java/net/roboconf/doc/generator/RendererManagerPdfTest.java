@@ -25,16 +25,16 @@
 
 package net.roboconf.doc.generator;
 
+import static com.codeborne.pdftest.PDF.containsText;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 
-import com.codeborne.pdftest.PDF;
-
-import static com.codeborne.pdftest.PDF.*;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.codeborne.pdftest.PDF;
 
 import net.roboconf.doc.generator.RenderingManager.Renderer;
 

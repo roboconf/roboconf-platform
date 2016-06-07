@@ -42,11 +42,6 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 
-import net.roboconf.core.model.beans.AbstractType;
-import net.roboconf.core.model.beans.Component;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.doc.generator.DocConstants;
-
 import org.apache.commons.collections15.Transformer;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
@@ -56,6 +51,10 @@ import edu.uci.ics.jung.visualization.decorators.AbstractEdgeShapeTransformer;
 import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.DefaultVertexLabelRenderer;
 import edu.uci.ics.jung.visualization.renderers.Renderer.VertexLabel.Position;
+import net.roboconf.core.model.beans.AbstractType;
+import net.roboconf.core.model.beans.Component;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.doc.generator.DocConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -81,12 +80,12 @@ public final class GraphUtils {
 	public static int computeShapeWidth( AbstractType type ) {
 
 		Font font = GraphUtils.getDefaultFont();
-    	BufferedImage img = new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB );
-    	FontMetrics fm = img.getGraphics().getFontMetrics( font );
+		BufferedImage img = new BufferedImage( 1, 1, BufferedImage.TYPE_INT_ARGB );
+		FontMetrics fm = img.getGraphics().getFontMetrics( font );
 
-    	int width = fm.stringWidth( type.getName());
-    	width = Math.max( width, 80 ) + 20;
-    	return width;
+		int width = fm.stringWidth( type.getName());
+		width = Math.max( width, 80 ) + 20;
+		return width;
 	}
 
 
@@ -183,20 +182,20 @@ public final class GraphUtils {
 
 		@Override
 		public Paint transform( AbstractType type ) {
-            return type.equals( this.selectedComponent ) ? this.highlightBgcolor : this.defaultBgColor;
-        }
-    }
+			return type.equals( this.selectedComponent ) ? this.highlightBgcolor : this.defaultBgColor;
+		}
+	}
 
 
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
 	static class VertexFont implements Transformer<AbstractType,Font> {
-        @Override
+		@Override
 		public Font transform( AbstractType type ) {
-            return GraphUtils.getDefaultFont();
-        }
-    }
+			return GraphUtils.getDefaultFont();
+		}
+	}
 
 
 	/**
@@ -223,7 +222,7 @@ public final class GraphUtils {
 			return this;
 		}
 
-    }
+	}
 
 
 	/**
@@ -241,10 +240,10 @@ public final class GraphUtils {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	static class VertexShape implements Transformer<AbstractType,Shape> {
-        @Override
+		@Override
 		public Shape transform( AbstractType type ) {
-        	int width = computeShapeWidth( type );
-        	return new Ellipse2D.Double( -width / 2.0, -SHAPE_HEIGHT / 2.0, width, SHAPE_HEIGHT );
-        }
-    }
+			int width = computeShapeWidth( type );
+			return new Ellipse2D.Double( -width / 2.0, -SHAPE_HEIGHT / 2.0, width, SHAPE_HEIGHT );
+		}
+	}
 }

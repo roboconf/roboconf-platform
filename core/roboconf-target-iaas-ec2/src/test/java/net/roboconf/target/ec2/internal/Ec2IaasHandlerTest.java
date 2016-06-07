@@ -39,10 +39,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
 
 import net.roboconf.target.api.TargetException;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -51,7 +50,7 @@ public class Ec2IaasHandlerTest {
 
 	@Test( expected = TargetException.class )
 	public void testInvalidConfiguration() throws Exception {
-		 Ec2IaasHandler.parseProperties( new HashMap<String,String> ());
+		Ec2IaasHandler.parseProperties( new HashMap<String,String> ());
 	}
 
 

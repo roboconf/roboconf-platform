@@ -39,7 +39,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AbstractLifeCycleManager_BasicTest {
+public class AbstractLifeCycleManagerBasicsTest {
 
 	@Test
 	public void testFactory() {

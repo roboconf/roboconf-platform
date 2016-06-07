@@ -32,19 +32,19 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdGatherLogs;
-
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Completion;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdGatherLogs;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -55,72 +55,72 @@ public class GatherLogsCommand implements Action {
 
 	@Argument( index = 0, name = "application", description = "The application's name", required = true, multiValued = false )
 	@Completion( ApplicationCompleter.class )
-    String applicationName;
+	String applicationName;
 
 	@Argument( index = 1, name = "scoped instance's path", description = "The scoped instance's path", required = false, multiValued = false )
 	@Completion( ScopedInstanceCompleter.class )
-    String scopedInstancePath;
+	String scopedInstancePath;
 
 	@Reference
-    Manager manager;
+	Manager manager;
 
 	// Other fields
 	final Logger logger = Logger.getLogger( getClass().getName());
 	PrintStream out = System.out;
 
 
-    @Override
-    public Object execute() throws Exception {
+	@Override
+	public Object execute() throws Exception {
 
-    	// Prepare the checks
-    	List<Instance> scopedInstances = new ArrayList<> ();
-    	ManagedApplication ma = null;
-    	Instance scopedInstance;
+		// Prepare the checks
+		List<Instance> scopedInstances = new ArrayList<> ();
+		ManagedApplication ma = null;
+		Instance scopedInstance;
 
-    	// Check...
-    	if(( ma = this.manager.applicationMngr().findManagedApplicationByName( this.applicationName )) == null )
-    		this.out.println( "Unknown application: " + this.applicationName + "." );
+		// Check...
+		if(( ma = this.manager.applicationMngr().findManagedApplicationByName( this.applicationName )) == null )
+			this.out.println( "Unknown application: " + this.applicationName + "." );
 
-    	else if( this.scopedInstancePath == null )
-    		scopedInstances.addAll( InstanceHelpers.findAllScopedInstances( ma.getApplication()));
+		else if( this.scopedInstancePath == null )
+			scopedInstances.addAll( InstanceHelpers.findAllScopedInstances( ma.getApplication()));
 
-    	else if(( scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), this.scopedInstancePath )) == null )
-    		this.out.println( "There is no " + this.scopedInstancePath + " instance in " + this.applicationName + "." );
+		else if(( scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), this.scopedInstancePath )) == null )
+			this.out.println( "There is no " + this.scopedInstancePath + " instance in " + this.applicationName + "." );
 
-    	else if( ! InstanceHelpers.isTarget( scopedInstance ))
-    		this.out.println( "Instance " + this.scopedInstancePath + " is not a scoped instance in " + this.applicationName + "." );
+		else if( ! InstanceHelpers.isTarget( scopedInstance ))
+			this.out.println( "Instance " + this.scopedInstancePath + " is not a scoped instance in " + this.applicationName + "." );
 
-    	else
-    		scopedInstances.add( scopedInstance );
+		else
+			scopedInstances.add( scopedInstance );
 
-    	// Send messages
-    	for( Instance inst : scopedInstances ) {
+		// Send messages
+		for( Instance inst : scopedInstances ) {
 
-    		if( inst.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
-    			StringBuilder sb = new StringBuilder( "No message will be sent to " );
-    			sb.append( this.scopedInstancePath );
-    			sb.append( ", the associated agent is not marked as deployed." );
-    			this.out.println( sb.toString());
+			if( inst.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
+				StringBuilder sb = new StringBuilder( "No message will be sent to " );
+				sb.append( this.scopedInstancePath );
+				sb.append( ", the associated agent is not marked as deployed." );
+				this.out.println( sb.toString());
 
-    			continue;
-    		}
+				continue;
+			}
 
-    		if( this.logger.isLoggable( Level.FINE )) {
-    			StringBuilder sb = new StringBuilder( "Sending a request to gather the logs from " );
-    			sb.append( this.scopedInstancePath );
-    			sb.append( " @ " );
-    			sb.append( this.applicationName );
-    			this.logger.fine( sb.toString());
-    		}
+			if( this.logger.isLoggable( Level.FINE )) {
+				StringBuilder sb = new StringBuilder( "Sending a request to gather the logs from " );
+				sb.append( this.scopedInstancePath );
+				sb.append( " @ " );
+				sb.append( this.applicationName );
+				this.logger.fine( sb.toString());
+			}
 
-    		MsgCmdGatherLogs message = new MsgCmdGatherLogs();
-    		this.manager.messagingMngr().sendMessageSafely( ma, inst, message );
-    	}
+			MsgCmdGatherLogs message = new MsgCmdGatherLogs();
+			this.manager.messagingMngr().sendMessageSafely( ma, inst, message );
+		}
 
-    	// Print an indication
-    	File dumpFile = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-logs" );
-    	this.out.println( "On reception, logs will be stored under " + dumpFile.getAbsolutePath() + "..." );
+		// Print an indication
+		File dumpFile = new File( System.getProperty( "java.io.tmpdir" ), "roboconf-logs" );
+		this.out.println( "On reception, logs will be stored under " + dumpFile.getAbsolutePath() + "..." );
 
-    	return null;
-    }
+		return null;
+	}
 }

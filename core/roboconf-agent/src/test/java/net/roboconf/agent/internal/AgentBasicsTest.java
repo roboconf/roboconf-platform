@@ -46,7 +46,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class Agent_BasicsTest {
+public class AgentBasicsTest {
 
 	private Agent agent;
 	private MessagingClientFactoryRegistry registry;

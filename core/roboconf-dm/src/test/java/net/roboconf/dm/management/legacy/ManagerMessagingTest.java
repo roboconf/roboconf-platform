@@ -34,7 +34,7 @@ import org.junit.rules.TemporaryFolder;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class Manager_MessagingTest {
+public class ManagerMessagingTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();

@@ -48,7 +48,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentMessageProcessor_StateChangeTest {
+public class AgentMessageProcessorStateChangeTest {
 
 	private Agent agent;
 

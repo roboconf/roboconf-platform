@@ -32,11 +32,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import net.roboconf.core.model.runtime.ScheduledJob;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.events.IDmListener;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,6 +46,11 @@ import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 import org.quartz.impl.matchers.GroupMatcher;
+
+import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.events.IDmListener;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -135,20 +135,20 @@ public class RoboconfSchedulerTest {
 		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Create several jobs
-		final int MAX = 5;
-		for( int i=0; i<MAX; i++ ) {
+		final int max = 5;
+		for( int i=0; i<max; i++ ) {
 			this.scheduler.saveJob( "job " + i, "cmd", "0 0 0 ? 1 *", "app" );
 		}
 
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
-		Assert.assertEquals( MAX, jobKeys.size());
-		Assert.assertEquals( MAX, Utils.listAllFiles( schedulerDirectory ).size());
+		Assert.assertEquals( max, jobKeys.size());
+		Assert.assertEquals( max, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Delete a job
 		this.scheduler.deleteJob( "job 3" );
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
-		Assert.assertEquals( MAX - 1, jobKeys.size());
-		Assert.assertEquals( MAX - 1, Utils.listAllFiles( schedulerDirectory ).size());
+		Assert.assertEquals( max - 1, jobKeys.size());
+		Assert.assertEquals( max - 1, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Find job properties
 		ScheduledJob job = this.scheduler.findJobProperties( "job 1" );
@@ -242,8 +242,8 @@ public class RoboconfSchedulerTest {
 		Utils.createDirectory( this.scheduler.getSchedulerDirectory());
 
 		// Create several job FILES
-		final int MAX = 5;
-		for( int i=0; i<MAX; i++ ) {
+		final int max = 5;
+		for( int i=0; i<max; i++ ) {
 
 			String jobName = "job " + i;
 
@@ -262,12 +262,12 @@ public class RoboconfSchedulerTest {
 		File schedulerDirectory = this.scheduler.getSchedulerDirectory();
 
 		Set<JobKey> jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
-		Assert.assertEquals( MAX, jobKeys.size());
-		Assert.assertEquals( MAX, Utils.listAllFiles( schedulerDirectory ).size());
+		Assert.assertEquals( max, jobKeys.size());
+		Assert.assertEquals( max, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// List the jobs
 		List<ScheduledJob> jobs = this.scheduler.listJobs();
-		Assert.assertEquals( MAX, jobs.size());
+		Assert.assertEquals( max, jobs.size());
 
 		List<String> jobNames = new ArrayList<> ();
 		for( ScheduledJob job : jobs ) {
@@ -277,7 +277,7 @@ public class RoboconfSchedulerTest {
 			jobNames.add( job.getJobName());
 		}
 
-		Assert.assertEquals( MAX, jobNames.size());
+		Assert.assertEquals( max, jobNames.size());
 	}
 
 
@@ -326,8 +326,8 @@ public class RoboconfSchedulerTest {
 		Utils.createDirectory( this.scheduler.getSchedulerDirectory());
 
 		// Create several job FILES
-		final int MAX = 5;
-		for( int i=0; i<MAX; i++ ) {
+		final int max = 5;
+		for( int i=0; i<max; i++ ) {
 			String jobName = "job " + i;
 
 			Properties props = new Properties();
@@ -348,12 +348,12 @@ public class RoboconfSchedulerTest {
 		File schedulerDirectory = this.scheduler.getSchedulerDirectory();
 
 		Set<JobKey> jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
-		Assert.assertEquals( MAX - 1, jobKeys.size());
-		Assert.assertEquals( MAX, Utils.listAllFiles( schedulerDirectory ).size());
+		Assert.assertEquals( max - 1, jobKeys.size());
+		Assert.assertEquals( max, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// List the jobs
 		List<ScheduledJob> jobs = this.scheduler.listJobs();
-		Assert.assertEquals( MAX, jobs.size());
+		Assert.assertEquals( max, jobs.size());
 
 		List<String> jobNames = new ArrayList<> ();
 		for( ScheduledJob job : jobs ) {
@@ -362,7 +362,7 @@ public class RoboconfSchedulerTest {
 			jobNames.add( job.getJobName());
 		}
 
-		Assert.assertEquals( MAX, jobNames.size());
+		Assert.assertEquals( max, jobNames.size());
 	}
 
 
@@ -372,8 +372,8 @@ public class RoboconfSchedulerTest {
 		Utils.createDirectory( this.scheduler.getSchedulerDirectory());
 
 		// Create several job FILES
-		final int MAX = 5;
-		for( int i=0; i<MAX; i++ ) {
+		final int max = 5;
+		for( int i=0; i<max; i++ ) {
 			String jobName = "job " + i;
 
 			Properties props = new Properties();
@@ -397,7 +397,7 @@ public class RoboconfSchedulerTest {
 
 		Set<JobKey> jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( 0, jobKeys.size());
-		Assert.assertEquals( MAX, Utils.listAllFiles( schedulerDirectory ).size());
+		Assert.assertEquals( max, Utils.listAllFiles( schedulerDirectory ).size());
 	}
 
 
