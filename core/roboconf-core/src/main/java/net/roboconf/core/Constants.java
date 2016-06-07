@@ -139,6 +139,11 @@ public interface Constants {
 	 */
 	String GENERATED = "generated";
 
+	/**
+	 * The Maven directory to store application files.
+	 */
+	String MAVEN_SRC_MAIN_MODEL = "src/main/model/";
+
 
 	/**
 	 * The property to define the messaging type in the DM and agent configuration files.
