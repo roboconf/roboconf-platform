@@ -196,12 +196,21 @@ public class ParsingModelValidatorTest {
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_CHILDREN, "facet with spaces" );
 		errors = ParsingModelValidator.validate( block );
-		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_CHILD_NAME, errors.iterator().next().getErrorCode());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_CHILDREN, "facet with	tabs" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_INVALID_CHILD_NAME, errors.iterator().next().getErrorCode());
+
+		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_CHILDREN, "facet-with-minus-symbols" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_CHILDREN, "facet_with_underscores" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
 
 
 		// Component Facets
@@ -252,7 +261,8 @@ public class ParsingModelValidatorTest {
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_COMPONENT_FACETS, "facet with spaces" );
 		errors = ParsingModelValidator.validate( block );
-		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_COMPONENT_FACETS, "facet with special ch@r@cters" );
 		errors = ParsingModelValidator.validate( block );
@@ -313,7 +323,8 @@ public class ParsingModelValidatorTest {
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXTENDS, "facet with spaces" );
 		errors = ParsingModelValidator.validate( block );
-		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setNameAndValue( ParsingConstants.PROPERTY_GRAPH_EXTENDS, "facet with	tabs and speci@l" );
 		errors = ParsingModelValidator.validate( block );
@@ -549,7 +560,8 @@ public class ParsingModelValidatorTest {
 
 		block.setName( "facet name" );
 		errors = ParsingModelValidator.validate( block );
-		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "facet n@me" );
 		errors = ParsingModelValidator.validate( block );
@@ -576,6 +588,14 @@ public class ParsingModelValidatorTest {
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_EMPTY_FACET_NAME, errors.iterator().next().getErrorCode());
 
+		block.setName( "facet-name" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setName( "facet_name" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
 		block.setName( "name" );
 		block.getInnerBlocks().add( new BlockProperty( file, "whatever", "whatever" ));
 		errors = ParsingModelValidator.validate( block );
@@ -600,21 +620,22 @@ public class ParsingModelValidatorTest {
 		block.setName( "component#" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "component name" );
 		errors = ParsingModelValidator.validate( block );
-		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "component n*me" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( ".component" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "component." );
 		errors = ParsingModelValidator.validate( block );
@@ -630,6 +651,14 @@ public class ParsingModelValidatorTest {
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_EMPTY_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+
+		block.setName( "component-name" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setName( "component_name" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
 
 		block.setName( "name" );
 		block.getInnerBlocks().add( new BlockProperty( file, ParsingConstants.PROPERTY_GRAPH_EXTENDS, "facet1" ));
@@ -674,21 +703,22 @@ public class ParsingModelValidatorTest {
 		block.setName( "component#" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "component name" );
 		errors = ParsingModelValidator.validate( block );
-		Assert.assertEquals( 0, errors.size());
+		Assert.assertEquals( 1, errors.size());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "component n@me" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( ".component" );
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
-		Assert.assertEquals( ErrorCode.PM_INVALID_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, errors.iterator().next().getErrorCode());
 
 		block.setName( "component." );
 		errors = ParsingModelValidator.validate( block );
@@ -704,6 +734,14 @@ public class ParsingModelValidatorTest {
 		errors = ParsingModelValidator.validate( block );
 		Assert.assertEquals( 1, errors.size());
 		Assert.assertEquals( ErrorCode.PM_EMPTY_COMPONENT_NAME, errors.iterator().next().getErrorCode());
+
+		block.setName( "component-name" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
+
+		block.setName( "component_name" );
+		errors = ParsingModelValidator.validate( block );
+		Assert.assertEquals( 0, errors.size());
 
 		block.setName( "name" );
 		block.getInnerBlocks().add( new BlockProperty( file, ParsingConstants.PROPERTY_GRAPH_EXTENDS, "anyPropertyToOverride" ));

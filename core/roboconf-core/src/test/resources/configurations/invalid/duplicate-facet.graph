@@ -1,9 +1,9 @@
-component A {
+componentA {
 	installer: whatever;
 	facets: fA;
 }
 
-component B {
+componentB {
 	installer: B;
 	facets: fB;
 }

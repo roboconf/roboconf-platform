@@ -1,11 +1,11 @@
-component A {
+componentA {
 	installer: whatever;
 }
 
-component B {
+componentB {
 	installer: B;
 }
 
-component A {
+componentA {
 	installer: whatever;
 }

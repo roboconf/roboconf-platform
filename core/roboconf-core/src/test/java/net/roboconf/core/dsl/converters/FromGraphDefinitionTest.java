@@ -31,18 +31,17 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
-import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -262,15 +261,15 @@ public class FromGraphDefinitionTest {
 		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
 		Graphs graphs = fromDef.buildGraphs( f );
 
-		Assert.assertEquals( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 7, fromDef.getErrors().size());
+		for( ParsingError error : fromDef.getErrors()) {
+			boolean a1 = ErrorCode.PM_INVALID_NAME == error.getErrorCode();
+			boolean a2 = ErrorCode.PM_INVALID_CHILD_NAME == error.getErrorCode();
+			Assert.assertTrue( error.getErrorCode().name(), a1 || a2 );
+		}
 
-		Component component = ComponentHelpers.findComponent( graphs, "hello world" );
-		Assert.assertNotNull( component );
-		Assert.assertTrue( component.getFacets().contains( new Facet( "war archive" )));
-
-		component = ComponentHelpers.findComponent( graphs, "ecom" );
-		Assert.assertNotNull( component );
-		Assert.assertTrue( component.getFacets().contains( new Facet( "war archive" )));
+		Assert.assertEquals( 0, graphs.getRootComponents().size());
+		Assert.assertEquals( 0, graphs.getFacetNameToFacet().size());
 	}
 
 
