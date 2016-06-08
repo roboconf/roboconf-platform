@@ -121,13 +121,16 @@
 					<instructions>
 						<Bundle-SymbolicName>${project.groupId}.${project.artifactId};singleton=true</Bundle-SymbolicName>
 						<Import-Package>
-							net.roboconf.*;version="${version.range}"
+							net.roboconf.*;version="${version.range}",
+							org.slf4j.*
 						</Import-Package>
 						<Export-Package>
 							!net.roboconf.dm.scheduler.internal.*,
 							net.roboconf.dm.scheduler.*
 						</Export-Package>
-						<Embed-Dependency>*;scope=compile|runtime;inline=true;groupId=!net.roboconf</Embed-Dependency>
+						<Embed-Dependency>
+							*;scope=compile|runtime;inline=true;groupId=!net.roboconf;groupId=!org.slf4j
+						</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
