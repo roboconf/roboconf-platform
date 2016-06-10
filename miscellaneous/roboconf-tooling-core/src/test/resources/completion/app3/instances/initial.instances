@@ -1,0 +1,19 @@
+
+# This is a comment
+# over several lines.
+
+instance of c2 {
+
+	name: my-c2;
+}
+
+instance of c2 {
+
+	name : root;
+	instance of  c1 {
+		
+		
+		
+	}
+}
+
