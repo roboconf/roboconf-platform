@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,6 +68,85 @@ public final class CompletionUtils {
 	 */
 	public static String removeComments( String line ) {
 		return line.replaceAll( "\\s*#[^\n]*", "" );
+	}
+
+
+	/**
+	 * Finds all the graph files that can be imported.
+	 * @param appDirectory the application's directory
+	 * @param editedFile the graph file that is being edited
+	 * @param fileContent the file content (not null)
+	 * @return a non-null set of (relative) file paths
+	 */
+	public static Set<String> findGraphFilesToImport( File appDirectory, File editedFile, String fileContent ) {
+
+		File graphDir = new File( appDirectory, Constants.PROJECT_DIR_GRAPH );
+		return findFilesToImport( graphDir, Constants.FILE_EXT_GRAPH, editedFile, fileContent );
+	}
+
+
+	/**
+	 * Finds all the instances files that can be imported.
+	 * @param appDirectory the application's directory
+	 * @param editedFile the graph file that is being edited
+	 * @param fileContent the file content (not null)
+	 * @return a non-null set of (relative) file paths
+	 */
+	public static Set<String> findInstancesFilesToImport( File appDirectory, File editedFile, String fileContent ) {
+
+		File instancesDir = new File( appDirectory, Constants.PROJECT_DIR_INSTANCES );
+		return findFilesToImport( instancesDir, Constants.FILE_EXT_INSTANCES, editedFile, fileContent );
+	}
+
+
+	/**
+	 * Finds all the files that can be imported.
+	 * @param searchDirectory the search's directory
+	 * @param fileExtension the file extension to search for
+	 * @param editedFile the graph file that is being edited
+	 * @param fileContent the file content (not null)
+	 * @return a non-null set of (relative) file paths
+	 */
+	private static Set<String> findFilesToImport(
+			File searchDirectory,
+			String fileExtension,
+			File editedFile,
+			String fileContent ) {
+
+		// Find all the files
+		Set<String> result = new TreeSet<> ();
+		if( searchDirectory.exists()) {
+
+			for( File f : Utils.listAllFiles( searchDirectory, fileExtension )) {
+				if( f.equals( editedFile ))
+					continue;
+
+				String path = Utils.computeFileRelativeLocation( searchDirectory, f );
+				result.add( path );
+			}
+		}
+
+		// Remove those that are already imported
+		Pattern importPattern = Pattern.compile( "\\b" + ParsingConstants.KEYWORD_IMPORT + "\\s+(.*)", Pattern.CASE_INSENSITIVE );
+		Matcher m = importPattern.matcher( fileContent );
+		while( m.find()) {
+			String imp = m.group( 1 ).trim();
+			if( imp.endsWith( ";" ))
+				imp = imp.substring( 0, imp.length() - 1 );
+
+			result.remove( imp.trim());
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * @param c a character
+	 * @return true if it is '\n' or '\r'
+	 */
+	public static boolean isLineBreak( char c ) {
+		return c == '\n' || c == '\r';
 	}
 
 
@@ -230,7 +311,8 @@ public final class CompletionUtils {
 		// TreeMap: keys are sorted alphabetically.
 		Map<String,String> result = new TreeMap<> ();
 		for( RoboconfTypeBean type : findAllTypes( appDirectory ).values()) {
-			result.put( type.getName() + ".*", "Import all the variables" );
+			if( type.exportedVariables.size() > 0 )
+				result.put( type.getName() + ".*", "Import all the variables" );
 
 			for( Map.Entry<String,String> entry : type.exportedVariables.entrySet()) {
 				String desc = resolveStringDescription( entry.getKey(), entry.getValue());

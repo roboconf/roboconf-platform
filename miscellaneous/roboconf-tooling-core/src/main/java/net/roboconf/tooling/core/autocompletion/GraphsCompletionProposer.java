@@ -25,10 +25,18 @@
 
 package net.roboconf.tooling.core.autocompletion;
 
+import static net.roboconf.core.dsl.ParsingConstants.KEYWORD_FACET;
+import static net.roboconf.core.dsl.ParsingConstants.KEYWORD_IMPORT;
+import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_COMPONENT_FACETS;
+import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_COMPONENT_IMPORTS;
+import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_COMPONENT_INSTALLER;
+import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_GRAPH_CHILDREN;
+import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_GRAPH_EXTENDS;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.basicProposal;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.buildProposalsFromMap;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findAllExportedVariables;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findTypeNames;
+import static net.roboconf.tooling.core.autocompletion.CompletionUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.startsWith;
 
 import java.io.File;
@@ -48,8 +56,8 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 	static final String FACET_BLOCK = "New facet block";
 	static final String COMPONENT_BLOCK = "New component block";
 
-	static final String FACET_PREFIX = ParsingConstants.KEYWORD_FACET + " ";
-	static final String IMPORT_PREFIX = ParsingConstants.KEYWORD_IMPORT + " ";
+	static final String FACET_PREFIX = KEYWORD_FACET + " ";
+	static final String IMPORT_PREFIX = KEYWORD_IMPORT + " ";
 
 	static final String[] KNOWN_INSTALLERS = { "script", "puppet", "logger" };
 	static final String[] COMPONENT_PROPERTY_NAMES = {
@@ -69,15 +77,18 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 
 
 	private final File appDirectory;
+	private final File editedFile;
 
 
 
 	/**
 	 * Constructor.
 	 * @param appDirectory
+	 * @param editedFile
 	 */
-	public GraphsCompletionProposer( File appDirectory ) {
+	public GraphsCompletionProposer( File appDirectory, File editedFile ) {
 		this.appDirectory = appDirectory;
+		this.editedFile = editedFile;
 	}
 
 
@@ -90,15 +101,26 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 
 		switch( ctx.kind ) {
 		case NEUTRAL:
-			// There cannot accept any word before the offset.
+
+			// Import
+			if( startsWith( IMPORT_PREFIX, ctx.property )) {
+				// "import" or a part of this word
+				if( ! ctx.property.matches( "(?i)" + KEYWORD_IMPORT + "\\s+" ))
+					proposals.add( basicProposal( IMPORT_PREFIX, ctx.property, true ));
+
+				// "import "
+				else for( String graphImport : CompletionUtils.findGraphFilesToImport( this.appDirectory, this.editedFile, text )) {
+					if( startsWith( graphImport, ctx.lastWord ))
+						proposals.add( basicProposal( graphImport, "", false ));
+				}
+			}
+
+			// From here, there cannot be any word before the offset.
 			if( ! Utils.isEmptyOrWhitespaces( ctx.lastWord ))
 				break;
 
-			// Import
-			if( startsWith( IMPORT_PREFIX, ctx.property ))
-				proposals.add( basicProposal( IMPORT_PREFIX, ctx.property, true ));
-
 			// Facet
+			ctx.property = ctx.property.trim();
 			if( startsWith( FACET_PREFIX, ctx.property )) {
 
 				// Basic proposal: facet
@@ -143,11 +165,8 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 
 			break;
 
-		case IMPORT:
-			System.out.println( "ok" );
-			break;
-
 		case PROPERTY:
+			ctx.property = ctx.property.trim();
 			Map<String,String> candidates = findPropertyCandidates( ctx );
 			proposals.addAll( buildProposalsFromMap( candidates, ctx.lastWord ));
 			break;
@@ -166,7 +185,6 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 	private static enum CtxKind {
 		NEUTRAL, 		// Default: beginning of the document or between two types
 		COMMENT,		// We are inside a comment
-		IMPORT,			// Import
 		ATTRIBUTE,		// At the beginning or right after a colon or an opening curly bracket
 		PROPERTY;		// We are defining a property
 	}
@@ -195,7 +213,7 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 		int n;
 		for( n = text.length() - 1; n >= 0; n-- ) {
 			char c = text.charAt( n );
-			if( c == '\n' || c == '\r' )
+			if( isLineBreak( c ))
 				break;
 
 			if( c == '#' ) {
@@ -236,6 +254,7 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 			if( Character.isWhitespace( c ) && lastWord == null ) {
 				lastWord = sb.toString();
 				sb.setLength( 0 );
+				sb.append( c );
 			}
 
 			// Same thing after a curly bracket
@@ -247,7 +266,7 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 				break;
 
 			// Line break? That depends...
-			else if( c == '\n' || c == '\r' ) {
+			else if( isLineBreak( c )) {
 				if( bracketFound )
 					break;
 
@@ -267,20 +286,20 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 			lastLine = sb.toString();
 
 		ctx.lastWord = lastWord == null ? "" : lastWord;
-		ctx.property = lastLine.trim();
+		ctx.property = lastLine;
 
 		// Time to analyze
-		if( ctx.property.endsWith( ":" )
-				|| ctx.property.endsWith( "," )) {
+		if( ctx.property.trim().endsWith( ":" )
+				|| ctx.property.trim().endsWith( "," )) {
 			ctx.kind = CtxKind.PROPERTY;
 
-		} else if( ctx.property.isEmpty()) {
-			if( ! Utils.isEmptyOrWhitespaces( sb.toString())
-					&& bracketFound )
+		} else if( Utils.isEmptyOrWhitespaces( ctx.property )) {
+			if( bracketFound
+					&& ! Utils.isEmptyOrWhitespaces( sb.toString()))
 				ctx.kind = CtxKind.ATTRIBUTE;
 		}
 
-		if( sb.toString().matches( "(?i)\\s*" + ParsingConstants.KEYWORD_FACET + "\\s+.*" ))
+		if( sb.toString().matches( "(?i)\\s*" + KEYWORD_FACET + "\\s+.*" ))
 			ctx.facet = true;
 
 		return ctx;
@@ -297,20 +316,20 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 	private Map<String,String> findPropertyCandidates( Ctx ctx ) {
 
 		Map<String,String> result = new TreeMap<> ();
-		if( ! ctx.facet && ctx.property.matches( ParsingConstants.PROPERTY_COMPONENT_INSTALLER + "\\s*:\\s*" )) {
+		if( ! ctx.facet && ctx.property.matches( PROPERTY_COMPONENT_INSTALLER + "\\s*:\\s*" )) {
 			for( String installer : KNOWN_INSTALLERS )
 				result.put( installer, null );
 
-		} else if( ctx.property.matches( ParsingConstants.PROPERTY_GRAPH_CHILDREN + "\\s*:\\s*.*" )) {
+		} else if( ctx.property.matches( PROPERTY_GRAPH_CHILDREN + "\\s*:\\s*.*" )) {
 			result.putAll( findTypeNames( this.appDirectory, true, true ));
 
-		} else if( ctx.property.matches( ParsingConstants.PROPERTY_GRAPH_EXTENDS + "\\s*:\\s*.*" )) {
+		} else if( ctx.property.matches( PROPERTY_GRAPH_EXTENDS + "\\s*:\\s*.*" )) {
 			result.putAll( findTypeNames( this.appDirectory, ctx.facet, ! ctx.facet ));
 
-		} else if( ! ctx.facet && ctx.property.matches( ParsingConstants.PROPERTY_COMPONENT_FACETS + "\\s*:\\s*.*" )) {
+		} else if( ! ctx.facet && ctx.property.matches( PROPERTY_COMPONENT_FACETS + "\\s*:\\s*.*" )) {
 			result.putAll( findTypeNames( this.appDirectory, true, false ));
 
-		} else if( ! ctx.facet && ctx.property.matches( ParsingConstants.PROPERTY_COMPONENT_IMPORTS + "\\s*:\\s*.*" )) {
+		} else if( ! ctx.facet && ctx.property.matches( PROPERTY_COMPONENT_IMPORTS + "\\s*:\\s*.*" )) {
 			result.putAll( findAllExportedVariables( this.appDirectory ));
 		}
 

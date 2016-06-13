@@ -276,7 +276,7 @@ public class FileDefinitionParser {
 		String[] parts = splitFromInlineComment( line );
 		String realLine = parts[ 0 ].trim();
 
-		String regex = "import\\s+([^;]*)";
+		String regex = ParsingConstants.KEYWORD_IMPORT + "\\s+([^;]*)";
 		Matcher m = Pattern.compile( regex, Pattern.CASE_INSENSITIVE ).matcher( realLine );
 		if( m.find()) {
 			result = P_CODE_YES;

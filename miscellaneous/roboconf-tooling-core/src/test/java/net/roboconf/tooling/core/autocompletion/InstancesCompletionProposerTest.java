@@ -64,10 +64,20 @@ public class InstancesCompletionProposerTest extends AbstractCompletionProposerT
 
 
 	@Test
-	public void testOffsetInComment() throws Exception {
+	public void testOffsetInComment_1() throws Exception {
 
 		// Expected: nothing
 		Couple couple = prepare( "app1", "initial.instances", 9 );
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 0, proposals.size());
+	}
+
+
+	@Test
+	public void testOffsetInComment_2() throws Exception {
+
+		// Expected: nothing
+		Couple couple = prepare( "app1", "initial.instances", 32 );
 		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
 		Assert.assertEquals( 0, proposals.size());
 	}
@@ -729,6 +739,120 @@ public class InstancesCompletionProposerTest extends AbstractCompletionProposerT
 	}
 
 
+	@Test
+	public void testOffsetForInstancesImportAllFiles() throws Exception {
+
+		// Expected: 3 files to import
+		Couple couple = prepare( "app4", "initial.instances", 700 );
+		couple.text += "\nimport ";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 3, proposals.size());
+
+		String[] expected = {
+				"imports/imp1.instances",
+				"imports/subimports/imp2.instances",
+				"imports/subimports/imp3.instances"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
+	@Test
+	public void testOffsetForInstancesImportNoSpaceAfterKeyword() throws Exception {
+
+		// Expected: "import"
+		Couple couple = prepare( "app4", "initial.instances", 700 );
+		couple.text += "\nimport";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 1, proposals.size());
+
+		Assert.assertEquals( KEYWORD_IMPORT, proposals.get( 0 ).getProposalName());
+		Assert.assertEquals( IMPORT_PREFIX, proposals.get( 0 ).getProposalString());
+		Assert.assertNull( proposals.get( 0 ).getProposalDescription());
+		Assert.assertEquals( KEYWORD_IMPORT.length(), proposals.get( 0 ).getReplacementOffset());
+	}
+
+
+	@Test
+	public void testOffsetForInstancesImportWithPrefix() throws Exception {
+
+		// Expected: 2 files to import
+		Couple couple = prepare( "app4", "initial.instances", 700 );
+		couple.text += "\nimport imports/s";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 2, proposals.size());
+
+		String[] expected = {
+				"imports/subimports/imp2.instances",
+				"imports/subimports/imp3.instances"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
+	@Test
+	public void testOffsetForInstancesImportAvoidDuplicates() throws Exception {
+
+		// Expected: 2 files to import
+		Couple couple = prepare( "app4", "initial.instances", 700 );
+		couple.text += "\nimport imports/subimports/imp2.instances\n\nimport ";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 2, proposals.size());
+
+		String[] expected = {
+				"imports/imp1.instances",
+				"imports/subimports/imp3.instances"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
+	@Test
+	public void testOffsetForInstancesImportAvoidNastyDuplicates() throws Exception {
+
+		// Expected: 2 files to import
+		Couple couple = prepare( "app4", "initial.instances", 700 );
+		couple.text += "\nimport imports/subimports/imp2.instances  ;   \n\nimport imp";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 2, proposals.size());
+
+		String[] expected = {
+				"imports/imp1.instances",
+				"imports/subimports/imp3.instances"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
 	/**
 	 * Prepares the expected replacement text with the right indentation.
 	 * @param level the indentation level
@@ -818,15 +942,16 @@ public class InstancesCompletionProposerTest extends AbstractCompletionProposerT
 	protected Couple prepare( String appName, String fileName, int offset )
 	throws IOException, URISyntaxException {
 
-		Couple result = new Couple();
 		File appDir = TestUtils.findTestFile( "/completion/" + appName );
-		result.proposer = new InstancesCompletionProposer( appDir );
+		File instancesFile = new File( appDir, Constants.PROJECT_DIR_INSTANCES + "/" + fileName );
+
+		Couple result = new Couple();
+		result.proposer = new InstancesCompletionProposer( appDir, instancesFile );
 
 		String cacheKey = appName + "/" + fileName;
 		String fileContent = CACHE.get( cacheKey );
 		if( fileContent == null ) {
-			File graphFile = new File( appDir, Constants.PROJECT_DIR_INSTANCES + "/" + fileName );
-			fileContent = Utils.readFileContent( graphFile );
+			fileContent = Utils.readFileContent( instancesFile );
 			CACHE.put( cacheKey, fileContent );
 		}
 

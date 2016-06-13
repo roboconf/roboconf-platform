@@ -78,10 +78,20 @@ public class GraphsCompletionProposerTest extends AbstractCompletionProposerTest
 
 
 	@Test
-	public void testOffsetRightBeforeComment() throws Exception {
+	public void testOffsetRightBeforeComment_1() throws Exception {
 
 		// Expected: import, facet, facet block, component block
 		Couple couple = prepare( "app1", "edited1.graph", 1 );
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		verifyNeutralOffset( proposals );
+	}
+
+
+	@Test
+	public void testOffsetRightBeforeComment_2() throws Exception {
+
+		// Expected: import, facet, facet block, component block
+		Couple couple = prepare( "app1", "edited1.graph", 21 );
 		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
 		verifyNeutralOffset( proposals );
 	}
@@ -724,6 +734,120 @@ public class GraphsCompletionProposerTest extends AbstractCompletionProposerTest
 
 
 	@Test
+	public void testOffsetForGraphImportAllFiles() throws Exception {
+
+		// Expected: 3 files to import
+		Couple couple = prepare( "app3", "edited3.graph", 700 );
+		couple.text += "\nimport ";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 3, proposals.size());
+
+		String[] expected = {
+				"imports/imp1.graph",
+				"imports/subimports/imp2.graph",
+				"imports/subimports/imp3.graph"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
+	@Test
+	public void testOffsetForGraphImportNoSpaceAfterKeyword() throws Exception {
+
+		// Expected: "import"
+		Couple couple = prepare( "app3", "edited3.graph", 700 );
+		couple.text += "\nimport";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 1, proposals.size());
+
+		Assert.assertEquals( KEYWORD_IMPORT, proposals.get( 0 ).getProposalName());
+		Assert.assertEquals( IMPORT_PREFIX, proposals.get( 0 ).getProposalString());
+		Assert.assertNull( proposals.get( 0 ).getProposalDescription());
+		Assert.assertEquals( KEYWORD_IMPORT.length(), proposals.get( 0 ).getReplacementOffset());
+	}
+
+
+	@Test
+	public void testOffsetForGraphImportWithPrefix() throws Exception {
+
+		// Expected: 2 files to import
+		Couple couple = prepare( "app3", "edited3.graph", 700 );
+		couple.text += "\nimport imports/s";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 2, proposals.size());
+
+		String[] expected = {
+				"imports/subimports/imp2.graph",
+				"imports/subimports/imp3.graph"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
+	@Test
+	public void testOffsetForGraphImportAvoidDuplicates() throws Exception {
+
+		// Expected: 2 files to import
+		Couple couple = prepare( "app3", "edited3.graph", 700 );
+		couple.text += "\nimport imports/subimports/imp2.graph\n\nimport ";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 2, proposals.size());
+
+		String[] expected = {
+				"imports/imp1.graph",
+				"imports/subimports/imp3.graph"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
+	@Test
+	public void testOffsetForGraphImportAvoidNastyDuplicates() throws Exception {
+
+		// Expected: 2 files to import
+		Couple couple = prepare( "app3", "edited3.graph", 700 );
+		couple.text += "\nimport imports/subimports/imp2.graph  ;   \n\nimport imp";
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 2, proposals.size());
+
+		String[] expected = {
+				"imports/imp1.graph",
+				"imports/subimports/imp3.graph"
+		};
+
+		for( int i=0; i<expected.length; i++ ) {
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalName());
+			Assert.assertEquals( expected[ i ], proposals.get( i ).getProposalString());
+			Assert.assertNull( proposals.get( i ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( i ).getReplacementOffset());
+		}
+	}
+
+
+	@Test
 	public void testOffsetForVariablesImportsWithoutPrefix() throws Exception {
 
 		// Expected: logger
@@ -797,14 +921,15 @@ public class GraphsCompletionProposerTest extends AbstractCompletionProposerTest
 	protected Couple prepare( String appName, String fileName, int offset )
 	throws IOException, URISyntaxException {
 
-		Couple result = new Couple();
 		File appDir = TestUtils.findTestFile( "/completion/" + appName );
-		result.proposer = new GraphsCompletionProposer( appDir );
+		File graphFile = new File( appDir, Constants.PROJECT_DIR_GRAPH + "/" + fileName );
+
+		Couple result = new Couple();
+		result.proposer = new GraphsCompletionProposer( appDir, graphFile );
 
 		String cacheKey = appName + "/" + fileName;
 		String fileContent = CACHE.get( cacheKey );
 		if( fileContent == null ) {
-			File graphFile = new File( appDir, Constants.PROJECT_DIR_GRAPH + "/" + fileName );
 			fileContent = Utils.readFileContent( graphFile );
 			CACHE.put( cacheKey, fileContent );
 		}

@@ -25,12 +25,14 @@
 
 package net.roboconf.tooling.core.autocompletion;
 
+import static net.roboconf.core.dsl.ParsingConstants.KEYWORD_IMPORT;
 import static net.roboconf.core.dsl.ParsingConstants.KEYWORD_INSTANCE_OF;
 import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_INSTANCE_CHANNELS;
 import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_INSTANCE_NAME;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.basicProposal;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.buildProposalsFromMap;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findAllTypes;
+import static net.roboconf.tooling.core.autocompletion.CompletionUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.resolveStringDescription;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.startsWith;
 
@@ -45,7 +47,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Component;
@@ -59,21 +60,24 @@ import net.roboconf.tooling.core.autocompletion.CompletionUtils.RoboconfTypeBean
 public class InstancesCompletionProposer implements ICompletionProposer {
 
 	static final String COMPONENT_NAME = "component";
-	static final String IMPORT_PREFIX = ParsingConstants.KEYWORD_IMPORT + " ";
+	static final String IMPORT_PREFIX = KEYWORD_IMPORT + " ";
 	static final String INSTANCE_OF_PREFIX = KEYWORD_INSTANCE_OF + " ";
 	static final String INSTANCE_OF_BLOCK = "New instance block";
 
 	private String errorMsg;
 	private final File appDirectory;
+	private final File editedFile;
 
 
 
 	/**
 	 * Constructor.
 	 * @param appDirectory
+	 * @param editedFile
 	 */
-	public InstancesCompletionProposer( File appDirectory ) {
+	public InstancesCompletionProposer( File appDirectory, File editedFile ) {
 		this.appDirectory = appDirectory;
+		this.editedFile = editedFile;
 	}
 
 
@@ -94,6 +98,14 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 
 		boolean addImport = true;
 		switch( ctx.kind ) {
+		case IMPORT:
+			for( String instanceImport : CompletionUtils.findInstancesFilesToImport( this.appDirectory, this.editedFile, text )) {
+				if( startsWith( instanceImport, ctx.lastWord ))
+					proposals.add( basicProposal( instanceImport, "", false ));
+			}
+
+			break;
+
 		case ATTRIBUTE:
 			addImport = false;
 			Map<String,String> candidates = findExportedVariableNames( ctx );
@@ -165,6 +177,7 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 		COMPONENT_NAME, 	// Right after "instance of"
 		ATTRIBUTE, 			// At the beginning or right after a colon or an opening curly bracket
 		ATTRIBUTE_VALUE,	// After a colon
+		IMPORT,				// If we are in a file import
 		NOTHING;			// Eliminate some cases
 	}
 
@@ -191,7 +204,7 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 		int n;
 		for( n = text.length() - 1; n >= 0; n-- ) {
 			char c = text.charAt( n );
-			if( c == '\n' || c == '\r' )
+			if( isLineBreak( c ))
 				break;
 
 			if( c == '#' ) {
@@ -235,7 +248,7 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 				lastWord = sb.toString();
 
 			// Store the last line.
-			if(( c == '\n' || c == '\r' ) && lastLine == null )
+			if( isLineBreak( c ) && lastLine == null )
 				lastLine = sb.toString();
 
 			// After a semicolon: we should suggest new attributes
@@ -255,6 +268,10 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 				cmp = cmp.trim().replaceAll( "\\s{2,}", " " );
 				if( cmp.equals( KEYWORD_INSTANCE_OF ))
 					ctx.kind = CtxKind.COMPONENT_NAME;
+
+				else if( cmp.equals( KEYWORD_IMPORT )
+						&& ! sb.toString().matches( ".*" + KEYWORD_IMPORT ))
+					ctx.kind = CtxKind.IMPORT;
 			}
 		}
 
