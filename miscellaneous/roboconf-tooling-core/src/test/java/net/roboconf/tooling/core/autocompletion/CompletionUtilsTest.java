@@ -27,8 +27,12 @@ package net.roboconf.tooling.core.autocompletion;
 
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.DEFAULT_VALUE;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.SET_BY_ROBOCONF;
+import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findAllTypes;
+import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findFilesToImport;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.resolveStringDescription;
+
+import java.io.File;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -60,5 +64,18 @@ public class CompletionUtilsTest {
 
 		Assert.assertEquals( DEFAULT_VALUE + "val", resolveStringDescription( "", "val" ));
 		Assert.assertEquals( DEFAULT_VALUE + "val", CompletionUtils.resolveStringDescription( "toto" + Constants.SPECIFIC_VARIABLE_IP, "val" ));
+	}
+
+
+	@Test
+	public void testFindFilesToImport_inexistingSearchDirectory() {
+		Assert.assertEquals( 0, findFilesToImport( new File( "whatever" ), null, null, "" ).size());
+	}
+
+
+	@Test
+	public void testFindAllTypes_noDirectory() {
+		Assert.assertEquals( 0, findAllTypes( new File( "whatever" )).size());
+		Assert.assertEquals( 0, findAllTypes( null ).size());
 	}
 }

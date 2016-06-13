@@ -26,21 +26,25 @@
 package net.roboconf.tooling.core.autocompletion;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.dsl.ParsingConstants;
-import net.roboconf.core.model.beans.ExportedVariable;
-import net.roboconf.core.model.helpers.VariableHelpers;
+import net.roboconf.core.dsl.converters.FromGraphDefinition;
+import net.roboconf.core.model.beans.AbstractType;
+import net.roboconf.core.model.beans.Facet;
+import net.roboconf.core.model.beans.Graphs;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.tooling.core.autocompletion.ICompletionProposer.RoboconfCompletionProposal;
 
@@ -51,6 +55,7 @@ public final class CompletionUtils {
 
 	public static final String DEFAULT_VALUE = "Default value: ";
 	public static final String SET_BY_ROBOCONF = "Value set dynamically by Roboconf";
+	public static final String IMPORT_ALL_THE_VARIABLES = "Import all the variables";
 
 
 	/**
@@ -107,7 +112,7 @@ public final class CompletionUtils {
 	 * @param fileContent the file content (not null)
 	 * @return a non-null set of (relative) file paths
 	 */
-	private static Set<String> findFilesToImport(
+	static Set<String> findFilesToImport(
 			File searchDirectory,
 			String fileExtension,
 			File editedFile,
@@ -196,49 +201,35 @@ public final class CompletionUtils {
 
 		List<File> graphFiles = new ArrayList<> ();
 		File graphDirectory = appDirectory;
-		if( graphDirectory != null )
-			graphFiles = Utils.listAllFiles( graphDirectory, "graph" );
-
-		final Pattern typePattern = Pattern.compile( "^((#[^#\n\r]*\r?\n)*)([^\n#{]+)\\{([^}]+)\\}", Pattern.MULTILINE );
-		final Pattern exportsPattern = Pattern.compile( ParsingConstants.PROPERTY_GRAPH_EXPORTS + "\\s*:([^;]+);", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE );
+		if( graphDirectory != null
+				&& graphDirectory.exists())
+			graphFiles = Utils.listAllFiles( graphDirectory, Constants.FILE_EXT_GRAPH );
 
 		Map<String,RoboconfTypeBean> result = new HashMap<> ();
 		for( File f : graphFiles ) {
 			try {
-				String s = Utils.readFileContent( f );
-				Matcher m = typePattern.matcher( s );
-				while( m.find()) {
+				FromGraphDefinition converter = new FromGraphDefinition( appDirectory, true );
+				Graphs g = converter.buildGraphs( f );
 
-					String lastComment = m.group( 1 );
-					String name = m.group( 3 ).trim();
-					if( lastComment != null )
-						lastComment = lastComment.replaceAll( "#\\s*", "" ).trim();
+				Collection<AbstractType> types = new ArrayList<> ();
+				types.addAll( ComponentHelpers.findAllComponents( g ));
+				types.addAll( g.getFacetNameToFacet().values());
 
-					boolean isFacet = name.matches( ParsingConstants.KEYWORD_FACET + "\\s+.*" );
-					if( isFacet )
-						name = name.substring( ParsingConstants.KEYWORD_FACET.length()).trim();
+				for( AbstractType type : types ) {
+					RoboconfTypeBean bean = new RoboconfTypeBean(
+							type.getName(),
+							converter.getTypeAnnotations().get( type.getName()),
+							type instanceof Facet );
 
-					RoboconfTypeBean type = new RoboconfTypeBean( name, lastComment, isFacet );
-					result.put( type.getName(), type );
-
-					String properties = m.group( 3 ).trim();
-					Matcher exportsMatcher = exportsPattern.matcher( properties );
-					while( exportsMatcher.find()) {
-
-						String exports = exportsMatcher.group( 1 ).trim();
-						for( String varDecl : Utils.splitNicelyWithPattern( exports, ",|\\\\" )) {
-							if( Utils.isEmptyOrWhitespaces( varDecl ))
-								continue;
-
-							Map.Entry<String,String> entry = VariableHelpers.parseExportedVariable( varDecl );
-							ExportedVariable var = new ExportedVariable( entry.getKey(), entry.getValue());
-							type.exportedVariables.put( var.getName(), var.getValue());
-						}
+					result.put( type.getName(), bean );
+					for( Map.Entry<String,String> entry : ComponentHelpers.findAllExportedVariables( type ).entrySet()) {
+						bean.exportedVariables.put( entry.getKey(), entry.getValue());
 					}
 				}
 
-			} catch( IOException e ) {
-				// TODO: RoboconfEclipsePlugin.log( e, IStatus.ERROR, "Failed to read content from file " + f.getName());
+			} catch( Exception e ) {
+				Logger logger = Logger.getLogger( CompletionUtils.class.getName());
+				Utils.logException( logger, e );
 			}
 		}
 
@@ -312,11 +303,11 @@ public final class CompletionUtils {
 		Map<String,String> result = new TreeMap<> ();
 		for( RoboconfTypeBean type : findAllTypes( appDirectory ).values()) {
 			if( type.exportedVariables.size() > 0 )
-				result.put( type.getName() + ".*", "Import all the variables" );
+				result.put( type.getName() + ".*", IMPORT_ALL_THE_VARIABLES );
 
 			for( Map.Entry<String,String> entry : type.exportedVariables.entrySet()) {
 				String desc = resolveStringDescription( entry.getKey(), entry.getValue());
-				result.put( type.getName() + "." + entry.getKey(), desc );
+				result.put( entry.getKey(), desc );
 			}
 		}
 

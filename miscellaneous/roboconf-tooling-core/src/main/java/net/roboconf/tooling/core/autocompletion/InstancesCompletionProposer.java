@@ -294,7 +294,7 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 			// instance of t| => 'lastWord == t' and 'm.group( 2 ) == t''
 			// instance of => 'lastWord' is not relevant...
 			if( ! Objects.equals( ctx.lastWord, m.group( 2 ).trim())) {
-				ctx.parentIndentation = m.group( 1 ) != null ? m.group( 1 ) : "";
+				ctx.parentIndentation = m.group( 1 );
 				ctx.parentIndentation += "\t";
 				ctx.parentInstanceType = m.group( 2 ).trim();
 			}
@@ -308,7 +308,7 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 	 * @param ctx the current context
 	 * @return a non-null list of component names
 	 */
-	private Map<String,String> findComponentNames( Ctx ctx ) {
+	Map<String,String> findComponentNames( Ctx ctx ) {
 
 		Map<String,String> result = new TreeMap<> ();
 		if( this.appDirectory != null ) {
@@ -352,7 +352,7 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 	 * @param ctx the current context
 	 * @return a non-null list of variable names
 	 */
-	private Map<String,String> findExportedVariableNames( Ctx ctx ) {
+	Map<String,String> findExportedVariableNames( Ctx ctx ) {
 
 		Map<String,String> result = new TreeMap<> ();
 		result.put( PROPERTY_INSTANCE_NAME + ": ", null );

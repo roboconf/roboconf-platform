@@ -39,6 +39,7 @@ import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.model.RuntimeModelValidator;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable.RandomKind;
+import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
@@ -461,5 +462,160 @@ public class FromGraphDefinitionTest {
 		Assert.assertNull( comp2.exportedVariables.get( "ajpPort" ).getValue());
 		Assert.assertTrue( comp2.exportedVariables.get( "ajpPort" ).isRandom());
 		Assert.assertNull( comp2.exportedVariables.get( "ajpPort" ).getRandomKind());
+	}
+
+
+	@Test
+	public void test_brokenGraph_1() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/broken-graph-1.graph" );
+
+		// Normal loading: errors and no built graph
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertNotSame( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 0, graphs.getRootComponents().size());
+		Assert.assertEquals( 0, graphs.getFacetNameToFacet().size());
+
+		// Flexible loading
+		fromDef = new FromGraphDefinition( f.getParentFile(), true );
+		graphs = fromDef.buildGraphs( f );
+
+		Assert.assertNotSame( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 4, ComponentHelpers.findAllComponents( graphs ).size());
+		Assert.assertEquals( 2, graphs.getFacetNameToFacet().size());
+
+		// Verify facets
+		Facet f1 = graphs.getFacetNameToFacet().get( "f1" );
+		Assert.assertNotNull( f1 );
+		Assert.assertEquals( 2, f1.exportedVariables.size());
+		Assert.assertEquals( 0, f1.getChildren().size());
+
+		Facet f2 = graphs.getFacetNameToFacet().get( "f2" );
+		Assert.assertNotNull( f2 );
+		Assert.assertEquals( 0, f2.exportedVariables.size());
+		Assert.assertEquals( 0, f2.getChildren().size());
+
+		// Verify components
+		Component c1 = ComponentHelpers.findComponent( graphs, "c1" );
+		Assert.assertNotNull( c1 );
+		Assert.assertEquals( 2, c1.exportedVariables.size());
+		Assert.assertEquals( 0, c1.importedVariables.size());
+		Assert.assertEquals( 1, c1.getFacets().size());
+		Assert.assertEquals( 0, c1.getChildren().size());
+
+		Component c2 = ComponentHelpers.findComponent( graphs, "c2" );
+		Assert.assertNotNull( c2 );
+		Assert.assertEquals( 1, c2.exportedVariables.size());
+		Assert.assertEquals( 0, c2.importedVariables.size());
+		Assert.assertEquals( 0, c2.getFacets().size());
+		Assert.assertEquals( 1, c2.getChildren().size());
+
+		Component comp1 = ComponentHelpers.findComponent( graphs, "comp1" );
+		Assert.assertNotNull( comp1 );
+		Assert.assertEquals( 0, comp1.exportedVariables.size());
+		Assert.assertEquals( 0, comp1.importedVariables.size());
+		Assert.assertEquals( 0, comp1.getFacets().size());
+		Assert.assertEquals( 0, comp1.getChildren().size());
+
+		Component comp2 = ComponentHelpers.findComponent( graphs, "comp2" );
+		Assert.assertNotNull( comp2 );
+		Assert.assertEquals( 1, comp2.exportedVariables.size());
+		Assert.assertEquals( 0, comp2.importedVariables.size());
+		Assert.assertEquals( 0, comp2.getFacets().size());
+		Assert.assertEquals( 0, comp2.getChildren().size());
+	}
+
+
+	@Test
+	public void test_brokenGraph_2() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/broken-graph-2.graph" );
+
+		// Normal loading: errors and no built graph
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile());
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertNotSame( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 0, graphs.getRootComponents().size());
+		Assert.assertEquals( 0, graphs.getFacetNameToFacet().size());
+
+		// Flexible loading
+		fromDef = new FromGraphDefinition( f.getParentFile(), true );
+		graphs = fromDef.buildGraphs( f );
+
+		Assert.assertNotSame( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 2, ComponentHelpers.findAllComponents( graphs ).size());
+		Assert.assertEquals( 2, graphs.getFacetNameToFacet().size());
+
+		// Verify facets
+		Facet f1 = graphs.getFacetNameToFacet().get( "f1" );
+		Assert.assertNotNull( f1 );
+		Assert.assertEquals( 2, f1.exportedVariables.size());
+		Assert.assertEquals( 0, f1.getChildren().size());
+
+		Facet f2 = graphs.getFacetNameToFacet().get( "f2" );
+		Assert.assertNotNull( f2 );
+		Assert.assertEquals( 0, f2.exportedVariables.size());
+		Assert.assertEquals( 0, f2.getChildren().size());
+
+		// Verify components.
+		// "c2" and "comp1" are not found because located after the broken section.
+		Component c1 = ComponentHelpers.findComponent( graphs, "c1" );
+		Assert.assertNotNull( c1 );
+		Assert.assertEquals( 2, c1.exportedVariables.size());
+		Assert.assertEquals( 0, c1.importedVariables.size());
+		Assert.assertEquals( 1, c1.getFacets().size());
+		Assert.assertEquals( 0, c1.getChildren().size());
+
+		Component comp2 = ComponentHelpers.findComponent( graphs, "comp2" );
+		Assert.assertNotNull( comp2 );
+		Assert.assertEquals( 1, comp2.exportedVariables.size());
+		Assert.assertEquals( 0, comp2.importedVariables.size());
+		Assert.assertEquals( 0, comp2.getFacets().size());
+		Assert.assertEquals( 0, comp2.getChildren().size());
+	}
+
+
+	@Test
+	public void testTypeAnnotations() throws Exception {
+
+		File f = TestUtils.findTestFile( "/configurations/invalid/broken-graph-1.graph" );
+
+		// Flexible loading
+		FromGraphDefinition fromDef = new FromGraphDefinition( f.getParentFile(), true );
+		Graphs graphs = fromDef.buildGraphs( f );
+
+		Assert.assertNotSame( 0, fromDef.getErrors().size());
+		Assert.assertEquals( 4, ComponentHelpers.findAllComponents( graphs ).size());
+		Assert.assertEquals( 2, graphs.getFacetNameToFacet().size());
+		Assert.assertEquals( 3, fromDef.getTypeAnnotations().size());
+
+		// Verify facets
+		Facet f1 = graphs.getFacetNameToFacet().get( "f1" );
+		Assert.assertNotNull( f1 );
+		Assert.assertEquals( "This is facet f1.\nAnd the desc spans over two lines.", fromDef.getTypeAnnotations().get( f1.getName()));
+
+		Facet f2 = graphs.getFacetNameToFacet().get( "f2" );
+		Assert.assertNotNull( f2 );
+		Assert.assertEquals( "Simple comment.", fromDef.getTypeAnnotations().get( f2.getName()));
+
+		// Verify components
+		Component c1 = ComponentHelpers.findComponent( graphs, "c1" );
+		Assert.assertNotNull( c1 );
+		Assert.assertEquals( "A comment about c1", fromDef.getTypeAnnotations().get( c1.getName()));
+
+		Component c2 = ComponentHelpers.findComponent( graphs, "c2" );
+		Assert.assertNotNull( c2 );
+		Assert.assertNull( fromDef.getTypeAnnotations().get( c2.getName()));
+
+		Component comp1 = ComponentHelpers.findComponent( graphs, "comp1" );
+		Assert.assertNotNull( comp1 );
+		Assert.assertNull( fromDef.getTypeAnnotations().get( comp1.getName()));
+
+		Component comp2 = ComponentHelpers.findComponent( graphs, "comp2" );
+		Assert.assertNotNull( comp2 );
+		Assert.assertNull( fromDef.getTypeAnnotations().get( comp2.getName()));
 	}
 }

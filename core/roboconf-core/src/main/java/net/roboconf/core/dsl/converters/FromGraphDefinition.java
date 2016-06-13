@@ -39,6 +39,8 @@ import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.AbstractBlock;
 import net.roboconf.core.dsl.parsing.AbstractBlockHolder;
+import net.roboconf.core.dsl.parsing.BlockBlank;
+import net.roboconf.core.dsl.parsing.BlockComment;
 import net.roboconf.core.dsl.parsing.BlockComponent;
 import net.roboconf.core.dsl.parsing.BlockFacet;
 import net.roboconf.core.dsl.parsing.BlockImport;
@@ -63,13 +65,16 @@ import net.roboconf.core.utils.Utils;
 public class FromGraphDefinition {
 
 	private final File rootDirectory;
-	private final Collection<ParsingError> errors = new ArrayList<ParsingError> ();
-	private final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
+	private final boolean flexParsing;
+
+	private final Collection<ParsingError> errors = new ArrayList<> ();
+	private final Map<Object,SourceReference> objectToSource = new HashMap<> ();
 
 	private Map<String,ComponentData> componentNameToComponentData;
 	private Map<String,FacetData> facetNameToFacetData;
 
 	private Set<File> importsToProcess, processedImports;
+	private final Map<String,String> typeAnnotations = new HashMap<> ();
 
 
 	/**
@@ -77,7 +82,18 @@ public class FromGraphDefinition {
 	 * @param rootDirectory the root directory that contains the definition (used to resolve imports)
 	 */
 	public FromGraphDefinition( File rootDirectory ) {
+		this( rootDirectory, false );
+	}
+
+
+	/**
+	 * Constructor.
+	 * @param rootDirectory the root directory that contains the definition (used to resolve imports)
+	 * @param flexParsing true to ignore parsing errors and build most of the runtime model
+	 */
+	public FromGraphDefinition( File rootDirectory, boolean flexParsing ) {
 		this.rootDirectory = rootDirectory;
+		this.flexParsing = flexParsing;
 	}
 
 
@@ -98,6 +114,14 @@ public class FromGraphDefinition {
 
 
 	/**
+	 * @return the type annotations (never null, key = type name, value = annotation)
+	 */
+	public Map<String,String> getTypeAnnotations() {
+		return this.typeAnnotations;
+	}
+
+
+	/**
 	 * @param file the initial file to parse
 	 * @return a graph(s)
 	 * <p>
@@ -113,7 +137,9 @@ public class FromGraphDefinition {
 
 		this.importsToProcess = new HashSet<File> ();
 		this.processedImports = new HashSet<File> ();
+
 		this.errors.clear();
+		this.typeAnnotations.clear();
 
 		// Process the file and its imports
 		this.importsToProcess.add( file );
@@ -130,13 +156,32 @@ public class FromGraphDefinition {
 			}
 
 			// Load the file
-			FileDefinition currentDefinition = new FileDefinitionParser( importedFile, true ).read();
+			FileDefinition currentDefinition = new FileDefinitionParser( importedFile, false ).read();
 			Collection<ParsingError> currentErrors = new ArrayList<ParsingError> ();
 			currentErrors.addAll( currentDefinition.getParsingErrors());
 
-			for( AbstractBlock block : currentDefinition.getBlocks())
+			StringBuilder lastComment = new StringBuilder();
+			for( AbstractBlock block : currentDefinition.getBlocks()) {
+
+				// Validate
 				currentErrors.addAll( ParsingModelValidator.validate( block ));
 
+				// Load annotations
+				if( block instanceof BlockComment ) {
+					lastComment.append(((BlockComment) block).getContent().trim() + "\n" );
+
+				} else if( block instanceof BlockBlank ) {
+					lastComment.setLength( 0 );
+
+				} else if( lastComment.length() > 0
+						&& block instanceof AbstractBlockHolder ) {
+
+					String comment = lastComment.toString().replaceAll( "#\\s*", "" ).trim();
+					this.typeAnnotations.put(((AbstractBlockHolder) block).getName(), comment );
+				}
+			}
+
+			// Verify the file kind
 			if( currentDefinition.getFileType() != FileDefinition.AGGREGATOR
 					&& currentDefinition.getFileType() != FileDefinition.GRAPH ) {
 
@@ -147,23 +192,23 @@ public class FromGraphDefinition {
 
 			// Process the file
 			this.errors.addAll( currentErrors );
-			if( ! RoboconfErrorHelpers.containsCriticalErrors( currentErrors ))
+			if( this.flexParsing || ! RoboconfErrorHelpers.containsCriticalErrors( currentErrors ))
 				processInstructions( currentDefinition );
 		}
 
 		// Check names collisions
-		if( this.errors.isEmpty())
+		if( this.flexParsing || this.errors.isEmpty())
 			checkNameCollisions();
 
 		// Check uniqueness
-		if( this.errors.isEmpty())
+		if( this.flexParsing || this.errors.isEmpty())
 			checkUnicity();
 
 		// Resolve all
-		if( this.errors.isEmpty())
+		if( this.flexParsing || this.errors.isEmpty())
 			resolveComponents();
 
-		if( this.errors.isEmpty())
+		if( this.flexParsing || this.errors.isEmpty())
 			resolveFacets();
 
 		// Build the result

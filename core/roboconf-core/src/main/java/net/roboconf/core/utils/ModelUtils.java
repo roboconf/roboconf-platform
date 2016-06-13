@@ -102,6 +102,10 @@ public final class ModelUtils {
 
 	/**
 	 * Gets and splits exported variables separated by a comma.
+	 * <p>
+	 * Variable names are not prefixed by the type's name.
+	 * </p>
+	 *
 	 * @param holder a property holder (not null)
 	 * @return a non-null map (key = exported variable name, value = the exported variable)
 	 */

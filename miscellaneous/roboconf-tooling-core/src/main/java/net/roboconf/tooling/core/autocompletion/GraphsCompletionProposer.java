@@ -185,6 +185,7 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 	private static enum CtxKind {
 		NEUTRAL, 		// Default: beginning of the document or between two types
 		COMMENT,		// We are inside a comment
+		NOTHING,		// Nothing special here
 		ATTRIBUTE,		// At the beginning or right after a colon or an opening curly bracket
 		PROPERTY;		// We are defining a property
 	}
@@ -232,7 +233,7 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 		int after = -2;
 		while( before != after ) {
 			before = text.length();
-			text = text.replaceAll( "(?i)(?s)(facet\\s+)?[^{]*\\{[^{}]*\\}", "" );
+			text = text.replaceAll( "(?i)(?s)(facet\\s+)?[^{]*\\{[^{}]*\\}\r?\n", "" );
 			after = text.length();
 		}
 
@@ -261,9 +262,11 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 			else if( c == '{' )
 				bracketFound = true;
 
-			// If we find a closing bracket, then we are at the beginning of a declaration
-			else if( c == '}' )
+			// If we find a closing bracket, then we are at the end of a declaration
+			else if( c == '}' ) {
+				ctx.kind = CtxKind.NOTHING;
 				break;
+			}
 
 			// Line break? That depends...
 			else if( isLineBreak( c )) {

@@ -853,6 +853,15 @@ public class InstancesCompletionProposerTest extends AbstractCompletionProposerT
 	}
 
 
+	@Test
+	public void testFindWhenNoDirectory() {
+
+		InstancesCompletionProposer proposer = new InstancesCompletionProposer( null, null );
+		Assert.assertEquals( 0, proposer.findComponentNames( null ).size());
+		Assert.assertEquals( 2, proposer.findExportedVariableNames( null ).size());
+	}
+
+
 	/**
 	 * Prepares the expected replacement text with the right indentation.
 	 * @param level the indentation level

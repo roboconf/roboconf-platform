@@ -43,6 +43,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -123,10 +125,15 @@ public class GraphsCompletionProposerTest extends AbstractCompletionProposerTest
 		proposals = couple.proposer.findProposals( couple.text );
 		verifyNeutralOffset( proposals );
 
+		// Right after a type
+		couple.text = "comp {\n}\n";
+		proposals = couple.proposer.findProposals( couple.text );
+		verifyNeutralOffset( proposals );
+
 		// Right after a closing curly bracket
 		couple.text = "comp {\n}";
 		proposals = couple.proposer.findProposals( couple.text );
-		verifyNeutralOffset( proposals );
+		Assert.assertEquals( 0, proposals.size());
 	}
 
 
@@ -159,6 +166,16 @@ public class GraphsCompletionProposerTest extends AbstractCompletionProposerTest
 		Couple couple = prepare( "app1", "edited1.graph", 70 );
 		couple.text += "\nfac anotherWord";
 
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( 0, proposals.size());
+	}
+
+
+	@Test
+	public void testOffsetRightAfterClosingBracket() throws Exception {
+
+		// Expected: nothing
+		Couple couple = prepare( "app1", "edited1.graph", 59 );
 		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
 		Assert.assertEquals( 0, proposals.size());
 	}
@@ -850,19 +867,155 @@ public class GraphsCompletionProposerTest extends AbstractCompletionProposerTest
 	@Test
 	public void testOffsetForVariablesImportsWithoutPrefix() throws Exception {
 
-		// Expected: logger
+		// Expected: all the exported variables
 		Couple couple = prepare( "app2", "edited2.graph", 140 );
 		couple.text += "\ncomp {\n\timports: ";
 
+		Map<String,String> expected = new TreeMap<> ();
+		expected.put( "c1.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c1.v1", CompletionUtils.DEFAULT_VALUE + "version1" );
+		expected.put( "c1.v2", CompletionUtils.DEFAULT_VALUE + "version2" );
+		expected.put( "c1.ip", CompletionUtils.SET_BY_ROBOCONF );
+		expected.put( "c1.port", CompletionUtils.DEFAULT_VALUE + "8100" );
+		expected.put( "c2.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c2.ip", CompletionUtils.SET_BY_ROBOCONF );
+		expected.put( "f1.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "f1.v1", CompletionUtils.DEFAULT_VALUE + "version1" );
+		expected.put( "f1.v2", CompletionUtils.DEFAULT_VALUE + "version2" );
+
 		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
-//		Assert.assertEquals( 1, proposals.size());
-//
-//		Assert.assertEquals( "logger", proposals.get( 0 ).getProposalName());
-//		Assert.assertEquals( "logger", proposals.get( 0 ).getProposalString());
-//		Assert.assertNull( proposals.get( 0 ).getProposalDescription());
-//		Assert.assertEquals( 3, proposals.get( 0 ).getReplacementOffset());
+		Assert.assertEquals( expected.size(), proposals.size());
+
+		int index = 0;
+		for( Map.Entry<String,String> entry : expected.entrySet()) {
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalName());
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalString());
+			Assert.assertEquals( entry.getValue(), proposals.get( index ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( index ).getReplacementOffset());
+			index ++;
+		}
 	}
 
+
+	@Test
+	public void testOffsetForVariablesImportsSkipNonExporting_BrokenGraph_1() throws Exception {
+
+		// Expected: all the exported variables.
+		// We should not set "comp1.*" (no export).
+		Couple couple = prepare( "app5", "edited5.graph", 394 );
+
+		Map<String,String> expected = new TreeMap<> ();
+		expected.put( "c1.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c1.v1", CompletionUtils.DEFAULT_VALUE + "version1" );
+		expected.put( "c1.v2", CompletionUtils.DEFAULT_VALUE + "version2" );
+		expected.put( "c1.ip", CompletionUtils.SET_BY_ROBOCONF );
+		expected.put( "c1.port", CompletionUtils.DEFAULT_VALUE + "8100" );
+		expected.put( "c2.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c2.ip", CompletionUtils.SET_BY_ROBOCONF );
+		expected.put( "f1.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "f1.v1", CompletionUtils.DEFAULT_VALUE + "version1" );
+		expected.put( "f1.v2", CompletionUtils.DEFAULT_VALUE + "version2" );
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( expected.size(), proposals.size());
+
+		int index = 0;
+		for( Map.Entry<String,String> entry : expected.entrySet()) {
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalName());
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalString());
+			Assert.assertEquals( entry.getValue(), proposals.get( index ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( index ).getReplacementOffset());
+			index ++;
+		}
+	}
+
+
+	@Test
+	public void testOffsetForVariablesImportsSkipNonExporting_BrokenGraph_2() throws Exception {
+
+		// Expected: all the exported variables.
+		// We should not set "comp1.*" (no export).
+		Couple couple = prepare( "app6", "edited6.graph", 410 );
+
+		Map<String,String> expected = new TreeMap<> ();
+		expected.put( "c1.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c1.v1", CompletionUtils.DEFAULT_VALUE + "version1" );
+		expected.put( "c1.v2", CompletionUtils.DEFAULT_VALUE + "version2" );
+		expected.put( "c1.ip", CompletionUtils.SET_BY_ROBOCONF );
+		expected.put( "c1.port", CompletionUtils.DEFAULT_VALUE + "8100" );
+		expected.put( "c2.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c2.ip", CompletionUtils.SET_BY_ROBOCONF );
+		expected.put( "comp2.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "comp2.toto", null );
+		expected.put( "f1.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "f1.v1", CompletionUtils.DEFAULT_VALUE + "version1" );
+		expected.put( "f1.v2", CompletionUtils.DEFAULT_VALUE + "version2" );
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( expected.size(), proposals.size());
+
+		int index = 0;
+		for( Map.Entry<String,String> entry : expected.entrySet()) {
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalName());
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalString());
+			Assert.assertEquals( entry.getValue(), proposals.get( index ).getProposalDescription());
+			Assert.assertEquals( 0, proposals.get( index ).getReplacementOffset());
+			index ++;
+		}
+	}
+
+
+	@Test
+	public void testOffsetForVariablesImportsWithPrefix_1() throws Exception {
+
+		// Expected: all the exported variables
+		Couple couple = prepare( "app2", "edited2.graph", 140 );
+		couple.text += "\ncomp {\n\timports: c1";
+
+		Map<String,String> expected = new TreeMap<> ();
+		expected.put( "c1.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c1.v1", CompletionUtils.DEFAULT_VALUE + "version1" );
+		expected.put( "c1.v2", CompletionUtils.DEFAULT_VALUE + "version2" );
+		expected.put( "c1.ip", CompletionUtils.SET_BY_ROBOCONF );
+		expected.put( "c1.port", CompletionUtils.DEFAULT_VALUE + "8100" );
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( expected.size(), proposals.size());
+
+		int index = 0;
+		for( Map.Entry<String,String> entry : expected.entrySet()) {
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalName());
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalString());
+			Assert.assertEquals( entry.getValue(), proposals.get( index ).getProposalDescription());
+			Assert.assertEquals( 2, proposals.get( index ).getReplacementOffset());
+			index ++;
+		}
+	}
+
+
+	@Test
+	public void testOffsetForVariablesImportsWithPrefix_2() throws Exception {
+
+		// Expected: all the exported variables
+		Couple couple = prepare( "app2", "edited2.graph", 140 );
+		couple.text += "\ncomp {\n\timports: c2.";
+
+		Map<String,String> expected = new TreeMap<> ();
+		expected.put( "c2.*", CompletionUtils.IMPORT_ALL_THE_VARIABLES );
+		expected.put( "c2.ip", CompletionUtils.SET_BY_ROBOCONF );
+
+		List<RoboconfCompletionProposal> proposals = couple.proposer.findProposals( couple.text );
+		Assert.assertEquals( expected.size(), proposals.size());
+
+		int index = 0;
+		for( Map.Entry<String,String> entry : expected.entrySet()) {
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalName());
+			Assert.assertEquals( entry.getKey(), proposals.get( index ).getProposalString());
+			Assert.assertEquals( entry.getValue(), proposals.get( index ).getProposalDescription());
+			Assert.assertEquals( 3, proposals.get( index ).getReplacementOffset());
+			index ++;
+		}
+	}
 
 
 	private static final String FORBIDDEN_PATTERN_FOR_INDENTATION = "(?s)(^|(.*\n))\t{2,}.*\\S*";
