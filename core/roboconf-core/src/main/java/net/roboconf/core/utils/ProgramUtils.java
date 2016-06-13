@@ -98,7 +98,7 @@ public final class ProgramUtils {
 
 		// Execute
 		Process process = pb.start();
-		
+
 		// Store process in ThreadLocal, so it can be cancelled later (eg. if blocked)
 		logger.fine("Storing process [" + applicationName + "] [" + scopedInstancePath + "]");
 		ProcessStore.setProcess(applicationName, scopedInstancePath, process);

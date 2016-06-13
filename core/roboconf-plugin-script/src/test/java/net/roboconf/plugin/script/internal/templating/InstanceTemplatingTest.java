@@ -33,18 +33,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.model.beans.Import;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.ImportHelpers;
-import net.roboconf.core.utils.Utils;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Import;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.ImportHelpers;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Graham Crosmarie - Linagora
@@ -62,14 +62,14 @@ public class InstanceTemplatingTest {
 
 		MustacheFactory mf = new DefaultMustacheFactory();
 		File templateFile = TestUtils.findTestFile( "/importTemplate.mustache" );
-	    Mustache mustache = mf.compile( templateFile.getAbsolutePath());
-	    StringWriter writer = new StringWriter();
-	    mustache.execute(writer, new ImportBean(impt)).flush();
+		Mustache mustache = mf.compile( templateFile.getAbsolutePath());
+		StringWriter writer = new StringWriter();
+		mustache.execute(writer, new ImportBean(impt)).flush();
 
-	    String writtenString = writer.toString();
-	    for( Map.Entry<String,String> entry : vars.entrySet()) {
-	    	Assert.assertTrue("Var was not displayed correctly", writtenString.contains( entry.getKey() + " : " + entry.getValue()));
-	    }
+		String writtenString = writer.toString();
+		for( Map.Entry<String,String> entry : vars.entrySet()) {
+			Assert.assertTrue("Var was not displayed correctly", writtenString.contains( entry.getKey() + " : " + entry.getValue()));
+		}
 	}
 
 	@Test
@@ -97,18 +97,18 @@ public class InstanceTemplatingTest {
 		StringWriter writer = new StringWriter();
 		InstanceTemplateHelper.injectInstanceImports(instance, templateFile, writer);
 
-	    String writtenString = writer.toString();
-	    for(String prefix : importsByPrefix.keySet()) {
-	    	Assert.assertTrue("Prefix was not displayed correctly", writtenString.contains("Prefix "+prefix));
-	    }
-	    for(String name : vars.keySet()) {
-	    	Assert.assertTrue("Var was not displayed correctly", writtenString.contains(name+" -> "+vars.get(name)));
-	    }
+		String writtenString = writer.toString();
+		for(String prefix : importsByPrefix.keySet()) {
+			Assert.assertTrue("Prefix was not displayed correctly", writtenString.contains("Prefix "+prefix));
+		}
+		for(String name : vars.keySet()) {
+			Assert.assertTrue("Var was not displayed correctly", writtenString.contains(name+" -> "+vars.get(name)));
+		}
 
-	    // Test templating into a new file
-	    File generated = File.createTempFile(instance.getName(), ".pipo");
-        InstanceTemplateHelper.injectInstanceImports(instance, templateFile, generated);
-        Assert.assertTrue(generated.exists() && generated.isFile());
-        Assert.assertEquals( Utils.readFileContent( generated ), writtenString);
+		// Test templating into a new file
+		File generated = File.createTempFile(instance.getName(), ".pipo");
+		InstanceTemplateHelper.injectInstanceImports(instance, templateFile, generated);
+		Assert.assertTrue(generated.exists() && generated.isFile());
+		Assert.assertEquals( Utils.readFileContent( generated ), writtenString);
 	}
 }

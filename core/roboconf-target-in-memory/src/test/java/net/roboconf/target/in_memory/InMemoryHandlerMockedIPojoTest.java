@@ -49,7 +49,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryHandler_mockedIPojoTest {
+public class InMemoryHandlerMockedIPojoTest {
 
 	private Map<String, String> msgCfg = new LinkedHashMap<> ();
 

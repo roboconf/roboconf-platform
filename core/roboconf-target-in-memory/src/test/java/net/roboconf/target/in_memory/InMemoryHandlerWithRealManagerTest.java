@@ -55,7 +55,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class InMemoryHandler_realManagerTest {
+public class InMemoryHandlerWithRealManagerTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();

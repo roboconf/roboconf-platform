@@ -27,18 +27,18 @@ package net.roboconf.karaf.commands.dm.logs;
 
 import java.util.List;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
-
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.api.console.CommandLine;
 import org.apache.karaf.shell.api.console.Completer;
 import org.apache.karaf.shell.api.console.Session;
 import org.apache.karaf.shell.support.completers.StringsCompleter;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -47,7 +47,7 @@ import org.apache.karaf.shell.support.completers.StringsCompleter;
 public class ScopedInstanceCompleter implements Completer {
 
 	@Reference
-    Manager manager;
+	Manager manager;
 
 
 	@Override

@@ -8,7 +8,7 @@
  * holder of Results enumerated here above fully & independently holds complete
  * ownership of the complete Intellectual Property rights applicable to the whole
  * of said Results, and may freely exploit it in any manner which does not infringe
- * the moral rights of the other copyright holdercontent.
+ * the moral rights of the other copyright holders.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,15 +28,15 @@ package net.roboconf.doc.generator;
 import java.io.File;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.doc.generator.internal.nls.Messages;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora

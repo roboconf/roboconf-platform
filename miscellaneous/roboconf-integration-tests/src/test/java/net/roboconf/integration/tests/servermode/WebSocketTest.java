@@ -27,10 +27,6 @@ package net.roboconf.integration.tests.servermode;
 
 import java.net.URI;
 
-import net.roboconf.integration.probes.DmTest;
-import net.roboconf.integration.tests.internal.ItUtils;
-import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
-
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -43,6 +39,10 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.TestContainer;
 import org.ops4j.pax.exam.karaf.container.internal.KarafTestContainer;
 import org.ops4j.pax.exam.spi.PaxExamRuntime;
+
+import net.roboconf.integration.probes.DmTest;
+import net.roboconf.integration.tests.internal.ItUtils;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 /**
  * This test verifies that a client can interact with the DM's websocket.
@@ -98,12 +98,12 @@ public class WebSocketTest extends DmTest {
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
-    static final class TestWebsocket extends WebSocketAdapter {
-    	private boolean wasConnected = false;
+	static final class TestWebsocket extends WebSocketAdapter {
+		private boolean wasConnected = false;
 
-    	@Override
-    	public void onWebSocketConnect( Session sess ) {
-    		this.wasConnected = true;
-    	}
-    }
+		@Override
+		public void onWebSocketConnect( Session sess ) {
+			this.wasConnected = true;
+		}
+	}
 }

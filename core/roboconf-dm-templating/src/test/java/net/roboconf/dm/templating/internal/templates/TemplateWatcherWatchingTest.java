@@ -42,7 +42,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class TemplateWatcher_WatchingTest {
+public class TemplateWatcherWatchingTest {
 
 	private static final long DELAY = 400;
 

@@ -36,7 +36,6 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.core.utils.Utils;
 
-
 /**
  * @author Amadou Diarra - UGA
  */
@@ -47,17 +46,18 @@ public class AgentStatusCommand implements Action {
 	// Other fields
 	final Logger logger = Logger.getLogger( getClass().getName());
 
-    @Reference
-    List<AgentMessagingInterface> agents;
+	@Reference
+	List<AgentMessagingInterface> agents;
 
-    @Override
+
+
+	@Override
 	public Object execute() throws Exception {
 
-    	if( this.agents != null ) {
+		if( this.agents != null ) {
 			for( AgentMessagingInterface agent : this.agents ) {
 				try {
-
-					System.out.println( agent.agentStatus() );
+					System.out.println( agent.agentStatus());
 					System.out.println( "" );
 
 				} catch( Exception e ) {
@@ -66,7 +66,7 @@ public class AgentStatusCommand implements Action {
 				}
 			}
 		}
+
 		return null;
 	}
-
 }

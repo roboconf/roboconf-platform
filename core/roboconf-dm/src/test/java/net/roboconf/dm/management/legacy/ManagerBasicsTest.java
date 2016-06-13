@@ -71,7 +71,7 @@ import org.mockito.Mockito;
  * @author Vincent Zurczak - Linagora
  * @author Pierre Bourret - Université Joseph Fourier
  */
-public class Manager_BasicsTest {
+public class ManagerBasicsTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();

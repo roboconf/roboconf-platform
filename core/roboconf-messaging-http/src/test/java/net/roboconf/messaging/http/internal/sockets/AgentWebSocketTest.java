@@ -27,11 +27,10 @@ package net.roboconf.messaging.http.internal.sockets;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.http.internal.sockets.AgentWebSocket;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.messaging.api.messages.Message;
 
 /**
  * @author Vincent Zurczak - Linagora

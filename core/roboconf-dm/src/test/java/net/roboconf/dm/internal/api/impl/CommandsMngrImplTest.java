@@ -22,17 +22,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package net.roboconf.dm.internal.api.impl;
 
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.List;
-
-import net.roboconf.core.internal.tests.TestApplication;
-import net.roboconf.core.model.ParsingError;
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.dm.management.Manager;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +35,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.dm.management.Manager;
 
 /**
  * @author Amadou Diarra - Université Joseph Fourier

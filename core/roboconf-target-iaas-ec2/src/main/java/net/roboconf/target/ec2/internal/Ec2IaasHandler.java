@@ -32,13 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.agents.DataHelpers;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler;
-import net.roboconf.target.api.TargetException;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 
@@ -54,6 +47,13 @@ import com.amazonaws.services.ec2.model.Placement;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
+import net.roboconf.target.api.TargetException;
 
 /**
  * @author Noël - LIG
@@ -283,7 +283,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 		String availabilityZone = targetProperties.get(Ec2Constants.AVAILABILITY_ZONE);
 		if(! Utils.isEmptyOrWhitespaces(availabilityZone))
 			runInstancesRequest.setPlacement(new Placement(availabilityZone));
-		
+
 		// The following part enables to transmit data to the VM.
 		// When the VM is up, it will be able to read this data.
 		String encodedUserData = new String( Base64.encodeBase64( userData.getBytes( "UTF-8" )), "UTF-8" );
@@ -291,7 +291,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 		return runInstancesRequest;
 	}
-	
+
 	/**
 	 * Finds the storage IDs (used as property suffixes).
 	 * @param targetProperties

@@ -47,7 +47,7 @@ import org.mockito.Mockito;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AbstractLifeCycleManager_ImportsUpdateTest {
+public class AbstractLifeCycleManagerImportsUpdateTest {
 
 	@Test
 	public void testOptionalImports() throws Exception {

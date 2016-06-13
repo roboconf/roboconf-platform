@@ -115,7 +115,7 @@ public class TargetHandlerResolverImpl implements ITargetHandlerResolver {
 
 		List<TargetHandler> snapshot;
 		synchronized( this.targetHandlers ) {
-			 snapshot = new ArrayList<>( this.targetHandlers );
+			snapshot = new ArrayList<>( this.targetHandlers );
 		}
 
 		return snapshot;

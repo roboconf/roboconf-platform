@@ -63,9 +63,8 @@ public enum ErrorCode {
 	PM_EMPTY_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "The component name is missing." ),
 	PM_EMPTY_VARIABLE_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "A variable name is missing." ),
 
-	PM_INVALID_CHILD_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid child name. As a reminder, children names must be separated by a comma." ),
-	PM_INVALID_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An invalid name was found. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
-	PM_INVALID_COMPONENT_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid component name. Expected pattern: " + ParsingConstants.PATTERN_FLEX_ID ),
+	PM_INVALID_CHILD_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid child name. As a reminder, children names must be separated by a comma. Expected pattern: " + ParsingConstants.PATTERN_ID ),
+	PM_INVALID_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "An invalid name was found. Expected pattern: " + ParsingConstants.PATTERN_ID ),
 	PM_INVALID_EXPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Exported variable names must be separated by a comma." ),
 	PM_EXTERNAL_IS_KEYWORD_FOR_IMPORTS( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, ParsingConstants.PROPERTY_COMPONENT_EXTERNAL_IMPORT + " is a keyword reserved for imports." ),
 	PM_INVALID_IMPORTED_VAR_NAME( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Invalid variable name. Imported variable names must be separated by a comma." ),

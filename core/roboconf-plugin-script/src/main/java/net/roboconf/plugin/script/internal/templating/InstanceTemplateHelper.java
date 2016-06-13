@@ -33,12 +33,12 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.Utils;
-
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
 
 /**
  * Provides methods for injecting Instance data into a template file.
@@ -69,8 +69,8 @@ public final class InstanceTemplateHelper {
 	throws IOException {
 
 		MustacheFactory mf = new DefaultMustacheFactory( templateFile.getParentFile());
-	    Mustache mustache = mf.compile( templateFile.getName());
-	    mustache.execute(writer, new InstanceBean( instance )).flush();
+		Mustache mustache = mf.compile( templateFile.getName());
+		mustache.execute(writer, new InstanceBean( instance )).flush();
 	}
 
 

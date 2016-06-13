@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.utils.ProgramUtils;
 import net.roboconf.core.utils.Utils;
@@ -151,9 +152,12 @@ public final class DockerTestUtils {
 	 * @return the updated Docker machine id, or {@code null} if the timeout has expired.
 	 * @throws InterruptedException if interrupted while waiting for update.
 	 */
-	public static String waitForMachineId( final String machineId,
-										   final Map<String, String> instanceData,
-										   long timeOut ) throws InterruptedException {
+	public static String waitForMachineId(
+			final String machineId,
+			final Map<String, String> instanceData,
+			long timeOut )
+	throws InterruptedException {
+
 		long deadLine = System.currentTimeMillis() + timeOut;
 		String containerId;
 		do {

@@ -208,7 +208,7 @@ public final class ParsingModelValidator {
 
 		} else if( ParsingConstants.PROPERTY_GRAPH_CHILDREN.equals( name )) {
 			for( String s : Utils.splitNicely( value, ParsingConstants.PROPERTY_SEPARATOR )) {
-				if( s.matches( ParsingConstants.PATTERN_FLEX_ID ))
+				if( s.matches( ParsingConstants.PATTERN_ID ))
 					continue;
 
 				ParsingError error = new ParsingError( ErrorCode.PM_INVALID_CHILD_NAME, block.getFile(), line );
@@ -223,7 +223,7 @@ public final class ParsingModelValidator {
 				if( Utils.isEmptyOrWhitespaces( s )) {
 					result.add( new ParsingError( ErrorCode.PM_EMPTY_REFERENCED_NAME, block.getFile(), line ));
 
-				} else if( ! s.matches( ParsingConstants.PATTERN_FLEX_ID )) {
+				} else if( ! s.matches( ParsingConstants.PATTERN_ID )) {
 					ParsingError error = new ParsingError( ErrorCode.PM_INVALID_NAME, block.getFile(), line );
 					error.setDetails( "Invalid name: " + s );
 					result.add( error );
@@ -359,8 +359,8 @@ public final class ParsingModelValidator {
 		String name = holder.getName();
 		if( Utils.isEmptyOrWhitespaces( name ))
 			result.add( parsingError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_EMPTY_FACET_NAME : ErrorCode.PM_EMPTY_COMPONENT_NAME, holder ));
-		else if( ! name.matches( ParsingConstants.PATTERN_FLEX_ID ))
-			result.add( parsingError( holder.getInstructionType() == AbstractBlock.FACET ? ErrorCode.PM_INVALID_NAME : ErrorCode.PM_INVALID_COMPONENT_NAME, holder ));
+		else if( ! name.matches( ParsingConstants.PATTERN_ID ))
+			result.add( parsingError( ErrorCode.PM_INVALID_NAME, holder ));
 		else if( name.contains( "." ))
 			result.add( parsingError( ErrorCode.PM_DOT_IS_NOT_ALLOWED, holder ));
 

@@ -26,8 +26,6 @@
 package net.roboconf.core.model.runtime;
 
 import org.junit.Assert;
-import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
-
 import org.junit.Test;
 
 /**

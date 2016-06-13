@@ -59,9 +59,9 @@ public abstract class AbstractTest {
 
 		// Create the Maven project by hand (...)
 		final MavenProject mvnProject = new MavenProject() ;
-        mvnProject.setFile( pom ) ;
+		mvnProject.setFile( pom ) ;
 
-        this.rule.setVariableValueToObject( mojo, "project", mvnProject );
+		this.rule.setVariableValueToObject( mojo, "project", mvnProject );
 		Assert.assertNotNull( this.rule.getVariableValueFromObject( mojo, "project" ));
 
 		// Initialize the project

@@ -28,12 +28,11 @@ package net.roboconf.core.internal.dsl.parsing;
 import java.io.File;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.dsl.parsing.BlockBlank;
 import net.roboconf.core.dsl.parsing.BlockComment;
 import net.roboconf.core.dsl.parsing.FileDefinition;
-import net.roboconf.core.internal.dsl.parsing.FileDefinitionSerializer;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora

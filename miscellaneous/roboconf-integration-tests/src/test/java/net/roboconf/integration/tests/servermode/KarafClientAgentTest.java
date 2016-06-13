@@ -51,7 +51,7 @@ import org.ops4j.pax.exam.spi.PaxExamRuntime;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class KarafClient_AgentTest extends AgentTest {
+public class KarafClientAgentTest extends AgentTest {
 
 	@Test
 	public void run() throws Exception {

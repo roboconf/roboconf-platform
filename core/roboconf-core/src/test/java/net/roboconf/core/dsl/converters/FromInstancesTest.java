@@ -33,6 +33,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.dsl.ParsingModelIo;
 import net.roboconf.core.dsl.ParsingModelValidator;
 import net.roboconf.core.dsl.parsing.FileDefinition;
@@ -48,17 +52,13 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class FromInstancesTest {
 
 	@Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
+	public TemporaryFolder testFolder = new TemporaryFolder();
 
 
 	@Test

@@ -370,7 +370,7 @@ public final class RuntimeModelValidator {
 		Map<String,Set<String>> localNameToFullNames = new HashMap<String,Set<String>> ();
 		Set<String> inheritedVarNames;
 		if( instance.getComponent() != null )
-		 inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
+			inheritedVarNames = ComponentHelpers.findAllExportedVariables( instance.getComponent()).keySet();
 		else
 			inheritedVarNames = new HashSet<>( 0 );
 

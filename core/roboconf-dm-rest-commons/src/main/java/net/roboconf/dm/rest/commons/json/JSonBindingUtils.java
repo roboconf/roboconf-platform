@@ -30,6 +30,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -45,20 +59,6 @@ import net.roboconf.core.utils.IconUtils;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
  * A set of utilities to bind Roboconf's runtime model to JSon.
@@ -253,7 +253,7 @@ public final class JSonBindingUtils {
 				TargetAssociation item,
 				JsonGenerator generator,
 				SerializerProvider provider )
-		throws IOException {
+						throws IOException {
 
 			generator.writeStartObject();
 			if( item.getInstancePath() != null )
@@ -343,21 +343,21 @@ public final class JSonBindingUtils {
 		public TargetWrapperDescriptor deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
+			JsonNode node = oc.readTree( parser );
+			TargetWrapperDescriptor twd = new TargetWrapperDescriptor();
 
-	        JsonNode n;
-	        if(( n = node.get( DESC )) != null )
-	        	twd.setDescription( n.textValue());
+			JsonNode n;
+			if(( n = node.get( DESC )) != null )
+				twd.setDescription( n.textValue());
 
-	        if(( n = node.get( TARGET_HANDLER )) != null )
-	        	twd.setHandler( n.textValue());
+			if(( n = node.get( TARGET_HANDLER )) != null )
+				twd.setHandler( n.textValue());
 
-	        if(( n = node.get( TARGET_ID )) != null )
-	        	twd.setId( n.textValue());
+			if(( n = node.get( TARGET_ID )) != null )
+				twd.setId( n.textValue());
 
-	        if(( n = node.get( NAME )) != null )
-	        	twd.setName( n.textValue());
+			if(( n = node.get( NAME )) != null )
+				twd.setName( n.textValue());
 
 			return twd;
 		}
@@ -374,12 +374,12 @@ public final class JSonBindingUtils {
 		public StringWrapper deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        String s = null;
+			JsonNode node = oc.readTree( parser );
+			String s = null;
 
-	        JsonNode n;
-	        if(( n = node.get( S )) != null )
-	        	s = n.textValue();
+			JsonNode n;
+			if(( n = node.get( S )) != null )
+				s = n.textValue();
 
 			return new StringWrapper( s );
 		}
@@ -418,13 +418,13 @@ public final class JSonBindingUtils {
 		public MapWrapper deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        Map<String,String> map = new HashMap<> ();
+			JsonNode node = oc.readTree( parser );
+			Map<String,String> map = new HashMap<> ();
 
-	        for( Iterator<Map.Entry<String,JsonNode>> it = node.fields(); it.hasNext(); ) {
-	        	Map.Entry<String,JsonNode> entry = it.next();
-	        	map.put( entry.getKey(), entry.getValue().textValue());
-	        }
+			for( Iterator<Map.Entry<String,JsonNode>> it = node.fields(); it.hasNext(); ) {
+				Map.Entry<String,JsonNode> entry = it.next();
+				map.put( entry.getKey(), entry.getValue().textValue());
+			}
 
 			return new MapWrapper( map );
 		}
@@ -442,13 +442,13 @@ public final class JSonBindingUtils {
 				MapWrapper m,
 				JsonGenerator generator,
 				SerializerProvider provider )
-		throws IOException {
+						throws IOException {
 
 			generator.writeStartObject();
 			for( Map.Entry<String,String> entry : m.getMap().entrySet()) {
 				generator.writeStringField(
 						entry.getKey() == null ? "" : entry.getKey(),
-						entry.getValue() == null ? "" : entry.getValue());
+								entry.getValue() == null ? "" : entry.getValue());
 			}
 
 			generator.writeEndObject();
@@ -583,20 +583,20 @@ public final class JSonBindingUtils {
 		public Diagnostic deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        Diagnostic diag = new Diagnostic();
+			JsonNode node = oc.readTree( parser );
+			Diagnostic diag = new Diagnostic();
 
-	        JsonNode n;
-	        if(( n = node.get( DIAG_PATH )) != null )
-	        	diag.setInstancePath( n.textValue());
+			JsonNode n;
+			if(( n = node.get( DIAG_PATH )) != null )
+				diag.setInstancePath( n.textValue());
 
-	        if(( n = node.get( DIAG_DEPENDENCIES )) != null ) {
-	        	for( JsonNode arrayNodeItem : n ) {
-	        		ObjectMapper mapper = createObjectMapper();
-		        	DependencyInformation info = mapper.readValue( arrayNodeItem.toString(), DependencyInformation.class );
-	        		diag.getDependenciesInformation().add( info );
-	        	}
-	        }
+			if(( n = node.get( DIAG_DEPENDENCIES )) != null ) {
+				for( JsonNode arrayNodeItem : n ) {
+					ObjectMapper mapper = createObjectMapper();
+					DependencyInformation info = mapper.readValue( arrayNodeItem.toString(), DependencyInformation.class );
+					diag.getDependenciesInformation().add( info );
+				}
+			}
 
 			return diag;
 		}
@@ -638,18 +638,18 @@ public final class JSonBindingUtils {
 		public DependencyInformation deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        DependencyInformation info = new DependencyInformation();
+			JsonNode node = oc.readTree( parser );
+			DependencyInformation info = new DependencyInformation();
 
-	        JsonNode n;
-	        if(( n = node.get( NAME )) != null )
-	        	info.setDependencyName( n.textValue());
+			JsonNode n;
+			if(( n = node.get( NAME )) != null )
+				info.setDependencyName( n.textValue());
 
-	        if(( n = node.get( DEP_OPTIONAL )) != null )
-	        	info.setOptional( Boolean.valueOf( n.textValue()));
+			if(( n = node.get( DEP_OPTIONAL )) != null )
+				info.setOptional( Boolean.valueOf( n.textValue()));
 
-	        if(( n = node.get( DEP_RESOLVED )) != null )
-	        	info.setResolved( Boolean.valueOf( n.textValue()));
+			if(( n = node.get( DEP_RESOLVED )) != null )
+				info.setResolved( Boolean.valueOf( n.textValue()));
 
 			return info;
 		}
@@ -713,10 +713,10 @@ public final class JSonBindingUtils {
 				}
 			}
 
-	        if( info != null )
-	        	generator.writeObjectField( APP_INFO, info );
+			if( info != null )
+				generator.writeObjectField( APP_INFO, info );
 
-	        generator.writeEndObject();
+			generator.writeEndObject();
 		}
 	}
 
@@ -731,33 +731,33 @@ public final class JSonBindingUtils {
 		public Application deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
+			JsonNode node = oc.readTree( parser );
 
-	        Application application;
-	        JsonNode n;
-	        if(( n = node.get( APP_INST_TPL_NAME )) != null ) {
-	        	ApplicationTemplate appTemplate = new ApplicationTemplate();
-	        	appTemplate.setName( n.textValue());
+			Application application;
+			JsonNode n;
+			if(( n = node.get( APP_INST_TPL_NAME )) != null ) {
+				ApplicationTemplate appTemplate = new ApplicationTemplate();
+				appTemplate.setName( n.textValue());
 
-	        	n = node.get( APP_INST_TPL_QUALIFIER );
-	        	if( n != null )
-	        		appTemplate.setQualifier( n.textValue());
+				n = node.get( APP_INST_TPL_QUALIFIER );
+				if( n != null )
+					appTemplate.setQualifier( n.textValue());
 
-	        	n = node.get( APP_INST_TPL_EEP );
-	        	if( n != null )
-	        		appTemplate.setExternalExportsPrefix( n.textValue());
+				n = node.get( APP_INST_TPL_EEP );
+				if( n != null )
+					appTemplate.setExternalExportsPrefix( n.textValue());
 
-	        	application = new Application( appTemplate );
+				application = new Application( appTemplate );
 
-	        } else {
-	        	application = new Application( null );
-	        }
+			} else {
+				application = new Application( null );
+			}
 
-	        if(( n = node.get( NAME )) != null )
-	        	application.setName( n.textValue());
+			if(( n = node.get( NAME )) != null )
+				application.setName( n.textValue());
 
-	        if(( n = node.get( DESC )) != null )
-	        	application.setDescription( n.textValue());
+			if(( n = node.get( DESC )) != null )
+				application.setDescription( n.textValue());
 
 			return application;
 		}
@@ -836,34 +836,34 @@ public final class JSonBindingUtils {
 		public Instance deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        Instance instance = new Instance();
+			JsonNode node = oc.readTree( parser );
+			Instance instance = new Instance();
 
-	        JsonNode n;
-	        if(( n = node.get( NAME )) != null )
-	        	instance.setName( n.textValue());
+			JsonNode n;
+			if(( n = node.get( NAME )) != null )
+				instance.setName( n.textValue());
 
-	        if(( n = node.get( INST_STATUS )) != null )
-	        	instance.setStatus( InstanceStatus.whichStatus( n.textValue()));
+			if(( n = node.get( INST_STATUS )) != null )
+				instance.setStatus( InstanceStatus.whichStatus( n.textValue()));
 
-	        if(( n = node.get( INST_CHANNELS )) != null ) {
-	        	for( JsonNode arrayNodeItem : n )
-	        		instance.channels.add( arrayNodeItem.textValue());
-	        }
+			if(( n = node.get( INST_CHANNELS )) != null ) {
+				for( JsonNode arrayNodeItem : n )
+					instance.channels.add( arrayNodeItem.textValue());
+			}
 
-	        ObjectMapper mapper = createObjectMapper();
+			ObjectMapper mapper = createObjectMapper();
 
-	        // Consider all exports as overridden. This will be fixed later
-	        // (eg. by comparison with component exports).
-	        if(( n = node.get( INST_EXPORTS )) != null ) {
-	        	Map<String, String> exports = mapper.readValue(n.toString(), new TypeReference<HashMap<String,String>>(){});
-	        	instance.overriddenExports.putAll(exports);
-	        }
+			// Consider all exports as overridden. This will be fixed later
+			// (eg. by comparison with component exports).
+			if(( n = node.get( INST_EXPORTS )) != null ) {
+				Map<String, String> exports = mapper.readValue(n.toString(), new TypeReference<HashMap<String,String>>(){});
+				instance.overriddenExports.putAll(exports);
+			}
 
-	        if(( n = node.get( INST_COMPONENT )) != null ) {
-	        	Component instanceComponent = mapper.readValue( n.toString(), Component.class );
-	        	instance.setComponent( instanceComponent );
-	        }
+			if(( n = node.get( INST_COMPONENT )) != null ) {
+				Component instanceComponent = mapper.readValue( n.toString(), Component.class );
+				instance.setComponent( instanceComponent );
+			}
 
 			return instance;
 		}
@@ -909,15 +909,15 @@ public final class JSonBindingUtils {
 		public Component deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
 
 			ObjectCodec oc = parser.getCodec();
-	        JsonNode node = oc.readTree( parser );
-	        Component component = new Component();
+			JsonNode node = oc.readTree( parser );
+			Component component = new Component();
 
-	        JsonNode n;
-	        if(( n = node.get( NAME )) != null )
-	        	component.setName( n.textValue());
+			JsonNode n;
+			if(( n = node.get( NAME )) != null )
+				component.setName( n.textValue());
 
-	        if(( n = node.get( COMP_INSTALLER )) != null )
-	        	component.setInstallerName( n.textValue());
+			if(( n = node.get( COMP_INSTALLER )) != null )
+				component.setInstallerName( n.textValue());
 
 			return component;
 		}

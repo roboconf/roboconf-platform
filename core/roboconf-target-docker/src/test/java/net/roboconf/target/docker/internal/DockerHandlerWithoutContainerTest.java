@@ -35,7 +35,7 @@ import org.junit.Test;
 /**
  * @author Pierre-Yves Gibello - Linagora
  */
-public class DockerHandler_withoutContainerTest {
+public class DockerHandlerWithoutContainerTest {
 
 	@Test
 	public void testGetTargetId() {

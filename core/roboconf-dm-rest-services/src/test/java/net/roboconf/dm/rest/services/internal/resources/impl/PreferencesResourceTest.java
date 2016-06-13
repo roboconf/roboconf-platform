@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -31,15 +31,15 @@ import java.util.List;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import net.roboconf.core.model.runtime.Preference;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.model.runtime.Preference;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 
 /**
  * @author Vincent Zurczak - Linagora

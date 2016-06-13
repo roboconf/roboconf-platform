@@ -39,11 +39,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
-import net.roboconf.target.api.TargetException;
-
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.AssociateAddressRequest;
 import com.amazonaws.services.ec2.model.AttachVolumeRequest;
@@ -59,6 +54,11 @@ import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.model.InstanceBlockDeviceMappingSpecification;
 import com.amazonaws.services.ec2.model.ModifyInstanceAttributeRequest;
 import com.amazonaws.services.ec2.model.Tag;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler.MachineConfigurator;
+import net.roboconf.target.api.TargetException;
 
 /**
  * A machine configurator for EC2.
@@ -85,7 +85,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 	private final Instance scopedInstance;
 	private final String machineId, tagName;
-	private String applicationName;
+	private final String applicationName;
 	private String availabilityZone;
 	private final Map<String,String> targetProperties;
 	private final Logger logger = Logger.getLogger( getClass().getName());
@@ -269,7 +269,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 			} else {
 				volumeId = createVolume(storageId, volumeSnapshotOrId, size);
 			}
-			
+
 			this.logger.info("Volume " + volumeId + " was successfully created.");
 			this.storageIdToVolumeId.put(storageId, volumeId);
 		}
@@ -286,9 +286,9 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 		if(volumeType == null) volumeType = "standard";
 
 		CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest()
-		  .withAvailabilityZone(this.availabilityZone)
-		  .withVolumeType(volumeType)
-		  .withSize(size); // The size of the volume, in gigabytes.
+				.withAvailabilityZone( this.availabilityZone )
+				.withVolumeType( volumeType )
+				.withSize( size ); // The size of the volume, in gigabytes.
 
 		// EC2 snapshot IDs start with "snap-"...
 		if(! Utils.isEmptyOrWhitespaces(snapshotId) && snapshotId.startsWith("snap-"))
@@ -317,7 +317,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 
 		return dvsresult != null && "available".equals(dvsresult.getVolumes().get(0).getState());
 	}
-	
+
 	/**
 	 * Checks whether all specified volumes are created.
 	 * @return true if all volumes created, false otherwise
@@ -371,7 +371,7 @@ public class Ec2MachineConfigurator implements MachineConfigurator {
 	 * @return true if successful attachment, or nothing to do. false otherwise
 	 */
 	private boolean attachVolumes() {
-		
+
 		// If volume is found in map, it has been successfully created (no need to check here)
 		for( Map.Entry<String,String> entry : this.storageIdToVolumeId.entrySet()) {
 

@@ -26,11 +26,10 @@
 package net.roboconf.messaging.api.utils;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.messaging.api.utils.MessagingUtils;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora

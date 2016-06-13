@@ -31,10 +31,11 @@ import java.util.Map;
 /**
  * Global process store.
  * @author Pierre-Yves Gibello - Linagora
- */ 
+ */
 public class ProcessStore {
 
-	private static final Map<String, Process> PROCESS_MAP = new HashMap<String, Process>();
+	private static final Map<String, Process> PROCESS_MAP = new HashMap<> ();
+
 
 	/**
 	 * Stores a process (eg. a running script), so that the
@@ -47,7 +48,7 @@ public class ProcessStore {
 
 	/**
 	 * Retrieves a stored process, when found.
-	 * 
+	 *
 	 * @return The process
 	 */
 	public static synchronized Process getProcess(String applicationName, String scopedInstancePath) {

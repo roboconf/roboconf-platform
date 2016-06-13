@@ -481,10 +481,15 @@ public class RuntimeModelIoTest {
 		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
 		Assert.assertEquals( ErrorCode.P_NO_FILE_TYPE, iterator.next().getErrorCode());
 
-		String fileContent = "instanceof Toto {\n\tname: toto;\n}";
+		String fileContent = "my Toto {\n\tname: toto;\n}";
 		Utils.copyStream( new ByteArrayInputStream( fileContent.getBytes( "UTF-8" )), graphFile );
 		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
-		Assert.assertEquals( ErrorCode.PM_PROPERTY_NOT_APPLIABLE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, iterator.next().getErrorCode());
+
+		fileContent = "instanceof Toto {\n\tname: toto;\n}";
+		Utils.copyStream( new ByteArrayInputStream( fileContent.getBytes( "UTF-8" )), graphFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.PM_INVALID_NAME, iterator.next().getErrorCode());
 
 		fileContent = "instance of Toto {\n\tname: toto;\n}";
 		Utils.copyStream( new ByteArrayInputStream( fileContent.getBytes( "UTF-8" )), graphFile );

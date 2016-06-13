@@ -66,7 +66,7 @@ import org.junit.Test;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentMessageProcessor_BasicTest {
+public class AgentMessageProcessorBasicTest {
 
 	private Agent agent;
 	private TestClient client;

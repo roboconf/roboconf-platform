@@ -11,7 +11,7 @@
  * the moral rights of the other copyright holders.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use file except in compliance with the License.
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -28,7 +28,11 @@ package net.roboconf.agent.internal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
@@ -44,14 +48,10 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImpor
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class AgentMessageProcessor_WaitingAncestorsTest {
+public class AgentMessageProcessorWaitingAncestorsTest {
 
 	private Agent agent;
 	private AgentMessageProcessor processor;

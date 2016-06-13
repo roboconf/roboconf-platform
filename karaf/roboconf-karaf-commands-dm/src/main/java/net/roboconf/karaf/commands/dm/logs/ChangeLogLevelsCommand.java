@@ -31,6 +31,13 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.Completion;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -38,13 +45,6 @@ import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeLogLevel;
-
-import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Argument;
-import org.apache.karaf.shell.api.action.Command;
-import org.apache.karaf.shell.api.action.Completion;
-import org.apache.karaf.shell.api.action.lifecycle.Reference;
-import org.apache.karaf.shell.api.action.lifecycle.Service;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -73,13 +73,13 @@ public class ChangeLogLevelsCommand implements Action {
 	PrintStream out = System.out;
 
 
-    @Override
-    public Object execute() throws Exception {
+	@Override
+	public Object execute() throws Exception {
 
-    	// Get the log level
-    	boolean isValidLevel = true;
-    	Level logLevel = null;
-    	try {
+		// Get the log level
+		boolean isValidLevel = true;
+		Level logLevel = null;
+		try {
 			logLevel = Level.parse( this.logLevelAsString );
 
 		} catch( Exception e ) {
@@ -87,56 +87,56 @@ public class ChangeLogLevelsCommand implements Action {
 			isValidLevel = false;
 		}
 
-    	// Prepare the checks
-    	List<Instance> scopedInstances = new ArrayList<> ();
-    	ManagedApplication ma = null;
-    	Instance scopedInstance;
+		// Prepare the checks
+		List<Instance> scopedInstances = new ArrayList<> ();
+		ManagedApplication ma = null;
+		Instance scopedInstance;
 
-    	// Check...
-    	if( ! isValidLevel )
-    		this.out.println( "Invalid log level: " + this.logLevelAsString + ". Only " + " are allowed." );
+		// Check...
+		if( ! isValidLevel )
+			this.out.println( "Invalid log level: " + this.logLevelAsString + ". Only " + " are allowed." );
 
-    	else if(( ma = this.manager.applicationMngr().findManagedApplicationByName( this.applicationName )) == null )
-    		this.out.println( "Unknown application: " + this.applicationName + "." );
+		else if(( ma = this.manager.applicationMngr().findManagedApplicationByName( this.applicationName )) == null )
+			this.out.println( "Unknown application: " + this.applicationName + "." );
 
-    	else if( this.scopedInstancePath == null )
-    		scopedInstances.addAll( InstanceHelpers.findAllScopedInstances( ma.getApplication()));
+		else if( this.scopedInstancePath == null )
+			scopedInstances.addAll( InstanceHelpers.findAllScopedInstances( ma.getApplication()));
 
-    	else if(( scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), this.scopedInstancePath )) == null )
-    		this.out.println( "There is no " + this.scopedInstancePath + " instance in " + this.applicationName + "." );
+		else if(( scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), this.scopedInstancePath )) == null )
+			this.out.println( "There is no " + this.scopedInstancePath + " instance in " + this.applicationName + "." );
 
-    	else if( ! InstanceHelpers.isTarget( scopedInstance ))
-    		this.out.println( "Instance " + this.scopedInstancePath + " is not a scoped instance in " + this.applicationName + "." );
+		else if( ! InstanceHelpers.isTarget( scopedInstance ))
+			this.out.println( "Instance " + this.scopedInstancePath + " is not a scoped instance in " + this.applicationName + "." );
 
-    	else
-    		scopedInstances.add( scopedInstance );
+		else
+			scopedInstances.add( scopedInstance );
 
-    	// Send messages
-    	for( Instance inst : scopedInstances ) {
+		// Send messages
+		for( Instance inst : scopedInstances ) {
 
-    		if( inst.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
-    			StringBuilder sb = new StringBuilder( "No message will be sent to " );
-    			sb.append( this.scopedInstancePath );
-    			sb.append( ", the associated agent is not marked as deployed." );
-    			this.out.println( sb.toString());
+			if( inst.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
+				StringBuilder sb = new StringBuilder( "No message will be sent to " );
+				sb.append( this.scopedInstancePath );
+				sb.append( ", the associated agent is not marked as deployed." );
+				this.out.println( sb.toString());
 
-    			continue;
-    		}
+				continue;
+			}
 
-    		if( this.logger.isLoggable( Level.FINE )) {
-    			StringBuilder sb = new StringBuilder( "Sending a change log level message (level = " );
-    			sb.append( this.logLevelAsString );
-    			sb.append( ") to " );
-    			sb.append( this.scopedInstancePath );
-    			sb.append( " @ " );
-    			sb.append( this.applicationName );
-    			this.logger.fine( sb.toString());
-    		}
+			if( this.logger.isLoggable( Level.FINE )) {
+				StringBuilder sb = new StringBuilder( "Sending a change log level message (level = " );
+				sb.append( this.logLevelAsString );
+				sb.append( ") to " );
+				sb.append( this.scopedInstancePath );
+				sb.append( " @ " );
+				sb.append( this.applicationName );
+				this.logger.fine( sb.toString());
+			}
 
-    		MsgCmdChangeLogLevel message = new MsgCmdChangeLogLevel( logLevel );
-    		this.manager.messagingMngr().sendMessageSafely( ma, inst, message );
-    	}
+			MsgCmdChangeLogLevel message = new MsgCmdChangeLogLevel( logLevel );
+			this.manager.messagingMngr().sendMessageSafely( ma, inst, message );
+		}
 
-    	return null;
-    }
+		return null;
+	}
 }

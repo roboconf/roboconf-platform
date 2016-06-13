@@ -181,14 +181,14 @@ public class RestHandler implements IMonitoringHandler {
 		String response = null;
 		try {
 			// Create a trust manager that does not validate certificate chains
-	        TrustManager[] trustAllCerts = new TrustManager[] { new LocalX509TrustManager()};
+			TrustManager[] trustAllCerts = new TrustManager[] { new LocalX509TrustManager()};
 
-	        // Install the all-trusting trust manager
-	        final SSLContext sc = SSLContext.getInstance("SSL");
-	        sc.init( null, trustAllCerts, new java.security.SecureRandom());
-	        HttpsURLConnection.setDefaultSSLSocketFactory( sc.getSocketFactory());
+			// Install the all-trusting trust manager
+			final SSLContext sc = SSLContext.getInstance("SSL");
+			sc.init( null, trustAllCerts, new java.security.SecureRandom());
+			HttpsURLConnection.setDefaultSSLSocketFactory( sc.getSocketFactory());
 
-	        // Create all-trusting host name verifier
+			// Create all-trusting host name verifier
 			HostnameVerifier allHostsValid = new LocalHostnameVerifier();
 			HttpsURLConnection.setDefaultHostnameVerifier( allHostsValid );
 
@@ -250,13 +250,13 @@ public class RestHandler implements IMonitoringHandler {
 		@Override
 		public void checkClientTrusted(X509Certificate[] certs, String authType) {
 			// nothing
-        }
+		}
 
 		@Override
 		public void checkServerTrusted(X509Certificate[] certs, String authType) {
 			// nothing
-        }
-    }
+		}
+	}
 
 
 	/**

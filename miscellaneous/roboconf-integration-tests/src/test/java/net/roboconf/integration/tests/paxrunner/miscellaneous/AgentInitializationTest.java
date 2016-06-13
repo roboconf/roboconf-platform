@@ -35,6 +35,16 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.ProbeBuilder;
+import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerMethod;
+
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.agent.internal.AgentMessageProcessor;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
@@ -51,16 +61,6 @@ import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.integration.tests.internal.MyHandler;
 import net.roboconf.integration.tests.internal.MyTargetResolver;
 import net.roboconf.integration.tests.internal.runners.RoboconfPaxRunner;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.Configuration;
-import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.ProbeBuilder;
-import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 /**
  * A set of tests for the agent's initialization.

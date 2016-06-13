@@ -70,17 +70,17 @@ public interface Ec2Constants {
 	 * An elastic IP to associate with a VM.
 	 */
 	String ELASTIC_IP = "ec2.elastic.ip";
-	
+
 	/**
 	 * The availability zone for instances (necessary to reuse volumes: only volumes in the same zone can be attached).
 	 */
 	String AVAILABILITY_ZONE = "ec2.availability.zone";
-	
+
 	/**
 	 * Use block storage, or not.
 	 */
 	String USE_BLOCK_STORAGE = "ec2.use-block-storage";
-	
+
 	/**
 	 * EBS (Elastic Block Storage) snapshot ID.
 	 */
@@ -90,7 +90,7 @@ public interface Ec2Constants {
 	 * EBS volume size (GB).
 	 */
 	String VOLUME_SIZE = "ec2.ebs-size";
-	
+
 	/**
 	 * EBS mount point (eg. /dev/sda2).
 	 */
@@ -100,10 +100,9 @@ public interface Ec2Constants {
 	 * EBS volume type (general purpose or provisioned iops SSD, magnetic).
 	 */
 	String VOLUME_TYPE = "ec2.ebs-type";
-	
+
 	/**
 	 * EBS delete volume on termination (default false).
 	 */
 	String VOLUME_VOLATILE = "ec2.ebs-delete-on-termination";
-
 }
