@@ -67,16 +67,6 @@ public final class CompletionUtils {
 
 
 	/**
-	 * Removes the comments from a line.
-	 * @param line a non-null line
-	 * @return a non-null line
-	 */
-	public static String removeComments( String line ) {
-		return line.replaceAll( "\\s*#[^\n]*", "" );
-	}
-
-
-	/**
 	 * Finds all the graph files that can be imported.
 	 * @param appDirectory the application's directory
 	 * @param editedFile the graph file that is being edited
@@ -143,15 +133,6 @@ public final class CompletionUtils {
 		}
 
 		return result;
-	}
-
-
-	/**
-	 * @param c a character
-	 * @return true if it is '\n' or '\r'
-	 */
-	public static boolean isLineBreak( char c ) {
-		return c == '\n' || c == '\r';
 	}
 
 

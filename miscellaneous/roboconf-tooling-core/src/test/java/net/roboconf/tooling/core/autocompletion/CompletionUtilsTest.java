@@ -29,7 +29,6 @@ import static net.roboconf.tooling.core.autocompletion.CompletionUtils.DEFAULT_V
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.SET_BY_ROBOCONF;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findAllTypes;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findFilesToImport;
-import static net.roboconf.tooling.core.autocompletion.CompletionUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.resolveStringDescription;
 
 import java.io.File;
@@ -43,15 +42,6 @@ import net.roboconf.core.Constants;
  * @author Vincent Zurczak - Linagora
  */
 public class CompletionUtilsTest {
-
-	@Test
-	public void testIsLineBreak() {
-
-		Assert.assertTrue( isLineBreak( '\n' ));
-		Assert.assertTrue( isLineBreak( '\r' ));
-		Assert.assertFalse( isLineBreak( 'c' ));
-	}
-
 
 	@Test
 	public void testResolveStringDescription() {

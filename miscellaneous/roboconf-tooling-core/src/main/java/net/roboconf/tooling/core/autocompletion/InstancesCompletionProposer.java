@@ -29,10 +29,10 @@ import static net.roboconf.core.dsl.ParsingConstants.KEYWORD_IMPORT;
 import static net.roboconf.core.dsl.ParsingConstants.KEYWORD_INSTANCE_OF;
 import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_INSTANCE_CHANNELS;
 import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_INSTANCE_NAME;
+import static net.roboconf.tooling.core.TextUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.basicProposal;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.buildProposalsFromMap;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findAllTypes;
-import static net.roboconf.tooling.core.autocompletion.CompletionUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.resolveStringDescription;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.startsWith;
 
@@ -52,6 +52,8 @@ import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.tooling.core.TextUtils;
+import net.roboconf.tooling.core.TextUtils.SelectionRange;
 import net.roboconf.tooling.core.autocompletion.CompletionUtils.RoboconfTypeBean;
 
 /**
@@ -214,7 +216,7 @@ public class InstancesCompletionProposer implements ICompletionProposer {
 		}
 
 		// Simplify the search: remove all the comments.
-		text = CompletionUtils.removeComments( text );
+		text = TextUtils.removeComments( text );
 
 		// Keep on simplifying the search: remove complete instances
 		// Since instances can contain other instances (recursivity), we must

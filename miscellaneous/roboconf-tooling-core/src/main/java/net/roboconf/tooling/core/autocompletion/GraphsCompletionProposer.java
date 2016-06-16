@@ -32,11 +32,11 @@ import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_COMPONENT_IMPORTS;
 import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_COMPONENT_INSTALLER;
 import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_GRAPH_CHILDREN;
 import static net.roboconf.core.dsl.ParsingConstants.PROPERTY_GRAPH_EXTENDS;
+import static net.roboconf.tooling.core.TextUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.basicProposal;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.buildProposalsFromMap;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findAllExportedVariables;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.findTypeNames;
-import static net.roboconf.tooling.core.autocompletion.CompletionUtils.isLineBreak;
 import static net.roboconf.tooling.core.autocompletion.CompletionUtils.startsWith;
 
 import java.io.File;
@@ -47,6 +47,8 @@ import java.util.TreeMap;
 
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.tooling.core.TextUtils;
+import net.roboconf.tooling.core.TextUtils.SelectionRange;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -224,7 +226,7 @@ public class GraphsCompletionProposer implements ICompletionProposer {
 		}
 
 		// Simplify the search: remove all the comments.
-		text = CompletionUtils.removeComments( text );
+		text = TextUtils.removeComments( text );
 
 		// Keep on simplifying the search: remove complete components and facets
 		// Since instances can contain other instances (recursivity), we must

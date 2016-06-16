@@ -28,6 +28,8 @@ package net.roboconf.tooling.core.autocompletion;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.roboconf.tooling.core.TextUtils.SelectionRange;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -93,33 +95,6 @@ public interface ICompletionProposer {
 		@Override
 		public String toString() {
 			return proposalName;
-		}
-	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public static class SelectionRange {
-		private final int offset, length;
-
-
-		/**
-		 * Constructor.
-		 * @param offset
-		 * @param length
-		 */
-		public SelectionRange( int offset, int length ) {
-			this.offset = offset;
-			this.length = length;
-		}
-
-		public int getOffset() {
-			return offset;
-		}
-
-		public int getLength() {
-			return length;
 		}
 	}
 }
