@@ -52,8 +52,8 @@ import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.tooling.core.SelectionRange;
 import net.roboconf.tooling.core.TextUtils;
-import net.roboconf.tooling.core.TextUtils.SelectionRange;
 import net.roboconf.tooling.core.autocompletion.CompletionUtils.RoboconfTypeBean;
 
 /**

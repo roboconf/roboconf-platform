@@ -29,8 +29,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import net.roboconf.tooling.core.SelectionRange;
 import net.roboconf.tooling.core.TextUtils;
-import net.roboconf.tooling.core.TextUtils.SelectionRange;
 
 /**
  * An abstract (and robust) action to manage comments in text selection.
@@ -42,6 +42,15 @@ import net.roboconf.tooling.core.TextUtils.SelectionRange;
  * @author Vincent Zurczak - Linagora
  */
 public abstract class AbstractCommentAction implements ITextAction {
+
+	private int newCursorPosition;
+
+
+	@Override
+	public int getNewCursorPosition() {
+		return this.newCursorPosition;
+	}
+
 
 	@Override
 	public String update( String fullText, int selectionOffset, int selectionLength ) {
@@ -68,11 +77,13 @@ public abstract class AbstractCommentAction implements ITextAction {
 		}
 
 		// Rebuild the new text
+		this.newCursorPosition = before.length() + sb.length();
 		sb.insert( 0, before );
 		sb.append( after );
 
 		return sb.toString();
 	}
+
 
 	/**
 	 * All the lines are pre-processed.
@@ -81,6 +92,7 @@ public abstract class AbstractCommentAction implements ITextAction {
 	protected void analyzeLine( String line ) {
 		// nothing
 	}
+
 
 	/**
 	 * Processes / Updates a line.

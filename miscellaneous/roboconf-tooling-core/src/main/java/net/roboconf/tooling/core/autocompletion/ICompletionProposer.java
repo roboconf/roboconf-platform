@@ -28,7 +28,7 @@ package net.roboconf.tooling.core.autocompletion;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.roboconf.tooling.core.TextUtils.SelectionRange;
+import net.roboconf.tooling.core.SelectionRange;
 
 /**
  * @author Vincent Zurczak - Linagora

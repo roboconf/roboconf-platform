@@ -135,31 +135,4 @@ public final class TextUtils {
 
 		return selectionLength;
 	}
-
-
-	/**
-	 * @author Vincent Zurczak - Linagora
-	 */
-	public static class SelectionRange {
-		private final int offset, length;
-
-
-		/**
-		 * Constructor.
-		 * @param offset
-		 * @param length
-		 */
-		public SelectionRange( int offset, int length ) {
-			this.offset = offset;
-			this.length = length;
-		}
-
-		public int getOffset() {
-			return this.offset;
-		}
-
-		public int getLength() {
-			return this.length;
-		}
-	}
 }

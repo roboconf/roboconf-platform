@@ -31,8 +31,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.roboconf.core.utils.Utils;
+import net.roboconf.tooling.core.SelectionRange;
 import net.roboconf.tooling.core.TextUtils;
-import net.roboconf.tooling.core.TextUtils.SelectionRange;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -40,6 +40,13 @@ import net.roboconf.tooling.core.TextUtils.SelectionRange;
 public class CorrectIndentationAction implements ITextAction {
 
 	private static final int LB_INDENT = 1;
+	private int newCursorPosition;
+
+
+	@Override
+	public int getNewCursorPosition() {
+		return this.newCursorPosition;
+	}
 
 
 	@Override
@@ -93,6 +100,7 @@ public class CorrectIndentationAction implements ITextAction {
 		}
 
 		// Rebuild the new text
+		this.newCursorPosition = before.length() + sb.length();
 		sb.insert( 0, before );
 		sb.append( after );
 

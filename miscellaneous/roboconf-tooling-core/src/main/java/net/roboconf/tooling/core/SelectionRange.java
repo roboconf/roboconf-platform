@@ -23,25 +23,41 @@
  * limitations under the License.
  */
 
-package net.roboconf.tooling.core.textactions;
+package net.roboconf.tooling.core;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
-public interface ITextAction {
+/**
+ * @author Vincent Zurczak - Linagora
+ */
+public class SelectionRange {
+	private int offset, length;
+
 
 	/**
-	 * Builds a new text from a text selection.
-	 * @param text a non-null text
-	 * @param selectionOffset the selection offset (-1 for the whole selection)
-	 * @param selectionLength the selection length
-	 * @return a non-null text
+	 * Constructor.
+	 * @param offset
+	 * @param length
 	 */
-	String update( String text, int selectionOffset, int selectionLength );
+	public SelectionRange( int offset, int length ) {
+		this.offset = offset;
+		this.length = length;
+	}
 
-	/**
-	 * Gives the location of the cursor in the content returned by {@link #update(String, int, int)}.
-	 * @return an integer in the [0, new text's length] range
-	 */
-	int getNewCursorPosition();
+	public int getOffset() {
+		return this.offset;
+	}
+
+	public int getLength() {
+		return this.length;
+	}
+
+	public void setOffset( int offset ) {
+		this.offset = offset;
+	}
+
+	public void setLength( int length ) {
+		this.length = length;
+	}
 }

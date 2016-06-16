@@ -47,8 +47,8 @@ import java.util.TreeMap;
 
 import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.tooling.core.SelectionRange;
 import net.roboconf.tooling.core.TextUtils;
-import net.roboconf.tooling.core.TextUtils.SelectionRange;
 
 /**
  * @author Vincent Zurczak - Linagora
