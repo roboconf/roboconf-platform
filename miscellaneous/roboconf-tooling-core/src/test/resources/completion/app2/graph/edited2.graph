@@ -1,0 +1,18 @@
+
+# This is a comment
+# over several lines.
+
+
+facet f1 {
+	exports: v1=version1, v2=version2;
+}
+
+c1 {
+	facets: f1;
+	exports: port=8100, ip;
+}
+
+c2 {
+	exports: ip;
+}
+

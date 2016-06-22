@@ -1,0 +1,13 @@
+
+# This is a comment
+# over several lines.
+
+instance of c1 {
+
+	instance of c2 {	# inline comment
+		
+	}
+
+}
+
+

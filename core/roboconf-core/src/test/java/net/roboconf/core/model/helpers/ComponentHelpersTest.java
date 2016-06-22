@@ -31,10 +31,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.ComplexApplicationFactory1;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.model.beans.AbstractType;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -42,8 +45,6 @@ import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.Graphs;
 import net.roboconf.core.model.beans.ImportedVariable;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -551,7 +552,7 @@ public class ComponentHelpersTest {
 
 
 	@Test
-	public void testfindAllImportedVariables() {
+	public void testFindAllImportedVariables() {
 
 		Component root = new Component( "root" );
 		Component serverWithApp = new Component( "server with app" );
@@ -597,7 +598,7 @@ public class ComponentHelpersTest {
 
 
 	@Test
-	public void testfindAllExportedVariables_simple() {
+	public void testFindAllExportedVariables_simple() {
 
 		Component comp = new Component( "comp" );
 		Map<String,String> exports = ComponentHelpers.findAllExportedVariables( comp );
@@ -611,7 +612,7 @@ public class ComponentHelpersTest {
 
 
 	@Test
-	public void testfindAllExportedVariables_withFacet() {
+	public void testFindAllExportedVariables_withFacet() {
 
 		Component comp = new Component( "comp" );
 		comp.addExportedVariable( new ExportedVariable( "test", "ok" ));
@@ -653,11 +654,18 @@ public class ComponentHelpersTest {
 		Assert.assertEquals( "ok", exports.get( "comp.test" ));
 		Assert.assertEquals( "value", exports.get( "facet.property" ));
 		Assert.assertEquals( "ha! ha!", exports.get( "comp.property" ));
+
+		// Verify we find the same thing with the abstract method
+		Map<String,String> abstractExports = ComponentHelpers.findAllExportedVariables((AbstractType) comp);
+		Assert.assertEquals( abstractExports.size(), exports.size());
+
+		abstractExports = ComponentHelpers.findAllExportedVariables((AbstractType) f);
+		Assert.assertEquals( 1, abstractExports.size());
 	}
 
 
 	@Test
-	public void testfindAllExportedVariables_withComponentExtension() {
+	public void testFindAllExportedVariables_withComponentExtension() {
 
 		Component comp = new Component( "comp" );
 		comp.addExportedVariable( new ExportedVariable( "test", "ok" ));
@@ -703,7 +711,7 @@ public class ComponentHelpersTest {
 
 
 	@Test
-	public void testfindAllExportedVariables_veryComplex() {
+	public void testFindAllExportedVariables_veryComplex() {
 
 		// Create a model
 		Component root = new Component( "root" );

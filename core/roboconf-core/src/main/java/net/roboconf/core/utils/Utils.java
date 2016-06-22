@@ -468,7 +468,7 @@ public final class Utils {
 
 
 	/**
-	 * Finds all the files directly contained in a directory and with a given extension.
+	 * Finds all the files (directly and indirectly) contained in a directory and with a given extension.
 	 * <p>
 	 * Search is case-insensitive.
 	 * It means searching for properties or PROPERTIES extensions will give

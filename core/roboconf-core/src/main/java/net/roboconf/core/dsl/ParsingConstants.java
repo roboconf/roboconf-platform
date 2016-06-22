@@ -47,11 +47,6 @@ public interface ParsingConstants {
 	 */
 	String PROPERTY_SEPARATOR = ",";
 
-	/**
-	 * The symbols that indicates the beginning of a comment.
-	 */
-	String EQUAL_OPERATOR = "=";
-
 
 	/**
 	 * Keyword to declare an import.

@@ -185,6 +185,27 @@ public final class ComponentHelpers {
 
 
 	/**
+	 * Finds all the exported variables for a given Roboconf type.
+	 * <p>
+	 * This method also fixes the name of the exported variables (set the right prefixes, if required).
+	 * </p>
+	 *
+	 * @param type a type (facet or component)
+	 * @return a non-null map of exported variables (key = variable name, value = variable value).
+	 */
+	public static Map<String,String> findAllExportedVariables( AbstractType type ) {
+
+		Map<String,String> result;
+		if( type instanceof Facet )
+			result = findAllExportedVariables((Facet) type);
+		else
+			result = findAllExportedVariables((Component) type);
+
+		return result;
+	}
+
+
+	/**
 	 * Finds all the exported variables for a given application / graph(s).
 	 * @param graphs a non-null graph(s)
 	 * @return a non-null map of exported variables (key = variable name, value = variable value).

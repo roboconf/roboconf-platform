@@ -47,6 +47,16 @@ public interface Constants {
 	String FILE_EXT_PROPERTIES = ".properties";
 
 	/**
+	 * The <strong>graph</strong> file extension.
+	 */
+	String FILE_EXT_GRAPH = ".graph";
+
+	/**
+	 * The <strong>instances</strong> file extension.
+	 */
+	String FILE_EXT_INSTANCES = ".instances";
+
+	/**
 	 * The <strong>drl</strong> file extension.
 	 */
 	String FILE_EXT_RULE = ".drl";

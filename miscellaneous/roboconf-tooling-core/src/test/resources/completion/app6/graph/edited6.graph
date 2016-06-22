@@ -1,0 +1,38 @@
+
+# This is a comment
+# over several lines.
+
+# This is not an annotation about the facet.
+
+# This is facet f1.
+# And the desc spans over two lines.
+facet f1 {
+	exports: v1=version1, v2=version2;
+}
+
+# Simple comment.
+facet f2 {
+
+}
+
+#
+# A comment about c1
+#
+c1 {
+	facets: f1;
+	exports: port=8100, ip;
+}
+
+# Not a description of c2
+
+c2 {
+	exports: ip;
+	children: c1;
+}
+
+comp1 {
+}
+
+comp2 {
+	exports: toto;
+	imports: 

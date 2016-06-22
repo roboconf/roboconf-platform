@@ -1,0 +1,14 @@
+# Initial comment
+	# Indented comment
+	## Double comment
+
+#comp1 {
+#	installer: bash;
+#	exports: ip, port=80;
+#}
+
+# comp2's annotation
+comp2 {
+	installer: bash;
+	exports: ip, port=80;
+}

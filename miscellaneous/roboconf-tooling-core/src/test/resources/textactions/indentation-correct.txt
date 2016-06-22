@@ -1,0 +1,30 @@
+
+c1 {
+	prop1: ok;
+	prop2: ok;
+
+	prop3: ko;
+}
+
+instance of c1 {
+
+	instance of c2 {	# this is a comment
+		prop1: lp;
+
+		prop3: ok;
+		prop5: ok1, ok2, \
+			ok0, \
+			ok3, \
+			ok4;
+	}
+
+	prop6: ok;
+	instance of c3 {
+		name: c3;
+		instance of c4 {
+
+			prop: value;
+
+		}
+	} 
+}
