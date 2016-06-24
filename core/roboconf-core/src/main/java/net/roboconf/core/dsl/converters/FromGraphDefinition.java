@@ -106,6 +106,14 @@ public class FromGraphDefinition {
 
 
 	/**
+	 * @return the processedImports
+	 */
+	public Set<File> getProcessedImports() {
+		return this.processedImports;
+	}
+
+
+	/**
 	 * @return the objectToSource (never null)
 	 */
 	public Map<Object,SourceReference> getObjectToSource() {

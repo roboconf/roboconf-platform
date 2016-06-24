@@ -51,6 +51,11 @@ public class RoboconfErrorTest {
 		Assert.assertTrue( def2.equals( new RoboconfError( ErrorCode.CMD_CANNOT_HAVE_ANY_PARENT, "details" )));
 		Assert.assertFalse( def2.equals( def3 ));
 		Assert.assertFalse( def2.equals( def1 ));
+
+		RoboconfError def4 = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, "component name: vm" );
+		RoboconfError def5 = new RoboconfError( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, "component name: server" );
+		Assert.assertFalse( def4.equals( def5 ));
+		Assert.assertFalse( def5.equals( def4 ));
 	}
 
 

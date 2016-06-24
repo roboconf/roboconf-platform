@@ -646,6 +646,96 @@ public class RuntimeModelIoTest {
 
 
 	@Test
+	public void testUnreachableFile() throws Exception {
+
+		// Valid project
+		File dir = this.folder.newFolder();
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_DESC ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
+
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+
+		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
+		desc.setName( "app name" );
+		desc.setQualifier( "qualifier" );
+		desc.setGraphEntryPoint( "app.graph" );
+		desc.setDslId( "roboconf-1.0" );
+		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
+
+		File graphFile = new File( dir, Constants.PROJECT_DIR_GRAPH + "/app.graph" );
+		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
+
+		// Unreachable files
+		final int length = 3;
+		File[] copies = new File[ length ];
+		for( int i=0; i<length; i++ ) {
+			copies[ i ] = new File( new File( dir, Constants.PROJECT_DIR_GRAPH ), "not-used-" + i + ".graph" );
+			Utils.copyStream( graphFile, copies[ i ]);
+		}
+
+		// Verify
+		List<RoboconfError> errors = new ArrayList<>( RuntimeModelIo.loadApplication( dir ).loadErrors );
+		Assert.assertEquals( length, errors.size());
+		for( int i=0; i<length; i++ ) {
+			Assert.assertEquals( ParsingError.class, errors.get( i ).getClass());
+			Assert.assertEquals( ErrorCode.PROJ_UNREACHABLE_FILE, errors.get( i ).getErrorCode());
+			Assert.assertEquals( copies[ i ], ((ParsingError) errors.get( i )).getFile());
+		}
+	}
+
+
+	@Test
+	public void testInvalidFileLocation() throws Exception {
+
+		// Valid project
+		File dir = this.folder.newFolder();
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_DESC ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_INSTANCES ).mkdir());
+
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM" ).mkdir());
+		Assert.assertTrue( new File( dir, Constants.PROJECT_DIR_GRAPH + "/VM/target.properties" ).createNewFile());
+
+		ApplicationTemplateDescriptor desc = new ApplicationTemplateDescriptor();
+		desc.setName( "app name" );
+		desc.setQualifier( "qualifier" );
+		desc.setGraphEntryPoint( "app.graph" );
+		desc.setDslId( "roboconf-1.0" );
+		ApplicationTemplateDescriptor.save( new File( dir, Constants.PROJECT_DIR_DESC + "/" + Constants.PROJECT_FILE_DESCRIPTOR ), desc );
+
+		File graphFile = new File( dir, Constants.PROJECT_DIR_GRAPH + "/app.graph" );
+		Utils.writeStringInto( "VM {\ninstaller:target;\n}", graphFile );
+
+		// File at an invalid location
+		final int length = 3;
+		File[] copies = new File[ length ];
+		for( int i=0; i<length; i++ ) {
+			copies[ i ] = new File( dir, "not-used-" + i + ".graph" );
+			Utils.copyStream( graphFile, copies[ i ]);
+		}
+
+		// Such files are not validated
+		File invalidInstFile = new File( dir, "invalid.instances" );
+		Utils.writeStringInto( "inst of {", invalidInstFile );
+
+		// Verify
+		List<RoboconfError> errors = new ArrayList<>( RuntimeModelIo.loadApplication( dir ).loadErrors );
+		Assert.assertEquals( length + 1, errors.size());
+		for( int i=0; i<length; i++ ) {
+			Assert.assertEquals( ParsingError.class, errors.get( i ).getClass());
+			Assert.assertEquals( ErrorCode.PROJ_INVALID_FILE_LOCATION, errors.get( i ).getErrorCode());
+			Assert.assertEquals( copies[ i ], ((ParsingError) errors.get( i )).getFile());
+		}
+
+		Assert.assertEquals( ParsingError.class, errors.get( length - 1 ).getClass());
+		Assert.assertEquals( ErrorCode.PROJ_INVALID_FILE_LOCATION, errors.get( length - 1 ).getErrorCode());
+		Assert.assertEquals( copies[ length - 1 ], ((ParsingError) errors.get( length - 1 )).getFile());
+	}
+
+
+	@Test
 	public void testParsingWithRecipeProject() throws Exception {
 
 		// Normal load
@@ -655,8 +745,10 @@ public class RuntimeModelIoTest {
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( dir );
 		RoboconfErrorHelpers.filterErrorsForRecipes( alr );
 
-		Assert.assertEquals( 1, alr.getLoadErrors().size());
-		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, alr.getLoadErrors().iterator().next().getErrorCode());
+		List<RoboconfError> errors = new ArrayList<>( alr.getLoadErrors());
+		Assert.assertEquals( 2, errors.size());
+		Assert.assertEquals( ErrorCode.PROJ_NO_DESC_DIR, errors.get( 0 ).getErrorCode());
+		Assert.assertEquals( ErrorCode.PROJ_UNREACHABLE_FILE, errors.get( 1 ).getErrorCode());
 
 		// Flexible load
 		alr = RuntimeModelIo.loadApplicationFlexibly( dir );
@@ -818,5 +910,15 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( 2, criticalErrors.size());
 		Assert.assertEquals( ErrorCode.RULE_UNKNOWN_COMMAND, criticalErrors.get( 0 ).getErrorCode());
 		Assert.assertEquals( ErrorCode.PROJ_INVALID_RULE_EXT, criticalErrors.get( 1 ).getErrorCode());
+	}
+
+
+	@Test
+	public void testParsingWithInexistingDirectory() {
+
+		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( new File( "inexiting" ));
+		Assert.assertNotNull( alr.getApplicationTemplate());
+		Assert.assertNull( alr.getApplicationTemplate().getGraphs());
+		Assert.assertNotSame( 0, alr.getLoadErrors().size());
 	}
 }

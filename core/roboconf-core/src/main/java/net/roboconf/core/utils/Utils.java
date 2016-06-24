@@ -661,7 +661,7 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void extractZipArchive( File zipFile, File targetDirectory )
-			throws IOException {
+	throws IOException {
 
 		extractZipArchive( zipFile, targetDirectory, null, null );
 	}
@@ -686,7 +686,7 @@ public final class Utils {
 	 * @throws IOException if something went wrong
 	 */
 	public static void extractZipArchive( File zipFile, File targetDirectory, String entryPattern, String removedEntryPrefix )
-			throws IOException {
+	throws IOException {
 
 		// Make some checks
 		if( zipFile == null || targetDirectory == null )
@@ -741,6 +741,22 @@ public final class Utils {
 			// Close the stream
 			theZipFile.close();
 		}
+	}
+
+
+	/**
+	 * Determines whether a directory contains a given file.
+	 * @param ancestorCandidate the directory
+	 * @param file the file
+	 * @return true if the directory directly or indirectly contains the file
+	 */
+	public static boolean isAncestor( File ancestorCandidate, File file ) {
+
+		String path = ancestorCandidate.getAbsolutePath();
+		if( ! path.endsWith( "/" ))
+			path += "/";
+
+		return file.getAbsolutePath().startsWith( path );
 	}
 
 

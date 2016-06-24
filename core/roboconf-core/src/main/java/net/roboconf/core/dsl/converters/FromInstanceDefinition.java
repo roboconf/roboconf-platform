@@ -91,6 +91,14 @@ public class FromInstanceDefinition {
 
 
 	/**
+	 * @return the processedImports
+	 */
+	public Set<File> getProcessedImports() {
+		return this.processedImports;
+	}
+
+
+	/**
 	 * @return the objectToSource
 	 */
 	public Map<Object,SourceReference> getObjectToSource() {

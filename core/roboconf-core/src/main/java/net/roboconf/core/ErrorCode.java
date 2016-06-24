@@ -159,6 +159,8 @@ public enum ErrorCode {
 	PROJ_APPLICATION_TEMPLATE_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application template was not found." ),
 	PROJ_INVALID_COMMAND_EXT( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A command script file must use the " + Constants.FILE_EXT_COMMANDS + " extension." ),
 	PROJ_INVALID_RULE_EXT( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "An autonomic rule file must use the " + Constants.FILE_EXT_RULE + " extension." ),
+	PROJ_UNREACHABLE_FILE( ErrorLevel.WARNING, ErrorCategory.PROJECT, "This file is not reachable from the application's descriptor. Maybe this file should be imported somewhere." ),
+	PROJ_INVALID_FILE_LOCATION( ErrorLevel.WARNING, ErrorCategory.PROJECT, "This file should not be located in this directory." ),
 
 	// Recipes Errors
 	REC_PUPPET_DISLIKES_WILDCARD_IMPORTS( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Puppet modules may encounter problems with Roboconf wildcard imports." ),
