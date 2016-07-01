@@ -26,19 +26,25 @@
 package net.roboconf.core.commands;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.model.ParsingError;
+import net.roboconf.core.model.helpers.ComponentHelpers;
 
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class BulkCommandInstructions extends AbstractCommandInstruction {
 
-	private String instancePath;
+	private static final String ALL = "\\s+instances\\s+of";
+
+	private String instancePath, componentName;
 	private ChangeStateInstruction changeStateInstruction;
 
 
@@ -51,10 +57,15 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 	BulkCommandInstructions( Context context, String instruction, int line ) {
 		super( context, instruction, line );
 
-		Matcher m = getPattern().matcher( instruction );
+		Matcher m = getPatternForInstancePath().matcher( instruction );
 		if( m.matches()) {
 			this.syntaxicallyCorrect = true;
 			this.instancePath = m.group( 2 ).trim();
+			this.changeStateInstruction = ChangeStateInstruction.which( m.group( 1 ).trim());
+
+		} else if(( m = getPatternForComponentName().matcher( instruction )).matches()) {
+			this.syntaxicallyCorrect = true;
+			this.componentName = m.group( 2 ).trim();
 			this.changeStateInstruction = ChangeStateInstruction.which( m.group( 1 ).trim());
 		}
 	}
@@ -66,17 +77,38 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 	 */
 	public static boolean isBulkInstruction( String line ) {
 
-		Matcher m = getPattern().matcher( line );
-		return m.matches()
-				&& ChangeStateInstruction.which( m.group( 1 ).trim()) != null;
+		boolean match = false;
+		Pattern[] patterns = {
+				getPatternForInstancePath(),
+				getPatternForComponentName()
+		};
+
+		for( Pattern p : patterns ) {
+			Matcher m = p.matcher( line );
+			if( m.matches()
+					&& ChangeStateInstruction.which( m.group( 1 ).trim()) != null ) {
+				match = true;
+				break;
+			}
+		}
+
+		return match;
 	}
 
 
 	/**
-	 * @return a pattern to recognize instructions supported by this class
+	 * @return a pattern to recognize instructions that update a given instance
 	 */
-	private static Pattern getPattern() {
+	private static Pattern getPatternForInstancePath() {
 		return Pattern.compile( "([^/]+)(/.*)", Pattern.CASE_INSENSITIVE );
+	}
+
+
+	/**
+	 * @return a pattern to recognize instructions that update instances of a given component
+	 */
+	private static Pattern getPatternForComponentName() {
+		return Pattern.compile( "(.+)" + ALL + "(.+)", Pattern.CASE_INSENSITIVE );
 	}
 
 
@@ -91,8 +123,13 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 		if( this.changeStateInstruction == null )
 			result.add( error( ErrorCode.CMD_UNRECOGNIZED_INSTRUCTION, "Instruction: " + this.changeStateInstruction ));
 
-		if( ! this.context.instanceExists( this.instancePath ))
+		if( this.instancePath != null
+				&& ! this.context.instanceExists( this.instancePath ))
 			result.add( error( ErrorCode.CMD_NO_MATCHING_INSTANCE, "Instance path: " + this.instancePath ));
+
+		if( this.componentName != null
+				&& ComponentHelpers.findComponent( this.context.getApp(), this.componentName ) == null )
+			result.add( error( ErrorCode.CMD_INEXISTING_COMPONENT, "Instance path: " + this.instancePath ));
 
 		return result;
 	}
@@ -106,11 +143,26 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 	public void updateContext() {
 
 		if( this.changeStateInstruction == ChangeStateInstruction.DELETE ) {
+
+			// Find the path of the instances to remove
+			Set<String> pathOfInstancesToRemove = new HashSet<> ();
+			if( this.instancePath != null ) {
+				pathOfInstancesToRemove.add( this.instancePath );
+
+			} else for( Map.Entry<String,String> entry : this.context.instancePathToComponentName.entrySet()) {
+				if( this.componentName.equals( entry.getValue()))
+					pathOfInstancesToRemove.add( entry.getKey());
+			}
+
+			// Now, delete the instances that need to eb erased
 			List<String> keys = new ArrayList<>( this.context.instancePathToComponentName.keySet());
 			for( String path : keys ) {
-				if( path.equals( this.instancePath )
-						|| path.startsWith( this.instancePath + "/" ))
-					this.context.instancePathToComponentName.remove( path );
+				for( String pathToRemove : pathOfInstancesToRemove ) {
+
+					if( path.equals( pathToRemove )
+							|| path.startsWith( pathToRemove + "/" ))
+						this.context.instancePathToComponentName.remove( path );
+				}
 			}
 		}
 	}
@@ -121,6 +173,14 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 	 */
 	public String getInstancePath() {
 		return this.instancePath;
+	}
+
+
+	/**
+	 * @return the componentName
+	 */
+	public String getComponentName() {
+		return this.componentName;
 	}
 
 
@@ -162,6 +222,12 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 			ChangeStateInstruction result = null;
 			for( ChangeStateInstruction elt : ChangeStateInstruction.values()) {
 				if( elt.toString().equalsIgnoreCase( s )) {
+					result = elt;
+					break;
+				}
+
+				// "Delete all" => "delete"
+				if(( elt.toString() + " all" ).equals( s )) {
 					result = elt;
 					break;
 				}
