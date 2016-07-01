@@ -93,6 +93,7 @@ public class CancelRecipeCommand implements Action {
 				}
 
 			}
+
 		} else {
 			this.out.println("No agent found, command not applicable");
 		}

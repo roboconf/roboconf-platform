@@ -49,6 +49,7 @@ import net.roboconf.core.Constants;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.runtime.IReconfigurable;
+import net.roboconf.core.utils.ProcessStore;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
@@ -528,9 +529,12 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	public String agentStatus() {
 
 		StringBuilder sb = new StringBuilder();
+
+		// Messages
 		LinkedBlockingQueue<Message> agentQueue = this.messagingClient.getMessageProcessor().getMessageQueue();
 		if( agentQueue.isEmpty() ) {
 			sb.append( "There is no message being processed in agent queue\n" );
+
 		} else {
 			sb.append( "Agent " + getScopedInstancePath() + " (" + getApplicationName() + ")\n" );
 			sb.append( "The number total of messages in agent queue is : " + agentQueue.size() + "\n" );
@@ -539,7 +543,14 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 				sb.append( msg.getClass().getSimpleName() + "\n" );
 			}
 		}
+
+		// Running processes
+		Process p = ProcessStore.getProcess(this.applicationName, this.scopedInstancePath);
+		if( p != null )
+			sb.append( "Be careful. A recipe is under execution." );
+		else
+			sb.append( "No recioe is under execution." );
+
 		return sb.toString();
 	}
-
 }
