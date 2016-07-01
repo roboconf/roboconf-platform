@@ -224,8 +224,11 @@ public class CommandsParser {
 		else if( toLowerCase.startsWith( RenameCommandInstruction.PREFIX ))
 			result = new RenameCommandInstruction( this.context, line, lineNumber );
 
-		else if( toLowerCase.startsWith( WriteCommandInstruction.PREFIX ))
+		else if( toLowerCase.startsWith( WriteCommandInstruction.WRITE_PREFIX ))
 			result = new WriteCommandInstruction( this.context, line, lineNumber );
+
+		else if( toLowerCase.startsWith( AppendCommandInstruction.APPEND_PREFIX ))
+			result = new AppendCommandInstruction( this.context, line, lineNumber );
 
 		else if( toLowerCase.startsWith( ExecuteCommandInstruction.PREFIX ))
 			result = new ExecuteCommandInstruction( this.context, line, lineNumber );

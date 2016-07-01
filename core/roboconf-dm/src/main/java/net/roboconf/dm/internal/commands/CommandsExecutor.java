@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.logging.Logger;
 
 import net.roboconf.core.commands.AbstractCommandInstruction;
+import net.roboconf.core.commands.AppendCommandInstruction;
 import net.roboconf.core.commands.AssociateTargetCommandInstruction;
 import net.roboconf.core.commands.BulkCommandInstructions;
 import net.roboconf.core.commands.ChangeStateCommandInstruction;
@@ -157,6 +158,9 @@ public class CommandsExecutor {
 
 		else if( WriteCommandInstruction.class.equals( instr.getClass()))
 			result = new WriteCommandExecution((WriteCommandInstruction) instr);
+
+		else if( AppendCommandInstruction.class.equals( instr.getClass()))
+			result = new AppendCommandExecution((AppendCommandInstruction) instr);
 
 		else if( ExecuteCommandInstruction.class.equals( instr.getClass()))
 			result = new ExecuteCommandExecution((ExecuteCommandInstruction) instr, this.manager );

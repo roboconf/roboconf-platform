@@ -40,7 +40,7 @@ import net.roboconf.core.utils.Utils;
 public class WriteCommandInstruction extends AbstractCommandInstruction {
 
 	static final String TMP = "%TMP%";
-	static final String PREFIX = "write";
+	static final String WRITE_PREFIX = "write";
 
 	private String content, filePath;
 
@@ -54,7 +54,7 @@ public class WriteCommandInstruction extends AbstractCommandInstruction {
 	WriteCommandInstruction( Context context, String instruction, int line ) {
 		super( context, instruction, line );
 
-		Pattern p = Pattern.compile( PREFIX + "\\s+(.*)\\s*into\\b(.*)", Pattern.CASE_INSENSITIVE );
+		Pattern p = Pattern.compile( getPrefix() + "\\s+(.*)\\s*into\\b(.*)", Pattern.CASE_INSENSITIVE );
 		Matcher m = p.matcher( instruction );
 		if( m.matches()) {
 			this.syntaxicallyCorrect = true;
@@ -92,6 +92,14 @@ public class WriteCommandInstruction extends AbstractCommandInstruction {
 	 */
 	public String getFilePath() {
 		return this.filePath;
+	}
+
+
+	/**
+	 * @return the prefix to look for
+	 */
+	protected String getPrefix() {
+		return WriteCommandInstruction.WRITE_PREFIX;
 	}
 
 
