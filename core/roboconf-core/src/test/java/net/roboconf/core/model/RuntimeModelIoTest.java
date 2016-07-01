@@ -221,7 +221,7 @@ public class RuntimeModelIoTest {
 		Graphs g = result.applicationTemplate.getGraphs();
 		Assert.assertEquals( 3, g.getRootComponents().size());
 
-		Set<String> rootComponentNames = new HashSet<String> ();
+		Set<String> rootComponentNames = new HashSet<> ();
 		for( Component c : g.getRootComponents()) {
 
 			rootComponentNames.add( c.getName());
@@ -305,7 +305,7 @@ public class RuntimeModelIoTest {
 		Assert.assertNotNull( vmOpenstack.getExtendedComponent());
 
 		// Test the instances
-		Set<String> expectedPaths = new HashSet<String> ();
+		Set<String> expectedPaths = new HashSet<> ();
 		expectedPaths.add( "/Apache VM" );
 		expectedPaths.add( "/Apache VM/Apache" );
 		expectedPaths.add( "/MySQL VM" );
@@ -317,7 +317,7 @@ public class RuntimeModelIoTest {
 		expectedPaths.add( "/Tomcat VM 3" );
 		expectedPaths.add( "/Tomcat VM 3/Tomcat" );
 
-		Set<String> realPaths = new HashSet<String> ();
+		Set<String> realPaths = new HashSet<> ();
 		for( Instance inst : InstanceHelpers.getAllInstances( result.getApplicationTemplate()))
 			realPaths.add( InstanceHelpers.computeInstancePath( inst ));
 
@@ -479,7 +479,33 @@ public class RuntimeModelIoTest {
 			throw new IOException( "Faild to create a graph file." );
 
 		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
-		Assert.assertEquals( ErrorCode.P_NO_FILE_TYPE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.P_EMPTY_FILE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_NO_ROOT_COMPONENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "   \n  \t\n\n ", graphFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.P_EMPTY_FILE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.RM_NO_ROOT_COMPONENT, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "[ not supported by our parser ]", graphFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.P_UNRECOGNIZED_BLOCK, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_NOT_A_GRAPH, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "  \n\n [ not supported by our parser ] \n\n ", graphFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.P_UNRECOGNIZED_BLOCK, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_NOT_A_GRAPH, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "comp", graphFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.P_O_C_BRACKET_MISSING, iterator.next().getErrorCode());
 
 		String fileContent = "my Toto {\n\tname: toto;\n}";
 		Utils.copyStream( new ByteArrayInputStream( fileContent.getBytes( "UTF-8" )), graphFile );
@@ -516,6 +542,44 @@ public class RuntimeModelIoTest {
 		Assert.assertEquals( ErrorCode.PROJ_MISSING_INSTANCE_EP, iterator.next().getErrorCode());
 
 		File instancesFile = new File( instDir, "init.instances" );
+		if( ! instancesFile.createNewFile())
+			throw new IOException( "Failed to create " + instancesFile );
+
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.P_EMPTY_FILE, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "   \n  \t\n\n ", instancesFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.P_EMPTY_FILE, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "[ not supported by our parser ]", instancesFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.P_UNRECOGNIZED_BLOCK, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_NOT_INSTANCES, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "  \n\n [ not supported by our parser ] \n\n ", instancesFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.P_UNRECOGNIZED_BLOCK, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_NOT_INSTANCES, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
+		Utils.writeStringInto( "  \n\n ip \n\n ", instancesFile );
+		iterator = RuntimeModelIo.loadApplication( tempDirectory ).loadErrors.iterator();
+		Assert.assertEquals( ErrorCode.PROJ_NO_RESOURCE_DIRECTORY, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.P_O_C_BRACKET_MISSING, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.PM_INVALID_BLOCK_TYPE, iterator.next().getErrorCode());
+		Assert.assertEquals( ErrorCode.CO_NOT_INSTANCES, iterator.next().getErrorCode());
+		Assert.assertFalse( iterator.hasNext());
+
 		fileContent = "facet MyFacet {\n}\n\nA {\n\tinstaller: script;\n}";
 		Utils.copyStream( new ByteArrayInputStream( fileContent.getBytes( "UTF-8" )), instancesFile );
 

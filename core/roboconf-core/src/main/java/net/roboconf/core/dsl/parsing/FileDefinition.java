@@ -41,11 +41,12 @@ public class FileDefinition {
 	public static final int GRAPH = 1;
 	public static final int INSTANCE = 2;
 	public static final int AGGREGATOR = 3;
+	public static final int EMPTY = 4;
 
 	private File editedFile;
 	private int fileType = UNDETERMINED;
-	private final List<ParsingError> parsingErrors = new ArrayList<ParsingError> ();
-	private final List<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
+	private final List<ParsingError> parsingErrors = new ArrayList<> ();
+	private final List<AbstractBlock> blocks = new ArrayList<> ();
 
 
 	/**
@@ -100,8 +101,9 @@ public class FileDefinition {
 	public void setFileType( int fileType ) {
 		if( fileType != GRAPH
 				&& fileType != INSTANCE
-				&& fileType != AGGREGATOR )
-			throw new IllegalArgumentException( "The file type was expected to be GRAPH, INSTANCE or AGGREGATOR." );
+				&& fileType != AGGREGATOR
+				&& fileType != EMPTY )
+			throw new IllegalArgumentException( "The file type was expected to be GRAPH, INSTANCE, AGGREGATOR or EMPTY." );
 
 		this.fileType = fileType;
 	}
@@ -117,7 +119,9 @@ public class FileDefinition {
 		sb.append( this.editedFile.getName());
 		sb.append( " with " );
 		sb.append( this.blocks.size());
-		sb.append( " blocks" );
+		sb.append( " block" );
+		if( this.blocks.size() > 1 )
+			sb.append( "s" );
 
 		return sb.toString();
 	}

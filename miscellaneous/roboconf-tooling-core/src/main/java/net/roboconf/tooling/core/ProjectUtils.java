@@ -42,8 +42,8 @@ import net.roboconf.core.utils.Utils;
  */
 public final class ProjectUtils {
 
-	static final String GRAPH_EP = "main.graph";
-	static final String INSTANCES_EP = "model.instances";
+	public static final String GRAPH_EP = "main.graph";
+	public static final String INSTANCES_EP = "model.instances";
 
 	private static final String TPL_NAME = "${NAME}";
 	private static final String TPL_DESCRIPTION = "${DESCRIPTION}";

@@ -25,37 +25,34 @@
 
 package net.roboconf.core.dsl.parsing;
 
-import net.roboconf.core.dsl.ParsingConstants;
-
 /**
- * The 'component' block.
+ * A block for unrecognized lines.
  * @author Vincent Zurczak - Linagora
  */
-public class BlockComponent extends AbstractBlockHolder {
+public class BlockUnknown extends AbstractBlock {
+
+	private final String content;
+
 
 	/**
 	 * Constructor.
 	 * @param declaringFile not null
 	 */
-	public BlockComponent( FileDefinition declaringFile ) {
+	public BlockUnknown( FileDefinition declaringFile, String content ) {
 		super( declaringFile );
-	}
-
-	@Override
-	public String[] getSupportedPropertyNames() {
-		return new String[] {
-			ParsingConstants.PROPERTY_GRAPH_CHILDREN,
-			ParsingConstants.PROPERTY_GRAPH_EXPORTS,
-			ParsingConstants.PROPERTY_GRAPH_EXTENDS,
-			ParsingConstants.PROPERTY_COMPONENT_INSTALLER,
-			ParsingConstants.PROPERTY_COMPONENT_FACETS,
-			ParsingConstants.PROPERTY_COMPONENT_IMPORTS
-		};
+		this.content = content;
 	}
 
 	@Override
 	public int getInstructionType() {
-		return AbstractBlock.COMPONENT;
+		return AbstractBlock.UNKNOWN;
+	}
+
+	/**
+	 * @return the content
+	 */
+	public String getContent() {
+		return this.content;
 	}
 
 	/*
@@ -64,6 +61,6 @@ public class BlockComponent extends AbstractBlockHolder {
 	 */
 	@Override
 	public String toString() {
-		return getName();
+		return this.content;
 	}
 }

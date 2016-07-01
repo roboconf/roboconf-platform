@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.ErrorCode.ErrorCategory;
 import net.roboconf.core.dsl.ParsingModelIo;
@@ -57,8 +59,6 @@ import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.utils.Utils;
 
-import org.junit.Test;
-
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -67,7 +67,7 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeComment() {
 
-		Collection<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
+		Collection<AbstractBlock> blocks = new ArrayList<> ();
 		String[] validLines = {
 				"# ok",
 				"#",
@@ -122,7 +122,7 @@ public class FileDefinitionParserTest {
 
 	@Test
 	public void testRecognizeBlank() {
-		Collection<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
+		Collection<AbstractBlock> blocks = new ArrayList<> ();
 
 		String[] validLines = { "  ", "" };
 		for( String line : validLines ) {
@@ -259,7 +259,7 @@ public class FileDefinitionParserTest {
 
 
 		// Test error codes
-		Map<String,ErrorCode> invalidLineToErrorCode = new LinkedHashMap<String,ErrorCode> ();
+		Map<String,ErrorCode> invalidLineToErrorCode = new LinkedHashMap<> ();
 		invalidLineToErrorCode.put( "import facets.rcf", ErrorCode.P_IMPORT_ENDS_WITH_SEMI_COLON );
 		invalidLineToErrorCode.put( "import facets.rcf ; facet toto {", ErrorCode.P_ONE_BLOCK_PER_LINE );
 		invalidLineToErrorCode.put( "import facets.rcf ; invalid comment", ErrorCode.P_ONE_BLOCK_PER_LINE );
@@ -355,7 +355,7 @@ public class FileDefinitionParserTest {
 
 
 		// Test error codes
-		Map<String,ErrorCode> invalidLineToErrorCode = new LinkedHashMap<String,ErrorCode> ();
+		Map<String,ErrorCode> invalidLineToErrorCode = new LinkedHashMap<> ();
 		invalidLineToErrorCode.put( "property: value", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
 		invalidLineToErrorCode.put( "property:", ErrorCode.P_PROPERTY_ENDS_WITH_SEMI_COLON );
 		invalidLineToErrorCode.put( "property: value ; facet toto {", ErrorCode.P_ONE_BLOCK_PER_LINE );
@@ -388,7 +388,7 @@ public class FileDefinitionParserTest {
 		FileDefinition file = new FileDefinition( new File( "some-file" ));
 
 		FileDefinitionParser parser = new FileDefinitionParser( null, false );
-		List<AbstractBlock> blocks = new ArrayList<AbstractBlock> ();
+		List<AbstractBlock> blocks = new ArrayList<> ();
 		blocks.add( new BlockImport( file ));
 		blocks.add( new BlockImport( file ));
 		parser.mergeContiguousRegions( blocks );
@@ -455,7 +455,7 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeFacet() throws Exception {
 
-		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<String,ParsingError> ();
+		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<> ();
 		resourceNameToErrorCode.put( "facet-invalid-property.graph", new ParsingError( ErrorCode.P_INVALID_PROPERTY, null, 2 ));
 		resourceNameToErrorCode.put( "facet-invalid-end.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
 		resourceNameToErrorCode.put( "facet-missing-closing-cb.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 3 ));
@@ -470,7 +470,7 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeComponent() throws Exception {
 
-		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<String,ParsingError> ();
+		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<> ();
 		resourceNameToErrorCode.put( "component-invalid-property.graph", new ParsingError( ErrorCode.P_INVALID_PROPERTY, null, 2 ));
 		resourceNameToErrorCode.put( "component-invalid-end.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
 		resourceNameToErrorCode.put( "component-missing-closing-cb.graph", new ParsingError( ErrorCode.P_C_C_BRACKET_MISSING, null, 3 ));
@@ -485,7 +485,7 @@ public class FileDefinitionParserTest {
 	@Test
 	public void testRecognizeInstanceOf() throws Exception {
 
-		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<String,ParsingError> ();
+		Map<String,ParsingError> resourceNameToErrorCode = new LinkedHashMap<> ();
 		resourceNameToErrorCode.put( "instanceof-invalid-property.instances", new ParsingError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, null, 2 ));
 		resourceNameToErrorCode.put( "instanceof-invalid-property-2.instances", new ParsingError( ErrorCode.P_INVALID_PROPERTY_OR_INSTANCE, null, 3 ));
 		resourceNameToErrorCode.put( "instanceof-invalid-end.instances", new ParsingError( ErrorCode.P_C_C_BRACKET_EXTRA_CHARACTERS, null, 3 ));
@@ -540,7 +540,7 @@ public class FileDefinitionParserTest {
 				else
 					Assert.fail( "Invalid block type." );
 
-				Assert.assertEquals( "ONE pasing error was expected for '" + entry.getKey() + "'", 1, parser.getFileRelations().getParsingErrors().size());
+				Assert.assertEquals( "ONE parsing error was expected for '" + entry.getKey() + "'", 1, parser.getFileRelations().getParsingErrors().size());
 				ParsingError error = parser.getFileRelations().getParsingErrors().iterator().next();
 				Assert.assertEquals( "Expected error code " + entry.getValue().getErrorCode() + " for '" + entry.getKey() + "'", entry.getValue().getErrorCode(), error.getErrorCode());
 				Assert.assertEquals( "Expected error line to be " + entry.getValue().getLine() + " for '" + entry.getKey() + "'", entry.getValue().getLine(), error.getLine());

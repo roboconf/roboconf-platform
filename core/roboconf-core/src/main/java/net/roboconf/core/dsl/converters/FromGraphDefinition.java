@@ -140,11 +140,11 @@ public class FromGraphDefinition {
 	public Graphs buildGraphs( File file ) {
 
 		// Initialize collections
-		this.componentNameToComponentData = new HashMap<String,ComponentData> ();
-		this.facetNameToFacetData = new HashMap<String,FacetData> ();
+		this.componentNameToComponentData = new HashMap<> ();
+		this.facetNameToFacetData = new HashMap<> ();
 
-		this.importsToProcess = new HashSet<File> ();
-		this.processedImports = new HashSet<File> ();
+		this.importsToProcess = new HashSet<> ();
+		this.processedImports = new HashSet<> ();
 
 		this.errors.clear();
 		this.typeAnnotations.clear();
@@ -165,7 +165,7 @@ public class FromGraphDefinition {
 
 			// Load the file
 			FileDefinition currentDefinition = new FileDefinitionParser( importedFile, false ).read();
-			Collection<ParsingError> currentErrors = new ArrayList<ParsingError> ();
+			Collection<ParsingError> currentErrors = new ArrayList<> ();
 			currentErrors.addAll( currentDefinition.getParsingErrors());
 
 			StringBuilder lastComment = new StringBuilder();
@@ -191,7 +191,8 @@ public class FromGraphDefinition {
 
 			// Verify the file kind
 			if( currentDefinition.getFileType() != FileDefinition.AGGREGATOR
-					&& currentDefinition.getFileType() != FileDefinition.GRAPH ) {
+					&& currentDefinition.getFileType() != FileDefinition.GRAPH
+					&& currentDefinition.getFileType() != FileDefinition.EMPTY ) {
 
 				ParsingError error = new ParsingError( ErrorCode.CO_NOT_A_GRAPH, file, 0 );
 				error.setDetails( "Imported file  " + importedFile + " is of type " + FileDefinition.fileTypeAsString( currentDefinition.getFileType()) + "." );
@@ -312,7 +313,7 @@ public class FromGraphDefinition {
 
 	private void checkNameCollisions() {
 
-		Collection<String> names = new HashSet<String> ();
+		Collection<String> names = new HashSet<> ();
 		names.addAll( this.componentNameToComponentData.keySet());
 		names.retainAll( this.facetNameToFacetData.keySet());
 
@@ -439,12 +440,12 @@ public class FromGraphDefinition {
 	private static class Data<T extends AbstractType> {
 
 		T object;
-		Collection<String> childrenNames = new HashSet<String> ();
-		List<AbstractBlockHolder> blocks = new ArrayList<AbstractBlockHolder> ();
+		Collection<String> childrenNames = new HashSet<> ();
+		List<AbstractBlockHolder> blocks = new ArrayList<> ();
 
 		List<ParsingError> error( ErrorCode code, String cause ) {
 
-			List<ParsingError> errors = new ArrayList<ParsingError> ();
+			List<ParsingError> errors = new ArrayList<> ();
 			for( AbstractBlockHolder block : this.blocks ) {
 				ParsingError error = new ParsingError( code, block.getDeclaringFile().getEditedFile(), block.getLine());
 				error.setDetails( cause );
@@ -461,7 +462,7 @@ public class FromGraphDefinition {
 	 */
 	private static class ComponentData extends Data<Component> {
 		String extendedComponentName;
-		Collection<String> facetNames = new HashSet<String> ();
+		Collection<String> facetNames = new HashSet<> ();
 	}
 
 
@@ -469,6 +470,6 @@ public class FromGraphDefinition {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	private static class FacetData extends Data<Facet> {
-		Collection<String> extendedFacetNames = new HashSet<String> ();
+		Collection<String> extendedFacetNames = new HashSet<> ();
 	}
 }
