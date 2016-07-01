@@ -28,6 +28,9 @@ package net.roboconf.messaging.api.internal.client;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.After;
+import org.junit.Assert;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -56,9 +59,6 @@ import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClient;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
-
-import org.junit.After;
-import org.junit.Assert;
 
 /**
  * This class defines messaging tests, independently of the implementation.
@@ -581,6 +581,7 @@ public abstract class AbstractMessagingTest {
 		// Only MySQL should receive it (Other is in another application).
 		otherClient.listenToRequestsFromOtherAgents( ListenerCommand.START, other );
 		mySqlClient.listenToRequestsFromOtherAgents( ListenerCommand.START, mysql );
+		Thread.sleep( getDelay());
 		tomcatClient.requestExportsFromOtherAgents( tomcat );
 		Thread.sleep( getDelay());
 
@@ -595,6 +596,7 @@ public abstract class AbstractMessagingTest {
 
 		// Now, let's do it again but MySQL stops listening.
 		mySqlClient.listenToRequestsFromOtherAgents( ListenerCommand.STOP, mysql );
+		Thread.sleep( getDelay());
 		tomcatClient.requestExportsFromOtherAgents( tomcat );
 		Thread.sleep( getDelay());
 
