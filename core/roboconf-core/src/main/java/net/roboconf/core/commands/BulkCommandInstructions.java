@@ -227,7 +227,7 @@ public class BulkCommandInstructions extends AbstractCommandInstruction {
 				}
 
 				// "Delete all" => "delete"
-				if(( elt.toString() + " all" ).equals( s )) {
+				if(( elt.toString() + " all" ).equalsIgnoreCase( s )) {
 					result = elt;
 					break;
 				}
