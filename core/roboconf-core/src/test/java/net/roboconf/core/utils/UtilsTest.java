@@ -47,15 +47,15 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-import net.roboconf.core.internal.tests.TestUtils;
-import net.roboconf.core.internal.tests.TestUtils.StringHandler;
-import net.roboconf.core.utils.Utils.DirectoryFileFilter;
-import net.roboconf.core.utils.Utils.FileNameComparator;
-
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.internal.tests.TestUtils.StringHandler;
+import net.roboconf.core.utils.Utils.DirectoryFileFilter;
+import net.roboconf.core.utils.Utils.FileNameComparator;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -948,5 +948,20 @@ public class UtilsTest {
 		Assert.assertEquals( 2, Utils.listAllFiles( dir, "txt" ).size());
 		Assert.assertEquals( 1, Utils.listAllFiles( dir, ".zip" ).size());
 		Assert.assertEquals( 5, Utils.listAllFiles( dir, null ).size());
+	}
+
+
+	@Test
+	public void testIsAncestor() {
+
+		File dir = new File( "somewhere/over/the/rainbow" );
+		Assert.assertTrue( Utils.isAncestor( dir, new File( dir, "test" )));
+		Assert.assertTrue( Utils.isAncestor( dir, new File( dir, "test.txt" )));
+		Assert.assertTrue( Utils.isAncestor( dir, new File( dir, "test/test/te" )));
+
+		Assert.assertFalse( Utils.isAncestor( dir, dir ));
+		Assert.assertFalse( Utils.isAncestor( dir, new File( "somewhere/else" )));
+		Assert.assertFalse( Utils.isAncestor( dir, new File( "somewhere/over/the/rainbows" )));
+		Assert.assertFalse( Utils.isAncestor( dir, new File( "somewhere/over/the/rainbo" )));
 	}
 }

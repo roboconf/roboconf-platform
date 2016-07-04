@@ -42,6 +42,7 @@ public abstract class AbstractBlock {
 	public static final int COMMENT = 4;
 	public static final int BLANK = 5;
 	public static final int INSTANCEOF = 6;
+	public static final int UNKNOWN = 7;
 
 	private String inlineComment;
 	private int line;

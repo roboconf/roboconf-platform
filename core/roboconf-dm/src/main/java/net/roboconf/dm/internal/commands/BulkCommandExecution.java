@@ -25,8 +25,14 @@
 
 package net.roboconf.dm.internal.commands;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
+
 import net.roboconf.core.commands.BulkCommandInstructions;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
@@ -36,6 +42,7 @@ import net.roboconf.dm.management.exceptions.CommandException;
  */
 class BulkCommandExecution extends AbstractCommandExecution {
 
+	private final Logger logger = Logger.getLogger( getClass().getName());
 	private final BulkCommandInstructions instr;
 	private final Manager manager;
 
@@ -55,26 +62,51 @@ class BulkCommandExecution extends AbstractCommandExecution {
 	public void execute() throws CommandException {
 
 		// Resolve runtime structure
-		Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), false );
 		ManagedApplication ma = resolveManagedApplication( this.manager, this.instr );
+		List<Instance> instances = new ArrayList<> ();
+		if( this.instr.getInstancePath() != null ) {
+			Instance instance = resolveInstance( this.instr, this.instr.getInstancePath(), false );
+			instances.add( instance );
+
+		} else {
+			instances.addAll( InstanceHelpers.findInstancesByComponentName( this.instr.getApplication(), this.instr.getComponentName()));
+		}
 
 		// Execute the command
 		try {
 			switch( this.instr.getChangeStateInstruction()) {
 			case DEPLOY_AND_START_ALL:
-				this.manager.instancesMngr().deployAndStartAll( ma, instance );
+				for( Instance inst : instances )
+					this.manager.instancesMngr().deployAndStartAll( ma, inst );
+
 				break;
 
 			case STOP_ALL:
-				this.manager.instancesMngr().stopAll( ma, instance );
+				for( Instance inst : instances )
+					this.manager.instancesMngr().stopAll( ma, inst );
+
 				break;
 
 			case UNDEPLOY_ALL:
-				this.manager.instancesMngr().undeployAll( ma, instance );
+				for( Instance inst : instances )
+					this.manager.instancesMngr().undeployAll( ma, inst );
+
 				break;
 
 			case DELETE:
-				this.manager.instancesMngr().removeInstance( ma, instance );
+				try {
+					for( Instance inst : instances )
+						this.manager.instancesMngr().removeInstance( ma, inst );
+
+				} catch( Exception e ) {
+					// Ignore errors related to deletion.
+					// If an element cannot be deleted, ignore it (it remains in the model).
+					// "Delete was not designed to be invoked in "batch mode". So, let's make it
+					// fault-tolerant.
+					this.logger.warning( "A DELETE instruction failed to be executed in commands. Application = " + this.instr.getApplication());
+					Utils.logException( this.logger, e );
+				}
+
 				break;
 			}
 

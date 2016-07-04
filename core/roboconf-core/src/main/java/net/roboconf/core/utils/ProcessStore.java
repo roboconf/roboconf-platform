@@ -46,14 +46,15 @@ public class ProcessStore {
 		PROCESS_MAP.put(toAgentId(applicationName, scopedInstancePath), process);
 	}
 
+
 	/**
 	 * Retrieves a stored process, when found.
-	 *
 	 * @return The process
 	 */
 	public static synchronized Process getProcess(String applicationName, String scopedInstancePath) {
 		return PROCESS_MAP.get(toAgentId(applicationName, scopedInstancePath));
 	}
+
 
 	/**
 	 * Removes a stored process, if found.
@@ -61,6 +62,7 @@ public class ProcessStore {
 	public static synchronized Process clearProcess(String applicationName, String scopedInstancePath) {
 		return PROCESS_MAP.remove(toAgentId(applicationName, scopedInstancePath));
 	}
+
 
 	private static String toAgentId(String applicationName, String scopedInstancePath) {
 		return applicationName + "|" + scopedInstancePath;

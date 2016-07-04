@@ -21,6 +21,9 @@ change status of /tomcat-vm-2/tomcat-server to DEPLOYED and STARTED
 # Write
 write something into /this/file
 
+# Append
+append that into /this/file
+
 # Execute
 execute single-line-commands
 
@@ -29,3 +32,12 @@ email toto@company.net with \
 	Subject: Alert!\
 	\n\
 	This is an alert.
+
+# Bulk actions by component names
+# (put at the end because one deletes all the instances)
+
+deploy and start all instances of vm
+stop all instances of vm
+undeploy all instances of vm
+delete all instances of vm
+	

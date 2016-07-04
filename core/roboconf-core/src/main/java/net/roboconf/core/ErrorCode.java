@@ -50,7 +50,7 @@ public enum ErrorCode {
 	P_INVALID_PROPERTY( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Syntax error: a property was expected." ),
 	P_INVALID_PROPERTY_OR_INSTANCE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Syntax error: a property or an instance was expected." ),
 	P_INVALID_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "Invalid file type. It mixes facet, component and instance definitions." ),
-	P_NO_FILE_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING, "No file type. No import, facet, component or instance definition was found." ),
+	P_EMPTY_FILE( ErrorLevel.WARNING, ErrorCategory.PARSING, "The file is empty." ),
 
 	// Parsing Model Errors
 	PM_INVALID_BLOCK_TYPE( ErrorLevel.SEVERE, ErrorCategory.PARSING_MODEL, "Validation failed. Unknown block type." ),
@@ -84,8 +84,8 @@ public enum ErrorCode {
 	PM_MALFORMED_BLANK( ErrorLevel.WARNING, ErrorCategory.PARSING_MODEL, "A blank section contains non-blank characters. It will be ignored at serialization time." ),
 
 	// Conversion Errors
-	CO_NOT_A_GRAPH( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A graph file imports a file which is not a graph file." ),
-	CO_NOT_INSTANCES( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A instance definition file imports a file which is not an instance definition." ),
+	CO_NOT_A_GRAPH( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A graph file was expected." ),
+	CO_NOT_INSTANCES( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "An instance definition was expected." ),
 	CO_UNREACHABLE_FILE( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "A configuration file could not be read." ),
 	CO_ALREADY_DEFINED_FACET( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This facet was defined more than once." ),
 	CO_ALREADY_DEFINED_COMPONENT( ErrorLevel.SEVERE, ErrorCategory.CONVERSION, "This component was defined more than once." ),
@@ -159,6 +159,8 @@ public enum ErrorCode {
 	PROJ_APPLICATION_TEMPLATE_NOT_FOUND( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "The application template was not found." ),
 	PROJ_INVALID_COMMAND_EXT( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "A command script file must use the " + Constants.FILE_EXT_COMMANDS + " extension." ),
 	PROJ_INVALID_RULE_EXT( ErrorLevel.SEVERE, ErrorCategory.PROJECT, "An autonomic rule file must use the " + Constants.FILE_EXT_RULE + " extension." ),
+	PROJ_UNREACHABLE_FILE( ErrorLevel.WARNING, ErrorCategory.PROJECT, "This file is not reachable from the application's descriptor. Maybe this file should be imported somewhere." ),
+	PROJ_INVALID_FILE_LOCATION( ErrorLevel.WARNING, ErrorCategory.PROJECT, "This file should not be located in this directory." ),
 
 	// Recipes Errors
 	REC_PUPPET_DISLIKES_WILDCARD_IMPORTS( ErrorLevel.WARNING, ErrorCategory.RECIPES, "Puppet modules may encounter problems with Roboconf wildcard imports." ),
@@ -228,7 +230,7 @@ public enum ErrorCode {
 
 
 	// These instructions are called after the enumeration items have been created.
-	private static final Map<ErrorCategory,AtomicInteger> CAT_TO_ID = new HashMap<ErrorCategory,AtomicInteger> ();
+	private static final Map<ErrorCategory,AtomicInteger> CAT_TO_ID = new HashMap<> ();
 	static {
 		for( ErrorCategory cat : ErrorCategory.values())
 			CAT_TO_ID.put( cat, new AtomicInteger( 0 ));

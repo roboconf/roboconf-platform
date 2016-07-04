@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,47 +23,29 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.dsl.parsing;
-
-import net.roboconf.core.dsl.ParsingConstants;
+package net.roboconf.core.commands;
 
 /**
- * The 'component' block.
  * @author Vincent Zurczak - Linagora
  */
-public class BlockComponent extends AbstractBlockHolder {
+public class AppendCommandInstruction extends WriteCommandInstruction {
+
+	static final String APPEND_PREFIX = "append";
+
 
 	/**
 	 * Constructor.
-	 * @param declaringFile not null
+	 * @param context
+	 * @param instruction
+	 * @param line
 	 */
-	public BlockComponent( FileDefinition declaringFile ) {
-		super( declaringFile );
+	AppendCommandInstruction( Context context, String instruction, int line ) {
+		super( context, instruction, line );
 	}
 
-	@Override
-	public String[] getSupportedPropertyNames() {
-		return new String[] {
-			ParsingConstants.PROPERTY_GRAPH_CHILDREN,
-			ParsingConstants.PROPERTY_GRAPH_EXPORTS,
-			ParsingConstants.PROPERTY_GRAPH_EXTENDS,
-			ParsingConstants.PROPERTY_COMPONENT_INSTALLER,
-			ParsingConstants.PROPERTY_COMPONENT_FACETS,
-			ParsingConstants.PROPERTY_COMPONENT_IMPORTS
-		};
-	}
 
 	@Override
-	public int getInstructionType() {
-		return AbstractBlock.COMPONENT;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return getName();
+	protected String getPrefix() {
+		return APPEND_PREFIX;
 	}
 }

@@ -27,7 +27,6 @@ package net.roboconf.core.dsl.parsing;
 
 import net.roboconf.core.dsl.ParsingConstants;
 
-
 /**
  * The 'facet' block.
  * @author Vincent Zurczak - Linagora

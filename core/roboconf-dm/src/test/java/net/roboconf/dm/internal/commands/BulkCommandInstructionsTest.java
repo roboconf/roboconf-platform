@@ -28,6 +28,10 @@ package net.roboconf.dm.internal.commands;
 import java.io.IOException;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.core.commands.BulkCommandInstructions;
 import net.roboconf.core.commands.BulkCommandInstructions.ChangeStateInstruction;
 import net.roboconf.core.commands.CommandsParser;
@@ -38,10 +42,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.api.IApplicationMngr;
 import net.roboconf.dm.management.api.IInstancesMngr;
 import net.roboconf.dm.management.exceptions.CommandException;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -73,7 +73,7 @@ public class BulkCommandInstructionsTest {
 
 
 	@Test
-	public void testExecute_success() throws Exception {
+	public void testExecute_success_byInstancePath() throws Exception {
 
 		// Prepare
 		String instancePath = InstanceHelpers.computeInstancePath( this.app.getTomcatVm());
@@ -85,18 +85,21 @@ public class BulkCommandInstructionsTest {
 		// Deploy and start all
 		Mockito.verifyZeroInteractions( this.instancesMngr );
 		executor1.execute();
+
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).deployAndStartAll( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).deployAndStartAll( this.ma, this.app.getTomcatVm());
 
 		// Stop all
 		Mockito.reset( this.instancesMngr );
 		executor2.execute();
+
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).stopAll( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).stopAll( this.ma, this.app.getTomcatVm());
 
 		// Undeploy all
 		Mockito.reset( this.instancesMngr );
 		executor3.execute();
+
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).undeployAll( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).undeployAll( this.ma, this.app.getTomcatVm());
 
@@ -106,6 +109,50 @@ public class BulkCommandInstructionsTest {
 
 		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getTomcatVm());
 		Mockito.verify( this.instancesMngr, Mockito.only()).removeInstance( this.ma, this.app.getTomcatVm());
+	}
+
+
+	@Test
+	public void testExecute_success_byComponentName() throws Exception {
+
+		// Prepare
+		String suffix = " instances of vm";
+		BulkCommandExecution executor1 = buildExecutor( ChangeStateInstruction.DEPLOY_AND_START_ALL.toString() + suffix );
+		BulkCommandExecution executor2 = buildExecutor( ChangeStateInstruction.STOP_ALL.toString() + suffix );
+		BulkCommandExecution executor3 = buildExecutor( ChangeStateInstruction.UNDEPLOY_ALL.toString() + suffix );
+		BulkCommandExecution executor4 = buildExecutor( ChangeStateInstruction.DELETE.toString() + " all " + suffix );
+
+		// Deploy and start all
+		Mockito.verifyZeroInteractions( this.instancesMngr );
+		executor1.execute();
+
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).deployAndStartAll( this.ma, this.app.getTomcatVm());
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).deployAndStartAll( this.ma, this.app.getMySqlVm());
+		Mockito.verifyNoMoreInteractions( this.instancesMngr );
+
+		// Stop all
+		Mockito.reset( this.instancesMngr );
+		executor2.execute();
+
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).stopAll( this.ma, this.app.getTomcatVm());
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).stopAll( this.ma, this.app.getMySqlVm());
+		Mockito.verifyNoMoreInteractions( this.instancesMngr );
+
+		// Undeploy all
+		Mockito.reset( this.instancesMngr );
+		executor3.execute();
+
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).undeployAll( this.ma, this.app.getTomcatVm());
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).undeployAll( this.ma, this.app.getMySqlVm());
+		Mockito.verifyNoMoreInteractions( this.instancesMngr );
+
+		// Delete
+		Mockito.reset( this.instancesMngr );
+		executor4.execute();
+
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getTomcatVm());
+		Mockito.verify( this.instancesMngr, Mockito.times( 1 )).removeInstance( this.ma, this.app.getMySqlVm());
+		Mockito.verifyNoMoreInteractions( this.instancesMngr );
 	}
 
 

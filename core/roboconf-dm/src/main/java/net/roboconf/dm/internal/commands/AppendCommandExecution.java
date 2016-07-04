@@ -1,5 +1,5 @@
 /**
- * Copyright 2013-2016 Linagora, Université Joseph Fourier, Floralis
+ * Copyright 2015-2016 Linagora, Université Joseph Fourier, Floralis
  *
  * The present code is developed in the scope of the joint LINAGORA -
  * Université Joseph Fourier - Floralis research program and is designated
@@ -23,47 +23,54 @@
  * limitations under the License.
  */
 
-package net.roboconf.core.dsl.parsing;
+package net.roboconf.dm.internal.commands;
 
-import net.roboconf.core.dsl.ParsingConstants;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import net.roboconf.core.commands.AppendCommandInstruction;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
- * The 'component' block.
  * @author Vincent Zurczak - Linagora
  */
-public class BlockComponent extends AbstractBlockHolder {
+class AppendCommandExecution extends AbstractCommandExecution {
+
+	private final AppendCommandInstruction instr;
+
 
 	/**
 	 * Constructor.
-	 * @param declaringFile not null
+	 * @param instr
 	 */
-	public BlockComponent( FileDefinition declaringFile ) {
-		super( declaringFile );
+	public AppendCommandExecution( AppendCommandInstruction instr ) {
+		this.instr = instr;
 	}
 
-	@Override
-	public String[] getSupportedPropertyNames() {
-		return new String[] {
-			ParsingConstants.PROPERTY_GRAPH_CHILDREN,
-			ParsingConstants.PROPERTY_GRAPH_EXPORTS,
-			ParsingConstants.PROPERTY_GRAPH_EXTENDS,
-			ParsingConstants.PROPERTY_COMPONENT_INSTALLER,
-			ParsingConstants.PROPERTY_COMPONENT_FACETS,
-			ParsingConstants.PROPERTY_COMPONENT_IMPORTS
-		};
-	}
 
 	@Override
-	public int getInstructionType() {
-		return AbstractBlock.COMPONENT;
-	}
+	public void execute() throws CommandException {
 
-	/*
-	 * (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return getName();
+		BufferedWriter bw = null;
+		try {
+			File f = new File( this.instr.getFilePath());
+			boolean append = f.exists() && f.length() > 0;
+
+			FileWriter fw = new FileWriter( f, true );
+			bw = new BufferedWriter( fw );
+			if( append )
+				bw.write( "\n" );
+
+			bw.write( this.instr.getContent());
+
+		} catch( IOException e ) {
+			throw new CommandException( e );
+
+		} finally {
+			Utils.closeQuietly( bw );
+		}
 	}
 }

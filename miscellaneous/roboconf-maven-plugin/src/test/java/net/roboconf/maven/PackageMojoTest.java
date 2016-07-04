@@ -27,10 +27,6 @@ package net.roboconf.maven;
 
 import java.io.File;
 
-import net.roboconf.core.model.RuntimeModelIo;
-import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.utils.Utils;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.MojoRule;
 import org.apache.maven.plugin.testing.resources.TestResources;
@@ -39,6 +35,11 @@ import org.apache.maven.project.artifact.ProjectArtifact;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -50,6 +51,9 @@ public class PackageMojoTest {
 
 	@Rule
 	public MojoRule rule = new MojoRule();
+
+	@Rule
+	public TemporaryFolder folder = new TemporaryFolder();
 
 
 	@Test
@@ -88,6 +92,7 @@ public class PackageMojoTest {
 		// Check assertions.
 		// Unfortunately, no filtering here.
 		Assert.assertTrue( targetArchive.exists());
+		targetDirectory = this.folder.newFolder();
 		Utils.extractZipArchive( targetArchive, targetDirectory );
 
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplication( targetDirectory );

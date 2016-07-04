@@ -29,6 +29,11 @@ import java.util.Objects;
 
 /**
  * An error instantiates an {@link ErrorCode}.
+ * <p>
+ * They implement the {@link Comparable} interface.
+ * Errors are compared against their error code.
+ * </p>
+ *
  * @author Vincent Zurczak - Linagora
  */
 public class RoboconfError {

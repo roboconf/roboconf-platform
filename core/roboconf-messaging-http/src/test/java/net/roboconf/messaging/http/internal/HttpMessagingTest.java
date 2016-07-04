@@ -27,16 +27,16 @@ package net.roboconf.messaging.http.internal;
 
 import java.io.IOException;
 
-import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
-import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
-import net.roboconf.messaging.http.HttpConstants;
-import net.roboconf.messaging.http.internal.HttpTestUtils.WebServer;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+
+import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
+import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
+import net.roboconf.messaging.http.HttpConstants;
+import net.roboconf.messaging.http.internal.HttpTestUtils.WebServer;
 
 /**
  * @author Pierre-Yves Gibello - Linagora

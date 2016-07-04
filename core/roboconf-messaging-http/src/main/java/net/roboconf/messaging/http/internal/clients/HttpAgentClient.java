@@ -33,6 +33,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.api.extensions.AbstractRoutingClient;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
@@ -45,10 +49,6 @@ import net.roboconf.messaging.http.internal.HttpUtils;
 import net.roboconf.messaging.http.internal.messages.HttpMessage;
 import net.roboconf.messaging.http.internal.messages.SubscriptionMessage;
 import net.roboconf.messaging.http.internal.sockets.AgentWebSocket;
-
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -176,7 +176,7 @@ public class HttpAgentClient implements IMessagingClient {
 		this.logger.fine( getId() + " is about to unsubscribe to " + ownerId );
 		HttpUtils.sendAsynchronously(
 				new SubscriptionMessage( ownerId, ctx, false ),
-				this.clientSession.getRemote());;
+				this.clientSession.getRemote());
 	}
 
 

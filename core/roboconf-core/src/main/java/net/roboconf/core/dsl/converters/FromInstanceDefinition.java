@@ -66,8 +66,8 @@ public class FromInstanceDefinition {
 
 	private final File rootDirectory;
 	private Graphs graphs;
-	private final Collection<ParsingError> errors = new ArrayList<ParsingError> ();
-	private final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
+	private final Collection<ParsingError> errors = new ArrayList<> ();
+	private final Map<Object,SourceReference> objectToSource = new HashMap<> ();
 
 	private Map<BlockInstanceOf,Instance> allBlocksToInstances;
 	private Set<File> importsToProcess, processedImports;
@@ -91,6 +91,14 @@ public class FromInstanceDefinition {
 
 
 	/**
+	 * @return the processedImports
+	 */
+	public Set<File> getProcessedImports() {
+		return this.processedImports;
+	}
+
+
+	/**
 	 * @return the objectToSource
 	 */
 	public Map<Object,SourceReference> getObjectToSource() {
@@ -110,11 +118,11 @@ public class FromInstanceDefinition {
 	public Collection<Instance> buildInstances( Graphs graphs, File file ) {
 
 		// Initialize collections
-		this.allBlocksToInstances = new LinkedHashMap<BlockInstanceOf,Instance> ();
+		this.allBlocksToInstances = new LinkedHashMap<> ();
 		this.graphs = graphs;
 
-		this.importsToProcess = new HashSet<File> ();
-		this.processedImports = new HashSet<File> ();
+		this.importsToProcess = new HashSet<> ();
+		this.processedImports = new HashSet<> ();
 		this.errors.clear();
 
 		// Process the file and its imports
@@ -133,14 +141,15 @@ public class FromInstanceDefinition {
 
 			// Load the file
 			FileDefinition currentDefinition = new FileDefinitionParser( importedFile, true ).read();
-			Collection<ParsingError> currentErrors = new ArrayList<ParsingError> ();
+			Collection<ParsingError> currentErrors = new ArrayList<> ();
 			currentErrors.addAll( currentDefinition.getParsingErrors());
 
 			for( AbstractBlock block : currentDefinition.getBlocks())
 				currentErrors.addAll( ParsingModelValidator.validate( block ));
 
 			if( currentDefinition.getFileType() != FileDefinition.INSTANCE
-					&& currentDefinition.getFileType() != FileDefinition.AGGREGATOR ) {
+					&& currentDefinition.getFileType() != FileDefinition.AGGREGATOR
+					&& currentDefinition.getFileType() != FileDefinition.EMPTY ) {
 
 				ParsingError error = new ParsingError( ErrorCode.CO_NOT_INSTANCES, file, 0 );
 				error.setDetails( "Imported file  " + importedFile + " is of type " + FileDefinition.fileTypeAsString( currentDefinition.getFileType()) + "." );
@@ -158,7 +167,7 @@ public class FromInstanceDefinition {
 			checkUnicity();
 
 		// Find the root instances
-		Collection<Instance> rootInstances = new HashSet<Instance> ();
+		Collection<Instance> rootInstances = new HashSet<> ();
 		for( Instance instance : this.allBlocksToInstances.values()) {
 			if( instance.getParent() == null )
 				rootInstances.add( instance );
@@ -168,12 +177,12 @@ public class FromInstanceDefinition {
 		if( this.errors.isEmpty()) {
 
 			// What we have to do, is to duplicate those whose "count" is higher than 1.
-			List<Instance> newRootInstances = new ArrayList<Instance> ();
+			List<Instance> newRootInstances = new ArrayList<> ();
 			for( Instance rootInstance : rootInstances )
 				newRootInstances.addAll( replicateInstancesFrom( rootInstance ));
 
 			// At this level, there may be new naming conflicts...
-			List<Instance> tempNewRootInstances = new ArrayList<Instance>( newRootInstances );
+			List<Instance> tempNewRootInstances = new ArrayList<>( newRootInstances );
 			tempNewRootInstances.retainAll( rootInstances );
 			for( Instance instance : tempNewRootInstances ) {
 				ParsingError error = new ParsingError( ErrorCode.CO_CONFLICTING_INFERRED_INSTANCE, file, 1 );
@@ -224,14 +233,14 @@ public class FromInstanceDefinition {
 	private void processInstance( BlockInstanceOf block ) {
 
 		// Process the rootInstances
-		Map<BlockInstanceOf,Instance> blockToInstance = new LinkedHashMap<BlockInstanceOf,Instance> ();
+		Map<BlockInstanceOf,Instance> blockToInstance = new LinkedHashMap<> ();
 		blockToInstance.put( block, new Instance());
 		this.allBlocksToInstances.putAll( blockToInstance );
 
 		// We rely on a different collection than just Instance#getChildren().
 		// This is because getChildren() uses a hash set.
 		// But here, at parsing time, we need a list (if there are duplicates, we need to know them).
-		Map<Instance,List<Instance>> instanceToChildrenInstances = new HashMap<Instance,List<Instance>> ();
+		Map<Instance,List<Instance>> instanceToChildrenInstances = new HashMap<> ();
 
 		while( ! blockToInstance.isEmpty()) {
 
@@ -252,7 +261,7 @@ public class FromInstanceDefinition {
 
 			instance.setComponent( ComponentHelpers.findComponent( this.graphs, currentBlock.getName()));
 			if( instance.getComponent() == null ) {
-				ParsingError error = new ParsingError( ErrorCode.CO_INEXISTING_COMPONENT, block.getDeclaringFile().getEditedFile(), 1 );
+				ParsingError error = new ParsingError( ErrorCode.CO_INEXISTING_COMPONENT, block.getDeclaringFile().getEditedFile(), currentBlock.getLine());
 				error.setDetails( "Component name: " + currentBlock.getName());
 				this.errors.add( error );
 				continue;
@@ -298,7 +307,7 @@ public class FromInstanceDefinition {
 
 				List<Instance> childrenInstances = instanceToChildrenInstances.get( instance );
 				if( childrenInstances == null )
-					childrenInstances = new ArrayList<Instance> ();
+					childrenInstances = new ArrayList<> ();
 
 				Instance newInstance = new Instance();
 				childrenInstances.add( newInstance );
@@ -319,7 +328,7 @@ public class FromInstanceDefinition {
 
 
 	private Collection<Instance> replicateInstancesFrom( Instance rootInstance ) {
-		Collection<Instance> newRootInstances = new ArrayList<Instance> ();
+		Collection<Instance> newRootInstances = new ArrayList<> ();
 
 		// Begin with the duplicates of the deepest instances.
 		List<Instance> orderedInstances = InstanceHelpers.buildHierarchicalList( rootInstance );
@@ -361,12 +370,12 @@ public class FromInstanceDefinition {
 		// "allBlocksToInstances" associates blocks and instances.
 		// Unlike instances children which consider instances with the same path as the same,
 		// "allBlocksToInstances" allows to find instances with the same path.
-		Map<String,List<BlockInstanceOf>> instancePathToBlocks = new HashMap<String,List<BlockInstanceOf>> ();
+		Map<String,List<BlockInstanceOf>> instancePathToBlocks = new HashMap<> ();
 		for( Map.Entry<BlockInstanceOf,Instance> entry : this.allBlocksToInstances.entrySet()) {
 			String instancePath = InstanceHelpers.computeInstancePath( entry.getValue());
 			List<BlockInstanceOf> blocks = instancePathToBlocks.get( instancePath );
 			if( blocks == null )
-				blocks = new ArrayList<BlockInstanceOf> ();
+				blocks = new ArrayList<> ();
 
 			blocks.add( entry.getKey());
 			instancePathToBlocks.put( instancePath, blocks );

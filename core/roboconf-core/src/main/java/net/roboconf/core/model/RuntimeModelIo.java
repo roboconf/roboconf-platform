@@ -31,8 +31,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
@@ -204,21 +206,8 @@ public final class RuntimeModelIo {
 				break GRAPH;
 			}
 
-			FromGraphDefinition fromDef = new FromGraphDefinition( graphDirectory );
-			Graphs graph = fromDef.buildGraphs( mainGraphFile );
-			if( ! fromDef.getErrors().isEmpty()) {
-				result.loadErrors.addAll( fromDef.getErrors());
-				break GRAPH;
-			}
-
-			Collection<ModelError> errors = RuntimeModelValidator.validate( graph );
-			result.loadErrors.addAll( errors );
-
-			errors = RuntimeModelValidator.validate( graph, projectDirectory );
-			result.loadErrors.addAll( errors );
-
-			result.objectToSource.putAll( fromDef.getObjectToSource());
-			app.setGraphs( graph );
+			Graphs graphs = loadGraph( mainGraphFile, graphDirectory, result );
+			app.setGraphs( graphs );
 		}
 
 
@@ -237,6 +226,7 @@ public final class RuntimeModelIo {
 			File mainInstFile = new File( instDirectory, appDescriptor.getInstanceEntryPoint());
 			InstancesLoadResult ilr = loadInstances( mainInstFile, instDirectory, app.getGraphs(), app.getName());
 
+			result.getParsedFiles().addAll( ilr.getParsedFiles());
 			result.objectToSource.putAll( ilr.getObjectToSource());
 			result.loadErrors.addAll( ilr.getLoadErrors());
 			app.getRootInstances().addAll( ilr.getRootInstances());
@@ -286,6 +276,29 @@ public final class RuntimeModelIo {
 		}
 
 
+		// Check for files that are not reachable or not in the right directories
+		if( projectDirectory.isDirectory()) {
+			String[] exts = { Constants.FILE_EXT_GRAPH, Constants.FILE_EXT_INSTANCES };
+			File[] directories = { graphDirectory, instDirectory };
+
+			for( int i=0; i<exts.length; i++ ) {
+				List<File> files = Utils.listAllFiles( projectDirectory, exts[ i ]);
+				List<File> filesWithInvalidLocation = new ArrayList<> ();
+				for( File f : files ) {
+					if( ! Utils.isAncestor( directories[ i ], f )) {
+						result.loadErrors.add( new ParsingError( ErrorCode.PROJ_INVALID_FILE_LOCATION, f, 1 ));
+						filesWithInvalidLocation.add( f );
+					}
+				}
+
+				files.removeAll( result.getParsedFiles());
+				files.removeAll( filesWithInvalidLocation );
+				for( File f : files )
+					result.loadErrors.add( new ParsingError( ErrorCode.PROJ_UNREACHABLE_FILE, f, 1 ));
+			}
+		}
+
+
 		// Validate the entire application
 		if( ! RoboconfErrorHelpers.containsCriticalErrors( result.loadErrors )) {
 			Collection<ModelError> errors = RuntimeModelValidator.validate( app );
@@ -301,9 +314,12 @@ public final class RuntimeModelIo {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class ApplicationLoadResult {
+
 		ApplicationTemplate applicationTemplate;
-		final Collection<RoboconfError> loadErrors = new ArrayList<RoboconfError> ();
-		final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
+		final Collection<RoboconfError> loadErrors = new ArrayList<> ();
+		final Map<Object,SourceReference> objectToSource = new HashMap<> ();
+		final Set<File> parsedFiles = new HashSet<> ();
+
 
 		/**
 		 * @return the application (can be null)
@@ -325,6 +341,13 @@ public final class RuntimeModelIo {
 		public Map<Object,SourceReference> getObjectToSource() {
 			return this.objectToSource;
 		}
+
+		/**
+		 * @return the files that have been parsed
+		 */
+		public Set<File> getParsedFiles() {
+			return this.parsedFiles;
+		}
 	}
 
 
@@ -333,9 +356,12 @@ public final class RuntimeModelIo {
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class InstancesLoadResult {
-		Collection<Instance> rootInstances = new ArrayList<Instance> ();
-		final Collection<RoboconfError> loadErrors = new ArrayList<RoboconfError> ();
-		final Map<Object,SourceReference> objectToSource = new HashMap<Object,SourceReference> ();
+
+		Collection<Instance> rootInstances = new ArrayList<> ();
+		final Collection<RoboconfError> loadErrors = new ArrayList<> ();
+		final Map<Object,SourceReference> objectToSource = new HashMap<> ();
+		final Set<File> parsedFiles = new HashSet<> ();
+
 
 		/**
 		 * @return the root instances (never null)
@@ -357,6 +383,42 @@ public final class RuntimeModelIo {
 		public Map<Object,SourceReference> getObjectToSource() {
 			return this.objectToSource;
 		}
+
+		/**
+		 * @return the files that have been parsed
+		 */
+		public Set<File> getParsedFiles() {
+			return this.parsedFiles;
+		}
+	}
+
+
+	/**
+	 * Loads a graph file.
+	 * @param graphFile the graph file
+	 * @param graphDirectory the graph directory
+	 * @param alr the application's load result to complete
+	 * @return the built graph (might be null)
+	 */
+	public static Graphs loadGraph( File graphFile, File graphDirectory, ApplicationLoadResult alr ) {
+
+		FromGraphDefinition fromDef = new FromGraphDefinition( graphDirectory );
+		Graphs graph = fromDef.buildGraphs( graphFile );
+		alr.getParsedFiles().addAll( fromDef.getProcessedImports());
+
+		if( ! fromDef.getErrors().isEmpty()) {
+			alr.loadErrors.addAll( fromDef.getErrors());
+
+		} else {
+			Collection<ModelError> errors = RuntimeModelValidator.validate( graph );
+			alr.loadErrors.addAll( errors );
+
+			errors = RuntimeModelValidator.validate( graph, graphDirectory.getParentFile());
+			alr.loadErrors.addAll( errors );
+			alr.objectToSource.putAll( fromDef.getObjectToSource());
+		}
+
+		return graph;
 	}
 
 
@@ -381,6 +443,7 @@ public final class RuntimeModelIo {
 
 			FromInstanceDefinition fromDef = new FromInstanceDefinition( rootDirectory );
 			Collection<Instance> instances = fromDef.buildInstances( graph, instancesFile );
+			result.getParsedFiles().addAll( fromDef.getProcessedImports());
 			if( ! fromDef.getErrors().isEmpty()) {
 				result.loadErrors.addAll( fromDef.getErrors());
 				break INST;

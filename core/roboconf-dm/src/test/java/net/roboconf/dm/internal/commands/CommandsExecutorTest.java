@@ -30,7 +30,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.commands.AbstractCommandInstruction;
+import net.roboconf.core.commands.AppendCommandInstruction;
 import net.roboconf.core.commands.BulkCommandInstructions;
 import net.roboconf.core.commands.ChangeStateCommandInstruction;
 import net.roboconf.core.commands.CommandsParser;
@@ -47,13 +55,6 @@ import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 import net.roboconf.messaging.api.MessagingConstants;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -240,6 +241,21 @@ public class CommandsExecutorTest {
 
 		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
 		Assert.assertEquals( WriteCommandExecution.class, executor.findExecutor( instr ).getClass());
+	}
+
+
+	@Test
+	public void testFindExecutor_appendCommand() {
+
+		CommandsParser parser = new CommandsParser( this.app, "append this into that" );
+		Assert.assertEquals( 0, parser.getParsingErrors().size());
+		Assert.assertEquals( 1, parser.getInstructions().size());
+
+		AbstractCommandInstruction instr = parser.getInstructions().get( 0 );
+		Assert.assertEquals( AppendCommandInstruction.class, instr.getClass());
+
+		CommandsExecutor executor = new CommandsExecutor( this.manager, null, new File( "whatever" ));
+		Assert.assertEquals( AppendCommandExecution.class, executor.findExecutor( instr ).getClass());
 	}
 
 

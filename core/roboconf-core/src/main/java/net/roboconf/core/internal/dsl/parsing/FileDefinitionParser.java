@@ -49,6 +49,7 @@ import net.roboconf.core.dsl.parsing.BlockFacet;
 import net.roboconf.core.dsl.parsing.BlockImport;
 import net.roboconf.core.dsl.parsing.BlockInstanceOf;
 import net.roboconf.core.dsl.parsing.BlockProperty;
+import net.roboconf.core.dsl.parsing.BlockUnknown;
 import net.roboconf.core.dsl.parsing.FileDefinition;
 import net.roboconf.core.model.ParsingError;
 import net.roboconf.core.utils.Utils;
@@ -107,15 +108,23 @@ public class FileDefinitionParser {
 
 		// Determine file type
 		boolean hasFacets = false, hasComponents = false, hasInstances = false, hasImports = false;
+		int ignorableBlocksCount = 0;
 		for( AbstractBlock block : this.definitionFile.getBlocks()) {
+
 			if( block.getInstructionType() == AbstractBlock.COMPONENT )
 				hasComponents = true;
+
 			else if( block.getInstructionType() == AbstractBlock.FACET )
 				hasFacets = true;
+
 			else if( block.getInstructionType() == AbstractBlock.INSTANCEOF )
 				hasInstances = true;
+
 			else if( block.getInstructionType() == AbstractBlock.IMPORT )
 				hasImports = true;
+
+			else if( block instanceof AbstractIgnorableInstruction )
+				ignorableBlocksCount ++;
 		}
 
 		if( hasInstances ) {
@@ -130,8 +139,9 @@ public class FileDefinitionParser {
 		} else if( hasImports ) {
 			this.definitionFile.setFileType( FileDefinition.AGGREGATOR );
 
-		} else {
-			addModelError( ErrorCode.P_NO_FILE_TYPE, 1 );
+		} else if( ignorableBlocksCount == this.definitionFile.getBlocks().size()) {
+			addModelError( ErrorCode.P_EMPTY_FILE, 1 );
+			this.definitionFile.setFileType( FileDefinition.EMPTY );
 		}
 
 		return this.definitionFile;
@@ -341,7 +351,7 @@ public class FileDefinitionParser {
 	void mergeContiguousRegions( Collection<AbstractBlock> blocks ) {
 
 		AbstractIgnorableInstruction initialInstr = null;
-		List<AbstractBlock> toRemove = new ArrayList<AbstractBlock> ();
+		List<AbstractBlock> toRemove = new ArrayList<> ();
 		StringBuilder sb = new StringBuilder();
 
 		// We only merge comments and blank regions to reduce their number
@@ -426,8 +436,15 @@ public class FileDefinitionParser {
 			result = P_CODE_CANCEL;
 
 		} else if( ! endInstructionReached ) {
-			addModelError( ErrorCode.P_O_C_BRACKET_MISSING );
-			result = P_CODE_CANCEL;
+			if( Utils.isEmptyOrWhitespaces( sb.toString())
+					|| sb.toString().matches( ParsingConstants.PATTERN_ID )) {
+
+				addModelError( ErrorCode.P_O_C_BRACKET_MISSING );
+				result = P_CODE_CANCEL;
+
+			} else {
+				result = P_CODE_NO;
+			}
 
 		} else {
 			result = P_CODE_YES;
@@ -542,8 +559,9 @@ public class FileDefinitionParser {
 	private void fillIn() throws IOException {
 
 		BufferedReader br = null;
+		InputStream in = null;
 		try {
-			InputStream in = new FileInputStream( this.definitionFile.getEditedFile());
+			in = new FileInputStream( this.definitionFile.getEditedFile());
 			br = new BufferedReader( new InputStreamReader( in, "UTF-8" ));
 
 			String line;
@@ -575,10 +593,20 @@ public class FileDefinitionParser {
 				else if( code == P_CODE_YES )
 					continue;
 
+				// "recognizeComponent" is the last attempt to identify the line.
 				code = recognizeComponent( line, br );
+
+				// So, eventually, we add the line as an unknown block.
+				if( code != P_CODE_YES )
+					this.definitionFile.getBlocks().add( new BlockUnknown( this.definitionFile, line ));
+
+				// Deal with the error codes.
+				// Cancel: break the loop.
+				// No: try to process the next line.
 				if( code == P_CODE_CANCEL )
 					break;
-				else if( code == P_CODE_NO )
+
+				if( code == P_CODE_NO )
 					addModelError( ErrorCode.P_UNRECOGNIZED_BLOCK );
 			}
 
@@ -588,6 +616,7 @@ public class FileDefinitionParser {
 
 		} finally {
 			Utils.closeQuietly( br );
+			Utils.closeQuietly( in );
 		}
 	}
 
