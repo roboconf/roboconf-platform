@@ -549,7 +549,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 		if( p != null )
 			sb.append( "Be careful. A recipe is under execution." );
 		else
-			sb.append( "No recioe is under execution." );
+			sb.append( "No recipe is under execution." );
 
 		return sb.toString();
 	}
