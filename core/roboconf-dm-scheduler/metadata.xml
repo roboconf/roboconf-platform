@@ -8,6 +8,7 @@
 		<requires field="manager" optional="false" />
 		<callback transition="validate" method="start" />
 		<callback transition="invalidate" method="stop" />
+		<provides />
 	</component>
 	
 	<instance component="roboconf-dm-scheduler" name="Roboconf - DM Scheduler" />

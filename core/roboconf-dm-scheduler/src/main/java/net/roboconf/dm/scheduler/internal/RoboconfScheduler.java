@@ -33,13 +33,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import net.roboconf.core.Constants;
-import net.roboconf.core.model.runtime.ScheduledJob;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.events.IDmListener;
-import net.roboconf.dm.scheduler.IScheduler;
-
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
@@ -49,6 +42,13 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
+
+import net.roboconf.core.Constants;
+import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.events.IDmListener;
+import net.roboconf.dm.scheduler.IScheduler;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -140,7 +140,7 @@ public class RoboconfScheduler implements IScheduler {
 				else
 					this.logger.warning( "Skipped schedule for a job. There are invalid or missing job properties in " + f.getName());
 
-			} catch( SchedulerException e ) {
+			} catch( IOException e ) {
 				this.logger.warning( "Failed to load a scheduled job from " + f.getName());
 				Utils.logException( this.logger, e );
 			}
@@ -170,31 +170,26 @@ public class RoboconfScheduler implements IScheduler {
 	public void saveJob( String jobName, String cmdName, String cron, String appName )
 	throws IOException {
 
-		try {
-			Properties props = new Properties();
-			if( jobName != null )
-				props.setProperty( JOB_NAME, jobName );
+		Properties props = new Properties();
+		if( jobName != null )
+			props.setProperty( JOB_NAME, jobName );
 
-			if( cmdName != null )
-				props.setProperty( CMD_NAME, cmdName );
+		if( cmdName != null )
+			props.setProperty( CMD_NAME, cmdName );
 
-			if( appName != null )
-				props.setProperty( APP_NAME, appName );
+		if( appName != null )
+			props.setProperty( APP_NAME, appName );
 
-			if( cron != null )
-				props.setProperty( CRON, cron );
+		if( cron != null )
+			props.setProperty( CRON, cron );
 
-			if( validProperties( props )) {
-				unscheduleJob( jobName );
+		if( validProperties( props )) {
+			unscheduleJob( jobName );
 
-				Utils.createDirectory( getSchedulerDirectory());
-				Utils.writePropertiesFile( props, getJobFile( jobName ));
+			Utils.createDirectory( getSchedulerDirectory());
+			Utils.writePropertiesFile( props, getJobFile( jobName ));
 
-				scheduleJob( props );
-			}
-
-		} catch( SchedulerException e ) {
-			throw new IOException( e );
+			scheduleJob( props );
 		}
 	}
 
@@ -205,9 +200,9 @@ public class RoboconfScheduler implements IScheduler {
 		try {
 			unscheduleJob( jobName );
 
-		} catch( SchedulerException e ) {
+		} catch( IOException e ) {
 			this.logger.warning( "Failed to remove a scheduled job. Job's name: " + jobName );
-			throw new IOException( e );
+			throw e;
 
 		} finally {
 			File f = getJobFile( jobName );
@@ -246,10 +241,10 @@ public class RoboconfScheduler implements IScheduler {
 	/**
 	 * @param props non-null and VALID properties
 	 * @return true if the job properties are correct and the job was successfully scheduled
-	 * @throws SchedulerException
+	 * @throws IOException
 	 * @see {@link #validProperties(Properties)}
 	 */
-	private boolean scheduleJob( Properties props ) throws SchedulerException {
+	private boolean scheduleJob( Properties props ) throws IOException {
 
 		// 1 file = 1 job = 1 trigger.
 		String jobName = props.getProperty( JOB_NAME, "" );
@@ -271,7 +266,14 @@ public class RoboconfScheduler implements IScheduler {
 				.withSchedule( CronScheduleBuilder.cronSchedule( cron ))
 				.build();
 
-		this.scheduler.scheduleJob( job, trigger );
+		try {
+			this.scheduler.scheduleJob( job, trigger );
+
+		} catch( Exception e ) {
+			// Catch all the exceptions (including the runtime ones)
+			throw new IOException( e );
+		}
+
 		return true;
 	}
 
@@ -294,14 +296,20 @@ public class RoboconfScheduler implements IScheduler {
 	}
 
 
-	private void unscheduleJob( String jobName ) throws SchedulerException {
+	private void unscheduleJob( String jobName ) throws IOException {
 
-		File f = getJobFile( jobName );
-		if( f.exists()) {
-			Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
-			String appName = props.getProperty( APP_NAME, "" );
-			if( ! Utils.isEmptyOrWhitespaces( appName ))
-				this.scheduler.unscheduleJob( TriggerKey.triggerKey( jobName, appName ));
+		try {
+			File f = getJobFile( jobName );
+			if( f.exists()) {
+				Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
+				String appName = props.getProperty( APP_NAME, "" );
+				if( ! Utils.isEmptyOrWhitespaces( appName ))
+					this.scheduler.unscheduleJob( TriggerKey.triggerKey( jobName, appName ));
+			}
+
+		} catch( SchedulerException e ) {
+			// Catch all the exceptions (including the runtime ones)
+			throw new IOException( e );
 		}
 	}
 
