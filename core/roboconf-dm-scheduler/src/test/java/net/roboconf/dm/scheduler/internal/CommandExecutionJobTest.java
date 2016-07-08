@@ -27,11 +27,6 @@ package net.roboconf.dm.scheduler.internal;
 
 import java.util.HashMap;
 
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.api.ICommandsMngr;
-import net.roboconf.dm.management.exceptions.CommandException;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +35,13 @@ import org.mockito.Mockito;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerContext;
+
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.ICommandsMngr;
+import net.roboconf.dm.management.exceptions.CommandException;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -74,6 +76,13 @@ public class CommandExecutionJobTest {
 		this.context = Mockito.mock( JobExecutionContext.class );
 		Mockito.when( this.context.get( RoboconfScheduler.MANAGER )).thenReturn( this.manager );
 		Mockito.when( this.context.getJobDetail()).thenReturn( jobDetail );
+
+		Scheduler scheduler = Mockito.mock( Scheduler.class );
+		Mockito.when( this.context.getScheduler()).thenReturn( scheduler );
+
+		SchedulerContext schedulerCtx = Mockito.mock( SchedulerContext.class );
+		Mockito.when( scheduler.getContext()).thenReturn( schedulerCtx );
+		Mockito.when( schedulerCtx.get( RoboconfScheduler.MANAGER )).thenReturn( this.manager );
 	}
 
 
@@ -84,7 +93,7 @@ public class CommandExecutionJobTest {
 		CommandExecutionJob job = new CommandExecutionJob();
 		job.execute( this.context );
 
-		Mockito.verify( this.context, Mockito.times( 1 )).get( RoboconfScheduler.MANAGER );
+		Mockito.verify( this.context, Mockito.times( 1 )).getScheduler();
 		Mockito.verify( this.context, Mockito.times( 3 )).getJobDetail();
 		Mockito.verify( this.manager, Mockito.times( 1 )).applicationMngr();
 		Mockito.verify( this.commandMngr, Mockito.times( 1 )).execute( null, "cmd" );
@@ -101,7 +110,7 @@ public class CommandExecutionJobTest {
 		CommandExecutionJob job = new CommandExecutionJob();
 		job.execute( this.context );
 
-		Mockito.verify( this.context, Mockito.times( 1 )).get( RoboconfScheduler.MANAGER );
+		Mockito.verify( this.context, Mockito.times( 1 )).getScheduler();
 		Mockito.verify( this.context, Mockito.times( 3 )).getJobDetail();
 		Mockito.verify( this.manager, Mockito.times( 1 )).applicationMngr();
 		Mockito.verify( this.commandMngr, Mockito.times( 1 )).execute( null, "cmd" );

@@ -31,6 +31,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 
@@ -53,7 +54,7 @@ public interface ISchedulerResource {
 
 	/**
 	 * Saves a job.
-	 * @param jobId the job's ID
+	 * @param jobId the job's ID (null to create a new job)
 	 * @param jobName the job's name
 	 * @param appName the application's name
 	 * @param cmdName the name of the commands file to execute
@@ -83,7 +84,8 @@ public interface ISchedulerResource {
 	 * @HTTP 403 if Roboconf's scheduler is not available
 	 */
 	@DELETE
-	Response deleteJob( String jobId );
+	@Path( "{job-id}" )
+	Response deleteJob( @PathParam("job-id") String jobId );
 
 
 	/**
@@ -121,6 +123,6 @@ public interface ISchedulerResource {
 	 * @HTTP 404 if the job was not found
 	 */
 	@GET
-	@Path( "job" )
-	Response findJobProperties( @QueryParam( "job-name" ) String jobId );
+	@Path( "{job-id}" )
+	Response findJobProperties( @PathParam("job-id") String jobId );
 }

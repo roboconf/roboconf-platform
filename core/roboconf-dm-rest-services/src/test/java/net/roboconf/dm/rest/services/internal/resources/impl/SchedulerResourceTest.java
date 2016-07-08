@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.dm.rest.commons.json.StringWrapper;
 import net.roboconf.dm.scheduler.IScheduler;
 
 /**
@@ -85,12 +86,12 @@ public class SchedulerResourceTest {
 
 		Mockito
 			.when( this.scheduler.saveJob( Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
-			.thenReturn( new ScheduledJob( "some-id" ));
+			.thenReturn( "some-id" );
 
 		Response resp = this.resource.saveJob( null, "job", "app", "cmd", "cron" );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
-		Assert.assertTrue( resp.getEntity() instanceof ScheduledJob );
-		Assert.assertEquals( "some-id", ((ScheduledJob) resp.getEntity()).getJobId());
+		Assert.assertTrue( resp.getEntity() instanceof StringWrapper );
+		Assert.assertEquals( "some-id", ((StringWrapper) resp.getEntity()).toString());
 	}
 
 

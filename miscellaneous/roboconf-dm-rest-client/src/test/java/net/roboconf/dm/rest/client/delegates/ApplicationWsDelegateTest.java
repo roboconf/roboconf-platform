@@ -25,6 +25,7 @@
 
 package net.roboconf.dm.rest.client.delegates;
 
+import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +34,18 @@ import java.util.Timer;
 
 import javax.ws.rs.core.UriBuilder;
 
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import com.sun.jersey.api.client.UniformInterfaceException;
+import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
+
+import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
@@ -41,6 +53,7 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.ComponentHelpers;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
@@ -54,16 +67,6 @@ import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
-
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -392,7 +395,7 @@ public class ApplicationWsDelegateTest {
 		this.client.getApplicationDelegate().addInstance( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm()), newMysql );
 		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
 
-		List<String> paths = new ArrayList<String> ();
+		List<String> paths = new ArrayList<> ();
 		for( Instance inst : this.app.getTomcatVm().getChildren())
 			paths.add( InstanceHelpers.computeInstancePath( inst ));
 
@@ -415,7 +418,7 @@ public class ApplicationWsDelegateTest {
 		this.client.getApplicationDelegate().addInstance( this.app.getName(), InstanceHelpers.computeInstancePath( this.app.getTomcatVm()), newMysql );
 		Assert.assertEquals( 2, this.app.getTomcatVm().getChildren().size());
 
-		List<String> paths = new ArrayList<String> ();
+		List<String> paths = new ArrayList<> ();
 		for( Instance inst : this.app.getTomcatVm().getChildren())
 			paths.add( InstanceHelpers.computeInstancePath( inst ));
 
@@ -587,5 +590,21 @@ public class ApplicationWsDelegateTest {
 			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
 			Assert.assertEquals( app2.getName(), msg.getAppName());
 		}
+	}
+
+
+	@Test
+	public void testListAllCommands() throws Exception {
+
+		List<String> cmds = this.client.getApplicationDelegate().listAllCommands( this.app.getName());
+		Assert.assertEquals( 0, cmds.size());
+
+		File cmdFile = new File( this.app.getDirectory(), Constants.PROJECT_DIR_COMMANDS + "/cmd" + Constants.FILE_EXT_COMMANDS );
+		Assert.assertTrue( cmdFile.getParentFile().mkdirs());
+		Utils.writeStringInto( "write this into /tmp", cmdFile );
+
+		cmds = this.client.getApplicationDelegate().listAllCommands( this.app.getName());
+		Assert.assertEquals( 1, cmds.size());
+		Assert.assertEquals( "cmd", cmds.get( 0 ));
 	}
 }

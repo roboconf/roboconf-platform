@@ -30,8 +30,15 @@ package net.roboconf.core.model.runtime;
  */
 public class ScheduledJob {
 
-	private final String jobId;
-	private String jobName, appName, cmdName, cron;
+	private String jobId, jobName, appName, cmdName, cron;
+
+
+	/**
+	 * Constructor.
+	 */
+	public ScheduledJob() {
+		// nothing
+	}
 
 
 	/**
@@ -39,6 +46,13 @@ public class ScheduledJob {
 	 * @param jobId the job's ID
 	 */
 	public ScheduledJob( String jobId ) {
+		this.jobId = jobId;
+	}
+
+	/**
+	 * @param jobId the jobId to set
+	 */
+	public void setJobId( String jobId ) {
 		this.jobId = jobId;
 	}
 

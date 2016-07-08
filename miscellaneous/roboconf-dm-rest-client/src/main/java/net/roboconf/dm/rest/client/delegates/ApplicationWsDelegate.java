@@ -32,15 +32,15 @@ import java.util.logging.Logger;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status.Family;
 
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.WebResource;
+
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.dm.rest.client.exceptions.ApplicationWsException;
 import net.roboconf.dm.rest.commons.UrlConstants;
-
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -196,12 +196,14 @@ public class ApplicationWsDelegate {
 				.type( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Instance>> () {});
 
-		if( result != null )
+		if( result != null ) {
 			this.logger.finer( result.size() + " children instances were found for " + instancePath + " in " + applicationName + "." );
-		else
+		} else {
 			this.logger.finer( "No child instance was found for " + instancePath + " in " + applicationName + "." );
+			result = new ArrayList<>( 0 );
+		}
 
-		return result != null ? result : new ArrayList<Instance> ();
+		return result;
 	}
 
 
@@ -281,12 +283,14 @@ public class ApplicationWsDelegate {
 				.accept( MediaType.APPLICATION_JSON )
 				.get( new GenericType<List<Component>> () {});
 
-		if( result != null )
+		if( result != null ) {
 			this.logger.finer( result.size() + " components were found for the application " + applicationName + "." );
-		else
+		} else {
 			this.logger.finer( "No component was found for the application " + applicationName + "." );
+			result = new ArrayList<>( 0 );
+		}
 
-		return result != null ? result : new ArrayList<Component> ();
+		return result;
 	}
 
 
@@ -304,12 +308,14 @@ public class ApplicationWsDelegate {
 			path = path.queryParam( "component-name", componentName );
 
 		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
-		if( result != null )
+		if( result != null ) {
 			this.logger.finer( result.size() + " possible children was or were found for " + componentName + "." );
-		else
+		} else {
 			this.logger.finer( "No possible child was found for " + componentName + "." );
+			result = new ArrayList<>( 0 );
+		}
 
-		return result != null ? result : new ArrayList<Component> ();
+		return result;
 	}
 
 
@@ -327,12 +333,14 @@ public class ApplicationWsDelegate {
 			path = path.queryParam( "component-name", componentName );
 
 		List<Component> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<Component>> () {});
-		if( result != null )
+		if( result != null ) {
 			this.logger.finer( result.size() + " possible parents was or were found for " + componentName + "." );
-		else
+		} else {
 			this.logger.finer( "No possible parent was found for " + componentName + "." );
+			result = new ArrayList<>( 0 );
+		}
 
-		return result != null ? result : new ArrayList<Component> ();
+		return result;
 	}
 
 
@@ -355,6 +363,30 @@ public class ApplicationWsDelegate {
 
 		ClientResponse response = path.post( ClientResponse.class );
 		handleResponse( response );
+	}
+
+
+	/**
+	 * Lists application commands.
+	 * @param applicationName an application name
+	 * @return a non-null list of command names
+	 */
+	public List<String> listAllCommands( String applicationName ) {
+
+		this.logger.finer( "Listing commands in " + applicationName + "..." );
+
+		WebResource path = this.resource.path( UrlConstants.APP )
+				.path( applicationName ).path( "commands" );
+
+		List<String> result = path.accept( MediaType.APPLICATION_JSON ).get( new GenericType<List<String>> () {});
+		if( result != null ) {
+			this.logger.finer( result.size() + " command(s) were found for " + applicationName + "." );
+		} else {
+			this.logger.finer( "No command was found for " + applicationName + "." );
+			result = new ArrayList<>( 0 );
+		}
+
+		return result;
 	}
 
 

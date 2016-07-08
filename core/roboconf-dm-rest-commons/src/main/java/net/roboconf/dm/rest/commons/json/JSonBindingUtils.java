@@ -158,10 +158,12 @@ public final class JSonBindingUtils {
 		module.addSerializer( MapWrapper.class, new MapWrapperSerializer());
 		module.addDeserializer( MapWrapper.class, new MapWrapperDeserializer());
 
+		module.addSerializer( ScheduledJob.class, new ScheduledJobSerializer());
+		module.addDeserializer( ScheduledJob.class, new ScheduledJobDeserializer());
+
 		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
 		module.addSerializer( TargetAssociation.class, new TargetAssociationSerializer());
 		module.addSerializer( Preference.class, new PreferenceSerializer());
-		module.addSerializer( ScheduledJob.class, new ScheduledJobSerializer());
 
 		mapper.registerModule( module );
 		return mapper;
@@ -205,10 +207,6 @@ public final class JSonBindingUtils {
 
 	/**
 	 * A JSon serializer for a bean describing a scheduled job.
-	 * <p>
-	 * No deserializer is provided, as it does not make sense for the REST API.
-	 * </p>
-	 *
 	 * @author Vincent Zurczak - Linagora
 	 */
 	public static class ScheduledJobSerializer extends JsonSerializer<ScheduledJob> {
@@ -237,6 +235,40 @@ public final class JSonBindingUtils {
 				generator.writeStringField( CRON, job.getCron());
 
 			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon deserializer for scheduled jobs.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class ScheduledJobDeserializer extends JsonDeserializer<ScheduledJob> {
+
+		@Override
+		public ScheduledJob deserialize( JsonParser parser, DeserializationContext context ) throws IOException {
+
+			ObjectCodec oc = parser.getCodec();
+			JsonNode node = oc.readTree( parser );
+			ScheduledJob job = new ScheduledJob();
+
+			JsonNode n;
+			if(( n = node.get( ID )) != null )
+				job.setJobId( n.textValue());
+
+			if(( n = node.get( JOB_NAME )) != null )
+				job.setJobName( n.textValue());
+
+			if(( n = node.get( JOB_APP_NAME )) != null )
+				job.setAppName( n.textValue());
+
+			if(( n = node.get( JOB_CMD_NAME )) != null )
+				job.setCmdName( n.textValue());
+
+			if(( n = node.get( CRON )) != null )
+				job.setCron( n.textValue());
+
+			return job;
 		}
 	}
 

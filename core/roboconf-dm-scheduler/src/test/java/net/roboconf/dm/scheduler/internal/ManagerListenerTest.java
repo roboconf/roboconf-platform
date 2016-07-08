@@ -44,7 +44,6 @@ import org.quartz.impl.matchers.GroupMatcher;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.management.ManagedApplication;
@@ -111,11 +110,11 @@ public class ManagerListenerTest {
 			Assert.assertNotNull( scheduler.saveJob( null, "job12", cmdName, "0 0 0 ? 1 *", app1.getName()));
 			Assert.assertNotNull( scheduler.saveJob( null, "job13", cmdName, "0 0 0 ? 1 *", app1.getName()));
 
-			ScheduledJob job21 = scheduler.saveJob( null, "job21", cmdName, "0 0 0 ? 1 *", app2.getName());
-			Assert.assertNotNull( job21  );
+			String jobId21 = scheduler.saveJob( null, "job21", cmdName, "0 0 0 ? 1 *", app2.getName());
+			Assert.assertNotNull( jobId21  );
 
-			ScheduledJob job22 = scheduler.saveJob( null, "job22", cmdName, "0 0 0 ? 1 *", app2.getName());
-			Assert.assertNotNull( job22  );
+			String jobId22 = scheduler.saveJob( null, "job22", cmdName, "0 0 0 ? 1 *", app2.getName());
+			Assert.assertNotNull( jobId22  );
 
 			// Now, send signals to the manager listener.
 			// Idle ones...
@@ -143,8 +142,8 @@ public class ManagerListenerTest {
 			jobKeys = scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 			Assert.assertEquals( 2, jobKeys.size());
 			Assert.assertEquals( 2, Utils.listAllFiles( schedulerDirectory ).size());
-			Assert.assertTrue( jobKeys.contains( new JobKey( job21.getJobId(), "app2" )));
-			Assert.assertTrue( jobKeys.contains( new JobKey( job22.getJobId(), "app2" )));
+			Assert.assertTrue( jobKeys.contains( new JobKey( jobId21, "app2" )));
+			Assert.assertTrue( jobKeys.contains( new JobKey( jobId22, "app2" )));
 
 		} finally {
 			scheduler.stop();

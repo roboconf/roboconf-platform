@@ -910,12 +910,22 @@ public class JSonBindingUtilsTest {
 		final String result = "{}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
+		// Test the serializer
 		ScheduledJob job = new ScheduledJob( null );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, job );
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+
+		// Test the deserializer
+		ScheduledJob readJob = mapper.readValue( result, ScheduledJob.class );
+		Assert.assertNotNull( readJob );
+		Assert.assertNull( readJob.getJobId());
+		Assert.assertNull( readJob.getJobName());
+		Assert.assertNull( readJob.getCmdName());
+		Assert.assertNull( readJob.getAppName());
+		Assert.assertNull( readJob.getCron());
 	}
 
 
@@ -925,6 +935,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{\"id\":\"job id\",\"app-name\":\"app\",\"cmd-name\":\"cmd\",\"job-name\":\"job\",\"cron\":\"* * *\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
+		// Test the serializer
 		ScheduledJob job = new ScheduledJob( "job id" );
 		job.setAppName( "app" );
 		job.setCmdName( "cmd" );
@@ -936,5 +947,14 @@ public class JSonBindingUtilsTest {
 		String s = writer.toString();
 
 		Assert.assertEquals( result, s );
+
+		// Test the deserializer
+		ScheduledJob readJob = mapper.readValue( result, ScheduledJob.class );
+		Assert.assertNotNull( readJob );
+		Assert.assertEquals( job.getJobId(), readJob.getJobId());
+		Assert.assertEquals( job.getJobName(), readJob.getJobName());
+		Assert.assertEquals( job.getCmdName(), readJob.getCmdName());
+		Assert.assertEquals( job.getAppName(), readJob.getAppName());
+		Assert.assertEquals( job.getCron(), readJob.getCron());
 	}
 }

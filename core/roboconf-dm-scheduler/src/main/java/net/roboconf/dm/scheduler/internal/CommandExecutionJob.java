@@ -27,13 +27,13 @@ package net.roboconf.dm.scheduler.internal;
 
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.Manager;
-
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.management.Manager;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -50,9 +50,9 @@ public class CommandExecutionJob implements Job {
 		String appName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.APP_NAME );
 		String jobName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.JOB_NAME );
 		String commandsFileName = (String) context.getJobDetail().getJobDataMap().get( RoboconfScheduler.CMD_NAME );
-		Manager manager = (Manager) context.get( RoboconfScheduler.MANAGER );
 
 		try {
+			Manager manager = (Manager) context.getScheduler().getContext().get( RoboconfScheduler.MANAGER );
 			Application app = manager.applicationMngr().findApplicationByName( appName );
 			manager.commandsMngr().execute( app, commandsFileName );
 

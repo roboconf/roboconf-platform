@@ -35,6 +35,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import net.roboconf.core.model.runtime.ScheduledJob;
+import net.roboconf.dm.rest.commons.json.StringWrapper;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.ISchedulerResource;
 import net.roboconf.dm.scheduler.IScheduler;
@@ -58,8 +59,8 @@ public class SchedulerResource implements ISchedulerResource {
 		Response result;
 		String msg = "Job " + jobName + " could not be saved.";
 		try {
-			ScheduledJob job = this.scheduler.saveJob( jobId, jobName, cmdName, cron, appName );
-			result = Response.ok( job ).build();
+			jobId = this.scheduler.saveJob( jobId, jobName, cmdName, cron, appName );
+			result = Response.ok( new StringWrapper( jobId )).build();
 
 		} catch( IllegalArgumentException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, msg, e ).build();

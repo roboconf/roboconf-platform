@@ -25,17 +25,18 @@
 
 package net.roboconf.dm.rest.client;
 
-import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
-import net.roboconf.dm.rest.client.delegates.DebugWsDelegate;
-import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
-import net.roboconf.dm.rest.client.delegates.TargetWsDelegate;
-import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
-
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
+
+import net.roboconf.dm.rest.client.delegates.ApplicationWsDelegate;
+import net.roboconf.dm.rest.client.delegates.DebugWsDelegate;
+import net.roboconf.dm.rest.client.delegates.ManagementWsDelegate;
+import net.roboconf.dm.rest.client.delegates.SchedulerWsDelegate;
+import net.roboconf.dm.rest.client.delegates.TargetWsDelegate;
+import net.roboconf.dm.rest.commons.json.ObjectMapperProvider;
 
 /**
  * A client for the REST API of the Deployment Manager.
@@ -76,6 +77,7 @@ public class WsClient {
 	private final ManagementWsDelegate managementDelegate;
 	private final DebugWsDelegate debugDelegate;
 	private final TargetWsDelegate targetWsDelegate;
+	private final SchedulerWsDelegate schedulerDelegate;
 
 	private final Client client;
 
@@ -98,6 +100,7 @@ public class WsClient {
 		this.managementDelegate = new ManagementWsDelegate( resource );
 		this.debugDelegate = new DebugWsDelegate( resource );
 		this.targetWsDelegate = new TargetWsDelegate( resource );
+		this.schedulerDelegate = new SchedulerWsDelegate( resource );
 	}
 
 
@@ -135,6 +138,13 @@ public class WsClient {
 	 */
 	public TargetWsDelegate getTargetWsDelegate() {
 		return this.targetWsDelegate;
+	}
+
+	/**
+	 * @return the schedulerDelegate
+	 */
+	public SchedulerWsDelegate getSchedulerDelegate() {
+		return this.schedulerDelegate;
 	}
 
 	/**

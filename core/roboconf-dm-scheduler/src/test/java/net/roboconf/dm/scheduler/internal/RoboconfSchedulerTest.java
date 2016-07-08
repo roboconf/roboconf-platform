@@ -151,9 +151,9 @@ public class RoboconfSchedulerTest {
 
 		// Create several jobs
 		final int max = 5;
-		ScheduledJob[] jobs = new ScheduledJob[ max ];
+		String[] jobIds = new String[ max ];
 		for( int i=0; i<max; i++ ) {
-			jobs[ i ] = this.scheduler.saveJob( null, "job " + i, "cmd", "0 0 0 ? 1 *", "app" );
+			jobIds[ i ] = this.scheduler.saveJob( null, "job " + i, "cmd", "0 0 0 ? 1 *", "app" );
 		}
 
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
@@ -161,13 +161,13 @@ public class RoboconfSchedulerTest {
 		Assert.assertEquals( max, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Delete a job
-		this.scheduler.deleteJob( jobs[ 3 ].getJobId());
+		this.scheduler.deleteJob( jobIds[ 3 ]);
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( max - 1, jobKeys.size());
 		Assert.assertEquals( max - 1, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Find job properties
-		ScheduledJob job = this.scheduler.findJobProperties( jobs[ 1 ].getJobId());
+		ScheduledJob job = this.scheduler.findJobProperties( jobIds[ 1 ]);
 		Assert.assertNotNull( job );
 		Assert.assertEquals( "app", job.getAppName());
 		Assert.assertEquals( "cmd", job.getCmdName());
@@ -245,21 +245,19 @@ public class RoboconfSchedulerTest {
 		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Create a job
-		ScheduledJob job = this.scheduler.saveJob( null, "my job", "cmd", "0 0 0 ? 1 *", "app" );
+		String jobId = this.scheduler.saveJob( null, "my job", "cmd", "0 0 0 ? 1 *", "app" );
 
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( 1, jobKeys.size());
 		Assert.assertEquals( 1, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Find job properties
-		ScheduledJob readJob = this.scheduler.findJobProperties( job.getJobId());
+		ScheduledJob readJob = this.scheduler.findJobProperties( jobId );
 		Assert.assertNotNull( readJob );
-		Assert.assertEquals( job.getAppName(), readJob.getAppName());
-		Assert.assertEquals( job.getCmdName(), readJob.getCmdName());
-		Assert.assertEquals( job.getCron(), readJob.getCron());
-		Assert.assertEquals( job.getJobName(), readJob.getJobName());
+		Assert.assertEquals( "app", readJob.getAppName());
+		Assert.assertEquals( "cmd", readJob.getCmdName());
+		Assert.assertEquals( "0 0 0 ? 1 *", readJob.getCron());
 		Assert.assertEquals( "my job", readJob.getJobName());
-		Assert.assertEquals( job.getJobId(), readJob.getJobId());
 
 		// Rename the initial job and the application's name.
 		// We also need to make sure the application exists...
@@ -272,20 +270,18 @@ public class RoboconfSchedulerTest {
 		this.manager.commandsMngr().createOrUpdateCommand( app, "cmd", "" );
 
 		// Update the job
-		job = this.scheduler.saveJob( job.getJobId(), "my new job", "cmd", "0 0 0 ? 1 *", app.getName());
+		jobId = this.scheduler.saveJob( jobId, "my new job", "cmd", "0 0 0 ? 1 *", app.getName());
 
 		// Find job properties
-		readJob = this.scheduler.findJobProperties( job.getJobId());
+		readJob = this.scheduler.findJobProperties( jobId );
 		Assert.assertNotNull( readJob );
-		Assert.assertEquals( job.getAppName(), readJob.getAppName());
-		Assert.assertEquals( job.getCmdName(), readJob.getCmdName());
-		Assert.assertEquals( job.getCron(), readJob.getCron());
-		Assert.assertEquals( job.getJobName(), readJob.getJobName());
+		Assert.assertEquals( app.getName(), readJob.getAppName());
+		Assert.assertEquals( "cmd", readJob.getCmdName());
+		Assert.assertEquals( "0 0 0 ? 1 *", readJob.getCron());
 		Assert.assertEquals( "my new job", readJob.getJobName());
-		Assert.assertEquals( job.getJobId(), readJob.getJobId());
 
 		// Delete the job
-		this.scheduler.deleteJob( job.getJobId());
+		this.scheduler.deleteJob( jobId );
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( 0, jobKeys.size());
 		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());

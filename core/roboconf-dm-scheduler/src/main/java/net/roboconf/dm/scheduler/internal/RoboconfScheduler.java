@@ -130,6 +130,14 @@ public class RoboconfScheduler implements IScheduler {
 	}
 
 
+	/**
+	 * @param manager the manager to set (to be used outside OSGi environments)
+	 */
+	public void setManager( Manager manager ) {
+		this.manager = manager;
+	}
+
+
 	@Override
 	public void loadJobs() {
 
@@ -175,7 +183,7 @@ public class RoboconfScheduler implements IScheduler {
 
 
 	@Override
-	public ScheduledJob saveJob( String jobId, String jobName, String cmdName, String cron, String appName )
+	public String saveJob( String jobId, String jobName, String cmdName, String cron, String appName )
 	throws IOException, IllegalArgumentException {
 
 		// Create the job properties
@@ -196,7 +204,7 @@ public class RoboconfScheduler implements IScheduler {
 			props.setProperty( CRON, cron );
 
 		// Validate...
-		ScheduledJob result = null;
+		String result = null;
 		if( validProperties( props )) {
 
 			// Verify the parameters
@@ -217,7 +225,7 @@ public class RoboconfScheduler implements IScheduler {
 			// Inject the ID in the properties and schedule the job
 			props.setProperty( JOB_ID, jobId );
 			scheduleJob( props );
-			result = from( props );
+			result = jobId;
 		}
 
 		return result;
