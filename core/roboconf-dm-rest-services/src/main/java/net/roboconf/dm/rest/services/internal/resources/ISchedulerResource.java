@@ -65,6 +65,7 @@ public interface ISchedulerResource {
 	 */
 	@POST
 	Response saveJob(
+			@QueryParam("job-id") String jobId,
 			@QueryParam("job-name") String jobName,
 			@QueryParam("app-name") String appName,
 			@QueryParam("cmd-name") String cmdName,

@@ -52,20 +52,22 @@ public interface IScheduler {
 
 	/**
 	 * Saves a job.
+	 * @param jobId the job's ID (will be generated if null, non-null means editing)
 	 * @param jobName the job's name
 	 * @param cmdName the name of the commands file to execute (the extension is optional)
 	 * @param cron a CRON expression to schedule the command execution
 	 * @param appName the application's name
+	 * @return the scheduled job's properties, or null if saving failed
 	 * @throws IOException if something went wrong
 	 */
-	void saveJob( String jobName, String cmdName, String cron, String appName ) throws IOException;
+	ScheduledJob saveJob( String jobId, String jobName, String cmdName, String cron, String appName ) throws IOException;
 
 	/**
 	 * Deletes a job.
-	 * @param jobName the job's name
+	 * @param jobId the job's ID
 	 * @throws IOException if something went wrong
 	 */
-	void deleteJob( String jobName ) throws IOException;
+	void deleteJob( String jobId ) throws IOException;
 
 	/**
 	 * @return a non-null list of jobs
@@ -74,8 +76,8 @@ public interface IScheduler {
 
 	/**
 	 * Finds the properties of a given job.
-	 * @param jobName the job's name
+	 * @param jobId the job's ID
 	 * @return the properties, or null if this job was not found
 	 */
-	ScheduledJob findJobProperties( String jobName );
+	ScheduledJob findJobProperties( String jobId );
 }

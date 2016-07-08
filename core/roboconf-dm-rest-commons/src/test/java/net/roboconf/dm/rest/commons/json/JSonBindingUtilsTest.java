@@ -30,6 +30,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
@@ -45,11 +50,6 @@ import net.roboconf.core.model.runtime.TargetUsageItem;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.rest.commons.Diagnostic;
 import net.roboconf.dm.rest.commons.Diagnostic.DependencyInformation;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -805,7 +805,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testMapWrapperBinding_1() throws Exception {
 
-		Map<String,String> map = new LinkedHashMap<String,String>( 2 );
+		Map<String,String> map = new LinkedHashMap<>( 2 );
 		map.put( "key1", "value1" );
 		map.put( "key2", "value2" );
 		map.put( "key3", null );
@@ -831,7 +831,7 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testMapWrapperBinding_2() throws Exception {
 
-		Map<String,String> map = new HashMap<String,String>( 0 );
+		Map<String,String> map = new HashMap<>( 0 );
 		MapWrapper obj = new MapWrapper( map );
 
 		StringWriter writer = new StringWriter();
@@ -910,7 +910,7 @@ public class JSonBindingUtilsTest {
 		final String result = "{}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		ScheduledJob job = new ScheduledJob();
+		ScheduledJob job = new ScheduledJob( null );
 		StringWriter writer = new StringWriter();
 		mapper.writeValue( writer, job );
 		String s = writer.toString();
@@ -922,10 +922,10 @@ public class JSonBindingUtilsTest {
 	@Test
 	public void testScheduledJobBinding_2() throws Exception {
 
-		final String result = "{\"app-name\":\"app\",\"cmd-name\":\"cmd\",\"job-name\":\"job\",\"cron\":\"* * *\"}";
+		final String result = "{\"id\":\"job id\",\"app-name\":\"app\",\"cmd-name\":\"cmd\",\"job-name\":\"job\",\"cron\":\"* * *\"}";
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
 
-		ScheduledJob job = new ScheduledJob();
+		ScheduledJob job = new ScheduledJob( "job id" );
 		job.setAppName( "app" );
 		job.setCmdName( "cmd" );
 		job.setJobName( "job" );

@@ -27,7 +27,7 @@ package net.roboconf.dm.scheduler.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -136,8 +136,9 @@ public class RoboconfSchedulerTest {
 
 		// Create several jobs
 		final int max = 5;
+		ScheduledJob[] jobs = new ScheduledJob[ max ];
 		for( int i=0; i<max; i++ ) {
-			this.scheduler.saveJob( "job " + i, "cmd", "0 0 0 ? 1 *", "app" );
+			jobs[ i ] = this.scheduler.saveJob( null, "job " + i, "cmd", "0 0 0 ? 1 *", "app" );
 		}
 
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
@@ -145,13 +146,13 @@ public class RoboconfSchedulerTest {
 		Assert.assertEquals( max, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Delete a job
-		this.scheduler.deleteJob( "job 3" );
+		this.scheduler.deleteJob( jobs[ 3 ].getJobId());
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( max - 1, jobKeys.size());
 		Assert.assertEquals( max - 1, Utils.listAllFiles( schedulerDirectory ).size());
 
 		// Find job properties
-		ScheduledJob job = this.scheduler.findJobProperties( "job 1" );
+		ScheduledJob job = this.scheduler.findJobProperties( jobs[ 1 ].getJobId());
 		Assert.assertNotNull( job );
 		Assert.assertEquals( "app", job.getAppName());
 		Assert.assertEquals( "cmd", job.getCmdName());
@@ -178,6 +179,56 @@ public class RoboconfSchedulerTest {
 
 		// Delete a job
 		this.scheduler.deleteJob( "job 3" );
+		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+	}
+
+
+	@Test
+	public void testSaveJobAndUpdateJob() throws Exception {
+
+		// Start the scheduler and halts triggers
+		this.scheduler.start();
+		this.scheduler.scheduler.standby();
+		File schedulerDirectory = this.scheduler.getSchedulerDirectory();
+
+		Set<JobKey> jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// Create a job
+		ScheduledJob job = this.scheduler.saveJob( null, "my job", "cmd", "0 0 0 ? 1 *", "app" );
+
+		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 1, jobKeys.size());
+		Assert.assertEquals( 1, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// Find job properties
+		ScheduledJob readJob = this.scheduler.findJobProperties( job.getJobId());
+		Assert.assertNotNull( readJob );
+		Assert.assertEquals( job.getAppName(), readJob.getAppName());
+		Assert.assertEquals( job.getCmdName(), readJob.getCmdName());
+		Assert.assertEquals( job.getCron(), readJob.getCron());
+		Assert.assertEquals( job.getJobName(), readJob.getJobName());
+		Assert.assertEquals( "my job", readJob.getJobName());
+		Assert.assertEquals( job.getJobId(), readJob.getJobId());
+
+		// Rename the initial job and the application's name
+		job = this.scheduler.saveJob( job.getJobId(), "my new job", "cmd", "0 0 0 ? 1 *", "new app" );
+
+		// Find job properties
+		readJob = this.scheduler.findJobProperties( job.getJobId());
+		Assert.assertNotNull( readJob );
+		Assert.assertEquals( job.getAppName(), readJob.getAppName());
+		Assert.assertEquals( job.getCmdName(), readJob.getCmdName());
+		Assert.assertEquals( job.getCron(), readJob.getCron());
+		Assert.assertEquals( job.getJobName(), readJob.getJobName());
+		Assert.assertEquals( "my new job", readJob.getJobName());
+		Assert.assertEquals( job.getJobId(), readJob.getJobId());
+
+		// Delete the job
+		this.scheduler.deleteJob( job.getJobId());
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( 0, jobKeys.size());
 		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
@@ -220,15 +271,43 @@ public class RoboconfSchedulerTest {
 		Assert.assertEquals( 0, jobKeys.size());
 		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
 
-		// Save an invalid job
-		this.scheduler.saveJob( "job", "cmd", null, "app" );
+		// Save an invalid job (no cron)
+		this.scheduler.saveJob( null, "job", "cmd", null, "app" );
 
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( 0, jobKeys.size());
 		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
 
-		// Save an invalid job
-		this.scheduler.saveJob( null, null, null, null );
+		// Save an invalid job (no job name)
+		this.scheduler.saveJob( null, null, "cmd", "0 0 0 ? 1 *", "app" );
+
+		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// Save an invalid job (no command name)
+		this.scheduler.saveJob( null, "job", null, "0 0 0 ? 1 *", "app" );
+
+		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// Save an invalid job (no application name)
+		this.scheduler.saveJob( null, "job", "cmd", "0 0 0 ? 1 *", null );
+
+		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// Save an invalid job (nothing at all)
+		this.scheduler.saveJob( null, null, null, null, null );
+
+		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// Save an invalid job (an ID but nothing else)
+		this.scheduler.saveJob( "some-id", null, null, null, null );
 
 		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 		Assert.assertEquals( 0, jobKeys.size());
@@ -245,15 +324,13 @@ public class RoboconfSchedulerTest {
 		final int max = 5;
 		for( int i=0; i<max; i++ ) {
 
-			String jobName = "job " + i;
-
 			Properties props = new Properties();
-			props.put( RoboconfScheduler.JOB_NAME, jobName );
+			props.put( RoboconfScheduler.JOB_NAME, "same job name" );
 			props.put( RoboconfScheduler.APP_NAME, "app" );
 			props.put( RoboconfScheduler.CMD_NAME, "cmd" );
 			props.put( RoboconfScheduler.CRON, "0 0 0 ? 1 *" );
 
-			Utils.writePropertiesFile( props, this.scheduler.getJobFile( jobName ));
+			Utils.writePropertiesFile( props, this.scheduler.getJobFile( "my-id-" + i ));
 		}
 
 		// Start the scheduler and halts triggers
@@ -269,15 +346,16 @@ public class RoboconfSchedulerTest {
 		List<ScheduledJob> jobs = this.scheduler.listJobs();
 		Assert.assertEquals( max, jobs.size());
 
-		List<String> jobNames = new ArrayList<> ();
+		Set<String> jobIds = new HashSet<> ();
 		for( ScheduledJob job : jobs ) {
+			Assert.assertEquals( "same job name", job.getJobName());
 			Assert.assertEquals( "app", job.getAppName());
 			Assert.assertEquals( "cmd", job.getCmdName());
 			Assert.assertEquals( "0 0 0 ? 1 *", job.getCron());
-			jobNames.add( job.getJobName());
+			jobIds.add( job.getJobId());
 		}
 
-		Assert.assertEquals( max, jobNames.size());
+		Assert.assertEquals( max, jobIds.size());
 	}
 
 
@@ -289,7 +367,7 @@ public class RoboconfSchedulerTest {
 				Mockito.any( JobDetail.class ),
 				Mockito.any( Trigger.class ))).thenThrow( new SchedulerException( "For test" ));
 
-		this.scheduler.saveJob( "job", "cmd", "0 0 0 ? 1 *", "app" );
+		this.scheduler.saveJob( null, "job", "cmd", "0 0 0 ? 1 *", "app" );
 	}
 
 
@@ -308,7 +386,7 @@ public class RoboconfSchedulerTest {
 		props.put( RoboconfScheduler.CRON, "0 0 0 ? 1 *" );
 
 		try {
-			File f = this.scheduler.getJobFile( "job" );
+			File f = this.scheduler.getJobFile( "job-id" );
 			Assert.assertTrue( f.getParentFile().mkdirs());
 			Utils.writePropertiesFile( props, f );
 
@@ -316,7 +394,7 @@ public class RoboconfSchedulerTest {
 			Assert.fail( "No exception was expected here." );
 		}
 
-		this.scheduler.deleteJob( "job" );
+		this.scheduler.deleteJob( "job-id" );
 	}
 
 
@@ -328,10 +406,9 @@ public class RoboconfSchedulerTest {
 		// Create several job FILES
 		final int max = 5;
 		for( int i=0; i<max; i++ ) {
-			String jobName = "job " + i;
 
 			Properties props = new Properties();
-			props.put( RoboconfScheduler.JOB_NAME, jobName );
+			props.put( RoboconfScheduler.JOB_NAME, "same job name" );
 			props.put( RoboconfScheduler.APP_NAME, "app" );
 			props.put( RoboconfScheduler.CMD_NAME, "cmd" );
 
@@ -339,7 +416,7 @@ public class RoboconfSchedulerTest {
 			if( i != 3 )
 				props.put( RoboconfScheduler.CRON, "0 0 0 ? 1 *" );
 
-			Utils.writePropertiesFile( props, this.scheduler.getJobFile( jobName ));
+			Utils.writePropertiesFile( props, this.scheduler.getJobFile( "job-id-" + i ));
 		}
 
 		// Start the scheduler and halts triggers
@@ -355,14 +432,15 @@ public class RoboconfSchedulerTest {
 		List<ScheduledJob> jobs = this.scheduler.listJobs();
 		Assert.assertEquals( max, jobs.size());
 
-		List<String> jobNames = new ArrayList<> ();
+		Set<String> jobIds = new HashSet<> ();
 		for( ScheduledJob job : jobs ) {
 			Assert.assertEquals( "app", job.getAppName());
 			Assert.assertEquals( "cmd", job.getCmdName());
-			jobNames.add( job.getJobName());
+			Assert.assertEquals( "same job name", job.getJobName());
+			jobIds.add( job.getJobId());
 		}
 
-		Assert.assertEquals( max, jobNames.size());
+		Assert.assertEquals( max, jobIds.size());
 	}
 
 
@@ -374,15 +452,14 @@ public class RoboconfSchedulerTest {
 		// Create several job FILES
 		final int max = 5;
 		for( int i=0; i<max; i++ ) {
-			String jobName = "job " + i;
 
 			Properties props = new Properties();
-			props.put( RoboconfScheduler.JOB_NAME, jobName );
+			props.put( RoboconfScheduler.JOB_NAME, "job " + i );
 			props.put( RoboconfScheduler.APP_NAME, "app" );
 			props.put( RoboconfScheduler.CMD_NAME, "cmd" );
 			props.put( RoboconfScheduler.CRON, "0 0 0 ? 1 *" );
 
-			Utils.writePropertiesFile( props, this.scheduler.getJobFile( jobName ));
+			Utils.writePropertiesFile( props, this.scheduler.getJobFile( "job-id-" + i ));
 		}
 
 		// Throw an exception when a job is scheduled

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.quartz.CronScheduleBuilder;
@@ -55,6 +56,7 @@ import net.roboconf.dm.scheduler.IScheduler;
  */
 public class RoboconfScheduler implements IScheduler {
 
+	static final String JOB_ID = "id";
 	static final String JOB_NAME = "job-name";
 	static final String APP_NAME = "application-name";
 	static final String CMD_NAME = "command-file-name";
@@ -133,8 +135,11 @@ public class RoboconfScheduler implements IScheduler {
 		for( File f : Utils.listAllFiles( getSchedulerDirectory(), Constants.FILE_EXT_PROPERTIES )) {
 			try {
 				Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
-				props.setProperty( JOB_NAME, Utils.removeFileExtension( f.getName()));
 
+				// Inject the ID in the properties
+				props.setProperty( JOB_ID, Utils.removeFileExtension( f.getName()));
+
+				// Validate and reload
 				if( validProperties( props ))
 					scheduleJob( props );
 				else
@@ -158,6 +163,8 @@ public class RoboconfScheduler implements IScheduler {
 			if( props.isEmpty())
 				continue;
 
+			// Inject the ID in the properties
+			props.put( JOB_ID, Utils.removeFileExtension( f.getName()));
 			ScheduledJob job = from( props );
 			result.add( job );
 		}
@@ -167,10 +174,13 @@ public class RoboconfScheduler implements IScheduler {
 
 
 	@Override
-	public void saveJob( String jobName, String cmdName, String cron, String appName )
+	public ScheduledJob saveJob( String jobId, String jobName, String cmdName, String cron, String appName )
 	throws IOException {
 
 		Properties props = new Properties();
+		if( jobId == null )
+			jobId = UUID.randomUUID().toString();
+
 		if( jobName != null )
 			props.setProperty( JOB_NAME, jobName );
 
@@ -183,41 +193,52 @@ public class RoboconfScheduler implements IScheduler {
 		if( cron != null )
 			props.setProperty( CRON, cron );
 
+		ScheduledJob result = null;
 		if( validProperties( props )) {
-			unscheduleJob( jobName );
 
+			// Unschedule the job, if any
+			unscheduleJob( jobId );
+
+			// Save the job's information
 			Utils.createDirectory( getSchedulerDirectory());
-			Utils.writePropertiesFile( props, getJobFile( jobName ));
+			Utils.writePropertiesFile( props, getJobFile( jobId ));
 
+			// Inject the ID in the properties and schedule the job
+			props.setProperty( JOB_ID, jobId );
 			scheduleJob( props );
+			result = from( props );
 		}
+
+		return result;
 	}
 
 
 	@Override
-	public void deleteJob( String jobName ) throws IOException {
+	public void deleteJob( String jobId ) throws IOException {
 
 		try {
-			unscheduleJob( jobName );
+			unscheduleJob( jobId );
 
 		} catch( IOException e ) {
-			this.logger.warning( "Failed to remove a scheduled job. Job's name: " + jobName );
+			this.logger.warning( "Failed to remove a scheduled job. Job's id: " + jobId );
 			throw e;
 
 		} finally {
-			File f = getJobFile( jobName );
+			File f = getJobFile( jobId );
 			Utils.deleteFilesRecursively( f );
 		}
 	}
 
 
 	@Override
-	public ScheduledJob findJobProperties( String jobName ) {
+	public ScheduledJob findJobProperties( String jobId ) {
 
 		ScheduledJob result = null;
-		File f = getJobFile( jobName );
+		File f = getJobFile( jobId );
 		try {
+			// Inject the ID in the properties
 			Properties props = Utils.readPropertiesFile( f );
+			props.put( JOB_ID, jobId );
 			result = from( props );
 
 		} catch( IOException e ) {
@@ -233,8 +254,29 @@ public class RoboconfScheduler implements IScheduler {
 	}
 
 
-	File getJobFile( String jobName ) {
-		return new File( getSchedulerDirectory(), jobName + Constants.FILE_EXT_PROPERTIES );
+	File getJobFile( String jobId ) {
+		return new File( getSchedulerDirectory(), jobId + Constants.FILE_EXT_PROPERTIES );
+	}
+
+
+	/**
+	 * @param props non-null properties
+	 * @return true if the properties are valid
+	 */
+	boolean validProperties( Properties props ) {
+
+		// We do not consider the job ID here.
+		// Job ID = file name. No need to duplicate the information as
+		// it would imply coherence checking.
+		String jobName = props.getProperty( JOB_NAME, "" );
+		String appName = props.getProperty( APP_NAME, "" );
+		String cmdName = props.getProperty( CMD_NAME, "" );
+		String cron = props.getProperty( CRON, "" );
+
+		return ! Utils.isEmptyOrWhitespaces( cron )
+				&& ! Utils.isEmptyOrWhitespaces( jobName )
+				&& ! Utils.isEmptyOrWhitespaces( appName )
+				&& ! Utils.isEmptyOrWhitespaces( cmdName );
 	}
 
 
@@ -247,6 +289,7 @@ public class RoboconfScheduler implements IScheduler {
 	private boolean scheduleJob( Properties props ) throws IOException {
 
 		// 1 file = 1 job = 1 trigger.
+		String jobId = props.getProperty( JOB_ID, "" );
 		String jobName = props.getProperty( JOB_NAME, "" );
 		String appName = props.getProperty( APP_NAME, "" );
 		String cmdName = props.getProperty( CMD_NAME, "" );
@@ -254,7 +297,8 @@ public class RoboconfScheduler implements IScheduler {
 
 		// Schedule the job
 		JobDetail job = JobBuilder.newJob( CommandExecutionJob.class )
-				.withIdentity( jobName, appName )
+				.withIdentity( jobId, appName )
+				.usingJobData( JOB_ID, jobId )
 				.usingJobData( APP_NAME, appName )
 				.usingJobData( JOB_NAME, jobName )
 				.usingJobData( CMD_NAME, cmdName )
@@ -262,7 +306,7 @@ public class RoboconfScheduler implements IScheduler {
 
 		Trigger trigger = TriggerBuilder
 				.newTrigger()
-				.withIdentity( jobName, appName )
+				.withIdentity( jobId, appName )
 				.withSchedule( CronScheduleBuilder.cronSchedule( cron ))
 				.build();
 
@@ -278,33 +322,15 @@ public class RoboconfScheduler implements IScheduler {
 	}
 
 
-	/**
-	 * @param props non-null properties
-	 * @return true if the properties are valid
-	 */
-	private boolean validProperties( Properties props ) {
-
-		String jobName = props.getProperty( JOB_NAME, "" );
-		String appName = props.getProperty( APP_NAME, "" );
-		String cmdName = props.getProperty( CMD_NAME, "" );
-		String cron = props.getProperty( CRON, "" );
-
-		return ! Utils.isEmptyOrWhitespaces( cron )
-				&& ! Utils.isEmptyOrWhitespaces( jobName )
-				&& ! Utils.isEmptyOrWhitespaces( appName )
-				&& ! Utils.isEmptyOrWhitespaces( cmdName );
-	}
-
-
-	private void unscheduleJob( String jobName ) throws IOException {
+	private void unscheduleJob( String jobId ) throws IOException {
 
 		try {
-			File f = getJobFile( jobName );
+			File f = getJobFile( jobId );
 			if( f.exists()) {
 				Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
 				String appName = props.getProperty( APP_NAME, "" );
 				if( ! Utils.isEmptyOrWhitespaces( appName ))
-					this.scheduler.unscheduleJob( TriggerKey.triggerKey( jobName, appName ));
+					this.scheduler.unscheduleJob( TriggerKey.triggerKey( jobId, appName ));
 			}
 
 		} catch( SchedulerException e ) {
@@ -316,7 +342,7 @@ public class RoboconfScheduler implements IScheduler {
 
 	private ScheduledJob from( Properties props ) {
 
-		ScheduledJob job = new ScheduledJob();
+		ScheduledJob job = new ScheduledJob( props.getProperty( JOB_ID ));
 		job.setAppName( props.getProperty( APP_NAME ));
 		job.setCmdName( props.getProperty( CMD_NAME ));
 		job.setJobName( props.getProperty( JOB_NAME ));

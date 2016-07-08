@@ -74,6 +74,7 @@ public final class JSonBindingUtils {
 	private static final String S = "s";
 	private static final String PATH = "path";
 	private static final String CRON = "cron";
+	private static final String ID = "id";
 
 	private static final String APP_ICON = "icon";
 	private static final String APP_INFO = "info";
@@ -97,7 +98,6 @@ public final class JSonBindingUtils {
 	private static final String DIAG_PATH = "path";
 	private static final String DIAG_DEPENDENCIES = "dependencies";
 
-	private static final String TARGET_ID = "id";
 	private static final String TARGET_HANDLER = "handler";
 	private static final String TARGET_DEFAULT = "default";
 
@@ -221,6 +221,9 @@ public final class JSonBindingUtils {
 		throws IOException {
 
 			generator.writeStartObject();
+			if( job.getJobId() != null )
+				generator.writeStringField( ID, job.getJobId());
+
 			if( job.getAppName() != null )
 				generator.writeStringField( JOB_APP_NAME, job.getAppName());
 
@@ -314,7 +317,7 @@ public final class JSonBindingUtils {
 
 			generator.writeStartObject();
 			if( twd.getId() != null )
-				generator.writeStringField( TARGET_ID, twd.getId());
+				generator.writeStringField( ID, twd.getId());
 
 			if( twd.getName() != null )
 				generator.writeStringField( NAME, twd.getName());
@@ -353,7 +356,7 @@ public final class JSonBindingUtils {
 			if(( n = node.get( TARGET_HANDLER )) != null )
 				twd.setHandler( n.textValue());
 
-			if(( n = node.get( TARGET_ID )) != null )
+			if(( n = node.get( ID )) != null )
 				twd.setId( n.textValue());
 
 			if(( n = node.get( NAME )) != null )

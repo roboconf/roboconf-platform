@@ -61,16 +61,22 @@ public class SchedulerResourceTest {
 	public void testSaveJob_noScheduler() {
 
 		this.resource.scheduler = null;
-		Response resp = this.resource.saveJob( "job", "app", "cmd", "cron" );
+		Response resp = this.resource.saveJob( null, "job", "app", "cmd", "cron" );
 		Assert.assertEquals( Status.FORBIDDEN.getStatusCode(), resp.getStatus());
 	}
 
 
 	@Test
-	public void testSaveJob_ok() {
+	public void testSaveJob_ok() throws Exception {
 
-		Response resp = this.resource.saveJob( "job", "app", "cmd", "cron" );
+		Mockito
+			.when( this.scheduler.saveJob( Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString()))
+			.thenReturn( new ScheduledJob( "some-id" ));
+
+		Response resp = this.resource.saveJob( null, "job", "app", "cmd", "cron" );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertTrue( resp.getEntity() instanceof ScheduledJob );
+		Assert.assertEquals( "some-id", ((ScheduledJob) resp.getEntity()).getJobId());
 	}
 
 
@@ -79,9 +85,9 @@ public class SchedulerResourceTest {
 
 		Mockito
 			.doThrow( new IOException( "For test" ))
-			.when( this.scheduler ).saveJob( Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+			.when( this.scheduler ).saveJob( Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 
-		Response resp = this.resource.saveJob( "job", "app", "cmd", "cron" );
+		Response resp = this.resource.saveJob( null, "job", "app", "cmd", "cron" );
 		Assert.assertEquals( Status.BAD_REQUEST.getStatusCode(), resp.getStatus());
 	}
 
@@ -137,10 +143,11 @@ public class SchedulerResourceTest {
 
 		Mockito
 			.when( this.scheduler.findJobProperties( Mockito.anyString()))
-			.thenReturn( new ScheduledJob());
+			.thenReturn( new ScheduledJob( "job-id" ));
 
-		Response resp = this.resource.findJobProperties( "job" );
+		Response resp = this.resource.findJobProperties( "job-id" );
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
+		Assert.assertTrue( resp.getEntity() instanceof ScheduledJob );
 	}
 
 
@@ -156,8 +163,8 @@ public class SchedulerResourceTest {
 	public void testListJobs_ok() {
 
 		List<ScheduledJob> result = new ArrayList<>( 2 );
-		result.add( new ScheduledJob());
-		result.add( new ScheduledJob());
+		result.add( new ScheduledJob( "id1" ));
+		result.add( new ScheduledJob( "id2" ));
 
 		Mockito
 			.when( this.scheduler.listJobs())

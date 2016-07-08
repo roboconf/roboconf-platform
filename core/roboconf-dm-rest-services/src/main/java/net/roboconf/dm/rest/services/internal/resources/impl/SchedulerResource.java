@@ -52,13 +52,14 @@ public class SchedulerResource implements ISchedulerResource {
 
 
 	@Override
-	public Response saveJob( String jobName, String appName, String cmdName, String cron ) {
+	public Response saveJob( String jobId, String jobName, String appName, String cmdName, String cron ) {
 
 		this.logger.fine( "Request: save a new scheduled job as " + jobName + "." );
-		Response result = Response.ok().build();
+		Response result;
 		String msg = "Job " + jobName + " could not be saved.";
 		try {
-			this.scheduler.saveJob( jobName, cmdName, cron, appName );
+			ScheduledJob job = this.scheduler.saveJob( jobId, jobName, cmdName, cron, appName );
+			result = Response.ok( job ).build();
 
 		} catch( IOException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.BAD_REQUEST, msg, e ).build();
@@ -125,7 +126,7 @@ public class SchedulerResource implements ISchedulerResource {
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
 			this.logger.warning( MSG.trim());
-			result = new ArrayList<ScheduledJob>( 0 );
+			result = new ArrayList<>( 0 );
 		}
 
 		return result;
