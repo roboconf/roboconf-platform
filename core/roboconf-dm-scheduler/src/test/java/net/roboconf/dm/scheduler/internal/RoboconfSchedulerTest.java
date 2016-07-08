@@ -47,8 +47,12 @@ import org.quartz.Trigger;
 import org.quartz.TriggerKey;
 import org.quartz.impl.matchers.GroupMatcher;
 
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.IDmListener;
 
@@ -66,12 +70,23 @@ public class RoboconfSchedulerTest {
 	@Before
 	public void prepare() throws Exception {
 
+		// Prepare the manager
 		this.manager = Mockito.spy( new Manager());
 		this.manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 
 		this.scheduler = new RoboconfScheduler();
 		this.scheduler.manager = this.manager;
 
+		// Configure applications and commands
+		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
+		Application app = new TestApplication().name( "app" );
+		app.setDirectory( this.folder.newFolder());
+		wrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+
+		// Register commands
+		this.manager.commandsMngr().createOrUpdateCommand( app, "cmd", "" );
+
+		// Ignore all the manager's invocations until now
 		Mockito.reset( this.manager );
 	}
 
@@ -185,6 +200,38 @@ public class RoboconfSchedulerTest {
 	}
 
 
+	@Test( expected = IllegalArgumentException.class )
+	public void testSaveJob_invalidApplicationName() throws Exception {
+
+		// Start the scheduler and halts triggers
+		this.scheduler.start();
+		this.scheduler.scheduler.standby();
+
+		// Create a job
+		this.scheduler.saveJob( null, "my job", "cmd", "0 0 0 ? 1 *", "app that does nto exist" );
+	}
+
+
+	@Test( expected = IllegalArgumentException.class )
+	public void testSaveJob_invalidCommandName() throws Exception {
+
+		// Start the scheduler and halts triggers
+		this.scheduler.start();
+		this.scheduler.scheduler.standby();
+
+		// Create a job
+		try {
+			Assert.assertNotNull( this.scheduler.saveJob( null, "my job", "cmd", "0 0 0 ? 1 *", "app" ));
+
+		} catch( Exception e ) {
+			Assert.fail( "No failure was expected here, the application was registered in the setup method." );
+		}
+
+		// This one will fail
+		this.scheduler.saveJob( null, "my job", "cmd that does not exist", "0 0 0 ? 1 *", "app" );
+	}
+
+
 	@Test
 	public void testSaveJobAndUpdateJob() throws Exception {
 
@@ -214,8 +261,18 @@ public class RoboconfSchedulerTest {
 		Assert.assertEquals( "my job", readJob.getJobName());
 		Assert.assertEquals( job.getJobId(), readJob.getJobId());
 
-		// Rename the initial job and the application's name
-		job = this.scheduler.saveJob( job.getJobId(), "my new job", "cmd", "0 0 0 ? 1 *", "new app" );
+		// Rename the initial job and the application's name.
+		// We also need to make sure the application exists...
+		TestManagerWrapper wrapper = new TestManagerWrapper( this.manager );
+		Application app = new TestApplication().name( "new app" );
+		app.setDirectory( this.folder.newFolder());
+		wrapper.getNameToManagedApplication().put( app.getName(), new ManagedApplication( app ));
+
+		// ... as well as the command.
+		this.manager.commandsMngr().createOrUpdateCommand( app, "cmd", "" );
+
+		// Update the job
+		job = this.scheduler.saveJob( job.getJobId(), "my new job", "cmd", "0 0 0 ? 1 *", app.getName());
 
 		// Find job properties
 		readJob = this.scheduler.findJobProperties( job.getJobId());

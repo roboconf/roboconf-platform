@@ -45,6 +45,7 @@ import org.quartz.TriggerKey;
 import org.quartz.impl.StdSchedulerFactory;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
@@ -175,8 +176,9 @@ public class RoboconfScheduler implements IScheduler {
 
 	@Override
 	public ScheduledJob saveJob( String jobId, String jobName, String cmdName, String cron, String appName )
-	throws IOException {
+	throws IOException, IllegalArgumentException {
 
+		// Create the job properties
 		Properties props = new Properties();
 		if( jobId == null )
 			jobId = UUID.randomUUID().toString();
@@ -193,8 +195,17 @@ public class RoboconfScheduler implements IScheduler {
 		if( cron != null )
 			props.setProperty( CRON, cron );
 
+		// Validate...
 		ScheduledJob result = null;
 		if( validProperties( props )) {
+
+			// Verify the parameters
+			Application app = this.manager.applicationMngr().findApplicationByName( appName );
+			if( app == null )
+				throw new IllegalArgumentException( appName + " does not exist" );
+
+			if( ! this.manager.commandsMngr().listCommands( app ).contains( cmdName ))
+				throw new IllegalArgumentException( "Command " + cmdName + " does not exist" );
 
 			// Unschedule the job, if any
 			unscheduleJob( jobId );

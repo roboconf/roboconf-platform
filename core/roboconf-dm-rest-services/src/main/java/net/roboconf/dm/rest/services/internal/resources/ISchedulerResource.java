@@ -61,6 +61,7 @@ public interface ISchedulerResource {
 	 *
 	 * @HTTP 200 everything went fine
 	 * @HTTP 403 if Roboconf's scheduler is not available
+	 * @HTTP 404 if the application or the command was not found
 	 * @HTTP 400 if a problem arose with the parameters
 	 */
 	@POST

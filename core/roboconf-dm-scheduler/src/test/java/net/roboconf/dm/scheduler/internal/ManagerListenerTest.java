@@ -41,10 +41,13 @@ import org.quartz.SchedulerException;
 import org.quartz.TriggerKey;
 import org.quartz.impl.matchers.GroupMatcher;
 
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.utils.Utils;
+import net.roboconf.dm.internal.test.TestManagerWrapper;
+import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.events.EventType;
 
@@ -82,6 +85,20 @@ public class ManagerListenerTest {
 		Manager manager = Mockito.spy( new Manager());
 		manager.configurationMngr().setWorkingDirectory( this.folder.newFolder());
 
+		// Register applications
+		final String cmdName = "cmd";
+		final Application app1 = new TestApplication().name( "app1" ).directory( this.folder.newFolder());
+		final Application app2 = new TestApplication().name( "app2" ).directory( this.folder.newFolder());
+
+		TestManagerWrapper wrapper = new TestManagerWrapper( manager );
+		wrapper.getNameToManagedApplication().put( app1.getName(), new ManagedApplication( app1 ));
+		wrapper.getNameToManagedApplication().put( app2.getName(), new ManagedApplication( app2 ));
+
+		// Register commands
+		manager.commandsMngr().createOrUpdateCommand( app1, cmdName, "" );
+		manager.commandsMngr().createOrUpdateCommand( app2, cmdName, "" );
+
+		// Prepare the scheduler
 		RoboconfScheduler scheduler = new RoboconfScheduler();
 		scheduler.manager = manager;
 		Mockito.reset( manager );
@@ -90,17 +107,14 @@ public class ManagerListenerTest {
 			scheduler.start();
 
 			// Register job properties
-			final String app1 = "app1";
-			final String app2 = "app2";
+			Assert.assertNotNull( scheduler.saveJob( null, "job11", cmdName, "0 0 0 ? 1 *", app1.getName()));
+			Assert.assertNotNull( scheduler.saveJob( null, "job12", cmdName, "0 0 0 ? 1 *", app1.getName()));
+			Assert.assertNotNull( scheduler.saveJob( null, "job13", cmdName, "0 0 0 ? 1 *", app1.getName()));
 
-			Assert.assertNotNull( scheduler.saveJob( null, "job11", "cmd", "0 0 0 ? 1 *", app1 ));
-			Assert.assertNotNull( scheduler.saveJob( null, "job12", "cmd", "0 0 0 ? 1 *", app1 ));
-			Assert.assertNotNull( scheduler.saveJob( null, "job13", "cmd", "0 0 0 ? 1 *", app1 ));
-
-			ScheduledJob job21 = scheduler.saveJob( null, "job21", "cmd", "0 0 0 ? 1 *", app2 );
+			ScheduledJob job21 = scheduler.saveJob( null, "job21", cmdName, "0 0 0 ? 1 *", app2.getName());
 			Assert.assertNotNull( job21  );
 
-			ScheduledJob job22 = scheduler.saveJob( null, "job22", "cmd", "0 0 0 ? 1 *", app2 );
+			ScheduledJob job22 = scheduler.saveJob( null, "job22", cmdName, "0 0 0 ? 1 *", app2.getName());
 			Assert.assertNotNull( job22  );
 
 			// Now, send signals to the manager listener.
@@ -111,26 +125,20 @@ public class ManagerListenerTest {
 			Assert.assertEquals( 5, jobKeys.size());
 			Assert.assertEquals( 5, Utils.listAllFiles( schedulerDirectory ).size());
 
-			scheduler.dmListener.application(
-					new Application( app1, Mockito.mock( ApplicationTemplate.class )),
-					EventType.CREATED );
+			scheduler.dmListener.application( app1, EventType.CREATED );
 
 			jobKeys = scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 			Assert.assertEquals( 5, jobKeys.size());
 			Assert.assertEquals( 5, Utils.listAllFiles( schedulerDirectory ).size());
 
-			scheduler.dmListener.application(
-					new Application( app1, Mockito.mock( ApplicationTemplate.class )),
-					EventType.CHANGED );
+			scheduler.dmListener.application( app1, EventType.CHANGED );
 
 			jobKeys = scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 			Assert.assertEquals( 5, jobKeys.size());
 			Assert.assertEquals( 5, Utils.listAllFiles( schedulerDirectory ).size());
 
 			// "app1" was deleted.
-			scheduler.dmListener.application(
-					new Application( app1, Mockito.mock( ApplicationTemplate.class )),
-					EventType.DELETED );
+			scheduler.dmListener.application( app1, EventType.DELETED );
 
 			jobKeys = scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
 			Assert.assertEquals( 2, jobKeys.size());

@@ -61,6 +61,9 @@ public class SchedulerResource implements ISchedulerResource {
 			ScheduledJob job = this.scheduler.saveJob( jobId, jobName, cmdName, cron, appName );
 			result = Response.ok( job ).build();
 
+		} catch( IllegalArgumentException e ) {
+			result = RestServicesUtils.handleException( this.logger, Status.NOT_FOUND, msg, e ).build();
+
 		} catch( IOException e ) {
 			result = RestServicesUtils.handleException( this.logger, Status.BAD_REQUEST, msg, e ).build();
 

@@ -67,6 +67,18 @@ public class SchedulerResourceTest {
 
 
 	@Test
+	public void testSaveJob_inexistingApplicationOrCommand() throws Exception {
+
+		Mockito
+			.doThrow( new IllegalArgumentException( "For test" ))
+			.when( this.scheduler ).saveJob( Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+
+		Response resp = this.resource.saveJob( null, "job", "app", "cmd", "cron" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
 	public void testSaveJob_ok() throws Exception {
 
 		Mockito

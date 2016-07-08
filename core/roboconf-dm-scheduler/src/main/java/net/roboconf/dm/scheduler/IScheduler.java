@@ -58,9 +58,11 @@ public interface IScheduler {
 	 * @param cron a CRON expression to schedule the command execution
 	 * @param appName the application's name
 	 * @return the scheduled job's properties, or null if saving failed
-	 * @throws IOException if something went wrong
+	 * @throws IOException if the job could not be scheduled or if the CRON expression is invalid
+	 * @throws IllegalArgumentException if the application or the command does not exist
 	 */
-	ScheduledJob saveJob( String jobId, String jobName, String cmdName, String cron, String appName ) throws IOException;
+	ScheduledJob saveJob( String jobId, String jobName, String cmdName, String cron, String appName )
+	throws IOException, IllegalArgumentException;
 
 	/**
 	 * Deletes a job.
