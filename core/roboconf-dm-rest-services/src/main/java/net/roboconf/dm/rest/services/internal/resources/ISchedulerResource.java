@@ -53,6 +53,7 @@ public interface ISchedulerResource {
 
 	/**
 	 * Saves a job.
+	 * @param jobId the job's ID
 	 * @param jobName the job's name
 	 * @param appName the application's name
 	 * @param cmdName the name of the commands file to execute
@@ -75,30 +76,44 @@ public interface ISchedulerResource {
 
 	/**
 	 * Deletes a job.
-	 * @param jobName the job's name
+	 * @param jobId the job's ID
 	 * @return a response
 	 *
 	 * @HTTP 200 everything went fine
 	 * @HTTP 403 if Roboconf's scheduler is not available
 	 */
 	@DELETE
-	Response deleteJob( String jobName );
+	Response deleteJob( String jobId );
 
 
 	/**
-	 * Lists all the jobs.
-	 * @param jobName the job's name
+	 * Lists jobs.
+	 * <p>
+	 * When no parameter is supplied, all the jobs are returned.
+	 * When <code>appName</code> is supplied, only the jobs associated with
+	 * this application are returned.  When <code>cmdName</code> is also supplied,
+	 * only the jobs associated with this application and this command are returned.
+	 * </p>
+	 * <p>
+	 * When <code>cmdName</code> is supplied but not <code>appName</code>, then no job
+	 * is returned.
+	 * </p>
+	 *
+	 * @param appName an application name (optional)
+	 * @param cmdName a command name (optional, only makes sense when the application name is given)
 	 * @return a non-null list of jobs
 	 *
 	 * @HTTP 200 everything went fine
 	 */
 	@GET
-	List<ScheduledJob> listJobs();
+	List<ScheduledJob> listJobs(
+			@QueryParam("app-name") String appName,
+			@QueryParam("cmd-name") String cmdName );
 
 
 	/**
 	 * Gets the properties of a given job.
-	 * @param jobName the job's name
+	 * @param jobId the job's ID
 	 * @return a response
 	 *
 	 * @HTTP 200 everything went fine
@@ -107,5 +122,5 @@ public interface ISchedulerResource {
 	 */
 	@GET
 	@Path( "job" )
-	Response findJobProperties( @QueryParam( "job-name" ) String jobName );
+	Response findJobProperties( @QueryParam( "job-name" ) String jobId );
 }

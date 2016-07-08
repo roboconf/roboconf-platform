@@ -119,17 +119,26 @@ public class SchedulerResource implements ISchedulerResource {
 
 
 	@Override
-	public List<ScheduledJob> listJobs() {
+	public List<ScheduledJob> listJobs( String appName, String cmdName ) {
 
-		List<ScheduledJob> result;
+		List<ScheduledJob> result = new ArrayList<> ();
 		this.logger.fine( "Request: get all the scheduled jobs." );
 		try {
-			result = this.scheduler.listJobs();
+			if( appName == null && cmdName == null ) {
+				result = this.scheduler.listJobs();
+
+			} else if( appName != null ) {
+				for( ScheduledJob job : this.scheduler.listJobs()) {
+					boolean cmdMatch = cmdName == null || cmdName.equals( job.getCmdName());
+					if( cmdMatch
+							&& appName.equals( job.getAppName()))
+						result.add( job );
+				}
+			}
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
 			this.logger.warning( MSG.trim());
-			result = new ArrayList<>( 0 );
 		}
 
 		return result;

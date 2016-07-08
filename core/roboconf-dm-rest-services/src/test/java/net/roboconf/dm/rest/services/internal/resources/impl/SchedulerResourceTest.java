@@ -27,7 +27,9 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -167,22 +169,76 @@ public class SchedulerResourceTest {
 	public void testListJobs_noScheduler() {
 
 		this.resource.scheduler = null;
-		Assert.assertEquals( 0, this.resource.listJobs().size());
+		Assert.assertEquals( 0, this.resource.listJobs( null, null ).size());
 	}
 
 
 	@Test
 	public void testListJobs_ok() {
 
-		List<ScheduledJob> result = new ArrayList<>( 2 );
-		result.add( new ScheduledJob( "id1" ));
-		result.add( new ScheduledJob( "id2" ));
+		// Prepare the mock
+		List<ScheduledJob> result = new ArrayList<> ();
+		for( int i=0; i<3; i++ ) {
+			for( int j=0; j<4; j++ ) {
+
+				ScheduledJob job = new ScheduledJob( "job-id-" + i + j );
+				job.setJobName( "Job " + i + j );
+				job.setCron( "some cron that we will not validate since we mock the scheduler" );
+				job.setAppName( "App-" + i );
+				job.setCmdName( "cmd-" + j );
+				result.add( job );
+			}
+		}
+
+		// And a duplicate job (but with a different name for readability)
+		ScheduledJob customJob = new ScheduledJob( "new-job-id" );
+		customJob.setJobName( "Custom Job" );
+		customJob.setCron( "some cron that we will not validate since we mock the scheduler" );
+		customJob.setAppName( "App-2" );
+		customJob.setCmdName( "cmd-2" );
+		result.add( customJob );
 
 		Mockito
 			.when( this.scheduler.listJobs())
 			.thenReturn( result );
 
-		Assert.assertEquals( 2, this.resource.listJobs().size());
-		Assert.assertEquals( result, this.resource.listJobs());
+		// Get all the jobs
+		Assert.assertEquals( result, this.resource.listJobs( null, null ));
+
+		// Get only the jobs from "App-2"
+		List<ScheduledJob> got = this.resource.listJobs( "App-2", null );
+		Set<String> jobNames = new HashSet<> ();
+		for( ScheduledJob gotJob : got ) {
+			Assert.assertEquals( "App-2", gotJob.getAppName());
+			jobNames.add( gotJob.getJobName());
+		}
+
+		Assert.assertEquals( 5, got.size());
+		Assert.assertEquals( 5, jobNames.size());
+		Assert.assertTrue( jobNames.contains( "Custom Job" ));
+
+		// Get only the jobs from "App-2" and "cmd-2"
+		got = this.resource.listJobs( "App-2", "cmd-2" );
+		jobNames.clear();
+		for( ScheduledJob gotJob : got ) {
+			Assert.assertEquals( "App-2", gotJob.getAppName());
+			jobNames.add( gotJob.getJobName());
+		}
+
+		Assert.assertEquals( 2, got.size());
+		Assert.assertEquals( 2, jobNames.size());
+		Assert.assertTrue( jobNames.contains( "Custom Job" ));
+
+		// Get only the jobs from "App-2" and "cmd-1"
+		Assert.assertEquals( 1, this.resource.listJobs( "App-2", "cmd-1" ).size());
+
+		// Get only the jobs from "App-2" and "cmd-that-does-not-exist"
+		Assert.assertEquals( 0, this.resource.listJobs( "App-2", "cmd-that-does-not-exist" ).size());
+
+		// Get only the jobs with "cmd-2"
+		Assert.assertEquals( 0, this.resource.listJobs( null, "cmd-2" ).size());
+
+		// Get only the jobs from "app-that-does-not-exist"
+		Assert.assertEquals( 0, this.resource.listJobs( "app-that-does-not-exist", null ).size());
 	}
 }
