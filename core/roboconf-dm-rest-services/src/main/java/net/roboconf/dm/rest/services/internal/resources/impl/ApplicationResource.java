@@ -26,6 +26,7 @@
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,6 +52,7 @@ import net.roboconf.core.model.runtime.TargetAssociation;
 import net.roboconf.core.model.runtime.TargetWrapperDescriptor;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.exceptions.CommandException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
 import net.roboconf.dm.rest.commons.json.MapWrapper;
@@ -245,7 +247,7 @@ public class ApplicationResource implements IApplicationResource {
 	@Override
 	public List<Instance> listChildrenInstances( String applicationName, String instancePath, boolean allChildren ) {
 
-		List<Instance> result = new ArrayList<Instance> ();
+		List<Instance> result = new ArrayList<> ();
 		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 
 		// Log
@@ -322,7 +324,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		} else {
 			// Find all the external prefixes to resolve
-			Map<String,String> map = new HashMap<String,String> ();
+			Map<String,String> map = new HashMap<> ();
 			for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication())) {
 				for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( inst.getComponent()).values()) {
 					if( ! var.isExternal())
@@ -503,7 +505,7 @@ public class ApplicationResource implements IApplicationResource {
 	public List<Component> listComponents( String applicationName ) {
 
 		this.logger.fine( "Request: list components for the application " + applicationName + "." );
-		List<Component> result = new ArrayList<Component> ();
+		List<Component> result = new ArrayList<> ();
 		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( app != null )
 			result.addAll( ComponentHelpers.findAllComponents( app ));
@@ -525,7 +527,7 @@ public class ApplicationResource implements IApplicationResource {
 		else
 			this.logger.fine( "Request: find components that can be deployed under a " + componentName + " component in " + applicationName + "." );
 
-		List<Component> result = new ArrayList<Component> ();
+		List<Component> result = new ArrayList<> ();
 		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( app != null ) {
 			Component comp;
@@ -550,7 +552,7 @@ public class ApplicationResource implements IApplicationResource {
 	public List<Component> findComponentAncestors( String applicationName, String componentName ) {
 
 		this.logger.fine( "Request: find components where a " + componentName + " component could be deployed on, in " + applicationName + "." );
-		List<Component> result = new ArrayList<Component> ();
+		List<Component> result = new ArrayList<> ();
 
 		Application app = this.manager.applicationMngr().findApplicationByName( applicationName );
 		if( app != null ) {
@@ -562,5 +564,86 @@ public class ApplicationResource implements IApplicationResource {
 		}
 
 		return result;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #listCommands(java.lang.String)
+	 */
+	@Override
+	public List<String> listCommands( String app ) {
+
+		this.logger.fine("Request: list all the commands in the " + app + " application.");
+		List<String> result;
+		Application application = this.manager.applicationMngr().findApplicationByName( app );
+		if( application == null )
+			result = new ArrayList<>( 0 );
+		else
+			result = this.manager.commandsMngr().listCommands( application );
+
+		return result;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #executeCommand(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Response executeCommand( String app, String commandName ) {
+
+		this.logger.fine("Request: execute command " + commandName + " in the " + app + " application.");
+		Response response = Response.ok().build();
+		try {
+			Application application = this.manager.applicationMngr().findApplicationByName( app );
+			if( application == null )
+				response = Response.status( Status.NOT_FOUND ).entity( "Application " + app + " does not exist." ).build();
+			else
+				this.manager.commandsMngr().execute( application, commandName );
+
+		} catch( NoSuchFileException e ) {
+			response = RestServicesUtils.handleException(
+					this.logger, Status.NOT_FOUND,
+					"Command " + commandName + " does not exist.", e ).build();
+
+		} catch( CommandException e ) {
+			response = RestServicesUtils.handleException(
+					this.logger, Status.CONFLICT,
+					"Command " + commandName + " encountered an error during its execution.", e ).build();
+
+		} catch( Exception e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+		}
+
+		return response;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see net.roboconf.dm.rest.services.internal.resources.IApplicationResource
+	 * #getCommandInstructions(java.lang.String, java.lang.String)
+	 */
+	@Override
+	public Response getCommandInstructions(String app, String commandName) {
+
+		this.logger.fine("Request: get instructions from " + commandName + " in the " + app + " application.");
+		Response response;
+		try {
+			ManagedApplication ma = this.manager.applicationMngr().findManagedApplicationByName( app );
+			String res = this.manager.commandsMngr().getCommandInstructions( ma.getApplication(), commandName);
+			if( res.isEmpty())
+				response = Response.status( Status.NO_CONTENT ).build();
+			else
+				response = Response.ok(res).build();
+
+		} catch( IOException e ) {
+			response = RestServicesUtils.handleException( this.logger, Status.INTERNAL_SERVER_ERROR, null, e ).build();
+		}
+
+		return response;
 	}
 }

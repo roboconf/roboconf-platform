@@ -28,15 +28,16 @@ package net.roboconf.dm.rest.services.internal;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.sun.jersey.api.core.DefaultResourceConfig;
+import com.sun.jersey.api.core.ResourceConfig;
+
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.cors.ResponseCorsFilter;
-import net.roboconf.dm.rest.services.internal.resources.IApplicationCommandsResource;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.IDebugResource;
 import net.roboconf.dm.rest.services.internal.resources.IManagementResource;
 import net.roboconf.dm.rest.services.internal.resources.IPreferencesResource;
 import net.roboconf.dm.rest.services.internal.resources.ITargetResource;
-import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationCommandsResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ApplicationResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.DebugResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.ManagementResource;
@@ -45,15 +46,11 @@ import net.roboconf.dm.rest.services.internal.resources.impl.SchedulerResource;
 import net.roboconf.dm.rest.services.internal.resources.impl.TargetResource;
 import net.roboconf.dm.scheduler.IScheduler;
 
-import com.sun.jersey.api.core.DefaultResourceConfig;
-import com.sun.jersey.api.core.ResourceConfig;
-
 /**
  * @author Vincent Zurczak - Linagora
  */
 public class RestApplication extends DefaultResourceConfig {
 
-	private final IApplicationCommandsResource applicationCommandsResource;
 	private final IApplicationResource applicationResource;
 	private final IManagementResource managementResource;
 	private final IDebugResource debugResource;
@@ -74,7 +71,6 @@ public class RestApplication extends DefaultResourceConfig {
 		this.debugResource = new DebugResource( manager );
 		this.targetResource = new TargetResource( manager );
 		this.preferencesResource = new PreferencesResource( manager );
-		this.applicationCommandsResource = new ApplicationCommandsResource( manager );
 		this.schedulerResource = new SchedulerResource();
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
@@ -87,7 +83,7 @@ public class RestApplication extends DefaultResourceConfig {
 	@Override
 	public Set<Class<?>> getClasses() {
 
-		Set<Class<?>> result = new HashSet<Class<?>> ();
+		Set<Class<?>> result = new HashSet<> ();
 		result.add( net.roboconf.dm.rest.commons.json.ObjectMapperProvider.class );
 		result.add( com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider.class );
 
@@ -98,13 +94,12 @@ public class RestApplication extends DefaultResourceConfig {
 	@Override
 	public Set<Object> getSingletons() {
 
-		HashSet<Object> set = new HashSet<Object> ();
+		HashSet<Object> set = new HashSet<> ();
 		set.add( this.applicationResource );
 		set.add( this.managementResource );
 		set.add( this.debugResource );
 		set.add( this.targetResource );
 		set.add( this.preferencesResource );
-		set.add( this.applicationCommandsResource );
 		set.add( this.schedulerResource );
 
 		return set;

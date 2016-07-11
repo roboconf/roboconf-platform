@@ -281,4 +281,50 @@ public interface IApplicationResource {
 	@Path( "/components/children" )
 	@Produces( MediaType.APPLICATION_JSON )
 	List<Component> findComponentChildren( @PathParam("name") String applicationName, @QueryParam("component-name") String componentName );
+
+
+	/**
+	 * Lists all the available commands for an application.
+	 * @param app the associated application
+	 * @return a non-null list of commands
+	 *
+	 * @HTTP 200 everything went fine
+	 */
+	@GET
+	@Path( "/commands" )
+	List<String> listCommands( @PathParam("name") String app );
+
+
+	/**
+	 * Gets the instructions contained by a command.
+	 * @param app the associated application
+	 * @param commandName the command name
+	 * @return the commands content (never null)
+	 *
+	 * @HTTP 200 everything went fine
+	 * @HTTP 204 no instruction was found
+	 */
+	@GET
+	@Path( "/commands/{command-name}" )
+	Response getCommandInstructions( @PathParam("name") String app, @PathParam("command-name") String commandName );
+
+
+	/**
+	 * Executes a given command.
+	 * @param app the associated application
+	 * @param commandName the command name
+	 * @return a response indicating if the command is about to be executed.
+	 * <p>
+	 * The result does not indicate whether the command was successfully executed.
+	 * Commands may take time to be run. If the application and the command was found,
+	 * then this operation is considered as successful.
+	 * </p>
+	 *
+	 * @HTTP 200 the command was found and successfully executed
+	 * @HTTP 404 the application or the command was not found
+	 * @HTTP 409 if the command execution failed
+	 */
+	@POST
+	@Path( "/commands/execute" )
+	Response executeCommand( @PathParam("name") String app, @QueryParam("command-name") String commandName );
 }

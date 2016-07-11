@@ -25,6 +25,8 @@
 
 package net.roboconf.dm.rest.services.internal.resources.impl;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -34,8 +36,16 @@ import java.util.Timer;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
+import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
@@ -57,13 +67,6 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstance
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -937,5 +940,80 @@ public class ApplicationResourceTest {
 		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
 		Assert.assertNull( wrapper.getMap().get( "ext" ));
 		Assert.assertTrue( wrapper.getMap().containsKey( "ext" ));
+	}
+
+
+	@Test
+	public void commandsTest() throws IOException {
+
+		// Inexisting application
+		Application inexisting = new Application( "inexisting", this.app.getTemplate());
+		Assert.assertEquals( 0, this.resource.listCommands( inexisting.getName()).size());
+
+		// With a real application
+		Response resp = this.resource.getCommandInstructions(this.app.getName(), "");
+		Assert.assertEquals( Status.NO_CONTENT.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( 0, this.resource.listCommands( this.app.getName()).size());
+
+		// Add a command
+		this.manager.commandsMngr().createOrUpdateCommand( this.app, "toto", "this is a command" );
+		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
+		Assert.assertEquals( "this is a command", resp.getEntity());
+
+		List<String> commandsList = this.resource.listCommands( this.app.getName());
+		Assert.assertEquals( 1, commandsList.size());
+		Assert.assertEquals( "toto", commandsList.get( 0 ));
+
+		// Update a command
+		this.manager.commandsMngr().createOrUpdateCommand( this.app, "toto", "Good command" );
+		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
+		Assert.assertEquals( "Good command",resp.getEntity());
+
+		// Delete it
+		this.manager.commandsMngr().deleteCommand( this.app, "toto");
+		resp = this.resource.getCommandInstructions(this.app.getName(), "toto");
+		Assert.assertEquals( Status.NO_CONTENT.getStatusCode(), resp.getStatus());
+		Assert.assertEquals( null, resp.getEntity());
+		Assert.assertEquals( 0, this.resource.listCommands( this.app.getName()).size());
+	}
+
+
+	@Test
+	public void testExecuteCommand_inexistingApplication() throws Exception {
+
+		Response resp = this.resource.executeCommand( "inexisting", "cmd" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testExecuteCommand_inexistingCommand() throws Exception {
+
+		Response resp = this.resource.executeCommand( this.app.getName(), "cmd" );
+		Assert.assertEquals( Status.NOT_FOUND.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testExecuteCommand_executionError() throws Exception {
+
+		this.manager.commandsMngr().createOrUpdateCommand( this.app, "toto", "Good command");
+		Response resp = this.resource.executeCommand( this.app.getName(), "toto" );
+		Assert.assertEquals( Status.CONFLICT.getStatusCode(), resp.getStatus());
+	}
+
+
+	@Test
+	public void testExecuteCommand_success() throws Exception {
+
+		File f = this.folder.newFile();
+		Assert.assertTrue( f.delete());
+
+		this.manager.commandsMngr().createOrUpdateCommand( this.app, "toto", "Write this into " + f.getAbsolutePath());
+		Assert.assertFalse( f.exists());
+
+		Response resp = this.resource.executeCommand( this.app.getName(), "toto" );
+		Assert.assertTrue( f.exists());
+		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 	}
 }
