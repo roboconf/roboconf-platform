@@ -29,8 +29,11 @@ import java.util.AbstractMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import net.roboconf.core.Constants;
+import net.roboconf.core.model.beans.AbstractApplication;
+import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 
@@ -71,7 +74,7 @@ public final class VariableHelpers {
 			simpleName = variableName.substring( index + 1 ).trim();
 		}
 
-		return new AbstractMap.SimpleEntry<String,String>( componentOrFacetName, simpleName );
+		return new AbstractMap.SimpleEntry<>( componentOrFacetName, simpleName );
 	}
 
 
@@ -93,7 +96,7 @@ public final class VariableHelpers {
 			defaultValue = exportedVariable.substring( index + 1 ).trim();
 		}
 
-		return new AbstractMap.SimpleEntry<String,String>( varName, defaultValue );
+		return new AbstractMap.SimpleEntry<>( varName, defaultValue );
 	}
 
 
@@ -104,7 +107,7 @@ public final class VariableHelpers {
 	 */
 	public static Set<String> findPrefixesForExportedVariables( Instance instance ) {
 
-		Set<String> result = new HashSet<String> ();
+		Set<String> result = new HashSet<> ();
 		for( String exportedVariableName : InstanceHelpers.findAllExportedVariables( instance ).keySet())
 			result.add( VariableHelpers.parseVariableName( exportedVariableName ).getKey());
 
@@ -118,7 +121,7 @@ public final class VariableHelpers {
 	 * @return a non-null set with all the component and facet names this instance imports
 	 */
 	public static Set<String> findPrefixesForImportedVariables( Instance instance ) {
-		Set<String> result = new HashSet<String> ();
+		Set<String> result = new HashSet<> ();
 
 		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( instance.getComponent()).values())
 			result.add( VariableHelpers.parseVariableName( var.getName()).getKey());
@@ -137,11 +140,38 @@ public final class VariableHelpers {
 	 * @return a non-null set with all the component and facet names this instance imports
 	 */
 	public static Set<String> findPrefixesForMandatoryImportedVariables( Instance instance ) {
-		Set<String> result = new HashSet<String> ();
+		Set<String> result = new HashSet<> ();
 
 		for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( instance.getComponent()).values()) {
 			if( ! var.isOptional())
 				result.add( VariableHelpers.parseVariableName( var.getName()).getKey());
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * Finds the prefixes of the external variables for a given application or template.
+	 * <p>
+	 * If this list is not empty, it means this application depends on
+	 * other ones.
+	 * </p>
+	 *
+	 * @param app an application or an application template
+	 * @return a non-null application
+	 */
+	public static Set<String> findPrefixesForExternalImports( AbstractApplication app ) {
+
+		Set<String> result = new TreeSet<> ();
+		for( Component c : ComponentHelpers.findAllComponents( app )) {
+			for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( c ).values()) {
+				if( ! var.isExternal())
+					continue;
+
+				String prefix = VariableHelpers.parseVariableName( var.getName()).getKey();
+				result.add( prefix );
+			}
 		}
 
 		return result;
@@ -160,7 +190,7 @@ public final class VariableHelpers {
 	static void updateNetworkVariables( Map<String,String> instanceExports, String ipAddress ) {
 
 		// Find the keys to update ( xxx.ip )
-		Set<String> keysToUpdate = new HashSet<String> ();
+		Set<String> keysToUpdate = new HashSet<> ();
 		for( Map.Entry<String,String> entry : instanceExports.entrySet()) {
 			String suffix = parseVariableName( entry.getKey()).getValue();
 			if( Constants.SPECIFIC_VARIABLE_IP.equalsIgnoreCase( suffix ))

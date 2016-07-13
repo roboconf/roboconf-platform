@@ -30,13 +30,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.Assert;
+import org.junit.Test;
+
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
 import net.roboconf.core.model.beans.Facet;
 import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -184,7 +185,7 @@ public class VariableHelpersTest {
 	@Test
 	public void testUpdateNetworkVariables() {
 
-		Map<String,String> map = new HashMap<String,String> ();
+		Map<String,String> map = new HashMap<> ();
 		map.put( "comp.ip", "" );
 		map.put( "ip", "" );
 		map.put( "not-ip", "" );
@@ -194,5 +195,22 @@ public class VariableHelpersTest {
 		Assert.assertEquals( ip, map.get( "comp.ip" ));
 		Assert.assertEquals( ip, map.get( "ip" ));
 		Assert.assertEquals( "", map.get( "not-ip" ));
+	}
+
+
+	@Test
+	public void testFindPrefixesForExternalImports() {
+
+		TestApplication app = new TestApplication();
+		ImportedVariable var1 = new ImportedVariable( "something.else", true, true );
+		ImportedVariable var2 = new ImportedVariable( "other.stuff", true, true );
+
+		app.getWar().getComponent().importedVariables.put( var1.getName(),  var1 );
+		app.getWar().getComponent().importedVariables.put( var2.getName(),  var2 );
+
+		Set<String> prefixes = VariableHelpers.findPrefixesForExternalImports( app );
+		Assert.assertEquals( 2, prefixes.size());
+		Assert.assertTrue( prefixes.contains( "other" ));
+		Assert.assertTrue( prefixes.contains( "something" ));
 	}
 }

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -50,6 +51,7 @@ import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.model.helpers.VariableHelpers;
 import net.roboconf.core.model.runtime.Preference;
 import net.roboconf.core.model.runtime.ScheduledJob;
 import net.roboconf.core.model.runtime.TargetAssociation;
@@ -71,6 +73,7 @@ public final class JSonBindingUtils {
 	private static final String DESC = "desc";
 	private static final String EEP = "eep";
 	private static final String EXT_VARS = "extVars";
+	private static final String EXT_DEP = "extDep";
 	private static final String S = "s";
 	private static final String PATH = "path";
 	private static final String CRON = "cron";
@@ -530,6 +533,17 @@ public final class JSonBindingUtils {
 
 			// Read-only information.
 			// We do not expect it for deserialization
+			Set<String> prefixesForExternalImports = VariableHelpers.findPrefixesForExternalImports( app );
+			if( ! prefixesForExternalImports.isEmpty()) {
+				generator.writeArrayFieldStart( EXT_DEP );
+				for( String prefix : prefixesForExternalImports )
+					generator.writeString( prefix );
+
+				generator.writeEndArray();
+			}
+
+			// Read-only information.
+			// We do not expect it for deserialization
 			generator.writeArrayFieldStart( APP_TPL_APPS );
 			for( Application associatedApp : app.getAssociatedApplications()) {
 
@@ -712,9 +726,7 @@ public final class JSonBindingUtils {
 				generator.writeStringField( DESC, app.getDescription());
 
 			if( app.getTemplate() != null ) {
-				if( app.getTemplate().getName() != null )
-					generator.writeStringField( APP_INST_TPL_NAME, app.getTemplate().getName());
-
+				generator.writeStringField( APP_INST_TPL_NAME, app.getTemplate().getName());
 				if( app.getTemplate().getQualifier() != null )
 					generator.writeStringField( APP_INST_TPL_QUALIFIER, app.getTemplate().getQualifier());
 
@@ -733,6 +745,17 @@ public final class JSonBindingUtils {
 			String iconLocation = IconUtils.findIconUrl( app );
 			if( ! Utils.isEmptyOrWhitespaces( iconLocation ))
 				generator.writeStringField( APP_ICON, iconLocation );
+
+			// Read-only information.
+			// We do not expect it for deserialization
+			Set<String> prefixesForExternalImports = VariableHelpers.findPrefixesForExternalImports( app );
+			if( ! prefixesForExternalImports.isEmpty()) {
+				generator.writeArrayFieldStart( EXT_DEP );
+				for( String prefix : prefixesForExternalImports )
+					generator.writeString( prefix );
+
+				generator.writeEndArray();
+			}
 
 			// #357 Add a state for applications in JSon objects
 			String info = null;

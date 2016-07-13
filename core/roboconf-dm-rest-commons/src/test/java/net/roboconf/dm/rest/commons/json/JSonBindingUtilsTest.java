@@ -35,10 +35,13 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.ExportedVariable;
+import net.roboconf.core.model.beans.ImportedVariable;
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -195,6 +198,30 @@ public class JSonBindingUtilsTest {
 		mapper.writeValue( writer, tpl );
 
 		Assert.assertEquals( "{\"name\":\"my tpl\",\"apps\":[]}", writer.toString());
+	}
+
+
+	@Test
+	public void testApplicationTemplateBinding_8() throws Exception {
+
+		TestApplicationTemplate tpl = new TestApplicationTemplate();
+		ImportedVariable var1 = new ImportedVariable( "something.else", true, true );
+		ImportedVariable var2 = new ImportedVariable( "other.stuff", true, true );
+
+		tpl.getWar().getComponent().importedVariables.put( var1.getName(),  var1 );
+		tpl.getWar().getComponent().importedVariables.put( var2.getName(),  var2 );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, tpl );
+		String s = writer.toString();
+
+		Assert.assertEquals(
+				"{\"name\":\"" + tpl.getName()
+						+ "\",\"qualifier\":\""
+						+ tpl.getQualifier()
+						+ "\",\"extDep\":[\"other\",\"something\"],\"apps\":[]}",
+				s );
 	}
 
 
@@ -372,6 +399,32 @@ public class JSonBindingUtilsTest {
 		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 		Assert.assertEquals( app.getTemplate(), readApp.getTemplate());
 		Assert.assertEquals( app.getTemplate().getExternalExportsPrefix(), readApp.getTemplate().getExternalExportsPrefix());
+	}
+
+
+	@Test
+	public void testApplicationBinding_10() throws Exception {
+
+		TestApplication app = new TestApplication();
+		ImportedVariable var1 = new ImportedVariable( "something.else", true, true );
+		ImportedVariable var2 = new ImportedVariable( "other.stuff", true, true );
+
+		app.getWar().getComponent().importedVariables.put( var1.getName(),  var1 );
+		app.getWar().getComponent().importedVariables.put( var2.getName(),  var2 );
+
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals(
+				"{\"name\":\"" + app.getName()
+						+ "\",\"tplName\":\""
+						+ app.getTemplate().getName()
+						+ "\",\"tplQualifier\":\""
+						+ app.getTemplate().getQualifier()
+						+ "\",\"extDep\":[\"other\",\"something\"]}",
+				s );
 	}
 
 
