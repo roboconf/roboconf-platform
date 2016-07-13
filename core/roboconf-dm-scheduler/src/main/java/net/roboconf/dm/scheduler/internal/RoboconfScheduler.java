@@ -29,6 +29,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -79,6 +80,7 @@ public class RoboconfScheduler implements IScheduler {
 	 * </p>
 	 */
 	public void start() throws Exception {
+		this.logger.info( "Roboconf's scheduler is starting..." );
 
 		// Verify the "scheduler" directory exists
 		File schedulerDirectory = getSchedulerDirectory();
@@ -115,6 +117,7 @@ public class RoboconfScheduler implements IScheduler {
 	 * </p>
 	 */
 	public void stop() throws Exception {
+		this.logger.info( "Roboconf's scheduler is stopping..." );
 
 		// Remove the DM listener
 		if( this.manager != null ) {
@@ -141,6 +144,7 @@ public class RoboconfScheduler implements IScheduler {
 	@Override
 	public void loadJobs() {
 
+		this.logger.fine( "Roboconf's scheduler is loading jobs..." );
 		for( File f : Utils.listAllFiles( getSchedulerDirectory(), Constants.FILE_EXT_PROPERTIES )) {
 			try {
 				Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
@@ -154,7 +158,8 @@ public class RoboconfScheduler implements IScheduler {
 				else
 					this.logger.warning( "Skipped schedule for a job. There are invalid or missing job properties in " + f.getName());
 
-			} catch( IOException e ) {
+			} catch( Exception e ) {
+				// Catch ALL the exceptions. #start() cannot fail.
 				this.logger.warning( "Failed to load a scheduled job from " + f.getName());
 				Utils.logException( this.logger, e );
 			}
@@ -165,6 +170,7 @@ public class RoboconfScheduler implements IScheduler {
 	@Override
 	public List<ScheduledJob> listJobs() {
 
+		this.logger.fine( "Roboconf's scheduler is listing jobs..." );
 		List<ScheduledJob> result = new ArrayList<> ();
 		for( File f : Utils.listAllFiles( getSchedulerDirectory(), Constants.FILE_EXT_PROPERTIES )) {
 
@@ -178,6 +184,7 @@ public class RoboconfScheduler implements IScheduler {
 			result.add( job );
 		}
 
+		Collections.sort( result );
 		return result;
 	}
 
@@ -206,6 +213,7 @@ public class RoboconfScheduler implements IScheduler {
 		// Validate...
 		String result = null;
 		if( validProperties( props )) {
+			this.logger.fine( "Roboconf's scheduler is about to save a job as " + jobName );
 
 			// Verify the parameters
 			Application app = this.manager.applicationMngr().findApplicationByName( appName );
@@ -218,14 +226,22 @@ public class RoboconfScheduler implements IScheduler {
 			// Unschedule the job, if any
 			unscheduleJob( jobId );
 
-			// Save the job's information
-			Utils.createDirectory( getSchedulerDirectory());
-			Utils.writePropertiesFile( props, getJobFile( jobId ));
+			try {
+				// Inject the ID in the properties and schedule the job
+				props.setProperty( JOB_ID, jobId );
+				scheduleJob( props );
+				result = jobId;
 
-			// Inject the ID in the properties and schedule the job
-			props.setProperty( JOB_ID, jobId );
-			scheduleJob( props );
-			result = jobId;
+				// Save the job's information
+				props.remove( JOB_ID );
+				Utils.createDirectory( getSchedulerDirectory());
+				Utils.writePropertiesFile( props, getJobFile( jobId ));
+
+				this.logger.fine( "Roboconf's scheduler has just saved a job as " + jobName );
+
+			} catch( Exception e ) {
+				throw new IOException( e );
+			}
 		}
 
 		return result;
@@ -235,16 +251,13 @@ public class RoboconfScheduler implements IScheduler {
 	@Override
 	public void deleteJob( String jobId ) throws IOException {
 
+		this.logger.fine( "Roboconf's scheduler is about to delete a job with ID " + jobId );
 		try {
 			unscheduleJob( jobId );
 
 		} catch( IOException e ) {
 			this.logger.warning( "Failed to remove a scheduled job. Job's id: " + jobId );
 			throw e;
-
-		} finally {
-			File f = getJobFile( jobId );
-			Utils.deleteFilesRecursively( f );
 		}
 	}
 
@@ -252,16 +265,14 @@ public class RoboconfScheduler implements IScheduler {
 	@Override
 	public ScheduledJob findJobProperties( String jobId ) {
 
+		this.logger.fine( "Roboconf's scheduler is about to find the properties of the job whose ID is " + jobId );
 		ScheduledJob result = null;
 		File f = getJobFile( jobId );
-		try {
+		if( f.isFile()) {
 			// Inject the ID in the properties
-			Properties props = Utils.readPropertiesFile( f );
+			Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
 			props.put( JOB_ID, jobId );
 			result = from( props );
-
-		} catch( IOException e ) {
-			// nothing
 		}
 
 		return result;
@@ -305,7 +316,7 @@ public class RoboconfScheduler implements IScheduler {
 	 * @throws IOException
 	 * @see {@link #validProperties(Properties)}
 	 */
-	private boolean scheduleJob( Properties props ) throws IOException {
+	private void scheduleJob( Properties props ) throws Exception {
 
 		// 1 file = 1 job = 1 trigger.
 		String jobId = props.getProperty( JOB_ID, "" );
@@ -329,22 +340,14 @@ public class RoboconfScheduler implements IScheduler {
 				.withSchedule( CronScheduleBuilder.cronSchedule( cron ))
 				.build();
 
-		try {
-			this.scheduler.scheduleJob( job, trigger );
-
-		} catch( Exception e ) {
-			// Catch all the exceptions (including the runtime ones)
-			throw new IOException( e );
-		}
-
-		return true;
+		this.scheduler.scheduleJob( job, trigger );
 	}
 
 
 	private void unscheduleJob( String jobId ) throws IOException {
 
+		File f = getJobFile( jobId );
 		try {
-			File f = getJobFile( jobId );
 			if( f.exists()) {
 				Properties props = Utils.readPropertiesFileQuietly( f, this.logger );
 				String appName = props.getProperty( APP_NAME, "" );
@@ -355,6 +358,9 @@ public class RoboconfScheduler implements IScheduler {
 		} catch( SchedulerException e ) {
 			// Catch all the exceptions (including the runtime ones)
 			throw new IOException( e );
+
+		} finally {
+			Utils.deleteFilesRecursively( f );
 		}
 	}
 

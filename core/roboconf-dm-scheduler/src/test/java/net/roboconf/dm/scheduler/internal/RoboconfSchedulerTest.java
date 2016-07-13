@@ -181,6 +181,38 @@ public class RoboconfSchedulerTest {
 
 
 	@Test
+	public void testSaveAndLoadJobs_invalidCron() throws Exception {
+
+		// Start the scheduler and halts triggers
+		this.scheduler.start();
+		this.scheduler.scheduler.standby();
+		File schedulerDirectory = this.scheduler.getSchedulerDirectory();
+
+		Assert.assertEquals( 0, this.scheduler.listJobs().size());
+		Set<JobKey> jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// Create an invalid job
+		try {
+			this.scheduler.saveJob( null, "job", "cmd", "0 0 0 ? invalid *", "app" );
+			Assert.fail( "An I/O exception was expected." );
+
+		} catch( IOException e ) {
+			// nothing
+		}
+
+		// There should not be any job: in the scheduler...
+		jobKeys = this.scheduler.scheduler.getJobKeys( GroupMatcher.anyJobGroup());
+		Assert.assertEquals( 0, jobKeys.size());
+		Assert.assertEquals( 0, Utils.listAllFiles( schedulerDirectory ).size());
+
+		// ... and listed by Roboconf
+		Assert.assertEquals( 0, this.scheduler.listJobs().size());
+	}
+
+
+	@Test
 	public void testDeleteJob_inexisting() throws Exception {
 
 		// Start the scheduler and halts triggers
@@ -547,5 +579,13 @@ public class RoboconfSchedulerTest {
 		List<ScheduledJob> jobs = this.scheduler.listJobs();
 		Assert.assertEquals( 1, jobs.size());
 		Assert.assertEquals( "job1", jobs.get( 0 ).getJobName());
+	}
+
+
+	@Test
+	public void testFindJobProperties_inexitingJob() throws Exception {
+
+		ScheduledJob job = this.scheduler.findJobProperties( "inexisting" );
+		Assert.assertNull( job );
 	}
 }

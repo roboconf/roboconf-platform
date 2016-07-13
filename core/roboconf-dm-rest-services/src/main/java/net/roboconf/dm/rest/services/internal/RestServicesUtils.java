@@ -64,7 +64,8 @@ public final class RestServicesUtils {
 			sb.append( e.getMessage());
 
 		logger.severe( sb.toString());
-		Utils.logException( logger, e );
+		if( e != null )
+			Utils.logException( logger, e );
 
 		// Errors should return a JSon object.
 		// Otherwise, Restangular cannot parse error messages.

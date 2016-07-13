@@ -28,7 +28,7 @@ package net.roboconf.core.model.runtime;
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ScheduledJob {
+public class ScheduledJob implements Comparable<ScheduledJob> {
 
 	private String jobId, jobName, appName, cmdName, cron;
 
@@ -117,5 +117,27 @@ public class ScheduledJob {
 	 */
 	public void setCron( String cron ) {
 		this.cron = cron;
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Comparable
+	 * #compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo( ScheduledJob job ) {
+
+		int result;
+		if( this.jobName == null && job.jobName == null )
+			result = 0;
+		else if( this.jobName == null )
+			result = -1;
+		else if( job.jobName == null )
+			result = 1;
+		else
+			result = this.jobName.compareTo( job.jobName );
+
+		return result;
 	}
 }

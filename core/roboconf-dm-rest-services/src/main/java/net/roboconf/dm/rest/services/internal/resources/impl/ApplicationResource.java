@@ -325,8 +325,8 @@ public class ApplicationResource implements IApplicationResource {
 		} else {
 			// Find all the external prefixes to resolve
 			Map<String,String> map = new HashMap<> ();
-			for( Instance inst : InstanceHelpers.getAllInstances( ma.getApplication())) {
-				for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( inst.getComponent()).values()) {
+			for( Component c : ComponentHelpers.findAllComponents( ma.getApplication())) {
+				for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( c ).values()) {
 					if( ! var.isExternal())
 						continue;
 

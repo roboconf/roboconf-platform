@@ -51,7 +51,7 @@ import net.roboconf.integration.tests.internal.ItUtils;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 /**
- * This test verifies that a client can interact with the DM's REST services.
+ * This test verifies that job scheduling (and its REST API) work.
  * @author Vincent Zurczak - Linagora
  */
 public class SchedulerTest extends DmWithAgentInMemoryTest {

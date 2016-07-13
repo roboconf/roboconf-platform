@@ -115,7 +115,7 @@ public final class ComponentHelpers {
 	 */
 	public static List<String> extractNames( Collection<? extends AbstractType> types ) {
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		for( AbstractType t : types )
 			result.add( t.getName());
 
@@ -234,10 +234,10 @@ public final class ComponentHelpers {
 	 */
 	public static Map<String,String> findAllExportedVariables( Facet facet ) {
 
-		Map<Facet,Boolean> facetToResolved = new HashMap<Facet,Boolean> ();
+		Map<Facet,Boolean> facetToResolved = new HashMap<> ();
 		Map<Facet,Map<String,String>> facetToResolvedExports = new HashMap<> ();
 
-		Collection<Facet> facets = new HashSet<Facet>( findAllExtendedFacets( facet ));
+		Collection<Facet> facets = new HashSet<>( findAllExtendedFacets( facet ));
 		facets.add( facet );
 		for( Facet f : facets ) {
 			facetToResolvedExports.put( f, new HashMap<String,String> ());
@@ -259,7 +259,7 @@ public final class ComponentHelpers {
 				}
 
 				// Get the resolved variables from all the extended facets.
-				Map<String,String> localExportedVariables = new HashMap<String,String> ();
+				Map<String,String> localExportedVariables = new HashMap<> ();
 				for( Facet ff : f.getExtendedFacets()) {
 					if( ! facetToResolved.get( ff ))
 						continue entries;
@@ -317,8 +317,8 @@ public final class ComponentHelpers {
 	 */
 	public static Collection<Facet> findAllFacets( Component component ) {
 
-		Set<Facet> result = new HashSet<Facet> ();
-		List<Facet> toProcess = new ArrayList<Facet> ();
+		Set<Facet> result = new HashSet<> ();
+		List<Facet> toProcess = new ArrayList<> ();
 		for( Component c : findAllExtendedComponents( component ))
 			toProcess.addAll( c.getFacets());
 
@@ -349,7 +349,7 @@ public final class ComponentHelpers {
 	 */
 	public static List<Component> findAllExtendedComponents( Component component ) {
 
-		List<Component> result = new ArrayList<Component> ();
+		List<Component> result = new ArrayList<> ();
 		for( Component c = component; c != null; c = c.getExtendedComponent()) {
 			if( result.contains( c ))
 				break;
@@ -372,8 +372,8 @@ public final class ComponentHelpers {
 	 */
 	public static Collection<Facet> findAllExtendedFacets( Facet facet ) {
 
-		Set<Facet> result = new HashSet<Facet> ();
-		Set<Facet> toProcess = new HashSet<Facet>( facet.getExtendedFacets());
+		Set<Facet> result = new HashSet<> ();
+		Set<Facet> toProcess = new HashSet<>( facet.getExtendedFacets());
 		while( ! toProcess.isEmpty()) {
 
 			Facet f = toProcess.iterator().next();
@@ -397,8 +397,8 @@ public final class ComponentHelpers {
 	 */
 	public static Collection<Facet> findAllExtendingFacets( Facet facet ) {
 
-		Set<Facet> result = new HashSet<Facet> ();
-		Set<Facet> toProcess = new HashSet<Facet>( facet.getExtendingFacets());
+		Set<Facet> result = new HashSet<> ();
+		Set<Facet> toProcess = new HashSet<>( facet.getExtendingFacets());
 		while( ! toProcess.isEmpty()) {
 
 			Facet f = toProcess.iterator().next();
@@ -422,8 +422,8 @@ public final class ComponentHelpers {
 	 */
 	public static Collection<Component> findAllExtendingComponents( Component component ) {
 
-		Collection<Component> result = new HashSet<Component> ();
-		Set<Component> toProcess = new HashSet<Component>( component.getExtendingComponents());
+		Collection<Component> result = new HashSet<> ();
+		Set<Component> toProcess = new HashSet<>( component.getExtendingComponents());
 		while( ! toProcess.isEmpty()) {
 
 			Component c = toProcess.iterator().next();
@@ -450,8 +450,8 @@ public final class ComponentHelpers {
 	 */
 	public static List<Component> findAllComponents( Graphs graphs ) {
 
-		Set<Component> result = new HashSet<Component> ();
-		Set<Component> toProcess = new HashSet<Component> ();
+		Set<Component> result = new HashSet<> ();
+		Set<Component> toProcess = new HashSet<> ();
 
 		toProcess.addAll( graphs.getRootComponents());
 		while( ! toProcess.isEmpty()) {
@@ -467,22 +467,22 @@ public final class ComponentHelpers {
 			toProcess.removeAll( result );
 		}
 
-		return new ArrayList<Component>( result );
+		return new ArrayList<>( result );
 	}
 
 
 	/**
-	 * Finds all the components of an application template.
+	 * Finds all the components of an application or a template.
 	 * <p>
 	 * Inheritance cycles are ignored.
 	 * </p>
 	 *
-	 * @param app an application template (not null)
+	 * @param app an application or a template (not null)
 	 * @return a non-null list of components
 	 */
-	public static List<Component> findAllComponents( ApplicationTemplate app ) {
+	public static List<Component> findAllComponents( AbstractApplication app ) {
 
-		List<Component> result = new ArrayList<Component> ();
+		List<Component> result = new ArrayList<> ();
 		if( app.getGraphs() != null )
 			result.addAll( findAllComponents( app.getGraphs()));
 
@@ -501,7 +501,7 @@ public final class ComponentHelpers {
 	 */
 	public static List<Component> findAllComponents( Application app ) {
 
-		List<Component> result = new ArrayList<Component> ();
+		List<Component> result = new ArrayList<> ();
 		if( app.getTemplate() != null )
 			result.addAll( findAllComponents( app.getTemplate()));
 
@@ -549,7 +549,7 @@ public final class ComponentHelpers {
 			ancestors.add( component );
 			for( Component childComponent : findAllChildren( component )) {
 
-				List<Component> updatedAncestors = new ArrayList<Component>( ancestors );
+				List<Component> updatedAncestors = new ArrayList<>( ancestors );
 				String s = searchForLoop( childComponent, updatedAncestors );
 
 				if( s != null ) {
@@ -602,7 +602,7 @@ public final class ComponentHelpers {
 	 */
 	public static Map<String,Boolean> findComponentDependenciesFor( Component component ) {
 
-		Map<String,Boolean> map = new HashMap<String,Boolean> ();
+		Map<String,Boolean> map = new HashMap<> ();
 		for( ImportedVariable var : findAllImportedVariables( component ).values()) {
 			String componentOrFacet = VariableHelpers.parseVariableName( var.getName()).getKey();
 			Boolean b = map.get( componentOrFacet );
@@ -626,7 +626,7 @@ public final class ComponentHelpers {
 		Map<String,Boolean> map = findComponentDependenciesFor( component );
 
 		// Resolve names to components
-		Map<Component,Boolean> result = new HashMap<Component,Boolean> ();
+		Map<Component,Boolean> result = new HashMap<> ();
 		for( Component c : findAllComponents( app )) {
 
 			// Check component names first.
@@ -660,13 +660,13 @@ public final class ComponentHelpers {
 	public static Map<Component,Boolean> findComponentsThatDependOn( Component component, ApplicationTemplate app ) {
 
 		// Determine the matching prefixes.
-		Set<String> prefixes = new HashSet<String> ();
+		Set<String> prefixes = new HashSet<> ();
 		prefixes.add( component.getName());
 		for( Facet f : findAllFacets( component ))
 			prefixes.add( f.getName());
 
 		// Resolve names to components
-		Map<Component,Boolean> result = new HashMap<Component,Boolean> ();
+		Map<Component,Boolean> result = new HashMap<> ();
 		for( Component c : findAllComponents( app )) {
 
 			Map<String,Boolean> map = findComponentDependenciesFor( c );
@@ -724,12 +724,12 @@ public final class ComponentHelpers {
 	private static Collection<Component> findAncestorsOrChildren( final Component component, final boolean children ) {
 
 		// The algorithm of death...
-		Set<Component> result = new TreeSet<Component>( new AbstractTypeComparator());
+		Set<Component> result = new TreeSet<>( new AbstractTypeComparator());
 		for( Component c : findAllExtendedComponents( component )) {
 
 			// A component may have zero child or ancestor.
 			// But its facets may define ones.
-			Collection<AbstractType> list = new HashSet<AbstractType> ();
+			Collection<AbstractType> list = new HashSet<> ();
 			list.addAll( children ? c.getChildren() : c.getAncestors());
 			for( Facet facet : findAllFacets( c ))
 				list.addAll( children ? facet.getChildren() : facet.getAncestors());
@@ -788,7 +788,7 @@ public final class ComponentHelpers {
 	 * @return a non-null map of exported variables (key = variable name, value = variable value).
 	 */
 	private static Map<String,String> findAllExportedVariables( Component component, Set<Component> alreadyChecked ) {
-		Map<String,String> result = new HashMap<String,String> ();
+		Map<String,String> result = new HashMap<> ();
 
 		// Get all the inherited variables from facets
 		for( Facet f : component.getFacets())

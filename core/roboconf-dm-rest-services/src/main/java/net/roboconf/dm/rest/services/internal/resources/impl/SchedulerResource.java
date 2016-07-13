@@ -57,7 +57,7 @@ public class SchedulerResource implements ISchedulerResource {
 
 		this.logger.fine( "Request: save a new scheduled job as " + jobName + "." );
 		Response result;
-		String msg = "Job " + jobName + " could not be saved.";
+		String msg = jobName + " could not be saved.";
 		try {
 			jobId = this.scheduler.saveJob( jobId, jobName, cmdName, cron, appName );
 			result = Response.ok( new StringWrapper( jobId )).build();
@@ -70,7 +70,7 @@ public class SchedulerResource implements ISchedulerResource {
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, msg + MSG ).build();
+			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, msg + MSG, e ).build();
 		}
 
 		return result;
@@ -82,7 +82,7 @@ public class SchedulerResource implements ISchedulerResource {
 
 		this.logger.fine( "Request: delete the scheduled job " + jobName + "." );
 		Response result = Response.ok().build();
-		String msg = "Job " + jobName + " could not be deleted.";
+		String msg = jobName + " could not be deleted.";
 		try {
 			this.scheduler.deleteJob( jobName );
 
@@ -91,7 +91,7 @@ public class SchedulerResource implements ISchedulerResource {
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, msg + MSG ).build();
+			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, msg + MSG, e ).build();
 		}
 
 		return result;
@@ -112,7 +112,7 @@ public class SchedulerResource implements ISchedulerResource {
 
 		} catch( NullPointerException e ) {
 			// Catch NPEs because it is more simple to deal with multi-threading issues.
-			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, MSG.trim()).build();
+			result = RestServicesUtils.handleException( this.logger, Status.FORBIDDEN, MSG.trim(), e ).build();
 		}
 
 		return result;
