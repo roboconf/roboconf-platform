@@ -144,6 +144,7 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 		Assert.assertEquals( "append something", cmdNames.get( 0 ));
 
 		// Create a scheduled job (every second)
+		Assert.assertFalse( this.tmpFile.exists());
 		Assert.assertEquals( 0, client.getSchedulerDelegate().listAllJobs( null, null ).size());
 		client.getSchedulerDelegate().createOrUpdateJob( null, "job1", receivedApp.getName(), cmdNames.get( 0 ), "* * * * * ?" );
 
@@ -163,7 +164,6 @@ public class SchedulerTest extends DmWithAgentInMemoryTest {
 
 		// Usually, crons do not allow seconds precision...
 		// But Quartz does.
-		Assert.assertFalse( this.tmpFile.exists());
 		Thread.sleep( 2000 );
 		Assert.assertTrue( this.tmpFile.exists());
 
