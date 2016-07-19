@@ -1,0 +1,20 @@
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Maven related elements or those that can be generated from the POM
+.project
+.classpath
+/.externalToolBuilders
+/target
+/bin
+/maven-eclipse.xml
+/.settings
+/roboconf-dm-it
+
+#idea
+*.iml
+.idea/

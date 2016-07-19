@@ -12,7 +12,7 @@ VER=`java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q'`
 # Others => Compile and run unit tests, but skip integration tests.
 
 if [[ $VER == "17" ]] && [[ $WHOLE_VER == *OpenJDK* ]]; then
-	mvn clean cobertura:cobertura install coveralls:report -q
+	mvn clean cobertura:cobertura install coveralls:report -P run-integration-tests -q
 else
-	mvn clean install -q -P skip-it
+	mvn clean install -q
 fi

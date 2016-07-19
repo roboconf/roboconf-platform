@@ -19,7 +19,7 @@ VER=`java -version 2>&1 | sed 's/java version "\(.*\)\.\(.*\)\..*"/\1\2/; 1q'`
 
 if [[ $VER == "17" ]] && [[ $WHOLE_VER == *OpenJDK* ]]; then
 	wget http://roboconf.net/resources/build/settings.xml
-	mvn clean deploy -DskipTests=true -q --settings settings.xml -P jdoc-and-sources
+	mvn clean deploy -DskipTests -q --settings settings.xml -P jdoc-and-sources
 elif [[ $VER == "18" ]]; then
 	mvn javadoc:javadoc -q -Droboconf.javadoc.check -DskipTests=true
 else
