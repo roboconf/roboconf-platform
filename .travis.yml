@@ -1,23 +1,49 @@
 language: java
 sudo: false
 
+
 # Skip the default Maven command launched by Travis.
 # By default, it is "mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V"
 install: true
+
 
 # ENV variables
 env:
   - ROBOCONF_IT_TIMEOUT=60000
 
-# Test several JDK
-jdk:
-  - oraclejdk7
-  - openjdk7
-  - oraclejdk8
 
-# Make sure there is a RabbitMq server
+# Our build matrix implies several JDK.
+#
+# Oracle JDK 7 => basic build.
+# Oracle JDK 8 => basic build with specific settings to validate the Javadoc.
+# Open JDK 7 => one build for Coveralls and snapshots deployment.
+# Open JDK 7 => another build to run integration tests (but not unit tests).
+#
+# Reminders
+# =========
+# -q: quiet
+# --settings: pass a settings XML file in parameter (required for deployment).
+# -DskipTests: compile unit tests but do not run them.
+# -P: execute a specific profile.
+# -rf: resume the build from a particular module.
+# -D: set a Maven property.
+#
+matrix:
+  include:
+    - jdk: oraclejdk7
+      env: BUILD_CMD="mvn clean install -q"
+    - jdk: oraclejdk8
+      env: BUILD_CMD="mvn clean install -q -Droboconf.javadoc.check"
+    - jdk: openjdk7
+      env: BUILD_CMD="wget http://roboconf.net/resources/build/settings.xml && mvn clean deploy cobertura:cobertura coveralls:report -q --settings settings.xml"
+    - jdk: openjdk7
+      env: BUILD_CMD="mvn clean install -q -DskipTests && mvn install -q -P run-integration-tests -rf :roboconf-integration-tests-commons"
+
+
+# Make sure there is a RabbitMq server.
 services:
   - rabbitmq
+
 
 # We need wget for Sonatype deployment.
 addons:
@@ -25,18 +51,10 @@ addons:
     packages:
     - wget
 
-# Configure RabbitMQ with new users.
-#before_script:
-#  - rabbitmqctl add_user roboconf roboconf
-#  - rabbitmqctl set_permissions roboconf ".*" ".*" ".*"
 
 # For debug only
 #  - puppet --version
 
-# Build with Maven.
-script:
-  - ./travis-build.sh
 
-# Actions to perform after the build.
-after_success:
-  - ./travis-after-success.sh
+# Build with Maven.
+script: $BUILD_CMD
