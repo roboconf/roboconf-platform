@@ -36,6 +36,21 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.ws.rs.core.UriBuilder;
 
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+import org.osgi.service.http.HttpContext;
+import org.osgi.service.http.HttpService;
+import org.osgi.service.http.NamespaceException;
+
+import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
+
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.dm.internal.test.TestManagerWrapper;
@@ -44,20 +59,6 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.commons.UrlConstants;
 import net.roboconf.dm.rest.commons.json.JSonBindingUtils;
 import net.roboconf.messaging.api.MessagingConstants;
-
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.osgi.service.http.HttpContext;
-import org.osgi.service.http.HttpService;
-import org.osgi.service.http.NamespaceException;
-
-import com.sun.jersey.api.container.grizzly2.GrizzlyServerFactory;
-import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -194,11 +195,43 @@ public class ServletRegistrationComponentTest {
 	}
 
 
+	@Test
+	public void testSetEnableCors() throws Exception {
+
+		// No NPE
+		ServletRegistrationComponent register = new ServletRegistrationComponent();
+		register.setEnableCors( true );
+		register.setEnableCors( false );
+
+		// Act like if the component had been started
+		register.app = Mockito.spy( new RestApplication( this.manager ));
+		register.jerseyServlet = Mockito.mock( ServletContainer.class );
+
+		register.setEnableCors( true );
+		Mockito.verify( register.app, Mockito.times( 1 )).enableCors( true );
+		Mockito.verify( register.jerseyServlet, Mockito.only()).reload();
+
+		Mockito.reset( register.app );
+		Mockito.reset( register.jerseyServlet );
+
+		register.setEnableCors( false );
+		Mockito.verify( register.app, Mockito.times( 1 )).enableCors( false );
+		Mockito.verify( register.jerseyServlet, Mockito.only()).reload();
+
+		// Stop...
+		register.stopping();
+
+		// No NPE
+		register.setEnableCors( true );
+		register.setEnableCors( false );
+	}
+
+
 	/**
 	 * @author Vincent Zurczak - Linagora
 	 */
 	private static class HttpServiceForTest implements HttpService {
-		Map<String,Servlet> pathToServlet = new HashMap<String,Servlet> ();
+		Map<String,Servlet> pathToServlet = new HashMap<> ();
 
 		@Override
 		@SuppressWarnings( "rawtypes" )

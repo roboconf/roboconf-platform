@@ -75,8 +75,6 @@ public class RestApplication extends DefaultResourceConfig {
 
 		getFeatures().put( "com.sun.jersey.api.json.POJOMappingFeature", Boolean.TRUE );
 		getFeatures().put( ResourceConfig.FEATURE_DISABLE_WADL, Boolean.TRUE );
-
-		getProperties().put( ResourceConfig.PROPERTY_CONTAINER_RESPONSE_FILTERS, ResponseCorsFilter.class.getName());
 	}
 
 
@@ -112,5 +110,18 @@ public class RestApplication extends DefaultResourceConfig {
 	 */
 	public void setScheduler( IScheduler scheduler ) {
 		this.schedulerResource.setScheduler( scheduler );
+	}
+
+
+	/**
+	 * Enables or disables CORS.
+	 * @param enableCors true to enable it
+	 */
+	public void enableCors( boolean enableCors ) {
+
+		if( enableCors )
+			getProperties().put( ResourceConfig.PROPERTY_CONTAINER_RESPONSE_FILTERS, ResponseCorsFilter.class.getName());
+		else
+			getProperties().remove( ResourceConfig.PROPERTY_CONTAINER_RESPONSE_FILTERS );
 	}
 }

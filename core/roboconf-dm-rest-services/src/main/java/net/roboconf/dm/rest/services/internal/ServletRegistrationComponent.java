@@ -29,14 +29,14 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.logging.Logger;
 
+import org.osgi.service.http.HttpService;
+
+import com.sun.jersey.spi.container.servlet.ServletContainer;
+
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.icons.IconServlet;
 import net.roboconf.dm.rest.services.internal.websocket.RoboconfWebSocketServlet;
 import net.roboconf.dm.scheduler.IScheduler;
-
-import org.osgi.service.http.HttpService;
-
-import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 /**
  * An iPojo component in charge of injecting the Manager into the REST services.
@@ -58,10 +58,12 @@ public class ServletRegistrationComponent {
 	private HttpService httpService;
 	private Manager manager;
 	private IScheduler scheduler;
+	private boolean enableCors = false;
 
 	// Internal fields
 	private final Logger logger = Logger.getLogger( getClass().getName());
-	private RestApplication app;
+	RestApplication app;
+	ServletContainer jerseyServlet;
 
 
 	/**
@@ -80,22 +82,23 @@ public class ServletRegistrationComponent {
 		// The scheduler may be null, it is optional.
 		this.app = new RestApplication( this.manager );
 		this.app.setScheduler( this.scheduler );
+		this.app.enableCors( this.enableCors );
 
-		Dictionary<String,String> initParams = new Hashtable<String,String> ();
+		Dictionary<String,String> initParams = new Hashtable<> ();
 		initParams.put( "servlet-name", "Roboconf DM (REST)" );
 
-		ServletContainer jerseyServlet = new ServletContainer( this.app );
-		this.httpService.registerServlet( REST_CONTEXT, jerseyServlet, initParams, null );
+		this.jerseyServlet = new ServletContainer( this.app );
+		this.httpService.registerServlet( REST_CONTEXT, this.jerseyServlet, initParams, null );
 
 		// Deal with the icons servlet
-		initParams = new Hashtable<String,String> ();
+		initParams = new Hashtable<> ();
 		initParams.put( "servlet-name", "Roboconf DM (icons)" );
 
 		IconServlet iconServlet = new IconServlet( this.manager );
 		this.httpService.registerServlet( ICONS_CONTEXT, iconServlet, initParams, null );
 
 		// Register the web socket
-		initParams = new Hashtable<String,String> ();
+		initParams = new Hashtable<> ();
 		initParams.put( "servlet-name", "Roboconf DM (websocket)" );
 
 		RoboconfWebSocketServlet websocketServlet = new RoboconfWebSocketServlet();
@@ -122,6 +125,7 @@ public class ServletRegistrationComponent {
 
 		// Reset the application
 		this.app = null;
+		this.jerseyServlet = null;
 	}
 
 
@@ -164,5 +168,22 @@ public class ServletRegistrationComponent {
 	 */
 	public void setManager( Manager manager ) {
 		this.manager = manager;
+	}
+
+
+	/**
+	 * Invoked by iPojo.
+	 * @param enableCors the enableCors to set
+	 */
+	public void setEnableCors( boolean enableCors ) {
+
+		this.logger.fine( "CORS is now " + (enableCors ? "enabled" : "disabled") + ". Updating the REST resource." );
+		this.enableCors = enableCors;
+
+		if( this.app != null )
+			this.app.enableCors( enableCors );
+
+		if( this.jerseyServlet != null )
+			this.jerseyServlet.reload();
 	}
 }
