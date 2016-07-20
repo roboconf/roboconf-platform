@@ -28,9 +28,14 @@ package net.roboconf.agent.internal.misc;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -163,5 +168,59 @@ public final class AgentUtils {
 		}
 
 		return logFiles;
+	}
+
+
+	/**
+	 * Finds the IP address of the current machine.
+	 * @param networkInterface the network interface to use
+	 * <p>
+	 * If this network interface does not exist, the default one is picked up,
+	 * as returned by <code>InetAddress.getLocalHost().getHostAddress()</code>.
+	 * </p>
+	 *
+	 * @return a non-null IP address (127.0.0.1 in case of error)
+	 */
+	public static String findIpAddress( String networkInterface ) {
+
+		String ipAddress = null;
+		Logger logger = Logger.getLogger( AgentUtils.class.getName());
+		try {
+			// Try the network interface
+			NetworkInterface nif;
+			if( networkInterface != null
+					&& (nif = NetworkInterface.getByName( networkInterface )) != null ) {
+
+				Enumeration<InetAddress> addrs = nif.getInetAddresses();
+				while( addrs.hasMoreElements()
+						&& (ipAddress == null || ipAddress.startsWith( "127.0" ))) {
+
+					Object obj = addrs.nextElement();
+					if( !( obj instanceof Inet4Address ))
+						continue;
+
+					ipAddress =  obj.toString();
+					if( ipAddress.startsWith( "/" ))
+						ipAddress = ipAddress.substring( 1 );
+				}
+
+			} else {
+				logger.severe( "Network interface " + networkInterface + " does not exists. The host's default IP will be picked up." );
+			}
+
+			// Otherwise, use the default address
+			if( ipAddress == null ) {
+				logger.fine( "Picking up the host's default IP address." );
+				ipAddress = InetAddress.getLocalHost().getHostAddress();
+			}
+
+		} catch( Exception e ) {
+			ipAddress = "127.0.0.1";
+			logger.warning( "The IP address could not be found. " + e.getMessage());
+			Utils.logException( logger, e );
+		}
+
+		logger.info( "The agent's address was resolved to " + ipAddress );
+		return ipAddress;
 	}
 }
