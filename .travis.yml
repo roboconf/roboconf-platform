@@ -7,9 +7,10 @@ sudo: false
 install: true
 
 
-# ENV variables
+# Global ENV variables (shared by all the items in the build matrix).
 env:
-  - ROBOCONF_IT_TIMEOUT=60000
+  global:
+    - ROBOCONF_IT_TIMEOUT=60000
 
 
 # Our build matrix implies several JDK.
@@ -57,4 +58,4 @@ addons:
 
 
 # Build with Maven.
-script: $BUILD_CMD
+script: eval $BUILD_CMD
