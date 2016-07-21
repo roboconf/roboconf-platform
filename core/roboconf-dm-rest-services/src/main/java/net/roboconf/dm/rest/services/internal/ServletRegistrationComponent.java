@@ -33,6 +33,7 @@ import org.osgi.service.http.HttpService;
 
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
+import net.roboconf.core.utils.Utils;
 import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.rest.services.internal.icons.IconServlet;
 import net.roboconf.dm.rest.services.internal.websocket.RoboconfWebSocketServlet;
@@ -183,7 +184,12 @@ public class ServletRegistrationComponent {
 		if( this.app != null )
 			this.app.enableCors( enableCors );
 
-		if( this.jerseyServlet != null )
-			this.jerseyServlet.reload();
+		try {
+			if( this.jerseyServlet != null )
+				this.jerseyServlet.reload();
+
+		} catch( Exception e ) {
+			Utils.logException( this.logger, e );
+		}
 	}
 }

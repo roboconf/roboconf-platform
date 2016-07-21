@@ -175,6 +175,7 @@ public final class UserDataUtils {
 	 * @return the agent's data, or null if they could not be parsed
 	 */
 	public static AgentProperties findParametersForVmware( Logger logger ) {
+
 		File propertiesFile = new File("/tmp/roboconf.properties");
 		try {
 			int retries = 30;
@@ -182,11 +183,14 @@ public final class UserDataUtils {
 				logger.fine("Agent tries to read properties file " + propertiesFile + ": trial #" + (30-retries));
 				try {
 					Thread.sleep( 2000 );
+
 				} catch( InterruptedException e ) {
 					throw new IOException("Can't read properties file: " + e);
 				}
 			}
+
 			return AgentProperties.readIaasProperties(Utils.readPropertiesFile(propertiesFile));
+
 		} catch(IOException e) {
 			logger.fine("Agent failed to read properties file " + propertiesFile);
 			return null;

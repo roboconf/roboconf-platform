@@ -47,6 +47,7 @@ import org.ops4j.pax.exam.spi.reactors.PerMethod;
 
 import net.roboconf.agent.internal.Agent;
 import net.roboconf.agent.internal.AgentMessageProcessor;
+import net.roboconf.agent.internal.misc.AgentUtils;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.Constants;
@@ -103,6 +104,7 @@ public class AgentInitializationWithScopedInstanceTest extends DmTest {
 
 		// Classes from the agent
 		probe.addTest( Agent.class );
+		probe.addTest( AgentUtils.class );
 		probe.addTest( PluginMock.class );
 		probe.addTest( HeartbeatTask.class );
 		probe.addTest( AgentMessageProcessor.class );

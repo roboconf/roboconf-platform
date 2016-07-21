@@ -25,6 +25,11 @@
 
 package net.roboconf.messaging.http.internal;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
@@ -32,11 +37,6 @@ import net.roboconf.messaging.http.HttpConstants;
 import net.roboconf.messaging.http.internal.clients.HttpAgentClient;
 import net.roboconf.messaging.http.internal.clients.HttpDmClient;
 import net.roboconf.messaging.http.internal.sockets.DmWebSocketServlet;
-
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -130,6 +130,9 @@ public abstract class HttpTestUtils {
 		}
 
 
+		/**
+		 * Stops the server.
+		 */
 		public void stop() {
 
 			try {
@@ -144,16 +147,25 @@ public abstract class HttpTestUtils {
 		}
 
 
+		/**
+		 * @return true if the server is started
+		 */
 		public boolean isServerStarted() {
 			return this.server.isStarted();
 		}
 
 
+		/**
+		 * @return true if the server is stopped
+		 */
 		public boolean isServerStopped() {
 			return this.server.isStopped();
 		}
 
 
+		/**
+		 * @return true if the server is running (running is our own indicator)
+		 */
 		public boolean isRunning() {
 			return this.running;
 		}

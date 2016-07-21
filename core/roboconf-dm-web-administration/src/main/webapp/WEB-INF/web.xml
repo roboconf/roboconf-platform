@@ -10,27 +10,51 @@
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
-	
+
+	<!-- Our own servlet -->
+
+	<servlet>
+		<servlet-name>roboconf-web-admin-interception-servlet</servlet-name>
+		<servlet-class>net.roboconf.dm.web.administration.WebAdminInterceptionServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<!-- Intercept some requests -->
+
+	<servlet-mapping>
+		<servlet-name>roboconf-web-admin-interception-servlet</servlet-name>
+		<url-pattern>img/logo_roboconf_2.jpg</url-pattern>
+	</servlet-mapping>
+
+	<servlet-mapping>
+		<servlet-name>roboconf-web-admin-interception-servlet</servlet-name>
+		<url-pattern>roboconf.min.css</url-pattern>
+	</servlet-mapping>
+
+	<!-- Default servlet -->
+
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
 		<url-pattern>img/*</url-pattern>
 	</servlet-mapping>
-	
+
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
 		<url-pattern>templates/*</url-pattern>
 	</servlet-mapping>
-	
+
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
 		<url-pattern>lib/*</url-pattern>
 	</servlet-mapping>
-	
+
 	<servlet-mapping>
 		<servlet-name>default</servlet-name>
 		<url-pattern>*.(html|css|js|ico|jpg)</url-pattern>
 	</servlet-mapping>
-	
+
+	<!-- Error page -->
+
 	<error-page>
 		<error-code>404</error-code>
 		<location>/error.html</location>
