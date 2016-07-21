@@ -81,16 +81,20 @@ public class RenderingManager {
 	 * @param applicationDirectory the application's directory
 	 * @param renderer a renderer
 	 * @param options the generation options (can be null)
+	 * @param typeAnnotations the type annotations (found by the converter - can be null)
 	 * @throws IOException if something went wrong
 	 */
 	public void render(
 			File outputDirectory,
 			ApplicationTemplate applicationTemplate,
 			File applicationDirectory,
-			Renderer renderer, Map<String,String> options )
+			Renderer renderer,
+			Map<String,String> options,
+			Map<String,String> typeAnnotations )
 	throws IOException {
+
 		options = fixOptions( options );
-		buildRenderer( outputDirectory, applicationTemplate, applicationDirectory, renderer ).render( options );
+		buildRenderer( outputDirectory, applicationTemplate, applicationDirectory, renderer, typeAnnotations ).render( options );
 	}
 
 
@@ -105,6 +109,7 @@ public class RenderingManager {
 	 * @param applicationDirectory the application's directory
 	 * @param renderers a non-null list of render names
 	 * @param options the generation options (can be null)
+	 * @param typeAnnotations the type annotations (found by the converter - can be null)
 	 * @throws IOException if something went wrong
 	 */
 	public void render(
@@ -112,7 +117,8 @@ public class RenderingManager {
 			ApplicationTemplate applicationTemplate,
 			File applicationDirectory,
 			List<String> renderers,
-			Map<String,String> options )
+			Map<String,String> options,
+			Map<String,String> typeAnnotations )
 	throws IOException {
 
 		options = fixOptions( options );
@@ -132,7 +138,7 @@ public class RenderingManager {
 				subDirName += "_" + locale;
 
 			File subDir = new File( outputDirectory, subDirName );
-			buildRenderer( subDir, applicationTemplate, applicationDirectory, r ).render( options );
+			buildRenderer( subDir, applicationTemplate, applicationDirectory, r, typeAnnotations ).render( options );
 		}
 	}
 
@@ -145,7 +151,7 @@ public class RenderingManager {
 	private Map<String,String> fixOptions( Map<String,String> options ) {
 
 		if( options == null )
-			options = new HashMap<String,String> ();
+			options = new HashMap<> ();
 
 		if( ! options.containsKey( DocConstants.OPTION_IMG_BACKGROUND_COLOR ))
 			options.put( DocConstants.OPTION_IMG_BACKGROUND_COLOR, DocConstants.DEFAULT_BACKGROUND_COLOR );
@@ -166,30 +172,32 @@ public class RenderingManager {
 	 * @param applicationTemplate
 	 * @param applicationDirectory
 	 * @param renderer
+	 * @param typeAnnotations
 	 * @return a renderer
 	 */
 	private IRenderer buildRenderer(
 			File outputDirectory,
 			ApplicationTemplate applicationTemplate,
 			File applicationDirectory,
-			Renderer renderer ) {
+			Renderer renderer,
+			Map<String,String> typeAnnotations ) {
 
 		IRenderer result = null;
 		switch( renderer ) {
 		case HTML:
-			result = new HtmlRenderer( outputDirectory, applicationTemplate, applicationDirectory );
+			result = new HtmlRenderer( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 			break;
 
 		case MARKDOWN:
-			result = new MarkdownRenderer( outputDirectory, applicationTemplate, applicationDirectory );
+			result = new MarkdownRenderer( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 			break;
 
 		case FOP:
-			result = new FopRenderer( outputDirectory, applicationTemplate, applicationDirectory );
+			result = new FopRenderer( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 			break;
 
 		case PDF:
-			result = new PdfRenderer( outputDirectory, applicationTemplate, applicationDirectory );
+			result = new PdfRenderer( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 			break;
 
 		default:

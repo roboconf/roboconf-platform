@@ -46,7 +46,7 @@ public class RendererManagerPdfTest extends AbstractTestForRendererManager {
 	@Test
 	public void testFopRenderer() throws Exception {
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.FOP, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.FOP, null, null );
 		File fofile = new File(this.outputDir,"index.fo");
 		Assert.assertTrue( fofile.exists() );
 		Assert.assertTrue( fofile.length() > 0 );
@@ -60,7 +60,7 @@ public class RendererManagerPdfTest extends AbstractTestForRendererManager {
 		try {
 			Locale.setDefault(new Locale.Builder().setLanguage("en").setRegion("US").build());
 
-			this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.PDF, null );
+			this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.PDF, null, null );
 			File pdffile = new File(this.outputDir,"index.pdf");
 			Assert.assertTrue( pdffile.exists() );
 			Assert.assertTrue( pdffile.length() > 0 );

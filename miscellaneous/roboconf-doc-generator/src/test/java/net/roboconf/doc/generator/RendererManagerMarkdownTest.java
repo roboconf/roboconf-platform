@@ -30,10 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.RenderingManager.Renderer;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,7 +44,7 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 	public void testMarkdown_nullOptions() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, null, null );
 
 		verifyMarkdown( true );
 	}
@@ -63,7 +63,7 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 		Assert.assertTrue( newDocDirectory.exists());
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, null, null );
 
 		verifyMarkdown( true );
 	}
@@ -73,10 +73,10 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 	public void testMarkdown_withFrenchLocale() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, options, null );
 
 		verifyMarkdown( false );
 	}
@@ -86,8 +86,8 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 	public void testMarkdown_emptyOptions() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, options );
+		Map<String,String> options = new HashMap<> ();
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, options, null );
 
 		verifyMarkdown( true );
 	}
@@ -99,13 +99,13 @@ public class RendererManagerMarkdownTest extends AbstractTestForRendererManager 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
 		this.alr.getApplicationTemplate().getRootInstances().clear();
 
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_IMG_HIGHLIGHT_BG_COLOR, "#dddddd" );
 		options.put( DocConstants.OPTION_IMG_BACKGROUND_COLOR, "#4582ad" );
 		options.put( DocConstants.OPTION_IMG_FOREGROUND_COLOR, "#000000" );
 		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.MARKDOWN, options, null );
 
 		verifyMarkdown( true );
 	}

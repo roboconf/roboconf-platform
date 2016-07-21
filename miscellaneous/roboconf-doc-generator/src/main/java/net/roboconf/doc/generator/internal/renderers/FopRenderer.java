@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -54,25 +55,35 @@ public class FopRenderer extends AbstractStructuredRenderer {
 	 * @param outputDirectory
 	 * @param applicationTemplate
 	 * @param applicationDirectory
+	 * @param typeAnnotations
 	 */
-	public FopRenderer(File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory) {
-		super(outputDirectory, applicationTemplate, applicationDirectory);
+	public FopRenderer(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			Map<String,String> typeAnnotations ) {
+
+		super( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 	}
+
 
 	@Override
 	protected String renderTitle1(String title) {
 		return "<fo:block font-size=\"18pt\" font-weight=\"bold\">" + title + "</fo:block>\n";
 	}
 
+
 	@Override
 	protected String renderTitle2(String title) {
 		return "<fo:block font-size=\"14pt\" font-weight=\"bold\">" + title + "</fo:block>\n";
 	}
 
+
 	@Override
 	protected String renderTitle3(String title) {
 		return "<fo:block font-size=\"12pt\" font-weight=\"bold\">" + title + "</fo:block>\n";
 	}
+
 
 	@Override
 	protected String renderParagraph(String paragraph) {
@@ -86,6 +97,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 
 		return sb.toString();
 	}
+
 
 	@Override
 	protected String renderList(Collection<String> listItems) {
@@ -110,25 +122,30 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		return sb.toString();
 	}
 
+
 	@Override
 	protected String renderPageBreak() {
 		return "<fo:block break-after=\"page\"/>";
 	}
+
 
 	@Override
 	protected String indent() {
 		return "\t";
 	}
 
+
 	@Override
 	protected String startTable() {
 		return "\n<fo:table text-align=\"center\" space-before=\"1em\" table-layout=\"fixed\" border=\"0.5pt solid black\">\n";
 	}
 
+
 	@Override
 	protected String endTable() {
 		return "</fo:table>\n";
 	}
+
 
 	@Override
 	protected String addTableHeader(String... headerEntries) {
@@ -149,6 +166,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		return sb.toString();
 	}
 
+
 	@Override
 	protected String addTableLine(String... lineEntries) {
 
@@ -168,16 +186,18 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		return sb.toString();
 	}
 
+
 	@Override
 	protected String renderDocumentTitle() {
 		return "<fo:block font-size=\"18pt\" font-weight=\"bold\">" + this.applicationTemplate.getName() + "</fo:block>\n";
 	}
 
+
 	@Override
 	protected String renderDocumentIndex() {
 
 		// What keys should we inject in the index?
-		List<String> keys = new ArrayList<String> ();
+		List<String> keys = new ArrayList<> ();
 		keys.add( "introduction" );
 		keys.add( "components" );
 		if( this.options.containsKey( DocConstants.OPTION_RECIPE ) ) {
@@ -209,6 +229,7 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		return sb.toString();
 	}
 
+
 	@Override
 	protected String renderImage(String componentName, DiagramType type, String relativeImagePath) {
 
@@ -219,15 +240,18 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		return sb.toString();
 	}
 
+
 	@Override
 	protected String applyBoldStyle(String text, String keyword) {
 		return text.replaceAll( Pattern.quote( keyword ), "<fo:block font-weight=\"bold\">" + keyword + "</fo:block>" );
 	}
 
+
 	@Override
 	protected String applyLink(String text, String linkId) {
 		return text.replaceAll( Pattern.quote( text ), "<fo:basic-link external-destination=\"" + "url(" + createId( linkId ) + ")" +"\">" + text + "</fo:basic-link>" );
 	}
+
 
 	@Override
 	protected File writeFileContent(String fileContent) throws IOException {
@@ -265,10 +289,12 @@ public class FopRenderer extends AbstractStructuredRenderer {
 		return result;
 	}
 
+
 	@Override
 	protected String renderSections(List<String> sectionNames) {
 		return "";
 	}
+
 
 	@Override
 	protected StringBuilder startSection(String sectionName) {
@@ -278,5 +304,4 @@ public class FopRenderer extends AbstractStructuredRenderer {
 	private String createId( String title ) {
 		return title.toLowerCase().replaceAll( "\\s+", "-" );
 	}
-
 }

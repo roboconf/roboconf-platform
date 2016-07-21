@@ -54,7 +54,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	private static final String CSS_MARKUP = "${CSS}";
 
 	private String menu;
-	private final Map<String,StringBuilder> sectionNameToContent = new HashMap<String,StringBuilder> ();
+	private final Map<String,StringBuilder> sectionNameToContent = new HashMap<> ();
 
 
 	/**
@@ -62,9 +62,15 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	 * @param outputDirectory
 	 * @param applicationTemplate
 	 * @param applicationDirectory
+	 * @param typeAnnotations
 	 */
-	public HtmlRenderer( File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory ) {
-		super( outputDirectory, applicationTemplate, applicationDirectory );
+	public HtmlRenderer(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			Map<String,String> typeAnnotations ) {
+
+		super( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 	}
 
 
@@ -251,7 +257,7 @@ public class HtmlRenderer extends AbstractStructuredRenderer {
 	protected String renderDocumentIndex() {
 
 		// What keys should we inject in the index?
-		List<String> keys = new ArrayList<String> ();
+		List<String> keys = new ArrayList<> ();
 		keys.add( "introduction" );
 		keys.add( "components" );
 		if( this.options.containsKey( DocConstants.OPTION_RECIPE )) {

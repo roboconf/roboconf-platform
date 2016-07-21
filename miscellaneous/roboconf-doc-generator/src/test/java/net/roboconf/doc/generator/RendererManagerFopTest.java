@@ -55,7 +55,7 @@ public class RendererManagerFopTest extends AbstractTestForRendererManager {
 	@Test
 	public void testFopRenderer() throws Exception {
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.FOP, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.FOP, null, null );
 		File fofile = new File(this.outputDir,"index.fo");
 		Assert.assertTrue( fofile.exists() );
 		Assert.assertTrue( fofile.length() > 0 );
@@ -64,7 +64,7 @@ public class RendererManagerFopTest extends AbstractTestForRendererManager {
 
 	@Test
 	public void testPdfRenderer() throws Exception {
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.FOP, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.FOP, null, null );
 		File fofile = new File(this.outputDir,"index.fo");
 		File pdffile = new File(this.outputDir,"index.pdf");
 		Assert.assertTrue( validateFop2pdf(fofile, pdffile) );
