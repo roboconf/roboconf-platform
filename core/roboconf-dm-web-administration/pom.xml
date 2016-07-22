@@ -137,13 +137,13 @@
 				<executions>
 					<execution>
 						<id>bundle-manifest</id>
-						<phase>process-sources</phase>
+						<phase>process-classes</phase>
 						<goals>
 							<goal>manifest</goal>
 						</goals>
 						<configuration>
 							<instructions>
-								<Bundle-ClassPath>., WEB-INF/classes</Bundle-ClassPath>
+								<Bundle-ClassPath>.,WEB-INF/classes</Bundle-ClassPath>
 								<Web-ContextPath>roboconf-web-administration</Web-ContextPath>
 								<Webapp-Context>roboconf-web-administration</Webapp-Context>
 								<Import-Package>

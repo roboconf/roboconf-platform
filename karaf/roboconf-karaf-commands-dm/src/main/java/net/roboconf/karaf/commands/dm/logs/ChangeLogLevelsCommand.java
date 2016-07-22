@@ -26,8 +26,6 @@
 package net.roboconf.karaf.commands.dm.logs;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,10 +38,13 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
-import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
-import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
+import net.roboconf.karaf.commands.dm.KarafDmCommandsUtils;
+import net.roboconf.karaf.commands.dm.KarafDmCommandsUtils.RbcfInfo;
+import net.roboconf.karaf.commands.dm.completers.ApplicationCompleter;
+import net.roboconf.karaf.commands.dm.completers.LogLevelCompleter;
+import net.roboconf.karaf.commands.dm.completers.ScopedInstanceCompleter;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeLogLevel;
 
 /**
@@ -87,32 +88,16 @@ public class ChangeLogLevelsCommand implements Action {
 			isValidLevel = false;
 		}
 
-		// Prepare the checks
-		List<Instance> scopedInstances = new ArrayList<> ();
-		ManagedApplication ma = null;
-		Instance scopedInstance;
-
 		// Check...
-		if( ! isValidLevel )
+		if( ! isValidLevel ) {
 			this.out.println( "Invalid log level: " + this.logLevelAsString + ". Only " + " are allowed." );
+			return null;
+		}
 
-		else if(( ma = this.manager.applicationMngr().findManagedApplicationByName( this.applicationName )) == null )
-			this.out.println( "Unknown application: " + this.applicationName + "." );
-
-		else if( this.scopedInstancePath == null )
-			scopedInstances.addAll( InstanceHelpers.findAllScopedInstances( ma.getApplication()));
-
-		else if(( scopedInstance = InstanceHelpers.findInstanceByPath( ma.getApplication(), this.scopedInstancePath )) == null )
-			this.out.println( "There is no " + this.scopedInstancePath + " instance in " + this.applicationName + "." );
-
-		else if( ! InstanceHelpers.isTarget( scopedInstance ))
-			this.out.println( "Instance " + this.scopedInstancePath + " is not a scoped instance in " + this.applicationName + "." );
-
-		else
-			scopedInstances.add( scopedInstance );
+		RbcfInfo info = KarafDmCommandsUtils.findInstances( this.manager, this.applicationName, this.scopedInstancePath, this.out );
 
 		// Send messages
-		for( Instance inst : scopedInstances ) {
+		for( Instance inst : info.getScopedInstances()) {
 
 			if( inst.getStatus() == InstanceStatus.NOT_DEPLOYED ) {
 				StringBuilder sb = new StringBuilder( "No message will be sent to " );
@@ -134,7 +119,7 @@ public class ChangeLogLevelsCommand implements Action {
 			}
 
 			MsgCmdChangeLogLevel message = new MsgCmdChangeLogLevel( logLevel );
-			this.manager.messagingMngr().sendMessageSafely( ma, inst, message );
+			this.manager.messagingMngr().sendMessageSafely( info.getManagedApplication(), inst, message );
 		}
 
 		return null;

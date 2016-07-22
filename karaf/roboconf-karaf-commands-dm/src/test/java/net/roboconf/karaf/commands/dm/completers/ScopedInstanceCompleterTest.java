@@ -23,16 +23,10 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.dm.logs;
+package net.roboconf.karaf.commands.dm.completers;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.dm.management.ManagedApplication;
-import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.management.api.IApplicationMngr;
 
 import org.apache.karaf.shell.api.console.CommandLine;
 import org.apache.karaf.shell.api.console.Session;
@@ -42,10 +36,15 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 
+import net.roboconf.core.internal.tests.TestApplication;
+import net.roboconf.dm.management.ManagedApplication;
+import net.roboconf.dm.management.Manager;
+import net.roboconf.dm.management.api.IApplicationMngr;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
-public class ApplicationCompleterTest {
+public class ScopedInstanceCompleterTest {
 
 	@Rule
 	public TemporaryFolder folder = new TemporaryFolder();
@@ -54,23 +53,26 @@ public class ApplicationCompleterTest {
 	@Test
 	public void testComplete() throws Exception {
 
+		TestApplication app = new TestApplication();
+		app.directory( this.folder.newFolder());
+		ManagedApplication ma = new ManagedApplication( app );
+
 		// Mock what is required
 		Session session = Mockito.mock( Session.class );
 		CommandLine commandLine = Mockito.mock( CommandLine.class );
 		Mockito.when( commandLine.getCursorArgument()).thenReturn( "" );
+		Mockito.when( commandLine.getCursorArgumentIndex()).thenReturn( 0 );
 		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 0 );
+		Mockito.when( commandLine.getArguments()).thenReturn( new String[ 0 ]);
 
-		final List<ManagedApplication> mas = new ArrayList<> ();
 		IApplicationMngr applicationMngr = Mockito.mock( IApplicationMngr.class );
-		Mockito.when( applicationMngr.getManagedApplications()).thenReturn( mas );
+		Mockito.when( applicationMngr.findManagedApplicationByName( app.getName())).thenReturn( ma );
 
 		Manager manager = Mockito.mock( Manager.class );
 		Mockito.when( manager.applicationMngr()).thenReturn( applicationMngr );
 
-		ApplicationTemplate tpl = new ApplicationTemplate( "whatever" ).directory( this.folder.newFolder());
-
 		// Nothing typed in yet
-		ApplicationCompleter completer = new ApplicationCompleter();
+		ScopedInstanceCompleter completer = new ScopedInstanceCompleter();
 		completer.manager = manager;
 		List<String> candidates = new ArrayList<> ();
 
@@ -78,56 +80,44 @@ public class ApplicationCompleterTest {
 		Assert.assertEquals( -1, completer.complete( session, commandLine, candidates ));
 		Assert.assertEquals( 0, candidates.size());
 
-		// Complete "I"
+		// Completion but no application
 		candidates = new ArrayList<> ();
-		Mockito.when( commandLine.getCursorArgument()).thenReturn( "I" );
-		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 1 ); // "I".length()
+		Mockito.when( commandLine.getCursorArgument()).thenReturn( "/my" );
+		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 3 );	// "/my".length()
 
 		Assert.assertEquals( 0, candidates.size());
 		Assert.assertEquals( -1, completer.complete( session, commandLine, candidates ));
 		Assert.assertEquals( 0, candidates.size());
 
-		mas.add( new ManagedApplication( new Application( "Ito", tpl )));
+		// Completion with an invalid application
+		Mockito.when( commandLine.getArguments()).thenReturn( new String[] { "inalid" });
+		Mockito.when( commandLine.getCursorArgumentIndex()).thenReturn( 1 );
+
+		Assert.assertEquals( 0, candidates.size());
 		Assert.assertEquals( -1, completer.complete( session, commandLine, candidates ));
+		Assert.assertEquals( 0, candidates.size());
+
+		// Completion with an application
+		Mockito.when( commandLine.getArguments()).thenReturn( new String[] { app.getName()});
+		Mockito.when( commandLine.getCursorArgumentIndex()).thenReturn( 1 );
+
+		Assert.assertEquals( -3, completer.complete( session, commandLine, candidates ));
 		Assert.assertEquals( 1, candidates.size());
-		Assert.assertEquals( "Ito", candidates.get( 0 ).trim());
+		Assert.assertEquals( "/mysql-vm", candidates.get( 0 ).trim());
 
 		// Complete "i" (case insensitive)
 		candidates = new ArrayList<> ();
-		Mockito.when( commandLine.getCursorArgument()).thenReturn( "i" );
-		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 1 ); // "i".length()
+		Mockito.when( commandLine.getCursorArgument()).thenReturn( "/MY" );
+		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 3 );	// "/MY".length()
 
 		Assert.assertEquals( 0, candidates.size());
-		Assert.assertEquals( -1, completer.complete( session, commandLine, candidates ));
+		Assert.assertEquals( -3, completer.complete( session, commandLine, candidates ));
 		Assert.assertEquals( 1, candidates.size());
-		Assert.assertEquals( "Ito", candidates.get( 0 ).trim());
-
-		// Try with several apps - and still "i"
-		mas.add( new ManagedApplication( new Application( "uto", tpl )));
-		mas.add( new ManagedApplication( new Application( "ito2", tpl )));
-		mas.add( new ManagedApplication( new Application( "as", tpl )));
-
-		candidates = new ArrayList<> ();
-		Assert.assertEquals( 0, candidates.size());
-		Assert.assertEquals( -1, completer.complete( session, commandLine, candidates ));
-		Assert.assertEquals( 2, candidates.size());
-		Assert.assertEquals( "Ito", candidates.get( 0 ).trim());
-		Assert.assertEquals( "ito2", candidates.get( 1 ).trim());
-
-		// Better search
-		candidates = new ArrayList<> ();
-		Mockito.when( commandLine.getCursorArgument()).thenReturn( "ito2" );
-		Mockito.when( commandLine.getArgumentPosition()).thenReturn( 4 ); // "ito2".length()
-
-		Assert.assertEquals( 0, candidates.size());
-		Assert.assertEquals( -4, completer.complete( session, commandLine, candidates ));
-		Assert.assertEquals( 1, candidates.size());
-		Assert.assertEquals( "ito2", candidates.get( 0 ).trim());
+		Assert.assertEquals( "/mysql-vm", candidates.get( 0 ).trim());
 
 		// Unknown
 		candidates = new ArrayList<> ();
 		Mockito.when( commandLine.getCursorArgument()).thenReturn( "unknown" );
-		Mockito.when( commandLine.getArgumentPosition()).thenReturn( "unknown".length());
 
 		Assert.assertEquals( 0, candidates.size());
 		Assert.assertEquals( -1, completer.complete( session, commandLine, candidates ));
