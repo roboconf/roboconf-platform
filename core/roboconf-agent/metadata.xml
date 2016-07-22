@@ -46,7 +46,6 @@
 			<property name="messaging-type" method="setMessagingType" />
 			<property name="application-name" method="setApplicationName" />
 			<property name="scoped-instance-path" method="setScopedInstancePath" />
-			<property name="network-interface" method="setNetworkInterface" />
 			<property name="ip-address-of-the-agent" method="setIpAddress" />
 			
 			<!-- Predefined Values -->

@@ -25,10 +25,18 @@
 
 package net.roboconf.agent.internal;
 
+import java.net.InetAddress;
+
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.utils.ProcessStore;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
@@ -37,11 +45,6 @@ import net.roboconf.messaging.api.internal.client.test.TestClientFactory;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifAutonomic;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -56,7 +59,7 @@ public class AgentBasicsTest {
 	public void initializeAgent() throws Exception {
 
 		this.registry = new MessagingClientFactoryRegistry();
-		this.registry.addMessagingClientFactory(new TestClientFactory());
+		this.registry.addMessagingClientFactory( new TestClientFactory());
 		this.agent = new Agent();
 
 		// We first need to start the agent, so it creates the reconfigurable messaging client.
@@ -64,7 +67,7 @@ public class AgentBasicsTest {
 		this.agent.start();
 
 		// We then set the factory registry of the created client, and reconfigure the agent, so the messaging client backend is created.
-		this.agent.getMessagingClient().setRegistry(this.registry);
+		this.agent.getMessagingClient().setRegistry( this.registry );
 		this.agent.reconfigure();
 
 		Thread.sleep( 200 );
@@ -228,20 +231,79 @@ public class AgentBasicsTest {
 		agent.listPlugins();
 	}
 
+
+	@Test
+	public void testSetIpAddress() {
+
+		Agent agent = new Agent();
+		agent.ipAddress = "something";
+
+		agent.setIpAddress( "else" );
+		Assert.assertEquals( "else", agent.ipAddress );
+
+		agent.setIpAddress( null );
+		Assert.assertEquals( "else", agent.ipAddress );
+
+		agent.setIpAddress( "" );
+		Assert.assertEquals( "else", agent.ipAddress );
+
+		agent.setIpAddress( "something" );
+		Assert.assertEquals( "something", agent.ipAddress );
+	}
+
+
+	@Test
+	public void testSetNetworkInterface() throws Exception {
+
+		Agent agent = new Agent();
+		agent.ipAddress = "something";
+		agent.overrideProperties = true;
+
+		// The network interface is always updated.
+		// The IP address is updated only when user data cannot override properties.
+		agent.setNetworkInterface( "else" );
+		Assert.assertEquals( "else", agent.networkInterface );
+		Assert.assertEquals( "something", agent.ipAddress );
+
+		agent.overrideProperties = false;
+		agent.setNetworkInterface( "else2" );
+		Assert.assertEquals( "else2", agent.networkInterface );
+		Assert.assertEquals( InetAddress.getLocalHost().getHostAddress(), agent.ipAddress );
+	}
+
+
 	@Test
 	public void testAgentStatus() throws Exception {
 
-		Assert.assertNotNull( this.agent.agentStatus() );
+		// Setup
+		String appName = "app";
+		String scopedInstancePath = "/some-path";
 
+		this.agent.applicationName = appName;
+		this.agent.scopedInstancePath = scopedInstancePath;
+
+		Assert.assertNotNull( this.agent.agentStatus());
 		this.agent.stop();
 
-		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add(Mockito.mock(MsgNotifHeartbeat.class));
-		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add(Mockito.mock(MsgNotifAutonomic.class));
-		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add(Mockito.mock(MsgNotifLogs.class));
+		// First check: messages, no process
+		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add( Mockito.mock( MsgNotifHeartbeat.class ));
+		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add( Mockito.mock( MsgNotifAutonomic.class ));
+		this.agent.getMessagingClient().getMessageProcessor().getMessageQueue().add( Mockito.mock( MsgNotifLogs.class ));
 
-		Assert.assertFalse( this.agent.agentStatus().startsWith( "There is no message" ));
+		String status = this.agent.agentStatus();
+		Assert.assertFalse( status.startsWith( "There is no message" ));
+		Assert.assertTrue( status.contains( "No recipe is under execution." ));
+		Assert.assertFalse( status.contains( "Be careful. A recipe is under execution." ));
 
+		// Now, let's assume a process is running
+		ProcessStore.setProcess( appName, scopedInstancePath, Mockito.mock( Process.class ));
+
+		status = this.agent.agentStatus();
+		Assert.assertFalse( status.startsWith( "There is no message" ));
+		Assert.assertFalse( status.contains( "No recipe is under execution." ));
+		Assert.assertTrue( status.contains( "Be careful. A recipe is under execution." ));
 	}
+
 
 	private TestClient getInternalClient() throws IllegalAccessException {
 		return TestUtils.getInternalField( this.agent.getMessagingClient(), "messagingClient", TestClient.class );

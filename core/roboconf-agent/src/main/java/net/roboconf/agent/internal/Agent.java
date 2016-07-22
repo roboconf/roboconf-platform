@@ -58,7 +58,8 @@ import net.roboconf.plugin.api.PluginInterface;
 public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	// Component properties (ipojo)
-	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType, networkInterface;
+	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType;
+	String networkInterface = AgentConstants.DEFAULT_NETWORK_INTERFACE;
 	boolean overrideProperties = false, simulatePlugins = true;
 
 	// Fields that should be injected (ipojo)
@@ -94,6 +95,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 		this.logger.info( "Agent '" + getAgentId() + "' is about to be launched." );
 		this.ipAddress = AgentUtils.findIpAddress( this.networkInterface );
+		this.logger.info( "IP address resolved to " + this.ipAddress );
 
 		this.messagingClient = new ReconfigurableClientAgent();
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
@@ -457,6 +459,16 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	 */
 	public void setNetworkInterface( String networkInterface ) {
 		this.networkInterface = networkInterface;
+
+		this.logger.info( "New network interface set: " + networkInterface );
+		if( ! this.overrideProperties ) {
+			this.logger.info( "Resetting the agent's IP address..." );
+			this.ipAddress = AgentUtils.findIpAddress( networkInterface );
+			this.logger.info( "New IP address: " + this.ipAddress );
+
+		} else {
+			this.logger.info( "User data are used. The IP address will not be refreshed." );
+		}
 	}
 
 

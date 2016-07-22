@@ -189,6 +189,7 @@ public final class AgentUtils {
 			// Try the network interface
 			NetworkInterface nif;
 			if( networkInterface != null
+					&& ! AgentConstants.DEFAULT_NETWORK_INTERFACE.equalsIgnoreCase( networkInterface )
 					&& (nif = NetworkInterface.getByName( networkInterface )) != null ) {
 
 				Enumeration<InetAddress> addrs = nif.getInetAddresses();
@@ -204,7 +205,7 @@ public final class AgentUtils {
 						ipAddress = ipAddress.substring( 1 );
 				}
 
-			} else {
+			} else if( ! AgentConstants.DEFAULT_NETWORK_INTERFACE.equalsIgnoreCase( networkInterface )) {
 				logger.severe( "Network interface " + networkInterface + " does not exists. The host's default IP will be picked up." );
 			}
 

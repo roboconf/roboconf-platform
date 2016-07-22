@@ -179,7 +179,7 @@ public class AgentUtilsTest {
 	public void testChangeRoboconfLogLevel() throws Exception {
 
 		// Null => no exception
-		AgentUtils.collectLogs( null );
+		AgentUtils.changeRoboconfLogLevel( Level.FINE.toString(), null );
 
 		// Create an empty directory => no log file to update
 		File karafEtc = this.folder.newFolder();
@@ -262,5 +262,13 @@ public class AgentUtilsTest {
 
 		String expectedIp = InetAddress.getLocalHost().getHostAddress();
 		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( null ));
+	}
+
+
+	@Test
+	public void testFindIpAddress_nforceDefaultNetworkInterface() throws Exception {
+
+		String expectedIp = InetAddress.getLocalHost().getHostAddress();
+		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( AgentConstants.DEFAULT_NETWORK_INTERFACE ));
 	}
 }
