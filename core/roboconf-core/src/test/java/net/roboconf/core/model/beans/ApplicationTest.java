@@ -28,10 +28,11 @@ package net.roboconf.core.model.beans;
 import java.util.HashSet;
 
 import org.junit.Assert;
+import org.junit.Test;
+
+import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.model.helpers.InstanceHelpers;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -47,7 +48,7 @@ public class ApplicationTest {
 		Application app2 = new Application( new ApplicationTemplate());
 		app2.setName( "app" );
 
-		HashSet<Application> set = new HashSet<Application>( 2 );
+		HashSet<Application> set = new HashSet<>( 2 );
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 1, set.size());
@@ -63,7 +64,7 @@ public class ApplicationTest {
 		Application app2 = new Application( app1.getTemplate());
 		app2.setName( "app" );
 
-		HashSet<Application> set = new HashSet<Application>( 2 );
+		HashSet<Application> set = new HashSet<>( 2 );
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 1, set.size());
@@ -76,7 +77,7 @@ public class ApplicationTest {
 		Application app1 = new Application(  new TestApplicationTemplate());
 		Application app2 = new Application( "app", app1.getTemplate());
 
-		HashSet<Application> set = new HashSet<Application>( 2 );
+		HashSet<Application> set = new HashSet<>( 2 );
 		set.add( app1 );
 		set.add( app2 );
 		Assert.assertEquals( 2, set.size());
@@ -174,5 +175,67 @@ public class ApplicationTest {
 
 		tpl.externalExports.put( "something", "here" );
 		Assert.assertEquals( app.getExternalExports(), tpl.externalExports );
+	}
+
+
+	@Test
+	public void testApplicationBindings() {
+
+		TestApplication app = new TestApplication();
+		Assert.assertEquals( 0, app.getApplicationBindings().size());
+
+		app.bindWithApplication( "p1", "app1" );
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app1" ));
+
+		app.bindWithApplication( "p2", "app1" );
+		Assert.assertEquals( 2, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+
+		app.bindWithApplication( "p1", "app1" );	// idempotent
+		Assert.assertEquals( 2, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+
+		app.bindWithApplication( "p1", "app2" );
+		Assert.assertEquals( 2, app.getApplicationBindings().size());
+		Assert.assertEquals( 2, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app1" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+
+		app.unbindFromApplication( "p1", "app1" );
+		Assert.assertEquals( 2, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p1" ).size());
+		Assert.assertTrue( app.getApplicationBindings().get( "p1" ).contains( "app2" ));
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+
+		app.unbindFromApplication( "p1", "app2" );
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+
+		app.unbindFromApplication( "inexisting", "app2" );
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+
+		app.unbindFromApplication( "p2", "inexisting" );
+		Assert.assertEquals( 1, app.getApplicationBindings().size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "p2" ).size());
+	}
+
+
+	@Test
+	public void testShortcuts() {
+
+		Application app = new Application( null );
+		Assert.assertNull( app.getGraphs());
+		Assert.assertNotNull( app.getExternalExports());
+		Assert.assertEquals( 0, app.getExternalExports().size());
+
+		app = new TestApplication();
+		Assert.assertNotNull( app.getGraphs());
+		Assert.assertNotNull( app.getExternalExports());
 	}
 }

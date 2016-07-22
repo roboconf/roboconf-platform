@@ -137,7 +137,7 @@ public final class Utils {
 		if( patternSeparator == null || patternSeparator.isEmpty())
 			throw new IllegalArgumentException( "The separator cannot be null or the empty string." );
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		if( ! Utils.isEmptyOrWhitespaces( toSplit )) {
 			for( String s : toSplit.split( patternSeparator ))
 				result.add( s .trim());
@@ -519,7 +519,7 @@ public final class Utils {
 			throw new IllegalArgumentException( directory.getAbsolutePath() + " does not exist or is not a directory." );
 
 		List<File> result = new ArrayList<> ();
-		List<File> directoriesToInspect = new ArrayList<File> ();
+		List<File> directoriesToInspect = new ArrayList<> ();
 		directoriesToInspect.add( directory );
 
 		while( ! directoriesToInspect.isEmpty()) {
@@ -603,7 +603,7 @@ public final class Utils {
 		if( ! directory.isDirectory())
 			throw new IllegalArgumentException( "The resource directory is not a valid directory. " + directory.getAbsolutePath());
 
-		Map<String,byte[]> result = new HashMap<String,byte[]> ();
+		Map<String,byte[]> result = new HashMap<> ();
 		List<File> resourceFiles = listAllFiles( directory, false );
 		for( File file : resourceFiles ) {
 
@@ -626,7 +626,7 @@ public final class Utils {
 	public static Map<String,String> storeDirectoryResourcesAsString( File directory ) throws IOException {
 
 		Map<String,byte[]> map = storeDirectoryResourcesAsBytes( directory );
-		Map<String,String> result = new HashMap<String,String>( map.size());
+		Map<String,String> result = new HashMap<>( map.size());
 		for( Map.Entry<String,byte[]> entry : map.entrySet())
 			result.put( entry.getKey(), new String( entry.getValue(), "UTF-8" ));
 
@@ -770,7 +770,7 @@ public final class Utils {
 		if( files == null )
 			return;
 
-		List<File> filesToDelete = new ArrayList<File> ();
+		List<File> filesToDelete = new ArrayList<> ();
 		filesToDelete.addAll( Arrays.asList( files ));
 		while( ! filesToDelete.isEmpty()) {
 			File currentFile = filesToDelete.remove( 0 );
@@ -919,7 +919,7 @@ public final class Utils {
 		Integer port = portAsString == null ? - 1 : Integer.parseInt( portAsString );
 		String address = portAsString == null ? url : url.replace( m.group( 1 ), "" );
 
-		return new AbstractMap.SimpleEntry<String,Integer>( address, port );
+		return new AbstractMap.SimpleEntry<>( address, port );
 	}
 
 	/**

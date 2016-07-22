@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.ws.rs.Path;
@@ -55,7 +56,7 @@ import net.roboconf.dm.management.Manager;
 import net.roboconf.dm.management.exceptions.CommandException;
 import net.roboconf.dm.management.exceptions.ImpossibleInsertionException;
 import net.roboconf.dm.management.exceptions.UnauthorizedActionException;
-import net.roboconf.dm.rest.commons.json.MapWrapper;
+import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
 import net.roboconf.dm.rest.services.internal.RestServicesUtils;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.target.api.TargetException;
@@ -324,7 +325,7 @@ public class ApplicationResource implements IApplicationResource {
 
 		} else {
 			// Find all the external prefixes to resolve
-			Map<String,String> map = new HashMap<> ();
+			Map<String,Set<String>> map = new HashMap<> ();
 			for( Component c : ComponentHelpers.findAllComponents( ma.getApplication())) {
 				for( ImportedVariable var : ComponentHelpers.findAllImportedVariables( c ).values()) {
 					if( ! var.isExternal())
@@ -336,8 +337,8 @@ public class ApplicationResource implements IApplicationResource {
 			}
 
 			// Override with the effective bindings
-			map.putAll( ma.getApplication().applicationBindings );
-			response = Response.ok().entity( new MapWrapper( map )).build();
+			map.putAll( ma.getApplication().getApplicationBindings());
+			response = Response.ok().entity( new MappedCollectionWrapper( map )).build();
 		}
 
 		return response;

@@ -27,8 +27,11 @@ package net.roboconf.dm.internal.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import net.roboconf.core.Constants;
@@ -183,8 +186,12 @@ public final class ConfigurationUtils {
 
 		Logger logger = Logger.getLogger( ConfigurationUtils.class.getName());
 		Properties props = Utils.readPropertiesFileQuietly( appBindingsFile, logger );
-		for( Map.Entry<?,?> entry : props.entrySet())
-			app.applicationBindings.put((String) entry.getKey(), (String) entry.getValue());
+		for( Map.Entry<?,?> entry : props.entrySet()) {
+			for( String part : Utils.splitNicely((String) entry.getValue(), "," )) {
+				if( ! Utils.isEmptyOrWhitespaces( part ))
+					app.bindWithApplication((String) entry.getKey(), part );
+			}
+		}
 	}
 
 
@@ -198,8 +205,23 @@ public final class ConfigurationUtils {
 		File descDir = new File( app.getDirectory(), Constants.PROJECT_DIR_DESC );
 		File appBindingsFile = new File( descDir, APP_BINDINGS_FILE );
 
+		// Convert the bindings map
+		Map<String,String> format = new HashMap<> ();
+		for(  Map.Entry<String,Set<String>> entry : app.getApplicationBindings().entrySet()) {
+
+			StringBuilder sb = new StringBuilder();
+			for( Iterator<String> it = entry.getValue().iterator(); it.hasNext(); ) {
+				sb.append( it.next());
+				if( it.hasNext())
+					sb.append( ", " );
+			}
+
+			format.put( entry.getKey(), sb.toString());
+		}
+
+		// Save it
 		Properties props = new Properties();
-		props.putAll( app.applicationBindings );
+		props.putAll( format );
 
 		try {
 			Utils.createDirectory( descDir );

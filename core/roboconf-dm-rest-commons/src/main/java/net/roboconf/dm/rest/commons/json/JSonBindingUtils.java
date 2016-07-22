@@ -26,6 +26,7 @@
 package net.roboconf.dm.rest.commons.json;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -164,6 +165,7 @@ public final class JSonBindingUtils {
 		module.addSerializer( ScheduledJob.class, new ScheduledJobSerializer());
 		module.addDeserializer( ScheduledJob.class, new ScheduledJobDeserializer());
 
+		module.addSerializer( MappedCollectionWrapper.class, new MappedCollectionWrapperSerializer());
 		module.addSerializer( TargetUsageItem.class, new TargetUsageItemSerializer());
 		module.addSerializer( TargetAssociation.class, new TargetAssociationSerializer());
 		module.addSerializer( Preference.class, new PreferenceSerializer());
@@ -480,13 +482,13 @@ public final class JSonBindingUtils {
 				MapWrapper m,
 				JsonGenerator generator,
 				SerializerProvider provider )
-						throws IOException {
+		throws IOException {
 
 			generator.writeStartObject();
 			for( Map.Entry<String,String> entry : m.getMap().entrySet()) {
 				generator.writeStringField(
 						entry.getKey() == null ? "" : entry.getKey(),
-								entry.getValue() == null ? "" : entry.getValue());
+						entry.getValue() == null ? "" : entry.getValue());
 			}
 
 			generator.writeEndObject();
@@ -559,6 +561,36 @@ public final class JSonBindingUtils {
 			}
 
 			generator.writeEndArray();
+			generator.writeEndObject();
+		}
+	}
+
+
+	/**
+	 * A JSon serializer for mapped collection wrappers.
+	 * @author Vincent Zurczak - Linagora
+	 */
+	public static class MappedCollectionWrapperSerializer extends JsonSerializer<MappedCollectionWrapper> {
+
+		@Override
+		public void serialize(
+				MappedCollectionWrapper m,
+				JsonGenerator generator,
+				SerializerProvider provider )
+		throws IOException {
+
+			generator.writeStartObject();
+			for( Map.Entry<String,? extends Collection<String>> entry : m.getMap().entrySet()) {
+				generator.writeArrayFieldStart( entry.getKey() == null ? "" : entry.getKey());
+
+				if( entry.getValue() != null ) {
+					for( String item : entry.getValue())
+						generator.writeString( item );
+				}
+
+				generator.writeEndArray();
+			}
+
 			generator.writeEndObject();
 		}
 	}

@@ -31,6 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
@@ -59,14 +67,6 @@ import net.roboconf.messaging.api.business.IDmClient;
 import net.roboconf.messaging.api.business.ListenerCommand;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -478,14 +478,14 @@ public class ApplicationMngrImplTest {
 		ManagedApplication ma2 = new ManagedApplication( app2 );
 		TestManagerWrapper.getNameToManagedApplication( this.mngr ).put( ma2.getName(), ma2 );
 
-		Assert.assertEquals( 0, ma1.getApplication().applicationBindings.size());
+		Assert.assertEquals( 0, ma1.getApplication().getApplicationBindings().size());
 		String eep = ma2.getApplication().getTemplate().getExternalExportsPrefix();
 
 		Mockito.verifyZeroInteractions( this.messagingMngr );
 		this.mngr.bindApplication( ma1, eep, ma2.getName());
 
-		Assert.assertEquals( 1, ma1.getApplication().applicationBindings.size());
-		Assert.assertEquals( ma2.getName(), ma1.getApplication().applicationBindings.get( eep ));
+		Assert.assertEquals( 1, ma1.getApplication().getApplicationBindings().size());
+		Assert.assertTrue( ma1.getApplication().getApplicationBindings().get( eep ).contains( ma2.getName()));
 
 		ArgumentCaptor<ManagedApplication> arg0 = ArgumentCaptor.forClass( ManagedApplication.class );
 		ArgumentCaptor<Instance> arg1 = ArgumentCaptor.forClass( Instance.class );
@@ -501,7 +501,9 @@ public class ApplicationMngrImplTest {
 
 			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
 			Assert.assertEquals( ma2.getApplication().getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
-			Assert.assertEquals( ma2.getName(), msg.getAppName());
+			Assert.assertNotNull( msg.getAppNames());
+			Assert.assertEquals( 1, msg.getAppNames().size());
+			Assert.assertTrue( msg.getAppNames().contains( ma2.getName()));
 		}
 
 		// Messages must be sent to ma1!

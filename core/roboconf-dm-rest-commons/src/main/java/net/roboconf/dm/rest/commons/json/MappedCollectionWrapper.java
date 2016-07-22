@@ -23,44 +23,31 @@
  * limitations under the License.
  */
 
-package net.roboconf.messaging.api.messages.from_dm_to_agent;
+package net.roboconf.dm.rest.commons.json;
 
-import java.util.Set;
-
-import net.roboconf.messaging.api.messages.Message;
+import java.util.Collection;
+import java.util.Map;
 
 /**
- * A message that indicates a new binding for inter-application exchanges.
  * @author Vincent Zurczak - Linagora
  */
-public class MsgCmdChangeBinding extends Message {
+public class MappedCollectionWrapper {
 
-	private static final long serialVersionUID = -90811826628551779L;
-	private final String externalExportsPrefix;
-	private final Set<String> appNames;
+	private final Map<String,? extends Collection<String>> map;
 
 
 	/**
 	 * Constructor.
-	 * @param externalExportsPrefix
-	 * @param appNames
+	 * @param map
 	 */
-	public MsgCmdChangeBinding( String externalExportsPrefix, Set<String> appNames ) {
-		this.externalExportsPrefix = externalExportsPrefix;
-		this.appNames = appNames;
+	public MappedCollectionWrapper( Map<String,? extends Collection<String>> map ) {
+		this.map = map;
 	}
 
 	/**
-	 * @return the externalExportsPrefix
+	 * @return the map
 	 */
-	public String getExternalExportsPrefix() {
-		return this.externalExportsPrefix;
-	}
-
-	/**
-	 * @return the appName
-	 */
-	public Set<String> getAppNames() {
-		return this.appNames;
+	public Map<String,? extends Collection<String>> getMap() {
+		return this.map;
 	}
 }

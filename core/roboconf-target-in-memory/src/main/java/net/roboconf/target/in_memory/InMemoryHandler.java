@@ -34,6 +34,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
 
+import org.apache.felix.ipojo.ComponentInstance;
+import org.apache.felix.ipojo.Factory;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
@@ -44,9 +47,6 @@ import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
-
-import org.apache.felix.ipojo.ComponentInstance;
-import org.apache.felix.ipojo.Factory;
 
 /**
  * A target that runs agents in memory.
@@ -247,7 +247,7 @@ public class InMemoryHandler implements TargetHandler {
 		String key = machineId.substring( 0, index ).trim();
 		String value = machineId.substring( index + 1 ).trim();
 
-		return new AbstractMap.SimpleEntry<String,String>( key, value );
+		return new AbstractMap.SimpleEntry<>( key, value );
 	}
 
 

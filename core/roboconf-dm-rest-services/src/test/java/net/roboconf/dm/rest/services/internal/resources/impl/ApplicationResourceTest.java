@@ -28,7 +28,9 @@ package net.roboconf.dm.rest.services.internal.resources.impl;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
@@ -57,7 +59,7 @@ import net.roboconf.dm.internal.test.TestManagerWrapper;
 import net.roboconf.dm.internal.test.TestTargetResolver;
 import net.roboconf.dm.management.ManagedApplication;
 import net.roboconf.dm.management.Manager;
-import net.roboconf.dm.rest.commons.json.MapWrapper;
+import net.roboconf.dm.rest.commons.json.MappedCollectionWrapper;
 import net.roboconf.dm.rest.services.internal.resources.IApplicationResource;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.internal.client.test.TestClient;
@@ -895,7 +897,9 @@ public class ApplicationResourceTest {
 
 			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
 			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
-			Assert.assertEquals( app2.getName(), msg.getAppName());
+			Assert.assertNotNull( msg.getAppNames());
+			Assert.assertEquals( 1, msg.getAppNames().size());
+			Assert.assertTrue( msg.getAppNames().contains( app2.getName()));
 		}
 	}
 
@@ -911,33 +915,34 @@ public class ApplicationResourceTest {
 	@Test
 	public void testGetApplicationBindings_success() throws Exception {
 
-		this.app.applicationBindings.put( "some", "value" );
-		this.app.applicationBindings.put( "another", "value" );
+		this.app.bindWithApplication( "some", "value" );
+		this.app.bindWithApplication( "another", "value" );
 
 		Response resp = this.resource.getApplicationBindings( this.app.getName());
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
-		MapWrapper wrapper = (MapWrapper) resp.getEntity();
+		MappedCollectionWrapper wrapper = (MappedCollectionWrapper) resp.getEntity();
 		Assert.assertEquals( 2, wrapper.getMap().size());
-		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
-		Assert.assertEquals( "value", wrapper.getMap().get( "another" ));
+		Assert.assertEquals( new HashSet<>( Arrays.asList( "value" )), wrapper.getMap().get( "some" ));
+		Assert.assertEquals( new HashSet<>( Arrays.asList( "value" )), wrapper.getMap().get( "another" ));
 	}
 
 
 	@Test
 	public void testGetApplicationBindings_success_withUnresolvedMapping() throws Exception {
 
+		// This is to verify application bindings are picked up from application bindings only
+		// and not deduced or completed by graph imports.
 		ImportedVariable var = new ImportedVariable( "ext.ip", false, true );
 		this.app.getWar().getComponent().importedVariables.put( var.getName(), var );
-
-		this.app.applicationBindings.put( "some", "value" );
+		this.app.bindWithApplication( "some", "value" );
 
 		Response resp = this.resource.getApplicationBindings( this.app.getName());
 		Assert.assertEquals( Status.OK.getStatusCode(), resp.getStatus());
 
-		MapWrapper wrapper = (MapWrapper) resp.getEntity();
+		MappedCollectionWrapper wrapper = (MappedCollectionWrapper) resp.getEntity();
 		Assert.assertEquals( 2, wrapper.getMap().size());
-		Assert.assertEquals( "value", wrapper.getMap().get( "some" ));
+		Assert.assertEquals( new HashSet<>( Arrays.asList( "value" )), wrapper.getMap().get( "some" ));
 		Assert.assertNull( wrapper.getMap().get( "ext" ));
 		Assert.assertTrue( wrapper.getMap().containsKey( "ext" ));
 	}

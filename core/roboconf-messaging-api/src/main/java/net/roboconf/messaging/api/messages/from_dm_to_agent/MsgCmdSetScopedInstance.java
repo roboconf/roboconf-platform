@@ -27,6 +27,7 @@ package net.roboconf.messaging.api.messages.from_dm_to_agent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.messages.Message;
@@ -40,7 +41,7 @@ public class MsgCmdSetScopedInstance extends Message {
 
 	private final Instance scopedInstance;
 	private final Map<String,String> externalExports;
-	private final Map<String,String> applicationBindings;
+	private final Map<String,Set<String>> applicationBindings;
 
 
 	/**
@@ -52,15 +53,15 @@ public class MsgCmdSetScopedInstance extends Message {
 	public MsgCmdSetScopedInstance(
 			Instance scopedInstance,
 			Map<String,String> externalExports,
-			Map<String,String> applicationBindings ) {
+			Map<String,Set<String>> applicationBindings ) {
 
 		this.scopedInstance = scopedInstance;
 
-		this.externalExports = new HashMap<String,String> ();
+		this.externalExports = new HashMap<> ();
 		if( externalExports != null )
 			this.externalExports.putAll( externalExports );
 
-		this.applicationBindings = new HashMap<String,String> ();
+		this.applicationBindings = new HashMap<> ();
 		if( applicationBindings != null )
 			this.applicationBindings.putAll( applicationBindings );
 	}
@@ -90,7 +91,7 @@ public class MsgCmdSetScopedInstance extends Message {
 	/**
 	 * @return the applicationBindings (never null)
 	 */
-	public Map<String,String> getApplicationBindings() {
+	public Map<String,Set<String>> getApplicationBindings() {
 		return this.applicationBindings;
 	}
 }

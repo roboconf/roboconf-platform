@@ -588,7 +588,9 @@ public class ApplicationWsDelegateTest {
 
 			MsgCmdChangeBinding msg = (MsgCmdChangeBinding) m;
 			Assert.assertEquals( app2.getTemplate().getExternalExportsPrefix(), msg.getExternalExportsPrefix());
-			Assert.assertEquals( app2.getName(), msg.getAppName());
+			Assert.assertNotNull( msg.getAppNames());
+			Assert.assertEquals( 1, msg.getAppNames().size());
+			Assert.assertTrue( msg.getAppNames().contains( app2.getName()));
 		}
 	}
 

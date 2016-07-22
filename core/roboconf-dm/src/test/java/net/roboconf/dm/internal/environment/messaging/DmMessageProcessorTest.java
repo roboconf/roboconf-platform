@@ -29,6 +29,14 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.beans.Instance;
@@ -47,16 +55,8 @@ import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceChan
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifInstanceRemoved;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifLogs;
 import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdGatherLogs;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
-
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -329,9 +329,9 @@ public class DmMessageProcessorTest {
 		Assert.assertEquals( 0, msgClient.allSentMessages.size());
 
 		// Store messages
-		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-1" ));
-		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-2" ));
-		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdChangeBinding( "tpl", "app-3" ));
+		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdGatherLogs());
+		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdGatherLogs());
+		this.manager.messagingMngr().sendMessageSafely( ma, this.app.getMySqlVm(), new MsgCmdGatherLogs());
 		Assert.assertEquals( 3, ma.getScopedInstanceToAwaitingMessages().get( this.app.getMySqlVm()).size());
 		Assert.assertEquals( 0, msgClient.allSentMessages.size());
 
