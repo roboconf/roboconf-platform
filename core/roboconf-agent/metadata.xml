@@ -20,6 +20,7 @@
 			<property name="application-name" method="setApplicationName" />
 			<property name="scoped-instance-path" method="setScopedInstancePath" />
 			<property name="ip-address-of-the-agent" method="setIpAddress" />
+			<property name="network-interface" method="setNetworkInterface" />
 			<property name="target-id" method="setTargetId" type="java.lang.String" />
 			<property name="override-properties-with-user-data" method="setOverrideProperties" value="true" />
 			<property name="simulate-plugins" method="setSimulatePlugins" value="false" />

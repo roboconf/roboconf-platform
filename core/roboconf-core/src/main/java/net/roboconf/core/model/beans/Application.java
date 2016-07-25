@@ -27,9 +27,13 @@ package net.roboconf.core.model.beans;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.roboconf.core.model.helpers.InstanceHelpers;
 
@@ -42,7 +46,7 @@ public class Application extends AbstractApplication implements Serializable {
 	private static final long serialVersionUID = -4753958407033243184L;
 
 	private final ApplicationTemplate template;
-	public final Map<String,String> applicationBindings = new HashMap<String,String> ();
+	private final Map<String,Set<String>> applicationBindings = new ConcurrentHashMap<> ();
 
 
 	/**
@@ -87,7 +91,7 @@ public class Application extends AbstractApplication implements Serializable {
 	 * @return a non-null map
 	 */
 	public Map<String,String> getExternalExports() {
-		return this.template != null ? this.template.externalExports : null;
+		return this.template != null ? this.template.externalExports : new HashMap<String,String>( 0 );
 	}
 
 	@Override
@@ -131,5 +135,54 @@ public class Application extends AbstractApplication implements Serializable {
 	public void removeAssociationWithTemplate() {
 		if( this.template != null )
 			this.template.removeApplicationAssocation( this );
+	}
+
+
+	/**
+	 * Binds an external export prefix with an application name.
+	 * <p>
+	 * No error is thrown if the bound already existed.
+	 * </p>
+	 *
+	 * @param externalExportPrefix an external export prefix (not null)
+	 * @param applicationName an application name (not null)
+	 */
+	public void bindWithApplication( String externalExportPrefix, String applicationName ) {
+
+		Set<String> bounds = this.applicationBindings.get( externalExportPrefix );
+		if( bounds == null ) {
+			bounds = new LinkedHashSet<> ();
+			this.applicationBindings.put( externalExportPrefix, bounds );
+		}
+
+		bounds.add( applicationName );
+	}
+
+
+	/**
+	 * Binds an external export prefix with an application name.
+	 * <p>
+	 * No error is thrown if the bound already existed.
+	 * </p>
+	 *
+	 * @param externalExportPrefix an external export prefix (not null)
+	 * @param applicationName an application name (not null)
+	 */
+	public void unbindFromApplication( String externalExportPrefix, String applicationName ) {
+
+		Set<String> bounds = this.applicationBindings.get( externalExportPrefix );
+		if( bounds != null ) {
+			bounds.remove( applicationName );
+			if( bounds.isEmpty())
+				this.applicationBindings.remove( externalExportPrefix );
+		}
+	}
+
+
+	/**
+	 * @return the applicationBindings
+	 */
+	public Map<String,Set<String>> getApplicationBindings() {
+		return Collections.unmodifiableMap( this.applicationBindings );
 	}
 }

@@ -231,7 +231,7 @@ public class DmMessageProcessor extends AbstractMessageProcessor<IDmClient> {
 					Message msg = new MsgCmdSetScopedInstance(
 							scopedInstance,
 							app.getExternalExports(),
-							app.applicationBindings );
+							app.getApplicationBindings());
 
 					this.messagingClient.sendMessageToAgent( ma.getApplication(), scopedInstance, msg );
 				}

@@ -26,9 +26,13 @@
 package net.roboconf.dm.rest.commons.json;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -886,6 +890,45 @@ public class JSonBindingUtilsTest {
 
 		Map<String,String> map = new HashMap<>( 0 );
 		MapWrapper obj = new MapWrapper( map );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, obj );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{}", s );
+		MapWrapper read = mapper.readValue( s, MapWrapper.class );
+		Assert.assertEquals( obj.getMap(), read.getMap());
+	}
+
+
+
+	@Test
+	public void testMappedCollectionWrapperBinding_1() throws Exception {
+
+		Map<String,List<String>> map = new LinkedHashMap<>( 2 );
+		map.put( "key1", Arrays.asList( "value11", "value12" ));
+		map.put( "key2", Arrays.asList( "value2" ));
+		map.put( "key3", null );
+		map.put( "key4", new ArrayList<String>( 0 ));
+		map.put( null, Arrays.asList( "value4" ));
+
+		MappedCollectionWrapper obj = new MappedCollectionWrapper( map );
+
+		StringWriter writer = new StringWriter();
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+		mapper.writeValue( writer, obj );
+		String s = writer.toString();
+
+		Assert.assertEquals( "{\"key1\":[\"value11\",\"value12\"],\"key2\":[\"value2\"],\"key3\":[],\"key4\":[],\"\":[\"value4\"]}", s );
+	}
+
+
+	@Test
+	public void testMappedCollectionWrapperBinding_2() throws Exception {
+
+		Map<String,Set<String>> map = new HashMap<>( 0 );
+		MappedCollectionWrapper obj = new MappedCollectionWrapper( map );
 
 		StringWriter writer = new StringWriter();
 		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();

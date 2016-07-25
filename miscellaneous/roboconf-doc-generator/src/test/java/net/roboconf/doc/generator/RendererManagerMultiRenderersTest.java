@@ -32,9 +32,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
-import net.roboconf.doc.generator.RenderingManager.Renderer;
-
 import org.junit.Test;
+
+import net.roboconf.doc.generator.RenderingManager.Renderer;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -45,12 +45,12 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 	public void testMulti_nullOptions() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		List<String> renderers = new ArrayList<String> ();
+		List<String> renderers = new ArrayList<> ();
 		renderers.add( Renderer.HTML.toString());
 		renderers.add( Renderer.MARKDOWN.toString());
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null, null );
 		Assert.assertEquals( 3, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.HTML.toString().toLowerCase());
@@ -69,11 +69,11 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 	public void testMultiButOnlyOneRenderer() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		List<String> renderers = new ArrayList<String> ();
+		List<String> renderers = new ArrayList<> ();
 		renderers.add( Renderer.MARKDOWN.toString());
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null, null );
 		Assert.assertEquals( 1, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.MARKDOWN.toString().toLowerCase());
@@ -88,12 +88,12 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 	public void testMulti_invalidRendererInside() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		List<String> renderers = new ArrayList<String> ();
+		List<String> renderers = new ArrayList<> ();
 		renderers.add( Renderer.HTML.toString());
 		renderers.add( "oops" );
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, null, null );
 		Assert.assertEquals( 2, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.HTML.toString().toLowerCase());
@@ -108,15 +108,15 @@ public class RendererManagerMultiRenderersTest extends AbstractTestForRendererMa
 	public void testMulti_withLocale() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		List<String> renderers = new ArrayList<String> ();
+		List<String> renderers = new ArrayList<> ();
 		renderers.add( Renderer.HTML.toString());
 		renderers.add( Renderer.MARKDOWN.toString());
 
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, renderers, options, null );
 		Assert.assertEquals( 3, this.outputDir.listFiles().length );
 
 		File f = new File( this.outputDir, Renderer.HTML.toString().toLowerCase() + "_fr_FR" );

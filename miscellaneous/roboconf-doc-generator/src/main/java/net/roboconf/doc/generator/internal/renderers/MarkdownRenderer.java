@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import net.roboconf.core.model.beans.ApplicationTemplate;
@@ -47,9 +48,15 @@ public class MarkdownRenderer extends AbstractStructuredRenderer {
 	 * @param outputDirectory
 	 * @param applicationTemplate
 	 * @param applicationDirectory
+	 * @param typeAnnotations
 	 */
-	public MarkdownRenderer( File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory ) {
-		super( outputDirectory, applicationTemplate, applicationDirectory );
+	public MarkdownRenderer(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			Map<String,String> typeAnnotations ) {
+
+		super( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 	}
 
 

@@ -29,6 +29,11 @@ import java.io.File;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.Constants;
 import net.roboconf.core.internal.tests.TestApplication;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
@@ -38,11 +43,6 @@ import net.roboconf.core.model.beans.Instance;
 import net.roboconf.core.model.beans.Instance.InstanceStatus;
 import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.management.ManagedApplication;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -193,21 +193,30 @@ public class ConfigurationUtilsTest {
 	@Test
 	public void testLoadAndSaveApplicationBindings() throws Exception {
 
+		File dir = this.folder.newFolder();
 		Application app = new TestApplication();
-		app.setDirectory( this.folder.newFolder());
+		app.setDirectory( dir );
 
-		Assert.assertEquals( 0, app.applicationBindings.size());
+		Assert.assertEquals( 0, app.getApplicationBindings().size());
 		ConfigurationUtils.loadApplicationBindings( app );
-		Assert.assertEquals( 0, app.applicationBindings.size());
+		Assert.assertEquals( 0, app.getApplicationBindings().size());
 
-		app.applicationBindings.put( "a1", "v1" );
-		app.applicationBindings.put( "a2", "v2" );
+		app.bindWithApplication( "a1", "v11" );
+		app.bindWithApplication( "a1", "v11" );
+		app.bindWithApplication( "a1", "v12" );
+		app.bindWithApplication( "a2", "v2" );
 		ConfigurationUtils.saveApplicationBindings( app );
 
-		app.applicationBindings.clear();
+		app = new TestApplication();
+		app.setDirectory( dir );
+
 		ConfigurationUtils.loadApplicationBindings( app );
-		Assert.assertEquals( 2, app.applicationBindings.size());
-		Assert.assertEquals( "v1", app.applicationBindings.get( "a1" ));
-		Assert.assertEquals( "v2", app.applicationBindings.get( "a2" ));
+		Assert.assertEquals( 2, app.getApplicationBindings().size());
+		Assert.assertEquals( 2, app.getApplicationBindings().get( "a1" ).size());
+		Assert.assertEquals( 1, app.getApplicationBindings().get( "a2" ).size());
+
+		Assert.assertTrue( app.getApplicationBindings().get( "a1" ).contains( "v11" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "a1" ).contains( "v12" ));
+		Assert.assertTrue( app.getApplicationBindings().get( "a2" ).contains( "v2" ));
 	}
 }

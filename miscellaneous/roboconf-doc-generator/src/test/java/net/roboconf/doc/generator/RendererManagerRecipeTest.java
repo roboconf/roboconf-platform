@@ -32,16 +32,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.RuntimeModelIo;
 import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
 import net.roboconf.core.model.helpers.RoboconfErrorHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.RenderingManager.Renderer;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -68,17 +68,17 @@ public class RendererManagerRecipeTest {
 		File outputDir = this.folder.newFolder();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
 
-		List<String> renderers = new ArrayList<String> ();
+		List<String> renderers = new ArrayList<> ();
 		renderers.add( Renderer.HTML.toString());
 		renderers.add( Renderer.MARKDOWN.toString());
 
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
 		// Generate...
 		RenderingManager rm = new RenderingManager();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
-		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options );
+		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options, null );
 
 		// With this example, there is only one component.
 		// So, no graph and no generated diagram.
@@ -97,8 +97,18 @@ public class RendererManagerRecipeTest {
 
 		content = Utils.readFileContent( new File( f, "index.md" ));
 		Assert.assertFalse( content.toLowerCase().contains( "facettes" ));
+		Assert.assertFalse( content.contains( "=> MySQL database" ));
 
 		Assert.assertFalse( new File( outputDir, "png" ).exists());
+
+		// Test with annotations
+		Map<String,String> annotations = new HashMap<> ();
+		annotations.put( "MySQL", "=> MySQL database" );
+		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options, annotations );
+
+		content = Utils.readFileContent( new File( f, "index.md" ));
+		Assert.assertFalse( content.toLowerCase().contains( "facettes" ));
+		Assert.assertTrue( content.contains( "=> MySQL database" ));
 	}
 
 
@@ -118,18 +128,18 @@ public class RendererManagerRecipeTest {
 		File outputDir = this.folder.newFolder();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
 
-		List<String> renderers = new ArrayList<String> ();
+		List<String> renderers = new ArrayList<> ();
 		renderers.add( Renderer.HTML.toString());
 		renderers.add( Renderer.MARKDOWN.toString());
 
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 		options.put( DocConstants.OPTION_RECIPE, "yes" );
 
 		// Generate...
 		RenderingManager rm = new RenderingManager();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
-		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options );
+		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options, null );
 
 		// With this example, there is only one component.
 		// So, no graph and no generated diagram.
@@ -169,18 +179,18 @@ public class RendererManagerRecipeTest {
 		File outputDir = this.folder.newFolder();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
 
-		List<String> renderers = new ArrayList<String> ();
+		List<String> renderers = new ArrayList<> ();
 		renderers.add( Renderer.HTML.toString());
 		renderers.add( Renderer.MARKDOWN.toString());
 
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 		options.put( DocConstants.OPTION_RECIPE, "yes" );
 
 		// Generate...
 		RenderingManager rm = new RenderingManager();
 		Assert.assertEquals( 0, outputDir.listFiles().length );
-		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options );
+		rm.render( outputDir, alr.getApplicationTemplate(), applicationDirectory, renderers, options, null );
 
 		// One component, one facet, everything is fine.
 		Assert.assertEquals( 3, outputDir.listFiles().length );

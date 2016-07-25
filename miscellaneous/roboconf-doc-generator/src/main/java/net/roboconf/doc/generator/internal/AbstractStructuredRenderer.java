@@ -31,6 +31,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	protected File outputDirectory;
 	protected ApplicationTemplate applicationTemplate;
 	protected File applicationDirectory;
-	protected Map<String,String> options;
+	protected Map<String,String> options, typeAnnotations;
 	protected Messages messages;
 	protected String locale;
 
@@ -82,11 +83,18 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	 * @param outputDirectory
 	 * @param applicationTemplate
 	 * @param applicationDirectory
+	 * @param typeAnnotations (can be null)
 	 */
-	public AbstractStructuredRenderer( File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory ) {
+	public AbstractStructuredRenderer(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			Map<String,String> typeAnnotations ) {
+
 		this.outputDirectory = outputDirectory;
 		this.applicationTemplate = applicationTemplate;
 		this.applicationDirectory = applicationDirectory;
+		this.typeAnnotations = typeAnnotations != null ? typeAnnotations : new HashMap<String,String>( 0 );
 	}
 
 
@@ -232,7 +240,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 		sb.append( renderTitle1( this.messages.get( "components" ))); //$NON-NLS-1$
 		sb.append( renderParagraph( this.messages.get( "components.intro" ))); //$NON-NLS-1$
 
-		List<String> sectionNames = new ArrayList<String> ();
+		List<String> sectionNames = new ArrayList<> ();
 		List<Component> allComponents = ComponentHelpers.findAllComponents( this.applicationTemplate );
 		Collections.sort( allComponents, new AbstractTypeComparator());
 		for( Component comp : allComponents ) {
@@ -246,6 +254,9 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			section.append( renderTitle3( this.messages.get( "overview" ))); //$NON-NLS-1$
 
 			String customInfo = readCustomInformation( this.applicationDirectory, comp.getName(), DocConstants.COMP_SUMMARY );
+			if( Utils.isEmptyOrWhitespaces( customInfo ))
+				customInfo = this.typeAnnotations.get( comp.getName());
+
 			if( ! Utils.isEmptyOrWhitespaces( customInfo ))
 				section.append( renderParagraph( customInfo ));
 
@@ -303,10 +314,10 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 
 			// Hierarchy
 			section.append( renderTitle3( this.messages.get( "hierarchy" ))); //$NON-NLS-1$
-			Collection<AbstractType> ancestors = new ArrayList<AbstractType>();
+			Collection<AbstractType> ancestors = new ArrayList<>();
 			ancestors.addAll( ComponentHelpers.findAllAncestors( comp ));
 
-			Set<AbstractType> children = new HashSet<AbstractType>();;
+			Set<AbstractType> children = new HashSet<>();;
 			children.addAll( ComponentHelpers.findAllChildren( comp ));
 
 			// For recipes, ancestors and children should include facets
@@ -396,8 +407,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			sb.append( renderTitle1( this.messages.get( "facets" ))); //$NON-NLS-1$
 			sb.append( renderParagraph( this.messages.get( "facets.intro" ))); //$NON-NLS-1$
 
-			List<String> sectionNames = new ArrayList<String> ();
-			List<Facet> allFacets = new ArrayList<Facet>( this.applicationTemplate.getGraphs().getFacetNameToFacet().values());
+			List<String> sectionNames = new ArrayList<> ();
+			List<Facet> allFacets = new ArrayList<>( this.applicationTemplate.getGraphs().getFacetNameToFacet().values());
 			Collections.sort( allFacets, new AbstractTypeComparator());
 
 			for( Facet facet : allFacets ) {
@@ -410,6 +421,9 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 				section.append( renderTitle2( facet.getName()));
 
 				String customInfo = readCustomInformation( this.applicationDirectory, facet.getName(), DocConstants.FACET_DETAILS );
+				if( Utils.isEmptyOrWhitespaces( customInfo ))
+					customInfo = this.typeAnnotations.get( facet.getName());
+
 				if( ! Utils.isEmptyOrWhitespaces( customInfo )) {
 					section.append( renderTitle3( this.messages.get( "overview" ))); //$NON-NLS-1$
 					section.append( renderParagraph( customInfo ));
@@ -458,8 +472,8 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 			sb.append( renderParagraph( this.messages.get( "instances.sorting" ))); //$NON-NLS-1$
 
 			// Split by root instance
-			List<String> sectionNames = new ArrayList<String> ();
-			Set<Instance> sortedRootInstances = new TreeSet<Instance>( new InstanceComparator());
+			List<String> sectionNames = new ArrayList<> ();
+			Set<Instance> sortedRootInstances = new TreeSet<>( new InstanceComparator());
 			sortedRootInstances.addAll( this.applicationTemplate.getRootInstances());
 			for( Instance inst : sortedRootInstances ) {
 
@@ -475,7 +489,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 						this.messages.get( "instances.component" ),		//$NON-NLS-1$
 						this.messages.get( "instances.installer" )));	//$NON-NLS-1$
 
-				List<Instance> instances = new ArrayList<Instance> ();
+				List<Instance> instances = new ArrayList<> ();
 				instances.addAll( InstanceHelpers.buildHierarchicalList( inst ));
 				Collections.sort( instances, new InstanceComparator());
 
@@ -625,7 +639,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	 */
 	private List<String> convertImports( Collection<ImportedVariable> importedVariables ) {
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		for( ImportedVariable var : importedVariables ) {
 			String componentOrFacet = VariableHelpers.parseVariableName( var.getName()).getKey();
 			String s = applyLink( var.getName(), componentOrFacet );
@@ -647,7 +661,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	 */
 	private List<String> convertExports( Map<String,String> exports ) {
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		for( Map.Entry<String,String> entry : exports.entrySet()) {
 			String componentOrFacet = VariableHelpers.parseVariableName( entry.getKey()).getKey();
 			String s = Utils.isEmptyOrWhitespaces( componentOrFacet )
@@ -674,7 +688,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	 */
 	private List<String> getImportComponents( Component component ) {
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		Map<String,Boolean> map = ComponentHelpers.findComponentDependenciesFor( component );
 		for( Map.Entry<String,Boolean> entry : map.entrySet()) {
 			String s = applyLink( entry.getKey(), entry.getKey());
@@ -693,7 +707,7 @@ public abstract class AbstractStructuredRenderer implements IRenderer {
 	 */
 	private String renderListAsLinks( List<String> names ) {
 
-		List<String> newNames = new ArrayList<String> ();
+		List<String> newNames = new ArrayList<> ();
 		for( String s : names )
 			newNames.add( applyLink( s, s ));
 

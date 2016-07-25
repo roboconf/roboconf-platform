@@ -319,6 +319,7 @@ public final class RuntimeModelIo {
 		final Collection<RoboconfError> loadErrors = new ArrayList<> ();
 		final Map<Object,SourceReference> objectToSource = new HashMap<> ();
 		final Set<File> parsedFiles = new HashSet<> ();
+		final Map<String,String> typeAnnotations = new HashMap<> ();
 
 
 		/**
@@ -347,6 +348,13 @@ public final class RuntimeModelIo {
 		 */
 		public Set<File> getParsedFiles() {
 			return this.parsedFiles;
+		}
+
+		/**
+		 * @return the typeAnnotations
+		 */
+		public Map<String,String> getTypeAnnotations() {
+			return this.typeAnnotations;
 		}
 	}
 
@@ -416,6 +424,7 @@ public final class RuntimeModelIo {
 			errors = RuntimeModelValidator.validate( graph, graphDirectory.getParentFile());
 			alr.loadErrors.addAll( errors );
 			alr.objectToSource.putAll( fromDef.getObjectToSource());
+			alr.typeAnnotations.putAll( fromDef.getTypeAnnotations());
 		}
 
 		return graph;

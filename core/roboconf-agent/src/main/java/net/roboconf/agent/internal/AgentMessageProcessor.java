@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -98,10 +99,10 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	/**
 	 * A map used for external exports.
 	 * <p>
-	 * Key = template name, value = application name.
+	 * Key = template name, value = a set of application names.
 	 * </p>
 	 */
-	final Map<String,String> applicationBindings = new HashMap<> ();
+	final Map<String,Set<String>> applicationBindings = new HashMap<> ();
 
 	/**
 	 * A local cache to store external imports, even those that are NOT used by instances.
@@ -244,13 +245,28 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	 * @param msg an change binding message
 	 */
 	void processMsgChangeBinding( MsgCmdChangeBinding msg ) throws IOException {
-		this.logger.fine( "Binding prefix " + msg.getExternalExportsPrefix() + " to application " + msg.getAppName() + "." );
+		this.logger.fine( "Updating bound applications for prefix " + msg.getExternalExportsPrefix() + "." );
 
-		// First, determine if a previous binding existed
-		String previousAppName = this.applicationBindings.get( msg.getExternalExportsPrefix());
+		// We need to get the delta between the new bindings and the previous ones
+		Set<String> oldBindings = this.applicationBindings.get( msg.getExternalExportsPrefix());
+		if( oldBindings == null )
+			oldBindings = new HashSet<>( 0 );
+
+		Set<String> newBindings = msg.getAppNames();
+		if( newBindings == null )
+			newBindings = new HashSet<>( 0 );
+
+		// Removed names are those present before but not after
+		Set<String> removedAppNames = new LinkedHashSet<>( oldBindings );
+		removedAppNames.removeAll( newBindings );
+
+		// Added ones are those present after but not before
+		Set<String> addedAppNames = new LinkedHashSet<>( newBindings );
+		addedAppNames.removeAll( oldBindings );
 
 		// If so, act as if the associated imports had been removed
-		if( previousAppName != null ) {
+		for( String removedAppName : removedAppNames ) {
+			this.logger.fine( "Unbiding prefix " + msg.getExternalExportsPrefix() + " from application " + removedAppName + "." );
 
 			// We need to remove all the instance paths associated with this inter-app prefix.
 			// For that, we act as if we had received MsgCmdRemoveImport messages.
@@ -274,7 +290,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 			// Now that we have the instance paths to remove,
 			// remove the associated imports.
 			for( String path : instancePaths ) {
-				MsgCmdRemoveImport fakeMsg = new MsgCmdRemoveImport( previousAppName, msg.getExternalExportsPrefix(), path );
+				MsgCmdRemoveImport fakeMsg = new MsgCmdRemoveImport( removedAppName, msg.getExternalExportsPrefix(), path );
 				try {
 					processMsgRemoveImport( fakeMsg, false );
 
@@ -286,16 +302,21 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 		}
 
 		// Update the bindings
-		this.applicationBindings.put( msg.getExternalExportsPrefix(), msg.getAppName());
+		this.applicationBindings.put( msg.getExternalExportsPrefix(), msg.getAppNames());
 
 		// Now, we need to find all the external imports associated with the new application.
 		// Then, we will act as if we had received AddImport messages. This is symmetrical with what we
 		// did with removed imports.
 		// This strategy with a local cache prevents use from requesting exports from other agents.
-		Collection<Import> imports = this.applicationNameToExternalExports.get( msg.getAppName());
-		if( imports != null ) {
+		for( String addedAppName : addedAppNames ) {
+
+			this.logger.fine( "Binding prefix " + msg.getExternalExportsPrefix() + " with application " + addedAppName + "." );
+			Collection<Import> imports = this.applicationNameToExternalExports.get( addedAppName );
+			if( imports == null )
+				continue;
+
 			for( Import imp : imports ) {
-				MsgCmdAddImport fakeMsg = new MsgCmdAddImport( msg.getAppName(), imp.getComponentName(), imp.getInstancePath(), imp.getExportedVars());
+				MsgCmdAddImport fakeMsg = new MsgCmdAddImport( addedAppName, imp.getComponentName(), imp.getInstancePath(), imp.getExportedVars());
 				try {
 					processMsgAddImport( fakeMsg );
 
@@ -370,7 +391,7 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 	void processMsgSetScopedInstance( MsgCmdSetScopedInstance msg ) throws IOException, PluginException {
 
 		Instance newScopedInstance = msg.getScopedInstance();
-		List<Instance> instancesToProcess = new ArrayList<Instance> ();
+		List<Instance> instancesToProcess = new ArrayList<> ();
 
 		// Update the model and determine what must be updated
 		if( ! InstanceHelpers.isTarget( newScopedInstance )) {
@@ -603,9 +624,9 @@ public class AgentMessageProcessor extends AbstractMessageProcessor<IAgentClient
 
 			// Should we go further?
 			// If it is not in the application binding, this import should not be added in the instance imports.
-			String expectedName = this.applicationBindings.get( msg.getComponentOrFacetName());
-			if( ! msg.getApplicationOrContextName().equals( expectedName )) {
-				this.logger.fine( "An external export was received (" + msg.getComponentOrFacetName() + ") but did not match (bound) application " + expectedName );
+			Set<String> appNames = this.applicationBindings.get( msg.getComponentOrFacetName());
+			if( appNames == null || ! appNames.contains( msg.getApplicationOrContextName())) {
+				this.logger.fine( "An external export was received (" + msg.getComponentOrFacetName() + ") but did not match any of the bound applications." );
 				return;
 			}
 		}

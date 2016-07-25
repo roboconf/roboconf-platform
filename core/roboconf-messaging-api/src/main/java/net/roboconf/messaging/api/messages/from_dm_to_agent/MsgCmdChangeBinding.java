@@ -25,6 +25,8 @@
 
 package net.roboconf.messaging.api.messages.from_dm_to_agent;
 
+import java.util.Set;
+
 import net.roboconf.messaging.api.messages.Message;
 
 /**
@@ -34,17 +36,18 @@ import net.roboconf.messaging.api.messages.Message;
 public class MsgCmdChangeBinding extends Message {
 
 	private static final long serialVersionUID = -90811826628551779L;
-	private final String externalExportsPrefix, appName;
+	private final String externalExportsPrefix;
+	private final Set<String> appNames;
 
 
 	/**
 	 * Constructor.
 	 * @param externalExportsPrefix
-	 * @param appName
+	 * @param appNames
 	 */
-	public MsgCmdChangeBinding( String externalExportsPrefix, String appName ) {
+	public MsgCmdChangeBinding( String externalExportsPrefix, Set<String> appNames ) {
 		this.externalExportsPrefix = externalExportsPrefix;
-		this.appName = appName;
+		this.appNames = appNames;
 	}
 
 	/**
@@ -57,7 +60,7 @@ public class MsgCmdChangeBinding extends Message {
 	/**
 	 * @return the appName
 	 */
-	public String getAppName() {
-		return this.appName;
+	public Set<String> getAppNames() {
+		return this.appNames;
 	}
 }

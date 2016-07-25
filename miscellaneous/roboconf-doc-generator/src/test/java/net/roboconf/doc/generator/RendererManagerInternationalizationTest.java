@@ -30,10 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.utils.Utils;
 import net.roboconf.doc.generator.RenderingManager.Renderer;
-
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -44,10 +44,10 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 	public void testHtml_en_US() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "en_US" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 		String s = checkInternationalization();
 		Assert.assertTrue( s.contains( "Components" ));
 		Assert.assertFalse( s.contains( "significant" ));
@@ -58,10 +58,10 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 	public void testHtml_fr_FR() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "fr_FR" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 		String s = checkInternationalization();
 		Assert.assertTrue( s.contains( "Composants" ));
 		Assert.assertTrue( s.contains( "significatif" ));
@@ -73,10 +73,10 @@ public class RendererManagerInternationalizationTest extends AbstractTestForRend
 	public void testHtml_unsupportedLocale() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_LOCALE, "oops" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 		checkInternationalization();
 	}
 

@@ -27,19 +27,21 @@ package net.roboconf.agent.internal.misc;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
-
-import net.roboconf.core.internal.tests.TestApplicationTemplate;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+
+import net.roboconf.core.internal.tests.TestApplicationTemplate;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -83,7 +85,7 @@ public class AgentUtilsTest {
 
 		// Prepare our resources
 		TestApplicationTemplate app = new TestApplicationTemplate();
-		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
+		Map<String,byte[]> fileNameToFileContent = new HashMap<> ();
 		fileNameToFileContent.put( "f1.txt", "I am file 1".getBytes( "UTF-8" ));
 		fileNameToFileContent.put( "f2.txt", "I am file 2".getBytes( "UTF-8" ));
 		fileNameToFileContent.put( "dir1/dir2/f3.txt", "I am file 3".getBytes( "UTF-8" ));
@@ -154,7 +156,7 @@ public class AgentUtilsTest {
 		// The directory where we should write contains a conflicting file.
 		// Prepare our resources
 		TestApplicationTemplate app = new TestApplicationTemplate();
-		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
+		Map<String,byte[]> fileNameToFileContent = new HashMap<> ();
 		fileNameToFileContent.put( "dir1/dir2/f3.txt", "I am file 3".getBytes( "UTF-8" ));
 
 		File dir = InstanceHelpers.findInstanceDirectoryOnAgent( app.getTomcat());
@@ -177,7 +179,7 @@ public class AgentUtilsTest {
 	public void testChangeRoboconfLogLevel() throws Exception {
 
 		// Null => no exception
-		AgentUtils.collectLogs( null );
+		AgentUtils.changeRoboconfLogLevel( Level.FINE.toString(), null );
 
 		// Create an empty directory => no log file to update
 		File karafEtc = this.folder.newFolder();
@@ -235,5 +237,38 @@ public class AgentUtilsTest {
 		Assert.assertEquals( 2, map.size());
 		Assert.assertTrue( map.containsKey( "karaf.log" ));
 		Assert.assertTrue( map.containsKey( "roboconf.log" ));
+	}
+
+
+	@Test
+	public void testFindIpAddress_invalidNetworkInterface() throws Exception {
+
+		String expectedIp = InetAddress.getLocalHost().getHostAddress();
+		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( "invalid-network" ));
+	}
+
+
+	@Test
+	public void testFindIpAddress_validNetworkInterface() throws Exception {
+
+		NetworkInterface nif = NetworkInterface.getByName( "eth0" );
+		if( nif != null )
+			Assert.assertNotNull( AgentUtils.findIpAddress( "eth0" ));
+	}
+
+
+	@Test
+	public void testFindIpAddress_nullNetworkInterface() throws Exception {
+
+		String expectedIp = InetAddress.getLocalHost().getHostAddress();
+		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( null ));
+	}
+
+
+	@Test
+	public void testFindIpAddress_nforceDefaultNetworkInterface() throws Exception {
+
+		String expectedIp = InetAddress.getLocalHost().getHostAddress();
+		Assert.assertEquals( expectedIp, AgentUtils.findIpAddress( AgentConstants.DEFAULT_NETWORK_INTERFACE ));
 	}
 }

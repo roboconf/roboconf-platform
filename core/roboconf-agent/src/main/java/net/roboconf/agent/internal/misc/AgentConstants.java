@@ -37,4 +37,6 @@ public interface AgentConstants {
 
 	String KARAF_LOG_CONF_FILE = "org.ops4j.pax.logging.cfg";
 	String KARAF_LOGS_DIRECTORY = "log";
+
+	String DEFAULT_NETWORK_INTERFACE = "rbcf-default-network";
 }

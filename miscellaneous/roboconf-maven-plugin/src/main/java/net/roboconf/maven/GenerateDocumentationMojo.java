@@ -31,12 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.roboconf.core.model.RuntimeModelIo;
-import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
-import net.roboconf.core.model.beans.ApplicationTemplate;
-import net.roboconf.doc.generator.DocConstants;
-import net.roboconf.doc.generator.RenderingManager;
-
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -45,6 +39,12 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+
+import net.roboconf.core.model.RuntimeModelIo;
+import net.roboconf.core.model.RuntimeModelIo.ApplicationLoadResult;
+import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.doc.generator.DocConstants;
+import net.roboconf.doc.generator.RenderingManager;
 
 /**
  * The <strong>documentation</strong> mojo.
@@ -75,6 +75,8 @@ public class GenerateDocumentationMojo extends AbstractMojo {
 		// - Sharing complex objects amongst mojos appears to be quite complicated.
 		File appDirectory = new File( this.project.getBasedir(), MavenPluginConstants.TARGET_MODEL_DIRECTORY );
 		ApplicationLoadResult alr = RuntimeModelIo.loadApplicationFlexibly( appDirectory );
+
+		Map<String,String> annotations = alr.getTypeAnnotations();
 		ApplicationTemplate app = alr.getApplicationTemplate();
 		if( app == null )
 			throw new MojoExecutionException( "The application object could not be loaded." );
@@ -84,9 +86,9 @@ public class GenerateDocumentationMojo extends AbstractMojo {
 
 		// Fix the options (add the right prefix if necessary)
 		if( this.options == null )
-			this.options = new HashMap<String,String>( 0 );
+			this.options = new HashMap<>( 0 );
 
-		Map<String,String> fixedOptions = new HashMap<String,String>( this.options.size());
+		Map<String,String> fixedOptions = new HashMap<>( this.options.size());
 		for( Map.Entry<String,String> entry : this.options.entrySet()) {
 			String key = entry.getKey().toLowerCase();
 			if( ! key.startsWith( DocConstants.OPTION_PREFIX ))
@@ -98,11 +100,11 @@ public class GenerateDocumentationMojo extends AbstractMojo {
 		// Start generating the documentation
 		try {
 			if( this.locales == null || this.locales.isEmpty()) {
-				new RenderingManager().render( docDirectory, app, appDirectory, this.renderers, fixedOptions );
+				new RenderingManager().render( docDirectory, app, appDirectory, this.renderers, fixedOptions, annotations );
 
 			} else for( String locale : this.locales ) {
 				fixedOptions.put( DocConstants.OPTION_LOCALE, locale );
-				new RenderingManager().render( docDirectory, app, appDirectory, this.renderers, fixedOptions );
+				new RenderingManager().render( docDirectory, app, appDirectory, this.renderers, fixedOptions, annotations );
 			}
 
 		} catch( IOException e ) {

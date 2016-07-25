@@ -15,6 +15,10 @@
 		
 		<callback transition="validate" method="starting" />
 		<callback transition="invalidate" method="stopping" />
+		
+		<properties pid="net.roboconf.dm.rest.services.configuration">
+			<property name="enable-cors" method="setEnableCors" value="false" />
+		</properties>
 	</component>
 	
 	<instance component="roboconf-dm-rest-component" name="Roboconf - DM REST services" />

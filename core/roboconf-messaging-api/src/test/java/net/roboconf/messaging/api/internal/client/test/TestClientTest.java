@@ -30,16 +30,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeBinding;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdResynchronize;
-
-import org.junit.Assert;
-import org.junit.Test;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -125,16 +125,16 @@ public class TestClientTest {
 		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "app1" );
 
 		Assert.assertEquals( 0, client.ctxToMessages.size());
-		client.publish( ctx, new MsgCmdChangeBinding( "prefix", "app" ));
-		client.publish( ctx, new MsgCmdChangeBinding( "prefix", "app" ));
+		client.publish( ctx, new MsgCmdSendInstances());
+		client.publish( ctx, new MsgCmdSendInstances());
 
 		Assert.assertEquals( 1, client.ctxToMessages.size());
 		List<Message> messages = client.ctxToMessages.get( ctx );
 
 		Assert.assertEquals( 2, client.messagesForTheDm.size());
 		Assert.assertEquals( 2, messages.size());
-		Assert.assertEquals( MsgCmdChangeBinding.class, messages.get( 0 ).getClass());
-		Assert.assertEquals( MsgCmdChangeBinding.class, messages.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdSendInstances.class, messages.get( 1 ).getClass());
 
 		Assert.assertEquals( 0, client.messagesForAgents.size());
 		ctx = new MessagingContext( RecipientKind.AGENTS, "app1" );
@@ -159,7 +159,7 @@ public class TestClientTest {
 
 		TestClient client = new TestClient();
 
-		List<Message> messages = new ArrayList<Message> ();
+		List<Message> messages = new ArrayList<> ();
 		messages.add( new MsgCmdRemoveInstance( "/root" ));
 		client.ctxToMessages.put( new MessagingContext( RecipientKind.DM, "app" ), messages );
 

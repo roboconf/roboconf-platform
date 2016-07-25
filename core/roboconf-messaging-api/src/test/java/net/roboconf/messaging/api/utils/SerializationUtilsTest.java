@@ -26,10 +26,17 @@
 package net.roboconf.messaging.api.utils;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
@@ -56,9 +63,6 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSendInstances;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.messaging.api.messages.from_dm_to_dm.MsgEcho;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -138,7 +142,7 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_addImport() throws Exception {
 
-		Map<String,String> map = new HashMap<String,String> ();
+		Map<String,String> map = new HashMap<> ();
 		map.put( "yeah", "value" );
 
 		MsgCmdAddImport msg = new MsgCmdAddImport( "app", "change-me", "anything", map );
@@ -167,8 +171,11 @@ public class SerializationUtilsTest {
 		map1.put( "test", "t1" );
 		map1.put( "another", "t2" );
 
-		Map<String,String> map2 = new HashMap<> ();
-		map2.put( "app_prefix", "app1" );
+		Map<String,Set<String>> map2 = new HashMap<> ();
+		Set<String> appNames = new LinkedHashSet<> ();
+		appNames.add( "app1" );
+		appNames.add( "app2" );
+		map2.put( "app_prefix", appNames );
 
 		msg = new MsgCmdSetScopedInstance( new Instance( "instance1" ), map1, map2 );
 		checkBasics( msg, MsgCmdSetScopedInstance.class );
@@ -213,7 +220,10 @@ public class SerializationUtilsTest {
 	@Test
 	public void testMessage_changeBinding() throws Exception {
 
-		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "tpl", "app" );
+		MsgCmdChangeBinding msg = new MsgCmdChangeBinding( "tpl", new HashSet<>( Arrays.asList( "app" )));
+		checkBasics( msg, MsgCmdChangeBinding.class );
+
+		msg = new MsgCmdChangeBinding( "tpl", new HashSet<>( Arrays.asList( "app1", "app2" )));
 		checkBasics( msg, MsgCmdChangeBinding.class );
 	}
 
@@ -270,7 +280,7 @@ public class SerializationUtilsTest {
 		msg = new MsgCmdChangeInstanceState( new Instance( "test" ), InstanceStatus.NOT_DEPLOYED );
 		checkBasics( msg, MsgCmdChangeInstanceState.class );
 
-		Map<String,byte[]> fileNameToFileContent = new HashMap<String,byte[]> ();
+		Map<String,byte[]> fileNameToFileContent = new HashMap<> ();
 		fileNameToFileContent.put( "readme.txt", new byte[ 90 ]);
 
 		msg = new MsgCmdChangeInstanceState( "/oops", InstanceStatus.NOT_DEPLOYED, fileNameToFileContent );

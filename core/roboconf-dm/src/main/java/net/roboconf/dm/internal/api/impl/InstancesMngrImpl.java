@@ -403,7 +403,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			MsgCmdSetScopedInstance msgModel = new MsgCmdSetScopedInstance(
 					scopedInstance,
 					ma.getApplication().getExternalExports(),
-					ma.getApplication().applicationBindings );
+					ma.getApplication().getApplicationBindings());
 
 			this.messagingMngr.sendMessageSafely( ma, scopedInstance, msgModel );
 

@@ -32,16 +32,22 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<!-- An independent module that can be built separately -->
+		<!--  "THE" Core Module -->
+		<module>core/roboconf-core</module>
+
+		<!-- 
+			This module embeds the web administration.
+			We put it in second because it requires NPM.
+			To save time (when possible), use "mvn clean install -rf :roboconf-target-api".
+		-->
 		<module>core/roboconf-dm-web-administration</module>
 
-		<!-- Core Modules -->
-		<module>core/roboconf-core</module>
+		<!-- Other Core Modules -->
 		<module>core/roboconf-target-api</module>
 		<module>core/roboconf-plugin-api</module>
 		<module>core/roboconf-messaging-api</module>
 		<module>core/roboconf-agent-monitoring-api</module>
-		
+
 		<!-- Utilities -->
 		<module>miscellaneous/roboconf-tooling-core</module>
 		<module>miscellaneous/roboconf-doc-generator</module>

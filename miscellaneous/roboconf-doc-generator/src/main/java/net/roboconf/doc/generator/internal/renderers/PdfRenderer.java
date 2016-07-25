@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
@@ -61,42 +62,57 @@ public class PdfRenderer extends AbstractStructuredRenderer {
 	 * @param outputDirectory
 	 * @param applicationTemplate
 	 * @param applicationDirectory
+	 * @param typeAnnotations
 	 */
-	public PdfRenderer(File outputDirectory, ApplicationTemplate applicationTemplate, File applicationDirectory) {
-		super(outputDirectory, applicationTemplate, applicationDirectory);
+	public PdfRenderer(
+			File outputDirectory,
+			ApplicationTemplate applicationTemplate,
+			File applicationDirectory,
+			Map<String,String> typeAnnotations ) {
+
+		super( outputDirectory, applicationTemplate, applicationDirectory, typeAnnotations );
 	}
 
-	@Override
-	protected File writeFileContent(String fileContent) throws IOException {
 
-		//Generate fop render
-		new RenderingManager().render( this.outputDirectory, this.applicationTemplate, this.applicationDirectory, Renderer.FOP, this.options );
+	@Override
+	protected File writeFileContent( String fileContent ) throws IOException {
+
+		// Generate FOP rendering
+		new RenderingManager().render(
+				this.outputDirectory,
+				this.applicationTemplate,
+				this.applicationDirectory,
+				Renderer.FOP,
+				this.options,
+				this.typeAnnotations );
+
 		File index_fo = new File( this.outputDirectory, "index.fo" );
 		File index_pdf = new File( this.outputDirectory, "index.pdf" );
 
-		//Copy fop configuration file in outputDirectory
+		// Copy the FOP configuration file in outputDirectory
 		InputStream conf = getClass().getResourceAsStream( "/fop.xconf" );
 		File fopConfig = new File( this.outputDirectory, "fop.xconf" );
 		Utils.copyStream( conf, fopConfig );
 
-		//Generate pdf render
+		// Generate the PDF rendering
 		OutputStream out = null;
 		try {
-				out = new BufferedOutputStream( new FileOutputStream(index_pdf) );
-				FopFactory fopFactory = FopFactory.newInstance( fopConfig );
-				Fop fop =  fopFactory.newFop( "application/pdf", out );
-				Source src = new StreamSource( index_fo );
+			out = new BufferedOutputStream( new FileOutputStream(index_pdf) );
+			FopFactory fopFactory = FopFactory.newInstance( fopConfig );
+			Fop fop =  fopFactory.newFop( "application/pdf", out );
+			Source src = new StreamSource( index_fo );
 
-				TransformerFactory factory = TransformerFactory.newInstance();
-				Transformer transformer = factory.newTransformer();
+			TransformerFactory factory = TransformerFactory.newInstance();
+			Transformer transformer = factory.newTransformer();
 
-				Result res = new SAXResult(fop.getDefaultHandler());
-				transformer.transform(src, res);
+			Result res = new SAXResult(fop.getDefaultHandler());
+			transformer.transform(src, res);
+
 		} catch ( Exception e) {
-				throw new IOException( e );
+			throw new IOException( e );
 
 		} finally {
-				Utils.closeQuietly ( out );
+			Utils.closeQuietly ( out );
 		}
 
 		return index_pdf;

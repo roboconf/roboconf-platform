@@ -26,13 +26,7 @@
 package net.roboconf.agent.internal;
 
 import java.io.IOException;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
@@ -42,6 +36,7 @@ import java.util.logging.Logger;
 
 import net.roboconf.agent.AgentMessagingInterface;
 import net.roboconf.agent.internal.misc.AgentConstants;
+import net.roboconf.agent.internal.misc.AgentUtils;
 import net.roboconf.agent.internal.misc.HeartbeatTask;
 import net.roboconf.agent.internal.misc.PluginMock;
 import net.roboconf.agent.internal.misc.UserDataUtils;
@@ -64,6 +59,7 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 
 	// Component properties (ipojo)
 	String applicationName, scopedInstancePath, ipAddress, targetId, messagingType;
+	String networkInterface = AgentConstants.DEFAULT_NETWORK_INTERFACE;
 	boolean overrideProperties = false, simulatePlugins = true;
 
 	// Fields that should be injected (ipojo)
@@ -86,33 +82,6 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	 */
 	public Agent() {
 		this.logger = Logger.getLogger( getClass().getName());
-
-		// Set default value for IP address
-		// Will be overridden in many cases (e.g. on IaaS with user-data).
-		try {
-			this.ipAddress = InetAddress.getLocalHost().getHostAddress();
-			if(this.ipAddress.startsWith("127.0")) {
-				NetworkInterface nif = NetworkInterface.getByName("eth0");
-				if(nif != null) {
-					Enumeration<InetAddress> addrs = nif.getInetAddresses();
-					while(addrs.hasMoreElements() && this.ipAddress.startsWith("127.0")) {
-						Object obj = addrs.nextElement();
-						if(obj instanceof Inet4Address) {
-							this.ipAddress =  obj.toString();
-							if(this.ipAddress.startsWith("/")) {
-								this.ipAddress = this.ipAddress.substring(1);
-							}
-						}
-					}
-				}
-			}
-			this.logger.finer( "Local IP address found by the agent: " + this.ipAddress );
-
-		} catch( UnknownHostException | SocketException e ) {
-			this.ipAddress = "127.0.0.1";
-			this.logger.warning( "The IP address could not be found. " + e.getMessage());
-			Utils.logException( this.logger, e );
-		}
 	}
 
 
@@ -125,6 +94,8 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	public void start() {
 
 		this.logger.info( "Agent '" + getAgentId() + "' is about to be launched." );
+		this.ipAddress = AgentUtils.findIpAddress( this.networkInterface );
+		this.logger.info( "IP address resolved to " + this.ipAddress );
 
 		this.messagingClient = new ReconfigurableClientAgent();
 		AgentMessageProcessor messageProcessor = new AgentMessageProcessor( this );
@@ -138,8 +109,9 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 			this.logger.fine( "User data are NOT supposed to be used." );
 
 		} else {
-			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
+
 			AgentProperties props = null;
+			this.logger.fine( "User data are supposed to be used. Retrieving in progress..." );
 			if( AgentConstants.PLATFORM_EC2.equalsIgnoreCase( this.targetId )
 					|| AgentConstants.PLATFORM_OPENSTACK.equalsIgnoreCase( this.targetId ))
 				props = UserDataUtils.findParametersForAmazonOrOpenStack( this.logger );
@@ -147,9 +119,8 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 			else if( AgentConstants.PLATFORM_AZURE.equalsIgnoreCase( this.targetId ))
 				props = UserDataUtils.findParametersForAzure( this.logger );
 
-			else if(AgentConstants.PLATFORM_VMWARE.equalsIgnoreCase(this.targetId)) {
-				props = UserDataUtils.findParametersForVmware(this.logger);
-			}
+			else if(AgentConstants.PLATFORM_VMWARE.equalsIgnoreCase(this.targetId))
+				props = UserDataUtils.findParametersForVmware( this.logger );
 
 			else
 				this.logger.warning( "Unknown target ID. No user data will be retrieved." );
@@ -160,10 +131,11 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 					this.logger.severe( "An error was found in user data. " + errorMessage );
 
 				this.applicationName = props.getApplicationName();
-				if(! Utils.isEmptyOrWhitespaces(props.getIpAddress())) {
-					this.ipAddress = props.getIpAddress();
-				}
 				this.scopedInstancePath = props.getScopedInstancePath();
+				if( ! Utils.isEmptyOrWhitespaces( props.getIpAddress())) {
+					this.ipAddress = props.getIpAddress();
+					this.logger.info( "The agent's address was overwritten from user data and set to " + this.ipAddress );
+				}
 
 				try {
 					this.logger.info( "Reconfiguring the agent with user data." );
@@ -479,6 +451,24 @@ public class Agent implements AgentMessagingInterface, IReconfigurable {
 	 */
 	public void setSimulatePlugins( boolean simulatePlugins ) {
 		this.simulatePlugins = simulatePlugins;
+	}
+
+
+	/**
+	 * @param networkInterface the networkInterface to set
+	 */
+	public void setNetworkInterface( String networkInterface ) {
+		this.networkInterface = networkInterface;
+
+		this.logger.info( "New network interface set: " + networkInterface );
+		if( ! this.overrideProperties ) {
+			this.logger.info( "Resetting the agent's IP address..." );
+			this.ipAddress = AgentUtils.findIpAddress( networkInterface );
+			this.logger.info( "New IP address: " + this.ipAddress );
+
+		} else {
+			this.logger.info( "User data are used. The IP address will not be refreshed." );
+		}
 	}
 
 

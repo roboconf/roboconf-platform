@@ -29,6 +29,13 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.ApplicationTemplate;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
@@ -44,13 +51,6 @@ import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.mockito.Mockito;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -243,9 +243,9 @@ public class ManagerTest {
 
 			// Create a binding between this application and itself.
 			// It does not make sense, but this is for test.
-			Assert.assertEquals( 0, ma.getApplication().applicationBindings.size());
+			Assert.assertEquals( 0, ma.getApplication().getApplicationBindings().size());
 			this.manager.applicationMngr().bindApplication( ma, tpl.getExternalExportsPrefix(), ma.getName());
-			Assert.assertEquals( 1, ma.getApplication().applicationBindings.size());
+			Assert.assertEquals( 1, ma.getApplication().getApplicationBindings().size());
 
 			// Bindings must have been saved.
 			// Remove the application from the cache and restore it.
@@ -256,8 +256,8 @@ public class ManagerTest {
 			ma = this.manager.applicationMngr().findManagedApplicationByName( ma.getName());
 			Assert.assertNotNull( ma );
 
-			Assert.assertEquals( 1, ma.getApplication().applicationBindings.size());
-			Assert.assertEquals( ma.getName(), ma.getApplication().applicationBindings.get( tpl.getExternalExportsPrefix()));
+			Assert.assertEquals( 1, ma.getApplication().getApplicationBindings().size());
+			Assert.assertTrue( ma.getApplication().getApplicationBindings().get( tpl.getExternalExportsPrefix()).contains( ma.getName()));
 
 		} finally {
 			this.manager.stop();

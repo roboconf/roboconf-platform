@@ -35,6 +35,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.Test;
+import org.xml.sax.InputSource;
+
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
 import net.roboconf.core.model.beans.Instance;
@@ -48,9 +51,6 @@ import nu.validator.servlet.imagereview.ImageCollector;
 import nu.validator.source.SourceCode;
 import nu.validator.validation.SimpleDocumentValidator;
 import nu.validator.xml.SystemErrErrorHandler;
-
-import org.junit.Test;
-import org.xml.sax.InputSource;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -69,7 +69,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	public void testSingleHtml_nullOptions() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, null, null );
 
 		verifySingleHtml( true );
 	}
@@ -79,8 +79,8 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	public void testSingleHtml_emptyOptions() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		Map<String,String> options = new HashMap<> ();
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 
 		verifySingleHtml( true );
 	}
@@ -91,7 +91,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
 		this.alr.getApplicationTemplate().getRootInstances().clear();
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, null );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, null, null );
 
 		verifySingleHtml( true );
 	}
@@ -101,10 +101,10 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	public void testSingleHtml_withReferencedCss() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put(  DocConstants.OPTION_HTML_CSS_REFERENCE, "http://hop.css" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 
 		String content = verifySingleHtml( false );
 		Assert.assertFalse( content.contains( "style.css" ));
@@ -120,10 +120,10 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		Utils.writeStringInto( cssContent, tempCssFile );
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put(  DocConstants.OPTION_HTML_CSS_FILE, tempCssFile.getAbsolutePath());
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 
 		String content = verifySingleHtml( true );
 		Assert.assertTrue( content.contains( "href=\"style.css\"" ));
@@ -139,12 +139,12 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	public void testExplodedHtml_withReferencedCss() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put(  DocConstants.OPTION_HTML_CSS_REFERENCE, "http://hop.css" );
 		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
 		options.put( DocConstants.OPTION_HTML_HEADER_IMAGE_FILE, "inexisting-will-be-replaced-by-default" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 
 		List<String> contents = verifyExplodedHtml( false );
 		for( int i=0; i<contents.size(); i++ ) {
@@ -168,12 +168,12 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 		Assert.assertTrue( targetImage.exists());
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put(  DocConstants.OPTION_HTML_CSS_FILE, tempCssFile.getAbsolutePath());
 		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
 		options.put( DocConstants.OPTION_HTML_HEADER_IMAGE_FILE, targetImage.getAbsolutePath());
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 
 		List<String> contents = verifyExplodedHtml( true );
 		int dotLevel = 0;
@@ -200,13 +200,13 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	public void testExplodedHtml_customColorInOptions() throws Exception {
 
 		Assert.assertEquals( 0, this.outputDir.listFiles().length );
-		Map<String,String> options = new HashMap<String,String> ();
+		Map<String,String> options = new HashMap<> ();
 		options.put( DocConstants.OPTION_IMG_HIGHLIGHT_BG_COLOR, "#dddddd" );
 		options.put( DocConstants.OPTION_IMG_BACKGROUND_COLOR, "#4582ad" );
 		options.put( DocConstants.OPTION_IMG_FOREGROUND_COLOR, "#000000" );
 		options.put( DocConstants.OPTION_HTML_EXPLODED, "boom" );
 
-		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options );
+		this.rm.render( this.outputDir, this.alr.getApplicationTemplate(), this.applicationDirectory, Renderer.HTML, options, null );
 		verifyExplodedHtml( true );
 	}
 
@@ -244,7 +244,7 @@ public class RendererManagerHtmlTest extends AbstractTestForRendererManager {
 	 * @return the generated files' content (for additional checks)
 	 */
 	private List<String> verifyExplodedHtml( boolean hasStyleCss ) throws Exception {
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 
 		File f = new File( this.outputDir, "header.jpg" );
 		Assert.assertTrue( f.exists());

@@ -29,10 +29,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
 import net.roboconf.core.internal.tests.TestApplicationTemplate;
 import net.roboconf.core.internal.tests.TestUtils;
 import net.roboconf.core.model.beans.Component;
@@ -51,10 +57,6 @@ import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRemoveImpor
 import net.roboconf.messaging.api.messages.from_agent_to_agent.MsgCmdRequestImport;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
 import net.roboconf.plugin.api.PluginInterface;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -160,7 +162,7 @@ public class AgentMessageProcessorImportsTest {
 		// Notify a MySQL instance is available
 		Assert.assertEquals( 0, app.getWar().getImports().size());
 
-		Map<String,String> variables1 = new HashMap<String,String> ();
+		Map<String,String> variables1 = new HashMap<> ();
 		variables1.put( "mysql.ip", "192.168.0.15" );
 		variables1.put( "mysql.port", "3306" );
 		processor.processMessage( new MsgCmdAddImport( APP, "mysql", "mysql-vm-1/mysql", variables1 ));
@@ -176,7 +178,7 @@ public class AgentMessageProcessorImportsTest {
 		Assert.assertEquals( "mysql-vm-1/mysql", imp.getInstancePath());
 
 		// Another instance is made available
-		Map<String,String> variables2 = new HashMap<String,String> ();
+		Map<String,String> variables2 = new HashMap<> ();
 		variables2.put( "mysql.ip", "192.168.0.21" );
 		variables2.put( "mysql.port", "31306" );
 		processor.processMessage( new MsgCmdAddImport( APP, "mysql", "mysql-vm-2/mysql", variables2 ));
@@ -227,7 +229,7 @@ public class AgentMessageProcessorImportsTest {
 		Assert.assertEquals( 0, app.getWar().getImports().size());
 		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
 
-		Map<String,String> variables1 = new HashMap<String,String> ();
+		Map<String,String> variables1 = new HashMap<> ();
 		variables1.put( "mysql.ip", "192.168.0.15" );
 		variables1.put( "mysql.port", "3306" );
 		processor.processMessage( new MsgCmdAddImport( "not-app", "mysql", "mysql-vm-1/mysql", variables1 ));
@@ -256,13 +258,15 @@ public class AgentMessageProcessorImportsTest {
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
 		// Create a binding - not really meaningful here
-		processor.applicationBindings.put( "mysql", "not-app" );
+		Set<String> appNames = new HashSet<>( 1 );
+		appNames.add( "not-app" );
+		processor.applicationBindings.put( "mysql", appNames );
 
 		// Notify a MySQL instance is available
 		Assert.assertEquals( 0, app.getWar().getImports().size());
 		Assert.assertEquals( 0, processor.applicationNameToExternalExports.size());
 
-		Map<String,String> variables1 = new HashMap<String,String> ();
+		Map<String,String> variables1 = new HashMap<> ();
 		variables1.put( "mysql.ip", "192.168.0.15" );
 		variables1.put( "mysql.port", "3306" );
 		processor.processMessage( new MsgCmdAddImport( "not-app", "mysql", "mysql-vm-1/mysql", variables1 ));
@@ -314,7 +318,7 @@ public class AgentMessageProcessorImportsTest {
 		// Notify a MySQL instance is available
 		Assert.assertEquals( 0, app.getWar().getImports().size());
 
-		Map<String,String> variables1 = new HashMap<String,String> ();
+		Map<String,String> variables1 = new HashMap<> ();
 		variables1.put( "mysql.ip", "192.168.0.15" );
 		variables1.put( "mysql.port", "3306" );
 		processor.processMessage( new MsgCmdAddImport( APP, "mysql", "mysql-vm-1/mysql", variables1 ));
@@ -354,7 +358,7 @@ public class AgentMessageProcessorImportsTest {
 		app.getTomcat().setStatus( InstanceStatus.DEPLOYED_STARTED );
 		app.getWar().setStatus( InstanceStatus.DEPLOYED_STARTED );
 
-		List<Import> imports = new ArrayList<Import>( Arrays.asList( new Import( "mysql-vm-1/mysql", "mysql" )));
+		List<Import> imports = new ArrayList<>( Arrays.asList( new Import( "mysql-vm-1/mysql", "mysql" )));
 		app.getWar().getImports().put( "mysql", imports );
 
 		// Remove the MySQL export
@@ -388,7 +392,7 @@ public class AgentMessageProcessorImportsTest {
 		Assert.assertEquals( 0, i1.getImports().size());
 
 		// Adding another node works
-		Map<String,String> variables = new HashMap<String,String> ();
+		Map<String,String> variables = new HashMap<> ();
 		variables.put( "cluster.ip", "192.168.0.45" );
 		processor.processMessage( new MsgCmdAddImport( APP, "cluster", "/vm/cluster node", variables ));
 

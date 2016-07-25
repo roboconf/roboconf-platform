@@ -23,7 +23,7 @@
  * limitations under the License.
  */
 
-package net.roboconf.karaf.commands.dm.logs;
+package net.roboconf.karaf.commands.dm.completers;
 
 import java.util.ArrayList;
 import java.util.List;
