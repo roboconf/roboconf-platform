@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 import net.roboconf.core.Constants;
 import net.roboconf.core.ErrorCode;
 import net.roboconf.core.RoboconfError;
+import net.roboconf.core.dsl.ParsingConstants;
 import net.roboconf.core.model.ApplicationDescriptor;
 import net.roboconf.core.model.RuntimeModelIo.InstancesLoadResult;
 import net.roboconf.core.model.beans.Application;
@@ -361,6 +362,9 @@ public class ApplicationMngrImpl implements IApplicationMngr {
 		this.logger.info( "Creating application " + name + " from template " + tpl + "..." );
 		if( Utils.isEmptyOrWhitespaces( name ))
 			throw new IOException( "An application name cannot be empty." );
+
+		if( ! name.matches( ParsingConstants.PATTERN_FLEX_ID ))
+			throw new IOException( "Application names cannot contain invalid characters. Letters, digits, dots, underscores, spaces and the minus symbol are allowed." );
 
 		if( this.nameToManagedApplication.containsKey( name ))
 			throw new AlreadyExistingException( name );

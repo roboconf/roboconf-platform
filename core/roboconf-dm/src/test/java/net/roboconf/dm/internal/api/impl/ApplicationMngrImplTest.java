@@ -129,8 +129,20 @@ public class ApplicationMngrImplTest {
 
 
 	@Test( expected = IOException.class )
-	public void testCreateApplication_invalidApplicationName() throws Exception {
+	public void testCreateApplication_invalidApplicationName_1() throws Exception {
 		this.mngr.createApplication( null, "desc", new ApplicationTemplate());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateApplication_invalidApplicationName_2() throws Exception {
+		this.mngr.createApplication( "", "desc", new ApplicationTemplate());
+	}
+
+
+	@Test( expected = IOException.class )
+	public void testCreateApplication_invalidApplicationName_3() throws Exception {
+		this.mngr.createApplication( "app#", "desc", new ApplicationTemplate());
 	}
 
 

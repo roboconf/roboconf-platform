@@ -230,6 +230,27 @@ public class JSonBindingUtilsTest {
 
 
 	@Test
+	public void testApplicationTemplateBinding_9() throws Exception {
+
+		final String result = "{\"name\":\"aeocu\",\"displayName\":\"àéoçù\",\"desc\":\"some text\",\"qualifier\":\"v1\",\"apps\":[]}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		ApplicationTemplate app = new ApplicationTemplate( "àéoçù" ).description( "some text" ).qualifier( "v1" );
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		ApplicationTemplate readApp = mapper.readValue( result, ApplicationTemplate.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
+		Assert.assertEquals( app.getQualifier(), readApp.getQualifier());
+		Assert.assertEquals( app.getExternalExportsPrefix(), readApp.getExternalExportsPrefix());
+	}
+
+
+	@Test
 	public void testApplicationBinding_1() throws Exception {
 
 		final String result = "{\"name\":\"app1\",\"desc\":\"some text\"}";
@@ -429,6 +450,25 @@ public class JSonBindingUtilsTest {
 						+ app.getTemplate().getQualifier()
 						+ "\",\"extDep\":[\"other\",\"something\"]}",
 				s );
+	}
+
+
+	@Test
+	public void testApplicationBinding_11() throws Exception {
+
+		final String result = "{\"name\":\"aeocu\",\"displayName\":\"àéoçù\",\"desc\":\"some text\"}";
+		ObjectMapper mapper = JSonBindingUtils.createObjectMapper();
+
+		Application app = new Application( "àéoçù", null ).description( "some text" );
+		StringWriter writer = new StringWriter();
+		mapper.writeValue( writer, app );
+		String s = writer.toString();
+
+		Assert.assertEquals( result, s );
+		Application readApp = mapper.readValue( result, Application.class );
+		Assert.assertEquals( app, readApp );
+		Assert.assertEquals( app.getName(), readApp.getName());
+		Assert.assertEquals( app.getDescription(), readApp.getDescription());
 	}
 
 
