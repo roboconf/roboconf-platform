@@ -25,11 +25,6 @@
 
 package net.roboconf.messaging.rabbitmq.internal.utils;
 
-import net.roboconf.messaging.api.extensions.MessagingContext;
-import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
-import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
@@ -38,6 +33,11 @@ import org.mockito.Mockito;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+
+import net.roboconf.messaging.api.extensions.MessagingContext;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.extensions.MessagingContext.ThoseThat;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -56,11 +56,11 @@ public class RabbitMqUtilsTest {
 	public void testDeclareApplicationExchanges() throws Exception {
 
 		Channel channel = Mockito.mock( Channel.class );
-		RabbitMqUtils.declareApplicationExchanges( null, channel );
+		RabbitMqUtils.declareApplicationExchanges( null, null, channel );
 		Mockito.verifyZeroInteractions( channel );
 
-		RabbitMqUtils.declareApplicationExchanges( "te", channel );
-		String exchangeName = RabbitMqUtils.buildExchangeNameForAgent( "te" );
+		RabbitMqUtils.declareApplicationExchanges( "domain", "te", channel );
+		String exchangeName = RabbitMqUtils.buildExchangeNameForAgent( "domain", "te" );
 		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( exchangeName, "topic" );
 	}
 
@@ -69,41 +69,41 @@ public class RabbitMqUtilsTest {
 	public void testDeclareGlobalExchanges() throws Exception {
 
 		Channel channel = Mockito.mock( Channel.class );
-		RabbitMqUtils.declareGlobalExchanges( channel );
+		RabbitMqUtils.declareGlobalExchanges( "d", channel );
 
-		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( RabbitMqConstants.EXHANGE_DM, "topic" );
-		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( RabbitMqConstants.EXHANGE_INTER_APP, "topic" );
+		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( "d." + RabbitMqConstants.EXCHANGE_DM, "topic" );
+		Mockito.verify( channel, Mockito.times( 1 )).exchangeDeclare( "d." + RabbitMqConstants.EXCHANGE_INTER_APP, "topic" );
 	}
 
 
 	@Test
 	public void testBuildExchangeNameForAgent() {
 
-		Assert.assertEquals( "test.agents", RabbitMqUtils.buildExchangeNameForAgent( "test" ));
-		Assert.assertEquals( "te.agents", RabbitMqUtils.buildExchangeNameForAgent( "te" ));
+		Assert.assertEquals( "d1.test.agents", RabbitMqUtils.buildExchangeNameForAgent( "d1", "test" ));
+		Assert.assertEquals( "d2.te.agents", RabbitMqUtils.buildExchangeNameForAgent( "d2", "te" ));
 	}
 
 
 	@Test
 	public void testBuildExchangeName() {
 
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "app1" );
-		Assert.assertEquals( RabbitMqConstants.EXHANGE_DM, RabbitMqUtils.buildExchangeName( ctx ));
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, "domain", "app1" );
+		Assert.assertEquals( "domain." + RabbitMqConstants.EXCHANGE_DM, RabbitMqUtils.buildExchangeName( ctx ));
 
-		ctx = new MessagingContext( RecipientKind.DM, "app2" );
-		Assert.assertEquals( RabbitMqConstants.EXHANGE_DM, RabbitMqUtils.buildExchangeName( ctx ));
+		ctx = new MessagingContext( RecipientKind.DM, "domain", "app2" );
+		Assert.assertEquals( "domain." + RabbitMqConstants.EXCHANGE_DM, RabbitMqUtils.buildExchangeName( ctx ));
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "app1" );
-		Assert.assertEquals( RabbitMqConstants.EXHANGE_INTER_APP, RabbitMqUtils.buildExchangeName( ctx ));
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "app1" );
+		Assert.assertEquals( "domain." + RabbitMqConstants.EXCHANGE_INTER_APP, RabbitMqUtils.buildExchangeName( ctx ));
 
-		ctx = new MessagingContext( RecipientKind.INTER_APP, "facet", ThoseThat.IMPORT, "app1" );
-		Assert.assertEquals( RabbitMqConstants.EXHANGE_INTER_APP, RabbitMqUtils.buildExchangeName( ctx ));
+		ctx = new MessagingContext( RecipientKind.INTER_APP, "domain", "facet", ThoseThat.IMPORT, "app1" );
+		Assert.assertEquals( "domain." + RabbitMqConstants.EXCHANGE_INTER_APP, RabbitMqUtils.buildExchangeName( ctx ));
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.IMPORT, "app1" );
-		Assert.assertEquals( "app1.agents", RabbitMqUtils.buildExchangeName( ctx ));
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "facet", ThoseThat.IMPORT, "app1" );
+		Assert.assertEquals( "domain.app1.agents", RabbitMqUtils.buildExchangeName( ctx ));
 
-		ctx = new MessagingContext( RecipientKind.AGENTS, "facet", ThoseThat.EXPORT, "app2" );
-		Assert.assertEquals( "app2.agents", RabbitMqUtils.buildExchangeName( ctx ));
+		ctx = new MessagingContext( RecipientKind.AGENTS, "domain1", "facet", ThoseThat.EXPORT, "app2" );
+		Assert.assertEquals( "domain1.app2.agents", RabbitMqUtils.buildExchangeName( ctx ));
 	}
 
 

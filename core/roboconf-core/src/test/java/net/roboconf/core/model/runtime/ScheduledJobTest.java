@@ -69,4 +69,22 @@ public class ScheduledJobTest {
 		Assert.assertEquals( job4, jobs.get( 3 ));
 		Assert.assertEquals( job5, jobs.get( 4 ));
 	}
+
+
+	@Test
+	public void testEquals() {
+
+		ScheduledJob job3 = new ScheduledJob();
+		ScheduledJob job4 = new ScheduledJob();
+		ScheduledJob job5 = new ScheduledJob();
+
+		job3.setJobName( "job3" );
+		job5.setJobName( "job3" );
+
+		Assert.assertEquals( job3, job5 );
+		Assert.assertEquals( job3.hashCode(), job5.hashCode());
+
+		Assert.assertNotEquals( job4, job5 );
+		Assert.assertNotEquals( job4.hashCode(), job5.hashCode());
+	}
 }

@@ -33,6 +33,11 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.Recoverable;
+
 import net.roboconf.core.model.beans.Application;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.IMessagingClient;
@@ -48,11 +53,6 @@ import net.roboconf.messaging.rabbitmq.internal.impl.RoboconfRecoveryListener;
 import net.roboconf.messaging.rabbitmq.internal.impl.RoboconfReturnListener;
 import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqUtils;
 
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.Recoverable;
-
 /**
  * Common RabbitMQ client-related stuffs.
  * @author Pierre Bourret - Université Joseph Fourier
@@ -66,7 +66,7 @@ public class RabbitMqClient implements IMessagingClient {
 
 	private LinkedBlockingQueue<Message> messageQueue;
 	private RecipientKind ownerKind;
-	private String applicationName, scopedInstancePath;
+	private String applicationName, scopedInstancePath, domain;
 
 	String consumerTag;
 	Channel channel;
@@ -141,11 +141,12 @@ public class RabbitMqClient implements IMessagingClient {
 
 
 	@Override
-	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
+	public void setOwnerProperties( RecipientKind ownerKind, String domain, String applicationName, String scopedInstancePath ) {
 
 		this.ownerKind = ownerKind;
 		this.applicationName = applicationName;
 		this.scopedInstancePath = scopedInstancePath;
+		this.domain = domain;
 
 		this.logger.fine( "Owner properties changed to " + getId());
 	}
@@ -175,8 +176,8 @@ public class RabbitMqClient implements IMessagingClient {
 		((Recoverable) this.channel).addRecoveryListener( new RoboconfRecoveryListener());
 
 		// Declare the exchanges.
-		RabbitMqUtils.declareGlobalExchanges( this.channel );
-		RabbitMqUtils.declareApplicationExchanges( this.applicationName, this.channel );
+		RabbitMqUtils.declareGlobalExchanges( this.domain, this.channel );
+		RabbitMqUtils.declareApplicationExchanges( this.domain, this.applicationName, this.channel );
 
 		// Declare the dedicated queue.
 		String queueName = getQueueName();
@@ -218,10 +219,11 @@ public class RabbitMqClient implements IMessagingClient {
 	throws IOException {
 
 		// We delete the application exchanges. There is only one now.
-		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForAgent( application.getName()));
+		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForAgent( this.domain, application.getName()));
+		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForTheDm( this.domain ));
+		this.channel.exchangeDelete( RabbitMqUtils.buildExchangeNameForInterApp( this.domain ));
 		this.logger.fine( "Messaging artifacts were deleted for application " + application );
 		// Queues are deleted automatically by RabbitMQ.
-		// Global exchanges do not need to be deleted. There are only 2.
 	}
 
 
@@ -291,17 +293,37 @@ public class RabbitMqClient implements IMessagingClient {
 
 	String getQueueName() {
 
-		String queueName;
-		if( this.ownerKind == RecipientKind.DM )
-			queueName = "roboconf.queue.dm";
-		else
-			queueName = this.applicationName + "." + MessagingUtils.escapeInstancePath( this.scopedInstancePath );
+		StringBuilder queueName = new StringBuilder();
+		queueName.append( this.domain );
+		queueName.append( "." );
+		if( this.ownerKind == RecipientKind.DM ) {
+			queueName.append( "roboconf-dm" );
 
-		return queueName;
+		} else {
+			queueName.append( this.applicationName );
+			queueName.append( "." );
+			queueName.append( MessagingUtils.escapeInstancePath( this.scopedInstancePath ));
+		}
+
+		return queueName.toString();
 	}
 
 
 	String getId() {
-		return this.ownerKind ==  RecipientKind.DM ? "DM" : this.scopedInstancePath + " @ " + this.applicationName;
+
+		StringBuilder sb = new StringBuilder();
+		sb.append( "[ " );
+		sb.append( this.domain );
+		sb.append( " ] " );
+
+		if( this.ownerKind ==  RecipientKind.DM ) {
+			sb.append( "DM" );
+		} else {
+			sb.append( this.scopedInstancePath );
+			sb.append( " @ " );
+			sb.append( this.applicationName );
+		}
+
+		return sb.toString();
 	}
 }

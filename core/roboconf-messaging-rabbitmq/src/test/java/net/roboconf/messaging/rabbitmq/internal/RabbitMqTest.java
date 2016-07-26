@@ -25,17 +25,37 @@
 
 package net.roboconf.messaging.rabbitmq.internal;
 
-import net.roboconf.core.model.beans.Application;
-import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
-import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import net.roboconf.core.model.beans.Application;
+import net.roboconf.core.model.beans.ApplicationTemplate;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.beans.Instance.InstanceStatus;
+import net.roboconf.messaging.api.business.IClient;
+import net.roboconf.messaging.api.business.ListenerCommand;
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.internal.client.AbstractMessagingTest;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifHeartbeat;
+import net.roboconf.messaging.api.messages.from_agent_to_dm.MsgNotifMachineDown;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdChangeInstanceState;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdRemoveInstance;
+import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInstance;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientAgent;
+import net.roboconf.messaging.api.reconfigurables.ReconfigurableClientDm;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -80,9 +100,13 @@ public class RabbitMqTest extends AbstractMessagingTest {
 					RecipientKind.DM );
 
 			client.openConnection();
-			client.deleteMessagingServerArtifacts( new Application( "app", null ));
-			client.deleteMessagingServerArtifacts( new Application( "app1", null ));
-			client.deleteMessagingServerArtifacts( new Application( "app2", null ));
+			for( String domain : Arrays.asList( null, "domain0", "domain1", "domain2" )) {
+				client.setOwnerProperties( RecipientKind.DM, domain, null, null );
+				client.deleteMessagingServerArtifacts( new Application( "app", null ));
+				client.deleteMessagingServerArtifacts( new Application( "app1", null ));
+				client.deleteMessagingServerArtifacts( new Application( "app2", null ));
+			}
+
 			client.closeConnection();
 		}
 	}
@@ -158,6 +182,164 @@ public class RabbitMqTest extends AbstractMessagingTest {
 	throws Exception {
 		Assume.assumeTrue( rabbitMqIsRunning );
 		super.testExternalExports_twoApplicationsAndTheDm_verifyAgentTerminationPropagation();
+	}
+
+
+	/*
+	 * This test is specific to RabbiMQ, as it is one of the rare
+	 * implementations to actually use "domains".
+	 */
+	@Test
+	public void testExchangesBetweenDmAndOneAgent_with_twoDomains() throws Exception {
+		Assume.assumeTrue( rabbitMqIsRunning );
+
+		// Initialize everything
+		Application app = new Application( "app", new ApplicationTemplate());
+		Instance rootInstance = new Instance( "root" );
+
+		final int finalSize = 3;
+		final ReconfigurableClientDm[] dmClients = new ReconfigurableClientDm[ finalSize ];
+		final ReconfigurableClientAgent[] agentClients = new ReconfigurableClientAgent[ finalSize ];
+		final Map<IClient,List<Message>> map = new LinkedHashMap<> ();
+
+		for( int i=0; i<finalSize; i++ ) {
+
+			List<Message> dmMessages = new ArrayList<> ();
+			dmClients[ i ] = new ReconfigurableClientDm();
+			dmClients[ i ].setRegistry( this.registry );
+			dmClients[ i ].setDomain( "domain" + i );
+			dmClients[ i ].associateMessageProcessor( createDmProcessor( dmMessages ));
+			dmClients[ i ].switchMessagingType( getMessagingType());
+			map.put( dmClients[ i ], dmMessages );
+			this.clients.add( dmClients[ i ]);
+
+			List<Message> agentMessages = new ArrayList<> ();
+			agentClients[ i ] = new ReconfigurableClientAgent();
+			agentClients[ i ].setRegistry( this.registry );
+			agentClients[ i ].setDomain( "domain" + i );
+			agentClients[ i ].associateMessageProcessor( createAgentProcessor( agentMessages ));
+			agentClients[ i ].setApplicationName( app.getName());
+			agentClients[ i ].setScopedInstancePath( "/" + rootInstance.getName());
+			agentClients[ i ].setExternalMapping( app.getExternalExports());
+			agentClients[ i ].switchMessagingType( getMessagingType());
+			map.put( agentClients[ i ], agentMessages );
+			this.clients.add( agentClients[ i ]);
+		}
+
+		// No message yet
+		Thread.sleep( getDelay());
+		for( Map.Entry<IClient,List<Message>> entry : map.entrySet())
+			Assert.assertEquals( entry.getKey().getDomain(), 0, entry.getValue().size());
+
+		// Domain 0: the agent is already listening to the DM.
+		List<Message> agentMessages0 = map.get( agentClients[ 0 ]);
+		List<Message> dmMessages0 = map.get( dmClients[ 0 ]);
+
+		dmClients[ 0 ].sendMessageToAgent( app, rootInstance, new MsgCmdSetScopedInstance( rootInstance ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 1, agentMessages0.size());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages0.get( 0 ).getClass());
+
+		agentClients[ 0 ].listenToTheDm( ListenerCommand.START );
+		dmClients[ 0 ].sendMessageToAgent( app, rootInstance, new MsgCmdRemoveInstance( rootInstance ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 2, agentMessages0.size());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages0.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages0.get( 1 ).getClass());
+
+		// Other domains were not notified
+		for( int i=1; i<finalSize; i++ ) {
+			Assert.assertEquals( 0, map.get( dmClients[ i ]).size());
+			Assert.assertEquals( 0, map.get( agentClients[ i ]).size());
+		}
+
+		// The agent sends a message to the DM
+		Assert.assertEquals( 0, dmMessages0.size());
+		agentClients[ 0 ].sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance, "192.168.1.45" ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 0, dmMessages0.size());
+
+		dmClients[ 0 ].listenToAgentMessages( app, ListenerCommand.START );
+		agentClients[ 0 ].sendMessageToTheDm( new MsgNotifMachineDown( app.getName(), rootInstance ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 1, dmMessages0.size());
+		Assert.assertEquals( MsgNotifMachineDown.class, dmMessages0.get( 0 ).getClass());
+
+		// The DM sends another message
+		dmClients[ 0 ].sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 3, agentMessages0.size());
+		Assert.assertEquals( MsgCmdSetScopedInstance.class, agentMessages0.get( 0 ).getClass());
+		Assert.assertEquals( MsgCmdRemoveInstance.class, agentMessages0.get( 1 ).getClass());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentMessages0.get( 2 ).getClass());
+
+		// Verify other domains
+		for( int i=1; i<finalSize; i++ ) {
+			Assert.assertEquals( 0, map.get( dmClients[ i ]).size());
+			Assert.assertEquals( 0, map.get( agentClients[ i ]).size());
+		}
+
+		// Let's deploy an agent from another domain
+		List<Message> agentMessages2 = map.get( agentClients[ 2 ]);
+
+		dmClients[ 2 ].sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 1, agentMessages2.size());
+		Assert.assertEquals( MsgCmdChangeInstanceState.class, agentMessages2.get( 0 ).getClass());
+
+		// Verify other domains
+		Assert.assertEquals( 1, map.get( dmClients[ 0 ]).size());
+		Assert.assertEquals( 3, map.get( agentClients[ 0 ]).size());
+
+		Assert.assertEquals( 0, map.get( dmClients[ 1 ]).size());
+		Assert.assertEquals( 0, map.get( agentClients[ 1 ]).size());
+
+		Assert.assertEquals( 0, map.get( dmClients[ 2 ]).size());
+		Assert.assertEquals( 1, map.get( agentClients[ 2 ]).size());
+
+		// The agent stops listening the DM
+		agentClients[ 0 ].listenToTheDm( ListenerCommand.STOP );
+		Thread.sleep( getDelay());
+
+		// The agent is not listening to the DM anymore.
+		// With RabbitMQ, the next invocation will result in a NO_ROUTE error in the channel.
+		dmClients[ 0 ].sendMessageToAgent( app, rootInstance, new MsgCmdChangeInstanceState( rootInstance, InstanceStatus.DEPLOYED_STARTED ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 3, agentMessages0.size());
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 3, agentMessages0.size());
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 3, agentMessages0.size());
+
+		// Verify all the domains
+		Assert.assertEquals( 1, map.get( dmClients[ 0 ]).size());
+		Assert.assertEquals( 3, map.get( agentClients[ 0 ]).size());
+
+		Assert.assertEquals( 0, map.get( dmClients[ 1 ]).size());
+		Assert.assertEquals( 0, map.get( agentClients[ 1 ]).size());
+
+		Assert.assertEquals( 0, map.get( dmClients[ 2 ]).size());
+		Assert.assertEquals( 1, map.get( agentClients[ 2 ]).size());
+
+		// The DM stops listening the agent
+		dmClients[ 0 ].listenToAgentMessages( app, ListenerCommand.STOP );
+		agentClients[ 0 ].sendMessageToTheDm( new MsgNotifHeartbeat( app.getName(), rootInstance, "192.168.1.47" ));
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 1, dmMessages0.size());
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 1, dmMessages0.size());
+		Thread.sleep( getDelay());
+		Assert.assertEquals( 1, dmMessages0.size());
+
+		// Verify other domains
+		Assert.assertEquals( 1, map.get( dmClients[ 0 ]).size());
+		Assert.assertEquals( 3, map.get( agentClients[ 0 ]).size());
+
+		Assert.assertEquals( 0, map.get( dmClients[ 1 ]).size());
+		Assert.assertEquals( 0, map.get( agentClients[ 1 ]).size());
+
+		Assert.assertEquals( 0, map.get( dmClients[ 2 ]).size());
+		Assert.assertEquals( 1, map.get( agentClients[ 2 ]).size());
 	}
 
 

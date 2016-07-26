@@ -32,13 +32,6 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.agents.DataHelpers;
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.AbstractThreadedTargetHandler;
-import net.roboconf.target.api.TargetException;
-
 import com.vmware.vim25.DynamicProperty;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineConfigSpec;
@@ -50,6 +43,14 @@ import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
+
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -83,28 +84,24 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
 		this.logger.fine( "Creating a new VM @ VMware." );
 
 		// For IaaS, we only expect root instance names to be passed
-		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+		if( InstanceHelpers.countInstances( parameters.getScopedInstancePath()) > 1 )
 			throw new TargetException( "Only root instances can be passed in arguments." );
 
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
 
 		// Deal with the creation
 		try {
 			System.setProperty("org.xml.sax.driver","org.apache.xerces.parsers.SAXParser");
+			Map<String,String> targetProperties = parameters.getTargetProperties();
 			final String machineImageId = targetProperties.get( TEMPLATE );
 			final ServiceInstance vmwareServiceInstance = getServiceInstance( targetProperties );
 
@@ -113,7 +110,12 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 					.searchManagedEntity("ComputeResource", targetProperties.get( CLUSTER )));
 
 			// Generate the user data first, so that nothing has been done on the IaaS if it fails
-			String userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, rootInstanceName );
+			String userData = DataHelpers.writeUserDataAsString(
+					parameters.getMessagingProperties(),
+					parameters.getDomain(),
+					parameters.getApplicationName(),
+					rootInstanceName );
+
 			VirtualMachine vm = getVirtualMachine( vmwareServiceInstance, machineImageId );
 			String vmwareDataCenter = targetProperties.get( DATA_CENTER );
 			Folder vmFolder =
@@ -165,29 +167,30 @@ public class VmwareIaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
-	 * java.util.Map, java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
 	public MachineConfigurator machineConfigurator(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
+			TargetHandlerParameters parameters,
 			String machineId,
-			String scopedInstancePath,
-			String applicationName,
 			Instance scopedInstance ) {
 
 		String userData = "";
 		try {
-			userData = DataHelpers.writeUserDataAsString( messagingConfiguration, applicationName, scopedInstancePath );
+			userData = DataHelpers.writeUserDataAsString(
+					parameters.getMessagingProperties(),
+					parameters.getDomain(),
+					parameters.getApplicationName(),
+					parameters.getScopedInstancePath());
 
 		} catch( IOException e ) {
 			this.logger.severe( "User data could not be generated." );
 			Utils.logException( this.logger, e );
 		}
 
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
-		return new VmWareMachineConfigurator( targetProperties, userData, rootInstanceName, scopedInstance );
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
+		return new VmWareMachineConfigurator( parameters.getTargetProperties(), userData, rootInstanceName, scopedInstance );
 	}
 
 

@@ -103,10 +103,12 @@ public class HttpAgentClient implements IMessagingClient {
 
 
 	@Override
-	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
+	public void setOwnerProperties( RecipientKind ownerKind, String domain, String applicationName, String scopedInstancePath ) {
 		this.applicationName = applicationName;
 		this.scopedInstancePath = scopedInstancePath;
 		this.logger.fine( "Owner properties changed to " + getId());
+
+		// "domain" is ignored, the DM is the domain here.
 	}
 
 

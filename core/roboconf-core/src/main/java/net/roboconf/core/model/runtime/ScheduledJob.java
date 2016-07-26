@@ -25,6 +25,8 @@
 
 package net.roboconf.core.model.runtime;
 
+import java.util.Objects;
+
 /**
  * @author Vincent Zurczak - Linagora
  */
@@ -139,5 +141,24 @@ public class ScheduledJob implements Comparable<ScheduledJob> {
 			result = this.jobName.compareTo( job.jobName );
 
 		return result;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals( Object obj ) {
+		return obj instanceof ScheduledJob
+				&& Objects.equals(((ScheduledJob) obj).jobName, this.jobName );
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return this.jobName == null ? 31 : this.jobName.hashCode();
 	}
 }

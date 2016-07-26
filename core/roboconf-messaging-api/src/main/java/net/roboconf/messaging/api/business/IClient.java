@@ -43,6 +43,12 @@ public interface IClient {
 	void setMessageQueue( LinkedBlockingQueue<Message> messageQueue );
 
 	/**
+	 * Sets the domain.
+	 * @param domain
+	 */
+	void setDomain( String domain );
+
+	/**
 	 * @return true if the client is connected, false otherwise
 	 */
 	boolean isConnected();
@@ -78,6 +84,11 @@ public interface IClient {
 	 * @return the type of messaging currently used by this client.
 	 */
 	String getMessagingType();
+
+	/**
+	 * @return the domain
+	 */
+	String getDomain();
 
 	/**
 	 * Gets the provider-specific messaging configuration of this client.

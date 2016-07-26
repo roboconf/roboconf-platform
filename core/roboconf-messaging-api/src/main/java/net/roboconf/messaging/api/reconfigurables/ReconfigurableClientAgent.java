@@ -66,14 +66,14 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 	@Override
 	protected void openConnection( IMessagingClient newMessagingClient ) throws IOException {
 
-		newMessagingClient.setOwnerProperties( getOwnerKind(), this.applicationName, this.scopedInstancePath );
+		newMessagingClient.setOwnerProperties( getOwnerKind(), this.domain, this.applicationName, this.scopedInstancePath );
 		newMessagingClient.openConnection();
 		listenToTheDm( newMessagingClient, ListenerCommand.START );
 
 		MsgNotifHeartbeat msg = new MsgNotifHeartbeat( this.applicationName, this.scopedInstancePath, this.ipAddress );
 		msg.setModelRequired( this.needsModel );
 
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, this.applicationName );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, this.domain, this.applicationName );
 		newMessagingClient.publish( ctx, msg );
 	}
 
@@ -171,6 +171,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 			MessagingContext ctx = new MessagingContext(
 					RecipientKind.AGENTS,
+					this.domain,
 					facetOrComponentName,
 					ThoseThat.IMPORT,
 					this.applicationName );
@@ -191,6 +192,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 			MessagingContext ctx = new MessagingContext(
 					RecipientKind.INTER_APP,
+					this.domain,
 					appTplName,
 					ThoseThat.IMPORT,
 					this.applicationName );
@@ -207,7 +209,11 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		// For all the exported variables...
 		// ... find the component or facet name...
 		for( MessagingContext ctx : MessagingContext.forExportedVariables(
-				this.applicationName, instance, this.externalExports, ThoseThat.IMPORT )) {
+				this.domain,
+				this.applicationName,
+				instance,
+				this.externalExports,
+				ThoseThat.IMPORT )) {
 
 			// Log here, for debug
 			this.logger.fine( "Agent '" + getAgentId() + "' is un-publishing its exports (" + ctx + ")." );
@@ -229,7 +235,11 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		// Find the right contexts to subscribe.
 		// This depends on the exported variables.
 		for( MessagingContext ctx : MessagingContext.forExportedVariables(
-				this.applicationName, instance, this.externalExports, ThoseThat.EXPORT )) {
+				this.domain,
+				this.applicationName,
+				instance,
+				this.externalExports,
+				ThoseThat.EXPORT )) {
 
 			if( command == ListenerCommand.START ) {
 				this.logger.fine( "Agent '" + getAgentId() + "' starts listening requests from other agents (" + ctx + ")." );
@@ -250,7 +260,10 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		// For all the imported variables...
 		// ... find the component or facet name...
 		for( MessagingContext ctx : MessagingContext.forImportedVariables(
-				this.applicationName, instance, ThoseThat.EXPORT )) {
+				this.domain,
+				this.applicationName,
+				instance,
+				ThoseThat.EXPORT )) {
 
 			// Log here, for debug
 			this.logger.fine( "Agent '" + getAgentId() + "' is requesting exports from other agents (" + ctx + ")." );
@@ -269,7 +282,10 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		// With RabbitMQ, and for agents, listening to others means
 		// create a binding between the "agents" exchange and the agent's queue.
 		for( MessagingContext ctx : MessagingContext.forImportedVariables(
-				this.applicationName, instance, ThoseThat.IMPORT )) {
+				this.domain,
+				this.applicationName,
+				instance,
+				ThoseThat.IMPORT )) {
 
 			// On which routing key do export go? Those.that.import...
 			if( command == ListenerCommand.START ) {
@@ -289,7 +305,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 
 		// The context match the one used by the DM to listen to messages sent by agents.
 		this.logger.fine( "Agent '" + getAgentId() + "' is sending a " + message.getClass().getSimpleName() + " message to the DM." );
-		MessagingContext ctx = new MessagingContext( RecipientKind.DM, this.applicationName );
+		MessagingContext ctx = new MessagingContext( RecipientKind.DM, this.domain, this.applicationName );
 		getMessagingClient().publish( ctx, message );
 	}
 
@@ -305,7 +321,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		// The context match the one used by the DM to send a message to an agent.
 		// The agent client MUST have a scoped instance path!
 		String topicName = MessagingUtils.buildTopicNameForAgent( this.scopedInstancePath );
-		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, topicName, this.applicationName );
+		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, this.domain, topicName, this.applicationName );
 		if( command == ListenerCommand.START ) {
 			this.logger.fine( "Agent '" + getAgentId() + "' starts listening to the DM." );
 			client.subscribe( ctx );
@@ -325,7 +341,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		this.applicationName = applicationName;
 
 		// Propagate the information to the internal client.
-		getMessagingClient().setOwnerProperties( getOwnerKind(), applicationName, this.scopedInstancePath );
+		getMessagingClient().setOwnerProperties( getOwnerKind(), this.domain, applicationName, this.scopedInstancePath );
 	}
 
 
@@ -334,7 +350,7 @@ public class ReconfigurableClientAgent extends ReconfigurableClient<IAgentClient
 		this.scopedInstancePath = scopedInstancePath;
 
 		// Propagate the information to the internal client.
-		getMessagingClient().setOwnerProperties( getOwnerKind(), this.applicationName, scopedInstancePath );
+		getMessagingClient().setOwnerProperties( getOwnerKind(), this.domain, this.applicationName, scopedInstancePath );
 	}
 
 

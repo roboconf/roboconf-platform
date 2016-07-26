@@ -165,6 +165,11 @@ public interface Constants {
 	 */
 	Long PROBES_POLLING_PERIOD = 20000L;
 
+	/**
+	 * The default domain name.
+	 */
+	String DEFAULT_DOMAIN = "default";
+
 
 	/**
 	 * The system property that points to Karaf's etc directory.

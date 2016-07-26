@@ -63,6 +63,11 @@ public class MyAgentInterface implements AgentMessagingInterface {
 	}
 
 	@Override
+	public String getDomain() {
+		return "domain";
+	}
+
+	@Override
 	public String getScopedInstancePath() {
 		return InstanceHelpers.computeInstancePath( this.scopedInstance );
 	}

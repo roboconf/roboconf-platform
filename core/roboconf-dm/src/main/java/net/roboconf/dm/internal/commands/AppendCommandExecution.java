@@ -25,10 +25,10 @@
 
 package net.roboconf.dm.internal.commands;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 import net.roboconf.core.commands.AppendCommandInstruction;
 import net.roboconf.core.utils.Utils;
@@ -54,23 +54,22 @@ class AppendCommandExecution extends AbstractCommandExecution {
 	@Override
 	public void execute() throws CommandException {
 
-		BufferedWriter bw = null;
+		OutputStreamWriter fw = null;
 		try {
 			File f = new File( this.instr.getFilePath());
 			boolean append = f.exists() && f.length() > 0;
 
-			FileWriter fw = new FileWriter( f, true );
-			bw = new BufferedWriter( fw );
+			fw = new OutputStreamWriter( new FileOutputStream( f, true ), "UTF-8" );
 			if( append )
-				bw.write( "\n" );
+				fw.append( "\n" );
 
-			bw.write( this.instr.getContent());
+			fw.append( this.instr.getContent());
 
 		} catch( IOException e ) {
 			throw new CommandException( e );
 
 		} finally {
-			Utils.closeQuietly( bw );
+			Utils.closeQuietly( fw );
 		}
 	}
 }

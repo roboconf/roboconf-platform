@@ -28,16 +28,16 @@ package net.roboconf.messaging.rabbitmq.internal;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.junit.Assert;
-import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
-import net.roboconf.messaging.api.messages.Message;
-import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
-
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.rabbitmq.client.Channel;
+
+import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
+import net.roboconf.messaging.api.messages.Message;
+import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
+import net.roboconf.messaging.rabbitmq.internal.utils.RabbitMqTestUtils;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -57,7 +57,7 @@ public class RabbitMqClientTest {
 		Assume.assumeTrue( rabbitMqIsRunning );
 
 		RabbitMqClient client = new RabbitMqClient( null, "localhost", "guest", "guest", RecipientKind.DM );
-		client.setOwnerProperties( RecipientKind.DM, "app", "/root" );
+		client.setOwnerProperties( RecipientKind.DM, "domain", "app", "/root" );
 
 		Assert.assertEquals( RabbitMqConstants.FACTORY_RABBITMQ, client.getMessagingType());
 		Assert.assertFalse( client.isConnected());
@@ -82,5 +82,20 @@ public class RabbitMqClientTest {
 		// closeConnection is idem-potent
 		client.closeConnection();
 		Assert.assertNull( client.channel );
+	}
+
+
+	@Test
+	public void testGetQueueName() {
+
+		RabbitMqClient client = new RabbitMqClient( null, "localhost", "guest", "guest", RecipientKind.DM );
+		client.setOwnerProperties( RecipientKind.DM, "domain", "app", "/root" );
+		Assert.assertEquals( "domain.roboconf-dm", client.getQueueName());
+
+		client.setOwnerProperties( RecipientKind.AGENTS, "domain", "app", "/root" );
+		Assert.assertEquals( "domain.app.root", client.getQueueName());
+
+		client.setOwnerProperties( RecipientKind.AGENTS, "domain1", "app", "/root" );
+		Assert.assertEquals( "domain1.app.root", client.getQueueName());
 	}
 }

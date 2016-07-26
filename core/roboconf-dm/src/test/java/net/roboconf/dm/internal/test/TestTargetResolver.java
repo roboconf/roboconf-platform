@@ -33,6 +33,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.dm.internal.api.impl.TargetHandlerResolverImpl;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -54,13 +55,10 @@ public class TestTargetResolver extends TargetHandlerResolverImpl {
 			}
 
 			@Override
-			public String createMachine(
-					Map<String,String> targetProperties,
-					Map<String,String> messagingConfiguration,
-					String scopedInstancePath,
-					String applicationName )
+			public String createMachine( TargetHandlerParameters parameters )
 			throws TargetException {
 
+				String scopedInstancePath = parameters.getScopedInstancePath();
 				TestTargetResolver.this.instancePathToRunningStatus.put( scopedInstancePath, Boolean.TRUE );
 				Integer cpt = TestTargetResolver.this.instancePathToRequestsCount.get( scopedInstancePath );
 				if( cpt == null )
@@ -73,11 +71,8 @@ public class TestTargetResolver extends TargetHandlerResolverImpl {
 
 			@Override
 			public void configureMachine(
-					Map<String,String> targetProperties,
-					Map<String,String> messagingConfiguration,
+					TargetHandlerParameters parameters,
 					String machineId,
-					String rootInstanceName,
-					String applicationName,
 					Instance scopedInstance )
 			throws TargetException {
 				// nothing

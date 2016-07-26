@@ -28,9 +28,10 @@ package net.roboconf.target.embedded.internal;
 import java.util.HashMap;
 
 import org.junit.Assert;
-import net.roboconf.core.model.beans.Instance;
-
 import org.junit.Test;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -46,17 +47,25 @@ public class EmbeddedHandlerTest {
 		target.terminateMachine( new HashMap<String,String>(), "anything" );
 
 		Assert.assertFalse( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
-		Assert.assertNotNull( target.createMachine( null, null, "nothing", "app" ));
+		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
+				.applicationName( "app" )
+				.domain( "domain" )
+				.scopedInstancePath( "nothing" )));
+
 		Assert.assertTrue( target.isMachineRunning( null, "nothing (" + EmbeddedHandler.TARGET_ID + ")" ));
 
-		Assert.assertNotNull( target.createMachine( new HashMap<String,String>(), new HashMap<String,String>(), null, null ));
+		Assert.assertNotNull( target.createMachine( new TargetHandlerParameters()
+				.targetProperties( new HashMap<String,String>( 0 ))
+				.messagingProperties( new HashMap<String,String>( 0 ))));
+
 		target.configureMachine(
-				new HashMap<String,String>( 0 ),
-				new HashMap<String,String>( 0 ),
-				null, null, null,
+				new TargetHandlerParameters()
+					.targetProperties( new HashMap<String,String>( 0 ))
+					.messagingProperties( new HashMap<String,String>( 0 )),
+				null,
 				new Instance());
 
-		target.terminateMachine( new HashMap<String,String>(), null );
+		target.terminateMachine( new HashMap<String,String>( 0 ), null );
 		target.terminateMachine( null, "anything" );
 	}
 }

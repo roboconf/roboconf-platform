@@ -24,6 +24,7 @@
 
 		<properties pid="net.roboconf.dm.configuration">
 			<property name="messaging-type" method="setMessagingType" />
+			<property name="domain" method="setDomain" />
 		</properties>
 	</component>
 

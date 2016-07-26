@@ -29,13 +29,14 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.target.api.AbstractThreadedTargetHandler;
-import net.roboconf.target.api.TargetException;
-
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse.ContainerState;
 import com.github.dockerjava.api.model.Container;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.target.api.AbstractThreadedTargetHandler;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -102,21 +103,16 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-					throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
 		this.logger.fine( "Creating a new machine." );
 
 		// Search an existing image in the local Docker repository
-		DockerUtils.verifyDockerClient( targetProperties );
+		DockerUtils.verifyDockerClient( parameters.getTargetProperties());
 
 		// We do not do anything else here.
 		// We return a UUID.
@@ -126,23 +122,21 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(java.util.Map,
-	 * java.util.Map, java.lang.String, java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public MachineConfigurator machineConfigurator(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String machineId,
-			String scopedInstancePath,
-			String applicationName,
-			Instance scopedInstance ) {
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance ) {
 
 		// machineId does not match a real container ID.
 		// It is the name of the container we will create.
 		return new DockerMachineConfigurator(
-				targetProperties, messagingConfiguration, machineId,
-				scopedInstancePath, applicationName, scopedInstance );
+				parameters.getTargetProperties(),
+				parameters.getMessagingProperties(),
+				machineId,
+				parameters.getScopedInstancePath(),
+				parameters.getApplicationName(),
+				scopedInstance );
 	}
 
 
@@ -153,7 +147,7 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	 */
 	@Override
 	public boolean isMachineRunning( Map<String,String> targetProperties, String machineId )
-			throws TargetException {
+	throws TargetException {
 
 		boolean result = false;
 		try {
@@ -175,7 +169,8 @@ public class DockerHandler extends AbstractThreadedTargetHandler {
 	 * #terminateMachine(java.util.Map, java.lang.String)
 	 */
 	@Override
-	public void terminateMachine( Map<String,String> targetProperties, String machineId ) throws TargetException {
+	public void terminateMachine( Map<String,String> targetProperties, String machineId )
+	throws TargetException {
 
 		this.logger.fine( "Terminating machine " + machineId );
 		try {

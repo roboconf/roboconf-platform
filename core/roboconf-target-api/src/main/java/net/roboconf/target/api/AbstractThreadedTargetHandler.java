@@ -96,44 +96,22 @@ public abstract class AbstractThreadedTargetHandler implements TargetHandler {
 
 
 	@Override
-	public final void configureMachine(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String machineId,
-			String rootInstanceName,
-			String applicationName,
-			Instance scopedInstance )
+	public final void configureMachine( TargetHandlerParameters parameters, String machineId, Instance scopedInstance )
 	throws TargetException {
 
 		this.logger.fine( "Configuring machine '" + machineId + "'." );
-		this.machineIdToConfigurators.put( machineId, machineConfigurator(
-				targetProperties,
-				messagingProperties,
-				machineId,
-				rootInstanceName,
-				applicationName,
-				scopedInstance ));
+		this.machineIdToConfigurators.put( machineId, machineConfigurator( parameters, machineId, scopedInstance ));
 	}
 
 
 	/**
 	 * Gets or builds a machine configurator to (guess what!) configure a machine.
-	 *
-	 * @param targetProperties the target properties (e.g. access key, secret key, etc.)
-	 * @param messagingProperties the configuration for the messaging.
+	 * @param parameters the target parameters
 	 * @param machineId the ID machine of the machine to configure
-	 * @param applicationName the application name
-	 * @param scopedInstanceName the name of the scoped instance associated with this VM
 	 * @param scopedInstance the scoped instance
 	 * @return a machine configurator
 	 */
-	public abstract MachineConfigurator machineConfigurator(
-			Map<String,String> targetProperties,
-			Map<String, String> messagingProperties,
-			String machineId,
-			String scopedInstanceName,
-			String applicationName,
-			Instance scopedInstance );
+	public abstract MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance );
 
 
 	/**

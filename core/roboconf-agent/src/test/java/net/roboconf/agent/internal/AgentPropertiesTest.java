@@ -37,11 +37,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import net.roboconf.core.agents.DataHelpers;
-import net.roboconf.messaging.api.MessagingConstants;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import net.roboconf.core.agents.DataHelpers;
+import net.roboconf.messaging.api.MessagingConstants;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -62,12 +62,14 @@ public class AgentPropertiesTest {
 	@Test
 	public void testReadIaasProperties_all() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString(rabbitMqMessagingConfiguration("ip", "user", "pwd"), "my app", "/root/path" );
+		String s = DataHelpers.writeUserDataAsString(rabbitMqMessagingConfiguration("ip", "user", "pwd"), "domain", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
+		Assert.assertEquals( "domain", ad.getDomain());
 		Assert.assertNull( ad.getIpAddress());
-		final Map<String, String> msgCfg = ad.getMessagingConfiguration();
+
+		final Map<String,String> msgCfg = ad.getMessagingConfiguration();
 		Assert.assertEquals( FACTORY_RABBITMQ, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 		Assert.assertEquals( "ip", msgCfg.get(RABBITMQ_SERVER_IP));
 		Assert.assertEquals( "pwd", msgCfg.get(RABBITMQ_SERVER_PASSWORD));
@@ -79,12 +81,14 @@ public class AgentPropertiesTest {
 	@Test
 	public void testReadIaasProperties_partial() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip", "user", null), "my app", "/root/path" );
+		String s = DataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip", "user", null), "domain", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
+		Assert.assertEquals( "domain", ad.getDomain());
 		Assert.assertNull( ad.getIpAddress());
-		final Map<String, String> msgCfg = ad.getMessagingConfiguration();
+
+		final Map<String,String> msgCfg = ad.getMessagingConfiguration();
 		Assert.assertEquals( FACTORY_RABBITMQ, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 		Assert.assertEquals( "ip", msgCfg.get(RABBITMQ_SERVER_IP));
 		Assert.assertNull(msgCfg.get(RABBITMQ_SERVER_PASSWORD));
@@ -96,12 +100,14 @@ public class AgentPropertiesTest {
 	@Test
 	public void testReadIaasProperties_withSpecialCharacters() throws Exception {
 
-		String s = DataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip\\:port", "user", "pwd:with:two;dots\\:"), "my app", "/root/path" );
+		String s = DataHelpers.writeUserDataAsString( rabbitMqMessagingConfiguration("ip\\:port", "user", "pwd:with:two;dots\\:"), "domain", "my app", "/root/path" );
 
 		AgentProperties ad = AgentProperties.readIaasProperties( s, Logger.getAnonymousLogger());
 		Assert.assertEquals( "my app", ad.getApplicationName());
+		Assert.assertEquals( "domain", ad.getDomain());
 		Assert.assertNull( ad.getIpAddress());
-		final Map<String, String> msgCfg = ad.getMessagingConfiguration();
+
+		final Map<String,String> msgCfg = ad.getMessagingConfiguration();
 		Assert.assertEquals( FACTORY_RABBITMQ, msgCfg.get(MessagingConstants.MESSAGING_TYPE_PROPERTY));
 		Assert.assertEquals( "ip:port", msgCfg.get(RABBITMQ_SERVER_IP));
 		Assert.assertEquals( "pwd:with:two;dots:", msgCfg.get(RABBITMQ_SERVER_PASSWORD));
@@ -116,6 +122,7 @@ public class AgentPropertiesTest {
 		AgentProperties ad = new AgentProperties();
 		ad.setApplicationName( "my app" );
 		ad.setScopedInstancePath( "/root" );
+		ad.setDomain( "d1" );
 		ad.setIpAddress( "whatever" );
 		Assert.assertNotNull( ad.validate());
 

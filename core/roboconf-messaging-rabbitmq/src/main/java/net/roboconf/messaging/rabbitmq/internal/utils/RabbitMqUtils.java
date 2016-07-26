@@ -28,13 +28,13 @@ package net.roboconf.messaging.rabbitmq.internal.utils;
 import java.io.IOException;
 import java.util.Map;
 
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConnectionFactory;
+
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.extensions.MessagingContext;
 import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.rabbitmq.RabbitMqConstants;
-
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -103,15 +103,19 @@ public final class RabbitMqUtils {
 
 	/**
 	 * Declares the required exchanges for an application (only for agents).
+	 * @param domain the domain name
 	 * @param applicationName the application name
 	 * @param channel the RabbitMQ channel
 	 * @throws IOException if an error occurs
 	 */
-	public static void declareApplicationExchanges( String applicationName, Channel channel ) throws IOException {
+	public static void declareApplicationExchanges( String domain, String applicationName, Channel channel )
+	throws IOException {
 
 		// "topic" is a keyword for RabbitMQ.
-		if( applicationName != null )
-			channel.exchangeDeclare( buildExchangeNameForAgent( applicationName ), "topic" );
+		if( applicationName != null ) {
+			String exch = buildExchangeNameForAgent( domain, applicationName );
+			channel.exchangeDeclare( exch, "topic" );
+		}
 	}
 
 
@@ -124,22 +128,43 @@ public final class RabbitMqUtils {
 	 * @param channel the RabbitMQ channel
 	 * @throws IOException if an error occurs
 	 */
-	public static void declareGlobalExchanges( Channel channel ) throws IOException {
+	public static void declareGlobalExchanges( String domain, Channel channel )
+	throws IOException {
 
 		// "topic" is a keyword for RabbitMQ.
-		channel.exchangeDeclare( RabbitMqConstants.EXHANGE_DM, "topic" );
-		channel.exchangeDeclare( RabbitMqConstants.EXHANGE_INTER_APP, "topic" );
-
+		channel.exchangeDeclare( buildExchangeNameForTheDm( domain ), "topic" );
+		channel.exchangeDeclare( buildExchangeNameForInterApp( domain ), "topic" );
 	}
 
 
 	/**
 	 * Builds the name of an exchange for agents (related to the application name).
+	 * @param domain the domain
 	 * @param applicationName the application name
 	 * @return a non-null string
 	 */
-	public static String buildExchangeNameForAgent( String applicationName ) {
-		return applicationName + ".agents";
+	public static String buildExchangeNameForAgent( String domain, String applicationName ) {
+		return domain + "." + applicationName + ".agents";
+	}
+
+
+	/**
+	 * Builds the name of the exchange for the DM.
+	 * @param domain the domain
+	 * @return a non-null string
+	 */
+	public static String buildExchangeNameForTheDm( String domain ) {
+		return domain + "." + RabbitMqConstants.EXCHANGE_DM;
+	}
+
+
+	/**
+	 * Builds the name of the exchange for inter-application exchanges.
+	 * @param domain the domain
+	 * @return a non-null string
+	 */
+	public static String buildExchangeNameForInterApp( String domain ) {
+		return domain + "." + RabbitMqConstants.EXCHANGE_INTER_APP;
 	}
 
 
@@ -152,11 +177,11 @@ public final class RabbitMqUtils {
 
 		String exchangeName;
 		if( ctx.getKind() == RecipientKind.DM )
-			exchangeName = RabbitMqConstants.EXHANGE_DM;
+			exchangeName = buildExchangeNameForTheDm( ctx.getDomain());
 		else if( ctx.getKind() == RecipientKind.INTER_APP )
-			exchangeName = RabbitMqConstants.EXHANGE_INTER_APP;
+			exchangeName = buildExchangeNameForInterApp( ctx.getDomain());
 		else
-			exchangeName = RabbitMqUtils.buildExchangeNameForAgent( ctx.getApplicationName());
+			exchangeName = RabbitMqUtils.buildExchangeNameForAgent( ctx.getDomain(), ctx.getApplicationName());
 
 		return exchangeName;
 	}

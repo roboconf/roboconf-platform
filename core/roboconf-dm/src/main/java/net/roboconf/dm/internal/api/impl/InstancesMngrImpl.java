@@ -61,6 +61,7 @@ import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdSetScopedInsta
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdUpdateProbeConfiguration;
 import net.roboconf.target.api.TargetException;
 import net.roboconf.target.api.TargetHandler;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Noël - LIG
@@ -422,10 +423,17 @@ public class InstancesMngrImpl implements IInstancesMngr {
 			Map<String,String> messagingConfiguration = this.messagingMngr.getMessagingClient().getConfiguration();
 			String scopedInstancePath = InstanceHelpers.computeInstancePath( scopedInstance );
 
+			TargetHandlerParameters parameters = new TargetHandlerParameters()
+					.targetProperties( targetProperties )
+					.messagingProperties( messagingConfiguration )
+					.scopedInstancePath( scopedInstancePath )
+					.applicationName( ma.getName())
+					.domain( this.messagingMngr.getMessagingClient().getDomain());
+
 			// FIXME: there can be many problems here.
 			// Not sure we handle all the possible problems correctly.
 			try {
-				machineId = targetHandler.createMachine( targetProperties, messagingConfiguration, scopedInstancePath, ma.getName());
+				machineId = targetHandler.createMachine( parameters );
 
 			} catch( TargetException e ) {
 				this.targetsMngr.unlockTarget( ma.getApplication(), scopedInstance );
@@ -437,10 +445,7 @@ public class InstancesMngrImpl implements IInstancesMngr {
 
 			// If the configuration fails, keep the lock on the target.
 			// This will prevent us from having ghost VMs with no target.
-			targetHandler.configureMachine(
-					targetProperties, messagingConfiguration,
-					machineId, scopedInstancePath, ma.getName(), scopedInstance );
-
+			targetHandler.configureMachine( parameters, machineId, scopedInstance );
 			this.logger.fine( "Scoped instance " + path + "'s configuration is on its way in " + ma.getName() + "." );
 
 		} catch( TargetException | IOException e ) {

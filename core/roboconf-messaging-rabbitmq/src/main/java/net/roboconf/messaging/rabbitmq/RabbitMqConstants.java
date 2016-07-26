@@ -59,8 +59,8 @@ public interface RabbitMqConstants {
 	String RABBITMQ_SERVER_PASSWORD = RABBITMQ_PROPERTY_PREFIX + ".server.password";
 
 
-	String EXHANGE_INTER_APP = "roboconf.inter-app";
-	String EXHANGE_DM = "roboconf.dm";
+	String EXCHANGE_INTER_APP = "roboconf.inter-app";
+	String EXCHANGE_DM = "roboconf.dm";
 
 
 	String DEFAULT_IP = "localhost";

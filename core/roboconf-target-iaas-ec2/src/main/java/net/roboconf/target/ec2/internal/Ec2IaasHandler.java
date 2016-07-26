@@ -54,6 +54,7 @@ import net.roboconf.core.model.helpers.InstanceHelpers;
 import net.roboconf.core.utils.Utils;
 import net.roboconf.target.api.AbstractThreadedTargetHandler;
 import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
 
 /**
  * @author Noël - LIG
@@ -92,34 +93,31 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.TargetHandler#createMachine(java.util.Map,
-	 * java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 * @see net.roboconf.target.api.TargetHandler
+	 * #createMachine(net.roboconf.target.api.TargetHandlerParameters)
 	 */
 	@Override
-	public String createMachine(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String scopedInstancePath,
-			String applicationName )
-	throws TargetException {
+	public String createMachine( TargetHandlerParameters parameters ) throws TargetException {
 
 		this.logger.fine( "Creating a new machine on AWS." );
 
 		// For IaaS, we only expect root instance names to be passed
-		if( InstanceHelpers.countInstances( scopedInstancePath ) > 1 )
+		if( InstanceHelpers.countInstances( parameters.getScopedInstancePath()) > 1 )
 			throw new TargetException( "Only root instances can be passed in arguments." );
 
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
 
 		// Deal with the creation
 		String instanceId;
 		try {
-			AmazonEC2 ec2 = createEc2Client( targetProperties );
+			AmazonEC2 ec2 = createEc2Client( parameters.getTargetProperties());
 			String userData = DataHelpers.writeUserDataAsString(
-					messagingConfiguration,
-					applicationName, rootInstanceName );
+					parameters.getMessagingProperties(),
+					parameters.getDomain(),
+					parameters.getApplicationName(),
+					rootInstanceName );
 
-			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode( targetProperties, userData );
+			RunInstancesRequest runInstancesRequest = prepareEC2RequestNode( parameters.getTargetProperties(), userData );
 			RunInstancesResult runInstanceResult = ec2.runInstances( runInstancesRequest );
 			instanceId = runInstanceResult.getReservation().getInstances().get( 0 ).getInstanceId();
 
@@ -134,21 +132,19 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 
 	/*
 	 * (non-Javadoc)
-	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler
-	 * #machineConfigurator(java.util.Map, java.util.Map, java.lang.String,
-	 * java.lang.String, java.lang.String, net.roboconf.core.model.beans.Instance)
+	 * @see net.roboconf.target.api.AbstractThreadedTargetHandler#machineConfigurator(
+	 * net.roboconf.target.api.TargetHandlerParameters, java.lang.String, net.roboconf.core.model.beans.Instance)
 	 */
 	@Override
-	public MachineConfigurator machineConfigurator(
-			Map<String,String> targetProperties,
-			Map<String,String> messagingConfiguration,
-			String machineId,
-			String scopedInstancePath,
-			String applicationName,
-			Instance scopedInstance ) {
+	public MachineConfigurator machineConfigurator( TargetHandlerParameters parameters, String machineId, Instance scopedInstance ) {
 
-		String rootInstanceName = InstanceHelpers.findRootInstancePath( scopedInstancePath );
-		return new Ec2MachineConfigurator( targetProperties, machineId, applicationName, rootInstanceName, scopedInstance );
+		String rootInstanceName = InstanceHelpers.findRootInstancePath( parameters.getScopedInstancePath());
+		return new Ec2MachineConfigurator(
+				parameters.getTargetProperties(),
+				machineId,
+				parameters.getApplicationName(),
+				rootInstanceName,
+				scopedInstance );
 	}
 
 
@@ -299,7 +295,7 @@ public class Ec2IaasHandler extends AbstractThreadedTargetHandler {
 	 */
 	static List<String> findStorageIds( Map<String,String> targetProperties ) {
 
-		List<String> result = new ArrayList<String> ();
+		List<String> result = new ArrayList<> ();
 		String prop = targetProperties.get( USE_BLOCK_STORAGE );
 		if( ! Utils.isEmptyOrWhitespaces( prop )) {
 			for( String s : Utils.splitNicely( prop, "," )) {

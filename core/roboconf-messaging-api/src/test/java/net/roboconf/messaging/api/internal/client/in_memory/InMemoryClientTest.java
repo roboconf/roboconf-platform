@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import net.roboconf.core.model.beans.Instance;
 import net.roboconf.messaging.api.MessagingConstants;
 import net.roboconf.messaging.api.extensions.MessagingContext;
@@ -37,9 +40,6 @@ import net.roboconf.messaging.api.extensions.MessagingContext.RecipientKind;
 import net.roboconf.messaging.api.internal.client.in_memory.InMemoryClient.InMemoryRoutingContext;
 import net.roboconf.messaging.api.messages.Message;
 import net.roboconf.messaging.api.messages.from_dm_to_agent.MsgCmdAddInstance;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * @author Vincent Zurczak - Linagora
@@ -69,7 +69,7 @@ public class InMemoryClientTest {
 	public void testScenarios_subscriptions() throws Exception {
 
 		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
-		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "app" );
+		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "app" );
 
 		// Not connected, subscriptions cannot work
 		Assert.assertFalse( client.isConnected());
@@ -106,10 +106,10 @@ public class InMemoryClientTest {
 	public void testScenarios_publications() throws Exception {
 
 		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
-		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<Message> ();
+		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<> ();
 		client.setMessageQueue( queue );
 
-		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "app" );
+		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "app" );
 
 		// Not connected, publications cannot work
 		Message msg = new MsgCmdAddInstance( new Instance( "" ));
@@ -141,16 +141,16 @@ public class InMemoryClientTest {
 		Set<String> ownerIds = new HashSet<> ();
 
 		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
-		client.setOwnerProperties( RecipientKind.DM, null, null );
+		client.setOwnerProperties( RecipientKind.DM, "domain", null, null );
 		ownerIds.add( client.getOwnerId());
 
-		client.setOwnerProperties( RecipientKind.AGENTS, "app1", "root1" );
+		client.setOwnerProperties( RecipientKind.AGENTS, "domain", "app1", "root1" );
 		ownerIds.add( client.getOwnerId());
 
-		client.setOwnerProperties( RecipientKind.AGENTS, "app1", "root2" );
+		client.setOwnerProperties( RecipientKind.AGENTS, "domain", "app1", "root2" );
 		ownerIds.add( client.getOwnerId());
 
-		client.setOwnerProperties( RecipientKind.AGENTS, "app2", "root2" );
+		client.setOwnerProperties( RecipientKind.AGENTS, "domain", "app2", "root2" );
 		ownerIds.add( client.getOwnerId());
 
 		Assert.assertEquals( 4, ownerIds.size());
@@ -162,11 +162,11 @@ public class InMemoryClientTest {
 
 		// Init...
 		InMemoryClient client = new InMemoryClient( new InMemoryRoutingContext(), RecipientKind.DM );
-		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<Message> ();
+		LinkedBlockingQueue<Message> queue = new LinkedBlockingQueue<> ();
 		client.setMessageQueue( queue );
 		client.openConnection();
 
-		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "app" );
+		MessagingContext ctx = new MessagingContext( RecipientKind.AGENTS, "domain", "app" );
 		client.subscribe( ctx );
 		String ownerId_1 = client.getOwnerId();
 
@@ -181,7 +181,7 @@ public class InMemoryClientTest {
 		Assert.assertTrue( subscribedContexts.contains( ctx ));
 
 		// Change the owner ID
-		client.setOwnerProperties( RecipientKind.AGENTS, "app1", "root1" );
+		client.setOwnerProperties( RecipientKind.AGENTS, "domain", "app1", "root1" );
 
 		// Verify properties were kept
 		String ownerId_2 = client.getOwnerId();

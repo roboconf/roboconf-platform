@@ -77,7 +77,7 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	protected final AtomicBoolean connected = new AtomicBoolean( false );
 	protected final Logger logger = Logger.getLogger( getClass().getName());
 
-	protected String ownerId, applicationName, scopedInstancePath;
+	protected String ownerId, applicationName, scopedInstancePath, domain;
 	protected boolean connectionIsRequired = true;
 
 
@@ -89,7 +89,7 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 	 */
 	public AbstractRoutingClient( RoutingContext routingContext, RecipientKind ownerKind ) {
 		this.routingContext = routingContext;
-		setOwnerProperties( ownerKind, null, null );
+		setOwnerProperties( ownerKind, null, null, null );
 	}
 
 
@@ -163,11 +163,12 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 
 
 	@Override
-	public void setOwnerProperties( RecipientKind ownerKind, String applicationName, String scopedInstancePath ) {
+	public void setOwnerProperties( RecipientKind ownerKind, String domain, String applicationName, String scopedInstancePath ) {
 
 		// Store the fields (the owner kind is not supposed to change)
 		this.applicationName = applicationName;
 		this.scopedInstancePath = scopedInstancePath;
+		this.domain = domain;
 
 		// Update the client's owner ID
 		String newOwnerId = buildOwnerId( ownerKind, applicationName, scopedInstancePath );
@@ -237,6 +238,8 @@ public abstract class AbstractRoutingClient<T> implements IMessagingClient {
 			}
 		}
 
+		// The "domain" is not used here.
+		// "domain" was not designed for self-hosted messaging but for "real" messaging servers.
 		return sb.toString().trim();
 	}
 

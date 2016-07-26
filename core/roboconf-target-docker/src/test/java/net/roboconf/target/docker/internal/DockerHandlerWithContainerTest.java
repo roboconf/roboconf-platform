@@ -36,12 +36,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import net.roboconf.core.model.beans.Instance;
-import net.roboconf.core.model.helpers.InstanceHelpers;
-import net.roboconf.core.utils.Utils;
-import net.roboconf.target.api.TargetException;
-import net.roboconf.target.docker.internal.DockerMachineConfigurator.RoboconfBuildImageResultCallback;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -54,6 +48,13 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig.DockerClientConfigBuilder;
+
+import net.roboconf.core.model.beans.Instance;
+import net.roboconf.core.model.helpers.InstanceHelpers;
+import net.roboconf.core.utils.Utils;
+import net.roboconf.target.api.TargetException;
+import net.roboconf.target.api.TargetHandlerParameters;
+import net.roboconf.target.docker.internal.DockerMachineConfigurator.RoboconfBuildImageResultCallback;
 
 /**
  * @author Pierre-Yves Gibello - Linagora
@@ -169,10 +170,18 @@ public class DockerHandlerWithContainerTest {
 
 		Assume.assumeTrue( this.dockerIsInstalled );
 		DockerHandler target = new DockerHandler();
+
 		Map<String,String> targetProperties = loadTargetProperties();
 		targetProperties.remove( DockerHandler.IMAGE_ID );
 
-		target.createMachine( targetProperties, this.msgCfg, "test", "roboconf" );
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( targetProperties )
+				.messagingProperties( this.msgCfg )
+				.applicationName( "roboconf" )
+				.domain( "my-domain" )
+				.scopedInstancePath( "test" );
+
+		target.createMachine( parameters );
 	}
 
 
@@ -262,16 +271,24 @@ public class DockerHandlerWithContainerTest {
 		DockerHandler target = new DockerHandler();
 		Instance scopedInstance = new Instance( "test-596598515" );
 		String path = InstanceHelpers.computeInstancePath( scopedInstance );
+
+		TargetHandlerParameters parameters = new TargetHandlerParameters()
+				.targetProperties( targetProperties )
+				.messagingProperties( this.msgCfg )
+				.applicationName( "roboconf" )
+				.domain( "my-domain" )
+				.scopedInstancePath( path );
+
 		try {
 			target.start();
-			String containerId = target.createMachine( targetProperties, this.msgCfg, path, "roboconf" );
+			String containerId = target.createMachine( parameters );
 			Assert.assertNotNull( containerId );
 			Assert.assertNull( scopedInstance.data.get( Instance.MACHINE_ID ));
 
 			// DockerMachineConfigurator is implemented in such a way that it runs only
 			// once when the image already exists. However, we must wait for the thread pool
 			// executor to pick up the configurator.
-			target.configureMachine( targetProperties, this.msgCfg, containerId, path, "roboconf", scopedInstance );
+			target.configureMachine( parameters, containerId, scopedInstance );
 
 			// Be careful, the Docker target changes the machine ID
 			containerId = DockerTestUtils.waitForMachineId(

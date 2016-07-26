@@ -30,6 +30,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
+
 import net.roboconf.core.utils.Utils;
 import net.roboconf.messaging.api.AbstractMessageProcessor;
 import net.roboconf.messaging.api.MessagingConstants;
@@ -40,11 +45,6 @@ import net.roboconf.messaging.api.factory.IMessagingClientFactory;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryListener;
 import net.roboconf.messaging.api.factory.MessagingClientFactoryRegistry;
 import net.roboconf.messaging.api.internal.client.dismiss.DismissClient;
-
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceReference;
 
 /**
  * A class that can switch dynamically between messaging types.
@@ -61,6 +61,8 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	private IMessagingClient messagingClient;
 	private MessagingClientFactoryRegistry registry;
 
+	protected String domain;
+
 
 	/**
 	 * Constructor.
@@ -70,6 +72,18 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 
 		// Try to find the MessagingClientFactoryRegistry service.
 		setRegistry( lookupMessagingClientFactoryRegistryService());
+	}
+
+
+	@Override
+	public void setDomain( String domain ) {
+		this.domain = domain;
+	}
+
+
+	@Override
+	public String getDomain() {
+		return this.domain;
 	}
 
 
@@ -85,7 +99,7 @@ public abstract class ReconfigurableClient<T extends IClient> implements IClient
 	 * Sets the {@code MessagingClientFactoryRegistry} associated for this client.
 	 * @param registry the {@code MessagingClientFactoryRegistry} for this client.
 	 */
-	public synchronized void setRegistry(MessagingClientFactoryRegistry registry) {
+	public synchronized void setRegistry( MessagingClientFactoryRegistry registry ) {
 
 		if (this.registry != null)
 			this.registry.removeListener(this);

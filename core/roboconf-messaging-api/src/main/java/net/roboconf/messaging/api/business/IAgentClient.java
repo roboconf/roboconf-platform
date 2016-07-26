@@ -42,12 +42,14 @@ public interface IAgentClient extends IClient {
 
 	/**
 	 * Sets the application name.
+	 * @param applicationName
 	 */
 	void setApplicationName( String applicationName );
 
 
 	/**
 	 * Sets the path of the (scoped) instance associated with the agent.
+	 * @param scopedInstancePath
 	 */
 	void setScopedInstancePath( String scopedInstancePath );
 
